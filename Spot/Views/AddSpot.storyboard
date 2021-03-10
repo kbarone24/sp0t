@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="aVO-qC-Pik">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17703"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Invite Friends Controller-->
+        <scene sceneID="pb3-Hr-iSF">
+            <objects>
+                <viewController storyboardIdentifier="InviteFriends" extendedLayoutIncludesOpaqueBars="YES" id="avE-oH-rjk" customClass="InviteFriendsController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="IgK-r2-VwG">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="9cb-j8-M4Q"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="lfx-5W-fsk" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2435" y="1193"/>
+        </scene>
+        <!--Camera Controller-->
+        <scene sceneID="Oii-Rd-xIs">
+            <objects>
+                <viewController storyboardIdentifier="AVCameraController" extendedLayoutIncludesOpaqueBars="YES" hidesBottomBarWhenPushed="YES" id="aVO-qC-Pik" customClass="AVCameraController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="U5b-7z-zk2">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="Lfb-E1-zm7"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <tabBarItem key="tabBarItem" title="" image="CameraLaunchButton" selectedImage="CameraLaunchButton" id="hRb-kl-OZu"/>
+                    <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="IWg-9X-u83" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-2726" y="340"/>
+        </scene>
+        <!--Photo Gallery Picker-->
+        <scene sceneID="3Tk-fh-FcW">
+            <objects>
+                <viewController storyboardIdentifier="PhotoGallery" id="OOt-jn-w3u" customClass="PhotoGalleryPicker" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="jyQ-3y-xeN">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="OB4-rM-fT7"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="FEC-VG-zfV" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-2726" y="1129"/>
+        </scene>
+        <!--Map Picker Controller-->
+        <scene sceneID="uyB-WT-b2u">
+            <objects>
+                <viewController storyboardIdentifier="MapPicker" id="dEP-aN-B8g" customClass="MapPickerController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="hep-Si-Kzj">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="dmC-BD-lM0"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="v0X-xB-oPi" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1675" y="1921"/>
+        </scene>
+        <!--Photos Container Controller-->
+        <scene sceneID="5SA-zU-lMr">
+            <objects>
+                <viewController storyboardIdentifier="PhotosContainer" id="uGm-Qn-dbA" customClass="PhotosContainerController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="blE-5x-GzP">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="sq2-ZJ-UGO"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="0Sg-xb-dvn" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1675" y="1128"/>
+        </scene>
+        <!--Drafts View Controller-->
+        <scene sceneID="WZ8-Ef-YVv">
+            <objects>
+                <viewController storyboardIdentifier="Drafts" id="NC7-bk-Gcm" customClass="DraftsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="ah1-3m-XZl">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="FEq-9I-OZr"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="kFh-Ti-U4s" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-2726" y="-463"/>
+        </scene>
+        <!--Cluster Picker Controller-->
+        <scene sceneID="ioa-jy-eNv">
+            <objects>
+                <viewController storyboardIdentifier="ClusterPicker" id="B8j-ZA-z2y" customClass="ClusterPickerController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="hGq-kZ-Ksg">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="ovu-N3-g5d"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Tcf-2j-MLj" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-617" y="1921"/>
+        </scene>
+        <!--Location Picker Controller-->
+        <scene sceneID="bib-c0-1uY">
+            <objects>
+                <viewController storyboardIdentifier="LocationPicker" id="rFw-uf-A2V" customClass="LocationPickerController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="BmR-EZ-zXL">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="CYI-81-n5P"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="mQk-Ro-agZ" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="470" y="340"/>
+        </scene>
+        <!--Choose Spot Controller-->
+        <scene sceneID="gbT-GF-W7Q">
+            <objects>
+                <viewController storyboardIdentifier="ChooseSpot" id="GTD-QH-7Qs" customClass="ChooseSpotController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="LGj-RO-0k1">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="pe2-fx-d1A"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Eik-mP-5Ax" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1481" y="340"/>
+        </scene>
+        <!--Upload Post Controller-->
+        <scene sceneID="STg-iB-YEb">
+            <objects>
+                <viewController storyboardIdentifier="UploadPost" id="WMx-mZ-XgP" customClass="UploadPostController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="kdV-i1-Jo7">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="zhB-o0-Xdg"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="B2j-KB-VN5" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2436" y="340"/>
+        </scene>
+        <!--Preview Controller-->
+        <scene sceneID="KYm-sD-diA">
+            <objects>
+                <viewController storyboardIdentifier="GIFPreview" id="jaA-Bx-D2z" customClass="GIFPreviewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="YqA-LV-ZJa">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="taH-3B-1fh"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="C7f-4i-ijb" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1675" y="340"/>
+        </scene>
+    </scenes>
+    <color key="tintColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+    <resources>
+        <image name="CameraLaunchButton" width="35" height="27"/>
+        <namedColor name="SpotBlack">
+            <color red="0.070588235294117646" green="0.070588235294117646" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+    </resources>
+</document>

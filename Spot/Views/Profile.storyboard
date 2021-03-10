@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="JJG-83-qOE">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17703"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Profile View Controller-->
+        <scene sceneID="mdV-Kn-vpE">
+            <objects>
+                <viewController restorationIdentifier="Profile" storyboardIdentifier="Profile" id="JJG-83-qOE" customClass="ProfileViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="QUw-Ma-y8r">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="813"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="kpA-WP-EZz"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                    <tabBarItem key="tabBarItem" title="" image="ProfileInactive" selectedImage="ProfileActive" id="9Be-Ab-xYA"/>
+                    <navigationItem key="navigationItem" id="xvo-Vl-4gD"/>
+                    <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="mkA-Fl-R3H" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="4652" y="3025"/>
+        </scene>
+        <!--Friends List Controller-->
+        <scene sceneID="I2R-B4-Tng">
+            <objects>
+                <viewController storyboardIdentifier="FriendsList" id="M48-pG-n3t" customClass="FriendsListController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="7e7-Ok-1wr">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="xbr-up-jsm"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="vKb-og-ybw" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5440" y="3022"/>
+        </scene>
+        <!--Settings View Controller-->
+        <scene sceneID="SBh-G1-iYC">
+            <objects>
+                <viewController storyboardIdentifier="Settings" extendedLayoutIncludesOpaqueBars="YES" id="BV1-QI-uvd" customClass="SettingsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="hDz-vX-Kdn">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="zvA-b6-cYS">
+                                <rect key="frame" x="0.0" y="44" width="414" height="818"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <prototypes>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="XCell" id="Pz2-be-GKt">
+                                        <rect key="frame" x="0.0" y="28" width="414" height="43.5"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="Pz2-be-GKt" id="Gfk-21-3cv">
+                                            <rect key="frame" x="0.0" y="0.0" width="414" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="LogoutCell" id="ahh-Jo-hmh">
+                                        <rect key="frame" x="0.0" y="71.5" width="414" height="43.5"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="ahh-Jo-hmh" id="Fgv-3u-U4c">
+                                            <rect key="frame" x="0.0" y="0.0" width="414" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="FeedbackCell" id="uzZ-Os-dJK" customClass="FeedbackCell" customModule="Spot" customModuleProvider="target">
+                                        <rect key="frame" x="0.0" y="115" width="414" height="43.5"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="uzZ-Os-dJK" id="1hO-yt-BFs">
+                                            <rect key="frame" x="0.0" y="0.0" width="414" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="PrivacyCell" id="CtO-wt-nNb">
+                                        <rect key="frame" x="0.0" y="158.5" width="414" height="43.5"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="CtO-wt-nNb" id="cII-St-K0w">
+                                            <rect key="frame" x="0.0" y="0.0" width="414" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </prototypes>
+                                <sections/>
+                                <connections>
+                                    <outlet property="dataSource" destination="BV1-QI-uvd" id="lZh-BQ-YIb"/>
+                                    <outlet property="delegate" destination="BV1-QI-uvd" id="5rY-6u-vX3"/>
+                                </connections>
+                            </tableView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="kso-kd-BYa"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                        <constraints>
+                            <constraint firstItem="zvA-b6-cYS" firstAttribute="leading" secondItem="kso-kd-BYa" secondAttribute="leading" id="C1L-GV-vhp"/>
+                            <constraint firstItem="zvA-b6-cYS" firstAttribute="top" secondItem="kso-kd-BYa" secondAttribute="top" id="ksB-Gf-cF9"/>
+                            <constraint firstItem="kso-kd-BYa" firstAttribute="bottom" secondItem="zvA-b6-cYS" secondAttribute="bottom" id="uQA-Ue-Hr3"/>
+                            <constraint firstItem="kso-kd-BYa" firstAttribute="trailing" secondItem="zvA-b6-cYS" secondAttribute="trailing" id="zhM-8f-O5j"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="tableview" destination="zvA-b6-cYS" id="Tbw-8I-UfB"/>
+                        <segue destination="cvb-71-v1h" kind="presentation" identifier="logoutSegue" modalPresentationStyle="fullScreen" id="iZn-rZ-KuU"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="M6M-Mi-mMp" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="6246" y="3025"/>
+        </scene>
+        <!--Edit Profile View Controller-->
+        <scene sceneID="uD2-1H-L6Q">
+            <objects>
+                <viewController storyboardIdentifier="EditProfile" extendedLayoutIncludesOpaqueBars="YES" id="2bd-oj-8Ol" customClass="EditProfileViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="HSG-kk-2Ma">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="sbL-og-rzH"/>
+                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="LPc-9N-grI" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5639" y="2191"/>
+        </scene>
+        <!--Edit Profile Camera Controller-->
+        <scene sceneID="Kvg-Mo-0T0">
+            <objects>
+                <viewController storyboardIdentifier="EditProfileCamera" id="WRj-2x-8Ld" customClass="EditProfileCameraController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="z1e-iO-IL0">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="zXP-yB-8xS"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="SSV-Kp-dve" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="6435" y="2190"/>
+        </scene>
+        <!--Login-->
+        <scene sceneID="ZNk-tw-SLo">
+            <objects>
+                <viewControllerPlaceholder storyboardName="Main" referencedIdentifier="Login" id="cvb-71-v1h" sceneMemberID="viewController"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="pkI-6u-1HP" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="6978" y="3025"/>
+        </scene>
+        <!--Profile Posts View Controller-->
+        <scene sceneID="oVC-9q-h6r">
+            <objects>
+                <viewController storyboardIdentifier="ProfilePosts" extendedLayoutIncludesOpaqueBars="YES" id="9aJ-lU-dbu" customClass="ProfilePostsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="fnZ-sw-6O8">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="fBp-ur-gkW"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="rn3-my-MVo" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5462.3188405797109" y="3799.5535714285711"/>
+        </scene>
+        <!--Search Contacts View Controller-->
+        <scene sceneID="Byz-79-6VU">
+            <objects>
+                <viewController storyboardIdentifier="SearchContacts" extendedLayoutIncludesOpaqueBars="YES" id="UoV-Yn-Z7D" customClass="SearchContactsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="1HC-av-VG8">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="CAB-ye-dCa"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="cMa-5Z-eWS" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5466" y="4477"/>
+        </scene>
+        <!--Profile Spots View Controller-->
+        <scene sceneID="Als-hD-rkG">
+            <objects>
+                <viewController storyboardIdentifier="ProfileSpots" extendedLayoutIncludesOpaqueBars="YES" id="0yF-Re-n86" customClass="ProfileSpotsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="0d7-U2-d4Y">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="jBi-TM-4o9"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="nJ6-su-oVh" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="4428.985507246377" y="3799.5535714285711"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="ProfileActive" width="25.5" height="25.5"/>
+        <image name="ProfileInactive" width="23.5" height="23"/>
+        <namedColor name="SpotBlack">
+            <color red="0.070588235294117646" green="0.070588235294117646" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+    </resources>
+</document>

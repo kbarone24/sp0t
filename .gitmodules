@@ -1,0 +1,3 @@
+[submodule "GeoFirestore-iOS"]
+	path = GeoFirestore-iOS
+	url = https://github.com/imperiumlabs/GeoFirestore-iOS
