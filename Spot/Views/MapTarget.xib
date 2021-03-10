@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="17701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17703"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <customFonts key="customFonts">
+        <array key="SFCamera-Regular.otf">
+            <string>SFCamera-Regular</string>
+        </array>
+    </customFonts>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="ejB-hQ-b4e" customClass="MapTarget" customModule="Spot" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="222" height="70"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="SpotBannerBackground" id="SYy-db-bpM">
+                    <rect key="frame" x="0.0" y="23" width="222" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="369-Vd-mrK">
+                    <rect key="frame" x="0.0" y="27" width="222" height="14"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" name="SFCamera-Regular" family="SFCamera" pointSize="13"/>
+                    <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="BannerTriangle" translatesAutoresizingMaskIntoConstraints="NO" id="4EY-ce-cLQ">
+                    <rect key="frame" x="108" y="47" width="7" height="6"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="RainbowSpotIcon" translatesAutoresizingMaskIntoConstraints="NO" id="h4o-cJ-LSO">
+                    <rect key="frame" x="100" y="47" width="23" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+            </subviews>
+            <viewLayoutGuide key="safeArea" id="xmc-Ad-rgt"/>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <color key="tintColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <connections>
+                <outlet property="bannerTriangle" destination="4EY-ce-cLQ" id="Yui-A1-lQb"/>
+                <outlet property="spotBannerBackground" destination="SYy-db-bpM" id="w9H-u7-UZU"/>
+                <outlet property="spotNameLabel" destination="369-Vd-mrK" id="Pux-db-bk9"/>
+                <outlet property="targetIcon" destination="h4o-cJ-LSO" id="6bI-gX-Sep"/>
+            </connections>
+            <point key="canvasLocation" x="-17511.594202898552" y="-11669.196428571428"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="BannerTriangle" width="7.5" height="5"/>
+        <image name="RainbowSpotIcon" width="29.5" height="22"/>
+        <image name="SpotBannerBackground" width="170" height="26"/>
+    </resources>
+</document>

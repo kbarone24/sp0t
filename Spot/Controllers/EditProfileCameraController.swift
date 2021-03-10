@@ -1,0 +1,563 @@
+//
+//  EditProfileCameraController.swift
+//  Spot
+//
+//  Created by kbarone on 1/7/21.
+//  Copyright © 2021 sp0t, LLC. All rights reserved.
+//
+
+import Foundation
+import UIKit
+import Mixpanel
+import AVFoundation
+import Photos
+import RSKImageCropper
+
+class EditProfileCameraController: UIViewController, UINavigationControllerDelegate {
+    
+    var cameraController: AVSpotCamera!
+    
+    var cameraButton: UIButton!
+    var cameraRollButton: UIButton!
+    var flashButton: UIButton!
+    var cancelButton: UIButton!
+    var cameraRotateButton: UIButton!
+    var stillText: UIButton!
+    
+    var lastZoomFactor: CGFloat = 1.0
+    var initialBrightness: CGFloat = 0.0
+    
+    var tapIndicator: UIImageView!
+    var frontFlashView: UIView!
+    
+    var cameraHeight: CGFloat!
+    lazy var imagePicker = UIImagePickerController()
+    unowned var editProfileVC: EditProfileViewController!
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if self.cameraController == nil {
+            cameraController = AVSpotCamera()
+            configureCameraController()
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        Mixpanel.mainInstance().track(event: "EditProfileCameraOpen")
+        super.viewDidAppear(animated)
+    }
+    
+    override func viewDidLoad() {
+        
+        view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        view.backgroundColor = UIColor(named: "SpotBlack")
+        
+        /// camera height will be 600 for iphone 6-10, 662.4 for XR + 11
+        let cameraAspect: CGFloat = 1.6
+        cameraHeight = UIScreen.main.bounds.width * cameraAspect
+        
+        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? (UIScreen.main.bounds.height - 710) / 2 : 39
+        
+        let cameraOffset: CGFloat = cameraHeight > 600 ? 621 : 600
+        let cameraY = minY == 39 ? UIScreen.main.bounds.height - 126 : minY + cameraOffset + 40
+        
+        cameraButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 46, y: cameraY, width: 92, height: 92))
+        cameraButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        cameraButton.setImage(UIImage(named: "CameraButton"), for: .normal)
+        cameraButton.addTarget(self, action: #selector(captureImage(_:)), for: .touchUpInside)
+        cameraButton.imageView?.contentMode = .scaleAspectFill
+        self.view.addSubview(cameraButton)
+        
+        
+        cameraRollButton = UIButton(frame: CGRect(x: 33, y: UIScreen.main.bounds.height - 89, width: 41, height: 36))
+        cameraRollButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        cameraRollButton.setImage(UIImage(named: "PhotoGalleryButton"), for: .normal)
+        cameraRollButton.imageView?.contentMode = .scaleAspectFill
+        cameraRollButton.clipsToBounds = true
+        cameraRollButton.layer.cornerRadius = 8
+        cameraRollButton.layer.masksToBounds = true
+        cameraRollButton.clipsToBounds = true
+        cameraRollButton.addTarget(self, action: #selector(openCamRoll(_:)), for: .touchUpInside)
+        self.view.addSubview(cameraRollButton)
+        
+        let galleryText = UILabel(frame: CGRect(x: 23.5, y: cameraRollButton.frame.maxY, width: 60, height: 18))
+        galleryText.textColor = .white
+        galleryText.font = UIFont(name: "SFCamera-Semibold", size: 11)
+        galleryText.textAlignment = .center
+        galleryText.text = "Gallery"
+        view.addSubview(galleryText)
+        
+        flashButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 54, y: minY + 18, width: 41.5, height: 41.5))
+        flashButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
+        flashButton.addTarget(self, action: #selector(switchFlash(_:)), for: .touchUpInside)
+        flashButton.imageView?.contentMode = .scaleAspectFit
+        self.view.addSubview(flashButton)
+        
+        cameraRotateButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 53, y: flashButton.frame.maxY + 17, width: 41.725, height: 37))
+        cameraRotateButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        cameraRotateButton.imageView?.contentMode = .scaleAspectFit
+        cameraRotateButton.setImage(UIImage(named: "CameraRotateAlt"), for: .normal)
+        cameraRotateButton.addTarget(self, action: #selector(switchCameras(_:)), for: .touchUpInside)
+        self.view.addSubview(cameraRotateButton)
+        
+        cancelButton = UIButton(frame: CGRect(x: 2, y: minY + 11, width: 55, height: 55))
+        cancelButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        cancelButton.setImage(UIImage(named: "CancelButton"), for: .normal)
+        cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+        self.view.addSubview(cancelButton)
+        
+        /// pan gesture will allow camera dismissal on swipe down
+        let pan = UIPanGestureRecognizer.init(target: self, action: #selector(panGesture))
+        self.view.addGestureRecognizer(pan)
+        
+        let zoom = UIPinchGestureRecognizer(target: self, action: #selector(pinch(_:)))
+        self.view.addGestureRecognizer(zoom)
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(tap(_:)))
+        self.view.addGestureRecognizer(tap)
+        
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(self.setAutoExposure(_:)),
+                                               name: NSNotification.Name.AVCaptureDeviceSubjectAreaDidChange,
+                                               object: nil)
+        
+        tapIndicator = UIImageView(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        tapIndicator.image = UIImage(named: "TapFocusIndicator")
+        tapIndicator.isHidden = true
+        self.view.addSubview(tapIndicator)
+        
+        frontFlashView = UIView(frame: view.frame)
+        frontFlashView.backgroundColor = .white
+        frontFlashView.isHidden = true
+        self.view.addSubview(frontFlashView)
+        
+    }
+    
+    @objc func switchFlash(_ sender: UIButton) {
+        
+        if flashButton.image(for: .normal) == UIImage(named: "FlashOff")! {
+            flashButton.setImage(UIImage(named: "FlashOn"), for: .normal)
+            cameraController.flashMode = .on
+        } else {
+            flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
+            cameraController.flashMode = .off
+        }
+    }
+    
+    @objc func switchCameras(_ sender: UIButton) {
+        do {
+            try cameraController.switchCameras()
+            self.resetZoom()
+        }
+        
+        catch {
+            print(error)
+        }
+    }
+    
+    func setStillFlash() {
+        if flashButton.image(for: .normal) == UIImage(named: "FlashOff")! {
+            cameraController.flashMode = .off
+        } else {
+            cameraController.flashMode = .on
+        }
+    }
+    
+    @objc func captureImage(_ sender: UIButton) {
+        
+        cameraController.captureImage {(image, error) in
+            guard var image = image else {
+                return
+            }
+            
+            let selfie = self.cameraController.currentCameraPosition == .front
+            
+            if selfie {
+                image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
+            }
+            
+            let resizedImage = self.ResizeImage(with: image, scaledToFill:  CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
+            
+            var imageCropVC : RSKImageCropViewController!
+            imageCropVC = RSKImageCropViewController(image: resizedImage, cropMode: RSKImageCropMode.circle)
+            
+            imageCropVC.isRotationEnabled = false
+            imageCropVC.delegate = self
+            imageCropVC.dataSource = self
+            imageCropVC.cancelButton.setTitleColor(.systemBlue, for: .normal)
+            imageCropVC.chooseButton.setTitleColor(.systemBlue, for: .normal)
+            imageCropVC.chooseButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
+            imageCropVC.cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
+            imageCropVC.cancelButton.setTitle("Back", for: .normal)
+            imageCropVC.moveAndScaleLabel.text = "Preview Image"
+            imageCropVC.moveAndScaleLabel.font = UIFont(name: "SFCamera-Regular", size: 20)
+            
+            imageCropVC.modalPresentationStyle = .fullScreen
+            self.present(imageCropVC, animated: true, completion: nil)
+        }
+    }
+    
+    @objc func cancelTap(_ sender: UIButton) {
+        self.dismiss(animated: true, completion: nil)
+    }
+        
+    func configureCameraController() {
+
+        cameraController.prepare {(error) in
+            if let error = error {
+                print(error)
+            }
+            
+            if (AVCaptureDevice.authorizationStatus(for: .video) == .notDetermined) {
+                AVCaptureDevice.requestAccess(for: .video) { response in
+                    DispatchQueue.main.async { // 4
+                        self.configureCameraController()
+                    }
+                }
+            }
+            
+            else if AVCaptureDevice.authorizationStatus(for: .video) == .denied || AVCaptureDevice.authorizationStatus(for: .video) == .restricted {
+                let alert = UIAlertController(title: "Allow camera access to take a picture", message: nil, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
+                                                switch action.style{
+                                                case .default:
+                                                    
+                                                    UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil)
+                                                    
+                                                case .cancel:
+                                                    print("cancel")
+                                                case .destructive:
+                                                    print("destruct")
+                                                @unknown default:
+                                                    fatalError()
+                                                }}))
+                alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { action in
+                                                switch action.style{
+                                                case .default:
+                                                    break
+                                                case .cancel:
+                                                    print("cancel")
+                                                case .destructive:
+                                                    print("destruct")
+                                                @unknown default:
+                                                    fatalError()
+                                                }}))
+                
+                self.present(alert, animated: false, completion: nil)
+                
+            } else {
+                if !self.cameraController.previewShown {
+                    try? self.cameraController.displayPreview(on: self.view)
+                    //   self.setAutoExposure()
+                }
+            }
+        }
+    }
+    
+    @objc func setAutoExposure(_ sender: NSNotification) {
+        self.setAutoExposure()
+    }
+    
+    func setAutoExposure() {
+        
+        var device: AVCaptureDevice!
+        if cameraController.currentCameraPosition == .rear {
+            device = cameraController.rearCamera
+        } else {
+            device = cameraController.frontCamera
+        }
+        try? device.lockForConfiguration()
+        device.isSubjectAreaChangeMonitoringEnabled = true
+        if device.isFocusModeSupported(AVCaptureDevice.FocusMode.continuousAutoFocus) {
+            device.focusMode = AVCaptureDevice.FocusMode.continuousAutoFocus
+        }
+        if device.isExposureModeSupported(AVCaptureDevice.ExposureMode.continuousAutoExposure) {
+            device.exposureMode = AVCaptureDevice.ExposureMode.continuousAutoExposure
+        }
+        device.unlockForConfiguration()
+    }
+    
+    @objc func openCamRoll(_ sender: UIButton) {
+        self.openCamRoll()
+    }
+    
+    func openCamRoll() {
+        
+        if PHPhotoLibrary.authorizationStatus() == .notDetermined { // 1
+            DispatchQueue.main.async { // 2
+                PHPhotoLibrary.requestAuthorization { _ in // 3
+                    DispatchQueue.main.async { // 4
+                        self.openCamRoll()
+                    }
+                }
+            }
+            return
+            
+        } else if PHPhotoLibrary.authorizationStatus() == .denied || PHPhotoLibrary.authorizationStatus() == .restricted  {
+            let alert = UIAlertController(title: "Allow photo access to add a picture", message: nil, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
+                                            switch action.style{
+                                            case .default:
+                                                
+                                                UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil)
+                                                
+                                            case .cancel:
+                                                print("cancel")
+                                            case .destructive:
+                                                print("destruct")
+                                            @unknown default:
+                                                fatalError()
+                                            }}))
+            alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { action in
+                                            switch action.style{
+                                            case .default:
+                                                break
+                                            case .cancel:
+                                                print("cancel")
+                                            case .destructive:
+                                                print("destruct")
+                                            @unknown default:
+                                                fatalError()
+                                            }}))
+            
+            self.present(alert, animated: true, completion: nil)
+            
+        } else {
+            
+            imagePicker.delegate = self
+            imagePicker.modalPresentationStyle = .fullScreen
+            imagePicker.sourceType = .photoLibrary
+            //  imgPicker.navigationController?.navigationBar.isTranslucent = false
+            UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.systemBlue], for: .normal)
+            UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.systemBlue], for: .highlighted)
+            UINavigationBar.appearance().backgroundColor = UIColor(named: "SpotBlack")
+            
+            present(imagePicker, animated: true, completion: nil)
+            /// dismiss and present image picker
+            
+        }
+    }
+    
+    func ResizeImage(with image: UIImage?, scaledToFill size: CGSize) -> UIImage? {
+        
+        let scale: CGFloat = max(size.width / (image?.size.width ?? 0.0), size.height / (image?.size.height ?? 0.0))
+        let width: CGFloat = (image?.size.width ?? 0.0) * scale
+        let height: CGFloat = (image?.size.height ?? 0.0) * scale
+        let imageRect = CGRect(x: (size.width - width) / 2.0, y: (size.height - height) / 2.0, width: width, height: height)
+        
+        UIGraphicsBeginImageContextWithOptions(size, false, 0)
+        image?.draw(in: imageRect)
+        let newImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return newImage
+    }
+    
+    @objc func panGesture(_ gesture: UIPanGestureRecognizer) {
+        /// swipe between camera types or remove camera on swipe down
+        let direction = gesture.velocity(in: self.view)
+        if gesture.state == .ended || gesture.state == .cancelled {
+            if abs(direction.y) > abs(direction.x) && direction.y > 200 {
+                self.dismiss(animated: true, completion: nil)
+            }
+        }
+    }
+    
+    @objc func pinch(_ pinch: UIPinchGestureRecognizer) {
+        
+        let minimumZoom: CGFloat = 1.0
+        let maximumZoom: CGFloat = 5.0
+        
+        var device: AVCaptureDevice!
+        if cameraController.currentCameraPosition == .rear {
+            device = cameraController.rearCamera
+        } else {
+            device = cameraController.frontCamera
+        }
+        
+        func minMaxZoom(_ factor: CGFloat) -> CGFloat {
+            return min(min(max(factor, minimumZoom), maximumZoom), device.activeFormat.videoMaxZoomFactor)
+        }
+        
+        func update(scale factor: CGFloat) {
+            do {
+                try device.lockForConfiguration()
+                defer { device.unlockForConfiguration() }
+                device.videoZoomFactor = factor
+            } catch {
+                print("\(error.localizedDescription)")
+            }
+        }
+        
+        let newScaleFactor = minMaxZoom(pinch.scale * lastZoomFactor)
+        
+        switch pinch.state {
+        case .began: fallthrough
+        case .changed: update(scale: newScaleFactor)
+        case .ended, .cancelled:
+            lastZoomFactor = minMaxZoom(newScaleFactor)
+            update(scale: lastZoomFactor)
+        default: break
+        }
+    }
+    
+    @objc func tap(_ tapGesture: UITapGestureRecognizer){
+        if AVCaptureDevice.authorizationStatus(for: .video) != .authorized {
+            return
+        }
+        
+        let bounds = UIScreen.main.bounds
+        
+        let position = tapGesture.location(in: view)
+        let screenSize = bounds.size
+        let focusPoint = CGPoint(x: position.y / screenSize.height, y: 1.0 - position.x / screenSize.width)
+        
+        /// add disappearing tap circle indicator and set focus on the tap area
+        if position.y < UIScreen.main.bounds.height - 100  && position.y > 50 {
+            tapIndicator.frame = CGRect(x: position.x - 25, y: position.y - 25, width: 50, height: 50)
+            tapIndicator.isHidden = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                UIView.animate(withDuration: 0.6, animations: { [weak self] in
+                    guard let self = self else { return }
+                    self.tapIndicator.isHidden = true
+                })
+            }
+            
+            var device: AVCaptureDevice!
+            if cameraController.currentCameraPosition == .rear {
+                device = cameraController.rearCamera
+            } else {
+                device = cameraController.frontCamera
+            }
+            do {
+                try device.lockForConfiguration()
+                if device.isFocusPointOfInterestSupported {
+                    device.focusPointOfInterest = focusPoint
+                    device.focusMode = AVCaptureDevice.FocusMode.autoFocus
+                }
+                if device.isExposurePointOfInterestSupported {
+                    device.exposurePointOfInterest = focusPoint
+                    device.exposureMode = AVCaptureDevice.ExposureMode.autoExpose
+                }
+                device.unlockForConfiguration()
+                
+            } catch {
+                // Handle errors here
+                print("There was an error focusing the device's camera")
+            }
+        }
+    }
+    
+    func resetZoom() {
+        // resets the zoom level when switching between rear and front cameras
+        
+        var device: AVCaptureDevice!
+        if cameraController.currentCameraPosition == .rear {
+            device = cameraController.rearCamera
+        } else {
+            device = cameraController.frontCamera
+        }
+        
+        do {
+            try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
+            device.videoZoomFactor = 1.0
+            self.lastZoomFactor = 1.0
+        } catch {
+            print("\(error.localizedDescription)")
+        }
+    }
+}
+
+extension EditProfileCameraController: UIImagePickerControllerDelegate, RSKImageCropViewControllerDelegate, RSKImageCropViewControllerDataSource {
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        
+        var image : UIImage = (info[UIImagePickerController.InfoKey.originalImage] as? UIImage)!
+        if picker.sourceType == .camera && picker.cameraDevice == .front {
+            image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
+        }
+        
+        var imageCropVC : RSKImageCropViewController!
+        imageCropVC = RSKImageCropViewController(image: image, cropMode: RSKImageCropMode.circle)
+        
+        imageCropVC.isRotationEnabled = false
+        imageCropVC.delegate = self
+        imageCropVC.dataSource = self
+        imageCropVC.cancelButton.setTitleColor(.systemBlue, for: .normal)
+        imageCropVC.chooseButton.setTitleColor(.systemBlue, for: .normal)
+        imageCropVC.chooseButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
+        imageCropVC.cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
+        imageCropVC.cancelButton.setTitle("Back", for: .normal)
+        imageCropVC.moveAndScaleLabel.text = "Preview Image"
+        imageCropVC.moveAndScaleLabel.font = UIFont(name: "SFCamera-Regular", size: 20)
+        
+        imageCropVC.modalPresentationStyle = .fullScreen
+        picker.present(imageCropVC, animated: true, completion: nil)
+    }
+
+    
+    func imageCropViewControllerDidCancelCrop(_ controller: RSKImageCropViewController) {
+        controller.dismiss(animated: true, completion: nil)
+    }
+    
+    func imageCropViewController(_ controller: RSKImageCropViewController, didCropImage croppedImage: UIImage, usingCropRect cropRect: CGRect, rotationAngle: CGFloat) {
+        /// pass back image to edit profile
+        editProfileVC.imageView.image = croppedImage
+        editProfileVC.profileVC.userInfo.profilePic = croppedImage
+        editProfileVC.didOpenPicker = true
+        editProfileVC.dismiss(animated: true, completion: nil)
+    }
+    
+    func imageCropViewControllerCustomMaskRect(_ controller: RSKImageCropViewController) -> CGRect {
+        
+        let aspectRatio = CGSize(width: 16, height: 16)
+        
+        let viewWidth = controller.view.frame.width
+        let viewHeight = controller.view.frame.height
+        
+        var maskWidth = viewWidth
+        
+        let maskHeight = maskWidth * aspectRatio.height / aspectRatio.width;
+        maskWidth = maskWidth - 1
+        
+        while maskHeight != floor(maskHeight) {
+            maskWidth = maskWidth + 1
+        }
+        
+        let maskSize = CGSize(width: maskWidth, height: maskHeight)
+        
+        let maskRect = CGRect(x: (viewWidth - maskSize.width) * 0.5, y: (viewHeight - maskSize.height) * 0.5, width: maskSize.width, height: maskSize.height)
+        
+        return maskRect
+    }
+    
+    func imageCropViewControllerCustomMaskPath(_ controller: RSKImageCropViewController) -> UIBezierPath {
+        let rect = controller.maskRect;
+        
+        let point1 = CGPoint(x: rect.minX, y: rect.maxY)
+        let point2 = CGPoint(x: rect.maxX, y: rect.maxY)
+        let point3 = CGPoint(x: rect.maxX, y: rect.minY)
+        let point4 = CGPoint(x: rect.minX, y: rect.minY)
+        
+        let rectangle = UIBezierPath()
+        
+        rectangle.move(to: point1)
+        rectangle.addLine(to: point2)
+        rectangle.addLine(to: point3)
+        rectangle.addLine(to: point4)
+        rectangle.close()
+        
+        return rectangle;
+    }
+    
+    func imageCropViewControllerCustomMovementRect(_ controller: RSKImageCropViewController) -> CGRect {
+        controller.maskRect
+    }
+}

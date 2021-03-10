@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="17709" systemVersion="20C69" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="ImageModel" representedClassName="ImageModel" syncable="YES">
+        <attribute name="imageData" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <attribute name="position" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="imagesArray" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ImagesArray" inverseName="images" inverseEntity="ImagesArray"/>
+        <relationship name="post" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PostDraft" inverseName="images" inverseEntity="PostDraft"/>
+        <relationship name="spot" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SpotDraft" inverseName="images" inverseEntity="SpotDraft"/>
+    </entity>
+    <entity name="ImagesArray" representedClassName="ImagesArray" syncable="YES">
+        <attribute name="id" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="postLat" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="postLong" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="uid" optional="YES" attributeType="String"/>
+        <relationship name="images" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ImageModel" inverseName="imagesArray" inverseEntity="ImageModel"/>
+    </entity>
+    <entity name="PostDraft" representedClassName="PostDraft" syncable="YES">
+        <attribute name="caption" optional="YES" attributeType="String"/>
+        <attribute name="city" optional="YES" attributeType="String"/>
+        <attribute name="createdBy" optional="YES" attributeType="String"/>
+        <attribute name="gif" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="inviteList" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
+        <attribute name="isFirst" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="postLat" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="postLong" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="privacyLevel" optional="YES" attributeType="String"/>
+        <attribute name="spotID" optional="YES" attributeType="String"/>
+        <attribute name="spotLat" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="spotLong" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="spotName" optional="YES" attributeType="String"/>
+        <attribute name="spotPrivacy" optional="YES" attributeType="String"/>
+        <attribute name="taggedUsers" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
+        <attribute name="timestamp" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="uid" optional="YES" attributeType="String"/>
+        <attribute name="visitorList" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
+        <relationship name="images" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ImageModel" inverseName="post" inverseEntity="ImageModel"/>
+    </entity>
+    <entity name="SpotDraft" representedClassName="SpotDraft" syncable="YES">
+        <attribute name="gif" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="inviteList" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
+        <attribute name="phone" optional="YES" attributeType="String"/>
+        <attribute name="postToPOI" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="privacyLevel" optional="YES" attributeType="String"/>
+        <attribute name="spotDescription" optional="YES" attributeType="String"/>
+        <attribute name="spotID" optional="YES" attributeType="String"/>
+        <attribute name="spotLat" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="spotLong" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="spotName" optional="YES" attributeType="String"/>
+        <attribute name="submitPublic" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="taggedIDs" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
+        <attribute name="taggedUsernames" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
+        <attribute name="tags" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
+        <attribute name="timestamp" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="uid" optional="YES" attributeType="String"/>
+        <relationship name="images" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ImageModel" inverseName="spot" inverseEntity="ImageModel"/>
+    </entity>
+    <elements>
+        <element name="ImageModel" positionX="-269.27734375" positionY="9.0234375" width="128" height="118"/>
+        <element name="ImagesArray" positionX="-54" positionY="9" width="128" height="118"/>
+        <element name="PostDraft" positionX="-162" positionY="36" width="128" height="328"/>
+        <element name="SpotDraft" positionX="-162" positionY="117" width="128" height="284"/>
+    </elements>
+</model>
