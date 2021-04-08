@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "friendscheck.png",
+      "filename" : "urfriends1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "friendscheck (1).png",
+      "filename" : "urfriends2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "friendscheck (2).png",
+      "filename" : "urfriends3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

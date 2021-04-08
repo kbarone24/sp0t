@@ -18,7 +18,7 @@ class FeedViewController: UIViewController {
     var postsList: [MapPost] = []
     var selectedPostIndex = 0
     var endDocument: DocumentSnapshot!
-    var refresh: refreshStatus = .noRefresh
+    var refresh: refreshStatus = .refreshing
     
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore! = Firestore.firestore()
@@ -39,8 +39,9 @@ class FeedViewController: UIViewController {
     }
     
     override func viewDidLoad() {
+        
         super.viewDidLoad()
-        self.title = ""
+        self.navigationItem.title = ""
         view.tag = 16
         
         activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 100, width: UIScreen.main.bounds.width, height: 40))
@@ -62,12 +63,10 @@ class FeedViewController: UIViewController {
     }
 
     
-    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
         resumeIndicatorAnimation()
-        if postVC != nil { checkForNewPosts() }
     }
         
     override func viewDidDisappear(_ animated: Bool) {
@@ -78,6 +77,8 @@ class FeedViewController: UIViewController {
         if let info = sender.userInfo as? [String: Any] {
             
             if let index = info["index"] as? Int {
+                
+                self.selectedPostIndex = index
                 guard let id = info["id"] as? String else { return }
                 if postVC != nil && id != postVC.vcid { return }
                 
@@ -86,21 +87,34 @@ class FeedViewController: UIViewController {
                 
                 if let post = info["post"] as? MapPost { self.postsList[index] = post }
                 
-                if index > postsList.count - 4 && self.refresh == .yesRefresh {
-                    
+                print("selected index", index, "posts count", postsList.count, "refresh", self.refresh)
+                if index > (postsList.count - 4) && self.refresh == .yesRefresh {
+                    print("refreshing")
                     refresh = .refreshing
                     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                         guard let self = self else { return }
-                        self.getPosts(refresh: false) }
+                        self.getFriendPosts(refresh: false) }
                 }
             }
         }
     }
     
     @objc func notifyNewPost(_ sender: NSNotification) {
+        
+        mapVC.tutorialMode = false /// remove tutorial on users first post
+        
         if let newPost = sender.userInfo?.first?.value as? MapPost {
             postsList.insert(newPost, at: 0)
+            
             if postVC != nil {
+                
+                /// add pullLine and image / row change notifications on first post
+                if postVC.tutorialMode || postVC.postsEmpty {
+                    postVC.addPullLineAndNotifications()
+                    postVC.tutorialMode = false
+                    postVC.postsEmpty = false
+                }
+                
                 postVC.postsList = self.postsList
                 self.mapVC.postsList = self.postsList
                 if postVC.tableView != nil { postVC.tableView.reloadData() }
@@ -110,6 +124,7 @@ class FeedViewController: UIViewController {
     }
     
     @objc func notifyEditPost(_ sender: NSNotification) {
+        
         if let newPost = sender.userInfo?.first?.value as? MapPost {
             // post edited from post page
             if let index = self.postsList.firstIndex(where: {$0.id == newPost.id}) {
@@ -120,6 +135,7 @@ class FeedViewController: UIViewController {
                     postVC.tableView.reloadData()
                 }
             }
+            
         } else if let info = sender.userInfo as? [String: Any] {
             // spot level info changed
             guard let postID = info["postID"] as? String else { return }
@@ -140,22 +156,46 @@ class FeedViewController: UIViewController {
     
     @objc func notifyDeletePost(_ sender: NSNotification) {
         
-        if let postID = sender.userInfo?.first?.value as? String {
-            if let index = self.postsList.firstIndex(where: {$0.id == postID}) {
-                
-                postsList.remove(at: index)
-                postsList.sort(by: {$0.seconds > $1.seconds})
-                
-                if postVC != nil {
+        var indexPaths: [IndexPath] = []
 
-                    postVC.postsList = self.postsList
-                    postVC.tableView.deleteRows(at: [IndexPath(row: postVC.selectedPostIndex, section: 0)], with: .bottom)
-
-                    mapVC.postsList = self.postsList
-                    
-                    let mapPass = ["selectedPost": self.postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": PostViewController.parentViewController.feed] as [String : Any]
-                    NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass)
+        if let postIDs = sender.userInfo?.first?.value as? [String] {
+            
+            if postVC != nil {
+                /// seperate loop for postvc postslist just in case it doesnt match the feeds postslist during reload
+                for id in postIDs {
+                    if let index = postVC.postsList.firstIndex(where: {$0.id == id}) {
+                        indexPaths.append(IndexPath(row: index, section: 0))
+                    }
                 }
+            }
+            
+            /// looping through these twice kind of sucks but i dont know how to account for the indexes changing upon removing a post
+            for id in postIDs {
+                if let index = self.postsList.firstIndex(where: {$0.id == id}) {
+                    postsList.remove(at: index)
+                    postsList.sort(by: {$0.seconds > $1.seconds})
+                }
+            }
+                    
+            if postVC != nil {
+
+                /// avoid double refresh
+                postVC.postsList = self.postsList
+                mapVC.postsList = self.postsList
+
+                postVC.tableView.beginUpdates()
+                postVC.tableView.deleteRows(at: indexPaths, with: .bottom)
+                postVC.tableView.endUpdates()
+                
+                if postVC.selectedPostIndex >= postVC.postsList.count {
+                    if postVC.postsList.count == 0 { postVC.postsEmpty = true; postVC.tableView.reloadData(); return }
+                    postVC.selectedPostIndex = max(0, postVC.postsList.count - 1)
+                    postVC.tableView.scrollToRow(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .top, animated: true)
+                    postVC.tableView.reloadData()
+                }
+
+                let mapPass = ["selectedPost": self.postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": PostViewController.parentViewController.feed] as [String : Any]
+                NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass)
             }
         }
     }
@@ -166,83 +206,60 @@ class FeedViewController: UIViewController {
         }
     }
     
-    func checkForNewPosts() {
-        getPosts(refresh: true)
-    }
     
-    func getPosts(refresh: Bool) {
+    func getFriendPosts(refresh: Bool) {
         
-        /// the only problem with using endDocument is that it stops listening for new documents from docs that have already loaded which kind of defeats the purpose of using an active listener. checkForNewPosts() is a patch fix that checks the earliest posts for changes. Better solution needed
-        
-        var query = db.collection("posts").order(by: "timestamp", descending: true)
+        var query = db.collection("posts").order(by: "timestamp", descending: true).whereField("friendsList", arrayContains: self.uid).limit(to: 11)
         if endDocument != nil && !refresh { query = query.start(atDocument: endDocument) }
+
+        self.listener1 = query.addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] (snap, err) in
         
-        self.listener1 = query.addSnapshotListener(includeMetadataChanges: true, listener: { (snap, err) in
+            guard let self = self else { return }
+            guard let longDocs = snap?.documents else { return }
             
-            guard let docs = snap?.documents else {
-                return
+            if longDocs.count < 11 && !(snap?.metadata.isFromCache ?? false) {
+                self.refresh = .noRefresh
+            } else {
+                self.endDocument = longDocs.last
             }
-            var dispatchIndex = 1
+            
+            if longDocs.count == 0 && self.postsList.count == 0 { self.addEmptyState(tutorialMode: false) }
+            
+            var localPosts: [MapPost] = []
+            var index = 0
+            
+            let docs = self.refresh == .noRefresh ? longDocs : longDocs.dropLast() /// drop last doc to get exactly 10 posts for reload unless under 10 posts fetched
             
             for doc in docs {
-
-                /// at the end of the query, noRefresh to avoid future calls
-                if docs.count < 6 {
-                    self.refresh = .noRefresh
-                }
-
-                if dispatchIndex > 6 {
-                    if !refresh { self.endDocument = doc }
-                    if self.refresh == .noRefresh { self.refresh = .yesRefresh }
-                    return
-                }
                 
                 do {
+                
+                let postIn = try doc.data(as: MapPost.self)
+                guard var postInfo = postIn else { index += 1; if index == docs.count { self.loadPostsToFeed(posts: localPosts)}; continue }
+                
+                    postInfo.seconds = postInfo.timestamp.seconds
+                    postInfo.id = doc.documentID
+                
+                if let user = self.mapVC.friendsList.first(where: {$0.id == postInfo.posterID}) {
+                    postInfo.userInfo = user
                     
-                    let postInfo = try doc.data(as: MapPost.self)
-                    guard var info = postInfo else { return }
+                } else if postInfo.posterID == self.uid {
+                    postInfo.userInfo = self.mapVC.userInfo
+                }
                     
-                    info.seconds = info.timestamp.seconds
-                    info.id = doc.documentID
-                    
-                    let lowFriends = self.mapVC.friendIDs.count < 3 && self.mapVC.adminIDs.contains(info.posterID)
-                    
-                    // check that user has access
-                    
-                    if info.posterID != self.uid {
-                        
-                        switch info.privacyLevel {
-                        
-                        case "invite":
-                            if !(info.inviteList?.contains(where: {$0 == self.uid}) ?? false) { continue }
-                            
-                        default:
-                            if !self.mapVC.friendIDs.contains(where: {$0 == info.posterID}) && !lowFriends { continue }
-                        }
-                    }
-                    
-                    dispatchIndex += 1
-                                        
-                    /// get user from users friends list because every user in feed will be a friend
-                    if let user = self.mapVC.friendsList.first(where: {$0.id == info.posterID}) {
-                        info.userInfo = user
-                    } else if info.posterID == self.uid {
-                        info.userInfo = self.mapVC.userInfo
-                    }
-                    
-                    // fetch comments
                     var commentList: [MapComment] = []
-                    
-                    self.listener3 = self.db.collection("posts").document(info.id!).collection("comments").order(by: "timestamp", descending: true).addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] (commentSnap, err) in
+                    self.listener2 = self.db.collection("posts").document(postInfo.id!).collection("comments").order(by: "timestamp", descending: true).addSnapshotListener({ [weak self] (commentSnap, err) in
                         
                         guard let self = self else { return }
-                        if err != nil { return }
-
+                        if err != nil { index += 1; if index == docs.count { self.loadPostsToFeed(posts: localPosts)}; return }
+                        
+                        if commentSnap!.documents.count == 0 { index += 1; if index == docs.count { self.loadPostsToFeed(posts: localPosts) }}
+                        
                         for doc in commentSnap!.documents {
                             do {
                                 
                                 let commInfo = try doc.data(as: MapComment.self)
-                                guard var commentInfo = commInfo else { continue }
+                                guard var commentInfo = commInfo else { if doc == commentSnap!.documents.last { index += 1; if index == docs.count { self.loadPostsToFeed(posts: localPosts) }}; continue }
                                 
                                 commentInfo.id = doc.documentID
                                 commentInfo.seconds = commentInfo.timestamp.seconds
@@ -253,92 +270,173 @@ class FeedViewController: UIViewController {
                                     commentList.sort(by: {$0.seconds < $1.seconds})
                                 }
 
-                                let docCount = commentSnap!.documents.count
-                                let commentCount = commentList.count
-
-                                if commentCount >= docCount {
-                                    info.commentList = commentList
-                                    self.loadPostToFeed(post: info)
-                                }
-
+                                if doc == commentSnap!.documents.last {
+                                    
+                                    postInfo.commentList = commentList
+                                    localPosts.append(postInfo)
+                                    
+                                    index += 1; if index == docs.count { self.loadPostsToFeed(posts: localPosts) }}
+                                
                             } catch {
-                                continue
+                                if doc == commentSnap!.documents.last { index += 1; if index == docs.count { self.loadPostsToFeed(posts: localPosts) }; continue }
                             }
                         }
                     })
-                } catch { continue }
+
+                } catch {
+                    index += 1
+                    if index == docs.count { self.loadPostsToFeed(posts: localPosts)}
+                    continue
+                }
             }
         })
     }
     
-    func loadPostToFeed(post: MapPost) {
-        
-        self.refresh = .yesRefresh
-        
-        if !self.postsList.contains(where: {$0.id == post.id}) {
+    func checkForNewPosts() {
+        getFriendPosts(refresh: true)
+    }
+    
+    func loadPostsToFeed(posts: [MapPost]) {
 
-            if mapVC.deletedPostIDs.contains(post.id ?? "") { return }
-
-            self.postsList.append(post)
-            self.postsList.sort(by: {$0.seconds > $1.seconds})
-                        
-            if self.postsList.count == 1 { self.mapVC.checkForFeedTutorial() }
+        for post in posts {
             
-            if self.postVC != nil {
-                let originalPostCount = self.postVC.postsList.count
+            var scrollToFirstRow = false
+
+            if !postsList.contains(where: {$0.id == post.id}) {
                 
-                /// don't want to set postslist once postsVC is already active because it'll reset selected image index
-                self.postVC.postsList = self.postsList
-                
-                if self.tabBar.selectedIndex == 0 && self.postVC.children.count == 0 {
-                    self.mapVC.postsList = self.postVC.postsList }
-                
-                if self.postVC.tableView != nil {
-                    if originalPostCount == self.postVC.selectedPostIndex {
-                        /// send notification to map to animate to new post if its on the loading page
+                if !mapVC.deletedPostIDs.contains(post.id ?? "") {
+
+                    let newPost = postsList.count > 10 && post.timestamp.seconds > postsList.first?.timestamp.seconds ?? 100000000000
+
+                    if !newPost {
+                        postsList.append(post)
+                        postsList.sort(by: {$0.seconds > $1.seconds})
                         
-                        let mapPass = ["selectedPost": self.postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": PostViewController.parentViewController.feed] as [String : Any]
-                        NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass)
+                    } else {
+
+                        /// insert at 0 if at the of the feed (usually a new load), insert at post + 1 otherwise
+                        if postVC.selectedPostIndex == 0 {
+                            scrollToFirstRow = true
+                            postsList.insert(post, at: 0)
+                            
+                        } else {
+                            postsList.insert(post, at: postVC.selectedPostIndex + 1)
+                        }
                     }
-                    self.postVC.tableView.reloadData()
+                }
+                
+               if post.id == posts.last?.id {
+                
+                    if postVC != nil {
+                        
+                        
+                        let originalPostCount = self.postVC.postsList.count
+                        
+                        postVC.postsList = postsList
+                        if tabBar.selectedIndex == 0 && postVC.children.count == 0 {
+                            mapVC.postsList = postVC.postsList }
+                        
+                        if originalPostCount == postVC.selectedPostIndex {
+                            /// send notification to map to animate to new post annotation if its on the loading page
+                            
+                            DispatchQueue.main.async {
+                                let mapPass = ["selectedPost": self.postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": PostViewController.parentViewController.feed] as [String : Any]
+                                DispatchQueue.main.async { NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass) }
+                            }
+                        }
+                    }
+                    
+                    DispatchQueue.main.async {
+                        
+                        /// add post as child or reload tableview with new posts
+                        if self.postVC == nil {
+                            self.activityIndicator.stopAnimating()
+                            self.addPostAsChild()
+                            if posts.count > 1 { self.mapVC.checkForFeedTutorial() } /// check for swipe tutorial on the 2nd post so user has actions to take
+                            if self.refresh != .noRefresh { self.refresh = .yesRefresh }
+
+                        } else if self.postVC.tableView != nil {
+                            self.checkTutorialRemove() /// check if need to remove tutorialView
+                            self.postVC.tableView.reloadData()
+                            self.postVC.tableView.performBatchUpdates(nil, completion: {
+                                (result) in
+                                if scrollToFirstRow { self.scrollToFirstRow() }
+                                if self.refresh != .noRefresh { self.refresh = .yesRefresh }
+                            })
+                        }
+                    }
                 }
                 
             } else {
-                self.activityIndicator.stopAnimating()
-                self.addPostAsChild()
-            }
-        } else {
-            
-            /// already contains post - active listener found a change, probably a comment or like
-            if let index = self.postsList.firstIndex(where: {$0.id == post.id}) {
+                
+                /// already contains post - active listener found a change, probably a comment or like
+                if let index = self.postsList.firstIndex(where: {$0.id == post.id}) {
 
-                self.postsList[index] = post
-
-                if let postVC = self.children.first as? PostViewController {
-                    if let index = postVC.postsList.firstIndex(where: {$0.id == post.id}) {
-                        
-                        let selectedIndex = postVC.postsList[index].selectedImageIndex
-                        self.postsList[index].selectedImageIndex = selectedIndex
-
-                        postVC.postsList[index] = post
-                        postVC.postsList[index].selectedImageIndex = selectedIndex
-                    }
+                    let selected0 = postsList[index].selectedImageIndex
+                    self.postsList[index] = post
+                    self.postsList[index].selectedImageIndex = selected0
                     
-                    if postVC.tableView != nil { postVC.tableView.reloadData() }
+                    if let postVC = children.first as? PostViewController {
+                        
+                        /// account for possiblity of postslist / postvc.postslist not matching up
+                        if let postIndex = postVC.postsList.firstIndex(where: {$0.id == post.id}) {
+                                                        
+                            let selected1 = postVC.postsList[postIndex].selectedImageIndex
+                            postVC.postsList[postIndex] = post
+                            postVC.postsList[postIndex].selectedImageIndex = selected1
+                        
+                            if post.id == posts.last?.id {
+
+                                if postVC.tableView != nil {
+                                    DispatchQueue.main.async { self.postVC.tableView.reloadData() }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-
     
+    func checkTutorialRemove() {
+        if postVC.tutorialMode || postVC.postsEmpty {
+            postVC.addPullLineAndNotifications()
+            postVC.tutorialMode = false
+            postVC.postsEmpty = false
+        }
+    }
+    
+    func addEmptyState(tutorialMode: Bool) {
+        
+        if let vc = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
+            
+            vc.selectedPostIndex = 0
+            vc.mapVC = self.mapVC
+            vc.parentVC = .feed
+            vc.tutorialMode = tutorialMode
+            vc.postsEmpty = !tutorialMode
+            
+            postVC = vc
+            
+            vc.view.frame = UIScreen.main.bounds
+            self.addChild(vc)
+            self.view.addSubview(vc.view)
+            vc.didMove(toParent: self)
+
+        }
+
+    }
+
     func addPostAsChild() {
+
         if let vc = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
             
             vc.postsList = self.postsList
             vc.selectedPostIndex = self.selectedPostIndex
             vc.mapVC = self.mapVC
             vc.parentVC = .feed
-            
+
+            mapVC.toggleMapTouch(enable: true)
             postVC = vc
             
             vc.view.frame = UIScreen.main.bounds
@@ -355,14 +453,18 @@ class FeedViewController: UIViewController {
     }
     
     func scrollToFirstRow() {
+        
         if postVC != nil {
+            
+            if postsList.count < 2 { return }
+            
             if postVC.tableView != nil {
                 
                 if postVC.tableView.numberOfRows(inSection: 0) == 0 { return }
                 
                 DispatchQueue.main.async {
                     self.postVC.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
-                    self.postVC.openDrawer()
+                    self.postVC.openDrawer(swipe: true)
                 }
                 
                 self.selectedPostIndex = 0

@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "flashon.png",
+      "filename" : "flashonwide1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "flashon (1).png",
+      "filename" : "flashonwide2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "flashon (2).png",
+      "filename" : "flashonwide3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

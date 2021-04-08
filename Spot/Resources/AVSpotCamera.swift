@@ -46,7 +46,7 @@ class AVSpotCamera: NSObject {
     var gifCaptureCompletionBlock: (([UIImage]) -> Void)?
     lazy var aliveImages: [UIImage] = []
         
-    func prepare(completionHandler: @escaping (Error?) -> Void) {
+    func prepare(position: CameraPosition, completionHandler: @escaping (Error?) -> Void) {
         
         func createCaptureSession() {
             self.captureSession = AVCaptureSession()
@@ -59,6 +59,7 @@ class AVSpotCamera: NSObject {
             if cameras.isEmpty { throw CameraControllerError.noCamerasAvailable }
             
             for camera in cameras {
+                
                 if camera.position == .front {
                     self.frontCamera = camera
                 }
@@ -76,10 +77,10 @@ class AVSpotCamera: NSObject {
         }
         
         func configureDeviceInputs() throws {
+            
             guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
             
-            if let rearCamera = self.rearCamera {
-                
+            if position == .rear, let rearCamera = self.rearCamera {
                 self.rearCameraInput = try AVCaptureDeviceInput(device: rearCamera)
                 
                 if captureSession.canAddInput(self.rearCameraInput!) { captureSession.addInput(self.rearCameraInput!) }
@@ -87,7 +88,8 @@ class AVSpotCamera: NSObject {
                 self.currentCameraPosition = .rear
             }
                 
-            else if let frontCamera = self.frontCamera {
+            else if position == .front, let frontCamera = self.frontCamera {
+
                 self.frontCameraInput = try AVCaptureDeviceInput(device: frontCamera)
                 
                 if captureSession.canAddInput(self.frontCameraInput!) { captureSession.addInput(self.frontCameraInput!) }
@@ -100,6 +102,7 @@ class AVSpotCamera: NSObject {
         }
         
         func configurePhotoOutput() throws {
+            
             guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
             
             self.photoOutput = AVCapturePhotoOutput()
@@ -153,6 +156,7 @@ class AVSpotCamera: NSObject {
     
     
     func displayPreview(on view: UIView) throws {
+        
         guard let captureSession = self.captureSession, captureSession.isRunning else { throw CameraControllerError.captureSessionIsMissing }
         
         self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
@@ -175,6 +179,7 @@ class AVSpotCamera: NSObject {
         captureSession.beginConfiguration()
         
         switch currentCameraPosition {
+        
         case .front:
             try switchToRearCamera()
             
@@ -277,7 +282,7 @@ extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputS
         if let error = error { self.photoCaptureCompletionBlock?(nil, error) }
 
         let data = photo.fileDataRepresentation() ?? UIImage().pngData()
-        let image = UIImage(data: data!)
+        let image = UIImage(data: data ?? Data())
         self.photoCaptureCompletionBlock?(image, nil)
     }
     

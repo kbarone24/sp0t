@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "create.png",
+      "filename" : "NAVCREATE1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "create (1).png",
+      "filename" : "NAVCREATE2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "create (2).png",
+      "filename" : "NAVCREATE3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

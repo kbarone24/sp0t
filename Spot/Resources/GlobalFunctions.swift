@@ -11,6 +11,8 @@ import UIKit
 import CoreLocation
 import Photos
 import Firebase
+import Geofirestore
+
 
 extension UIViewController {
     //reverse geocode should a string based on lat/long input and amount of detail that it wants to return
@@ -69,9 +71,15 @@ extension UIViewController {
     func isValidUsername(username: String) -> Bool {
         let regEx = "^[a-zA-Z0-9_.]*$"
         let pred = NSPredicate(format:"SELF MATCHES %@", regEx)
-        return pred.evaluate(with: username)
+        return pred.evaluate(with: username) && username.count > 1
     }
     
+    func isValidEmail(email:String?) -> Bool {
+        guard email != nil else { return false }
+        let regEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+        let pred = NSPredicate(format:"SELF MATCHES %@", regEx)
+        return pred.evaluate(with: email)
+    }
     
     func getTopMostViewController() -> UIViewController? {
         let currentWindow = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
@@ -96,7 +104,7 @@ extension UIViewController {
         return commentHeight
     }
     
-    func hasAccess(creatorID: String, privacyLevel: String, inviteList: [String], mapVC: MapViewController) -> Bool {
+    func hasPOILevelAccess(creatorID: String, privacyLevel: String, inviteList: [String], mapVC: MapViewController) -> Bool {
         
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
@@ -112,12 +120,45 @@ extension UIViewController {
                     return false
                 }
             }
+            
         } else if privacyLevel == "invite" {
             if !inviteList.contains(where: {$0 == uid}) {
                 return false
             }
         }
         return true
+    }
+    
+    func hasSpotAccess(spot: MapSpot, mapVC: MapViewController) -> Bool {
+        
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        
+        if mapVC.adminIDs.contains(where: {$0 == spot.founderID}) {
+            if uid != spot.founderID {
+                return false
+            }
+        }
+        
+        if spot.privacyLevel == "friends" {
+            if mapVC.friendIDs.contains(where: {$0 == spot.founderID}) || uid == spot.founderID {
+                return true
+            }
+            
+        } else if spot.privacyLevel == "invite" {
+            if spot.inviteList!.contains(where: {$0 == uid}) {
+                return true
+            }
+            
+        } else {
+            for posterID in spot.posterIDs {
+                if mapVC.friendIDs.contains(posterID) || mapVC.uid == posterID { return true }
+            }
+            for postPrivacy in spot.postPrivacies {
+                if postPrivacy == "public" { return true }
+            }
+        }
+        
+        return false
     }
     
     func incrementSpotScore(user: String, increment: Int) {
@@ -142,14 +183,284 @@ extension UIViewController {
             
             spotScore = myDoc.data()?["spotScore"] as? Int ?? 0
             spotScore += increment
+            let finalScore = max(spotScore, 0) // never set sp0tsc0re < 0
             
             transaction.updateData([
-                "spotScore": spotScore
+                "spotScore": finalScore
             ], forDocument: ref)
             
             return nil
             
         }) { _,_ in  }
+    }
+    
+    func checkUserSpotsOnPostDelete(spotID: String, deletedID: String) {
+        
+        if spotID == "" { return }
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let db: Firestore = Firestore.firestore()
+        
+        var deleteUser = true
+        db.collection("spots").document(spotID).getDocument { (snap, err) in
+            
+            do {
+                let spot = try snap?.data(as: MapSpot.self)
+                guard let spotInfo = spot else { return }
+                
+                if spotInfo.postIDs.count == 0 { return }
+                for i in 0 ... spotInfo.postIDs.count - 1 {
+                    if spotInfo.postIDs[i] != deletedID && spotInfo.posterIDs[i] == uid {
+                        deleteUser = false
+                    }
+                    
+                    if i == spotInfo.postIDs.count - 1 {
+                        /// if we didn't find a post with current users uid, remove from that users spot list, remove that user from the visitor list
+                        if deleteUser {
+                            db.collection("users").document(uid).collection("spotsList").document(spotID).delete()
+                            DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("UserListRemove"), object: nil, userInfo: ["spotID" : spotID]) }
+                            db.collection("spots").document(spotID).updateData(["visitorList" : FieldValue.arrayRemove([uid])])
+                        } else {
+                            /// else remove the post from postslist in spotsList
+                            db.collection("users").document(uid).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayRemove([deletedID])])
+                        }
+                    }
+                }
+            } catch { return }
+        }
+    }
+    
+    /// on spot delete (could be multiple posts / visitors)
+    func userDelete(spot: MapSpot) {
+        
+        let db: Firestore = Firestore.firestore()
+
+        for visitor in spot.visitorList {
+            db.collection("users").document(visitor).collection("spotsList").document(spot.id!).delete()
+        }
+    }
+    
+    /// on post delete (1 post / 1 user)
+    func userDelete(spotID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        db.collection("users").document(uid).collection("spotsList").document(spotID).delete()
+    }
+    
+    func spotNotificationDelete(spot: MapSpot) {
+        //delete any spot level notifications
+        
+        let db: Firestore = Firestore.firestore()
+
+        for visitor in spot.visitorList {
+            let postNotiRef = db.collection("users").document(visitor).collection("notifications")
+            let query = postNotiRef.whereField("spotID", isEqualTo: spot.id!)
+            query.getDocuments { (querysnapshot, err) in
+                for doc in querysnapshot!.documents {
+                    doc.reference.delete()
+                }
+            }
+        }
+        
+        for invite in spot.inviteList ?? [] {
+            let postNotiRef = db.collection("users").document(invite).collection("notifications")
+            let query = postNotiRef.whereField("spotID", isEqualTo: spot.id!)
+            query.getDocuments { (querysnapshot, err) in
+                for doc in querysnapshot!.documents {
+                    doc.reference.delete()
+                }
+            }
+        }
+    }
+    
+    func spotDelete(spotID: String) {
+        
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let db: Firestore = Firestore.firestore()
+        
+        self.incrementSpotScore(user: uid, increment: -6)
+        db.collection("spots").document(spotID).delete()
+        
+        /// user delete for each user on spot page
+    }
+    
+    func postNotificationDelete(createdBy: String, posterID: String, postID: String) {
+        
+        let db: Firestore = Firestore.firestore()
+
+        let postNotiRef = db.collection("users").document(posterID).collection("notifications")
+        let query = postNotiRef.whereField("postID", isEqualTo: postID)
+        
+        query.getDocuments {(querysnapshot, err) in
+
+            for doc in querysnapshot!.documents {
+                doc.reference.delete()
+            }
+        }
+        
+        if createdBy != "" {
+            
+            let spotNotiRef = db.collection("users").document(createdBy).collection("notifications")
+            let spotQuery = spotNotiRef.whereField("postID", isEqualTo: postID)
+            spotQuery.getDocuments {(querysnapshot, err) in
+                
+                for doc in querysnapshot!.documents {
+                    doc.reference.delete()
+                }
+            }
+        }
+    }
+    
+    func postDelete(postsList: [MapPost], spotID: String) {
+        ///delete all spot posts / post objects and comments
+        /// spotID != "" when spot isn't being deleted
+        
+        let db: Firestore = Firestore.firestore()
+        for post in postsList {
+            
+            let postRef = db.collection("posts").document(post.id!)
+            postRef.collection("comments").getDocuments { (querysnapshot, err) in
+
+                if querysnapshot?.documents.count == 0 || err != nil { postRef.delete() }
+                
+                for doc in querysnapshot!.documents {
+                    postRef.collection("comments").document(doc.documentID).delete()
+                    
+                    if doc == querysnapshot?.documents.last {
+                        self.postNotificationDelete(createdBy: post.createdBy ?? "", posterID: post.posterID, postID: post.id! )
+                        
+                        /// spotID != "" when the spot is not being deleted -> need to run transaction
+                        if spotID != "" {
+                                                        
+                            /// can be identical values for posterIDs + postPrivacies so need to run transactions
+                            let db: Firestore! = Firestore.firestore()
+                            let ref = db.collection("spots").document(spotID)
+                            
+                            db.runTransaction({ (transaction, errorPointer) -> Any? in
+                                
+                                let myDoc: DocumentSnapshot
+                                do {
+                                    try myDoc = transaction.getDocument(ref)
+                                } catch let fetchError as NSError {
+                                    errorPointer?.pointee = fetchError
+                                    return nil
+                                }
+                                
+                                var postIDs: [String] = []
+                                var postTimestamps: [Firebase.Timestamp] = []
+                                var posterIDs: [String] = []
+                                var postPrivacies: [String] = []
+                                
+                                postIDs = myDoc.data()?["postIDs"] as? [String] ?? []
+                                let arrayIndex = postIDs.firstIndex(where: {$0 == post.id!}) ?? 0
+
+                                postTimestamps = myDoc.data()?["postTimestamps"] as? [Firebase.Timestamp] ?? []
+                                posterIDs = myDoc.data()?["posterIDs"] as? [String] ?? []
+                                postPrivacies = myDoc.data()?["postPrivacies"] as? [String] ?? []
+                                
+                                if postIDs.count > arrayIndex { postIDs.remove(at: arrayIndex) }
+                                
+                                if postTimestamps.count > arrayIndex { postTimestamps.remove(at: arrayIndex) }
+                                
+                                if posterIDs.count > arrayIndex { posterIDs.remove(at: arrayIndex) }
+                                
+                                if postPrivacies.count > arrayIndex {
+                                    postPrivacies.remove(at: arrayIndex)
+                                }
+                                
+                                    transaction.updateData([
+                                        "postIDs": postIDs,
+                                        "postTimestamps": postTimestamps,
+                                        "posterIDs" : posterIDs,
+                                        "postPrivacies" : postPrivacies
+                                    ], forDocument: ref)
+                                
+                                return nil
+                                
+                            }) { (object, error) in
+                                if error != nil {
+                                    postRef.delete()
+                                } else {
+                                    postRef.delete()
+                                }
+                            }
+                        } else { postRef.delete() }
+                    }
+                }
+            }
+        }
+    }
+    
+    func removeFriendFromPosts(posterID: String, friendID: String, completion: @escaping (_ complete: Bool) -> Void) {
+        
+        let db = Firestore.firestore()
+        
+        db.collection("posts").whereField("posterID", isEqualTo: posterID).getDocuments { (snap, err) in
+            if err == nil {
+                
+                var index = 0
+                if snap!.documents.count == 0 { completion(true); return }
+                
+                for doc in snap!.documents {
+                    if let _ = doc.get("friendsList") as? [String] {
+                        doc.reference.updateData(["friendsList" : FieldValue.arrayRemove([friendID])])
+                        
+                        if let _ = doc.get("inviteList") as? [String] {
+                            doc.reference.updateData(["inviteList" : FieldValue.arrayRemove([friendID])])
+                            index += 1; if index == snap!.documents.count { completion(true); return }
+                            
+                        } else {
+                            index += 1; if index == snap!.documents.count { completion(true); return }
+                        }
+                            
+                    } else { index += 1; if index == snap!.documents.count { completion(true); return }}
+                }
+            } else { completion(true); return }
+        }
+    }
+    
+    func removeFriendFromNotis(posterID: String, friendID: String, completion: @escaping (_ complete: Bool) -> Void) {
+        
+        let db = Firestore.firestore()
+        
+        let postNotiRef = db.collection("users").document(posterID).collection("notifications")
+        let query = postNotiRef.whereField("senderID", isEqualTo: friendID)
+        query.getDocuments { (querysnapshot, err) in
+            if err != nil || querysnapshot!.documents.count == 0 { completion(true); return }
+            var index = 0
+            for doc in querysnapshot!.documents {
+                doc.reference.delete()
+                index += 1
+                if index == querysnapshot!.documents.count { completion(true); return }
+            }
+        }
+    }
+    
+    func addToCityList(city: String) {
+        
+        let db = Firestore.firestore()
+        let query = db.collection("cities").whereField("cityName", isEqualTo: city)
+        
+        query.getDocuments { [weak self] (cityDocs, err) in
+            
+            guard let self = self else { return }
+            if cityDocs?.documents.count ?? 0 == 0 {
+                
+                self.getCoordinateFrom(address: city) { coordinate, error in
+                    
+                    guard let coordinate = coordinate, error == nil else { return }
+
+                    let id = UUID().uuidString
+                    db.collection("cities").document(id).setData(["cityName" : city])
+                    GeoFirestore(collectionRef: db.collection("cities")).setLocation(location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude), forDocumentWithID: id) { (error) in
+                        print(city, "Location:", coordinate)
+                    }
+                }
+            }
+        }
+    }
+    
+    func getCoordinateFrom(address: String, completion: @escaping(_ coordinate: CLLocationCoordinate2D?, _ error: Error?) -> () ) {
+        CLGeocoder().geocodeAddressString(address) { completion($0?.first?.location?.coordinate, $1) }
     }
 }
 
@@ -219,6 +530,7 @@ extension CLLocationDistance {
 extension UITableViewCell {
     
     func addFriend(senderProfile: UserProfile, receiverID: String) {
+        
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let db: Firestore = Firestore.firestore()
         let notiID = UUID().uuidString
@@ -236,6 +548,8 @@ extension UITableViewCell {
         ] as [String : Any]
         ref.setData(values)
         
+        db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
+        
         let sender = PushNotificationSender()
         
         db.collection("users").document(receiverID).getDocument { (tokenSnap, err) in
@@ -249,76 +563,19 @@ extension UITableViewCell {
     func acceptFriendRequest(friendID: String, uid: String, username: String) {
         
         let db: Firestore! = Firestore.firestore()
-        let ref = db.collection("users").document(uid)
-        
-        db.runTransaction({ (transaction, errorPointer) -> Any? in
-            
-            let myDoc: DocumentSnapshot
-            do {
-                try myDoc = transaction.getDocument(ref)
-            } catch let fetchError as NSError {
-                errorPointer?.pointee = fetchError
-                return nil
-            }
-            
-            
-            var friendsList: [String] = []
-            
-            friendsList = myDoc.data()?["friendsList"] as! [String]
-            if (!friendsList.contains(friendID)) {
-                friendsList.append(friendID)
-                transaction.updateData([
-                    "friendsList": friendsList
-                ], forDocument: ref)
-            }
-            
-            return nil
-            
-        }) { (object, error) in
-            if let error = error {
-                print("Transaction failed: \(error)")
-            } else {
-                print("Transaction successfully committed!")
-            }
-        }
-        //add current user to new friend's friends list
-        let friendRef = db.collection("users").document(friendID)
-        db.runTransaction({ (transaction, errorPointer) -> Any? in
-            
-            let friendDoc: DocumentSnapshot
-            do {
-                try friendDoc = transaction.getDocument(friendRef)
-            } catch let fetchError as NSError {
-                errorPointer?.pointee = fetchError
-                return nil
-            }
-            
-            var friendList2: [String] = []
-            
-            friendList2 = friendDoc.data()?["friendsList"] as! [String]
-            //  newFriendUsername = friendDoc.get("username") as! String
-            if (!friendList2.contains(uid)) {
-                friendList2.append(uid)
-                transaction.updateData([
-                                        "friendsList": friendList2], forDocument: friendRef)
-            }
-            
-            return nil
-            
-        }) { (object, error) in
-            if let error = error {
-                print("Transaction failed: \(error)")
-            } else {
-                print("Transaction successfully committed!")
-            }
-        }
-        
+        /// add friend to current users friendsList
+        db.collection("users").document(uid).updateData(["friendsList" : FieldValue.arrayUnion([friendID])])
+        adjustPostsFriendsList(userID: uid, friendID: friendID)
+        /// add current user to new friends friendsList
+        db.collection("users").document(friendID).updateData(["friendsList" : FieldValue.arrayUnion([uid])])
+        adjustPostsFriendsList(userID: friendID, friendID: uid)
+        db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
+
         //remove notification
         let notificationRef = db.collection("users").document(uid).collection("notifications")
         let query = notificationRef.whereField("senderID", isEqualTo: friendID).whereField("type", isEqualTo: "friendRequest")
-        query.getDocuments(completion: { [weak self] (snap, err) in
+        query.getDocuments(completion: { (snap, err) in
             
-            if self == nil { return }
             if err != nil { return }
             let timestamp = NSDate().timeIntervalSince1970
             let myTimeInterval = TimeInterval(timestamp)
@@ -334,10 +591,8 @@ extension UITableViewCell {
             
             let sender = PushNotificationSender()
             
-            db.collection("users").document(friendID).getDocument { [weak self]  (tokenSnap, err) in
-                
-                if self == nil { return }
-                
+            db.collection("users").document(friendID).getDocument {  (tokenSnap, err) in
+                                
                 if (tokenSnap == nil) {
                     return
                 } else {
@@ -348,9 +603,25 @@ extension UITableViewCell {
         })
     }
     
-    func removeFriendRequest(friendID: String, uid: String) {
-        let db: Firestore! = Firestore.firestore()
+    func adjustPostsFriendsList(userID: String, friendID: String) {
         
+        let db = Firestore.firestore()
+        db.collection("posts").whereField("posterID", isEqualTo: userID).getDocuments { (snap, err) in
+            if err != nil { return }
+            for doc in snap!.documents {
+                let privacyLevel = doc.get("privacyLevel") as? String ?? "friends"
+                if privacyLevel != "invite" {
+                    db.collection("posts").document(doc.documentID).updateData(["friendsList" : FieldValue.arrayUnion([friendID])])
+                }
+            }
+        }
+    }
+    
+    func removeFriendRequest(friendID: String, uid: String) {
+        
+        let db: Firestore! = Firestore.firestore()
+        db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
+
         let notificationRef = db.collection("users").document(uid).collection("notifications")
         let query = notificationRef.whereField("type", isEqualTo: "friendRequest").whereField("senderID", isEqualTo: friendID)
         var temp: String!
@@ -370,7 +641,7 @@ extension UITableViewCell {
             
         })
     }
-    
+        
     func getAttString(caption: String, taggedFriends: [String]) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
         let attString = NSMutableAttributedString(string: caption)
         var freshRect: [(rect: CGRect, username: String)] = []
@@ -437,9 +708,10 @@ extension UITableViewCell {
             
             spotScore = myDoc.data()?["spotScore"] as? Int ?? 0
             spotScore += increment
+            let finalScore = max(spotScore, 0) // never set sp0tsc0re < 0
             
             transaction.updateData([
-                "spotScore": spotScore
+                "spotScore": finalScore
             ], forDocument: ref)
             
             return nil
@@ -448,67 +720,14 @@ extension UITableViewCell {
     }
     
     func likePostDB(post: MapPost) {
+        
+        if post.id == "" { return }
+        
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let db: Firestore! = Firestore.firestore()
         
+        db.collection("posts").document(post.id!).updateData(["likers" : FieldValue.arrayUnion([uid])])
         incrementSpotScore(user: post.posterID, increment: 1)
-        
-        ///like post from spots collection if not a free post
-        
-        if post.spotID != "" {
-            let ref = db.collection("spots").document(post.spotID ?? "").collection("feedPost").document(post.id ?? "")
-            
-            db.runTransaction({ (transaction, errorPointer) -> Any? in
-                
-                let myDoc: DocumentSnapshot
-                do {
-                    try myDoc = transaction.getDocument(ref)
-                } catch let fetchError as NSError {
-                    errorPointer?.pointee = fetchError
-                    return nil
-                }
-                
-                var likers: [String] = []
-                
-                likers = myDoc.data()?["likers"] as? [String] ?? []
-                if (!likers.contains(uid)) {
-                    likers.append(uid)
-                    transaction.updateData([
-                        "likers": likers
-                    ], forDocument: ref)
-                }
-                
-                return nil
-                
-            }) { _,_ in  }
-        }
-        
-        let postsRef = db.collection("posts").document(post.id ?? "")
-        // update posts likers in DB
-        db.runTransaction({ (transaction, error) -> Any? in
-            
-            let myDoc: DocumentSnapshot
-            do {
-                try myDoc = transaction.getDocument(postsRef)
-            } catch let fetchError as NSError {
-                error?.pointee = fetchError
-                return nil
-            }
-            
-            
-            var likers: [String] = []
-            
-            likers = myDoc.data()?["likers"] as? [String] ?? []
-            if (!likers.contains(uid)) {
-                likers.append(uid)
-                transaction.updateData([
-                    "likers": likers
-                ], forDocument: postsRef)
-            }
-            
-            return nil
-            
-        }) { _,_ in  }
         
         if (post.posterID != uid) {
             
@@ -541,7 +760,7 @@ extension UITableViewCell {
                         senderName = userSnap?.get("username") as? String
                         
                         if (token != nil && token != "") {
-                            sender.sendPushNotification(token: token, title: "", body: "\(senderName ?? "someone") liked your post")
+                            DispatchQueue.main.async { sender.sendPushNotification(token: token, title: "", body: "\(senderName ?? "someone") liked your post") }
                         }
                     }
                 }
@@ -550,68 +769,16 @@ extension UITableViewCell {
     }
     
     func unlikePostDB(post: MapPost) {
+        
+        if post.id == "" { return }
+        
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let db: Firestore! = Firestore.firestore()
         
+        db.collection("posts").document(post.id!).updateData(["likers" : FieldValue.arrayRemove([uid])])
+        
         incrementSpotScore(user: post.posterID, increment: -1)
-        
-        if post.spotID != "" {
-            let ref = db.collection("spots").document(post.spotID ??
-                                                        "").collection("feedPost").document(post.id ?? "")
-            
-            
-            db.runTransaction({ (transaction, errorPointer) -> Any? in
-                                
-                let myDoc: DocumentSnapshot
-                do {
-                    try myDoc = transaction.getDocument(ref)
-                } catch let fetchError as NSError {
-                    errorPointer?.pointee = fetchError
-                    return nil
-                }
-                
-                
-                var likers: [String] = []
-                
-                likers = myDoc.data()?["likers"] as? [String] ?? []
-                if (likers.contains(uid)) {
-                    likers.removeAll(where: {$0 == uid})
-                    transaction.updateData([
-                        "likers": likers
-                    ], forDocument: ref)
-                }
-                
-                return nil
-                
-            }) { _,_ in  }
-        }
-        
-        let postsRef = db.collection("posts").document(post.id ?? "")
-        
-        db.runTransaction({ (transaction, error) -> Any? in
-                        
-            let myDoc: DocumentSnapshot
-            do {
-                try myDoc = transaction.getDocument(postsRef)
-            } catch let fetchError as NSError {
-                error?.pointee = fetchError
-                return nil
-            }
-            
-            var likers: [String] = []
-            
-            likers = myDoc.data()?["likers"] as? [String] ?? []
-            if (likers.contains(uid)) {
-                likers.removeAll(where: {$0 == uid})
-                transaction.updateData([
-                    "likers": likers
-                ], forDocument: postsRef)
-            }
-            
-            return nil
-            
-        }) { _,_ in  }
-        
+
         let notificationRef = db.collection("users").document(post.posterID).collection("notifications")
         let query = notificationRef.whereField("type", isEqualTo: "like").whereField("postID", isEqualTo: post.id ?? "").whereField("senderID", isEqualTo: uid)
         query.getDocuments { [weak self] (querysnapshot, err) in
@@ -712,6 +879,52 @@ extension UITableViewCell {
             }
         }
     }
+    
+    func sendAcceptPublicNotification(spot: MapSpot) {
+        
+        let db: Firestore! = Firestore.firestore()
+
+        let timestamp = NSDate().timeIntervalSince1970
+        let myTimeInterval = TimeInterval(timestamp)
+        let time = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
+        
+        let notiID = UUID().uuidString
+        let notificationRef = db.collection("users").document(spot.founderID).collection("notifications")
+        let acceptRef = notificationRef.document(notiID)
+        
+        acceptRef.setData(["seen" : false, "timestamp" : time, "senderID": "T4KMLe3XlQaPBJvtZVArqXQvaNT2", "type": "publicSpotAccepted", "spotID": spot.id!, "postID": spot.postIDs.first!, "imageURL": spot.imageURL] as [String: Any])
+        db.collection("spots").document(spot.id!).updateData(["privacyLevel" : "public"])
+        db.collection("submissions").document(spot.id!).delete()
+        
+        let sender = PushNotificationSender()
+        var token: String!
+        
+        db.collection("users").document(spot.founderID).getDocument {  (tokenSnap, err) in
+            
+            if (tokenSnap == nil) {
+                return
+            } else {
+                token = tokenSnap?.get("notificationToken") as? String
+                DispatchQueue.main.async { sender.sendPushNotification(token: token, title: "", body: "\(spot.spotName) was approved!") }
+            }
+        }
+    }
+    
+    func sendRejectPublicNotification(spot: MapSpot) {
+
+        let db: Firestore! = Firestore.firestore()
+
+        let timestamp = NSDate().timeIntervalSince1970
+        let myTimeInterval = TimeInterval(timestamp)
+        let time = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
+        
+        let notiID = UUID().uuidString
+        let notificationRef = db.collection("users").document(spot.founderID).collection("notifications")
+        let acceptRef = notificationRef.document(notiID)
+        
+        acceptRef.setData(["seen" : false, "timestamp" : time, "senderID": "T4KMLe3XlQaPBJvtZVArqXQvaNT2", "type": "publicSpotRejected", "spotID": spot.id!, "postID": spot.postIDs.first!, "imageURL": spot.imageURL] as [String: Any])
+        db.collection("submissions").document(spot.id!).delete()
+    }
 }
 
 extension UIScrollView {
@@ -731,6 +944,7 @@ extension UIScrollView {
 }
 
 extension UIImageView {
+    
     func animateGIF(directionUp: Bool, counter: Int, photos: [UIImage]) {
         
         if superview == nil { return }
@@ -766,7 +980,7 @@ extension UIImageView {
     }
     
     func animateGIF(directionUp: Bool, counter: Int) {
-        
+    
         if superview == nil { return }
         
         var newDirection = directionUp
@@ -788,7 +1002,7 @@ extension UIImageView {
             }
         }
         
-        UIView.transition(with: self, duration: 0.09, options: [.transitionCrossDissolve, .allowUserInteraction, .beginFromCurrentState], animations: { [weak self] in
+        UIView.transition(with: self, duration: 0.08, options: [.allowUserInteraction, .beginFromCurrentState], animations: { [weak self] in
             guard let self = self else { return }
                             self.image = self.animationImages![counter] },
                           completion: nil)
@@ -857,4 +1071,118 @@ extension UIImageView {
         }
     }
 }
+
+extension UINavigationBar {
+    
+    func addShadow() {
+        /// gray line at bottom of nav bar
+        if let _ = layer.sublayers?.first(where: {$0.name == "bottomLine"}) { return }
+        
+        let bottomLine = CALayer()
+        bottomLine.frame = CGRect(x: 0.0, y: bounds.height - 1, width: bounds.width, height: 1.0)
+        bottomLine.backgroundColor = UIColor(red: 0.121, green: 0.121, blue: 0.121, alpha: 1).cgColor
+        bottomLine.shouldRasterize = true
+        bottomLine.name = "bottomLine"
+        layer.addSublayer(bottomLine)
+        
+        /// mask to show under nav bar
+        layer.masksToBounds = false
+        layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.37).cgColor
+        layer.shadowOpacity = 1
+        layer.shadowOffset = CGSize(width: 0, height: 4)
+        layer.shadowRadius = 6
+        layer.position = center
+        layer.shouldRasterize = true
+    }
+    
+    func removeShadow() {
+        if let sub = layer.sublayers?.first(where: {$0.name == "bottomLine"}) { sub.removeFromSuperlayer() }
+        layer.shadowRadius = 0
+        layer.shadowOffset = CGSize(width: 0, height: 0)
+    }
+    
+    func addBackgroundImage(alpha: CGFloat) {
+        /// gradient nav bar background
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+        let navBarHeight = statusHeight + bounds.height
+
+        let gradient = CAGradientLayer()
+        let sizeLength: CGFloat = UIScreen.main.bounds.size.height * 2
+        let defaultNavigationBarFrame = CGRect(x: 0, y: 0, width: sizeLength, height: navBarHeight)
+        
+        gradient.frame = defaultNavigationBarFrame
+        gradient.colors = [UIColor(red: 0.10, green: 0.10, blue: 0.10, alpha: alpha).cgColor, UIColor(red: 0.07, green: 0.07, blue: 0.07, alpha: alpha).cgColor]
+        gradient.startPoint = CGPoint(x: 0.5, y: 0.0)
+        gradient.endPoint = CGPoint(x: 0.5, y: 1.0)
+        setBackgroundImage(self.image(fromLayer: gradient), for: .default)
+    }
+    
+    func removeBackgroundImage() {
+        setBackgroundImage(UIImage(), for: .default)
+    }
+    
+    func image(fromLayer layer: CALayer) -> UIImage {
+        UIGraphicsBeginImageContext(layer.frame.size)
+        layer.render(in: UIGraphicsGetCurrentContext()!)
+        let outputImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return outputImage!
+    }
+}
+
+/*
+extension UICollectionViewCell {
+    
+    func addCellShadow() {
+
+        let shadows = UIView()
+        shadows.frame = bounds
+        shadows.clipsToBounds = false
+        shadows.tag = 11
+        addSubview(shadows)
+
+        let shadowPath0 = UIBezierPath(roundedRect: bounds, cornerRadius: 7.5)
+        let layer0 = CALayer()
+        layer0.shadowPath = shadowPath0.cgPath
+        layer0.shouldRasterize = true
+        layer0.rasterizationScale = UIScreen.main.scale
+        layer0.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.4).cgColor
+        layer0.shadowOpacity = 1
+        layer0.shadowRadius = 1.5
+        layer0.shadowOffset = CGSize(width: 0.25, height: 1)
+        layer0.bounds = shadows.bounds
+        layer0.position = shadows.center
+        shadows.layer.addSublayer(layer0)
+        
+    }
+    
+    func addCellBorder() {
+        
+        let shapes = UIView()
+        shapes.frame = bounds
+        shapes.clipsToBounds = true
+        shapes.tag = 12
+        addSubview(shapes)
+        
+        let color1 = UIColor(red: 0.18, green: 0.18, blue: 0.18, alpha: 1.00)
+        let color2 = UIColor(red: 0.14, green: 0.14, blue: 0.14, alpha: 1.00)
+        let layer1 = CAGradientLayer()
+        layer1.frame = shapes.bounds
+        layer1.shouldRasterize = true
+        layer1.shadowPath = UIBezierPath(roundedRect: shapes.bounds, cornerRadius: 7.5).cgPath
+        layer1.rasterizationScale = UIScreen.main.scale
+        layer1.colors = [color1, color2]
+        
+        let shape = CAShapeLayer()
+        shape.lineWidth = 1
+        shape.path = UIBezierPath(roundedRect: shapes.bounds, cornerRadius: 7.5).cgPath
+        shape.strokeColor = UIColor.blue.cgColor
+        shape.fillColor = UIColor.clear.cgColor
+        layer1.mask = shape
+        shapes.layer.addSublayer(layer1)
+    }
+    
+}
+*/
 

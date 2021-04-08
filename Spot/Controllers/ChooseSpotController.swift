@@ -64,6 +64,7 @@ class ChooseSpotController: UIViewController {
         
         setUpNavBar()
         setUpViews()
+        
         if nearbyIDs.isEmpty { DispatchQueue.global().async {
             self.getNearbyPOIs()
             self.getNearbySpots()
@@ -94,22 +95,27 @@ class ChooseSpotController: UIViewController {
     
     func setUpNavBar() {
 
-        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "BackArrow")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(backTapped(_:)))
-        
+        let backArrow = UIImage(named: "BackArrow")?.withRenderingMode(.alwaysOriginal)
+        navigationController?.navigationBar.backIndicatorImage = backArrow
+        navigationController?.navigationBar.backIndicatorTransitionMaskImage = backArrow
+        navigationItem.backBarButtonItem?.tintColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+
         let titleView = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 75, y: 14, width: 150, height: 23))
         titleView.text = "Choose a spot"
         titleView.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        titleView.font = UIFont(name: "SFCamera-Regular", size: 15)
+        titleView.font = UIFont(name: "SFCamera-Regular", size: 18)
         titleView.textAlignment = .center
         navigationItem.titleView = titleView
-        
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "+ New Spot", style: .plain, target: self, action: #selector(newSpotTap(_:)))
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([NSAttributedString.Key.foregroundColor : UIColor(named: "SpotGreen")!, NSAttributedString.Key.font : UIFont(name: "SFCamera-Semibold", size: 15)!], for: .normal)
     }
     
     func setUpViews() {
-        searchBarContainer = UIView(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 40))
+        
+        view.backgroundColor = UIColor(named: "SpotBlack")
+        
+        searchBarContainer = UIView(frame: CGRect(x: 0, y: 15, width: UIScreen.main.bounds.width, height: 40))
         searchBarContainer.backgroundColor = nil
         view.addSubview(searchBarContainer)
         
@@ -141,6 +147,7 @@ class ChooseSpotController: UIViewController {
         searchBarContainer.addSubview(cancelButton)
         
         nearbyTable = UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY + 20, width: UIScreen.main.bounds.width, height: view.bounds.height - searchBarContainer.frame.maxY - 20))
+        nearbyTable.backgroundColor = UIColor(named: "SpotBlack")
         nearbyTable.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         nearbyTable.showsVerticalScrollIndicator = false
         nearbyTable.separatorStyle = .none
@@ -148,7 +155,6 @@ class ChooseSpotController: UIViewController {
         nearbyTable.delegate = self
         nearbyTable.tag = 0
         nearbyTable.isUserInteractionEnabled = true
-        nearbyTable.backgroundColor = UIColor(named: "SpotBlack")
         nearbyTable.register(ChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpotCell")
         nearbyTable.register(ChooseSpotHeader.self, forHeaderFooterViewReuseIdentifier: "ChooseSpotHeader")
         view.addSubview(nearbyTable)
@@ -200,7 +206,7 @@ class ChooseSpotController: UIViewController {
             }
 
             /// > 10 poi's should be enough for the table, otherwise re-run fetch
-            if response.mapItems.count < 10 && newRequest.radius < 2500 { self.runPOIFetch(request: newRequest); return }
+            if response.mapItems.count < 10 && newRequest.radius < 2500 {   self.runPOIFetch(request: newRequest); return }
             
             for item in response.mapItems {
 
@@ -230,8 +236,8 @@ class ChooseSpotController: UIViewController {
     func getNearbySpots() {
         
         circleQuery = geoFirestore.query(withCenter: GeoPoint(latitude: postLocation.latitude, longitude: postLocation.longitude), radius: 0.5)
-        let _ = circleQuery?.observe(.documentEntered, with: loadSpotFromDB)
-        
+        let _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
+
         let _ = circleQuery?.observeReady { [weak self] in
             guard let self = self else { return }
             /// nearby spots count is incremented once a spot has been fetched that user has access to. It *should* have incremented by the time circle query is done running. Trying to delay table reload until both POI's and spots have loaded
@@ -252,14 +258,14 @@ class ChooseSpotController: UIViewController {
             guard let doc = spotSnap else { return}
 
             do {
-                let spotIn = try doc.data(as: MapSpot.self)
                 
-                guard var spotInfo = spotIn else { return }
+                let unwrappedInfo = try doc.data(as: MapSpot.self)
+                guard var spotInfo = unwrappedInfo else { return }
                 
                 spotInfo.spotLat = coordinate.latitude
                 spotInfo.spotLong = coordinate.longitude
                                 
-                if self.hasAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? [], mapVC: self.mapVC) {
+                if self.hasPOILevelAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? [], mapVC: self.mapVC) {
                     
                     self.nearbySpotsCount += 1
                     self.spotLoaded = true
@@ -281,73 +287,93 @@ class ChooseSpotController: UIViewController {
                         spotInfo.spotDescription = POIdescription; spotInfo.imageURL = ""
                     }
                     
-                    ref.collection("feedPost").order(by: "timestamp", descending: false).getDocuments {  [weak self] (postSnap, err) in
+                    if spotInfo.privacyLevel != "public" {
+                        spotInfo.visiblePosts = spotInfo.postIDs.count
+                        self.nearbyIDs.append((id: spotInfo.id!, distance: distanceFromImage))
+                        self.nearbySpots.append(spotInfo)
+                        self.endQuery()
+                        return
+                    }
+                    
+                    var visiblePosts = 0
+                    let friendImageFromFounder = self.isFriends(id: spotInfo.founderID)
+                    var friendImage = friendImageFromFounder
+                    var postFetchID = ""
+                    
+                    for i in 0 ... spotInfo.postIDs.count - 1 {
                         
-                        guard let self = self else { return }
-                        guard let snap = postSnap else { return }
+                        let isFriend = self.isFriends(id: spotInfo.posterIDs[i]) /// is this a friend or a public stranger post
+                        let postPrivacy = spotInfo.postPrivacies[i]
                         
-                        // for friends, invite spot just need to get number of visible posts and can return
-                        if spotInfo.privacyLevel != "public" {
-                            spotInfo.visiblePosts = snap.documents.count
+                        if postPrivacy == "public" || isFriend {
+                            visiblePosts += 1
+                            
+                            if postFetchID == "" {
+                                /// set postFetchID for first visible post
+                                postFetchID = spotInfo.postIDs[i]
+                                friendImage = isFriend
+                                
+                            } else if !friendImage && isFriend {
+                                /// always show first friend image if possible
+                                postFetchID = spotInfo.postIDs[i]
+                                friendImage = true
+                            }
+                        }
+                    }
+                    
+                    
+                    spotInfo.visiblePosts = visiblePosts
+                    spotInfo.friendImage = friendImageFromFounder
+                    spotInfo.postFetchID = postFetchID
+                    
+                    if spotInfo.imageURL == "" {
+                        
+                        /// edge case where async return causes poi query to run after getting the spotObject but before cycling through posts and altering the description / imageURL
+                        if let nearbyDuplicate = self.nearbySpotsRef.last(where: {$0.id == spotInfo.id}) {
+                            spotInfo.spotDescription = nearbyDuplicate.spotDescription
+                        }
+                    }
+                    
+                    if !self.nearbySpots.contains(where: {$0.id == spotInfo.id}) {
+                        
+                        /// friends with public spot owner, append to nearby spots and end query
+                        if spotInfo.friendImage {
                             self.nearbyIDs.append((id: spotInfo.id!, distance: distanceFromImage))
                             self.nearbySpots.append(spotInfo)
                             self.endQuery()
                             return
                         }
                         
-                        var visiblePosts = 0
-                        var friendImage = false
-                        
-                        for doc in snap.documents {
-                            
-                            guard let posterID = doc.get("posterID") as? String else { return }
-                            guard let postPrivacy = doc.get("privacyLevel") as? String else { return }
-                            let imageURL = doc.get("imageURLs") as? [String] ?? []
-                            let caption = doc.get("caption") as? String ?? ""
-                            
-                            let isFriend = self.isFriends(id: posterID)
-                            
-                            if postPrivacy == "public" || isFriend {
-                                visiblePosts += 1
-                                
-                                if spotInfo.imageURL == "" {
-                                    /// add imageURL for to spot for first visible post
-                                    spotInfo.imageURL = imageURL.first ?? ""
-                                    spotInfo.spotDescription = caption
-                                    friendImage = isFriend
+                        self.nearbyIDs.append((id: spotInfo.id!, distance: distanceFromImage))
 
-                                } else if !friendImage && isFriend {
-                                    /// always show first friend image + description if possible
-                                    spotInfo.imageURL = imageURL.first ?? ""
-                                    spotInfo.spotDescription = caption
-                                    friendImage = true
-                                }
+                        /// get friends image and description if available for public spot
+                        if spotInfo.postFetchID != "" {
+                            var newSpot = spotInfo
+                            
+                            self.db.collection("posts").document(newSpot.postFetchID).getDocument { (doc, err) in
+                                
+                                do {
+                                    
+                                    let postInfo = try doc?.data(as: MapPost.self)
+                                    guard let post = postInfo else { self.nearbySpots.append(spotInfo); self.endQuery(); return }
+                                    
+                                    newSpot.spotDescription = post.caption
+                                    newSpot.imageURL = post.imageURLs.first ?? ""
+                                    self.nearbySpots.append(newSpot)
+                                    self.endQuery()
+                                    
+                                } catch {
+                                    self.nearbySpots.append(spotInfo); self.endQuery(); return}
                             }
                             
-                            if doc == snap.documents.last {
-                                spotInfo.visiblePosts = visiblePosts
-                                
-                                if spotInfo.imageURL == "" {
-                                    
-                                    /// edge case where async return causes poi query to run after getting the spotObject but before cycling through posts and altering the description / imageURL
-                                    if let nearbyDuplicate = self.nearbySpotsRef.last(where: {$0.id == spotInfo.id}) {
-                                        spotInfo.spotDescription = nearbyDuplicate.spotDescription
-                                    }
-                                }
-                                
-                                if !self.nearbySpots.contains(where: {$0.id == spotInfo.id}) {
-                                    self.nearbyIDs.append((id: spotInfo.id!, distance: distanceFromImage))
-                                    self.nearbySpots.append(spotInfo)
-                                }
-                                self.endQuery()
-                            }
-                        }
+                        } else { self.nearbySpots.append(spotInfo); self.endQuery() }
                     }
+
                 }
             } catch { return }
-        }
+         }
     }
-        
+
     func endQuery() {
         
         nearbyRefreshCount += 1
@@ -380,14 +406,13 @@ class ChooseSpotController: UIViewController {
         self.emptyView.backgroundColor = nil
         self.nearbyTable.addSubview(self.emptyView)
         
-        let icon = UIImageView(frame: CGRect(x: 14, y: 2, width: 11, height: 11))
-        icon.image = UIImage(named: "NoSpotsIcon")
-        self.emptyView.addSubview(icon)
-        
-        let emptyLabel = UILabel(frame: CGRect(x: 30, y: 0, width: 150, height: 15))
-        emptyLabel.text = "None nearby"
+        let emptyLabel = UILabel(frame: CGRect(x: 14, y: 0, width: UIScreen.main.bounds.width - 28, height: 14))
+        emptyLabel.text = "None nearby. Try searching or creating a new spot"
         emptyLabel.textColor = UIColor(red: 0.454, green: 0.454, blue: 0.454, alpha: 1)
         emptyLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        emptyLabel.numberOfLines = 0
+        emptyLabel.lineBreakMode = .byWordWrapping
+        emptyLabel.sizeToFit()
         self.emptyView.addSubview(emptyLabel)
     }
     
@@ -423,10 +448,6 @@ class ChooseSpotController: UIViewController {
         infoMask.removeFromSuperview()
     }
     
-    @objc func backTapped(_ sender: UIButton) {
-        self.dismiss(animated: true, completion: nil)
-    }
-    
     @objc func newSpotTap(_ sender: UIButton) {
         
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
@@ -451,7 +472,7 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch tableView.tag {
         case 0:
-            return nearbyIDs.count
+            return nearbyIDs.count > 35 ? 35 : nearbyIDs.count
         default:
             return queryIDs.count > 5 ? 5 : queryIDs.count
         }
@@ -503,7 +524,6 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
         
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
             
-            Mixpanel.mainInstance().track(event: "ChooseSpotSpotSelected")
                         
             vc.postLocation = postLocation
             vc.selectedImages = selectedImages
@@ -521,9 +541,12 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
                     let id = nearbyIDs[indexPath.row].id
                     
                     if let spotObject = nearbySpots.first(where: {$0.id! == id}) {
+                        
+                        Mixpanel.mainInstance().track(event: "ChooseSpotSpotSelected", properties: ["POI": false])
+                        
                         vc.spotObject = spotObject
                         vc.postType = spotObject.privacyLevel == "public" ? .postToPublic : .postToPrivate
-                        
+
                         if spotObject.imageURL == "" {
                             imageTransition = true
                             transitionFromImage(tableView: tableView, indexPath: indexPath, vc: vc)
@@ -531,6 +554,9 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
                         
                     } else if let POI = nearbyPOIs.first(where: {$0.id == id}) {
                         /// if no image on spot, animate transition
+                        
+                        Mixpanel.mainInstance().track(event: "ChooseSpotSpotSelected", properties: ["POI": true])
+
                         vc.poi = POI
                         vc.postType = .postToPOI
                         imageTransition = true
@@ -541,6 +567,9 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
                     let id = queryIDs[indexPath.row].id
 
                     if let spotObject = querySpots.first(where: {$0.id! == id}) {
+                        
+                        Mixpanel.mainInstance().track(event: "ChooseSpotSearchSpotSelected", properties: ["POI": false])
+                        
                         vc.spotObject = spotObject
                         vc.postType = spotObject.privacyLevel == "public" ? .postToPublic : .postToPrivate
                         
@@ -550,6 +579,9 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
                         }
                         
                     } else if let POI = queryPOIs.first(where: {$0.id == id}) {
+                        
+                        Mixpanel.mainInstance().track(event: "ChooseSpotSearchSpotSelected", properties: ["POI": true])
+
                         /// if no image on spot, animate transiton
                         vc.poi = POI
                         vc.postType = .postToPOI
@@ -741,14 +773,14 @@ extension ChooseSpotController: UISearchBarDelegate {
             if docs.count == 0 { self.reloadResultsTable() }
 
             for doc in docs {
+                
                 do {
-
                     /// get all spots that match query and order by distance
                     let spotInfo = try doc.data(as: MapSpot.self)
                     guard var info = spotInfo else { return }
                     info.id = doc.documentID
                     
-                    if self.hasAccess(creatorID: info.founderID, privacyLevel: info.privacyLevel, inviteList: info.inviteList ?? [], mapVC: self.mapVC) {
+                    if self.hasPOILevelAccess(creatorID: info.founderID, privacyLevel: info.privacyLevel, inviteList: info.inviteList ?? [], mapVC: self.mapVC) {
                                                     
                         let location = CLLocation(latitude: info.spotLat, longitude: info.spotLong)
                         let distanceFromImage = location.distance(from: CLLocation(latitude: self.postLocation.latitude, longitude: self.postLocation.longitude))
@@ -774,14 +806,14 @@ extension ChooseSpotController: UISearchBarDelegate {
         let topSpots = querySpotsRef.count > 10 ? Array(querySpotsRef.prefix(10)) : querySpotsRef
         
         for spot in topSpots {
-
+            
             var newSpot = spot
             var scoreMultiplier: Double = 1000
             var POIdescription = ""
             
             if spot.privacyLevel == "public" {
                 if let i = self.queryPOIs.firstIndex(where: {$0.name == spot.spotName}) {
-
+                    
                     POIdescription = self.queryPOIs[i].type.toString()
                     self.queryIDs.removeAll(where: {$0.id == self.queryPOIs[i].id})
                     self.queryPOIs.remove(at: i)
@@ -800,67 +832,53 @@ extension ChooseSpotController: UISearchBarDelegate {
             if spot.privacyLevel == "public" && !self.isFriends(id: spot.founderID) {
                 newSpot.spotDescription = POIdescription; newSpot.imageURL = ""
             }
-
-            self.db.collection("spots").document(spot.id!).collection("feedPost").order(by: "timestamp", descending: false).getDocuments { [weak self] (postSnap, err) in
+            
+            let friendImageFromFounder = spot.privacyLevel != "public" || isFriends(id: spot.founderID)
+            var friendImage = friendImageFromFounder
+            var postFetchID = ""
+            
+            for i in 0 ... spot.postIDs.count - 1 {
                 
-                guard let self = self else { return }
+                let isFriend = self.isFriends(id: spot.posterIDs[i]) /// is this a friend or a public stranger post
+                let postPrivacy = spot.postPrivacies[i]
                 
-                if !self.queryValid(searchText: searchText) { return }
-                guard let snap = postSnap else { return }
-                
-                // get correct image to show in table + spot score
-
-                var friendImage = spot.privacyLevel != "public"
-                
-                for doc in snap.documents {
+                if postPrivacy == "public" || isFriend {
                     
-                    guard let posterID = doc.get("posterID") as? String else { return }
-                    guard let postPrivacy = doc.get("privacyLevel") as? String else { return }
-                    let imageURL = doc.get("imageURLs") as? [String] ?? []
-                    let caption = doc.get("caption") as? String ?? ""
+                    scoreMultiplier += 20
                     
-                    let isFriend = self.isFriends(id: posterID)
-                    
-                    if postPrivacy == "public" || isFriend {
+                    if postFetchID == "" {
+                        /// set postFetchID for first visible post
+                        postFetchID = spot.postIDs[i]
+                        friendImage = isFriend
                         
-                        scoreMultiplier += 20
-                        
-                        if newSpot.imageURL == "" {
-                            /// add imageURL for to spot for first visible post
-                            newSpot.imageURL = imageURL.first ?? ""
-                            newSpot.spotDescription = caption
-                            friendImage = isFriend
-
-                        } else if !friendImage && isFriend {
-                            /// always show first friend image if possible
-                            newSpot.imageURL = imageURL.first ?? ""
-                            newSpot.spotDescription = caption
-                            friendImage = true
-                        }
-                    }
-                    
-                    if doc == snap.documents.last {
-                        
-                        if newSpot.imageURL == "" {
-                            
-                            /// edge case where async return causes poi query to run after getting the spotObject but before cycling through posts and altering the description / imageURL
-                            if let nearbyDuplicate = self.nearbySpotsRef.last(where: {$0.id == newSpot.id}) {
-                                newSpot.spotDescription = nearbyDuplicate.spotDescription
-                            }
-                        }
-
-                        if !self.querySpots.contains(where: {$0.id == newSpot.id}) {
-                            self.querySpots.append(newSpot)
-                            self.queryIDs.append((id: spot.id!, score: scoreMultiplier/spot.distance))
-                        }
-                                                
-                        if self.querySpots.count == topSpots.count { self.reloadResultsTable() }
+                    } else if !friendImage && isFriend {
+                        /// always show first friend image if possible
+                        postFetchID = spot.postIDs[i]
+                        friendImage = true
                     }
                 }
             }
             
+            newSpot.friendImage = friendImageFromFounder
+            newSpot.postFetchID = postFetchID
+            
+            if postFetchID == "" {
+                
+                /// edge case where async return causes poi query to run after getting the spotObject but before cycling through posts and altering the description / imageURL
+                if let nearbyDuplicate = self.nearbySpotsRef.last(where: {$0.id == newSpot.id}) {
+                    newSpot.spotDescription = nearbyDuplicate.spotDescription
+                }
+            }
+            
+            if !self.querySpots.contains(where: {$0.id == newSpot.id}) {
+                self.querySpots.append(newSpot)
+                self.queryIDs.append((id: spot.id!, score: scoreMultiplier/spot.distance))
+            }
+            
+            if self.querySpots.count == topSpots.count { self.reloadResultsTable() }
         }
     }
+    
     
     func queryValid(searchText: String) -> Bool {
         return searchText == searchTextGlobal && searchText != ""
@@ -872,7 +890,44 @@ extension ChooseSpotController: UISearchBarDelegate {
         if searchRefreshCount < 2 { return }
         
         queryIDs.sort(by: {$0.score > $1.score})
+        let topIDs = queryIDs.prefix(5)
+        var counter = 0
+
+        if topIDs.count == 0 { finishResultsLoad() }
         
+        for id in topIDs {
+            
+            if let i = self.querySpots.firstIndex(where: {$0.id == id.id}) {
+                /// fetch friend image / description for spot on search
+                let spot = self.querySpots[i]
+                
+                if spot.friendImage { counter += 1; if counter == topIDs.count { finishResultsLoad() } }
+                
+                if spot.postFetchID != "" {
+                    var newSpot = spot
+                    self.db.collection("posts").document(spot.postFetchID).getDocument { (doc, err) in
+                        
+                        do {
+                            
+                            let postInfo = try doc?.data(as: MapPost.self)
+                            guard let info = postInfo else { counter += 1; if counter == topIDs.count { self.finishResultsLoad()}; return }
+                            
+                            newSpot.spotDescription = info.caption
+                            newSpot.imageURL = info.imageURLs.first ?? ""
+                            self.querySpots[i] = newSpot
+                            counter += 1; if counter == topIDs.count { self.finishResultsLoad() }
+                            
+                        } catch { counter += 1; if counter == topIDs.count { self.finishResultsLoad()} }
+                    }
+                }
+                
+            } else {
+                counter += 1; if counter == topIDs.count { finishResultsLoad() }
+            }
+        }
+    }
+    
+    func finishResultsLoad() {
         DispatchQueue.main.async {
             self.searchIndicator.stopAnimating()
             self.resultsTable.reloadData()
@@ -1063,7 +1118,7 @@ class ChooseSpotCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         if thumbnailImage != nil { thumbnailImage.sd_cancelCurrentImageLoad() }
-        thumbnailImage.image = UIImage()
+        if thumbnailImage != nil {  thumbnailImage.image = UIImage() }
     }
 }
 
@@ -1084,6 +1139,7 @@ class ChooseSpotHeader: UITableViewHeaderFooterView {
         label.font = UIFont(name: "SFCamera-Regular", size: 13)
         label.sizeToFit()
         addSubview(label)
+        
     }
     
     override init(reuseIdentifier: String?) {
@@ -1103,6 +1159,7 @@ class SpotSearchCell: UITableViewCell {
     var name: UILabel!
     var username: UILabel!
     var address: UILabel!
+    var bottomLine: UIView!
     
     func setUp(spot: MapSpot) {
         
@@ -1137,6 +1194,7 @@ class SpotSearchCell: UITableViewCell {
     }
     
     func setUp(POI: POI) {
+        
         backgroundColor = UIColor(named: "SpotBlack")
         selectionStyle = .none
         
@@ -1237,17 +1295,16 @@ class SpotSearchCell: UITableViewCell {
         
         resetCell()
         
-        thumbnailImage = UIImageView(frame: CGRect(x: 28.5, y: 19.5, width: 15, height: 21))
-        thumbnailImage.image = UIImage(named: "CitySearchIcon")
-        thumbnailImage.contentMode = .scaleAspectFit
-        addSubview(thumbnailImage)
-        
-        spotName = UILabel(frame: CGRect(x: thumbnailImage.frame.maxX + 18.5, y: 22, width: 250, height: 16))
+        spotName = UILabel(frame: CGRect(x: 28.5, y: 22, width: 250, height: 16))
         spotName.text = cityName
-        spotName.font = UIFont(name: "SFCamera-Regular", size: 13)
+        spotName.font = UIFont(name: "SFCamera-Semibold", size: 15)
         spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         spotName.sizeToFit()
         addSubview(spotName)
+        
+        bottomLine = UIView(frame: CGRect(x: 14, y: 64, width: UIScreen.main.bounds.width - 28, height: 1))
+        bottomLine.backgroundColor = UIColor(red: 0.121, green: 0.121, blue: 0.121, alpha: 1)
+        addSubview(bottomLine)
     }
     
     func resetCell() {
@@ -1257,6 +1314,7 @@ class SpotSearchCell: UITableViewCell {
         if name != nil {name.text = ""}
         if username != nil {username.text = ""}
         if address != nil { address.text = "" }
+        if bottomLine != nil { bottomLine.backgroundColor = nil }
     }
     
     override func prepareForReuse() {

@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "directionsfix.png",
+      "filename" : "Gobutton1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "directionsfix (1) (2).png",
+      "filename" : "Gobutton2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "directionsfix (2) (1).png",
+      "filename" : "Gobutton3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

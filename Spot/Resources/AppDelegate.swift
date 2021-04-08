@@ -7,6 +7,7 @@ import IQKeyboardManagerSwift
 import UserNotifications
 import FirebaseMessaging
 import CoreData
+import Mixpanel
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -18,27 +19,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         FirebaseApp.configure()
                 
-        let navigationBarAppearance = UINavigationBar.appearance()
-        navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor:UIColor.white, NSAttributedString.Key.font: UIFont(name: "SFCamera-Regular", size: 16)!]
-        navigationBarAppearance.isTranslucent = true
-        navigationBarAppearance.barTintColor = UIColor(named: "SpotBlack")
-        navigationBarAppearance.shadowImage = UIImage()
-        navigationBarAppearance.setBackgroundImage(UIImage(), for: .default)
-        navigationBarAppearance.backgroundColor = .clear
-                
         let db = Firestore.firestore()
         let settings = db.settings
         settings.isPersistenceEnabled = true
         db.settings = settings
         
+        /// set navigation bar appearance with gradient
+        
+        /// set bar button appearance (remove "back" from back buttos)
         let BarButtonItemAppearance = UIBarButtonItem.appearance()
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .normal)
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .selected)
+        BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .highlighted)
         
+        /// search bar text = white
         UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
         
         let searchBarAppearance = UISearchBar.appearance()
-        searchBarAppearance.barTintColor = UIColor.black
+        searchBarAppearance.barTintColor = UIColor(named: "SpotBlack")
         searchBarAppearance.barStyle =  .black
         
         UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
@@ -46,14 +44,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let appearance = UITabBar.appearance()
         appearance.shadowImage = UIImage()
         
+        UIView.appearance().isExclusiveTouch = true
+        
+        let navigationBarAppearance = UINavigationBar.appearance()
+        navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor:UIColor.white, NSAttributedString.Key.font: UIFont(name: "SFCamera-Regular", size: 18)!]
+        navigationBarAppearance.backgroundColor = nil
+        navigationBarAppearance.setBackgroundImage(UIImage(), for: .default)
+        navigationBarAppearance.shadowImage = UIImage()
+ 
         IQKeyboardManager.shared.enable = true
         IQKeyboardManager.shared.enableAutoToolbar = true
         IQKeyboardManager.shared.shouldShowToolbarPlaceholder = false
         
         FirebaseConfiguration.shared.setLoggerLevel(.min)
-                
+        Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33")
+        
         return true
     }
+    
     
     @available(iOS 13.0, *)
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
@@ -82,7 +90,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
-        
     }
     
     func applicationDidBecomeActive(_ application: UIApplication) {

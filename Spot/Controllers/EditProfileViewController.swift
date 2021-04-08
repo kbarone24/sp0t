@@ -12,25 +12,30 @@ import Photos
 import RSKImageCropper
 import Mixpanel
 
-class EditProfileViewController: UIViewController, UITextFieldDelegate {
+class EditProfileViewController: UIViewController {
     
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     let db = Firestore.firestore()
     
     unowned var profileVC: ProfileViewController!
-    var didOpenPicker = false
+    var usernameText = ""
+    
+    var newProfilePic: UIImage!
+    var newName: String!
+    var newUsername: String!
+    var newCity: String!
     
     var imageView: UIImageView!
-    
-    var bioContainer: UIView!
-    var nameView, usernameView, cityView, bioView: UITextView!
-    var line5: UIView!
+    var statusIcon: UIImageView!
+    var nameField, usernameField, cityField: UITextField!
     
     var errorBox: UIView!
-    var errorText: UILabel!
+    var errorLabel: UILabel!
     var saveButton: UIButton!
     
-    ///let stockProfilePicURL = "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2FProfileActive3x.png?alt=media&token=91e9cab9-70a8-4d31-9866-c3861c8b7b89"
+    var usernameIndicator: CustomActivityIndicator!
+    var loadingIndicator: CustomActivityIndicator!
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,6 +50,7 @@ class EditProfileViewController: UIViewController, UITextFieldDelegate {
     }
     
     func addHeader() {
+        
         let headerView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 40))
         headerView.backgroundColor = nil
         view.addSubview(headerView)
@@ -64,8 +70,8 @@ class EditProfileViewController: UIViewController, UITextFieldDelegate {
         cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
         headerView.addSubview(cancelButton)
         
-        saveButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 60, y: 13, width: 50, height: 18))
-        saveButton.titleEdgeInsets = UIEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
+        saveButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 66, y: 7, width: 62, height: 30))
+        saveButton.titleEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         saveButton.setTitle("Save", for: .normal)
         saveButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
         saveButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
@@ -75,151 +81,178 @@ class EditProfileViewController: UIViewController, UITextFieldDelegate {
     
     func addImageView() {
         
-        let imageContainer = UIView(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 100))
+        let imageContainer = UIView(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 150))
         imageContainer.backgroundColor = nil
         view.addSubview(imageContainer)
-        
-        let profileLabel = UILabel(frame: CGRect(x: 14, y: 0, width: 100, height: 17))
-        profileLabel.text = "Profile pic"
-        profileLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        profileLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
-        imageContainer.addSubview(profileLabel)
-        
-        imageView = UIImageView(frame: CGRect(x: 14, y: 27, width: 64, height: 64))
+                
+        imageView = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 58, y: 0, width: 116, height: 116))
         imageView.image = profileVC.userInfo.profilePic
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 32
-        imageView.isUserInteractionEnabled = true 
+        imageView.layer.cornerRadius = imageView.frame.width/2
         imageContainer.addSubview(imageView)
         
-        let imageMask = UIView(frame: CGRect(x: 0, y: 0, width: 64, height: 64))
-        imageMask.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        imageView.addSubview(imageMask)
+        let gradient = CAGradientLayer()
+        gradient.frame = imageView.bounds
+        gradient.colors = [
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0.81).cgColor
+        ]
+        gradient.locations = [0, 1]
+        gradient.startPoint = CGPoint(x: 0.5, y: 0.5)
+        gradient.endPoint = CGPoint(x: 0.5, y: 1.0)
+        imageView.layer.addSublayer(gradient)
         
-        /// add edge insets so add icon covers everything and receives all touches
-        let addIcon = UIButton(frame: CGRect(x: 0, y: 0, width: 64, height: 64))
-        addIcon.imageEdgeInsets = UIEdgeInsets(top: 15, left: 21, bottom: 15, right: 21)
-        addIcon.setImage(UIImage(named: "EditProfilePic"), for: .normal)
-        addIcon.imageView?.contentMode = .scaleAspectFill
-        addIcon.addTarget(self, action: #selector(openCamera(_:)), for: .touchUpInside)
-        imageView.addSubview(addIcon)
+        let changeLabel = UILabel(frame: CGRect(x: 0, y: imageView.bounds.maxY - 33, width: imageView.bounds.width, height: 18))
+        changeLabel.text = "Change"
+        changeLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        changeLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        changeLabel.textAlignment = .center
+        imageView.addSubview(changeLabel)
+        
+        let imageButton = UIButton(frame: CGRect(x: imageView.frame.minX - 10, y: imageView.frame.minY - 10, width: imageView.frame.width + 20, height: imageView.frame.height + 20))
+        imageButton.backgroundColor = nil
+        imageButton.addTarget(self, action: #selector(openCamera(_:)), for: .touchUpInside)
+        imageContainer.addSubview(imageButton)
     }
     
     func addTextViews() {
-        
-        let nameContainer = UIView(frame: CGRect(x: 0, y: 160, width: UIScreen.main.bounds.width, height: 48.5))
+        /// add name fields
+        let nameContainer = UIView(frame: CGRect(x: 0, y: 210, width: UIScreen.main.bounds.width, height: 55))
         nameContainer.backgroundColor = nil
         view.addSubview(nameContainer)
-        
-        let line = UIView(frame: CGRect(x: 14, y: 0, width: UIScreen.main.bounds.width - 28, height: 1.5))
-        line.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
-        nameContainer.addSubview(line)
-        
-        let nameLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 60, height: 17))
+                
+        let nameLabel = UILabel(frame: CGRect(x: 14, y: 0, width: 60, height: 12))
         nameLabel.text = "Name"
         nameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         nameLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
         nameContainer.addSubview(nameLabel)
         
-        nameView = UITextView(frame: CGRect(x: 88, y: 11, width: UIScreen.main.bounds.width - 102, height: 22))
-        nameView.backgroundColor = nil
-        nameView.tag = 0
-        nameView.autocorrectionType = .no
-        nameView.text = profileVC.userInfo.name
-        nameView.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        nameContainer.addSubview(nameView)
+        nameField = UITextField(frame: CGRect(x: 14, y: nameLabel.frame.maxY + 3, width: UIScreen.main.bounds.width - 28, height: 28))
+        nameField.backgroundColor = nil
+        nameField.tag = 0
+        nameField.autocapitalizationType = .words
+        nameField.autocorrectionType = .no
+        nameField.text = profileVC.userInfo.name
+        nameField.font = UIFont(name: "SFCamera-Regular", size: 17)
+        nameField.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+        nameContainer.addSubview(nameField)
         
-        let usernameContainer = UIView(frame: CGRect(x: 0, y: 208.5, width: UIScreen.main.bounds.width, height: 48.5))
+        let line1 = UIView(frame: CGRect(x: 0, y: 53.5, width: UIScreen.main.bounds.width, height: 1.5))
+        line1.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
+        nameContainer.addSubview(line1)
+
+        /// add username fields
+        let usernameContainer = UIView(frame: CGRect(x: 0, y: nameContainer.frame.maxY, width: UIScreen.main.bounds.width, height: 70))
         usernameContainer.backgroundColor = nil
         view.addSubview(usernameContainer)
-        
-        let line1 = UIView(frame: CGRect(x: 14, y: 0, width: UIScreen.main.bounds.width - 28, height: 1.5))
-        line1.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
-        usernameContainer.addSubview(line1)
-        
-        let usernameLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 65, height: 17))
+                
+        let usernameLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 65, height: 12))
         usernameLabel.text = "Username"
         usernameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         usernameLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
         usernameContainer.addSubview(usernameLabel)
+                
+        let atLabel = UILabel(frame: CGRect(x: 14, y: usernameLabel.frame.maxY + 10, width: 18, height: 16))
+        atLabel.text = "@"
+        atLabel.textColor =  UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+        atLabel.font = UIFont(name: "SFCamera-Regular", size: 17)
+        usernameContainer.addSubview(atLabel)
         
-        usernameView = UITextView(frame: CGRect(x: 88, y: 11, width: UIScreen.main.bounds.width - 102, height: 22))
-        usernameView.backgroundColor = nil
-        usernameView.tag = 1
-        usernameView.autocorrectionType = .no
-        usernameView.autocapitalizationType = .none
-        usernameView.delegate = self
-        usernameView.text = profileVC.userInfo.username
-        usernameView.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        usernameContainer.addSubview(usernameView)
+        usernameField = UITextField(frame: CGRect(x: atLabel.frame.maxX, y: usernameLabel.frame.maxY + 7, width: UIScreen.main.bounds.width - 102, height: 22))
+        usernameField.backgroundColor = nil
+        usernameField.tag = 1
+        usernameField.autocorrectionType = .no
+        usernameField.autocapitalizationType = .none
+        usernameField.delegate = self
+        usernameField.text = profileVC.userInfo.username
+        usernameField.font = UIFont(name: "SFCamera-Regular", size: 17)
+        usernameField.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+        usernameField.addTarget(self, action: #selector(usernameChanged(_:)), for: .editingChanged)
+        usernameContainer.addSubview(usernameField)
         
-        let cityContainer = UIView(frame: CGRect(x: 0, y: 257, width: UIScreen.main.bounds.width, height: 48.5))
+        statusIcon = UIImageView(frame: CGRect(x: usernameField.frame.maxX + 10, y: usernameField.frame.minY + 1, width: 20, height: 20))
+        statusIcon.image = UIImage()
+        usernameContainer.addSubview(statusIcon)
+                
+        let line2 = UIView(frame: CGRect(x: 0, y: 68.5, width: UIScreen.main.bounds.width, height: 1.5))
+        line2.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
+        usernameContainer.addSubview(line2)
+
+        /// add city fields
+        
+        let cityContainer = UIView(frame: CGRect(x: 0, y: usernameContainer.frame.maxY, width: UIScreen.main.bounds.width, height: 70))
         cityContainer.backgroundColor = nil
         view.addSubview(cityContainer)
-        
-        let line2 = UIView(frame: CGRect(x: 14, y: 0, width: UIScreen.main.bounds.width - 28, height: 1.5))
-        line2.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
-        cityContainer.addSubview(line2)
-        
-        let cityLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 65, height: 17))
+                
+        let cityLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 65, height: 12))
         cityLabel.text = "Home city"
         cityLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
         cityContainer.addSubview(cityLabel)
         
-        cityView = UITextView(frame: CGRect(x: 88, y: 11, width: UIScreen.main.bounds.width - 102, height: 22))
-        cityView.tag = 2
-        cityView.delegate = self
-        cityView.text = profileVC.userInfo.currentLocation
-        cityView.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        cityView.backgroundColor = nil
-        cityContainer.addSubview(cityView)
-                
-        bioContainer = UIView(frame: CGRect(x: 0, y: 305.5, width: UIScreen.main.bounds.width, height: 50))
-        bioContainer.backgroundColor = nil
-        view.addSubview(bioContainer)
+        let cityIcon = UIImageView(frame: CGRect(x: 14, y: cityLabel.frame.maxY + 9, width: 12.14, height: 16.35))
+        cityIcon.image = UIImage(named: "ProfileCityIcon")
+        cityContainer.addSubview(cityIcon)
+
+        cityField = UITextField(frame: CGRect(x: cityIcon.frame.maxX + 6, y: cityLabel.frame.maxY + 7, width: UIScreen.main.bounds.width - 102, height: 22))
+        cityField.tag = 2
+        cityField.delegate = self
+        cityField.text = profileVC.userInfo.currentLocation
+        cityField.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+        cityField.font = UIFont(name: "SFCamera-Regular", size: 17)
+        cityField.backgroundColor = nil
+        cityContainer.addSubview(cityField)
         
-        let line4 = UIView(frame: CGRect(x: 14, y: 0, width: UIScreen.main.bounds.width - 28, height: 1.5))
-        line4.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
-        bioContainer.addSubview(line4)
+        let line3 = UIView(frame: CGRect(x: 0, y: 68.5, width: UIScreen.main.bounds.width, height: 1.5))
+        line3.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
+        cityContainer.addSubview(line3)
         
-        let bioLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 65, height: 17))
-        bioLabel.text = "Bio"
-        bioLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        bioLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
-        bioContainer.addSubview(bioLabel)
-        
-        bioView = UITextView(frame: CGRect(x: 88, y: 11, width: UIScreen.main.bounds.width - 102, height: 22))
-        bioView.backgroundColor = nil
-        bioView.tag = 4
-        bioView.delegate = self
-        bioView.isScrollEnabled = false
-        bioView.text = profileVC.userInfo.userBio
-        bioView.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        bioContainer.addSubview(bioView)
-                
-        line5 = UIView(frame: CGRect(x: 14, y: 48.5, width: UIScreen.main.bounds.width - 28, height: 1.5))
-        line5.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
-        bioContainer.addSubview(line5)
-        
-        resizeTextView()
-        
+        /// add error box
         errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 150, width: UIScreen.main.bounds.width, height: 32))
-        errorBox.backgroundColor = UIColor(red:0.35, green:0, blue:0.04, alpha:1)
+        errorBox.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
         view.addSubview(errorBox)
         errorBox.isHidden = true
         
         //Load error text
-        errorText = UILabel(frame: CGRect(x: 0, y: 6, width: UIScreen.main.bounds.width, height: 18))
-        errorText.lineBreakMode = .byWordWrapping
-        errorText.numberOfLines = 0
-        errorText.textColor = UIColor.white
-        errorText.textAlignment = .center
-        errorText.text = "this is a generic placeholder error message"
-        errorText.font = UIFont(name: "SFCamera-Regular", size: 14)!
-        errorBox.addSubview(errorText)
-        errorText.isHidden = true
+        errorLabel = UILabel(frame: CGRect(x: 0, y: 6, width: UIScreen.main.bounds.width, height: 18))
+        errorLabel.lineBreakMode = .byWordWrapping
+        errorLabel.numberOfLines = 0
+        errorLabel.textColor = UIColor.white
+        errorLabel.textAlignment = .center
+        errorLabel.text = "this is a generic placeholder error message"
+        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 14)!
+        errorBox.addSubview(errorLabel)
+        errorLabel.isHidden = true
+        
+        usernameIndicator = CustomActivityIndicator(frame: CGRect(x: UIScreen.main.bounds.width/2 - 29, y: 149, width: 20, height: 20))
+        usernameIndicator.isHidden = true
+        view.addSubview(usernameIndicator)
+
+        loadingIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 250, width: UIScreen.main.bounds.width, height: 30))
+        loadingIndicator.isHidden = true
+        view.addSubview(loadingIndicator)
+        
+        setAvailable()
     }
+    
+    func setAvailable() {
+        usernameIndicator.stopAnimating()
+        statusIcon.image = UIImage(named: "UsernameAvailable")
+        saveButton.alpha = 1.0
+    }
+    
+    func setUnavailable() {
+        usernameIndicator.stopAnimating()
+        statusIcon.image = UIImage(named: "UsernameTaken")
+        saveButton.alpha = 0.65
+    }
+    
+    func setEmpty() {
+        usernameIndicator.stopAnimating()
+        statusIcon.image = UIImage()
+        saveButton.alpha = 0.65
+    }
+
     
     @objc func cancelTap(_ sender: UIButton) {
         self.dismiss(animated: true, completion: nil)
@@ -227,78 +260,104 @@ class EditProfileViewController: UIViewController, UITextFieldDelegate {
     
     @objc func saveTap(_ sender: UIButton) {
         
-        saveButton.isEnabled = false
+        newName = nameField.text ?? ""
+        newCity = cityField.text ?? ""
         
-        if nameView.text!.isEmpty { nameView.text = "" }
-        if cityView.text!.isEmpty { cityView.text = "" }
-        if bioView.text!.isEmpty { bioView.text = "" }
-        
-        profileVC.userInfo.name = nameView.text
-        profileVC.userInfo.currentLocation = cityView.text
-        profileVC.userInfo.userBio = bioView.text
+        sender.isEnabled = false
+        loadingIndicator.startAnimating()
 
-        if didOpenPicker { updateProfileImage() }
+        guard var username = usernameField.text?.lowercased() else { return }
+        username = username.trimmingCharacters(in: .whitespaces)
+        if username == profileVC.userInfo.username { self.updateUserInfo(); return }
         
-        ///check for valid username
-        let whiteSpace = " "
-        if usernameView.text == profileVC.userInfo.username {
-            self.updateUserInfo()
-            return
-        } else if (usernameView.text.contains(whiteSpace)) {
-            self.showErrorMessage(message: "Please enter a valid username (no spaces)")
-        } else if self.containsSpecialCharacters(username: usernameView.text) {
-            self.showErrorMessage(message: "Please enter a valid username (no special characters)")
-        } else if usernameView.text!.isEmpty {
-            self.showErrorMessage(message: "Please enter a valid username")
-        } else {
-            Mixpanel.mainInstance().track(event: "EditProfileSave")
+        usernameAvailable(username: username) { (errorMessage) in
             
-            usernameView.text! = usernameView.text!.lowercased()
-            let usersRef = db.collection("usernames");
-            let query = usersRef.whereField("username", isEqualTo: usernameView.text!)
             
-            query.getDocuments(completion: { [weak self] (snap, err) in
-                guard let self = self else { return }
+            if errorMessage != "" {
+                self.errorBox.isHidden = false
+                self.errorLabel.isHidden = false
+                self.errorLabel.text = errorMessage
                 
-                if err != nil {
-                    self.updateUserInfo()
-                    return
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+                    guard let self = self else { return }
+                    self.errorLabel.isHidden = true
+                    self.errorBox.isHidden = true
                 }
                 
-                if (snap?.documents.count)! > 0 {
-                    self.showErrorMessage(message: "Username already in use")
+            } else {
                 
-                } else {
-                    self.removeFromUsernames(username: self.profileVC.userInfo.username)
-                    
-                    self.profileVC.userInfo.username = self.usernameView.text!
-                    let usernameID = UUID().uuidString
-                    self.db.collection("usernames").document(usernameID).setData(["username" : self.profileVC.userInfo.username])
-                    
-                    self.updateUserInfo()
-                }
-            })
+                Mixpanel.mainInstance().track(event: "EditProfileSave")
+                
+                let oldUsername = self.profileVC.userInfo.username
+                DispatchQueue.global(qos: .utility).async { self.removeFromUsernames(username: oldUsername) }
+                
+                self.newUsername = username
+                
+                let usernameID = UUID().uuidString
+                self.db.collection("usernames").document(usernameID).setData(["username" : username])
+                
+                self.updateUserInfo()
+            }
         }
     }
     
-    func showErrorMessage(message: String) {
-        errorBox.isHidden = false
-        errorText.isHidden = false
-        errorText.text = message
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-            guard let self = self else { return }
-            self.errorText.isHidden = true
-            self.errorBox.isHidden = true
-        }
-        saveButton.isEnabled = true
+    @objc func usernameChanged(_ sender: UITextField) {
+        
+        setEmpty()
+
+        var lowercaseUsername = sender.text?.lowercased() ?? ""
+        lowercaseUsername = lowercaseUsername.trimmingCharacters(in: .whitespaces)
+
+        usernameText = lowercaseUsername
+        if usernameText == "" { return }
+
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.runUsernameQuery), object: nil)
+        self.perform(#selector(self.runUsernameQuery), with: nil, afterDelay: 0.4)
     }
     
-    func containsSpecialCharacters(username: String) -> Bool {
-        let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.")
-        if username.rangeOfCharacter(from: characterset.inverted) != nil {
-            return true
+    @objc func backTapped(_ sender: UIButton){
+        self.navigationController?.popViewController(animated: true)
+    }
+        
+    @objc func runUsernameQuery() {
+        
+        let localUsername = self.usernameText
+        setEmpty()
+        usernameIndicator.startAnimating()
+        
+        usernameAvailable(username: localUsername) { (errorMessage) in
+            
+            if localUsername != self.usernameText { return }
+            
+            if errorMessage != "" {
+                self.setUnavailable()
+            } else {
+                self.setAvailable()
+            }
         }
-        return false
+    }
+    
+    func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void) {
+        
+        if username == "" { completion("Invalid username"); return }
+        if username == profileVC.userInfo.username { completion(""); return } /// users original username
+        if !isValidUsername(username: username) { completion("invalid username"); return }
+        
+        let db = Firestore.firestore()
+        let usersRef = db.collection("usernames")
+        let query = usersRef.whereField("username", isEqualTo: username)
+        
+        query.getDocuments(completion: { (snap, err) in
+
+            if err != nil { completion("an error occurred"); return }
+            if username != self.usernameText { completion("username already in use"); return }
+            
+            if (snap?.documents.count)! > 0 {
+                completion("Username already in use")
+            } else {
+                completion("")
+            }
+        })
     }
     
     func removeFromUsernames(username: String) {
@@ -306,29 +365,55 @@ class EditProfileViewController: UIViewController, UITextFieldDelegate {
         query.getDocuments { (snap, err) in
             if err == nil {
                 for doc in snap!.documents {
-                    print("remove from usernames", username)
                     self.db.collection("usernames").document(doc.documentID).delete()
                 }
             }
         }
     }
+
+    
+    func showErrorMessage(message: String) {
+        
+        errorBox.isHidden = false
+        errorLabel.isHidden = false
+        errorLabel.text = message
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            guard let self = self else { return }
+            self.errorLabel.isHidden = true
+            self.errorBox.isHidden = true
+        }
+        saveButton.isEnabled = true
+    }
+        
     
     func updateUserInfo() {
         
         let ref = self.db.collection("users").document(self.uid)
-        ref.updateData(["name" : profileVC.userInfo.name,
-                        "currentLocation" : profileVC.userInfo.currentLocation,
-                        "phone": profileVC.userInfo.phone ?? "",
-                        "userBio" : profileVC.userInfo.userBio,
-                        "username" : profileVC.userInfo.username])
+        ref.updateData(["name" : newName!,
+                        "currentLocation" : newCity!,
+                        "lowercaseName": newName!.lowercased()])
                 
-        self.profileVC.reloadProfile()
-        self.saveButton.isEnabled = true
+        profileVC.userInfo.name = newName
+        profileVC.userInfo.currentLocation = newCity
+        if newUsername != nil {
+            profileVC.userInfo.username = newUsername
+            ref.updateData(["username" : newUsername!])
+        }
         
-        self.dismiss(animated: true, completion: nil)
+        if newProfilePic == nil  {
+            self.profileVC.reloadProfile()
+            self.saveButton.isEnabled = true
+            self.dismiss(animated: true, completion: nil)
+            return
+        }
+        
+        profileVC.userInfo.profilePic = newProfilePic
+        updateProfileImage()
     }
     
     func updateProfileImage(){
+        
         let imageId = UUID().uuidString
         let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageId)")
         let image = imageView.image
@@ -354,15 +439,18 @@ class EditProfileViewController: UIViewController, UITextFieldDelegate {
                     urlStr = (url?.absoluteString)!
                     print(urlStr)
                     
-                    if self.profileVC != nil {
-                        self.profileVC.userInfo.imageURL = urlStr
-                        self.profileVC.reloadProfile()
-                    }
-
                     let values = ["imageURL": urlStr]
-                    self.db.collection("users").document(self.uid).setData(values, merge:true)
+                    self.db.collection("users").document(self.uid).setData(values, merge: true)
+                    
+                    self.profileVC.userInfo.imageURL = urlStr
+                    self.profileVC.userInfo.profilePic = self.newProfilePic ?? UIImage()
+                    self.profileVC.reloadProfile()
+                    self.saveButton.isEnabled = true
+                    self.dismiss(animated: true, completion: nil)
+                    return
+
                 })
-            }
+            } else { print("handle error")}
         }
     }
     
@@ -431,10 +519,10 @@ extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigati
     }
     
     func imageCropViewController(_ controller: RSKImageCropViewController, didCropImage croppedImage: UIImage, usingCropRect cropRect: CGRect, rotationAngle: CGFloat) {
-        self.imageView.image = croppedImage
-        self.profileVC.userInfo.profilePic = croppedImage
-        self.didOpenPicker = true
-        self.dismiss(animated: true, completion: nil)
+        imageView.image = croppedImage
+        newProfilePic = croppedImage
+        profileVC.userInfo.profilePic = croppedImage
+        dismiss(animated: true, completion: nil)
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
@@ -464,41 +552,29 @@ extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigati
     }
 }
 
-extension EditProfileViewController: UITextViewDelegate {
+extension EditProfileViewController: UITextFieldDelegate {
     
-    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         
-        let currentText = textView.text ?? ""
-        
+        let currentText = textField.text ?? ""
         guard let stringRange = Range(range, in: currentText) else { return false }
+        let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
+
+        switch textField.tag {
         
-        let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
-        
-        switch textView.tag {
         case 0:
             return updatedText.count <= 25
+            
         case 1:
             return updatedText.count <= 16
+            
         case 2:
-            return updatedText.count <= 25
-        case 3:
-            return true
+            return updatedText.count <= 40
+            
         default:
-            resizeTextView()
-            return updatedText.count <= 170
+            return false
         }
-    }
-    
-    func resizeTextView() {
-        var size = bioView.sizeThatFits(CGSize(width: bioView.frame.size.width, height: 200))
-        /// resize to adjust textView to line changes
-        if size.height == 30 { size = CGSize(width: size.width, height: 22) }
-        if size.height != bioView.frame.size.height {
-            let diff = size.height - bioView.frame.height
-            bioContainer.frame = CGRect(x: bioContainer.frame.minX, y: bioContainer.frame.minY, width: bioContainer.frame.width, height: bioContainer.frame.height + diff)
-            bioView.frame = CGRect(x: bioView.frame.minX, y: bioView.frame.minY, width: bioView.frame.width, height: bioView.frame.height + diff)
-            line5.frame = CGRect(x: 14, y: bioContainer.frame.height - 1.5, width: UIScreen.main.bounds.width - 28, height: 1.5)
-        }
+
     }
 }
 

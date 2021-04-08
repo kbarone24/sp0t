@@ -89,13 +89,14 @@
         <!--Drafts View Controller-->
         <scene sceneID="WZ8-Ef-YVv">
             <objects>
-                <viewController storyboardIdentifier="Drafts" id="NC7-bk-Gcm" customClass="DraftsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="Drafts" automaticallyAdjustsScrollViewInsets="NO" id="NC7-bk-Gcm" customClass="DraftsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="ah1-3m-XZl">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="FEq-9I-OZr"/>
                         <color key="backgroundColor" name="SpotBlack"/>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="kFh-Ti-U4s" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -119,7 +120,7 @@
         <!--Location Picker Controller-->
         <scene sceneID="bib-c0-1uY">
             <objects>
-                <viewController storyboardIdentifier="LocationPicker" id="rFw-uf-A2V" customClass="LocationPickerController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="LocationPicker" extendedLayoutIncludesOpaqueBars="YES" automaticallyAdjustsScrollViewInsets="NO" id="rFw-uf-A2V" customClass="LocationPickerController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="BmR-EZ-zXL">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -134,7 +135,7 @@
         <!--Choose Spot Controller-->
         <scene sceneID="gbT-GF-W7Q">
             <objects>
-                <viewController storyboardIdentifier="ChooseSpot" id="GTD-QH-7Qs" customClass="ChooseSpotController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ChooseSpot" interfaceStyle="dark" id="GTD-QH-7Qs" customClass="ChooseSpotController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="LGj-RO-0k1">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -149,7 +150,7 @@
         <!--Upload Post Controller-->
         <scene sceneID="STg-iB-YEb">
             <objects>
-                <viewController storyboardIdentifier="UploadPost" id="WMx-mZ-XgP" customClass="UploadPostController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="UploadPost" extendedLayoutIncludesOpaqueBars="YES" id="WMx-mZ-XgP" customClass="UploadPostController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="kdV-i1-Jo7">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -180,7 +181,7 @@
     </scenes>
     <color key="tintColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
     <resources>
-        <image name="CameraLaunchButton" width="35" height="27"/>
+        <image name="CameraLaunchButton" width="36" height="27"/>
         <namedColor name="SpotBlack">
             <color red="0.070588235294117646" green="0.070588235294117646" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>

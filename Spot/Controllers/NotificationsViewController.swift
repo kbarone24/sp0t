@@ -24,7 +24,8 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     lazy var contentNotificationList: [ContentNotification] = []
     lazy var notificationList: [(senderID: String, type: String, timestamp: Firebase.Timestamp, notiID: String)] = []
     lazy var friendRequestsPending: [FriendRequest] = []
-    
+    lazy var removedRequestList: [String] = []
+
     let acceptNotificationName = Notification.Name("friendRequestAccept")
     let deleteNotificationName = Notification.Name("friendRequestReject")
     
@@ -38,6 +39,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     lazy var sentFromPending = false
     lazy var active = false
     
+    
     //finish passing method reloads data if friend request action was taken in profile
     
     
@@ -46,20 +48,23 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         NotificationCenter.default.addObserver(self, selector: #selector(notifyAccept(_:)), name: acceptNotificationName, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyReject(_:)), name: deleteNotificationName, object: nil)
-        
+        NotificationCenter.default.addObserver(self, selector: #selector(updateUser(_:)), name: NSNotification.Name("InitialUserLoad"), object: nil)
+
         NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [unowned self] notification in
             ///stop indicator freeze after view enters background
             resumeIndicatorAnimation()
         }
         
-        self.setUpViews()
-        getNotifications(refresh: false)
-        getFriendRequests()
-        removeSeen()
-        
+        setUpViews()
         /// causes profile to freeze if its already been scrolled past 0
         let pushManager = PushNotificationManager(userID: uid)
         pushManager.registerForPushNotifications()
+
+        if mapVC.userInfo == nil { return } /// wait to run requests on user load
+        
+        getNotifications(refresh: false)
+        getFriendRequests()
+        removeSeen()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -77,16 +82,17 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             getNotifications(refresh: true)
         }
         
+        if children.count != 0 { return }
         resetView()
-        markNotisSeen()
         resumeIndicatorAnimation()
+        DispatchQueue.global().async { self.markNotisSeen() }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
+        
         super.viewWillDisappear(false)
         active = false
         
-        mapVC.mapMask.removeFromSuperview()
         mapVC.customTabBar.tabBar.items?[3].image = UIImage(named: "NotificationsInactive")?.withRenderingMode(.alwaysOriginal)
         mapVC.customTabBar.tabBar.items?[3].selectedImage = UIImage(named: "NotificationsActive")?.withRenderingMode(.alwaysOriginal)
     }
@@ -125,16 +131,17 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         let annotations = mapVC.mapView.annotations
         mapVC.mapView.removeAnnotations(annotations)
         
-        mapVC.prePanY = 0
-        mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-        
         mapVC.hideNearbyButtons()
         mapVC.hideSpotButtons()
         mapVC.customTabBar.tabBar.isHidden = false
         mapVC.setUpNavBar()
         
-        mapVC.mapMask.backgroundColor = UIColor(named: "SpotBlack")!.withAlphaComponent(0.7)
-        mapVC.mapView.addSubview(mapVC.mapMask)
+        mapVC.prePanY = 0
+        mapVC.removeBottomBar()
+        
+        UIView.animate(withDuration: 0.15) {
+            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        }
     }
     
     func updateContentPosts() {
@@ -161,10 +168,9 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         let friendRequestQuery = notiRef.whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending").order(by: "timestamp", descending: true)
         
         listener1 = friendRequestQuery.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
-            //   if (snap.count != 0)
+
             if err == nil && !(snap?.metadata.isFromCache ?? false) {
-                //if query returns 0, refresh if the other query is done running
-                
+
                 docLoop: for document in snap!.documents {
                     
                     let id = document.get("senderID") as! String
@@ -183,12 +189,13 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         if endDocument != nil && !refresh { query = query.start(atDocument: endDocument)}
         
         listener2 = query.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
-            //   if (snap.count != 0)
+
             if err != nil  { return }
+            if snap?.metadata.isFromCache ?? false { return }
             
             else {
                 
-                if(snap!.documents.count <= 1) {
+                if (snap!.documents.count <= 1) {
                     //refresh on 0 if friendrequest query is done (for empty state there will be 1 noti from b0t)
                     self.refresh = .noRefresh
                     self.removeRefresh()
@@ -237,15 +244,17 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         getUserInfo(userID: userID, mapVC: mapVC) { (user) in
             let noti = FriendRequest(notiID: notiID, userInfo: user, timestamp: timestamp, accepted: accepted)
-            if self.friendRequestList.contains(where: { $0.notiID == notiID }) || self.friendRequestsPending.contains(where: {$0.notiID == notiID}) { return }
+            if self.friendRequestList.contains(where: { $0.notiID == notiID }) || self.friendRequestsPending.contains(where: {$0.notiID == notiID}) || self.removedRequestList.contains(where: {$0 == notiID}) { return }
             
             if (noti.accepted) {
                 let type = "friendRequestAccepted"
                 self.friendRequestList.append(noti)
                 self.notificationList.append((senderID: noti.userInfo.id ?? "", type: type, timestamp: noti.timestamp, notiID: noti.notiID))
                 self.notificationList = self.notificationList.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
+                self.removeRefresh()
                 if self.refresh == .refreshing { self.refresh = .yesRefresh }
-                /// don't refresh here due to friend requests loading before the rest of notificaitons
+                DispatchQueue.main.async { self.tableView.reloadData() }
+
             } else {
                 self.friendRequestsPending.append(noti)
                 DispatchQueue.main.async { self.tableView.reloadData() }
@@ -258,6 +267,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         getUserInfo(userID: userID, mapVC: mapVC) { (userInfo) in
             self.getMapPost(postID: postID, mapVC: self.mapVC) { (post) in
                 
+                if post.userInfo.id == "" { return }
                 /// update post notification
                 if self.notificationList.contains(where: {$0.notiID == notiID}) {
                     if let contentNoti = self.contentNotificationList.first(where: {$0.notiID == notiID}) {
@@ -273,6 +283,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 self.notificationList = self.notificationList.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
                 self.removeRefresh()
                 if self.refresh == .refreshing { self.refresh = .yesRefresh }
+                print("reload content post")
                 DispatchQueue.main.async { self.tableView.reloadData() }
             }
         }
@@ -292,7 +303,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                     info.id = doc!.documentID
                     
                     completion(info)
-                } catch { return }
+                } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "")); return }
             }
         }
     }
@@ -319,7 +330,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 self.prefetchImages(imageURLs: info.imageURLs)
                 
                 self.getUserInfo(userID: info.posterID, mapVC: mapVC) { (userInfo) in
-                    info.userInfo = userInfo
+                    if userInfo.id != "" { info.userInfo = userInfo }
                     dispatch.leave()
                 }
                 
@@ -355,12 +366,13 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { (commentSnap, err) in
             
-            if err != nil { return }
-
+            if err != nil { completion(commentList); return }
+            if commentSnap!.documents.count == 0 { completion(commentList); return }
+            
             for doc in commentSnap!.documents {
                 do {
                     let commentInf = try doc.data(as: MapComment.self)
-                    guard var commentInfo = commentInf else { return }
+                    guard var commentInfo = commentInf else { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
                     
                     commentInfo.id = doc.documentID
                     commentInfo.seconds = commentInfo.timestamp.seconds
@@ -370,15 +382,10 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                         commentList.append(commentInfo)
                         commentList.sort(by: {$0.seconds < $1.seconds})
                     }
+                                        
+                    if doc == commentSnap!.documents.last { completion(commentList) }
                     
-                    let docCount = commentSnap!.documents.count
-                    let commentCount = commentList.count
-                    
-                    if commentCount == docCount {
-                        completion(commentList)
-                    }
-                    
-                } catch { continue }
+                } catch { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
             }
         }
     }
@@ -448,7 +455,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return friendRequestsPending.count == 0 ? 0 : 45
+        return friendRequestsPending.count == 0 ? 0 : 42
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -471,7 +478,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 }
             }
             if currentRequest == nil { return blank! }
-            cell.setUpAll(request: currentRequest, currentUsername: self.mapVC.userInfo.username )
+            cell.setUpAll(request: currentRequest, currentUsername: self.mapVC.userInfo.username)
             cell.setUpAccepted()
             return cell
         } else {
@@ -496,48 +503,28 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         }
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let notiID = self.notificationList[indexPath.row].notiID
-        if let noti = self.contentNotificationList.first(where: {$0.notiID == notiID}) {
-            if let vc = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
-                
-                self.active = false
-                
-                let pList = [noti.post]
-                vc.postsList = pList
-                vc.selectedPostIndex = 0
-                vc.mapVC = self.mapVC
-                vc.parentVC = .notifications
-                
-                if noti.type == "commentComment" || noti.type == "commentTag" || noti.type == "comment" { vc.commentNoti = true }
-                
-                mapVC.title = ""
-                mapVC.customTabBar.tabBar.isHidden = true
-                mapVC.navigationController?.navigationBar.isTranslucent = true
-                mapVC.mapMask.removeFromSuperview()
-                
-                vc.view.frame = self.view.frame
-                self.addChild(vc)
-                self.view.addSubview(vc.view)
-                vc.didMove(toParent: self)
-                
-                self.mapVC.postsList = pList
-                let infoPass = ["selectedPost": 0, "firstOpen": true, "parentVC":  PostViewController.parentViewController.notifications] as [String : Any]
-                NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: infoPass)
-            }
-        }
+    @objc func updateUser(_ sender: NSNotification) {
+        /// run functions once map got userinfo
+        getNotifications(refresh: false)
+        getFriendRequests()
+        removeSeen()
     }
     
+    
     @objc func notifyAccept(_ notification:Notification) {
+        
         if let friendID = notification.userInfo?.first?.value as? String {
             if let index = self.friendRequestsPending.firstIndex(where: {$0.userInfo.id == friendID}) {
+                
                 let request = self.friendRequestsPending.remove(at: index)
+                self.removedRequestList.append(request.notiID)
+                
                 let interval = NSDate.now
                 let timestamp = Timestamp(date: interval)
                 request.timestamp = timestamp
                 
-                self.notificationList.insert((senderID: request.userInfo.id!, type: "friendRequestAccepted", timestamp: timestamp, notiID: request.notiID), at: 0)
-                self.friendRequestList.insert(request, at: 0)
+                notificationList.insert((senderID: request.userInfo.id!, type: "friendRequestAccepted", timestamp: timestamp, notiID: request.notiID), at: 0)
+                friendRequestList.insert(request, at: 0)
                 DispatchQueue.main.async { self.tableView.reloadData() }
             }
         }
@@ -545,8 +532,30 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     
     @objc func notifyReject(_ notification:Notification) {
         if let friendID = notification.userInfo?.first?.value as? String {
-            friendRequestsPending.removeAll(where: {$0.userInfo.id == friendID})
-            DispatchQueue.main.async { self.tableView.reloadData() }
+            if let index = self.friendRequestsPending.firstIndex(where: {$0.userInfo.id == friendID}) {
+                
+                let request = self.friendRequestsPending.remove(at: index)
+                self.removedRequestList.append(request.notiID)
+                DispatchQueue.main.async { self.tableView.reloadData() }
+
+            }
+        }
+    }
+    
+    func openProfile(user: UserProfile) {
+        if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
+         
+            vc.userInfo = user
+            vc.id = user.id!
+            
+            vc.mapVC = self.mapVC
+            active = false
+            mapVC.customTabBar.tabBar.isHidden = true
+            
+            vc.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - mapVC.tabBarClosedY)
+            self.addChild(vc)
+            view.addSubview(vc.view)
+            vc.didMove(toParent: self)
         }
     }
 }
@@ -600,7 +609,7 @@ class FriendRequestCell: UITableViewCell {
         userButton.addTarget(self, action: #selector(openProfile(_:)), for: .touchUpInside)
         self.addSubview(userButton)
         
-        time = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 80, y: 28, width: 40, height: 15))
+        time = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 80, y: 32, width: 40, height: 15))
         time.textColor = UIColor(red:0.78, green:0.78, blue:0.78, alpha:1.0)
         time.textAlignment = .right
         time.font = UIFont(name: "SFCamera-Regular", size: 12)
@@ -625,22 +634,14 @@ class FriendRequestCell: UITableViewCell {
         detail.sizeToFit()
         self.addSubview(detail)
         
-        acceptButton = UIButton(frame: CGRect(x: 103, y: 85, width: 95, height: 30))
-        acceptButton.layer.cornerRadius = 15
-        acceptButton.layer.borderWidth = 2
-        acceptButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-        acceptButton.backgroundColor = nil
-        acceptButton.setTitle("Accept", for: UIControl.State.normal)
-        acceptButton.setTitleColor(UIColor(named: "SpotGreen"), for: UIControl.State.normal)
-        acceptButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        acceptButton = UIButton(frame: CGRect(x: 97, y: 85, width: 104, height: 33))
+        acceptButton.setImage(UIImage(named: "AcceptButton"), for: UIControl.State.normal)
         acceptButton.addTarget(self, action: #selector(acceptTap(_:)), for: .touchUpInside)
         self.addSubview(acceptButton)
         
-        removeButton = UIButton(frame: CGRect(x: 210, y: 85, width: 95, height: 30))
+        removeButton = UIButton(frame: CGRect(x: acceptButton.frame.maxX + 10, y: 85, width: 95, height: 30))
         removeButton.backgroundColor = nil
         removeButton.layer.cornerRadius = 15
-        removeButton.layer.borderWidth = 2
-        removeButton.layer.borderColor = UIColor(red:0.61, green:0.61, blue:0.61, alpha:1).cgColor
         removeButton.setTitle("Remove", for: UIControl.State.normal)
         removeButton.setTitleColor(UIColor(red:0.61, green:0.61, blue:0.61, alpha:1), for: UIControl.State.normal)
         removeButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
@@ -683,8 +684,8 @@ class FriendRequestCell: UITableViewCell {
         
         if usernameLabel != nil { usernameLabel.text = "" }
         if detail != nil { detail.text = "" }
-        if acceptButton != nil { acceptButton.setImage(UIImage(), for: .normal); acceptButton.removeFromSuperview() }
-        if removeButton != nil { removeButton.setImage(UIImage(), for: .normal); removeButton.removeFromSuperview() }
+        if acceptButton != nil { acceptButton.setImage(UIImage(), for: .normal) }
+        if removeButton != nil { removeButton.setTitle("", for: .normal) }
         if acceptedLabel != nil { acceptedLabel.text = "" }
         if icon != nil { icon.image = UIImage() }
         if time != nil { time.text = "" }
@@ -698,19 +699,8 @@ class FriendRequestCell: UITableViewCell {
     @objc func openProfile(_ sender: UIButton) {
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
             if let notiVC = self.viewContainingController() as? NotificationsViewController {
-                vc.userInfo = self.userInfo
-                vc.id = userInfo.id!
                 
-                vc.mapVC = notiVC.mapVC
-                
-                notiVC.active = false
-                notiVC.mapVC.customTabBar.tabBar.isHidden = true
-                notiVC.mapVC.mapMask.removeFromSuperview()
-                
-                vc.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - notiVC.mapVC.tabBarClosedY)
-                notiVC.addChild(vc)
-                notiVC.view.addSubview(vc.view)
-                vc.didMove(toParent: notiVC)
+                notiVC.openProfile(user: self.userInfo!)
                 
             } else if let pendingVC = self.viewContainingController() as? PendingFriendRequestsController {
                 ///dismiss pending view controller before opening profile
@@ -720,7 +710,6 @@ class FriendRequestCell: UITableViewCell {
                 
                 pendingVC.notiVC.active = false
                 pendingVC.notiVC.mapVC.customTabBar.tabBar.isHidden = true
-                pendingVC.notiVC.mapVC.mapMask.removeFromSuperview()
                 pendingVC.notiVC.sentFromPending = true
                 
                 pendingVC.dismiss(animated: false, completion: nil)
@@ -734,23 +723,27 @@ class FriendRequestCell: UITableViewCell {
     }
     
     @objc func acceptTap(_ sender: UIButton) {
+        
         Mixpanel.mainInstance().track(event: "NotificationsAcceptRequest")
         self.acceptButton.setImage(UIImage(), for: .normal)
         self.removeButton.setImage(UIImage(), for: .normal)
         
         let friendID = userInfo.id!
-        acceptFriendRequest(friendID: friendID, uid: uid, username: username)
+        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID, uid: self.uid, username: self.username) }
+        
         let infoPass = ["friendID": friendID] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("friendRequestAccept"), object: nil, userInfo: infoPass)
     }
     
     @objc func removeTap(_ sender: UIButton) {
+        
         Mixpanel.mainInstance().track(event: "NotificationsRemoveRequest")
         self.acceptButton.setImage(UIImage(), for: .normal)
         self.removeButton.setImage(UIImage(), for: .normal)
         
         let friendID = userInfo.id!
         removeFriendRequest(friendID: friendID, uid: uid)
+        
         let infoPass = ["friendID": friendID] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("friendRequestReject"), object: nil, userInfo: infoPass)
     }
@@ -765,13 +758,16 @@ class ContentCell: UITableViewCell {
     var time: UILabel!
     var contentImage: UIImageView!
     var icon: UIImageView!
+    
     var userInfo: UserProfile!
+    var notification: ContentNotification!
     
     func setUpAll (notification: ContentNotification) {
         
         self.backgroundColor = UIColor(named: "SpotBlack")
         self.selectionStyle = .none
         self.userInfo = notification.userInfo
+        self.notification = notification
         
         resetCell()
                 
@@ -803,7 +799,7 @@ class ContentCell: UITableViewCell {
         self.addSubview(userButton)
         
         
-        time = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 80, y: 28, width: 40, height: 15))
+        time = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 80, y: 32, width: 40, height: 15))
         time.textColor = UIColor(red:0.78, green:0.78, blue:0.78, alpha:1.0)
         time.textAlignment = .right
         time.font = UIFont(name: "SFCamera-Regular", size: 12)
@@ -814,7 +810,7 @@ class ContentCell: UITableViewCell {
         icon = UIImageView(frame: CGRect(x: 25, y: 31, width: 19.5, height: 13))
         self.addSubview(icon)
         
-        detail = UILabel(frame: CGRect(x: 103, y: 43, width: UIScreen.main.bounds.width - 117, height: 15))
+        detail = UILabel(frame: CGRect(x: 103, y: 43, width: UIScreen.main.bounds.width - 188, height: 15))
         detail.textColor = UIColor(red:0.71, green:0.71, blue:0.71, alpha:1.0)
         detail.font = UIFont(name: "SFCamera-regular", size: 14)
         detail.isHidden = false
@@ -827,6 +823,8 @@ class ContentCell: UITableViewCell {
         contentImage.clipsToBounds = true
         contentImage.contentMode = .scaleAspectFill
         contentImage.isHidden = false
+        contentImage.isUserInteractionEnabled = true
+        contentImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openPost(_:))))
         self.addSubview(contentImage)
                 
         let contentURL = notification.post.imageURLs.first ?? ""
@@ -838,20 +836,20 @@ class ContentCell: UITableViewCell {
         if notification.type == "like" {
             detail.text = "liked your post"
             detail.sizeToFit()
-            
             var newFrame = icon.frame
             newFrame.size.width = 16
             newFrame.size.height = 16
             icon.frame = newFrame
             icon.image = UIImage(named: "LikeNotification") ?? UIImage()
+            
         } else if notification.type == "comment" {
             detail.text = "commented on your post"
             detail.sizeToFit()
-            
             var newFrame = icon.frame
             newFrame.size.height = 16
             newFrame.size.width = 16
             icon.frame = newFrame
+            
             icon.image = UIImage(named: "CommentNotification") ?? UIImage()
         } else if notification.type == "post" {
             detail.text = "posted at \(notification.post.spotName ?? "")"
@@ -860,6 +858,7 @@ class ContentCell: UITableViewCell {
             newFrame.size.height = 18
             icon.frame = newFrame
             icon.image = UIImage(named: "PostNotification") ?? UIImage()
+            
         } else if notification.type == "invite" {
             detail.text = "added you to a private spot"
             detail.sizeToFit()
@@ -868,6 +867,7 @@ class ContentCell: UITableViewCell {
             newFrame.size.width = 17
             icon.frame = newFrame
             icon.image = UIImage(named: "PrivateIcon") ?? UIImage()
+            
         } else if notification.type == "commentTag" {
             detail.text = "tagged you in a comment"
             detail.sizeToFit()
@@ -876,6 +876,7 @@ class ContentCell: UITableViewCell {
             newFrame.size.width = 16
             icon.frame = newFrame
             icon.image = UIImage(named: "CommentNotification") ?? UIImage()
+            
         } else if notification.type == "spotTag" {
             detail.text = "tagged you at a spot"
             detail.sizeToFit()
@@ -883,7 +884,8 @@ class ContentCell: UITableViewCell {
             newFrame.size.height = 20
             newFrame.size.width = 20
             icon.frame = newFrame
-            icon.image = UIImage(named: "BlackSpotIcon") ?? UIImage()
+            icon.image = UIImage(named: "PlainSpotIcon") ?? UIImage()
+            
         } else if notification.type == "postTag" {
             detail.text = "tagged you in a post"
             detail.sizeToFit()
@@ -891,6 +893,7 @@ class ContentCell: UITableViewCell {
             newFrame.size.height = 18
             icon.frame = newFrame
             icon.image = UIImage(named: "PostNotification") ?? UIImage()
+            
         } else if notification.type == "commentComment" {
             detail.text = "commented on \(notification.originalPoster)'s post"
             detail.sizeToFit()
@@ -899,6 +902,26 @@ class ContentCell: UITableViewCell {
             newFrame.size.width = 16
             icon.frame = newFrame
             icon.image = UIImage(named: "CommentNotification") ?? UIImage()
+            
+        } else if notification.type == "publicSpotAccepted" {
+            detail.text = "Your public submission was approved!"
+            detail.sizeToFit()
+            var newFrame = icon.frame
+            newFrame.size.height = 22
+            newFrame.size.width = 22
+            icon.frame = newFrame
+            icon.contentMode = .scaleAspectFit
+            icon.image = UIImage(named: "PublicSubmissionAccepted") ?? UIImage()
+            
+        } else if notification.type == "publicSpotRejected" {
+            detail.text = "Your spot was not approved for the public map"
+            detail.sizeToFit()
+            var newFrame = icon.frame
+            newFrame.size.height = 22
+            newFrame.size.width = 22
+            icon.frame = newFrame
+            icon.contentMode = .scaleAspectFit
+            icon.image = UIImage(named: "PublicSubmissionDenied") ?? UIImage()
         }
         
         contentImage.frame = CGRect(x: 103, y: detail.frame.maxY + 10, width: 50, height: 75)
@@ -928,57 +951,64 @@ class ContentCell: UITableViewCell {
     }
     
     @objc func openProfile(_ sender: UIButton) {
-        if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
-            if let notiVC = self.viewContainingController() as? NotificationsViewController {
-                
-                vc.userInfo = self.userInfo
-                vc.id = userInfo.id!
-                vc.mapVC = notiVC.mapVC
-                
-                notiVC.active = false
-                notiVC.mapVC.customTabBar.tabBar.isHidden = true
-                
-                vc.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - notiVC.mapVC.tabBarClosedY)
-                notiVC.addChild(vc)
-                notiVC.view.addSubview(vc.view)
-                vc.didMove(toParent: notiVC)
-            }
+        if let notiVC = self.viewContainingController() as? NotificationsViewController {
+            notiVC.openProfile(user: self.userInfo!)
+        }
+    }
+    
+    @objc func openPost(_ sender: UITapGestureRecognizer) {
+        
+        guard let notiVC = viewContainingController() as? NotificationsViewController else { return }
+        if let vc = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
+            
+            notiVC.active = false
+            
+            let pList = [notification.post]
+            vc.postsList = pList
+            vc.selectedPostIndex = 0
+            vc.mapVC = notiVC.mapVC
+            vc.parentVC = .notifications
+            
+            if notification.type == "commentComment" || notification.type == "commentTag" || notification.type == "comment" { vc.commentNoti = true }
+            
+            notiVC.mapVC.navigationItem.title = ""
+            notiVC.mapVC.customTabBar.tabBar.isHidden = true
+            notiVC.mapVC.navigationController?.navigationBar.removeShadow()
+            notiVC.mapVC.navigationController?.navigationBar.removeBackgroundImage()
+            notiVC.mapVC.toggleMapTouch(enable: true )
+            
+            vc.view.frame = notiVC.view.frame
+            notiVC.addChild(vc)
+            notiVC.view.addSubview(vc.view)
+            vc.didMove(toParent: notiVC)
+            
+            notiVC.mapVC.postsList = pList
+            let infoPass = ["selectedPost": 0, "firstOpen": true, "parentVC":  PostViewController.parentViewController.notifications] as [String : Any]
+            NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: infoPass)
         }
     }
 }
 
 class FriendRequestHeader: UITableViewHeaderFooterView {
+    
     var friendRequestsLabel: UILabel!
-    var friendRequestCountLabel: UILabel!
-    var seenDot: UIImageView!
     var tapArea: UIButton!
     
     func setUp(friendRequestCount: Int) {
         
         let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor(named: "SpotBlack")
+        backgroundView.backgroundColor = UIColor(red: 0.03, green: 0.604, blue: 0.604, alpha: 1)
         self.backgroundView = backgroundView
-        
-        resetCell()
-        
-        friendRequestsLabel = UILabel(frame: CGRect(x: 10, y: 17.5, width: 200, height: 15))
-        friendRequestsLabel.text = "Friend Requests"
-        friendRequestsLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+                
+        friendRequestsLabel = UILabel(frame: CGRect(x: 23, y: 12, width: 200, height: 18))
+        var labelText = "\(friendRequestCount) Friend Request"
+        if friendRequestCount > 1 { labelText += "s" }
+        friendRequestsLabel.text = labelText
+        friendRequestsLabel.font = UIFont(name: "SFCamera-Semibold", size: 14)
         friendRequestsLabel.textColor = .white
         friendRequestsLabel.textAlignment = .left
         self.addSubview(friendRequestsLabel)
-        
-        friendRequestCountLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 30, y: 20, width: 15, height: 10))
-        friendRequestCountLabel.font = UIFont(name: "SFCamera-Semibold", size: 14)
-        friendRequestCountLabel.textColor = .white
-        friendRequestCountLabel.text = String(friendRequestCount)
-        self.addSubview(friendRequestCountLabel)
-        
-        seenDot = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width - 45, y: 21, width: 12, height: 12))
-        let greenActive = UIImage(named: "GreenActiveDot") ?? UIImage()
-        seenDot.image = greenActive
-        self.addSubview(seenDot)
-        
+                
         tapArea = UIButton(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 40))
         tapArea.backgroundColor = nil
         tapArea.addTarget(self, action: #selector(openRequests(_:)), for: .touchUpInside)
@@ -1003,12 +1033,6 @@ class FriendRequestHeader: UITableViewHeaderFooterView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    func resetCell() {
-        if friendRequestsLabel != nil { friendRequestsLabel.text = "" }
-        if friendRequestCountLabel != nil { friendRequestCountLabel.text = "" }
-        if seenDot != nil { seenDot.image = UIImage() }
     }
 }
 

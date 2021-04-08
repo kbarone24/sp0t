@@ -10,199 +10,149 @@ import UIKit
 import Firebase
 import FirebaseFirestore
 import FirebaseAuth
+import Mixpanel
 
-//This file controls the resetView
 class ResetViewController: UIViewController {
-    
-    //Change status bar theme color white
-    override var preferredStatusBarStyle: UIStatusBarStyle {
-        return .lightContent
-    }
-    
-    //Initializes text field variable
-    var emailField: UITextField!
-    var confirmationSymbol: UIImageView!
-    var confirmationLayer: UILabel!
-    var emailLayer: UILabel!
-    var instructLayer: UILabel!
-    var resetBtn: UIButton!
-    var errorBox: UIView!
-    var errorTextLayer: UILabel!
-    var resetLabel: UILabel!
+        
     var emailLabel: UILabel!
+    var emailField: UITextField!
+    var descriptionLabel: UILabel!
+    var resetButton: UIButton!
+    
+    var activityIndicator: CustomActivityIndicator!
+    var errorBox: UIView!
+    var errorLabel: UILabel!
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        if emailField != nil { emailField.becomeFirstResponder() }
+        Mixpanel.mainInstance().track(event: "ResetOpen")
+    }
     
     override func viewDidLoad() {
         
         super.viewDidLoad()
         
-        //Display background image
-        var heightAdjust: CGFloat = 0
-        if (!(UIScreen.main.nativeBounds.height > 2300 || UIScreen.main.nativeBounds.height == 1792)) {
-            heightAdjust = 20
-        }
+        view.backgroundColor = UIColor(named: "SpotBlack")
+        navigationItem.title = "Password reset"
+
+        let backArrow = UIImage(named: "BackArrow")?.withRenderingMode(.alwaysOriginal)
+        navigationController?.navigationBar.backIndicatorImage = backArrow
+        navigationController?.navigationBar.backIndicatorTransitionMaskImage = backArrow
         
-        self.view.backgroundColor = UIColor(named: "SpotBlack")
-        
-        //Load Spot Logo
-        let logoImage = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 45, y: 52 - heightAdjust, width: 90, height: 36))
-        logoImage.image = UIImage(named: "MapSp0tLogo")
-        logoImage.contentMode = .scaleAspectFit
-        view.addSubview(logoImage)
-        
-        
-        let sloganLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 75, y: logoImage.frame.maxY + 3, width: 150, height: 17))
-        sloganLabel.text = "where places live"
-        sloganLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
-        sloganLabel.textColor = .white
-        sloganLabel.textAlignment = .center
-        view.addSubview(sloganLabel)
-        
-        let arrow = UIButton(frame: CGRect(x: 0, y: 50 - heightAdjust, width: 40, height: 40))
-        arrow.setImage(UIImage(named: "BackButton"), for: .normal)
-        arrow.addTarget(self, action: #selector(backTapped(_:)), for: .touchUpInside)
-        view.addSubview(arrow)
-        
-        //Loads 'Password Reset' Label
-        
-        resetLabel = UILabel(frame: CGRect(x: 32, y: sloganLabel.frame.maxY + 60, width: 100, height: 31))
-        resetLabel.text = "Password reset"
-        resetLabel.font = UIFont(name: "SFCamera-Semibold", size: 22)
-        resetLabel.textColor = UIColor(red:0.64, green:0.64, blue:0.64, alpha:1.00)
-        resetLabel.sizeToFit()
-        self.view.addSubview(resetLabel)
-        
-        
-        //Load reset confirmation text
-        confirmationLayer = UILabel(frame: CGRect(x: 108, y: 308 - heightAdjust, width: 236, height: 38))
-        confirmationLayer.lineBreakMode = .byWordWrapping
-        confirmationLayer.numberOfLines = 0
-        confirmationLayer.textColor = UIColor(named: "SpotGreen")
-        confirmationLayer.font = UIFont(name: "SFCamera-regular", size: 16)
-        confirmationLayer.text = "Got it! Check your inbox for a link to reset your password."
-        confirmationLayer.sizeToFit()
-        self.view.addSubview(confirmationLayer)
-        confirmationLayer.isHidden = true
-        
-        
-        confirmationSymbol = UIImageView(frame: CGRect(x: 30, y: 298 - heightAdjust, width: 60, height: 60))
-        confirmationSymbol.isHidden = true
-        confirmationSymbol.image = UIImage(named: "CheckIcon")
-        view.addSubview(confirmationSymbol)
-        
-        //load email label
-        emailLabel = UILabel(frame: CGRect(x: 37, y: resetLabel.frame.maxY + 30, width: 100, height: 18))
+        emailLabel = UILabel(frame: CGRect(x: 31, y: 40, width: 40, height: 12))
         emailLabel.text = "Email"
         emailLabel.textColor = UIColor(named: "SpotGreen")
-        emailLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)
-        emailLabel.sizeToFit()
-        self.view.addSubview(emailLabel)
-        
-        //load email text field
-        emailField = UITextField(frame: CGRect(x: 28.5, y: emailLabel.frame.maxY + 3, width: UIScreen.main.bounds.width - 57, height: 41))
-        emailField.layer.cornerRadius = 10
-        emailField.backgroundColor = UIColor(red:0.16, green:0.16, blue:0.16, alpha:0.5)
-        emailField.layer.borderColor = UIColor(red:0.21, green:0.21, blue:0.21, alpha:1).cgColor
+        emailLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        view.addSubview(emailLabel)
+
+        emailField = PaddedTextField(frame: CGRect(x: 27, y: emailLabel.frame.maxY + 8, width: UIScreen.main.bounds.width - 54, height: 40))
+        emailField.layer.cornerRadius = 7.5
+        emailField.backgroundColor = .black
+        emailField.layer.borderColor = UIColor(red: 0.158, green: 0.158, blue: 0.158, alpha: 1).cgColor
         emailField.layer.borderWidth = 1
-        self.view.addSubview(emailField)
-        
-        emailField.textColor = UIColor.white
-        emailField.font = UIFont(name: "SFCamera-regular", size: 16)!
-        emailField.autocorrectionType = .no
         emailField.autocapitalizationType = .none
-        emailField.textContentType = .username
+        emailField.autocorrectionType = .no
+        emailField.tag = 1
+        emailField.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
+        emailField.font = UIFont(name: "SFCamera-Regular", size: 16)!
+        emailField.textContentType = .emailAddress
         emailField.keyboardType = .emailAddress
-        
-        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 10, height: self.emailField.frame.height))
-        emailField.leftView = paddingView
-        emailField.leftViewMode = UITextField.ViewMode.always
-        
-        
-        //Load 'we'll send a link to reset your password'
-        instructLayer = UILabel(frame: CGRect(x: 38, y: emailField.frame.maxY + 6, width: 313, height: 19))
-        instructLayer.lineBreakMode = .byWordWrapping
-        instructLayer.numberOfLines = 0
-        instructLayer.textColor = UIColor(red:0.61, green:0.61, blue:0.61, alpha:1)
-        instructLayer.text = "We’ll send a link to reset your password."
-        instructLayer.font = UIFont(name: "SFCamera-regular", size: 14)!
-        instructLayer.sizeToFit()
-        self.view.addSubview(instructLayer)
+        emailField.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
+        view.addSubview(emailField)
+
+        descriptionLabel = UILabel(frame: CGRect(x: emailField.frame.minX, y: emailField.frame.maxY + 6, width: emailField.frame.width, height: 19))
+        descriptionLabel.textColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha:1)
+        descriptionLabel.textAlignment = .center
+        descriptionLabel.text = "We’ll send a link to reset your password."
+        descriptionLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        view.addSubview(descriptionLabel)
         
         //Load 'Email Link' button background
-        resetBtn = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 96, y: 412 - heightAdjust, width: 192, height: 45))
-        resetBtn.contentMode = .scaleAspectFit
-        resetBtn.setImage(UIImage(named: "SendLinkButton"), for: .normal)
-        resetBtn.addTarget(self, action: #selector(handleReset(_:)), for: UIControl.Event.touchUpInside)
-        self.view.addSubview(resetBtn)
+        resetButton = UIButton(frame: CGRect(x: (UIScreen.main.bounds.width - 217)/2, y: descriptionLabel.frame.maxY + 32, width: 217, height: 40))
+        resetButton.alpha = 0.65
+        resetButton.imageView?.contentMode = .scaleAspectFit
+        resetButton.setImage(UIImage(named: "SendLinkButton"), for: .normal)
+        resetButton.addTarget(self, action: #selector(handleReset(_:)), for: UIControl.Event.touchUpInside)
+        view.addSubview(resetButton)
         
-        
-        errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 80, width: UIScreen.main.bounds.width, height: 32))
-        errorBox.backgroundColor = UIColor(red:0.35, green:0, blue:0.04, alpha:1)
-        self.view.addSubview(errorBox)
+        errorBox = UIView(frame: CGRect(x: 0, y: resetButton.frame.maxY + 30, width: UIScreen.main.bounds.width, height: 32))
+        errorBox.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
+        view.addSubview(errorBox)
         errorBox.isHidden = true
         
-        //Load error text
-        errorTextLayer = UILabel(frame: CGRect(x: 23, y: UIScreen.main.bounds.height - 73, width: UIScreen.main.bounds.width - 46, height: 18))
-        errorTextLayer.lineBreakMode = .byWordWrapping
-        errorTextLayer.numberOfLines = 0
-        errorTextLayer.textColor = UIColor.white
-        errorTextLayer.textAlignment = .center
-        errorTextLayer.text = "Please enter a valid email address."
-        errorTextLayer.font = UIFont(name: "SFCamera-regular", size: 14)
-        self.view.addSubview(errorTextLayer)
-        errorTextLayer.isHidden = true
-        
+        errorLabel = UILabel(frame: CGRect(x: 13, y: 7, width: UIScreen.main.bounds.width - 26, height: 18))
+        errorLabel.lineBreakMode = .byWordWrapping
+        errorLabel.numberOfLines = 0
+        errorLabel.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
+        errorLabel.textAlignment = .center
+        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        errorLabel.text = "Invalid email"
+        errorBox.addSubview(errorLabel)
+        errorLabel.isHidden = true
+
+        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 165, width: UIScreen.main.bounds.width, height: 30))
+        activityIndicator.isHidden = true
+        view.addSubview(activityIndicator)
     }
-    @objc override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(false)
+    
+    @objc func textChanged(_ sender: UITextView) {
+        resetButton.alpha = isValidEmail(email: emailField.text ?? "") ? 1.0 : 0.65
     }
     
     @objc func backTapped(_ sender: UIButton){
-        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "Login") as? LoginViewController {
+        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "EmailLogin") as? EmailLoginController {
             vc.modalPresentationStyle = .fullScreen
             self.present(vc, animated: false, completion: nil)
         }
     }
     
     @objc func handleReset(_ sender: UIButton){
+        
         guard let resetText = emailField.text else { return }
         
         if !isValidEmail(email: resetText) {
             
-            errorBox.isHidden = false
-            errorTextLayer.isHidden = false
+            Mixpanel.mainInstance().track(event: "ResetSendEmail")
             
-        }else{
+            self.errorBox.isHidden = false
+            self.errorLabel.isHidden = false
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+                guard let self = self else { return }
+                self.errorLabel.isHidden = true
+                self.errorBox.isHidden = true
+            }
+
+        } else {
             
             Auth.auth().sendPasswordReset(withEmail: resetText, completion: nil)
-                        
-            //Hide initial fields, label, and button
-            resetLabel.isHidden = true
-            emailLabel.isHidden = true
-            emailField.isHidden = true
-            instructLayer.isHidden = true
-            resetBtn.isHidden = true
-            errorBox.isHidden = true
-            errorTextLayer.isHidden = true
-            
-            //Show confirmation text and symbol
-            confirmationSymbol.isHidden = false //show check mark
-            confirmationLayer.isHidden = false  //show confirmation message
+            showConfirmMessage()
         }
+    }
+    
+    func showConfirmMessage() {
         
-    }
-    
-    //checks to see if valid email is entered
-    func isValidEmail(email:String?) -> Bool {
-        guard email != nil else { return false }
-        let regEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
-        let pred = NSPredicate(format:"SELF MATCHES %@", regEx)
-        return pred.evaluate(with: email)
-    }
-    
-    //Hide keyboard when user touches screen
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        self.view.endEditing(true)
+        emailLabel.isHidden = true
+        emailField.isHidden = true
+        descriptionLabel.isHidden = true
+        resetButton.isHidden = true
+        errorBox.isHidden = true
+        errorLabel.isHidden = true
         
+        let confirmationLabel = UILabel(frame: CGRect(x: 108, y: 80, width: 236, height: 38))
+        confirmationLabel.textColor = UIColor(named: "SpotGreen")
+        confirmationLabel.font = UIFont(name: "SFCamera-Regular", size: 16)
+        confirmationLabel.text = "Got it! Check your inbox for a link to reset your password."
+        confirmationLabel.numberOfLines = 0
+        confirmationLabel.lineBreakMode = .byWordWrapping
+        confirmationLabel.sizeToFit()
+        view.addSubview(confirmationLabel)
+        
+        let confirmationSymbol = UIImageView(frame: CGRect(x: 30, y: 70, width: 60, height: 60))
+        confirmationSymbol.image = UIImage(named: "CheckIcon")
+        view.addSubview(confirmationSymbol)
+
     }
-    
 }

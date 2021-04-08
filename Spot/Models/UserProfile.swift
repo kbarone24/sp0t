@@ -19,7 +19,6 @@ struct UserProfile: Identifiable, Codable {
     var name: String
     var imageURL: String
     var currentLocation: String
-    var userBio: String
 
     var profilePic: UIImage = UIImage()
     var spotsList: [String] = []
@@ -29,15 +28,20 @@ struct UserProfile: Identifiable, Codable {
     var phone: String? = ""
     var tutorialList: [Bool] = []
     
+    var pendingFriendRequests: [String] = []
+    var sentInvites: [String] = []
+    var mutualFriends: Int = 0 
+    
     enum CodingKeys: String, CodingKey {
         case username
         case name
         case imageURL
         case currentLocation
-        case userBio
         case spotScore
         case friendIDs = "friendsList"
         case phone
         case tutorialList
+        case pendingFriendRequests
+        case sentInvites
     }
 }

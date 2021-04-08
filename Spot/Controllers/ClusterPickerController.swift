@@ -222,6 +222,11 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         
         guard let selectedObject = imageObjects[safe: indexPath.row] else { return }
         
+        let selectedRows = selectedObjects.map({$0.index})
+        var selectedPaths: [IndexPath] = []
+        for row in selectedRows { selectedPaths.append(IndexPath(item: row, section: 0)) }
+        if !selectedPaths.contains(where: {$0 == indexPath}) { selectedPaths.append(indexPath) }
+
         if let i = self.selectedObjects.firstIndex(where: {$0.index == indexPath.row}) {
             
             self.selectedObjects.remove(at: i)
@@ -230,9 +235,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                 self.removeNextButton()
             }
             
-            DispatchQueue.main.async {
-                DispatchQueue.main.async { collectionView.reloadItems(at: [indexPath]) }
-            }
+            DispatchQueue.main.async { collectionView.reloadItems(at: selectedPaths) }
             
         } else {
             if editSpotMode {
@@ -246,8 +249,8 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                 self.selectedObjects.append((selectedObject, indexPath.row))
                     self.checkForNext()
                 
-                DispatchQueue.main.async { collectionView.reloadItems(at: [indexPath]) }
-                
+                DispatchQueue.main.async { collectionView.reloadItems(at: selectedPaths) }
+
                 } else {
                     if let cell = collectionView.cellForItem(at: indexPath) as? GalleryCell {
                         let currentAsset = self.imageObjects[indexPath.row].asset
@@ -272,7 +275,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                                 /// append new image object with fetched image
                                 self.selectedObjects.append((ImageObject(asset: selectedObject.asset, rawLocation: selectedObject.rawLocation, image: result, creationDate: selectedObject.creationDate), indexPath.row))
                                 self.checkForNext()
-                                DispatchQueue.main.async { collectionView.reloadItems(at: [indexPath]) }
+                                DispatchQueue.main.async { collectionView.reloadItems(at: selectedPaths) }
                             }
                         }
                     }
@@ -370,7 +373,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
             vc.mapVC = self.mapVC
             vc.containerVC = self.containerVC
             vc.spotObject = self.spotObject
-            self.navigationController?.pushViewController(vc, animated: false)
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
     

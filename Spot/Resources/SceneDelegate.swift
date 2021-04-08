@@ -13,24 +13,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
         // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        
-        let notificationName = Notification.Name("openPush")
-        
+                
         if let windowScene = (scene as? UIWindowScene) {
             
             self.window = UIWindow(windowScene: windowScene)
             
             if Auth.auth().currentUser != nil {
-                //self.window = UIWindow(frame: UIScreen.main.bounds)
-                let sb = UIStoryboard(name: "TabBar", bundle: nil)
-                let vc = sb.instantiateViewController(withIdentifier: "MapView") as! MapViewController
-
-                let navController = UINavigationController(rootViewController: vc)
-                
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: nil)
-                
-                self.window!.rootViewController = navController
-                self.window!.makeKeyAndVisible()
+                checkForPhoneAuth()
                 
             } else {
                 let sb = UIStoryboard(name: "Main", bundle: nil)
@@ -39,32 +28,66 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 self.window!.rootViewController = vc
                 self.window!.makeKeyAndVisible()
             }
-            
-            let BarButtonItemAppearance = UIBarButtonItem.appearance()
-            BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .normal)
-            
-            BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .selected)
-            
-            UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-            
-            let searchBarAppearance = UISearchBar.appearance()
-            searchBarAppearance.barTintColor = UIColor(named: "SpotBlack")
-            searchBarAppearance.barStyle =  .black
-            
-            UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-
-            
-            let tabBarAppearance = UITabBar.appearance()
-            
-            tabBarAppearance.backgroundColor = UIColor.black
-            
-            UIView.appearance().isExclusiveTouch = true
-            
-            Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33")
         }
-        
     }
     
+    func checkForPhoneAuth() {
+        /// use user defaults as primary, firestore as backup
+        let defaults = UserDefaults.standard
+        let verified = defaults.object(forKey: "verifiedPhone") as? Bool ?? false
+        
+        if verified {
+            Mixpanel.mainInstance().track(event: "PreAuthenticatedUser")
+            self.animateToMap()
+            
+        } else {
+            
+            let db = Firestore.firestore()
+            db.collection("users").whereField("email", isEqualTo: Auth.auth().currentUser?.email ?? "").getDocuments { (snap, err) in
+
+                if let doc = snap?.documents.first {
+                    /// if user is verified but its not already saved to defaults ( could have deleted the app and redownloaded), save it to defaults and send them to the map
+                    let verified = doc.get("verifiedPhone") as? Bool ?? false
+                    if verified {
+                        Mixpanel.mainInstance().track(event: "SceneDelegateDefaultVerificationFail")
+                        defaults.set(true, forKey: "verifiedPhone")
+                        self.animateToMap()
+                    } else {
+                        self.sendUserToPhoneAuth()
+                    }
+                    
+                } else {
+                    self.sendUserToPhoneAuth()
+                }
+            }
+        }
+    }
+    
+    func sendUserToPhoneAuth() {
+        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhoneVC") as? PhoneController {
+            
+            vc.codeType = .multifactor
+            vc.root = true
+            
+            let navController = UINavigationController(rootViewController: vc)
+            navController.modalPresentationStyle = .fullScreen
+            self.window!.rootViewController = navController
+            self.window!.makeKeyAndVisible()
+        }
+    }
+    
+    func animateToMap() {
+        let sb = UIStoryboard(name: "TabBar", bundle: nil)
+        let vc = sb.instantiateViewController(withIdentifier: "MapView") as! MapViewController
+        
+        let notificationName = Notification.Name("openPush")
+        NotificationCenter.default.post(name: notificationName, object: nil, userInfo: nil)
+        
+        let navController = UINavigationController(rootViewController: vc)
+        self.window!.rootViewController = navController
+        self.window!.makeKeyAndVisible()
+    }
+        
     func sceneDidDisconnect(_ scene: UIScene) {
         // Called as the scene is being released by the system.
         // This occurs shortly after the scene enters the background, or when its session is discarded.

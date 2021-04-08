@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="16097.3" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="6P3-sj-ZXZ">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="6P3-sj-ZXZ">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16087"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17703"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -15,8 +16,8 @@
                     <view key="view" contentMode="scaleToFill" id="CMp-fv-XFv">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
                         <viewLayoutGuide key="safeArea" id="KU5-By-9Lv"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="g5H-hZ-kIU" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
@@ -32,41 +33,91 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
-                    <navigationItem key="navigationItem" id="Mea-3e-2Ct"/>
+                    <extendedEdge key="edgesForExtendedLayout"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-768" y="62"/>
         </scene>
-        <!--Sign Up2 Controller-->
+        <!--Username Controller-->
         <scene sceneID="Nhv-as-XuE">
             <objects>
-                <viewController storyboardIdentifier="SignUp2" id="SnA-v3-KgV" customClass="SignUp2Controller" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="UsernameVC" id="SnA-v3-KgV" customClass="UsernameController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="zEH-p9-wuE">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
                         <viewLayoutGuide key="safeArea" id="hWX-N3-tRT"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="3O2-el-0rY" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="429" y="62"/>
         </scene>
-        <!--SignUp3-->
+        <!--Country Picker Controller-->
+        <scene sceneID="vRw-kP-1Hv">
+            <objects>
+                <viewController storyboardIdentifier="CountryPicker" interfaceStyle="dark" id="yyJ-6p-dGP" customClass="CountryPickerController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="hQE-qF-L9q">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="lE3-5Z-DRh"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="9yh-cF-UOw" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1527" y="-681"/>
+        </scene>
+        <!--Phone Controller-->
         <scene sceneID="SZt-ze-ew5">
             <objects>
-                <viewController storyboardIdentifier="SignUp3" title="SignUp3" id="byO-bf-wlw" customClass="SignUp3Controller" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="PhoneVC" title="Phone Controller" id="byO-bf-wlw" customClass="PhoneController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="hzn-Kc-D0p">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
                         <viewLayoutGuide key="safeArea" id="CUL-ky-qrX"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="pR4-Dg-MIN" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1520" y="62"/>
+        </scene>
+        <!--Confirm Code Controller-->
+        <scene sceneID="BT2-Y8-9Co">
+            <objects>
+                <viewController storyboardIdentifier="ConfirmVC" interfaceStyle="dark" id="qe5-sv-10B" customClass="ConfirmCodeController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="9st-TQ-VgJ">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="H8g-ZR-Mub"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ppj-2r-1Lv" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2633" y="62"/>
+        </scene>
+        <!--Contacts Overview Controller-->
+        <scene sceneID="i6n-5L-yT6">
+            <objects>
+                <viewController storyboardIdentifier="ContactsOverview" interfaceStyle="dark" id="Uaf-lN-EtD" customClass="ContactsOverviewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="DjC-fS-siO">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="7K3-AQ-Iq4"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dtC-PO-y4j" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3667" y="62"/>
         </scene>
         <!--resetView-->
         <scene sceneID="HRS-Cp-xON">
@@ -77,21 +128,23 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="cme-O4-bPL"/>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
                     <navigationItem key="navigationItem" id="Ede-Nc-fk7"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="05g-aM-7Gk" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="429" y="808"/>
+            <point key="canvasLocation" x="-768" y="1606"/>
         </scene>
-        <!--loginView-->
+        <!--Email Login Controller-->
         <scene sceneID="kEs-Lq-NMz">
             <objects>
-                <viewController storyboardIdentifier="Login" title="loginView" id="gWK-HF-6yf" customClass="LoginViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="EmailLogin" title="Email Login Controller" id="gWK-HF-6yf" customClass="EmailLoginController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="KtO-vt-APb">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="Cnz-rS-oVl"/>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
                     <navigationItem key="navigationItem" id="MIG-VT-X50"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="z2e-P3-jzF" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -103,5 +156,8 @@
         <namedColor name="SpotBlack">
             <color red="0.070588235294117646" green="0.070588235294117646" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
     </resources>
 </document>

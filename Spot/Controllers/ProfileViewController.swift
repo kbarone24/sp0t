@@ -26,8 +26,8 @@ class ProfileViewController: UIViewController {
     
     var addFriendButton: UIButton!
     var lock: UIImageView!
+    var addFirstSpotButton: UIButton!
     
-    var nearbyCity: String!
     var userFriended = false
     var friendedDetail: UILabel!
     var acceptButton: UIButton!
@@ -37,17 +37,19 @@ class ProfileViewController: UIViewController {
     
     var shadowScroll: UIScrollView!
     var tableView: UITableView!
+    var activityIndicator: CustomActivityIndicator!
     lazy var scrollDistance: CGFloat = 0
-    lazy var friendsListScrollDistance: CGFloat = 0 
+    lazy var friendsListScrollDistance: CGFloat = 0
     
+    var editView: UIView! /// "more" menu showed with remove friend + report user
+    var editMask: UIView!
+    var exitButton: UIButton!
+    
+    var passedUsername: String! /// passed username from tapped tag
     var userInfo: UserProfile!
-    lazy var bioHeight: CGFloat = 0
     lazy var navBarHeight: CGFloat = 0
     lazy var sec0Height: CGFloat = 0
     unowned var mapVC: MapViewController!
-    
-    var addedPost = false
-    var addedSpot = false
     
     var commentsSelectedPost: MapPost!
     var postCaptionHeight: CGFloat!
@@ -64,17 +66,8 @@ class ProfileViewController: UIViewController {
         case received
         case denied
     }
-    
-    private lazy var firstViewController: ProfilePostsViewController = {
-        let storyboard = UIStoryboard(name: "Profile", bundle: Bundle.main)
-        var vc = storyboard.instantiateViewController(withIdentifier: "ProfilePosts") as! ProfilePostsViewController
-        vc.profileVC = self
-        vc.mapVC = mapVC
-        self.addChild(vc)
-        return vc
-    }()
-    
-    private lazy var secondViewController: ProfileSpotsViewController = {
+        
+    private lazy var profileSpotsController: ProfileSpotsViewController = {
         let storyboard = UIStoryboard(name: "Profile", bundle: Bundle.main)
         var vc = storyboard.instantiateViewController(withIdentifier: "ProfileSpots") as! ProfileSpotsViewController
         vc.profileVC = self
@@ -82,8 +75,16 @@ class ProfileViewController: UIViewController {
         self.addChild(vc)
         return vc
     }()
-
     
+    private lazy var profilePostsController: ProfilePostsViewController = {
+        let storyboard = UIStoryboard(name: "Profile", bundle: Bundle.main)
+        var vc = storyboard.instantiateViewController(withIdentifier: "ProfilePosts") as! ProfilePostsViewController
+        vc.profileVC = self
+        vc.mapVC = mapVC
+        self.addChild(vc)
+        return vc
+    }()
+
     private func remove(asChildViewController viewController: UIViewController) {
         viewController.willMove(toParent: nil)
         viewController.view.removeFromSuperview()
@@ -100,11 +101,12 @@ class ProfileViewController: UIViewController {
     }
     
     override func viewDidLoad() {
+        
         super.viewDidLoad()
         view.backgroundColor = UIColor(named: "SpotBlack")
         
-       // addSegments()
         resetMap()
+        addTableView()
         runFunctions()
         
         /// set drawer to half-screen
@@ -117,13 +119,8 @@ class ProfileViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        if userInfo == nil {
-            if mapVC.userInfo == nil { return }
-            userInfo = mapVC.userInfo
-        }
-        
         Mixpanel.mainInstance().track(event: "ProfileOpen")
+        setUserInfo()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -140,7 +137,6 @@ class ProfileViewController: UIViewController {
             mapVC.profileViewController = nil
             mapVC.selectedProfileID = ""
             mapVC.navigationItem.titleView = nil
-            if !(self.parent is SpotViewController) && !(self.parent is NotificationsViewController) { self.navigationController?.setNavigationBarHidden(true, animated: false) }
         }
         
         if parent is CustomTabBar { scrollDistance = self.shadowScroll.contentOffset.y }
@@ -148,11 +144,28 @@ class ProfileViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        setUpNavBar()
+        if userInfo == nil { activityIndicator.startAnimating() }
+        if !children.contains(where: {$0.isKind(of: PostViewController.self)}) && !children.contains(where: {$0.isKind(of: SpotViewController.self)}) { setUpNavBar() }
     }
     
     deinit {
         print("deinit")
+    }
+    
+    func setUserInfo() {
+        
+        /// get  userInfo on first load
+        if userInfo == nil && id == uid {
+            if mapVC.userInfo == nil { return }
+            userInfo = mapVC.userInfo
+            
+        } else if passedUsername != nil {
+            getUserFromUsername()
+        }
+        
+        /// set profile info as soon as possible to avoid leaks
+        if profilePostsController.children.count == 0 &&  profileSpotsController.children.count == 0 { mapVC.profileViewController = self; mapVC.selectedProfileID = id }
+
     }
     
     func resetMap() {
@@ -163,10 +176,9 @@ class ProfileViewController: UIViewController {
         mapVC.profileViewController = self
         mapVC.spotViewController = nil
         mapVC.nearbyViewController = nil
-        mapVC.selectedProfileID = self.id
+        mapVC.selectedProfileID = id
         
         /// selectedProfileID == "" used interchangeably with profileViewController == nil on map for filtering - should remove for redundancy
-        mapVC.selectedProfileID = id
         mapVC.mapView.removeAnnotations(annotations)
         mapVC.hideNearbyButtons()
         mapVC.postsList.removeAll()
@@ -180,29 +192,23 @@ class ProfileViewController: UIViewController {
     }
     
     func runFunctions() {
-        //user info only nil when its active user
         
+        // user info only nil when its active user or passed from a profile tap of a non-friend user
+
         if userInfo == nil {
             /// will call runFunctions() again on updateUser from notification
-            if mapVC.userInfo == nil { return }
+            if mapVC.userInfo == nil || id != uid { return }
             userInfo = mapVC.userInfo
             userInfo.friendsList = mapVC.friendsList
         } 
-                
-        if nearbyCity != nil {
-            selectedIndex = 1
-            add(asChildViewController: secondViewController)
-        } else {
-            add(asChildViewController: firstViewController)
-        }
-        
-        bioHeight = getBioHeight()
+                        
+        add(asChildViewController: profileSpotsController)
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
         let navBarHeight = statusHeight +
                     (self.navigationController?.navigationBar.frame.height ?? 44.0)
-        sec0Height = bioHeight + 110 - navBarHeight
+        sec0Height = 127 - navBarHeight
 
         /// check if active user is friends with this profile
         if uid != userInfo.id && !mapVC.friendIDs.contains(userInfo.id ?? "") {
@@ -210,29 +216,54 @@ class ProfileViewController: UIViewController {
         } else {
             status = .friends
         }
-        
-        addTableView()
-        tableView.reloadData()
+            
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+            self.activityIndicator.stopAnimating()
+        }
     }
     
     @objc func updateUser(_ notification: NSNotification) {
+
         if userInfo == nil {
             runFunctions()
+
         } else {
-            /// update userInfo even if its not nil to update profileImage
+            /// update userInfo even if its not nil if current user
             if id == uid { userInfo = mapVC.userInfo }
             tableView.reloadData()
         }
-        if mapVC.customTabBar.selectedIndex == 4 { setUpNavBar() }
+    }
+        
+    func addEmptyState() {
+        
+        let tabBarHeight = mapVC.customTabBar.tabBar.frame.height
+
+        addFirstSpotButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 95, y: UIScreen.main.bounds.height - mapVC.halfScreenY - tabBarHeight - 64, width: 190, height: 47))
+        addFirstSpotButton.setImage(UIImage(named: "ProfileEmptyState"), for: .normal)
+        addFirstSpotButton.addTarget(self, action: #selector(addFirstSpotTap(_:)), for: .touchUpInside)
+        
+        DispatchQueue.main.async {
+            self.view.addSubview(self.addFirstSpotButton)
+            self.tableView.reloadData()
+        }
+    }
+        
+    @objc func addFirstSpotTap(_ sender: UIButton) {
+        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
+            vc.mapVC = mapVC
+            let transition = CATransition()
+            transition.duration = 0.3
+            transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
+            transition.type = CATransitionType.push
+            transition.subtype = CATransitionSubtype.fromTop
+            mapVC.navigationController?.view.layer.add(transition, forKey: kCATransition)
+            mapVC.navigationController?.pushViewController(vc, animated: false)
+        }
     }
     
-    func getBioHeight() -> CGFloat {
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 32, height: 18))
-        tempLabel.text = userInfo.userBio
-        tempLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
-        tempLabel.numberOfLines = 0
-        tempLabel.lineBreakMode = .byWordWrapping
-        return tempLabel.frame.height
+    func removeEmptyState() {
+        if addFirstSpotButton != nil { addFirstSpotButton.removeFromSuperview(); addFirstSpotButton = nil }
     }
     
     func addTableView() {
@@ -279,8 +310,12 @@ class ProfileViewController: UIViewController {
         
         view.addGestureRecognizer(shadowScroll.panGestureRecognizer)
         tableView.removeGestureRecognizer(tableView.panGestureRecognizer)
-        firstViewController.postsCollection.removeGestureRecognizer(firstViewController.postsCollection.panGestureRecognizer)
-        secondViewController.spotsCollection.removeGestureRecognizer(secondViewController.spotsCollection.panGestureRecognizer)
+        profileSpotsController.spotsCollection.removeGestureRecognizer(profileSpotsController.spotsCollection.panGestureRecognizer)
+        profilePostsController.postsCollection.removeGestureRecognizer(profilePostsController.postsCollection.panGestureRecognizer)
+        
+        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 100, width: UIScreen.main.bounds.width, height: 30))
+        activityIndicator.isHidden = true
+        tableView.addSubview(activityIndicator)
     }
     
     func setUpNavBar() {
@@ -289,7 +324,9 @@ class ProfileViewController: UIViewController {
         
         mapVC.navigationController?.setNavigationBarHidden(false, animated: false)
         mapVC.navigationController?.navigationBar.isTranslucent = mapVC.prePanY != 0
-        mapVC.navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
+        mapVC.navigationController?.navigationBar.removeShadow()
+        mapVC.prePanY == 0 ? mapVC.navigationController?.navigationBar.addBackgroundImage(alpha: 1.0) : mapVC.navigationController?.navigationBar.removeBackgroundImage()
+        
         mapVC.navigationController?.navigationBar.isUserInteractionEnabled = true
         
         let titleView = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 40))
@@ -312,15 +349,29 @@ class ProfileViewController: UIViewController {
         titleView.addSubview(scoreLabel)
         
         mapVC.navigationItem.titleView = titleView
+        mapVC.toggleMapTouch(enable: false) /// patch fix, maybe. map wasn't receiving touch events on profile occasionally for some reason.
         
         if !(parent is CustomTabBar) {
-            mapVC.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "BackArrow")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(removeProfile(_:)))
-            mapVC.navigationItem.rightBarButtonItem = UIBarButtonItem()
-        }
-        
-        if uid == id {
-            let settingsIcon = UIImage(named: "SettingsIcon")?.withRenderingMode(.alwaysOriginal)
-            mapVC.navigationItem.rightBarButtonItem = UIBarButtonItem(image: settingsIcon, style: .plain, target: self, action: #selector(openSettings(_:)))
+            
+            let backButton = UIBarButtonItem(image: UIImage(named: "CircleBackButton")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(removeProfile(_:)))
+            backButton.imageInsets = UIEdgeInsets(top: 0, left: -2, bottom: 0, right: 0)
+            mapVC.navigationItem.leftBarButtonItem = backButton
+
+            /// right bar button item = more menu
+            if id != uid {
+                let moreButton = UIBarButtonItem(image: UIImage(named: "MoreBarButton")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(openMoreMenu(_:)))
+                moreButton.imageInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: -2)
+                mapVC.navigationItem.rightBarButtonItem = moreButton
+            }
+
+        } else {
+            let settingsButton = UIBarButtonItem(image: UIImage(named: "SettingsIcon")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(openSettings(_:)))
+            settingsButton.imageInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: -2)
+            mapVC.navigationItem.rightBarButtonItem = settingsButton
+            
+            let addFriendsButton = UIBarButtonItem(image: UIImage(named: "ProfileAddFriends")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(openAddFriends(_:)))
+            addFriendsButton.imageInsets = UIEdgeInsets(top: 0, left: -2, bottom: 0, right: 0)
+            mapVC.navigationItem.leftBarButtonItem = addFriendsButton
         }
         
         mapVC.selectedProfileID = id
@@ -328,11 +379,8 @@ class ProfileViewController: UIViewController {
         mapVC.spotViewController = nil
         mapVC.nearbyViewController = nil
     }
-        
+ 
     func reloadProfile() {
-        bioHeight = getBioHeight()
-        navBarHeight = navigationController?.navigationBar.frame.height ?? 40
-        sec0Height = bioHeight + navBarHeight - 20
         self.tableView.reloadData()
     }
     
@@ -391,16 +439,17 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func removeProfile(_ sender: UIBarButtonItem) {
+        
         Mixpanel.mainInstance().track(event: "ProfileRemove")
         
         mapVC.mapView.showsUserLocation = true
         mapVC.postsList.removeAll()
         mapVC.selectedProfileID = ""
         mapVC.profileViewController = nil
-        mapVC.navigationItem.leftBarButtonItem = UIBarButtonItem()
+        mapVC.navigationItem.rightBarButtonItem = UIBarButtonItem()
         
-        firstViewController.active = false
-        secondViewController.active = false
+        profilePostsController.active = false
+        profileSpotsController.active = false
         
         /// this is like the equivalent of running a viewWillAppear method from the underneath view controller
         if let nearbyVC = parent as? NearbyViewController{
@@ -413,7 +462,6 @@ class ProfileViewController: UIViewController {
         } else if let profileVC = parent as? ProfileViewController {
             
             profileVC.resetProfile()
-            if profileVC.selectedIndex == 0 { profileVC.firstViewController.resetPosts() }
             profileVC.tableView.reloadData()
             openFriendsList()
             
@@ -426,13 +474,13 @@ class ProfileViewController: UIViewController {
         }
         
         ///remove listeners early to avoid reference being called after dealloc
-        firstViewController.removeListeners()
-        secondViewController.removeListeners()
+        profilePostsController.removeListeners()
+        profileSpotsController.removeListeners()
         
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("InitialUserLoad"), object: nil)
             
-        self.remove(asChildViewController: firstViewController)
-        self.remove(asChildViewController: secondViewController)
+        self.remove(asChildViewController: profileSpotsController)
+        self.remove(asChildViewController: profilePostsController)
         
         self.willMove(toParent: nil)
         self.view.removeFromSuperview()
@@ -487,12 +535,29 @@ class ProfileViewController: UIViewController {
         }
     }
     
+    func editProfile() {
+        if let editProfileVC = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "EditProfile") as? EditProfileViewController {
+            editProfileVC.profileVC = self
+            DispatchQueue.main.async {
+                self.present(editProfileVC, animated: true, completion: nil)
+            }
+        }
+    }
+    
     @objc func openSettings(_ sender: UIBarButtonItem) {
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "Settings") as? SettingsViewController {
             vc.profileVC = self
+            vc.mapVC = mapVC
             DispatchQueue.main.async {
                 self.present(vc, animated: true, completion: nil)
             }
+        }
+    }
+    
+    @objc func openAddFriends(_ sender: UIButton) {
+        if let vc = storyboard?.instantiateViewController(identifier: "FindFriends") as? FindFriendsController {
+            vc.mapVC = mapVC
+            present(vc, animated: true, completion: nil)
         }
     }
     
@@ -502,80 +567,50 @@ class ProfileViewController: UIViewController {
 
         if index == 0 {
             DispatchQueue.main.async {
-                
-                self.remove(asChildViewController: self.secondViewController)
-                self.add(asChildViewController: self.firstViewController)
+                self.remove(asChildViewController: self.profilePostsController)
+                self.add(asChildViewController: self.profileSpotsController)
                 
                 self.tableView.setContentOffset(CGPoint(x: self.tableView.contentOffset.x, y: minY), animated: false)
-
+                
                 ///reset content offsets so scroll stays smooth
-                if self.firstViewController.postsCollection.contentOffset.y > 0 || self.secondViewController.spotsCollection.contentOffset.y > 0  {
-                    self.shadowScroll.contentOffset.y = self.sec0Height + self.firstViewController.postsCollection.contentOffset.y
+                if self.profilePostsController.postsCollection.contentOffset.y > 0 || self.profileSpotsController.spotsCollection.contentOffset.y > 0  {
+                    self.shadowScroll.contentOffset.y = self.sec0Height + self.profileSpotsController.spotsCollection.contentOffset.y
                 }
                 
-                /// reset content size for current collection 
-                self.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: max(UIScreen.main.bounds.height - self.sec0Height, self.firstViewController.postsCollection.contentSize.height + 65))
+                self.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: max(UIScreen.main.bounds.height - self.sec0Height, self.profileSpotsController.spotsCollection.contentSize.height + 300))
             }
             
         } else {
             DispatchQueue.main.async {
             
-                self.remove(asChildViewController: self.firstViewController)
-                self.add(asChildViewController: self.secondViewController)
+                self.remove(asChildViewController: self.profileSpotsController)
+                self.add(asChildViewController: self.profilePostsController)
                 
                 self.tableView.setContentOffset(CGPoint(x: self.tableView.contentOffset.x, y: minY), animated: false)
-                
+
                 ///reset content offsets so scroll stays smooth
-                if self.firstViewController.postsCollection.contentOffset.y > 0 || self.secondViewController.spotsCollection.contentOffset.y > 0  {
-                    self.shadowScroll.contentOffset.y = self.sec0Height + self.secondViewController.spotsCollection.contentOffset.y
+                if self.profilePostsController.postsCollection.contentOffset.y > 0 || self.profileSpotsController.spotsCollection.contentOffset.y > 0  {
+                    self.shadowScroll.contentOffset.y = self.sec0Height + self.profilePostsController.postsCollection.contentOffset.y
                 }
                 
-                self.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: max(UIScreen.main.bounds.height - self.sec0Height, self.secondViewController.spotsCollection.contentSize.height + 300))
+                /// reset content size for current collection
+                self.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: max(UIScreen.main.bounds.height - self.sec0Height, self.profilePostsController.postsCollection.contentSize.height + 65))
             }
         }
+        
         selectedIndex = index
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
-    
-    func postRemove() {
-        // unhide navigation bar if added post page from here
-        setUpNavBar()
-        expandProfile()
         
-        // not sure when addedPost would be false
-        if addedPost {
-            addedPost = false
-            
-            let annotations = mapVC.mapView.annotations
-            mapVC.mapView.removeAnnotations(annotations)
-            
-            if selectedIndex == 0 { firstViewController.addAnnotations() }
-            if parent is CustomTabBar { mapVC.customTabBar.tabBar.isHidden = false }
-            
-            if passedCamera != nil {
-                /// passed camera represents where the profile was before entering posts
-                mapVC.mapView.setCamera(passedCamera, animated: false)
-                passedCamera = nil
-            } else {
-                mapVC.animateToProfileLocation(active: uid == id, coordinate: CLLocationCoordinate2D())
-            }
-        }
-    }
-    
-    // reset profile is only called right now after spot page remove
     func resetProfile() {
-        
+
+        setUpNavBar()
+
+        /// expandProfile to full screen if it was full screen and scrolled at all before adding childVC
         if shadowScroll != nil {
-            /// expandProfile to full screen if it was full screen and scrolled at all before adding childVC
-            if shadowScroll.contentOffset.y > 0 {
-                expandProfile()
-            } else {
-                profileToHalf()
-            }
+            shadowScroll.contentOffset.y > 0 ? expandProfile() : profileToHalf()
         }
-        
-        secondViewController.resetView()
-        
+                
         mapVC.profileViewController = self
         mapVC.spotViewController = nil
         mapVC.nearbyViewController = nil
@@ -583,46 +618,76 @@ class ProfileViewController: UIViewController {
         
         mapVC.navigationController?.setNavigationBarHidden(false, animated: false)
         if self.parent is CustomTabBar { mapVC.customTabBar.tabBar.isHidden = false }
-        setUpNavBar()
+        
+        selectedIndex == 0 ? profileSpotsController.resetView() : profilePostsController.resetView()
     }
     
     func expandProfile() {
-
-        mapVC.prePanY = 0
-        mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height )
         
         // only can scroll if active seg is loaded
-        shadowScroll.isScrollEnabled = (selectedIndex == 0 && firstViewController.loaded) || (selectedIndex == 1 && secondViewController.loaded)
+        shadowScroll.isScrollEnabled = (selectedIndex == 0 && profileSpotsController.loaded) || (selectedIndex == 1 && profilePostsController.loaded)
         
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
+        navigationController?.navigationBar.isTranslucent = false
+        /// no shadow on profile even with translucent nav bar 
+        mapVC.navigationController?.navigationBar.removeShadow()
+        
+        mapVC.prePanY = 0
+        UIView.animate(withDuration: 0.15) {
+            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height )
+        }
     }
     
     func profileToHalf() {
         
         if tableView == nil { return }
-        mapVC.prePanY = mapVC.halfScreenY
         
         /// reset scrolls
-        mapVC.customTabBar.view.frame = CGRect(x: 0, y: mapVC.halfScreenY, width: self.view.frame.width, height: UIScreen.main.bounds.height - mapVC.halfScreenY)
         tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: 0), animated: false)
         shadowScroll.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: 0), animated: false)
         shadowScroll.isScrollEnabled = false
         resetSegs()
         
-        self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
+        self.navigationController?.navigationBar.removeBackgroundImage()
         self.navigationController?.navigationBar.isTranslucent = true
+        mapVC.navigationController?.navigationBar.removeShadow()
+        mapVC.removeBottomBar()
+        
+        mapVC.prePanY = mapVC.halfScreenY
+        UIView.animate(withDuration: 0.15) {
+            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: self.mapVC.halfScreenY, width: self.view.frame.width, height: UIScreen.main.bounds.height - self.mapVC.halfScreenY)
+        }
     }
     
     func resetSegs() {
-        firstViewController.postsCollection.setContentOffset(CGPoint(x: firstViewController.postsCollection.contentOffset.x, y: 0), animated: false)
-        secondViewController.spotsCollection.setContentOffset(CGPoint(x: secondViewController.spotsCollection.contentOffset.x, y: 0), animated: false)
+        profileSpotsController.spotsCollection.setContentOffset(CGPoint(x: profileSpotsController.spotsCollection.contentOffset.x, y: 0), animated: false)
+        profilePostsController.postsCollection.setContentOffset(CGPoint(x: profilePostsController.postsCollection.contentOffset.x, y: 0), animated: false)
+    }
+    
+    func getUserFromUsername() {
+        
+        let query = self.db.collection("users").whereField("username", isEqualTo: passedUsername!)
+        
+        query.getDocuments { [weak self] (snap, err) in
+            do {
+                guard let self = self else { return }
+                
+                let userInfo = try snap?.documents.first?.data(as: UserProfile.self)
+                guard var info = userInfo else { return }
+                info.id = snap!.documents.first?.documentID ?? ""
+                
+                self.id = info.id!
+                self.userInfo = info
+                self.runFunctions()
+
+            } catch { return }
+        }
     }
 }
 
 extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return status == nil ? 1 : 2
+        return userInfo == nil ? 0 : status == nil ? 1 : 2
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -637,11 +702,14 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
             return cell
             
         } else {
+            
             switch status {
+            
             case .friends :
                 let cell = tableView.dequeueReusableCell(withIdentifier: "SegViewCell", for: indexPath) as! SegViewCell
-                cell.setUp(selectedIndex: selectedIndex, profilePosts: firstViewController, profileSpots: secondViewController)
+                cell.setUp(selectedIndex: selectedIndex, profilePosts: profilePostsController, profileSpots: profileSpotsController)
                 return cell
+                
             default:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "NotFriendsCell", for: indexPath) as! NotFriendsCell
                 let activeUser = self.uid == id ? userInfo : self.mapVC.userInfo
@@ -654,7 +722,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if section == 1 {
             let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "SegViewHeader") as! SegViewHeader
-            header.setUp(index: selectedIndex, profileVC: self, status: status ?? .add)
+            header.setUp(index: selectedIndex, profileVC: self, emptyState: addFirstSpotButton != nil, status: status ?? .add)
             return header
         }
         else { return UITableViewHeaderFooterView() }
@@ -665,7 +733,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        indexPath.section == 0 ? 110 + bioHeight : UIScreen.main.bounds.height - 120 - bioHeight
+        indexPath.section == 0 ? 127 : UIScreen.main.bounds.height - 137
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -674,7 +742,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
         if mapVC.prePanY != mapVC.customTabBar.view.frame.minY { return }
         
         /// reset scrolling before selected view controller has loaded content
-        if (selectedIndex == 0 && !firstViewController.loaded) || (selectedIndex == 1 && !secondViewController.loaded) {
+        if (selectedIndex == 0 && !profileSpotsController.loaded) || (selectedIndex == 1 && !profilePostsController.loaded) {
 
             DispatchQueue.main.async {
                 let offsetY = self.mapVC.prePanY == 0 ? self.sec0Height : 0
@@ -686,8 +754,8 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
         
         /// only recognize on the main  scroll
         if scrollView.tag != 80 { return }
-        if selectedIndex == 0 && firstViewController.children.count > 0 { return }
-        if selectedIndex == 1 && secondViewController.children.count > 0 { return }
+        if selectedIndex == 0 && profileSpotsController.children.count > 0 { return }
+        if selectedIndex == 1 && profilePostsController.children.count > 0 { return }
         
         /// scrollView offset hasn't hit the seg view yet so offset the profile header info
         setContentOffsets()
@@ -711,12 +779,13 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
                     
                     self.shadowScroll.setContentOffset(CGPoint(x: 0, y: self.sec0Height), animated: false)
                     self.tableView.setContentOffset(CGPoint(x: self.tableView.contentOffset.x, y: self.sec0Height), animated: false)
-                    self.selectedIndex == 0 ? self.firstViewController.postsCollection.setContentOffset(CGPoint(x: self.firstViewController.postsCollection.contentOffset.x, y: 0), animated: false) : self.secondViewController.spotsCollection.setContentOffset(CGPoint(x: self.secondViewController.spotsCollection.contentOffset.x, y: 0), animated: false)
+                    
+                    self.selectedIndex == 0 ? self.profileSpotsController.spotsCollection.setContentOffset(CGPoint(x: self.profileSpotsController.spotsCollection.contentOffset.x, y: 0), animated: false) : self.profilePostsController.postsCollection.setContentOffset(CGPoint(x: self.profilePostsController.postsCollection.contentOffset.x, y: 0), animated: false)
                     return
                 }
                 
                 self.tableView.setContentOffset(CGPoint(x: self.tableView.contentOffset.x, y: self.shadowScroll.contentOffset.y), animated: false)
-                self.selectedIndex == 0 ? self.firstViewController.postsCollection.setContentOffset(CGPoint(x: self.firstViewController.postsCollection.contentOffset.x, y: 0), animated: false) : self.secondViewController.spotsCollection.setContentOffset(CGPoint(x: self.secondViewController.spotsCollection.contentOffset.x, y: 0), animated: false)
+                self.selectedIndex == 0 ? self.profileSpotsController.spotsCollection.setContentOffset(CGPoint(x: self.profileSpotsController.spotsCollection.contentOffset.x, y: 0), animated: false) : self.profilePostsController.postsCollection.setContentOffset(CGPoint(x: self.profilePostsController.postsCollection.contentOffset.x, y: 0), animated: false)
                 /// offset current content collection
                 
             } else if self.tableView.cellForRow(at: IndexPath(row: 0, section: 1)) is SegViewCell {
@@ -726,10 +795,10 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
                 switch self.selectedIndex {
                 
                 case 0:
-                    self.firstViewController.postsCollection.setContentOffset(CGPoint(x: self.firstViewController.postsCollection.contentOffset.x, y: self.shadowScroll.contentOffset.y - self.sec0Height), animated: false)
-                    
+                    self.profileSpotsController.spotsCollection.setContentOffset(CGPoint(x: self.profileSpotsController.spotsCollection.contentOffset.x, y: self.shadowScroll.contentOffset.y - self.sec0Height), animated: false)
+
                 default:
-                    self.secondViewController.spotsCollection.setContentOffset(CGPoint(x: self.secondViewController.spotsCollection.contentOffset.x, y: self.shadowScroll.contentOffset.y - self.sec0Height), animated: false)
+                    self.profilePostsController.postsCollection.setContentOffset(CGPoint(x: self.profilePostsController.postsCollection.contentOffset.x, y: self.shadowScroll.contentOffset.y - self.sec0Height), animated: false)
                 }
             }
         }
@@ -743,7 +812,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
         if shadowScroll.contentOffset.y > sec0Height {
                         
             UIView.animate(withDuration: 0.2) {
-                self.selectedIndex == 0 ? self.firstViewController.postsCollection.setContentOffset(CGPoint(x: self.firstViewController.postsCollection.contentOffset.x, y: 0), animated: false) : self.secondViewController.spotsCollection.setContentOffset(CGPoint(x: self.secondViewController.spotsCollection.contentOffset.x, y: 0), animated: false)
+                self.selectedIndex == 0 ? self.profileSpotsController.spotsCollection.setContentOffset(CGPoint(x: self.profileSpotsController.spotsCollection.contentOffset.x, y: 0), animated: false) : self.profilePostsController.postsCollection.setContentOffset(CGPoint(x: self.profilePostsController.postsCollection.contentOffset.x, y: 0), animated: false)
             } completion: { (_) in
                 self.shadowScroll.setContentOffset(CGPoint(x: self.shadowScroll.contentOffset.x, y: self.sec0Height), animated: false)
             }
@@ -754,11 +823,13 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
 
 class UserViewCell: UITableViewCell {
     
-    var pullLine: UIImageView!
+    var pullLine: UIButton!
     var profileImage: UIImageView!
-    var nameLabel, usernameLabel, cityLabel, bioLabel: UILabel!
-    var currentLocationIcon, friendsIcon: UIImageView!
+    var editProfileButton: UIButton!
+    var nameLabel, usernameLabel, cityLabel: UILabel!
     var friendCountButton: UIButton!
+    var cityIcon: UIImageView!
+    var separatorView: UIView!
     
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var userInfo: UserProfile!
@@ -774,11 +845,13 @@ class UserViewCell: UITableViewCell {
         
         resetCell()
         
-        pullLine = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 18, y: 10, width: 36, height: 4.5))
-        pullLine.image = UIImage(named: "PullLine")
-        self.addSubview(pullLine)
-        
-        profileImage = UIImageView(frame: CGRect(x: 13, y: 20, width: 42, height: 42))
+        let pullLine = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 23, y: 0, width: 46, height: 14.5))
+        pullLine.contentEdgeInsets = UIEdgeInsets(top: 9, left: 5, bottom: 0, right: 5)
+        pullLine.setImage(UIImage(named: "PullLine"), for: .normal)
+        pullLine.addTarget(self, action: #selector(lineTap(_:)), for: .touchUpInside)
+        addSubview(pullLine)
+
+        profileImage = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width - 74, y: 14, width: 60, height: 60))
         profileImage.layer.masksToBounds = false
         profileImage.layer.cornerRadius = profileImage.frame.height/2
         profileImage.clipsToBounds = true
@@ -791,82 +864,70 @@ class UserViewCell: UITableViewCell {
             profileImage.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
         }
         
-        nameLabel = UILabel(frame: CGRect(x: 64, y: 23, width: UIScreen.main.bounds.width - 190, height: 18))
+        nameLabel = UILabel(frame: CGRect(x: 14, y: 28, width: UIScreen.main.bounds.width - 120, height: 18))
         nameLabel.text = user.name
         nameLabel.textColor = UIColor.white
-        nameLabel.font = UIFont(name: "SFCamera-Semibold", size: 16)!
+        nameLabel.font = UIFont(name: "SFCamera-Semibold", size: 17.5)!
         nameLabel.sizeToFit()
-        self.addSubview(nameLabel)
+        addSubview(nameLabel)
         
-        usernameLabel = UILabel(frame: CGRect(x: 65, y: 42.5, width: UIScreen.main.bounds.width - 190, height: 15))
-        usernameLabel.text = user.username
-        usernameLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        usernameLabel.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
+        if uid == user.id {
+            editProfileButton = UIButton(frame: CGRect(x: nameLabel.frame.maxX, y: nameLabel.frame.minY - 5, width: 32, height: 32))
+            editProfileButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            editProfileButton.setImage(UIImage(named: "EditPost")!, for: .normal)
+            editProfileButton.contentMode = .scaleAspectFit
+            editProfileButton.addTarget(self, action: #selector(editProfileTap(_:)), for: .touchUpInside)
+            self.addSubview(editProfileButton)
+        }
+        
+        usernameLabel = UILabel(frame: CGRect(x: 14, y: nameLabel.frame.maxY + 4, width: UIScreen.main.bounds.width - 120, height: 15))
+        usernameLabel.text = "@" + user.username
+        usernameLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
+        usernameLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
         usernameLabel.sizeToFit()
-        self.addSubview(usernameLabel)
+        addSubview(usernameLabel)
         
         // set user's city
         if user.currentLocation != "" {
-            currentLocationIcon = UIImageView(frame: CGRect(x: 14, y: 74.5, width: 9, height: 13))
-            currentLocationIcon.image = UIImage(named: "DistanceIcon")
-            self.addSubview(currentLocationIcon)
             
-            cityLabel = UILabel(frame: CGRect(x: 29, y: 74, width: 250, height: 20))
-            cityLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+            cityIcon = UIImageView(frame: CGRect(x: 12.5, y: usernameLabel.frame.maxY + 23, width: 10.8, height: 14.54))
+            cityIcon.image = UIImage(named: "ProfileCityIcon")
+            addSubview(cityIcon)
+            
+            cityLabel = UILabel(frame: CGRect(x: cityIcon.frame.maxX + 5, y: usernameLabel.frame.maxY + 24, width: UIScreen.main.bounds.width - 120, height: 20))
+            cityLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
             cityLabel.text = user.currentLocation
-            cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 12.5)!
+            cityLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
             cityLabel.sizeToFit()
-            self.addSubview(cityLabel)
+            addSubview(cityLabel)
+            
+            separatorView = UIView(frame: CGRect(x: cityLabel.frame.maxX + 9, y: cityLabel.frame.midY - 0.5,  width: 5, height: 2))
+            separatorView.backgroundColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
+            separatorView.layer.cornerRadius = 0.5
+            addSubview(separatorView)
         }
         
-        let friendsX = cityLabel == nil ? 14 : cityLabel.frame.maxX + 15
-        friendsIcon = UIImageView(frame: CGRect(x: friendsX, y: 75, width: 18, height: 12))
-        friendsIcon.image = UIImage(named: "FriendRequest")
-        friendsIcon.contentMode = .scaleAspectFit
-        self.addSubview(friendsIcon)
+        let friendsX = cityLabel == nil ? 14 : separatorView.frame.maxX + 9
         
-        friendCountButton = UIButton(frame: CGRect(x: friendsIcon.frame.maxX + 6, y: friendsIcon.frame.minY - 2, width: 100, height: 18))
-        friendCountButton.setTitle("\(user.friendIDs.count) friends", for: .normal)
+        friendCountButton = UIButton(frame: CGRect(x: friendsX, y: usernameLabel.frame.maxY + 24, width: 100, height: 18))
+        var friendString = "\(user.friendIDs.count) friend"; if user.friendIDs.count > 1 { friendString += "s" }
+        friendCountButton.setTitle(friendString, for: .normal)
         friendCountButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        friendCountButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 13)
+        friendCountButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 13)
         friendCountButton.contentHorizontalAlignment = .left
         friendCountButton.contentVerticalAlignment = .top
         
         if status == .friends {
             friendCountButton.addTarget(self, action: #selector(openFriendsList(_:)), for: .touchUpInside)
         }
-        self.addSubview(friendCountButton)
         
-        if uid == user.id {
-            let editProfileButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 110, y: 23, width: 93, height: 28))
-            editProfileButton.setImage(UIImage(named: "EditProfileButton"), for: .normal)
-            editProfileButton.contentMode = .scaleAspectFit
-            editProfileButton.addTarget(self, action: #selector(editProfileTap(_:)), for: .touchUpInside)
-            self.addSubview(editProfileButton)
-        }
-        
-        bioLabel = UILabel(frame: CGRect(x: 16, y: friendsIcon.frame.maxY + 13, width: UIScreen.main.bounds.width - 32, height: 18))
-        bioLabel.text = user.userBio
-        bioLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
-        bioLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        bioLabel.numberOfLines = 0
-        bioLabel.lineBreakMode = .byWordWrapping
-        bioLabel.sizeToFit()
-        self.addSubview(bioLabel)
-        
-        self.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 150 + bioLabel.frame.height)
+        addSubview(friendCountButton)
     }
     
     @objc func editProfileTap(_ sender: UIButton) {
-        if let editProfileVC = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "EditProfile") as? EditProfileViewController {
-            if let profileVC = self.viewContainingController() as? ProfileViewController {
-                editProfileVC.profileVC = profileVC
-                DispatchQueue.main.async {
-                    profileVC.present(editProfileVC, animated: true, completion: nil)
-                }
-            }
-        }
+        if let profileVC = viewContainingController() as? ProfileViewController { profileVC.editProfile() }
     }
+        
     
     @objc func openFriendsList(_ sender: UIButton) {
         if let friendsListVC = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "FriendsList") as? FriendsListController {
@@ -885,20 +946,25 @@ class UserViewCell: UITableViewCell {
     }
     
     func resetCell() {
-        if pullLine != nil { pullLine.image = UIImage() }
+        if pullLine != nil { pullLine.setImage(UIImage(), for: .normal) }
         if profileImage != nil { profileImage.image = UIImage() }
         if nameLabel != nil { nameLabel.text = "" }
+        if editProfileButton != nil { editProfileButton.setImage(UIImage(), for: .normal) }
         if usernameLabel != nil { usernameLabel.text = "" }
         if cityLabel != nil { cityLabel.text = "" }
-        if bioLabel != nil { bioLabel.text = "" }
-        if currentLocationIcon != nil { currentLocationIcon.image = UIImage() }
-        if friendsIcon != nil { friendsIcon.image = UIImage() }
+        if cityIcon != nil { cityIcon.image = UIImage() }
+        if separatorView != nil { separatorView.backgroundColor = nil }
         if friendCountButton != nil { friendCountButton.setTitle("", for: .normal) }
     }
     
-    @objc override func prepareForReuse() {
+    override func prepareForReuse() {
         super.prepareForReuse()
         if profileImage != nil { profileImage.sd_cancelCurrentImageLoad() }
+    }
+    
+    @objc func lineTap(_ sender: UIButton) {
+        guard let profileVC = viewContainingController() as? ProfileViewController else { return }
+        profileVC.mapVC.animateToFullScreen()
     }
 }
 
@@ -906,6 +972,8 @@ class SegViewHeader: UITableViewHeaderFooterView {
     
     var segmentedControl: UISegmentedControl!
     var buttonBar: UIView!
+    var shadowImage: UIImageView!
+    var separatorCover: UIView!
     var selectedIndex = 0
     
     unowned var profileVC: ProfileViewController!
@@ -914,7 +982,7 @@ class SegViewHeader: UITableViewHeaderFooterView {
         super.init(reuseIdentifier: reuseIdentifier)
     }
     
-    func setUp(index: Int, profileVC: ProfileViewController, status: ProfileViewController.friendStatus) {
+    func setUp(index: Int, profileVC: ProfileViewController, emptyState: Bool, status: ProfileViewController.friendStatus) {
         
         let backgroundView = UIView()
         backgroundView.backgroundColor = UIColor(named: "SpotBlack")
@@ -929,8 +997,8 @@ class SegViewHeader: UITableViewHeaderFooterView {
         segmentedControl.backgroundColor = nil
         segmentedControl.selectedSegmentIndex = index
         
-        let postSegIm = index == 0 ? UIImage(named: "PostSeg") : UIImage(named: "PostSeg")?.alpha(0.6)
-        let spotSegIm = index == 0 ? UIImage(named: "SpotSeg")?.alpha(0.6) : UIImage(named: "SpotSeg")
+        let postSegIm = index == 0 ? UIImage(named: "SpotSeg") : UIImage(named: "SpotSeg")?.alpha(0.6)
+        let spotSegIm = index == 0 ? UIImage(named: "PostSeg")?.alpha(0.6) : UIImage(named: "PostSeg")
         
         segmentedControl.insertSegment(with: postSegIm, at: 0, animated: false)
         segmentedControl.insertSegment(with: spotSegIm, at: 1, animated: false)
@@ -957,9 +1025,25 @@ class SegViewHeader: UITableViewHeaderFooterView {
         segmentedControl.setBackgroundImage(backgroundImage, for: .normal, barMetrics: .default)
         segmentedControl.setBackgroundImage(backgroundImage, for: .selected, barMetrics: .default)
         
-        let separatorCover = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 1, y: 0, width: 2, height: 40))
+        if separatorCover != nil { separatorCover.backgroundColor = nil }
+        separatorCover = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 1, y: 0, width: 2, height: 40))
         separatorCover.backgroundColor = UIColor(named: "SpotBlack")
         self.addSubview(separatorCover)
+    
+        /// hacky shadow for mask under seg view on profile
+        if shadowImage != nil { shadowImage.image = UIImage() }
+        shadowImage = UIImageView(frame: CGRect(x: -10, y: 37, width: UIScreen.main.bounds.width + 20, height: 6))
+        shadowImage.image = UIImage(named: "NavShadowLine")
+        shadowImage.clipsToBounds = false
+        shadowImage.contentMode = .scaleAspectFill
+        addSubview(shadowImage)
+        
+        
+        if emptyState || status != .friends {
+            /// disable on empty state
+            segmentedControl.isEnabled = false
+            buttonBar.isHidden = true
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -967,7 +1051,9 @@ class SegViewHeader: UITableViewHeaderFooterView {
     }
     
     @objc func segmentedControlValueChanged(_ sender: UISegmentedControl) {
-        
+                
+        Mixpanel.mainInstance().track(event: "ProfileSwitchSegments")
+
         // scroll to top of collection on same index tap
         if sender.selectedSegmentIndex == selectedIndex {
             profileVC.scrollSegmentToTop()
@@ -984,8 +1070,8 @@ class SegViewHeader: UITableViewHeaderFooterView {
         DispatchQueue.main.async {
             UIView.animate(withDuration: 0.15) {  self.buttonBar.frame = CGRect(x: minX, y: self.segmentedControl.frame.maxY + 3, width: 40, height: 1.5)
                 
-                let postSegIm = index == 0 ? UIImage(named: "PostSeg") : UIImage(named: "PostSeg")?.alpha(0.6)
-                let spotSegIm = index == 0 ? UIImage(named: "SpotSeg")?.alpha(0.6) : UIImage(named: "SpotSeg")
+                let postSegIm = index == 0 ? UIImage(named: "SpotSeg") : UIImage(named: "SpotSeg")?.alpha(0.6)
+                let spotSegIm = index == 0 ? UIImage(named: "PostSeg")?.alpha(0.6) : UIImage(named: "PostSeg")
                 
                 self.segmentedControl.setImage(postSegIm, forSegmentAt: 0)
                 self.segmentedControl.setImage(spotSegIm, forSegmentAt: 1)
@@ -1002,20 +1088,26 @@ class SegViewHeader: UITableViewHeaderFooterView {
 class SegViewCell: UITableViewCell {
     
     func setUp(selectedIndex: Int, profilePosts: ProfilePostsViewController, profileSpots: ProfileSpotsViewController) {
+        
         self.backgroundColor = UIColor(named: "SpotBlack")
         self.selectionStyle = .none
         
         switch selectedIndex {
+        
         case 0:
-            self.addSubview(profilePosts.view)
-        default:
             self.addSubview(profileSpots.view)
+
+        case 1:
+            self.addSubview(profilePosts.view)
+
+        default:
+            return
         }
     }
-    
 }
 
 class NotFriendsCell: UITableViewCell {
+    
     var userInfo: UserProfile!
     var activeUser: UserProfile!
     let db: Firestore! = Firestore.firestore()
@@ -1036,9 +1128,10 @@ class NotFriendsCell: UITableViewCell {
         resetCell()
         
         switch status {
+        
         case .add:
             /// set up standard not friends view with add friend button
-            addFriendButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width / 2 - 95.5, y: 40, width: 191, height: 45))
+            addFriendButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 117.5, y: 100, width: 235, height: 39))
             addFriendButton.setImage(UIImage(named: "AddFriendButton"), for: .normal)
             addFriendButton.addTarget(self, action: #selector(addFriendTap(_:)), for: .touchUpInside)
             self.addSubview(addFriendButton)
@@ -1046,15 +1139,15 @@ class NotFriendsCell: UITableViewCell {
         case .received:
             /// set up view with option to accept / deny request
             
-            receivedLabel = UILabel(frame: CGRect(x: 20, y: 20, width: UIScreen.main.bounds.width - 40, height: 20))
+            receivedLabel = UILabel(frame: CGRect(x: 20, y: 70, width: UIScreen.main.bounds.width - 40, height: 20))
             receivedLabel.text = "Sent you a friend request"
             receivedLabel.textAlignment = .center
             receivedLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
             receivedLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
             self.addSubview(receivedLabel)
             
-            acceptButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 95.5, y: receivedLabel.frame.maxY + 15, width: 191, height: 45))
-            acceptButton.setImage(UIImage(named: "AcceptButton"), for: .normal)
+            acceptButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 117.5, y: receivedLabel.frame.maxY + 15, width: 235, height: 39))
+            acceptButton.setImage(UIImage(named: "ProfileAcceptButton"), for: .normal)
             acceptButton.addTarget(self, action: #selector(acceptTap(_:)), for: .touchUpInside)
             self.addSubview(acceptButton)
             
@@ -1069,7 +1162,7 @@ class NotFriendsCell: UITableViewCell {
             
         case .pending:
             /// show friend request sent
-            pendingLabel = UILabel(frame: CGRect(x: 20, y: 60, width: UIScreen.main.bounds.width - 40, height: 20))
+            pendingLabel = UILabel(frame: CGRect(x: 20, y: 120, width: UIScreen.main.bounds.width - 40, height: 20))
             pendingLabel.text = "Friend request pending"
             pendingLabel.textAlignment = .center
             pendingLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
@@ -1078,7 +1171,7 @@ class NotFriendsCell: UITableViewCell {
             
         default:
             ///show friend request removed
-            removedLabel = UILabel(frame: CGRect(x: 20, y: 60, width: UIScreen.main.bounds.width - 40, height: 20))
+            removedLabel = UILabel(frame: CGRect(x: 20, y: 110, width: UIScreen.main.bounds.width - 40, height: 20))
             removedLabel.text = "Friend request removed"
             removedLabel.textAlignment = .center
             removedLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
@@ -1090,51 +1183,52 @@ class NotFriendsCell: UITableViewCell {
     @objc func addFriendTap(_ sender: UIButton) {
         /// send request in db
         Mixpanel.mainInstance().track(event: "ProfileAddFriend")
-        addFriend(senderProfile: self.activeUser, receiverID: userInfo.id!)
-        resetView(status: .pending)
+        
+        let activeUser = self.activeUser!
+        let userInfo = self.userInfo!
+        
+        DispatchQueue.global(qos: .utility).async { self.addFriend(senderProfile: activeUser, receiverID: userInfo.id!) }
+        
+        if let profileVC = viewContainingController() as? ProfileViewController {
+            profileVC.status = .pending
+            profileVC.tableView.reloadData()
+        }
     }
     
     @objc func acceptTap(_ sender: UIButton) {
         /// add friend in db
         Mixpanel.mainInstance().track(event: "ProfileFriendRequestAccepted")
-        acceptFriendRequest()
+
+        let friendID = userInfo.id!
+        let uid = self.uid
         
-        if let profileVC = self.viewContainingController() as? ProfileViewController {
-            profileVC.updateFriendsLists(friendID: userInfo.id!)
-            profileVC.removeFriendsView()
+        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID, uid: uid, username: self.activeUser.username) }
+                
+        let infoPass = ["friendID": friendID] as [String : Any]
+        NotificationCenter.default.post(name: Notification.Name("friendRequestAccept"), object: nil, userInfo: infoPass)
+        
+        if let profileVC = viewContainingController() as? ProfileViewController {
+            profileVC.status = .friends
+            profileVC.tableView.reloadData()
         }
     }
     
     @objc func removeTap(_ sender: UIButton) {
         /// remove request in db
         Mixpanel.mainInstance().track(event: "ProfileFriendRequestRemoved")
-        removeFriendRequest()
-        resetView(status: .denied)
-    }
-    
-    func resetView(status: ProfileViewController.friendStatus) {
-        for sub in self.subviews {
-            sub.removeFromSuperview()
-        }
-        setUp(status: status, user: userInfo, activeUser: activeUser)
-    }
-    
-    func acceptFriendRequest() {
-        let friendID = userInfo.id!
-        acceptFriendRequest(friendID: friendID, uid: uid, username: activeUser.username)
         
-        for view in subviews { view.removeFromSuperview() }
-        
-        let infoPass = ["friendID": friendID] as [String : Any]
-        NotificationCenter.default.post(name: Notification.Name("friendRequestAccept"), object: nil, userInfo: infoPass)
-        // add new friend to current user's friends list
-    }
-    
-    func removeFriendRequest() {
         let friendID = self.userInfo.id!
-        removeFriendRequest(friendID: friendID, uid: uid)
+        let uid = self.uid
+        
+        DispatchQueue.global(qos: .utility).async { self.removeFriendRequest(friendID: friendID, uid: uid) }
+        
         let infoPass = ["friendID": friendID] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("friendRequestReject"), object: nil, userInfo: infoPass)
+        
+        if let profileVC = viewContainingController() as? ProfileViewController {
+            profileVC.status = .denied
+            profileVC.tableView.reloadData()
+        }
     }
     
     func resetCell() {
@@ -1143,7 +1237,7 @@ class NotFriendsCell: UITableViewCell {
         if removedLabel != nil { removedLabel.text = "" }
         if addFriendButton != nil { addFriendButton.setImage(UIImage(), for: .normal) }
         if acceptButton != nil { acceptButton.setImage(UIImage(), for: .normal) }
-        if removeButton != nil { removeButton.setImage(UIImage(), for: .normal) }
+        if removeButton != nil { removeButton.setTitle("", for: .normal) }
     }
 }
 
@@ -1170,5 +1264,225 @@ class ProfileSegmentedControl: UISegmentedControl {
                 profileVC.scrollSegmentToTop()
             }
         }
+    }
+}
+
+/// more menu functions
+extension ProfileViewController: UIGestureRecognizerDelegate {
+    
+    @objc func openMoreMenu(_ sender: UIBarButtonItem) {
+        
+        let addRemove = status == .friends && id != "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
+        let height: CGFloat = addRemove ? 167 : 122
+        
+        editView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 112, y: UIScreen.main.bounds.height/2 - 180, width: 224, height: height))
+        editView.backgroundColor = UIColor(red: 0.11, green: 0.114, blue: 0.114, alpha: 1)
+        
+        editView.layer.borderColor = UIColor(red: 0.158, green: 0.158, blue: 0.158, alpha: 1).cgColor
+        editView.layer.borderWidth = 1.25
+        editView.layer.cornerRadius = 7.5
+        
+        editMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        editMask.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+        let tap = UITapGestureRecognizer(target: self, action: #selector(tapExitEditOverview(_:)))
+        tap.delegate = self
+        editMask.addGestureRecognizer(tap)
+
+        mapVC.view.addSubview(editMask)
+        editMask.addSubview(editView)
+        
+        exitButton = UIButton(frame: CGRect(x: editView.frame.width - 37, y: 7, width: 30, height: 30))
+        exitButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        exitButton.setImage(UIImage(named: "CancelButton"), for: .normal)
+        exitButton.addTarget(self, action: #selector(exitEditOverview(_:)), for: .touchUpInside)
+        editView.addSubview(exitButton)
+        
+        if addRemove {
+            let removeButton = UIButton(frame: CGRect(x: 50, y: 37, width: 124, height: 49))
+            removeButton.setTitle("Remove friend", for: .normal)
+            removeButton.setTitleColor(UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0), for: .normal)
+            removeButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 16)
+            removeButton.contentHorizontalAlignment = .center
+            removeButton.contentVerticalAlignment = .center
+            removeButton.titleLabel?.textAlignment = .center
+            removeButton.addTarget(self, action: #selector(removeFriendTap(_:)), for: .touchUpInside)
+            editView.addSubview(removeButton)
+        }
+        
+        let minY: CGFloat = addRemove ? 90 : 37
+        
+        let reportButton = UIButton(frame: CGRect(x: 50, y: minY, width: 124, height: 49))
+        reportButton.setTitle("Report user", for: .normal)
+        reportButton.setTitleColor(UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1), for: .normal)
+        reportButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 16)
+        reportButton.titleLabel?.textAlignment = .center
+        reportButton.contentHorizontalAlignment = .center
+        reportButton.contentVerticalAlignment = .center
+        reportButton.addTarget(self, action: #selector(reportUserTap(_:)), for: .touchUpInside)
+        editView.addSubview(reportButton)
+        
+        mapVC.navigationController?.navigationBar.isUserInteractionEnabled = false
+    }
+    
+    @objc func tapExitEditOverview(_ sender: UIButton) {
+        exitEditOverview()
+    }
+    
+    @objc func exitEditOverview(_ sender: UIButton) {
+        exitEditOverview()
+    }
+    
+    func exitEditOverview() {
+        for sub in editView.subviews {
+            sub.removeFromSuperview()
+        }
+        editView.removeFromSuperview()
+        editMask.removeFromSuperview()
+        editView = nil
+        mapVC.navigationController?.navigationBar.isUserInteractionEnabled = true
+    }
+    
+    @objc func removeFriendTap(_ sender: UIButton) {
+        
+        sender.isUserInteractionEnabled = false
+        
+        let alert = UIAlertController(title: "Remove Friend?", message: nil, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "Remove", style: .destructive, handler: { action in
+                                        
+                                        switch action.style{
+                                        
+                                        case .destructive:
+                                            Mixpanel.mainInstance().track(event: "UserUnfriended")
+                                            let friendID = self.id
+                                            self.updateLocally(friendID: friendID)
+                                            self.makeFirebaseDeletes(friendID: friendID)
+                                            
+                                        case .default:
+                                            return
+                                            
+                                        case .cancel:
+                                            self.exitEditOverview()
+                                            
+                                        @unknown default:
+                                            fatalError()
+                                        }}))
+        
+        self.present(alert, animated: true, completion: nil)
+    }
+        
+    func updateLocally(friendID: String) {
+        
+        /// remove from unfriended
+        userInfo.friendsList.removeAll(where: {$0.id == uid})
+        userInfo.friendIDs.removeAll(where: {$0 == uid})
+        
+        /// remove from active user
+        mapVC.userInfo.friendsList.removeAll(where: {$0.id == friendID})
+        mapVC.userInfo.friendIDs.removeAll(where: {$0 == friendID})
+        
+        if let feedVC = mapVC.customTabBar.viewControllers?.first(where: {$0 is FeedViewController}) as? FeedViewController {
+            feedVC.postsList.removeAll(where: {$0.posterID == friendID})
+            if feedVC.postVC != nil {
+                feedVC.postVC.postsList = feedVC.postsList
+                if feedVC.postVC.tableView != nil { feedVC.postVC.tableView.reloadData() }
+            }
+        }
+        
+        if let nearbyVC = mapVC.customTabBar.viewControllers?.first(where: {$0 is NearbyViewController}) as? NearbyViewController {
+            nearbyVC.cityFriends.removeAll(where: {$0.user.id == friendID})
+            nearbyVC.usersCollection.reloadData()
+        }
+        
+        status = .add
+        tableView.reloadData()
+    }
+    
+    func makeFirebaseDeletes(friendID: String) {
+        
+        let loadingIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 200, width: UIScreen.main.bounds.width, height: 30))
+        loadingIndicator.startAnimating()
+        editMask.addSubview(loadingIndicator)
+        
+        editMask.removeGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(tapExitEditOverview(_:))))
+        exitButton.isEnabled = false
+        
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            
+            /// remove from both users friendsLists
+            self.db.collection("users").document(uid).updateData(["friendsList" : FieldValue.arrayRemove([friendID])])
+            self.db.collection("users").document(friendID).updateData(["friendsList" : FieldValue.arrayRemove([uid])])
+            
+            // need to use deleteIndex because need to ensure that the deletes work before exiting. Eventually need to move to background thread
+            /// remove from both users posts
+            var deleteIndex = 0
+            
+            self.removeFriendFromPosts(posterID: uid, friendID: friendID) { (complete) in
+                deleteIndex += 1
+                if deleteIndex == 4 {
+                    self.exitEditOverview()
+                }
+            }
+            
+            self.removeFriendFromPosts(posterID: friendID, friendID: uid) { (complete) in
+                deleteIndex += 1
+                if deleteIndex == 4 {
+                    self.exitEditOverview()
+                }
+            }
+        
+            /// remove from both users notifications
+            self.removeFriendFromNotis(posterID: uid, friendID: friendID) { (complete) in
+                deleteIndex += 1
+                if deleteIndex == 4 {
+                    self.exitEditOverview()
+                }
+            }
+            
+            self.removeFriendFromNotis(posterID: friendID, friendID: uid) { (complete) in
+                deleteIndex += 1
+                if deleteIndex == 4 {
+                    self.exitEditOverview()
+                }
+            }
+        }
+    }
+    
+    @objc func reportUserTap(_ sender: UIButton) {
+        let alert = UIAlertController(title: "Report user", message: "Describe why you're reporting this person:", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        alert.addTextField { (textField) in textField.text = "" }
+        alert.addAction(UIAlertAction(title: "Report", style: .destructive, handler: { action in
+                                        
+                                        switch action.style{
+                                        
+                                        case .default:
+                                            return
+                                            
+                                        case .cancel:
+                                            self.exitEditOverview()
+                                            
+                                        case .destructive:
+                                            let textField = alert.textFields![0]
+                                            let friendID = self.id
+                                            self.reportUser(reportedUser: friendID, description: textField.text ?? "")
+
+                                        @unknown default:
+                                            fatalError()
+                                        }}))
+        
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    func reportUser(reportedUser: String, description: String) {
+        
+        let db = Firestore.firestore()
+        let uuid = UUID().uuidString
+        
+        db.collection("contact").document(uuid).setData(["type": "report user", "reporterID" : uid, "reportedID": reportedUser, "description": description])
+        
+        exitEditOverview()
     }
 }

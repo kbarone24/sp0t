@@ -43,7 +43,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     var isFetching = false
     
     override func viewWillAppear(_ animated: Bool) {
-        navigationItem.title = "Photo Gallery"
+        navigationItem.title = "Photo gallery"
         guard let parentVC = parent as? PhotosContainerController else { return }
         parentVC.mapVC.customTabBar.tabBar.isHidden = true
     }
@@ -320,6 +320,11 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         guard let parentVC = parent as? PhotosContainerController else { return }
         guard let selectedObject = imageObjects[safe: indexPath.row] else { return }
         
+        let selectedRows = parentVC.selectedObjects.map({$0.index})
+        var selectedPaths: [IndexPath] = []
+        for row in selectedRows { selectedPaths.append(IndexPath(item: row, section: 0)) }
+        if !selectedPaths.contains(where: {$0 == indexPath}) { selectedPaths.append(indexPath) }
+        
         if parentVC.selectedObjects.contains(where: {$0.index == indexPath.row}) {
             
             parentVC.selectedObjects.removeAll(where: {$0.index == indexPath.row})
@@ -328,9 +333,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                 parentVC.removeNextButton()
             }
             
-            DispatchQueue.main.async {
-                collectionView.reloadItems(at: [indexPath])
-            }
+            DispatchQueue.main.async { collectionView.reloadItems(at: selectedPaths) }
             
         } else {
             
@@ -344,9 +347,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                     parentVC.selectedObjects.append((selectedObject, indexPath.row))
                     self.checkForNext()
                     
-                    DispatchQueue.main.async {
-                        collectionView.reloadItems(at: [indexPath])
-                    }
+                    DispatchQueue.main.async { collectionView.reloadItems(at: selectedPaths) }
                     //fetch full quality pic
                 } else {
                     
@@ -354,7 +355,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                         parentVC.selectedObjects.append((selectedObject, indexPath.row))
                         self.checkForNext()
                         
-                        DispatchQueue.main.async { collectionView.reloadItems(at: [indexPath]) }
+                        DispatchQueue.main.async { collectionView.reloadItems(at: selectedPaths) }
                         
                     } else {
                         
@@ -386,7 +387,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                                     self.checkForNext()
                                     cell.removeActivityIndicator()
                                     
-                                    DispatchQueue.main.async { collectionView.reloadItems(at: [indexPath]) }
+                                    DispatchQueue.main.async {  collectionView.reloadItems(at: selectedPaths) }
                                 }
                             }
                         }
@@ -536,6 +537,7 @@ class GalleryCell: UICollectionViewCell {
     ///https://stackoverflow.com/questions/40226949/ios-phimagemanager-cancelimagerequest-not-working
     
     func addBlackFrame() {
+                
         if number != nil {number.text = ""}
         if shadow != nil {shadow.backgroundColor = nil}
         
@@ -561,6 +563,7 @@ class GalleryCell: UICollectionViewCell {
     }
     
     func addGreenFrame(count: Int) {
+        
         if line1 != nil {line1.backgroundColor = nil}
         line1 = UIView(frame: CGRect(x: self.bounds.minX, y: self.bounds.minY, width: 3, height: self.bounds.height))
         line1.backgroundColor = UIColor(named: "SpotGreen")
