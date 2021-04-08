@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "AF.png",
+      "filename" : "AddFriendonProf1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "AF2.png",
+      "filename" : "AddFriendonProf2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "AF3.png",
+      "filename" : "AddFriendonProf3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

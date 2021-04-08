@@ -338,10 +338,10 @@ PODS:
   - FirebaseUI/Storage (10.0.2):
     - Firebase/Storage
     - SDWebImage (~> 5.6)
-  - GeoFire (4.0.2):
+  - GeoFire (4.1.0):
     - Firebase/Database (~> 6.0)
-    - GeoFire/Utils (= 4.0.2)
-  - GeoFire/Utils (4.0.2):
+    - GeoFire/Utils (= 4.1.0)
+  - GeoFire/Utils (4.1.0):
     - Firebase/Database (~> 6.0)
   - Geofirestore (1.0.1):
     - Firebase
@@ -408,10 +408,10 @@ PODS:
   - gRPC-Core/Interface (1.28.2)
   - GTMSessionFetcher/Core (1.5.0)
   - IQKeyboardManagerSwift (6.5.6)
-  - leveldb-library (1.22)
-  - Mixpanel-swift (2.9.0):
-    - Mixpanel-swift/Complete (= 2.9.0)
-  - Mixpanel-swift/Complete (2.9.0)
+  - leveldb-library (1.22.1)
+  - Mixpanel-swift (2.9.1):
+    - Mixpanel-swift/Complete (= 2.9.1)
+  - Mixpanel-swift/Complete (2.9.1)
   - nanopb (1.30906.0):
     - nanopb/decode (= 1.30906.0)
     - nanopb/encode (= 1.30906.0)
@@ -420,9 +420,9 @@ PODS:
   - PromisesObjC (1.2.12)
   - Protobuf (3.14.0)
   - RSKImageCropper (3.0.2)
-  - SDWebImage (5.10.4):
-    - SDWebImage/Core (= 5.10.4)
-  - SDWebImage/Core (5.10.4)
+  - SDWebImage (5.11.0):
+    - SDWebImage/Core (= 5.11.0)
+  - SDWebImage/Core (5.11.0)
 
 DEPENDENCIES:
   - Firebase/Analytics
@@ -435,8 +435,7 @@ DEPENDENCIES:
   - Firebase/Storage
   - FirebaseFirestoreSwift
   - FirebaseUI/Storage
-  - GeoFire (from `https://github.com/firebase/geofire-objc`)
-  - Geofirestore (from `https://github.com/basementaspirations/GeoFirestore-iOS`, branch `firebase-upgrade`)
+  - Geofirestore (from `https://github.com/imperiumlabs/GeoFirestore-iOS.git`)
   - GoogleAnalytics
   - IQKeyboardManagerSwift
   - Mixpanel-swift
@@ -463,6 +462,7 @@ SPEC REPOS:
     - FirebaseRemoteConfig
     - FirebaseStorage
     - FirebaseUI
+    - GeoFire
     - GoogleAnalytics
     - GoogleAppMeasurement
     - GoogleDataTransport
@@ -481,19 +481,13 @@ SPEC REPOS:
     - SDWebImage
 
 EXTERNAL SOURCES:
-  GeoFire:
-    :git: https://github.com/firebase/geofire-objc
   Geofirestore:
-    :branch: firebase-upgrade
-    :git: https://github.com/basementaspirations/GeoFirestore-iOS
+    :git: https://github.com/imperiumlabs/GeoFirestore-iOS.git
 
 CHECKOUT OPTIONS:
-  GeoFire:
-    :commit: 8260232103d8521a460afca14ce042014bb7af79
-    :git: https://github.com/firebase/geofire-objc
   Geofirestore:
-    :commit: 1f7ff28dc0f652fb401ee58d88931ea18752b522
-    :git: https://github.com/basementaspirations/GeoFirestore-iOS
+    :commit: fe7bec6c754686da10aace26511b3da47264f906
+    :git: https://github.com/imperiumlabs/GeoFirestore-iOS.git
 
 SPEC CHECKSUMS:
   abseil: 6c8eb7892aefa08d929b39f9bb108e5367e3228f
@@ -515,7 +509,7 @@ SPEC CHECKSUMS:
   FirebaseRemoteConfig: 35a729305f254fb15a2e541d4b36f3a379da7fdc
   FirebaseStorage: 15e0f15ef3c7fec3d1899d68623e47d4447066b4
   FirebaseUI: 59db3d833773f985550897d54ceb811ba37fb9a5
-  GeoFire: de4c2b55b49e77c3656fb164eb4037eda3da823b
+  GeoFire: 8372fdf980b5ef1df6767dba7ff79288fad34612
   Geofirestore: 46c079cf1ceeb03e77e7b2e4a3e65530527b6f95
   GoogleAnalytics: f42cc53a87a51fe94334821868d9c8481ff47a7b
   GoogleAppMeasurement: a6a3a066369828db64eda428cb2856dc1cdc7c4e
@@ -526,14 +520,14 @@ SPEC CHECKSUMS:
   gRPC-Core: 4afa11bfbedf7cdecd04de535a9e046893404ed5
   GTMSessionFetcher: b3503b20a988c4e20cc189aa798fd18220133f52
   IQKeyboardManagerSwift: c7df9d2deb356c04522f5c4b7b6e4ce4d8ed94fe
-  leveldb-library: 55d93ee664b4007aac644a782d11da33fba316f7
-  Mixpanel-swift: a6832b31ddd3880aebe803ae783708d35f28c256
+  leveldb-library: 50c7b45cbd7bf543c81a468fe557a16ae3db8729
+  Mixpanel-swift: f945f36adc3b76fc6517df98682211d3c0bf5bbe
   nanopb: 59317e09cf1f1a0af72f12af412d54edf52603fc
   PromisesObjC: 3113f7f76903778cf4a0586bd1ab89329a0b7b97
   Protobuf: 0cde852566359049847168e51bd1c690e0f70056
   RSKImageCropper: 1ac71e9a82e3f41eea3eedfff8eacb0d3821c9ec
-  SDWebImage: c666b97e1fa9c64b4909816a903322018f0a9c84
+  SDWebImage: 7acbb57630ac7db4a495547fb73916ff3e432f6b
 
-PODFILE CHECKSUM: 388871a36acbbd25d0962e6024b9be379d4f89fd
+PODFILE CHECKSUM: cb849243f704d64c12e4d5dc700c98be9d679b22
 
 COCOAPODS: 1.10.1

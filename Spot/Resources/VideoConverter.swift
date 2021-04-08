@@ -37,18 +37,18 @@ class ImageAnimator {
     var frameNum = 0
 
     class func saveToLibrary(videoURL: URL) {
-     /*   PHPhotoLibrary.requestAuthorization { status in
+        PHPhotoLibrary.requestAuthorization { status in
             guard status == .authorized else { return }
 
-        /*    PHPhotoLibrary.shared().performChanges({
+            PHPhotoLibrary.shared().performChanges({
                 PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: videoURL)
             }) { success, error in
                 if !success {
                     print("Could not save video to photo library:", error as Any)
                 }
-            } */
+            }
             SpotPhotoAlbum.sharedInstance.save(videoURL: videoURL)
-        } */
+        }
     }
 
     class func removeFileAtURL(fileURL: URL) {
@@ -82,7 +82,7 @@ class ImageAnimator {
 
         videoWriter.start()
         videoWriter.render(appendPixelBuffers: appendPixelBuffers) {
-           // ImageAnimator.saveToLibrary(videoURL: self.settings.outputURL)
+            ImageAnimator.saveToLibrary(videoURL: self.settings.outputURL)
             completion?()
         }
 
@@ -151,8 +151,8 @@ class VideoWriter {
 
         let horizontalRatio = size.width / image.size.width
         let verticalRatio = size.height / image.size.height
-        //aspectRatio = max(horizontalRatio, verticalRatio) // ScaleAspectFill
-        let aspectRatio = min(horizontalRatio, verticalRatio) // ScaleAspectFit
+        let aspectRatio = max(horizontalRatio, verticalRatio) // ScaleAspectFill
+        //let aspectRatio = min(horizontalRatio, verticalRatio) // ScaleAspectFit
         let newSize = CGSize(width: image.size.width * aspectRatio, height: image.size.height * aspectRatio)
 
         let x = newSize.width < size.width ? (size.width - newSize.width) / 2 : 0

@@ -19,6 +19,7 @@ class PostViewController: UIViewController {
     lazy var friendsList: [String] = []
     lazy var postsList: [MapPost] = []
 
+    var spotObject: MapSpot!
     var tableView: UITableView!
     var cellHeight, closedY, tabBarHeight: CGFloat!
     var selectedPostIndex = 0 /// current row in posts table
@@ -28,12 +29,17 @@ class PostViewController: UIViewController {
     unowned var mapVC: MapViewController!
     var commentNoti = false /// present commentsVC if opened from notification comment
     
+    var tutorialMode = false /// initial user tutorial
+    var tutorialImageIndex = 0
+    var postsEmpty = false /// no available posts, show findFriendsCell
+    
     var editView = false /// edit overview presented
     var editPostView = false /// edit post view presented
     var notFriendsView = false /// not friends view presented
     var editedPost: MapPost! /// selected post with edits
         
     var active = true
+    var addedLocationPicker = false
     
     private lazy var loadingQueue = OperationQueue()
     private lazy var loadingOperations = [String: PostImageLoader]()
@@ -54,6 +60,7 @@ class PostViewController: UIViewController {
         
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
+        mapVC.hideNearbyButtons()
         
         if tableView == nil {
             vcid = UUID().uuidString
@@ -64,6 +71,19 @@ class PostViewController: UIViewController {
             resetView()
             tableView.reloadData()
         }
+    }
+    
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(tagSelect(_:)), name: NSNotification.Name("TagSelect"), object: nil)
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        active = false
+        cancelDownloads()
     }
     
     func cancelDownloads() {
@@ -77,8 +97,9 @@ class PostViewController: UIViewController {
         
         loadingQueue.cancelAllOperations()
         if parentVC != .spot { hideFeedButtons() } /// feed buttons needed for spot page too
-        mapVC.mapView.isUserInteractionEnabled = true
+        mapVC.toggleMapTouch(enable: false)
     }
+    
     
     func setUpTable() {
         
@@ -87,7 +108,7 @@ class PostViewController: UIViewController {
         let safeBottom = window?.safeAreaInsets.bottom ?? 0
         
         tabBarHeight = tabBar?.tabBar.frame.height ?? 44 + safeBottom
-        closedY = !(tabBar?.tabBar.isHidden ?? false) ? tabBarHeight + 62 : safeBottom + 62
+        closedY = !(tabBar?.tabBar.isHidden ?? false) ? tabBarHeight + 77 : safeBottom + 115
         cellHeight = UIScreen.main.bounds.height > 800 ? (UIScreen.main.bounds.width * 1.77778) : (UIScreen.main.bounds.width * 1.5)
         cellHeight += tabBarHeight
         
@@ -103,35 +124,76 @@ class PostViewController: UIViewController {
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: cellHeight, right: 0)
         tableView.register(PostCell.self, forCellReuseIdentifier: "PostCell")
         tableView.register(LoadingCell.self, forCellReuseIdentifier: "LoadingCell")
+        tableView.register(TutorialCell.self, forCellReuseIdentifier: "TutorialCell")
+        tableView.register(PostFriendsCell.self, forCellReuseIdentifier: "PostFriendsCell")
         view.addSubview(tableView)
         
+
         DispatchQueue.main.async {
+            
             self.tableView.reloadData()
-            self.tableView.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
+            
+            if !self.postsEmpty && !self.tutorialMode {
+                self.tableView.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
+            }
         }
         
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: Notification.Name("PostImageChange"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyIndexChange(_:)), name: NSNotification.Name("PostIndexChange"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyAddressChange(_:)), name: NSNotification.Name("PostAddressChange"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostTap(_:)), name: NSNotification.Name("FeedPostTap"), object: nil)
-
+        if tutorialMode || postsEmpty { return }
+        
+        addPullLineAndNotifications()
+        
         if self.commentNoti {
             self.openComments()
             self.commentNoti = false
         }
-        
-    }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(tagSelect(_:)), name: NSNotification.Name("TagSelect"), object: nil)
-    }
-    
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
-        active = false
-        cancelDownloads()
+
+        if parentVC != .feed {
+            
+            setUpNavBar()
+            
+            if parentVC == .spot {
+                /// add spot name banner over the top of feed for spot page
+                let pan = UIPanGestureRecognizer(target: self, action: #selector(topViewTableSwipe(_:)))
+
+                let spotNameBanner = UIView(frame: CGRect(x: 12, y: 20, width: UIScreen.main.bounds.width - 63, height: 30))
+                spotNameBanner.backgroundColor = nil
+                spotNameBanner.addGestureRecognizer(pan)
+                view.addSubview(spotNameBanner)
+                
+                let targetIcon = UIImageView(frame: CGRect(x: 0, y: 0.5, width: 19, height: 19))
+                targetIcon.image = UIImage(named: "PlainSpotIcon")
+                targetIcon.isUserInteractionEnabled = false
+                spotNameBanner.addSubview(targetIcon)
+                
+                let spotNameLabel = UILabel(frame: CGRect(x: 22, y: 2.5, width: UIScreen.main.bounds.width - 72, height: 14.5))
+                spotNameLabel.lineBreakMode = .byTruncatingTail
+                spotNameLabel.text = spotObject.spotName
+                spotNameLabel.textColor = .white
+                spotNameLabel.clipsToBounds = true
+                spotNameLabel.isUserInteractionEnabled = false
+                spotNameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)
+                spotNameLabel.sizeToFit()
+                
+                spotNameBanner.addSubview(spotNameLabel)
+                
+                let cityLabel = UILabel(frame: CGRect(x: 1, y: spotNameLabel.frame.maxY + 2.5, width: 300, height: 14))
+                cityLabel.isUserInteractionEnabled = false
+                cityLabel.text = spotObject.city ?? ""
+                cityLabel.textColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1)
+                cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
+                cityLabel.sizeToFit()
+                print("max y", cityLabel.frame.maxY)
+                spotNameBanner.addSubview(cityLabel)
+                
+                spotNameBanner.sizeToFit()
+                
+                let tapButton = UIButton(frame: CGRect(x: 4, y: 14, width: spotNameLabel.frame.width + 30, height: spotNameBanner.frame.height + 8))
+                tapButton.backgroundColor = nil
+                tapButton.addTarget(self, action: #selector(spotNameTap(_:)), for: .touchUpInside)
+                view.addSubview(tapButton)
+                
+            }
+        }
     }
     
     @objc func notifyImageChange(_ sender: NSNotification) {
@@ -151,6 +213,26 @@ class PostViewController: UIViewController {
         }
     }
     
+    func addPullLineAndNotifications() {
+        /// broken out into its own function so it can be called on transition from tutorial to regular view
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: Notification.Name("PostImageChange"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyIndexChange(_:)), name: NSNotification.Name("PostIndexChange"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyAddressChange(_:)), name: NSNotification.Name("PostAddressChange"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostTap(_:)), name: NSNotification.Name("FeedPostTap"), object: nil)
+        
+        mapVC.toggleMapTouch(enable: true)
+        
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(topViewTableSwipe(_:)))
+
+        let pullLine = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 23, y: 0, width: 46, height: 14.5))
+        pullLine.contentEdgeInsets = UIEdgeInsets(top: 9, left: 5, bottom: 0, right: 5)
+        pullLine.setImage(UIImage(named: "PullLine"), for: .normal)
+        pullLine.addTarget(self, action: #selector(lineTap(_:)), for: .touchUpInside)
+        pullLine.addGestureRecognizer(pan)
+        view.addSubview(pullLine)
+    }
+    
     func updateParentImageIndex(post: MapPost) {
         if let feedVC = parent as? FeedViewController {
             feedVC.postsList[selectedPostIndex] = post
@@ -160,6 +242,7 @@ class PostViewController: UIViewController {
     }
     
     @objc func notifyIndexChange(_ sender: NSNotification) {
+
         if let info = sender.userInfo as? [String: Any] {
             
             guard let id = info["id"] as? String else { return }
@@ -171,6 +254,7 @@ class PostViewController: UIViewController {
             /// animate to next post after vertical scroll
             if let index = info["index"] as? Int {
                 selectedPostIndex = index
+                
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     self.tableView.reloadData()
@@ -218,7 +302,7 @@ class PostViewController: UIViewController {
     @objc func notifyPostTap(_ sender: NSNotification) {
         /// deselect annotation so tap works again
         for annotation in mapVC.mapView.selectedAnnotations { mapVC.mapView.deselectAnnotation(annotation, animated: false) }
-        openDrawer()
+        openDrawer(swipe: false)
     }
     
     @objc func tagSelect(_ sender: NSNotification) {
@@ -239,35 +323,64 @@ class PostViewController: UIViewController {
     }
     
     func resetView() {
-        
-        mapVC.postsList = postsList
-        mapVC.mapView.isUserInteractionEnabled = false
 
-        ///notify map to show this post
+        mapVC.postsList = postsList
         mapVC.navigationController?.setNavigationBarHidden(true, animated: false)
+        
         
         if parentVC == .notifications {
             if let tabBar = parent?.parent as? CustomTabBar {
                 tabBar.view.frame = CGRect(x: 0, y: mapVC.tabBarClosedY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
             }
+        }
+        
+        if parentVC == .feed {
             
-        } else if parentVC == .feed {
             mapVC.customTabBar.tabBar.isHidden = false
+            
             if selectedPostIndex == 0 && tableView != nil {
+                if postsList.count == 0 { self.mapVC.animateToFullScreen(); return }
                 DispatchQueue.main.async { self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
             }
             
             if let feed = parent as? FeedViewController {
-                feed.checkForNewPosts()
+                if !tutorialMode { feed.checkForNewPosts() }
             }
+            
+        } else {
+            setUpNavBar()
         }
         
-        let mapPass = ["selectedPost": selectedPostIndex as Any, "firstOpen": true, "parentVC": parentVC] as [String : Any]
+        ///notify map to show this post
+        let firstOpen = !addedLocationPicker /// fucked up nav bar after edit post location
+        let mapPass = ["selectedPost": selectedPostIndex as Any, "firstOpen": firstOpen, "parentVC": parentVC] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass)
+        
+        addedLocationPicker = false
+    }
+    
+    func setUpNavBar() {
+        
+        print("set up post nav bar")
+        /// add exit button over top of feed for profile and spot page
+        mapVC.navigationController?.setNavigationBarHidden(false, animated: false)
+        mapVC.navigationController?.navigationBar.isTranslucent = true
+        mapVC.navigationController?.navigationBar.removeShadow()
+        mapVC.navigationController?.navigationBar.removeBackgroundImage()
+        
+        let backButton = UIBarButtonItem(image: UIImage(named: "CircleBackButton")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(exitPosts(_:)))
+        backButton.imageInsets = UIEdgeInsets(top: 0, left: -2, bottom: 0, right: 0)
+        mapVC.navigationItem.leftBarButtonItem = backButton
+        mapVC.navigationItem.title = ""
+        mapVC.navigationItem.rightBarButtonItem = nil
     }
     
     func openComments() {
+        
         if let commentsVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Comments") as? CommentsViewController {
+            
+            Mixpanel.mainInstance().track(event: "PostOpenComments")
+
             let post = self.postsList[selectedPostIndex]
             commentsVC.commentList = post.commentList
             commentsVC.post = post
@@ -280,6 +393,7 @@ class PostViewController: UIViewController {
     }
     
     func getCaptionHeight(caption: String) -> CGFloat {
+        
         let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 36, height: 20))
         tempLabel.text = caption
         tempLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
@@ -289,86 +403,122 @@ class PostViewController: UIViewController {
         return tempLabel.frame.height
     }
     
-    func closeDrawer() {
+    func closeDrawer(swipe: Bool) {
                 
+        Mixpanel.mainInstance().track(event: "PostCloseDrawer", properties: ["swipe": swipe])
+
         guard let post = postsList[safe: selectedPostIndex] else { return }
         let tabBar = mapVC.customTabBar
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let safeBottom = window?.safeAreaInsets.bottom ?? 0
         let tabBarHeight = tabBar?.tabBar.frame.height ?? 44 + safeBottom
 
-        let closedY = tabBarHeight + 62
+        let closedY = parentVC == .feed ? tabBarHeight + 84 : safeBottom + 115
         
         let maxZoom: CLLocationDistance = parentVC == .spot ? 300 : 600
-        let adjust: CLLocationDistance = 0.00000525 * maxZoom
+        let adjust: CLLocationDistance = 0.00000345 * maxZoom
         let adjustedCoordinate = CLLocationCoordinate2D(latitude: post.postLat - Double(adjust), longitude: post.postLong)
-        mapVC.mapView.animatedZoom(zoomRegion: MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: maxZoom, longitudinalMeters: maxZoom), duration: 0.3)
+        mapVC.mapView.animatedZoom(zoomRegion: MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: maxZoom, longitudinalMeters: maxZoom), duration: 0.4)
 
+        let duration: TimeInterval = swipe ? 0.15 : 0.30
         guard let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell else { return }
-        UIView.animate(withDuration: 0.15, animations: {
+      
+        UIView.animate(withDuration: duration, animations: {
             self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: UIScreen.main.bounds.height - closedY, width: UIScreen.main.bounds.width, height: closedY)
+            if cell.postImage.frame.minY != 0 { cell.postImage.addTopMask() }
             cell.postImage.frame = CGRect(x: cell.postImage.frame.minX, y: 0, width: cell.postImage.frame.width, height: cell.postImage.frame.height)
-            if cell.pullLine != nil { cell.bringSubviewToFront(cell.pullLine) }
             if cell.topView != nil { cell.bringSubviewToFront(cell.topView) }
             if cell.tapButton != nil { cell.bringSubviewToFront(cell.tapButton) }
         })
         
+        /// animate post view at same duration as animated zoom
+        UIView.animate(withDuration: 0.4, animations: {
+            if let annoView = self.mapVC.mapView.view(for: self.mapVC.postAnnotation) {
+                annoView.alpha = 1.0
+            }
+        })
+
         mapVC.prePanY = UIScreen.main.bounds.height - closedY
-        mapVC.mapView.isUserInteractionEnabled = true
+        mapVC.toggleMapTouch(enable: false)
         unhideFeedButtons()
     }
     
-    func openDrawer() {
+    func openDrawer(swipe: Bool) {
         
+        Mixpanel.mainInstance().track(event: "PostOpenDrawer", properties: ["swipe": swipe])
+
         guard let post = postsList[safe: selectedPostIndex] else { return }
         let zoomDistance: CLLocationDistance = parentVC == .spot ? 1000 : 100000
-        let adjust = 0.00000525 * zoomDistance
+        let adjust = 0.00000845 * zoomDistance
         let adjustedCoordinate = CLLocationCoordinate2D(latitude: post.postLat - adjust, longitude: post.postLong)
         mapVC.mapView.animatedZoom(zoomRegion: MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: zoomDistance, longitudinalMeters: zoomDistance), duration: 0.3)
 
         mapVC.removeBottomBar()
+        mapVC.toggleMapTouch(enable: true)
+        
         let prePanY = mapVC.customTabBar.tabBar.isHidden ? mapVC.tabBarClosedY : mapVC.tabBarOpenY
         mapVC.prePanY = prePanY
-        mapVC.mapView.isUserInteractionEnabled = false
         hideFeedButtons()
 
+        let duration: TimeInterval = swipe ? 0.15 : 0.30
         guard let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell else { return }
-        UIView.animate(withDuration: 0.15) {
+       
+        UIView.animate(withDuration: duration) {
             self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: prePanY!, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - prePanY!)
+            if cell.imageY != 0 { cell.postImage.removeTopMask() }
             cell.postImage.frame = CGRect(x: cell.postImage.frame.minX, y: cell.imageY, width: cell.postImage.frame.width, height: cell.postImage.frame.height)
-            if cell.pullLine != nil { cell.bringSubviewToFront(cell.pullLine) }
             if cell.topView != nil { cell.bringSubviewToFront(cell.topView) }
             if cell.tapButton != nil { cell.bringSubviewToFront(cell.tapButton) }
         }
+        
+        /// animate post view at same duration as animated zoom
+        UIView.animate(withDuration: 0.4, animations: {
+            if let annoView = self.mapVC.mapView.view(for: self.mapVC.postAnnotation) {
+                annoView.alpha = 0.0
+            }
+        })
     }
 
+    @objc func topViewTableSwipe(_ gesture: UIPanGestureRecognizer) {
+        guard let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell else { return }
+        cell.topViewSwipe(gesture) /// pass through to cell method
+    }
+    
+    @objc func exitPosts(_ sender: UIBarButtonItem) {
+        exitPosts()
+    }
+    
+    @objc func spotNameTap(_ sender: UIPanGestureRecognizer) {
+        exitPosts()
+    }
+    
+    @objc func lineTap(_ sender: UIButton) {
+        guard let _ = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell else { return }
+        mapVC.prePanY < 200 ? closeDrawer(swipe: false) : openDrawer(swipe: false)
+    }
 }
 
 extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITableViewDataSourcePrefetching {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
+        if tutorialMode || postsEmpty { return 1 }
+        
         var postCount = postsList.count
 
-        /// increment postCount if added loading cell at the end
-        if let postParent = parent as? ProfilePostsViewController {
-            if postParent.refresh != .noRefresh { postCount += 1 }
-        } else if let postParent = parent as? FeedViewController {
-            if postParent.refresh != .noRefresh { postCount += 1 }
+        /// increment postCount if added loading cell at the end. 6 is earliest that cell refresh can happen
+        if let postParent = parent as? FeedViewController {
+            if postParent.refresh != .noRefresh && postsList.count > 6 { postCount += 1 }
         }
-        
+
         return postCount
     }
-    
-/*   func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard let cell = cell as? PostCell else { return }
-    } */
     
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
         guard let cell = cell as? PostCell else { return }
         guard let post = postsList[safe: indexPath.row] else { return }
-        
         /// update cell image and related properties on completion
         
         let updateCellImage: ([UIImage]?) -> () = { [weak self] (images) in
@@ -427,17 +577,18 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
     ///https://medium.com/monstar-lab-bangladesh-engineering/tableview-prefetching-datasource-3de593530c4a
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         if indexPath.row < self.postsList.count {
+
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "PostCell") as? PostCell else { return UITableViewCell() }
             
-            let cell = tableView.dequeueReusableCell(withIdentifier: "PostCell") as! PostCell
             let post = postsList[indexPath.row]
             var postsCount = self.postsList.count
             
             /// increment postCount if added loading cell at the end
-            if let postParent = parent as? ProfilePostsViewController {
-                if postParent.refresh != .noRefresh { postsCount += 1 }
-            } else if let postParent = parent as? FeedViewController {
-                if postParent.refresh != .noRefresh { postsCount += 1 }
+
+            if let postParent = parent as? FeedViewController {
+                if postParent.refresh != .noRefresh && postsList.count > 6 { postsCount += 1 }
             }
 
             cell.setUp(post: post, selectedPostIndex: selectedPostIndex, postsCount: postsCount, parentVC: parentVC, vcid: vcid, row: indexPath.row, cellHeight: cellHeight, tabBarHeight: tabBarHeight, closedY: closedY)
@@ -445,8 +596,22 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
             ///edit view was getting added on random cells after returning from other screens so this is really a patch fix
             
             return cell
+            
         } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "LoadingCell") as! LoadingCell
+            
+            if tutorialMode && indexPath.row == 0 {
+                
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: "TutorialCell") as?  TutorialCell else { return UITableViewCell() }
+                cell.setUp(selectedImageIndex: tutorialImageIndex, cellHeight: cellHeight, tabBarHeight: tabBarHeight)
+                return cell
+                
+            } else if postsEmpty && indexPath.row == 0 {
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: "PostFriendsCell") as? PostFriendsCell else { return UITableViewCell() }
+                cell.setUp(cellHeight: cellHeight, tabBarHeight: tabBarHeight)
+                return cell
+            }
+            
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "LoadingCell") as? LoadingCell else { return UITableViewCell() }
             cell.setUp(selectedPostIndex: indexPath.row, parentVC: parentVC, vcid: vcid)
             return cell
         }
@@ -461,8 +626,9 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
     }
     
     func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
+        
         for indexPath in indexPaths {
-            
+
             if abs(indexPath.row - selectedPostIndex) > 4 { return }
             
             guard let post = postsList[safe: indexPath.row] else { return }
@@ -519,20 +685,20 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
         DispatchQueue.main.async { self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: self.mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - self.mapVC.halfScreenY) }
     }
     
-    func exitPosts(swipe: Bool) {
+    func exitPosts() {
         
         /// posts will always be a child of feed vc
         if parentVC == .feed { return }
         
         self.willMove(toParent: nil)
+        view.removeFromSuperview()
         
-        ///if swipe down, animate view removal
-        if !swipe { view.removeFromSuperview() }
+        mapVC.toggleMapTouch(enable: false)
         
         if let spotVC = parent as? SpotViewController {
             spotVC.resetView()
         } else if let profileVC = parent as? ProfileViewController {
-            profileVC.postRemove()
+            profileVC.resetProfile()
         } else if let notificationsVC = parent as? NotificationsViewController {
             notificationsVC.resetView()
         }
@@ -572,12 +738,10 @@ class PostCell: UITableViewCell {
     var selectedSpotID: String!
     
     var topView: UIView!
-    var pullLine: UIImageView!
     var postImage: UIImageView!
     var postImageNext: UIImageView!
     var postImagePrevious: UIImageView!
     var bottomMask: UIView!
-    var exitButton: UIButton!
     var dotView: UIView!
     
     var spotNameBanner: UIView!
@@ -611,12 +775,13 @@ class PostCell: UITableViewCell {
 
     var nextPan, swipe: UIPanGestureRecognizer!
     
+    /// for if user isn't friend with spot founder
     var noAccessFriend: UserProfile!
     var notFriendsView: UIView!
     var postMask: UIView!
     var addFriendButton: UIButton!
-    var isOnlyPost = false /// to determine whether to delete entire spot on delete
     
+    var deleteIndicator: CustomActivityIndicator!
     var editView: UIView!
     var editPostView: EditPostView!
     
@@ -627,6 +792,7 @@ class PostCell: UITableViewCell {
     var imageY: CGFloat = 0 /// minY of postImage before moving drawer
     var closedY: CGFloat = 0
     var tabBarHeight: CGFloat = 0
+    var beginningSwipe: CGFloat = 0
 
     func setUp(post: MapPost, selectedPostIndex: Int, postsCount: Int, parentVC: PostViewController.parentViewController, vcid: String, row: Int, cellHeight: CGFloat, tabBarHeight: CGFloat, closedY: CGFloat) {
         
@@ -657,37 +823,31 @@ class PostCell: UITableViewCell {
         self.addGestureRecognizer(nextPan)
                         
         let minY: CGFloat = screenSize == 0 ? 0 : screenSize == 1 ? 62 : 69
-        postImage = UIImageView(frame: CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: overflowBound))
+        postImage = UIImageView(frame: CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: overflowBound - minY))
         postImage.image = UIImage(color: UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1.0))
         postImage.backgroundColor = nil
         postImage.tag = 16
         postImage.clipsToBounds = true
-        postImage.layer.cornerRadius = 7.5
         postImage.isUserInteractionEnabled = true
         addSubview(postImage)
         
-        /// load non image related post info
+        // load non image related post info
+        /// spot name stuff added on each cell unless spot is parent
+        if post.spotID != "" && parentVC != .spot {
+            /// spot name banner added on the cell for non-spot
+            topView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 62))
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(topViewSwipe(_:)))
+            topView.addGestureRecognizer(pan)
+            addSubview(topView)
 
-        topView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 62))
-        topView.backgroundColor = nil
-        topView.tag = 16
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(topViewSwipe(_:)))
-        topView.addGestureRecognizer(pan)
-        addSubview(topView)
-        
-        pullLine = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 18, y: 10, width: 36, height: 4.5))
-        pullLine.image = UIImage(named: "PullLine")
-        topView.addSubview(pullLine)
-        
-        if post.spotID != "" {
-            
-            spotNameBanner = UIView(frame: CGRect(x: 8, y: 17, width: UIScreen.main.bounds.width - 16, height: 20))
+            spotNameBanner = UIView(frame: CGRect(x: 11, y: 22, width: UIScreen.main.bounds.width - 13, height: 40))
             spotNameBanner.backgroundColor = nil
             topView.addSubview(spotNameBanner)
             
             targetIcon = UIImageView(frame: CGRect(x: 0, y: 0.5, width: 19, height: 19))
             targetIcon.image = UIImage(named: "PlainSpotIcon")
             targetIcon.isUserInteractionEnabled = false
+            targetIcon.sizeToFit()
             spotNameBanner.addSubview(targetIcon)
             
             spotNameLabel = UILabel(frame: CGRect(x: 22, y: 2.5, width: UIScreen.main.bounds.width - 40, height: 14.5))
@@ -700,55 +860,40 @@ class PostCell: UITableViewCell {
             
             spotNameBanner.addSubview(spotNameLabel)
             
-            cityLabel = UILabel(frame: CGRect(x: 0, y: spotNameLabel.frame.maxY + 4, width: 300, height: 14))
+            cityLabel = UILabel(frame: CGRect(x: 1, y: spotNameLabel.frame.maxY + 2.5, width: 300, height: 14))
             cityLabel.isUserInteractionEnabled = false
             cityLabel.text = post.city ?? ""
             cityLabel.textColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1)
-            cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
+            cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
             cityLabel.sizeToFit()
             spotNameBanner.addSubview(cityLabel)
             
             spotNameBanner.sizeToFit()
             
-            tapButton = UIButton(frame: CGRect(x: 4, y: 14, width: spotNameLabel.frame.width + 30, height: spotNameBanner.frame.height + 8))
+            tapButton = UIButton(frame: CGRect(x: 4, y: 14, width: spotNameLabel.frame.width + 30, height: spotNameBanner.frame.height - 5))
             tapButton.backgroundColor = nil
             tapButton.addTarget(self, action: #selector(spotNameTap(_:)), for: .touchUpInside)
             addSubview(tapButton)
         }
         
-        if parentVC != .feed {
-            exitButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 45, y: 12, width: 35, height: 35))
-            exitButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            exitButton.setImage(UIImage(named: "CancelButton"), for: .normal)
-            exitButton.addTarget(self, action: #selector(exitPosts(_:)), for: .touchUpInside)
-            topView.addSubview(exitButton)
-            
-            /// resize to avoid overlap
-            if spotNameLabel != nil { spotNameLabel.frame = CGRect(x: 22.5, y: 2.5, width: UIScreen.main.bounds.width - 72, height: 14.5) }
-        }
-        
         var captionHeight = getCaptionHeight(caption: post.caption)
         trueCaptionHeight = captionHeight
-        
-        ///  overflow to add more button to caption if necessary. 3 lines max for 414 width screens, 2 lines otherwise
-        let tabBarHidden = parentVC == .profile || parentVC == .spot
-        
-        var maxCaption: CGFloat = screenSize == 2 ? 45 : 30
-        if tabBarHidden { maxCaption += 30 }
+                
+        let maxCaption: CGFloat = screenSize == 2 ? 45 : 30
         let overflow = captionHeight > maxCaption
         captionHeight = min(captionHeight, maxCaption)
         
         /// adjust to incrementally move user info / caption down
         var userAdjust: CGFloat = 0
         switch captionHeight {
-        case 75:
-            userAdjust = 5
+        case 75: /// right now can only be  less than 45 because boundary on spot / profile pages is the same now
+            userAdjust = 11
         case 30, 45, 60:
-            userAdjust = 15 /// either large screen or tabbarhidden or both
+            userAdjust = 21 /// either large screen or tabbarhidden or both
         case 15:
-            userAdjust = 25
+            userAdjust = 31
         case 0:
-            userAdjust = 45
+            userAdjust = 51
         default:
             userAdjust = 0
         }
@@ -757,7 +902,7 @@ class PostCell: UITableViewCell {
         userView.backgroundColor = nil
         addSubview(userView)
         
-        profilePic = UIImageView(frame: CGRect(x: 13, y: 0, width: 26, height: 26))
+        profilePic = UIImageView(frame: CGRect(x: 13, y: 1.5, width: 23, height: 23))
         profilePic.layer.cornerRadius = 12
         profilePic.clipsToBounds = true
         userView.addSubview(profilePic)
@@ -770,7 +915,7 @@ class PostCell: UITableViewCell {
             }
         }
         
-        username = UILabel(frame: CGRect(x: 45, y: 6, width: 200, height: 16))
+        username = UILabel(frame: CGRect(x: 44, y: 6, width: 200, height: 16))
         username.text = post.userInfo == nil ? "" : post.userInfo!.username
         username.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
         username.font = UIFont(name: "SFCamera-Semibold", size: 12)
@@ -836,8 +981,7 @@ class PostCell: UITableViewCell {
         postCaption.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         postCaption.font = UIFont(name: "SFCamera-Regular", size: 12.5)
         
-        var numberOfLines = overflow ? screenSize == 2 ? 3 : 2 : 0
-        if tabBarHidden && overflow { numberOfLines += 2 }
+        let numberOfLines = overflow ? screenSize == 2 ? 3 : 2 : 0
         postCaption.numberOfLines = numberOfLines
         postCaption.lineBreakMode = overflow ? .byTruncatingTail : .byWordWrapping
         postCaption.isUserInteractionEnabled = true
@@ -846,6 +990,7 @@ class PostCell: UITableViewCell {
         
         /// adding links for tagged users
         if !(post.taggedUsers?.isEmpty ?? true) {
+            
             let attString = self.getAttString(caption: post.caption, taggedFriends: post.taggedUsers!)
             postCaption.attributedText = attString.0
             tagRect = attString.1
@@ -859,11 +1004,10 @@ class PostCell: UITableViewCell {
             postCaption.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCamera-Semibold", size: 12.5)!, moreTextColor: .white)
             addSubview(self.postCaption)
         } else { addSubview(postCaption) }
-        
-     //   postCaption.sizeToFit()
     }
     
     func finishImageSetUp(images: [UIImage]) {
+        
         resetImageInfo()
 
         if images.isEmpty { return }
@@ -880,7 +1024,7 @@ class PostCell: UITableViewCell {
         
         let overflowBound = screenSize == 2 ? cellHeight - tabBarHeight - 116 : cellHeight - tabBarHeight - 105
         let standardSize = UIScreen.main.bounds.width * 1.333
-        let aliveSize = UIScreen.main.bounds.width * 1.5
+        let aliveSize = UIScreen.main.bounds.width * 1.78
         var minY: CGFloat = 0
 
         /// max height is view size, minHeight is overflow boundary
@@ -888,8 +1032,8 @@ class PostCell: UITableViewCell {
         let minHeight = max(maxHeight, standardSize)
         var adjustedHeight = minHeight
         
-        /// height adjustment so that image is either completely full screen or at the overflow bound
-        if (adjustedHeight < standardSize + 20) {
+        /// height adjustment so that image is either completely full screen or at the overflow bound. Or if multiple images, constrain to bounds for smooth swiping
+        if (adjustedHeight < standardSize + 20) || !isGif && images.count > 1 {
             adjustedHeight = standardSize
             minY = screenSize == 0 ? 0 : screenSize == 1 ? 62 : 69
             if adjustedHeight > overflowBound { adjustedHeight = overflowBound } /// crop for small screens
@@ -910,8 +1054,13 @@ class PostCell: UITableViewCell {
     
         // add top mask to show title if title overlaps image
         if minY == 0 && post.spotID != ""  { postImage.addTopMask() }
-        if postImage != nil { bringSubviewToFront(postImage) }
         
+        let largeScreen = UIScreen.main.bounds.height > 800
+        let largeMask = parentVC != .feed && !largeScreen /// larger mask if tab bar hidden on iphone8
+        if adjustedHeight > standardSize { postImage.addBottomMask(largeMask: largeMask) }
+    
+        if postImage != nil { bringSubviewToFront(postImage) }
+
         if !isGif {
             postImageNext = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width, y: minY, width: UIScreen.main.bounds.width, height: adjustedHeight))
             postImageNext.clipsToBounds = true
@@ -919,7 +1068,6 @@ class PostCell: UITableViewCell {
             let nAspect = nImage.size.height / nImage.size.width > 1
             postImageNext.contentMode = nAspect ? .scaleAspectFill : .scaleAspectFit
             postImageNext.image = nImage
-            postImageNext.layer.cornerRadius = 7.5
             addSubview(postImageNext)
             if minY == 0 && post.spotID != "" { postImageNext.addTopMask() }
             
@@ -929,32 +1077,10 @@ class PostCell: UITableViewCell {
             let pAspect = pImage.size.height / pImage.size.width > 1
             postImagePrevious.contentMode = pAspect ? .scaleAspectFill : .scaleAspectFit
             postImagePrevious.image = pImage
-            postImagePrevious.layer.cornerRadius = 7.5
             addSubview(postImagePrevious)
             if minY == 0 && post.spotID != "" { postImagePrevious.addTopMask() }
         }
                 
-        /// bottom mask for image overlay if necessary
-        if adjustedHeight > standardSize && screenSize == 0 {
-            bottomMask = UIView(frame: CGRect(x: 0, y: minY + standardSize - 28, width: UIScreen.main.bounds.width, height: 129))
-            bottomMask.backgroundColor = nil
-            let layer0 = CAGradientLayer()
-            layer0.frame = bottomMask.bounds
-            layer0.colors = [
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0.01).cgColor,
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0.04).cgColor,
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0.18).cgColor,
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0.43).cgColor,
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0.9).cgColor
-            ]
-            layer0.locations = [0, 0.11, 0.24, 0.43, 0.65, 1]
-            layer0.startPoint = CGPoint(x: 0.5, y: 0)
-            layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
-            bottomMask.layer.addSublayer(layer0)
-            addSubview(bottomMask)
-        }
-        
         let tap = UITapGestureRecognizer(target: self, action: #selector(imageTapped(_:)))
         tap.numberOfTapsRequired = 2
         postImage.addGestureRecognizer(tap)
@@ -966,7 +1092,7 @@ class PostCell: UITableViewCell {
             swipe = UIPanGestureRecognizer(target: self, action: #selector(panGesture(_:)))
             postImage.addGestureRecognizer(swipe)
                         
-            dotView = UIView(frame: CGRect(x: 0, y: minY + standardSize - 19, width: UIScreen.main.bounds.width, height: 10))
+            dotView = UIView(frame: CGRect(x: 0, y: overflowBound - 19, width: UIScreen.main.bounds.width, height: 10))
             dotView.backgroundColor = nil
             addSubview(dotView)
             
@@ -1002,11 +1128,9 @@ class PostCell: UITableViewCell {
     
     func resetTextInfo() {
         /// reset for fields that are set before image fetch
-        if pullLine != nil { pullLine.image = UIImage() }
         if targetIcon != nil { targetIcon.image = UIImage() }
         if spotNameLabel != nil { spotNameLabel.text = "" }
         if cityLabel != nil { cityLabel.text = "" }
-        if exitButton != nil { exitButton.setImage(UIImage(), for: .normal) }
         if profilePic != nil { profilePic.image = UIImage() }
         if username != nil { username.text = "" }
         if timestamp != nil { timestamp.text = "" }
@@ -1058,10 +1182,9 @@ class PostCell: UITableViewCell {
     @objc func spotNameTap(_ sender: UIButton) {
         /// get spot level info then open spot page
         
-        if parentVC == .spot {
-            exitPosts(swipe: false)
-            return
-        }
+        Mixpanel.mainInstance().track(event: "PostSpotNameTap")
+        
+        if parentVC == .spot { exitPosts(); return }
         
         sender.isEnabled = false
         if let postVC = self.viewContainingController() as? PostViewController {
@@ -1087,11 +1210,19 @@ class PostCell: UITableViewCell {
     func openProfile(user: UserProfile) {
         
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
-            vc.userInfo = user
+            
+            Mixpanel.mainInstance().track(event: "PostOpenProfile")
+
+            if user.id != "" {
+                vc.userInfo = user /// already have user info 
+            } else {
+                vc.passedUsername = user.username /// run username query from tapped tag on profile open
+            }
             
             if let postVC = self.viewContainingController() as? PostViewController {
+                
                 vc.mapVC = postVC.mapVC
-                vc.id = user.id!
+                vc.id = user.id ?? ""
                 
                 postVC.mapVC.customTabBar.tabBar.isHidden = true
                 postVC.cancelDownloads()
@@ -1132,16 +1263,12 @@ class PostCell: UITableViewCell {
     }
     
     
-    @objc func exitPosts(_ sender: UIButton) {
-        exitPosts(swipe: false)
-    }
-    
-    func exitPosts(swipe: Bool) {
+    func exitPosts() {
         
         Mixpanel.mainInstance().track(event: "PostPageRemove")
         
         if let postVC = self.viewContainingController() as? PostViewController {
-            postVC.exitPosts(swipe: swipe)
+            postVC.exitPosts()
         }
     }
     
@@ -1155,18 +1282,10 @@ class PostCell: UITableViewCell {
                     if let friend = postVC.mapVC.friendsList.first(where: {$0.username == r.username}) {
                         openProfile(user: friend)
                     } else {
-                        // open tag from user ID
-                        let query = self.db.collection("users").whereField("username", isEqualTo: r.username)
-                        query.getDocuments { [weak self] (snap, err) in
-                            do {
-                                guard let self = self else { return }
-                                
-                                let userInfo = try snap?.documents.first?.data(as: UserProfile.self)
-                                guard var info = userInfo else { return }
-                                info.id = snap!.documents.first?.documentID ?? ""
-                                self.openProfile(user: info)
-                            } catch { return }
-                        }
+                        /// pass blank user object to open func, run get user func on profile load
+                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "")
+                        user.id = ""
+                        self.openProfile(user: user)
                     }
                 } else {
                     postVC.openComments()
@@ -1192,7 +1311,7 @@ class PostCell: UITableViewCell {
         
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": self.selectedPostIndex as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("PostIndexChange"), object: nil, userInfo: infoPass)
-        self.likePostDB(post: post)
+        DispatchQueue.global(qos: .utility).async { self.likePostDB(post: self.post) }
     }
     
     @objc func unlikePost(_ sender: UIButton) {
@@ -1203,7 +1322,7 @@ class PostCell: UITableViewCell {
         //update main data source -- send notification to map, update comments
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": self.selectedPostIndex as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("PostIndexChange"), object: nil, userInfo: infoPass)
-        self.unlikePostDB(post: post)
+        DispatchQueue.global(qos: .utility).async { self.unlikePostDB(post: self.post) }
     }
     
     @objc func topViewSwipe(_ gesture: UIPanGestureRecognizer) {
@@ -1251,21 +1370,30 @@ class PostCell: UITableViewCell {
             let zoom: CGFloat = multiplier * (initialZoom - endingZoom) + endingZoom
             let finalZoom: CLLocationDistance = CLLocationDistance(min(highestZoom, max(zoom, lowestZoom)))
             
-            let adjust = 0.00000525 * finalZoom
-            let adjustedCoordinate = CLLocationCoordinate2D(latitude: post.postLat - adjust, longitude: post.postLong)
+            let activeMultiplier = closedToStart ? multiplier : 1 - multiplier
+            let adjustedOffset = 0.00000845 - activeMultiplier * 0.000005 /// progressively change offset based on zoom distance (.0000345 = half screen post, .00000845 puts post frame at top of screen
+            
+            let latAdjust = CLLocationDistance(adjustedOffset) * finalZoom
+            let adjustedCoordinate = CLLocationCoordinate2D(latitude: post.postLat - latAdjust, longitude: post.postLong)
             
             postVC.mapVC.mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: finalZoom, longitudinalMeters: finalZoom), animated: false)
             
-            /// move postImage to top of frame
+            /// gradually adjust alpha on drawer offset
+            if let annoView = postVC.mapVC.mapView.view(for: postVC.mapVC.postAnnotation) {
+                annoView.alpha = activeMultiplier
+            }
             
             
         case .ended, .cancelled:
+            
+            beginningSwipe = 0
+            
             if velocity <= 0 && closed && abs(velocity + translation) > cellHeight * 1/3 {
-                postVC.openDrawer()
+                postVC.openDrawer(swipe: true)
             } else if velocity >= 0 && !closed && abs(velocity + translation) > cellHeight * 1/3 {
-                postVC.closeDrawer()
+                postVC.closeDrawer(swipe: true)
             } else {
-                closed ? postVC.closeDrawer() : postVC.openDrawer()
+                closed ? postVC.closeDrawer(swipe: true) : postVC.openDrawer(swipe: true)
             }
             
         default:
@@ -1323,9 +1451,8 @@ class PostCell: UITableViewCell {
     
     func imageSwipe(gesture: UIPanGestureRecognizer) {
         /// cancel gesture if zooming
-        
-        if offScreen { resetPostFrame(); return }
-                
+        guard let postVC = self.viewContainingController() as? PostViewController else { return }
+
         let direction = gesture.velocity(in: self)
         let translation = gesture.translation(in: self)
         
@@ -1333,7 +1460,13 @@ class PostCell: UITableViewCell {
         let frameN1 = CGRect(x: -UIScreen.main.bounds.width, y: minY, width: UIScreen.main.bounds.width, height: postImage.frame.height)
         let frame0 = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: postImage.frame.height)
         let frame1 = CGRect(x: UIScreen.main.bounds.width, y: minY, width: UIScreen.main.bounds.width, height: postImage.frame.height)
-                
+        
+        if (post.selectedImageIndex == 0 && direction.x > 0) || postVC.view.frame.minX > 0 {
+            if parentVC != .feed { swipeToExit(gesture: gesture); return }
+        }
+        
+        if offScreen { resetPostFrame(); return }
+
         switch gesture.state {
             
         case .changed:
@@ -1411,20 +1544,26 @@ class PostCell: UITableViewCell {
         
         let direction = gesture.velocity(in: self)
         let translation = gesture.translation(in: self)
-        
             
+        /// offset drawer if touch occurs in topview
+        if beginningSwipe != 0 && beginningSwipe < 80 { offsetDrawer(gesture: gesture); return }
+        
         /// offset drawer if its closed and gesture passed to here
         guard let postVC = viewContainingController() as? PostViewController else { return }
         if postVC.mapVC.prePanY > 200 {
             offsetDrawer(gesture: gesture)
             return
         }
-
-        if offScreen { resetPostFrame(); return }
-        if self.postsCount < 2 { return }
-        /// cancel on image zoom or swipe
-        
+                
         if let tableView = self.superview as? UITableView {
+            
+            /// swipe to exit if horizontal swipe
+            if (abs(translation.x) > abs(translation.y) && translation.x > 0 && tableView.contentOffset.y == originalOffset) || postVC.view.frame.minX > 0 {
+                if parentVC != .feed { swipeToExit(gesture: gesture) }
+                return
+            }
+            
+            /// cancel on image zoom or swipe if not swiping to exit
             
             func removeGestures() {
                 if let gestures = self.gestureRecognizers {
@@ -1433,10 +1572,12 @@ class PostCell: UITableViewCell {
                     }
                 }
             }
-            
+
             switch gesture.state {
             
             case .began:
+                let location = gesture.location(in: self)
+                beginningSwipe = location.y
                 originalOffset = tableView.contentOffset.y
                 
             case .changed:
@@ -1444,7 +1585,9 @@ class PostCell: UITableViewCell {
                 
             case .ended, .cancelled:
 
-                if direction.y < 0 {
+                beginningSwipe = 0
+                
+                if direction.y < 0 || direction.y == 0 && originalOffset + translation.y < 0 {
                     // if we're halfway down the next cell, animate to next cell
                     /// return if at end of posts and theres no loading cell next
                     if self.selectedPostIndex == self.postsCount - 1 { self.resetCellFrame(); return }
@@ -1511,6 +1654,46 @@ class PostCell: UITableViewCell {
         /// reset horizontal image scroll if necessary
     }
     
+    func swipeToExit(gesture: UIPanGestureRecognizer) {
+        
+        guard let postVC = self.viewContainingController() as? PostViewController else { return }
+        let velocity = gesture.velocity(in: self)
+        let translation = gesture.translation(in: self)
+
+        func animateRemovePost() {
+            Mixpanel.mainInstance().track(event: "PostPageSwipeToExit")
+            
+            DispatchQueue.main.async {
+                
+                UIView.animate(withDuration: 0.2) {
+                    postVC.view.frame = CGRect(x: UIScreen.main.bounds.width, y: postVC.view.frame.minY, width: postVC.view.frame.width, height: postVC.view.frame.height)
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    self.exitPosts()
+                }
+            }
+        }
+        
+        switch gesture.state {
+        
+        case .began:
+            offScreen = true
+            
+        case .changed:
+            DispatchQueue.main.async { postVC.view.frame = CGRect(x: translation.x, y: postVC.view.frame.minY, width: postVC.view.frame.width, height: postVC.view.frame.height) }
+            
+        case .ended:
+            if velocity.x + translation.x > UIScreen.main.bounds.width * 3/4 {
+                animateRemovePost()
+            } else {
+                resetPostFrame()
+            }
+            
+        default: return
+        }
+    }
+    
     override func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
 
         //only close view on maskView touch
@@ -1566,6 +1749,7 @@ extension PostCell {
             
             getUserInfo(userID: post.createdBy!) { [weak self] (userInfo) in
                 
+                if userInfo.id == "" { return }
                 guard let self = self else { return }
                 self.noAccessFriend = userInfo
                 
@@ -1598,6 +1782,7 @@ extension PostCell {
                 self.notFriendsView.addSubview(usernameButton)
                 
                 self.getFriendRequestInfo { (pending) in
+                    
                     if pending {
                         let pendingLabel = UILabel(frame: CGRect(x: 20, y: 145, width: self.notFriendsView.bounds.width - 40, height: 20))
                         pendingLabel.text = "Friend request pending"
@@ -1605,8 +1790,9 @@ extension PostCell {
                         pendingLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
                         pendingLabel.textColor = UIColor(named: "SpotGreen")
                         self.notFriendsView.addSubview(pendingLabel)
+                        
                     } else {
-                        self.addFriendButton = UIButton(frame: CGRect(x: 33, y: 136, width: 191, height: 45))
+                        self.addFriendButton = UIButton(frame: CGRect(x: 33, y: 136, width: 191, height: 31.7))
                         self.addFriendButton.setImage(UIImage(named: "AddFriendButton"), for: .normal)
                         self.addFriendButton.addTarget(self, action: #selector(self.addFriendTap(_:)), for: .touchUpInside)
                         self.notFriendsView.addSubview(self.addFriendButton)
@@ -1618,12 +1804,14 @@ extension PostCell {
     
     func getUserInfo(userID: String, completion: @escaping (_ userInfo: UserProfile) -> Void) {
         self.db.collection("users").document(userID).getDocument { (snap, err) in
+            
             do {
                 let userInfo = try snap?.data(as: UserProfile.self)
-                guard var info = userInfo else { return }
+                guard var info = userInfo else {completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "")); return }
                 info.id = snap!.documentID
                 completion(info)
-            } catch { return }
+                
+            } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "")); return }
         }
     }
     
@@ -1692,6 +1880,7 @@ extension PostCell {
     }
     
     @objc func addFriendTap(_ sender: UIButton) {
+        
         self.addFriendButton.isHidden = true
         
         let pendingLabel = UILabel(frame: CGRect(x: 20, y: 145, width: notFriendsView.bounds.width - 40, height: 20))
@@ -1823,30 +2012,55 @@ extension PostCell {
     //4. post delete
     
     @objc func deleteTapped(_ sender: UIButton) {
-        
-        post.isFirst ?? false ? checkForZero() : presentDeleteMenu(message: "")
-            /// not ideal to be loading information right on tap but not a better alternative for  when post is only at a spot
+        checkForZero() /// check to see if this is the only post at a spot
     }
-    
+        
     func checkForZero() {
         
         let singlePostMessage = "Deleting the only post at a spot will delete the entire spot"
-        if post.spotID == nil || post.privacyLevel == "public" { presentDeleteMenu(message: ""); return }
         
-        if parentVC == .spot {
+        if post.spotID == nil {
+            presentDeleteMenu(message: "", deleteSpot: false)
+            
+        } else if parentVC == .spot {
             guard let postVC = self.viewContainingController() as? PostViewController else { return }
             guard let spotVC = postVC.parent as? SpotViewController else { return }
-            spotVC.postsList.count > 1 ? self.presentDeleteMenu(message: "") : self.presentDeleteMenu(message: singlePostMessage)
-            return
-        }
-        
-        self.db.collection("spots").document(post.spotID!).collection("feedPost").getDocuments { (snap, err) in
-            snap?.documents.count ?? 0 > 1 ? self.presentDeleteMenu(message: "") : self.presentDeleteMenu(message: singlePostMessage)
+            let singlePostMessage = "Deleting the only post at a spot will delete the entire spot"
+            let message = spotVC.postsList.count == 1 ? singlePostMessage : ""
+            presentDeleteMenu(message: message, deleteSpot: message != "")
+            
+        } else {
+            
+            addDeleteIndicator()
+            
+            self.db.collection("spots").document(post.spotID!).getDocument { (snap, err) in
+                
+                guard let postIDs = snap?.get("postIDs") as? [String] else { self.presentDeleteMenu(message: "", deleteSpot: false); return }
+                let privacyLevel = snap?.get("privacyLevel") as? String ?? "friends"
+                
+                let deleteSpot = postIDs.count == 1
+                /// don't show message for POI, delete on backend but user doesn't need to think they're deleting a public place
+                let message = deleteSpot ? privacyLevel == "public" ? "" : singlePostMessage : ""
+                self.presentDeleteMenu(message: message, deleteSpot: deleteSpot)
+                self.removeDeleteIndicator()
+            }
         }
     }
     
-    func presentDeleteMenu(message: String) {
-        if message != "" { isOnlyPost = true }
+    func addDeleteIndicator() {
+        deleteIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 100, width: UIScreen.main.bounds.width, height: 30))
+        deleteIndicator.startAnimating()
+        postMask.addSubview(deleteIndicator)
+    }
+
+    func removeDeleteIndicator() {
+        deleteIndicator.removeFromSuperview()
+        deleteIndicator = nil
+    }
+    
+    
+    func presentDeleteMenu(message: String, deleteSpot: Bool) {
+        
         if let postVC = self.viewContainingController() as? PostViewController {
             
             let alert = UIAlertController(title: "Delete Post?", message: message, preferredStyle: .alert)
@@ -1864,16 +2078,23 @@ extension PostCell {
                 }}))
             
             alert.addAction(UIAlertAction(title: "Delete", style: .default, handler: { action in
+                                            
                 switch action.style{
+                
                 case .default:
+                    
                     postVC.mapVC.deletedPostIDs.append(self.post.id!)
+                    
                     ///update database
-                    self.postDelete(deletePost: self.post!)
+                    self.postDelete(deletePost: self.post!, spotDelete: deleteSpot)
+                   
                     Mixpanel.mainInstance().track(event: "PostPagePostDelete")
-                    ///update postVC
-                    ///send notification
-                    let infoPass: [String: Any] = ["postID": self.post.id as Any]
-                    NotificationCenter.default.post(name: Notification.Name("DeletePost"), object: nil, userInfo: infoPass)
+                    
+                    ///update postVC + send noti
+                    DispatchQueue.main.async {
+                        let infoPass: [String: Any] = ["postID": [self.post.id] as Any]
+                        NotificationCenter.default.post(name: Notification.Name("DeletePost"), object: nil, userInfo: infoPass)
+                    }
                     
                 case .cancel:
                     print("cancel")
@@ -1882,6 +2103,8 @@ extension PostCell {
                 @unknown default:
                     fatalError()
                 }}))
+            
+            if editView == nil { return } /// user tapped off during load
             
             editView.removeFromSuperview()
             postMask.removeFromSuperview()
@@ -1892,127 +2115,51 @@ extension PostCell {
     }
     
     
-    func postDelete(deletePost: MapPost) {
+    func postDelete(deletePost: MapPost, spotDelete: Bool) {
         
-        let postNotiRef = self.db.collection("users").document(deletePost.posterID).collection("notifications")
-        let query = postNotiRef.whereField("postID", isEqualTo: deletePost.id!)
+        let postCopy = deletePost
         
-        query.getDocuments {(querysnapshot, err) in
+        if let postVC = self.viewContainingController() as? PostViewController {
 
-            for doc in querysnapshot!.documents {
-                doc.reference.delete()
-            }
-        }
-        
-        if deletePost.createdBy != nil {
-            let spotNotiRef = self.db.collection("users").document(deletePost.createdBy!).collection("notifications")
-            let spotQuery = spotNotiRef.whereField("postID", isEqualTo: deletePost.id!)
-            spotQuery.getDocuments {(querysnapshot, err) in
+            /// delete funcs
+            DispatchQueue.global(qos: .userInitiated).async {
                 
-                for doc in querysnapshot!.documents {
-                    doc.reference.delete()
-                }
-            }
-        }
-        
-        self.incrementSpotScore(user: self.uid, increment: -3)
-        
-        //delete from posts collection
-        
-        let postRef = self.db.collection("posts").document(deletePost.id!)
-        
-        postRef.collection("comments").getDocuments { (querysnapshot, err) in
-            for doc in querysnapshot!.documents {
-                postRef.collection("comments").document(doc.documentID).delete()
-                if doc == querysnapshot!.documents.last { postRef.delete() }
-            }
-            
-            if deletePost.spotID != "" {
-                let feedPostRef = self.db.collection("spots").document(deletePost.spotID!).collection("feedPost").document(deletePost.id!)
-                feedPostRef.collection("Comments").getDocuments { (querysnapshot, err) in
-                    for doc in querysnapshot!.documents {
-                        postRef.collection("Comments").document(doc.documentID).delete()
-                        if doc == querysnapshot!.documents.last {
-                            feedPostRef.delete()
-                            if self.isOnlyPost { self.spotDelete(spotID: deletePost.spotID!) }
+                if spotDelete {
+                    
+                    let spotID = postCopy.spotID!
+                    postVC.postDelete(postsList: [postCopy], spotID: "")
+                    postVC.spotDelete(spotID: spotID)
+                    postVC.userDelete(spotID: spotID)
+                    
+                    postVC.mapVC.deletedSpotIDs.append(spotID)
+                    
+                    DispatchQueue.main.async {
+                        let infoPass: [String: Any] = ["spotID": spotID as Any]
+                        NotificationCenter.default.post(name: Notification.Name("DeleteSpot"), object: nil, userInfo: infoPass)
+                    }
+                    
+                    if let spotVC = postVC.parent as? SpotViewController {
+                        
+                        DispatchQueue.main.async {
+                            postVC.willMove(toParent: nil)
+                            postVC.view.removeFromSuperview()
+                            postVC.removeFromParent()
+                            spotVC.removeSpotPage(delete: true)
                         }
                     }
-                }
-                
-                
-                //remove from user's post list
-                var postsCount = 1
-                
-                let ref = self.db.collection("users").document(self.uid).collection("spotsList").document(deletePost.spotID!)
-                self.db.runTransaction({ (transaction, errorPointer) -> Any? in
-                    let spotDoc: DocumentSnapshot
-                    do {
-                        try spotDoc = transaction.getDocument(ref)
-                    } catch let fetchError as NSError {
-                        errorPointer?.pointee = fetchError
-                        return nil
-                    }
                     
+                } else {
+                    /// pass spotID through to delete post info from spot page when not deleting the spot
+                    postVC.postDelete(postsList: [postCopy], spotID: postCopy.spotID ?? "")
+
+                    /// remove post from this users spotsList document or remove from users spotsList
+                    postVC.checkUserSpotsOnPostDelete(spotID: postCopy.spotID!, deletedID: deletePost.id!)
                     
-                    var postsList: [String] = []
-                    
-                    postsList = spotDoc.data()?["postsList"] as! [String]
-                    
-                    postsList.removeAll(where: {$0 == deletePost.id})
-                    postsCount = postsList.count
-                    
-                    transaction.updateData([
-                        "postsList": postsList
-                    ], forDocument: ref)
-                    
-                    return nil
-                    
-                }) { (object, error) in
-                    if error == nil {
-                        if postsCount == 0 { self.removeFromUserSpots(id: deletePost.spotID!, spotDelete: self.isOnlyPost) }
-                    }
+                    /// spot score incremented in delete spot method otherwise
+                    self.incrementSpotScore(user: self.uid, increment: -3)
                 }
             }
         }
-    }
-    
-    func spotDelete(spotID: String) {
-        self.incrementSpotScore(user: self.uid, increment: -3)
-        self.db.collection("spots").document(spotID).delete()
-        if let postVC = self.viewContainingController() as? PostViewController {
-            if let spotVC = postVC.parent as? SpotViewController {
-                spotVC.animateToRoot()
-            }
-        }
-    }
-    
-    func removeFromUserSpots(id: String, spotDelete: Bool) {
-        self.db.collection("users").document(self.uid).collection("spotsList").document(id).delete()
-        NotificationCenter.default.post(name: NSNotification.Name("UserListRemove"), object: nil, userInfo: ["spotID" : id])
-        
-        if spotDelete { return }
-        
-        //remove user from spots visitor list
-        let ref = self.db.collection("spots").document(id)
-        self.db.runTransaction({ (transaction, errorPointer) -> Any? in
-            let spotDoc: DocumentSnapshot
-            do {
-                try spotDoc = transaction.getDocument(ref)
-            } catch let fetchError as NSError {
-                errorPointer?.pointee = fetchError
-                return nil
-            }
-            
-            var visitorList = spotDoc.data()?["visitorList"] as! [String]
-            visitorList.removeAll(where: {$0 == self.uid})
-            
-            transaction.updateData([
-                "visitorList": visitorList
-            ], forDocument: ref)
-            
-            return nil
-            
-        }) { _,_ in  }
     }
 }
 
@@ -2026,6 +2173,7 @@ class LoadingCell: UITableViewCell {
     var vcid: String!
     
     func setUp(selectedPostIndex: Int, parentVC: PostViewController.parentViewController, vcid: String) {
+        
         self.backgroundColor = UIColor(named: "SpotBlack")
         self.selectedPostIndex = selectedPostIndex
         self.parentVC = parentVC
@@ -2148,14 +2296,14 @@ class EditPostView: UIView, UITextViewDelegate {
             targetIcon.image = UIImage(named: "PlainSpotIcon")
             postingToView.addSubview(targetIcon)
             
-            spotNameLabel = UILabel(frame: CGRect(x: targetIcon.frame.maxX + 6, y: 35, width: 200, height: 17))
+            spotNameLabel = UILabel(frame: CGRect(x: targetIcon.frame.maxX + 8, y: 35, width: 200, height: 17))
             spotNameLabel.text = post.spotName
             spotNameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
             spotNameLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
             spotNameLabel.sizeToFit()
             postingToView.addSubview(spotNameLabel)
             
-            if post.createdBy == postVC.uid {
+            if post.createdBy == postVC.uid && !(post.spotPrivacy == "public") {
                 let editSpotButton = UIButton(frame: CGRect(x: spotNameLabel.frame.maxX + 2, y: 36, width: 55, height: 15))
                 editSpotButton.setTitle("EDIT SPOT", for: .normal)
                 editSpotButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
@@ -2272,7 +2420,8 @@ class EditPostView: UIView, UITextViewDelegate {
         privacyView.addSubview(privacyLabel)
         
         if post.privacyLevel == "invite" { privacyView.addSubview(friendCount) }
-        if  !(post.isFirst ?? true) && (post.spotID == "" || post.spotPrivacy != "invite") { privacyView.addSubview(actionArrow) }
+        if (post.spotPrivacy == "public" || post.spotID == "") {
+            privacyView.addSubview(actionArrow) }
         
         let cancelButton = UIButton(frame: CGRect(x: 200, y: 70, width: 65, height: 20))
         cancelButton.titleEdgeInsets = UIEdgeInsets(top: 2.5, left: 2.5, bottom: 2.5, right: 2.5)
@@ -2296,17 +2445,20 @@ class EditPostView: UIView, UITextViewDelegate {
     }
     
     func loadPrivacyView() {
-        let privacyString = post.privacyLevel!.prefix(1).capitalized + post.privacyLevel!.dropFirst()
+        
+        let privacyString = post.privacyLevel! == "public" ? "Anyone" :  post.privacyLevel!.prefix(1).capitalized + post.privacyLevel!.dropFirst()
         privacyLabel.text = privacyString
         
         if post.privacyLevel == "friends" {
             privacyIcon.frame = CGRect(x: 14, y: whoCanSee.frame.maxY + 10, width: 20, height: 13)
             privacyIcon.image = UIImage(named: "FriendsIcon")
             privacyLabel.frame = CGRect(x: privacyIcon.frame.maxX + 6, y: privacyIcon.frame.minY - 2, width: 100, height: 15)
+            
         } else if post.privacyLevel == "public" {
             privacyIcon.frame = CGRect(x: 14, y: whoCanSee.frame.maxY + 10, width: 18, height: 18)
             privacyIcon.image = UIImage(named: "PublicIcon")
             privacyLabel.frame = CGRect(x: privacyIcon.frame.maxX + 6, y: privacyIcon.frame.minY + 1, width: 100, height: 15)
+            
         } else {
             privacyIcon.frame = CGRect(x: 14, y: whoCanSee.frame.maxY + 11, width: 17.8, height: 22.25)
             privacyIcon.image = UIImage(named: "PrivateIcon")
@@ -2327,7 +2479,7 @@ class EditPostView: UIView, UITextViewDelegate {
             friendCount.sizeToFit()
         }
         
-        if  !(post.isFirst ?? true) && (post.spotID == "" || post.spotPrivacy != "invite") {
+        if (post.spotPrivacy == "public" || post.spotID == "") {
             actionArrow.frame = CGRect(x: privacyLabel.frame.maxX, y: privacyLabel.frame.minY, width: 23, height: 17)
         }
     }
@@ -2339,6 +2491,7 @@ class EditPostView: UIView, UITextViewDelegate {
     }
     
     @objc func editAddress(_ sender: UIButton) {
+        
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
             
             vc.selectedImages = post.postImage
@@ -2350,7 +2503,8 @@ class EditPostView: UIView, UITextViewDelegate {
             }
             
             vc.passedAddress = addressButton.titleLabel?.text ?? ""
-            postVC.mapVC.navigationController?.pushViewController(vc, animated: false)
+            postVC.mapVC.navigationController?.pushViewController(vc, animated: true)
+            postVC.addedLocationPicker = true
             
             removeEditPost()
         }
@@ -2489,14 +2643,18 @@ class EditPostView: UIView, UITextViewDelegate {
         NotificationCenter.default.post(name: Notification.Name("EditPost"), object: nil, userInfo: infoPass)
         
         let values : [String: Any] = ["caption" : captionText ?? "", "postLat": uploadPost.postLat, "postLong": uploadPost.postLong, "privacyLevel": uploadPost.privacyLevel as Any, "taggedUsers": taggedUsernames]
-        updatePostValues(values: values)
         
-        /// update city on location change
-        let db = Firestore.firestore()
-        postVC.reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: uploadPost.postLat, longitude: uploadPost.postLong)) { (city) in
+        DispatchQueue.global(qos: .userInitiated).async {
+            /// set edit values for individual posts
+            self.updatePostValues(values: values)
+            
+            /// update city on location change
+            let db = Firestore.firestore()
+            self.postVC.reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: uploadPost.postLat, longitude: uploadPost.postLong)) { (city) in
 
-            if city == "" { return }
-            db.collection("posts").document(uploadPost.id!).updateData(["city" : city])
+                if city == "" { return }
+                db.collection("posts").document(uploadPost.id!).updateData(["city" : city])
+            }
         }
     }
     
@@ -2530,6 +2688,7 @@ class EditPostView: UIView, UITextViewDelegate {
     
     
     func updatePostValues(values: [String: Any]) {
+        
         let db = Firestore.firestore()
         db.collection("posts").document(post.id!).updateData(values)
         
@@ -2539,18 +2698,6 @@ class EditPostView: UIView, UITextViewDelegate {
             if err == nil {
                 if let doc = postSnap?.documents.first {
                     db.collection("posts").document(self.post.id!).collection("comments").document(doc.documentID).updateData(["comment": values["caption"] as Any])
-                }
-            }
-        }
-        
-        if post.spotID != "" && post.spotID != nil {
-            db.collection("spots").document(post.spotID!).collection("feedPost").document(post.id!).updateData(values)
-            let sQuery = db.collection("spots").document(post.spotID!).collection("feedPost").document(post.id!).collection("Comments").order(by: "timestamp", descending: false)
-            sQuery.getDocuments { (spotSnap, err) in
-                if err == nil {
-                    if let doc = spotSnap?.documents.first {
-                        db.collection("spots").document(self.post.spotID!).collection("feedPost").document(self.post.id!).collection("Comments").document(doc.documentID).updateData(["comment": values["caption"] as Any])
-                    }
                 }
             }
         }
@@ -2641,21 +2788,51 @@ extension UILabel {
 
 extension UIImageView {
     
+    func removeTopMask() {
+        if let sub = subviews.first(where: {$0.tag == 7}) {
+            sub.removeFromSuperview()
+        }
+    }
+    
     func addTopMask() {
-        let topMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 72))
+        let topMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 118))
         topMask.backgroundColor = nil
+        topMask.tag = 7
         let layer0 = CAGradientLayer()
         layer0.frame = topMask.bounds
         layer0.colors = [
             UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-            UIColor(red: 0.071, green: 0.071, blue: 0.071, alpha: 0.32).cgColor,
-            UIColor(red: 0.071, green: 0.071, blue: 0.071, alpha: 0.6).cgColor
-        ]
-        layer0.locations = [0, 0.49, 1.0]
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.04).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.15).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.32).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor
+          ]
+        layer0.locations = [0, 0.23, 0.49, 0.76, 1]
         layer0.startPoint = CGPoint(x: 0.5, y: 1.0)
         layer0.endPoint = CGPoint(x: 0.5, y: 0)
         topMask.layer.addSublayer(layer0)
-        self.addSubview(topMask)
+        addSubview(topMask)
+    }
+    
+    func addBottomMask(largeMask: Bool) {
+        let maskHeight: CGFloat = largeMask ? 200 : 140
+        let bottomMask = UIView(frame: CGRect(x: 0, y: bounds.height - maskHeight, width: UIScreen.main.bounds.width, height: maskHeight))
+        bottomMask.backgroundColor = nil
+        let layer0 = CAGradientLayer()
+        layer0.frame = bottomMask.bounds
+        layer0.colors = [
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.01).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.04).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.18).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.43).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.75).cgColor
+        ]
+        layer0.locations = [0, 0.11, 0.24, 0.43, 0.65, 1]
+        layer0.startPoint = CGPoint(x: 0.5, y: 0)
+        layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
+        bottomMask.layer.addSublayer(layer0)
+        addSubview(bottomMask)
     }
 }
 

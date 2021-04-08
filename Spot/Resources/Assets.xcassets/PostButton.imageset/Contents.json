@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Post.png",
+      "filename" : "Postbutton1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Post (1).png",
+      "filename" : "Postbutton2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Post (2).png",
+      "filename" : "Postbutton3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

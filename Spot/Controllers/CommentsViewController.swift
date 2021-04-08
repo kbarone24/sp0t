@@ -131,16 +131,19 @@ class CommentsViewController: UIViewController {
         textView.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         textView.text = "Comment..."
         textView.alpha = 0.65
-        textView.textContainerInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 40)
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 60)
         textView.isScrollEnabled = false
         textView.textContainer.maximumNumberOfLines = 6
         textView.textContainer.lineBreakMode = .byTruncatingHead
         textView.delegate = self
         textView.inputAccessoryView = footerView
         
-        postButton = UIButton(frame: CGRect(x: textView.bounds.maxX - 40, y: 5, width: 40, height: 18))
+        postButton = UIButton(frame: CGRect(x: textView.bounds.maxX - 55, y: 2, width: 55, height: 28))
         postButton.setTitle("Post", for: .normal)
         postButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
+        postButton.contentHorizontalAlignment = .center
+        postButton.contentVerticalAlignment = .center
+        postButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         postButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 13)
         postButton.addTarget(self, action: #selector(postComment(_:)), for: .touchUpInside)
         postButton.isEnabled = false
@@ -150,6 +153,7 @@ class CommentsViewController: UIViewController {
     }
     
     func getCommenterInfo() {
+        
         var index = 0
         func commentEscape() {
             index += 1
@@ -170,8 +174,10 @@ class CommentsViewController: UIViewController {
                 guard let self = self else { return }
                 
                 do {
+                    
                     let userProf = try snap?.data(as: UserProfile.self)
                     guard var userProfile = userProf else { commentEscape(); return }
+                    
                     userProfile.id = snap!.documentID
                     
                     if let url = URL(string: userProfile.imageURL) {
@@ -247,14 +253,11 @@ class CommentsViewController: UIViewController {
                       "commenterID" : self.uid,
                       "timestamp" : firTimestamp,
                       "taggedUsers": taggedUsernames] as [String : Any]
-        
-        if self.post.spotID != "" {
-            self.db.collection("spots").document(self.post.spotID!).collection("feedPost").document(self.post.id!).collection("Comments").document(commentID).setData(values, merge: true)
+                
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.db.collection("posts").document(self.post.id!).collection("comments").document(commentID).setData(values, merge: true)
+            self.incrementSpotScore(user: self.post.posterID, increment: 1)
         }
-        
-        self.db.collection("posts").document(self.post.id!).collection("comments").document(commentID).setData(values, merge: true)
-        self.incrementSpotScore(user: post.posterID, increment: 1)
-        
         
         // send comment notification to the original poster first
         var dontSendList: [String] = [self.uid]
@@ -488,16 +491,16 @@ extension CommentsViewController: UITableViewDelegate, UITableViewDataSource {
         if (editingStyle == .delete) {
             Mixpanel.mainInstance().track(event: "CommentsDelete")
             
-            postVC.incrementSpotScore(user: post.posterID, increment: -1)
+            let commentID = commentList[indexPath.row + 1].id!
+            let postID = post.id!
+            let posterID = post.posterID
             
-            let postsRef = self.db.collection("posts").document(self.post.id!).collection("comments").document(commentList[indexPath.row + 1].id!)
-                postsRef.delete()
-                
-            if post.spotID != "" {
-                let spotsRef = self.db.collection("spots").document(self.post.spotID!).collection("feedPost").document(self.post.id!).collection("Comments").document(commentList[indexPath.row + 1].id!)
-                spotsRef.delete()
+            DispatchQueue.global(qos: .default).async {
+                self.postVC.incrementSpotScore(user: posterID, increment: -1)
+                let postsRef = self.db.collection("posts").document(postID).collection("comments").document(commentID)
+                    postsRef.delete()
             }
-            
+                
             commentList.remove(at: indexPath.row + 1)
             
             let path2 = IndexPath(row: indexPath.row, section: 0)
@@ -595,21 +598,14 @@ class CommentCell: UITableViewCell {
         if let commentsVC = self.viewContainingController() as? CommentsViewController {
             for r in tagRect {
                 if r.rect.contains(sender.location(in: sender.view)) {
-                    // open tag from friends list
+                    /// open tag from friends list
                     if let friend = commentsVC.postVC.mapVC.friendsList.first(where: {$0.username == r.username}) {
                         openProfile(user: friend)
                     } else {
-                        // open tag from user ID
-                        let query = commentsVC.db.collection("users").whereField("username", isEqualTo: r.username)
-                        query.getDocuments { [weak self] (snap, err) in
-                            do {
-                                guard let self = self else { return }
-                                let userInfo = try snap?.documents.first?.data(as: UserProfile.self)
-                                guard var info = userInfo else { return }
-                                info.id = snap!.documents.first?.documentID ?? ""
-                                self.openProfile(user: info)
-                            } catch { return }
-                        }
+                        /// pass blank user object to open func, run get user func on profile load
+                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "")
+                        user.id = ""
+                        self.openProfile(user: user)
                     }
                 }
             }
@@ -621,8 +617,13 @@ class CommentCell: UITableViewCell {
             
             if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
                 
-                vc.userInfo = user
-                vc.id = user.id!
+                if user.id != "" {
+                    vc.userInfo = user /// already have user info
+                } else {
+                    vc.passedUsername = user.username /// run username query from tapped tag on profile open
+                }
+                
+                vc.id = user.id ?? ""
                 vc.commentsSelectedPost = commentsVC.post
                 vc.postCaptionHeight = commentsVC.captionHeight
                 vc.mapVC = commentsVC.postVC.mapVC
@@ -754,18 +755,10 @@ class CommentHeader: UITableViewHeaderFooterView {
                     if let friend = commentsVC.postVC.mapVC.friendsList.first(where: {$0.username == r.username}) {
                         openProfile(user: friend)
                     } else {
-                        // open tag from user ID
-                        let query = commentsVC.db.collection("users").whereField("username", isEqualTo: r.username)
-                        query.getDocuments { [weak self] (snap, err) in
-                            guard let self = self else { return }
-                            
-                            do {
-                                let userInfo = try snap?.documents.first?.data(as: UserProfile.self)
-                                guard var info = userInfo else { return }
-                                info.id = snap!.documents.first?.documentID ?? ""
-                                self.openProfile(user: info)
-                            } catch { return }
-                        }
+                        /// pass blank user object to open func, run get user func on profile load
+                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "")
+                        user.id = ""
+                        self.openProfile(user: user)
                     }
                 }
             }

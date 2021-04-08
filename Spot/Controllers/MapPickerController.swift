@@ -107,7 +107,9 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
             DispatchQueue.main.async {
                 
                 parentVC.mapView.mapType = .mutedStandard
+                parentVC.mapView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
                 self.view.addSubview(parentVC.mapView)
+                
                 
                 if self.storedCamera != nil {
                     parentVC.mapView.camera = self.storedCamera
@@ -120,10 +122,11 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
                 /// main thread was getting clogged with map updates
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                     guard let self = self else { return }
-                    guard let parentVC = self.parent as? PhotosContainerController else { return }
+                    guard let containerVC = self.parent as? PhotosContainerController else { return }
                     
                     self.addRefreshIndicator()
-                    parentVC.mapView.addAnnotations(self.annotations)
+                    if containerVC.mapView == nil { return }
+                    containerVC.mapView.addAnnotations(self.annotations)
                 }
             }
         }
@@ -405,10 +408,12 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
     }
     
     func loadNib() -> MarkerInfoWindow {
+        
         let infoWindow = MarkerInfoWindow.instanceFromNib() as! MarkerInfoWindow
         infoWindow.clipsToBounds = true
         
         infoWindow.galleryImage.contentMode = .scaleAspectFill
+        infoWindow.galleryImage.layer.cornerRadius = 3
         infoWindow.galleryImage.clipsToBounds = true
         
         infoWindow.count.font = UIFont(name: "SFCamera-Semibold", size: 12)
@@ -495,6 +500,7 @@ class StandardPostAnnotationView: MKAnnotationView {
                     
                     nibView.galleryImage.image = image
                     nibView.count.isHidden = true
+                    
                     let nibImage = nibView.asImage()
                     self.image = nibImage
                 }
@@ -528,10 +534,12 @@ class StandardPostAnnotationView: MKAnnotationView {
     }
     
     func loadPostNib() -> MarkerInfoWindow {
+        
         let infoWindow = MarkerInfoWindow.instanceFromNib() as! MarkerInfoWindow
         infoWindow.clipsToBounds = true
         
         infoWindow.galleryImage.contentMode = .scaleAspectFill
+        infoWindow.galleryImage.layer.cornerRadius = 3
         infoWindow.galleryImage.clipsToBounds = true
         
         infoWindow.count.font = UIFont(name: "SFCamera-Semibold", size: 12)
@@ -732,6 +740,7 @@ class PostClusterView: MKAnnotationView {
         infoWindow.clipsToBounds = true
         
         infoWindow.galleryImage.contentMode = .scaleAspectFill
+        infoWindow.galleryImage.layer.cornerRadius = 3
         infoWindow.galleryImage.clipsToBounds = true
         
         infoWindow.count.font = UIFont(name: "SFCamera-Semibold", size: 12)
@@ -759,6 +768,7 @@ class CustomPointAnnotation: MKPointAnnotation {
     
   //  lazy var imageURL: String = ""
     lazy var asset: PHAsset = PHAsset()
+    var postID: String = ""
     
     override init() {
         super.init()

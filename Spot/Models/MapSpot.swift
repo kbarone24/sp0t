@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import CoreLocation
+import Firebase
 import FirebaseFirestoreSwift
 
 struct MapSpot: Identifiable, Codable {
@@ -20,6 +21,10 @@ struct MapSpot: Identifiable, Codable {
     var spotLong: Double
     var founderID: String
     var privacyLevel: String
+    var postIDs: [String] = []
+    var posterIDs: [String] = []
+    var postTimestamps: [Firebase.Timestamp] = []
+    var postPrivacies: [String] = []
     var visitorList: [String] = [] 
     var inviteList: [String]? = []
     var tags: [String] = []
@@ -34,6 +39,8 @@ struct MapSpot: Identifiable, Codable {
     var visiblePosts = 0
     var spotScore: Float = 0
     var distance: CLLocationDistance = CLLocationDistance()
+    var friendImage = false
+    var postFetchID = "" 
     
     enum CodingKeys: String, CodingKey {
         case id = "spotID"
@@ -50,5 +57,9 @@ struct MapSpot: Identifiable, Codable {
         case spotLong
         case city
         case phone
+        case postIDs
+        case posterIDs
+        case postTimestamps
+        case postPrivacies
     }
 }

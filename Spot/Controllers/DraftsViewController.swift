@@ -45,6 +45,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
     
     var shouldUploadPost = true
     var emptyState = true
+    var uploadsFetched = 0 /// patch variable to avoid empty alives prematurely adding empty state
     
     var mainScroll = UIScrollView()
     var shadowScroll = UIScrollView()
@@ -95,6 +96,10 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         super.viewWillDisappear(animated)
         removePreview()
     }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+    }
      
     func setUpViews() {
         
@@ -140,7 +145,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
                 
         mainScroll.addSubview(failedUploadCollection)
         
-        maskView = UIView(frame: CGRect(x: 0, y: self.navigationController!.navigationBar.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - self.navigationController!.navigationBar.frame.maxY))
+        maskView = UIView(frame: CGRect(x: 0, y: navBarHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navBarHeight))
         maskView.backgroundColor = UIColor.black.withAlphaComponent(0.8)
         maskView.isHidden = true
         
@@ -151,7 +156,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         window?.addSubview(maskView)
         
         let previewHeight = (UIScreen.main.bounds.width - 80) * 1.75
-        let previewY = (UIScreen.main.bounds.height - navBarHeight - previewHeight - 10)/2
+        let previewY = (UIScreen.main.bounds.height - navBarHeight - previewHeight - 20)/2
             
         previewView = UIImageView(frame: CGRect(x: 40, y: previewY, width: UIScreen.main.bounds.width - 80, height: previewHeight))
         previewView.layer.cornerRadius = 12
@@ -178,8 +183,8 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         deleteButton.addTarget(self, action: #selector(deleteTapped(_:)), for: .touchUpInside)
         previewView.addSubview(deleteButton)
 
-        let cityIcon = UIImageView(frame: CGRect(x: 14, y: 15, width: 9, height: 13))
-        cityIcon.image = UIImage(named: "LocationIcon")
+        let cityIcon = UIImageView(frame: CGRect(x: 15, y: 14.5, width: 10, height: 15))
+        cityIcon.image = UIImage(named: "DraftsCityIcon")
         previewView.addSubview(cityIcon)
 
         cityName = UILabel(frame: CGRect(x: cityIcon.frame.maxX + 5, y: 14.5, width: previewView.frame.width - 70, height: 16))
@@ -187,7 +192,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         cityName.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
         previewView.addSubview(cityName)
         
-        progressView = UIProgressView(frame: CGRect(x: 50, y: 200, width: UIScreen.main.bounds.width - 100, height: 20))
+        progressView = UIProgressView(frame: CGRect(x: 50, y: 260, width: UIScreen.main.bounds.width - 100, height: 20))
         progressView.transform = progressView.transform.scaledBy(x: 1, y: 2.3)
         progressView.layer.cornerRadius = 2
         progressView.layer.sublayers![1].cornerRadius = 2
@@ -200,14 +205,16 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
     }
     
     func setUpNavBar() {
-        self.navigationItem.title = "Drafts"
-        self.navigationController?.setNavigationBarHidden(false, animated: true)
-        self.navigationController?.navigationBar.tintColor = .white
-        self.navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
-        self.navigationController?.navigationBar.isTranslucent = false
+        navigationItem.title = "Drafts"
+        navigationController?.setNavigationBarHidden(false, animated: true)
+        navigationController?.navigationBar.tintColor = .white
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.addShadow()
+        navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
     }
     
     func addEmptyState() {
+        
         let bot = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 15, y: UIScreen.main.bounds.height/2 - 100, width: 30, height: 34))
         bot.image = UIImage(named: "OnboardB0t")
         bot.contentMode = .scaleAspectFit
@@ -229,6 +236,10 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         returnButton.addTarget(self, action: #selector(returnToCamera(_:)), for: .touchUpInside)
         returnButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
         mainScroll.addSubview(returnButton)
+        
+        if let camera = parent as? AVCameraController {
+            camera.draftsActive = false
+        }
     }
     
     @objc func returnToCamera(_ sender: UIButton) {
@@ -236,6 +247,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
     }
     
     func getImages() {
+        
         guard let appDelegate =
             UIApplication.shared.delegate as? AppDelegate else {
                 return
@@ -253,7 +265,9 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         
         DispatchQueue.global().async {
             do {
+                
                 let drafts = try managedContext.fetch(fetchRequest)
+                if drafts.count == 0 { self.removeAlives() }
                 
                 for draft in drafts {
                     var gifImages: [UIImage] = []
@@ -293,7 +307,6 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
                             self.aliveCollection.performBatchUpdates(nil) { (result) in
                                 self.alivesIndicator.stopAnimating()
                                 self.shadowScroll.contentSize = CGSize(width: self.shadowScroll.contentSize.width, height: self.aliveCollection.frame.minY + self.aliveCollection.contentSize.height + 150) /// 150 accounts for navBar + extra space on bottom
-                              //  self.setUploadsSize()
                             }
                         }
                     }
@@ -303,14 +316,9 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
             }
         }
     }
-
-/*    func setUploadsSize() {
-        let widthOfItems = self.failedSize.width * CGFloat(self.failedUploads.count)
-        let widthOfSpaces = 10 * CGFloat(self.failedUploads.count) + 50
-        self.failedUploadCollection.contentSize = CGSize(width: widthOfItems + widthOfSpaces, height: self.failedUploadCollection.contentSize.height)
-    } */
     
     func getFailedUploads() {
+        
         guard let appDelegate =
             UIApplication.shared.delegate as? AppDelegate else {
                 return
@@ -329,11 +337,14 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         
         DispatchQueue.global().async {
             do {
+                
                 let failedPosts = try managedContext.fetch(postsRequest)
                 self.failedPosts = failedPosts
+                if self.failedPosts.count == 0 { self.uploadsFetched += 1 }
                 
                 for post in failedPosts {
                     
+                    if post == failedPosts.last { self.uploadsFetched += 1 }
                     ///if add-to-spot mode, only get failed uploads that are posts to this spot
                     if self.spotObject != nil {
                         if post.spotID != self.spotObject.id { continue }
@@ -380,8 +391,12 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
             do {
                 let failedSpots = try managedContext.fetch(spotsRequest)
                 self.failedSpots = failedSpots
-                
+                if self.failedSpots.count == 0 { self.uploadsFetched += 1 }
+
                 for spot in failedSpots {
+                    
+                    if spot == failedSpots.last { self.uploadsFetched += 1 }
+
                     let spotName = spot.spotName
                     let timestampID = spot.timestamp
                     let images = spot.images! as! Set<ImageModel>
@@ -414,15 +429,13 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
 
         self.failedUploadCollection.frame = CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 245)
         self.aliveCollection.frame = CGRect(x: 0, y: failedUploadCollection.frame.maxY + 50, width: self.aliveCollection.frame.width, height: self.aliveCollection.frame.height)
-
-        DispatchQueue.main.async { self.failedUploadCollection.reloadData() }
+        self.failedUploadCollection.reloadData()
     }
     
     func hideFailedUploads() {
         
         self.failedUploadCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0)
         self.aliveCollection.frame = CGRect(x: 0, y: 35, width: self.aliveCollection.frame.width, height: self.aliveCollection.frame.height)
-        
         if aliveDrafts.count == 0 { self.addEmptyState() }
     }
     
@@ -431,12 +444,13 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
     }
     
     func removePreview() {
+        if previewView == nil { return }
         previewView.removeFromSuperview()
         cityName.text = ""
         maskView.isHidden = true
         mainScroll.isUserInteractionEnabled = true
         navigationItem.rightBarButtonItem = nil
-        self.selectedItem = 100000
+        selectedItem = 100000
     }
     
     @objc func deleteTapped(_ sender: UIButton) {
@@ -462,11 +476,11 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
     
     func deleteDraft() {
         
+        print("delete draft")
         Mixpanel.mainInstance().track(event: "DraftsDeletedUpload")
         
         let draft = aliveDrafts[selectedItem]
         aliveDrafts.remove(at: selectedItem)
-    //    if aliveDrafts.count == 1 { self.resizeToSingle() }
         if aliveDrafts.isEmpty { self.removeAlives() }
         
         removePreview()
@@ -558,10 +572,13 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
             }
             
         }
-        if self.failedUploads.isEmpty {
-            self.hideFailedUploads()
-            if self.aliveDrafts.isEmpty {
-                self.addEmptyState()
+        
+        DispatchQueue.main.async {
+            if self.failedUploads.isEmpty {
+                self.hideFailedUploads()
+                if self.aliveDrafts.isEmpty {
+                    self.addEmptyState()
+                }
             }
         }
     }
@@ -592,6 +609,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         catch let error as NSError {
             print("could not fetch. \(error)")
         }
+        
         if !upload {
             self.failedUploads.removeAll(where: {$0.timestampID == timestampID})
             self.failedSpots.removeAll(where: {$0.timestamp == timestampID
@@ -600,16 +618,21 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
                 self.failedUploadCollection.reloadData()
             }
         }
-        if self.failedUploads.isEmpty {
-            self.hideFailedUploads()
-            if self.aliveDrafts.isEmpty {
-                self.addEmptyState()
+        
+        DispatchQueue.main.async {
+            if self.failedUploads.isEmpty {
+                self.hideFailedUploads()
+                if self.aliveDrafts.isEmpty {
+                    self.addEmptyState()
+                }
             }
         }
     }
     
     @objc func nextTapped(_ sender: UIBarButtonItem) {
+        
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "LocationPicker") as? LocationPickerController {
+            
             Mixpanel.mainInstance().track(event: "DraftsGIFSelection")
             
             /// selected item represents the row selected before the gif preview appears
@@ -630,16 +653,11 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         }
     }
     
-    /*func resizeToSingle() {
-        aliveCollection.frame = CGRect(x: 0, y: aliveCollection.frame.minY, width: baseSize.width + 30, height: baseSize.height)
-        DispatchQueue.main.async {
-            self.aliveCollection.reloadData()
-        }
-    } */
-    
     func removeAlives() {
-        aliveCollection.frame = CGRect(x: aliveCollection.frame.minX, y: aliveCollection.frame.minY, width: aliveCollection.frame.width, height: 0)
-        if failedUploads.isEmpty { addEmptyState() }
+        DispatchQueue.main.async {
+            self.aliveCollection.frame = CGRect(x: self.aliveCollection.frame.minX, y: self.aliveCollection.frame.minY, width: self.aliveCollection.frame.width, height: 0)
+            if self.failedUploads.isEmpty && self.uploadsFetched >= 2 { self.addEmptyState() }
+        }
     }
         
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
@@ -832,7 +850,13 @@ extension DraftsViewController {
             let myTimeInterval = TimeInterval(interval)
             let timestamp = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
 
-            let feedPostValues = ["caption" : post.caption ?? "",
+            var finalInvites = post.inviteList ?? []
+            finalInvites.append(self.uid)
+
+            var postFriends = post.privacyLevel == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
+            if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
+            
+            let postValues = ["caption" : post.caption ?? "",
                               "posterID": self.uid,
                               "likers": [],
                               "timestamp": timestamp,
@@ -841,23 +865,23 @@ extension DraftsViewController {
                               "postLat": post.postLat,
                               "postLong": post.postLong,
                               "privacyLevel": post.privacyLevel ?? "friends",
-                              "imageURLs" : imageURLs] as [String : Any]
+                              "imageURLs" : imageURLs,
+                              "spotName" : post.spotName ?? "",
+                              "createdBy": post.createdBy ?? "",
+                              "city" : city,
+                              "inviteList" : finalInvites,
+                              "friendsList" : postFriends,
+                              "spotID": post.spotID ?? "",
+                              "spotLat": post.spotLat,
+                              "spotLong": post.spotLong,
+                              "isFirst": false,
+                              "spotPrivacy" : post.spotPrivacy ?? ""] as [String : Any]
             
             let commentValues = ["commenterID" : self.uid,
                                  "comment" : post.caption ?? "",
                                  "timestamp" : timestamp,
                                  "taggedUsers": post.taggedUsers ?? []] as [String : Any]
 
-             let pValues =  ["spotName" : post.spotName ?? "",
-                            "createdBy": post.createdBy ?? "",
-                            "city" : city,
-                            "inviteList" : post.inviteList ?? [],
-                            "spotID": post.spotID ?? "",
-                            "spotLat": post.spotLat,
-                            "spotLong": post.spotLong,
-                            "isFirst": false,
-                            "spotPrivacy" : post.spotPrivacy ?? ""] as [String : Any]
-            
             let commentID = UUID().uuidString
             let commentObject = MapComment(id: commentID, comment: post.caption ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, taggedUsers: post.taggedUsers ?? [], commentHeight: self.getCommentHeight(comment: post.caption ?? ""), seconds: Int64(interval))
             
@@ -875,28 +899,62 @@ extension DraftsViewController {
             let postObject = MapPost(id: postID, caption: post.caption ?? "", postLat: post.postLat, postLong: post.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: post.spotID ?? "", gif: post.gif, city: city, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: post.taggedUsers, spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, privacyLevel: post.privacyLevel, spotPrivacy: post.spotPrivacy ?? "friends", createdBy: self.uid, inviteList: post.inviteList ?? [])
             
             NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
-
-            let postValues = pValues.merging(feedPostValues) { (_, newD) in newD }
             
             self.db.collection("posts").document(postID).setData(postValues)
             self.db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
-
-            if post.spotID == "" {
-                ///transition
-                self.finishPostUpload(post: post)
+                    
+            if post.createdBy != nil { self.incrementSpotScore(user: post.createdBy!, increment: 1) }
+            self.incrementSpotScore(user: self.uid, increment: 3)
+            
+            /// add user to visitor lis if not already there
+            self.db.collection("spots").document(post.spotID!).updateData(["visitorList" : FieldValue.arrayUnion([self.uid])])
+            /// add to users spotslist if not already there
+            if post.visitorList != nil && post.visitorList!.contains(where: {$0 == self.uid}) {
+                self.db.collection("users").document(self.uid).collection("spotsList").document(post.spotID!).updateData(["postsList" : FieldValue.arrayUnion([postID])])
             } else {
-                self.db.collection("spots").document(post.spotID!).collection("feedPost").document(postID).setData(feedPostValues)
-                self.db.collection("spots").document(post.spotID!).collection("feedPost").document(postID).collection("Comments").document(commentID).setData(commentValues)
-                if post.visitorList!.contains(where: {$0 == self.uid}) {
-                    self.runSpotsListTransaction(post: post, postID: postID)
-                } else {
-                    self.db.collection("users").document(self.uid).collection("spotsList").document(post.spotID!).setData(["spotID" : post.spotID!, "checkInTime" : timestamp, "postsList" : [postID], "city" : city], merge:true)
-                    self.runVisitorsListTransaction(post: post)
-                }
+                self.db.collection("users").document(self.uid).collection("spotsList").document(post.spotID!).setData(["spotID" : post.spotID!, "checkInTime" : timestamp, "postsList" : [postID], "city": city], merge:true)
             }
+            
+            self.db.collection("spots").document(post.spotID!).updateData(["postIDs" : FieldValue.arrayUnion([postID])])
+            self.db.collection("spots").document(post.spotID!).updateData(["postTimestamps" : FieldValue.arrayUnion([timestamp])])
+            
+            self.runSpotTransactions(spotID: post.spotID!, postPrivacy: post.privacyLevel ?? "friends", post: post)
         }
     }
     
+    func runSpotTransactions(spotID: String, postPrivacy: String, post: PostDraft) {
+        
+        let db = Firestore.firestore()
+        let ref = db.collection("spots").document(spotID)
+        
+        db.runTransaction({ (transaction, errorPointer) -> Any? in
+            let spotDoc: DocumentSnapshot
+            do {
+                try spotDoc = transaction.getDocument(ref)
+            } catch let fetchError as NSError {
+                errorPointer?.pointee = fetchError
+                return nil
+            }
+            
+            var posterIDs = spotDoc.data()?["posterIDs"] as? [String] ?? []
+            posterIDs.append(self.uid)
+            
+            var postPrivacies = spotDoc.data()?["postPrivacies"] as? [String] ?? []
+            postPrivacies.append(postPrivacy)
+                        
+            transaction.updateData([
+                "posterIDs": posterIDs,
+                "postPrivacies" : postPrivacies
+            ], forDocument: ref)
+            
+            return nil
+            
+        }) { (object, error) in
+            self.finishPostUpload(post: post)
+        }
+    }
+
+        
     func uploadSpot(spot: SpotDraft) {
         /// upload to posts
 
@@ -930,32 +988,41 @@ extension DraftsViewController {
                 let myTimeInterval = TimeInterval(interval)
                 let timestamp = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
                 
-                let feedPostValues = ["caption" : spot.spotDescription ?? "",
-                                      "posterID": self.uid,
-                                      "likers": [],
-                                      "timestamp": timestamp,
-                                      "taggedUsers": spot.taggedUsernames ?? [],
-                                      "gif": spot.gif,
-                                      "postLat": spot.spotLat,
-                                      "postLong": spot.spotLong,
-                                      "privacyLevel": spot.privacyLevel ?? "friends",
-                                      "imageURLs" : imageURLs] as [String : Any]
+                /// spot.privacyLevel really refers to post privacy here
+                let spotPrivacy = spot.postToPOI ? "public" : spot.privacyLevel ?? "friends"
+                
+                var finalInvites = spot.inviteList ?? []
+                if spot.privacyLevel == "invite" { finalInvites.append(self.uid) }
+                
+                var postFriends = spot.privacyLevel == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
+                if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
+                
+                let postValues = ["caption" : spot.spotDescription ?? "",
+                                  "posterID": self.uid,
+                                  "likers": [],
+                                  "timestamp": timestamp,
+                                  "taggedUsers": spot.taggedUsernames ?? [],
+                                  "gif": spot.gif,
+                                  "postLat": spot.spotLat,
+                                  "postLong": spot.spotLong,
+                                  "privacyLevel": spotPrivacy,
+                                  "imageURLs" : imageURLs,
+                                  "spotName" : spot.spotName ?? "",
+                                  "createdBy": self.uid ,
+                                  "city" : city,
+                                  "inviteList" : finalInvites,
+                                  "friendsList" : postFriends,
+                                  "spotID": spot.spotID ?? "",
+                                  "spotLat": spot.spotLat,
+                                  "spotLong": spot.spotLong,
+                                  "isFirst": true,
+                                  "spotPrivacy" : spot.privacyLevel ?? "friends"] as [String : Any]
                 
                 let commentValues = ["commenterID" : self.uid,
                                      "comment" : spot.spotDescription ?? "",
                                      "timestamp" : timestamp,
                                      "taggedUsers": spot.taggedUsernames ?? []] as [String : Any]
-                
-                let pValues =  ["spotName" : spot.spotName ?? "",
-                                "createdBy": self.uid ,
-                                "city" : city,
-                                "inviteList" : spot.inviteList ?? [],
-                                "spotID": spot.spotID ?? "",
-                                "spotLat": spot.spotLat,
-                                "spotLong": spot.spotLong,
-                                "isFirst": true,
-                                "spotPrivacy" : spot.privacyLevel ?? "friends"] as [String : Any]
-                
+
                 let commentID = UUID().uuidString
                 let commentObject = MapComment(id: commentID, comment: spot.spotDescription ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, taggedUsers: spot.taggedUsernames ?? [], commentHeight: self.getCommentHeight(comment: spot.spotDescription ?? ""), seconds: Int64(interval))
                 
@@ -974,7 +1041,6 @@ extension DraftsViewController {
                 
                 NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
                 
-                let postValues = pValues.merging(feedPostValues) { (_, newD) in newD }
                 
                 self.db.collection("posts").document(postID).setData(postValues)
                 self.db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
@@ -988,18 +1054,21 @@ extension DraftsViewController {
                                    "tags": spot.tags ?? [],
                                    "createdBy": self.uid,
                                    "visitorList": [self.uid],
+                                   "inviteList" : finalInvites,
                                    "privacyLevel": spot.privacyLevel ?? "friends",
                                    "taggedUsers": spot.taggedUsernames ?? [],
                                    "spotLat": spot.spotLat,
                                    "spotLong" : spot.spotLong,
                                    "imageURL" : imageURLs.first ?? "",
-                                   "phone": spot.phone as Any] as [String : Any]
+                                   "phone": spot.phone as Any,
+                                   "postIDs": [postID],
+                                   "postTimestamps": [timestamp],
+                                   "posterIDs": [self.uid],
+                                   "postPrivacies": [spot.privacyLevel ?? "friends"]] as [String : Any]
                 
                 let spotID = duplicateID == "" ? spot.spotID! : duplicateID
                 
                 if duplicateID == "" { self.db.collection("spots").document(spotID).setData(spotValues, merge: true) }
-                self.db.collection("spots").document(spotID).collection("feedPost").document(postID).setData(feedPostValues)
-                self.db.collection("spots").document(spotID).collection("feedPost").document(postID).collection("Comments").document(commentID).setData(commentValues)
                 
                 self.db.collection("users").document(self.uid).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : timestamp, "postsList" : [postID], "city": city], merge:true)
                 
@@ -1011,6 +1080,12 @@ extension DraftsViewController {
                 var spotObject = MapSpot(id: spotID, spotDescription: spot.spotDescription ?? "", spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, founderID: self.uid, privacyLevel: spot.privacyLevel ?? "friends", visitorList: [self.uid], inviteList: spot.inviteList ?? [], tags: spot.tags ?? [], imageURL: imageURLs.first ?? "", spotImage: postImages.first ?? UIImage(), taggedUsers: spot.taggedUsernames ?? [], city: city, friendVisitors: 0, distance: 0)
                 spotObject.checkInTime = Int64(interval)
                 
+                /// add city to list of cities if this is the first post there
+                DispatchQueue.global().async { self.addToCityList(city: city) }
+                
+                /// increment users spotScore
+                self.incrementSpotScore(user: self.uid, increment: 6)
+
                 NotificationCenter.default.post(name: NSNotification.Name("NewSpot"), object: nil, userInfo: ["spot" : spotObject])
                 self.finishSpotUpload(spot: spot)
             }
@@ -1166,60 +1241,6 @@ extension DraftsViewController {
             }
         }
     }
-    
-    func runSpotsListTransaction(post: PostDraft, postID: String) {
-         let db = Firestore.firestore()
-        let ref = db.collection("users").document(self.uid).collection("spotsList").document(post.spotID!)
-         db.runTransaction({ (transaction, errorPointer) -> Any? in
-             let spotDoc: DocumentSnapshot
-             do {
-                 try spotDoc = transaction.getDocument(ref)
-             } catch let fetchError as NSError {
-                 errorPointer?.pointee = fetchError
-                 return nil
-             }
-             
-             var postsList = spotDoc.data()?["postsList"] as! [String]
-            postsList.append(postID)
-             
-             transaction.updateData([
-                 "postsList": postsList
-             ], forDocument: ref)
-             
-             return nil
-             
-         }) { (object, error) in
-            self.finishPostUpload(post: post)
-         }
-     }
-     
-    func runVisitorsListTransaction(post: PostDraft) {
-         let db = Firestore.firestore()
-        let spotRef = db.collection("spots").document(post.spotID!)
-
-         db.runTransaction({ (transaction, errorPointer) -> Any? in
-             let spotDoc: DocumentSnapshot
-             do {
-                 try spotDoc = transaction.getDocument(spotRef)
-             } catch let fetchError as NSError {
-                 errorPointer?.pointee = fetchError
-                 return nil
-             }
-             
-             var visitorList: [String] = []
-             visitorList = spotDoc.data()?["visitorList"] as! [String]
-            visitorList.append(self.uid)
-             transaction.updateData([
-                 "visitorList": visitorList
-             ], forDocument: spotRef)
-             
-             return nil
-             
-         }) { (object, error) in
-            self.finishPostUpload(post: post)
-         }
-     }
-    
 }
 
 class FailedUploadCell: UICollectionViewCell {

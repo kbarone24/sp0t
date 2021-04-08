@@ -81,6 +81,7 @@ class SpotPhotoAlbum: NSObject {
 
             }, completionHandler: nil)
         }
+    
     func save(videoURL: URL) {
         if assetCollection == nil {
             return                          // if there was an error upstream, skip the save

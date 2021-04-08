@@ -46,6 +46,7 @@ class AVCameraController: UIViewController {
     var lastZoomFactor: CGFloat = 1.0
     var initialBrightness: CGFloat = 0.0
     
+    var pan: UIPanGestureRecognizer!
     var tapIndicator: UIImageView!
     var frontFlashView: UIView!
     
@@ -93,6 +94,8 @@ class AVCameraController: UIViewController {
 
             self.navigationController?.setNavigationBarHidden(false, animated: false)
             mapVC.navigationController?.navigationBar.isTranslucent = true
+            mapVC.navigationController?.navigationBar.removeShadow()
+            mapVC.navigationController?.navigationBar.removeBackgroundImage()
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
                 guard let self = self else { return }
@@ -121,20 +124,10 @@ class AVCameraController: UIViewController {
         
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 0
         let cameraY: CGFloat = minY + cameraHeight - 5 - 94
-        
-        /// camera button will always be 15 pts above the bottom of camera preview. size of button is 94 pts
-        
-        cameraButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 47, y: cameraY, width: 94, height: 94))
-        cameraButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        cameraButton.setImage(UIImage(named: "CameraButton"), for: .normal)
-        cameraButton.addTarget(self, action: #selector(captureImage(_:)), for: .touchUpInside)
-        cameraButton.imageView?.contentMode = .scaleAspectFill
-        
-        view.addSubview(cameraButton)
-        
+                
         /// text above camera button for small screen, below camera button for iphoneX+
-        let textY: CGFloat = minY == 0 ? cameraButton.frame.minY - 24 : minY + cameraHeight + 10
-        
+        let textY: CGFloat = minY == 0 ? cameraY - 24 : minY + cameraHeight + 10
+                
         if minY == 0 {
             /// add bottom mask that covers entire capture section
             cameraMask = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 135, width: UIScreen.main.bounds.width, height: 135))
@@ -161,6 +154,16 @@ class AVCameraController: UIViewController {
         }
         view.addSubview(cameraMask)
         
+        /// camera button will always be 15 pts above the bottom of camera preview. size of button is 94 pts
+        
+        cameraButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 47, y: cameraY, width: 94, height: 94))
+        cameraButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        cameraButton.setImage(UIImage(named: "CameraButton"), for: .normal)
+        cameraButton.addTarget(self, action: #selector(captureImage(_:)), for: .touchUpInside)
+        cameraButton.imageView?.contentMode = .scaleAspectFill
+        
+        view.addSubview(cameraButton)
+
         stillText = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 27.5, y: textY, width: 55, height: 25))
         stillText.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         stillText.setTitle("Photo", for: .normal)
@@ -191,7 +194,8 @@ class AVCameraController: UIViewController {
         
         if minY != 0 { view.bringSubviewToFront(cameraMask) } /// camera mask is on top of text for large screen
         
-        dotView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 30, y: textY - 5.5, width: 60, height: 10))
+        let dotY: CGFloat = minY == 0 ? cameraMask.frame.minY - 21 : cameraButton.frame.minY - 21
+        dotView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 30, y: dotY, width: 60, height: 10))
         dotView.backgroundColor = nil
         view.addSubview(dotView)
         
@@ -264,7 +268,7 @@ class AVCameraController: UIViewController {
         view.addSubview(cancelButton)
         
         /// pan gesture will allow camera dismissal on swipe down
-        let pan = UIPanGestureRecognizer.init(target: self, action: #selector(panGesture))
+        pan = UIPanGestureRecognizer.init(target: self, action: #selector(panGesture))
         view.addGestureRecognizer(pan)
         
         let zoom = UIPinchGestureRecognizer(target: self, action: #selector(pinch(_:)))
@@ -354,8 +358,27 @@ class AVCameraController: UIViewController {
         cameraController.flashMode = .off
     }
     
+    func disableButtons() {
+        /// disable buttons while camera is capturing
+        pan.isEnabled = false
+        cameraButton.isEnabled = false
+        cancelButton.isUserInteractionEnabled = false
+        galleryButton.isUserInteractionEnabled = false
+        draftsButton.isUserInteractionEnabled = false
+    }
+    
+    func enableButtons() {
+        pan.isEnabled = true
+        cameraButton.isEnabled = true
+        cancelButton.isUserInteractionEnabled = true
+        galleryButton.isUserInteractionEnabled = true
+        draftsButton.isUserInteractionEnabled = true
+    }
+    
     @objc func captureImage(_ sender: UIButton) {
         //if the gif camera is enabled, capture 5 images in rapid succession
+        disableButtons()
+        
         if gifMode {
             
             let flash = flashButton.image(for: .normal) == UIImage(named: "FlashOn")
@@ -364,7 +387,6 @@ class AVCameraController: UIViewController {
             Mixpanel.mainInstance().track(event: "CameraAliveCapture", properties: ["flash": flash, "selfie": selfie])
             
             self.addDots(count: 0)
-            self.cameraButton.isUserInteractionEnabled = false
             
             if flash {
                 if selfie {
@@ -415,6 +437,8 @@ class AVCameraController: UIViewController {
             }
             
             let resizedImage = self.ResizeImage(with: image, scaledToFill:  CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
+            
+            self.enableButtons()
             
             if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "GIFPreview") as? GIFPreviewController {
                 
@@ -499,6 +523,7 @@ class AVCameraController: UIViewController {
         //check for alives to see if drafts button is active
     }
     func checkAlives() {
+        
         guard let appDelegate =
                 UIApplication.shared.delegate as? AppDelegate else {
             return
@@ -549,8 +574,9 @@ class AVCameraController: UIViewController {
                     let device = self.cameraController.rearCamera
                     device?.toggleFlashlight()
                 }
-                self.cameraButton.isUserInteractionEnabled = true
                 
+                self.enableButtons()
+
                 if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "GIFPreview") as? GIFPreviewController {
                     vc.unfilteredImages = self.animationImages
                     vc.spotObject = self.spotObject
@@ -601,7 +627,8 @@ class AVCameraController: UIViewController {
     
     // set up camera preview on screen if we have user permission
     func configureCameraController() {
-        cameraController.prepare {(error) in
+        
+        cameraController.prepare(position: .rear) {(error) in
             if let error = error {
                 print(error)
             }
@@ -644,6 +671,7 @@ class AVCameraController: UIViewController {
                 self.present(alert, animated: false, completion: nil)
                 
             } else {
+                
                 if !self.cameraController.previewShown {
                     try? self.cameraController.displayPreview(on: self.view)
                     self.setAutoExposure()
@@ -664,6 +692,7 @@ class AVCameraController: UIViewController {
         } else {
             device = cameraController.frontCamera
         }
+        
         try? device.lockForConfiguration()
         device.isSubjectAreaChangeMonitoringEnabled = true
         if device.isFocusModeSupported(AVCaptureDevice.FocusMode.continuousAutoFocus) {
@@ -753,7 +782,8 @@ class AVCameraController: UIViewController {
         let height: CGFloat = (image?.size.height ?? 0.0) * scale
         let imageRect = CGRect(x: (size.width - width) / 2.0, y: (size.height - height) / 2.0, width: width, height: height)
         
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
+        let clipSize = CGSize(width: size.width, height: size.height - 2) /// fix rounding error for images taken from camera
+        UIGraphicsBeginImageContextWithOptions(clipSize, false, 0)
         image?.draw(in: imageRect)
         let newImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()

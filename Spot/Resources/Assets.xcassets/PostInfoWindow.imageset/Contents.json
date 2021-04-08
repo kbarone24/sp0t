@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "postmapsmall1x (2).png",
+      "filename" : "NewPostFrame1x (1).png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "postmapsmall2x (2).png",
+      "filename" : "NewPostFrame2x (1).png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "postmapsmall3x (2).png",
+      "filename" : "NewPostFrame3x (1).png",
       "idiom" : "universal",
       "scale" : "3x"
     }

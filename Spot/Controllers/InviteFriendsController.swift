@@ -58,7 +58,7 @@ class InviteFriendsController: UIViewController {
         let doneButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 53, y: 19, width: 40, height: 16))
         doneButton.setTitle("Done", for: .normal)
         doneButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        doneButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        doneButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 15)
         doneButton.addTarget(self, action: #selector(doneTapped(_:)), for: .touchUpInside)
         topBar.addSubview(doneButton)
     }
@@ -116,13 +116,21 @@ class InviteFriendsController: UIViewController {
     }
     
     @objc func doneTapped(_ sender: UIButton) {
+        
         if uploadVC != nil {
+            /// for uploadVC we want to just show 1 friend, it's implied the user has access
             uploadVC.inviteList = self.selectedFriends.map({($0.id ?? "")})
+            uploadVC.postPrivacy = "invite"
             uploadVC.tableView.reloadData()
+            
         } else if editVC != nil {
-            editVC.spotObject.inviteList = self.selectedFriends.map({($0.id ?? "")})
+            var inviteList = self.selectedFriends.map({($0.id ?? "")})
+            if !inviteList.contains(editVC.uid) { inviteList.append(editVC.uid) }
+            editVC.spotObject.privacyLevel = "invite"
+            editVC.spotObject.inviteList = inviteList
             editVC.tableView.reloadData()
         }
+        
         Mixpanel.mainInstance().track(event: "InviteFriendsSave", properties: ["friendCount": self.selectedFriends.count])
         self.dismiss(animated: true, completion: nil)
     }
@@ -235,25 +243,25 @@ extension InviteFriendsController: UITableViewDataSource, UITableViewDelegate {
     
     func showVisitorMessage() {
         let errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 120, width: UIScreen.main.bounds.width, height: 32))
-        let errorTextLayer = UILabel(frame: CGRect(x: 23, y: 6, width: UIScreen.main.bounds.width - 46, height: 18))
+        let errorLabel = UILabel(frame: CGRect(x: 23, y: 6, width: UIScreen.main.bounds.width - 46, height: 18))
 
         errorBox.backgroundColor = UIColor.lightGray
-        errorTextLayer.textColor = UIColor.white
-        errorTextLayer.textAlignment = .center
-        errorTextLayer.text = "This person has already posted here"
-        errorTextLayer.font = UIFont(name: "SFCamera-Regular", size: 12)
+        errorLabel.textColor = UIColor.white
+        errorLabel.textAlignment = .center
+        errorLabel.text = "This person has already posted here"
+        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 12)
         
         view.addSubview(errorBox)
-        errorBox.addSubview(errorTextLayer)
+        errorBox.addSubview(errorLabel)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { 
-            errorTextLayer.removeFromSuperview()
+            errorLabel.removeFromSuperview()
             errorBox.removeFromSuperview()
         }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 50
+        return 61
     }
     
 }

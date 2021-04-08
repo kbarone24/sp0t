@@ -1,23 +1,23 @@
 {
   "images" : [
     {
+      "filename" : "Send link1x.png",
       "idiom" : "universal",
-      "filename" : "sendlink1x (1).png",
       "scale" : "1x"
     },
     {
+      "filename" : "Send link2x.png",
       "idiom" : "universal",
-      "filename" : "sendlink2x (1).png",
       "scale" : "2x"
     },
     {
+      "filename" : "Send link3x.png",
       "idiom" : "universal",
-      "filename" : "sendlink3x (1).png",
       "scale" : "3x"
     }
   ],
   "info" : {
-    "version" : 1,
-    "author" : "xcode"
+    "author" : "xcode",
+    "version" : 1
   }
 }

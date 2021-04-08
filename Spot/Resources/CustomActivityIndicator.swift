@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 
 class CustomActivityIndicator: UIView {
+    
     let imageView = UIImageView()
     
     override init(frame: CGRect) {

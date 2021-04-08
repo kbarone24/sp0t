@@ -69,7 +69,7 @@ class PhotosContainerController: UIViewController {
         }
     }
     
-    override func viewWillAppear(_ animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         if segView != nil {
@@ -109,26 +109,27 @@ class PhotosContainerController: UIViewController {
         segmentedControl.addTarget(self, action: #selector(segmentedControlValueChanged(_:)), for: .valueChanged)
         
         setUpNavBar()
-        self.add(asChildViewController: self.firstViewController)
+        add(asChildViewController: firstViewController)
     }
     
     func setUpNavBar() {
         
-        self.navigationItem.titleView = segmentedControl
-        self.navigationController?.setNavigationBarHidden(false, animated: true)
-        self.navigationController?.navigationBar.tintColor = .white
-        self.navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
-        self.navigationController?.navigationBar.isTranslucent = false
+        navigationItem.titleView = segmentedControl
+        navigationController?.setNavigationBarHidden(false, animated: true)
+        navigationController?.navigationBar.tintColor = .white
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.addShadow()
+        navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
                 
         if !selectedObjects.isEmpty {
-            self.addNextButton()
+            addNextButton()
         }
     }
     
     
     func assetsFetched() {
-        self.secondViewController.loaded = true
-        self.segmentedControl.isUserInteractionEnabled = true
+        secondViewController.loaded = true
+        segmentedControl.isUserInteractionEnabled = true
     }
 
     func addToFrontOfGallery() {
@@ -198,7 +199,7 @@ class PhotosContainerController: UIViewController {
             vc.spotObject = self.spotObject
             vc.mapVC = self.mapVC
             vc.containerVC = self
-            self.navigationController?.pushViewController(vc, animated: false)
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
     

@@ -28,6 +28,7 @@ class GIFPreviewController: UIViewController {
     var unfilteredImages: [UIImage] = []
     var filteredImages: [UIImage] = []
 
+    var draftID: Int64!
     var gif = false
     var previewView: UIImageView!
     var draftsButton: UIButton!
@@ -110,6 +111,8 @@ class GIFPreviewController: UIViewController {
         mapVC.customTabBar.tabBar.isHidden = true
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.addShadow()
+        navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
         
         let backArrow = UIImage(named: "BackArrow")?.withRenderingMode(.alwaysOriginal)
         navigationController?.navigationBar.backIndicatorImage = backArrow
@@ -134,7 +137,7 @@ class GIFPreviewController: UIViewController {
             
             ///image from camera indicates to location picker to use the current location
             vc.imageFromCamera = true 
-            self.navigationController?.pushViewController(vc, animated: false)
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
     
@@ -280,7 +283,7 @@ extension GIFPreviewController: UICollectionViewDelegate, UICollectionViewDataSo
     
     func haze(image: UIImage) -> (UIImage , String) {
         let originalImage = CIImage(image: image)
-        let filtered0 = inputFilter(image: originalImage ?? CIImage(), saturation: 0.94, brightness: 0.0, contrast: 0.994, vibrance: 0.1, hue: 0.0, exposure: 0.0, warmth: 0.25, tint: -0.06, highlights: 1.007, shadows: 0.0, sharpness: 0.403)
+        let filtered0 = inputFilter(image: originalImage ?? CIImage(), saturation: 0.94, brightness: 0.0, contrast: 0.992, vibrance: 0.1, hue: 0.0, exposure: 0.0, warmth: 0.45, tint: -0.16, highlights: 1.007, shadows: 0.0, sharpness: 0.403)
         let filtered1 = context.createCGImage(filtered0!, from: filtered0!.extent)!
         let newImage = UIImage(cgImage: filtered1)
         return (newImage, "HAZE")

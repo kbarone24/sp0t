@@ -67,10 +67,11 @@ class EditSpotController: UIViewController {
     }
     
     func privacyTap() {
-        spotObject.privacyLevel == "invite" ? launchFriendsPicker() : presentPrivacyPicker()
+        spotPrivacy == "invite" ? launchFriendsPicker() : presentPrivacyPicker()
     }
     
     func presentPrivacyPicker() {
+        
         privacyMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         privacyMask.backgroundColor = UIColor.black.withAlphaComponent(0.7)
         privacyMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(closePrivacyPicker(_:))))
@@ -181,14 +182,15 @@ class EditSpotController: UIViewController {
         
         case 0:
             spotObject.privacyLevel = "friends"
+            spotObject.inviteList = []
             launchSubmitPublic()
             return
             
         case 1:
             spotObject.privacyLevel = "friends"
+            spotObject.inviteList = []
             
         default:
-            spotObject.privacyLevel = "invite"
             launchFriendsPicker()
         }
         
@@ -298,8 +300,12 @@ class EditSpotController: UIViewController {
         if let inviteVC = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "InviteFriends") as? InviteFriendsController {
             
             inviteVC.editVC = self
-            inviteVC.friendsList = mapVC.friendsList
-            inviteVC.queryFriends = mapVC.friendsList
+            
+            var noBotList = mapVC.friendsList
+            noBotList.removeAll(where: {$0.id == "T4KMLe3XlQaPBJvtZVArqXQvaNT2"})
+            
+            inviteVC.friendsList = noBotList
+            inviteVC.queryFriends = noBotList
             
             for invite in spotObject.inviteList ?? [] {
                 if let friend = mapVC.friendsList.first(where: {$0.id == invite}) {
@@ -334,7 +340,7 @@ extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
             
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "SpotTagCell") as! SpotTagCell
-            var spotTags: [String] = spotObject.privacyLevel == "public" ? spotObject.tags : []
+            let spotTags: [String] = spotObject.privacyLevel == "public" ? spotObject.tags : []
             let tagsHeight: CGFloat = mapVC.largeScreen ? 210 : UIScreen.main.bounds.height < 600 ? 240 : 180
             cell.setUp(selectedTags: spotObject.tags, spotTags: spotTags, collectionHeight: tagsHeight - 30)
             return cell
@@ -350,9 +356,9 @@ extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch indexPath.row {
         case 0:
-            return 340
+            return 290
         case 1:
-            return mapVC.largeScreen ? 210 : UIScreen.main.bounds.height < 600 ? 240 : 180
+            return UIScreen.main.bounds.height < 600 ? 240 : 195
         default:
             return 60
         }
@@ -370,7 +376,8 @@ extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
 }
 
 class EditSpotHeader: UITableViewHeaderFooterView {
-    var backButton: UIButton!
+    
+    var cancelButton: UIButton!
     var titleLabel: UILabel!
     var saveButton: UIButton!
     
@@ -381,21 +388,22 @@ class EditSpotHeader: UITableViewHeaderFooterView {
         
         resetView()
         
-        backButton = UIButton(frame: CGRect(x: 12, y: 28, width: 28, height: 18.66))
-        backButton.titleEdgeInsets = UIEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
-        backButton.setImage(UIImage(named: "BackArrow"), for: .normal)
-        backButton.addTarget(self, action: #selector(backTapped(_:)), for: .touchUpInside)
-        backButton.tintColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        self.addSubview(backButton)
+        cancelButton = UIButton(frame: CGRect(x: 12, y: 26, width: 60, height: 24))
+        cancelButton.titleEdgeInsets = UIEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
+        cancelButton.setTitle("Cancel", for: .normal)
+        cancelButton.setTitleColor(UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1), for: .normal)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        cancelButton.addTarget(self, action: #selector(backTapped(_:)), for: .touchUpInside)
+        self.addSubview(cancelButton)
         
-        titleLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 60, y: 28, width: 120, height: 20))
+        titleLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 60, y: 26, width: 120, height: 20))
         titleLabel.text = "Edit Spot"
         titleLabel.textAlignment = .center
         titleLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        titleLabel.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 16)
         self.addSubview(titleLabel)
         
-        saveButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 60, y: 26, width: 50, height: 18))
+        saveButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 60, y: 27, width: 50, height: 18))
         saveButton.titleEdgeInsets = UIEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
         saveButton.setTitle("Save", for: .normal)
         saveButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
@@ -405,7 +413,7 @@ class EditSpotHeader: UITableViewHeaderFooterView {
     }
     
     func resetView() {
-        if backButton != nil { backButton.setImage(UIImage(), for: .normal)}
+        if cancelButton != nil { cancelButton.setImage(UIImage(), for: .normal)}
         if titleLabel != nil { titleLabel.text = "" }
         if saveButton != nil { saveButton.setImage(UIImage(), for: .normal)}
     }
@@ -417,6 +425,7 @@ class EditSpotHeader: UITableViewHeaderFooterView {
     }
     
     @objc func saveTap(_ sender: UIButton) {
+        
         Mixpanel.mainInstance().track(event: "EditSpotSaveTap")
 
         if let editVC = viewContainingController() as? EditSpotController {
@@ -465,50 +474,46 @@ class EditSpotHeader: UITableViewHeaderFooterView {
     func saveSpotToDB(spot: MapSpot, originalCoordinate: CLLocationCoordinate2D, originalInvites: [String]) {
         
         let db = Firestore.firestore()
+        guard let editVC = viewContainingController() as? EditSpotController else { return }
+                
+        let selectedUsernames = editVC.spotObject.taggedUsers
+        let values : [String : Any] = ["spotName": spot.spotName,
+                                       "lowercaseName" : spot.spotName.lowercased(),
+                                       "description" : spot.spotDescription,
+                                       "tags" : spot.tags,
+                                       "spotLat": spot.spotLat,
+                                       "spotLong" : spot.spotLong,
+                                       "privacyLevel": spot.privacyLevel,
+                                       "taggedUsers": selectedUsernames as Any,
+                                       "inviteList": spot.inviteList as Any]
         
-        if let editVC = viewContainingController() as? EditSpotController {
-            
-            var finalInvites = spot.inviteList
-            finalInvites?.append(editVC.uid)
-            
-            let selectedUsernames = editVC.spotObject.taggedUsers
-            let values : [String : Any] = ["spotName": spot.spotName,
-                                           "lowercaseName" : spot.spotName.lowercased(),
-                                           "description" : spot.spotDescription,
-                                           "tags" : spot.tags,
-                                           "spotLat": spot.spotLat,
-                                           "spotLong" : spot.spotLong,
-                                           "privacyLevel": spot.privacyLevel,
-                                           "taggedUsers": selectedUsernames as Any,
-                                           "inviteList": spot.inviteList as Any]
-            
-            db.collection("spots").document(spot.id!).updateData(values)
-            
-            updateSpotCoordinate(spotID: spot.id!, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong))
-            
-            // update city if necessary
-            if spot.spotLong != originalCoordinate.longitude || spot.spotLat != originalCoordinate.latitude {
-                editVC.reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)) { [weak self] address  in
-                    if self == nil { return }
-                    db.collection("spots").document(spot.id!).updateData(["city" : address])
-                }
+        db.collection("spots").document(spot.id!).updateData(values)
+        
+        updateSpotCoordinate(spotID: spot.id!, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong))
+        
+        // update city if necessary
+        if spot.spotLong != originalCoordinate.longitude || spot.spotLat != originalCoordinate.latitude {
+            editVC.reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)) { [weak self] address  in
+                if self == nil { return }
+                db.collection("spots").document(spot.id!).updateData(["city" : address])
             }
-            
-            // upload spot image if necessary
-            
-            if editVC.spotVC.editedImage {
-                self.uploadSpotImage(image: spot.spotImage) { (url) in
-                    if url != "" {
-                        db.collection("spots").document(spot.id!).updateData(["imageURL" : url])
-                        if editVC.spotVC != nil { editVC.spotVC.editedImage = false }
-                    }
-                }
-            }
-            
-            /// send invites to newly invited users, remove invite notis from old users in case this was sent recently
-            let firstPostID = editVC.spotVC.postsList.first?.id ?? ""
-            updateNotificationsList(oldList: originalInvites, newList: editVC.spotObject.inviteList ?? [], user: editVC.mapVC.userInfo, spot: editVC.spotObject, firstPostID: firstPostID)
         }
+        
+        // upload spot image if necessary
+        
+        if editVC.spotVC.editedImage {
+            self.uploadSpotImage(image: spot.spotImage) { (url) in
+                if url != "" {
+                    db.collection("spots").document(spot.id!).updateData(["imageURL" : url])
+                    if editVC.spotVC != nil { editVC.spotVC.editedImage = false }
+                }
+            }
+        }
+        
+        /// send invites to newly invited users, remove invite notis from old users in case this was sent recently
+        let firstPostID = editVC.spotVC.postsList.first?.id ?? ""
+        updateNotificationsList(oldList: originalInvites, newList: editVC.spotObject.inviteList ?? [], user: editVC.mapVC.userInfo, spot: editVC.spotObject, firstPostID: firstPostID)
+        
     }
     
     func updateSpotCoordinate(spotID: String, location: CLLocation) {
@@ -529,23 +534,19 @@ class EditSpotHeader: UITableViewHeaderFooterView {
 
     
     func updatePostValues(spot: MapSpot) {
+        
         let db = Firestore.firestore()
         ///update post values, post privacy only changes if spot becomes private
         var postValues = ["spotName": spot.spotName, "inviteList": spot.inviteList ?? [], "spotPrivacy": spot.privacyLevel, "spotLat": spot.spotLat, "spotLong": spot.spotLong] as [String : Any]
         if spot.privacyLevel == "invite" {
             postValues["privacyLevel"] = "invite"
         }
-        let pQuery = db.collection("posts").whereField("spotID", isEqualTo: spot.id!)
-        pQuery.getDocuments { [weak self] (postSnap, err) in
-            if self == nil { return }
-            if err != nil { return }
-            for post in postSnap!.documents {
-                db.collection("posts").document(post.documentID).updateData(postValues)
-                ///update post objects
-                var notiValues = postValues
-                notiValues["postID"] = post.documentID
-                NotificationCenter.default.post(Notification(name: Notification.Name("EditPost"), object: nil, userInfo: postValues))
-            }
+        
+        for post in spot.postIDs {
+            db.collection("posts").document(post).updateData(postValues)
+            var notiValues = postValues
+            notiValues["postID"] = post
+            NotificationCenter.default.post(Notification(name: Notification.Name("EditPost"), object: nil, userInfo: postValues))
         }
     }
     
@@ -620,15 +621,16 @@ class EditSpotHeader: UITableViewHeaderFooterView {
     }
 }
 
-class EditOverviewCell: UITableViewCell, UITextViewDelegate, UITextFieldDelegate {
+class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
     var spot: MapSpot!
+    
     weak var editVC: EditSpotController!
     
+    var address: String!
     var overviewImage: UIImageView!
     var editImage: UIImageView!
     var editPhotoLabel: UILabel!
     var spotNameField: UITextField!
-    var descriptionField: UITextView!
     var locationLabel: UILabel!
     var addressButton: UIButton!
     var editAddressButton: UIButton!
@@ -678,30 +680,8 @@ class EditOverviewCell: UITableViewCell, UITextViewDelegate, UITextFieldDelegate
         spotNameField.layer.borderColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1).cgColor
         spotNameField.delegate = self
         self.addSubview(spotNameField)
-        
-        descriptionField = UITextView(frame: CGRect(x: 22, y: spotNameField.frame.maxY + 15, width: UIScreen.main.bounds.width - 44, height: 32))
-        descriptionField.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1.0)
-        
-        if spot.spotDescription == "" {
-            descriptionField.alpha = 0.5
-            descriptionField.text = "Write a caption..."
-        } else {
-            descriptionField.text = spot.spotDescription
-        }
-        
-        descriptionField.font = UIFont(name: "SFCamera-Regular", size: 13)
-        descriptionField.backgroundColor = nil
-        descriptionField.isScrollEnabled = true
-        descriptionField.textContainer.lineBreakMode = .byTruncatingHead
-        descriptionField.keyboardDistanceFromTextField = 100
-        descriptionField.delegate = self
-        let size = descriptionField.sizeThatFits(CGSize(width: descriptionField.frame.size.width, height: 100))
-        if size.height > descriptionField.frame.size.height {
-            descriptionField.frame = CGRect(x: descriptionField.frame.minX, y: descriptionField.frame.minY, width: descriptionField.frame.width, height: size.height)
-        }
-        self.addSubview(descriptionField)
-        
-        locationLabel = UILabel(frame: CGRect(x: 21, y: 280, width: 60, height: 20))
+
+        locationLabel = UILabel(frame: CGRect(x: 21, y: spotNameField.frame.maxY + 25, width: 60, height: 20))
         locationLabel.text = "Location"
         locationLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
         locationLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
@@ -713,9 +693,10 @@ class EditOverviewCell: UITableViewCell, UITextViewDelegate, UITextFieldDelegate
         addressButton.setTitleColor(UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1), for: .normal)
         self.addSubview(addressButton)
         
-        reverseGeocodeFromCoordinate(numberOfFields: 4, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)) { [weak self] (address) in
-            guard let self = self else { return }
+        getAddress(location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)) {  [weak self] (address) in
             
+            guard let self = self else { return }
+            self.address = address
             self.addressButton.setTitle(address, for: .normal)
             self.addressButton.sizeToFit()
             
@@ -727,14 +708,25 @@ class EditOverviewCell: UITableViewCell, UITextViewDelegate, UITextFieldDelegate
         }
     }
     
+    func getAddress(location: CLLocation, completion: @escaping (_ address: String) -> Void) {
+        /// store address to avoid blinking on refresh
+        if self.address != nil { completion(self.address); return }
+        
+        reverseGeocodeFromCoordinate(numberOfFields: 4, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)) { (address) in
+            completion(address)
+        }
+    }
+    
     @objc func editAddress(_ sender: UIButton) {
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
+            
             vc.selectedImages = [spot.spotImage]
             vc.mapVC = editVC.mapVC
             vc.passedLocation = CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)
             vc.passedAddress = addressButton.titleLabel?.text ?? ""
             vc.spotObject = editVC.spotObject
-            editVC.mapVC.navigationController?.pushViewController(vc, animated: false)
+            
+            editVC.mapVC.navigationController?.pushViewController(vc, animated: true)
             editVC.spotVC.editedSpot = editVC.spotObject
             editVC.dismiss(animated: false)
         }
@@ -761,7 +753,6 @@ class EditOverviewCell: UITableViewCell, UITextViewDelegate, UITextFieldDelegate
         if editImage != nil { editImage.image = UIImage() }
         if editPhotoLabel != nil { editPhotoLabel.text = "" }
         if spotNameField != nil { spotNameField.text = "" }
-        if descriptionField != nil { descriptionField.text = "" }
         if locationLabel != nil { locationLabel.text = "" }
         if addressButton != nil { addressButton.setTitle("", for: .normal) }
         if editAddressButton != nil { editAddressButton.setImage(UIImage(), for: .normal)}
@@ -778,56 +769,6 @@ class EditOverviewCell: UITableViewCell, UITextViewDelegate, UITextFieldDelegate
         }
         
         return updatedText.count <= 27
-        
-    }
-    
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.alpha == 0.5 {
-            textView.text = nil
-            textView.alpha = 1.0
-        }
-    }
-    
-    func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text.isEmpty {
-            textView.alpha = 0.5
-            textView.text = "Write a caption..."
-        }
-    }
-    
-    func textViewDidChange(_ textView: UITextView) {
-        let amountOfLinesToBeShown: CGFloat = 4
-        let maxHeight: CGFloat = textView.font!.lineHeight * amountOfLinesToBeShown + 6
-        
-        let size = textView.sizeThatFits(CGSize(width: textView.frame.size.width, height: maxHeight))
-        if size.height != textView.frame.size.height && size.height < maxHeight {
-            let diff = size.height - textView.frame.height
-            textView.frame = CGRect(x: textView.frame.minX, y: textView.frame.minY, width: textView.frame.width, height: textView.frame.height + diff)
-        }
-        
-        if textView.text.last != " " {
-            if let editVC = viewContainingController() as? EditSpotController {
-                if let word = textView.text?.split(separator: " ").last {
-                    if word.hasPrefix("@") {
-                        editVC.mapVC.addTable(text: String(word.lowercased().dropFirst()), parent: .upload)
-                        return
-                    }
-                }
-                editVC.mapVC.removeTable()
-            }
-        }
-    }
-    
-    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-        
-        let currentText = textView.text ?? ""
-        guard let stringRange = Range(range, in: currentText) else { return false }
-        let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
-        ///update parent
-        if let uploadVC = self.viewContainingController() as? EditSpotController {
-            if updatedText.count <= 500 { uploadVC.spotObject.spotDescription = updatedText }
-        }
-        return updatedText.count <= 500
         
     }
 }

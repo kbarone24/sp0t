@@ -13,14 +13,16 @@ import Mixpanel
 import FirebaseUI
 
 class FriendsListController: UIViewController {
+        
+    unowned var profileVC: ProfileViewController!
+    let db: Firestore! = Firestore.firestore()
+    let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+    var tableView : UITableView!
     
     lazy var friendIDs: [String] = []
     lazy var friendsList: [UserProfile] = []
-    
-    let db: Firestore! = Firestore.firestore()
-    var tableView : UITableView!
-    
-    unowned var profileVC: ProfileViewController!
+
     var loadingIndicator: CustomActivityIndicator!
     var listener1: ListenerRegistration!
     
@@ -40,6 +42,7 @@ class FriendsListController: UIViewController {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         removeListeners()
+        Mixpanel.mainInstance().track(event: "FriendsListOpen")
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -48,6 +51,7 @@ class FriendsListController: UIViewController {
     }
     
     func setUpTable() {
+        
         tableView = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         tableView.backgroundColor = UIColor(named: "SpotBlack")
         tableView.separatorStyle = .none
@@ -69,6 +73,16 @@ class FriendsListController: UIViewController {
             tableView.reloadData()
             tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: tableOffset), animated: false)
             tableOffset = 0
+        }
+        
+        if uid == profileVC.id {
+            let offsetY: CGFloat = profileVC.mapVC.largeScreen ? 145 : 125
+            let addFriendsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 158, y: UIScreen.main.bounds.height - offsetY, width: 138, height: 49))
+            addFriendsButton.setImage(UIImage(named: "FriendsListAddFriends"), for: .normal)
+            addFriendsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            addFriendsButton.addTarget(self, action: #selector(addFriendsTap(_:)), for: .touchUpInside)
+            addFriendsButton.imageView?.contentMode = .scaleAspectFit
+            view.addSubview(addFriendsButton)
         }
     }
     
@@ -96,6 +110,7 @@ class FriendsListController: UIViewController {
                             self.removeLoadingIndicator()
                             self.tableView.reloadData()
                         }
+                        
                 } catch { return }
             }
         }
@@ -118,13 +133,21 @@ class FriendsListController: UIViewController {
     
     @objc func updateFriendsList(_ sender: NSNotification) {
         /// update friends list if selected before full friends list loaded on
-        if profileVC != nil && profileVC.uid == profileVC.id {
+        if profileVC != nil && uid == profileVC.id {
             friendsList = profileVC.mapVC.friendsList
             self.tableView.reloadData()
         }
     }
     
+    @objc func addFriendsTap(_ sender: UIButton) {
+        if let vc = storyboard?.instantiateViewController(identifier: "FindFriends") as? FindFriendsController {
+            vc.mapVC = profileVC.mapVC
+            present(vc, animated: true, completion: nil)
+        }
+    }
+    
     func removeListeners() {
+        
         if listener1 != nil { listener1.remove() }
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("FriendsListLoad"), object: nil)
         
@@ -145,42 +168,41 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 52
+        return 61
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "FriendsListHeader") as? FriendsListHeader {
             let count = !friendIDs.isEmpty ? friendIDs.count : friendsList.count
-            let isCurrentUser = profileVC != nil && profileVC.id == profileVC.uid
-            header.setUp(friendCount: count, isCurrentUser: isCurrentUser)
+            header.setUp(friendCount: count)
             return header
         } else { return UITableViewHeaderFooterView() }
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 40
+        return 50
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedUser = self.friendsList[indexPath.row]
         
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
-                
-                vc.userInfo = selectedUser
-                vc.mapVC = self.profileVC.mapVC
-                vc.id = selectedUser.id!
-                
-                profileVC.shadowScroll.isScrollEnabled = false
-                profileVC.friendsListScrollDistance = tableView.contentOffset.y
-                
-                vc.view.frame = profileVC.view.frame
-                profileVC.addChild(vc)
-                profileVC.view.addSubview(vc.view)
-                vc.didMove(toParent: profileVC)
-                
-                profileVC.mapVC.customTabBar.tabBar.isHidden = true
-        }
             
+            vc.userInfo = selectedUser
+            vc.mapVC = self.profileVC.mapVC
+            vc.id = selectedUser.id!
+            
+            profileVC.shadowScroll.isScrollEnabled = false
+            profileVC.friendsListScrollDistance = tableView.contentOffset.y
+            
+            vc.view.frame = profileVC.view.frame
+            profileVC.addChild(vc)
+            profileVC.view.addSubview(vc.view)
+            vc.didMove(toParent: profileVC)
+            
+            profileVC.mapVC.customTabBar.tabBar.isHidden = true
+            self.dismiss(animated: false, completion: nil)
+        }
     }
 }
 
@@ -197,8 +219,8 @@ class FriendsListCell: UITableViewCell {
         
         resetCell()
         
-        profilePic = UIImageView(frame: CGRect(x: 18, y: 8, width: 36, height: 36))
-        profilePic.layer.cornerRadius = 18
+        profilePic = UIImageView(frame: CGRect(x: 14, y: 8.5, width: 44, height: 44))
+        profilePic.layer.cornerRadius = 22
         profilePic.clipsToBounds = true
         self.addSubview(profilePic)
 
@@ -208,18 +230,19 @@ class FriendsListCell: UITableViewCell {
             profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
         }
         
-        name = UILabel(frame: CGRect(x: 60, y: 9, width: UIScreen.main.bounds.width - 70, height: 20))
+        name = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: 14.5, width: UIScreen.main.bounds.width - 186, height: 15))
+        name.textAlignment = .left
+        name.lineBreakMode = .byTruncatingTail
         name.text = friend.name
-        name.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        name.font = UIFont(name: "SFCamera-Semibold", size: 13)
-        name.sizeToFit()
+        name.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
+        name.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
         self.addSubview(name)
-        
-        username = UILabel(frame: CGRect(x: 61, y: name.frame.maxY + 1, width: UIScreen.main.bounds.width - 70, height: 20))
+                
+        username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: name.frame.maxY + 1, width: 150, height: 15))
         username.text = friend.username
-        username.textColor = UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1)
-        username.font = UIFont(name: "SFCamera-Regular", size: 13)
-        username.sizeToFit()
+        username.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        username.textAlignment = .left
         self.addSubview(username)
     }
     
@@ -241,35 +264,27 @@ class FriendsListHeader: UITableViewHeaderFooterView {
     var privacyIcon: UIImageView!
     var numFriends: UILabel!
     var backButton: UIButton!
-    var searchContacts: UIButton!
     
-    func setUp(friendCount: Int, isCurrentUser: Bool) {
+    func setUp(friendCount: Int) {
+        
         let backgroundView = UIView()
         backgroundView.backgroundColor = UIColor(named: "SpotBlack")
         self.backgroundView = backgroundView
         
         resetCell()
                 
-        numFriends = UILabel(frame: CGRect(x: 100, y: 11, width: UIScreen.main.bounds.width - 200, height: 16))
+        numFriends = UILabel(frame: CGRect(x: 100, y: 15, width: UIScreen.main.bounds.width - 200, height: 16))
         var friendText = "\(friendCount) friends"
         if friendCount == 1 {friendText = String(friendText.dropLast())}
         numFriends.text = friendText
-        numFriends.font = UIFont(name: "SFCamera-Semibold", size: 14)
-        numFriends.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+        numFriends.font = UIFont(name: "SFCamera-Regular", size: 16)
+        numFriends.textColor = .white
         numFriends.textAlignment = .center
         self.addSubview(numFriends)
         
-        if isCurrentUser {
-            searchContacts = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 40, y: 4, width: 33, height: 31.6))
-            searchContacts.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            searchContacts.setImage(UIImage(named: "SearchContactsButton"), for: .normal)
-            searchContacts.addTarget(self, action: #selector(searchContacts(_:)), for: .touchUpInside)
-            self.addSubview(searchContacts)
-        }
-        
-        backButton = UIButton(frame: CGRect(x: 5, y: 4, width: 35, height: 35))
+        backButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 40, y: 7, width: 35, height: 35))
         backButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        backButton.setImage(UIImage(named: "BackButton"), for: .normal)
+        backButton.setImage(UIImage(named: "CancelButton"), for: .normal)
         backButton.addTarget(self, action: #selector(exit(_:)), for: .touchUpInside)
         self.addSubview(backButton)
         
@@ -286,7 +301,6 @@ class FriendsListHeader: UITableViewHeaderFooterView {
     func resetCell() {
         if numFriends != nil { numFriends.text = "" }
         if backButton != nil { backButton.setImage(UIImage(), for: .normal) }
-        if searchContacts != nil { searchContacts.setImage(UIImage(), for: .normal)}
     }
     
     @objc func exit(_ sender: UIButton) {
