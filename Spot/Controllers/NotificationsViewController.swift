@@ -39,7 +39,6 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     lazy var sentFromPending = false
     lazy var active = false
     
-    
     //finish passing method reloads data if friend request action was taken in profile
     
     
@@ -283,7 +282,6 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 self.notificationList = self.notificationList.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
                 self.removeRefresh()
                 if self.refresh == .refreshing { self.refresh = .yesRefresh }
-                print("reload content post")
                 DispatchQueue.main.async { self.tableView.reloadData() }
             }
         }
@@ -411,6 +409,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     }
     
     func checkForRequests() {
+        /// pass friend request updates to pendingRequests controller on update from friend vc
         if sentFromPending {
             if !friendRequestsPending.isEmpty {
                 if let vc = UIStoryboard(name: "TabBar", bundle: nil).instantiateViewController(withIdentifier: "PendingFriends") as? PendingFriendRequestsController {
@@ -429,7 +428,6 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         query.getDocuments { (docs, err) in
             if err != nil { return }
             for doc in docs!.documents {
-                print("update doc")
                 self.db.collection("users").document(self.uid).collection("notifications").document(doc.documentID).updateData(["seen" : true])
             }
         }
@@ -467,6 +465,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             return blank!
         }
         
+        /// only accepted friend requests will show up here, pending will appear in header
         if (notificationList[indexPath.row].1 == "friendRequestAccepted") {
             let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCell") as! FriendRequestCell
             
@@ -481,6 +480,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             cell.setUpAll(request: currentRequest, currentUsername: self.mapVC.userInfo.username)
             cell.setUpAccepted()
             return cell
+            
         } else {
             
             if (contentNotificationList.isEmpty) { return blank! }
@@ -531,6 +531,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     }
     
     @objc func notifyReject(_ notification:Notification) {
+        
         if let friendID = notification.userInfo?.first?.value as? String {
             if let index = self.friendRequestsPending.firstIndex(where: {$0.userInfo.id == friendID}) {
                 
@@ -543,6 +544,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     }
     
     func openProfile(user: UserProfile) {
+        
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
          
             vc.userInfo = user
@@ -697,6 +699,7 @@ class FriendRequestCell: UITableViewCell {
     }
     
     @objc func openProfile(_ sender: UIButton) {
+        
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
             if let notiVC = self.viewContainingController() as? NotificationsViewController {
                 
@@ -723,7 +726,7 @@ class FriendRequestCell: UITableViewCell {
     }
     
     @objc func acceptTap(_ sender: UIButton) {
-        
+        /// send notification to notificationsVC + pendingRequestsVC
         Mixpanel.mainInstance().track(event: "NotificationsAcceptRequest")
         self.acceptButton.setImage(UIImage(), for: .normal)
         self.removeButton.setImage(UIImage(), for: .normal)
@@ -736,7 +739,7 @@ class FriendRequestCell: UITableViewCell {
     }
     
     @objc func removeTap(_ sender: UIButton) {
-        
+        /// send notification to notificationsVC + pendingRequestsVC
         Mixpanel.mainInstance().track(event: "NotificationsRemoveRequest")
         self.acceptButton.setImage(UIImage(), for: .normal)
         self.removeButton.setImage(UIImage(), for: .normal)
@@ -930,6 +933,8 @@ class ContentCell: UITableViewCell {
     }
     
     func resetCell() {
+        if profilePic != nil { profilePic.image = UIImage() }
+        if contentImage != nil { contentImage.image = UIImage() }
         if usernameLabel != nil { usernameLabel.text = "" }
         if time != nil { time.text = "" }
         if detail != nil { detail.text = "" }
@@ -937,6 +942,7 @@ class ContentCell: UITableViewCell {
     }
     
     override func prepareForReuse() {
+        
         super.prepareForReuse()
         
         if profilePic != nil {
@@ -945,8 +951,8 @@ class ContentCell: UITableViewCell {
         }
         
         if contentImage != nil {
-            contentImage.image = UIImage()
             contentImage.sd_cancelCurrentImageLoad()
+            contentImage.image = UIImage()
         }
     }
     

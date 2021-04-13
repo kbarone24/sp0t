@@ -1039,7 +1039,7 @@ class PostCell: UITableViewCell {
             if adjustedHeight > overflowBound { adjustedHeight = overflowBound } /// crop for small screens
         
         } else {
-            adjustedHeight = aliveSize
+            adjustedHeight = min(aliveSize, cellHeight - tabBarHeight + 20)
             minY = 0
         }
         
@@ -1054,10 +1054,7 @@ class PostCell: UITableViewCell {
     
         // add top mask to show title if title overlaps image
         if minY == 0 && post.spotID != ""  { postImage.addTopMask() }
-        
-        let largeScreen = UIScreen.main.bounds.height > 800
-        let largeMask = parentVC != .feed && !largeScreen /// larger mask if tab bar hidden on iphone8
-        if adjustedHeight > standardSize { postImage.addBottomMask(largeMask: largeMask) }
+        if adjustedHeight > standardSize { postImage.addBottomMask() }
     
         if postImage != nil { bringSubviewToFront(postImage) }
 
@@ -2814,9 +2811,8 @@ extension UIImageView {
         addSubview(topMask)
     }
     
-    func addBottomMask(largeMask: Bool) {
-        let maskHeight: CGFloat = largeMask ? 200 : 140
-        let bottomMask = UIView(frame: CGRect(x: 0, y: bounds.height - maskHeight, width: UIScreen.main.bounds.width, height: maskHeight))
+    func addBottomMask() {
+        let bottomMask = UIView(frame: CGRect(x: 0, y: bounds.height - 140, width: UIScreen.main.bounds.width, height: 140))
         bottomMask.backgroundColor = nil
         let layer0 = CAGradientLayer()
         layer0.frame = bottomMask.bounds

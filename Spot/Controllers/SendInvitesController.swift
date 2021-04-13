@@ -27,6 +27,7 @@ class SendInvitesController: UIViewController {
 
     var sectionTitles: [String] = []
     var numbers: [String] = []
+    var sentInvites: [String] = []
     var pendingNumber = "" /// temporary variable used while messages controller is presented
     
     var rawContacts: [CNContact] = []
@@ -148,9 +149,13 @@ class SendInvitesController: UIViewController {
     
     func getNumbers() {
         
-        /// get all numbers on the app for matching -> should be faster than running individual queries
+        /// get users sent invites in correct format
+        for invite in mapVC.userInfo.sentInvites {
+            sentInvites.append(invite.formatNumber())
+        }
         
-        self.db.collection("users").getDocuments { [weak self]
+        /// get all numbers on the app for matching -> should be faster than running individual queries
+        db.collection("users").getDocuments { [weak self]
             (snap, err) in
 
             guard let self = self else { return }
@@ -160,8 +165,7 @@ class SendInvitesController: UIViewController {
             
                 if let phone = document.get("phone") as? String {
                     
-                    var number = phone.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-                    number = String(number.suffix(10))
+                    let number = phone.formatNumber()
                     if !self.numbers.contains(where: {$0 == number }) { self.numbers.append(number) }
                     index += 1; if index == snap!.documents.count { self.getContacts() }
                     
@@ -202,22 +206,22 @@ class SendInvitesController: UIViewController {
     
     func checkContactStatuses() {
 
-        print("check contact statuses", rawContacts.count)
         var localContacts: [(contact: CNContact, status: InviteStatus)] = []
         
         for contact in rawContacts {
-            let rawNumber = contact.phoneNumbers.first?.value
-            var number = rawNumber?.stringValue ?? ""
-            /// user already invited this contact
-            if mapVC.userInfo.sentInvites.contains(number) {
+            
+            let rawNumber = contact.phoneNumbers.first?.value.stringValue ?? ""
+            let number = rawNumber.formatNumber()
+
+            let status: InviteStatus = numbers.contains(number) ? .joined : .none
+            
+            /// user already invited this contact but they haven't joined yet
+            if status == .none && sentInvites.contains(number) {
                 localContacts.append((contact: contact, status: .invited))
                 if localContacts.count == rawContacts.count { reloadContactsTable(localContacts: localContacts) }
-                return
+                continue
             }
-            
-            number = number.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-            number = String(number.suffix(10)) /// match based on last 10 digits to eliminate country codes and formatting
-            let status: InviteStatus = numbers.contains(number) ? .joined : .none
+
             
             localContacts.append((contact: contact, status: status))
             if localContacts.count == rawContacts.count { reloadContactsTable(localContacts: localContacts) }
@@ -246,7 +250,6 @@ class SendInvitesController: UIViewController {
         sectionTitles.sort(by: {$0 < $1})
 
         DispatchQueue.main.async {
-            print("contacts", self.contacts.map({$0.status}), "raw", self.rawContacts.count)
             self.loadingIndicator.stopAnimating()
             self.tableView.reloadData()
         }
@@ -313,6 +316,9 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
         /// update header
             mapVC.userInfo.sentInvites.append(pendingNumber)
             titleView.setUp(count: 5 - mapVC.userInfo.sentInvites.count)
+            
+        /// update local sentInvites
+            sentInvites.append(pendingNumber.formatNumber())
         
         /// send noti to find friends controller
             let notificationName = Notification.Name("SentInvite")
@@ -463,9 +469,10 @@ class SendInviteCell: UITableViewCell {
     }
     
     @objc func inviteFriend(_ sender: UIButton) {
-        print("invite friend")
         if let vc = viewContainingController() as? SendInvitesController {
             vc.sendInvite(number: number)
         }
     }
 }
+
+

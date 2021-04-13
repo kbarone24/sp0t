@@ -87,7 +87,6 @@ class FeedViewController: UIViewController {
                 
                 if let post = info["post"] as? MapPost { self.postsList[index] = post }
                 
-                print("selected index", index, "posts count", postsList.count, "refresh", self.refresh)
                 if index > (postsList.count - 4) && self.refresh == .yesRefresh {
                     print("refreshing")
                     refresh = .refreshing

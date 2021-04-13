@@ -27,17 +27,17 @@ class NearbyViewController: UIViewController {
     var cityIcon: UIImageView!
     var cityName: UILabel!
     var changeCityButton: UIButton!
-    var selectedCity: (name: String, coordinate: CLLocationCoordinate2D)!
-    var userCity: (name: String, coordinate: CLLocationCoordinate2D)!
+    var selectedCity: (name: String, coordinate: CLLocationCoordinate2D)! /// currently selected city
+    var userCity: (name: String, coordinate: CLLocationCoordinate2D)! /// user city based on currentLocation
     
     var searchBar: UISearchBar!
     var searchBarContainer: UIView!
     var resultsTable: UITableView!
     var citiesTable: UITableView!
-    var searchTextGlobal = ""
+    var searchTextGlobal = "" /// used to compare local async search text with updated search bar text
     var searchIndicator: CustomActivityIndicator!
     var cancelButton: UIButton!
-    var locationCompleter: MKLocalSearchCompleter!
+    var locationCompleter: MKLocalSearchCompleter! /// used for nearby city search
     var search: MKLocalSearch!
     
     lazy var loadingIndicator = CustomActivityIndicator()
@@ -46,26 +46,26 @@ class NearbyViewController: UIViewController {
     lazy var spotsTable: UITableView = UITableView(frame: CGRect.zero)
     lazy var spotsHeader: NearbySpotsHeader = NearbySpotsHeader(frame: CGRect.zero)
 
-    lazy var queryIDs: [(id: String, score: Double)] = []
-    lazy var queryUsers: [UserProfile] = []
-    lazy var querySpots: [MapSpot] = []
+    lazy var queryIDs: [(id: String, score: Double)] = [] /// list of returned search items, score for ranking relevancy
+    lazy var queryUsers: [UserProfile] = [] /// users returned by search query
+    lazy var querySpots: [MapSpot] = [] /// spots returned by searchQuery
     lazy var queryCities = [MKLocalSearchCompletion]()
     
     var circleQuery: GFSCircleQuery?
     lazy var nearbyCityCounter = 0
     lazy var cityDuplicateCount = 0
-    lazy var cityRadius: Double = 30
+    lazy var cityRadius: Double = 30 /// search radius for finding nearbyCities
     lazy var showQuery = false
     lazy var enteredCities: [String] = [] /// shorthand cities for duplicates before city spots fetch runs
-    lazy var nearbyCities: [City] = []
+    lazy var nearbyCities: [City] = [] /// nearbyCities to show in citiesTable
 
-    lazy var citySpots: [(spot: MapSpot, filtered: Bool)] = []
-    lazy var cityFriends: [CityUser] = []
-    var selectedUserID: String!
-    lazy var sortByScore = false
+    lazy var citySpots: [(spot: MapSpot, filtered: Bool)] = [] /// spotsList for selectedCity
+    lazy var cityFriends: [CityUser] = [] /// users friendsList with individual spotsList updated when city changes
+    var selectedUserID: String! /// selected user filter
+    lazy var sortByScore = false /// sort bool for neary spots table
 
-    lazy var cityTags: [Tag] = []
-    lazy var selectedTags: [String] = []
+    lazy var cityTags: [Tag] = [] /// tags with # of spots in selectedCity
+    lazy var selectedTags: [String] = [] /// selected tag filters
     
     var sortMask: UIView!
     
@@ -84,8 +84,6 @@ class NearbyViewController: UIViewController {
     
     unowned var mapVC: MapViewController!
     weak var postVC: PostViewController!
-    
-    var emptyState: UIView!
     
     var passedCamera: MKMapCamera!
         
@@ -179,7 +177,7 @@ class NearbyViewController: UIViewController {
     @objc func notifyEditSpot(_ notification: NSNotification) {
         if let editSpot = notification.userInfo?.first?.value as? MapSpot {
             /// update map spot
-            if let anno = mapVC.spotAnnotations.first(where: {$0.key == editSpot.id}) {
+            if let anno = mapVC.nearbyAnnotations.first(where: {$0.key == editSpot.id}) {
                 anno.value.coordinate = CLLocationCoordinate2D(latitude: editSpot.spotLat, longitude: editSpot.spotLong)
             }
             /// update nearby spot
@@ -193,8 +191,8 @@ class NearbyViewController: UIViewController {
     @objc func notifyDeleteSpot(_ notification: NSNotification) {
         if let spotID = notification.userInfo?.first?.value as? String {
             /// delete map spot
-            if let index = mapVC.spotAnnotations.firstIndex(where: {$0.key == spotID}) {
-                mapVC.spotAnnotations.remove(at: index)
+            if let index = mapVC.nearbyAnnotations.firstIndex(where: {$0.key == spotID}) {
+                mapVC.nearbyAnnotations.remove(at: index)
             }
             /// delete nearby spot
             if let index = citySpots.firstIndex(where: {$0.spot.id == spotID}) {
@@ -206,6 +204,7 @@ class NearbyViewController: UIViewController {
     
     @objc func notifyFriendsLoad(_ notification: NSNotification) {
         
+        /// notify user friendsList load -> if user friendsList empty, run initial get functions
         if friendsEmpty {
             
             cityFriends.append(CityUser(user: mapVC.userInfo))
@@ -320,13 +319,14 @@ class NearbyViewController: UIViewController {
             
             self.nearbyCityCounter += 1
             
-            DispatchQueue.global(qos: .userInitiated).async { self.getSpots() }
+            DispatchQueue.global(qos: .userInitiated).async { self.getSpots() } /// run nearby spots search on userInitiated background thread
             
-            DispatchQueue.global(qos: .default).async {  self.getNearbyCities(radius: self.cityRadius) }
+            DispatchQueue.global(qos: .default).async {  self.getNearbyCities(radius: self.cityRadius) } /// run nearby city search on default background thread thread because cities are hidden from view before click
         })
     }
     
     func resetToUserCity() {
+        
         ///called when clicking current location icon on the map
         if cityFriends.isEmpty { return }
         
@@ -402,8 +402,8 @@ class NearbyViewController: UIViewController {
     }
     
     func loadSearchBar() {
-        // search bar hidden until interacted with
         
+        // search bar hidden until interacted with
         searchBarContainer = UIView(frame: CGRect(x: 0, y: 11, width: UIScreen.main.bounds.width, height: 60))
         searchBarContainer.backgroundColor = nil
         mainScroll.addSubview(searchBarContainer)
@@ -457,39 +457,6 @@ class NearbyViewController: UIViewController {
         searchBar.becomeFirstResponder()
     }
 
-    func addEmptyState() {
-        
-        if citySpots.count != 0 { return }
-        if emptyState != nil { return }
-        
-        removeLoadingIndicator()
-        
-        resetCollectionValues()
-        
-        let minY: CGFloat = mapVC.largeScreen ? 170 : 140
-        emptyState = UIView(frame: CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: 80))
-        emptyState.backgroundColor = nil
-        emptyState.tag = 3
-        
-        view.addSubview(emptyState)
-        view.bringSubviewToFront(resultsTable)
-        view.bringSubviewToFront(citiesTable)
-        
-        let botImage = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 16.27, y: 0, width: 32.54, height: 43.7))
-        botImage.image = UIImage(named: "OnboardB0t")
-        botImage.contentMode = .scaleAspectFit
-        emptyState.addSubview(botImage)
-        
-        let emptyLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: botImage.frame.maxY + 5, width: 200, height: 40))
-        emptyLabel.text = "Nothing here yet. Try a different city or be the first to post"
-        emptyLabel.textColor = UIColor(red: 0.842, green: 0.842, blue: 0.842, alpha: 1)
-        emptyLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
-        emptyLabel.textAlignment = .center
-        emptyLabel.numberOfLines = 0
-        emptyLabel.lineBreakMode = .byWordWrapping
-        emptyLabel.sizeToFit()
-        emptyState.addSubview(emptyLabel)
-    }
     
     func resetCollectionValues() {
         
@@ -507,22 +474,19 @@ class NearbyViewController: UIViewController {
         spotsTable.frame = CGRect(x: spotsTable.frame.minX, y: spotsTable.frame.minY, width: spotsTable.frame.width, height: 0)
     }
     
-    func removeEmptyState() {
-        if emptyState != nil {
-            emptyState.removeFromSuperview()
-            emptyState = nil
-        }
-    }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        
         /// so scroll doesnt scroll before being full screen
-
         if let tabBar = parent?.parent as? CustomTabBar {
             if tabBar.view.frame.minY > 0 {
                 DispatchQueue.main.async { self.mainScroll.contentOffset.y = 0 }
                 return
             }
         }
+        
+        if !resultsTable.isHidden { return }
+        
         setOffsets(scrollView: scrollView)
     }
     
@@ -839,6 +803,7 @@ extension NearbyViewController: UISearchBarDelegate {
     
     func startEditing() {
         
+        /// open search, hide main view, show search table
         Mixpanel.mainInstance().track(event: "SearchBegan")
         animateToFull()
         
@@ -1026,6 +991,7 @@ extension NearbyViewController: UISearchBarDelegate {
     }
     
     func resetOffsets() {
+        
         ///scroll to top on nearby tab bar button click
         
         DispatchQueue.main.async {
@@ -1062,6 +1028,7 @@ extension NearbyViewController: UISearchBarDelegate {
     }
     
     func emptyQueries() {
+        /// reset search values
         searchRefreshCount = 0
         self.queryIDs.removeAll()
         self.querySpots.removeAll()
@@ -1238,33 +1205,39 @@ extension NearbyViewController: UISearchBarDelegate {
             var postFetchID = ""
             var accessToOnePost = false
             
-            for i in 0 ... spot.postIDs.count - 1 {
+            /// exception handling for failed spot transaction on upload 
+            if spot.postIDs.count != 0 && spot.postPrivacies.count == spot.postIDs.count {
                 
-                let isFriend = self.isFriends(id: spot.posterIDs[i]) /// is this a friend or a public stranger post
-                let postPrivacy = spot.postPrivacies[i]
-                
-                if postPrivacy == "public" || isFriend {
-                    accessToOnePost = true
+                for i in 0 ... spot.postIDs.count - 1 {
+                                        
+                    let isFriend = self.isFriends(id: spot.posterIDs[safe: i] ?? "xxxxx") /// is this a friend or a public stranger post
+                    let postPrivacy = spot.postPrivacies[safe: i] ?? "friends"
                     
-                    scoreMultiplier += 100
-                    
-                    if postFetchID == "" {
-                        /// set postFetchID for first visible post
-                        postFetchID = spot.postIDs[i]
-                        friendImage = isFriend
+                    if postPrivacy == "public" || isFriend {
+                        accessToOnePost = true
                         
-                    } else if !friendImage && isFriend {
-                        /// always show first friend image if possible
-                        postFetchID = spot.postIDs[i]
-                        friendImage = true
+                        scoreMultiplier += 100
+                        
+                        if postFetchID == "" {
+                            /// set postFetchID for first visible post
+                            postFetchID = spot.postIDs[i]
+                            friendImage = isFriend
+                            
+                        } else if !friendImage && isFriend {
+                            /// always show first friend image if possible
+                            postFetchID = spot.postIDs[i]
+                            friendImage = true
+                        }
                     }
                 }
+                
             }
             
             newSpot.friendImage = friendImageFromFounder /// do we need to run post fetch?
             newSpot.postFetchID = postFetchID
             
-            if accessToOnePost {
+            if accessToOnePost { /// access to one post should always be true here because hasSpotAccess checks for user access already
+                
                 querySpots.append(newSpot)
                 queryIDs.append((id: spot.id!, score: scoreMultiplier/spot.distance))
             }
@@ -1507,7 +1480,8 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
         if !nearbyCities.isEmpty {
             for i in 0...nearbyCities.count - 1 { nearbyCities[i].activeCity = false }
         }
-        /// if chosen from existing cities, set to active, otherwise add new city
+        
+        // if chosen from existing cities, set to active, otherwise add new city
         if let i = nearbyCities.firstIndex(where: {$0.cityName == selectedCity.name}) {
             nearbyCities[i].activeCity = true
             
@@ -1520,29 +1494,37 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
             self.nearbyCityCounter += 1
         }
         
+        /// resort/reload cities table
         reloadCities()
         
+        /// remove city spots from each friend object
         for i in 0...cityFriends.count - 1 {
             cityFriends[i].spotsList.removeAll()
             cityFriends[i].filteredCount = 0
             cityFriends[i].selected = false
         }
         
+        /// remove city spots from each tag object
         for i in 0...cityTags.count - 1 {
             cityTags[i].spotCount = 0
             cityTags[i].selected = false
         }
         
+        /// remove filters
         selectedUserID = nil
         selectedTags.removeAll()
+        
+        /// reset map filters
+        mapVC.filterUser = nil
+        mapVC.filterTags.removeAll()
+        mapVC.addSelectedFilters()
+        mapVC.filterSpots(refresh: false)
         
         citySpots.removeAll()
         
         usersCollection.reloadData()
         loadingIndicator.startAnimating()
-                
-        removeEmptyState()
-        
+
         DispatchQueue.global(qos: .userInitiated).async { self.getSpots() }
     }
     
@@ -2209,6 +2191,7 @@ class NearbyCityCell: UITableViewCell {
     }
 }
 
+// empty state added to usersCollection
 class NearbyEmptyCell: UICollectionViewCell {
     
     var label: UILabel!
@@ -2334,7 +2317,7 @@ extension NearbyViewController {
                         continue spotLoop
                     }
 
-                    /// invite / friends spot fetch
+                    /// check for user access, increment friend visitors to cityFriends
                     if self.hasSpotAccess(spot: spotInfo, mapVC: self.mapVC) {
                         
                         for visitor in spotInfo.visitorList {
@@ -2402,6 +2385,7 @@ extension NearbyViewController {
             for spot in snap.documents {
                 
                 do {
+                    
                     let spotInfo = try spot.data(as: MapSpot.self)
                     guard var info = spotInfo else { spotCount += 1; if spotCount == snap.documents.count { self.getUsersSize(); self.getTagsSize(); self.getSpotScores() }; continue }
                     
@@ -2769,7 +2753,7 @@ extension NearbyViewController {
         
         /// update filter view and filter map based on selected tags / user
         mapVC.filterTags = selectedTags
-        mapVC.closeFilters()
+        mapVC.filterFromNearby()
         
         /// reset individual tag spot counts
         for i in 0...cityTags.count - 1 { cityTags[i].spotCount = 0 }

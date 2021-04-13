@@ -95,7 +95,7 @@ class UploadPostController: UIViewController {
         
         if spotObject != nil {
             postPrivacy = spotObject.privacyLevel
-            if postPrivacy == "public" { selectedTags = spotObject.tags }
+            selectedTags = spotObject.tags
         } else if poi != nil {
             postPrivacy = "public"
         } else {
@@ -1430,17 +1430,9 @@ extension UploadPostController {
             switch self.postType {
             
             case .postToPublic, .postToPrivate:
-                
-                    self.incrementSpotScore(user: self.uid, increment: 3)
-                    self.incrementSpotScore(user: self.spotObject.founderID, increment: 1)
-                    
-                    /// update tags if user changed tags for a public spot
-                    if self.postType == .postToPublic { db.collection("spots").document(spotID).updateData(["tags" : self.selectedTags])}
-                                    
+                                                                        
                     self.sendPostNotis(post: postObject, spotObject: self.spotObject, selectedUsers: selectedUsers)
                     
-                    /// add user to visitor lis if not already there
-                    db.collection("spots").document(spotID).updateData(["visitorList" : FieldValue.arrayUnion([self.uid])])
                     /// add to users spotslist if not already there
                     if self.spotObject.visitorList.contains(where: {$0 == self.uid}) {
                         db.collection("users").document(self.uid).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayUnion([postID])])
@@ -1448,10 +1440,10 @@ extension UploadPostController {
                         db.collection("users").document(self.uid).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : timestamp, "postsList" : [postID], "city": self.postCity], merge:true)
                     }
                     
-                    db.collection("spots").document(spotID).updateData(["postIDs" : FieldValue.arrayUnion([postID])])
-                    db.collection("spots").document(spotID).updateData(["postTimestamps" : FieldValue.arrayUnion([timestamp])])
-                    
-                    self.runSpotTransactions(spotID: spotID, postPrivacy: self.postPrivacy)
+                self.incrementSpotScore(user: self.uid, increment: 3)
+                self.incrementSpotScore(user: self.spotObject.founderID, increment: 1)
+                
+                self.runSpotTransactions(spotID: spotID, postPrivacy: self.postPrivacy, postID: postID, timestamp: timestamp)
                 
                 
             default:
@@ -1703,7 +1695,9 @@ extension UploadPostController {
         }
     }
     
-    func runSpotTransactions(spotID: String, postPrivacy: String) {
+    func runSpotTransactions(spotID: String, postPrivacy: String, postID: String, timestamp: NSDate) {
+        
+        /// run all spot data transactions here to avoid overlap with data updating
         
         let db = Firestore.firestore()
         let ref = db.collection("spots").document(spotID)
@@ -1722,10 +1716,24 @@ extension UploadPostController {
             
             var postPrivacies = spotDoc.data()?["postPrivacies"] as? [String] ?? []
             postPrivacies.append(postPrivacy)
-                        
+            
+            var visitorList = spotDoc.data()?["visitorList"] as? [String] ?? []
+            if !visitorList.contains(self.uid) { visitorList.append(self.uid) }
+            
+            var postIDs = spotDoc.data()?["postIDs"] as? [String] ?? []
+            postIDs.append(postID)
+            
+            var postTimestamps = spotDoc.data()?["postTimestamps"] as? [Firebase.Timestamp] ?? []
+            let firTimestamp = Firebase.Timestamp(date: timestamp as Date)
+            postTimestamps.append(firTimestamp)
+            
             transaction.updateData([
                 "posterIDs": posterIDs,
-                "postPrivacies" : postPrivacies
+                "postPrivacies" : postPrivacies,
+                "tags" : self.selectedTags,
+                "visitorList" : visitorList,
+                "postIDs" : postIDs,
+                "postTimestamps" : postTimestamps,
             ], forDocument: ref)
             
             return nil
