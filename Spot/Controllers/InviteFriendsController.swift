@@ -64,6 +64,7 @@ class InviteFriendsController: UIViewController {
     }
     
     func setUpViews() {
+        
         searchBarContainer = UIView(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 40))
         searchBarContainer.backgroundColor = nil
         view.addSubview(searchBarContainer)

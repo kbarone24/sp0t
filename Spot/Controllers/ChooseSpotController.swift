@@ -299,28 +299,32 @@ class ChooseSpotController: UIViewController {
                     let friendImageFromFounder = self.isFriends(id: spotInfo.founderID)
                     var friendImage = friendImageFromFounder
                     var postFetchID = ""
+                   
+                    /// error handling for failed transaction where postPrivacies and postIDs dont
+                    if spotInfo.postIDs.count != 0 && spotInfo.postPrivacies.count == spotInfo.postIDs.count {
                     
-                    for i in 0 ... spotInfo.postIDs.count - 1 {
-                        
-                        let isFriend = self.isFriends(id: spotInfo.posterIDs[i]) /// is this a friend or a public stranger post
-                        let postPrivacy = spotInfo.postPrivacies[i]
-                        
-                        if postPrivacy == "public" || isFriend {
-                            visiblePosts += 1
+                        for i in 0 ... spotInfo.postIDs.count - 1 {
                             
-                            if postFetchID == "" {
-                                /// set postFetchID for first visible post
-                                postFetchID = spotInfo.postIDs[i]
-                                friendImage = isFriend
+                            let isFriend = self.isFriends(id: spotInfo.posterIDs[safe: i] ?? "xxxxx") /// is this a friend or a public stranger post
+                            let postPrivacy = spotInfo.postPrivacies[safe: i] ?? "friends"
+                            
+                            if postPrivacy == "public" || isFriend {
+                                visiblePosts += 1
                                 
-                            } else if !friendImage && isFriend {
-                                /// always show first friend image if possible
-                                postFetchID = spotInfo.postIDs[i]
-                                friendImage = true
+                                if postFetchID == "" {
+                                    /// set postFetchID for first visible post
+                                    postFetchID = spotInfo.postIDs[i]
+                                    friendImage = isFriend
+                                    
+                                } else if !friendImage && isFriend {
+                                    /// always show first friend image if possible
+                                    postFetchID = spotInfo.postIDs[i]
+                                    friendImage = true
+                                }
                             }
                         }
                     }
-                    
+                        
                     
                     spotInfo.visiblePosts = visiblePosts
                     spotInfo.friendImage = friendImageFromFounder
@@ -837,28 +841,31 @@ extension ChooseSpotController: UISearchBarDelegate {
             var friendImage = friendImageFromFounder
             var postFetchID = ""
             
-            for i in 0 ... spot.postIDs.count - 1 {
-                
-                let isFriend = self.isFriends(id: spot.posterIDs[i]) /// is this a friend or a public stranger post
-                let postPrivacy = spot.postPrivacies[i]
-                
-                if postPrivacy == "public" || isFriend {
+            if spot.postIDs.count != 0 && spot.postPrivacies.count == spot.postIDs.count {
+
+                for i in 0 ... spot.postIDs.count - 1 {
                     
-                    scoreMultiplier += 20
-                    
-                    if postFetchID == "" {
-                        /// set postFetchID for first visible post
-                        postFetchID = spot.postIDs[i]
-                        friendImage = isFriend
+                    let isFriend = self.isFriends(id: spot.posterIDs[safe: i] ?? "xxxxx") /// is this a friend or a public stranger post
+                    let postPrivacy = spot.postPrivacies[safe: i] ?? "friends"
+
+                    if postPrivacy == "public" || isFriend {
                         
-                    } else if !friendImage && isFriend {
-                        /// always show first friend image if possible
-                        postFetchID = spot.postIDs[i]
-                        friendImage = true
+                        scoreMultiplier += 20
+                        
+                        if postFetchID == "" {
+                            /// set postFetchID for first visible post
+                            postFetchID = spot.postIDs[i]
+                            friendImage = isFriend
+                            
+                        } else if !friendImage && isFriend {
+                            /// always show first friend image if possible
+                            postFetchID = spot.postIDs[i]
+                            friendImage = true
+                        }
                     }
                 }
             }
-            
+                
             newSpot.friendImage = friendImageFromFounder
             newSpot.postFetchID = postFetchID
             

@@ -63,7 +63,7 @@ class MapViewController: UIViewController {
     var selectedSpotID: String!
     var selectedProfileID: String!
     var postAnnotation: SinglePostAnnotation!
-    var spotAnnotations = [String: CustomSpotAnnotation]()
+    var nearbyAnnotations = [String: CustomSpotAnnotation]()
     var profileAnnotations = [String: CustomSpotAnnotation]()
     
     lazy var postsList: [MapPost] = []
@@ -83,7 +83,7 @@ class MapViewController: UIViewController {
     var tagTable: UITableView! /// tag table that shows after @ throughout app
     var tagParent: tagTableParent! /// active VC where @ was entered
     
-    var tutorialView: UIView!
+    var tutorialView: UIView! /// tutorial view added to Window for different hand tutorials
     var tutorialImage: UIImageView!
     var tutorialText: UILabel!
     var tutorialMode = false
@@ -94,6 +94,7 @@ class MapViewController: UIViewController {
     lazy var deletedSpotIDs: [String] = []
     lazy var deletedPostIDs: [String] = []
         
+    /// tag table added over top of view to window then result passed to active VC
     enum tagTableParent {
         case comments
         case upload
@@ -319,11 +320,7 @@ class MapViewController: UIViewController {
         }
     }
     
- 
-    @objc func maskTap(_ sender: UITapGestureRecognizer) {
-        closeFilters()
-    }
-    
+     
     //filterPrivacy true when deselected (filtered)
     
     func addTabBar() {
@@ -398,6 +395,7 @@ class MapViewController: UIViewController {
     
     func feedMapReset() {
         
+        // reset map after post upload
         self.prePanY = tabBarOpenY
         customTabBar.view.frame = CGRect(x: 0, y: tabBarOpenY, width: view.frame.width, height: view.frame.height - tabBarOpenY)
         
@@ -417,6 +415,7 @@ class MapViewController: UIViewController {
     
     func toggleMapTouch(enable: Bool) {
         
+        /// map touch closes the drawer on post page when user interacts with the map
         if enable {
             if closeFeedButton != nil { return }
             closeFeedButton = UIButton(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: tabBarOpenY))
@@ -526,12 +525,10 @@ class MapViewController: UIViewController {
         }
         
         if self.currentLocation == nil { return }
-        let adjust = 0.00000845 * distance
+        let adjust = 0.00000845 * distance /// adjust coordinate to show centered above drawer
 
         let adjustedCoordinate = CLLocationCoordinate2D(latitude: postAnnotation.coordinate.latitude - adjust, longitude: postAnnotation.coordinate.longitude)
         self.mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: distance, longitudinalMeters: distance), animated: false)
-     //   self.offsetCenterCoordinate(selectedCoordinate: postCoordinate, offset: offset, animated: false, region: MKCoordinateRegion())
-        
     }
     
     func searchPageOpen() -> Bool {
@@ -855,7 +852,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
                 self.navigationController?.navigationBar.isTranslucent = true
                 self.navigationController?.navigationBar.removeBackgroundImage()
                 self.navigationController?.navigationBar.removeShadow()
-                self.spotViewController.hideSeparatorLine()
+                self.spotViewController.hideSeparatorLine() /// hide line between friiend visiotrs and posts collection
                 self.addToSpotTransition(alpha: 0.0)
                 
             } else if self.profileViewController != nil {
@@ -870,7 +867,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
                         
             UIView.animate(withDuration: 0.15, animations: {
                 self.customTabBar.view.frame = CGRect(x: 0, y: UIScreen.main.bounds.height - closedY, width: self.view.frame.width, height: closedY)
-                if bottomBarMode { self.bottomBar.alpha = 1.0 }
+                if bottomBarMode { self.bottomBar.alpha = 1.0 } /// animate adding of bottom bar to cover content on bottom of the screen
             })
             
             self.prePanY = UIScreen.main.bounds.height - closedY
@@ -891,10 +888,10 @@ extension MapViewController: UIGestureRecognizerDelegate {
         DispatchQueue.main.async {
             
             if self.spotViewController != nil {
-                self.halfScreenNavBarTransition()
+                self.halfScreenNavBarTransition() /// transtion nav bar background remove
                 self.setSpotSubviews(open: false)
                 self.spotViewController.tableView.isScrollEnabled = false
-                self.addToSpotTransition(alpha: 1.0)
+                self.addToSpotTransition(alpha: 1.0) /// animate addToSpotButton add
                 self.spotViewController.resizeTable(halfScreen: true, forceRefresh: false)
                 self.spotViewController.unhideSeparatorLine()
                 
@@ -902,8 +899,8 @@ extension MapViewController: UIGestureRecognizerDelegate {
                 if self.profileViewController.shadowScroll == nil { return }
                 self.profileViewController.shadowScroll.isScrollEnabled = false
                 self.setProfileSubviews(open: false)
-                self.halfScreenNavBarTransition()
-                self.hideNearbyButtons()
+                self.halfScreenNavBarTransition() /// transtion nav bar background remove
+                self.hideNearbyButtons() /// hide map buttons
                 
             } else if self.nearbyViewController != nil {
                 self.hideNearbyButtons()
@@ -973,7 +970,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
         prePanY = 0
 
         UIView.animate(withDuration: 0.15) {
-            //spotVC.tableView.reloadData()
+
             self.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
             self.navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
             self.navigationController?.navigationBar.addShadow()
@@ -1037,24 +1034,6 @@ extension MapViewController: UIGestureRecognizerDelegate {
         return spotViewController != nil && activeOffset <= self.spotViewController.sec0Height
     }
     
-    func offsetPostAnnotations(offset: CGFloat) {
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-            
-            guard let self = self else { return }
-            
-            if self.selectedSpotID != "" {
-                
-                if let selected = self.spotAnnotations.first(where: {$0.key == self.selectedSpotID}) {
-                    self.offsetCenterCoordinate(selectedCoordinate: selected.value.coordinate, offset: offset, animated: false, region: MKCoordinateRegion())
-                    
-                } else if let selected = self.profileAnnotations.first(where: {$0.key == self.selectedSpotID}) {
-                    self.offsetCenterCoordinate(selectedCoordinate: selected.value.coordinate, offset: offset, animated: false, region: MKCoordinateRegion())
-                }
-            }
-        }
-    }
-    
     func setSpotSubviews(open: Bool) {
         
         if spotViewController == nil { return }
@@ -1105,7 +1084,7 @@ extension MapViewController: MKMapViewDelegate {
         // run circle query to get nearby spots
         let radius = self.mapView.currentRadius()
         
-        if !self.spotAnnotations.isEmpty { filterSpots(refresh: true) }
+        if !self.nearbyAnnotations.isEmpty { filterSpots(refresh: true) }
         
         if currentLocation == nil || (currentLocation.coordinate.longitude == 0.0 && currentLocation.coordinate.latitude == 0.0) || radius == 0 || radius > 6000 { return }
         
@@ -1115,7 +1094,7 @@ extension MapViewController: MKMapViewDelegate {
     
     func loadSpotFromDB(key: String?, location: CLLocation?) {
         // 1. check that marker isn't already shown on map
-        if key == nil || key == "" || self.spotAnnotations.contains(where: {$0.key == key}) { return }
+        if key == nil || key == "" || self.nearbyAnnotations.contains(where: {$0.key == key}) { return }
 
         // 2. prepare new marker -> load all spot-level data needed, ensure user has privacy level access
         let annotation = CustomSpotAnnotation()
@@ -1159,18 +1138,18 @@ extension MapViewController: MKMapViewDelegate {
     
     func loadSpotToMap(annotation: CustomSpotAnnotation, id: String, hidden: Bool) {
         
-        if !spotAnnotations.contains(where: {$0.key == id}) {
+        if !nearbyAnnotations.contains(where: {$0.key == id}) {
             
             if deletedSpotIDs.contains(id) { return }
             
-            spotAnnotations.updateValue(annotation, forKey: id)
+            nearbyAnnotations.updateValue(annotation, forKey: id)
                         
             let rank = getSpotRank(spot: annotation.spotInfo)
             annotation.rank = rank
-            spotAnnotations[id]?.rank = rank
+            nearbyAnnotations[id]?.rank = rank
             
             if !hidden  && (self.postsList.isEmpty || self.selectedSpotID != "") {
-                self.spotAnnotations[id]?.isHidden = false
+                self.nearbyAnnotations[id]?.isHidden = false
                 
                 DispatchQueue.main.async {
                     if self.nearbyViewController != nil {
@@ -1232,6 +1211,7 @@ extension MapViewController: MKMapViewDelegate {
         
         //posts list is not empty whenever post page is open
         if postsList.isEmpty && (self.selectedSpotID == "" ||  self.selectedProfileID != "") {
+            
             // spot banner view
             if let anno = annotation as? CustomSpotAnnotation {
                 var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier) as? SpotAnnotationView
@@ -1249,7 +1229,8 @@ extension MapViewController: MKMapViewDelegate {
                 }
                 
                 var spotInfo: MapSpot!
-                if let spot = self.spotAnnotations.first(where: {$0.value.coordinate.latitude == annotation.coordinate.latitude && $0.value.coordinate.longitude == annotation.coordinate.longitude}) {
+                /// fetch spot from list of user annos from profile or from list of map spots from nearby
+                if let spot = self.nearbyAnnotations.first(where: {$0.value.coordinate.latitude == annotation.coordinate.latitude && $0.value.coordinate.longitude == annotation.coordinate.longitude}) {
                     spotInfo = spot.value.spotInfo
                 } else if let spot = self.profileAnnotations.first(where: {$0.value.coordinate.latitude == annotation.coordinate.latitude && $0.value.coordinate.longitude == annotation.coordinate.longitude}) {
                     spotInfo = spot.value.spotInfo
@@ -1279,7 +1260,7 @@ extension MapViewController: MKMapViewDelegate {
                 else { annotationView?.annotation = annotation }
                 
                 if selectedProfileID == "" {
-                    annotationView?.updateImage(annotations: Array(spotAnnotations.values))
+                    annotationView?.updateImage(annotations: Array(nearbyAnnotations.values))
                 } else {
                     annotationView?.updateImage(annotations: Array(profileAnnotations.values))
                 }
@@ -1293,6 +1274,7 @@ extension MapViewController: MKMapViewDelegate {
                 annotationView.clusteringIdentifier = nil
                 return annotationView
             }
+            
         } else if annotation is CustomPointAnnotation {
             // post annotation for spot page
             var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Post") as? StandardPostAnnotationView
@@ -1311,8 +1293,9 @@ extension MapViewController: MKMapViewDelegate {
                 annotationView!.isSelected = true
                 return annotationView
             }
+            
         } else if let anno = annotation as? MKClusterAnnotation {
-            // post lcuster for spot page
+            // post cluster for spot page
             var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "postCluster") as? PostClusterView
             if annotationView == nil {
                 annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier) as? PostClusterView
@@ -1369,11 +1352,14 @@ extension MapViewController: MKMapViewDelegate {
     
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
                 
+        /// only remove clustering for spot banner targets so return otherwise
+        if nearbyViewController == nil && profileViewController == nil { return }
+        if profileViewController != nil && profileViewController.selectedIndex == 1 { return }
+        
         let span = mapView.region.span
         if span.longitudeDelta < 0.002 {
             
             /// remove clustering if zoomed in far (check here if zoom went over boundary on this zoom)
-            
             if self.shouldCluster {
                 self.shouldCluster = false
                 let annotations = self.mapView.annotations
@@ -1420,7 +1406,7 @@ extension MapViewController: MKMapViewDelegate {
         
         if !postsList.isEmpty || self.selectedSpotID != "" || self.selectedProfileID != "" { return }
         
-        for anno in spotAnnotations {
+        for anno in nearbyAnnotations {
             
             let info = anno.value.spotInfo!
             if anno.value.rank == 0 {
@@ -1437,6 +1423,7 @@ extension MapViewController: MKMapViewDelegate {
                 }
                 
             } else {
+                /// is spot contained in maps bounding rect
                 if spotFilteredByLocation(spotCoordinates: anno.value.coordinate) {
                     anno.value.isHidden = true
                     DispatchQueue.main.async {
@@ -1444,7 +1431,7 @@ extension MapViewController: MKMapViewDelegate {
                     }
                     continue
                 }
-                
+                /// tag selected in nearby drawer
                 if spotFilteredByTag(tags: info.tags) {
                     anno.value.isHidden = true
                     DispatchQueue.main.async {
@@ -1452,6 +1439,7 @@ extension MapViewController: MKMapViewDelegate {
                     }
                     continue
                 }
+                /// user selected in nearby drawer
                 if spotFilteredByUser(visitorList: info.visitorList) {
                     anno.value.isHidden = true
                     DispatchQueue.main.async {
@@ -1535,6 +1523,7 @@ extension MapViewController: MKMapViewDelegate {
                 let infoPass = ["id": clusterView.topPostID] as [String : Any]
                 NotificationCenter.default.post(name: Notification.Name("PostTap"), object: nil, userInfo: infoPass)
             }
+            
         } else if let annoView = view as? StandardPostAnnotationView {
             Mixpanel.mainInstance().track(event: "MapSelectPost")
             
@@ -1545,6 +1534,7 @@ extension MapViewController: MKMapViewDelegate {
                 let infoPass = ["id": annoView.spotID] as [String : Any]
                 NotificationCenter.default.post(name: Notification.Name("PostTap"), object: nil, userInfo: infoPass)
             }
+            
         } else if view is SinglePostAnnotationView {
             print("did select")
             NotificationCenter.default.post(name: Notification.Name("FeedPostTap"), object: nil, userInfo: nil)
@@ -1552,6 +1542,7 @@ extension MapViewController: MKMapViewDelegate {
     }
     
     func selectFromProfile(spotID: String) {
+        
         /// passed camera is where camera was before opening user profile
         if profileViewController == nil { return }
         profileViewController.passedCamera = MKMapCamera(lookingAtCenter: mapView.centerCoordinate, fromDistance: mapView.camera.centerCoordinateDistance, pitch: mapView.camera.pitch, heading: mapView.camera.heading)
@@ -1563,9 +1554,10 @@ extension MapViewController: MKMapViewDelegate {
     }
     
     func selectFromMap(spotID: String) {
+        
         // clear out all markers, show posts on map
         selectedSpotID = spotID
-        if let selected = self.spotAnnotations.first(where: {$0.key == self.selectedSpotID}) {
+        if let selected = self.nearbyAnnotations.first(where: {$0.key == self.selectedSpotID}) {
             let selectedCoordinate = selected.value.coordinate
             runSelected(selectedCoordinate: selectedCoordinate, spot: selected.value.spotInfo)
         }
@@ -1573,17 +1565,18 @@ extension MapViewController: MKMapViewDelegate {
     }
     
     func selectFromSearch(spot: MapSpot) {
+        /// open spot from nearby search
         
         Mixpanel.mainInstance().track(event: "SelectSpotFromSearch")
         
         selectedSpotID = spot.id ?? "" 
         let selectedCoordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
         
-        if !self.spotAnnotations.contains(where: {$0.key == selectedSpotID}) {
+        if !self.nearbyAnnotations.contains(where: {$0.key == selectedSpotID}) {
             let anno = CustomSpotAnnotation()
             anno.coordinate = selectedCoordinate
             anno.spotInfo = spot
-            spotAnnotations[selectedSpotID] = anno
+            nearbyAnnotations[selectedSpotID] = anno
         }
         
         runSelected(selectedCoordinate: selectedCoordinate, spot: spot)
@@ -1599,11 +1592,11 @@ extension MapViewController: MKMapViewDelegate {
         self.selectedSpotID = spot.id ?? ""
         let selectedCoordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
         
-        if !self.spotAnnotations.contains(where: {$0.key == selectedSpotID}) {
+        if !self.nearbyAnnotations.contains(where: {$0.key == selectedSpotID}) {
             let anno = CustomSpotAnnotation()
             anno.coordinate = selectedCoordinate
             anno.spotInfo = spot
-            spotAnnotations[selectedSpotID] = anno
+            nearbyAnnotations[selectedSpotID] = anno
         }
         
         self.postsList.removeAll()
@@ -1614,6 +1607,7 @@ extension MapViewController: MKMapViewDelegate {
         selectedSpotAnno.coordinate = selectedCoordinate
         mapView.addAnnotation(selectedSpotAnno)
         
+        /// larger offset for 3D view
         let offset = mapView.mapType.rawValue == 4 ? 0.003 : 0.0015
         
         let adjustedCoordinate = CLLocationCoordinate2D(latitude: selectedCoordinate.latitude - offset, longitude: selectedCoordinate.longitude)
@@ -2308,7 +2302,7 @@ extension MapViewController {
     }
     
         
-    func closeFilters() {
+    func filterFromNearby() {
         DispatchQueue.main.async { self.addSelectedFilters() }
         DispatchQueue.global(qos: .userInitiated).async { self.filterSpots(refresh: false) }
     }
@@ -2482,6 +2476,7 @@ extension MapViewController {
         
         case 0:
 
+            // add feed pull down tutorial
             tutorialView = UIView(frame: CGRect(x: 0, y: tabBarOpenY - 10, width: UIScreen.main.bounds.width, height: 300))
             tutorialView.backgroundColor = nil
             DispatchQueue.main.async { self.mapMask.addSubview(self.tutorialView) }
@@ -2515,6 +2510,7 @@ extension MapViewController {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
                 guard let self = self else { return }
                 
+                // remove if tap to visit wasn't already added
                 if self.tutorialImage.frame.minY == 0 {
                     self.addTapToVisit()
                 }
@@ -2522,6 +2518,7 @@ extension MapViewController {
             
         case 1:
             
+            // add add to spot tutorial
             let smallScreenAdjust: CGFloat = largeScreen ? 0 : 25
             
             tutorialView = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 140 + smallScreenAdjust, width: UIScreen.main.bounds.width, height: 145))
@@ -2563,6 +2560,7 @@ extension MapViewController {
 
         case 2:
             
+            // add tap to place tutorial
             tutorialView = UIView(frame: CGRect(x: 0, y: 100, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 100))
             tutorialView.backgroundColor = nil
             DispatchQueue.main.async { self.mapMask.addSubview(self.tutorialView) }
@@ -2641,6 +2639,7 @@ extension MapViewController {
     }
     
     func addSwipeToNext() {
+        // add feed swipe to next tutorial
         
         let minY = (UIScreen.main.bounds.height - tabBarOpenY)/2 - 70
         

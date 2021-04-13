@@ -100,7 +100,7 @@ class SpotViewController: UIViewController {
         super.viewWillDisappear(animated)
                 
         if self.isMovingFromParent { removeListeners() }
-        addToSpotButton.isHidden = true
+        if addToSpotButton != nil { addToSpotButton.isHidden = true }
         cancelDownloads()
     }
     
@@ -554,7 +554,8 @@ class SpotViewController: UIViewController {
     
     func adjustCollectionSize() {
         
-                
+        // set shadowScroll content height
+        
         let width = (UIScreen.main.bounds.width - 10.5) / 3
         let height = width * 1.374
         let numberOfRows = ((postsList.count - 1) / 3) + 1
@@ -594,7 +595,8 @@ class SpotViewController: UIViewController {
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        //1. override tableView content offset when view isn't completely pulled to the top
+        
+        // override tableView content offset when view isn't completely pulled to the top
         
         if mapVC.prePanY != mapVC.customTabBar.view.frame.minY { return }
 
@@ -797,12 +799,14 @@ class SpotViewController: UIViewController {
     
     func loadPostToCollection(post: MapPost) {
         
+        /// update existing post from active listener
         if let index = postsList.firstIndex(where: {$0.id == post.id}) {
             
             postsList[index] = post
             mapVC.postsList = postsList
             DispatchQueue.main.async { self.tableView.reloadData() }
             
+        /// add new post
         } else {
             /// check that post wasn't recently deleted and still in cache
             if mapVC.deletedPostIDs.contains(post.id ?? "") { postEscape(); return }
@@ -881,9 +885,9 @@ class SpotViewController: UIViewController {
     }
     
     @objc func showEditPicker(_ sender: UIButton) {
-        
+        // show edit / directions / delete menu
         if spotObject == nil { return }
-        let adminView = (spotObject.privacyLevel == "invite" || spotObject.privacyLevel == "friends") && uid == spotObject.founderID
+        let adminView = ((spotObject.privacyLevel == "invite" || spotObject.privacyLevel == "friends") && uid == spotObject.founderID) || uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" /// give bot edit access to all spots
         
         let editHeight: CGFloat = adminView ? 222 : 167
         editView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 112, y: UIScreen.main.bounds.height/2 - 180, width: 224, height: editHeight))
@@ -969,6 +973,7 @@ class SpotViewController: UIViewController {
     }
     
     func exitEditOverview() {
+        /// exit exit overview always called to remove mask and enable main view again
         for sub in editView.subviews {
             sub.removeFromSuperview()
         }
@@ -1020,16 +1025,16 @@ class SpotViewController: UIViewController {
     }
     
     func makeDeletes() {
-        
+        /// local objects to stay alive on spot page remove
         let postsCopy = self.postsList
         let spotCopy = self.spotObject!
-        sendNotification()
+        sendNotification() /// send deelte notifications to other VCs
 
         DispatchQueue.global(qos: .userInitiated).async {
-            self.userDelete(spot: spotCopy)
-            self.spotNotificationDelete(spot: spotCopy)
-            self.postDelete(postsList: postsCopy, spotID: "")
-            self.spotDelete(spotID: spotCopy.id!)
+            self.userDelete(spot: spotCopy) /// delete from users spot list
+            self.spotNotificationDelete(spot: spotCopy) /// delete all notifications pertaining to this spot
+            self.postDelete(postsList: postsCopy, spotID: "") /// delete spot posts
+            self.spotDelete(spotID: spotCopy.id!) /// delete spot
         }
     }
         

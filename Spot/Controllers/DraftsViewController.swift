@@ -902,12 +902,7 @@ extension DraftsViewController {
             
             self.db.collection("posts").document(postID).setData(postValues)
             self.db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
-                    
-            if post.createdBy != nil { self.incrementSpotScore(user: post.createdBy!, increment: 1) }
-            self.incrementSpotScore(user: self.uid, increment: 3)
-            
-            /// add user to visitor lis if not already there
-            self.db.collection("spots").document(post.spotID!).updateData(["visitorList" : FieldValue.arrayUnion([self.uid])])
+                                
             /// add to users spotslist if not already there
             if post.visitorList != nil && post.visitorList!.contains(where: {$0 == self.uid}) {
                 self.db.collection("users").document(self.uid).collection("spotsList").document(post.spotID!).updateData(["postsList" : FieldValue.arrayUnion([postID])])
@@ -915,14 +910,14 @@ extension DraftsViewController {
                 self.db.collection("users").document(self.uid).collection("spotsList").document(post.spotID!).setData(["spotID" : post.spotID!, "checkInTime" : timestamp, "postsList" : [postID], "city": city], merge:true)
             }
             
-            self.db.collection("spots").document(post.spotID!).updateData(["postIDs" : FieldValue.arrayUnion([postID])])
-            self.db.collection("spots").document(post.spotID!).updateData(["postTimestamps" : FieldValue.arrayUnion([timestamp])])
-            
-            self.runSpotTransactions(spotID: post.spotID!, postPrivacy: post.privacyLevel ?? "friends", post: post)
+            if post.createdBy != nil { self.incrementSpotScore(user: post.createdBy!, increment: 1) }
+            self.incrementSpotScore(user: self.uid, increment: 3)
+
+            self.runSpotTransactions(spotID: post.spotID!, postPrivacy: post.privacyLevel ?? "friends", postID: postID, timestamp: timestamp, post: post)
         }
     }
     
-    func runSpotTransactions(spotID: String, postPrivacy: String, post: PostDraft) {
+    func runSpotTransactions(spotID: String, postPrivacy: String, postID: String, timestamp: NSDate, post: PostDraft) {
         
         let db = Firestore.firestore()
         let ref = db.collection("spots").document(spotID)
@@ -941,10 +936,23 @@ extension DraftsViewController {
             
             var postPrivacies = spotDoc.data()?["postPrivacies"] as? [String] ?? []
             postPrivacies.append(postPrivacy)
+            
+            var visitorList = spotDoc.data()?["visitorList"] as? [String] ?? []
+            if !visitorList.contains(self.uid) { visitorList.append(self.uid) }
+            
+            var postIDs = spotDoc.data()?["postIDs"] as? [String] ?? []
+            postIDs.append(postID)
+            
+            var postTimestamps = spotDoc.data()?["postTimestamps"] as? [Firebase.Timestamp] ?? []
+            let firTimestamp = Firebase.Timestamp(date: timestamp as Date)
+            postTimestamps.append(firTimestamp)
                         
             transaction.updateData([
                 "posterIDs": posterIDs,
-                "postPrivacies" : postPrivacies
+                "postPrivacies" : postPrivacies,
+                "visitorList" : visitorList,
+                "postIDs" : postIDs,
+                "postTimestamps" : postTimestamps,
             ], forDocument: ref)
             
             return nil

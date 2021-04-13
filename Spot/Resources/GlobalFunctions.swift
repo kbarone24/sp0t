@@ -1131,6 +1131,13 @@ extension UINavigationBar {
     }
 }
 
+extension String {
+    func formatNumber() -> String {
+        var newNumber = components(separatedBy: CharacterSet.decimalDigits.inverted).joined() /// remove dashes and spaces 
+        newNumber = String(newNumber.suffix(10)) /// match based on last 10 digits to eliminate country codes and formatting
+        return newNumber
+    }
+}
 /*
 extension UICollectionViewCell {
     

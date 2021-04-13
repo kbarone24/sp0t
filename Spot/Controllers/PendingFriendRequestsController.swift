@@ -88,10 +88,8 @@ class PendingFriendRequestsController: UIViewController, UITableViewDelegate, UI
         cell.setUpAll(request: currentRequest, currentUsername: notiVC.mapVC.userInfo.username)
         
         if (requests[indexPath.row].1 == "pending") {
-            print("set up pending", indexPath.row)
             cell.setUpPending()
         } else if (requests[indexPath.row].1 == "rejected") {
-            print("set up rejected", indexPath.row)
             cell.setUpRejected()
         } else {
             cell.setUpAccepted()
@@ -111,6 +109,7 @@ class PendingFriendRequestsController: UIViewController, UITableViewDelegate, UI
         return 40
     }
     
+    // notifications sent form friendRequestCell
     @objc func notifyAccept(_ notification: NSNotification) {
         if let friendID = notification.userInfo?.first?.value as? String {
             if let index = self.requests.firstIndex(where: {$0.0.userInfo.id == friendID}) {

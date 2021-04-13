@@ -764,7 +764,12 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
             let camera = MKMapCamera(lookingAtCenter: adjustedCenter, fromDistance: 2000, pitch: self.mapView.camera.pitch, heading: 0)
             self.mapView.camera = camera
             
-            self.postAnnotation.coordinate = coordinate
+            if self.postAnnotation == nil {
+                self.spotAnnotation.coordinate = coordinate
+            } else {
+                self.postAnnotation.coordinate = coordinate
+            }
+            
             self.addressLabel.text = placemark.addressFormatter(number: true)
             self.searchBar.endEditing(true)
         }
