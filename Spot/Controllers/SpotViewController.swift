@@ -73,7 +73,7 @@ class SpotViewController: UIViewController {
         }
                 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyAddressChange(_:)), name: NSNotification.Name("SpotAddressChange"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("ImageChange"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("EditImageChange"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditPost(_:)), name: NSNotification.Name("EditPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyDeletePost(_:)), name: NSNotification.Name("DeletePost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUsersChange(_:)), name: NSNotification.Name("UserListRemove"), object: nil)
@@ -175,7 +175,6 @@ class SpotViewController: UIViewController {
                 let spot = self.editedSpot == nil ? self.spotObject : self.editedSpot
                 editVC.spotObject = spot
                 editVC.spotObject.spotImage = image
-                print("set edited image")
                 
                 self.present(editVC, animated: false, completion: nil)
                 self.editedSpot = nil
@@ -258,8 +257,6 @@ class SpotViewController: UIViewController {
         addToSpotButton.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
         addToSpotButton.addTarget(self, action: #selector(addToSpotTap(_:)), for: .touchUpInside)
         mapVC.view.addSubview(addToSpotButton)
-        
-        mapVC.unhideSpotButtons()
     }
     
     func getFriendVisitors() {
@@ -271,7 +268,6 @@ class SpotViewController: UIViewController {
                     if self.friendVisitors.count == self.spotObject.inviteList?.count { getUsersSize() }
 
                 } else {
-                    print("visitor", visitor)
                     self.getUser(id: visitor) { [weak self] (user) in
                         guard let self = self else { return }
                         self.friendVisitors.append(user)
@@ -323,10 +319,11 @@ class SpotViewController: UIViewController {
         var numberOfRows = 0
         /// 14 is the edge inset of the collection
         var lineWidth: CGFloat = 14
-        print("visitor count", friendVisitors.count)
         for friend in friendVisitors {
             
             let userWidth = getWidth(name: friend.username)
+            print("line width", lineWidth + userWidth - 14)
+            print("line width + insets", lineWidth + userWidth + 14, UIScreen.main.bounds.width)
             if lineWidth + userWidth + 14 > UIScreen.main.bounds.width || fullScreenUserCount == 0 {
 
                 /// new row
@@ -338,7 +335,18 @@ class SpotViewController: UIViewController {
                     let moreWidth = getMoreWidth(extraCount: extraCount)
                     usersMoreNeeded = true
                     /// room for an extra user cell if more won't cause line overflow
-                    if lineWidth + moreWidth + 14 < UIScreen.main.bounds.width { halfScreenUserCount += 1 }
+                    if lineWidth + moreWidth + 14 < UIScreen.main.bounds.width {
+                        halfScreenUserCount += 1
+                        
+                    } else {
+                        /// another user cell would have fit, but the more cell won't fit. -2 because the user that we're replacing is the one that is an additional user back from where the current user would be
+                        guard let previousUser = friendVisitors[safe: halfScreenUserCount - 2] else { return }
+                        let previousWidth = getWidth(name: previousUser.username)
+                        if lineWidth - previousWidth + moreWidth + 14 > UIScreen.main.bounds.width {
+                            halfScreenUserCount -= 1
+                        }
+                    }
+                    
                     stopIncrementingHalf = true
                 }
                 
@@ -369,7 +377,10 @@ class SpotViewController: UIViewController {
         
         /// only refresh when expanding or closing the section
         if closeOnRefresh || forceRefresh {
-            tableView.reloadSections(IndexSet(0...0), with: .fade)
+            /// right now the tableview is freezing after the animation with reloadRows / reloadSections. reloadData isn't ideal animation but better than the bug
+            tableView.beginUpdates()
+            tableView.reloadData()
+            tableView.endUpdates()
         }
     }
     
@@ -413,12 +424,30 @@ class SpotViewController: UIViewController {
         }
     }
     
+    func animateRemoveSpot() {
+        Mixpanel.mainInstance().track(event: "SpotPageSwipeToExit")
+        
+        DispatchQueue.main.async {
+            
+            UIView.animate(withDuration: 0.2) { [weak self] in
+                guard let self = self else { return }
+                self.view.frame = CGRect(x: UIScreen.main.bounds.width, y: self.view.frame.minY, width: self.view.frame.width, height: self.view.frame.height)
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                guard let self = self else { return }
+                self.removeSpotPage(delete: false)
+            }
+        }
+    }
+    
     @objc func removeSpotPage(_ sender: UIBarButtonItem) {
         /// pop spot page on back tap
         removeSpotPage(delete: false)
     }
         
     func removeSpotPage(delete: Bool) {
+        print("remove spot page")
         /// if delete, also exit the child posts page (posts will get deleted with the spot)
         Mixpanel.mainInstance().track(event: "SpotPageRemove")
         
@@ -439,6 +468,7 @@ class SpotViewController: UIViewController {
         
         if let postVC = parent as? PostViewController {
             postVC.resetView()
+            postVC.tableView.reloadData() 
             if delete && postVC.postsList.count == 0 { postVC.exitPosts() }
         } else if let nearbyVC = parent as? NearbyViewController {
             nearbyVC.resetView()
@@ -472,7 +502,6 @@ class SpotViewController: UIViewController {
         mapVC.nearbyViewController = nil
         
         mapVC.postsList = postsList
-        mapVC.unhideSpotButtons()
         setUpNavBar()
         resetAnnos()
                 
@@ -577,7 +606,7 @@ class SpotViewController: UIViewController {
             guard let self = self else { return }
             self.activityIndicator.stopAnimating()
             self.tableView.reloadData()
-            self.mapVC.checkForSpotTutorial()
+            self.mapVC.checkForTutorial(index: 1)
             
             /// animate to full if offset  > 1 (on refresh)
             self.shadowScroll.contentOffset.y > 0 ? self.expandSpot() : self.mapVC.animateToHalfScreen()
@@ -622,7 +651,7 @@ class SpotViewController: UIViewController {
     
     
     func setUpTable() {
-        
+                
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
         let navBarHeight = statusHeight +
@@ -637,7 +666,7 @@ class SpotViewController: UIViewController {
         shadowScroll.showsVerticalScrollIndicator = false
         shadowScroll.delegate = self
         shadowScroll.tag = 60
-        
+            
         tableView = UITableView(frame: UIScreen.main.bounds)
         tableView.separatorStyle = .none
         tableView.showsVerticalScrollIndicator = false
@@ -657,7 +686,7 @@ class SpotViewController: UIViewController {
         activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 30))
         tableView.addSubview(activityIndicator)
         activityIndicator.startAnimating()
-        
+                
         view.addGestureRecognizer(shadowScroll.panGestureRecognizer)
         tableView.removeGestureRecognizer(tableView.panGestureRecognizer)
     }
@@ -669,13 +698,12 @@ class SpotViewController: UIViewController {
         if postIndex == spotObject.postIDs.count {
             adjustCollectionSize()
             mapVC.checkPostLocations(spotLocation: CLLocation(latitude: spotObject.spotLat, longitude: spotObject.spotLong))
-            mapVC.checkForSpotTutorial()
         }
     }
     
     func getSpotPosts() {
         //sort on timestamp
-        guard let spotID = spotObject.id else { return }
+        guard let _ = spotObject.id else { return }
         // enter dispatch for each post on get post image, get user info, get comments
         
         DispatchQueue.global(qos: .userInitiated).async {
@@ -691,11 +719,8 @@ class SpotViewController: UIViewController {
                         let postInfo = try post?.data(as: MapPost.self)
                         guard var info = postInfo else { self.postEscape(); return }
                         
-                        info.city = self.spotObject.city
                         info.seconds = info.timestamp.seconds
                         info.id = post!.documentID
-                        info.spotID = spotID
-                        info.spotName = self.spotObject.spotName
                                                 
                         if self.spotObject.privacyLevel == "public" {
                             ///if this is a public spot, you shouldn't be able to see posts by people you aren't friends with unless the posts are public
@@ -1018,7 +1043,7 @@ class SpotViewController: UIViewController {
         if listener3 != nil { listener3.remove() }
         
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("SpotAddressChange"), object: nil)
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ImageChange"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("EditImageChange"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("EditPost"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DeletePost"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("UserListRemove"), object: nil)
@@ -1092,6 +1117,7 @@ class SpotViewController: UIViewController {
 }
 
 extension SpotViewController: UIGestureRecognizerDelegate {
+    
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         //only close view on maskView touch
         if editView != nil && touch.view?.isDescendant(of: editView) == true {
@@ -1134,6 +1160,7 @@ extension SpotViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+                
         switch indexPath.row {
         case 0:
             return 98
@@ -1147,10 +1174,12 @@ extension SpotViewController: UITableViewDataSource, UITableViewDelegate {
     }
 }
 
+
 class SpotDescriptionCell: UITableViewCell {
     
     var pullLine: UIButton!
     var tagView: UIView!
+    var tag1Icon, tag2Icon, tag3Icon: UIImageView!
     var spotName: UILabel!
     var cityName: UILabel!
     var separatorView: UIView!
@@ -1164,8 +1193,8 @@ class SpotDescriptionCell: UITableViewCell {
         
         resetCell()
         
-        let pullLine = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 23, y: 0, width: 46, height: 14.5))
-        pullLine.contentEdgeInsets = UIEdgeInsets(top: 9, left: 5, bottom: 0, right: 5)
+        let pullLine = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 21.5, y: 0, width: 43, height: 14.5))
+        pullLine.contentEdgeInsets = UIEdgeInsets(top: 7, left: 5, bottom: 0, right: 5)
         pullLine.setImage(UIImage(named: "PullLine"), for: .normal)
         pullLine.addTarget(self, action: #selector(lineTap(_:)), for: .touchUpInside)
         addSubview(pullLine)
@@ -1179,30 +1208,33 @@ class SpotDescriptionCell: UITableViewCell {
             var tagX = 14
             
             let tag1 = Tag(name: spot.tags[0])
-            let tag1Icon = UIImageView(frame: CGRect(x: tagX, y: 0, width: 24, height: 24))
+            tag1Icon = UIImageView(frame: CGRect(x: tagX, y: 0, width: 24, height: 24))
             tag1Icon.contentMode = .scaleAspectFit
             tag1Icon.image = tag1.image
             tagView.addSubview(tag1Icon)
+            if tag1.image == UIImage() { getTagImage(tag: tag1, position: 1)}
             
             if spot.tags.count > 1 {
                 
                 tagX += 28
                 
                 let tag2 = Tag(name: spot.tags[1])
-                let tag2Icon = UIImageView(frame: CGRect(x: tagX, y: 0, width: 24, height: 24))
+                tag2Icon = UIImageView(frame: CGRect(x: tagX, y: 0, width: 24, height: 24))
                 tag2Icon.contentMode = .scaleAspectFit
                 tag2Icon.image = tag2.image
                 tagView.addSubview(tag2Icon)
+                if tag2.image == UIImage() { getTagImage(tag: tag2, position: 2)}
                 
                 if spot.tags.count > 2 {
                     
                     tagX += 28
                     
                     let tag3 = Tag(name: spot.tags[2])
-                    let tag3Icon = UIImageView(frame: CGRect(x: tagX, y: 0, width: 24, height: 24))
+                    tag3Icon = UIImageView(frame: CGRect(x: tagX, y: 0, width: 24, height: 24))
                     tag3Icon.contentMode = .scaleAspectFit
                     tag3Icon.image = tag3.image
                     tagView.addSubview(tag3Icon)
+                    if tag3.image == UIImage() { getTagImage(tag: tag3, position: 3)}
                 }
             }
         }
@@ -1246,6 +1278,23 @@ class SpotDescriptionCell: UITableViewCell {
         addSubview(bottomLine)
     }
     
+    // get tag image from database if not preloaded for this user
+    func getTagImage(tag: Tag, position: Int) {
+        
+        tag.getImageURL { [weak self] url in
+            guard let self = self else { return }
+            
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+            
+            switch position {
+            case 1: if self.tag1Icon != nil { self.tag1Icon.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) }
+            case 2: if self.tag2Icon != nil { self.tag2Icon.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) }
+            case 3: if self.tag3Icon != nil { self.tag3Icon.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) }
+            default: return
+            }
+        }
+    }
+    
     func resetCell() {
         if pullLine != nil { pullLine.setImage(UIImage(), for: .normal) }
         if tagView != nil { for sub in tagView.subviews { sub.removeFromSuperview() } }
@@ -1253,6 +1302,13 @@ class SpotDescriptionCell: UITableViewCell {
         if cityName != nil { cityName.text = "" }
         if distanceLabel != nil { distanceLabel.text = "" }
         if bottomLine != nil { bottomLine.backgroundColor = nil }
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        if tag1Icon != nil { tag1Icon.sd_cancelCurrentImageLoad() }
+        if tag2Icon != nil { tag2Icon.sd_cancelCurrentImageLoad() }
+        if tag3Icon != nil { tag3Icon.sd_cancelCurrentImageLoad() }
     }
     
     @objc func lineTap(_ sender: UIButton) {
@@ -1316,10 +1372,11 @@ class SpotFriendsCollectionCell: UITableViewCell, UICollectionViewDataSource, UI
             cell.setUp(count: fullScreenUserCount - trueHalf)
             return cell
         }
-        
+                
         /// regular user cell
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SpotFriendsCell", for: indexPath) as? SpotFriendsCell else { return UICollectionViewCell() }
         guard let user = friendVisitors[safe: indexPath.row] else { return cell }
+        
         cell.setUp(user: user)
         return cell
     }
@@ -1456,7 +1513,7 @@ class SpotPageMoreCell: UICollectionViewCell {
         backgroundColor = nil
         
         if label != nil { label.text = "" }
-        label = UILabel(frame: CGRect(x: 0, y: 3, width: 100, height: 16))
+        label = UILabel(frame: CGRect(x: 0, y: 4, width: 100, height: 16))
         label.font = UIFont(name: "SFCamera-Regular", size: 12.5)
         label.text = "+ \(count) more"
         label.textColor = UIColor(named: "SpotGreen")

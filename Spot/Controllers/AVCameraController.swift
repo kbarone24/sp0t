@@ -62,13 +62,12 @@ class AVCameraController: UIViewController {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(true, animated: true)
         self.draftsNotification.isHidden = true
-        
-        checkForDrafts()
-        
+                
         ///set up camera view if not already loaded
         if self.cameraController == nil {
             cameraController = AVSpotCamera()
             configureCameraController()
+            
         } else {
             cameraController.previewLayer?.connection?.isEnabled = true
         }
@@ -103,11 +102,7 @@ class AVCameraController: UIViewController {
             }
         }
     }
-    
-    deinit {
-        print("deinit cam")
-    }
-    
+        
     
     override func viewDidLoad() {
         
@@ -119,18 +114,18 @@ class AVCameraController: UIViewController {
         view.backgroundColor = UIColor(named: "SpotBlack")
         
         /// camera height will be 667 for iphone 6-10, 736.4 for XR + 11
-        let cameraAspect: CGFloat = 1.77778
+        let cameraAspect: CGFloat = 1.72267
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
-        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 0
+        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 2
         let cameraY: CGFloat = minY + cameraHeight - 5 - 94
                 
         /// text above camera button for small screen, below camera button for iphoneX+
-        let textY: CGFloat = minY == 0 ? cameraY - 24 : minY + cameraHeight + 10
+        let textY: CGFloat = minY == 2 ? cameraY - 24 : minY + cameraHeight + 10
                 
-        if minY == 0 {
+        if minY == 2 {
             /// add bottom mask that covers entire capture section
-            cameraMask = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 135, width: UIScreen.main.bounds.width, height: 135))
+            cameraMask = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 145, width: UIScreen.main.bounds.width, height: 145))
             cameraMask.backgroundColor = UIColor.black.withAlphaComponent(0.4)
         } else {
             /// add mask that just covers alive // still text
@@ -149,7 +144,6 @@ class AVCameraController: UIViewController {
             layer0.locations = [0, 0.23, 0.77, 1]
             layer0.startPoint = CGPoint(x: 0, y: 0.5)
             layer0.endPoint = CGPoint(x: 1, y: 0.5)
-            // layer0.transform = CATransform3DMakeAffineTransform(CGAffineTransform(a: -1, b: 0, c: 0, d: -70.41, tx: 1, ty: 35.73))
             cameraMask.layer.insertSublayer(layer0, at: 0)
         }
         view.addSubview(cameraMask)
@@ -192,14 +186,14 @@ class AVCameraController: UIViewController {
         gifText.addTarget(self, action: #selector(transitionToGIF(_:)), for: .touchUpInside)
         view.addSubview(gifText)
         
-        if minY != 0 { view.bringSubviewToFront(cameraMask) } /// camera mask is on top of text for large screen
+        if minY != 2 { view.bringSubviewToFront(cameraMask) } /// camera mask is on top of text for large screen
         
-        let dotY: CGFloat = minY == 0 ? cameraMask.frame.minY - 21 : cameraButton.frame.minY - 21
+        let dotY: CGFloat = minY == 2 ? cameraMask.frame.minY - 21 : cameraButton.frame.minY - 21
         dotView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 30, y: dotY, width: 60, height: 10))
         dotView.backgroundColor = nil
         view.addSubview(dotView)
         
-        let buttonY: CGFloat = minY == 0 ? UIScreen.main.bounds.height - 70.5 : UIScreen.main.bounds.height - 82.5
+        let buttonY = UIScreen.main.bounds.height - 82.5
         
         galleryButton = UIButton(frame: CGRect(x: 37, y: buttonY, width: 34, height: 29))
         galleryButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -424,15 +418,16 @@ class AVCameraController: UIViewController {
     func captureImage() {
         
         self.cameraController.captureImage {(image, error) in
-            guard var image = image else {
-                return
-            }
+            
+            guard var image = image else { return }
+            
             let flash = self.flashButton.image(for: .normal) == UIImage(named: "FlashOn")
             let selfie = self.cameraController.currentCameraPosition == .front
             
             Mixpanel.mainInstance().track(event: "CameraStillCapture", properties: ["flash": flash, "selfie": selfie])
             
             if selfie {
+                /// flip image orientation on selfie
                 image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
             }
             
@@ -455,6 +450,7 @@ class AVCameraController: UIViewController {
     }
     
     func addDots(count: Int) {
+        
         //dots show progress with each successive gif image capture
         if count < 5 {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
@@ -569,6 +565,7 @@ class AVCameraController: UIViewController {
                 if self.frontFlashView.isHidden == false {
                     UIScreen.main.brightness = self.initialBrightness
                     self.frontFlashView.isHidden = true
+                    
                 } else if self.cameraController.currentCameraPosition == .rear && self.flashButton.image(for: .normal) == UIImage(named: "FlashOn")! && self.gifMode {
                     ///special rear flash used for gif mode so reset this on the final image
                     let device = self.cameraController.rearCamera
@@ -671,7 +668,6 @@ class AVCameraController: UIViewController {
                 self.present(alert, animated: false, completion: nil)
                 
             } else {
-                
                 if !self.cameraController.previewShown {
                     try? self.cameraController.displayPreview(on: self.view)
                     self.setAutoExposure()
@@ -707,6 +703,7 @@ class AVCameraController: UIViewController {
     @objc func draftsTap(_ sender: UIButton) {
         
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "Drafts") as? DraftsViewController {
+            
             vc.mapVC = self.mapVC
             vc.emptyState = !self.draftsActive
             vc.spotObject = self.spotObject
@@ -723,17 +720,18 @@ class AVCameraController: UIViewController {
     
     func openCamRoll() {
         
-        if PHPhotoLibrary.authorizationStatus() == .notDetermined { // 1
-            DispatchQueue.main.async { // 2
-                PHPhotoLibrary.requestAuthorization { _ in // 3
-                    DispatchQueue.main.async { // 4
+        switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
+        
+        case .notDetermined:
+            DispatchQueue.main.async {
+                PHPhotoLibrary.requestAuthorization { _ in
+                    DispatchQueue.main.async {
                         self.openCamRoll()
                     }
                 }
             }
-            return
             
-        } else if PHPhotoLibrary.authorizationStatus() == .denied || PHPhotoLibrary.authorizationStatus() == .restricted  {
+        case .restricted, .denied:
             let alert = UIAlertController(title: "Allow photo access to add a picture", message: nil, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
                                             switch action.style{
@@ -762,16 +760,21 @@ class AVCameraController: UIViewController {
             
             self.present(alert, animated: true, completion: nil)
             
-        } else {
-            
+
+        case .authorized, .limited:
             if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "PhotosContainer") as? PhotosContainerController {
+                
                 vc.mapVC = self.mapVC
                 vc.spotObject = self.spotObject
+                if PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited { vc.limited = true }
                                 
                 DispatchQueue.main.async {
                     self.navigationController?.pushViewController(vc, animated: true)
                 }
             }
+            
+        default: return
+            
         }
     }
     
@@ -780,10 +783,10 @@ class AVCameraController: UIViewController {
         let scale: CGFloat = max(size.width / (image?.size.width ?? 0.0), size.height / (image?.size.height ?? 0.0))
         let width: CGFloat = (image?.size.width ?? 0.0) * scale
         let height: CGFloat = (image?.size.height ?? 0.0) * scale
-        let imageRect = CGRect(x: (size.width - width) / 2.0, y: (size.height - height) / 2.0, width: width, height: height)
+        let imageRect = CGRect(x: (size.width - width) / 2.0, y: (size.height - height) / 2.0 - 0.5, width: width, height: height)
         
-        let clipSize = CGSize(width: size.width, height: size.height - 2) /// fix rounding error for images taken from camera
-        UIGraphicsBeginImageContextWithOptions(clipSize, false, 0)
+        let clipSize = CGSize(width: size.width, height: size.height - 1) /// fix rounding error for images taken from camera
+        UIGraphicsBeginImageContextWithOptions(clipSize, false, 0.0)
         image?.draw(in: imageRect)
         let newImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
@@ -930,7 +933,7 @@ class AVCameraController: UIViewController {
             
             self.gifMode = false
             
-            let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 0
+            let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 2
             let cameraY: CGFloat = minY + self.cameraHeight - 5 - 94
             
             UIView.animate(withDuration: 0.3, animations: {
@@ -958,7 +961,7 @@ class AVCameraController: UIViewController {
         if !self.gifMode {
             self.gifMode = true
             
-            let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 0
+            let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 2
             let cameraY: CGFloat = minY + self.cameraHeight - 5 - 95
             
             UIView.animate(withDuration: 0.3, animations: {

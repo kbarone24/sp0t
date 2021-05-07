@@ -92,7 +92,7 @@ class ProfilePostsViewController: UIViewController {
             let annotation = CustomPointAnnotation()
             annotation.coordinate = CLLocationCoordinate2D(latitude: newPost.postLat, longitude: newPost.postLong)
             annotation.postID = newPost.id!
-            self.postAnnotations.append(annotation)
+            postAnnotations.append(annotation)
         }
     }
     
@@ -100,19 +100,19 @@ class ProfilePostsViewController: UIViewController {
         if let newPost = sender.userInfo?.first?.value as? MapPost {
             // edit post from postsVC
             if let index = postsList.firstIndex(where: {$0.id == newPost.id}) {
-                self.postsList[index] = newPost
-                self.postsCollection.reloadData()
+                postsList[index] = newPost
+                postsCollection.reloadData()
             }
         } else if let info = sender.userInfo as? [String: Any] {
             // spot level info changed
             guard let postID = info["postID"] as? String else { return }
             if let index = self.postsList.firstIndex(where: {$0.id == postID}) {
-                self.postsList[index].spotName = info["spotName"] as? String ?? ""
-                self.postsList[index].inviteList = info["inviteList"] as? [String] ?? []
-                self.postsList[index].spotLat = info["spotLat"] as? Double ?? 0.0
-                self.postsList[index].spotLong = info["spotLong"] as? Double ?? 0.0
-                self.postsList[index].spotPrivacy = info["spotPrivacy"] as? String ?? ""
-                self.postsCollection.reloadData()
+                postsList[index].spotName = info["spotName"] as? String ?? ""
+                postsList[index].inviteList = info["inviteList"] as? [String] ?? []
+                postsList[index].spotLat = info["spotLat"] as? Double ?? 0.0
+                postsList[index].spotLong = info["spotLong"] as? Double ?? 0.0
+                postsList[index].spotPrivacy = info["spotPrivacy"] as? String ?? ""
+                postsCollection.reloadData()
             }
         }
     }
@@ -138,7 +138,7 @@ class ProfilePostsViewController: UIViewController {
                     print("remove post", id)
                     postsList.remove(at: index)
                     postsList.sort(by: {$0.seconds > $1.seconds})
-                    self.postsCollection.reloadData()
+                    postsCollection.reloadData()
                 }
                 
                 if let aIndex = postAnnotations.firstIndex(where: {$0.postID == id}) {
@@ -150,8 +150,8 @@ class ProfilePostsViewController: UIViewController {
             if postVC != nil {
 
                 /// avoid double refresh
-                postVC.postsList = self.postsList
-                mapVC.postsList = self.postsList
+                postVC.postsList = postsList
+                mapVC.postsList = postsList
 
                 postVC.tableView.beginUpdates()
                 postVC.tableView.deleteRows(at: indexPaths, with: .bottom)
@@ -164,7 +164,7 @@ class ProfilePostsViewController: UIViewController {
                     postVC.tableView.reloadData()
                 }
 
-                let mapPass = ["selectedPost": self.postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": PostViewController.parentViewController.profile] as [String : Any]
+                let mapPass = ["selectedPost": postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": PostViewController.parentViewController.profile] as [String : Any]
                 NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass)
             }
         }
@@ -183,7 +183,7 @@ class ProfilePostsViewController: UIViewController {
     }
     
     func resumeIndicatorAnimation() {
-        if !self.postsIndicator.isHidden {
+        if !postsIndicator.isHidden {
             DispatchQueue.main.async { self.postsIndicator.startAnimating() }
         }
     }
@@ -206,10 +206,10 @@ class ProfilePostsViewController: UIViewController {
     
     func addAnnotations() {
         
-        let annotations = self.mapVC.mapView.annotations
+        let annotations = mapVC.mapView.annotations
         mapVC.mapView.removeAnnotations(annotations)
         
-        if !self.postAnnotations.isEmpty {
+        if !postAnnotations.isEmpty {
             mapVC.postsList = self.postsList
             for anno in postAnnotations {
                 DispatchQueue.main.async { self.mapVC.mapView.addAnnotation(anno) }
@@ -256,9 +256,9 @@ class ProfilePostsViewController: UIViewController {
     func getPosts(refresh: Bool) {
         
         if profileVC == nil { return }
-        let query = self.db.collection("posts").whereField("posterID", isEqualTo: profileVC.id).order(by: "timestamp", descending: true)
+        let query = db.collection("posts").whereField("posterID", isEqualTo: profileVC.id).order(by: "timestamp", descending: true)
 
-        self.listener1 = query.addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] (snap, err) in
+        listener1 = query.addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] (snap, err) in
             
             guard let self = self else { return }
             if self.profileVC == nil { return }
@@ -460,6 +460,7 @@ extension ProfilePostsViewController: UICollectionViewDelegate, UICollectionView
         guard let cell = cell as? GuestbookCell else { return }
         guard let post = postsList[safe: indexPath.row] else { return }
         
+        /// cached images weren't working + were bringing in the wrong images on reuse
       /*  if cell.cachedImage.postID == post.id! && cell.cachedImage.image != UIImage() {
             cell.imagePreview.image = cell.cachedImage.image
             return
@@ -495,12 +496,12 @@ extension ProfilePostsViewController: UICollectionViewDelegate, UICollectionView
             /// cancel downloads on visible images
             removeDownloads()
             
-            vc.postsList = self.postsList
+            vc.postsList = postsList
             vc.selectedPostIndex = row
-            vc.mapVC = self.mapVC
+            vc.mapVC = mapVC
             vc.parentVC = .profile
             
-            self.postVC = vc
+            postVC = vc
             
             /// move posts list to parent controller
             vc.view.frame = profileVC.view.frame
@@ -508,7 +509,7 @@ extension ProfilePostsViewController: UICollectionViewDelegate, UICollectionView
             profileVC.shadowScroll.isScrollEnabled = false
             profileVC.passedCamera = MKMapCamera(lookingAtCenter: mapVC.mapView.centerCoordinate, fromDistance: mapVC.mapView.camera.centerCoordinateDistance, pitch: mapVC.mapView.camera.pitch, heading: mapVC.mapView.camera.heading)
 
-            mapVC.postsList = self.postsList
+            mapVC.postsList = postsList
             mapVC.profileViewController = nil
             mapVC.toggleMapTouch(enable: true)
             

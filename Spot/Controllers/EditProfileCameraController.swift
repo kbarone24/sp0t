@@ -46,6 +46,11 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        
+        /// reset bar button appearance
+        UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .normal)
+        UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .selected)
+        UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .highlighted)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -59,10 +64,10 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
         view.backgroundColor = UIColor(named: "SpotBlack")
         
         /// camera height will be 600 for iphone 6-10, 662.4 for XR + 11
-        let cameraAspect: CGFloat = 1.77778
+        let cameraAspect: CGFloat = 1.72267
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
-        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 0
+        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 2
         let cameraY: CGFloat = minY + cameraHeight - 5 - 94
         
         /// camera button will always be 15 pts above the bottom of camera preview. size of button is 94 pts
@@ -76,9 +81,9 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
         view.addSubview(cameraButton)
         
         /// text above camera button for small screen, below camera button for iphoneX+
-        let textY: CGFloat = minY == 0 ? cameraButton.frame.minY - 24 : minY + cameraHeight + 10
+        let textY: CGFloat = minY == 2 ? cameraButton.frame.minY - 24 : minY + cameraHeight + 10
         
-        if minY == 0 {
+        if minY == 2 {
             /// add bottom mask that covers entire capture section
             cameraMask = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 135, width: UIScreen.main.bounds.width, height: 135))
             cameraMask.backgroundColor = UIColor.black.withAlphaComponent(0.4)
@@ -103,7 +108,7 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
             cameraMask.layer.insertSublayer(layer0, at: 0)
         }
         
-        let buttonY: CGFloat = minY == 0 ? UIScreen.main.bounds.height - 70.5 : UIScreen.main.bounds.height - 82.5
+        let buttonY: CGFloat = minY == 2 ? UIScreen.main.bounds.height - 70.5 : UIScreen.main.bounds.height - 82.5
         
         galleryButton = UIButton(frame: CGRect(x: 37, y: buttonY, width: 34, height: 29))
         galleryButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)

@@ -21,9 +21,7 @@ class EditProfileViewController: UIViewController {
     var usernameText = ""
     
     var newProfilePic: UIImage!
-    var newName: String!
-    var newUsername: String!
-    var newCity: String!
+    var newName, newUsername, newCity: String! /// use separate values for changed fields to avoid mixing up with original profile values
     
     var imageView: UIImageView!
     var statusIcon: UIImageView!
@@ -255,7 +253,7 @@ class EditProfileViewController: UIViewController {
 
     
     @objc func cancelTap(_ sender: UIButton) {
-        self.dismiss(animated: true, completion: nil)
+        dismiss(animated: true, completion: nil)
     }
     
     @objc func saveTap(_ sender: UIButton) {
@@ -268,10 +266,10 @@ class EditProfileViewController: UIViewController {
 
         guard var username = usernameField.text?.lowercased() else { return }
         username = username.trimmingCharacters(in: .whitespaces)
-        if username == profileVC.userInfo.username { self.updateUserInfo(); return }
+        if username == profileVC.userInfo.username { updateUserInfo(); return }
         
-        usernameAvailable(username: username) { (errorMessage) in
-            
+        usernameAvailable(username: username) { [weak self] (errorMessage) in
+            guard let self = self else { return }
             
             if errorMessage != "" {
                 self.errorBox.isHidden = false
@@ -311,22 +309,23 @@ class EditProfileViewController: UIViewController {
         usernameText = lowercaseUsername
         if usernameText == "" { return }
 
-        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.runUsernameQuery), object: nil)
-        self.perform(#selector(self.runUsernameQuery), with: nil, afterDelay: 0.4)
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(runUsernameQuery), object: nil)
+        perform(#selector(runUsernameQuery), with: nil, afterDelay: 0.4)
     }
     
     @objc func backTapped(_ sender: UIButton){
-        self.navigationController?.popViewController(animated: true)
+        navigationController?.popViewController(animated: true)
     }
         
     @objc func runUsernameQuery() {
         
-        let localUsername = self.usernameText
+        let localUsername = usernameText
         setEmpty()
         usernameIndicator.startAnimating()
         
-        usernameAvailable(username: localUsername) { (errorMessage) in
+        usernameAvailable(username: localUsername) { [weak self] (errorMessage) in
             
+            guard let self = self else { return }
             if localUsername != self.usernameText { return }
             
             if errorMessage != "" {
@@ -347,8 +346,9 @@ class EditProfileViewController: UIViewController {
         let usersRef = db.collection("usernames")
         let query = usersRef.whereField("username", isEqualTo: username)
         
-        query.getDocuments(completion: { (snap, err) in
-
+        query.getDocuments(completion: { [weak self] (snap, err) in
+            
+            guard let self = self else { return }
             if err != nil { completion("an error occurred"); return }
             if username != self.usernameText { completion("username already in use"); return }
             
@@ -361,8 +361,10 @@ class EditProfileViewController: UIViewController {
     }
     
     func removeFromUsernames(username: String) {
+        
         let query = db.collection("usernames").whereField("username", isEqualTo: username)
-        query.getDocuments { (snap, err) in
+        query.getDocuments { [weak self](snap, err) in
+            guard let self = self else { return }
             if err == nil {
                 for doc in snap!.documents {
                     self.db.collection("usernames").document(doc.documentID).delete()
@@ -389,22 +391,27 @@ class EditProfileViewController: UIViewController {
     
     func updateUserInfo() {
         
-        let ref = self.db.collection("users").document(self.uid)
+        let lowercaseName = newName!.lowercased()
+        let nameKeywords = lowercaseName.getKeywordArray()
+        
+        let ref = db.collection("users").document(uid)
         ref.updateData(["name" : newName!,
                         "currentLocation" : newCity!,
-                        "lowercaseName": newName!.lowercased()])
+                        "lowercaseName": lowercaseName,
+                        "nameKeywords": nameKeywords])
                 
         profileVC.userInfo.name = newName
         profileVC.userInfo.currentLocation = newCity
         if newUsername != nil {
             profileVC.userInfo.username = newUsername
-            ref.updateData(["username" : newUsername!])
+            let usernameKeywords = newUsername.getKeywordArray()
+            ref.updateData(["username" : newUsername!, "usernameKeywords": usernameKeywords])
         }
         
         if newProfilePic == nil  {
-            self.profileVC.reloadProfile()
-            self.saveButton.isEnabled = true
-            self.dismiss(animated: true, completion: nil)
+            profileVC.reloadProfile()
+            saveButton.isEnabled = true
+            dismiss(animated: true, completion: nil)
             return
         }
         
@@ -429,15 +436,15 @@ class EditProfileViewController: UIViewController {
         
         storageRef.putData(imageData, metadata: metadata){metadata, error in
             
-            if error == nil, metadata != nil{
+            if error == nil, metadata != nil {
                 //get download url
-                storageRef.downloadURL(completion: { url, error in
+                storageRef.downloadURL(completion: { [weak self] url, error in
                     if let error = error{
                         print("\(error.localizedDescription)")
                     }
-                    //url
+                    
                     urlStr = (url?.absoluteString)!
-                    print(urlStr)
+                    guard let self = self else { return }
                     
                     let values = ["imageURL": urlStr]
                     self.db.collection("users").document(self.uid).setData(values, merge: true)
@@ -456,10 +463,11 @@ class EditProfileViewController: UIViewController {
     
     @objc func openCamera(_ sender: UIButton) {
 
+        /// use editProfileCamera to allow for imageCropVC + remove drafts button
         if let cameraController = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "EditProfileCamera") as? EditProfileCameraController {
             cameraController.modalPresentationStyle = .fullScreen
             cameraController.editProfileVC = self
-            self.present(cameraController, animated: true, completion: nil)
+            present(cameraController, animated: true, completion: nil)
         }
     }
 }
@@ -515,7 +523,7 @@ extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigati
     
     
     func imageCropViewControllerDidCancelCrop(_ controller: RSKImageCropViewController) {
-        self.dismiss(animated: true, completion: nil)
+        dismiss(animated: true, completion: nil)
     }
     
     func imageCropViewController(_ controller: RSKImageCropViewController, didCropImage croppedImage: UIImage, usingCropRect cropRect: CGRect, rotationAngle: CGFloat) {
@@ -527,7 +535,7 @@ extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigati
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         
-        var image : UIImage = (info[UIImagePickerController.InfoKey.originalImage] as? UIImage)!
+        var image : UIImage = (info[UIImagePickerController.InfoKey.originalImage] as? UIImage) ?? UIImage()
         if picker.sourceType == .camera && picker.cameraDevice == .front {
             image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
         }

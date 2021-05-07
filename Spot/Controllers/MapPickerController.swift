@@ -62,9 +62,11 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
     
     override func viewDidAppear(_ animated: Bool) {
         Mixpanel.mainInstance().track(event: "MapPickerOpen")
-        
+                
         guard let parentVC = parent as? PhotosContainerController else { return }
+
         if self.locationObjects.isEmpty {
+            
             /// original load
             view.isUserInteractionEnabled = false
             
@@ -100,6 +102,7 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
             checkLocation()
             
         } else if parentVC.mapView != nil && parentVC.mapView.superview == nil {
+            
             /// reset delegate after return from location picker
 
             if locationObjects.count > 0 { self.view.isUserInteractionEnabled = true }
@@ -479,11 +482,7 @@ class StandardPostAnnotationView: MKAnnotationView {
             clusteringIdentifier = StandardPostAnnotationView.preferredClusteringIdentifier
         }
     }
-    
-    deinit {
-        print("deinit standard post")
-    }
-    
+        
     override func prepareForDisplay() {
         super.prepareForDisplay()
         
@@ -604,9 +603,6 @@ class PostClusterView: MKAnnotationView {
     var requestID: Int32 = 0
     lazy var imageObjects: [ImageObject] = []
     
-    deinit {
-        print("deinit post cluster")
-    }
     
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)

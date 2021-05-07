@@ -72,6 +72,7 @@ class CommentsViewController: UIViewController {
         super.viewWillDisappear(animated)
         active = false
         for download in downloads { download.cancel() }
+        postVC.mapVC.removeTable()
         
         IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("TagSelect"), object: nil)
@@ -99,14 +100,20 @@ class CommentsViewController: UIViewController {
     }
     
     @objc func tagSelect(_ sender: NSNotification) {
-        if let username = sender.userInfo?.first?.value as? String {
-            if let word = textView.text?.split(separator: " ").last {
-                if word.hasPrefix("@") {
-                    var text = String(textView.text.dropLast(word.count - 1))
-                    text.append(contentsOf: username)
-                    self.textView.text = text
-                }
-            }
+        
+        guard let infoPass = sender.userInfo as? [String: Any] else { return }
+        guard let username = infoPass["username"] as? String else { return }
+        guard let tag = infoPass["tag"] as? Int else { return }
+        if tag != 0 { return } /// tag 2 for upload tag. This notification should only come through if tag = 2 because upload will always be topmost VC
+
+        /// get where user is currently editing
+        if let selectedRange = textView.selectedTextRange {
+            let startPosition: UITextPosition =  textView.beginningOfDocument
+            let cursorPosition =  textView.offset(from: startPosition, to: selectedRange.start)
+            let text = textView.text ?? ""
+            
+            let tagText = addTaggedUserTo(text: text, username: username, cursorPosition: cursorPosition)
+            textView.text = tagText
         }
     }
     
@@ -218,9 +225,10 @@ class CommentsViewController: UIViewController {
         var selectedUsers: [UserProfile] = []
         
         ///for tagging users on comment post
-        let word = commentText.split(separator: " ")
         
-        for w in word {
+        let words = commentText.components(separatedBy: .whitespacesAndNewlines)
+        
+        for w in words {
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
                 if let f = postVC.mapVC.friendsList.first(where: {$0.username == username}) {
@@ -376,16 +384,11 @@ extension CommentsViewController: UITextViewDelegate {
         resizeFooter(type: 2)
         
         ///add tag table if @ used
-        if textView.text.last != " " {
-            if let word = textView.text?.split(separator: " ").last {
-                if word.hasPrefix("@") {
-                    self.postVC.mapVC.addTable(text: String(word.lowercased().dropFirst()), parent: .comments)
-                    return
-                }
-            }
+        if let selectedRange = textView.selectedTextRange {
+            let startPosition: UITextPosition =  textView.beginningOfDocument
+            let cursorPosition =  textView.offset(from: startPosition, to: selectedRange.start)
+            postVC.addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursorPosition, tableParent: .comments)
         }
-        
-        postVC.mapVC.removeTable()
     }
     
     func resizeFooter(type: Int) {
@@ -628,12 +631,15 @@ class CommentCell: UITableViewCell {
                 vc.postCaptionHeight = commentsVC.captionHeight
                 vc.mapVC = commentsVC.postVC.mapVC
                 
+                commentsVC.postVC.cancelDownloads()
+                if let feedVC = commentsVC.postVC.parent as? FeedViewController { feedVC.hideFeedSeg() }
+                commentsVC.postVC.mapVC.customTabBar.tabBar.isHidden = true
+                
                 vc.view.frame = commentsVC.postVC.view.frame
                 commentsVC.postVC.addChild(vc)
                 commentsVC.postVC.view.addSubview(vc.view)
                 vc.didMove(toParent: commentsVC.postVC)
-                
-                commentsVC.postVC.mapVC.customTabBar.tabBar.isHidden = true
+                                
                 commentsVC.dismiss(animated: false, completion: nil)
             }
         }
@@ -662,7 +668,7 @@ class CommentHeader: UITableViewHeaderFooterView {
         
         resetView()
         
-        profilePic = UIImageView(frame: CGRect(x: 17, y: 12.5, width: 24, height: 24))
+        profilePic = UIImageView(frame: CGRect(x: 13, y: 12, width: 27, height: 27))
         profilePic.layer.cornerRadius = 12
         profilePic.clipsToBounds = true
         self.addSubview(profilePic)
@@ -673,10 +679,10 @@ class CommentHeader: UITableViewHeaderFooterView {
             profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
         }
 
-        username = UIButton(frame: CGRect(x: 47, y: 12, width: 200, height: 16))
+        username = UIButton(frame: CGRect(x: profilePic.frame.maxX + 7, y: 11.5, width: 200, height: 16))
         username.setTitle(post.userInfo.username, for: .normal)
         username.setTitleColor(UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1), for: .normal)
-        username.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        username.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
         username.sizeToFit()
         username.contentHorizontalAlignment = .left
         self.addSubview(username)
@@ -687,16 +693,16 @@ class CommentHeader: UITableViewHeaderFooterView {
         self.addSubview(userButton)
         
         timestamp = UILabel(frame: CGRect(x: username.frame.maxX + 8, y: 18.5, width: 150, height: 16))
-        timestamp.font = UIFont(name: "SFCamera-Regular", size: 12)
+        timestamp.font = UIFont(name: "SFCamera-Regular", size: 12.5)
         timestamp.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
         timestamp.text = getTimestamp(postTime: post.timestamp)
         timestamp.sizeToFit()
         self.addSubview(timestamp)
         
-        postCaption = UILabel(frame: CGRect(x: 16, y: 42, width: UIScreen.main.bounds.width - 32, height: 15))
+        postCaption = UILabel(frame: CGRect(x: 15.5, y: profilePic.frame.maxY + 7, width: UIScreen.main.bounds.width - 31, height: 15))
         postCaption.text = post.caption
         postCaption.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        postCaption.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        postCaption.font = UIFont(name: "SFCamera-Regular", size: 13)
         postCaption.numberOfLines = 0
         postCaption.lineBreakMode = .byWordWrapping
         self.addSubview(postCaption)
@@ -777,18 +783,27 @@ class CommentHeader: UITableViewHeaderFooterView {
     func openProfile(user: UserProfile) {
         if let commentsVC = self.viewContainingController() as? CommentsViewController {
             if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
-                vc.userInfo = user
+                
+                if user.id != "" {
+                    vc.userInfo = user /// already have user info
+                } else {
+                    vc.passedUsername = user.username /// run username query from tapped tag on profile open
+                }
+                
                 vc.id = user.id!
                 vc.commentsSelectedPost = self.post /// open comments on this row on return from profile 
                 vc.postCaptionHeight = commentsVC.captionHeight
                 vc.mapVC = commentsVC.postVC.mapVC
                 
+                commentsVC.postVC.cancelDownloads()
+                if let feedVC = commentsVC.postVC.parent as? FeedViewController { feedVC.hideFeedSeg() }
+                commentsVC.postVC.mapVC.customTabBar.tabBar.isHidden = true
+                                
                 vc.view.frame = commentsVC.postVC.view.frame
                 commentsVC.postVC.addChild(vc)
                 commentsVC.postVC.view.addSubview(vc.view)
                 vc.didMove(toParent: commentsVC.postVC)
                 
-                commentsVC.postVC.mapVC.customTabBar.tabBar.isHidden = true
                 commentsVC.dismiss(animated: false, completion: nil)
             }
         }
@@ -835,10 +850,10 @@ class CommentHeader: UITableViewHeaderFooterView {
         var freshRect: [(rect: CGRect, username: String)] = []
         
         var tags: [(username: String, range: NSRange)] = []
+        let words = caption.components(separatedBy: .whitespacesAndNewlines)
         
-        let word = caption.split(separator: " ")
         var index = 0
-        for w in word {
+        for w in words {
             let username = String(w.dropFirst())
             if w.hasPrefix("@") && taggedFriends.contains(where: {$0 == username}) {
                 let tag = (username: String(w.dropFirst()), range: NSMakeRange(index + 1, w.count - 1))

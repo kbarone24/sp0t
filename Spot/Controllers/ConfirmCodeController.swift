@@ -110,6 +110,7 @@ class ConfirmCodeController: UIViewController {
         sender.isUserInteractionEnabled = false
         
         if codeType == .multifactor {
+            /// user either sent from email signin or from scene delegate with no validated phone number
             self.linkMultifactor(credential: phoneCredential)
             return
         }
@@ -138,6 +139,7 @@ class ConfirmCodeController: UIViewController {
                         
                         Mixpanel.mainInstance().track(event: "ConfirmCodeInvalidAuth", properties: ["error": err?.localizedDescription ?? ""])
                         
+                        /// unlink phone number verification so that user doesnt' have half an acount created and can try again with this phone number
                         Auth.auth().currentUser?.unlink(fromProvider: user.providerID, completion: nil)
                     }
                 }
@@ -199,11 +201,15 @@ class ConfirmCodeController: UIViewController {
         let db = Firestore.firestore()
         guard let userID = Auth.auth().currentUser?.uid else{return}
         
-        let tutorialList: [Bool] = [false, false, false]
+        let tutorialList: [Bool] = [false, false, false, false]
         let botID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
         
         var friendsList : [String] = []
         friendsList.append(botID)
+        
+        let lowercaseName = newUser.name.lowercased()
+        let nameKeywords = lowercaseName.getKeywordArray()
+        let usernameKeywords = newUser.username.getKeywordArray()
         
         let values = ["name" : newUser.name,
                       "email" : newUser.email,
@@ -213,13 +219,15 @@ class ConfirmCodeController: UIViewController {
                       "friendsList" :  friendsList,
                       "spotScore" : 0,
                       "admin" : false,
-                      "lowercaseName:" : newUser.name.lowercased(),
+                      "lowercaseName" : lowercaseName,
                       "imageURL" :  "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2FProfileActive3x.png?alt=media&token=91e9cab9-70a8-4d31-9866-c3861c8b7b89",
                       "currentLocation" : "",
                       "tutorialList" : tutorialList,
                       "verifiedPhone" : true,
                       "sentInvites" : [],
                       "pendingFriendRequests" : [],
+                      "usernameKeywords": usernameKeywords,
+                      "nameKeywords" : nameKeywords,
             ] as [String : Any]
         
         db.collection("users").document(userID).setData(values, merge: true)

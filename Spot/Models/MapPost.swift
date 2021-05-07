@@ -28,6 +28,7 @@ struct MapPost: Identifiable, Codable {
     var postImage: [UIImage] = []
     var seconds: Int64 = 0
     var selectedImageIndex = 0
+    var postScore: Double = 0 
     var commentList: [MapComment] = []
     var likers: [String]
     var taggedUsers: [String]? = []

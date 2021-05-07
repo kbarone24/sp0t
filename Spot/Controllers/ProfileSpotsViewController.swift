@@ -120,7 +120,7 @@ class ProfileSpotsViewController: UIViewController {
         guard let userInfo = notification.userInfo as? [String: Any] else { return }
         guard let id = userInfo.first?.value as? String else { return }
         if let spot = spotsList.first(where: {$0.id == id}) {
-            self.openSpot(spot: spot)
+            openSpot(spot: spot)
         }
     }
     
@@ -128,21 +128,21 @@ class ProfileSpotsViewController: UIViewController {
         
         if let newSpot = notification.userInfo?.first?.value as? MapSpot {
             
-            self.profileVC.removeEmptyState()
-            self.spotsList.append(newSpot)
-            self.addSpotCoordinate(spot: newSpot)
-            self.spotsCollection.reloadData()
+            profileVC.removeEmptyState()
+            spotsList.append(newSpot)
+            addSpotCoordinate(spot: newSpot)
+            spotsCollection.reloadData()
             let interval = NSDate().timeIntervalSince1970
             
-            self.updateCityList(spot: newSpot, seconds: Int64(interval))
+            updateCityList(spot: newSpot, seconds: Int64(interval))
         }
     }
     
     @objc func notifyEditSpot(_ notification: NSNotification) {
         if let editSpot = notification.userInfo?.first?.value as? MapSpot {
             if let index = self.spotsList.firstIndex(where: {$0.id == editSpot.id}) {
-                self.spotsList[index] = editSpot
-                self.spotsCollection.reloadData()
+                spotsList[index] = editSpot
+                spotsCollection.reloadData()
             }
             if let anno = spotAnnotations.first(where: {$0.key == editSpot.id}) {
                 anno.value.coordinate = CLLocationCoordinate2D(latitude: editSpot.spotLat, longitude: editSpot.spotLong)
@@ -153,13 +153,13 @@ class ProfileSpotsViewController: UIViewController {
     @objc func notifyDeleteSpot(_ notification: NSNotification) {
         
         if let spotID = notification.userInfo?.first?.value as? String {
-            if let index = self.spotsList.firstIndex(where: {$0.id == spotID}) {
+            if let index = spotsList.firstIndex(where: {$0.id == spotID}) {
                 let spotCity = spotsList[index].city
-                self.spotsList.remove(at: index)
+                spotsList.remove(at: index)
                 if !spotsList.contains(where: {$0.city == spotCity}) {
-                    self.cityList.removeAll(where: {$0.city == spotCity})
+                    cityList.removeAll(where: {$0.city == spotCity})
                 }
-                self.spotsCollection.reloadData()
+                spotsCollection.reloadData()
             }
             
             if let aIndex = spotAnnotations.firstIndex(where: {$0.key == spotID}) {
@@ -287,13 +287,17 @@ class ProfileSpotsViewController: UIViewController {
             self.spotsIndicator.stopAnimating()
             
             self.spotsCollection.reloadData()
-            self.spotsCollection.performBatchUpdates(nil, completion: {
+            self.spotsCollection.performBatchUpdates(nil, completion: { [weak self]
                 (result) in
+                guard let self = self else { return }
                 if self.profileVC.selectedIndex == 0 { self.profileVC.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: max(UIScreen.main.bounds.height - self.profileVC.sec0Height, self.spotsCollection.contentSize.height + 300)) }
             })
             
             if self.profileVC.userInfo != nil && self.profileVC.userInfo.id == self.uid {
-                self.spotsList.count > 0 ? self.profileVC.removeEmptyState() : self.profileVC.addEmptyState()
+                self.profileVC.userInfo.spotsList = self.spotsList.map({$0.id ?? ""})
+                self.mapVC.userInfo.spotsList = self.spotsList.map({$0.id ?? ""})
+                if self.spotsList.count > 0 { self.profileVC.removeEmptyState(); self.profileVC.mapVC.checkForTutorial(index: 3) }
+                else { self.profileVC.addEmptyState() }
             }
         }
     }
@@ -437,7 +441,7 @@ extension ProfileSpotsViewController: UICollectionViewDelegate, UICollectionView
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard let cell = cell as? SpotCollectionCell else { return }
-        cell.cachedImage.spotID = cell.spotObject.id!
+        cell.cachedImage.spotID = cell.spotObject.id ?? "" 
         cell.spotImage.sd_cancelCurrentImageLoad()
         cell.spotImage.image = UIImage()
     }

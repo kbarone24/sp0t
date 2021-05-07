@@ -47,6 +47,8 @@
 	<string>sp0t uses your location to find Spots near you</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow sp0t to access your photos so you can share them</string>
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<true/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>SFCamera-Semibold.otf</string>

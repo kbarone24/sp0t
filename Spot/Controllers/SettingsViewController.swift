@@ -142,7 +142,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
                 fatalError()
             }}))
         
-        self.present(alert, animated: true, completion: nil)
+        present(alert, animated: true, completion: nil)
         
     }
     
@@ -166,9 +166,8 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
     }
     
     @objc func editProfile(_ sender: UIButton) {
-        dismiss(animated: false) {
-            self.profileVC.editProfile()
-        }
+        profileVC.editProfile()
+        dismiss(animated: false, completion: nil)
     }
     
     @objc func openFindFriends(_ sender: UIButton) {

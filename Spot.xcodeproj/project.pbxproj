@@ -281,9 +281,9 @@
 		8C3209F126168A5900FB32BA /* ReviewPublicController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3209F026168A5900FB32BA /* ReviewPublicController.swift */; };
 		8C3209F226168A5900FB32BA /* ReviewPublicController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3209F026168A5900FB32BA /* ReviewPublicController.swift */; };
 		8C3209F326168A5900FB32BA /* ReviewPublicController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3209F026168A5900FB32BA /* ReviewPublicController.swift */; };
-		8C320A242616B1BE00FB32BA /* TutorialCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C320A232616B1BE00FB32BA /* TutorialCell.swift */; };
-		8C320A252616B1BE00FB32BA /* TutorialCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C320A232616B1BE00FB32BA /* TutorialCell.swift */; };
-		8C320A262616B1BE00FB32BA /* TutorialCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C320A232616B1BE00FB32BA /* TutorialCell.swift */; };
+		8C3351892645AFDE00141365 /* TutorialCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3351882645AFDE00141365 /* TutorialCell.swift */; };
+		8C33518A2645AFDE00141365 /* TutorialCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3351882645AFDE00141365 /* TutorialCell.swift */; };
+		8C33518B2645AFDE00141365 /* TutorialCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3351882645AFDE00141365 /* TutorialCell.swift */; };
 		8C342073260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */; };
 		8C342074260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */; };
 		8C342075260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */; };
@@ -441,7 +441,7 @@
 		8C2EB0D725E97E6400698D8F /* VideoConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoConverter.swift; sourceTree = "<group>"; };
 		8C3209D42614DB6500FB32BA /* ManageAccountController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageAccountController.swift; sourceTree = "<group>"; };
 		8C3209F026168A5900FB32BA /* ReviewPublicController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewPublicController.swift; sourceTree = "<group>"; };
-		8C320A232616B1BE00FB32BA /* TutorialCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialCell.swift; sourceTree = "<group>"; };
+		8C3351882645AFDE00141365 /* TutorialCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TutorialCell.swift; sourceTree = "<group>"; };
 		8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsOverviewController.swift; sourceTree = "<group>"; };
 		8C342079261140FA0017CB2F /* FindFriendsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindFriendsController.swift; sourceTree = "<group>"; };
 		8C3420AF261273140017CB2F /* SendInvitesController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendInvitesController.swift; sourceTree = "<group>"; };
@@ -619,9 +619,9 @@
 				597072F924291992008A481A /* AVSpotCamera.swift */,
 				593AC540243CE36400C08237 /* GlobalFunctions.swift */,
 				59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */,
+				8C3351882645AFDE00141365 /* TutorialCell.swift */,
 				5992A5A9245B666E009DAA8B /* CircleProgress.swift */,
 				8C2EB0D725E97E6400698D8F /* VideoConverter.swift */,
-				8C320A232616B1BE00FB32BA /* TutorialCell.swift */,
 				59FCF5BE24734AC10012207D /* CoreDataModels */,
 			);
 			path = Resources;
@@ -1137,7 +1137,7 @@
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
 				5992A5AA245B666E009DAA8B /* CircleProgress.swift in Sources */,
 				8C342073260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */,
-				8C320A242616B1BE00FB32BA /* TutorialCell.swift in Sources */,
+				8C3351892645AFDE00141365 /* TutorialCell.swift in Sources */,
 				8C3420B726127BA30017CB2F /* InviteContact.swift in Sources */,
 				593AC545243E56D400C08237 /* LandingPageController.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */,
@@ -1235,7 +1235,7 @@
 				59CF4D942448F70A00855B26 /* MapPickerController.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF59260C413F00349091 /* ConfirmCodeController.swift in Sources */,
-				8C320A252616B1BE00FB32BA /* TutorialCell.swift in Sources */,
+				8C33518A2645AFDE00141365 /* TutorialCell.swift in Sources */,
 				59F4701F2368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				59E0CCFB25ACDCC8006587AF /* CityUser.swift in Sources */,
 				592EADDE2333F4190076FBC5 /* EditSpotController.swift in Sources */,
@@ -1326,7 +1326,7 @@
 				59CF4D952448F70A00855B26 /* MapPickerController.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF5A260C413F00349091 /* ConfirmCodeController.swift in Sources */,
-				8C320A262616B1BE00FB32BA /* TutorialCell.swift in Sources */,
+				8C33518B2645AFDE00141365 /* TutorialCell.swift in Sources */,
 				59F470202368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				59E0CCFC25ACDCC8006587AF /* CityUser.swift in Sources */,
 				592EADDF2333F4190076FBC5 /* EditSpotController.swift in Sources */,
@@ -1532,7 +1532,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 22;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1600,9 +1600,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 22;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
@@ -1655,7 +1655,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE_SPECIFIER = "sp0t ios profile";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -1670,8 +1670,10 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = H5355TZ8Q3;
+				DEVELOPMENT_TEAM = S7MW4WDQQA;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = SpotTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1759,6 +1761,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "Spot/Resources/SpotTests-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -1774,8 +1778,10 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = H5355TZ8Q3;
+				DEVELOPMENT_TEAM = S7MW4WDQQA;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = SpotTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1863,6 +1869,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "Spot/Resources/SpotTests-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1876,6 +1884,8 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1967,6 +1977,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "Spot/Resources/SpotUITests-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -1981,6 +1993,8 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2072,6 +2086,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "Spot/Resources/SpotUITests-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

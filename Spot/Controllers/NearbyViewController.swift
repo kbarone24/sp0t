@@ -133,9 +133,7 @@ class NearbyViewController: UIViewController {
         
         mainScroll.removeGestureRecognizer(mainScroll.panGestureRecognizer)
         mainScroll.addGestureRecognizer(shadowScroll.panGestureRecognizer)
-        
-        cityTags = [Tag(name: "Art"), Tag(name: "Active"), Tag(name: "Chill"), Tag(name: "Coffee"), Tag(name: "Drink"), Tag(name: "Eat"), Tag(name: "History"), Tag(name: "Nature"), Tag(name: "Shop"), Tag(name: "Stay"), Tag(name: "Sunset"), Tag(name: "Weird")]
-        
+                
         view.backgroundColor = nil
         loadSearchBar()
         loadScrollView()
@@ -220,8 +218,8 @@ class NearbyViewController: UIViewController {
     
     func loadScrollView() {
         
-        let pullLine = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 23, y: 0, width: 46, height: 14.5))
-        pullLine.contentEdgeInsets = UIEdgeInsets(top: 9, left: 5, bottom: 0, right: 5)
+        let pullLine = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 21.5, y: 0, width: 43, height: 14.5))
+        pullLine.contentEdgeInsets = UIEdgeInsets(top: 7, left: 5, bottom: 0, right: 5)
         pullLine.setImage(UIImage(named: "PullLine"), for: .normal)
         pullLine.addTarget(self, action: #selector(lineTap(_:)), for: .touchUpInside)
         mainScroll.addSubview(pullLine)
@@ -259,7 +257,7 @@ class NearbyViewController: UIViewController {
         mainScroll.addSubview(cityIcon)
         
         cityName = UILabel(frame: CGRect(x: cityIcon.frame.maxX + 8, y: searchBarContainer.frame.maxY + 13, width: UIScreen.main.bounds.width - 28, height: 20))
-        cityName.font = UIFont(name: "SFCamera-Semibold", size: 16)
+        cityName.font = UIFont(name: "SFCamera-Semibold", size: 17)
         cityName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         mainScroll.addSubview(self.cityName)
         
@@ -274,12 +272,12 @@ class NearbyViewController: UIViewController {
         mainScroll.addSubview(changeCityButton)
         
         /// set up filters and spots table
-        self.loadMainScroll()
+        loadMainScroll()
         
-        if self.mapVC.currentLocation == nil { return }
+        if mapVC.currentLocation == nil { return }
         
         /// map hasn't fetched friends list yet
-        if self.mapVC.friendsList.isEmpty || mapVC.friendsList.count < mapVC.friendIDs.count {
+        if !mapVC.friendsLoaded {
             friendsEmpty = true
             return
         }
@@ -593,7 +591,7 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
                 return CGSize(width: moreWidth, height: 34)
             }
 
-            let tag = cityTags[indexPath.row]
+            guard let tag = cityTags[safe: indexPath.row] else { return (CGSize(width: 100, height: 34)) }
             let width = getWidth(name: tag.name, spotCount: tag.spotCount)
             return CGSize(width: width, height: 34)
         }
@@ -809,6 +807,7 @@ extension NearbyViewController: UISearchBarDelegate {
         
         searchBar.placeholder = citiesTable.isHidden ? " Search for spots and friends" : " Search cities"
         let selectedTable = citiesTable.isHidden ? resultsTable! : citiesTable!
+        if citiesTable.isHidden && !selectedTable.isHidden { return } /// don't want to show animation when search bar editing already began
         
         selectedTable.alpha = 0.0
         selectedTable.isHidden = false
@@ -846,9 +845,8 @@ extension NearbyViewController: UISearchBarDelegate {
     func animateToFull() {
 
         UIView.animate(withDuration: 0.2) {
-            let minY: CGFloat = self.postVC != nil ? self.mapVC.tabBarOpenY : 0
             let searchBarY: CGFloat = self.mapVC.largeScreen ? 55 : 25
-            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: minY, width: self.view.frame.width, height: UIScreen.main.bounds.height)
+            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: UIScreen.main.bounds.height)
             self.searchBarContainer.frame = CGRect(x: 0, y: searchBarY, width: UIScreen.main.bounds.width, height: 60)
             self.searchBar.frame =  CGRect(x: self.searchBar.frame.minX, y: 11, width: self.searchBar.frame.width, height: self.searchBar.frame.height)
             self.resultsTable.frame = CGRect(x: 0, y: self.searchBarContainer.frame.maxY, width: UIScreen.main.bounds.width, height: 300)
@@ -1080,6 +1078,8 @@ extension NearbyViewController: UISearchBarDelegate {
     
     func reloadResultsTable() {
         
+        let searchTextLocal = searchTextGlobal /// check for last minute text change
+        
         searchRefreshCount += 1
         if searchRefreshCount < 3 { return }
         
@@ -1109,9 +1109,13 @@ extension NearbyViewController: UISearchBarDelegate {
                 
                 if spot.postFetchID != "" {
                     var newSpot = spot
-                    self.db.collection("posts").document(spot.postFetchID).getDocument { (doc, err) in
+                    self.db.collection("posts").document(spot.postFetchID).getDocument { [weak self] (doc, err) in
+
+                        guard let self = self else { return }
                         
                         do {
+                            
+                            if searchTextLocal != self.searchTextGlobal { return }
                             let postInfo = try doc?.data(as: MapPost.self)
                             guard let info = postInfo else { counter += 1; if counter == topIDs.count { self.finishResultsLoad() }; return }
                             
@@ -1145,9 +1149,7 @@ extension NearbyViewController: UISearchBarDelegate {
     func runSpotsQuery(searchText: String) {
         
         let spotsRef = db.collection("spots")
-        let maxVal = "\(searchText.lowercased())uf8ff"
-        
-        let spotsQuery = spotsRef.whereField("lowercaseName", isGreaterThanOrEqualTo: searchText.lowercased()).whereField("lowercaseName", isLessThanOrEqualTo: maxVal as Any)
+        let spotsQuery = spotsRef.whereField("searchKeywords", arrayContains: searchText.lowercased()).limit(to: 10)
         
         spotsQuery.getDocuments{ [weak self] (snap, err) in
             
@@ -1249,8 +1251,7 @@ extension NearbyViewController: UISearchBarDelegate {
     func runNameQuery(searchText: String) {
         /// query names for matches
         let userRef = db.collection("users")
-        let maxVal = "\(searchText.lowercased())uf8ff"
-        let nameQuery = userRef.whereField("lowercaseName", isGreaterThanOrEqualTo: searchText.lowercased()).whereField("lowercaseName", isLessThanOrEqualTo: maxVal as Any)
+        let nameQuery = userRef.whereField("nameKeywords", arrayContains: searchText.lowercased()).limit(to: 5)
         
         nameQuery.getDocuments{ [weak self] (snap, err) in
             
@@ -1287,9 +1288,8 @@ extension NearbyViewController: UISearchBarDelegate {
     func runUsernameQuery(searchText: String) {
         ///query usernames for matches
         let userRef = db.collection("users")
-        let maxVal = "\(searchText.lowercased())uf8ff"
-        let usernameQuery = userRef.whereField("username", isGreaterThanOrEqualTo: searchText.lowercased()).whereField("username", isLessThanOrEqualTo: maxVal as Any)
-        
+        let usernameQuery = userRef.whereField("usernameKeywords", arrayContains: searchText.lowercased()).limit(to: 5)
+
         usernameQuery.getDocuments { [weak self] (snap, err) in
             
             guard let self = self else { return }
@@ -1505,10 +1505,7 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         /// remove city spots from each tag object
-        for i in 0...cityTags.count - 1 {
-            cityTags[i].spotCount = 0
-            cityTags[i].selected = false
-        }
+        cityTags.removeAll()
         
         /// remove filters
         selectedUserID = nil
@@ -1736,6 +1733,13 @@ class NearbyTagCell: UICollectionViewCell {
         tagPic.layer.masksToBounds = true
         tagPic.contentMode = .scaleAspectFit
         tagPic.image = tag.image
+        
+        /// fetch tag image from database
+        if tagPic.image == UIImage() && tag.imageURL != "" {
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+            tagPic.sd_setImage(with: URL(string: tag.imageURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+        }
+        
         addSubview(tagPic)
 
         tagName = UILabel(frame: CGRect(x: tagPic.frame.maxX + 5, y: 9, width: self.bounds.width, height: 16))
@@ -1760,7 +1764,9 @@ class NearbyTagCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
+        super.prepareForReuse()
         isSelected = false
+        if tagPic != nil { tagPic.sd_cancelCurrentImageLoad() }
     }
 }
 
@@ -2074,6 +2080,12 @@ class NearbySpotsHeader: UIView {
             tagView.image = tag.image
             minX -= 32
             filterView.addSubview(tagView)
+            
+            /// load image from DB
+            if tagView.image == UIImage() && tag.imageURL != "" {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+                tagView.sd_setImage(with: URL(string: tag.imageURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            }
         }
      
         if selectedUser.user.imageURL != "" {
@@ -2365,7 +2377,7 @@ extension NearbyViewController {
         }
         
         nearbyCities.sort(by: {(!$0.activeCity && !$1.activeCity) ? $0.score > $1.score : $0.activeCity && !$1.activeCity})
-            DispatchQueue.main.async { self.citiesTable.reloadData() }
+        DispatchQueue.main.async { print("reload data"); self.citiesTable.reloadData() }
         nearbyCityCounter = 0
     }
     
@@ -2411,6 +2423,10 @@ extension NearbyViewController {
                         for tag in info.tags {
                             if let index = self.cityTags.firstIndex(where: {$0.name == tag}) {
                                 self.cityTags[index].spotCount += 1
+                            } else {
+                                let newTag = Tag(name: tag)
+                                newTag.spotCount = 1
+                                self.cityTags.append(newTag)
                             }
                         }
                                                 
@@ -2426,27 +2442,45 @@ extension NearbyViewController {
                     
                     spotCount += 1
                     if spotCount == snap.documents.count {
-                        
-                        /// resize collections to show correct number of cells
-                        self.getUsersSize()
-                        self.getTagsSize()
-                        
-                        /// get spot scores to rank by "TOP"
-                        self.getSpotScores()
+                        self.checkForBlankTagImages()
                     }
                     
                 } catch {
                     
                     spotCount += 1
                     if spotCount == snap.documents.count {
-                                                
-                        self.getUsersSize()
-                        self.getTagsSize()
-                        self.getSpotScores()
+                        self.checkForBlankTagImages()
                     }
                 }
             }
         })
+    }
+    
+    /// check if need to load tag URL from database
+    func checkForBlankTagImages() {
+        
+        if cityTags.count == 0 { getUsersSize(); getTagsSize(); getSpotScores(); return }
+        var tagCount = 0
+
+        for i in 0...cityTags.count - 1 {
+            
+            let tag = cityTags[i]
+            if tag.image == UIImage() {
+                tag.getImageURL { [weak self] url in
+                    guard let self = self else { return }
+                    self.cityTags[i].imageURL = url
+                    tagCount += 1; if tagCount == self.cityTags.count { self.getUsersSize(); self.getTagsSize(); self.getSpotScores() }
+                }
+                
+            } else {
+                tagCount += 1
+                if tagCount == cityTags.count {
+                    self.getUsersSize()
+                    self.getTagsSize()
+                    self.getSpotScores()
+                }
+            }
+        }
     }
     
     func getFriendVisitors(visitorList: [String]) -> Int {
@@ -2497,7 +2531,20 @@ extension NearbyViewController {
                         let extraCount = above0.count - halfScreenUserCount
                         let moreWidth = getMoreWidth(extraCount: extraCount)
                         usersMoreNeeded = true
-                        if lineWidth + moreWidth + 11 < UIScreen.main.bounds.width { halfScreenUserCount += 1 }
+                        
+                        /// room for an extra user cell if more won't cause line overflow
+                        if lineWidth + moreWidth + 11 < UIScreen.main.bounds.width {
+                            halfScreenUserCount += 1
+                            
+                        } else {
+                            /// another user cell would have fit, but the more cell won't fit. -2 because the user that we're replacing is the one that is an additional user back from where the current user would be
+                            guard let previousUser = above0[safe: halfScreenUserCount - 2] else { return }
+                            let previousWidth = getWidth(name: previousUser.user.username, spotCount: previousUser.filteredCount)
+                            if lineWidth - previousWidth + moreWidth + 11 > UIScreen.main.bounds.width {
+                                halfScreenUserCount -= 1
+                            }
+                        }
+                        
                         stopIncrementingHalf = true
                     }
                     
@@ -2582,7 +2629,19 @@ extension NearbyViewController {
                     let moreWidth = getMoreWidth(extraCount: extraCount)
                     tagsMoreNeeded = true
                     
-                    if lineWidth + moreWidth + 11 < UIScreen.main.bounds.width { halfScreenTagsCount += 1 }
+                    if lineWidth + moreWidth + 11 < UIScreen.main.bounds.width {
+                        halfScreenTagsCount += 1
+                        
+                    } else {
+                        /// another tag cell would have fit, but the more cell won't fit. -2 because the tag that we're replacing is the one that is an additional tag back from where the current tag would be
+                        guard let previousTag = above0[safe: halfScreenTagsCount - 2] else { return }
+                        let previousWidth = getWidth(name: previousTag.name, spotCount: previousTag.spotCount)
+                        if lineWidth - previousWidth + moreWidth + 11 > UIScreen.main.bounds.width {
+                            halfScreenTagsCount -= 1
+                        }
+                    }
+                    
+                    
                     stopIncrementingHalf = true
                 }
 

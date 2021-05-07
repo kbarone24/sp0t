@@ -38,6 +38,8 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     
     lazy var sentFromPending = false
     lazy var active = false
+    lazy var friendsEmpty = false
+    lazy var addedNewPost = false
     
     //finish passing method reloads data if friend request action was taken in profile
     
@@ -47,7 +49,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         NotificationCenter.default.addObserver(self, selector: #selector(notifyAccept(_:)), name: acceptNotificationName, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyReject(_:)), name: deleteNotificationName, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateUser(_:)), name: NSNotification.Name("InitialUserLoad"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name("FriendsListLoad"), object: nil)
 
         NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [unowned self] notification in
             ///stop indicator freeze after view enters background
@@ -58,8 +60,12 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         /// causes profile to freeze if its already been scrolled past 0
         let pushManager = PushNotificationManager(userID: uid)
         pushManager.registerForPushNotifications()
-
-        if mapVC.userInfo == nil { return } /// wait to run requests on user load
+        
+        /// wait to run requests after userInfo and friendsList has loaded
+        if !mapVC.friendsLoaded {
+            friendsEmpty = true
+            return
+        }
         
         getNotifications(refresh: false)
         getFriendRequests()
@@ -76,9 +82,11 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
         
         active = true
-        if tableView != nil {
-            DispatchQueue.main.async { self.tableView.reloadData() }
-            getNotifications(refresh: true)
+        
+        /// if appended a new notification while view was in the background, scroll to first row
+        if addedNewPost {
+            scrollToFirstRow()
+            addedNewPost = false
         }
         
         if children.count != 0 { return }
@@ -99,7 +107,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     func setUpViews() {
         view.backgroundColor = UIColor(named: "SpotBlack")
         
-        tableView = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - mapVC.tabBarOpenY))
+        tableView = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         tableView.register(FriendRequestCell.self, forCellReuseIdentifier: "FriendRequestCell")
         tableView.register(ContentCell.self, forCellReuseIdentifier: "ContentCell")
@@ -143,10 +151,11 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         }
     }
     
-    func updateContentPosts() {
-        // update content posts because there's no active listener attached to getcontentposts
-        for noti in contentNotificationList {
-            getContentPosts(notiID: noti.notiID, userID: noti.userInfo.id ?? "", postID: noti.post.id ?? "", timestamp: noti.post.timestamp, type: noti.type, originalPoster: noti.originalPoster)
+    func scrollToFirstRow() {
+        if tableView != nil && notificationList.count > 1 {
+            DispatchQueue.main.async { 
+                self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
+            }
         }
     }
     
@@ -229,6 +238,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                     if type == "friendRequest" {
                         //set up friend request cell for accepted request
                         self.addFriendRequest(notiID: document.documentID, userID: senderID, timestamp: timestamp, accepted: true)
+                        
                     } else {
                         let postID = document.get("postID") as! String
                         let originalPoster = document.get("originalPoster") as? String ?? "someone"
@@ -283,11 +293,13 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 self.removeRefresh()
                 if self.refresh == .refreshing { self.refresh = .yesRefresh }
                 DispatchQueue.main.async { self.tableView.reloadData() }
+                if !self.active { self.addedNewPost = true }
             }
         }
     }
     
     func getUserInfo(userID: String, mapVC: MapViewController, completion: @escaping (_ user: UserProfile) -> Void) {
+        
         let db: Firestore! = Firestore.firestore()
         
         if let user = mapVC.friendsList.first(where: {$0.id == userID}) {
@@ -299,7 +311,6 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                     let userInfo = try doc!.data(as: UserProfile.self)
                     guard var info = userInfo else { return }
                     info.id = doc!.documentID
-                    
                     completion(info)
                 } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "")); return }
             }
@@ -422,11 +433,13 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     }
     
     func markNotisSeen() {
+        
         let notiRef = db.collection("users").document(uid).collection("notifications")
         let query = notiRef.whereField("seen", isEqualTo: false)
         
         query.getDocuments { (docs, err) in
             if err != nil { return }
+            if docs!.count > 0 { }
             for doc in docs!.documents {
                 self.db.collection("users").document(self.uid).collection("notifications").document(doc.documentID).updateData(["seen" : true])
             }
@@ -503,8 +516,9 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         }
     }
     
-    @objc func updateUser(_ sender: NSNotification) {
+    @objc func notifyFriendsLoad(_ sender: NSNotification) {
         /// run functions once map got userinfo
+        if !friendsEmpty { return }
         getNotifications(refresh: false)
         getFriendRequests()
         removeSeen()
@@ -583,6 +597,7 @@ class FriendRequestCell: UITableViewCell {
         
         self.backgroundColor = UIColor(named: "SpotBlack")
         self.selectionStyle = .none
+        self.contentView.isUserInteractionEnabled = false
         
         self.userInfo = request.userInfo
         self.username = currentUsername
@@ -769,6 +784,8 @@ class ContentCell: UITableViewCell {
         
         self.backgroundColor = UIColor(named: "SpotBlack")
         self.selectionStyle = .none
+        self.contentView.isUserInteractionEnabled = false
+        
         self.userInfo = notification.userInfo
         self.notification = notification
         

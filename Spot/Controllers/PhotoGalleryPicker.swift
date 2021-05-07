@@ -11,12 +11,13 @@ import UIKit
 import Firebase
 import Photos
 import Mixpanel
+import PhotosUI
 
 protocol PhotoGalleryDelegate {
     func FinishPassing(images: [(UIImage, Int, CLLocation)])
 }
 
-class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, PHPhotoLibraryChangeObserver {
     
     let collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
     lazy var layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout.init()
@@ -51,6 +52,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     
     deinit {
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ScrollGallery"), object: nil)
+         PHPhotoLibrary.shared().unregisterChangeObserver(self)
     }
     
     override func viewDidLoad() {
@@ -88,10 +90,21 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         getGalleryImages()
         
         NotificationCenter.default.addObserver(self, selector: #selector(scrollToTop(_:)), name: NSNotification.Name("ScrollGallery"), object: nil)
+        
+        
+        guard let containerVC = self.parent as? PhotosContainerController else { return }
+        if containerVC.limited {
+            PHPhotoLibrary.shared().register(self) /// eventually probably want to do this after
+            showLimitedAlert()
+        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        
+        /// reset nav bar colors (only set if limited picker was shown)
+        UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .normal)
+        UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .highlighted)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -105,11 +118,11 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     }
     
     func getGalleryImages() {
+        
         let fetchOptions = PHFetchOptions()
         fetchOptions.fetchLimit = 1000
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
-        
         
         guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
         
@@ -178,6 +191,33 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             }
         }
         }
+    }
+    
+    func showLimitedAlert() {
+        
+        let alert = UIAlertController(title: "Allow sp0t to access your photos", message: "You've allowed access to a limited number of photos", preferredStyle: .alert)
+        
+        alert.addAction(UIAlertAction(title: "Allow access to all photos", style: .default, handler: { action in
+                                        switch action.style{
+                                        case .default:
+                                            UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil)
+                                        default: return
+                                        }}))
+        
+        alert.addAction(UIAlertAction(title: "Select more photos", style: .default, handler: { action in
+                                        switch action.style{
+                                        case .default:
+                                            UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.systemBlue], for: .normal)
+                                            UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.systemBlue], for: .highlighted)
+                                            UINavigationBar.appearance().backgroundColor = UIColor(named: "SpotBlack")
+                                            PHPhotoLibrary.shared().presentLimitedLibraryPicker(from: self)
+                                        default: return
+                                        }}))
+        
+        alert.addAction(UIAlertAction(title: "Keep current selection", style: .default, handler: nil))
+        
+        self.present(alert, animated: true, completion: nil)
+
     }
     
     @objc func maskTap(_ sender: UITapGestureRecognizer) {
@@ -468,6 +508,20 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                     self.fullGallery = true
                 }
                 self.fetchAssets(indexSet: indexSet, first: false)
+            }
+        }
+    }
+    
+    // for .limited photoGallery access
+    func photoLibraryDidChange(_ changeInstance: PHChange) {
+
+        DispatchQueue.main.async {
+         
+            if changeInstance.changeDetails(for: self.assetsFirst) != nil {
+              /// couldn't get change handler to work so just reload everything for now
+                self.imageObjects.removeAll()
+                self.collectionView.reloadData()
+                self.getGalleryImages()
             }
         }
     }

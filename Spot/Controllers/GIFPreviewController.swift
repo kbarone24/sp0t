@@ -52,7 +52,7 @@ class GIFPreviewController: UIViewController {
         
         view.backgroundColor = UIColor(named: "SpotBlack")
         
-        let cameraAspect: CGFloat = 1.77778
+        let cameraAspect: CGFloat = 1.72267
         var cameraWidth = UIScreen.main.bounds.width - 42
         var cameraHeight = cameraWidth * cameraAspect
 
@@ -65,7 +65,7 @@ class GIFPreviewController: UIViewController {
         var minX: CGFloat = 21
         if cameraHeight > viewHeight - 107 {
             cameraHeight = viewHeight - 107
-            cameraWidth = cameraHeight/1.7778
+            cameraWidth = cameraHeight/1.72267
             minX = (UIScreen.main.bounds.width - cameraWidth) / 2
         }
         

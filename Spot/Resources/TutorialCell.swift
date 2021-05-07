@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 import Mixpanel
-
+/*
 class TutorialCell: UITableViewCell {
     
     var swipeNextLabel: UILabel!
@@ -331,7 +331,7 @@ class TutorialCell: UITableViewCell {
             return
         }
     }
-}
+}*/
 
 
 class PostFriendsCell: UITableViewCell {

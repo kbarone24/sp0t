@@ -130,6 +130,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         alivesIndicator.startAnimating()
         aliveCollection.addSubview(alivesIndicator)
         
+        /// failed upload collection hidden by default (height: 0)
         failedUploadCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0)
         failedUploadCollection.backgroundColor = UIColor(named: "SpotBlack")
         failedUploadCollection.register(FailedUploadCell.self, forCellWithReuseIdentifier: "FailedUploadCell")
@@ -263,6 +264,8 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         fetchRequest.sortDescriptors = [timeSort]
         fetchRequest.predicate = NSPredicate(format: "uid == %@", self.uid)
         
+        var counter = 0
+        
         DispatchQueue.global().async {
             do {
                 
@@ -270,9 +273,10 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
                 if drafts.count == 0 { self.removeAlives() }
                 
                 for draft in drafts {
-                    var gifImages: [UIImage] = []
                     
-                    if draft.images?.count == 0 { continue }
+                    var draftImages: [UIImage] = []
+                    
+                    if draft.images?.count == 0 { counter += 0; if counter == drafts.count { self.finishAlivesLoad() } }
                     
                     let model = draft.images! as! Set<ImageModel>
                     
@@ -283,7 +287,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
                         let im = mod[i]
                         let imageData = im.imageData
                         let image = UIImage(data: imageData! as Data) ?? UIImage()
-                        gifImages.append(image)
+                        draftImages.append(image)
                     }
                     
                     let timestamp = draft.id
@@ -297,25 +301,29 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
                         draftLocation = CLLocation(latitude: postLat, longitude: postLong)
                     }
 
-                    self.aliveDrafts.append((gifImages, timestamp, draftLocation))
+                    self.aliveDrafts.append((draftImages, timestamp, draftLocation))
                     
-                    if draft == drafts.last {
-                        DispatchQueue.main.async {
-                            
-                            self.aliveCollection.reloadData()
-                            
-                            self.aliveCollection.performBatchUpdates(nil) { (result) in
-                                self.alivesIndicator.stopAnimating()
-                                self.shadowScroll.contentSize = CGSize(width: self.shadowScroll.contentSize.width, height: self.aliveCollection.frame.minY + self.aliveCollection.contentSize.height + 150) /// 150 accounts for navBar + extra space on bottom
-                            }
-                        }
-                    }
+                    counter += 1
+                    if counter == drafts.count { self.finishAlivesLoad() }
                 }
+                
             } catch let error as NSError {
                 print("Could not fetch. \(error), \(error.userInfo)")
             }
         }
     }
+    
+    func finishAlivesLoad() {
+        
+        DispatchQueue.main.async {
+            self.aliveCollection.reloadData()
+            self.aliveCollection.performBatchUpdates(nil) { (result) in
+                self.alivesIndicator.stopAnimating()
+                self.shadowScroll.contentSize = CGSize(width: self.shadowScroll.contentSize.width, height: self.aliveCollection.frame.minY + self.aliveCollection.contentSize.height + 150) /// 150 accounts for navBar + extra space on bottom
+            }
+        }
+    }
+    
     
     func getFailedUploads() {
         
@@ -343,12 +351,11 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
                 if self.failedPosts.count == 0 { self.uploadsFetched += 1 }
                 
                 for post in failedPosts {
-                    
+                    /// uploads fetched checks to make both failed spots and failed posts have been fetched before adding empty state
                     if post == failedPosts.last { self.uploadsFetched += 1 }
+                    
                     ///if add-to-spot mode, only get failed uploads that are posts to this spot
-                    if self.spotObject != nil {
-                        if post.spotID != self.spotObject.id { continue }
-                    }
+                    if self.spotObject != nil {  if post.spotID != self.spotObject.id { continue } }
                     
                     let spotName = post.spotName
                     let timestampID = post.timestamp
@@ -377,7 +384,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         }
         
         /// only get failed spot uploads if not in add-to-spot flow
-        if self.spotObject != nil { return }
+        if self.spotObject != nil { self.uploadsFetched += 1; return }
         
         let spotsRequest = NSFetchRequest<SpotDraft>(entityName: "SpotDraft")
         spotsRequest.relationshipKeyPathsForPrefetching = ["images"]
@@ -388,6 +395,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         
         
         DispatchQueue.global().async {
+
             do {
                 let failedSpots = try managedContext.fetch(spotsRequest)
                 self.failedSpots = failedSpots
@@ -475,8 +483,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
     }
     
     func deleteDraft() {
-        
-        print("delete draft")
+            
         Mixpanel.mainInstance().track(event: "DraftsDeletedUpload")
         
         let draft = aliveDrafts[selectedItem]
@@ -727,8 +734,8 @@ extension DraftsViewController: UICollectionViewDelegate, UICollectionViewDataSo
             
             let draft = aliveDrafts[indexPath.row]
                         
+            /// drafts can only be 1 or 5 images right now because always saved from camera
             if draft.0.count == 5 {
-                
                 DispatchQueue.main.async { self.previewView.animationImages = draft.0; self.previewView.animateGIF(directionUp: true, counter: 0) }
                 
             } else { previewView.image = draft.0[0] }
@@ -842,9 +849,8 @@ extension DraftsViewController {
         }
         
         self.uploadPostImage(uploadImages, postID: postID) { (imageURLs) in
-            if imageURLs.isEmpty {
-                self.uploadFailed(); return
-            }
+            
+            if imageURLs.isEmpty {  self.uploadFailed(); return }
             
             let interval = NSDate().timeIntervalSince1970
             let myTimeInterval = TimeInterval(interval)
@@ -902,7 +908,8 @@ extension DraftsViewController {
             
             self.db.collection("posts").document(postID).setData(postValues)
             self.db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
-                                
+            self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: postID)
+
             /// add to users spotslist if not already there
             if post.visitorList != nil && post.visitorList!.contains(where: {$0 == self.uid}) {
                 self.db.collection("users").document(self.uid).collection("spotsList").document(post.spotID!).updateData(["postsList" : FieldValue.arrayUnion([postID])])
@@ -986,9 +993,8 @@ extension DraftsViewController {
         }
 
         self.uploadPostImage(uploadImages, postID: postID) { (imageURLs) in
-            if imageURLs.isEmpty {
-                self.uploadFailed(); return
-            }
+            
+            if imageURLs.isEmpty { self.uploadFailed(); return }
 
             self.checkForPOI(spot: spot) { (duplicateID) in
                 
@@ -996,8 +1002,8 @@ extension DraftsViewController {
                 let myTimeInterval = TimeInterval(interval)
                 let timestamp = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
                 
-                /// spot.privacyLevel really refers to post privacy here
                 let spotPrivacy = spot.postToPOI ? "public" : spot.privacyLevel ?? "friends"
+                let postPrivacy = spot.privacyLevel ?? "friends"
                 
                 var finalInvites = spot.inviteList ?? []
                 if spot.privacyLevel == "invite" { finalInvites.append(self.uid) }
@@ -1013,7 +1019,7 @@ extension DraftsViewController {
                                   "gif": spot.gif,
                                   "postLat": spot.spotLat,
                                   "postLong": spot.spotLong,
-                                  "privacyLevel": spotPrivacy,
+                                  "privacyLevel": postPrivacy,
                                   "imageURLs" : imageURLs,
                                   "spotName" : spot.spotName ?? "",
                                   "createdBy": self.uid ,
@@ -1024,7 +1030,7 @@ extension DraftsViewController {
                                   "spotLat": spot.spotLat,
                                   "spotLong": spot.spotLong,
                                   "isFirst": true,
-                                  "spotPrivacy" : spot.privacyLevel ?? "friends"] as [String : Any]
+                                  "spotPrivacy" : spotPrivacy] as [String : Any]
                 
                 let commentValues = ["commenterID" : self.uid,
                                      "comment" : spot.spotDescription ?? "",
@@ -1052,18 +1058,22 @@ extension DraftsViewController {
                 
                 self.db.collection("posts").document(postID).setData(postValues)
                 self.db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
-                
+                self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), postID: postID)
+
                 ///upload spot
+                
+                let lowercaseName = spot.spotName?.lowercased() ?? ""
+                let keywords = lowercaseName.getKeywordArray()
                 
                 let spotValues =  ["city" : city,
                                    "spotName" : spot.spotName ?? "",
-                                   "lowercaseName": spot.spotName?.lowercased() ?? "",
+                                   "lowercaseName": lowercaseName,
                                    "description": spot.spotDescription ?? "",
                                    "tags": spot.tags ?? [],
                                    "createdBy": self.uid,
                                    "visitorList": [self.uid],
                                    "inviteList" : finalInvites,
-                                   "privacyLevel": spot.privacyLevel ?? "friends",
+                                   "privacyLevel": spotPrivacy,
                                    "taggedUsers": spot.taggedUsernames ?? [],
                                    "spotLat": spot.spotLat,
                                    "spotLong" : spot.spotLong,
@@ -1072,7 +1082,8 @@ extension DraftsViewController {
                                    "postIDs": [postID],
                                    "postTimestamps": [timestamp],
                                    "posterIDs": [self.uid],
-                                   "postPrivacies": [spot.privacyLevel ?? "friends"]] as [String : Any]
+                                   "postPrivacies": [spot.privacyLevel ?? "friends"],
+                                   "searchKeywords": keywords] as [String : Any]
                 
                 let spotID = duplicateID == "" ? spot.spotID! : duplicateID
                 
@@ -1172,7 +1183,10 @@ extension DraftsViewController {
             
             storageRef.putData(image, metadata: metadata){metadata, error in
                 if error != nil { completion([]); return }
-                storageRef.downloadURL { (url, err) in
+                storageRef.downloadURL { [weak self] (url, err) in
+                    
+                    guard let self = self else { return }
+                    
                     if error != nil { completion([]); return }
                     let urlString = url!.absoluteString
                     
@@ -1198,18 +1212,22 @@ extension DraftsViewController {
         
         if !spot.postToPOI { completion(""); return }
         
-        db.collection("spots").whereField("spotName", isEqualTo: spot.spotName ?? "").getDocuments { (snap, err) in
+        db.collection("spots").whereField("spotName", isEqualTo: spot.spotName ?? "").getDocuments { [weak self] (snap, err) in
+            
+            guard let self = self else { return }
             
             if snap?.documents.count == 0 || err != nil { completion(""); return }
+            
             for doc in snap!.documents {
                 
                 do {
+                    
                     let spotInfo = try doc.data(as: MapSpot.self)
                     guard let querySpot = spotInfo else { completion(""); return }
                     
                     if spot.privacyLevel == "public" && self.locationsClose(coordinate1: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), coordinate2: CLLocationCoordinate2D(latitude: querySpot.spotLat, longitude: querySpot.spotLong)) {
                         completion(doc.documentID); return
-                    }
+                    } else { completion(""); return }
                 } catch { completion(""); return }
             }
         }
@@ -1235,18 +1253,6 @@ extension DraftsViewController {
             self.present(alert, animated: true)
             self.progressView.isHidden = true
             self.maskView.isHidden = true
-        }
-    }
-
-    func setSpotLocations(spotLocation: CLLocationCoordinate2D, spotID: String) {
-        let location = CLLocation(latitude: spotLocation.latitude, longitude: spotLocation.longitude)
-        
-        GeoFirestore(collectionRef: Firestore.firestore().collection("spots")).setLocation(location: location, forDocumentWithID: spotID) { (error) in
-            if (error != nil) {
-                print("An error occured: \(String(describing: error))")
-            } else {
-                print("Saved location successfully!")
-            }
         }
     }
 }

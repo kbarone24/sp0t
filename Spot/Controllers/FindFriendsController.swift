@@ -486,9 +486,8 @@ extension FindFriendsController: UISearchBarDelegate {
     func runNameQuery(searchText: String) {
         /// query names for matches
         let userRef = db.collection("users")
-        let maxVal = "\(searchText.lowercased())uf8ff"
-        let nameQuery = userRef.whereField("lowercaseName", isGreaterThanOrEqualTo: searchText.lowercased()).whereField("lowercaseName", isLessThanOrEqualTo: maxVal as Any)
-        
+        let nameQuery = userRef.whereField("nameKeywords", arrayContains: searchText.lowercased()).limit(to: 5)
+
         nameQuery.getDocuments{ [weak self] (snap, err) in
             
             guard let self = self else { return }
@@ -521,9 +520,8 @@ extension FindFriendsController: UISearchBarDelegate {
     func runUsernameQuery(searchText: String) {
         ///query usernames for matches
         let userRef = db.collection("users")
-        let maxVal = "\(searchText.lowercased())uf8ff"
-        let usernameQuery = userRef.whereField("username", isGreaterThanOrEqualTo: searchText.lowercased()).whereField("username", isLessThanOrEqualTo: maxVal as Any)
-        
+        let usernameQuery = userRef.whereField("usernameKeywords", arrayContains: searchText.lowercased()).limit(to: 5)
+
         usernameQuery.getDocuments { [weak self] (snap, err) in
             
             guard let self = self else { return }

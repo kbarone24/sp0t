@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "drawerbar1x (1).png",
+      "filename" : "blurUpdate1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "drawerbar2x (1).png",
+      "filename" : "blurUpdate2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "drawerbar3x (1).png",
+      "filename" : "blurUpdate3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
