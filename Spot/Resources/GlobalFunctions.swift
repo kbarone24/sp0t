@@ -104,6 +104,78 @@ extension UIViewController {
         return commentHeight
     }
     
+    func addRemoveTagTable(text: String, cursorPosition: Int, tableParent: MapViewController.TagTableParent) {
+    
+        
+        let atIndices = text.indices(of: "@")
+        var wordIndices = text.indices(of: " ")
+        wordIndices.append(contentsOf: text.indices(of: "\n")) /// add new lines
+        if !wordIndices.contains(0) { wordIndices.insert(0, at: 0) } /// first word not included
+        wordIndices.sort(by: {$0 < $1})
+        
+        for atIndex in atIndices {
+            
+            if cursorPosition > atIndex {
+                var i = 0
+                for w in wordIndices {
+                    
+                    /// cursor is > current word, < next word, @ is 1 more than current word , < next word OR last word in string
+                    if (w <= cursorPosition && (i == wordIndices.count - 1 || cursorPosition <= wordIndices[i + 1])) && ((atIndex == 0 && i == 0 || atIndex == w + 1) && (i == wordIndices.count - 1 || cursorPosition <= wordIndices[i + 1])) {
+                        
+                        let start = text.index(text.startIndex, offsetBy: w)
+                        let end = text.index(text.startIndex, offsetBy: cursorPosition)
+                        let range = start..<end
+                        let currentWord = text[range].replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "@", with: "").replacingOccurrences(of: "\n", with: "") ///  remove space and @ from word
+                        
+                        if let currentVC = self as? PostViewController {
+                            currentVC.mapVC.addTable(text: String(currentWord), parent: tableParent)
+                        } else if let currentVC = self as? UploadPostController {
+                            currentVC.mapVC.addTable(text: String(currentWord), parent: tableParent)
+                        }
+                        return
+                    } else { i += 1; continue }
+                }
+            }
+        }
+        
+        if let currentVC = self as? PostViewController {
+            currentVC.mapVC.removeTable()
+        } else if let currentVC = self as? UploadPostController {
+            currentVC.mapVC.removeTable()
+        }
+    }
+    
+    // run when user taps a username to tag
+    func addTaggedUserTo(text: String, username: String, cursorPosition: Int) -> String {
+        
+        var tagText = text
+        
+        var wordIndices = text.indices(of: " ")
+        wordIndices.append(contentsOf: text.indices(of: "\n")) /// add new lines
+        if !wordIndices.contains(0) { wordIndices.insert(0, at: 0) } /// first word not included
+        wordIndices.sort(by: {$0 < $1})
+        var currentWordIndex = 0; var nextWordIndex = 0; var i = 0
+        /// get current word
+        for index in wordIndices {
+            if index < cursorPosition {
+                if i == wordIndices.count - 1 { currentWordIndex = index; nextWordIndex = text.count }
+                else if cursorPosition <= wordIndices[i + 1] { currentWordIndex = index; nextWordIndex = wordIndices[i + 1] }
+                i += 1
+            }
+        }
+        
+        let suffix = text.suffix(text.count - currentWordIndex) /// get end of string to figure out where @ is
+        guard var start = suffix.firstIndex(of: "@") else { return "" }
+        start = text.index(start, offsetBy: 1)  /// offset to include @
+        let end = text.index(text.startIndex, offsetBy: nextWordIndex)
+        let range = start..<end
+        tagText.removeSubrange(range) /// replace existing text
+        tagText.insert(contentsOf: username, at: start) //// append username
+        
+        return tagText
+    }
+
+    
     func hasPOILevelAccess(creatorID: String, privacyLevel: String, inviteList: [String], mapVC: MapViewController) -> Bool {
         
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
@@ -160,6 +232,48 @@ extension UIViewController {
         
         return false
     }
+    
+    func hasPostAccess(post: MapPost, mapVC: MapViewController) -> Bool {
+        
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        if uid == post.posterID { return true }
+        if mapVC.adminIDs.contains(where: {$0 == post.posterID}) { return false }
+        
+        if post.privacyLevel == "friends" {
+            if !mapVC.friendIDs.contains(post.posterID) { return false }
+        } else if post.privacyLevel == "invite" {
+            if !(post.inviteList?.contains(uid) ?? false) { return false }
+        }
+        
+        return true
+    }
+    
+    func setPostLocations(postLocation: CLLocationCoordinate2D, postID: String) {
+        
+        let location = CLLocation(latitude: postLocation.latitude, longitude: postLocation.longitude)
+        
+        GeoFirestore(collectionRef: Firestore.firestore().collection("posts")).setLocation(location: location, forDocumentWithID: postID) { (error) in
+            if (error != nil) {
+                print("An error occured: \(String(describing: error))")
+            } else {
+                print("Saved location successfully!")
+            }
+        }
+    }
+    
+    func setSpotLocations(spotLocation: CLLocationCoordinate2D, spotID: String) {
+        
+        let location = CLLocation(latitude: spotLocation.latitude, longitude: spotLocation.longitude)
+        
+        GeoFirestore(collectionRef: Firestore.firestore().collection("spots")).setLocation(location: location, forDocumentWithID: spotID) { (error) in
+            if (error != nil) {
+                print("An error occured: \(String(describing: error))")
+            } else {
+                print("Saved location successfully!")
+            }
+        }
+    }
+
     
     func incrementSpotScore(user: String, increment: Int) {
         
@@ -638,29 +752,36 @@ extension UITableViewCell {
                     finalRef.delete()
                 }
             }
-            
         })
     }
         
     func getAttString(caption: String, taggedFriends: [String]) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
+        
         let attString = NSMutableAttributedString(string: caption)
         var freshRect: [(rect: CGRect, username: String)] = []
-        
         var tags: [(username: String, range: NSRange)] = []
         
-        let word = caption.split(separator: " ")
-        var index = 0
-        for w in word {
-            let username = String(w.dropFirst())
-            if w.hasPrefix("@") && taggedFriends.contains(where: {$0 == username}) {
-                let tag = (username: String(w.dropFirst()), range: NSMakeRange(index + 1, w.count - 1))
+        let words = caption.components(separatedBy: .whitespacesAndNewlines)
+                
+        for word in words {
+            
+            let username = String(word.dropFirst())
+            if word.hasPrefix("@") && taggedFriends.contains(where: {$0 == username}) {
+                
+                /// get first index of this word
+                let atIndexes = caption.indices(of: String(word))
+                let currentIndex = atIndexes[0]
+                
+                /// make tag rect out of the username + @
+                let tag = (username: String(word.dropFirst()), range: NSMakeRange(currentIndex, word.count))
+
                 if !tags.contains(where: {$0 == tag}) {
                     tags.append(tag)
-                    let range = NSMakeRange(index, w.count)
+                    let range = NSMakeRange(currentIndex, word.count)
+                    /// bolded range out of username + @
                     attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCamera-Semibold", size: 12.5) as Any, range: range)
                 }
             }
-            index = index + w.count + 1
         }
         
         for tag in tags {
@@ -815,12 +936,13 @@ extension UITableViewCell {
                 let days = timeSincePost / 86400
                 return "\(days)d"
             }
+            
         } else {
             // return date
             let timeInterval = TimeInterval(integerLiteral: seconds)
             let date = Date(timeIntervalSince1970: timeInterval)
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "M/dd/yy"
+            dateFormatter.dateFormat = "M/d/yy"
             let dateString = dateFormatter.string(from: date)
             return dateString
         }
@@ -893,7 +1015,6 @@ extension UITableViewCell {
         let acceptRef = notificationRef.document(notiID)
         
         acceptRef.setData(["seen" : false, "timestamp" : time, "senderID": "T4KMLe3XlQaPBJvtZVArqXQvaNT2", "type": "publicSpotAccepted", "spotID": spot.id!, "postID": spot.postIDs.first!, "imageURL": spot.imageURL] as [String: Any])
-        db.collection("spots").document(spot.id!).updateData(["privacyLevel" : "public"])
         db.collection("submissions").document(spot.id!).delete()
         
         let sender = PushNotificationSender()
@@ -907,6 +1028,60 @@ extension UITableViewCell {
                 token = tokenSnap?.get("notificationToken") as? String
                 DispatchQueue.main.async { sender.sendPushNotification(token: token, title: "", body: "\(spot.spotName) was approved!") }
             }
+        }
+        
+        /// change spotLevelValues
+        let ref = db.collection("spots").document(spot.id!)
+        var adjustedIDs: [String] = []
+        var postIDs: [String] = []
+
+        db.runTransaction({ (transaction, errorPointer) -> Any? in
+            
+            let myDoc: DocumentSnapshot
+            do {
+                try myDoc = transaction.getDocument(ref)
+            } catch let fetchError as NSError {
+                errorPointer?.pointee = fetchError
+                return nil
+            }
+                        
+            let posterIDs = myDoc.data()?["posterIDs"] as? [String] ?? []
+            var postPrivacies = myDoc.data()?["postPrivacies"] as? [String] ?? []
+            postIDs = myDoc.data()?["postIDs"] as? [String] ?? []
+                        
+            /// change all of the founder IDs posts to public
+            for i in 0...posterIDs.count - 1 {
+                if posterIDs[i] == spot.founderID {
+                    postPrivacies[i] = "public"
+                    adjustedIDs.append(postIDs[i])
+                }
+            }
+            
+            /// change spots privacy to public and update post privacies
+            transaction.updateData([
+                "privacyLevel": "public",
+                "postPrivacies": postPrivacies
+            ], forDocument: ref)
+            
+            return nil
+            
+        }) { (object, error) in
+            if error != nil {
+                self.adjustPostPrivacies(postIDs: postIDs, adjustedIDs: adjustedIDs)
+            } else {
+                self.adjustPostPrivacies(postIDs: postIDs, adjustedIDs: adjustedIDs)
+            }
+        }
+    }
+    
+    func adjustPostPrivacies(postIDs: [String], adjustedIDs: [String]) {
+        
+        let db: Firestore! = Firestore.firestore()
+
+        for id in postIDs {
+            /// update spot privacy for all posts, post privacy for founder posts
+            db.collection("posts").document(id).updateData(["spotPrivacy" : "public"])
+            if adjustedIDs.contains(id) {             db.collection("posts").document(id).updateData(["privacyLevel" : "public"]) }
         }
     }
     
@@ -924,6 +1099,48 @@ extension UITableViewCell {
         
         acceptRef.setData(["seen" : false, "timestamp" : time, "senderID": "T4KMLe3XlQaPBJvtZVArqXQvaNT2", "type": "publicSpotRejected", "spotID": spot.id!, "postID": spot.postIDs.first!, "imageURL": spot.imageURL] as [String: Any])
         db.collection("submissions").document(spot.id!).delete()
+    }
+}
+
+extension String {
+    func indices(of string: String) -> [Int] {
+        return indices.reduce([]) { $1.utf16Offset(in: self) > ($0.last ?? -1) && self[$1...].hasPrefix(string) ? $0 + [$1.utf16Offset(in: self)] : $0 }
+    }
+    
+    func getKeywordArray() -> [String] {
+        
+        var keywords: [String] = []
+        
+        keywords.append(contentsOf: getKeywordsFrom(index: 0))
+        let atIndexes = indices(of: " ")
+        
+        for index in atIndexes {
+            if index == count - 1 { continue }
+            keywords.append(contentsOf: getKeywordsFrom(index: index + 1))
+        }
+        
+        return keywords
+    }
+    
+    func getKeywordsFrom(index: Int) -> [String] {
+        
+        var keywords: [String] = []
+        if index > count { return keywords }
+        let subString = suffix(count - index)
+        
+        var word = ""
+        for sub in subString {
+            word = word + String(sub)
+            keywords.append(word)
+        }
+        
+        return keywords
+    }
+
+    func formatNumber() -> String {
+        var newNumber = components(separatedBy: CharacterSet.decimalDigits.inverted).joined() /// remove dashes and spaces
+        newNumber = String(newNumber.suffix(10)) /// match based on last 10 digits to eliminate country codes and formatting
+        return newNumber
     }
 }
 
@@ -1039,13 +1256,31 @@ extension UIImageView {
     }
     
     func enableZoom() {
-        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(startZooming(_:)))
+        
         isUserInteractionEnabled = true
+        
+        guard let postCell = superview as? PostCell else { return } /// not ideal way to access delegate but right now zoom only enabled on post so its fine
+        
+        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(zoom(_:)))
+        pinchGesture.delegate = postCell
         addGestureRecognizer(pinchGesture)
+        
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
+        panGesture.delegate = postCell
+        addGestureRecognizer(panGesture)
     }
-    
-    @objc private func startZooming(_ sender: UIPinchGestureRecognizer) {
-        if sender.state == .began || sender.state == .changed {
+
+        
+    @objc func zoom(_ sender: UIPinchGestureRecognizer) {
+        
+        switch sender.state {
+        
+        case .began:
+            guard let postCell = superview as? PostCell else { return }
+            postCell.isZooming = true
+            postCell.originalCenter = center
+            
+        case .changed:
             let pinchCenter = CGPoint(x: sender.location(in: self).x - self.bounds.midX,
                                       y: sender.location(in: self).y - self.bounds.midY)
             
@@ -1064,12 +1299,39 @@ extension UIImageView {
                 self.transform = transform
                 sender.scale = 1
             }
-        } else if sender.state == .ended || sender.state == .cancelled {
-            UIView.animate(withDuration: 0.3, animations: {
+            
+        case .ended, .cancelled, .failed:
+            UIView.animate(withDuration: 0.3, animations: { [weak self] in
+                guard let self = self else { return }
+                guard let postCell = self.superview as? PostCell else { return }
+                self.center = postCell.originalCenter
+                
                 self.transform = CGAffineTransform.identity
             })
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [ weak self] in
+                guard let self = self else { return }
+                guard let postCell = self.superview as? PostCell else { return }
+                postCell.isZooming = false
+            }
+            
+        default: return
         }
     }
+    
+    @objc func pan(_ sender: UIPanGestureRecognizer) {
+        
+        guard let postCell = superview as? PostCell else { return }
+        
+        if postCell.isZooming && sender.state == .changed {
+            let translation = sender.translation(in: self)
+            let currentScale = self.frame.size.width / self.bounds.size.width
+            center = CGPoint(x: center.x + (translation.x * currentScale), y: center.y + (translation.y * currentScale))
+            sender.setTranslation(CGPoint.zero, in: superview)
+        }
+    }
+    
+    /// source: https://medium.com/@jeremysh/instagram-pinch-to-zoom-pan-gesture-tutorial-772681660dfe
 }
 
 extension UINavigationBar {
@@ -1131,13 +1393,6 @@ extension UINavigationBar {
     }
 }
 
-extension String {
-    func formatNumber() -> String {
-        var newNumber = components(separatedBy: CharacterSet.decimalDigits.inverted).joined() /// remove dashes and spaces 
-        newNumber = String(newNumber.suffix(10)) /// match based on last 10 digits to eliminate country codes and formatting
-        return newNumber
-    }
-}
 /*
 extension UICollectionViewCell {
     

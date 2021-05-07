@@ -146,6 +146,7 @@ class ProfileViewController: UIViewController {
         super.viewDidAppear(animated)
         if userInfo == nil { activityIndicator.startAnimating() }
         if !children.contains(where: {$0.isKind(of: PostViewController.self)}) && !children.contains(where: {$0.isKind(of: SpotViewController.self)}) { setUpNavBar() }
+        print("1")
     }
     
     deinit {
@@ -194,13 +195,12 @@ class ProfileViewController: UIViewController {
     func runFunctions() {
         
         // user info only nil when its active user or passed from a profile tap of a non-friend user
-
         if userInfo == nil {
-            /// will call runFunctions() again on updateUser from notification
+            /// will call runFunctions() again on updateUser from notification for current user, get user from username for non-active user
             if mapVC.userInfo == nil || id != uid { return }
             userInfo = mapVC.userInfo
             userInfo.friendsList = mapVC.friendsList
-        } 
+        } else if id == "" { return } /// patch fix for a crash when id = "". will just show a blank screen for now
                         
         add(asChildViewController: profileSpotsController)
         
@@ -211,7 +211,7 @@ class ProfileViewController: UIViewController {
         sec0Height = 127 - navBarHeight
 
         /// check if active user is friends with this profile
-        if uid != userInfo.id && !mapVC.friendIDs.contains(userInfo.id ?? "") {
+        if uid != id && !mapVC.friendIDs.contains(id) {
             getFriendRequestInfo()
         } else {
             status = .friends
@@ -227,7 +227,9 @@ class ProfileViewController: UIViewController {
 
         if userInfo == nil {
             runFunctions()
-
+            setUpNavBar()
+            print("2 user")
+            
         } else {
             /// update userInfo even if its not nil if current user
             if id == uid { userInfo = mapVC.userInfo }
@@ -304,10 +306,10 @@ class ProfileViewController: UIViewController {
         tableView.register(SegViewHeader.self, forHeaderFooterViewReuseIdentifier: "SegViewHeader")
         tableView.register(SegViewCell.self, forCellReuseIdentifier: "SegViewCell")
         tableView.register(NotFriendsCell.self, forCellReuseIdentifier: "NotFriendsCell")
+        
         view.addSubview(tableView)
-        
         view.addSubview(shadowScroll)
-        
+                
         view.addGestureRecognizer(shadowScroll.panGestureRecognizer)
         tableView.removeGestureRecognizer(tableView.panGestureRecognizer)
         profileSpotsController.spotsCollection.removeGestureRecognizer(profileSpotsController.spotsCollection.panGestureRecognizer)
@@ -438,8 +440,28 @@ class ProfileViewController: UIViewController {
         }
     }
     
-    @objc func removeProfile(_ sender: UIBarButtonItem) {
+    func animateRemoveProfile() {
+        Mixpanel.mainInstance().track(event: "ProfileSwipeToExit")
         
+        DispatchQueue.main.async {
+            
+            UIView.animate(withDuration: 0.2) { [weak self] in
+                guard let self = self else { return }
+                self.view.frame = CGRect(x: UIScreen.main.bounds.width, y: self.view.frame.minY, width: self.view.frame.width, height: self.view.frame.height)
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                guard let self = self else { return }
+                self.removeProfile()
+            }
+        }
+    }
+    
+    @objc func removeProfile(_ sender: UIBarButtonItem) {
+        removeProfile()
+    }
+    
+    func removeProfile() {
         Mixpanel.mainInstance().track(event: "ProfileRemove")
         
         mapVC.mapView.showsUserLocation = true
@@ -522,8 +544,8 @@ class ProfileViewController: UIViewController {
             guard let profileVC = parent as? ProfileViewController else { print("profile broke"); return }
             
             friendsListVC.profileVC = profileVC
-            friendsListVC.friendIDs = profileVC.userInfo.friendIDs
-            friendsListVC.friendsList = profileVC.userInfo.friendsList
+            friendsListVC.friendIDs = profileVC.userInfo.friendIDs.reversed()
+            if id == uid { friendsListVC.friendsList = profileVC.userInfo.friendsList.reversed() } /// already reversed for non-active user
             
             /// set table offset on return to friendslist to keep users scroll distance
             friendsListVC.tableOffset = profileVC.friendsListScrollDistance
@@ -605,6 +627,7 @@ class ProfileViewController: UIViewController {
     func resetProfile() {
 
         setUpNavBar()
+        print("3")
 
         /// expandProfile to full screen if it was full screen and scrolled at all before adding childVC
         if shadowScroll != nil {
@@ -679,11 +702,15 @@ class ProfileViewController: UIViewController {
                 self.id = info.id!
                 self.userInfo = info
                 self.runFunctions()
+                self.setUpNavBar()
+                print("4")
 
             } catch { return }
         }
     }
 }
+
+
 
 extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -845,8 +872,8 @@ class UserViewCell: UITableViewCell {
         
         resetCell()
         
-        let pullLine = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 23, y: 0, width: 46, height: 14.5))
-        pullLine.contentEdgeInsets = UIEdgeInsets(top: 9, left: 5, bottom: 0, right: 5)
+        let pullLine = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 21.5, y: 0, width: 43, height: 14.5))
+        pullLine.contentEdgeInsets = UIEdgeInsets(top: 7, left: 5, bottom: 0, right: 5)
         pullLine.setImage(UIImage(named: "PullLine"), for: .normal)
         pullLine.addTarget(self, action: #selector(lineTap(_:)), for: .touchUpInside)
         addSubview(pullLine)
@@ -880,7 +907,7 @@ class UserViewCell: UITableViewCell {
             self.addSubview(editProfileButton)
         }
         
-        usernameLabel = UILabel(frame: CGRect(x: 14, y: nameLabel.frame.maxY + 4, width: UIScreen.main.bounds.width - 120, height: 15))
+        usernameLabel = UILabel(frame: CGRect(x: 14, y: nameLabel.frame.maxY + 3, width: UIScreen.main.bounds.width - 120, height: 15))
         usernameLabel.text = "@" + user.username
         usernameLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
         usernameLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
@@ -933,9 +960,9 @@ class UserViewCell: UITableViewCell {
         if let friendsListVC = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "FriendsList") as? FriendsListController {
             if let profileVC = self.viewContainingController() as? ProfileViewController {
                 friendsListVC.profileVC = profileVC
-                friendsListVC.friendIDs = userInfo.friendIDs
+                friendsListVC.friendIDs = userInfo.friendIDs.reversed()
                 if uid == userInfo.id {
-                    userInfo.friendsList = mapVC.friendsList
+                    userInfo.friendsList = mapVC.friendsList.reversed()
                 }
                 if !userInfo.friendsList.isEmpty { friendsListVC.friendsList = userInfo.friendsList }
                 DispatchQueue.main.async {
@@ -1003,7 +1030,7 @@ class SegViewHeader: UITableViewHeaderFooterView {
         segmentedControl.insertSegment(with: postSegIm, at: 0, animated: false)
         segmentedControl.insertSegment(with: spotSegIm, at: 1, animated: false)
         
-        segmentedControl.addTarget(self, action: #selector(segmentedControlValueChanged(_:)), for: UIControl.Event.valueChanged)
+        segmentedControl.addTarget(self, action: #selector(segmentedControlValueChanged(_:)), for: .valueChanged)
         let segWidth = UIScreen.main.bounds.width * 1/3
         segmentedControl.setWidth(segWidth, forSegmentAt: 0)
         segmentedControl.setWidth(segWidth, forSegmentAt: 1)
@@ -1382,9 +1409,9 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
         mapVC.userInfo.friendIDs.removeAll(where: {$0 == friendID})
         
         if let feedVC = mapVC.customTabBar.viewControllers?.first(where: {$0 is FeedViewController}) as? FeedViewController {
-            feedVC.postsList.removeAll(where: {$0.posterID == friendID})
+            feedVC.friendPosts.removeAll(where: {$0.posterID == friendID})
             if feedVC.postVC != nil {
-                feedVC.postVC.postsList = feedVC.postsList
+                feedVC.postVC.postsList = feedVC.friendPosts
                 if feedVC.postVC.tableView != nil { feedVC.postVC.tableView.reloadData() }
             }
         }

@@ -536,7 +536,7 @@ extension LocationPickerController: CLLocationManagerDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self = self else { return }
-            self.mapVC.checkForAddTutorial()
+            self.mapVC.checkForTutorial(index: 2)
         }
     }
     

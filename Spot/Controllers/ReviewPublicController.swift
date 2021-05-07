@@ -67,7 +67,6 @@ class ReviewPublicController: UIViewController {
                         info.id = postDoc!.documentID
                         let timestamp = postDoc!.get("checkInTime") as? Timestamp ?? Timestamp()
                         info.checkInTime = timestamp.seconds
-                        print("append")
                         self.pendingSpots.append(info)
                         self.spotsTable.reloadData()
                         
@@ -84,7 +83,6 @@ class ReviewPublicController: UIViewController {
 extension ReviewPublicController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        print("count", pendingSpots.count)
         return pendingSpots.count
     }
     

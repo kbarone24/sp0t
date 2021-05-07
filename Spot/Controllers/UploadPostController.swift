@@ -193,15 +193,14 @@ class UploadPostController: UIViewController {
         
         // progress view for upload
         progressView = UIProgressView(frame: CGRect(x: 50, y: UIScreen.main.bounds.height - 160, width: UIScreen.main.bounds.width - 100, height: 15))
-        progressView.transform = progressView.transform.scaledBy(x: 1, y: 2.3)
-        progressView.layer.cornerRadius = 3
-        progressView.layer.sublayers![1].cornerRadius = 3
         progressView.subviews[1].clipsToBounds = true
         progressView.clipsToBounds = true
         progressView.progressTintColor = UIColor(named: "SpotGreen")
         progressView.progress = 0.0
-        progressView.isHidden = true
-        maskView.addSubview(progressView)
+        progressView.transform = progressView.transform.scaledBy(x: 1, y: 2)
+        progressView.layer.cornerRadius = 1.5
+        progressView.layer.sublayers![1].cornerRadius = 1.5
+        /// add to mask on upload
     }
         
     func presentPrivacyPicker() {
@@ -270,15 +269,20 @@ class UploadPostController: UIViewController {
     }
     
     @objc func tagSelect(_ sender: NSNotification) {
-        if let username = sender.userInfo?.first?.value as? String {
-            if let word = caption.split(separator: " ").last {
-                if word.hasPrefix("@") {
-                    var text = String(caption.dropLast(word.count - 1))
-                    text.append(contentsOf: username)
-                    caption = text
-                    DispatchQueue.main.async { self.tableView.reloadData() }
-                }
-            }
+        
+        guard let infoPass = sender.userInfo as? [String: Any] else { return }
+        guard let username = infoPass["username"] as? String else { return }
+        guard let tag = infoPass["tag"] as? Int else { return }
+        if tag != 2 { return } /// tag 2 for upload tag. This notification should only come through if tag = 2 because upload will always be topmost VC
+        guard let uploadOverviewCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
+        
+        /// get where user is currently editing
+        if let selectedRange = uploadOverviewCell.descriptionField.selectedTextRange {
+            let startPosition: UITextPosition =  uploadOverviewCell.descriptionField.beginningOfDocument
+            let cursorPosition =  uploadOverviewCell.descriptionField.offset(from: startPosition, to: selectedRange.start)
+            let tagText = addTaggedUserTo(text: caption ?? "", username: username, cursorPosition: cursorPosition)
+            caption = tagText
+            uploadOverviewCell.descriptionField.text = tagText
         }
     }
     
@@ -483,7 +487,7 @@ class UploadPostController: UIViewController {
             /// animate image preview expand
         UIView.animate(withDuration: 0.2) {
             let aspect = self.selectedImages[self.selectedIndex].size.height / self.selectedImages[self.selectedIndex].size.width
-            let cameraHeight = UIScreen.main.bounds.width * 1.77778
+            let cameraHeight = UIScreen.main.bounds.width * 1.72267
             let height = UIScreen.main.bounds.width * aspect > cameraHeight ? cameraHeight : UIScreen.main.bounds.width * aspect
             let viewHeight = self.view.bounds.height
             self.maskView.alpha = 1.0 /// animate mask appearing
@@ -502,7 +506,7 @@ class UploadPostController: UIViewController {
         /// setImageBounds also called on swipe between images
         
         let aspect = selectedImages[selectedIndex].size.height / selectedImages[selectedIndex].size.width
-        let cameraHeight = UIScreen.main.bounds.width * 1.77778
+        let cameraHeight = UIScreen.main.bounds.width * 1.72267
         let height = UIScreen.main.bounds.width * aspect > cameraHeight ? cameraHeight : UIScreen.main.bounds.width * aspect
         let viewHeight = self.view.bounds.height
                 
@@ -621,7 +625,6 @@ class UploadPostController: UIViewController {
     }
     
     @objc func closeKeyboard(_ sender: UITapGestureRecognizer) {
-        print("close keyboard")
         guard let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
         if cell.descriptionField != nil { cell.descriptionField.resignFirstResponder() }
         if cell.spotNameField != nil { cell.spotNameField.resignFirstResponder() }
@@ -862,17 +865,12 @@ class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelega
     
     func textViewDidChange(_ textView: UITextView) {
         
-        /// add tag table after @
-        if textView.text.last != " " {
-            if let uploadVC = viewContainingController() as? UploadPostController {
-                if let word = textView.text?.split(separator: " ").last {
-                    if word.hasPrefix("@") {
-                        uploadVC.mapVC.addTable(text: String(word.lowercased().dropFirst()), parent: .upload)
-                        return
-                    }
-                }
-                uploadVC.mapVC.removeTable()
-            }
+        /// add tag table if this is the same word after @ was typed
+        if let selectedRange = textView.selectedTextRange {
+            let startPosition: UITextPosition = textView.beginningOfDocument
+            let cursorPosition = textView.offset(from: startPosition, to: selectedRange.start)
+            guard let uploadVC = viewContainingController() as? UploadPostController else { return }
+            uploadVC.addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursorPosition, tableParent: .upload)
         }
     }
         
@@ -881,14 +879,15 @@ class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelega
         let currentText = textView.text ?? ""
         guard let stringRange = Range(range, in: currentText) else { return false }
         let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
+        
         ///update parent
         if let uploadVC = self.viewContainingController() as? UploadPostController {
             if updatedText.count <= 500 { uploadVC.caption = updatedText }
         }
+        
         return updatedText.count <= 500
-        
     }
-        
+    
     ///add textview delegate functions
 }
 
@@ -1326,12 +1325,13 @@ extension UploadPostController {
             self.postCity = city
         }
         
-        progressView.isHidden = false
+        maskView.addSubview(progressView)
         progressView.setProgress(0.1, animated: true)
                 
         /// patch fix for uploads going through after failed upload shows that probably wont work
         if uploadFailed { return }
         
+        print(" upload post image ")
         self.uploadPostImage(selectedImages, postID: postID) { [weak self] (imageURLs) in
             
             guard let self = self else { return }
@@ -1354,16 +1354,19 @@ extension UploadPostController {
             let spotID = postToSpot ? self.spotObject.id! : UUID().uuidString
             let spotCoordinate = postToSpot ? CLLocationCoordinate2D(latitude: self.spotObject.spotLat, longitude: self.spotObject.spotLong) : self.postType == .postToPOI ? CLLocationCoordinate2D(latitude: self.poi.coordinate.latitude, longitude: self.poi.coordinate.longitude) : self.postLocation
             let createdBy = postToSpot ? self.spotObject.founderID : self.uid
-            let spotPrivacy = postToSpot ? self.spotObject.privacyLevel : self.postType == .postToPOI ? "public" : self.postPrivacy
+            let spotPrivacy = postToSpot ? self.spotObject.privacyLevel : self.postType == .postToPOI ? "public" : self.submitPublic ? "friends" : self.postPrivacy
+            /// new post privacy value to account for keeping friend level privacy if submit public
+            let adjustedPostPrivacy = self.submitPublic ? "friends" : self.postPrivacy ?? "friends"
+            
             let phone = self.postType == .postToPOI ? self.poi.phone : ""
             
             var taggedUsernames: [String] = []
             var selectedUsers: [UserProfile] = []
             
             ///for tagging users on comment post
-            let word = self.caption.split(separator: " ")
+            let words = self.caption.components(separatedBy: .whitespacesAndNewlines)
             
-            for w in word {
+            for w in words {
                 let username = String(w.dropFirst())
                 if w.hasPrefix("@") {
                     if let f = self.mapVC.friendsList.first(where: {$0.username == username}) {
@@ -1392,7 +1395,7 @@ extension UploadPostController {
                               "gif": self.gifMode,
                               "postLat": self.postLocation.latitude,
                               "postLong": self.postLocation.longitude,
-                              "privacyLevel": self.postPrivacy ?? "friends",
+                              "privacyLevel": adjustedPostPrivacy,
                               "imageURLs" : imageURLs,
                               "spotName" : self.spotName ?? "",
                               "createdBy": createdBy,
@@ -1403,7 +1406,7 @@ extension UploadPostController {
                               "spotLat": spotCoordinate?.latitude ?? 0.0,
                               "spotLong": spotCoordinate?.longitude ?? 0.0,
                               "isFirst": self.postType != .postToPublic && self.postType != .postToPrivate,
-                              "spotPrivacy" : spotPrivacy ?? ""] as [String : Any]
+                              "spotPrivacy" : spotPrivacy] as [String : Any]
             
             let commentValues = ["commenterID" : self.uid,
                                  "comment" : self.caption ?? "",
@@ -1414,7 +1417,7 @@ extension UploadPostController {
             
             let commentObject = MapComment(id: commentID, comment: self.caption ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, taggedUsers: taggedUsernames, commentHeight: self.getCommentHeight(comment: self.caption ?? ""), seconds: Int64(interval))
             
-            let postObject = MapPost(id: postID, caption: self.caption ?? "", postLat: self.postLocation.latitude, postLong: self.postLocation.longitude, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spotID, gif: self.gifMode, city: self.postCity, imageURLs: imageURLs, postImage: self.selectedImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: taggedUsernames, spotName: self.spotName, spotLat: spotCoordinate?.latitude ?? 0.0, spotLong: spotCoordinate?.longitude ?? 0.0, privacyLevel: self.postPrivacy, createdBy: self.uid, inviteList: self.inviteList)
+            let postObject = MapPost(id: postID, caption: self.caption ?? "", postLat: self.postLocation.latitude, postLong: self.postLocation.longitude, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spotID, gif: self.gifMode, city: self.postCity, imageURLs: imageURLs, postImage: self.selectedImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: taggedUsernames, spotName: self.spotName, spotLat: spotCoordinate?.latitude ?? 0.0, spotLong: spotCoordinate?.longitude ?? 0.0, privacyLevel: adjustedPostPrivacy, createdBy: self.uid, inviteList: self.inviteList)
             
             /// notify feed + any other open view controllers (profile posts, nearby) of new post
             NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
@@ -1423,7 +1426,8 @@ extension UploadPostController {
             let db = Firestore.firestore()
             
             db.collection("posts").document(postID).setData(postValues)
-               db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
+            db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
+            self.setPostLocations(postLocation: self.postLocation, postID: postID)
             
             if !selectedUsers.isEmpty { self.sendTagNotis(post: postObject, spotID: spotID, selectedUsers: selectedUsers, postType: self.postType) }
             ///switch post type
@@ -1443,16 +1447,19 @@ extension UploadPostController {
                 self.incrementSpotScore(user: self.uid, increment: 3)
                 self.incrementSpotScore(user: self.spotObject.founderID, increment: 1)
                 
-                self.runSpotTransactions(spotID: spotID, postPrivacy: self.postPrivacy, postID: postID, timestamp: timestamp)
+                self.runSpotTransactions(spotID: spotID, postPrivacy: adjustedPostPrivacy, postID: postID, timestamp: timestamp)
                 
                 
             default:
                 
                 ///3. create new spot from POI or from scratch
-                let spotPrivacy = self.submitPublic ? "friends" : self.postPrivacy ?? "friends"
+                let spotPrivacy = self.submitPublic ? "friends" : self.postType == .newSpot ? self.postPrivacy ?? "friends" : "public"
+                let lowercaseName = self.spotName.lowercased()
+                let keywords = lowercaseName.getKeywordArray()
+                
                 let spotValues =  ["city" : self.postCity,
                                    "spotName" : self.spotName ?? "",
-                                   "lowercaseName": self.spotName.lowercased(),
+                                   "lowercaseName": lowercaseName,
                                    "description": self.caption ?? "",
                                    "tags": self.selectedTags,
                                    "createdBy": self.uid,
@@ -1467,7 +1474,8 @@ extension UploadPostController {
                                    "postIDs": [postID],
                                    "postTimestamps": [timestamp],
                                    "posterIDs": [self.uid],
-                                   "postPrivacies": [self.postPrivacy]] as [String : Any]
+                                   "postPrivacies": [adjustedPostPrivacy],
+                                   "searchKeywords": keywords] as [String : Any]
                 
                     db.collection("spots").document(spotID).setData(spotValues, merge: true)
                     db.collection("users").document(self.uid).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : timestamp, "postsList" : [postID], "city": self.postCity])
@@ -1555,8 +1563,9 @@ extension UploadPostController {
         
         
         for user in spotObject.visitorList {
+            
             if selectedUsers.contains(where: {$0.id == user}) { continue }
-            if !self.mapVC.friendIDs.contains(user) { continue }
+            if user == uid { continue }
             
             let notiID = UUID().uuidString
             let notiRef = db.collection("users").document(user).collection("notifications").document(notiID)
@@ -1568,12 +1577,12 @@ extension UploadPostController {
             var token: String!
             
             db.collection("users").document(user).getDocument { [weak self] (tokenSnap, err) in
+                
                 guard let self = self else { return }
-                if (tokenSnap == nil) {
-                    return
-                } else {
-                    token = tokenSnap?.get("notificationToken") as? String
-                }
+                if (tokenSnap == nil) { return }
+                  
+                token = tokenSnap?.get("notificationToken") as? String
+                
                 if (token != nil && token != "") {
                     sender.sendPushNotification(token: token, title: "", body: "\(self.mapVC.userInfo.username) posted at \(spotObject.spotName)")
                 }
@@ -1667,7 +1676,6 @@ extension UploadPostController {
             metadata.contentType = "image/jpeg"
             
             storageRef.putData(imageData, metadata: metadata) { metadata, error in
-                
                 if error != nil { completion([]); return }
                 storageRef.downloadURL { (url, err) in
                     if error != nil { completion([]); return }
@@ -1743,18 +1751,7 @@ extension UploadPostController {
             self.transitionToMap()
         }
     }
-
-    func setSpotLocations(spotLocation: CLLocationCoordinate2D, spotID: String) {
-        let location = CLLocation(latitude: spotLocation.latitude, longitude: spotLocation.longitude)
-        
-        GeoFirestore(collectionRef: Firestore.firestore().collection("spots")).setLocation(location: location, forDocumentWithID: spotID) { (error) in
-            if (error != nil) {
-                print("An error occured: \(String(describing: error))")
-            } else {
-                print("Saved location successfully!")
-            }
-        }
-    }
+    
     
 
     func runFailedUpload() {
@@ -1817,7 +1814,7 @@ extension UploadPostController {
             spotObject.gif = gifMode
             spotObject.images = NSSet(array: imageObjects)
             spotObject.spotID = UUID().uuidString
-            spotObject.privacyLevel = submitPublic ? "friends" : postPrivacy ?? "friends"
+            spotObject.privacyLevel = self.submitPublic ? "friends" : self.postPrivacy ?? "friends"
             spotObject.inviteList = inviteList
             spotObject.uid = uid
             spotObject.phone = postType == .postToPOI ? self.poi.phone : ""
@@ -1835,13 +1832,14 @@ extension UploadPostController {
             let spotCoordinate = CLLocationCoordinate2D(latitude: spotObject.spotLat, longitude: spotObject.spotLong)
             let createdBy = spotObject.founderID
             let spotPrivacy = spotObject == nil ? "" : postType == .newSpot ? postPrivacy : spotObject.privacyLevel
+            let adjustedPostPrivacy = self.submitPublic ? "friends" : self.postPrivacy ?? "friends"
             let visitorList = spotObject == nil ? [] : spotObject.visitorList
             
             let postObject = PostDraft(context: managedContext)
             postObject.caption = caption ?? ""
             postObject.city = self.postCity
             postObject.createdBy = createdBy
-            postObject.privacyLevel = postPrivacy ?? ""
+            postObject.privacyLevel = adjustedPostPrivacy
             postObject.spotPrivacy = spotPrivacy
             postObject.spotID = spotID
             postObject.inviteList = inviteList

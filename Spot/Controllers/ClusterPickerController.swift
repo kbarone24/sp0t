@@ -37,10 +37,6 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     
     var downloadCircle: UIActivityIndicatorView!
     
-    deinit {
-        print("cluster deinit")
-    }
-    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(false, animated: true)
@@ -289,7 +285,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         if self.selectedObjects.count == 1 {
             self.addNextButton()
             let controllers = self.navigationController?.viewControllers
-            if let container = controllers![controllers!.count - 2] as? PhotosContainerController {
+            if let container = controllers?.first(where: {$0.isKind(of: PhotosContainerController.self)}) as? PhotosContainerController {
                 container.addNextButton()
             }
         }
@@ -361,7 +357,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         
         if editSpotMode {
             let infoPass = ["image": selectedObjects.map({$0.object.image}).first ?? UIImage()] as [String : Any]
-            NotificationCenter.default.post(name: NSNotification.Name("ImageChange"), object: nil, userInfo: infoPass)
+            NotificationCenter.default.post(name: NSNotification.Name("EditImageChange"), object: nil, userInfo: infoPass)
             guard let controllers = self.navigationController?.viewControllers else { return }
             self.navigationController?.popToViewController(controllers[controllers.count - 3], animated: true)
             return

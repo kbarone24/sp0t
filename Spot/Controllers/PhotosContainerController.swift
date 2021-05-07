@@ -18,6 +18,7 @@ class PhotosContainerController: UIViewController {
     var mapView: MKMapView!
     var spotObject: MapSpot!
     var editSpotMode = false
+    var limited = false /// limited gallery access
     
     lazy var segmentedControl = PhotosSegmentedControl()
     lazy var selectedObjects: [(object: ImageObject, index: Int)] = []
@@ -57,11 +58,11 @@ class PhotosContainerController: UIViewController {
         setUpViews()
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
         
         // set mapView to nil on return to main mapVC
-        if mapView != nil && isMovingFromParent {
+        if parent == nil && isMovingFromParent && mapView != nil {
             mapView.delegate = nil
             mapView.removeFromSuperview()
             mapView.removeAnnotations(mapView.annotations)
@@ -115,6 +116,7 @@ class PhotosContainerController: UIViewController {
     func setUpNavBar() {
         
         navigationItem.titleView = segmentedControl
+        navigationItem.titleView?.isUserInteractionEnabled = true 
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.tintColor = .white
         navigationController?.navigationBar.isTranslucent = false
@@ -188,7 +190,7 @@ class PhotosContainerController: UIViewController {
         
         if editSpotMode {
             let infoPass = ["image": selectedObjects.map({$0.object.image}).first ?? UIImage()] as [String : Any]
-            NotificationCenter.default.post(name: NSNotification.Name("ImageChange"), object: nil, userInfo: infoPass)
+            NotificationCenter.default.post(name: NSNotification.Name("EditImageChange"), object: nil, userInfo: infoPass)
             self.navigationController?.popViewController(animated: true)
             return
         }

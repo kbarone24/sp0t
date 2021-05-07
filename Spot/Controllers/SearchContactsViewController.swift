@@ -88,11 +88,9 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
     }
 
     func animateToMap() {
+        
         let storyboard = UIStoryboard(name: "TabBar", bundle: nil)
-        
         let vc = storyboard.instantiateViewController(withIdentifier: "MapView") as! MapViewController
-        vc.tutorialMode = true
-        
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
         

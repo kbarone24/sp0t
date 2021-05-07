@@ -38,7 +38,7 @@ class EditSpotController: UIViewController {
         tableView.showsVerticalScrollIndicator = false
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.isScrollEnabled = UIScreen.main.bounds.height < 600
+        tableView.isScrollEnabled = UIScreen.main.bounds.height < 600 /// only need scroll for SE
         tableView.register(EditOverviewCell.self, forCellReuseIdentifier: "EditOverviewCell")
         tableView.register(SpotTagCell.self, forCellReuseIdentifier: "SpotTagCell")
         tableView.register(SpotPrivacyCell.self, forCellReuseIdentifier: "SpotPrivacyCell")
@@ -50,8 +50,6 @@ class EditSpotController: UIViewController {
         }
         
         spotPrivacy = spotObject.privacyLevel
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(tagSelect(_:)), name: NSNotification.Name("TagSelect"), object: nil)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -121,59 +119,7 @@ class EditSpotController: UIViewController {
         }
         pickerView.addSubview(inviteButton)
     }
-    
-    func addPrivacyError() {
-        privacyMask = UIView(frame: view.frame)
-        privacyMask.backgroundColor = UIColor.black.withAlphaComponent(0.7)
-        privacyMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(privacyErrorTap(_:))))
-        view.addSubview(privacyMask)
         
-        let infoView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 116, y: UIScreen.main.bounds.height/2 - 140, width: 232, height: 158))
-        infoView.backgroundColor = UIColor(named: "SpotBlack")
-        infoView.layer.cornerRadius = 7.5
-        infoView.clipsToBounds = true
-        privacyMask.addSubview(infoView)
-        
-        let botPic = UIImageView(frame: CGRect(x: 21, y: 22, width: 30, height: 34.44))
-        botPic.image = UIImage(named: "OnboardB0t")
-        infoView.addSubview(botPic)
-        
-        let botName = UILabel(frame: CGRect(x: botPic.frame.maxX + 8, y: 37, width: 80, height: 20))
-        botName.text = "sp0tb0t"
-        botName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        botName.font = UIFont(name: "SFcamera-Semibold", size: 12.5)
-        infoView.addSubview(botName)
-        
-        let botComment = UILabel(frame: CGRect(x: 22, y: botPic.frame.maxY + 21, width: 196, height: 15))
-        botComment.text = "You can't edit a spot's privacy level once someone else has posted there."
-        botComment.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        botComment.font = UIFont(name: "SFCamera-Regular", size: 14)
-        botComment.numberOfLines = 0
-        botComment.lineBreakMode = .byWordWrapping
-        botComment.sizeToFit()
-        infoView.addSubview(botComment)
-    }
-    
-    @objc func privacyErrorTap(_ sender: UITapGestureRecognizer) {
-        for sub in privacyMask.subviews {
-            sub.removeFromSuperview()
-        }
-        privacyMask.removeFromSuperview()
-    }
-    
-    @objc func tagSelect(_ sender: NSNotification) {
-        if let username = sender.userInfo?.first?.value as? String {
-            if let word = spotObject.spotDescription.split(separator: " ").last {
-                if word.hasPrefix("@") {
-                    var text = String(spotObject.spotDescription.dropLast(word.count - 1))
-                    text.append(contentsOf: username)
-                    spotObject.spotDescription = text
-                    DispatchQueue.main.async { self.tableView.reloadData() }
-                }
-            }
-        }
-    }
-    
     @objc func privacyTap(_ sender: UIButton) {
         
         for subview in privacyMask.subviews { subview.removeFromSuperview() }
@@ -181,7 +127,7 @@ class EditSpotController: UIViewController {
         switch sender.tag {
         
         case 0:
-            spotObject.privacyLevel = "friends"
+            spotObject.privacyLevel = "friends" /// privacy will change on public submission confirm
             spotObject.inviteList = []
             launchSubmitPublic()
             return
@@ -436,9 +382,9 @@ class EditSpotHeader: UITableViewHeaderFooterView {
             var selectedUsers: [UserProfile] = []
             
             ///for tagging users on comment post
-            let word = editVC.spotObject.spotDescription.split(separator: " ")
+            let words = editVC.spotObject.spotDescription.components(separatedBy: .whitespacesAndNewlines)
             
-            for w in word {
+            for w in words {
                 let username = String(w.dropFirst())
                 if w.hasPrefix("@") {
                     if let f = editVC.mapVC.friendsList.first(where: {$0.username == username}) {
@@ -477,15 +423,19 @@ class EditSpotHeader: UITableViewHeaderFooterView {
         guard let editVC = viewContainingController() as? EditSpotController else { return }
                 
         let selectedUsernames = editVC.spotObject.taggedUsers
+        let lowercaseName = spot.spotName.lowercased()
+        let keywords = lowercaseName.getKeywordArray()
+        
         let values : [String : Any] = ["spotName": spot.spotName,
-                                       "lowercaseName" : spot.spotName.lowercased(),
+                                       "lowercaseName" : lowercaseName,
                                        "description" : spot.spotDescription,
                                        "tags" : spot.tags,
                                        "spotLat": spot.spotLat,
                                        "spotLong" : spot.spotLong,
                                        "privacyLevel": spot.privacyLevel,
                                        "taggedUsers": selectedUsernames as Any,
-                                       "inviteList": spot.inviteList as Any]
+                                       "inviteList": spot.inviteList as Any,
+                                       "searchKeywords": keywords] 
         
         db.collection("spots").document(spot.id!).updateData(values)
         

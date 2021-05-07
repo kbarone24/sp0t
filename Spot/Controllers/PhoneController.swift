@@ -89,14 +89,15 @@ class PhoneController: UIViewController {
         phoneField.keyboardType = .numberPad
         phoneField.addTarget(self, action: #selector(phoneNumberChanged(_:)), for: .editingChanged)
         view.addSubview(phoneField)
-            
+        
+        /// country code overlaps with left portion of phoneField
         countryCodeView = CountryCodeView(frame: CGRect(x: phoneField.frame.minX + 10, y: phoneField.frame.minY + 8, width: 130, height: 40))
         countryCodeView.setUp(country: country)
         let tap = UITapGestureRecognizer(target: self, action: #selector(openCountryPicker(_:)))
         countryCodeView.addGestureRecognizer(tap)
         countryCodeView.frame = CGRect(x: countryCodeView.frame.minX, y: countryCodeView.frame.minY, width: countryCodeView.separatorLine.frame.maxX + 10, height: countryCodeView.frame.height)
         view.addSubview(countryCodeView)
-        
+                
         paddingView = UIView(frame: CGRect(x: 0, y: 0, width: countryCodeView.bounds.width + 10, height: phoneField.frame.height))
         phoneField.leftView = paddingView
         phoneField.leftViewMode = UITextField.ViewMode.always
@@ -145,7 +146,6 @@ class PhoneController: UIViewController {
         do {
             try Auth.auth().signOut()
             if let loginVC = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
-                //  loginVC.modalPresentationStyle = .fullScreen
                 
                 let keyWindow = UIApplication.shared.connectedScenes
                     .filter({$0.activationState == .foregroundActive})
@@ -185,8 +185,8 @@ class PhoneController: UIViewController {
         PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil) { (verificationID, error) in
 
             if let error = error {
+                
                 self.view.endEditing(true)
-                print("error", error.localizedDescription)
                 let message = error.localizedDescription == "TOO_SHORT" ? "Please enter a valid phone number" : error.localizedDescription == "We have blocked all requests from this device due to unusual activity. Try again later." ? "You're all out of codes. Try again later." : error.localizedDescription
                 
                 Mixpanel.mainInstance().track(event: "PhoneError", properties: ["error": message])
@@ -216,6 +216,8 @@ class PhoneController: UIViewController {
     
     func checkForUser(phoneNumber: String) {
         
+        // check if a user with this phone number exists if logging in with phone
+        
         let defaults = UserDefaults.standard
         let verified = defaults.object(forKey: "verifiedPhone") as? Bool ?? false
         let db = Firestore.firestore()
@@ -226,7 +228,7 @@ class PhoneController: UIViewController {
         } else {
             db.collection("users").whereField("phone", isEqualTo: phoneNumber).getDocuments { (snap, err) in
                 if let doc = snap?.documents.first {
-                    /// if user is verified but its not already saved to defaults, save it to defaults and send them to the map
+                    /// if user is verified but its not already saved to defaults (app could've been deleted), save it to defaults
                     let verified = doc.get("verfiedPhone") as? Bool ?? false
                     if verified {
                         defaults.set(true, forKey: "verifiedPhone")
@@ -264,31 +266,6 @@ class PhoneController: UIViewController {
         countryCodeView.frame = CGRect(x: countryCodeView.frame.minX, y: countryCodeView.frame.minY, width: countryCodeView.separatorLine.frame.maxX + 10, height: countryCodeView.frame.height)
         paddingView.frame = CGRect(x: 0, y: 0, width: countryCodeView.bounds.width + 10, height: phoneField.frame.height)
     }
-        
-    
-   /*
-    @objc func searchContactsTap(_ sender: UIButton) {
-        if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "SearchContacts") as? SearchContactsViewController {
-            vc.sentFromTutorial = true
-            self.present(vc, animated: true, completion: nil)
-        }
-    }
-    
-    @objc func skipTap(_ sender: UIButton) {
-        let storyboard = UIStoryboard(name: "TabBar", bundle: nil)
-        let vc = storyboard.instantiateViewController(withIdentifier: "MapView") as! MapViewController
-        let navController = UINavigationController(rootViewController: vc)
-        navController.modalPresentationStyle = .fullScreen
-        
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter({$0.activationState == .foregroundActive})
-            .map({$0 as? UIWindowScene})
-            .compactMap({$0})
-            .first?.windows
-            .filter({$0.isKeyWindow}).first
-        keyWindow?.rootViewController = navController
-    }
-    */
 }
 
 class CountryCodeView: UIView {

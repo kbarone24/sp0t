@@ -133,6 +133,7 @@ class LandingPageController: UIViewController {
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if object as AnyObject? === videoPlayer {
+            /// start video only when its ready so that we can show an image preview before the videoPlayer starts playing
             if keyPath == "status" {
                 if videoPlayer.status == .readyToPlay {
                     if thumbnailImage != nil { thumbnailImage.removeFromSuperview() }

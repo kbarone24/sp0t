@@ -241,7 +241,9 @@ class SendInvitesController: UIViewController {
         }
         
         contacts = localContacts
+        
         contacts.sort {
+            /// sort based on last name then first name if both, just first name if no last name available
             let criteriaA = $0.contact.familyName.isEmpty ? $0.contact.givenName.lowercased() : $0.contact.familyName.lowercased()
             let criteriaB = $1.contact.familyName.isEmpty ? $1.contact.givenName.lowercased() : $1.contact.familyName.lowercased()
             return criteriaA < criteriaB
@@ -278,6 +280,7 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
         
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "SendInvite") as? SendInviteCell else { return UITableViewCell() }
         let head = sectionTitles[indexPath.section]
+        /// get first contact starting with this section letter and count from there
         let firstIndex = contacts.firstIndex(where: {$0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head})!
         let contact = contacts[firstIndex + indexPath.row]
         cell.setUp(contact: contact.0, status: contact.1)
@@ -285,6 +288,7 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+        /// set header text color 
         (view as! UITableViewHeaderFooterView).contentView.backgroundColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1.0)
         (view as! UITableViewHeaderFooterView).textLabel?.textColor = UIColor.white
     }

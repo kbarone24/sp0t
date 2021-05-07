@@ -57,6 +57,8 @@ class MapViewController: UIViewController {
     var userInfo: UserProfile!
     lazy var userSpots: [String] = []
     
+    var friendsLoaded = false
+    var feedLoaded = false
     var shouldUpdateRegion = true /// shouldUpdateRegion is true when circleQuery should update when user changes visible map
     var shouldCluster = true /// should cluster is false when nearby (tab index 1) selected and max zoom enabled
     
@@ -75,18 +77,18 @@ class MapViewController: UIViewController {
     var toggleMapButton, userLocationButton, directionsButton: UIButton! /// buttons to manipulate map appearance
     var activeFilterView: UIView! /// activeFilterView shows active filters on the map after filterView is closed
     var mapMask: UIView!
+    var feedMask: UIView! /// seperate mask for feed seg - for tutorial need 2 masks on the feed
     
     lazy var filterTags: [String] = [] /// selected tag filters
     var filterUser: UserProfile! /// selected user to filter by
     
     lazy var tagUsers: [UserProfile] = [] /// users for rows in tagTable
     var tagTable: UITableView! /// tag table that shows after @ throughout app
-    var tagParent: tagTableParent! /// active VC where @ was entered
+    var tagParent: TagTableParent! /// active VC where @ was entered
     
     var tutorialView: UIView! /// tutorial view added to Window for different hand tutorials
     var tutorialImage: UIImageView!
     var tutorialText: UILabel!
-    var tutorialMode = false
     
     var imageManager: SDWebImageManager!
     
@@ -95,7 +97,7 @@ class MapViewController: UIViewController {
     lazy var deletedPostIDs: [String] = []
         
     /// tag table added over top of view to window then result passed to active VC
-    enum tagTableParent {
+    enum TagTableParent {
         case comments
         case upload
         case post
@@ -108,6 +110,7 @@ class MapViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(postOpen(_:)), name: NSNotification.Name("PostOpen"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(selectFromPost(_:)), name: NSNotification.Name("OpenSpotFromPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(selectFromProfile(_:)), name: NSNotification.Name("OpenSpotFromProfile"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         
         mapView = MKMapView(frame: UIScreen.main.bounds)
         mapView.delegate = self
@@ -154,13 +157,12 @@ class MapViewController: UIViewController {
         locationGroup.enter()
         checkLocation()
         
-        locationGroup.notify(queue: DispatchQueue.global()) {
-            self.getFriends()
-        }
+        locationGroup.notify(queue: DispatchQueue.global()) { self.getFriends() }
         
         selectedSpotID = ""
         selectedProfileID = ""
     }
+    
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
@@ -202,6 +204,7 @@ class MapViewController: UIViewController {
                 guard var activeUser = actUser else { return }
                 
                 activeUser.id = userSnap!.documentID
+                let firstLoad = self.userInfo == nil
                 self.userInfo = activeUser
                 
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
@@ -210,11 +213,10 @@ class MapViewController: UIViewController {
                     activeUser.profilePic = image ?? UIImage()
                     self.userInfo = activeUser
                     ///post noti for profile in case user has already selected it
-                    NotificationCenter.default.post(Notification(name: Notification.Name("InitialUserLoad")))
+                    if firstLoad { NotificationCenter.default.post(Notification(name: Notification.Name("InitialUserLoad"))) }
                 }
                 
                 self.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
-                if self.friendIDs.count > 1 { self.tutorialMode = false } /// remove tutorial when user gets first friend
                 
                 var spotsList: [String] = []
                 
@@ -222,6 +224,12 @@ class MapViewController: UIViewController {
                 var count = 0
                                 
                 for friend in self.friendIDs {
+                    
+                    if !self.friendsList.contains(where: {$0.id == friend}) {
+                        var emptyProfile = UserProfile(username: "", name: "", imageURL: "", currentLocation: "")
+                        emptyProfile.id = friend
+                        self.friendsList.append(emptyProfile) } /// append empty here so they appear in order
+                    
                     self.db.collection("users").document(friend).getDocument { (friendSnap, err) in
                         do {
                             let friendInfo = try friendSnap?.data(as: UserProfile.self)
@@ -230,8 +238,8 @@ class MapViewController: UIViewController {
                             
                             info.id = friendSnap!.documentID
 
-                            if !self.friendsList.contains(where: {$0.id == info.id}) {
-                                self.friendsList.append(info)
+                            if let i = self.friendsList.firstIndex(where: {$0.id == friend}) {
+                                self.friendsList[i] = info
                             }
                             
                             count += 1
@@ -241,6 +249,7 @@ class MapViewController: UIViewController {
                         } catch {
                             /// remove broken friend object
                             self.friendIDs.removeAll(where: {$0 == friend})
+                            self.friendsList.removeAll(where: {$0.id == friend})
                             
                             if count == self.friendIDs.count { self.loadFeed();                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad"))) }
                             return
@@ -262,6 +271,10 @@ class MapViewController: UIViewController {
                 }
             } catch { print("catch"); return }
         })
+    }
+    
+    @objc func notifyFriendsLoad(_ sender: NSNotification) {
+        friendsLoaded = true
     }
     
     func setUpNavBar() {
@@ -292,9 +305,13 @@ class MapViewController: UIViewController {
     }
     
     func loadFeed() {
-
+        if feedLoaded { return }
         if let feedVC = self.customTabBar.viewControllers?[0] as? FeedViewController {
-            tutorialMode ? feedVC.addEmptyState(tutorialMode: true) : feedVC.getFriendPosts(refresh: false)
+            feedLoaded = true
+            let selectedIndex = friendIDs.count > 2 ? 0 : 1
+            feedVC.addFeedSeg(selectedIndex: selectedIndex)
+            feedVC.friendsRefresh = .refreshing
+            selectedIndex == 0 ?  feedVC.getFriendPosts(refresh: false) : feedVC.getNearbyPosts(radius: 0.5)
         }
     }
     
@@ -343,7 +360,7 @@ class MapViewController: UIViewController {
             let tabBarHeight = customTabBar.tabBar.frame.height + safeBottom
                 
             halfScreenY = UIScreen.main.bounds.height - tabBarHeight - 396
-            tabBarOpenY = largeScreen ? UIScreen.main.bounds.height - (UIScreen.main.bounds.width * 1.77778 + tabBarHeight) : UIScreen.main.bounds.height - (UIScreen.main.bounds.width * 1.5 + tabBarHeight)
+            tabBarOpenY = largeScreen ? UIScreen.main.bounds.height - (UIScreen.main.bounds.width * 1.72267 + tabBarHeight) : UIScreen.main.bounds.height - (UIScreen.main.bounds.width * 1.5 + tabBarHeight)
             tabBarClosedY = tabBarOpenY + 30
 
             customTabBar.view.frame = CGRect(x: 0, y: tabBarOpenY, width: view.frame.width, height: UIScreen.main.bounds.height - tabBarOpenY)
@@ -406,11 +423,16 @@ class MapViewController: UIViewController {
         mapView.removeAnnotations(annotations)
         
         if let feedVC = self.customTabBar.viewControllers![0] as? FeedViewController {
-            self.postsList = feedVC.postsList
+            self.postsList = feedVC.selectedPostIndex == 0 ? feedVC.friendPosts : feedVC.nearbyPosts
             if feedVC.postVC != nil {
                 self.addSelectedPostToMap(index: feedVC.postVC.selectedPostIndex, parentVC: .feed)
             }
         }
+    }
+    
+    
+    @objc func feedSegValueChanged(_ sender: UISegmentedControl) {
+        print("value changed")
     }
     
     func toggleMapTouch(enable: Bool) {
@@ -429,11 +451,12 @@ class MapViewController: UIViewController {
             mapView.isScrollEnabled = false
             
         } else {
+            
             if closeFeedButton != nil { closeFeedButton.removeFromSuperview() }
             closeFeedButton = nil
             
             mapView.isZoomEnabled = true
-            mapView.isScrollEnabled = true 
+            mapView.isScrollEnabled = true
         }
     }
     
@@ -475,7 +498,9 @@ class MapViewController: UIViewController {
         }
     }
     
+    
     @objc func postOpen(_ sender: NSNotification) {
+        
         if let infoPass = sender.userInfo as? [String: Any] {
             /// if selected from nearby posts set postslist from there (only sent from nearby)
             
@@ -483,7 +508,6 @@ class MapViewController: UIViewController {
             guard let selectedPost = infoPass["selectedPost"] as? Int else { return }
             guard let parentVC = infoPass["parentVC"] as? PostViewController.parentViewController else { return }
             ///  guard let parentVC = infoPass["parentVC"] as? String else { return }
-            
             self.mapView.removeAnnotations(self.mapView.annotations)
             
             if firstOpen {
@@ -637,14 +661,14 @@ extension MapViewController: CLLocationManagerDelegate {
         /// for active user profile, animate to current user location
         if active {
             if currentLocation == nil { return }
-            let adjustedCoordinate = CLLocationCoordinate2D(latitude: currentLocation.coordinate.latitude - 1.7, longitude: currentLocation.coordinate.longitude)
-            mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: 400000, longitudinalMeters: 400000), animated: false)
+            let adjustedCoordinate = CLLocationCoordinate2D(latitude: currentLocation.coordinate.latitude - 0.0085, longitude: currentLocation.coordinate.longitude)
+            mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: 2000, longitudinalMeters: 2000), animated: false)
         } else {
-            /// for friend profile, hide user location and animate to most recent post
+            /// for friend profile, hide user location and animate to most recent post (zoomed out)
             mapView.showsUserLocation = false
             if coordinate.latitude != 0.0 {
-                let adjustedCoordinate = CLLocationCoordinate2D(latitude: coordinate.latitude - 1.7, longitude: coordinate.longitude)
-                mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: 400000, longitudinalMeters: 400000), animated: true)
+                let adjustedCoordinate = CLLocationCoordinate2D(latitude: coordinate.latitude - 0.85, longitude: coordinate.longitude)
+                mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: 200000, longitudinalMeters: 200000), animated: true)
             }
         }
     }
@@ -655,7 +679,7 @@ extension MapViewController: UITabBarControllerDelegate {
         
         if let feedVC = viewController as? FeedViewController {
             feedVC.mapVC = self
-            if customTabBar.selectedIndex == 0 { feedVC.scrollToFirstRow(); return true }
+            if customTabBar.selectedIndex == 0 { feedVC.openOrScrollToFirst(animated: true, newPost: false); return true }
             Mixpanel.mainInstance().track(event: "FeedOpen")
             feedMapReset()
             
@@ -685,7 +709,7 @@ extension MapViewController: UITabBarControllerDelegate {
             if customTabBar.selectedIndex != 3 {
                 notiVC.mapVC = self
             } else {
-                if notiVC.tableView != nil && notiVC.notificationList.count > 1 { notiVC.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)}
+                notiVC.scrollToFirstRow()
             }
         }
         
@@ -710,12 +734,26 @@ extension MapViewController: UIGestureRecognizerDelegate {
         return false
     }
     
+    func swipeToRemoveBegan() -> Bool {
+        let activeView = spotViewController != nil ? spotViewController.view : profileViewController != nil ? profileViewController.view : UIView()
+        if activeView == UIView() { return false }
+        return activeView?.frame.minX != 0
+    }
+    
     @objc func panGesture(_ recognizer: UIPanGestureRecognizer) {
         //tab bar view will have 3 states - full-screen, half-screen, closed
         let translation = recognizer.translation(in: view)
         let velocity = recognizer.velocity(in: view)
         
-        if abs(translation.y) <= abs(translation.x) && !drawerIsOffset() { return }
+        /// swipe to exit from profile or spot page if swiping to the right
+        if abs(translation.y) <= abs(translation.x) {
+         if ((spotViewController != nil || (profileViewController != nil && profileViewController.parent != customTabBar)) && !drawerIsOffset()) || swipeToRemoveBegan() {
+            swipeToExit(translation: translation.x, velocity: velocity.x, state: recognizer.state)
+            return
+
+            /// else if horizontal swipe only follow pan if user already began offsetting the drawer
+            } else if !drawerIsOffset() { return }
+        }
         
         /// should recognize gesture recognizer only for Profile, Spot, Nearby -> switch pan type based on
         nearbySwipe(translation: translation.y, velocity: velocity.y, state: recognizer.state)
@@ -830,6 +868,37 @@ extension MapViewController: UIGestureRecognizerDelegate {
         }
     }
     
+    func swipeToExit(translation: CGFloat, velocity: CGFloat, state: UIGestureRecognizer.State) {
+            
+        print("swipe to exit")
+        
+        guard let activeTable = spotViewController != nil ? spotViewController.shadowScroll : profileViewController != nil ? profileViewController.shadowScroll : UITableView() else { return }
+        guard let activeView = spotViewController != nil ? spotViewController.view : profileViewController.view else { return }
+
+        func resetFrame() {
+            DispatchQueue.main.async {
+                UIView.animate(withDuration: 0.2) {
+                    activeView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                }
+            }
+        }
+
+        switch state {
+                    
+        case .changed:
+            if (translation <= 0 && activeView.frame.minY == 0) || (activeTable.isDragging || activeTable.isDecelerating) { return } /// don't want to be able to offset in the other direction
+            DispatchQueue.main.async { activeView.frame = CGRect(x: translation, y: activeView.frame.minY, width: activeView.frame.width, height: activeView.frame.height) }
+            
+        case .ended:
+            if velocity + translation > UIScreen.main.bounds.width * 3/4 {
+                spotViewController != nil ? spotViewController.animateRemoveSpot() : profileViewController.animateRemoveProfile()
+            } else {
+                resetFrame()
+            }
+            
+        default: return
+        }
+    }
     
     func animateClosed() {
         
@@ -862,7 +931,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
                 self.navigationController?.navigationBar.removeBackgroundImage()
                 self.navigationController?.navigationBar.removeShadow()
 
-            } else if self.prePanY < self.tabBarOpenY && self.nearbyViewController != nil{
+            } else if self.prePanY < self.tabBarOpenY && self.nearbyViewController != nil {
                 self.nearbyViewController.closeSearch() }
                         
             UIView.animate(withDuration: 0.15, animations: {
@@ -878,6 +947,9 @@ extension MapViewController: UIGestureRecognizerDelegate {
                 
             } else if self.profileViewController != nil {
                 self.unhideNearbyButtons(nearby: false)
+                
+            } else if self.spotViewController != nil {
+                self.unhideSpotButtons()
             }
         }
     }
@@ -925,6 +997,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
             if alpha == 0.0 {
+                if self.spotViewController == nil { return }
                 self.spotViewController.addToSpotButton.isHidden = true
                 self.spotViewController.addToSpotButton.alpha = 0.0
             }
@@ -949,6 +1022,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
             
             if self.spotViewController != nil {
                 self.animateSpotToFull(forceRefresh: false)
+                self.hideSpotButtons()
                 
             } else if self.profileViewController != nil {
                 self.animateProfileToFull()
@@ -959,7 +1033,15 @@ extension MapViewController: UIGestureRecognizerDelegate {
                 self.hideNearbyButtons()
                 
             } else {
+                
                 self.prePanY = self.customTabBar.tabBar.isHidden ? self.tabBarClosedY : self.tabBarOpenY
+                if self.customTabBar.selectedIndex == 0, let feedVC = self.customTabBar.children.first as? FeedViewController {
+                    /// override tabbar hidden for edge case where tabbar is still hidden when animateTofFullScreen called on the main feed
+                    if let postVC = feedVC.children.first as? PostViewController {
+                        if postVC.children.count == 0 { self.prePanY = self.tabBarOpenY }
+                    }
+                }
+                
                 self.customTabBar.view.frame = CGRect(x: 0, y: self.prePanY, width: self.view.frame.width, height: self.view.frame.height - self.prePanY)
             }
         }
@@ -2011,14 +2093,20 @@ class ActiveFilterView: UIView {
         filterimage = UIImageView(frame: CGRect(x: 8, y: 5, width: 20, height: 20))
         filterimage.backgroundColor = nil
         
-        /// get from image url for user profile picture
+        /// get from image url for user profile picture or  tag from db
         if image == UIImage() {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 70, height: 70), scaleMode: .aspectFill)
-            filterimage.sd_setImage(with: URL(string: imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, _, _, _) in
+            /// returns same URL for profile pic, fetches new one for tag from DB
+            getImageURL(name: name, imageURL: imageURL) { [weak self] url in
                 guard let self = self else { return }
-                if image != nil { self.filterimage.image = image!}
-                self.filterimage.layer.cornerRadius = 10
-                self.filterimage.layer.masksToBounds = true
+                if url == "" { return }
+                
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 70, height: 70), scaleMode: .aspectFill)
+                self.filterimage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, _, _, _) in
+                    guard let self = self else { return }
+                    if image != nil { self.filterimage.image = image!}
+                    self.filterimage.layer.cornerRadius = 10
+                    self.filterimage.layer.masksToBounds = true
+                }
             }
         } else { filterimage.image = image }
         
@@ -2032,12 +2120,20 @@ class ActiveFilterView: UIView {
         if image == UIImage() { filterName.sizeToFit() }
         self.addSubview(filterName)
         
-        closeButton = UIButton(frame: CGRect(x: filterName.frame.maxX, y: 1, width: 28, height: 28))
+        closeButton = UIButton(frame: CGRect(x: bounds.width - 29, y: 1, width: 28, height: 28))
         closeButton.imageEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
         closeButton.setImage(UIImage(named: "CheckInX"), for: .normal)
         self.addSubview(closeButton)
     }
     
+    func getImageURL(name: String, imageURL: String, completion: @escaping (_ URL: String) -> Void) {
+        if imageURL != "" { completion(imageURL); return }
+        let tag = Tag(name: name)
+        tag.getImageURL { url in
+            completion(url)
+        }
+    }
+
     required init(coder: NSCoder) {
         fatalError()
     }
@@ -2070,28 +2166,35 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let username = tagUsers[indexPath.row].username
-        let infoPass = ["username": username] as [String : Any]
+        let infoPass = ["username": username, "tag": tagTable.tag] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("TagSelect"), object: nil, userInfo: infoPass)
         removeTable()
     }
     
-    func addTable(text: String, parent: tagTableParent) {
+    func addTable(text: String, parent: TagTableParent) {
         if tagTable.superview == nil {
             /// add tag table to window
             resizeTable(parent: parent)
             let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
             window?.addSubview(tagTable)
+            
+            /// add tag to pass to correct vc on tag select
+            switch parent {
+            case .comments : tagTable.tag = 0
+            case .post : tagTable.tag = 1
+            case .upload : tagTable.tag = 2
+            }
         }
         runQuery(searchText: text)
     }
     
-    func resizeTable(parent: tagTableParent) {
+    func resizeTable(parent: TagTableParent) {
         switch parent {
         case .comments:
             let height: CGFloat = largeScreen ? 330 : 275
             tagTable.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: height)
         default:
-            let height: CGFloat = largeScreen ? 220 : 165
+            let height: CGFloat = 165 /// originally using 220 for large screen but was cutting off for post-to spot
             tagTable.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: height)
         }
     }
@@ -2103,6 +2206,7 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func runQuery(searchText: String) {
+        
         tagUsers.removeAll()
         let usernameList = self.friendsList.map({$0.username})
         let nameList = self.friendsList.map({$0.name})
@@ -2126,6 +2230,7 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource {
                 if !self.tagUsers.contains(where: {$0.id == friend.id}) { self.tagUsers.append(friend) }
             }
         }
+        
         DispatchQueue.main.async { self.tagTable.reloadData() }
     }
 }
@@ -2343,7 +2448,8 @@ extension MapViewController {
         for tag in filterTags {
             
             let filterView = ActiveFilterView(frame: CGRect(x: 16, y: minY, width: 105, height: 30))
-            filterView.setUpFilter(name: tag, image: UIImage(named: "\(tag)Tag") ?? UIImage(), imageURL: "")
+            let tag = Tag(name: tag)
+            filterView.setUpFilter(name: tag.name, image: tag.image, imageURL: "")
             filterView.closeButton.tag = count
             filterView.closeButton.addTarget(self, action: #selector(deselectFilter(_:)), for: .touchUpInside)
             self.activeFilterView.addSubview(filterView)
@@ -2426,37 +2532,19 @@ extension MapViewController {
 // tutorial extension
 extension MapViewController {
     
-    func checkForFeedTutorial() {
-
-        if mapMask == nil || mapMask.superview == nil {
-            if userInfo == nil || userInfo.tutorialList.isEmpty || self.customTabBar.selectedIndex != 0 { return }
-            if !userInfo.tutorialList[0] {
-                addTutorialView(index: 0)
-                updateTutorialList(index: 0)
+    func checkForTutorial(index: Int) {
+        
+        if tutorialView == nil || tutorialView.superview == nil {
+            if userInfo == nil || userInfo.tutorialList.isEmpty { return }
+            if index == 0 && customTabBar.selectedIndex != 0 { return }
+            
+            if !userInfo.tutorialList[index] {
+                addTutorialView(index: index)
+                updateTutorialList(index: index)
             }
         }
     }
         
-    func checkForSpotTutorial() {
-        if mapMask == nil || mapMask.superview == nil {
-            if userInfo == nil || userInfo.tutorialList.isEmpty { return }
-            if !userInfo.tutorialList[1] {
-                addTutorialView(index: 1)
-                updateTutorialList(index: 1)
-            }
-        }
-    }
-    
-    func checkForAddTutorial() {
-        if mapMask == nil || mapMask.superview == nil {
-            if userInfo == nil || userInfo.tutorialList.isEmpty { return }
-            if !userInfo.tutorialList[2] {
-                addTutorialView(index: 2)
-                updateTutorialList(index: 2)
-            }
-        }
-    }
-    
     func addTutorialView(index: Int) {
         
         mapMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
@@ -2511,7 +2599,7 @@ extension MapViewController {
                 guard let self = self else { return }
                 
                 // remove if tap to visit wasn't already added
-                if self.tutorialImage.frame.minY == 0 {
+                if self.tutorialView.superview != nil && self.tutorialImage.frame.minY == 0 {
                     self.addTapToVisit()
                 }
             }
@@ -2520,8 +2608,9 @@ extension MapViewController {
             
             // add add to spot tutorial
             let smallScreenAdjust: CGFloat = largeScreen ? 0 : 25
+            let minY = UIScreen.main.bounds.height - 140 + smallScreenAdjust
             
-            tutorialView = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 140 + smallScreenAdjust, width: UIScreen.main.bounds.width, height: 145))
+            tutorialView = UIView(frame: CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: 145))
             tutorialView.backgroundColor = nil
             DispatchQueue.main.async { self.mapMask.addSubview(self.tutorialView) }
             
@@ -2552,9 +2641,8 @@ extension MapViewController {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) { [weak self] in
                 guard let self = self else { return }
                 
-                if self.mapMask.superview != nil {
-                    self.mapMask.removeFromSuperview()
-                    self.tutorialView.removeFromSuperview()
+                if self.tutorialView.superview != nil && self.tutorialView.frame.minY == minY {
+                    self.removeTutorialView()
                 }
             }
 
@@ -2590,9 +2678,52 @@ extension MapViewController {
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                                 
-                if self.mapMask.superview != nil {
-                    self.mapMask.removeFromSuperview()
-                    self.tutorialView.removeFromSuperview()
+                if self.tutorialView.superview != nil && self.tutorialView.frame.minY == 100 {
+                    self.removeTutorialView()
+                }
+            }
+            
+        case 3:
+
+            let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+            let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+            let navBarHeight = statusHeight +
+                        (self.navigationController?.navigationBar.frame.height ?? 44.0)
+
+            tutorialView = UIView(frame: CGRect(x: 0, y: navBarHeight - 54, width: UIScreen.main.bounds.width, height: 300))
+            tutorialView.backgroundColor = nil
+            DispatchQueue.main.async { self.mapMask.addSubview(self.tutorialView) }
+            
+            tutorialImage = UIImageView(frame: CGRect(x: 0, y: 1, width: 120, height: 120))
+            tutorialImage.image = UIImage(named: "Tap0")
+            tutorialImage.contentMode = .scaleAspectFit
+            tutorialImage.animationImages = [UIImage(named: "Tap0")!, UIImage(named: "Tap1")!, UIImage(named: "Tap2")!, UIImage(named: "Tap3")!, UIImage(named: "Tap4")!, UIImage(named: "Tap5")!, UIImage(named: "Tap6")!, UIImage(named: "Tap7")!, UIImage(named: "Tap8")!]
+            tutorialImage.animationDuration = 0.7
+            
+            DispatchQueue.main.async {
+                self.tutorialImage.startAnimating()
+                self.tutorialView.addSubview(self.tutorialImage)
+            }
+            
+            tutorialText = UILabel(frame: CGRect(x: 20, y: tutorialImage.frame.maxY, width: 150, height: 90))
+            tutorialText.text = "Tap to find and invite friends"
+            tutorialText.textColor = .white
+            tutorialText.font = UIFont(name: "SFCamera-Semibold", size: 24)
+            tutorialText.textAlignment = .left
+            tutorialText.lineBreakMode = .byWordWrapping
+            tutorialText.numberOfLines = 0
+            tutorialText.clipsToBounds = false
+            DispatchQueue.main.async { self.tutorialView.addSubview(self.tutorialText) }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.mapMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tutorialMaskTap(_:))))
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+                guard let self = self else { return }
+
+                if self.tutorialView.superview != nil && self.tutorialView.frame.minY == navBarHeight - 50 {
+                    self.removeTutorialView()
                 }
             }
 
@@ -2630,7 +2761,9 @@ extension MapViewController {
             self.mapMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.secondTutorialTap(_:))))
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            
+            guard let self = self else { return }
             
             if self.tutorialImage.frame.minY == 5 {
                 self.addSwipeToNext()
@@ -2662,35 +2795,27 @@ extension MapViewController {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
            
-            if self.mapMask.superview != nil {
-                self.mapMask.removeFromSuperview()
-                self.tutorialView.removeFromSuperview()
+            if self.tutorialView.superview != nil && self.tutorialImage.frame.minY == minY {
+                self.removeTutorialView()
             }
         }
     }
          
      func updateTutorialList(index: Int) {
-                
-         var tutorialList = userInfo.tutorialList
-        
-         switch index {
-         case 0:
-             tutorialList[0] = true
-         case 1:
-             tutorialList[1] = true
-         case 2:
-             tutorialList[2] = true
-         default:
-            return
-         }
-        
-         userInfo.tutorialList = tutorialList
+
+        var tutorialList = userInfo.tutorialList
+        tutorialList[index] = true
+
+        userInfo.tutorialList = tutorialList
          db.collection("users").document(uid).updateData(["tutorialList": tutorialList])
      }
      
      @objc func tutorialMaskTap(_ sender: UITapGestureRecognizer) {
-         mapMask.removeFromSuperview()
-         tutorialView.removeFromSuperview()
+        removeTutorialView()
      }
      
+    func removeTutorialView() {
+        tutorialView.removeFromSuperview()
+        mapMask.removeFromSuperview()
+    }
 }

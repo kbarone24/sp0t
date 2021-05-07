@@ -111,6 +111,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         nextButton.alpha = 0.65
     }
     
+    /// max username = 16 char
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         let currentText = textField.text ?? ""
         
@@ -146,7 +147,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         
         usernameAvailable(username: localUsername) { (errorMessage) in
             
-            if localUsername != self.usernameText { return }
+            if localUsername != self.usernameText { return } /// return if username field already changed
             
             if errorMessage != "" {
                 self.setUnavailable()
@@ -179,7 +180,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
     }
     
     @objc func nextTapped(_ sender: UIButton) {
-        
+                
         self.view.endEditing(true)
         setEmpty()
 
@@ -189,6 +190,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         sender.isEnabled = false
         activityIndicator.startAnimating()
         
+        /// check username status again on completion
         usernameAvailable(username: username) { (errorMessage) in
             
             if errorMessage != "" {

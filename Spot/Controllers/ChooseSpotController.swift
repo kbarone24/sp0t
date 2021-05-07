@@ -53,9 +53,10 @@ class ChooseSpotController: UIViewController {
     var emptyView: UIView! /// empty footer view
     var infoMask: UIView!
     
-    lazy var nearbySpotsCount = 0
-    lazy var nearbyRefreshCount = 0
-    lazy var searchRefreshCount = 0
+    var nearbyEnteredCount = 0
+    var noAccessCount = 0
+    var nearbyRefreshCount = 0
+    var searchRefreshCount = 0
     
     override func viewDidLoad() {
         
@@ -78,7 +79,7 @@ class ChooseSpotController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
 
         /// indicator animation doesn't work until view has entered foreground
-        if nearbyIndicator == nil && nearbyTable != nil && nearbyIDs.isEmpty && emptyView == nil {
+        if nearbyIndicator == nil && nearbyTable != nil && nearbyRefreshCount < 2 && emptyView == nil {
             nearbyIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 10, width: UIScreen.main.bounds.width, height: 30))
             nearbyTable.addSubview(nearbyIndicator)
             DispatchQueue.main.async { self.nearbyIndicator.startAnimating() }
@@ -178,6 +179,7 @@ class ChooseSpotController: UIViewController {
     }
     
     func getNearbyPOIs() {
+        
         let searchRequest = MKLocalPointsOfInterestRequest(center: postLocation, radius: 200)
         /// these filters will omit POI's with nil as their category. This can occasionally exclude some desirable POI's but primarily excludes junk
         let filters = MKPointOfInterestFilter(including: searchFilters)
@@ -241,33 +243,34 @@ class ChooseSpotController: UIViewController {
         let _ = circleQuery?.observeReady { [weak self] in
             guard let self = self else { return }
             /// nearby spots count is incremented once a spot has been fetched that user has access to. It *should* have incremented by the time circle query is done running. Trying to delay table reload until both POI's and spots have loaded
-            if self.nearbySpotsCount == 0 { self.endQuery() }
+            if self.nearbyEnteredCount == 0 { self.endQuery() }
         }
     }
     
     func loadSpotFromDB(key: String?, location: CLLocation?) {
         
+        
         if nearbySpots.contains(where: {$0.id == key}) { return }
         guard let spotKey = key else { return }
         guard let coordinate = location?.coordinate else { return }
         
+        nearbyEnteredCount += 1
+        
         let ref = db.collection("spots").document(spotKey)
-         ref.getDocument { [weak self] (spotSnap, err) in
+         ref.getDocument { [weak self] (doc, err) in
             
             guard let self = self else { return }
-            guard let doc = spotSnap else { return}
 
             do {
                 
-                let unwrappedInfo = try doc.data(as: MapSpot.self)
-                guard var spotInfo = unwrappedInfo else { return }
-                
+                let unwrappedInfo = try doc?.data(as: MapSpot.self)
+                guard var spotInfo = unwrappedInfo else { self.noAccessCount += 1; self.accessEscape(); return }
+
                 spotInfo.spotLat = coordinate.latitude
                 spotInfo.spotLong = coordinate.longitude
                                 
                 if self.hasPOILevelAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? [], mapVC: self.mapVC) {
                     
-                    self.nearbySpotsCount += 1
                     self.spotLoaded = true
                     
                     /// remove from POIs if this POI has been made into a spot. save the POI description in case unvisited by current user
@@ -291,7 +294,7 @@ class ChooseSpotController: UIViewController {
                         spotInfo.visiblePosts = spotInfo.postIDs.count
                         self.nearbyIDs.append((id: spotInfo.id!, distance: distanceFromImage))
                         self.nearbySpots.append(spotInfo)
-                        self.endQuery()
+                        self.accessEscape()
                         return
                     }
                     
@@ -302,7 +305,7 @@ class ChooseSpotController: UIViewController {
                    
                     /// error handling for failed transaction where postPrivacies and postIDs dont
                     if spotInfo.postIDs.count != 0 && spotInfo.postPrivacies.count == spotInfo.postIDs.count {
-                    
+
                         for i in 0 ... spotInfo.postIDs.count - 1 {
                             
                             let isFriend = self.isFriends(id: spotInfo.posterIDs[safe: i] ?? "xxxxx") /// is this a friend or a public stranger post
@@ -344,7 +347,7 @@ class ChooseSpotController: UIViewController {
                         if spotInfo.friendImage {
                             self.nearbyIDs.append((id: spotInfo.id!, distance: distanceFromImage))
                             self.nearbySpots.append(spotInfo)
-                            self.endQuery()
+                            self.accessEscape()
                             return
                         }
                         
@@ -359,23 +362,28 @@ class ChooseSpotController: UIViewController {
                                 do {
                                     
                                     let postInfo = try doc?.data(as: MapPost.self)
-                                    guard let post = postInfo else { self.nearbySpots.append(spotInfo); self.endQuery(); return }
+                                    guard let post = postInfo else { self.nearbySpots.append(spotInfo); self.accessEscape(); return }
                                     
                                     newSpot.spotDescription = post.caption
                                     newSpot.imageURL = post.imageURLs.first ?? ""
                                     self.nearbySpots.append(newSpot)
-                                    self.endQuery()
+                                    self.accessEscape()
+                                    print("add with non friend image")
                                     
                                 } catch {
-                                    self.nearbySpots.append(spotInfo); self.endQuery(); return}
+                                    self.nearbySpots.append(spotInfo); self.accessEscape(); return}
                             }
                             
-                        } else { self.nearbySpots.append(spotInfo); self.endQuery() }
-                    }
+                        } else { self.nearbySpots.append(spotInfo); self.accessEscape() }
+                    } else { self.noAccessCount += 1; self.accessEscape(); return }
 
-                }
-            } catch { return }
+                } else { self.noAccessCount += 1; self.accessEscape(); return }
+            } catch { self.noAccessCount += 1; self.accessEscape(); return }
          }
+    }
+    
+    func accessEscape() {
+        if noAccessCount + nearbySpots.count == nearbyEnteredCount { endQuery() }
     }
 
     func endQuery() {
@@ -492,6 +500,7 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
             
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "SpotSearch") as! SpotSearchCell
+            cell.backgroundColor = UIColor(named: "SpotBlack") /// in case returning blank we want it to blend in with background rather than be white
             guard let id = queryIDs[safe: indexPath.row] else { return cell }
             if let spot = querySpots.first(where: {$0.id == id.id}) { cell.setUp(spot: spot) }
             if let poi = queryPOIs.first(where: {$0.id == id.id}) { cell.setUp(POI: poi) }
@@ -713,9 +722,9 @@ extension ChooseSpotController: UISearchBarDelegate {
         searcher.start { [weak self] response, error in
             
             guard let self = self else { return }
-            if error != nil { self.reloadResultsTable() }
+            if error != nil { self.reloadResultsTable(searchText: searchText) }
             if !self.queryValid(searchText: searchText) { return }
-            guard let response = response else { self.reloadResultsTable(); return }
+            guard let response = response else { self.reloadResultsTable(searchText: searchText); return }
             
             var index = 0
             for item in response.mapItems {
@@ -746,12 +755,12 @@ extension ChooseSpotController: UISearchBarDelegate {
                         }
                         
                         index += 1
-                        if index == response.mapItems.count { self.reloadResultsTable() }
+                        if index == response.mapItems.count { self.reloadResultsTable(searchText: searchText) }
                     }
                     
                 } else {
                     index += 1
-                    if index == response.mapItems.count { self.reloadResultsTable() }
+                    if index == response.mapItems.count { self.reloadResultsTable(searchText: searchText) }
                 }
             }
         }
@@ -764,17 +773,15 @@ extension ChooseSpotController: UISearchBarDelegate {
     func runSpotsQuery(searchText: String) {
                 
         let spotsRef = db.collection("spots")
-        let maxVal = "\(searchTextGlobal.lowercased())uf8ff"
-        
-        let spotsQuery = spotsRef.whereField("lowercaseName", isGreaterThanOrEqualTo: searchTextGlobal.lowercased()).whereField("lowercaseName", isLessThanOrEqualTo: maxVal as Any)
-        
+        let spotsQuery = spotsRef.whereField("searchKeywords", arrayContains: searchText.lowercased()).limit(to: 10)
+                
         spotsQuery.getDocuments { [weak self] (snap, err) in
-            
+                        
             guard let self = self else { return }
             guard let docs = snap?.documents else { return }
             if !self.queryValid(searchText: searchText) { return }
             
-            if docs.count == 0 { self.reloadResultsTable() }
+            if docs.count == 0 { self.reloadResultsTable(searchText: searchText) }
 
             for doc in docs {
                 
@@ -882,7 +889,7 @@ extension ChooseSpotController: UISearchBarDelegate {
                 self.queryIDs.append((id: spot.id!, score: scoreMultiplier/spot.distance))
             }
             
-            if self.querySpots.count == topSpots.count { self.reloadResultsTable() }
+            if self.querySpots.count == topSpots.count { self.reloadResultsTable(searchText: searchText) }
         }
     }
     
@@ -891,7 +898,7 @@ extension ChooseSpotController: UISearchBarDelegate {
         return searchText == searchTextGlobal && searchText != ""
     }
 
-    func reloadResultsTable() {
+    func reloadResultsTable(searchText: String) {
 
         searchRefreshCount += 1
         if searchRefreshCount < 2 { return }
@@ -911,9 +918,13 @@ extension ChooseSpotController: UISearchBarDelegate {
                 if spot.friendImage { counter += 1; if counter == topIDs.count { finishResultsLoad() } }
                 
                 if spot.postFetchID != "" {
+                    
                     var newSpot = spot
-                    self.db.collection("posts").document(spot.postFetchID).getDocument { (doc, err) in
+                    self.db.collection("posts").document(spot.postFetchID).getDocument { [weak self] (doc, err) in
                         
+                        guard let self = self else { return }
+                        if searchText != self.searchTextGlobal { return } /// text changed while in fetch
+
                         do {
                             
                             let postInfo = try doc?.data(as: MapPost.self)

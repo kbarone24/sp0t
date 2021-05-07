@@ -24,7 +24,6 @@ class FriendsListController: UIViewController {
     lazy var friendsList: [UserProfile] = []
 
     var loadingIndicator: CustomActivityIndicator!
-    var listener1: ListenerRegistration!
     
     var userManager: SDWebImageManager!
     lazy var active = true
@@ -67,8 +66,8 @@ class FriendsListController: UIViewController {
         
         /// friendsList won't be passed for strangers friend's list on profile
         if self.friendsList.isEmpty {
-            print("friends list empty")
             DispatchQueue.global(qos: .userInitiated).async { self.getFriendInfo() }
+            
         } else {
             tableView.reloadData()
             tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: tableOffset), animated: false)
@@ -86,33 +85,53 @@ class FriendsListController: UIViewController {
         }
     }
     
+    // get friends from friendIDs for profile (non-active user)
     func getFriendInfo() {
+        
         DispatchQueue.main.async {
             if self.loadingIndicator != nil && !self.loadingIndicator.isHidden {
                 self.loadingIndicator.startAnimating()
             }
         }
 
+        var friendIndex = 0
+
         for friend in self.friendIDs {
-            self.listener1 = self.db.collection("users").document(friend).addSnapshotListener { [weak self] (friendSnap, err) in
+                        
+            if !self.friendsList.contains(where: {$0.id == friend}) {
+                var emptyProfile = UserProfile(username: "", name: "", imageURL: "", currentLocation: "")
+                emptyProfile.id = friend
+                self.friendsList.append(emptyProfile) } /// append empty here so they appear in order
+
+            self.db.collection("users").document(friend).getDocument { [weak self] (friendSnap, err) in
                 guard let self = self else { return }
                 
                     do {
+                        
                         let info = try friendSnap?.data(as: UserProfile.self)
-                        guard var userInfo = info else { return }
+                        guard var userInfo = info else { friendIndex += 1; if friendIndex == self.friendIDs.count { self.reloadTable() }; return }
                         
                         userInfo.id = friendSnap!.documentID
                         
-                        self.friendsList.append(userInfo)
+                        if let i = self.friendsList.firstIndex(where: {$0.id == friend}) {
+                            self.friendsList[i] = userInfo
+                        }
                         self.profileVC.userInfo.friendsList = self.friendsList
                         
-                        DispatchQueue.main.async {
-                            self.removeLoadingIndicator()
-                            self.tableView.reloadData()
+                        friendIndex += 1
+                        if friendIndex == self.friendIDs.count {
+                            self.reloadTable()
                         }
                         
-                } catch { return }
+                    } catch { friendIndex += 1; if friendIndex == self.friendIDs.count { self.reloadTable() }; return }
             }
+        }
+    }
+    
+    func reloadTable() {
+        DispatchQueue.main.async {
+            self.removeLoadingIndicator()
+            self.tableView.reloadData()
         }
     }
     
@@ -147,10 +166,7 @@ class FriendsListController: UIViewController {
     }
     
     func removeListeners() {
-        
-        if listener1 != nil { listener1.remove() }
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("FriendsListLoad"), object: nil)
-        
         active = false
         if userManager != nil { userManager.cancelAll() }
     }
