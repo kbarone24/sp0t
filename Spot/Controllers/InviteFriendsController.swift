@@ -15,6 +15,7 @@ class InviteFriendsController: UIViewController {
     
     weak var uploadVC: UploadPostController!
     weak var editVC: EditSpotController!
+    weak var spotVC: SpotViewController!
     
     var searchBarContainer: UIView!
     var searchBar: UISearchBar!
@@ -25,7 +26,6 @@ class InviteFriendsController: UIViewController {
     lazy var friendsList: [UserProfile] = []
     lazy var queryFriends: [UserProfile] = []
     lazy var selectedFriends: [UserProfile] = []
-    lazy var visitorList: [String] = []
     
     ///friends list is the initital mapvc friends object, query friends is what rows will show (adjusted for search), selectedfriends tracks selected rows
     
@@ -72,6 +72,7 @@ class InviteFriendsController: UIViewController {
         searchBar = UISearchBar(frame: CGRect(x: 14, y: 3, width: UIScreen.main.bounds.width - 28, height: 36))
         searchBar.searchBarStyle = .default
         searchBar.barTintColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
+        searchBar.tintColor = .white
         searchBar.searchTextField.backgroundColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
         searchBar.delegate = self
         searchBar.autocapitalizationType = .none
@@ -125,11 +126,31 @@ class InviteFriendsController: UIViewController {
             uploadVC.tableView.reloadData()
             
         } else if editVC != nil {
-            var inviteList = self.selectedFriends.map({($0.id ?? "")})
+            var inviteList = self.selectedFriends.map({($0.id!)})
             if !inviteList.contains(editVC.uid) { inviteList.append(editVC.uid) }
             editVC.spotObject.privacyLevel = "invite"
             editVC.spotObject.inviteList = inviteList
             editVC.tableView.reloadData()
+            
+        } else if spotVC != nil {
+            
+            var selectedList = self.selectedFriends.map({$0.id!})
+            if !selectedList.contains(spotVC.uid) { selectedList.append(spotVC.uid) }
+            var initialList: [String] = []
+            
+            if spotVC.spotObject.privacyLevel == "invite" {
+                initialList = spotVC.spotObject.inviteList ?? []
+                spotVC.spotObject.inviteList = selectedList
+                
+            } else {
+                initialList = spotVC.spotObject.visitorList
+                spotVC.spotObject.visitorList = selectedList
+            }
+            
+            spotVC.memberList.removeAll()
+            spotVC.getVisitorInfo(refresh: true)
+            spotVC.updateUserList(initialList: initialList)
+            ///update db
         }
         
         Mixpanel.mainInstance().track(event: "InviteFriendsSave", properties: ["friendCount": self.selectedFriends.count])
@@ -211,7 +232,7 @@ extension InviteFriendsController: UITableViewDataSource, UITableViewDelegate {
         
         if self.selectedFriends.contains(where: {$0.id == friend.id}) {
             cell.setSelected(true, animated: false)
-            cell.backgroundColor = UIColor(red: 0.045, green: 0.454, blue: 0.405, alpha: 0.45)
+            cell.backgroundColor = UIColor(red: 0.029, green: 0.287, blue: 0.256, alpha: 1)
         } else {
             cell.setSelected(false, animated: false)
             cell.backgroundColor = UIColor(named: "SpotBlack")
@@ -225,8 +246,10 @@ extension InviteFriendsController: UITableViewDataSource, UITableViewDelegate {
         if let cell = tableView.cellForRow(at: indexPath) as? FriendsListCell {
         
             if let index = selectedFriends.firstIndex(where: {$0.id == friend.id}) {
+                
                 ///cant uninvite a user that has visited
-                if self.editVC != nil && self.editVC.spotObject.visitorList.contains(where: {$0 == friend.id}) { self.showVisitorMessage(); return }
+                if editVC != nil && editVC.spotObject.posterIDs.contains(where: {$0 == friend.id}) { self.showVisitorMessage(); return }
+                if spotVC != nil && spotVC.spotObject.posterIDs.contains(where: {$0 == friend.id}) { self.showVisitorMessage(); return }
                 
                 self.selectedFriends.remove(at: index)
                 cell.setSelected(false, animated: false)
@@ -250,7 +273,7 @@ extension InviteFriendsController: UITableViewDataSource, UITableViewDelegate {
         errorLabel.textColor = UIColor.white
         errorLabel.textAlignment = .center
         errorLabel.text = "This person has already posted here"
-        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 12)
+        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
         
         view.addSubview(errorBox)
         errorBox.addSubview(errorLabel)

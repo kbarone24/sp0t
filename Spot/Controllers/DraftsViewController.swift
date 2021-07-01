@@ -445,6 +445,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         self.failedUploadCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0)
         self.aliveCollection.frame = CGRect(x: 0, y: 35, width: self.aliveCollection.frame.width, height: self.aliveCollection.frame.height)
         if aliveDrafts.count == 0 { self.addEmptyState() }
+        
     }
     
     @objc func removePreview(_ sender: UITapGestureRecognizer) {
@@ -641,21 +642,24 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "LocationPicker") as? LocationPickerController {
             
             Mixpanel.mainInstance().track(event: "DraftsGIFSelection")
+            let draft = aliveDrafts[selectedItem]
             
             /// selected item represents the row selected before the gif preview appears
-            let selectedImages = aliveDrafts[self.selectedItem].0
-            vc.mapVC = self.mapVC
-            vc.spotObject = self.spotObject
+            let selectedImages = draft.0
+            vc.mapVC = mapVC
+            vc.spotObject = spotObject
             
             vc.selectedImages = selectedImages
+            vc.frameIndexes = [0] /// always only one image grouping for drafts
             
-            if aliveDrafts[self.selectedItem].2 != CLLocation() {
+            if aliveDrafts[selectedItem].2 != CLLocation() {
                 /// gallery location sets location on location picker
-                vc.galleryLocation = aliveDrafts[self.selectedItem].2
+                vc.galleryLocation = draft.2
             }
                 
-            vc.gifMode = aliveDrafts[self.selectedItem].0.count == 5
-            vc.draftID = aliveDrafts[self.selectedItem].1
+                            
+            vc.postDate = Date(timeIntervalSince1970: TimeInterval(draft.1))
+            vc.draftID = draft.1
             self.navigationController!.pushViewController(vc, animated: true)
         }
     }
@@ -734,10 +738,12 @@ extension DraftsViewController: UICollectionViewDelegate, UICollectionViewDataSo
             
             let draft = aliveDrafts[indexPath.row]
                         
-            /// drafts can only be 1 or 5 images right now because always saved from camera
-            if draft.0.count == 5 {
-                DispatchQueue.main.async { self.previewView.animationImages = draft.0; self.previewView.animateGIF(directionUp: true, counter: 0) }
-                
+            /// > 1 image = animatable gif
+            if draft.0.count > 1 {
+                DispatchQueue.main.async {
+                    self.previewView.animationImages = draft.0
+                    draft.0.count == 5 ? self.previewView.animate5FrameAlive(directionUp: true, counter: 0) : self.previewView.animateGIF(directionUp: true, counter: 0, frames: draft.0.count)
+                }
             } else { previewView.image = draft.0[0] }
             
             maskView.addSubview(previewView)
@@ -855,19 +861,23 @@ extension DraftsViewController {
             let interval = NSDate().timeIntervalSince1970
             let myTimeInterval = TimeInterval(interval)
             let timestamp = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
+            let actualTimestamp = Date(timeIntervalSince1970: TimeInterval(post.timestamp))
 
             var finalInvites = post.inviteList ?? []
             finalInvites.append(self.uid)
 
-            var postFriends = post.privacyLevel == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
-            if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
+            var postFriends: [String] = []
+            if !post.hideFromFeed {
+                postFriends = post.privacyLevel == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
+                if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
+            }
             
             let postValues = ["caption" : post.caption ?? "",
                               "posterID": self.uid,
                               "likers": [],
                               "timestamp": timestamp,
+                              "actualTimestamp": actualTimestamp,
                               "taggedUsers": post.taggedUsers ?? [],
-                              "gif": post.gif,
                               "postLat": post.postLat,
                               "postLong": post.postLong,
                               "privacyLevel": post.privacyLevel ?? "friends",
@@ -881,7 +891,9 @@ extension DraftsViewController {
                               "spotLat": post.spotLat,
                               "spotLong": post.spotLong,
                               "isFirst": false,
-                              "spotPrivacy" : post.spotPrivacy ?? ""] as [String : Any]
+                              "spotPrivacy" : post.spotPrivacy ?? "",
+                              "hideFromFeed": post.hideFromFeed,
+                              "frameIndexes": post.frameIndexes ?? []] as [String : Any]
             
             let commentValues = ["commenterID" : self.uid,
                                  "comment" : post.caption ?? "",
@@ -902,7 +914,8 @@ extension DraftsViewController {
                 postImages.append(image)
             }
             
-            let postObject = MapPost(id: postID, caption: post.caption ?? "", postLat: post.postLat, postLong: post.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: post.spotID ?? "", gif: post.gif, city: city, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: post.taggedUsers, spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, privacyLevel: post.privacyLevel, spotPrivacy: post.spotPrivacy ?? "friends", createdBy: self.uid, inviteList: post.inviteList ?? [])
+            var postObject = MapPost(id: postID, caption: post.caption ?? "", postLat: post.postLat, postLong: post.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: post.spotID ?? "", city: city, frameIndexes: post.frameIndexes, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: post.taggedUsers, spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, privacyLevel: post.privacyLevel, spotPrivacy: post.spotPrivacy ?? "friends", createdBy: self.uid, inviteList: post.inviteList ?? [])
+            postObject.friendsList = postFriends
             
             NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
             
@@ -920,11 +933,11 @@ extension DraftsViewController {
             if post.createdBy != nil { self.incrementSpotScore(user: post.createdBy!, increment: 1) }
             self.incrementSpotScore(user: self.uid, increment: 3)
 
-            self.runSpotTransactions(spotID: post.spotID!, postPrivacy: post.privacyLevel ?? "friends", postID: postID, timestamp: timestamp, post: post)
+            self.runSpotTransactions(spotID: post.spotID!, postPrivacy: post.privacyLevel ?? "friends", postID: postID, timestamp: timestamp as Date, post: post)
         }
     }
     
-    func runSpotTransactions(spotID: String, postPrivacy: String, postID: String, timestamp: NSDate, post: PostDraft) {
+    func runSpotTransactions(spotID: String, postPrivacy: String, postID: String, timestamp: Date, post: PostDraft) {
         
         let db = Firestore.firestore()
         let ref = db.collection("spots").document(spotID)
@@ -998,9 +1011,10 @@ extension DraftsViewController {
 
             self.checkForPOI(spot: spot) { (duplicateID) in
                 
-                let interval = NSDate().timeIntervalSince1970
+                let interval = Date().timeIntervalSince1970
                 let myTimeInterval = TimeInterval(interval)
-                let timestamp = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
+                let timestamp = Date(timeIntervalSince1970: TimeInterval(myTimeInterval))
+                let actualTimestamp = Date(timeIntervalSince1970: TimeInterval(spot.timestamp))
                 
                 let spotPrivacy = spot.postToPOI ? "public" : spot.privacyLevel ?? "friends"
                 let postPrivacy = spot.privacyLevel ?? "friends"
@@ -1008,17 +1022,21 @@ extension DraftsViewController {
                 var finalInvites = spot.inviteList ?? []
                 if spot.privacyLevel == "invite" { finalInvites.append(self.uid) }
                 
-                var postFriends = spot.privacyLevel == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
-                if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
                 
+                var postFriends: [String] = []
+                if !spot.hideFromFeed {
+                    postFriends = spot.privacyLevel == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
+                    if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
+                }
+
                 let postValues = ["caption" : spot.spotDescription ?? "",
                                   "posterID": self.uid,
                                   "likers": [],
                                   "timestamp": timestamp,
+                                  "actualTimestamp": actualTimestamp,
                                   "taggedUsers": spot.taggedUsernames ?? [],
-                                  "gif": spot.gif,
-                                  "postLat": spot.spotLat,
-                                  "postLong": spot.spotLong,
+                                  "postLat": spot.postLat,
+                                  "postLong": spot.postLong,
                                   "privacyLevel": postPrivacy,
                                   "imageURLs" : imageURLs,
                                   "spotName" : spot.spotName ?? "",
@@ -1030,7 +1048,9 @@ extension DraftsViewController {
                                   "spotLat": spot.spotLat,
                                   "spotLong": spot.spotLong,
                                   "isFirst": true,
-                                  "spotPrivacy" : spotPrivacy] as [String : Any]
+                                  "spotPrivacy" : spotPrivacy,
+                                  "hideFromFeed": spot.hideFromFeed,
+                                  "frameIndexes": spot.frameIndexes ?? []] as [String : Any]
                 
                 let commentValues = ["commenterID" : self.uid,
                                      "comment" : spot.spotDescription ?? "",
@@ -1051,7 +1071,8 @@ extension DraftsViewController {
                     postImages.append(image)
                 }
                 
-                let postObject = MapPost(id: postID, caption: spot.spotDescription ?? "", postLat: spot.spotLat, postLong: spot.spotLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spot.spotID ?? "", gif: spot.gif, city: city, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: spot.taggedUsernames, spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, privacyLevel: spot.privacyLevel ?? "friends", spotPrivacy: spot.privacyLevel ?? "friends", createdBy: self.uid, inviteList: spot.inviteList ?? [])
+                var postObject = MapPost(id: postID, caption: spot.spotDescription ?? "", postLat: spot.spotLat, postLong: spot.spotLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spot.spotID ?? "", city: city, frameIndexes: spot.frameIndexes, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: spot.taggedUsernames, spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, privacyLevel: spot.privacyLevel ?? "friends", spotPrivacy: spot.privacyLevel ?? "friends", createdBy: self.uid, inviteList: spot.inviteList ?? [])
+                postObject.friendsList = postFriends
                 
                 NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
                 
@@ -1099,6 +1120,9 @@ extension DraftsViewController {
                 var spotObject = MapSpot(id: spotID, spotDescription: spot.spotDescription ?? "", spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, founderID: self.uid, privacyLevel: spot.privacyLevel ?? "friends", visitorList: [self.uid], inviteList: spot.inviteList ?? [], tags: spot.tags ?? [], imageURL: imageURLs.first ?? "", spotImage: postImages.first ?? UIImage(), taggedUsers: spot.taggedUsernames ?? [], city: city, friendVisitors: 0, distance: 0)
                 spotObject.checkInTime = Int64(interval)
                 
+                /// send notifications if this is an invite only spot
+                self.sendInviteNotis(spotObject: spotObject, postObject: postObject, username: self.mapVC.userInfo.username)
+
                 /// add city to list of cities if this is the first post there
                 DispatchQueue.global().async { self.addToCityList(city: city) }
                 
@@ -1227,7 +1251,9 @@ extension DraftsViewController {
                     
                     if spot.privacyLevel == "public" && self.locationsClose(coordinate1: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), coordinate2: CLLocationCoordinate2D(latitude: querySpot.spotLat, longitude: querySpot.spotLong)) {
                         completion(doc.documentID); return
+                        
                     } else { completion(""); return }
+                    
                 } catch { completion(""); return }
             }
         }

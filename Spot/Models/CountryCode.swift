@@ -11,9 +11,9 @@ import Foundation
 
 class CountryCode {
     
-    var id: Int!
-    var code: String!
-    var name: String!
+    var id: Int
+    var code: String
+    var name: String
     
     init(id: Int, code: String, name: String) {
         self.id = id

@@ -21,6 +21,7 @@ class NearbyViewController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore! = Firestore.firestore()
     
+    var headerView: UIView!
     var mainScroll = UIScrollView()
     var shadowScroll = UIScrollView()
     
@@ -112,8 +113,11 @@ class NearbyViewController: UIViewController {
         
         addNotifications()
         
-        mainScroll = UIScrollView(frame: UIScreen.main.bounds)
-        mainScroll.layer.cornerRadius = 10
+        headerView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 100))
+        headerView.backgroundColor = UIColor(named: "SpotBlack")
+        view.addSubview(headerView)
+        
+        mainScroll = UIScrollView(frame: CGRect(x: 0, y: 61, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 61))
         mainScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         mainScroll.backgroundColor = UIColor(named: "SpotBlack")
         mainScroll.isScrollEnabled = false
@@ -142,8 +146,10 @@ class NearbyViewController: UIViewController {
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
         
+        super.viewDidAppear(animated)
+        if children.count != 0 { return }
+
         Mixpanel.mainInstance().track(event: "SearchOpen")
         resetView()
         addIndicators()
@@ -153,6 +159,7 @@ class NearbyViewController: UIViewController {
         super.viewDidDisappear(animated)
         mapVC.hideNearbyButtons()
         mapVC.nearbyViewController = nil
+        mapVC.searchBarButton.isHidden = true
         addTopRadius()
     }
     
@@ -222,9 +229,9 @@ class NearbyViewController: UIViewController {
         pullLine.contentEdgeInsets = UIEdgeInsets(top: 7, left: 5, bottom: 0, right: 5)
         pullLine.setImage(UIImage(named: "PullLine"), for: .normal)
         pullLine.addTarget(self, action: #selector(lineTap(_:)), for: .touchUpInside)
-        mainScroll.addSubview(pullLine)
+        headerView.addSubview(pullLine)
 
-        resultsTable = UITableView(frame: CGRect(x: 0, y: 15, width: UIScreen.main.bounds.width, height: 300))
+        resultsTable = UITableView(frame: CGRect(x: 0, y: 25, width: UIScreen.main.bounds.width, height: 300))
         resultsTable.dataSource = self
         resultsTable.delegate = self
         resultsTable.backgroundColor = UIColor(named: "SpotBlack")
@@ -251,15 +258,15 @@ class NearbyViewController: UIViewController {
         citiesTable.tag = 2
         view.addSubview(citiesTable)
                 
-        cityIcon = UIImageView(frame: CGRect(x: 14, y: searchBarContainer.frame.maxY + 10, width: 15, height: 20.2))
+        cityIcon = UIImageView(frame: CGRect(x: 14, y: 25, width: 15, height: 20.2))
         cityIcon.image = UIImage(named: "CityIcon")
         cityIcon.isHidden = true
-        mainScroll.addSubview(cityIcon)
+        headerView.addSubview(cityIcon)
         
-        cityName = UILabel(frame: CGRect(x: cityIcon.frame.maxX + 8, y: searchBarContainer.frame.maxY + 13, width: UIScreen.main.bounds.width - 28, height: 20))
+        cityName = UILabel(frame: CGRect(x: cityIcon.frame.maxX + 8, y: cityIcon.frame.minY + 2, width: UIScreen.main.bounds.width - 28, height: 20))
         cityName.font = UIFont(name: "SFCamera-Semibold", size: 17)
         cityName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        mainScroll.addSubview(self.cityName)
+        headerView.addSubview(self.cityName)
         
         /// button covers cityname to include it in touch area
         changeCityButton = UIButton(frame: CGRect(x: cityName.frame.minX - 4.5, y: cityName.frame.minY - 4, width: cityName.frame.width + 86, height: 30))
@@ -269,9 +276,9 @@ class NearbyViewController: UIViewController {
         changeCityButton.contentVerticalAlignment = .center
         changeCityButton.contentHorizontalAlignment = .right
         changeCityButton.addTarget(self, action: #selector(changeCityTap(_:)), for: .touchUpInside)
-        mainScroll.addSubview(changeCityButton)
+        headerView.addSubview(changeCityButton)
         
-        /// set up filters and spots table
+          /// set up filters and spots table
         loadMainScroll()
         
         if mapVC.currentLocation == nil { return }
@@ -344,7 +351,7 @@ class NearbyViewController: UIViewController {
         let usersLayout = LeftAlignedCollectionViewFlowLayout()
         usersLayout.headerReferenceSize = CGSize(width: UIScreen.main.bounds.width, height: 29)
         
-        usersCollection.frame = CGRect(x: 0, y: cityName.frame.maxY + 14, width: UIScreen.main.bounds.width, height: 0)
+        usersCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0)
         usersCollection.setCollectionViewLayout(usersLayout, animated: false)
         usersCollection.tag = 0
         usersCollection.delegate = self
@@ -402,11 +409,13 @@ class NearbyViewController: UIViewController {
     func loadSearchBar() {
         
         // search bar hidden until interacted with
-        searchBarContainer = UIView(frame: CGRect(x: 0, y: 11, width: UIScreen.main.bounds.width, height: 60))
-        searchBarContainer.backgroundColor = nil
-        mainScroll.addSubview(searchBarContainer)
+        searchBarContainer = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 100))
+        searchBarContainer.backgroundColor = UIColor(named: "SpotBlack")
+        searchBarContainer.alpha = 0.0
+        view.addSubview(searchBarContainer)
         
-        searchBar = UISearchBar(frame: CGRect(x: 14, y: 11, width: UIScreen.main.bounds.width - 28, height: 36))
+        let searchBarY: CGFloat = mapVC.largeScreen ? 66 : 36
+        searchBar = UISearchBar(frame: CGRect(x: 14, y: searchBarY, width: UIScreen.main.bounds.width - 85, height: 36))
         searchBar.searchBarStyle = .default
         searchBar.barTintColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
         searchBar.searchTextField.backgroundColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
@@ -421,16 +430,15 @@ class NearbyViewController: UIViewController {
         searchBar.searchTextField.clipsToBounds = true
         searchBar.layer.cornerRadius = 8
         searchBar.searchTextField.layer.cornerRadius = 8
-        
+
         searchBarContainer.addSubview(searchBar)
         
-        cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 60, y: 13, width: 50, height: 30))
+        cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 60, y: searchBarY + 2, width: 50, height: 30))
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00), for: .normal)
         cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
         cancelButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
         cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
-        cancelButton.isHidden = true
         searchBarContainer.addSubview(cancelButton)
     }
     
@@ -497,7 +505,7 @@ class NearbyViewController: UIViewController {
         }
         
         if scrollView.tag != 40 { return }
-        let offset: CGFloat = mapVC.largeScreen ? 65 : 40
+        let offset: CGFloat = 32
         let sec0Height = spotsTable.frame.minY - offset
         let grayZone = sec0Height - 40
         
@@ -529,12 +537,12 @@ class NearbyViewController: UIViewController {
         if spotsHeader.topView == nil { return }
         
         let backgroundAlpha: CGFloat = 1 - 2.5 * level/100
-        spotsHeader.topView.backgroundColor = UIColor(red: 0.011, green: 0.011, blue: 0.011, alpha: backgroundAlpha)
+        spotsHeader.topView.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(backgroundAlpha)
         
         let lineAlpha = 0.025 * level
         spotsHeader.topLine.alpha = lineAlpha
     }
-            
+    
     func removeLoadingIndicator() {
         DispatchQueue.main.async { self.loadingIndicator.stopAnimating() }
     }
@@ -641,7 +649,7 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
                 /// add more button for halfscreen view with user overflow
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MoreCell", for: indexPath) as? MoreCell else { return UICollectionViewCell() }
                 let trueHalf = usersMoreNeeded ? halfScreenUserCount - 1 : halfScreenUserCount
-                cell.setUp(count: fullScreenUserCount - trueHalf)
+                cell.setUp(count: fullScreenUserCount - trueHalf, spotPage: false)
                 return cell
             }
             /// regular user cell
@@ -656,7 +664,7 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
             if indexPath.row == halfScreenTagsCount - 1 && tagsMoreNeeded && !expandTags {
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MoreCell", for: indexPath) as? MoreCell else { return UICollectionViewCell() }
                 let trueHalf = tagsMoreNeeded ? halfScreenTagsCount - 1 : halfScreenTagsCount
-                cell.setUp(count: fullScreenTagsCount - trueHalf)
+                cell.setUp(count: fullScreenTagsCount - trueHalf, spotPage: false)
                 return cell
             }
             /// tag cell
@@ -774,8 +782,9 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
             vc.mapVC = self.mapVC
             vc.id = user.id!
                         
-            self.mapVC.nearbyViewController = nil
-            self.addTopRadius()
+            mapVC.nearbyViewController = nil
+            mapVC.searchBarButton.isHidden = true
+            addTopRadius()
             
             mapVC.customTabBar.tabBar.isHidden = true
             
@@ -811,20 +820,22 @@ extension NearbyViewController: UISearchBarDelegate {
         
         selectedTable.alpha = 0.0
         selectedTable.isHidden = false
-        cancelButton.alpha = 0.0
-        cancelButton.isHidden = false
+        searchBarContainer.alpha = 0.0
+        searchBarContainer.isHidden = false
         
         UIView.animate(withDuration: 0.2) {
+            self.headerView.alpha = 0.0
             self.usersCollection.alpha = 0.0
             self.tagsCollection.alpha = 0.0
             self.spotsHeader.alpha = 0.0
             self.spotsTable.alpha = 0.0
-            self.cancelButton.alpha = 1.0
+            self.searchBarContainer.alpha = 1.0
             selectedTable.alpha = 1.0
-            self.searchBar.frame =  CGRect(x: self.searchBar.frame.minX, y: 11, width: UIScreen.main.bounds.width - 85, height: self.searchBar.frame.height)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.headerView.isHidden = true
+            self.headerView.alpha = 1.0
             self.usersCollection.isHidden = true
             self.usersCollection.alpha = 1.0
             self.tagsCollection.isHidden = true
@@ -845,13 +856,10 @@ extension NearbyViewController: UISearchBarDelegate {
     func animateToFull() {
 
         UIView.animate(withDuration: 0.2) {
-            let searchBarY: CGFloat = self.mapVC.largeScreen ? 55 : 25
             self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: UIScreen.main.bounds.height)
-            self.searchBarContainer.frame = CGRect(x: 0, y: searchBarY, width: UIScreen.main.bounds.width, height: 60)
-            self.searchBar.frame =  CGRect(x: self.searchBar.frame.minX, y: 11, width: self.searchBar.frame.width, height: self.searchBar.frame.height)
-            self.resultsTable.frame = CGRect(x: 0, y: self.searchBarContainer.frame.maxY, width: UIScreen.main.bounds.width, height: 300)
-            self.citiesTable.frame = CGRect(x: 0, y: self.searchBarContainer.frame.maxY + 5, width: UIScreen.main.bounds.width, height: 325)
-            self.offsetCityName(closed: false)
+            self.resultsTable.frame = CGRect(x: 0, y: self.searchBarContainer.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 300)
+            self.citiesTable.frame = CGRect(x: 0, y: self.searchBarContainer.frame.maxY + 15, width: UIScreen.main.bounds.width, height: 325)
+            self.offsetCityName(position: 2)
         }
         
         if !mapVC.largeScreen { removeTopRadius() }
@@ -868,6 +876,8 @@ extension NearbyViewController: UISearchBarDelegate {
         
         /// animate users/tags/spots collections back in if hidden
         if usersCollection.isHidden {
+            headerView.alpha = 0.0
+            headerView.isHidden = false
             usersCollection.alpha = 0.0
             usersCollection.isHidden = false
             tagsCollection.alpha = 0.0
@@ -879,22 +889,26 @@ extension NearbyViewController: UISearchBarDelegate {
         }
 
         UIView.animate(withDuration: 0.2) {
+            self.headerView.alpha = 1.0
             self.usersCollection.alpha = 1.0
             self.tagsCollection.alpha = 1.0
             self.spotsHeader.alpha = 1.0
             self.spotsTable.alpha = 1.0
             self.spotsTable.alpha = 1.0
-            self.searchBar.frame = CGRect(x: self.searchBar.frame.minX, y: 11, width: UIScreen.main.bounds.width - 28, height: self.searchBar.frame.height)
-            self.searchBarContainer.frame = CGRect(x: 0, y: 11, width: UIScreen.main.bounds.width, height: 60)
-            self.offsetCityName(closed: false)
+            self.searchBarContainer.alpha = 0.0
+            
+            self.offsetCityName(position: 1)
             self.mainScroll.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.searchBarContainer.isHidden = true
         }
         
         if !mapVC.largeScreen { addTopRadius() }
         
         shadowScroll.isScrollEnabled = false
         //hide results view
-        cancelButton.isHidden = true
         searchBar.text = ""
         searchBar.placeholder = ""
         emptyQueries()
@@ -931,12 +945,10 @@ extension NearbyViewController: UISearchBarDelegate {
     // top radius used bc can't set corner radius for entire drawer or else bottom corners will show on iPhone8-
     func removeTopRadius() {
         mapVC.customTabBar.view.layer.mask = nil
-        self.mainScroll.layer.cornerRadius = 0
     }
     
     func addTopRadius() {
         mapVC.customTabBar.view.layer.mask = mapVC.tabBarLayer
-        self.mainScroll.layer.cornerRadius = 10
     }
     
     func resetMap() {
@@ -944,6 +956,8 @@ extension NearbyViewController: UISearchBarDelegate {
         let annotations = mapVC.mapView.annotations
         mapVC.mapView.removeAnnotations(annotations)
         mapVC.postsList.removeAll()
+        
+        mapVC.searchBarButton.isHidden = false
         
         mapVC.nearbyViewController = self
         mapVC.profileViewController = nil
@@ -1014,17 +1028,25 @@ extension NearbyViewController: UISearchBarDelegate {
         }
     }
     
-    func offsetCityName(closed: Bool) {
-        /// called to move cityname away from search bar
-        if cityName == nil { return }
-        let offset: CGFloat = closed ? 10 : 0 /// push the city stuff below the tab bar so it doesnt show on closed drawer
+    func offsetCityName(position: Int) {
         
-        cityIcon.frame = CGRect(x: 14, y: searchBarContainer.frame.maxY + 6 + offset, width: 15, height: 20.2)
-        cityName.frame = CGRect(x: cityIcon.frame.maxX + 8, y: self.searchBarContainer.frame.maxY + 8 + offset, width: UIScreen.main.bounds.width - 28, height: 20)
+        /// position: 0 = closed, 1 = half, 2 = full
+
+        let minY: CGFloat = position != 2 ? 25 : self.mapVC.largeScreen ? 60 : 35
+        let cityOffset: CGFloat = position == 0 ? 5 : 0
+        let scrollOffset: CGFloat = position == 0 ? 35 : position == 2 ? 17 : 14
+
+        if cityName == nil { return }
+
+        cityIcon.frame = CGRect(x: 14, y: minY + cityOffset, width: 15, height: 20.2)
+        cityName.frame = CGRect(x: cityIcon.frame.maxX + 8, y: cityIcon.frame.minY + 2, width: UIScreen.main.bounds.width - 28, height: 20)
         cityName.sizeToFit()
-        changeCityButton.frame = CGRect(x: cityName.frame.minX - 4.5, y: cityName.frame.minY - 4 + offset, width: cityName.frame.width + 86, height: 30)
+        changeCityButton.frame = CGRect(x: cityName.frame.minX - 4.5, y: cityName.frame.minY - 4, width: cityName.frame.width + 86, height: 30)
+
+        /// offset mainScroll to the bottom of cityName
+        mainScroll.frame = CGRect(x: mainScroll.frame.minX, y: minY + 22 + scrollOffset, width: mainScroll.frame.width, height: mainScroll.frame.height)
     }
-    
+        
     func emptyQueries() {
         /// reset search values
         searchRefreshCount = 0
@@ -1365,12 +1387,14 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
             /// set up city cell
             if showQuery {
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: "SpotSearchCell") as? SpotSearchCell else { return UITableViewCell() }
+                print("city", queryCities[indexPath.row])
                 let city = queryCities[indexPath.row].cityFormatter()
                 cell.setUpCity(cityName: city)
                 return cell
                 
             } else {
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: "NearbyCityCell") as? NearbyCityCell else { return UITableViewCell() }
+                print("city", nearbyCities[indexPath.row])
                 let city = nearbyCities[indexPath.row]
                 cell.setUp(city: city)
                 return cell
@@ -1425,32 +1449,31 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
                 
                 guard let completion = queryCities[safe: indexPath.row] else { return }
                 let queryString = completion.cityFormatter()
-                    
-                    let searchRequest = MKLocalSearch.Request(completion: completion)
-                    let search = MKLocalSearch(request: searchRequest)
-                    
-                    search.start { [weak self] (response, error) in
-                        
-                        guard let self = self else { return }
-                        guard let placemark = response?.mapItems[0].placemark else { return }
-                        
-                        let coordinate = placemark.coordinate
-                        let adjustedCoordinate = CLLocationCoordinate2D(latitude: coordinate.latitude - 0.02333, longitude: coordinate.longitude)
-                        
-                        let city = placemark.locality ?? ""
-                        let state = placemark.administrativeArea ?? ""
-                        let country = placemark.country ?? ""
-                        let secondString = country == "United States" ? state : country
-                        
-                        /// use same logic as upload to ensure city matches with cityname for spots. In case placemark fails just use original query string
-                        let cityString = (city != "" && secondString != "") ? city + ", " + secondString : queryString
-                        
-                        self.mapVC.mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: 7000, longitudinalMeters: 7000), animated: true)
-                        self.selectedCity = (name: cityString, coordinate: adjustedCoordinate)
-                        
-                        self.resetCity(); self.emptyQueries(); self.animateToHalf()
-                }
+                let searchRequest = MKLocalSearch.Request(completion: completion)
+                let search = MKLocalSearch(request: searchRequest)
                 
+                search.start { [weak self] (response, error) in
+                    
+                    guard let self = self else { return }
+                    guard let placemark = response?.mapItems[0].placemark else { return }
+                    
+                    let coordinate = placemark.coordinate
+                    let adjustedCoordinate = CLLocationCoordinate2D(latitude: coordinate.latitude - 0.02333, longitude: coordinate.longitude)
+                    
+                    let city = placemark.locality ?? ""
+                    let state = placemark.administrativeArea ?? ""
+                    let country = placemark.country ?? ""
+                    let secondString = country == "United States" ? state : country
+                    
+                    /// use same logic as upload to ensure city matches with cityname for spots. In case placemark fails just use original query string
+                    let cityString = (city != "" && secondString != "") ? city + ", " + secondString : queryString
+                    
+                    self.mapVC.mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: 7000, longitudinalMeters: 7000), animated: true)
+                    self.selectedCity = (name: cityString, coordinate: adjustedCoordinate)
+                    
+                    self.resetCity(); self.emptyQueries(); self.animateToHalf()
+                }
+
             } else {
                 /// select from nearby
                 guard let city = nearbyCities[safe: indexPath.row] else { return }
@@ -1465,13 +1488,43 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
     
+    func checkForCityChange() {
+        
+        let coordinate = mapVC.mapView.centerCoordinate
+        
+        reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) { [weak self] cityString in
+            
+            guard let self = self else { return }
+            
+            if cityString != self.selectedCity.name {
+                /// this isn't the perfect coordinate representing the city center, but it only impacts spotscores so this is acceptable
+                self.db.collection("cities").whereField("cityName", isEqualTo: cityString).getDocuments { snap, err in
+                    
+                    if let doc = snap?.documents.first {
+
+                        guard let l = doc.get("l") as? [Double] else { print("no l"); return }
+                        let cityCenter = CLLocationCoordinate2D(latitude: l[0], longitude: l[1])
+                        
+                        /// check that city hasn't changed again during fetch
+                        self.selectedCity = (name: cityString, coordinate: cityCenter)
+                        self.resetCity()
+                    }
+
+                    self.mapVC.shouldUpdateCity = true
+                }
+                
+            } 
+        }
+    }
+    
+    
     func resetCity() {
         
         // sort by score if viewing another city
         sortByScore = userCity != nil && userCity.name != selectedCity.name
         
-        cityIcon.frame = CGRect(x: 14, y: searchBarContainer.frame.maxY + 10, width: 15, height: 20.2)
-        cityName.frame = CGRect(x: cityIcon.frame.maxX + 8, y: self.searchBarContainer.frame.maxY + 12, width: UIScreen.main.bounds.width - 28, height: 20)
+        cityIcon.frame = CGRect(x: 14, y: 25, width: 15, height: 20.2)
+        cityName.frame = CGRect(x: cityIcon.frame.maxX + 8, y: cityIcon.frame.minY + 2, width: UIScreen.main.bounds.width - 28, height: 20)
         cityName.text = selectedCity.name
         cityName.sizeToFit()
         
@@ -1496,25 +1549,28 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
         
         /// resort/reload cities table
         reloadCities()
-        
+       
         /// remove city spots from each friend object
-        for i in 0...cityFriends.count - 1 {
-            cityFriends[i].spotsList.removeAll()
-            cityFriends[i].filteredCount = 0
-            cityFriends[i].selected = false
+        if cityFriends.count > 0 {
+            for i in 0...cityFriends.count - 1 {
+                cityFriends[i].spotsList.removeAll()
+                cityFriends[i].filteredCount = 0
+    //            cityFriends[i].selected = false
+            }
         }
         
-        /// remove city spots from each tag object
-        cityTags.removeAll()
+        /// remove city spots from each tag object except for selected tag
+        if cityTags.count > 0 { for i in 0...cityTags.count - 1 { cityTags[i].spotCount = 0 } }
+        cityTags.removeAll(where: {!$0.selected})
         
         /// remove filters
-        selectedUserID = nil
-        selectedTags.removeAll()
+//        selectedUserID = nil
+//        selectedTags.removeAll()
         
         /// reset map filters
-        mapVC.filterUser = nil
-        mapVC.filterTags.removeAll()
-        mapVC.addSelectedFilters()
+//        mapVC.filterUser = nil
+//        mapVC.filterTags.removeAll()
+//        mapVC.addSelectedFilters()
         mapVC.filterSpots(refresh: false)
         
         citySpots.removeAll()
@@ -1796,13 +1852,14 @@ class MoreCell: UICollectionViewCell {
     
     var label: UILabel!
     
-    func setUp(count: Int) {
+    func setUp(count: Int, spotPage: Bool) {
         backgroundColor = UIColor(red: 0.11, green: 0.11, blue: 0.11, alpha: 1.0)
         layer.cornerRadius = 7.5
         
         if label != nil { label.text = "" }
         
-        label = UILabel(frame: CGRect(x: 7, y: 9, width: 100, height: 16))
+        let labelY = spotPage ? 6.5 : 9
+        label = UILabel(frame: CGRect(x: 7, y: labelY, width: 100, height: 16))
         label.font = UIFont(name: "SFCamera-Regular", size: 11.5)
         label.text = "+ \(count) more"
         label.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
@@ -2024,11 +2081,11 @@ class NearbySpotsHeader: UIView {
         backgroundColor = nil
         
         if topView != nil { topView.backgroundColor = nil }
-        topView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 50))
-        topView.backgroundColor = UIColor(red: 0.011, green: 0.011, blue: 0.011, alpha: 0.0)
+        topView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 20))
+        topView.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(0.0)
         addSubview(topView)
         
-        let titleView = UIView(frame: CGRect(x: 0, y: 50, width: UIScreen.main.bounds.width, height: 35))
+        let titleView = UIView(frame: CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 35))
         titleView.backgroundColor = UIColor(red: 0.011, green: 0.011, blue: 0.011, alpha: 1.0)
         addSubview(titleView)
         
@@ -2102,11 +2159,7 @@ class NearbySpotsHeader: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        /// top view shouldn't receive touches
-        return bounds.contains(point) && !topView.frame.contains(point)
-    }
+
 }
 
 class HeaderFilterView: UIImageView {
@@ -2242,8 +2295,8 @@ class NearbyEmptyCell: UICollectionViewCell {
 extension NearbyViewController {
     
     func getCity(completion: @escaping (_ city: String) -> Void) {
-        if self.mapVC.currentLocation == nil { completion(""); return }
-        self.reverseGeocodeFromCoordinate(numberOfFields: 2, location: self.mapVC.currentLocation) {  city in
+        if mapVC.currentLocation == nil { completion(""); return }
+        reverseGeocodeFromCoordinate(numberOfFields: 2, location: mapVC.currentLocation) {  city in
             completion(city)
         }
     }
@@ -2382,18 +2435,18 @@ extension NearbyViewController {
     }
     
     func getSpots() {
-        
+
         let query = db.collection("spots").whereField("city", isEqualTo: selectedCity.name)
         let localCity = selectedCity.name
         
-        listener1 = query.addSnapshotListener({ [weak self] (snap, err) in
+        listener1 = query.addSnapshotListener(includeMetadataChanges: true, listener: ({ [weak self] (snap, err) in
             
             guard let self = self else { return }
             guard let snap = snap else { return }
             
             var spotCount = 0
-            
             if snap.documents.count == 0 { self.getUsersSize(); self.getTagsSize(); self.getSpotScores() }
+            
             for spot in snap.documents {
                 
                 do {
@@ -2411,21 +2464,25 @@ extension NearbyViewController {
                     
                     if self.hasSpotAccess(spot: info, mapVC: self.mapVC) {
                         
+                        /// only way a spot will be filtered here is typically if already filtered on reset city
+                        var filtered = self.selectedUserID != nil && !info.visitorList.contains(where: {$0 == self.selectedUserID})
+                        for tag in self.selectedTags { if !info.tags.contains(tag) { filtered = true }}
+
                         /// check for friend visitors
                         for visitor in info.visitorList {
                             if let index = self.cityFriends.firstIndex(where: {$0.user.id! == visitor}) {
-                                self.cityFriends[index].spotsList.append((info, filtered: false))
-                                self.cityFriends[index].filteredCount += 1
+                                self.cityFriends[index].spotsList.append((info, filtered: filtered))
+                                self.cityFriends[index].filteredCount += filtered ? 0 : 1
                             }
                         }
                         
                         /// check for tags
                         for tag in info.tags {
                             if let index = self.cityTags.firstIndex(where: {$0.name == tag}) {
-                                self.cityTags[index].spotCount += 1
+                                if !filtered { self.cityTags[index].spotCount += 1 }
                             } else {
                                 let newTag = Tag(name: tag)
-                                newTag.spotCount = 1
+                                if !filtered { newTag.spotCount = 1 }
                                 self.cityTags.append(newTag)
                             }
                         }
@@ -2435,8 +2492,8 @@ extension NearbyViewController {
                         info.distance = distanceFromImage
                         
                         info.friendVisitors = self.getFriendVisitors(visitorList: info.visitorList)
-
-                        self.citySpots.append((spot: info, filtered: false))
+                        
+                        self.citySpots.append((spot: info, filtered: filtered))
                         /// check for last then reload collections
                     }
                     
@@ -2453,18 +2510,19 @@ extension NearbyViewController {
                     }
                 }
             }
-        })
+        }))
     }
     
     /// check if need to load tag URL from database
     func checkForBlankTagImages() {
-        
+
         if cityTags.count == 0 { getUsersSize(); getTagsSize(); getSpotScores(); return }
         var tagCount = 0
 
         for i in 0...cityTags.count - 1 {
             
             let tag = cityTags[i]
+            
             if tag.image == UIImage() {
                 tag.getImageURL { [weak self] url in
                     guard let self = self else { return }
@@ -2587,7 +2645,7 @@ extension NearbyViewController {
             UIView.animate(withDuration: speed) { [weak self] in
                 guard let self = self else { return }
                 let height = self.expandUsers ? self.fullScreenUserHeight : self.halfScreenUserHeight
-                self.usersCollection.frame = CGRect(x: self.usersCollection.frame.minX, y: self.cityName.frame.maxY + 14, width: self.usersCollection.frame.width, height: height)
+                self.usersCollection.frame = CGRect(x: self.usersCollection.frame.minX, y: 0, width: self.usersCollection.frame.width, height: height)
                 
                 let indexSet: IndexSet = IndexSet(0...0)
                 self.usersCollection.performBatchUpdates { self.usersCollection.reloadSections(indexSet) }
@@ -2611,7 +2669,7 @@ extension NearbyViewController {
         var lineWidth: CGFloat = 11
         
         self.cityTags.sort(by: {!$0.selected && !$1.selected ? $0.spotCount > $1.spotCount : $0.selected && !$1.selected})
-        let above0 = cityTags.prefix(while: {$0.spotCount > 0})
+        let above0 = cityTags.prefix(while: {$0.spotCount > 0 || $0.selected})
         
         if above0.count == 0 { self.resizeTags(refresh: false) }
         
@@ -2676,7 +2734,7 @@ extension NearbyViewController {
             UIView.animate(withDuration: speed) { [weak self] in
                 guard let self = self else { return }
                 
-                let minPosts = self.cityName.frame.maxY + 14
+                let minPosts: CGFloat = 0
                 let minY: CGFloat = self.expandUsers ? minPosts + self.fullScreenUserHeight + 2 : minPosts + self.halfScreenUserHeight + 2
                 let height = self.expandTags ? self.fullScreenTagsHeight : self.halfScreenTagsHeight
                 self.tagsCollection.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: height)
@@ -2704,20 +2762,20 @@ extension NearbyViewController {
             UIView.animate(withDuration: 0.4) { [weak self] in
                 guard let self = self else { return }
                 
-                let minPosts = self.cityName.frame.maxY + 14
+                let minPosts: CGFloat = 0
                 let usersHeight = self.expandUsers ? self.fullScreenUserHeight : self.halfScreenUserHeight
                 let tagsHeight = self.expandTags ? self.fullScreenTagsHeight : self.halfScreenTagsHeight
-                let minY: CGFloat = minPosts + usersHeight + tagsHeight - 38
+                let minY: CGFloat = minPosts + usersHeight + tagsHeight - 8
                                 
                 self.spotsHeader.isHidden = spotsEmpty || !self.resultsTable.isHidden || !self.citiesTable.isHidden
-                self.spotsHeader.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: 85)
+                self.spotsHeader.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: 55)
                 self.spotsTable.frame = CGRect(x: 0, y: self.spotsHeader.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
                 self.reloadSpotsTable()
                 
                 /// size of shadow scroll reflects the total number of cells in the tableview - all unfiltered spots
                 let unfiltered = self.citySpots.prefix(while: {!$0.filtered})
                 let height = CGFloat(unfiltered.count) * 98
-                self.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: minY + height + 200)
+                self.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: minY + height + 250)
             }
         }
     }
@@ -2731,9 +2789,7 @@ extension NearbyViewController {
         let sortType = sortByScore ? "TOP" : "NEAREST"
 
         var filterTags: [Tag] = []
-        for tag in selectedTags {
-            filterTags.append(cityTags.first(where: {$0.name == tag})!)
-        }
+        for tag in selectedTags { filterTags.append(cityTags.first(where: {$0.name == tag})!) }
         
         var selectedUser = CityUser(user: UserProfile(username: "", name: "", imageURL: "", currentLocation: ""))
         if let user = cityFriends.first(where: {$0.selected}) {
@@ -2803,7 +2859,6 @@ extension NearbyViewController {
     }
         
     func filter() {
-        
         if let selectedUser = mapVC.friendsList.first(where: {$0.id == selectedUserID}) {
             mapVC.filterUser = selectedUser
         } else if selectedUserID == uid {
@@ -2814,6 +2869,15 @@ extension NearbyViewController {
         mapVC.filterTags = selectedTags
         mapVC.filterFromNearby()
         
+        /// empty city load while filters were aleady selected, just remove filters and reload
+        if citySpots.count == 0 {
+            cityTags.removeAll(where: {!$0.selected})
+            for i in 0...cityFriends.count - 1 { cityFriends[i].filteredCount = 0 }
+            getUsersSize()
+            getTagsSize()
+            return
+        }
+
         /// reset individual tag spot counts
         for i in 0...cityTags.count - 1 { cityTags[i].spotCount = 0 }
         for i in 0...cityFriends.count - 1 { cityFriends[i].filteredCount = 0 }
@@ -2835,6 +2899,7 @@ extension NearbyViewController {
                     continue spotLoop
                 }
             }
+            
             /// not filtered if this spot contains all selected tags
             citySpots[i].filtered = false
             
@@ -2911,6 +2976,9 @@ extension MKLocalSearchCompletion {
         //format 3: some non-US cities
         /// title = city
         /// subtitle = country
+        //format 4: (update): US cities
+        /// title = city, state
+        /// subtitle = country
         
         var cityString = ""
         var commaPositions: [Int] = []
@@ -2921,6 +2989,9 @@ extension MKLocalSearchCompletion {
             index += 1
         }
         
+        print("title", title)
+        print("subtitle", subtitle)
+        
         /// format 1
         if subtitle == "" {
             
@@ -2930,7 +3001,12 @@ extension MKLocalSearchCompletion {
                 cityString = commaPositions.count > 1 ? String(title.prefix(commaPositions[1])) : title
             }
             
+        } else if subtitle == "United States" {
+            /// format 4
+            cityString = title
+            
         } else {
+            
         /// format 2 & 3
             let city = commaPositions.isEmpty ? title : String(title.prefix(commaPositions[0]))
             cityString = city + ", " + subtitle

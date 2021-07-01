@@ -1,28 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="16097.3" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="eCr-eN-N6D">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="18122" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="eCr-eN-N6D">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16087"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="18093"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--Create Post View Controller-->
-        <scene sceneID="VpB-Wx-tgC">
-            <objects>
-                <viewController storyboardIdentifier="CreatePost" extendedLayoutIncludesOpaqueBars="YES" id="McA-Zb-s0J" customClass="CreatePostViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="eD9-j3-nN6">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                        <viewLayoutGuide key="safeArea" id="4oF-Q7-Kd7"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="K3Y-54-oVr" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="2291" y="2460"/>
-        </scene>
         <!--Spot View Controller-->
         <scene sceneID="FM9-rp-soc">
             <objects>
@@ -30,14 +16,29 @@
                     <view key="view" autoresizesSubviews="NO" contentMode="scaleToFill" id="9Lr-wN-HvS">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
                         <viewLayoutGuide key="safeArea" id="jwP-qg-Weg"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
                     </view>
                     <navigationItem key="navigationItem" id="Qv1-Ze-Idw"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Dhe-fi-Zt9" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1438" y="3150"/>
+        </scene>
+        <!--Spot Visitors View Controller-->
+        <scene sceneID="WNs-Su-2mA">
+            <objects>
+                <viewController storyboardIdentifier="SpotVisitors" interfaceStyle="dark" id="XsH-LJ-ckz" customClass="SpotVisitorsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="6wD-pb-oGZ">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="8OX-yr-kfV"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="j2U-Va-Peb" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2545" y="3485"/>
         </scene>
         <!--Edit Spot Controller-->
         <scene sceneID="j5A-mO-ya8">
@@ -46,13 +47,13 @@
                     <view key="view" contentMode="scaleToFill" id="ddo-tO-3Pt">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
                         <viewLayoutGuide key="safeArea" id="1gb-he-mtt"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OBe-vx-nfR" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="2338" y="3150"/>
+            <point key="canvasLocation" x="1438" y="2429"/>
         </scene>
         <!--Post View Controller-->
         <scene sceneID="GiP-j4-Ff6">
@@ -61,18 +62,36 @@
                     <view key="view" contentMode="scaleToFill" id="N1m-io-lLg">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
                         <viewLayoutGuide key="safeArea" id="o3P-AO-W4m"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dKu-dE-vuZ" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1438" y="3862"/>
         </scene>
+        <!--Spot Posts View Controller-->
+        <scene sceneID="qYI-cw-WHx">
+            <objects>
+                <viewController storyboardIdentifier="SpotPosts" interfaceStyle="dark" id="QVC-xf-EqP" customClass="SpotPostsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="ICn-bN-rP6">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="9Nb-r5-7IA"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ck7-hu-tyl" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2545" y="2724"/>
+        </scene>
     </scenes>
     <resources>
         <namedColor name="SpotBlack">
             <color red="0.070588235294117646" green="0.070588235294117646" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
     </resources>
 </document>

@@ -287,13 +287,16 @@ class EditProfileViewController: UIViewController {
                 Mixpanel.mainInstance().track(event: "EditProfileSave")
                 
                 let oldUsername = self.profileVC.userInfo.username
-                DispatchQueue.global(qos: .utility).async { self.removeFromUsernames(username: oldUsername) }
+                
+                DispatchQueue.global(qos: .utility).async {
+                    self.removeFromUsernames(username: oldUsername)
+                    self.updateUserTags(oldUsername: oldUsername, newUsername: username)
+                }
                 
                 self.newUsername = username
                 
                 let usernameID = UUID().uuidString
                 self.db.collection("usernames").document(usernameID).setData(["username" : username])
-                
                 self.updateUserInfo()
             }
         }
@@ -361,14 +364,11 @@ class EditProfileViewController: UIViewController {
     }
     
     func removeFromUsernames(username: String) {
-        
         let query = db.collection("usernames").whereField("username", isEqualTo: username)
         query.getDocuments { [weak self](snap, err) in
             guard let self = self else { return }
             if err == nil {
-                for doc in snap!.documents {
-                    self.db.collection("usernames").document(doc.documentID).delete()
-                }
+                for doc in snap!.documents { self.db.collection("usernames").document(doc.documentID).delete() }
             }
         }
     }

@@ -22,10 +22,12 @@ class UploadPostController: UIViewController {
     var poi: POI!
     var postDirectToSpot = false
     
-    lazy var selectedImages: [UIImage] = []
+    var selectedImages: [UIImage] = []
+    var frameIndexes: [Int] = []
+    
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var postLocation: CLLocationCoordinate2D!
-    var gifMode = false
+    var postDate: Date!
     var imageFromCamera = false
     var draftID: Int64!
     
@@ -40,11 +42,13 @@ class UploadPostController: UIViewController {
     var submitPublic = false
     var spotName: String!
     var caption: String!
+    var hideFromFeed = false
     
     var maskView: UIView!
     var imageCloseTap, botCloseTap, privacyCloseTap: UITapGestureRecognizer!
     var maskImage, maskImageNext, maskImagePrevious: UIImageView!
-    lazy var selectedIndex = 0
+    
+    var selectedIndex = 0 /// selectedIndex refers to the index of the images as user sees it
     
     var progressView: UIProgressView!
     var errorBox: UIView!
@@ -56,6 +60,10 @@ class UploadPostController: UIViewController {
     lazy var imageY: CGFloat = 0
     var navBarHeight: CGFloat = 0
     
+    var initialDate: Date!
+    var datePicker: UIDatePicker!
+    var textDatePicker: UITextField!
+        
     enum PostType {
         case postToPOI /// "posting to _spot name" + tags, create spot object on upload
         case postToPublic /// "posting to _spot name" + tags (selected if selected), upload to existing  + update tags
@@ -89,6 +97,7 @@ class UploadPostController: UIViewController {
         tableView.register(UploadOverviewCell.self, forCellReuseIdentifier: "SpotOverviewCell")
         tableView.register(SpotTagCell.self, forCellReuseIdentifier: "SpotTagCell")
         tableView.register(SpotPrivacyCell.self, forCellReuseIdentifier: "SpotPrivacyCell")
+        tableView.register(ShowOnFeedCell.self, forCellReuseIdentifier: "ShowOnFeedCell")
         view.addSubview(tableView)
         
         if tableView.isScrollEnabled { tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0) }
@@ -105,9 +114,15 @@ class UploadPostController: UIViewController {
         imageY = postType == .newSpot ? 87 : 39
         if spotObject != nil && spotObject.privacyLevel == "invite" { inviteList = spotObject.inviteList ?? [] }
         spotName = spotObject == nil ? poi == nil ? "" : poi.name : spotObject.spotName
-        caption = ""
         
-        /// slide new spot image up to make room for spotName textfield
+        /// set initial date for comparison on upload
+        
+        let interval = Date().timeIntervalSince1970
+        let currentDate = Date(timeIntervalSince1970: TimeInterval(interval))
+        let date = postDate == nil ? currentDate : postDate
+        initialDate = date
+        
+        caption = ""
         
         addSupplementaryViews()
         
@@ -268,6 +283,68 @@ class UploadPostController: UIViewController {
         }
     }
     
+    func presentDatePicker() {
+        
+        let interval = Date().timeIntervalSince1970
+        let currentDate = Date(timeIntervalSince1970: TimeInterval(interval))
+        let date = postDate == nil ? currentDate : postDate
+
+        datePicker = UIDatePicker()
+        datePicker.preferredDatePickerStyle = .wheels
+        datePicker.date = date!
+        datePicker.datePickerMode = .date
+        datePicker.maximumDate = currentDate
+        
+        let toolbar = UIToolbar();
+        toolbar.sizeToFit()
+        
+        let doneButton = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(doneDatePicker(_:)));
+        doneButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
+        let spaceButton = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(cancelDatePicker(_:)));
+        cancelButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Regular", size: 14) as Any, NSAttributedString.Key.foregroundColor: UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1) as Any], for: .normal)
+        toolbar.setItems([cancelButton, spaceButton, doneButton], animated: false)
+        
+        textDatePicker = UITextField()
+        textDatePicker.inputAccessoryView = toolbar
+        textDatePicker.inputView = datePicker
+        view.addSubview(textDatePicker)
+        
+        textDatePicker.becomeFirstResponder()
+        tableView.addGestureRecognizer(tapToClose)
+    }
+    
+    @objc func cancelDatePicker(_ sender: UIBarButtonItem) {
+        textDatePicker.resignFirstResponder()
+        textDatePicker.removeFromSuperview()
+        tableView.removeGestureRecognizer(tapToClose)
+    }
+    
+    @objc func doneDatePicker(_ sender: UIBarButtonItem) {
+        
+        Mixpanel.mainInstance().track(event: "EditDateSave")
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/d/yy"
+        let dateString = formatter.string(from: datePicker.date)
+        
+        textDatePicker.resignFirstResponder()
+        textDatePicker.removeFromSuperview()
+        tableView.removeGestureRecognizer(tapToClose)
+        
+        /// update timestamp text and size to fit again with new frame
+        if let uploadCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell {
+            uploadCell.timestampLabel.text = dateString
+            uploadCell.timestampLabel.frame = CGRect(x: uploadCell.spotImage.frame.maxX + 12, y: uploadCell.spotImage.frame.minY + 2, width: 100, height: 15)
+            uploadCell.timestampLabel.sizeToFit()
+            uploadCell.editImage.frame = CGRect(x: uploadCell.timestampLabel.frame.maxX + 4, y: uploadCell.timestampLabel.frame.minY - 0.5, width: 11, height: 12.2)
+            uploadCell.editButton.frame = CGRect(x: uploadCell.timestampLabel.frame.minX - 5, y: uploadCell.timestampLabel.frame.minY - 5, width: uploadCell.timestampLabel.frame.width + 30, height: uploadCell.timestampLabel.frame.height + 10)
+        }
+        
+        postDate = datePicker.date
+    }
+
+
     @objc func tagSelect(_ sender: NSNotification) {
         
         guard let infoPass = sender.userInfo as? [String: Any] else { return }
@@ -299,6 +376,9 @@ class UploadPostController: UIViewController {
             if postType == .newSpot {
                 launchSubmitPublic()
                 return
+                
+            } else {
+                postPrivacy = "public"
             }
 
         case 1:
@@ -457,13 +537,14 @@ class UploadPostController: UIViewController {
            
         /// mask image starts as the exact size of the thumbmnail then will expand to full screen
         maskImage = UIImageView(frame: CGRect(x: 14, y: imageY, width: 78, height: 104))
-        maskImage.image = selectedImages[selectedIndex]
+        let selectedFrame = frameIndexes[selectedIndex]
+        maskImage.image = selectedImages[selectedFrame]
         maskImage.contentMode = .scaleAspectFill
         maskImage.clipsToBounds = true
         maskImage.isUserInteractionEnabled = true
         maskView.addSubview(maskImage)
                 
-        if !gifMode && selectedImages.count > 1 {
+        if frameIndexes.count > 1 {
             
             /// add swipe between images if there are images to swipe through
             maskImage.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:))))
@@ -486,7 +567,8 @@ class UploadPostController: UIViewController {
         }
             /// animate image preview expand
         UIView.animate(withDuration: 0.2) {
-            let aspect = self.selectedImages[self.selectedIndex].size.height / self.selectedImages[self.selectedIndex].size.width
+            let selectedFrame = self.frameIndexes[self.selectedIndex]
+            let aspect = self.selectedImages[selectedFrame].size.height / self.selectedImages[selectedFrame].size.width
             let cameraHeight = UIScreen.main.bounds.width * 1.72267
             let height = UIScreen.main.bounds.width * aspect > cameraHeight ? cameraHeight : UIScreen.main.bounds.width * aspect
             let viewHeight = self.view.bounds.height
@@ -496,7 +578,23 @@ class UploadPostController: UIViewController {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             guard let self = self else { return }
-            if self.gifMode { self.maskImage.animationImages = self.selectedImages; self.maskImage.animateGIF(directionUp: true, counter: 0) }
+            let animationImages = self.getGifImages()
+            if !animationImages.isEmpty {
+                self.maskImage.animationImages = animationImages
+                /// 5 frame alive check for old alive draft
+                animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count) }
+        }
+    }
+    
+    func getGifImages() -> [UIImage] {
+        let selectedFrame = frameIndexes[selectedIndex]
+        if frameIndexes.count == 1 {
+            return selectedImages.count > 1 ? selectedImages : []
+        } else if frameIndexes.count - 1 == selectedIndex {
+            return selectedImages[selectedFrame] != selectedImages.last ? selectedImages.suffix(selectedImages.count - 1 - selectedFrame) : []
+        } else {
+            let frame1 = frameIndexes[selectedIndex + 1]
+            return frame1 - selectedFrame > 1 ? Array(selectedImages[selectedFrame...frame1 - 1]) : []
         }
     }
     
@@ -505,7 +603,8 @@ class UploadPostController: UIViewController {
         // first = true on original mask expand (will animate the frame of the mask image)
         /// setImageBounds also called on swipe between images
         
-        let aspect = selectedImages[selectedIndex].size.height / selectedImages[selectedIndex].size.width
+        let selectedFrame = frameIndexes[selectedIndex]
+        let aspect = selectedImages[selectedFrame].size.height / selectedImages[selectedFrame].size.width
         let cameraHeight = UIScreen.main.bounds.width * 1.72267
         let height = UIScreen.main.bounds.width * aspect > cameraHeight ? cameraHeight : UIScreen.main.bounds.width * aspect
         let viewHeight = self.view.bounds.height
@@ -514,7 +613,8 @@ class UploadPostController: UIViewController {
         var pImage = UIImage()
         
         if selectedIndex > 0 {
-            pImage = selectedImages[selectedIndex - 1]
+            let pFrame = frameIndexes[selectedIndex - 1]
+            pImage = selectedImages[pFrame]
             let pAspect = pImage.size.height / pImage.size.width
             pHeight = UIScreen.main.bounds.width * pAspect
             if pHeight > cameraHeight { pHeight = cameraHeight }
@@ -524,15 +624,19 @@ class UploadPostController: UIViewController {
         maskImagePrevious.image = pImage
          
         if !first {
+            let selectedFrame = frameIndexes[selectedIndex]
             maskImage.frame = CGRect(x: 0, y:(viewHeight - height - navBarHeight)/2 - 10, width: UIScreen.main.bounds.width, height: height)
-            maskImage.image = selectedImages[selectedIndex]
+            maskImage.image = selectedImages[selectedFrame]
+            let animationImages = getGifImages()
+            if !animationImages.isEmpty { animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count) }
         }
         
         var nHeight: CGFloat = height
         var nImage = UIImage()
         
-        if selectedIndex < selectedImages.count - 1 {
-            nImage = selectedImages[selectedIndex + 1]
+        if selectedIndex < frameIndexes.count - 1 {
+            let nFrame = frameIndexes[selectedIndex + 1]
+            nImage = selectedImages[nFrame]
             let nAspect = nImage.size.height / nImage.size.width
             nHeight = UIScreen.main.bounds.width * nAspect
             if nHeight > cameraHeight { nHeight = cameraHeight }
@@ -568,6 +672,7 @@ class UploadPostController: UIViewController {
     }
     
     @objc func imageSwipe(_ gesture: UIPanGestureRecognizer) {
+        
         let direction = gesture.velocity(in: view)
         let translation = gesture.translation(in: view)
         
@@ -581,13 +686,20 @@ class UploadPostController: UIViewController {
         case .ended:
             
             if direction.x < 0 {
-                if maskImage.frame.maxX + direction.x < UIScreen.main.bounds.width/2 && selectedIndex < selectedImages.count - 1 {
+                if maskImage.frame.maxX + direction.x < UIScreen.main.bounds.width/2 && selectedIndex < frameIndexes.count - 1 {
                     //animate to next image
                     UIView.animate(withDuration: 0.2) {
                         self.maskImageNext.frame = CGRect(x: 0, y: self.maskImageNext.frame.minY, width: self.maskImageNext.frame.width, height: self.maskImageNext.frame.height)
                         self.maskImage.frame = CGRect(x: -UIScreen.main.bounds.width, y: self.maskImage.frame.minY, width: self.maskImage.frame.width, height: self.maskImage.frame.height)
                         self.maskImagePrevious.frame = CGRect(x: -UIScreen.main.bounds.width, y: self.maskImagePrevious.frame.minY, width: self.maskImagePrevious.frame.width, height: self.maskImagePrevious.frame.height)
                     }
+                    
+                    /// remove animation images early for smooth swiping
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) { [weak self] in
+                        guard let self = self else { return }
+                        self.maskImage.animationImages?.removeAll()
+                    }
+                    
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                         guard let self = self else { return }
                         self.selectedIndex += 1
@@ -607,6 +719,13 @@ class UploadPostController: UIViewController {
                         self.maskImage.frame = CGRect(x: UIScreen.main.bounds.width, y: self.maskImage.frame.minY, width: self.maskImage.frame.width, height: self.maskImage.frame.height)
                         self.maskImageNext.frame = CGRect(x: UIScreen.main.bounds.width, y: self.maskImageNext.frame.minY, width: self.maskImageNext.frame.width, height: self.maskImageNext.frame.height)
                     }
+                    
+                    /// remove animation images early for smooth swiping
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) { [weak self] in
+                        guard let self = self else { return }
+                        self.maskImage.animationImages?.removeAll()
+                    }
+                    
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                         guard let self = self else { return }
                         self.selectedIndex -= 1
@@ -626,6 +745,7 @@ class UploadPostController: UIViewController {
     
     @objc func closeKeyboard(_ sender: UITapGestureRecognizer) {
         guard let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
+        if textDatePicker != nil { textDatePicker.resignFirstResponder() }
         if cell.descriptionField != nil { cell.descriptionField.resignFirstResponder() }
         if cell.spotNameField != nil { cell.spotNameField.resignFirstResponder() }
     }
@@ -646,10 +766,7 @@ extension UploadPostController: UIGestureRecognizerDelegate {
 extension UploadPostController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if postType == .postToPrivate {
-            return 2
-        }
-        return 3
+        return 4
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -657,65 +774,80 @@ extension UploadPostController: UITableViewDelegate, UITableViewDataSource {
         
         case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: "SpotOverviewCell") as! UploadOverviewCell
-            cell.setUp(type: postType, images: selectedImages, gifMode: gifMode, selectedIndex: selectedIndex, spotName: spotName, caption: caption)
+            let interval = Date().timeIntervalSince1970
+            let currentDate = Date(timeIntervalSince1970: TimeInterval(interval))
+            let date = postDate == nil ? currentDate : postDate
+            cell.setUp(type: postType, images: selectedImages, date: date!, selectedIndex: selectedIndex, frameIndexes: frameIndexes, spotName: spotName, caption: caption)
             return cell
             
         case 1:
-            if postType == .postToPrivate  {
-                let cell = tableView.dequeueReusableCell(withIdentifier: "SpotPrivacyCell") as! SpotPrivacyCell
-                let spotPrivacy = spotObject == nil ? "" : spotObject.privacyLevel
-                let trimText = spotName.trimmingCharacters(in: .whitespacesAndNewlines)
-                let spotNameEmpty = (postType == .newSpot && trimText == "")
-                cell.setUp(type: postType, postPrivacy: postPrivacy, spotPrivacy: spotPrivacy, inviteList: inviteList, uploadPost: true, spotNameEmpty: spotNameEmpty, visitorList: [])
-                return cell
-            }
-            
             let cell = tableView.dequeueReusableCell(withIdentifier: "SpotTagCell") as! SpotTagCell
             let spotTags: [String] = spotObject == nil ? [] : spotObject.tags
-            let tagsHeight: CGFloat = UIScreen.main.bounds.height < 600 ? 240 : 190
-            cell.setUp(selectedTags: selectedTags, spotTags: spotTags, collectionHeight: tagsHeight - 30)
+            let tagsHeight: CGFloat = UIScreen.main.bounds.height < 600 ? 310 : UIScreen.main.bounds.height > 800 ? 240 : 230
+            cell.setUp(selectedTags: selectedTags, spotTags: spotTags, collectionHeight: tagsHeight - 25)
             return cell
             
-        default:
+        case 2:
             let cell = tableView.dequeueReusableCell(withIdentifier: "SpotPrivacyCell") as! SpotPrivacyCell
             let spotPrivacy = spotObject == nil ? "" : spotObject.privacyLevel
             cell.setUp(type: postType, postPrivacy: postPrivacy, spotPrivacy: spotPrivacy, inviteList: inviteList, uploadPost: true, spotNameEmpty: spotName == "", visitorList: [])
             return cell
+            
+        default:
+            let cell = tableView.dequeueReusableCell(withIdentifier: "ShowOnFeedCell") as! ShowOnFeedCell
+            cell.setUp(hide: hideFromFeed)
+            return cell
         }
     }
     
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        
+        let screenSize = UIScreen.main.bounds.height > 800 ? 2 : UIScreen.main.bounds.height < 600 ? 0 : 1
+        let smallCellSize: CGFloat = screenSize == 2 ? 76 : 69
         
         switch indexPath.row {
         case 0:
-            let screenAdjust: CGFloat = UIScreen.main.bounds.height > 800 ? 0 : -10
+            let screenAdjust: CGFloat = screenSize == 2 ? 0 : -15
             return postType == .newSpot ? 230 + screenAdjust : 190 + screenAdjust
         case 1:
-            if postType == .postToPrivate { return 60 }
-            let tagsHeight: CGFloat = UIScreen.main.bounds.height < 600 ? 240 : 190
+            let tagsHeight: CGFloat = screenSize == 0 ? 315 : screenSize == 1 ? 230 : 240
             return tagsHeight
         default:
-            return 60
+            return smallCellSize
         }
     }
 }
 
 class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelegate {
     
+    var type: UploadPostController.PostType!
     var images: [UIImage] = []
+    var frameIndexes: [Int] = []
+    var selectedIndex = 0
     
     var spotImage: UIImageView!
+    var timestampLabel: UILabel!
+    var editImage: UIImageView!
+    var editButton: UIButton!
     var expandIcon: UIImageView!
     var spotNameField: PaddedTextField!
     var descriptionField: UITextView!
     
-    func setUp(type: UploadPostController.PostType, images: [UIImage], gifMode: Bool, selectedIndex: Int, spotName: String, caption: String) {
+    var addFriendsLabel: UILabel!
+    
+    
+    func setUp(type: UploadPostController.PostType, images: [UIImage], date: Date, selectedIndex: Int, frameIndexes: [Int], spotName: String, caption: String) {
         
         backgroundColor = UIColor(named: "SpotBlack")
         selectionStyle = .none
         contentView.isUserInteractionEnabled = false
         
+        self.type = type
         self.images = images
+        self.frameIndexes = frameIndexes
+        self.selectedIndex = selectedIndex
+        let selectedFrame = frameIndexes[selectedIndex]
         
         resetCell()
         
@@ -725,7 +857,7 @@ class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelega
             
             let minY = UIScreen.main.bounds.height > 800 ? 35 : 25
             
-            spotNameField = PaddedTextField(frame: CGRect(x: 12, y: minY, width: 295, height: 33))
+            spotNameField = PaddedTextField(frame: CGRect(x: 12, y: minY, width: 295, height: 37))
             
             spotImage = UIImageView(frame: CGRect(x: 14, y: minY + 52, width: 78, height: 104))
             
@@ -741,9 +873,9 @@ class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelega
             spotNameField.textColor = UIColor(named: "SpotGreen")
             spotNameField.backgroundColor = .black
             spotNameField.tintColor = .white
-            spotNameField.layer.cornerRadius = 6
-            spotNameField.layer.borderWidth = 1.5
-            spotNameField.layer.borderColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1).cgColor
+            spotNameField.layer.cornerRadius = 9
+            spotNameField.layer.borderWidth = 1
+            spotNameField.layer.borderColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1).cgColor
             spotNameField.delegate = self
             spotNameField.autocapitalizationType = .sentences
             spotNameField.textAlignment = .left
@@ -755,31 +887,43 @@ class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelega
             spotImage = UIImageView(frame: CGRect(x: 14, y: 39, width: 78, height: 104))
         }
         
-        spotImage.image = images[selectedIndex]
+        spotImage.image = images[selectedFrame]
         spotImage.contentMode = .scaleAspectFill
         spotImage.layer.cornerRadius = 5
         spotImage.isUserInteractionEnabled = true
         spotImage.clipsToBounds = true
         spotImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(imageExpand(_:))))
-        self.addSubview(spotImage)
+        addSubview(spotImage)
         
-        if gifMode {
-            expandIcon = UIImageView(frame: CGRect(x: spotImage.frame.maxX - 26, y: spotImage.frame.maxY - 26, width: 18, height: 18))
-            expandIcon.image = UIImage(named: "PreviewGif")
-            self.addSubview(expandIcon)
-        } else if images.count > 1 {
+        timestampLabel = UILabel(frame: CGRect(x: spotImage.frame.maxX + 12, y: spotImage.frame.minY + 2, width: 100, height: 15))
+        let timestamp = Timestamp(date: date)
+        timestampLabel.text = getDateTimestamp(postTime: timestamp)
+        timestampLabel.textColor = UIColor(red: 0.442, green: 0.442, blue: 0.442, alpha: 1)
+        timestampLabel.font = UIFont(name: "SFCamera-Semibold", size: 11.25)
+        timestampLabel.sizeToFit()
+        addSubview(timestampLabel)
+        
+        editImage = UIImageView(frame: CGRect(x: timestampLabel.frame.maxX + 4, y: timestampLabel.frame.minY - 0.5, width: 11, height: 12.2))
+        editImage.image = UIImage(named: "EditDateButton")
+        editImage.contentMode = .scaleAspectFit
+        addSubview(editImage)
+        
+        editButton = UIButton(frame: CGRect(x: timestampLabel.frame.minX - 5, y: timestampLabel.frame.minY - 5, width: timestampLabel.frame.width + 30, height: timestampLabel.frame.height + 10))
+        editButton.addTarget(self, action: #selector(editDateTap(_:)), for: .touchUpInside)
+        addSubview(editButton)
+    
+        if frameIndexes.count > 1 {
             expandIcon = UIImageView(frame: CGRect(x: spotImage.frame.maxX - 30, y: spotImage.frame.maxY - 30, width: 22, height: 22))
             expandIcon.image = UIImage(named: "PreviewPic")
             self.addSubview(expandIcon)
         }
         
-        
-        descriptionField = VerticallyCenteredTextView(frame: CGRect(x: spotImage.frame.maxX + 12, y: spotImage.frame.minY - 10, width: UIScreen.main.bounds.width - 26 - spotImage.frame.maxX, height: spotImage.frame.height + 20))
+        descriptionField = VerticallyCenteredTextView(frame: CGRect(x: spotImage.frame.maxX + 8, y: editImage.frame.maxY + 7, width: UIScreen.main.bounds.width - 24 - spotImage.frame.maxX, height: spotImage.frame.height - 25))
         descriptionField.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1.0)
         
         if caption == "" {
             descriptionField.alpha = 0.5
-            descriptionField.text = "What's it like?"
+            descriptionField.text = type == .newSpot || type == .postToPOI ? "What's it like?" : "Write a caption..."
         } else {
             descriptionField.text = caption
         }
@@ -797,17 +941,27 @@ class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelega
     
     func resetCell() {
         if spotImage != nil { spotImage.image = UIImage() }
+        if timestampLabel != nil { timestampLabel.text = "" }
+        if editImage != nil { editImage.image = UIImage() }
         if expandIcon != nil { expandIcon.image = UIImage() }
         if spotNameField != nil { spotNameField.text = "" }
         if descriptionField != nil { descriptionField.text = "" }
     }
-    
+        
     @objc func imageExpand(_ sender: UITapGestureRecognizer) {
         if let uploadVC = self.viewContainingController() as? UploadPostController {
             uploadVC.imageExpand()
         }
         self.spotImage.isHidden = true
     }
+    
+    @objc func editDateTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "EditDateOpen")
+        if let uploadVC = self.viewContainingController() as? UploadPostController {
+            uploadVC.presentDatePicker()
+        }
+    }
+    
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         
@@ -859,7 +1013,7 @@ class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelega
 
         if textView.text.isEmpty {
             textView.alpha = 0.5
-            textView.text = "What's it like?"
+            textView.text = type == .newSpot || type == .postToPOI ? "What's it like?" : "Write a caption..."
         }
     }
     
@@ -893,10 +1047,11 @@ class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelega
 
 class SpotTagCell: UITableViewCell, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
-    var tags: [Tag] = [Tag(name: "Active"), Tag(name: "Art"), Tag(name: "Chill"), Tag(name: "Coffee"), Tag(name: "Drink"), Tag(name: "Eat"), Tag(name: "History"), Tag(name: "Nature"), Tag(name: "Shop"), Tag(name: "Stay"), Tag(name: "Sunset"), Tag(name: "Weird")]
+    var tags: [Tag] = [Tag(name: "Active"), Tag(name: "Art"), Tag(name: "Boogie"), Tag(name: "Chill"), Tag(name: "Coffee"), Tag(name: "Drink"), Tag(name: "Eat"), Tag(name: "Historic"), Tag(name: "Home"), Tag(name: "Nature"), Tag(name: "Shop"), Tag(name: "Smoke"), Tag(name: "Sunset"), Tag(name: "Swim"), Tag(name: "View"), Tag(name: "Weird")]
     var selectedTags: [String] = []
     var spotTags: [String] = []
     var tagsCollection: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: LeftAlignedCollectionViewFlowLayout.init())
+    var tagLabel: UILabel!
 
     func setUp(selectedTags: [String], spotTags: [String], collectionHeight: CGFloat) {
         ///update selected tags on colleciton tap
@@ -948,7 +1103,7 @@ class SpotTagCell: UITableViewCell, UICollectionViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 12
+        return 16
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -970,7 +1125,7 @@ class SpotTagCell: UITableViewCell, UICollectionViewDelegate, UICollectionViewDa
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         ///update parent with selected tags
-        print("did select")
+
         let tag = tags[indexPath.row]
         if spotTags.contains(tag.name) { showBotPopUp(tag: tag.name); return }
         ///remove / add tags
@@ -994,7 +1149,23 @@ class SpotTagCell: UITableViewCell, UICollectionViewDelegate, UICollectionViewDa
         } else if selectedTags.count < 3 {
             return true
         }
+        showTagMessage()
         return false
+    }
+    
+    func showTagMessage() {
+        
+        if tagLabel != nil && tagLabel.superview != nil { return }
+        tagLabel = UILabel(frame: CGRect(x: 75, y: tagsCollection.frame.minY + 3, width: 150, height: 16))
+        tagLabel.text = "3 tag max"
+        tagLabel.textColor = .white
+        tagLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        addSubview(tagLabel)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self = self else { return }
+            self.tagLabel.removeFromSuperview()
+        }
     }
     
     func getWidth(name: String) -> CGFloat {
@@ -1122,9 +1293,9 @@ class UploadTagsHeader: UICollectionReusableView {
         super.init(frame: frame)
         
         if label != nil { label.text = "" }
-        label = UILabel(frame: CGRect(x: 6, y: 3, width: 100, height: 16))
+        label = UILabel(frame: CGRect(x: 3, y: 3, width: 100, height: 16))
         label.text = "Add Tags"
-        label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
+        label.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
         label.font = UIFont(name: "SFCamera-Regular", size: 12)
         addSubview(label)
     }
@@ -1151,9 +1322,9 @@ class SpotPrivacyCell: UITableViewCell {
         
         resetCell()
         
-        descriptionLabel = UILabel(frame: CGRect(x: 22, y: 0, width: 200, height: 20))
+        descriptionLabel = UILabel(frame: CGRect(x: 14, y: 0, width: 200, height: 20))
         descriptionLabel.textAlignment = .left
-        descriptionLabel.text = "Who can see your post?"
+        descriptionLabel.text = "Who can see your post"
         descriptionLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
         descriptionLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
         self.addSubview(descriptionLabel)
@@ -1162,26 +1333,26 @@ class SpotPrivacyCell: UITableViewCell {
         icon.contentMode = .scaleAspectFit
         
         privacyLabel = UILabel()
-        var privacyString = postPrivacy == "public" ? "anyone" : postPrivacy
+        var privacyString = postPrivacy == "public" ? "anyone" : postPrivacy == "friends" ? "friends-only" :  postPrivacy
         privacyString = privacyString.prefix(1).capitalized + privacyString.dropFirst()
         privacyLabel.text = privacyString
         privacyLabel.textColor = .white
         privacyLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)
         
         if postPrivacy == "friends" {
-            icon.frame = CGRect(x: 22, y: descriptionLabel.frame.maxY + 6, width: 20, height: 13)
+            icon.frame = CGRect(x: 14, y: descriptionLabel.frame.maxY + 6, width: 20, height: 13)
             icon.image = UIImage(named: "FriendsIcon")?.withRenderingMode(.alwaysTemplate)
             icon.tintColor = .white
-            privacyLabel.frame = CGRect(x: icon.frame.maxX + 6, y: icon.frame.minY - 2, width: 100, height: 15)
+            privacyLabel.frame = CGRect(x: icon.frame.maxX + 6, y: icon.frame.minY - 1.5, width: 100, height: 15)
             
         } else if postPrivacy == "public" {
-            icon.frame = CGRect(x: 22, y: descriptionLabel.frame.maxY + 6, width: 18, height: 18)
+            icon.frame = CGRect(x: 14, y: descriptionLabel.frame.maxY + 6, width: 18, height: 18)
             icon.image = UIImage(named: "PublicIcon")?.withRenderingMode(.alwaysTemplate)
             icon.tintColor = .white
             privacyLabel.frame = CGRect(x: icon.frame.maxX + 6, y: icon.frame.minY + 1, width: 100, height: 15)
             
         } else {
-            icon.frame = CGRect(x: 22, y: descriptionLabel.frame.maxY + 7, width: 17.8, height: 22.25)
+            icon.frame = CGRect(x: 14, y: descriptionLabel.frame.maxY + 7, width: 17.8, height: 22.25)
             icon.image = UIImage(named: "PrivateIcon")?.withRenderingMode(.alwaysTemplate)
             icon.tintColor = .white
             privacyLabel.frame = CGRect(x: icon.frame.maxX + 8, y: icon.frame.minY + 5, width: 100, height: 15)
@@ -1208,7 +1379,7 @@ class SpotPrivacyCell: UITableViewCell {
             self.addSubview(friendCount)
         }
         
-        privacyButton = UIButton(frame: CGRect(x: 20, y: descriptionLabel.frame.maxY + 2, width: privacyLabel.frame.maxX - 20, height: 30))
+        privacyButton = UIButton(frame: CGRect(x: 12, y: descriptionLabel.frame.maxY + 2, width: privacyLabel.frame.maxX - 20, height: 30))
         privacyButton.backgroundColor = nil
         self.addSubview(privacyButton)
                 
@@ -1312,26 +1483,27 @@ extension UploadPostController {
             if cell.spotNameField != nil { cell.spotNameField.resignFirstResponder() }
             if cell.descriptionField != nil { cell.descriptionField.resignFirstResponder() }
         }
-        
-        mapVC.removeTable() /// remove tag table
-        
-        /// add mask for upload
-        maskView.isHidden = false
-        view.addSubview(maskView)
-
+      
+        DispatchQueue.main.async {
+            self.mapVC.removeTable() /// remove tag table
+            
+            /// add mask for upload
+            self.maskView.isHidden = false
+            self.view.addSubview(self.maskView)
+            
+            self.maskView.addSubview(self.progressView)
+            self.progressView.setProgress(0.1, animated: true)
+        }
+            
         /// upload spot image with completion handler
         let postID = UUID().uuidString
         reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: postLocation.latitude, longitude: postLocation.longitude)) { (city) in
             self.postCity = city
         }
         
-        maskView.addSubview(progressView)
-        progressView.setProgress(0.1, animated: true)
-                
-        /// patch fix for uploads going through after failed upload shows that probably wont work
+        /// patch fix for uploads going through after failed upload shows
         if uploadFailed { return }
         
-        print(" upload post image ")
         self.uploadPostImage(selectedImages, postID: postID) { [weak self] (imageURLs) in
             
             guard let self = self else { return }
@@ -1344,7 +1516,7 @@ extension UploadPostController {
             }
             
             if self.uploadFailed { return }
-            
+
             if self.imageFromCamera { self.saveToPhotos(images: self.selectedImages) }
             
             DispatchQueue.main.async { self.progressView.setProgress(1.0, animated: true) }
@@ -1378,25 +1550,39 @@ extension UploadPostController {
             taggedUsernames = selectedUsers.map({$0.username})
             self.selectedUsers = selectedUsers
             
-            let interval = NSDate().timeIntervalSince1970
-            let timestamp = NSDate(timeIntervalSince1970: TimeInterval(interval))
+            /// set timestamp to original post date or current date
+            let interval = Date().timeIntervalSince1970
+            let timestamp = Date(timeIntervalSince1970: TimeInterval(interval))
+            var actualTimestamp = timestamp
+
+            if self.postDate != nil {
+                /// use initial date to preserve exact time if user set the date to the same day as the initial date. Otherwise use post date
+                let formatter = DateFormatter()
+                formatter.dateFormat = "M/d/yy"
+                let string1 = formatter.string(from: self.postDate)
+                let string2 = formatter.string(from: self.initialDate)
+                actualTimestamp = string1 == string2 ? self.initialDate : self.postDate
+            }
             
             var finalInvites = self.inviteList
-            if self.postPrivacy == "invite" { finalInvites.append(self.uid) }
+            if self.postPrivacy == "invite" && !finalInvites.contains(self.uid) { finalInvites.append(self.uid) }
             
-            var postFriends = self.postPrivacy == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
-            if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
-
+            var postFriends = self.hideFromFeed ? [] : self.postPrivacy == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
+            if !postFriends.contains(self.uid) && !self.hideFromFeed { postFriends.append(self.uid) }
+            let gif = self.imageFromCamera && self.selectedImages.count > 1 /// for legacy builds gif still corresponds to image animation
+            
             let postValues = ["caption" : self.caption ?? "",
                               "posterID": self.uid,
                               "likers": [],
                               "timestamp": timestamp,
+                              "actualTimestamp": actualTimestamp,
                               "taggedUsers": taggedUsernames,
-                              "gif": self.gifMode,
                               "postLat": self.postLocation.latitude,
                               "postLong": self.postLocation.longitude,
                               "privacyLevel": adjustedPostPrivacy,
                               "imageURLs" : imageURLs,
+                              "frameIndexes" : self.frameIndexes,
+                              "gif": gif,
                               "spotName" : self.spotName ?? "",
                               "createdBy": createdBy,
                               "city" : self.postCity,
@@ -1406,7 +1592,8 @@ extension UploadPostController {
                               "spotLat": spotCoordinate?.latitude ?? 0.0,
                               "spotLong": spotCoordinate?.longitude ?? 0.0,
                               "isFirst": self.postType != .postToPublic && self.postType != .postToPrivate,
-                              "spotPrivacy" : spotPrivacy] as [String : Any]
+                              "spotPrivacy" : spotPrivacy,
+                              "hideFromFeed": self.hideFromFeed] as [String : Any]
             
             let commentValues = ["commenterID" : self.uid,
                                  "comment" : self.caption ?? "",
@@ -1417,7 +1604,9 @@ extension UploadPostController {
             
             let commentObject = MapComment(id: commentID, comment: self.caption ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, taggedUsers: taggedUsernames, commentHeight: self.getCommentHeight(comment: self.caption ?? ""), seconds: Int64(interval))
             
-            let postObject = MapPost(id: postID, caption: self.caption ?? "", postLat: self.postLocation.latitude, postLong: self.postLocation.longitude, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spotID, gif: self.gifMode, city: self.postCity, imageURLs: imageURLs, postImage: self.selectedImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: taggedUsernames, spotName: self.spotName, spotLat: spotCoordinate?.latitude ?? 0.0, spotLong: spotCoordinate?.longitude ?? 0.0, privacyLevel: adjustedPostPrivacy, createdBy: self.uid, inviteList: self.inviteList)
+            var postObject = MapPost(id: postID, caption: self.caption ?? "", postLat: self.postLocation.latitude, postLong: self.postLocation.longitude, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spotID, city: self.postCity, frameIndexes: self.frameIndexes, imageURLs: imageURLs, postImage: self.selectedImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: taggedUsernames, spotName: self.spotName, spotLat: spotCoordinate?.latitude ?? 0.0, spotLong: spotCoordinate?.longitude ?? 0.0, privacyLevel: adjustedPostPrivacy, createdBy: self.uid, inviteList: self.inviteList)
+            postObject.friendsList = postFriends
+            postObject.actualTimestamp = Timestamp(date: actualTimestamp)
             
             /// notify feed + any other open view controllers (profile posts, nearby) of new post
             NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
@@ -1483,7 +1672,7 @@ extension UploadPostController {
                     /// set spot for public submission
                     if self.submitPublic { db.collection("submissions").document(spotID).setData(["spotID" : spotID])}
                     
-                    self.setSpotLocations(spotLocation: self.postLocation, spotID: spotID)
+                    self.setSpotLocations(spotLocation: spotCoordinate!, spotID: spotID)
                     
                     var spotObject = MapSpot(id: spotID, spotDescription: self.caption ?? "", spotName: self.spotName ?? "", spotLat: self.postLocation.latitude, spotLong: self.postLocation.longitude, founderID: self.uid, privacyLevel: spotPrivacy, visitorList: [self.uid], inviteList: self.inviteList, tags: self.selectedTags, imageURL: imageURLs.first ?? "", spotImage: self.selectedImages.first ?? UIImage(), taggedUsers: taggedUsernames, city: self.postCity, friendVisitors: 0, distance: 0)
                     spotObject.checkInTime = Int64(interval)
@@ -1491,7 +1680,7 @@ extension UploadPostController {
                     NotificationCenter.default.post(name: NSNotification.Name("NewSpot"), object: nil, userInfo: ["spot" : spotObject])
                     
                     /// send notifications if this is an invite only spot
-                    self.sendInviteNotis(spotObject: spotObject, postObject: postObject)
+                    self.sendInviteNotis(spotObject: spotObject, postObject: postObject, username: self.mapVC.userInfo.username)
                     
                     /// add city to list of cities if this is the first post there
                     self.addToCityList(city: self.postCity)
@@ -1502,40 +1691,17 @@ extension UploadPostController {
                     Mixpanel.mainInstance().track(event: "UploadPostSuccessful")
                     
                     self.deleteDraft()
-                    self.transitionToMap()
+                    self.transitionToMap(postID: postID, spotID: spotID)
             }
         }
     }
     
-    func sendInviteNotis(spotObject: MapSpot, postObject: MapPost) {
-        let db = Firestore.firestore()
-        let interval = NSDate().timeIntervalSince1970
-        let timestamp = NSDate(timeIntervalSince1970: TimeInterval(interval))
-        
-        for invite in spotObject.inviteList ?? [] {
-            let notiID = UUID().uuidString
-            
-            let notificationRef = db.collection("users").document(invite).collection("notifications")
-            let notiRef = notificationRef.document(notiID)
-            
-            let notiValues = ["seen" : false, "timestamp" : timestamp, "senderID": uid, "type": "invite", "spotID": spotObject.id!, "postID" : postObject.id!, "imageURL": spotObject.imageURL, "spotName": spotObject.spotName] as [String : Any]
-            notiRef.setData(notiValues)
-            
-            let sender = PushNotificationSender()
-            
-            db.collection("users").document(postObject.posterID).getDocument { [weak self] (tokenSnap, err) in
-                guard let self = self else { return }
-                guard let token = tokenSnap?.get("notificationToken") as? String else { return }
-                sender.sendPushNotification(token: token, title: "", body: "\(self.mapVC.userInfo.username) added you to a private spot")
-            }
-        }
-    }
     
     func sendTagNotis(post: MapPost, spotID: String, selectedUsers: [UserProfile], postType: UploadPostController.PostType) {
         
         let db = Firestore.firestore()
-        let interval = NSDate().timeIntervalSince1970
-        let timestamp = NSDate(timeIntervalSince1970: TimeInterval(interval))
+        let interval = Date().timeIntervalSince1970
+        let timestamp = Date(timeIntervalSince1970: TimeInterval(interval))
         
         
         for user in selectedUsers {
@@ -1558,8 +1724,8 @@ extension UploadPostController {
     func sendPostNotis(post: MapPost, spotObject: MapSpot, selectedUsers: [UserProfile]) {
         
         let db = Firestore.firestore()
-        let interval = NSDate().timeIntervalSince1970
-        let timestamp = NSDate(timeIntervalSince1970: TimeInterval(interval))
+        let interval = Date().timeIntervalSince1970
+        let timestamp = Date(timeIntervalSince1970: TimeInterval(interval))
         
         
         for user in spotObject.visitorList {
@@ -1593,7 +1759,7 @@ extension UploadPostController {
     func deleteDraft() {
         
         if draftID == nil { return }
-        
+
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
         
         let managedContext =
@@ -1620,20 +1786,21 @@ extension UploadPostController {
     }
     
     
-    func transitionToMap() {
+    func transitionToMap(postID: String, spotID: String) {
 
         DispatchQueue.main.async {
             
-            if (self.postType == .postToPublic || self.postType == .postToPrivate) && self.mapVC.spotViewController != nil {
-                self.mapVC.spotViewController.removeOnUpload()
+            /// if not transitioning right to spot page prepare for transition
+            if ((self.postType == .postToPublic || self.postType == .postToPrivate) && self.mapVC.spotViewController != nil) {
+                self.mapVC.spotViewController.newPostReset(tags: self.selectedTags)
+                
+            } else {
+                self.mapVC.customTabBar.tabBar.isHidden = false
+                self.hideFromFeed && postID != "" ? self.mapVC.profileUploadReset(spotID: spotID, postID: postID, tags: self.selectedTags) : self.mapVC.feedUploadReset()
             }
             
-            self.mapVC.customTabBar.selectedIndex = 0
-            self.mapVC.setUpNavBar()
-            self.mapVC.customTabBar.tabBar.isHidden = false
-            
             self.navigationController?.popToRootViewController(animated: true)
-            self.mapVC.feedMapReset()
+
         }
     }
     
@@ -1657,53 +1824,62 @@ extension UploadPostController {
         }
         
         var progress = 0.7/Double(images.count)
-        print("progress", progress)
         var URLs: [String] = []
         for _ in images {
             URLs.append("")
         }
+        
         for image in images {
-            let imageID = UUID().uuidString
-            let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageID)")
             
-            guard var imageData = image.jpegData(compressionQuality: 0.5) else { completion([]); return }
-            
-            if imageData.count > 1000000 {
-                imageData = image.jpegData(compressionQuality: 0.3)!
-            }
-            
-            let metadata = StorageMetadata()
-            metadata.contentType = "image/jpeg"
+            uploadImageToFirebase(image: image, completion: { url in
+                
+                let i = images.lastIndex(where: {$0 == image})
+                URLs[i ?? 0] = url
+                
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.progressView.setProgress(Float(0.3 + progress), animated: true)
+                }
+                
+                progress = progress * Double(index + 1)
+                
+                index += 1
+                if index == images.count {
+                    DispatchQueue.main.async { completion(URLs); return }
+                }
+            })
+        }
+    }
+    
+    func uploadImageToFirebase(image: UIImage, completion: @escaping ((_ url: String) -> ())) {
+     
+        let imageID = UUID().uuidString
+        let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageID)")
+        
+        guard var imageData = image.jpegData(compressionQuality: 0.8) else { completion(""); return }
+        
+        if imageData.count > 1000000 { imageData = image.jpegData(compressionQuality: 0.5)! }
+        
+        if imageData.count > 1000000 { imageData = image.jpegData(compressionQuality: 0.3)! }
+                
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        
+        DispatchQueue.global(qos: .userInitiated).async {
             
             storageRef.putData(imageData, metadata: metadata) { metadata, error in
-                if error != nil { completion([]); return }
+                if error != nil { completion(""); return }
                 storageRef.downloadURL { (url, err) in
-                    if error != nil { completion([]); return }
+                    if error != nil { completion(""); return }
                     let urlString = url!.absoluteString
-                    
-                    let i = images.lastIndex(where: {$0 == image})
-                    URLs[i ?? 0] = urlString
-                    
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self = self else { return }
-                        self.progressView.setProgress(Float(0.3 + progress), animated: true)
-                    }
-                    
-                    progress = progress * Double(index + 1)
-                    
-                    index += 1
-                    if index == images.count {
-                        DispatchQueue.main.async {
-                            completion(URLs)
-                            return
-                        }
-                    }
+                    completion(urlString)
+                    return
                 }
             }
         }
     }
     
-    func runSpotTransactions(spotID: String, postPrivacy: String, postID: String, timestamp: NSDate) {
+    func runSpotTransactions(spotID: String, postPrivacy: String, postID: String, timestamp: Date) {
         
         /// run all spot data transactions here to avoid overlap with data updating
         
@@ -1748,7 +1924,7 @@ extension UploadPostController {
             
         }) { (object, error) in
             self.deleteDraft()
-            self.transitionToMap()
+            self.transitionToMap(postID: postID, spotID: spotID)
         }
     }
     
@@ -1766,11 +1942,11 @@ extension UploadPostController {
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
                                         switch action.style{
                                         case .default:
-                                            self.transitionToMap()
+                                            self.transitionToMap(postID: "", spotID: "")
                                         case .cancel:
-                                            self.transitionToMap()
+                                            self.transitionToMap(postID: "", spotID: "")
                                         case .destructive:
-                                            self.transitionToMap()
+                                            self.transitionToMap(postID: "", spotID: "")
                                         @unknown default:
                                             fatalError()
                                         }}))
@@ -1778,11 +1954,9 @@ extension UploadPostController {
     }
     
     func saveToDrafts() {
-        
+
         guard let appDelegate =
-                UIApplication.shared.delegate as? AppDelegate else {
-            return
-        }
+                UIApplication.shared.delegate as? AppDelegate else { return }
         
         let managedContext =
             appDelegate.persistentContainer.viewContext
@@ -1802,6 +1976,8 @@ extension UploadPostController {
         
         case .newSpot, .postToPOI:
             
+            let spotCoordinate = self.postType == .postToPOI ? CLLocationCoordinate2D(latitude: self.poi.coordinate.latitude, longitude: self.poi.coordinate.longitude) : CLLocationCoordinate2D(latitude: postLocation.latitude, longitude: postLocation.longitude)
+
             let spotObject = SpotDraft(context: managedContext)
             
             spotObject.spotName = spotName ?? ""
@@ -1809,9 +1985,10 @@ extension UploadPostController {
             spotObject.tags = selectedTags
             spotObject.taggedUsernames = selectedUsers.map({$0.username})
             spotObject.taggedIDs = selectedUsers.map({$0.id ?? ""})
-            spotObject.spotLat = postLocation.latitude
-            spotObject.spotLong = postLocation.longitude
-            spotObject.gif = gifMode
+            spotObject.postLat = postLocation.latitude
+            spotObject.postLong = postLocation.longitude
+            spotObject.spotLat = spotCoordinate.latitude
+            spotObject.spotLong = spotCoordinate.longitude
             spotObject.images = NSSet(array: imageObjects)
             spotObject.spotID = UUID().uuidString
             spotObject.privacyLevel = self.submitPublic ? "friends" : self.postPrivacy ?? "friends"
@@ -1820,15 +1997,17 @@ extension UploadPostController {
             spotObject.phone = postType == .postToPOI ? self.poi.phone : ""
             spotObject.submitPublic = submitPublic
             spotObject.postToPOI = postType == .postToPOI
+            spotObject.hideFromFeed = hideFromFeed
+            spotObject.frameIndexes = frameIndexes
             
-            let timestamp = NSDate().timeIntervalSince1970
+            let timestamp = postDate == nil ? Date().timeIntervalSince1970 : postDate!.timeIntervalSince1970
             let seconds = Int64(timestamp)
-            
             spotObject.timestamp = seconds
 
         default:
 
             let spotID = spotObject.id!
+            
             let spotCoordinate = CLLocationCoordinate2D(latitude: spotObject.spotLat, longitude: spotObject.spotLong)
             let createdBy = spotObject.founderID
             let spotPrivacy = spotObject == nil ? "" : postType == .newSpot ? postPrivacy : spotObject.privacyLevel
@@ -1850,14 +2029,14 @@ extension UploadPostController {
             postObject.spotName = spotName ?? ""
             postObject.taggedUsers = selectedUsers.map({$0.username})
             postObject.images = NSSet(array: imageObjects)
-            postObject.gif = gifMode
             postObject.uid = uid
             postObject.isFirst = false
             postObject.visitorList = visitorList
+            postObject.hideFromFeed = hideFromFeed
+            postObject.frameIndexes = frameIndexes
             
-            let timestamp = NSDate().timeIntervalSince1970
+            let timestamp = postDate == nil ? Date().timeIntervalSince1970 : postDate!.timeIntervalSince1970
             let seconds = Int64(timestamp)
-            
             postObject.timestamp = seconds
         }
         do {
@@ -1923,3 +2102,44 @@ class PaddedTextField: UITextField {
     }
 }
 /// https://stackoverflow.com/questions/25367502/create-space-at-the-beginning-of-a-uitextfield
+
+class ShowOnFeedCell: UITableViewCell {
+     
+    var label: UILabel!
+    var toggle: UIButton!
+    var hide = false
+    
+    func setUp(hide: Bool) {
+        
+        backgroundColor = UIColor(named: "SpotBlack")
+        selectionStyle = .none
+        self.hide = hide
+        
+        if label != nil { label.text = "" }
+        label = UILabel(frame: CGRect(x: 14, y: 5, width: 150, height: 18))
+        label.text = "Post to friends feed"
+        label.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+        label.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        label.sizeToFit()
+        contentView.addSubview(label)
+                
+        if toggle != nil { toggle.setImage(UIImage(), for: .normal) }
+        toggle = UIButton(frame: CGRect(x: 9, y: label.frame.maxY + 5, width: 64, height: 41))
+        let image = hide ? UIImage(named: "HideToggleOff") : UIImage(named: "HideToggleOn")
+        toggle.setImage(image, for: .normal)
+        toggle.addTarget(self, action: #selector(toggle(_:)), for: .touchUpInside)
+        contentView.addSubview(toggle)
+    }
+    
+    @objc func toggle(_ sender: UIButton) {
+        hide = !hide
+        let image = hide ? UIImage(named: "HideToggleOff") : UIImage(named: "HideToggleOn")
+        toggle.setImage(image, for: .normal)
+
+        guard let parentVC = viewContainingController() as? UploadPostController else { return }
+        parentVC.hideFromFeed = hide
+        
+        let event = hide ? "HideToggleOff" : "HideToggleOn"
+        Mixpanel.mainInstance().track(event: event)
+    }
+}

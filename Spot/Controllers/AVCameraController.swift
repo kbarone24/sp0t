@@ -13,6 +13,7 @@ import Photos
 import CoreData
 import Firebase
 import Mixpanel
+import JPSVolumeButtonHandler
 
 protocol AVCameraDelegate {
     func finishPassing(image: UIImage)
@@ -24,6 +25,7 @@ class AVCameraController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var cameraController: AVSpotCamera!
     var spotObject: MapSpot!
+    var volumeHandler: JPSVolumeButtonHandler!
     
     var cameraButton: UIButton!
     var galleryButton: UIButton!
@@ -61,7 +63,6 @@ class AVCameraController: UIViewController {
         
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(true, animated: true)
-        self.draftsNotification.isHidden = true
                 
         ///set up camera view if not already loaded
         if self.cameraController == nil {
@@ -70,6 +71,9 @@ class AVCameraController: UIViewController {
             
         } else {
             cameraController.previewLayer?.connection?.isEnabled = true
+            draftsNotification.isHidden = true
+            checkForDrafts()
+            enableButtons()
         }
     }
     
@@ -102,8 +106,12 @@ class AVCameraController: UIViewController {
             }
         }
     }
-        
     
+    deinit {
+        volumeHandler.stop()
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.AVCaptureDeviceSubjectAreaDidChange, object: nil)
+    }
+        
     override func viewDidLoad() {
         
         for vc in self.navigationController!.children {
@@ -293,6 +301,9 @@ class AVCameraController: UIViewController {
         frontFlashView.isHidden = true
         view.addSubview(frontFlashView)
         
+        volumeHandler = JPSVolumeButtonHandler(up: {self.capture()}, downBlock: {self.capture()})
+        volumeHandler.start(true)
+        
         if spotObject != nil {
             let spotTitle = UILabel(frame: CGRect(x: 75, y: minY + 28, width: UIScreen.main.bounds.width - 150, height: 20))
             spotTitle.text = spotObject.spotName
@@ -359,6 +370,7 @@ class AVCameraController: UIViewController {
         cancelButton.isUserInteractionEnabled = false
         galleryButton.isUserInteractionEnabled = false
         draftsButton.isUserInteractionEnabled = false
+        volumeHandler.stop()
     }
     
     func enableButtons() {
@@ -367,10 +379,16 @@ class AVCameraController: UIViewController {
         cancelButton.isUserInteractionEnabled = true
         galleryButton.isUserInteractionEnabled = true
         draftsButton.isUserInteractionEnabled = true
+        volumeHandler.start(true)
     }
     
     @objc func captureImage(_ sender: UIButton) {
         //if the gif camera is enabled, capture 5 images in rapid succession
+        capture()
+    }
+    
+    func capture() {
+        
         disableButtons()
         
         if gifMode {
@@ -432,9 +450,7 @@ class AVCameraController: UIViewController {
             }
             
             let resizedImage = self.ResizeImage(with: image, scaledToFill:  CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
-            
-            self.enableButtons()
-            
+                        
             if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "GIFPreview") as? GIFPreviewController {
                 
                 vc.unfilteredImages = [resizedImage]
@@ -544,8 +560,9 @@ class AVCameraController: UIViewController {
     }
     
     func addExclamationPoint() {
-        self.draftsActive = true
-        self.draftsNotification.isHidden = false
+        draftsActive = true
+        draftsNotification.isHidden = false
+        view.bringSubviewToFront(draftsNotification)
     }
     
     func captureGIF() {
@@ -572,8 +589,6 @@ class AVCameraController: UIViewController {
                     device?.toggleFlashlight()
                 }
                 
-                self.enableButtons()
-
                 if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "GIFPreview") as? GIFPreviewController {
                     vc.unfilteredImages = self.animationImages
                     vc.spotObject = self.spotObject
@@ -776,22 +791,6 @@ class AVCameraController: UIViewController {
         default: return
             
         }
-    }
-    
-    func ResizeImage(with image: UIImage?, scaledToFill size: CGSize) -> UIImage? {
-        
-        let scale: CGFloat = max(size.width / (image?.size.width ?? 0.0), size.height / (image?.size.height ?? 0.0))
-        let width: CGFloat = (image?.size.width ?? 0.0) * scale
-        let height: CGFloat = (image?.size.height ?? 0.0) * scale
-        let imageRect = CGRect(x: (size.width - width) / 2.0, y: (size.height - height) / 2.0 - 0.5, width: width, height: height)
-        
-        let clipSize = CGSize(width: size.width, height: size.height - 1) /// fix rounding error for images taken from camera
-        UIGraphicsBeginImageContextWithOptions(clipSize, false, 0.0)
-        image?.draw(in: imageRect)
-        let newImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return newImage
     }
     
     @objc func panGesture(_ gesture: UIPanGestureRecognizer) {

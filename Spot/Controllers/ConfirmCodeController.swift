@@ -14,6 +14,7 @@ import Mixpanel
 class ConfirmCodeController: UIViewController {
     
     var phoneNumber: String!
+    var rawNumber: String!
     var newUser: NewUser!
     var codeType: CodeType!
     
@@ -162,9 +163,9 @@ class ConfirmCodeController: UIViewController {
             if err == nil && authResult != nil {
                 
                 let db = Firestore.firestore()
-                guard let userID = Auth.auth().currentUser?.uid else { return }
+                guard let uid = Auth.auth().currentUser?.uid else { return }
                 /// update to confirm user multiauth
-                db.collection("users").document(userID).updateData(["phone" : self.phoneNumber ?? "", "verifiedPhone": true])
+                db.collection("users").document(uid).updateData(["phone" : self.phoneNumber ?? "", "verifiedPhone": true])
                 
                 let defaults = UserDefaults.standard
                 defaults.set(true, forKey: "verifiedPhone")
@@ -199,14 +200,10 @@ class ConfirmCodeController: UIViewController {
     func saveUserToFirebase() {
         
         let db = Firestore.firestore()
-        guard let userID = Auth.auth().currentUser?.uid else{return}
+        guard let uid = Auth.auth().currentUser?.uid else{return}
         
         let tutorialList: [Bool] = [false, false, false, false]
-        let botID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
-        
-        var friendsList : [String] = []
-        friendsList.append(botID)
-        
+                
         let lowercaseName = newUser.name.lowercased()
         let nameKeywords = lowercaseName.getKeywordArray()
         let usernameKeywords = newUser.username.getKeywordArray()
@@ -216,7 +213,7 @@ class ConfirmCodeController: UIViewController {
                       "username" : newUser.username,
                       "phone" : newUser.phone,
                       "userBio" : "",
-                      "friendsList" :  friendsList,
+                      "friendsList" :  [],
                       "spotScore" : 0,
                       "admin" : false,
                       "lowercaseName" : lowercaseName,
@@ -230,23 +227,111 @@ class ConfirmCodeController: UIViewController {
                       "nameKeywords" : nameKeywords,
             ] as [String : Any]
         
-        db.collection("users").document(userID).setData(values, merge: true)
+        db.collection("users").document(uid).setData(values, merge: true)
         
         let defaults = UserDefaults.standard /// save verfiied phone login to user defaults 
         defaults.set(true, forKey: "verifiedPhone")
         
         let docID = UUID().uuidString
         db.collection("usernames").document(docID).setData(["username" : newUser.username])
+        
+        DispatchQueue.global().async { self.addInitialFriends() }
+    }
+    
+    func addInitialFriends() {
+        
+        let db = Firestore.firestore()
+        var initialFriends = [(id: "T4KMLe3XlQaPBJvtZVArqXQvaNT2", textInvite: false)]
+        var yetToJoin: [String] = []
+        var queryCount = 0
+        
+        // text invites
+        db.collection("users").whereField("sentInvites", arrayContains: newUser.phone.formatNumber()).getDocuments { [weak self] snap, err in
+            
+            guard let self = self else { return }
+            if err != nil || snap?.documents.count == 0 { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
+            
+            for doc in snap!.documents {
+                if !initialFriends.contains(where: {$0.id == doc.documentID}) { initialFriends.append((doc.documentID, true)) }
+                if doc == snap!.documents.last { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
+            }
+        }
+        
+        // signup group contains linked users that haven't signed up yet
+        db.collection("users").whereField("signupGroup", arrayContains: newUser.email).getDocuments { [weak self] snap, err in
+                    
+            guard let self = self else { return }
+            if err != nil || snap?.documents.count == 0 {  queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
+            
+            for doc in snap!.documents {
+                if !initialFriends.contains(where: {$0.id == doc.documentID}) { initialFriends.insert((doc.documentID, false), at: 0) }
+                if doc == snap!.documents.last { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
+            }
+        }
+        
+        // email invites for people who havent signed up yet
+        db.collection("signups").whereField("emails", arrayContains: newUser.email).getDocuments { [weak self] snap, err in
+            
+            guard let self = self else { return }
+            if err != nil || snap?.documents.count == 0 { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
 
-        let notiID = UUID().uuidString
-        let acceptRef = db.collection("users").document(userID).collection("notifications").document(notiID)
+            if let doc = snap!.documents.first {
+                let emails = doc.get("emails") as! [String]
+                for email in emails {
+                    if !yetToJoin.contains(email) { yetToJoin.append(email) }
+                    if email == emails.last { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
+                }
+            }
+        }
+    }
+        
+    func sendFriendRequests(initialFriends: [(id: String, textInvite: Bool)], yetToJoin: [String]) {
+                
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
         
         let timestamp = NSDate().timeIntervalSince1970
         let myTimeInterval = TimeInterval(timestamp)
         let time = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
         
-        acceptRef.setData(["status" : "accepted", "timestamp" : time, "senderID": "T4KMLe3XlQaPBJvtZVArqXQvaNT2", "type": "friendRequest", "seen": false])
-        db.collection("users").document(botID).updateData(["friendsList" : FieldValue.arrayUnion([userID])])
+        for friend in initialFriends {
+            
+            /// 1. send friend request notis to bot + inviter
+            let friendNoti = UUID().uuidString
+            let friendRef = db.collection("users").document(friend.id).collection("notifications").document(friendNoti)
+            friendRef.setData(["status" : "accepted", "timestamp" : time, "senderID": uid, "type": "friendRequest", "seen": false])
+            /// send push to the inviter
+            if friend.id != "T4KMLe3XlQaPBJvtZVArqXQvaNT2" { let username = newUser.username; sendInviterNoti(receiverID: friend.id, username: username, textInvite: friend.textInvite) }
+            
+            /// 2. add notifications to new user in DB
+            let userNoti = UUID().uuidString
+            let acceptRef = db.collection("users").document(uid).collection("notifications").document(userNoti)
+            acceptRef.setData(["status" : "accepted", "timestamp" : time, "senderID": friend.id, "type": "friendRequest", "seen": false])
+            
+            /// 3. update friends lists
+          ///  addFriend(friendID: uid, frienderID: friend.id)
+            addFriend(friendID: friend.id, frienderID: uid)
+            if friend.id != "T4KMLe3XlQaPBJvtZVArqXQvaNT2" { adjustPostsFriendsList(userID: friend.id, friendID: uid) }
+        }
+        
+        /// update user friend list all at once (test)
+        addFriends(friendIDs: initialFriends.map{$0.id}, uid: uid, yetToJoin: yetToJoin)
+    }
+    
+    func sendInviterNoti(receiverID: String, username: String, textInvite: Bool) {
+        
+        let db = Firestore.firestore()
+        let sender = PushNotificationSender()
+        
+        let body = textInvite ? "\(username) accepted your invite and is now on sp0t!" : "\(username) just joined sp0t!"
+        
+        db.collection("users").document(receiverID).getDocument { (tokenSnap, err) in
+            if (tokenSnap != nil) {
+                guard let token = tokenSnap?.get("notificationToken") as? String else { return }
+                sender.sendPushNotification(token: token, title: "", body: body)
+            }
+        }
+
     }
     
     func animateToMap() {

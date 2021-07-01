@@ -19,11 +19,12 @@ struct MapPost: Identifiable, Codable {
     var postLong: Double
     var posterID: String
     var timestamp: Firebase.Timestamp
+    var actualTimestamp: Firebase.Timestamp? 
     var userInfo: UserProfile!
     var spotID: String? = ""
-    var gif: Bool? = false
     var city: String? = ""
-
+    var frameIndexes: [Int]? = []
+    
     var imageURLs: [String] = []
     var postImage: [UIImage] = []
     var seconds: Int64 = 0
@@ -33,7 +34,6 @@ struct MapPost: Identifiable, Codable {
     var likers: [String]
     var taggedUsers: [String]? = []
     
-    // all of these will only return for feed post
     var spotName: String? = ""
     var spotLat: Double? = 0.0
     var spotLong: Double? = 0.0
@@ -41,7 +41,9 @@ struct MapPost: Identifiable, Codable {
     var spotPrivacy: String? = ""
     var createdBy: String? = ""
     var inviteList: [String]? = []
+    var friendsList: [String] = [] 
     var isFirst: Bool? = false
+    var hideFromFeed: Bool? = false
     
     enum CodingKeys: String, CodingKey {
         case caption
@@ -52,9 +54,10 @@ struct MapPost: Identifiable, Codable {
         case spotLong
         case posterID
         case imageURLs
+        case frameIndexes
         case timestamp
+        case actualTimestamp
         case likers
-        case gif
         case city
         case taggedUsers
         case spotName
@@ -63,5 +66,6 @@ struct MapPost: Identifiable, Codable {
         case createdBy
         case inviteList
         case isFirst
+        case hideFromFeed
     }
 }

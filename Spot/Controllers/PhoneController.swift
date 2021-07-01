@@ -165,9 +165,9 @@ class PhoneController: UIViewController {
         /// set to confirm button
 
         view.resignFirstResponder()
-        guard var phoneNumber = phoneField.text?.trimmingCharacters(in: .whitespaces) else { return }
+        guard let rawNumber = phoneField.text?.trimmingCharacters(in: .whitespaces) else { return }
         /// add country code if not there
-        phoneNumber = country.code + phoneNumber
+        let phoneNumber = country.code + rawNumber
         
         sender.isEnabled = false
         activityIndicator.startAnimating()
@@ -176,12 +176,13 @@ class PhoneController: UIViewController {
             checkForUser(phoneNumber: phoneNumber)
             
         } else {
-            validatePhoneNumber(phoneNumber: phoneNumber)
+            validatePhoneNumber(phoneNumber: phoneNumber, rawNumber: rawNumber)
         }
     }
     
-    func validatePhoneNumber(phoneNumber: String) {
+    func validatePhoneNumber(phoneNumber: String, rawNumber: String) {
         
+        /// raw number only needed for searching db for sentInvites to this number
         PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil) { (verificationID, error) in
 
             if let error = error {
@@ -203,6 +204,7 @@ class PhoneController: UIViewController {
                     vc.verificationID = verificationID!
                     vc.phoneNumber = phoneNumber
                     vc.codeType = self.codeType
+                    vc.rawNumber = rawNumber
                     
                     if self.newUser != nil { vc.newUser = self.newUser }
                     self.navigationController?.pushViewController(vc, animated: true)
@@ -223,7 +225,7 @@ class PhoneController: UIViewController {
         let db = Firestore.firestore()
         
         if verified {
-            self.validatePhoneNumber(phoneNumber: phoneNumber)
+            self.validatePhoneNumber(phoneNumber: phoneNumber, rawNumber: "")
             
         } else {
             db.collection("users").whereField("phone", isEqualTo: phoneNumber).getDocuments { (snap, err) in
@@ -232,7 +234,7 @@ class PhoneController: UIViewController {
                     let verified = doc.get("verfiedPhone") as? Bool ?? false
                     if verified {
                         defaults.set(true, forKey: "verifiedPhone")
-                        self.validatePhoneNumber(phoneNumber: phoneNumber)
+                        self.validatePhoneNumber(phoneNumber: phoneNumber, rawNumber: "")
                     } else {
                         self.showErrorMessage(message: "No verified user found with this number")
                     }

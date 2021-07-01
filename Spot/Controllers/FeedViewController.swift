@@ -35,10 +35,11 @@ class FeedViewController: UIViewController {
     var circleQuery: GFSCircleQuery?
 
     var endDocument: DocumentSnapshot!
+    var activityIndicator: CustomActivityIndicator!
     var refresh: refreshStatus = .refreshing
     var friendsRefresh: refreshStatus = .yesRefresh
     var nearbyRefresh: refreshStatus = .yesRefresh
-    var activityIndicator: CustomActivityIndicator!
+    var queryReady = false /// circlequery returned
     
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore! = Firestore.firestore()
@@ -115,7 +116,7 @@ class FeedViewController: UIViewController {
                     refresh = .refreshing
                     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                         guard let self = self else { return }
-                        if self.selectedSegmentIndex == 0 { self.getFriendPosts(refresh: false) } else { self.activeRadius *= 2; self.getNearbyPosts(radius: self.activeRadius) }
+                        if self.selectedSegmentIndex == 0 { self.getFriendPosts(refresh: false) } else if self.activeRadius < 1000 { self.activeRadius *= 2; self.getNearbyPosts(radius: self.activeRadius) }
                     }
                 }
             }
@@ -126,6 +127,7 @@ class FeedViewController: UIViewController {
                 
         if let newPost = sender.userInfo?.first?.value as? MapPost {
             
+            if !newPost.friendsList.contains(uid) { return }
             friendPosts.insert(newPost, at: 0)
             
             if postVC != nil {
@@ -228,7 +230,8 @@ class FeedViewController: UIViewController {
             if postVC != nil {
 
                 mapVC.postsList = postVC.postsList
-
+                if postVC.tableView == nil { return } /// i think crash happening on logged out account views still existing in the background
+                
                 postVC.tableView.beginUpdates()
                 postVC.tableView.deleteRows(at: indexPaths, with: .bottom)
                 postVC.tableView.endUpdates()
@@ -292,6 +295,10 @@ class FeedViewController: UIViewController {
                     
                 } else if postInfo.posterID == self.uid {
                     postInfo.userInfo = self.mapVC.userInfo
+                    
+                } else {
+                    /// friend not in users friendslist, might have removed them as a friend
+                    index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts)}; continue
                 }
                     
                     var commentList: [MapComment] = []
@@ -455,23 +462,41 @@ class FeedViewController: UIViewController {
         /// instantiate or update radius for circleQuery
         if circleQuery == nil {
             circleQuery = geoFire.query(withCenter: GeoPoint(latitude: mapVC.currentLocation.coordinate.latitude, longitude: mapVC.currentLocation.coordinate.longitude), radius: radius)
-            circleQuery?.searchLimit = 500
+            ///circleQuery?.searchLimit = 500
             let _ = circleQuery?.observe(.documentEntered, with: loadPostFromDB)
+            
             let _ = circleQuery?.observeReady {
-                if self.nearbyEnteredCount == 0 { self.activeRadius *= 2; self.getNearbyPosts(radius: self.activeRadius) }
+                self.queryReady = true
+                if self.nearbyEnteredCount == 0 && self.activeRadius < 1024 {
+                    print("get nearby on 0", self.activeRadius * 2)
+                    self.activeRadius *= 2; self.getNearbyPosts(radius: self.activeRadius)
+                } else { self.accessEscape() }
             }
             
         } else {
+            
+            queryReady = false
+            circleQuery?.removeAllObservers()
             circleQuery?.radius = radius
             circleQuery?.center = mapVC.currentLocation
+
+            let _ = circleQuery?.observe(.documentEntered, with: loadPostFromDB)
+            let _ = circleQuery?.observeReady {
+                self.queryReady = true
+                if self.nearbyEnteredCount == 0 && self.activeRadius < 1024 {
+                    print("get nearby on 0", self.activeRadius * 2)
+                    self.activeRadius *= 2; self.getNearbyPosts(radius: self.activeRadius)
+                } else { self.accessEscape() }
+            }
         }
     }
     
     func loadPostFromDB(key: String?, location: CLLocation?) {
-        
+
         guard let postKey = key else { return }
         
         nearbyEnteredCount += 1
+        var escaped = false /// variable denotes whether to increment noAccessCount (whether active listener found change or this is a new post entering)
         
         let ref = db.collection("posts").document(postKey)
         listener5 = ref.addSnapshotListener({ [weak self] (doc, err) in
@@ -481,7 +506,7 @@ class FeedViewController: UIViewController {
             do {
                 /// get spot and check for access
                 let postIn = try doc?.data(as: MapPost.self)
-                guard var postInfo = postIn else { self.noAccessCount += 1; self.accessEscape(); return }
+                guard var postInfo = postIn else { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return }
                 if self.mapVC.deletedPostIDs.contains(where: {$0 == postKey}) { self.noAccessCount += 1; self.accessEscape(); return }
                 
                 postInfo.seconds = postInfo.timestamp.seconds
@@ -489,19 +514,21 @@ class FeedViewController: UIViewController {
                 
                 if self.nearbyPosts.contains(where: {$0.id == postKey}) {
                     /// fetching new circle query form DB and this post is already there
-                    if self.noAccessCount + self.currentNearbyPosts.count < self.nearbyEnteredCount {
-                        self.noAccessCount += 1; self.accessEscape(); return
+                    if self.noAccessCount + self.currentNearbyPosts.count < self.nearbyEnteredCount { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return
                     } else {
                     /// active listener found a change
-                        self.updateNearbyPostFromDB(post: postInfo)
+                        self.updateNearbyPostFromDB(post: postInfo); return
                     }
                 }
                 
-                if !self.hasPostAccess(post: postInfo, mapVC: self.mapVC) { self.noAccessCount += 1; self.accessEscape(); return }
-                self.currentNearbyPosts.append(postInfo)
+                if !self.hasPostAccess(post: postInfo, mapVC: self.mapVC) { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return }
+                
+                /// fix for current nearby posts growing too big - possibly due to active listener finding a change? this is all happening inside the listener closure so just update post object if necessary, don't need to increment and escape like above
+                if !self.currentNearbyPosts.contains(where: {$0.id == postInfo.id}) { self.currentNearbyPosts.append(postInfo) }
+                else if let i = self.currentNearbyPosts.firstIndex(where: {$0.id == postInfo.id }) { self.currentNearbyPosts[i] = postInfo; if !escaped { self.noAccessCount += 1 }; escaped = true; }
                 self.accessEscape()
                 
-            } catch { self.noAccessCount += 1; self.accessEscape(); return }
+            } catch { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return }
         })
     }
     
@@ -544,10 +571,13 @@ class FeedViewController: UIViewController {
     }
 
     func accessEscape() {
-        if noAccessCount + currentNearbyPosts.count == nearbyEnteredCount {
-            if currentNearbyPosts.count < 10 {
-                activeRadius *= 2; getNearbyPosts(radius: activeRadius)
+        print("no acc", noAccessCount, "cur", currentNearbyPosts.count, "nearby entered", nearbyEnteredCount, queryReady)
+        if noAccessCount + currentNearbyPosts.count == nearbyEnteredCount && queryReady {
+            if currentNearbyPosts.count < 10 && activeRadius < 1000 { /// force reload if active radius reaches 1024
+               activeRadius *= 2; getNearbyPosts(radius: activeRadius)
+                print("get nearby posts", activeRadius)
             } else {
+                print("get nearby user info", activeRadius)
                 self.getNearbyUserInfo()
             }
         }
@@ -671,8 +701,9 @@ class FeedViewController: UIViewController {
         let timeSincePost = currentTime - postTime
 
         /// add multiplier for recent posts
-        let factor = Double(min(1 + (100000000 / timeSincePost), 200))
-        scoreMultiplier = Double(pow(1.2, factor)) * 10
+        let factor = Double(min(1 + (100000000 / timeSincePost), 2000))
+        scoreMultiplier = Double(pow(factor, 3)) * 10
+
         /// content bonuses
         if mapVC.friendIDs.contains(post.posterID) { scoreMultiplier += 50 }
         
@@ -1046,7 +1077,8 @@ class FeedViewController: UIViewController {
     }
     
     func checkForLocationChange() {
-        if postVC != nil && postVC.tableView != nil && selectedSegmentIndex == 1 {
+        
+        if postVC != nil && postVC.tableView != nil && selectedSegmentIndex == 1  && activeRadius < 1000 {
             /// rerun circleQuery to updated location. Animate activity indicator so user expects new posts to appear
             let clCoordinate = mapVC.currentLocation.coordinate
             let queryCoordinate = circleQuery?.center.coordinate

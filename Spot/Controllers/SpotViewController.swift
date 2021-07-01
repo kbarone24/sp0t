@@ -19,41 +19,36 @@ import Geofirestore
 class SpotViewController: UIViewController {
     
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+    let db: Firestore! = Firestore.firestore()
+
     var spotID: String!
     var spotObject: MapSpot!
     var spotName: String!
-    lazy var friendVisitors: [UserProfile] = []
+    
+    lazy var memberList: [UserProfile] = [] /// full profiles for visitorList (friends/public) or inviteList (invite)
     lazy var postsList: [MapPost] = []
+    lazy var guestbookPreviews: [GuestbookPreview] = []
+    lazy var postDates: [(date: String, seconds: Int64)] = []
     
     lazy var shadowScroll = UIScrollView() /// receives all touch events to allow for smooth scrolling between segments
-    var tableView: UITableView!
+    lazy var tableView = UITableView()
     var addToSpotButton: UIButton!
     var activityIndicator: CustomActivityIndicator!
     
-    lazy var tableScrollNeeded = false /// table scroll needed used when drawer goes to full screen
     unowned var mapVC: MapViewController!
     
-    let db: Firestore! = Firestore.firestore()
-    var listener1, listener2, listener3: ListenerRegistration!
-    
-    lazy var halfScreenUserCount = 0
-    lazy var fullScreenUserCount = 0
-    lazy var halfScreenUserHeight: CGFloat = 0
-    lazy var fullScreenUserHeight: CGFloat = 0
     lazy var sec0Height: CGFloat = 0
-    var expandUsers = false, usersMoreNeeded = false
-
     lazy var postIndex = 0
+    lazy var visitorIndex = 0
+    lazy var escapeIndex = 0
+    lazy var selectedIndex = 0
     
     var editMask: UIView!
     var editView: UIView!
     var editedSpot: MapSpot!
     lazy var editSpotMode = false
     lazy var editedImage = false /// determines whether edit controller should update the cover image in DB
-    
-    lazy var active = true ///  false if there is a child view receiving events
-    lazy var presentFriends = false /// true if user is returning from a profile tapped through the visitor list
-    
+        
     deinit {
         print("deinit spot")
     }
@@ -74,15 +69,47 @@ class SpotViewController: UIViewController {
                 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyAddressChange(_:)), name: NSNotification.Name("SpotAddressChange"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("EditImageChange"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name("NewPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditPost(_:)), name: NSNotification.Name("EditPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyDeletePost(_:)), name: NSNotification.Name("DeletePost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUsersChange(_:)), name: NSNotification.Name("UserListRemove"), object: nil)
     }
-        
+    
+    private lazy var spotPostsController: SpotPostsViewController = {
+        let storyboard = UIStoryboard(name: "SpotPage", bundle: Bundle.main)
+        var vc = storyboard.instantiateViewController(withIdentifier: "SpotPosts") as! SpotPostsViewController
+        vc.spotVC = self
+        vc.mapVC = mapVC
+        self.addChild(vc)
+        return vc
+    }()
+    
+    private lazy var spotVisitorsController: SpotVisitorsViewController = {
+        let storyboard = UIStoryboard(name: "SpotPage", bundle: Bundle.main)
+        var vc = storyboard.instantiateViewController(withIdentifier: "SpotVisitors") as! SpotVisitorsViewController
+        vc.spotVC = self
+        vc.mapVC = mapVC
+        self.addChild(vc)
+        return vc
+    }()
+    
+    private func remove(asChildViewController viewController: UIViewController) {
+        viewController.willMove(toParent: nil)
+        viewController.view.removeFromSuperview()
+        viewController.removeFromParent()
+    }
+    
+    private func add(asChildViewController viewController: UIViewController) {
+        addChild(viewController)
+        viewController.didMove(toParent: self)
+    }
+
+
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if children.count != 0 { return } /// edge case if entering from background or from edit location
+        if children.count > 2 { return } /// edge case if entering from background or from edit location
         
         mapVC.spotViewController = self
         mapVC.profileViewController = nil
@@ -105,17 +132,15 @@ class SpotViewController: UIViewController {
     }
     
     func cancelDownloads() {
-        if let cell = tableView.cellForRow(at: IndexPath(row: 1, section: 0)) as? GuestbookCollectionCell {
-            for postCell in cell.postsCollection.visibleCells {
-                guard let safeCell = postCell as? GuestbookCell else { return }
-                safeCell.imagePreview.sd_cancelCurrentImageLoad()
-            }
-        }
+        spotPostsController.cancelDownloads()
+        spotVisitorsController.cancelDownloads()
     }
     
     func runInitialFuncs() {
-        getFriendVisitors()
-        DispatchQueue.global(qos: .userInitiated).async { self.getSpotPosts() }
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getVisitorInfo(refresh: false)
+            self.getSpotPosts()
+        }
     }
 
     func getSpotInfo() {
@@ -183,6 +208,25 @@ class SpotViewController: UIViewController {
         }
     }
     
+    @objc func notifyNewPost(_ sender: NSNotification) {
+        /// new post on post upload
+        if let newPost = sender.userInfo?.first?.value as? MapPost {
+            
+            postsList.insert(newPost, at: 0)
+            
+            var frameIndexes = newPost.frameIndexes ?? []
+            if frameIndexes.isEmpty { for i in 0...newPost.imageURLs.count - 1 { frameIndexes.append(i)} }
+
+            let date = getDateTimestamp(seconds: newPost.actualTimestamp?.seconds ?? newPost.seconds)
+            for i in 0...frameIndexes.count - 1 { guestbookPreviews.append(GuestbookPreview(postID: newPost.id!, frameIndex: frameIndexes[i], imageIndex: i, imageURL: newPost.imageURLs[frameIndexes[i]], seconds: newPost.seconds, date: date)) }
+            guestbookPreviews.sort(by: {$0.seconds > $1.seconds})
+
+            updatePostDates(date: date, seconds: newPost.seconds)
+            
+            self.tableView.reloadData()
+        }
+    }
+    
     @objc func notifyEditPost(_ sender: NSNotification) {
         // edit from edit post
         if let newPost = sender.userInfo?.first?.value as? MapPost {
@@ -212,12 +256,23 @@ class SpotViewController: UIViewController {
             
             if let index = self.postsList.firstIndex(where: {$0.id == postID}) {
                 
+                let postDate = getDateTimestamp(seconds: postsList[index].actualTimestamp?.seconds ?? postsList[index].seconds)
+                
                 self.postsList.remove(at: index)
                 self.postsList.sort(by: {$0.seconds > $1.seconds})
+                
+                /// remove date section if this was the only post with that date
+                var removeDate = true
+                for post in postsList { if getDateTimestamp(seconds: post.actualTimestamp?.seconds ?? post.seconds) == postDate { removeDate = false } }
+                if removeDate { self.postDates.removeAll(where: { $0.date == postDate })}
+                
+                self.guestbookPreviews.removeAll(where: {$0.postID == postID})
+                guestbookPreviews.sort(by: {$0.seconds > $1.seconds})
+                
                 self.tableView.reloadData()
                 if postsList.count == 0 { return } /// cancel post page funcs on spotDelete
                 
-                if let postVC = self.children.first as? PostViewController {
+                if let postVC = self.children.first(where: {$0.isKind(of: PostViewController.self)}) as? PostViewController {
                     
                     postVC.postsList = self.postsList
                     postVC.tableView.beginUpdates()
@@ -244,8 +299,17 @@ class SpotViewController: UIViewController {
     }
     
     @objc func notifyUsersChange(_ sender: NSNotification) {
-        self.friendVisitors.removeAll(where: {$0.id == uid})
-        if tableView != nil { tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .none )}
+        /// only user post deleted from feed
+        memberList.removeAll(where: {$0.id == uid})
+        if selectedIndex == 1 { DispatchQueue.main.async { self.spotVisitorsController.visitorsCollection.reloadData() } }
+    }
+    
+    func newPostReset(tags: [String]) {
+        /// new post (hide from feed)
+        spotObject.tags = tags
+        if !spotObject.visitorList.contains(uid) { spotObject.visitorList.append(uid) }
+        memberList.removeAll()
+        getVisitorInfo(refresh: true)
     }
     
     func addAddToSpot() {
@@ -256,134 +320,58 @@ class SpotViewController: UIViewController {
         addToSpotButton = UIButton(frame: CGRect(x: addX, y: addY, width: 55, height: 55))
         addToSpotButton.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
         addToSpotButton.addTarget(self, action: #selector(addToSpotTap(_:)), for: .touchUpInside)
+        addToSpotButton.isHidden = selectedIndex == 0 && children.count == 2
         mapVC.view.addSubview(addToSpotButton)
     }
     
-    func getFriendVisitors() {
-        //get invite list for a private spot to show # of friends
-        if spotObject.privacyLevel == "invite" {
-            for visitor in spotObject.inviteList ?? [] {
-                if let friend = mapVC.friendsList.first(where: {$0.id == visitor}) {
-                    self.friendVisitors.append(friend)
-                    if self.friendVisitors.count == self.spotObject.inviteList?.count { getUsersSize() }
-
-                } else {
-                    self.getUser(id: visitor) { [weak self] (user) in
-                        guard let self = self else { return }
-                        self.friendVisitors.append(user)
-                        if self.friendVisitors.count == self.spotObject.inviteList?.count  { self.getUsersSize() }
-                    }
-                }
-            }
-            
-        } else {
-            //get visitor list for a non private spot to show # of friend visitors
-            for visitor in spotObject.visitorList {
-                if let friend = mapVC.friendsList.first(where: {$0.id == visitor}) {
-                    if !self.mapVC.adminIDs.contains(visitor) {
-                        self.friendVisitors.append(friend)
-                    }
-                }
-                else if visitor == self.uid { self.friendVisitors.append(self.mapVC.userInfo) }
-                
-                if visitor == spotObject.visitorList.last { getUsersSize() }
-            }
-        }
-    }
-    
-    // this could be causing strong reference cycle need to check
-    func getUser(id: String, completion: @escaping (_ user: UserProfile) -> Void) {
-        ///supplemental get user method used for getting non-friends for private spots invite list
-        self.db.collection("users").document(id).getDocument { (friendSnap, err) in
-            do {
-                let friendInfo = try friendSnap?.data(as: UserProfile.self)
-                guard var info = friendInfo else { return }
-                
-                info.id = friendSnap!.documentID
-                completion(info)
-                
-            } catch { return }
-        }
-    }
-    
-    func getUsersSize() {
-
-        /// reset values in case spot was edited
-        halfScreenUserCount = 0
-        fullScreenUserCount = 0
-        halfScreenUserHeight = 0
-        fullScreenUserHeight = 0
+    func getVisitorInfo(refresh: Bool) {
         
-        var stopIncrementingHalf = false
-                
-        var numberOfRows = 0
-        /// 14 is the edge inset of the collection
-        var lineWidth: CGFloat = 14
-        for friend in friendVisitors {
+        // get visitors for this spot
+        visitorIndex = 0
+        let list = spotObject.privacyLevel == "invite" ? spotObject.inviteList ?? [] : spotObject.visitorList
+        
+        for visitor in list {
             
-            let userWidth = getWidth(name: friend.username)
-            print("line width", lineWidth + userWidth - 14)
-            print("line width + insets", lineWidth + userWidth + 14, UIScreen.main.bounds.width)
-            if lineWidth + userWidth + 14 > UIScreen.main.bounds.width || fullScreenUserCount == 0 {
-
-                /// new row
-                numberOfRows += 1
+            /// get visitor from user friendsList
+            if let user = self.mapVC.friendsList.first(where: {$0.id == visitor}) {
+                memberList.append(user)
+                visitorEscape(refresh: refresh)
                 
-                if numberOfRows == 3 {
-                    /// if this is the 3rd row, stop incrementing half screen size and half screen users and check if there will be room for the + more cell on half screen
-                    let extraCount = friendVisitors.count - halfScreenUserCount
-                    let moreWidth = getMoreWidth(extraCount: extraCount)
-                    usersMoreNeeded = true
-                    /// room for an extra user cell if more won't cause line overflow
-                    if lineWidth + moreWidth + 14 < UIScreen.main.bounds.width {
-                        halfScreenUserCount += 1
-                        
-                    } else {
-                        /// another user cell would have fit, but the more cell won't fit. -2 because the user that we're replacing is the one that is an additional user back from where the current user would be
-                        guard let previousUser = friendVisitors[safe: halfScreenUserCount - 2] else { return }
-                        let previousWidth = getWidth(name: previousUser.username)
-                        if lineWidth - previousWidth + moreWidth + 14 > UIScreen.main.bounds.width {
-                            halfScreenUserCount -= 1
-                        }
-                    }
+            /// get visitor from userInfo
+            } else if visitor == uid {
+                memberList.append(mapVC.userInfo)
+                visitorEscape(refresh: refresh)
+                
+            } else {
+                /// get visitor from db
+                db.collection("users").document(visitor).getDocument{  [weak self] (userSnap, err) in
                     
-                    stopIncrementingHalf = true
+                    guard let self = self else { return }
+                    
+                    if err == nil {
+                        do {
+                            let profInfo = try userSnap?.data(as: UserProfile.self)
+                            guard var prof = profInfo else { self.postEscape(); return }
+                            
+                            prof.id = userSnap?.documentID
+                            self.memberList.append(prof)
+                            self.visitorEscape(refresh: refresh)
+                            
+                        } catch { self.visitorEscape(refresh: refresh); return }
+                    } else { self.visitorEscape(refresh: refresh); return }
                 }
-                
-                lineWidth = 14
-                /// rowheightX + headerHeight + 5
-                let rowHeight = CGFloat(numberOfRows * 34) + 37
-                
-                fullScreenUserHeight = rowHeight
-                if !stopIncrementingHalf { halfScreenUserHeight = fullScreenUserHeight }
             }
-            
-         ///  x + 11 (spacing between cells)
-            lineWidth += userWidth + 11
-            fullScreenUserCount += 1
-            if !stopIncrementingHalf { halfScreenUserCount = fullScreenUserCount }
-            
-            if friend.id == friendVisitors.last?.id {
-                DispatchQueue.main.async { self.tableView.reloadData() }
-            }
-
         }
     }
     
-    func resizeTable(halfScreen: Bool, forceRefresh: Bool) {
-        
-        let closeOnRefresh = halfScreen && expandUsers
-        if closeOnRefresh { expandUsers = false }
-        
-        /// only refresh when expanding or closing the section
-        if closeOnRefresh || forceRefresh {
-            /// right now the tableview is freezing after the animation with reloadRows / reloadSections. reloadData isn't ideal animation but better than the bug
-            tableView.beginUpdates()
-            tableView.reloadData()
-            tableView.endUpdates()
+    func visitorEscape(refresh: Bool) {
+        visitorIndex += 1
+        if visitorIndex == spotObject.visitorList.count {
+            if refresh && selectedIndex == 1 { DispatchQueue.main.async { self.spotVisitorsController.visitorsCollection.reloadData() }; return }
+            escapeIndex += 1
+            if escapeIndex == 2 { finishLoad() }
         }
     }
-    
         
     func getWidth(name: String) -> CGFloat {
             
@@ -395,11 +383,12 @@ class SpotViewController: UIViewController {
     }
     
     func getMoreWidth(extraCount: Int) -> CGFloat {
-        
+
         let moreLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 100, height: 16))
-        moreLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        moreLabel.font = UIFont(name: "SFCamera-Regular", size: 11.5)
         moreLabel.text = "+ \(extraCount) more"
         moreLabel.sizeToFit()
+
         return moreLabel.frame.width + 15
     }
 
@@ -421,6 +410,20 @@ class SpotViewController: UIViewController {
             transition.subtype = CATransitionSubtype.fromTop
             mapVC.navigationController?.view.layer.add(transition, forKey: kCATransition)
             mapVC.navigationController?.pushViewController(vc, animated: false)
+        }
+    }
+    
+    @objc func rightSwipe(_ sender: UISwipeGestureRecognizer) {
+        if selectedIndex == 1 {
+            guard let header = tableView.headerView(forSection: 1) as? SpotSegHeader else { return }
+            header.animateBar(index: 0)
+        }
+    }
+    
+    @objc func leftSwipe(_ sender: UISwipeGestureRecognizer) {
+        if selectedIndex == 0 {
+            guard let header = tableView.headerView(forSection: 1) as? SpotSegHeader else { return }
+            header.animateBar(index: 1)
         }
     }
     
@@ -447,7 +450,7 @@ class SpotViewController: UIViewController {
     }
         
     func removeSpotPage(delete: Bool) {
-        print("remove spot page")
+
         /// if delete, also exit the child posts page (posts will get deleted with the spot)
         Mixpanel.mainInstance().track(event: "SpotPageRemove")
         
@@ -455,7 +458,6 @@ class SpotViewController: UIViewController {
         mapVC.navigationItem.rightBarButtonItem = UIBarButtonItem()
         mapVC.navigationItem.leftBarButtonItem = UIBarButtonItem()
         
-        active = false
         if editView != nil { exitEditOverview() }
         
         /// reset selectedSpotID and spotViewController for map filtering and drawer animations
@@ -475,6 +477,9 @@ class SpotViewController: UIViewController {
         } else if let profileVC = parent as? ProfileViewController {
             mapVC.postsList.removeAll()
             profileVC.resetProfile()
+        } else if let notificationsVC = parent as? NotificationsViewController {
+            mapVC.postsList.removeAll()
+            notificationsVC.resetView()
         }
         
         self.removeFromParent()
@@ -494,9 +499,8 @@ class SpotViewController: UIViewController {
     }
     
     func resetView() {
-
-        if self.children.count > 1 { return }
         
+        mapVC.selectedSpotID = spotID ?? ""
         mapVC.spotViewController = self
         mapVC.profileViewController = nil
         mapVC.nearbyViewController = nil
@@ -505,29 +509,31 @@ class SpotViewController: UIViewController {
         setUpNavBar()
         resetAnnos()
                 
-        /// enable / disable scroll
-        adjustCollectionSize()
-
-        /// reload table in case all images havent loaded
-        if tableView != nil {
-            DispatchQueue.main.async { self.tableView.reloadData() }
+        DispatchQueue.main.async {
+            /// enable / disable scroll + animate
+           self.resetTableView()
+            /// reload table in case all images havent loaded
+           self.selectedIndex == 0 ? self.spotPostsController.resetView() : self.spotVisitorsController.resetView()
         }
     }
     
-    func expandSpot() { /// custom  function on view reset to avoid content offset getting reset
+    func expandSpot() { /// custom function on view reset to avoid content offset getting reset
         
         /// set content offset back to 0 to avoid weird scrolling
         if shadowScroll.contentOffset.y == 1 { shadowScroll.contentOffset.y = 0 }
         
-        mapVC.prePanY = 0
-        mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height )
-
         navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
-        navigationController?.navigationBar.addShadow()
+        navigationController?.navigationBar.removeShadow()
         navigationController?.navigationBar.isTranslucent = false
         
-        shadowScroll.isScrollEnabled = tableScrollNeeded
-        unhideSeparatorLine()
+        mapVC.prePanY = 0
+        
+        shadowScroll.isScrollEnabled = true
+        
+        UIView.animate(withDuration: 0.15) {
+            print("offset", self.shadowScroll.contentOffset.y)
+            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height )
+        }
     }
     
     func setUpNavBar() {
@@ -551,13 +557,12 @@ class SpotViewController: UIViewController {
         editButton.imageInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: -2)
         mapVC.navigationItem.rightBarButtonItem = editButton
         
-        if addToSpotButton != nil { addToSpotButton.isHidden = false }
+        if addToSpotButton != nil && selectedIndex == 0 { addToSpotButton.isHidden = false }
     }
     
     func resetAnnos() {
-        /// add main target annotation and individual posts back to map
-        active = true
         
+        /// add main target annotation and individual posts back to map
         let annotations = mapVC.mapView.annotations
         mapVC.mapView.removeAnnotations(annotations)
         
@@ -581,73 +586,84 @@ class SpotViewController: UIViewController {
         mapVC.checkPostLocations(spotLocation: CLLocation(latitude: spotObject.spotLat, longitude: spotObject.spotLong))
     }
     
-    func adjustCollectionSize() {
-        
-        // set shadowScroll content height
-        
-        let width = (UIScreen.main.bounds.width - 10.5) / 3
-        let height = width * 1.374
-        let numberOfRows = ((postsList.count - 1) / 3) + 1
-        let guestbookHeight = (CGFloat(numberOfRows) * height) + 250
-        
-        let scrollY = guestbookHeight + fullScreenUserHeight + 200
-        shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: scrollY)
-        
-        if guestbookHeight < UIScreen.main.bounds.height {
-            tableScrollNeeded = false
-            shadowScroll.isScrollEnabled = false
-        } else {
-            tableScrollNeeded = true
-            if mapVC.customTabBar.view.frame.minY == 0 { shadowScroll.isScrollEnabled = true }
-        }
-        // if guestbook fills full screen, disable tableView scroll in map scroll
-        
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.activityIndicator.stopAnimating()
-            self.tableView.reloadData()
-            self.mapVC.checkForTutorial(index: 1)
-            
-            /// animate to full if offset  > 1 (on refresh)
-            self.shadowScroll.contentOffset.y > 0 ? self.expandSpot() : self.mapVC.animateToHalfScreen()
-        }
+    func resetTableView() {
+        shadowScroll.isScrollEnabled = true
+        DispatchQueue.main.async {  self.shadowScroll.contentOffset.y > 0 ? self.expandSpot() : self.mapVC.animateToHalfScreen() }
     }
     
-    func hideSeparatorLine() {
-        guard let descriptionCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? SpotDescriptionCell else { return }
-        descriptionCell.bottomLine.isHidden = true
-    }
-    
-    func unhideSeparatorLine() {
-        guard let descriptionCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? SpotDescriptionCell else { return }
-        descriptionCell.bottomLine.isHidden = false
-    }
-    
+
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         
         // override tableView content offset when view isn't completely pulled to the top
         
         if mapVC.prePanY != mapVC.customTabBar.view.frame.minY { return }
-
         if scrollView.tag != 60 { return }
+        if selectedIndex == 0 && spotPostsController.children.count > 0 { return }
+        if selectedIndex == 1 && spotVisitorsController.children.count > 0 { return }
+
+        setContentOffsets()
+    }
+    
+    func setContentOffsets() {
+        print("set content offsets ")
+        if !(self.tableView.cellForRow(at: IndexPath(row: 0, section: 1)) is SpotSegCell) { return }
         
         DispatchQueue.main.async {
+            self.tableView.setContentOffset(CGPoint(x: self.tableView.contentOffset.x, y: self.sec0Height), animated: false)
             
-            guard let collectionCell = self.tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? GuestbookCollectionCell else { return }
-                        
-            let sec1Height = self.expandUsers ? self.fullScreenUserHeight + self.sec0Height : self.halfScreenUserHeight + self.sec0Height
+            switch self.selectedIndex {
+            
+            case 0:
+                self.spotPostsController.postsCollection.setContentOffset(CGPoint(x: self.spotPostsController.postsCollection.contentOffset.x, y: self.shadowScroll.contentOffset.y - self.sec0Height), animated: false)
 
-            if scrollView.contentOffset.y < sec1Height {
-                /// scrollView offset hasn't hit the posts collection yet so offset the tableview
-                self.tableView.setContentOffset(CGPoint(x: 0, y: scrollView.contentOffset.y), animated: false)
-                collectionCell.postsCollection.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
-            } else {
-                /// offset posts collection
-                self.tableView.setContentOffset(CGPoint(x: 0, y: sec1Height), animated: false)
-                collectionCell.postsCollection.setContentOffset(CGPoint(x: 0, y: scrollView.contentOffset.y - sec1Height), animated: false)
+            case 1:
+                self.spotVisitorsController.visitorsCollection.setContentOffset(CGPoint(x: self.spotVisitorsController.visitorsCollection.contentOffset.x, y: self.shadowScroll.contentOffset.y - self.sec0Height), animated: false)
+                
+            default: return
+
             }
         }
+        
     }
+    
+    func resetIndex(index: Int) {
+        
+        let minY = mapVC.prePanY == 0 ? sec0Height : 0
+
+        if index == 0 {
+            DispatchQueue.main.async {
+                self.remove(asChildViewController: self.spotPostsController)
+                self.add(asChildViewController: self.spotVisitorsController)
+                
+                self.tableView.setContentOffset(CGPoint(x: self.tableView.contentOffset.x, y: minY), animated: false)
+                if self.addToSpotButton != nil { self.addToSpotButton.isHidden = false }
+                
+                ///reset content offsets so scroll stays smooth
+                if self.spotPostsController.postsCollection.contentOffset.y > 0 || self.spotVisitorsController.visitorsCollection.contentOffset.y > 0  {
+                    self.shadowScroll.contentOffset.y = self.sec0Height + self.spotPostsController.postsCollection.contentOffset.y
+                }
+            }
+            
+        } else {
+            DispatchQueue.main.async {
+            
+                self.remove(asChildViewController: self.spotPostsController)
+                self.add(asChildViewController: self.spotVisitorsController)
+                
+                self.tableView.setContentOffset(CGPoint(x: self.tableView.contentOffset.x, y: minY), animated: false)
+                if self.addToSpotButton != nil { self.addToSpotButton.isHidden = true }
+
+                ///reset content offsets so scroll stays smooth
+                if self.spotPostsController.postsCollection.contentOffset.y > 0 || self.spotVisitorsController.visitorsCollection.contentOffset.y > 0  {
+                    self.shadowScroll.contentOffset.y = self.sec0Height + self.spotVisitorsController.visitorsCollection.contentOffset.y
+                }
+            }
+        }
+        
+        selectedIndex = index
+        DispatchQueue.main.async { self.tableView.reloadData() }
+    }
+
     
     
     func setUpTable() {
@@ -656,7 +672,7 @@ class SpotViewController: UIViewController {
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
         let navBarHeight = statusHeight +
                     (self.navigationController?.navigationBar.frame.height ?? 44.0)
-        sec0Height = 96 - navBarHeight
+        sec0Height = 93 - navBarHeight
         
         shadowScroll = UIScrollView(frame: CGRect(x: 0, y: -UIScreen.main.bounds.height, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
@@ -680,30 +696,55 @@ class SpotViewController: UIViewController {
         tableView.reloadData()
         
         tableView.register(SpotDescriptionCell.self, forCellReuseIdentifier: "SpotDescription")
-        tableView.register(SpotFriendsCollectionCell.self, forCellReuseIdentifier: "SpotFriendsCollectionCell")
-        tableView.register(GuestbookCollectionCell.self, forCellReuseIdentifier: "GuestbookCollectionCell")
+        tableView.register(SpotSegHeader.self, forHeaderFooterViewReuseIdentifier: "SpotSegHeader")
+        tableView.register(SpotSegCell.self, forCellReuseIdentifier: "SpotSegCell")
         
-        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 30))
+        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 90, width: UIScreen.main.bounds.width, height: 30))
         tableView.addSubview(activityIndicator)
         activityIndicator.startAnimating()
                 
         view.addGestureRecognizer(shadowScroll.panGestureRecognizer)
         tableView.removeGestureRecognizer(tableView.panGestureRecognizer)
+        
+        let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(rightSwipe(_:)))
+        rightSwipe.direction = .right
+        view.addGestureRecognizer(rightSwipe)
+        
+        let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(leftSwipe(_:)))
+        leftSwipe.direction = .left
+        view.addGestureRecognizer(leftSwipe)
     }
     
     func postEscape() {
-        
         postIndex += 1
-        
         if postIndex == spotObject.postIDs.count {
-            adjustCollectionSize()
-            mapVC.checkPostLocations(spotLocation: CLLocation(latitude: spotObject.spotLat, longitude: spotObject.spotLong))
+            escapeIndex += 1
+            if escapeIndex == 2 { finishLoad() }
+        }
+    }
+    
+    func finishLoad() {
+
+        /// add user info to spotsList
+        for i in 0...postsList.count - 1 { postsList[i].userInfo = memberList.first(where: {$0.id == postsList[i].posterID})}
+        
+        mapVC.checkPostLocations(spotLocation: CLLocation(latitude: spotObject.spotLat, longitude: spotObject.spotLong))
+
+        /// reload table
+        DispatchQueue.main.async { [weak self] in
+            
+            guard let self = self else { return }
+            if self.children.count == 0 { self.add(asChildViewController: self.spotPostsController) } /// initial add func
+            self.activityIndicator.stopAnimating()
+            self.mapVC.checkForTutorial(index: 1)
+            self.tableView.reloadData()
         }
     }
     
     func getSpotPosts() {
         //sort on timestamp
         guard let _ = spotObject.id else { return }
+        postIndex = 0
         // enter dispatch for each post on get post image, get user info, get comments
         
         DispatchQueue.global(qos: .userInitiated).async {
@@ -736,39 +777,8 @@ class SpotViewController: UIViewController {
                         }
                         
                         /// get user from users friends list or fetch if not a friend
-                        if let user = self.mapVC.friendsList.first(where: {$0.id == info.posterID}) {
-                            info.userInfo = user
-                            self.getComments(post: info)
-                            
-                        } else if info.posterID == self.uid {
-                            info.userInfo = self.mapVC.userInfo
-                            self.getComments(post: info)
-                            
-                        } else {
-                            
-                            var userLeaveCalled = false
-                            
-                            self.listener2 = self.db.collection("users").document(info.posterID).addSnapshotListener({  [weak self] (userSnap, err) in
-                                
-                                guard let self = self else { return }
-                                
-                                if err == nil {
-                                    do {
-                                        let profInfo = try userSnap?.data(as: UserProfile.self)
-                                        guard var prof = profInfo else { self.postEscape(); return }
-                                        
-                                        prof.id = userSnap?.documentID
-                                        info.userInfo = prof
-                                        
-                                        if !userLeaveCalled {
-                                            userLeaveCalled = true
-                                            self.getComments(post: info)
-                                        }
-                                        
-                                    } catch { self.postEscape(); return }
-                                } else { self.postEscape(); return }
-                            })
-                        }
+                        self.getComments(post: info)
+                        
                     } catch { self.postEscape(); return }
                 }
             }
@@ -783,7 +793,7 @@ class SpotViewController: UIViewController {
 
         let commentRef = self.db.collection("posts").document(post.id!).collection("comments").order(by: "timestamp", descending: true)
 
-        self.listener3 = commentRef.addSnapshotListener({ [weak self] (commentSnap, err) in
+        commentRef.getDocuments{ [weak self] (commentSnap, err) in
             
             guard let self = self else { return }
             
@@ -819,7 +829,7 @@ class SpotViewController: UIViewController {
                     return
                 }
             }
-        })
+        }
     }
     
     func loadPostToCollection(post: MapPost) {
@@ -837,6 +847,15 @@ class SpotViewController: UIViewController {
             if mapVC.deletedPostIDs.contains(post.id ?? "") { postEscape(); return }
             postsList.append(post)
             
+            let postDate = getDateTimestamp(seconds: post.actualTimestamp?.seconds ?? post.seconds)
+            updatePostDates(date: postDate, seconds: post.seconds)
+            
+            var frameIndexes = post.frameIndexes ?? []
+            if frameIndexes.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i)} }
+
+            for i in 0...frameIndexes.count - 1 { guestbookPreviews.append(GuestbookPreview(postID: post.id!, frameIndex: frameIndexes[i], imageIndex: i, imageURL: post.imageURLs[frameIndexes[i]], seconds: post.seconds, date: postDate)) }
+            guestbookPreviews.sort(by: {$0.seconds > $1.seconds})
+            
             let annotation = CustomPointAnnotation()
             annotation.coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
             postsList.sort(by: {$0.seconds > $1.seconds})
@@ -851,48 +870,23 @@ class SpotViewController: UIViewController {
         }
     }
     
-    func openPostPage(index: Int) {
+    func updatePostDates(date: String, seconds: Int64) {
         
-        if let vc = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
-            
-            /// set offset to 1 so spot stays full screen on open
-            if self.mapVC.prePanY < 200 {
-                if shadowScroll.contentOffset.y == 0 { shadowScroll.setContentOffset(CGPoint(x: 0, y: 1), animated: false)}
+        if let temp = postDates.last(where: {$0.date == date}) {
+            /// new most recent post with this date
+            if seconds > temp.seconds {
+                postDates.removeAll(where: {$0.date == date})
+                postDates.append((date: date, seconds: seconds))
             }
-            
-            cancelDownloads()
-            
-            vc.postsList = self.postsList
-            vc.selectedPostIndex = index
-            
-            mapVC.spotViewController = nil
-            mapVC.hideSpotButtons()
-            mapVC.toggleMapTouch(enable: true)
-            
-            active = false
-            vc.mapVC = mapVC
-            vc.parentVC = .spot
-            vc.spotObject = spotObject
-            
-            addToSpotButton.isHidden = true
-            
-            vc.view.frame = UIScreen.main.bounds
-            addChild(vc)
-            view.addSubview(vc.view)
-            vc.didMove(toParent: self)
-            
-            let infoPass = ["selectedPost": index, "firstOpen": true, "parentVC": PostViewController.parentViewController.spot] as [String : Any]
-            NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: infoPass)
-        }
+        } else { postDates.append((date: date, seconds: seconds)) }
+        
+        postDates.sort(by: {$0.seconds > $1.seconds})
     }
     
     func openProfile(user: UserProfile) {
         
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
-          
-            cancelDownloads()
-            addToSpotButton.isHidden = true
-
+         
             mapVC.customTabBar.tabBar.isHidden = true
             mapVC.spotViewController = nil
             mapVC.hideSpotButtons()
@@ -908,6 +902,140 @@ class SpotViewController: UIViewController {
             
         }
     }
+
+        
+    func launchFriendsPicker() {
+        
+        if let inviteVC = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "InviteFriends") as? InviteFriendsController {
+            
+            inviteVC.spotVC = self
+            var noBotList = mapVC.friendsList
+            noBotList.removeAll(where: {$0.id == "T4KMLe3XlQaPBJvtZVArqXQvaNT2"})
+            
+            inviteVC.friendsList = noBotList
+            inviteVC.queryFriends = noBotList
+
+            if spotObject.privacyLevel == "invite" {
+                for invite in spotObject.inviteList ?? [] {
+                    if let friend = mapVC.friendsList.first(where: {$0.id == invite}) {
+                        inviteVC.selectedFriends.append(friend)
+                    }
+                }
+                
+            } else {
+                for visitor in spotObject.visitorList {
+                    if let friend = mapVC.friendsList.first(where: {$0.id == visitor}) {
+                         inviteVC.selectedFriends.append(friend)
+                    }
+                }
+            }
+            
+            self.present(inviteVC, animated: true, completion: nil)
+        }
+    }
+    
+    func updateUserList(initialList: [String]) {
+        
+        /// 1. grab users not included in initial list
+        let newList = spotObject.privacyLevel == "invite" ? spotObject.inviteList! : spotObject.visitorList
+        let newUsers = newList.filter({!initialList.contains($0)})
+        let oldUsers = initialList.filter({!newList.contains($0)})
+
+        /// 2. update visitorList for friends spot, inviteList for invite spot
+        var values: [String: Any] = [:]
+        if spotObject.privacyLevel == "invite" { values["inviteList"] = newList } else { values["visitorList"] = newList }
+        db.collection("spots").document(spotID).updateData(values)
+        
+        /// 4. add to new users spots list, send notification
+        for user in newUsers { sendInviteNotification(user: user) }
+        
+        /// 5. remove from removed users spots list
+        for user in oldUsers { removeSpotNotifications(user: user) }
+        
+        let increment = newUsers.count - oldUsers.count
+        if increment > 0 { DispatchQueue.global(qos: .utility).async { self.incrementSpotScore(user: self.uid, increment: increment) } }
+    }
+    
+    func sendInviteNotification(user: String) {
+        
+        if user == uid { return }
+        let interval = NSDate().timeIntervalSince1970
+        let timestamp = NSDate(timeIntervalSince1970: TimeInterval(interval))
+        
+        /// update users spotsList
+        db.collection("users").document(user).collection("spotsList").document(spotID!).setData(["spotID" : spotID!, "checkInTime" : timestamp, "postsList" : [], "city": spotObject.city ?? ""], merge: true)
+
+        let notiID = UUID().uuidString
+        let notificationRef = db.collection("users").document(user).collection("notifications")
+        let acceptRef = notificationRef.document(notiID)
+        
+        let notiValues = ["seen" : false, "timestamp" : timestamp, "senderID": uid, "type": "invite", "spotID": spotID!, "postID" : postsList.last!.id!, "imageURL": spotObject.imageURL, "spotName": spotObject.spotName] as [String : Any]
+        
+        acceptRef.setData(notiValues)
+        
+        let sender = PushNotificationSender()
+        var token: String!
+        
+        db.collection("users").document(user).getDocument { [weak self] (tokenSnap, err) in
+            guard let self = self else { return }
+            if (tokenSnap == nil) { return }
+            token = tokenSnap?.get("notificationToken") as? String
+            if (token != nil && token != "") {
+                sender.sendPushNotification(token: token, title: "", body: "\(self.mapVC.userInfo.username) added you to a spot")
+            }
+        }
+    }
+    
+    func removeSpotNotifications(user: String) {
+        
+        let notiRef = db.collection("users").document(user).collection("notifications")
+        let query = notiRef.whereField("spotID", isEqualTo: spotID!)
+        
+        query.getDocuments { (querysnapshot, err) in
+            for doc in querysnapshot!.documents { doc.reference.delete() }
+        }
+        
+        /// delete from users spots list
+        db.collection("users").document(user).collection("spotsList").document(spotID).delete()
+    }
+    
+     func openPostPage(postID: String, imageIndex: Int) {
+         
+         if let vc = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
+             
+             /// set offset to 1 so spot stays full screen on open
+             if self.mapVC.prePanY < 200 {
+                 if shadowScroll.contentOffset.y == 0 { shadowScroll.setContentOffset(CGPoint(x: 0, y: 1), animated: false)}
+             }
+             
+             cancelDownloads()
+             
+             let index = postsList.firstIndex(where: {$0.id == postID}) ?? 0
+             vc.postsList = self.postsList
+             vc.postsList[index].selectedImageIndex = imageIndex
+             vc.selectedPostIndex = index
+             /// set frame index and go to that image
+             
+             mapVC.spotViewController = nil
+             mapVC.hideSpotButtons()
+             mapVC.toggleMapTouch(enable: true)
+             
+             vc.mapVC = mapVC
+             vc.parentVC = .spot
+             vc.spotObject = spotObject
+             
+             addToSpotButton.isHidden = true
+             
+             vc.view.frame = UIScreen.main.bounds
+             addChild(vc)
+             view.addSubview(vc.view)
+             vc.didMove(toParent: self)
+             
+             let infoPass = ["selectedPost": index, "firstOpen": true, "parentVC": PostViewController.parentViewController.spot] as [String : Any]
+             NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: infoPass)
+         }
+     }
+
     
     @objc func showEditPicker(_ sender: UIButton) {
         // show edit / directions / delete menu
@@ -1038,12 +1166,10 @@ class SpotViewController: UIViewController {
     }
     
     func removeListeners() {
-        if listener1 != nil { listener1.remove() }
-        if listener2 != nil { listener2.remove() }
-        if listener3 != nil { listener3.remove() }
         
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("SpotAddressChange"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("EditImageChange"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("NewPost"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("EditPost"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DeletePost"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("UserListRemove"), object: nil)
@@ -1073,7 +1199,6 @@ class SpotViewController: UIViewController {
         /// send post notis
         for post in postsList { mapVC.deletedPostIDs.append(post.id!) }
         let postIDs = postsList.map({$0.id!})
-        print("append 1", postIDs)
         let postPass: [String: Any] = ["postIDs": postIDs as Any]
         NotificationCenter.default.post(name: Notification.Name("DeletePost"), object: nil, userInfo: postPass)
     }
@@ -1129,28 +1254,26 @@ extension SpotViewController: UIGestureRecognizerDelegate {
 
 extension SpotViewController: UITableViewDataSource, UITableViewDelegate {
     
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return spotObject == nil ? 0 : 2
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return spotObject == nil ? 0 : 3
+        return 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        switch indexPath.row {
+        switch indexPath.section {
         
         case 0:
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "SpotDescription") as? SpotDescriptionCell else { return UITableViewCell() }
             cell.setUp(spot: spotObject, userLocation: mapVC.currentLocation)
             return cell
-            
+                        
         case 1:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "SpotFriendsCollectionCell") as? SpotFriendsCollectionCell else { return UITableViewCell() }
-            let height = self.expandUsers ? self.fullScreenUserHeight : self.halfScreenUserHeight
-            cell.setUp(friendVisitors: friendVisitors, privacyLevel: spotObject.privacyLevel, halfScreenUserCount: halfScreenUserCount, fullScreenUserCount: fullScreenUserCount, usersMoreNeeded: usersMoreNeeded, expandUsers: expandUsers, collectionHeight: height)
-            return cell
-            
-        case 2:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "GuestbookCollectionCell") as? GuestbookCollectionCell else { return UITableViewCell() }
-            cell.setUp(posts: postsList, spotID: self.spotID)
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "SpotSegCell") as? SpotSegCell else { return UITableViewCell() }
+            cell.setUp(selectedIndex: selectedIndex, spotPosts: spotPostsController, spotVisitors: spotVisitorsController)
             return cell
 
         default:
@@ -1161,16 +1284,27 @@ extension SpotViewController: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
                 
-        switch indexPath.row {
+        switch indexPath.section {
         case 0:
             return 98
         case 1:
-            return expandUsers ? fullScreenUserHeight : halfScreenUserHeight
-        case 2:
-            return UIScreen.main.bounds.height
+            return UIScreen.main.bounds.height - 98
         default:
             return 0
         }
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        if section == 1 {
+            let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "SpotSegHeader") as! SpotSegHeader
+            header.setUp(selectedIndex: selectedIndex)
+            return header
+        }
+        else { return UITableViewHeaderFooterView() }
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        section == 1 ? 40 : 0
     }
 }
 
@@ -1181,10 +1315,12 @@ class SpotDescriptionCell: UITableViewCell {
     var tagView: UIView!
     var tag1Icon, tag2Icon, tag3Icon: UIImageView!
     var spotName: UILabel!
+    
     var cityName: UILabel!
-    var separatorView: UIView!
+    var separatorView0: UIView!
     var distanceLabel: UILabel!
-    var bottomLine: UIView!
+    var separatorView1: UIView!
+    var privacyIcon: UIImageView!
         
     func setUp(spot: MapSpot, userLocation: CLLocation) {
         
@@ -1255,12 +1391,12 @@ class SpotDescriptionCell: UITableViewCell {
         
         var distanceX: CGFloat = 14
         if cityName.text != "" {
-            separatorView = UIView(frame: CGRect(x: cityName.frame.maxX + 9, y: cityName.frame.midY - 0.7, width: 5, height: 2))
-            separatorView.backgroundColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-            separatorView.layer.cornerRadius = 0.5
-            addSubview(separatorView)
+            separatorView0 = UIView(frame: CGRect(x: cityName.frame.maxX + 9, y: cityName.frame.midY - 0.7, width: 5, height: 2))
+            separatorView0.backgroundColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
+            separatorView0.layer.cornerRadius = 0.5
+            addSubview(separatorView0)
             
-            distanceX = separatorView.frame.maxX + 9
+            distanceX = separatorView0.frame.maxX + 8
         }
         
         let spotLocation = CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)
@@ -1273,9 +1409,29 @@ class SpotDescriptionCell: UITableViewCell {
         distanceLabel.sizeToFit()
         addSubview(distanceLabel)
         
-        bottomLine = UIView(frame: CGRect(x: 0, y: 88, width: UIScreen.main.bounds.width, height: 1))
-        bottomLine.backgroundColor = UIColor(red: 0.121, green: 0.121, blue: 0.121, alpha: 1)
-        addSubview(bottomLine)
+        distanceX = distanceLabel.frame.maxX + 8
+        
+        separatorView1 = UIView(frame: CGRect(x: distanceX, y: distanceLabel.frame.midY - 0.7, width: 5, height: 2))
+        separatorView1.backgroundColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
+        separatorView1.layer.cornerRadius = 0.5
+        addSubview(separatorView1)
+        
+        distanceX = separatorView1.frame.maxX + 8
+                
+        switch spot.privacyLevel {
+        
+        case "friends":
+            privacyIcon = UIImageView(frame: CGRect(x: distanceX, y: distanceLabel.frame.minY, width: 92, height: 16))
+            privacyIcon.image = UIImage(named: "SpotPageFriends")
+        case "invite":
+            privacyIcon = UIImageView(frame: CGRect(x: distanceX, y: distanceLabel.frame.minY, width: 55.73, height: 16))
+            privacyIcon.image = UIImage(named: "SpotPagePrivate")
+        default:
+            privacyIcon = UIImageView(frame: CGRect(x: distanceX, y: distanceLabel.frame.minY, width: 57, height: 16))
+            privacyIcon.image = UIImage(named: "SpotPagePublic")
+        }
+
+        addSubview(privacyIcon)
     }
     
     // get tag image from database if not preloaded for this user
@@ -1301,7 +1457,9 @@ class SpotDescriptionCell: UITableViewCell {
         if spotName != nil { spotName.text = "" }
         if cityName != nil { cityName.text = "" }
         if distanceLabel != nil { distanceLabel.text = "" }
-        if bottomLine != nil { bottomLine.backgroundColor = nil }
+        if separatorView0 != nil { separatorView0.backgroundColor = nil }
+        if separatorView1 != nil { separatorView1.backgroundColor = nil }
+        if privacyIcon != nil { privacyIcon.image = UIImage() }
     }
     
     override func prepareForReuse() {
@@ -1317,396 +1475,123 @@ class SpotDescriptionCell: UITableViewCell {
     }
 }
 
-class SpotFriendsCollectionCell: UITableViewCell, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+class SpotSegHeader: UITableViewHeaderFooterView {
     
-    var usersCollection: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
-    var friendVisitors: [UserProfile] = []
-    var privacyLevel = ""
-    var halfScreenUserCount = 0, fullScreenUserCount = 0
-    var usersMoreNeeded = false
-    var expandUsers = false
-    
-    func setUp(friendVisitors: [UserProfile], privacyLevel: String, halfScreenUserCount: Int, fullScreenUserCount: Int, usersMoreNeeded: Bool, expandUsers: Bool, collectionHeight: CGFloat) {
-        
-        self.selectionStyle = .none
-        self.backgroundColor = UIColor(named: "SpotBlack")
-        
-        self.friendVisitors = friendVisitors
-        self.privacyLevel = privacyLevel
-        self.halfScreenUserCount = halfScreenUserCount
-        self.fullScreenUserCount = fullScreenUserCount
-        self.usersMoreNeeded = usersMoreNeeded
-        self.expandUsers = expandUsers
-        
-        let usersLayout = LeftAlignedCollectionViewFlowLayout()
-        usersLayout.headerReferenceSize = CGSize(width: UIScreen.main.bounds.width, height: 33)
+    var segmentedControl: UISegmentedControl!
+    var buttonBar: UIView!
+    var shadowImage: UIImageView!
+    var separatorCover: UIView!
+    var selectedIndex = 0
 
-        usersCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: collectionHeight)
-        usersCollection.contentInset = UIEdgeInsets(top: 0, left: 14, bottom: 0, right: 14)
-        usersCollection.delegate = self
-        usersCollection.dataSource = self
-        usersCollection.backgroundColor = nil
-        usersCollection.register(SpotFriendsHeader.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "SpotFriendsHeader")
-        usersCollection.register(SpotFriendsCell.self, forCellWithReuseIdentifier: "SpotFriendsCell")
-        usersCollection.register(SpotPageMoreCell.self, forCellWithReuseIdentifier: "SpotPageMoreCell")
-        usersCollection.isScrollEnabled = false
-        usersCollection.bounces = false
-        self.addSubview(usersCollection)
+    func setUp(selectedIndex: Int) {
         
-        usersCollection.reloadData()
-        usersCollection.setCollectionViewLayout(usersLayout, animated: false)
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = UIColor(named: "SpotBlack")
+        self.backgroundView = backgroundView
+
+        self.selectedIndex = selectedIndex
         
+        if segmentedControl != nil { segmentedControl.removeFromSuperview() }
+        segmentedControl = ProfileSegmentedControl(frame: CGRect(x: 10, y: 10, width: 204, height: 20))
+        segmentedControl.backgroundColor = nil
+        segmentedControl.selectedSegmentIndex = selectedIndex
+        
+        let postSegIm = selectedIndex == 0 ? UIImage(named: "PostsActive")?.withRenderingMode(.alwaysOriginal) : UIImage(named: "PostsInactive")?.withRenderingMode(.alwaysOriginal)
+        let visitorSegIm = selectedIndex == 1 ? UIImage(named: "SpotVisitorsActive")?.withRenderingMode(.alwaysOriginal) : UIImage(named: "SpotVisitorsInactive")?.withRenderingMode(.alwaysOriginal)
+        
+        segmentedControl.insertSegment(with: postSegIm, at: 0, animated: false)
+        segmentedControl.insertSegment(with: visitorSegIm, at: 1, animated: false)
+
+        segmentedControl.addTarget(self, action: #selector(segmentedControlValueChanged(_:)), for: .valueChanged)
+        let segWidth: CGFloat = 100
+        segmentedControl.setWidth(segWidth, forSegmentAt: 0)
+        segmentedControl.setWidth(segWidth, forSegmentAt: 1)
+        segmentedControl.selectedSegmentTintColor = .clear
+        addSubview(segmentedControl)
+
+        let minX: CGFloat = selectedIndex == 0 ? 10 : 114
+        let minY = segmentedControl.frame.maxY + 3
+        
+        if buttonBar != nil { buttonBar.backgroundColor = nil }
+        buttonBar = UIView(frame: CGRect(x: minX, y: minY, width: 97, height: 1.5))
+        buttonBar.backgroundColor = .white
+        self.addSubview(buttonBar)
+        
+        let backgroundImage = UIImage(named: "BlackBackground")
+        segmentedControl.setBackgroundImage(backgroundImage, for: .normal, barMetrics: .default)
+        segmentedControl.setBackgroundImage(backgroundImage, for: .selected, barMetrics: .default)
+        
+        if separatorCover != nil { separatorCover.backgroundColor = nil }
+        separatorCover = UIView(frame: CGRect(x: 109, y: 0, width: 2, height: 40))
+        separatorCover.backgroundColor = UIColor(named: "SpotBlack")
+        self.addSubview(separatorCover)
+    
+        /// hacky shadow for mask under seg view on profile
+        if shadowImage != nil { shadowImage.image = UIImage() }
+        shadowImage = UIImageView(frame: CGRect(x: -10, y: 37, width: UIScreen.main.bounds.width + 20, height: 6))
+        shadowImage.image = UIImage(named: "NavShadowLine")
+        shadowImage.clipsToBounds = false
+        shadowImage.contentMode = .scaleAspectFill
+        addSubview(shadowImage)
     }
     
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return expandUsers ? fullScreenUserCount : halfScreenUserCount
+    @objc func segmentedControlValueChanged(_ sender: UISegmentedControl) {
+        // change selected segment on new index tap
+        selectedIndex = sender.selectedSegmentIndex
+        animateBar(index: sender.selectedSegmentIndex)
     }
     
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    func animateBar(index: Int) {
         
-        /// add more button for halfscreen view with user overflow
-        if indexPath.row == halfScreenUserCount - 1 && usersMoreNeeded && !expandUsers {
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SpotPageMoreCell", for: indexPath) as? SpotPageMoreCell else { return UICollectionViewCell() }
-            let trueHalf = usersMoreNeeded ? halfScreenUserCount - 1 : halfScreenUserCount
-            cell.setUp(count: fullScreenUserCount - trueHalf)
-            return cell
-        }
+        guard let spotVC = viewContainingController() as? SpotViewController else { return }
+        let minX: CGFloat = index == 0 ? 10 : 114
+        
+        DispatchQueue.main.async {
+            UIView.animate(withDuration: 0.15) {  self.buttonBar.frame = CGRect(x: minX, y: self.buttonBar.frame.minY, width: self.buttonBar.frame.width, height: self.buttonBar.frame.height)
                 
-        /// regular user cell
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SpotFriendsCell", for: indexPath) as? SpotFriendsCell else { return UICollectionViewCell() }
-        guard let user = friendVisitors[safe: indexPath.row] else { return cell }
-        
-        cell.setUp(user: user)
-        return cell
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        
-        if indexPath.row == halfScreenUserCount - 1 && usersMoreNeeded && !expandUsers {
-            /// add +more button if users aren't going to fit on 2 lines for this section, and hasn't already been expanded
-            let moreWidth = getMoreWidth(extraCount: fullScreenUserCount - halfScreenUserCount)
-            return CGSize(width: moreWidth, height: 24)
-        }
-        
-        guard let user = friendVisitors[safe: indexPath.row] else { return CGSize(width: 0, height: 0) }
-        let width = getWidth(name: user.username)
-        
-        return CGSize(width: width, height: 24)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        guard let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "SpotFriendsHeader", for: indexPath) as? SpotFriendsHeader else { return UICollectionReusableView() }
-        header.setUp(friendCount: friendVisitors.count, privacyLevel: privacyLevel)
-        return header
-    }
-
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
-        guard let spotVC = self.viewContainingController() as? SpotViewController else { return }
-        if spotVC.mapVC.prePanY < 200 { spotVC.shadowScroll.setContentOffset(CGPoint(x: 0, y: 1), animated: false)}
-        
-        if collectionView.cellForItem(at: indexPath) is SpotFriendsCell {
-            
-            guard let user = friendVisitors[safe: indexPath.row] else { return }
-            
-            spotVC.openProfile(user: user)
-            
-        } else {
-
-            guard let spotVC = self.viewContainingController() as? SpotViewController else { return }
-            /// more button tap -> expand to full and resize section
-            spotVC.expandUsers = true
-            if spotVC.mapVC.prePanY != 0 {
-                spotVC.mapVC.animateSpotToFull(forceRefresh: true)
-            } else {
-                spotVC.resizeTable(halfScreen: false, forceRefresh: true)
+                let postSegIm = index == 0 ? UIImage(named: "PostsActive")?.withRenderingMode(.alwaysOriginal) : UIImage(named: "PostsInactive")?.withRenderingMode(.alwaysOriginal)
+                let visitorSegIm = index == 1 ? UIImage(named: "SpotVisitorsActive")?.withRenderingMode(.alwaysOriginal) : UIImage(named: "SpotVisitorsInactive")?.withRenderingMode(.alwaysOriginal)
+                
+                self.segmentedControl.setImage(postSegIm, forSegmentAt: 0)
+                self.segmentedControl.setImage(visitorSegIm, forSegmentAt: 1)
             }
         }
-    }
-    
-    func getWidth(name: String) -> CGFloat {
-            
-        let username = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 16))
-        username.text = name
-        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        username.sizeToFit()
-        return 30 + username.frame.width
-    }
-    
-    func getMoreWidth(extraCount: Int) -> CGFloat {
         
-        let moreLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 100, height: 16))
-        moreLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        moreLabel.text = "+ \(extraCount) more"
-        moreLabel.sizeToFit()
-        
-        return moreLabel.frame.width + 15
-    }
-    
-    override func prepareForReuse() {
-        
-        /// collection was getting readded and not removing cells 
-        for cell in usersCollection.visibleCells {
-            guard let cell = cell as? SpotFriendsCell else { return }
-            if cell.username != nil { cell.username.text = "" }
-            if cell.profilePic != nil { cell.profilePic.image = UIImage() }
-        }
-        
-        guard let header = usersCollection.supplementaryView(forElementKind: UICollectionView.elementKindSectionHeader, at: IndexPath(item: 0, section: 0)) as? SpotFriendsHeader else { return }
-        if header.label != nil { header.label.text = "" }
-        if header.privacyIcon != nil { header.privacyIcon.image = UIImage() }
-        
-        usersCollection = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { spotVC.resetIndex(index: index) }
     }
 }
 
-class SpotFriendsHeader: UICollectionReusableView {
+class SpotSegCell: UITableViewCell {
     
-    var label: UILabel!
-    var privacyIcon: UIImageView!
-    
-    func setUp(friendCount: Int, privacyLevel: String) {
+    func setUp(selectedIndex: Int, spotPosts: SpotPostsViewController, spotVisitors: SpotVisitorsViewController) {
+            
+        self.backgroundColor = UIColor(named: "SpotBlack")
+        self.selectionStyle = .none
         
-        if label != nil { label.text = "" }
-        label = UILabel(frame: CGRect(x: 0, y: 7, width: 200, height: 16))
-        label.text = "\(friendCount) friend"
-        if friendCount != 1 { label.text! += "s" }
-        label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 12)
-        label.sizeToFit()
-        addSubview(label)
+        switch selectedIndex {
         
-        if privacyIcon != nil { privacyIcon.image = UIImage() }
-        
-        switch privacyLevel {
-        
-        case "friends":
-            privacyIcon = UIImageView(frame: CGRect(x: label.frame.maxX + 7, y: 4, width: 98, height: 19))
-            privacyIcon.image = UIImage(named: "SpotPageFriends")
-        case "invite":
-            privacyIcon = UIImageView(frame: CGRect(x: label.frame.maxX + 7, y: 4, width: 68, height: 19))
-            privacyIcon.image = UIImage(named: "SpotPagePrivate")
+        case 0:
+            self.addSubview(spotPosts.view)
+            spotPosts.postsCollection.reloadData()
+            spotPosts.postsCollection.performBatchUpdates(nil, completion: { [weak self] _ in
+                guard let self = self else { return }
+                guard let spotVC = self.viewContainingController() as? SpotViewController else { return }
+                spotVC.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: spotPosts.postsCollection.contentSize.height + spotVC.sec0Height + 250)
+            })
+            
+        case 1:
+            self.addSubview(spotVisitors.view)
+            spotVisitors.visitorsCollection.reloadData()
+            spotVisitors.visitorsCollection.performBatchUpdates(nil, completion: { [weak self] _ in
+                guard let self = self else { return }
+                guard let spotVC = self.viewContainingController() as? SpotViewController else { return }
+                spotVC.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: spotVisitors.visitorsCollection.contentSize.height + spotVC.sec0Height + 200)
+            })
+
         default:
             return
         }
-        
-        addSubview(privacyIcon)
-    }
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 
 }
 
-class SpotPageMoreCell: UICollectionViewCell {
-    
-    var label: UILabel!
-    
-    func setUp(count: Int) {
-        
-        backgroundColor = nil
-        
-        if label != nil { label.text = "" }
-        label = UILabel(frame: CGRect(x: 0, y: 4, width: 100, height: 16))
-        label.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        label.text = "+ \(count) more"
-        label.textColor = UIColor(named: "SpotGreen")
-        label.sizeToFit()
-        addSubview(label)
-    }
-}
-
-class SpotFriendsCell: UICollectionViewCell {
-    
-    var profilePic: UIImageView!
-    var username: UILabel!
-    
-    func setUp(user: UserProfile) {
-        
-        backgroundColor = nil
-        
-        if profilePic != nil { profilePic.image = UIImage() }
-        profilePic = UIImageView(frame: CGRect(x: 0, y: 0, width: 22, height: 22))
-        profilePic.layer.cornerRadius = 11
-        profilePic.layer.masksToBounds = true
-        profilePic.contentMode = .scaleAspectFill
-        self.addSubview(profilePic)
-        
-        let url = user.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-        }
-
-        if username != nil { username.text = "" }
-        username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 6, y: 3, width: self.bounds.width - 28, height: 16))
-        username.text = user.username
-        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        username.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        username.sizeToFit()
-        self.addSubview(username)
-    }
-    
-    override func prepareForReuse() {
-        /// cancel image fetch when cell leaves screen
-        super.prepareForReuse()
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
-    }
-}
-
-
-class GuestbookCollectionCell: UITableViewCell, UICollectionViewDataSource, UICollectionViewDelegate {
-    
-    lazy var postsList: [MapPost] = []
-    let postsCollection: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
-    let layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout.init()
-    var spotID: String!
-    
-    func setUp(posts: [MapPost], spotID: String) {
-        
-        postsList = posts
-        self.spotID = spotID
-        
-        self.backgroundColor = UIColor(named: "SpotBlack")
-        self.selectionStyle = .none
-        
-        layout.scrollDirection = .vertical
-        let width = (UIScreen.main.bounds.width - 10.5) / 3
-        let height = width * 1.374
-        
-        layout.itemSize = CGSize(width: width, height: height)
-        layout.minimumInteritemSpacing = 5
-        layout.minimumLineSpacing = 5
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
-        layout.headerReferenceSize = CGSize(width: UIScreen.main.bounds.width, height: 29)
-        
-        postsCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-        postsCollection.setCollectionViewLayout(layout, animated: false)
-        postsCollection.delegate = self
-        postsCollection.dataSource = self
-        postsCollection.showsVerticalScrollIndicator = false
-        postsCollection.backgroundColor = nil
-        postsCollection.register(SpotPostsHeader.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "SpotPostsHeader")
-        postsCollection.register(GuestbookCell.self, forCellWithReuseIdentifier: "GuestbookCell")
-        postsCollection.isScrollEnabled = false
-        postsCollection.bounces = false
-        self.addSubview(postsCollection)
-        
-        postsCollection.removeGestureRecognizer(postsCollection.panGestureRecognizer)
-        
-        DispatchQueue.main.async { self.postsCollection.reloadData() }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return postsList.count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "GuestbookCell", for: indexPath) as? GuestbookCell else { return UICollectionViewCell() }
-        
-        if let post = postsList[safe: indexPath.row] {
-            cell.setUp(post: post)
-        }
-            
-        return cell
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        guard let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "SpotPostsHeader", for: indexPath) as? SpotPostsHeader else { return UICollectionReusableView() }
-        header.setUp(postCount: postsList.count)
-        return header
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if let spotVC = self.viewContainingController() as? SpotViewController {
-            spotVC.openPostPage(index: indexPath.row)
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-
-        guard let cell = cell as? GuestbookCell else { return }
-        guard let post = postsList[safe: indexPath.row] else { return }
-        
-        if cell.cachedImage.postID == post.id! && cell.cachedImage.image != UIImage() {
-            cell.imagePreview.image = cell.cachedImage.image
-            return
-        }
-        
-        cell.imagePreview.image = UIImage()
-
-        guard let url = post.imageURLs.first else { return }
-        if url == "" { return }
-        
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 300, height: 300), scaleMode: .aspectFill)
-        cell.imagePreview.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { (image, _, _, _) in
-            if image != nil { cell.cachedImage.image = image!}
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        
-        guard let cell = cell as? GuestbookCell else { return }
-        guard let post = postsList[safe: indexPath.row] else { return }
-        cell.cachedImage.postID = post.id!
-        cell.imagePreview.sd_cancelCurrentImageLoad()
-    }
-}
-
-class GuestbookCell: UICollectionViewCell {
-    
-    var postID: String!
-    lazy var cachedImage: ((image: UIImage, postID: String)) = ((UIImage(), ""))
-    lazy var imagePreview = UIImageView()
-    
-    func setUp(post: MapPost) {
-        
-        postID = post.id!
-        
-        self.backgroundColor = UIColor(red: 0.11, green: 0.11, blue: 0.11, alpha: 1.00)
-        self.layer.cornerRadius = 3
-        self.clipsToBounds = true
-        
-        imagePreview.frame = self.bounds
-        imagePreview.contentMode = .scaleAspectFill
-        imagePreview.clipsToBounds = true
-        self.addSubview(imagePreview)
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-    }
-}
-
-
-class SpotPostsHeader: UICollectionReusableView {
-    
-    var label: UILabel!
-    
-    func setUp(postCount: Int) {
-        
-        if label != nil { label.text = "" }
-        label = UILabel(frame: CGRect(x: 14, y: 3, width: 100, height: 16))
-        label.text = "\(postCount) post"
-        if postCount != 1 { label.text! += "s" }
-        label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 12)
-        addSubview(label)
-    }
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-}

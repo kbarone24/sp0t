@@ -16,8 +16,7 @@ import FirebaseUI
 import Geofirestore
 
 class PostViewController: UIViewController {
-    
-    lazy var friendsList: [String] = []
+
     lazy var postsList: [MapPost] = []
 
     var spotObject: MapSpot!
@@ -168,24 +167,23 @@ class PostViewController: UIViewController {
                 targetIcon.isUserInteractionEnabled = false
                 spotNameBanner.addSubview(targetIcon)
                 
-                let spotNameLabel = UILabel(frame: CGRect(x: 22, y: 2.5, width: UIScreen.main.bounds.width - 72, height: 14.5))
+                let spotNameLabel = UILabel(frame: CGRect(x: 22, y: 2.5, width: UIScreen.main.bounds.width - 40, height: 14.5))
                 spotNameLabel.lineBreakMode = .byTruncatingTail
                 spotNameLabel.text = spotObject.spotName
                 spotNameLabel.textColor = .white
                 spotNameLabel.clipsToBounds = true
                 spotNameLabel.isUserInteractionEnabled = false
                 spotNameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)
-                spotNameLabel.sizeToFit()
+                spotNameLabel.sizeThatFits(CGSize(width: UIScreen.main.bounds.width - 40, height: 14.5))
                 
                 spotNameBanner.addSubview(spotNameLabel)
                 
-                let cityLabel = UILabel(frame: CGRect(x: 1, y: spotNameLabel.frame.maxY + 2.5, width: 300, height: 14))
+                let cityLabel = UILabel(frame: CGRect(x: 1, y: spotNameLabel.frame.maxY + 3, width: 300, height: 14))
                 cityLabel.isUserInteractionEnabled = false
                 cityLabel.text = spotObject.city ?? ""
                 cityLabel.textColor = UIColor(red: 0.86, green: 0.86, blue: 0.86, alpha: 1.00)
                 cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
                 cityLabel.sizeToFit()
-                print("max y", cityLabel.frame.maxY)
                 spotNameBanner.addSubview(cityLabel)
                 
                 spotNameBanner.sizeToFit()
@@ -891,11 +889,11 @@ class PostCell: UITableViewCell {
             spotNameLabel.textColor = .white
             spotNameLabel.isUserInteractionEnabled = false
             spotNameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)
-            spotNameLabel.sizeToFit()
-            
+            spotNameLabel.sizeThatFits(CGSize(width: UIScreen.main.bounds.width - 40, height: 14.5))
+
             spotNameBanner.addSubview(spotNameLabel)
             
-            cityLabel = UILabel(frame: CGRect(x: 1, y: spotNameLabel.frame.maxY + 2.5, width: 300, height: 14))
+            cityLabel = UILabel(frame: CGRect(x: 1, y: spotNameLabel.frame.maxY + 3, width: 300, height: 14))
             cityLabel.isUserInteractionEnabled = false
             cityLabel.text = post.city ?? ""
             cityLabel.textColor = UIColor(red: 0.86, green: 0.86, blue: 0.86, alpha: 1.00)
@@ -955,16 +953,24 @@ class PostCell: UITableViewCell {
         usernameButton.backgroundColor = nil
         usernameButton.addTarget(self, action: #selector(usernameTap(_:)), for: .touchUpInside)
         userView.addSubview(usernameButton)
-                
-        timestamp = UILabel(frame: CGRect(x: username.frame.maxX + 8, y: 7, width: 150, height: 16))
-        timestamp.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        timestamp.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        timestamp.text = selectedSegmentIndex == 0 ? getTimestamp(postTime: post.timestamp) : CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: currentLocation).getLocationString()
-        timestamp.sizeToFit()
-        userView.addSubview(timestamp)
         
+        let showTimestamp = selectedSegmentIndex == 1 || parentVC != .feed
+        
+        if showTimestamp {
+
+            let postTimestamp = post.actualTimestamp == nil ? post.timestamp : post.actualTimestamp
+            
+            timestamp = UILabel(frame: CGRect(x: username.frame.maxX + 8, y: 7, width: 150, height: 16))
+            timestamp.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+            timestamp.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+            timestamp.text = parentVC == .feed ? CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: currentLocation).getLocationString() : getDateTimestamp(postTime: postTimestamp!)
+            timestamp.sizeToFit()
+            userView.addSubview(timestamp)
+        }
+            
         if post.posterID == self.uid {
-            editButton = UIButton(frame: CGRect(x: timestamp.frame.maxX, y: 0.5, width: 27, height: 27))
+            let editX = showTimestamp ? timestamp.frame.maxX : username.frame.maxX + 2
+            editButton = UIButton(frame: CGRect(x: editX, y: 0.5, width: 27, height: 27))
             editButton.setImage(UIImage(named: "EditPost"), for: .normal)
             editButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             editButton.addTarget(self, action: #selector(pencilTapped(_:)), for: .touchUpInside)
@@ -1038,14 +1044,16 @@ class PostCell: UITableViewCell {
     func finishImageSetUp(images: [UIImage]) {
         
         resetImageInfo()
+        var frameIndexes = post.frameIndexes ?? []
+        if post.imageURLs.count == 0 { return }
+        if frameIndexes.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i)} }
+        post.frameIndexes = frameIndexes
 
         if images.isEmpty { return }
         post.postImage = images
         
-        guard let currentImage = post.postImage[safe: post.selectedImageIndex] else {  return }
-        
+        guard let currentImage = images[safe: frameIndexes[post.selectedImageIndex]] else { return }
         postImage.image = currentImage
-        let isGif = post.gif ?? false
 
         let im = currentImage
         let aspect = im.size.height / im.size.width
@@ -1063,7 +1071,8 @@ class PostCell: UITableViewCell {
         var adjustedHeight = minHeight
         
         /// height adjustment so that image is either completely full screen or at the overflow bound. Or if multiple images, constrain to bounds for smooth swiping
-        if (adjustedHeight < standardSize + 20) || !isGif && images.count > 1 {
+        
+        if (adjustedHeight < standardSize + 20) || frameIndexes.count > 1 {
             adjustedHeight = standardSize
             minY = screenSize == 0 ? 0 : 64
             if adjustedHeight + minY > overflowBound { adjustedHeight = overflowBound - minY } /// crop for small screens
@@ -1074,8 +1083,12 @@ class PostCell: UITableViewCell {
         }
 
         imageY = minY
-        
-        if isGif && post.postImage.count == 5 { postImage.animationImages = post.postImage; postImage.animateGIF(directionUp: true, counter: post.selectedImageIndex)}
+        let animationImages = getGifImages(selectedImages: images, frameIndexes: frameIndexes)
+        let isGif = !animationImages.isEmpty
+        if isGif {
+            postImage.animationImages = animationImages
+            animationImages.count == 5 ? postImage.animate5FrameAlive(directionUp: true, counter: 0) : postImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count)  /// use old animation for 5 frame alives
+        }
         
         postImage.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: adjustedHeight)
         postImage.contentMode = aspect > 0.9 ? .scaleAspectFill : .scaleAspectFit
@@ -1085,36 +1098,32 @@ class PostCell: UITableViewCell {
         // add top mask to show title if title overlaps image
         if minY == 0 && post.spotID != ""  { postImage.addTopMask() }
         if adjustedHeight > standardSize { postImage.addBottomMask() }
-    
+
         if postImage != nil { bringSubviewToFront(postImage) }
 
-        if !isGif {
-            postImageNext = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width, y: minY, width: UIScreen.main.bounds.width, height: adjustedHeight))
-            postImageNext.clipsToBounds = true
-            let nImage = post.selectedImageIndex != post.postImage.count - 1 ?  post.postImage[post.selectedImageIndex + 1] : UIImage()
-            let nAspect = nImage.size.height / nImage.size.width > 0.9
-            postImageNext.contentMode = nAspect ? .scaleAspectFill : .scaleAspectFit
-            postImageNext.image = nImage
-            addSubview(postImageNext)
-            if minY == 0 && post.spotID != "" { postImageNext.addTopMask() }
-            
-            postImagePrevious = UIImageView(frame: CGRect(x: -UIScreen.main.bounds.width, y: minY, width: UIScreen.main.bounds.width, height: adjustedHeight))
-            postImagePrevious.clipsToBounds = true
-            let pImage = post.selectedImageIndex > 0 ? post.postImage[post.selectedImageIndex - 1] : UIImage()
-            let pAspect = pImage.size.height / pImage.size.width > 0.9
-            postImagePrevious.contentMode = pAspect ? .scaleAspectFill : .scaleAspectFit
-            postImagePrevious.image = pImage
-            addSubview(postImagePrevious)
-            if minY == 0 && post.spotID != "" { postImagePrevious.addTopMask() }
-        }
+        postImageNext = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width, y: minY, width: UIScreen.main.bounds.width, height: adjustedHeight))
+        postImageNext.clipsToBounds = true
+        let nImage = post.selectedImageIndex < frameIndexes.count - 1 ?  images[frameIndexes[post.selectedImageIndex + 1]] : UIImage()
+        let nAspect = nImage.size.height / nImage.size.width > 0.9
+        postImageNext.contentMode = nAspect ? .scaleAspectFill : .scaleAspectFit
+        postImageNext.image = nImage
+        addSubview(postImageNext)
+        if minY == 0 && post.spotID != "" { postImageNext.addTopMask() }
+        
+        postImagePrevious = UIImageView(frame: CGRect(x: -UIScreen.main.bounds.width, y: minY, width: UIScreen.main.bounds.width, height: adjustedHeight))
+        postImagePrevious.clipsToBounds = true
+        let pImage = post.selectedImageIndex > 0 ? images[frameIndexes[post.selectedImageIndex - 1]] : UIImage()
+        let pAspect = pImage.size.height / pImage.size.width > 0.9
+        postImagePrevious.contentMode = pAspect ? .scaleAspectFill : .scaleAspectFit
+        postImagePrevious.image = pImage
+        addSubview(postImagePrevious)
+        if minY == 0 && post.spotID != "" { postImagePrevious.addTopMask() }
                 
         let tap = UITapGestureRecognizer(target: self, action: #selector(imageTapped(_:)))
         tap.numberOfTapsRequired = 2
         postImage.addGestureRecognizer(tap)
         
-        let count = post.imageURLs.count
-        
-        if count > 1 && !isGif {
+        if frameIndexes.count > 1 {
             
             swipe = UIPanGestureRecognizer(target: self, action: #selector(panGesture(_:)))
             postImage.addGestureRecognizer(swipe)
@@ -1126,8 +1135,8 @@ class PostCell: UITableViewCell {
             var i = 1.0
             
             /// 1/2 of size of dot + the distance between that half and the next dot 
-            var xOffset = CGFloat(6 + (Double(count - 1) * 7.5))
-            while i <= Double(count) {
+            var xOffset = CGFloat(6 + (Double(frameIndexes.count - 1) * 7.5))
+            while i <= Double(frameIndexes.count) {
                 
                 let view = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width / 2 - xOffset, y: 0, width: 12, height: 12))
                 view.layer.cornerRadius = 6
@@ -1201,7 +1210,7 @@ class PostCell: UITableViewCell {
         super.prepareForReuse()
 
         if imageManager != nil { imageManager.cancelAll(); imageManager = nil }
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
+        if profilePic != nil { profilePic.removeFromSuperview(); profilePic.sd_cancelCurrentImageLoad() }
         if postImage != nil { postImage.removeFromSuperview(); postImage = nil }
     }
         
@@ -1501,7 +1510,7 @@ class PostCell: UITableViewCell {
         let frame1 = CGRect(x: UIScreen.main.bounds.width, y: minY, width: UIScreen.main.bounds.width, height: postImage.frame.height)
         
         if (post.selectedImageIndex == 0 && direction.x > 0) || postVC.view.frame.minX > 0 {
-            if parentVC != .feed { swipeToExit(gesture: gesture); return }
+            if parentVC != .feed && postImage.frame.minX == 0 { swipeToExit(gesture: gesture); return }
         }
         
         if offScreen { resetPostFrame(); return }
@@ -1518,7 +1527,7 @@ class PostCell: UITableViewCell {
         case .ended, .cancelled:
             
             if direction.x < 0 {
-                if postImage.frame.maxX + direction.x < UIScreen.main.bounds.width/2 && post.selectedImageIndex < post.imageURLs.count - 1 {
+                if postImage.frame.maxX + direction.x < UIScreen.main.bounds.width/2 && post.selectedImageIndex < (post.frameIndexes?.count ?? 0) - 1 {
                     //animate to next image
                     UIView.animate(withDuration: 0.2) {
                         self.postImageNext.frame = frame0
@@ -1606,7 +1615,7 @@ class PostCell: UITableViewCell {
             
             /// swipe to exit if horizontal swipe
             if (abs(translation.x) > abs(translation.y) && translation.x > 0 && tableView.contentOffset.y == originalOffset) || postVC.view.frame.minX > 0 {
-                if parentVC != .feed { swipeToExit(gesture: gesture) }
+                if parentVC != .feed && postImage.frame.minX == 0 { swipeToExit(gesture: gesture) }
                 return
             }
             
@@ -1758,6 +1767,19 @@ class PostCell: UITableViewCell {
     override func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return gestureRecognizer.view?.tag == 16 && otherGestureRecognizer.view?.tag == 16 /// only user for postImage zoom / swipe
     }
+    
+    func getGifImages(selectedImages: [UIImage], frameIndexes: [Int]) -> [UIImage] {
+
+        let selectedFrame = frameIndexes[post.selectedImageIndex]
+        if frameIndexes.count == 1 {
+            return selectedImages.count > 1 ? selectedImages : []
+        } else if frameIndexes.count - 1 == post.selectedImageIndex {
+            return selectedImages[selectedFrame] != selectedImages.last ? selectedImages.suffix(selectedImages.count - 1 - selectedFrame) : []
+        } else {
+            let frame1 = frameIndexes[post.selectedImageIndex + 1]
+            return frame1 - selectedFrame > 1 ? Array(selectedImages[selectedFrame...frame1 - 1]) : []
+        }
+    }
 }
 
 ///supplementary view methods
@@ -1856,6 +1878,7 @@ extension PostCell {
     }
     
     func getUserInfo(userID: String, completion: @escaping (_ userInfo: UserProfile) -> Void) {
+        
         self.db.collection("users").document(userID).getDocument { (snap, err) in
             
             do {
@@ -1872,8 +1895,8 @@ extension PostCell {
     func getFriendRequestInfo(completion: @escaping(_ pending: Bool) -> Void) {
         
         // check each users notificaitons for a pending friend request and fill completion handler
-        let userRef = self.db.collection("users").document(self.uid).collection("notifications")
-        let userQuery = userRef.whereField("type", isEqualTo: "friendRequest").whereField("senderID", isEqualTo: self.noAccessFriend.id!)
+        let userRef = db.collection("users").document(uid).collection("notifications")
+        let userQuery = userRef.whereField("type", isEqualTo: "friendRequest").whereField("senderID", isEqualTo: noAccessFriend.id!)
         
         var zeroCount = 0
         userQuery.getDocuments { (snap, err) in
@@ -1889,8 +1912,8 @@ extension PostCell {
             }
         }
         
-        let notiRef = self.db.collection("users").document(self.noAccessFriend.id!).collection("notifications")
-        let query = notiRef.whereField("type", isEqualTo: "friendRequest").whereField("senderID", isEqualTo: self.uid)
+        let notiRef = db.collection("users").document(noAccessFriend.id!).collection("notifications")
+        let query = notiRef.whereField("type", isEqualTo: "friendRequest").whereField("senderID", isEqualTo: uid)
         query.getDocuments { (snap2, err) in
             
             if err != nil { completion(false); return }
@@ -2076,16 +2099,19 @@ extension PostCell {
     func checkForZero() {
         
         let singlePostMessage = "Deleting the only post at a spot will delete the entire spot"
+        let postSpot = MapSpot(spotDescription: "", spotName: "", spotLat: 0, spotLong: 0, founderID: "", privacyLevel: "", imageURL: "")
         
         if post.spotID == nil {
-            presentDeleteMenu(message: "", deleteSpot: false)
+            /// present with blank spot object because wont need it
+            presentDeleteMenu(message: "", deleteSpot: false, spot: postSpot)
             
         } else if parentVC == .spot {
             guard let postVC = self.viewContainingController() as? PostViewController else { return }
             guard let spotVC = postVC.parent as? SpotViewController else { return }
+            let deleteSpot = spotVC.postsList.count == 1
             let singlePostMessage = "Deleting the only post at a spot will delete the entire spot"
-            let message = spotVC.postsList.count == 1 ? singlePostMessage : ""
-            presentDeleteMenu(message: message, deleteSpot: message != "")
+            let message = deleteSpot && spotVC.spotObject.privacyLevel != "public" ? singlePostMessage : ""
+            presentDeleteMenu(message: message, deleteSpot: deleteSpot, spot: spotVC.spotObject)
             
         } else {
             
@@ -2093,14 +2119,21 @@ extension PostCell {
             
             self.db.collection("spots").document(post.spotID!).getDocument { (snap, err) in
                 
-                guard let postIDs = snap?.get("postIDs") as? [String] else { self.presentDeleteMenu(message: "", deleteSpot: false); return }
-                let privacyLevel = snap?.get("privacyLevel") as? String ?? "friends"
-                
-                let deleteSpot = postIDs.count == 1
-                /// don't show message for POI, delete on backend but user doesn't need to think they're deleting a public place
-                let message = deleteSpot ? privacyLevel == "public" ? "" : singlePostMessage : ""
-                self.presentDeleteMenu(message: message, deleteSpot: deleteSpot)
-                self.removeDeleteIndicator()
+                do {
+
+                    let info = try snap?.data(as: MapSpot.self)
+                    guard let postSpot = info else { self.presentDeleteMenu(message: "", deleteSpot: false, spot: postSpot); return }
+                    
+                    let deleteSpot = postSpot.postIDs.count == 1
+                    /// don't show message for POI, delete on backend but user doesn't need to think they're deleting a public place
+                    let message = deleteSpot ? postSpot.privacyLevel == "public" ? "" : singlePostMessage : ""
+                    self.presentDeleteMenu(message: message, deleteSpot: deleteSpot, spot: postSpot)
+                    self.removeDeleteIndicator()
+
+                } catch {
+                    self.presentDeleteMenu(message: "", deleteSpot: false, spot: postSpot)
+                    return
+                }
             }
         }
     }
@@ -2118,7 +2151,7 @@ extension PostCell {
     }
     
     
-    func presentDeleteMenu(message: String, deleteSpot: Bool) {
+    func presentDeleteMenu(message: String, deleteSpot: Bool, spot: MapSpot) {
         
         if let postVC = self.viewContainingController() as? PostViewController {
             
@@ -2145,7 +2178,7 @@ extension PostCell {
                     postVC.mapVC.deletedPostIDs.append(self.post.id!)
                     
                     ///update database
-                    self.postDelete(deletePost: self.post!, spotDelete: deleteSpot)
+                    self.postDelete(deletePost: self.post!, spotDelete: deleteSpot, spot: spot)
                    
                     Mixpanel.mainInstance().track(event: "PostPagePostDelete")
                     
@@ -2174,7 +2207,7 @@ extension PostCell {
     }
     
     
-    func postDelete(deletePost: MapPost, spotDelete: Bool) {
+    func postDelete(deletePost: MapPost, spotDelete: Bool, spot: MapSpot) {
         
         let postCopy = deletePost
         
@@ -2188,7 +2221,7 @@ extension PostCell {
                     let spotID = postCopy.spotID!
                     postVC.postDelete(postsList: [postCopy], spotID: "")
                     postVC.spotDelete(spotID: spotID)
-                    postVC.userDelete(spotID: spotID)
+                    postVC.userDelete(spot: spot)
                     
                     postVC.mapVC.deletedSpotIDs.append(spotID)
                     
@@ -2306,492 +2339,6 @@ class LoadingCell: UITableViewCell {
 }
 
 
-class EditPostView: UIView, UITextViewDelegate {
-    
-    var postingToView: UIView!
-    var spotNameLabel: UILabel!
-    var captionView: UIView!
-    var postImage: UIImageView!
-    var postCaption: UITextView!
-    var locationView: UIView!
-    var addressButton: UIButton!
-    var editAddress: UIButton!
-    var whoCanSee: UILabel!
-    var privacyView: UIView!
-    var friendCount: UILabel!
-    var actionArrow: UIButton!
-    var privacyButton: UIButton!
-    var privacyIcon: UIImageView!
-    var privacyLabel: UILabel!
-    var privacyMask: UIView!
-    
-    var post: MapPost!
-    weak var postVC: PostViewController!
-    var newPrivacy: String!
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        backgroundColor = UIColor(red: 0.086, green: 0.086, blue: 0.086, alpha: 1)
-        layer.cornerRadius = 12
-    }
-    
-    func setUp(post: MapPost, postVC: PostViewController) {
-        
-        self.post = post
-        self.postVC = postVC
-        
-        if post.spotID != "" {
-            
-            postingToView = UIView(frame: CGRect(x: 0, y: 0, width: self.bounds.width, height: 64))
-            postingToView.backgroundColor = nil
-            self.addSubview(postingToView)
-            
-            let postingToLabel = UILabel(frame: CGRect(x: 14, y: 14, width: 65, height: 15))
-            postingToLabel.text = "Posting to"
-            postingToLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-            postingToLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-            postingToView.addSubview(postingToLabel)
-            
-            let targetIcon = UIImageView(frame: CGRect(x: 14, y: 34, width: 17, height: 17))
-            targetIcon.image = UIImage(named: "PlainSpotIcon")
-            postingToView.addSubview(targetIcon)
-            
-            spotNameLabel = UILabel(frame: CGRect(x: targetIcon.frame.maxX + 8, y: 35, width: 200, height: 17))
-            spotNameLabel.text = post.spotName
-            spotNameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-            spotNameLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-            spotNameLabel.sizeToFit()
-            postingToView.addSubview(spotNameLabel)
-            
-            if post.createdBy == postVC.uid && !(post.spotPrivacy == "public") {
-                let editSpotButton = UIButton(frame: CGRect(x: spotNameLabel.frame.maxX + 2, y: 36, width: 55, height: 15))
-                editSpotButton.setTitle("EDIT SPOT", for: .normal)
-                editSpotButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-                editSpotButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 9.5)
-                editSpotButton.addTarget(self, action: #selector(editSpotTap(_:)), for: .touchUpInside)
-                postingToView.addSubview(editSpotButton)
-                
-                let bottomLine = UIView(frame: CGRect(x: 0, y: 61, width: UIScreen.main.bounds.width, height: 1))
-                bottomLine.backgroundColor = UIColor(red: 0.179, green: 0.179, blue: 0.179, alpha: 1)
-                postingToView.addSubview(bottomLine)
-            }
-        }
-        
-        let rollingY: CGFloat = post.spotID == "" ? 0 : 64
-        
-        captionView = UIView(frame: CGRect(x: 0, y: rollingY, width: self.bounds.width, height: 183))
-        captionView.backgroundColor = nil
-        self.addSubview(captionView)
-        
-        postImage = UIImageView(frame: CGRect(x: 14, y: 36, width: 71, height: 99))
-        postImage.image = post.postImage.first ?? UIImage(color: UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1.0))
-        postImage.clipsToBounds = true
-        postImage.layer.cornerRadius = 3.33
-        postImage.contentMode = .scaleAspectFill
-        captionView.addSubview(postImage)
-        
-        
-        postCaption = VerticallyCenteredTextView(frame: CGRect(x: postImage.frame.maxX + 9, y: 10, width: 219, height: 160))
-        postCaption.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        
-        if post.caption == "" {
-            postCaption.alpha = 0.5
-            postCaption.text = "Write a caption..."
-        } else {
-            postCaption.text = post.caption
-        }
-        
-        postCaption.font = UIFont(name: "SFCamera-Regular", size: 13)
-        postCaption.backgroundColor = nil
-        postCaption.isScrollEnabled = true
-        postCaption.textContainer.lineBreakMode = .byTruncatingHead
-        postCaption.keyboardDistanceFromTextField = 100
-        postCaption.delegate = self
-        captionView.addSubview(postCaption)
-                
-        let bottomLine = UIView(frame: CGRect(x: 0, y: 182, width: self.bounds.width, height: 1))
-        bottomLine.backgroundColor = UIColor(red: 0.179, green: 0.179, blue: 0.179, alpha: 1)
-        captionView.addSubview(bottomLine)
-        
-        locationView = UIView(frame: CGRect(x: 0, y: captionView.frame.maxY, width: self.bounds.width, height: 56))
-        locationView.backgroundColor = nil
-        self.addSubview(locationView)
-        
-        let postLabel = UILabel(frame: CGRect(x: 14, y: 10, width: 100, height: 17))
-        postLabel.text = "Post location"
-        postLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        postLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        locationView.addSubview(postLabel)
-        
-        addressButton = UIButton(frame: CGRect(x: 14, y: postLabel.frame.maxY - 4, width: self.bounds.width - 50, height: 15))
-        addressButton.setTitleColor(UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1), for: .normal)
-        addressButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
-        addressButton.titleLabel?.lineBreakMode = .byTruncatingTail
-        addressButton.addTarget(self, action: #selector(editAddress(_:)), for: .touchUpInside)
-        
-        postVC.reverseGeocodeFromCoordinate(numberOfFields: 4, location: CLLocation(latitude: post.postLat, longitude: post.postLong)) { [weak self] (address) in
-            guard let self = self else { return }
-            
-            self.addressButton.setTitle(address, for: .normal)
-            self.addressButton.sizeToFit()
-            self.locationView.addSubview(self.addressButton)
-            
-            self.editAddress = UIButton(frame: CGRect(x: self.addressButton.frame.maxX + 2, y: postLabel.frame.maxY - 5, width: 27, height: 27))
-            self.editAddress.setImage(UIImage(named: "EditPost"), for: .normal)
-            self.editAddress.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            self.editAddress.addTarget(self, action: #selector(self.editAddress(_:)), for: .touchUpInside)
-            self.locationView.addSubview(self.editAddress)
-        }
-        
-        let line = UIView(frame: CGRect(x: 0, y: 55, width: self.bounds.width, height: 1))
-        line.backgroundColor = UIColor(red: 0.179, green: 0.179, blue: 0.179, alpha: 1)
-        locationView.addSubview(line)
-        
-        privacyView = UIView(frame: CGRect(x: 0, y: locationView.frame.maxY, width: self.bounds.width, height: 106))
-        privacyView.backgroundColor = nil
-        self.addSubview(privacyView)
-        
-        whoCanSee = UILabel(frame: CGRect(x: 14, y: 10, width: 100, height: 17))
-        whoCanSee.text = "Who can see?"
-        whoCanSee.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        whoCanSee.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        privacyView.addSubview(whoCanSee)
-        
-        privacyIcon = UIImageView()
-        privacyIcon.contentMode = .scaleAspectFit
-        
-        privacyLabel = UILabel()
-        privacyLabel.textColor = .white
-        privacyLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)
-        
-        friendCount = UILabel()
-        friendCount.textColor = UIColor(named: "SpotGreen")
-        friendCount.font = UIFont(name: "SFCamera-Regular", size: 10.5)
-        
-        actionArrow = UIButton()
-        actionArrow.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        actionArrow.setImage(UIImage(named: "ActionArrow"), for: .normal)
-        actionArrow.addTarget(self, action: #selector(actionTap(_:)), for: .touchUpInside)
-                
-        loadPrivacyView()
-        privacyView.addSubview(privacyIcon)
-        privacyView.addSubview(privacyLabel)
-        
-        if post.privacyLevel == "invite" { privacyView.addSubview(friendCount) }
-        if (post.spotPrivacy == "public" || post.spotID == "") {
-            privacyView.addSubview(privacyButton)
-            privacyView.addSubview(actionArrow)
-        }
-        
-        let cancelButton = UIButton(frame: CGRect(x: 200, y: 70, width: 65, height: 20))
-        cancelButton.titleEdgeInsets = UIEdgeInsets(top: 2.5, left: 2.5, bottom: 2.5, right: 2.5)
-        cancelButton.setTitle("Cancel", for: .normal)
-        cancelButton.setTitleColor(UIColor(red: 0.769, green: 0.769, blue: 0.769, alpha: 1), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
-        cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
-        privacyView.addSubview(cancelButton)
-        
-        let saveButton = UIButton(frame: CGRect(x: 275, y: 70, width: 43, height: 20))
-        saveButton.titleEdgeInsets = UIEdgeInsets(top: 2.5, left: 2.5, bottom: 2.5, right: 2.5)
-        saveButton.setTitle("Save", for: .normal)
-        saveButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        saveButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
-        saveButton.addTarget(self, action: #selector(saveTap(_:)), for: .touchUpInside)
-        privacyView.addSubview(saveButton)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func loadPrivacyView() {
-        
-        let privacyString = post.privacyLevel! == "public" ? "Anyone" :  post.privacyLevel!.prefix(1).capitalized + post.privacyLevel!.dropFirst()
-        privacyLabel.text = privacyString
-        
-        if post.privacyLevel == "friends" {
-            privacyIcon.frame = CGRect(x: 14, y: whoCanSee.frame.maxY + 10, width: 20, height: 13)
-            privacyIcon.image = UIImage(named: "FriendsIcon")
-            privacyLabel.frame = CGRect(x: privacyIcon.frame.maxX + 6, y: privacyIcon.frame.minY - 2, width: 100, height: 15)
-            
-        } else if post.privacyLevel == "public" {
-            privacyIcon.frame = CGRect(x: 14, y: whoCanSee.frame.maxY + 10, width: 18, height: 18)
-            privacyIcon.image = UIImage(named: "PublicIcon")
-            privacyLabel.frame = CGRect(x: privacyIcon.frame.maxX + 6, y: privacyIcon.frame.minY + 1, width: 100, height: 15)
-            
-        } else {
-            privacyIcon.frame = CGRect(x: 14, y: whoCanSee.frame.maxY + 11, width: 17.8, height: 22.25)
-            privacyIcon.image = UIImage(named: "PrivateIcon")
-            privacyLabel.frame = CGRect(x: privacyIcon.frame.maxX + 8, y: privacyIcon.frame.minY + 5, width: 100, height: 15)
-            privacyLabel.text = "Private"
-        }
-        
-        privacyLabel.sizeToFit()
-        
-        if post.privacyLevel == "invite" {
-            privacyLabel.frame = CGRect(x: privacyIcon.frame.maxX + 8, y: whoCanSee.frame.maxY + 6.5, width: 100, height: 15)
-            privacyLabel.sizeToFit()
-            
-            friendCount.frame = CGRect(x: privacyIcon.frame.maxX + 8, y: privacyLabel.frame.maxY + 2, width: 70, height: 14)
-            var countText = "\(post.inviteList?.count ?? 0) friend"
-            if post.inviteList?.count != 1 { countText += "s"}
-            friendCount.text = countText
-            friendCount.sizeToFit()
-        }
-        
-        if (post.spotPrivacy == "public" || post.spotID == "") {
-            actionArrow.frame = CGRect(x: privacyLabel.frame.maxX, y: privacyLabel.frame.minY, width: 23, height: 17)
-            
-            privacyButton = UIButton(frame: CGRect(x: privacyIcon.frame.minX, y: privacyIcon.frame.minY, width: actionArrow.frame.maxX - privacyIcon.frame.minY, height: 25))
-            privacyButton.addTarget(self, action: #selector(actionTap(_:)), for: .touchUpInside)
-        }
-        
-    }
-    
-    @objc func editSpotTap(_ sender: UIButton) {
-        removeEditPost()
-        postVC.editPostView = false
-        postVC.openSpotPage(edit: true)
-    }
-    
-    @objc func editAddress(_ sender: UIButton) {
-        
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
-            
-            vc.selectedImages = post.postImage
-            vc.mapVC = postVC.mapVC
-            vc.passedLocation = CLLocation(latitude: post.postLat, longitude: post.postLong)
-            if post.spotID != "" {
-                vc.secondaryLocation = CLLocation(latitude: post.spotLat ?? post.postLong, longitude: post.spotLong ?? post.postLong)
-                vc.spotName = post.spotName ?? ""
-            }
-            
-            vc.passedAddress = addressButton.titleLabel?.text ?? ""
-            postVC.mapVC.navigationController?.pushViewController(vc, animated: true)
-            postVC.addedLocationPicker = true
-            
-            removeEditPost()
-        }
-    }
-    
-    @objc func actionTap(_ sender: UIButton) {
-        ///show privacy picker on action arrow tap
-        if let postMask = self.superview {
-            privacyMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-            privacyMask.backgroundColor = UIColor.black.withAlphaComponent(0.7)
-            privacyMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(closePrivacyPicker(_:))))
-            postMask.addSubview(privacyMask)
-            
-            let pickerView = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 260, width: UIScreen.main.bounds.width, height: 260))
-            pickerView.backgroundColor = UIColor(named: "SpotBlack")
-            privacyMask.addSubview(pickerView)
-            
-            let titleLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: 10, width: 200, height: 20))
-            titleLabel.text = "Who can see this?"
-            titleLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-            titleLabel.font = UIFont(name: "SFCamera-Semibold", size: 15)
-            titleLabel.textAlignment = .center
-            pickerView.addSubview(titleLabel)
-            
-            let publicButton = UIButton(frame: CGRect(x: 14, y: 50, width: 171, height: 54))
-            publicButton.setImage(UIImage(named: "PublicButton"), for: .normal)
-            publicButton.layer.cornerRadius = 7.5
-            publicButton.tag = 0
-            publicButton.addTarget(self, action: #selector(privacyTap(_:)), for: .touchUpInside)
-            if post.privacyLevel == "public" {
-                publicButton.layer.borderWidth = 1
-                publicButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-            }
-            pickerView.addSubview(publicButton)
-            
-            let friendsButton = UIButton(frame: CGRect(x: 14, y: publicButton.frame.maxY + 10, width: 171, height: 54))
-            friendsButton.setImage(UIImage(named: "FriendsButton"), for: .normal)
-            friendsButton.layer.cornerRadius = 7.5
-            friendsButton.tag = 1
-            friendsButton.addTarget(self, action: #selector(privacyTap(_:)), for: .touchUpInside)
-            if post.privacyLevel == "friends" {
-                friendsButton.layer.borderWidth = 1
-                friendsButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-            }
-            pickerView.addSubview(friendsButton)
-        }
-    }
-    
-    @objc func privacyTap(_ sender: UIButton) {
-        
-        switch sender.tag {
-        case 0:
-            post.privacyLevel = "public"
-            postVC.editedPost.privacyLevel = "public"
-        default:
-            post.privacyLevel = "friends"
-            postVC.editedPost.privacyLevel = "friends"
-        }
-        
-        for subview in privacyMask.subviews { subview.removeFromSuperview() }
-        privacyMask.removeFromSuperview()
-        
-        loadPrivacyView()
-    }
-    
-    
-    @objc func closePrivacyPicker(_ sender: UITapGestureRecognizer) {
-        for subview in privacyMask.subviews { subview.removeFromSuperview() }
-        privacyMask.removeFromSuperview()
-    }
-    
-    @objc func cancelTap(_ sender: UIButton) {
-        removeEditPost()
-        postVC.editPostView = false
-    }
-    
-    func removeEditPost() {
-            
-        postVC.editPostView = false
-        postVC.mapVC.removeTable()
-        postVC.tableView.reloadData()
-        
-        if let postMask = self.superview {
-            postMask.removeFromSuperview()
-        }
-        
-        for sub in self.subviews {
-            sub.removeFromSuperview()
-        }
-        
-        self.removeFromSuperview()
-    }
-    
-    @objc func saveTap(_ sender: UIButton) {
-        
-        Mixpanel.mainInstance().track(event: "EditPostSave")
-        
-        let captionText = postCaption.text == "Write a caption..." ? "" : postCaption.text
-        
-        var taggedUsernames: [String] = []
-        var selectedUsers: [UserProfile] = []
-        
-        ///for tagging users on comment post
-        let words = captionText!.components(separatedBy: .whitespacesAndNewlines)
-        
-        for w in words {
-            let username = String(w.dropFirst())
-            if w.hasPrefix("@") {
-                if let f = postVC.mapVC.friendsList.first(where: {$0.username == username}) {
-                    selectedUsers.append(f)
-                }
-            }
-        }
-        
-        taggedUsernames = selectedUsers.map({$0.username})
-        
-        postVC.postsList[postVC.selectedPostIndex].caption = captionText ?? ""
-        postVC.postsList[postVC.selectedPostIndex].taggedUsers = taggedUsernames
-        postVC.postsList[postVC.selectedPostIndex].postLong = postVC.editedPost.postLong
-        postVC.postsList[postVC.selectedPostIndex].postLat = postVC.editedPost.postLat
-        postVC.postsList[postVC.selectedPostIndex].privacyLevel = postVC.editedPost.privacyLevel
-        
-        let uploadPost = postVC.postsList[postVC.selectedPostIndex]
-        
-        postVC.editedPost = nil
-        postVC.editPostView = false
-        postVC.tableView.reloadData()
-        removeEditPost()
-        
-        //reset annotation
-        postVC.mapVC.postsList = postVC.postsList
-        let mapPass = ["selectedPost": postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": postVC.parentVC] as [String : Any]
-        NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass)
-        
-        let infoPass: [String: Any] = ["post": uploadPost as Any]
-        NotificationCenter.default.post(name: Notification.Name("EditPost"), object: nil, userInfo: infoPass)
-        
-        let values : [String: Any] = ["caption" : captionText ?? "", "postLat": uploadPost.postLat, "postLong": uploadPost.postLong, "privacyLevel": uploadPost.privacyLevel as Any, "taggedUsers": taggedUsernames]
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            /// set edit values for individual posts
-            self.updatePostValues(values: values)
-            /// update city on location change
-            let db = Firestore.firestore()
-            self.postVC.reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: uploadPost.postLat, longitude: uploadPost.postLong)) { (city) in
-
-                if city == "" { return }
-                db.collection("posts").document(uploadPost.id!).updateData(["city" : city])
-            }
-        }
-    }
-    
-    func updatePostCoordinate(postID: String, location: CLLocation) {
-        
-        let db = Firestore.firestore()
-        let coordinate = location.coordinate
-        
-        db.collection("posts").document(postID).updateData(["spotLat" : coordinate.latitude, "spotLong": coordinate.longitude])
-                
-        GeoFirestore(collectionRef: Firestore.firestore().collection("spots")).setLocation(location: location, forDocumentWithID: postID) { (error) in
-            if (error != nil) {
-                print("An error occured: \(String(describing: error))")
-            } else {
-                print("Saved location successfully!")
-            }
-        }
-    }
-
-    
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.alpha == 0.5 {
-            textView.text = nil
-            textView.alpha = 1.0
-        }
-    }
-    
-    func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text.isEmpty {
-            textView.alpha = 0.5
-            textView.text = "Write a caption..."
-        }
-    }
-    
-    func textViewDidChange(_ textView: UITextView) {
-        if let selectedRange = textView.selectedTextRange {
-            let startPosition: UITextPosition =  textView.beginningOfDocument
-            let cursorPosition =  textView.offset(from: startPosition, to: selectedRange.start)
-            postVC.addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursorPosition, tableParent: .post)
-         ///   addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursorPosition)
-        }
-    }
-
-    
-    func updatePostValues(values: [String: Any]) {
-        
-        let db = Firestore.firestore()
-        db.collection("posts").document(post.id!).updateData(values)
-        
-        updatePostCoordinate(postID: post.id!, location: CLLocation(latitude: post.postLat, longitude: post.postLong))
-
-        
-        let pQuery = db.collection("posts").document(post.id!).collection("comments").order(by: "timestamp", descending: false)
-        
-        pQuery.getDocuments { (postSnap, err) in
-            if err == nil {
-                if let doc = postSnap?.documents.first {
-                    db.collection("posts").document(self.post.id!).collection("comments").document(doc.documentID).updateData(["comment": values["caption"] as Any])
-                }
-            }
-        }
-    }
-}
-
-class VerticallyCenteredTextView: UITextView {
-    override var contentSize: CGSize {
-        didSet {
-            var topCorrection = (bounds.size.height - contentSize.height * zoomScale) / 2.0
-            topCorrection = max(0, topCorrection)
-            contentInset = UIEdgeInsets(top: topCorrection, left: 0, bottom: 0, right: 0)
-        }
-    }
-}
 ///https://stackoverflow.com/questions/12591192/center-text-vertically-in-a-uitextview
 
 extension UILabel {
@@ -2900,10 +2447,10 @@ extension UIImageView {
         layer0.colors = [
             UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
             UIColor(red: 0, green: 0, blue: 0, alpha: 0.01).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.04).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.18).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.43).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.75).cgColor
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.06).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.23).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.85).cgColor
         ]
         layer0.locations = [0, 0.11, 0.24, 0.43, 0.65, 1]
         layer0.startPoint = CGPoint(x: 0.5, y: 0)

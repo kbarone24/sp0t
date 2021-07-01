@@ -32,6 +32,13 @@ class SendInvitesController: UIViewController {
     
     var rawContacts: [CNContact] = []
     var contacts: [(contact: CNContact, status: InviteStatus)] = []
+    var queryContacts: [(contact: CNContact, status: InviteStatus)] = []
+    
+    var searchBar: UISearchBar!
+    var searchBarContainer: UIView!
+    var cancelButton: UIButton!
+    var resultsTable: UITableView!
+    
     var tableView: UITableView!
     var titleView: SendInvitesTitleView!
     var loadingIndicator: CustomActivityIndicator!
@@ -40,26 +47,72 @@ class SendInvitesController: UIViewController {
     var errorText: UILabel!
         
     override func viewDidLoad() {
+        
         super.viewDidLoad()
         
         view.backgroundColor = UIColor(named: "SpotBlack")
                 
         titleView = SendInvitesTitleView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 60))
-        titleView.setUp(count: 5 - mapVC.userInfo.sentInvites.count)
+        titleView.setUp(count: 8 - mapVC.userInfo.sentInvites.count)
         view.addSubview(titleView)
+        
+        searchBarContainer = UIView(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 40))
+        searchBarContainer.backgroundColor = nil
+        view.addSubview(searchBarContainer)
+        
+        searchBar = UISearchBar(frame: CGRect(x: 14, y: 3, width: UIScreen.main.bounds.width - 28, height: 36))
+        searchBar.searchBarStyle = .default
+        searchBar.barTintColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
+        searchBar.tintColor = .white
+        searchBar.searchTextField.backgroundColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
+        searchBar.delegate = self
+        searchBar.autocapitalizationType = .none
+        searchBar.autocorrectionType = .no
+        searchBar.showsCancelButton = false
+        searchBar.searchTextField.font = UIFont(name: "SFCamera-Regular", size: 13)
+        searchBar.clipsToBounds = true
+        searchBar.layer.masksToBounds = true
+        searchBar.searchTextField.layer.masksToBounds = true
+        searchBar.searchTextField.clipsToBounds = true
+        searchBar.layer.cornerRadius = 8
+        searchBar.searchTextField.layer.cornerRadius = 8
+        searchBar.placeholder = "Search contacts"
+        searchBarContainer.addSubview(searchBar)
+        
+        cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 65, y: 5.5, width: 50, height: 30))
+        cancelButton.setTitle("Cancel", for: .normal)
+        cancelButton.setTitleColor(UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1), for: .normal)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
+        cancelButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
+        cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
+        cancelButton.isHidden = true
+        searchBarContainer.addSubview(cancelButton)
 
-        tableView = UITableView(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        tableView = UITableView(frame: CGRect(x: 0, y: 120, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         tableView.backgroundColor = UIColor(named: "SpotBlack")
         tableView.separatorStyle = .none
+        tableView.tag = 0
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.keyboardDismissMode = .onDrag
-        tableView.allowsSelection = false 
+        tableView.allowsSelection = false
         tableView.register(SendInviteCell.self, forCellReuseIdentifier: "SendInvite")
         view.addSubview(tableView)
         
-        loadingIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 30, width: UIScreen.main.bounds.width, height: 30))
+        resultsTable = UITableView(frame: CGRect(x: 0, y: 115, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        resultsTable.backgroundColor = UIColor(named: "SpotBlack")
+        resultsTable.separatorStyle = .none
+        resultsTable.tag = 1
+        resultsTable.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 200, right: 0)
+        resultsTable.delegate = self
+        resultsTable.dataSource = self
+        resultsTable.keyboardDismissMode = .onDrag
+        resultsTable.allowsSelection = false
+        resultsTable.isHidden = true
+        resultsTable.register(SendInviteCell.self, forCellReuseIdentifier: "SendInvite")
+        view.addSubview(resultsTable)
+        
+        loadingIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 90, width: UIScreen.main.bounds.width, height: 30))
         loadingIndicator.isHidden = true
         view.addSubview(loadingIndicator)
         
@@ -151,6 +204,7 @@ class SendInvitesController: UIViewController {
         
         /// get users sent invites in correct format
         for invite in mapVC.userInfo.sentInvites {
+            print("formatted", invite.formatNumber())
             sentInvites.append(invite.formatNumber())
         }
         
@@ -216,7 +270,7 @@ class SendInvitesController: UIViewController {
             let status: InviteStatus = numbers.contains(number) ? .joined : .none
             
             /// user already invited this contact but they haven't joined yet
-            if status == .none && sentInvites.contains(number) {
+            if status == .none && sentInvites.contains(number.formatNumber()) {
                 localContacts.append((contact: contact, status: .invited))
                 if localContacts.count == rawContacts.count { reloadContactsTable(localContacts: localContacts) }
                 continue
@@ -261,14 +315,17 @@ class SendInvitesController: UIViewController {
 extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
         
     func sectionIndexTitles(for tableView: UITableView) -> [String]? {
-        return sectionTitles.map({$0})
+        return tableView.tag == 0 ? sectionTitles.map({$0}) : []
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return sectionTitles.count
+        return tableView.tag == 0 ? sectionTitles.count : 1
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
+        print("number of rows", queryContacts.count)
+        if tableView.tag == 1 { return min(queryContacts.count, 10) }
         
         let head = sectionTitles[section]
         let firstIndex = contacts.firstIndex(where: {$0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head})
@@ -279,6 +336,10 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "SendInvite") as? SendInviteCell else { return UITableViewCell() }
+        
+        print("tag", tableView.tag)
+        if tableView.tag == 1 { let contact = queryContacts[indexPath.row]; cell.setUp(contact: contact.0, status: contact.1); return cell }
+        
         let head = sectionTitles[indexPath.section]
         /// get first contact starting with this section letter and count from there
         let firstIndex = contacts.firstIndex(where: {$0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head})!
@@ -294,11 +355,81 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
     }
         
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return sectionTitles[section]
+        return tableView.tag == 0 ? sectionTitles[section] : ""
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 61
+    }
+}
+
+extension SendInvitesController: UISearchBarDelegate {
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        
+        /// clear old search results if search bar is empty
+        if searchBar.text == "" { DispatchQueue.main.async { self.resultsTable.reloadData() } }
+
+        cancelButton.alpha = 0.0
+        cancelButton.isHidden = false
+        resultsTable.alpha = 0.0
+        resultsTable.isHidden = false
+        
+        UIView.animate(withDuration: 0.1) {
+            self.searchBar.frame = CGRect(x: self.searchBar.frame.minX, y: self.searchBar.frame.minY, width: UIScreen.main.bounds.width - 85, height: self.searchBar.frame.height)
+            self.cancelButton.alpha = 1.0
+            self.resultsTable.alpha = 1.0
+        }
+    }
+        
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        /// dismiss here if user swiped down to exit with empty search bar
+        if searchBar.text == "" { dismissKeyboard() }
+    }
+    
+    func dismissKeyboard() {
+        
+        searchBar.text = ""
+        queryContacts.removeAll()
+
+        UIView.animate(withDuration: 0.1) {
+            self.searchBar.frame = CGRect(x: self.searchBar.frame.minX, y: self.searchBar.frame.minY, width: UIScreen.main.bounds.width - 28, height: self.searchBar.frame.height)
+            self.cancelButton.alpha = 0.0
+            self.resultsTable.alpha = 0.0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let self = self else { return }
+            self.cancelButton.isHidden = true
+            self.resultsTable.isHidden = true
+        }
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
+        queryContacts.removeAll()
+        /// show no contacts when search bar is empty rather than all contacts
+        if searchBar.text == "" { DispatchQueue.main.async { self.resultsTable.reloadData() }; return }
+        
+        let nameList = contacts.map({$0.contact.givenName + " " + $0.contact.familyName})
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            
+            let filteredNames = searchText.isEmpty ? nameList : nameList.filter({(dataString: String) -> Bool in
+                return dataString.range(of: searchText, options: .caseInsensitive) != nil
+            })
+            
+            for name in filteredNames {
+                if let friend = self.contacts.first(where: {$0.contact.givenName + " " + $0.contact.familyName == name} ) { self.queryContacts.append(friend) }
+            }
+            
+            DispatchQueue.main.async { self.resultsTable.reloadData() }
+        }
+    }
+        
+    @objc func searchCancelTap(_ sender: UIButton) {
+        searchBar.resignFirstResponder()
+        dismissKeyboard()
     }
 }
 
@@ -317,21 +448,26 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
                 contacts[i].status = .invited
             }
             
+            if let i = queryContacts.firstIndex(where: {$0.contact.phoneNumbers.first?.value.stringValue ?? "" == pendingNumber}) {
+                queryContacts[i].status = .invited
+            }
+
+            let formattedNumber = pendingNumber.formatNumber()
         /// update header
-            mapVC.userInfo.sentInvites.append(pendingNumber)
-            titleView.setUp(count: 5 - mapVC.userInfo.sentInvites.count)
+            mapVC.userInfo.sentInvites.append(formattedNumber)
+            titleView.setUp(count: 8 - mapVC.userInfo.sentInvites.count)
             
         /// update local sentInvites
-            sentInvites.append(pendingNumber.formatNumber())
+            sentInvites.append(formattedNumber)
         
         /// send noti to find friends controller
             let notificationName = Notification.Name("SentInvite")
             NotificationCenter.default.post(name: notificationName, object: nil, userInfo: nil)
 
         /// upadte database
-            self.db.collection("users").document(uid).updateData(["sentInvites": FieldValue.arrayUnion([pendingNumber])])
-        
-            DispatchQueue.main.async { self.tableView.reloadData() }
+            self.db.collection("users").document(uid).updateData(["sentInvites": FieldValue.arrayUnion([formattedNumber])])
+            
+            DispatchQueue.main.async { self.tableView.reloadData(); self.resultsTable.reloadData() }
             
         default:
             print("")
@@ -344,7 +480,7 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
     func sendInvite(number: String) {
         
         let adminID = mapVC.uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || mapVC.uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
-        if mapVC.userInfo.sentInvites.count == 5 && !adminID {
+        if mapVC.userInfo.sentInvites.count == 8 && !adminID {
             errorBox.isHidden = false
             return
         }
@@ -352,7 +488,6 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
         if (MFMessageComposeViewController.canSendText()) {
             
             let controller = MFMessageComposeViewController()
-            
             let betaString = "https://testflight.apple.com/join/dtVe46HZ"
             
             controller.body = "Hey! Here’s an invite to download sp0t, the app for finding and sharing cool spots: \(betaString)"

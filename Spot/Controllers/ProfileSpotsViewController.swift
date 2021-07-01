@@ -23,7 +23,7 @@ class ProfileSpotsViewController: UIViewController {
     var spotsLayout: UICollectionViewFlowLayout = UICollectionViewFlowLayout.init()
     var spotsIndicator: CustomActivityIndicator!
     
-    var listener1, listener2: ListenerRegistration!
+    var listener1: ListenerRegistration!
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore! = Firestore.firestore()
     
@@ -87,9 +87,11 @@ class ProfileSpotsViewController: UIViewController {
     
     func addAnnotations() {
         
-        let annotations = self.mapVC.mapView.annotations
-        self.mapVC.mapView.removeAnnotations(annotations)
-        self.mapVC.postsList.removeAll()
+        if checkForOpenSpot() { return }
+
+        let annotations = mapVC.mapView.annotations
+        mapVC.mapView.removeAnnotations(annotations)
+        mapVC.postsList.removeAll()
         
         if !spotAnnotations.isEmpty {
             mapVC.profileAnnotations = spotAnnotations
@@ -107,6 +109,27 @@ class ProfileSpotsViewController: UIViewController {
         } else {
             mapVC.animateToProfileLocation(active: uid == profileVC.id, coordinate: CLLocationCoordinate2D())
         }
+    }
+    
+    func checkForOpenSpot() -> Bool {
+        
+        /// posted with hide from feed
+        if profileVC.openSpotID != "" {
+            
+            guard let i = spotsList.firstIndex(where: {$0.id == profileVC.openSpotID}) else { return false }
+          
+            /// add postID to postIDs + user to posts list + adjust tags
+            if !spotsList[i].postIDs.contains(profileVC.openPostID) { spotsList[i].postIDs.append(profileVC.openPostID) }
+            if !spotsList[i].visitorList.contains(uid) { spotsList[i].visitorList.append(uid) }
+            spotsList[i].tags = profileVC.openSpotTags
+            
+            self.openSpot(spot: spotsList[i])
+            profileVC.openSpotID = ""
+            profileVC.openSpotTags.removeAll()
+            profileVC.openPostID = ""
+            return true
+        }
+        return false
     }
     
     func cancelDownloads() {
@@ -130,7 +153,7 @@ class ProfileSpotsViewController: UIViewController {
             
             profileVC.removeEmptyState()
             spotsList.append(newSpot)
-            addSpotCoordinate(spot: newSpot)
+            addSpotCoordinate(spot: newSpot, newSpot: true)
             spotsCollection.reloadData()
             let interval = NSDate().timeIntervalSince1970
             
@@ -199,12 +222,12 @@ class ProfileSpotsViewController: UIViewController {
     
     func getSpots() {
         
+        if profileVC.id == "" { return }
         let query = db.collection("users").document(profileVC.id).collection("spotsList").order(by: "checkInTime", descending: true)
         
-        listener1 = query.addSnapshotListener({ [weak self] (snap, err) in
+        listener1 = query.addSnapshotListener { [weak self] (snap, err) in
 
             guard let self = self else { return }
-            if self.profileVC == nil { return }
             guard let listDocs = snap?.documents else { return }
             
             if listDocs.count == 0 { self.finishLoad() }
@@ -213,10 +236,10 @@ class ProfileSpotsViewController: UIViewController {
                 
             listLoop: for list in listDocs {
                 
-                self.listener2 = self.db.collection("spots").document(list.documentID).addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] (doc, err) in
+                self.db.collection("spots").document(list.documentID).getDocument { [weak self] (doc, err) in
                     
                     guard let self = self else { return }
-                    if self.profileVC == nil { return }
+                    guard let profileVC = self.profileVC else  { return }
 
                     do {
                         
@@ -231,15 +254,15 @@ class ProfileSpotsViewController: UIViewController {
                         if info.city == nil {
                             /// set city, try to update city in DB
                             info.city = "City, Earth"
-                            if self.uid == self.profileVC.id { self.updateNilCity(spot: info) }
+                            if self.uid == profileVC.id { self.updateNilCity(spot: info) }
                         }
                         
                         //privacy check
                         if self.hasAccess(spot: info) {
                                                              
                             /// animate map to first spot location if this isn't the active user
-                            if index == 0 && self.spotsList.isEmpty && self.uid != self.profileVC.id {
-                                self.profileVC.mapVC.animateToProfileLocation(active: false, coordinate: CLLocationCoordinate2D(latitude: info.spotLat, longitude: info.spotLong))
+                            if index == 0 && self.spotsList.isEmpty && self.uid != profileVC.id {
+                                profileVC.mapVC.animateToProfileLocation(active: false, coordinate: CLLocationCoordinate2D(latitude: info.spotLat, longitude: info.spotLong))
                             }
 
                             if let index = self.spotsList.firstIndex(where: {$0.id == info.id }) {
@@ -252,7 +275,7 @@ class ProfileSpotsViewController: UIViewController {
                                 }
 
                                 self.spotsList.append(info)
-                                self.addSpotCoordinate(spot: info)
+                                self.addSpotCoordinate(spot: info, newSpot: false)
                             }
 
                             ///get placemark if city returns empty
@@ -269,20 +292,22 @@ class ProfileSpotsViewController: UIViewController {
                         index += 1
                         if index == listDocs.count { self.finishLoad() }
                     }
-                })
+                }
                 
             }
-        })
+        }
     }
     
     func finishLoad() {
+        
         DispatchQueue.main.async { [weak self] in
             
             guard let self = self else { return }
-            if self.profileVC == nil { return }
+            guard let profileVC = self.profileVC else { return }
 
-            if self.mapVC.customTabBar.view.frame.minY < 200 && self.profileVC.selectedIndex == 0 { self.profileVC.shadowScroll.isScrollEnabled = true }
+            if self.mapVC.customTabBar.view.frame.minY < 200 && profileVC.selectedIndex == 0 { profileVC.shadowScroll.isScrollEnabled = true }
             
+            let alreadyLoaded = self.loaded /// check if loaded before for openspotID
             self.loaded = true
             self.spotsIndicator.stopAnimating()
             
@@ -290,14 +315,23 @@ class ProfileSpotsViewController: UIViewController {
             self.spotsCollection.performBatchUpdates(nil, completion: { [weak self]
                 (result) in
                 guard let self = self else { return }
-                if self.profileVC.selectedIndex == 0 { self.profileVC.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: max(UIScreen.main.bounds.height - self.profileVC.sec0Height, self.spotsCollection.contentSize.height + 300)) }
+                if profileVC.selectedIndex == 0 { profileVC.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: max(UIScreen.main.bounds.height - profileVC.sec0Height, self.spotsCollection.contentSize.height + 300)) }
             })
             
-            if self.profileVC.userInfo != nil && self.profileVC.userInfo.id == self.uid {
-                self.profileVC.userInfo.spotsList = self.spotsList.map({$0.id ?? ""})
+            /// posted with hide from feed
+            
+            if profileVC.userInfo != nil && profileVC.userInfo.id == self.uid {
+                
+                profileVC.userInfo.spotsList = self.spotsList.map({$0.id ?? ""})
                 self.mapVC.userInfo.spotsList = self.spotsList.map({$0.id ?? ""})
-                if self.spotsList.count > 0 { self.profileVC.removeEmptyState(); self.profileVC.mapVC.checkForTutorial(index: 3) }
-                else { self.profileVC.addEmptyState() }
+                
+                if alreadyLoaded && profileVC.openSpotID != "" { return } /// wil open new spot from resetView
+                if self.checkForOpenSpot() { profileVC.removeEmptyState(); return }
+                
+                if self.spotsList.count > 0 { profileVC.removeEmptyState() }
+                else { profileVC.addEmptyState() }
+                
+                profileVC.mapVC.checkForTutorial(index: 3) 
             }
         }
     }
@@ -320,7 +354,7 @@ class ProfileSpotsViewController: UIViewController {
         spotsList.sort(by: {$0.city == $1.city ? $0.checkInTime > $1.checkInTime : $0.city ?? "" > $1.city ?? "" })
     }
     
-    func addSpotCoordinate(spot: MapSpot) {
+    func addSpotCoordinate(spot: MapSpot, newSpot: Bool) {
         
         let annotation = CustomSpotAnnotation()
         annotation.coordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
@@ -331,7 +365,8 @@ class ProfileSpotsViewController: UIViewController {
         let rank = mapVC.getSpotRank(spot: spot)
         spotAnnotations[spot.id!]?.rank = rank
         
-        if active {
+///        only add if adding spot coordinate while the view is active (on the initial load)
+        if active && !newSpot && profileVC.openSpotID == "" && !profileVC.children.contains(where: {$0.isKind(of: SpotViewController.self)}) {
             mapVC.mapView.addAnnotation(annotation)
             mapVC.profileAnnotations = self.spotAnnotations
         }
@@ -356,8 +391,8 @@ class ProfileSpotsViewController: UIViewController {
     }
     
     func removeListeners() {
-        if listener1 != nil { listener1.remove() }
-        if listener2 != nil { listener2.remove() }
+
+        if listener1 != nil { listener1.remove(); listener1 = nil }
         
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("MapSpotOpen"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("NewSpot"), object: nil)
@@ -381,9 +416,7 @@ extension ProfileSpotsViewController: UICollectionViewDelegate, UICollectionView
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         var count = 0
         for spot in spotsList {
-            if spot.city == cityList[section].city {
-                count = count + 1
-            }
+            if spot.city == cityList[section].city { count += 1 }
         }
 
         return count
@@ -424,11 +457,6 @@ extension ProfileSpotsViewController: UICollectionViewDelegate, UICollectionView
         
         guard let spot = subset[safe: indexPath.row] else { return }
         
-        if cell.cachedImage.spotID == spot.id! && cell.cachedImage.image != UIImage() {
-            cell.spotImage.image = cell.cachedImage.image
-            return
-        }
-        
         let url = spot.imageURL
         
         if url != "" {
@@ -441,6 +469,7 @@ extension ProfileSpotsViewController: UICollectionViewDelegate, UICollectionView
     
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard let cell = cell as? SpotCollectionCell else { return }
+        if cell.spotObject == nil { return }
         cell.cachedImage.spotID = cell.spotObject.id ?? "" 
         cell.spotImage.sd_cancelCurrentImageLoad()
         cell.spotImage.image = UIImage()
@@ -460,6 +489,7 @@ extension ProfileSpotsViewController: UICollectionViewDelegate, UICollectionView
     
     func openSpot(spot: MapSpot) {
         
+        print("open spot")
         let infoPass = ["spot": spot as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("OpenSpotFromProfile"), object: nil, userInfo: infoPass)
         
@@ -472,9 +502,6 @@ extension ProfileSpotsViewController: UICollectionViewDelegate, UICollectionView
             spotVC.spotID = spot.id ?? ""
             spotVC.spotObject = spot
             spotVC.mapVC = mapVC
-            
-            mapVC.postsList.removeAll()
-            mapVC.profileViewController = nil
             
             profileVC.shadowScroll.isScrollEnabled = false
             profileVC.passedCamera = MKMapCamera(lookingAtCenter: mapVC.mapView.centerCoordinate, fromDistance: mapVC.mapView.camera.centerCoordinateDistance, pitch: mapVC.mapView.camera.pitch, heading: mapVC.mapView.camera.heading)

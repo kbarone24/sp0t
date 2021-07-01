@@ -402,21 +402,6 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
         }
     }
     
-    func ResizeImage(with image: UIImage?, scaledToFill size: CGSize) -> UIImage? {
-        
-        let scale: CGFloat = max(size.width / (image?.size.width ?? 0.0), size.height / (image?.size.height ?? 0.0))
-        let width: CGFloat = (image?.size.width ?? 0.0) * scale
-        let height: CGFloat = (image?.size.height ?? 0.0) * scale
-        let imageRect = CGRect(x: (size.width - width) / 2.0, y: (size.height - height) / 2.0, width: width, height: height)
-        
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
-        image?.draw(in: imageRect)
-        let newImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return newImage
-    }
-    
     @objc func panGesture(_ gesture: UIPanGestureRecognizer) {
         /// swipe between camera types or remove camera on swipe down
         let direction = gesture.velocity(in: self.view)

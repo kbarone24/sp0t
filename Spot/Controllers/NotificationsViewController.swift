@@ -20,9 +20,10 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     
-    lazy var friendRequestList: [FriendRequest] = []
-    lazy var contentNotificationList: [ContentNotification] = []
-    lazy var notificationList: [(senderID: String, type: String, timestamp: Firebase.Timestamp, notiID: String)] = []
+    lazy var friendRequests: [FriendRequest] = []
+    lazy var postNotifications: [PostNotification] = []
+    lazy var spotNotifications: [SpotNotification] = []
+    lazy var notificationList: [(senderID: String, type: String, superType: Int, timestamp: Firebase.Timestamp, notiID: String)] = [] /// supertypes: 0 = friend request, 1 = post, 2 = spot
     lazy var friendRequestsPending: [FriendRequest] = []
     lazy var removedRequestList: [String] = []
 
@@ -39,7 +40,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     lazy var sentFromPending = false
     lazy var active = false
     lazy var friendsEmpty = false
-    lazy var addedNewPost = false
+    lazy var addedNewNoti = false
     
     //finish passing method reloads data if friend request action was taken in profile
     
@@ -84,9 +85,9 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         active = true
         
         /// if appended a new notification while view was in the background, scroll to first row
-        if addedNewPost {
+        if addedNewNoti {
             scrollToFirstRow()
-            addedNewPost = false
+            addedNewNoti = false
         }
         
         if children.count != 0 { return }
@@ -110,7 +111,8 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         tableView = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         tableView.register(FriendRequestCell.self, forCellReuseIdentifier: "FriendRequestCell")
-        tableView.register(ContentCell.self, forCellReuseIdentifier: "ContentCell")
+        tableView.register(PostNotificationCell.self, forCellReuseIdentifier: "PostNotificationCell")
+        tableView.register(SpotNotificationCell.self, forCellReuseIdentifier: "SpotNotificationCell")
         tableView.register(FriendRequestHeader.self, forHeaderFooterViewReuseIdentifier: "FriendRequestHeader")
         tableView.backgroundColor = UIColor(named: "SpotBlack")
         tableView.delegate = self
@@ -240,9 +242,17 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                         self.addFriendRequest(notiID: document.documentID, userID: senderID, timestamp: timestamp, accepted: true)
                         
                     } else {
-                        let postID = document.get("postID") as! String
+                        /// if spotID != nil, get spot notification, if postID != nil, get post notification
                         let originalPoster = document.get("originalPoster") as? String ?? "someone"
-                        self.getContentPosts(notiID: document.documentID, userID: senderID, postID: postID, timestamp: timestamp, type: type, originalPoster: originalPoster)
+
+                        if let spotID = document.get("spotID") as? String, type == "publicSpotAccepted" || type == "publicSpotRejected" || type == "spotTag" || type == "invite" {
+                            self.getSpotForNotification(notiID: document.documentID, userID: senderID, spotID: spotID, timestamp: timestamp, type: type, originalPoster: originalPoster)
+                            
+                        } else {
+                            
+                            let postID = document.get("postID") as! String
+                            self.getPostForNotification(notiID: document.documentID, userID: senderID, postID: postID, timestamp: timestamp, type: type, originalPoster: originalPoster)
+                        }
                     }
                 }
             }
@@ -253,49 +263,72 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         getUserInfo(userID: userID, mapVC: mapVC) { (user) in
             let noti = FriendRequest(notiID: notiID, userInfo: user, timestamp: timestamp, accepted: accepted)
-            if self.friendRequestList.contains(where: { $0.notiID == notiID }) || self.friendRequestsPending.contains(where: {$0.notiID == notiID}) || self.removedRequestList.contains(where: {$0 == notiID}) { return }
+            if self.friendRequests.contains(where: { $0.notiID == notiID }) || self.friendRequestsPending.contains(where: {$0.notiID == notiID}) || self.removedRequestList.contains(where: {$0 == notiID}) { return }
             
             if (noti.accepted) {
                 let type = "friendRequestAccepted"
-                self.friendRequestList.append(noti)
-                self.notificationList.append((senderID: noti.userInfo.id ?? "", type: type, timestamp: noti.timestamp, notiID: noti.notiID))
-                self.notificationList = self.notificationList.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
-                self.removeRefresh()
-                if self.refresh == .refreshing { self.refresh = .yesRefresh }
-                DispatchQueue.main.async { self.tableView.reloadData() }
-
+                self.friendRequests.append(noti)
+                self.notificationList.append((senderID: noti.userInfo.id ?? "", type: type, superType: 0, timestamp: noti.timestamp, notiID: noti.notiID))
+                self.sortAndReload()
+                
             } else {
                 self.friendRequestsPending.append(noti)
                 DispatchQueue.main.async { self.tableView.reloadData() }
             }
         }
     }
-    
-    func getContentPosts(notiID: String, userID: String, postID: String, timestamp: Firebase.Timestamp, type: String, originalPoster: String) {
+
+    func getPostForNotification(notiID: String, userID: String, postID: String, timestamp: Firebase.Timestamp, type: String, originalPoster: String) {
         
         getUserInfo(userID: userID, mapVC: mapVC) { (userInfo) in
-            self.getMapPost(postID: postID, mapVC: self.mapVC) { (post) in
+            
+            self.getMapPost(postID: postID) { (post) in
                 
                 if post.userInfo.id == "" { return }
                 /// update post notification
                 if self.notificationList.contains(where: {$0.notiID == notiID}) {
-                    if let contentNoti = self.contentNotificationList.first(where: {$0.notiID == notiID}) {
-                        contentNoti.post = post
+                    if let i = self.postNotifications.firstIndex(where: {$0.notiID == notiID}) {
+                        self.postNotifications[i].post = post
                         DispatchQueue.main.async { self.tableView.reloadData() }
                     }
                     return
                 }
                 
                 /// new content notification
-                self.notificationList.append((senderID: userID, type: type, timestamp: timestamp, notiID: notiID))
-                self.contentNotificationList.append(ContentNotification(notiID: notiID, userInfo: userInfo, originalPoster: originalPoster, timestamp: timestamp, type: type, post: post))
-                self.notificationList = self.notificationList.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
-                self.removeRefresh()
-                if self.refresh == .refreshing { self.refresh = .yesRefresh }
-                DispatchQueue.main.async { self.tableView.reloadData() }
-                if !self.active { self.addedNewPost = true }
+                self.notificationList.append((senderID: userID, type: type, superType: 1, timestamp: timestamp, notiID: notiID))
+                self.postNotifications.append(PostNotification(notiID: notiID, userInfo: userInfo, originalPoster: originalPoster, timestamp: timestamp, type: type, post: post))
+                self.sortAndReload()
             }
         }
+    }
+    
+    func getSpotForNotification(notiID: String, userID: String, spotID: String, timestamp: Firebase.Timestamp, type: String, originalPoster: String) {
+        getUserInfo(userID: userID, mapVC: mapVC) { userInfo in
+            self.getMapSpot(spotID: spotID) { (spot) in
+                
+                /// update spot noti
+                if self.notificationList.contains(where: {$0.notiID == notiID}) {
+                    if let i = self.spotNotifications.firstIndex(where: {$0.notiID == notiID}) {
+                        self.spotNotifications[i].spot = spot
+                        DispatchQueue.main.async { self.tableView.reloadData() }
+                    }
+                    return
+                }
+                
+                /// new content notification
+                self.notificationList.append((senderID: userID, type: type, superType: 2, timestamp: timestamp, notiID: notiID))
+                self.spotNotifications.append(SpotNotification(notiID: notiID, userInfo: userInfo, originalPoster: originalPoster, timestamp: timestamp, type: type, spot: spot))
+                self.sortAndReload()
+            }
+        }
+    }
+    
+    func sortAndReload() {
+        notificationList = self.notificationList.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
+        removeRefresh()
+        if refresh == .refreshing { refresh = .yesRefresh }
+        if !self.active { self.addedNewNoti = true } /// added a notification when notis was in background, scroll to first row to see it
+        DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
     func getUserInfo(userID: String, mapVC: MapViewController, completion: @escaping (_ user: UserProfile) -> Void) {
@@ -307,28 +340,32 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         } else {
             db.collection("users").document(userID).getDocument { (doc, err) in
                 if err != nil { return }
+                
                 do {
                     let userInfo = try doc!.data(as: UserProfile.self)
                     guard var info = userInfo else { return }
                     info.id = doc!.documentID
                     completion(info)
+                    
                 } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "")); return }
             }
         }
     }
     
     // standard get post methods because we need to get all post data before opening post page
-    func getMapPost(postID: String, mapVC: MapViewController, completion: @escaping (_ post: MapPost) -> Void) {
+    func getMapPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
         
         let dispatch = DispatchGroup()
         let db: Firestore! = Firestore.firestore()
         
-        db.collection("posts").document(postID).addSnapshotListener({ (doc, err) in
+        db.collection("posts").document(postID).getDocument { [weak self] (doc, err) in
             if err != nil { return }
             
             do {
+                
                 let postInfo = try doc?.data(as: MapPost.self)
                 guard var info = postInfo else { return }
+                guard let self = self else { return }
                 
                 info.seconds = info.timestamp.seconds
                 info.id = doc!.documentID
@@ -338,7 +375,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 
                 self.prefetchImages(imageURLs: info.imageURLs)
                 
-                self.getUserInfo(userID: info.posterID, mapVC: mapVC) { (userInfo) in
+                self.getUserInfo(userID: info.posterID, mapVC: self.mapVC) { (userInfo) in
                     if userInfo.id != "" { info.userInfo = userInfo }
                     dispatch.leave()
                 }
@@ -348,14 +385,28 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                     dispatch.leave()
                 }
                 
-                dispatch.notify(queue: .main) {
-                    completion(info)
-                }
+                dispatch.notify(queue: .main) { completion(info) }
                 
             } catch { return }
-        })
+        }
     }
     
+    func getMapSpot(spotID: String, completion: @escaping (_ post: MapSpot) -> Void) {
+        
+        db.collection("spots").document(spotID).getDocument { (snap, err) in
+            guard let doc = snap else { return }
+            do {
+
+                let spot = try doc.data(as: MapSpot.self)
+                guard var spotInfo = spot else { return }
+                
+                spotInfo.id = doc.documentID
+                completion(spotInfo)
+                return
+                
+            } catch { return }
+        }
+    }
     
     
     func prefetchImages(imageURLs: [String]) {
@@ -373,11 +424,12 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         let db: Firestore! = Firestore.firestore()
         var commentList: [MapComment] = []
         
-        db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { (commentSnap, err) in
+        db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, err) in
             
             if err != nil { completion(commentList); return }
             if commentSnap!.documents.count == 0 { completion(commentList); return }
-            
+            guard let self = self else { return }
+
             for doc in commentSnap!.documents {
                 do {
                     let commentInf = try doc.data(as: MapComment.self)
@@ -451,12 +503,10 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        if (notificationList[indexPath.row].type == "friendRequestAccepted" || notificationList[indexPath.row].type == "friendRequestRejected") {
-            return 80
-        } else {
-            return 170
+        switch notificationList[indexPath.row].superType {
+        case 0: return 80
+        default: return 170
         }
-        
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -480,11 +530,11 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         /// only accepted friend requests will show up here, pending will appear in header
         if (notificationList[indexPath.row].1 == "friendRequestAccepted") {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCell") as! FriendRequestCell
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCell") as? FriendRequestCell else { return blank! }
             
             let currentNotificationID = notificationList[indexPath.row].notiID
             var currentRequest: FriendRequest!
-            for request in friendRequestList {
+            for request in friendRequests {
                 if request.notiID == currentNotificationID {
                     currentRequest = request
                 }
@@ -494,23 +544,30 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             cell.setUpAccepted()
             return cell
             
-        } else {
+        } else if notificationList[indexPath.row].superType == 1 {
             
-            if (contentNotificationList.isEmpty) { return blank! }
-            let cell = tableView.dequeueReusableCell(withIdentifier: "ContentCell") as! ContentCell
+            if (postNotifications.isEmpty) { return blank! }
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "PostNotificationCell") as? PostNotificationCell else { return blank! }
             
             let currentNotificationID = notificationList[indexPath.row].notiID
-            
-            var currentRequest: ContentNotification!
-            for content in contentNotificationList {
-                if content.notiID == currentNotificationID {
-                    currentRequest = content
-                }
-            }
+            let currentRequest = postNotifications.first(where: {$0.notiID == currentNotificationID })
             
             if (currentRequest == nil) { return blank! }
             
-            cell.setUpAll(notification: currentRequest)
+            cell.setUp(notification: currentRequest!)
+            
+            return cell
+        } else {
+            
+            if (spotNotifications.isEmpty) { return blank! }
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "SpotNotificationCell") as? SpotNotificationCell else { return blank! }
+            
+            let currentNotificationID = notificationList[indexPath.row].notiID
+            let currentRequest = spotNotifications.first(where: {$0.notiID == currentNotificationID })
+            
+            if (currentRequest == nil) { return blank! }
+            
+            cell.setUp(notification: currentRequest!)
             
             return cell
         }
@@ -537,8 +594,8 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 let timestamp = Timestamp(date: interval)
                 request.timestamp = timestamp
                 
-                notificationList.insert((senderID: request.userInfo.id!, type: "friendRequestAccepted", timestamp: timestamp, notiID: request.notiID), at: 0)
-                friendRequestList.insert(request, at: 0)
+                notificationList.insert((senderID: request.userInfo.id!, type: "friendRequestAccepted", superType: 0, timestamp: timestamp, notiID: request.notiID), at: 0)
+                friendRequests.insert(request, at: 0)
                 DispatchQueue.main.async { self.tableView.reloadData() }
             }
         }
@@ -767,7 +824,7 @@ class FriendRequestCell: UITableViewCell {
     }
 }
 
-class ContentCell: UITableViewCell {
+class PostNotificationCell: UITableViewCell {
     
     var usernameLabel: UILabel!
     var profilePic: UIImageView!
@@ -778,9 +835,9 @@ class ContentCell: UITableViewCell {
     var icon: UIImageView!
     
     var userInfo: UserProfile!
-    var notification: ContentNotification!
+    var notification: PostNotification!
     
-    func setUpAll (notification: ContentNotification) {
+    func setUp (notification: PostNotification) {
         
         self.backgroundColor = UIColor(named: "SpotBlack")
         self.selectionStyle = .none
@@ -880,13 +937,13 @@ class ContentCell: UITableViewCell {
             icon.image = UIImage(named: "PostNotification") ?? UIImage()
             
         } else if notification.type == "invite" {
-            detail.text = "added you to a private spot"
+            detail.text = "added you to a spot"
             detail.sizeToFit()
             var newFrame = icon.frame
-            newFrame.size.height = 20
-            newFrame.size.width = 17
+            newFrame.size.height = 22
+            newFrame.size.width = 22
             icon.frame = newFrame
-            icon.image = UIImage(named: "PrivateIcon") ?? UIImage()
+            icon.image = UIImage(named: "PrivateNotiIcon") ?? UIImage()
             
         } else if notification.type == "commentTag" {
             detail.text = "tagged you in a comment"
@@ -944,7 +1001,7 @@ class ContentCell: UITableViewCell {
             icon.image = UIImage(named: "PublicSubmissionDenied") ?? UIImage()
         }
         
-        contentImage.frame = CGRect(x: 103, y: detail.frame.maxY + 10, width: 50, height: 75)
+        contentImage.frame = CGRect(x: contentImage.frame.minX, y: detail.frame.maxY + 10, width: contentImage.frame.width, height: contentImage.frame.height)
 
         usernameLabel.isHidden = false
     }
@@ -1012,6 +1069,191 @@ class ContentCell: UITableViewCell {
     }
 }
 
+class SpotNotificationCell: UITableViewCell {
+    
+    var usernameLabel: UILabel!
+    var profilePic: UIImageView!
+    var userButton: UIButton!
+    var detail: UILabel!
+    var time: UILabel!
+    var spotImage: UIImageView!
+    var icon: UIImageView!
+    
+    var userInfo: UserProfile!
+    var notification: SpotNotification!
+    
+    func setUp (notification: SpotNotification) {
+        
+        self.backgroundColor = UIColor(named: "SpotBlack")
+        self.selectionStyle = .none
+        self.contentView.isUserInteractionEnabled = false
+        
+        self.userInfo = notification.userInfo
+        self.notification = notification
+        
+        resetCell()
+                
+        usernameLabel = UILabel(frame: CGRect(x: 103, y: 27, width: 70, height: 20))
+        usernameLabel.isHidden = false
+        usernameLabel.text = notification.userInfo.username
+        usernameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)!
+        usernameLabel.textColor = UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0)
+        usernameLabel.sizeToFit()
+        self.addSubview(usernameLabel)
+        
+        profilePic = UIImageView(frame: CGRect(x: 65, y: 27.5, width: 30, height: 30))
+        profilePic.layer.masksToBounds = false
+        profilePic.layer.cornerRadius = profilePic.frame.height/2
+        profilePic.clipsToBounds = true
+        profilePic.contentMode = UIView.ContentMode.scaleAspectFill
+        profilePic.isHidden = false
+        self.addSubview(profilePic)
+        
+        let url = notification.userInfo.imageURL
+        if url != "" {
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+        }
+
+        userButton = UIButton(frame: CGRect(x: usernameLabel.frame.minX - 40, y: usernameLabel.frame.minY - 5, width: usernameLabel.frame.maxX + 5, height: 40))
+        userButton.backgroundColor = nil
+        userButton.addTarget(self, action: #selector(openProfile(_:)), for: .touchUpInside)
+        self.addSubview(userButton)
+        
+        
+        time = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 80, y: 32, width: 40, height: 15))
+        time.textColor = UIColor(red:0.78, green:0.78, blue:0.78, alpha:1.0)
+        time.textAlignment = .right
+        time.font = UIFont(name: "SFCamera-Regular", size: 12)
+        time.isHidden = false
+        time.text = getNotiTimestamp(timestamp: notification.timestamp)
+        self.addSubview(time)
+        
+        icon = UIImageView(frame: CGRect(x: 25, y: 31, width: 19.5, height: 13))
+        self.addSubview(icon)
+        
+        detail = UILabel(frame: CGRect(x: 103, y: 43, width: UIScreen.main.bounds.width - 188, height: 15))
+        detail.textColor = UIColor(red:0.71, green:0.71, blue:0.71, alpha:1.0)
+        detail.font = UIFont(name: "SFCamera-regular", size: 14)
+        detail.isHidden = false
+        detail.numberOfLines = 0
+        detail.lineBreakMode = .byWordWrapping
+        self.addSubview(detail)
+        
+        spotImage = UIImageView(frame: CGRect(x: 103, y: 78, width: 50, height: 75))
+        spotImage.layer.cornerRadius = 3
+        spotImage.clipsToBounds = true
+        spotImage.contentMode = .scaleAspectFill
+        spotImage.isHidden = false
+        spotImage.isUserInteractionEnabled = true
+        spotImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openSpot(_:))))
+        self.addSubview(spotImage)
+                        
+        let contentURL = notification.spot.imageURL
+        if contentURL != "" {
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 200, height: 200), scaleMode: .aspectFill)
+            spotImage.sd_setImage(with: URL(string: contentURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+        }
+        
+        if notification.type == "invite" {
+            detail.text = "added you to \(notification.spot.spotName)"
+            detail.sizeToFit()
+            var newFrame = icon.frame
+            newFrame.size.height = 22
+            newFrame.size.width = 22
+            icon.frame = newFrame
+            icon.image = UIImage(named: "PrivateNotiIcon") ?? UIImage()
+            
+        } else if notification.type == "spotTag" {
+            detail.text = "tagged you at \(notification.spot.spotName)"
+            detail.sizeToFit()
+            var newFrame = icon.frame
+            newFrame.size.height = 20
+            newFrame.size.width = 20
+            icon.frame = newFrame
+            icon.image = UIImage(named: "PlainSpotIcon") ?? UIImage()
+                        
+        } else if notification.type == "publicSpotAccepted" {
+            detail.text = "Your public submission was approved!"
+            detail.sizeToFit()
+            var newFrame = icon.frame
+            newFrame.size.height = 22
+            newFrame.size.width = 22
+            icon.frame = newFrame
+            icon.contentMode = .scaleAspectFit
+            icon.image = UIImage(named: "PublicSubmissionAccepted") ?? UIImage()
+            
+        } else if notification.type == "publicSpotRejected" {
+            detail.text = "Your spot was not approved for the public map"
+            detail.sizeToFit()
+            var newFrame = icon.frame
+            newFrame.size.height = 22
+            newFrame.size.width = 22
+            icon.frame = newFrame
+            icon.contentMode = .scaleAspectFit
+            icon.image = UIImage(named: "PublicSubmissionDenied") ?? UIImage()
+        }
+        
+        spotImage.frame = CGRect(x: spotImage.frame.minX, y: detail.frame.maxY + 10, width: spotImage.frame.width, height: spotImage.frame.height)
+        usernameLabel.isHidden = false
+    }
+    
+    func resetCell() {
+        if profilePic != nil { profilePic.image = UIImage() }
+        if spotImage != nil { spotImage.image = UIImage() }
+        if usernameLabel != nil { usernameLabel.text = "" }
+        if time != nil { time.text = "" }
+        if detail != nil { detail.text = "" }
+        if icon != nil { icon.image = UIImage() }
+    }
+    
+    @objc func openProfile(_ sender: UIButton) {
+        if let notiVC = self.viewContainingController() as? NotificationsViewController {
+            notiVC.openProfile(user: self.userInfo!)
+        }
+    }
+    
+    @objc func openSpot(_ sender: UIButton) {
+        guard let notiVC = viewContainingController() as? NotificationsViewController else { return }
+        if let spotVC = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "SpotPage") as? SpotViewController {
+            
+            let spot = notification.spot
+            
+            spotVC.spotID = spot.id ?? ""
+            spotVC.spotObject = spot
+            spotVC.mapVC = notiVC.mapVC
+            
+            spotVC.view.frame = notiVC.view.frame
+            notiVC.addChild(spotVC)
+            notiVC.view.addSubview(spotVC.view)
+            spotVC.didMove(toParent: notiVC)
+            
+            notiVC.mapVC.prePanY = notiVC.mapVC.halfScreenY
+            DispatchQueue.main.async { notiVC.mapVC.customTabBar.view.frame = CGRect(x: 0, y: notiVC.mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - notiVC.mapVC.halfScreenY) }
+            
+            let infoPass = ["spot": spot as Any] as [String : Any]
+            NotificationCenter.default.post(name: Notification.Name("OpenSpotFromNotis"), object: nil, userInfo: infoPass)
+        }
+    }
+    
+    
+    override func prepareForReuse() {
+        
+        super.prepareForReuse()
+        
+        if profilePic != nil {
+            profilePic.sd_cancelCurrentImageLoad()
+            profilePic.image = UIImage()
+        }
+        
+        if spotImage != nil {
+            spotImage.sd_cancelCurrentImageLoad()
+            spotImage.image = UIImage()
+        }
+    }
+
+}
+
 class FriendRequestHeader: UITableViewHeaderFooterView {
     
     var friendRequestsLabel: UILabel!
@@ -1023,6 +1265,7 @@ class FriendRequestHeader: UITableViewHeaderFooterView {
         backgroundView.backgroundColor = UIColor(red: 0.03, green: 0.604, blue: 0.604, alpha: 1)
         self.backgroundView = backgroundView
                 
+        if friendRequestsLabel != nil { friendRequestsLabel.text = "" }
         friendRequestsLabel = UILabel(frame: CGRect(x: 23, y: 12, width: 200, height: 18))
         var labelText = "\(friendRequestCount) Friend Request"
         if friendRequestCount > 1 { labelText += "s" }
