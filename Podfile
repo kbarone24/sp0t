@@ -19,6 +19,7 @@ use_frameworks!
   pod 'FirebaseFirestoreSwift'
   pod 'Firebase/Crashlytics'
   pod 'FirebaseUI/Storage'
+  pod 'JPSVolumeButtonHandler'
     
   target 'SpotTests' do
     inherit! :search_paths

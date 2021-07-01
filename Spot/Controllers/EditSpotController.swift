@@ -277,6 +277,9 @@ extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
+        let screenSize = UIScreen.main.bounds.height > 800 ? 2 : UIScreen.main.bounds.height < 600 ? 0 : 1
+
         switch indexPath.row {
         
         case 0:
@@ -287,7 +290,7 @@ extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "SpotTagCell") as! SpotTagCell
             let spotTags: [String] = spotObject.privacyLevel == "public" ? spotObject.tags : []
-            let tagsHeight: CGFloat = mapVC.largeScreen ? 210 : UIScreen.main.bounds.height < 600 ? 240 : 180
+            let tagsHeight: CGFloat = screenSize == 0 ? 315 : screenSize == 1 ? 230 : 240
             cell.setUp(selectedTags: spotObject.tags, spotTags: spotTags, collectionHeight: tagsHeight - 30)
             return cell
             
@@ -300,11 +303,18 @@ extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        
+        let screenSize = UIScreen.main.bounds.height > 800 ? 2 : UIScreen.main.bounds.height < 600 ? 0 : 1
+
         switch indexPath.row {
+        
         case 0:
-            return 290
+            return screenSize == 2 ? 290 : 280
+            
         case 1:
-            return UIScreen.main.bounds.height < 600 ? 240 : 195
+            let tagsHeight: CGFloat = screenSize == 0 ? 315 : screenSize == 1 ? 230 : 240
+            return tagsHeight
+            
         default:
             return 60
         }
@@ -401,8 +411,8 @@ class EditSpotHeader: UITableViewHeaderFooterView {
             editVC.spotVC.spotObject = editVC.spotObject
             editVC.spotVC.setUpNavBar()
             editVC.spotVC.resetAnnos()
-            editVC.spotVC.friendVisitors.removeAll()
-            editVC.spotVC.getFriendVisitors()
+            editVC.spotVC.memberList.removeAll()
+            editVC.spotVC.getVisitorInfo(refresh: true)
             
             editVC.spotVC.tableView.reloadData()
             
@@ -461,8 +471,8 @@ class EditSpotHeader: UITableViewHeaderFooterView {
         }
         
         /// send invites to newly invited users, remove invite notis from old users in case this was sent recently
-        let firstPostID = editVC.spotVC.postsList.first?.id ?? ""
-        updateNotificationsList(oldList: originalInvites, newList: editVC.spotObject.inviteList ?? [], user: editVC.mapVC.userInfo, spot: editVC.spotObject, firstPostID: firstPostID)
+        let firstPostID = editVC.spotVC.postsList.last?.id ?? "" /// first post is last sorted by timestamp
+        updateNotificationsList(oldList: originalInvites, newList: editVC.spotObject.inviteList ?? [], user: editVC.mapVC.userInfo, spot: editVC.spotObject, firstPostID: firstPostID, city: editVC.spotObject.city ?? "")
         
     }
     
@@ -522,49 +532,52 @@ class EditSpotHeader: UITableViewHeaderFooterView {
         }
     }
     
-    func updateNotificationsList(oldList: [String], newList: [String], user: UserProfile, spot: MapSpot, firstPostID: String) {
+    func updateNotificationsList(oldList: [String], newList: [String], user: UserProfile, spot: MapSpot, firstPostID: String, city: String) {
+        
+        let newUsers = newList.filter({!oldList.contains($0)})
+        let oldUsers = oldList.filter({!newList.contains($0)})
+                
         let db = Firestore.firestore()
         let interval = NSDate().timeIntervalSince1970
         let timestamp = NSDate(timeIntervalSince1970: TimeInterval(interval))
         
         if firstPostID != "" {
-            for invite in newList {
-                ///new invite, send notification
-                if (!oldList.contains(invite)) {
-                    let notiID = UUID().uuidString
-                    let notificationRef = db.collection("users").document(invite).collection("notifications")
-                    let acceptRef = notificationRef.document(notiID)
+            for newUser in newUsers {
+                db.collection("users").document(newUser).collection("spotsList").document(spot.id!).setData(["spotID" : spot.id!, "checkInTime" : timestamp, "postsList" : [], "city": city], merge: true)
+
+                let notiID = UUID().uuidString
+                let notificationRef = db.collection("users").document(newUser).collection("notifications")
+                let acceptRef = notificationRef.document(notiID)
+                
+                let notiValues = ["seen" : false, "timestamp" : timestamp, "senderID": user.id!, "type": "invite", "spotID": spot.id!, "postID" : firstPostID, "imageURL": spot.imageURL, "spotName": spot.spotName] as [String : Any]
+                
+                acceptRef.setData(notiValues)
+                
+                let sender = PushNotificationSender()
+                var token: String!
+                
+                db.collection("users").document(newUser).getDocument { (tokenSnap, err) in
                     
-                    let notiValues = ["seen" : false, "timestamp" : timestamp, "senderID": user.id!, "type": "invite", "spotID": spot.id!, "postID" : firstPostID, "imageURL": spot.imageURL, "spotName": spot.spotName] as [String : Any]
-                    
-                    acceptRef.setData(notiValues)
-                    
-                    let sender = PushNotificationSender()
-                    var token: String!
-                    
-                    db.collection("users").document(invite).getDocument { (tokenSnap, err) in
-                        
-                        if (tokenSnap == nil) {
-                            return
-                        } else {
-                            token = tokenSnap?.get("notificationToken") as? String
-                        }
-                        if (token != nil && token != "") {
-                            sender.sendPushNotification(token: token, title: "", body: "\(user.username) added you to a private spot")
-                        }
+                    if (tokenSnap == nil) {
+                        return
+                    } else {
+                        token = tokenSnap?.get("notificationToken") as? String
+                    }
+                    if (token != nil && token != "") {
+                        sender.sendPushNotification(token: token, title: "", body: "\(user.username) added you to a spot")
                     }
                 }
             }
         }
+        
         //delete all notis from this spot for uninvited users
-        for invite in oldList {
-            if (!newList.contains(invite)) {
-                let notiRef = db.collection("users").document(invite).collection("notifications")
-                let query = notiRef.whereField("spotID", isEqualTo: spot.id!)
-                query.getDocuments { (querysnapshot, err) in
-                    for doc in querysnapshot!.documents {
-                        doc.reference.delete()
-                    }
+        for oldUser in oldUsers {
+            print("old user", oldUser)
+            let notiRef = db.collection("users").document(oldUser).collection("notifications")
+            let query = notiRef.whereField("spotID", isEqualTo: spot.id!)
+            query.getDocuments { (querysnapshot, err) in
+                for doc in querysnapshot!.documents {
+                    doc.reference.delete()
                 }
             }
         }
@@ -631,13 +644,13 @@ class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
         spotNameField.delegate = self
         self.addSubview(spotNameField)
 
-        locationLabel = UILabel(frame: CGRect(x: 21, y: spotNameField.frame.maxY + 25, width: 60, height: 20))
+        locationLabel = UILabel(frame: CGRect(x: 14, y: spotNameField.frame.maxY + 25, width: 60, height: 20))
         locationLabel.text = "Location"
         locationLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
         locationLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
         self.addSubview(locationLabel)
         
-        addressButton = UIButton(frame: CGRect(x: 21, y: locationLabel.frame.maxY, width: UIScreen.main.bounds.width - 60, height: 20))
+        addressButton = UIButton(frame: CGRect(x: 14, y: locationLabel.frame.maxY, width: UIScreen.main.bounds.width - 60, height: 20))
         addressButton.titleLabel?.lineBreakMode = .byTruncatingTail
         addressButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
         addressButton.setTitleColor(UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1), for: .normal)
@@ -660,7 +673,7 @@ class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
     
     func getAddress(location: CLLocation, completion: @escaping (_ address: String) -> Void) {
         /// store address to avoid blinking on refresh
-        if self.address != nil { completion(self.address); return }
+        if address != nil { completion(address); return }
         
         reverseGeocodeFromCoordinate(numberOfFields: 4, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)) { (address) in
             completion(address)

@@ -48,9 +48,8 @@ class AVSpotCamera: NSObject {
         
     func prepare(position: CameraPosition, completionHandler: @escaping (Error?) -> Void) {
         
-        func createCaptureSession() {
-            self.captureSession = AVCaptureSession()
-        }
+        
+        func createCaptureSession() { captureSession = AVCaptureSession() }
         
         func configureCaptureDevices() throws {
             
@@ -60,12 +59,10 @@ class AVSpotCamera: NSObject {
             
             for camera in cameras {
                 
-                if camera.position == .front {
-                    self.frontCamera = camera
-                }
+                if camera.position == .front { frontCamera = camera }
                 
                 if camera.position == .back {
-                    self.rearCamera = camera
+                    rearCamera = camera
                     
                     try camera.lockForConfiguration()
                     camera.focusMode = .continuousAutoFocus
@@ -85,17 +82,17 @@ class AVSpotCamera: NSObject {
                 
                 if captureSession.canAddInput(self.rearCameraInput!) { captureSession.addInput(self.rearCameraInput!) }
                 
-                self.currentCameraPosition = .rear
+                currentCameraPosition = .rear
             }
                 
-            else if position == .front, let frontCamera = self.frontCamera {
+            else if position == .front, let frontCamera = frontCamera {
 
                 self.frontCameraInput = try AVCaptureDeviceInput(device: frontCamera)
                 
                 if captureSession.canAddInput(self.frontCameraInput!) { captureSession.addInput(self.frontCameraInput!) }
                 else { throw CameraControllerError.inputsAreInvalid }
                 
-                self.currentCameraPosition = .front
+                currentCameraPosition = .front
             }
                 
             else { throw CameraControllerError.noCamerasAvailable }
@@ -103,19 +100,19 @@ class AVSpotCamera: NSObject {
         
         func configurePhotoOutput() throws {
             
-            guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
+            guard let captureSession = captureSession else { throw CameraControllerError.captureSessionIsMissing }
             
-            self.photoOutput = AVCapturePhotoOutput()
-            self.photoOutput!.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey : AVVideoCodecType.jpeg])], completionHandler: nil)
+            photoOutput = AVCapturePhotoOutput()
+            photoOutput!.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey : AVVideoCodecType.jpeg])], completionHandler: nil)
             
-            if captureSession.canAddOutput(self.photoOutput!) { captureSession.addOutput(self.photoOutput!) }
+            if captureSession.canAddOutput(photoOutput!) { captureSession.addOutput(photoOutput!) }
             
             captureSession.startRunning()
         }
         
         func configureVideoOutput() throws {
             
-            guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
+            guard let captureSession = captureSession else { throw CameraControllerError.captureSessionIsMissing }
             
             videoOutput = AVCaptureVideoDataOutput()
             if let videoDataOutputConnection = videoOutput?.connection(with: .video), videoDataOutputConnection.isVideoStabilizationSupported {
@@ -159,16 +156,16 @@ class AVSpotCamera: NSObject {
         
         guard let captureSession = self.captureSession, captureSession.isRunning else { throw CameraControllerError.captureSessionIsMissing }
         
-        self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        self.previewLayer?.connection?.videoOrientation = .portrait
+        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        previewLayer?.connection?.videoOrientation = .portrait
         
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 2
         let cameraHeight = UIScreen.main.bounds.width * 1.72267
 
-        view.layer.insertSublayer(self.previewLayer!, at: 0)
-        self.previewLayer?.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: cameraHeight)
-        self.previewLayer?.cornerRadius = 12
+        view.layer.insertSublayer(previewLayer!, at: 0)
+        previewLayer?.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: cameraHeight)
+        previewLayer?.cornerRadius = 12
         previewShown = true
     }
     
@@ -252,14 +249,16 @@ class AVSpotCamera: NSObject {
 extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        
         /// start a timer when alive capture initiated
-        /// show if timer >  .25, take image as capture, pass to avcameracontroller, reset timer
-        /// stop timer on 5th capture 
+        /// show if timer >  .0.12, take image as capture, pass to avcameracontroller, reset timer
+        /// stop timer on 10th capture
+        
         if start != nil {
             
             let diff = CFAbsoluteTimeGetCurrent() - start
-            if diff > 0.18 {
-
+            if diff > 0.12 {
+                
                 let orientation = currentCameraPosition == .front ? UIImage.Orientation.leftMirrored : UIImage.Orientation.right
                 var image = imageFromSampleBuffer(sampleBuffer: sampleBuffer)
                 image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: orientation)
@@ -267,7 +266,7 @@ extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputS
                 aliveImages.append(image)
                 start = CFAbsoluteTimeGetCurrent()
                 
-                if aliveImages.count == 5 {
+                if aliveImages.count == 8 {
                     gifCaptureCompletionBlock?(aliveImages)
                     start = nil
                     aliveImages = []

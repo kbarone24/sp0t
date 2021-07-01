@@ -14,6 +14,7 @@ class PushNotificationSender {
     //change to uid and get username // token from this or handle all in the sender class and use string interpolation
     
     func sendPushNotification(token: String, title: String, body: String) {
+        
         let urlString = "https://fcm.googleapis.com/fcm/send"
         let url = NSURL(string: urlString)!
         let paramString: [String : Any] = ["to" : token,

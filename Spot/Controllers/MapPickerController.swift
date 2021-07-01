@@ -17,7 +17,9 @@ import FirebaseUI
 struct ImageObject {
     let asset: PHAsset
     let rawLocation: CLLocation
-    let image: UIImage
+    var stillImage: UIImage
+    var animationImages: [UIImage]
+    var gifMode: Bool
     let creationDate: Date
 }
 
@@ -35,15 +37,11 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
     lazy var annotations: [CustomPointAnnotation] = []
     
     var firstTimeGettingLocation = true
-    
+    var shouldUpdateRegion = true
     var loaded = false
     
     override func viewDidLoad() {
         self.navigationItem.title = "Photo map"
-    }
-    
-    deinit {
-        print("picker deinit")
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -65,6 +63,8 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
                 
         guard let parentVC = parent as? PhotosContainerController else { return }
 
+        print("view appear")
+        
         if self.locationObjects.isEmpty {
             
             /// original load
@@ -101,8 +101,8 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
             locationManager.delegate = self
             checkLocation()
             
-        } else if parentVC.mapView != nil && parentVC.mapView.superview == nil {
-            
+        } else if parentVC.mapView != nil {
+            print("add mapview")
             /// reset delegate after return from location picker
 
             if locationObjects.count > 0 { self.view.isUserInteractionEnabled = true }
@@ -123,12 +123,13 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
                 parentVC.mapView.delegate = self
                 
                 /// main thread was getting clogged with map updates
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                     guard let self = self else { return }
                     guard let containerVC = self.parent as? PhotosContainerController else { return }
                     
                     self.addRefreshIndicator()
                     if containerVC.mapView == nil { return }
+                    print("mass add annotations")
                     containerVC.mapView.addAnnotations(self.annotations)
                 }
             }
@@ -212,23 +213,22 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
             
             if parentVC.mapView == nil { stop.pointee = true }
             if let l = object.location {
+                
                 var creationDate = Date()
-                if let d = object.creationDate {
-                    creationDate = d
-                }
+                if let d = object.creationDate { creationDate = d }
                 
                 if !self.locationObjects.contains(where: {$0.asset == object })  {
                     
                     let annotation = CustomPointAnnotation()
                     annotation.coordinate = l.coordinate
                     annotation.asset = object
-                    self.annotations.append(annotation)
-                    
-                    self.locationObjects.append(ImageObject(asset: object, rawLocation: l, image: UIImage(), creationDate: creationDate))
-                    
+
                     if parentVC.mapView == nil { return }
-                    parentVC.mapView.addAnnotation(annotation)
                     
+                    parentVC.mapView.addAnnotation(annotation)
+                    self.annotations.append(annotation)
+                    self.locationObjects.append(ImageObject(asset: object, rawLocation: l, stillImage: UIImage(), animationImages: [], gifMode: false, creationDate: creationDate))
+                        
                     assetIndex += 1
                     
                     /// enable mapView interactions once annotations all loaded
@@ -247,7 +247,7 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
     
     func enableMap() {
         view.isUserInteractionEnabled = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [weak self] in
             guard let self = self else { return }
              self.maskView.isHidden = true
         })
@@ -265,15 +265,15 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
         if annotation is CustomPointAnnotation {
             
             var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier) as? StandardPostAnnotationView
+            
             if annotationView == nil {
                 annotationView = StandardPostAnnotationView(annotation: annotation, reuseIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier)
             } else {
                 annotationView!.annotation = annotation
             }
-            
+                        
             ///if nibview for this coordinate doesn't exist, create it, add to object
             ///if nibview for this coordinate does exist, fetch and add to annotation
-            
             if let i = self.locationObjects.lastIndex(where: {$0.rawLocation.coordinate.latitude == annotation.coordinate.latitude && $0.rawLocation.coordinate.longitude == annotation.coordinate.longitude}) {
               
                 annotationView!.updateImage(object: self.locationObjects[i])
@@ -281,11 +281,12 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
             } else {
                 annotationView!.image = UIImage()
             }
-            
+                        
             let tap = MapPickerTap(target: self, action: #selector(markerTap(_:)))
             tap.coordinates = annotation.coordinate
             annotationView!.addGestureRecognizer(tap)
             annotationView!.centerOffset = CGPoint(x: 6.25, y: -26)
+            
             return annotationView
             
         } else if annotation is MKClusterAnnotation {
@@ -296,6 +297,7 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
             else {
                 annotationView!.annotation = annotation
             }
+            
             /// update image to have the number of member annotations in the cluster showing
             
             annotationView!.updateImage(imageObjects: self.locationObjects)
@@ -308,7 +310,7 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
             return nil
         }
     }
-    
+
     @objc func markerTap(_ sender: MapPickerTap) {
         let latitude = sender.coordinates.latitude
         let longitude = sender.coordinates.longitude
@@ -410,23 +412,16 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
         }
     }
     
-    func loadNib() -> MarkerInfoWindow {
+    func annoWithinBounds(annoCoordinates: CLLocationCoordinate2D) -> Bool {
         
-        let infoWindow = MarkerInfoWindow.instanceFromNib() as! MarkerInfoWindow
-        infoWindow.clipsToBounds = true
+        guard let parentVC = parent as? PhotosContainerController else { return false }
+        let coordinates = parentVC.mapView.region.boundingBoxCoordinates
         
-        infoWindow.galleryImage.contentMode = .scaleAspectFill
-        infoWindow.galleryImage.layer.cornerRadius = 3
-        infoWindow.galleryImage.clipsToBounds = true
+        if !(annoCoordinates.latitude < coordinates[0].latitude && annoCoordinates.latitude > coordinates[2].latitude && annoCoordinates.longitude > coordinates[0].longitude && annoCoordinates.longitude < coordinates[2].longitude) {
+            return false
+        }
         
-        infoWindow.count.font = UIFont(name: "SFCamera-Semibold", size: 12)
-        infoWindow.count.textColor = .black
-        let attText = NSAttributedString(string: (infoWindow.count.text)!, attributes: [NSAttributedString.Key.kern: 0.8])
-        infoWindow.count.attributedText = attText
-        infoWindow.count.textAlignment = .center
-        infoWindow.count.clipsToBounds = true
-        
-        return infoWindow
+        return true
     }
 }
 
@@ -445,9 +440,14 @@ extension MapPickerController: CLLocationManagerDelegate {
         guard let location = locations.last else { return }
         
         if (firstTimeGettingLocation) {
+            
             currentLocation = location
-            parentVC.mapView.setRegion(MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 50000, longitudinalMeters: 50000), animated: false)
             self.firstTimeGettingLocation = false
+            
+            let centerCoordinate = parentVC.spotObject != nil ? CLLocationCoordinate2D(latitude: parentVC.spotObject.spotLat, longitude: parentVC.spotObject.spotLong) : location.coordinate
+            let zoomLevel: CLLocationDistance = parentVC.spotObject != nil ? 500 : 35000
+            parentVC.mapView.setRegion(MKCoordinateRegion(center: centerCoordinate, latitudinalMeters: zoomLevel, longitudinalMeters: zoomLevel), animated: false)
+
         } else {
             currentLocation = location
         }
@@ -489,12 +489,15 @@ class StandardPostAnnotationView: MKAnnotationView {
         galleryManager = PHCachingImageManager()
         let nibView = loadPostNib()
            
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .default).async {
+            
             if self.imageObject == nil { return }
             self.loadGalleryAnnotationImage(object: self.imageObject) { [weak self] (image) in
                 
                 DispatchQueue.main.async {
                     guard let self = self else { return }
+                    
+                    self.isHidden = false
                     if image == UIImage() { return }
                     
                     nibView.galleryImage.image = image
@@ -509,6 +512,7 @@ class StandardPostAnnotationView: MKAnnotationView {
     }
     
     func updateImage(post: MapPost) {
+                
         imageManager = SDWebImageManager()
         let nibView = loadPostNib()
         
@@ -524,12 +528,10 @@ class StandardPostAnnotationView: MKAnnotationView {
     }
     
     func updateImage(object: ImageObject) {
-        self.imageObject = object
         
-        let nibView = loadPostNib()
-        nibView.count.isHidden = true
-        let nibImage = nibView.asImage()
-        self.image = nibImage
+        self.imageObject = object
+        self.image = UIImage(named: "InfoWindowBackground")
+        self.isHidden = true
     }
     
     func loadPostNib() -> MarkerInfoWindow {
@@ -559,7 +561,7 @@ class StandardPostAnnotationView: MKAnnotationView {
         options.isNetworkAccessAllowed = true
         options.isSynchronous = false
         
-        self.requestID = self.galleryManager.requestImage(for: object.asset, targetSize: baseSize, contentMode: .aspectFill, options: options) { (result, info) in
+        requestID = galleryManager.requestImage(for: object.asset, targetSize: baseSize, contentMode: .aspectFill, options: options) { (result, info) in
             if result != nil {
                 completion(result!)
             } else { completion(UIImage()) }
@@ -572,7 +574,7 @@ class StandardPostAnnotationView: MKAnnotationView {
         if imageManager == nil { imageManager = SDWebImageManager() }
         
         let transformer = SDImageResizingTransformer(size: CGSize(width: 80, height: 50), scaleMode: .aspectFill)
-        self.imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
+        imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
                 guard self != nil else { return }
             let image = image ?? UIImage()
             completion(image)
@@ -598,6 +600,7 @@ class PostClusterView: MKAnnotationView {
     
     var topPostID = ""
     var imageManager: SDWebImageManager!
+    var nibImage: UIImage!
     
     var galleryManager: PHCachingImageManager!
     var requestID: Int32 = 0
@@ -614,6 +617,7 @@ class PostClusterView: MKAnnotationView {
     }
     
     override func prepareForDisplay() {
+        
         super.prepareForDisplay()
         
         /// return when not using in map picker
@@ -623,7 +627,7 @@ class PostClusterView: MKAnnotationView {
         if let clusterAnnotation = annotation as? MKClusterAnnotation {
             let anno0 = clusterAnnotation.memberAnnotations.first
             if let obj = imageObjects.last(where: {$0.rawLocation.coordinate.latitude == anno0!.coordinate.latitude && $0.rawLocation.coordinate.longitude == anno0!.coordinate.longitude}) {
-                DispatchQueue.global(qos: .userInitiated).async {
+                DispatchQueue.global(qos: .default).async {
                     
                     self.loadGalleryAnnotationImage(object: obj) { (image) in
                         
@@ -634,11 +638,13 @@ class PostClusterView: MKAnnotationView {
                             nibView.count.backgroundColor = UIColor(patternImage: UIImage(named: "InfoWindowCountBackground")!)
                             let nibImage = nibView.asImage()
                             self.image = nibImage
+                            self.isHidden = false
                         }
                     }
                 }
                 
             } else {
+                self.isHidden = false
                 nibView.galleryImage.image = UIImage()
                 nibView.count.text = String(clusterAnnotation.memberAnnotations.count)
                 nibView.count.backgroundColor = UIColor(patternImage: UIImage(named: "InfoWindowCountBackground")!)
@@ -647,6 +653,7 @@ class PostClusterView: MKAnnotationView {
             }
             
         } else {
+            self.isHidden = false
             nibView.count.isHidden = true
             let nibImage = nibView.asImage()
             self.image = nibImage
@@ -654,13 +661,11 @@ class PostClusterView: MKAnnotationView {
     }
         
     func updateImage(imageObjects: [ImageObject]) {
-        self.imageObjects = imageObjects
         
         /// set cluster to blank image to ensure clusters are spaced apart correctly
-        let nibView = loadNib()
-        nibView.count.isHidden = true
-        let nibImage = nibView.asImage()
-        self.image = nibImage
+        self.imageObjects = imageObjects
+        self.image = UIImage(named: "InfoWindowBackground")
+        self.isHidden = true
     }
     
     func updateImage(posts: [MapPost], count: Int) {
@@ -701,7 +706,7 @@ class PostClusterView: MKAnnotationView {
         guard let url = URL(string: post.imageURLs.first ?? "") else { completion(UIImage()); return }
     
         let transformer = SDImageResizingTransformer(size: CGSize(width: 80, height: 50), scaleMode: .aspectFill)
-        self.imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
+        imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
                 guard self != nil else { return }
             let image = image ?? UIImage()
             completion(image)
@@ -718,7 +723,7 @@ class PostClusterView: MKAnnotationView {
         options.isNetworkAccessAllowed = true
         options.isSynchronous = false
         
-        self.requestID = self.galleryManager.requestImage(for: object.asset, targetSize: baseSize, contentMode: .aspectFill, options: options) { [weak self] (result, info) in
+        requestID = self.galleryManager.requestImage(for: object.asset, targetSize: baseSize, contentMode: .aspectFill, options: options) { [weak self] (result, info) in
             guard self != nil else { return }
             if result != nil {
                 completion(result!)
@@ -764,6 +769,7 @@ class CustomPointAnnotation: MKPointAnnotation {
     
   //  lazy var imageURL: String = ""
     lazy var asset: PHAsset = PHAsset()
+    var hidden = false
     var postID: String = ""
     
     override init() {

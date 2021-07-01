@@ -12,6 +12,7 @@ import FirebaseFirestore
 import FirebaseMessaging
 import UIKit
 import UserNotifications
+import Mixpanel
 
 class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCenterDelegate {
     let userID: String
@@ -35,14 +36,13 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
                 // Either denied or notDetermined
                 let authOptions: UNAuthorizationOptions = [.alert, .badge]
                 UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { (granted: Bool, err) in
-                    
                     if granted {
                         DispatchQueue.main.async {
                             Messaging.messaging().delegate = self
                             UIApplication.shared.registerForRemoteNotifications()
                             self.updateFirestorePushTokenIfNeeded()
                         }
-                    }
+                    } else { Mixpanel.mainInstance().track(event: "NotificationsAccessDenied") }
                 }
             }
         }
@@ -55,7 +55,6 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
         
         if let token = Messaging.messaging().fcmToken {
             let usersRef = Firestore.firestore().collection("users").document(userID)
-            print("register", token)
             usersRef.setData(["notificationToken": token], merge: true)
         }
         

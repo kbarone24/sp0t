@@ -20,10 +20,11 @@ class LocationPickerController: UIViewController {
     weak var containerVC: PhotosContainerController!
     
     var spotObject: MapSpot!
-    lazy var selectedImages: [UIImage] = []
+    var selectedImages: [UIImage] = []
+    var frameIndexes: [Int] = []
 
     var galleryLocation: CLLocation!
-    var gifMode = false
+    var postDate: Date!
     var imageFromCamera = false
     var draftID: Int64!
     
@@ -77,6 +78,7 @@ class LocationPickerController: UIViewController {
             mapView = nil
             if toggleMapButton != nil { toggleMapButton.removeFromSuperview() }
             if userLocationButton != nil { userLocationButton.removeFromSuperview() }
+            NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
         }
     }
     
@@ -425,8 +427,10 @@ class LocationPickerController: UIViewController {
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "ChooseSpot") as? ChooseSpotController {
             
             vc.selectedImages = selectedImages
+            vc.frameIndexes = frameIndexes
             let postCoordinate = postAnnotation == nil ? currentLocation.coordinate : postAnnotation.coordinate /// patch fix for disappearing post annotation
             vc.postLocation = postCoordinate
+            vc.postDate = postDate
             vc.mapVC = mapVC
             vc.locationPickerVC = self
             
@@ -438,14 +442,16 @@ class LocationPickerController: UIViewController {
     func presentUploadPost(animated: Bool) {
         
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
-            vc.selectedImages = self.selectedImages
-            vc.spotObject = self.spotObject
-            vc.postLocation = self.postAnnotation.coordinate
-            vc.postLocation = self.postAnnotation.coordinate
-            vc.mapVC = self.mapVC
-            vc.postType = self.spotObject.privacyLevel == "public" ? .postToPublic : .postToPrivate
             
-            vc.gifMode = gifMode
+            vc.selectedImages = selectedImages
+            vc.frameIndexes = frameIndexes
+            
+            vc.spotObject = spotObject
+            vc.postLocation = postAnnotation.coordinate
+            vc.postDate = postDate
+            vc.mapVC = mapVC
+            vc.postType = spotObject.privacyLevel == "public" ? .postToPublic : .postToPrivate
+            
             vc.imageFromCamera = imageFromCamera
             vc.draftID = draftID
             vc.postDirectToSpot = true

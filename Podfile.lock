@@ -408,6 +408,7 @@ PODS:
   - gRPC-Core/Interface (1.28.2)
   - GTMSessionFetcher/Core (1.5.0)
   - IQKeyboardManagerSwift (6.5.6)
+  - JPSVolumeButtonHandler (1.0.5)
   - leveldb-library (1.22.1)
   - Mixpanel-swift (2.9.1):
     - Mixpanel-swift/Complete (= 2.9.1)
@@ -438,6 +439,7 @@ DEPENDENCIES:
   - Geofirestore (from `https://github.com/imperiumlabs/GeoFirestore-iOS.git`)
   - GoogleAnalytics
   - IQKeyboardManagerSwift
+  - JPSVolumeButtonHandler
   - Mixpanel-swift
   - RSKImageCropper
 
@@ -472,6 +474,7 @@ SPEC REPOS:
     - gRPC-Core
     - GTMSessionFetcher
     - IQKeyboardManagerSwift
+    - JPSVolumeButtonHandler
     - leveldb-library
     - Mixpanel-swift
     - nanopb
@@ -520,6 +523,7 @@ SPEC CHECKSUMS:
   gRPC-Core: 4afa11bfbedf7cdecd04de535a9e046893404ed5
   GTMSessionFetcher: b3503b20a988c4e20cc189aa798fd18220133f52
   IQKeyboardManagerSwift: c7df9d2deb356c04522f5c4b7b6e4ce4d8ed94fe
+  JPSVolumeButtonHandler: 53110330c9168ed325def93eabff39f0fe3e8082
   leveldb-library: 50c7b45cbd7bf543c81a468fe557a16ae3db8729
   Mixpanel-swift: f945f36adc3b76fc6517df98682211d3c0bf5bbe
   nanopb: 59317e09cf1f1a0af72f12af412d54edf52603fc
@@ -528,6 +532,6 @@ SPEC CHECKSUMS:
   RSKImageCropper: 1ac71e9a82e3f41eea3eedfff8eacb0d3821c9ec
   SDWebImage: 7acbb57630ac7db4a495547fb73916ff3e432f6b
 
-PODFILE CHECKSUM: cb849243f704d64c12e4d5dc700c98be9d679b22
+PODFILE CHECKSUM: 7f4fedacec61dfcd8849494af2dfb60127af8269
 
 COCOAPODS: 1.10.1

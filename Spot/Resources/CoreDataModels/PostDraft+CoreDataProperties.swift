@@ -32,10 +32,11 @@ extension PostDraft {
     @NSManaged public var taggedUsers: [String]?
     @NSManaged public var timestamp: Int64
     @NSManaged public var images: NSSet?
-    @NSManaged public var gif: Bool
+    @NSManaged public var hideFromFeed: Bool
     @NSManaged public var uid: String?
     @NSManaged public var isFirst: Bool
     @NSManaged public var visitorList: [String]?
+    @NSManaged public var frameIndexes: [Int]?
 }
 
 // MARK: Generated accessors for images

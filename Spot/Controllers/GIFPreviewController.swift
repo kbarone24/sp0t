@@ -81,7 +81,7 @@ class GIFPreviewController: UIViewController {
         previewView.isUserInteractionEnabled = true
         previewView.layer.cornerRadius = 12
         view.addSubview(previewView)
-        if gif { previewView.animationImages = filteredImages; previewView.animateGIF(directionUp: true, counter: 0) }
+        if gif { previewView.animationImages = filteredImages; previewView.animateGIF(directionUp: true, counter: 0, frames: filteredImages.count) }
                    
         draftsButton = UIButton(frame: CGRect(x: previewView.frame.maxX - 104, y: previewView.frame.maxY - 51, width: 88, height: 35))
         draftsButton.setImage(UIImage(named: "SaveToDraftsButton"), for: .normal)
@@ -127,11 +127,11 @@ class GIFPreviewController: UIViewController {
     }
         
     @objc func nextTap(_ sender: UIButton) {
-        //      delegate?.FinishPassing(images: photos)
 
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
-            vc.gifMode = self.gif
+            
             vc.selectedImages = self.filteredImages
+            vc.frameIndexes = [0]
             vc.mapVC = self.mapVC
             vc.spotObject = self.spotObject
             

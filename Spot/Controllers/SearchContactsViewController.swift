@@ -47,7 +47,6 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.keyboardDismissMode = .onDrag
         tableView.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
         view.addSubview(tableView)
         
@@ -140,7 +139,7 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
         
         if !self.contacts[indexPath.row].friend && !self.contacts[indexPath.row].pending {
             cell.friendLabel.tag = indexPath.row
-            cell.friendLabel.addTarget(self, action: #selector(self.addFriend), for: UIControl.Event.touchUpInside)
+            cell.friendLabel.addTarget(self, action: #selector(self.addFriend(_:)), for: UIControl.Event.touchUpInside)
         }
         
         return cell
@@ -150,7 +149,7 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
         super.viewWillDisappear(false)
     }
     
-    @objc func addFriend(sender: UIButton) {
+    @objc func addFriend(_ sender: UIButton) {
         
         Mixpanel.mainInstance().track(event: "SearchContactsAddFriend")
         let row = sender.tag

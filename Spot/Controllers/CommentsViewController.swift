@@ -695,7 +695,8 @@ class CommentHeader: UITableViewHeaderFooterView {
         timestamp = UILabel(frame: CGRect(x: username.frame.maxX + 8, y: 18.5, width: 150, height: 16))
         timestamp.font = UIFont(name: "SFCamera-Regular", size: 12.5)
         timestamp.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        timestamp.text = getTimestamp(postTime: post.timestamp)
+        let postTimestamp = post.actualTimestamp == nil ? post.timestamp : post.actualTimestamp
+        timestamp.text = getDateTimestamp(postTime: postTimestamp!)
         timestamp.sizeToFit()
         self.addSubview(timestamp)
         
@@ -809,42 +810,16 @@ class CommentHeader: UITableViewHeaderFooterView {
         }
     }
     
-    func getTimestamp(postTime: Firebase.Timestamp) -> String {
-        let seconds = postTime.seconds
-        let current = NSDate().timeIntervalSince1970
-        let currentTime = Int64(current)
-        let timeSincePost = currentTime - seconds
-        
-        if timeSincePost < 604800 {
-            // return time since post
-            
-            if (timeSincePost <= 86400) {
-                if (timeSincePost <= 3600) {
-                    if (timeSincePost <= 60) {
-                        return "\(timeSincePost)s"
-                    } else {
-                        let minutes = timeSincePost / 60
-                        return "\(minutes)m"
-                    }
-                } else {
-                    let hours = timeSincePost / 3600
-                    return "\(hours)h"
-                }
-            } else {
-                let days = timeSincePost / 86400
-                return "\(days)d"
-            }
-        } else {
-            // return date
-            let timeInterval = TimeInterval(integerLiteral: seconds)
-            let date = Date(timeIntervalSince1970: timeInterval)
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "M/dd/yy"
-            let dateString = dateFormatter.string(from: date)
-            return dateString
-        }
+    func getDateTimestamp(postTime: Firebase.Timestamp) -> String {
+
+        let timeInterval = TimeInterval(integerLiteral: postTime.seconds)
+        let date = Date(timeIntervalSince1970: timeInterval)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "M/d/yy"
+        let dateString = dateFormatter.string(from: date)
+        return dateString
     }
-    
+
     func getAttString(caption: String, taggedFriends: [String]) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
         let attString = NSMutableAttributedString(string: caption)
         var freshRect: [(rect: CGRect, username: String)] = []

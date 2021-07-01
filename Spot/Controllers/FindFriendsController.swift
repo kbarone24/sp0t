@@ -106,6 +106,7 @@ class FindFriendsController: UIViewController {
         
         searchBar = UISearchBar(frame: CGRect(x: 14, y: 11, width: UIScreen.main.bounds.width - 28, height: 36))
         searchBar.searchBarStyle = .default
+        searchBar.tintColor = .white
         searchBar.barTintColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
         searchBar.searchTextField.backgroundColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
         searchBar.delegate = self
@@ -157,7 +158,7 @@ class FindFriendsController: UIViewController {
         view.addSubview(mainView)
         
         sendInvitesView = SendInvitesView(frame: CGRect(x: 0, y: 5, width: UIScreen.main.bounds.width, height: 76))
-        sendInvitesView.setUp(invites: 5 - mapVC.userInfo.sentInvites.count)
+        sendInvitesView.setUp(invites: 8 - mapVC.userInfo.sentInvites.count)
         sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
         mainView.addSubview(sendInvitesView)
         
@@ -199,13 +200,13 @@ class FindFriendsController: UIViewController {
     }
     
     @objc func notifyInviteSent(_ sender: NSNotification) {
-        sendInvitesView.setUp(invites: 5 - mapVC.userInfo.sentInvites.count)
+        sendInvitesView.setUp(invites: 8 - mapVC.userInfo.sentInvites.count)
     }
     
     @objc func presentSendInvites(_ sender: UITapGestureRecognizer) {
         
         let adminID = mapVC.uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || mapVC.uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
-        if mapVC.userInfo.sentInvites.count > 4 && !adminID { return }
+        if mapVC.userInfo.sentInvites.count > 7 && !adminID { return }
         
         if let vc = storyboard?.instantiateViewController(identifier: "SendInvites") as? SendInvitesController {
             vc.mapVC = mapVC
@@ -278,13 +279,15 @@ class FindFriendsController: UIViewController {
     
     func getPendingFriends(mutuals: [(id: String, count: Int)]) {
         
-        let pendingRequests = mapVC.userInfo.pendingFriendRequests
-        if pendingRequests.count == 0 { getUserSpots(mutuals: mutuals) }
+        var pendingRequests = mapVC.userInfo.pendingFriendRequests
+//        if pendingRequests.count == 0 { getUserSpots(mutuals: mutuals) }
         
         var mutuals = mutuals
         var secondaryMutuals: [(id: String, secondaryCount: Int)] = [] /// get "mutuals" from pending friend requests to fill up the rest of suggestions
         
         var pendingIndex = 0
+        if mutuals.count == 0 { pendingRequests.append("T4KMLe3XlQaPBJvtZVArqXQvaNT2")} /// will have the effect of just showing the top users worldwide
+       
         for id in pendingRequests {
             self.db.collection("users").document(id).getDocument { [weak self] (snap, err) in
                 guard let self = self else { return }
@@ -304,8 +307,9 @@ class FindFriendsController: UIViewController {
                         if id == friendsList.last {
                             pendingIndex += 1
                             if pendingIndex == pendingRequests.count {
-                                /// add secondary mutuals at the end of the array
+                                /// add secondary mutuals at the end of the array. sort by spotscore if the user doesn't have a lot of secondary mutuals (usually just spotbot as mutual)
                                 secondaryMutuals.sort(by: {$0.secondaryCount > $1.secondaryCount})
+                                print("sec", secondaryMutuals.prefix(20))
                                 for user in secondaryMutuals { mutuals.append((id: user.id, count: 0)) }
                                 self.getUserSpots(mutuals: mutuals)
                             }
@@ -327,10 +331,10 @@ class FindFriendsController: UIViewController {
     func getUserSpots(mutuals: [(id: String, count: Int)]) {
         
         var index = 0
-        let topMutuals = mutuals.prefix(20)
+        let topMutuals = mutuals.contains(where: {$0.count > 0}) ? mutuals.prefix(20) : mutuals.prefix(500) /// make the selection much larger for new users to always get top spotters in their suggested
         if topMutuals.count == 0 { removeTable() }
         
-        /// get user data for  top 10 mutuals
+        /// get user data for top 20 mutuals
         for user in topMutuals {
             
             self.db.collection("users").document(user.id).getDocument { [weak self] (snap, err) in
@@ -372,6 +376,8 @@ class FindFriendsController: UIViewController {
     func finishSuggestedLoad() {
         /// sort by combined spots x mutual friends
         suggestedUsers.sort(by: {$0.0.spotsList.count + $0.0.mutualFriends > $1.0.spotsList.count + $1.0.mutualFriends})
+        if suggestedUsers.count > 20 { suggestedUsers.removeAll(where: {$0.0.spotsList.count < 5})} /// if initial user load, only show users with 3 or more spots
+        
         DispatchQueue.main.async {
             self.suggestedIndicator.stopAnimating()
             self.suggestedTable.reloadData()

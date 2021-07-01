@@ -1,23 +1,23 @@
 {
   "images" : [
     {
+      "filename" : "Addfriend1x (1).png",
       "idiom" : "universal",
-      "filename" : "editpic1x.png",
       "scale" : "1x"
     },
     {
+      "filename" : "Addfriend2x (1).png",
       "idiom" : "universal",
-      "filename" : "editpic2x.png",
       "scale" : "2x"
     },
     {
+      "filename" : "Addfriend3x (1).png",
       "idiom" : "universal",
-      "filename" : "editpic3x.png",
       "scale" : "3x"
     }
   ],
   "info" : {
-    "version" : 1,
-    "author" : "xcode"
+    "author" : "xcode",
+    "version" : 1
   }
 }

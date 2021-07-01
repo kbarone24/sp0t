@@ -179,7 +179,8 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "FriendsListCell", for: indexPath) as! FriendsListCell
-        cell.setUp(friend: friendsList[indexPath.row])
+        guard let friend = friendsList[safe: indexPath.row] else { return cell }
+        cell.setUp(friend: friend)
         return cell
     }
     

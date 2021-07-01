@@ -21,6 +21,7 @@ class ChooseSpotController: UIViewController {
     weak var locationPickerVC: LocationPickerController!
     
     lazy var selectedImages: [UIImage] = []
+    lazy var frameIndexes: [Int] = []
     lazy var nearbyIDs: [(id: String, distance: CLLocationDistance)] = []
     lazy var nearbyPOIs: [POI] = []
     lazy var nearbySpotsRef: [MapSpot] = [] /// keep basic spot structure to avoid closure issues on remove duplicates
@@ -33,6 +34,7 @@ class ChooseSpotController: UIViewController {
     lazy var querySpots: [MapSpot] = []
 
     var postLocation: CLLocationCoordinate2D!
+    var postDate: Date!
     var nearbyTable: UITableView!
     var nearbyIndicator: CustomActivityIndicator!
         
@@ -49,6 +51,7 @@ class ChooseSpotController: UIViewController {
     var searchManager: SDWebImageManager!
     let searchFilters: [MKPointOfInterestCategory] = [.airport, .amusementPark, .aquarium, .bakery, .beach, .brewery, .cafe, .campground, .foodMarket, .library, .marina, .museum, .movieTheater, .nightlife, .nationalPark, .park, .restaurant, .store, .school, .stadium, .theater, .university, .winery, .zoo]
         
+    var queryReady = false
     var spotLoaded = false /// true when there's a spot in the nearby radius
     var emptyView: UIView! /// empty footer view
     var infoMask: UIView!
@@ -91,6 +94,10 @@ class ChooseSpotController: UIViewController {
         
         if searchManager != nil { searchManager.cancelAll() }
         if circleQuery != nil { circleQuery?.removeAllObservers() }
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+    
+    deinit {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }
     
@@ -193,22 +200,23 @@ class ChooseSpotController: UIViewController {
             
         let search = MKLocalSearch(request: request)
         search.start { [weak self] response, error in
-            
+
             guard let self = self else { return }
             
             let newRequest = MKLocalPointsOfInterestRequest(center: self.postLocation, radius: request.radius * 2)
+            print("radius", newRequest.radius)
             newRequest.pointOfInterestFilter = request.pointOfInterestFilter
 
             
             /// if the new radius won't be greater than about 1.5 miles then run poi fetch to get more nearby stuff
             guard let response = response else {
                 /// error usually means no results found
-                newRequest.radius < 2500 ? self.runPOIFetch(request: newRequest) : self.getNearbySpots()
+                newRequest.radius < 3000 ? self.runPOIFetch(request: newRequest) : self.endQuery()
                 return
             }
-
+            
             /// > 10 poi's should be enough for the table, otherwise re-run fetch
-            if response.mapItems.count < 10 && newRequest.radius < 2500 {   self.runPOIFetch(request: newRequest); return }
+            if response.mapItems.count < 10 && newRequest.radius < 3000 {   self.runPOIFetch(request: newRequest); return }
             
             for item in response.mapItems {
 
@@ -241,9 +249,15 @@ class ChooseSpotController: UIViewController {
         let _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
 
         let _ = circleQuery?.observeReady { [weak self] in
+            
             guard let self = self else { return }
-            /// nearby spots count is incremented once a spot has been fetched that user has access to. It *should* have incremented by the time circle query is done running. Trying to delay table reload until both POI's and spots have loaded
-            if self.nearbyEnteredCount == 0 { self.endQuery() }
+            self.queryReady = true
+            
+            if self.nearbyEnteredCount == 0 {
+                self.endQuery()
+            } else if self.noAccessCount + self.nearbySpots.count == self.nearbyEnteredCount {
+                self.endQuery()
+            }
         }
     }
     
@@ -368,7 +382,6 @@ class ChooseSpotController: UIViewController {
                                     newSpot.imageURL = post.imageURLs.first ?? ""
                                     self.nearbySpots.append(newSpot)
                                     self.accessEscape()
-                                    print("add with non friend image")
                                     
                                 } catch {
                                     self.nearbySpots.append(spotInfo); self.accessEscape(); return}
@@ -383,7 +396,7 @@ class ChooseSpotController: UIViewController {
     }
     
     func accessEscape() {
-        if noAccessCount + nearbySpots.count == nearbyEnteredCount { endQuery() }
+        if noAccessCount + nearbySpots.count == nearbyEnteredCount && queryReady { endQuery() }
     }
 
     func endQuery() {
@@ -466,11 +479,13 @@ class ChooseSpotController: UIViewController {
             
             Mixpanel.mainInstance().track(event: "ChooseSpotNewSpot")
             vc.postLocation = postLocation
+            vc.postDate = postDate
             vc.selectedImages = selectedImages
+            vc.frameIndexes = frameIndexes
+            
             vc.postType = .newSpot
             vc.mapVC = mapVC
             
-            vc.gifMode = locationPickerVC.gifMode
             vc.imageFromCamera = locationPickerVC.imageFromCamera
             vc.draftID = locationPickerVC.draftID
 
@@ -539,10 +554,11 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
             
                         
             vc.postLocation = postLocation
+            vc.postDate = postDate
             vc.selectedImages = selectedImages
+            vc.frameIndexes = frameIndexes
             vc.mapVC = mapVC
             
-            vc.gifMode = locationPickerVC.gifMode
             vc.imageFromCamera = locationPickerVC.imageFromCamera
             vc.draftID = locationPickerVC.draftID
             
@@ -1394,31 +1410,34 @@ extension ChooseSpotController {
     
     func isDuplicateQuery(poi: POI, completion: @escaping (_ duplicate: Bool) -> Void) {
                 
-        if let i = self.querySpotsRef.firstIndex(where: {$0.spotName == poi.name}) {
+        if let i = querySpotsRef.firstIndex(where: {$0.spotName == poi.name}) {
             
-            let spot = self.querySpotsRef[i]
+            let spot = querySpotsRef[i]
             
             if spot.privacyLevel == "public" && locationsClose(coordinate1: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), coordinate2: CLLocationCoordinate2D(latitude: poi.coordinate.latitude, longitude: poi.coordinate.longitude)) {
                 
-                if spot.imageURL == "" { self.querySpotsRef[i].spotDescription = poi.type.toString() }
+                if spot.imageURL == "" { querySpotsRef[i].spotDescription = poi.type.toString() }
                 completion(true); return
             }
         }
         
-        if poi.phone.count > 1, let i = self.querySpotsRef.firstIndex(where: {$0.phone == poi.phone}) {
-            let spot = self.querySpotsRef[i]
+        if poi.phone.count > 1, let i = querySpotsRef.firstIndex(where: {$0.phone == poi.phone}) {
+            let spot = querySpotsRef[i]
             
             if spot.privacyLevel == "public" && locationsClose(coordinate1: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), coordinate2: CLLocationCoordinate2D(latitude: poi.coordinate.latitude, longitude: poi.coordinate.longitude)) {
                 
-                if self.querySpotsRef[i].imageURL == "" { self.querySpotsRef[i].spotDescription = poi.type.toString() }
+                if querySpotsRef[i].imageURL == "" { querySpotsRef[i].spotDescription = poi.type.toString() }
                 completion(true); return
             }
         }
         /// need to check database in case apple maps query returned something but spot names didnt
-        let query = self.db.collection("spots").whereField("spotName", isEqualTo: poi.name)
-        query.getDocuments { (snap, err) in
+        let query = db.collection("spots").whereField("spotName", isEqualTo: poi.name)
+        query.getDocuments { [weak self] (snap, err) in
+            
             if snap?.documents.count ?? 0 > 0 {
+                
                 guard let snap = snap else { return }
+                guard let self = self else { return }
                 
                 for doc in snap.documents {
                     do {

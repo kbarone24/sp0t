@@ -36,7 +36,7 @@ class MapViewController: UIViewController {
     var regionQuery: GFSRegionQuery?
     let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("spots"))
     
-    var listener1, listener2, listener3, listener4: ListenerRegistration!
+    var listener1: ListenerRegistration!
     
     var adminIDs: [String] = []
     var friendIDs: [String] = []
@@ -60,6 +60,7 @@ class MapViewController: UIViewController {
     var friendsLoaded = false
     var feedLoaded = false
     var shouldUpdateRegion = true /// shouldUpdateRegion is true when circleQuery should update when user changes visible map
+    var shouldUpdateCity = true /// shouldUpdateCity is true when nearby drawer should update city when user changes visible map
     var shouldCluster = true /// should cluster is false when nearby (tab index 1) selected and max zoom enabled
     
     var selectedSpotID: String!
@@ -74,7 +75,7 @@ class MapViewController: UIViewController {
     var bottomBar: UIView! /// bottom bar is a hack to allow more space underneath closed drawer for iPhoneX+
     
     var closeFeedButton: UIButton! /// tap anywhere on map closes feed
-    var toggleMapButton, userLocationButton, directionsButton: UIButton! /// buttons to manipulate map appearance
+    var toggleMapButton, userLocationButton, directionsButton, searchBarButton: UIButton! /// buttons to manipulate map appearance
     var activeFilterView: UIView! /// activeFilterView shows active filters on the map after filterView is closed
     var mapMask: UIView!
     var feedMask: UIView! /// seperate mask for feed seg - for tutorial need 2 masks on the feed
@@ -95,6 +96,7 @@ class MapViewController: UIViewController {
     /// use to avoid deleted documents entering from cache
     lazy var deletedSpotIDs: [String] = []
     lazy var deletedPostIDs: [String] = []
+    lazy var deletedFriendIDs: [String] = []
         
     /// tag table added over top of view to window then result passed to active VC
     enum TagTableParent {
@@ -110,6 +112,7 @@ class MapViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(postOpen(_:)), name: NSNotification.Name("PostOpen"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(selectFromPost(_:)), name: NSNotification.Name("OpenSpotFromPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(selectFromProfile(_:)), name: NSNotification.Name("OpenSpotFromProfile"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(selectFromNotis(_:)), name: NSNotification.Name("OpenSpotFromNotis"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         
         mapView = MKMapView(frame: UIScreen.main.bounds)
@@ -161,8 +164,8 @@ class MapViewController: UIViewController {
         
         selectedSpotID = ""
         selectedProfileID = ""
+
     }
-    
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
@@ -193,7 +196,7 @@ class MapViewController: UIViewController {
     
     func getFriends() {
         
-        listener2 = self.db.collection("users").document(self.uid).addSnapshotListener(includeMetadataChanges: true, listener: { (userSnap, err) in
+        listener1 = self.db.collection("users").document(self.uid).addSnapshotListener(includeMetadataChanges: true, listener: { (userSnap, err) in
             
             if userSnap?.metadata.isFromCache ?? false { return }
             if err != nil { return }
@@ -217,6 +220,7 @@ class MapViewController: UIViewController {
                 }
                 
                 self.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
+                for id in self.deletedFriendIDs { self.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
                 
                 var spotsList: [String] = []
                 
@@ -308,7 +312,7 @@ class MapViewController: UIViewController {
         if feedLoaded { return }
         if let feedVC = self.customTabBar.viewControllers?[0] as? FeedViewController {
             feedLoaded = true
-            let selectedIndex = friendIDs.count > 2 ? 0 : 1
+            let selectedIndex = friendIDs.count > 3 ? 0 : 1
             feedVC.addFeedSeg(selectedIndex: selectedIndex)
             feedVC.friendsRefresh = .refreshing
             selectedIndex == 0 ?  feedVC.getFriendPosts(refresh: false) : feedVC.getNearbyPosts(radius: 0.5)
@@ -359,7 +363,7 @@ class MapViewController: UIViewController {
             let safeBottom = window?.safeAreaInsets.bottom ?? 0
             let tabBarHeight = customTabBar.tabBar.frame.height + safeBottom
                 
-            halfScreenY = UIScreen.main.bounds.height - tabBarHeight - 396
+            halfScreenY = UIScreen.main.bounds.height - tabBarHeight - 350
             tabBarOpenY = largeScreen ? UIScreen.main.bounds.height - (UIScreen.main.bounds.width * 1.72267 + tabBarHeight) : UIScreen.main.bounds.height - (UIScreen.main.bounds.width * 1.5 + tabBarHeight)
             tabBarClosedY = tabBarOpenY + 30
 
@@ -409,8 +413,28 @@ class MapViewController: UIViewController {
             self.customTabBar.view.isUserInteractionEnabled = true
         }
     }
+        
+    func profileUploadReset(spotID: String, postID: String, tags: [String]) {
+
+        /// patch for hiding feed
+        if let feedVC = customTabBar.viewControllers?[0] as? FeedViewController { feedVC.hideFeedSeg() }
+        guard let profileVC = customTabBar.viewControllers?[4] as? ProfileViewController else { return }
+        
+        profileVC.mapVC = self
+        profileVC.openSpotID = spotID
+        profileVC.openPostID = postID
+        profileVC.openSpotTags = tags
+        
+        profileVC.resetMap()
+        profileVC.setUpNavBar()
+        if profileVC.selectedIndex != 0 { profileVC.resetIndex(index: 0) }
+        customTabBar.selectedIndex = 4
+    }
     
-    func feedMapReset() {
+    func feedUploadReset() {
+        
+        customTabBar.selectedIndex = 0
+        setUpNavBar()
         
         // reset map after post upload
         self.prePanY = tabBarOpenY
@@ -589,7 +613,6 @@ class MapViewController: UIViewController {
             case .default:
                 Mixpanel.mainInstance().track(event: "LocationServicesSettingsOpen")
                 UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:]) { (allowed) in
-                    print("allowed", allowed)
                 }
 
             case .cancel:
@@ -681,7 +704,7 @@ extension MapViewController: UITabBarControllerDelegate {
             feedVC.mapVC = self
             if customTabBar.selectedIndex == 0 { feedVC.openOrScrollToFirst(animated: true, newPost: false); return true }
             Mixpanel.mainInstance().track(event: "FeedOpen")
-            feedMapReset()
+            feedUploadReset()
             
             // add all removed annos to map
         } else if viewController.isKind(of: AVCameraController.self) {
@@ -702,7 +725,7 @@ extension MapViewController: UITabBarControllerDelegate {
             profileVC.resetMap()
             profileVC.setUpNavBar()
             
-            profileVC.scrollDistance > 0 ? profileVC.expandProfile() : profileVC.profileToHalf()
+            profileVC.scrollDistance > 0 ? profileVC.expandProfile(reset: false) : profileVC.profileToHalf()
             
         } else if let notiVC = viewController as? NotificationsViewController {
 
@@ -746,8 +769,8 @@ extension MapViewController: UIGestureRecognizerDelegate {
         let velocity = recognizer.velocity(in: view)
         
         /// swipe to exit from profile or spot page if swiping to the right
-        if abs(translation.y) <= abs(translation.x) {
-         if ((spotViewController != nil || (profileViewController != nil && profileViewController.parent != customTabBar)) && !drawerIsOffset()) || swipeToRemoveBegan() {
+        if abs(translation.y) <= abs(translation.x) || swipeToRemoveBegan() {
+            if ((spotViewController != nil && spotViewController.selectedIndex == 0 || (profileViewController != nil && profileViewController.parent != customTabBar && profileViewController.selectedIndex == 0)) && !drawerIsOffset()) || swipeToRemoveBegan() {
             swipeToExit(translation: translation.x, velocity: velocity.x, state: recognizer.state)
             return
 
@@ -760,7 +783,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
     }
     
     func nearbySwipe(translation: CGFloat, velocity: CGFloat, state: UIGestureRecognizer.State) {
-        
+
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let safeBottom = window?.safeAreaInsets.bottom ?? 0
         let tabBarHeight = customTabBar.tabBar.frame.height + safeBottom
@@ -869,9 +892,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
     }
     
     func swipeToExit(translation: CGFloat, velocity: CGFloat, state: UIGestureRecognizer.State) {
-            
-        print("swipe to exit")
-        
+                
         guard let activeTable = spotViewController != nil ? spotViewController.shadowScroll : profileViewController != nil ? profileViewController.shadowScroll : UITableView() else { return }
         guard let activeView = spotViewController != nil ? spotViewController.view : profileViewController.view else { return }
 
@@ -921,8 +942,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
                 self.navigationController?.navigationBar.isTranslucent = true
                 self.navigationController?.navigationBar.removeBackgroundImage()
                 self.navigationController?.navigationBar.removeShadow()
-                self.spotViewController.hideSeparatorLine() /// hide line between friiend visiotrs and posts collection
-                self.addToSpotTransition(alpha: 0.0)
+                if self.spotViewController.selectedIndex == 0 { self.addToSpotTransition(alpha: 0.0) }
                 
             } else if self.profileViewController != nil {
                 self.profileViewController.shadowScroll.isScrollEnabled = false
@@ -943,7 +963,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
             
             if self.nearbyViewController != nil {
                 self.unhideNearbyButtons(nearby: true)
-                self.nearbyViewController.offsetCityName(closed: true)
+                self.nearbyViewController.offsetCityName(position: 0)
                 
             } else if self.profileViewController != nil {
                 self.unhideNearbyButtons(nearby: false)
@@ -963,9 +983,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
                 self.halfScreenNavBarTransition() /// transtion nav bar background remove
                 self.setSpotSubviews(open: false)
                 self.spotViewController.tableView.isScrollEnabled = false
-                self.addToSpotTransition(alpha: 1.0) /// animate addToSpotButton add
-                self.spotViewController.resizeTable(halfScreen: true, forceRefresh: false)
-                self.spotViewController.unhideSeparatorLine()
+                if self.spotViewController.selectedIndex == 0 { self.addToSpotTransition(alpha: 1.0) } /// animate addToSpotButton add
                 
             } else if self.profileViewController != nil {
                 if self.profileViewController.shadowScroll == nil { return }
@@ -995,7 +1013,8 @@ extension MapViewController: UIGestureRecognizerDelegate {
         
         UIView.animate(withDuration: 0.15, animations: { self.spotViewController.addToSpotButton.alpha = alpha })
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) { [weak self] in
+            guard let self = self else { return }
             if alpha == 0.0 {
                 if self.spotViewController == nil { return }
                 self.spotViewController.addToSpotButton.isHidden = true
@@ -1015,13 +1034,14 @@ extension MapViewController: UIGestureRecognizerDelegate {
     
     func animateToFullScreen() {
         
+        print("animate to full")
         removeBottomBar()
         self.prePanY = 0
         
         DispatchQueue.main.async {
             
             if self.spotViewController != nil {
-                self.animateSpotToFull(forceRefresh: false)
+                self.animateSpotToFull()
                 self.hideSpotButtons()
                 
             } else if self.profileViewController != nil {
@@ -1047,7 +1067,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
         }
     }
     
-    func animateSpotToFull(forceRefresh: Bool) {
+    func animateSpotToFull() {
         
         prePanY = 0
 
@@ -1055,21 +1075,12 @@ extension MapViewController: UIGestureRecognizerDelegate {
 
             self.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
             self.navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
-            self.navigationController?.navigationBar.addShadow()
+            self.navigationController?.navigationBar.removeShadow()
             self.navigationController?.navigationBar.isTranslucent = false
             
-            self.spotViewController.shadowScroll.isScrollEnabled = self.spotViewController.tableScrollNeeded
-            self.spotViewController.unhideSeparatorLine()
-            self.addToSpotTransition(alpha: 1.0)
+            self.spotViewController.shadowScroll.isScrollEnabled = true
+            if self.spotViewController.selectedIndex == 0 { self.addToSpotTransition(alpha: 1.0) }
             self.setSpotSubviews(open: true)
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
-            
-            guard let self = self else { return }
-            
-            if self.spotViewController == nil { return }
-            self.spotViewController.resizeTable(halfScreen: false, forceRefresh: forceRefresh)
         }
     }
     
@@ -1121,7 +1132,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
         if spotViewController == nil { return }
         let minY = open ? spotViewController.sec0Height : 0
 
-        if spotViewController.tableView != nil {  spotViewController.tableView.setContentOffset(CGPoint(x: spotViewController.tableView.contentOffset.x, y: minY), animated: false) }
+         spotViewController.tableView.setContentOffset(CGPoint(x: spotViewController.tableView.contentOffset.x, y: minY), animated: false)
          spotViewController.shadowScroll.setContentOffset(CGPoint(x: spotViewController.shadowScroll.contentOffset.x, y: minY), animated: false)
     }
         
@@ -1183,11 +1194,11 @@ extension MapViewController: MKMapViewDelegate {
         guard let coordinate = location?.coordinate else { return }
         annotation.coordinate = coordinate
         
-        self.listener1 = self.db.collection("spots").document(key!).addSnapshotListener({ (spotSnap, err) in
-            guard let doc = spotSnap else {
-                return
-            }
+        self.db.collection("spots").document(key!).getDocument { (spotSnap, err) in
+            guard let doc = spotSnap else { return }
+            
             do {
+                
                 let spotIn = try doc.data(as: MapSpot.self)
                 guard var spotInfo = spotIn else { return }
                 
@@ -1214,7 +1225,7 @@ extension MapViewController: MKMapViewDelegate {
             } catch {
                 return
             }
-        })
+        }
     }
     
     
@@ -1288,11 +1299,11 @@ extension MapViewController: MKMapViewDelegate {
     }
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        
+
         if annotation is MKUserLocation { return nil }
         
         //posts list is not empty whenever post page is open
-        if postsList.isEmpty && (self.selectedSpotID == "" ||  self.selectedProfileID != "") {
+        if postsList.isEmpty && (self.selectedSpotID == "" || self.selectedProfileID != "") {
             
             // spot banner view
             if let anno = annotation as? CustomSpotAnnotation {
@@ -1467,18 +1478,33 @@ extension MapViewController: MKMapViewDelegate {
         /// should update region is on a delay so that it doesn't get called constantly on the map pan
         if shouldUpdateRegion {
         
-            if !searchPageOpen() { return }
-            self.shouldUpdateRegion = false
+            shouldUpdateRegion = false
             
             DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 
                 guard let self = self else { return }
+                
                 self.shouldUpdateRegion = true
+                if !self.searchPageOpen() { return }
                 if !mapView.region.IsValid { return }
                 
-                self.regionQuery = self.geoFirestore.query(inRegion: mapView.region)
-                let _ = self.regionQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
+                if self.regionQuery != nil {
+                    self.regionQuery?.region = mapView.region
+                } else { self.regionQuery = self.geoFirestore.query(inRegion: mapView.region) }
+                
                 self.filterSpots(refresh: false)
+            }
+        }
+        
+        if shouldUpdateCity {
+            
+            shouldUpdateCity = false
+            
+            DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                
+                guard let self = self else { return }
+                if !self.searchPageOpen() { return }
+                self.nearbyViewController.checkForCityChange()
             }
         }
     }
@@ -1567,8 +1593,8 @@ extension MapViewController: MKMapViewDelegate {
     
     
     func openPostPage(id: String) {
-        if let index = self.postsList.firstIndex(where: {$0.id == id})  {
-            spotViewController.openPostPage(index: index)
+        if let post = self.postsList.first(where: {$0.id == id})  {
+            spotViewController.openPostPage(postID: post.id!, imageIndex: 0)
         }
     }
     
@@ -1580,17 +1606,17 @@ extension MapViewController: MKMapViewDelegate {
             Mixpanel.mainInstance().track(event: "MapSelectSpot")
             
             if selectedProfileID != "" {
-                selectFromProfile(spotID: clusterView.topSpotID)
+                selectProfileFromMap(spotID: clusterView.topSpotID)
             } else {
-                selectFromMap(spotID: clusterView.topSpotID)
+                selectNearbyFromMap(spotID: clusterView.topSpotID)
             }
         } else if let annoView = view as? SpotAnnotationView {
             Mixpanel.mainInstance().track(event: "MapSelectSpot")
             
             if selectedProfileID != "" {
-                selectFromProfile(spotID: annoView.spotID)
+                selectProfileFromMap(spotID: annoView.spotID)
             } else {
-                selectFromMap(spotID: annoView.spotID)
+                selectNearbyFromMap(spotID: annoView.spotID)
             }
             ///post annotations
             
@@ -1618,24 +1644,24 @@ extension MapViewController: MKMapViewDelegate {
             }
             
         } else if view is SinglePostAnnotationView {
-            print("did select")
             NotificationCenter.default.post(name: Notification.Name("FeedPostTap"), object: nil, userInfo: nil)
         }
     }
     
-    func selectFromProfile(spotID: String) {
-        
+    func selectProfileFromMap(spotID: String) {
+
         /// passed camera is where camera was before opening user profile
         if profileViewController == nil { return }
         profileViewController.passedCamera = MKMapCamera(lookingAtCenter: mapView.centerCoordinate, fromDistance: mapView.camera.centerCoordinateDistance, pitch: mapView.camera.pitch, heading: mapView.camera.heading)
 
         profileViewController = nil
+        selectedProfileID = "" 
         selectedSpotID = spotID
         let infoPass = ["id": spotID] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("MapSpotOpen"), object: nil, userInfo: infoPass)
     }
     
-    func selectFromMap(spotID: String) {
+    func selectNearbyFromMap(spotID: String) {
         
         // clear out all markers, show posts on map
         selectedSpotID = spotID
@@ -1703,10 +1729,16 @@ extension MapViewController: MKMapViewDelegate {
 
         guard let userInfo = notification.userInfo as? [String: Any] else { return }
         guard let spot = userInfo["spot"] as? MapSpot else { return }
-        self.selectedSpotID = spot.id ?? ""
+        
+        selectedSpotID = spot.id ?? ""
+        selectedProfileID = ""
+        profileViewController = nil
+        postsList.removeAll()
+        
         let selectedCoordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
         let annotations = self.mapView.annotations
         mapView.removeAnnotations(annotations)
+        
         let selectedSpotAnno = MKPointAnnotation()
         selectedSpotAnno.coordinate = selectedCoordinate
         mapView.addAnnotation(selectedSpotAnno)
@@ -1715,6 +1747,24 @@ extension MapViewController: MKMapViewDelegate {
         mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: 300, longitudinalMeters: 300), animated: true)
     }
     
+    @objc func selectFromNotis(_ notification: NSNotification) {
+        
+        Mixpanel.mainInstance().track(event: "SelectSpotFromNotis")
+        
+        guard let userInfo = notification.userInfo as? [String: Any] else { return }
+        guard let spot = userInfo["spot"] as? MapSpot else { return }
+
+        selectedSpotID = spot.id ?? ""
+                
+        let selectedCoordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
+        
+        let selectedSpotAnno = MKPointAnnotation()
+        selectedSpotAnno.coordinate = selectedCoordinate
+        mapView.addAnnotation(selectedSpotAnno)
+            
+        let adjustedCoordinate = CLLocationCoordinate2D(latitude: selectedCoordinate.latitude - 0.001, longitude: selectedCoordinate.longitude)
+        mapView.setRegion(MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: 300, longitudinalMeters: 300), animated: true)
+    }
     
     func runSelected(selectedCoordinate: CLLocationCoordinate2D, spot: MapSpot) {
         // remove annotations and open spot page
@@ -1798,6 +1848,7 @@ extension MapViewController: MKMapViewDelegate {
             vc.view.frame = UIScreen.main.bounds
             
             hideNearbyButtons()
+            searchBarButton.isHidden = true
             nearbyViewController.addTopRadius()
             nearbyViewController.addChild(vc)
             nearbyViewController.view.addSubview(vc.view)
@@ -1829,7 +1880,11 @@ extension MapViewController: MKMapViewDelegate {
                 /// max distance = 160 in all directions
                 if farthestDistance > 160 {
                     
-                    let region = MKCoordinateRegion(center: spotLocation.coordinate, latitudinalMeters: farthestDistance * 2.5, longitudinalMeters: farthestDistance * 2.5)
+                    var region = MKCoordinateRegion(center: spotLocation.coordinate, latitudinalMeters: farthestDistance * 2.5, longitudinalMeters: farthestDistance * 2.5)
+                    
+                    /// adjust if invalid region
+                    if region.span.latitudeDelta > 100 { region.span.latitudeDelta = 100 }
+                    if region.span.longitudeDelta > 100 { region.span.longitudeDelta = 100 }
 
                     let offset: CGFloat = self.largeScreen ? 240 : 270
                     self.offsetCenterCoordinate(selectedCoordinate: spotLocation.coordinate, offset: offset, animated: true, region: region)
@@ -2208,8 +2263,10 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource {
     func runQuery(searchText: String) {
         
         tagUsers.removeAll()
-        let usernameList = self.friendsList.map({$0.username})
-        let nameList = self.friendsList.map({$0.name})
+        var adjustedFriends = friendsList
+        adjustedFriends.removeAll(where: {$0.id == "T4KMLe3XlQaPBJvtZVArqXQvaNT2"}) /// remove bot
+        let usernameList = adjustedFriends.map({$0.username})
+        let nameList = adjustedFriends.map({$0.name})
         
         let filteredUsernames = searchText.isEmpty ? usernameList : usernameList.filter({(dataString: String) -> Bool in
             // If dataItem matches the searchText, return true to include it
@@ -2221,11 +2278,11 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource {
         })
         
         for username in filteredUsernames {
-            if let friend = self.friendsList.first(where: {$0.username == username}) { self.tagUsers.append(friend) }
+            if let friend = adjustedFriends.first(where: {$0.username == username}) { self.tagUsers.append(friend) }
         }
         
         for name in filteredNames {
-            if let friend = self.friendsList.first(where: {$0.name == name}) {
+            if let friend = adjustedFriends.first(where: {$0.name == name}) {
                 ///chance that 2 people with same name won't show up in search rn
                 if !self.tagUsers.contains(where: {$0.id == friend.id}) { self.tagUsers.append(friend) }
             }
@@ -2328,28 +2385,26 @@ extension MapViewController {
     
     func addMapButtons() {
         
-        mapMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-
-        activeFilterView = UIView(frame: CGRect(x: 0, y: 50, width: 120, height: 150))
-        activeFilterView.backgroundColor = nil
-        activeFilterView.alpha = 0.0
-        mapView.addSubview(activeFilterView)
-        
-        /// tab bar height - portion of search bar showing -
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let safeBottom = window?.safeAreaInsets.bottom ?? 0
         let tabBarHeight = customTabBar.tabBar.frame.height + safeBottom
-
         let closedY = tabBarHeight + 84
 
-        userLocationButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 61, y: UIScreen.main.bounds.height - closedY - 80, width: 50, height: 50))
+        mapMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+
+        activeFilterView = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - closedY - 120, width: 120, height: 150))
+        activeFilterView.backgroundColor = nil
+        activeFilterView.alpha = 0.0
+        mapView.addSubview(activeFilterView)
+
+        userLocationButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 61, y: UIScreen.main.bounds.height - closedY - 65, width: 50, height: 50))
         userLocationButton.setImage(UIImage(named: "UserLocationButton"), for: .normal)
         userLocationButton.addTarget(self, action: #selector(userLocationTap(_:)), for: .touchUpInside)
         userLocationButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         userLocationButton.isHidden = true
         mapView.addSubview(userLocationButton)
         
-        directionsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 64, y: UIScreen.main.bounds.height - closedY - 80, width: 56, height: 56))
+        directionsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 64, y: UIScreen.main.bounds.height - closedY - 65, width: 56, height: 56))
         directionsButton.setImage(UIImage(named: "DirectionsButton"), for: .normal)
         directionsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         directionsButton.isHidden = true
@@ -2361,6 +2416,20 @@ extension MapViewController {
         toggleMapButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         toggleMapButton.isHidden = true
         mapView.addSubview(toggleMapButton)
+        
+        let searchBarY: CGFloat = largeScreen ? 43 : 33
+        searchBarButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 205/2, y: searchBarY, width: 205, height: 48))
+        searchBarButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        searchBarButton.setImage(UIImage(named: "SearchBarButton"), for: .normal)
+        searchBarButton.addTarget(self, action: #selector(searchBarTap(_:)), for: .touchUpInside)
+        searchBarButton.isHidden = true
+        mapView.addSubview(searchBarButton)
+    }
+    
+    @objc func searchBarTap(_ sender: UIButton) {
+        if nearbyViewController == nil { return }
+        Mixpanel.mainInstance().track(event: "NearbySearchBarTap")
+        nearbyViewController.searchBar.becomeFirstResponder()
     }
     
     @objc func toggle2D(_ sender: UIButton) {
@@ -2425,7 +2494,7 @@ extension MapViewController {
         
         mapView.bringSubviewToFront(activeFilterView)
         
-        var minY: CGFloat = 0
+        var minY: CGFloat = 80
         
         if filterUser != nil {
             
@@ -2434,20 +2503,20 @@ extension MapViewController {
             temp.font = UIFont(name: "SFCamera-Semibold", size: 12)
             temp.sizeToFit()
             
-            let filterView = ActiveFilterView(frame: CGRect(x: 16, y: minY, width: temp.bounds.width + 65, height: 30))
+            let filterView = ActiveFilterView(frame: CGRect(x: 13, y: minY, width: temp.bounds.width + 65, height: 30))
             filterView.setUpFilter(name: filterUser.username, image: UIImage(), imageURL: filterUser.imageURL)
             filterView.closeButton.tag = 10
             filterView.closeButton.addTarget(self, action: #selector(deselectFilter(_:)), for: .touchUpInside)
             activeFilterView.addSubview(filterView)
 
-            minY += 40
+            minY -= 40
         }
         
         var count = 0
         
         for tag in filterTags {
             
-            let filterView = ActiveFilterView(frame: CGRect(x: 16, y: minY, width: 105, height: 30))
+            let filterView = ActiveFilterView(frame: CGRect(x: 13, y: minY, width: 105, height: 30))
             let tag = Tag(name: tag)
             filterView.setUpFilter(name: tag.name, image: tag.image, imageURL: "")
             filterView.closeButton.tag = count
@@ -2455,7 +2524,7 @@ extension MapViewController {
             self.activeFilterView.addSubview(filterView)
             
             count += 1
-            minY += 40
+            minY -= 40
         }
     }
     
@@ -2591,7 +2660,8 @@ extension MapViewController {
             tutorialText.clipsToBounds = false
             DispatchQueue.main.async { self.tutorialView.addSubview(self.tutorialText) }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self = self else { return }
                 self.mapMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.firstTutorialTap(_:))))
             }
             
@@ -2634,7 +2704,8 @@ extension MapViewController {
             tutorialText.sizeToFit()
             DispatchQueue.main.async { self.tutorialView.addSubview(self.tutorialText) }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self = self else { return }
                 self.mapMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tutorialMaskTap(_:))))
             }
             
@@ -2672,12 +2743,13 @@ extension MapViewController {
             tutorialText.font = UIFont(name: "SFCamera-Semibold", size: 24)
             DispatchQueue.main.async { self.tutorialView.addSubview(self.tutorialText) }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self = self else { return }
                 self.mapMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tutorialMaskTap(_:))))
             }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                                
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+                guard let self = self else { return }
                 if self.tutorialView.superview != nil && self.tutorialView.frame.minY == 100 {
                     self.removeTutorialView()
                 }
@@ -2715,13 +2787,13 @@ extension MapViewController {
             tutorialText.clipsToBounds = false
             DispatchQueue.main.async { self.tutorialView.addSubview(self.tutorialText) }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self = self else { return }
                 self.mapMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tutorialMaskTap(_:))))
             }
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
                 guard let self = self else { return }
-
                 if self.tutorialView.superview != nil && self.tutorialView.frame.minY == navBarHeight - 50 {
                     self.removeTutorialView()
                 }
@@ -2757,7 +2829,8 @@ extension MapViewController {
         
         for gesture in mapMask.gestureRecognizers! { mapMask.removeGestureRecognizer(gesture) }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+            guard let self = self else { return }
             self.mapMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.secondTutorialTap(_:))))
         }
         
@@ -2789,12 +2862,13 @@ extension MapViewController {
         
         for gesture in mapMask.gestureRecognizers! {  mapMask.removeGestureRecognizer(gesture) }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self = self else { return }
             self.mapMask.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tutorialMaskTap(_:))))
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-           
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            guard let self = self else { return }
             if self.tutorialView.superview != nil && self.tutorialImage.frame.minY == minY {
                 self.removeTutorialView()
             }
