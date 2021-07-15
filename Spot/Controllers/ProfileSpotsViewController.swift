@@ -38,6 +38,7 @@ class ProfileSpotsViewController: UIViewController {
         
         super.viewDidLoad()
         setUpSpotsCollection()
+        spotsIndicator.startAnimating()
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -123,7 +124,7 @@ class ProfileSpotsViewController: UIViewController {
             if !spotsList[i].visitorList.contains(uid) { spotsList[i].visitorList.append(uid) }
             spotsList[i].tags = profileVC.openSpotTags
             
-            self.openSpot(spot: spotsList[i])
+            self.openSpot(spot: spotsList[i], upload: true)
             profileVC.openSpotID = ""
             profileVC.openSpotTags.removeAll()
             profileVC.openPostID = ""
@@ -143,7 +144,7 @@ class ProfileSpotsViewController: UIViewController {
         guard let userInfo = notification.userInfo as? [String: Any] else { return }
         guard let id = userInfo.first?.value as? String else { return }
         if let spot = spotsList.first(where: {$0.id == id}) {
-            openSpot(spot: spot)
+            openSpot(spot: spot, upload: false)
         }
     }
     
@@ -162,6 +163,7 @@ class ProfileSpotsViewController: UIViewController {
     }
     
     @objc func notifyEditSpot(_ notification: NSNotification) {
+        
         if let editSpot = notification.userInfo?.first?.value as? MapSpot {
             if let index = self.spotsList.firstIndex(where: {$0.id == editSpot.id}) {
                 spotsList[index] = editSpot
@@ -483,13 +485,12 @@ extension ProfileSpotsViewController: UICollectionViewDelegate, UICollectionView
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if let cell = spotsCollection.cellForItem(at: indexPath) as? SpotCollectionCell {
-            openSpot(spot: cell.spotObject)
+            openSpot(spot: cell.spotObject, upload: false)
         }
     }
     
-    func openSpot(spot: MapSpot) {
+    func openSpot(spot: MapSpot, upload: Bool) {
         
-        print("open spot")
         let infoPass = ["spot": spot as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("OpenSpotFromProfile"), object: nil, userInfo: infoPass)
         
@@ -502,6 +503,7 @@ extension ProfileSpotsViewController: UICollectionViewDelegate, UICollectionView
             spotVC.spotID = spot.id ?? ""
             spotVC.spotObject = spot
             spotVC.mapVC = mapVC
+            spotVC.openOnUpload = upload
             
             profileVC.shadowScroll.isScrollEnabled = false
             profileVC.passedCamera = MKMapCamera(lookingAtCenter: mapVC.mapView.centerCoordinate, fromDistance: mapVC.mapView.camera.centerCoordinateDistance, pitch: mapVC.mapView.camera.pitch, heading: mapVC.mapView.camera.heading)

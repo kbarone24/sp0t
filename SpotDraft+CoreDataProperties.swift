@@ -37,6 +37,7 @@ extension SpotDraft {
     @NSManaged public var postToPOI: Bool
     @NSManaged public var hideFromFeed: Bool
     @NSManaged public var frameIndexes: [Int]?
+    @NSManaged public var gif: Bool
 }
 
 // MARK: Generated accessors for images

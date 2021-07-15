@@ -106,15 +106,10 @@ class CommentsViewController: UIViewController {
         guard let tag = infoPass["tag"] as? Int else { return }
         if tag != 0 { return } /// tag 2 for upload tag. This notification should only come through if tag = 2 because upload will always be topmost VC
 
-        /// get where user is currently editing
-        if let selectedRange = textView.selectedTextRange {
-            let startPosition: UITextPosition =  textView.beginningOfDocument
-            let cursorPosition =  textView.offset(from: startPosition, to: selectedRange.start)
-            let text = textView.text ?? ""
-            
-            let tagText = addTaggedUserTo(text: text, username: username, cursorPosition: cursorPosition)
-            textView.text = tagText
-        }
+        let cursorPosition = textView.getCursorPosition()
+        let text = textView.text ?? ""
+        let tagText = addTaggedUserTo(text: text, username: username, cursorPosition: cursorPosition)
+        textView.text = tagText
     }
     
     func addFooter() {
@@ -186,10 +181,7 @@ class CommentsViewController: UIViewController {
                     guard var userProfile = userProf else { commentEscape(); return }
                     
                     userProfile.id = snap!.documentID
-                    
-                    if let url = URL(string: userProfile.imageURL) {
-                        SDWebImagePrefetcher.shared.prefetchURLs([url], progress: nil) }
-                    
+                                        
                     comment.userInfo = userProfile
                     self.commentList[i] = comment
                     self.post.commentList = self.commentList
@@ -384,11 +376,8 @@ extension CommentsViewController: UITextViewDelegate {
         resizeFooter(type: 2)
         
         ///add tag table if @ used
-        if let selectedRange = textView.selectedTextRange {
-            let startPosition: UITextPosition =  textView.beginningOfDocument
-            let cursorPosition =  textView.offset(from: startPosition, to: selectedRange.start)
-            postVC.addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursorPosition, tableParent: .comments)
-        }
+        let cursor = textView.getCursorPosition()
+        postVC.addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursor, tableParent: .comments)
     }
     
     func resizeFooter(type: Int) {
@@ -606,7 +595,7 @@ class CommentCell: UITableViewCell {
                         openProfile(user: friend)
                     } else {
                         /// pass blank user object to open func, run get user func on profile load
-                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "")
+                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "", userBio: "")
                         user.id = ""
                         self.openProfile(user: user)
                     }
@@ -763,7 +752,7 @@ class CommentHeader: UITableViewHeaderFooterView {
                         openProfile(user: friend)
                     } else {
                         /// pass blank user object to open func, run get user func on profile load
-                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "")
+                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "", userBio: "")
                         user.id = ""
                         self.openProfile(user: user)
                     }
@@ -815,7 +804,7 @@ class CommentHeader: UITableViewHeaderFooterView {
         let timeInterval = TimeInterval(integerLiteral: postTime.seconds)
         let date = Date(timeIntervalSince1970: timeInterval)
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "M/d/yy"
+        dateFormatter.dateFormat = "MMM d, yyyy"
         let dateString = dateFormatter.string(from: date)
         return dateString
     }

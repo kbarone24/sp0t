@@ -144,12 +144,11 @@ class PhotosContainerController: UIViewController {
         guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
 
         ///assets full are for reloads and map gallery
-        assetsFull = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions)
+        assetsFull = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions) 
         photoMapController.loaded = true
         
         /// run get images in case map picker lagged behind
         if selectedIndex == 1 && photoMapController.locationObjects.isEmpty {
-            print("get images 2")
             photoMapController.getImages()
         }
     }

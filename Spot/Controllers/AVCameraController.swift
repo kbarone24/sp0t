@@ -90,7 +90,7 @@ class AVCameraController: UIViewController {
         super.viewDidDisappear(animated)
         
         cameraController.previewLayer?.connection?.isEnabled = false
-        
+        disableButtons()
         /// disable for deinit
         
         if isMovingFromParent {
@@ -469,7 +469,7 @@ class AVCameraController: UIViewController {
         
         //dots show progress with each successive gif image capture
         if count < 5 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.19) { [weak self] in
                 guard let self = self else { return }
                 self.addDot(count: count)
                 self.addDots(count: count + 1)

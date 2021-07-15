@@ -27,8 +27,8 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     lazy var friendRequestsPending: [FriendRequest] = []
     lazy var removedRequestList: [String] = []
 
-    let acceptNotificationName = Notification.Name("friendRequestAccept")
-    let deleteNotificationName = Notification.Name("friendRequestReject")
+    let acceptNotificationName = Notification.Name("FriendRequestAccept")
+    let deleteNotificationName = Notification.Name("FriendRequestReject")
     
     var listener1, listener2, listener3, listener4, listener5: ListenerRegistration!
     var endDocument: DocumentSnapshot!
@@ -284,7 +284,8 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             
             self.getMapPost(postID: postID) { (post) in
                 
-                if post.userInfo.id == "" { return }
+                if userInfo.id == "" { return }
+                                
                 /// update post notification
                 if self.notificationList.contains(where: {$0.notiID == notiID}) {
                     if let i = self.postNotifications.firstIndex(where: {$0.notiID == notiID}) {
@@ -337,17 +338,22 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         if let user = mapVC.friendsList.first(where: {$0.id == userID}) {
             completion(user)
+            
+        } else if userID == mapVC.uid {
+            completion(mapVC.userInfo)
+            
         } else {
             db.collection("users").document(userID).getDocument { (doc, err) in
                 if err != nil { return }
-                
+
                 do {
                     let userInfo = try doc!.data(as: UserProfile.self)
                     guard var info = userInfo else { return }
+                    print("fetch", info.username)
                     info.id = doc!.documentID
                     completion(info)
                     
-                } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "")); return }
+                } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")); return }
             }
         }
     }
@@ -355,8 +361,8 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     // standard get post methods because we need to get all post data before opening post page
     func getMapPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
         
-        let dispatch = DispatchGroup()
         let db: Firestore! = Firestore.firestore()
+        let dispatch = DispatchGroup()
         
         db.collection("posts").document(postID).getDocument { [weak self] (doc, err) in
             if err != nil { return }
@@ -373,20 +379,18 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 dispatch.enter()
                 dispatch.enter()
                 
-                self.prefetchImages(imageURLs: info.imageURLs)
-                
                 self.getUserInfo(userID: info.posterID, mapVC: self.mapVC) { (userInfo) in
                     if userInfo.id != "" { info.userInfo = userInfo }
                     dispatch.leave()
                 }
-                
+                                                
                 self.getComments(postID: postID) { (comments) in
                     info.commentList = comments
                     dispatch.leave()
                 }
                 
                 dispatch.notify(queue: .main) { completion(info) }
-                
+                                
             } catch { return }
         }
     }
@@ -406,17 +410,6 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 
             } catch { return }
         }
-    }
-    
-    
-    func prefetchImages(imageURLs: [String]) {
-        var urls: [URL] = []
-        for postURL in imageURLs {
-            guard let url = URL(string: postURL) else { continue }
-            urls.append(url)
-        }
-        
-        SDWebImagePrefetcher.shared.prefetchURLs(urls)
     }
     
     func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
@@ -807,7 +800,7 @@ class FriendRequestCell: UITableViewCell {
         DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID, uid: self.uid, username: self.username) }
         
         let infoPass = ["friendID": friendID] as [String : Any]
-        NotificationCenter.default.post(name: Notification.Name("friendRequestAccept"), object: nil, userInfo: infoPass)
+        NotificationCenter.default.post(name: Notification.Name("FriendRequestAccept"), object: nil, userInfo: infoPass)
     }
     
     @objc func removeTap(_ sender: UIButton) {
@@ -820,7 +813,7 @@ class FriendRequestCell: UITableViewCell {
         removeFriendRequest(friendID: friendID, uid: uid)
         
         let infoPass = ["friendID": friendID] as [String : Any]
-        NotificationCenter.default.post(name: Notification.Name("friendRequestReject"), object: nil, userInfo: infoPass)
+        NotificationCenter.default.post(name: Notification.Name("FriendRequestReject"), object: nil, userInfo: infoPass)
     }
 }
 
@@ -906,7 +899,7 @@ class PostNotificationCell: UITableViewCell {
                 
         let contentURL = notification.post.imageURLs.first ?? ""
         if contentURL != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 200, height: 200), scaleMode: .aspectFill)
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 200), scaleMode: .aspectFill)
             contentImage.sd_setImage(with: URL(string: contentURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
         }
         
@@ -1151,7 +1144,7 @@ class SpotNotificationCell: UITableViewCell {
                         
         let contentURL = notification.spot.imageURL
         if contentURL != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 200, height: 200), scaleMode: .aspectFill)
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 200), scaleMode: .aspectFill)
             spotImage.sd_setImage(with: URL(string: contentURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
         }
         
@@ -1326,3 +1319,4 @@ extension UITableViewCell {
         }
     }
 }
+

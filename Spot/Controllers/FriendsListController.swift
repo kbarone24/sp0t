@@ -99,7 +99,7 @@ class FriendsListController: UIViewController {
         for friend in self.friendIDs {
                         
             if !self.friendsList.contains(where: {$0.id == friend}) {
-                var emptyProfile = UserProfile(username: "", name: "", imageURL: "", currentLocation: "")
+                var emptyProfile = UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
                 emptyProfile.id = friend
                 self.friendsList.append(emptyProfile) } /// append empty here so they appear in order
 

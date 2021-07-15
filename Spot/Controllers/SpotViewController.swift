@@ -37,18 +37,19 @@ class SpotViewController: UIViewController {
     
     unowned var mapVC: MapViewController!
     
-    lazy var sec0Height: CGFloat = 0
+    var sec0Height: CGFloat = 0
     lazy var postIndex = 0
-    lazy var visitorIndex = 0
-    lazy var escapeIndex = 0
-    lazy var selectedIndex = 0
+    var visitorIndex = 0
+    var escapeIndex = 0
+    var selectedIndex = 0
     
     var editMask: UIView!
     var editView: UIView!
     var editedSpot: MapSpot!
-    lazy var editSpotMode = false
-    lazy var editedImage = false /// determines whether edit controller should update the cover image in DB
-        
+    var editSpotMode = false
+    var editedImage = false /// determines whether edit controller should update the cover image in DB
+    var openOnUpload = false /// bool to tell view to reset annotations on upload (patch fix)
+    
     deinit {
         print("deinit spot")
     }
@@ -137,6 +138,9 @@ class SpotViewController: UIViewController {
     }
     
     func runInitialFuncs() {
+        
+        if mapVC.userInfo == nil { return }
+        
         DispatchQueue.global(qos: .userInitiated).async {
             self.getVisitorInfo(refresh: false)
             self.getSpotPosts()
@@ -212,16 +216,20 @@ class SpotViewController: UIViewController {
         /// new post on post upload
         if let newPost = sender.userInfo?.first?.value as? MapPost {
             
-            postsList.insert(newPost, at: 0)
-            
-            var frameIndexes = newPost.frameIndexes ?? []
-            if frameIndexes.isEmpty { for i in 0...newPost.imageURLs.count - 1 { frameIndexes.append(i)} }
+            var post = newPost
+            post.seconds = post.actualTimestamp?.seconds ?? post.timestamp.seconds /// adjust seconds to reflect spot page sorting
+            postsList.append(post)
+            postsList.sort(by: {$0.seconds > $1.seconds})
 
-            let date = getDateTimestamp(seconds: newPost.actualTimestamp?.seconds ?? newPost.seconds)
-            for i in 0...frameIndexes.count - 1 { guestbookPreviews.append(GuestbookPreview(postID: newPost.id!, frameIndex: frameIndexes[i], imageIndex: i, imageURL: newPost.imageURLs[frameIndexes[i]], seconds: newPost.seconds, date: date)) }
+            
+            var frameIndexes = post.frameIndexes ?? []
+            if frameIndexes.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i)} }
+
+            let date = getDateTimestamp(seconds: post.seconds)
+            for i in 0...frameIndexes.count - 1 { guestbookPreviews.append(GuestbookPreview(postID: post.id!, frameIndex: frameIndexes[i], imageIndex: i, imageURL: post.imageURLs[frameIndexes[i]], seconds: post.seconds, date: date)) }
             guestbookPreviews.sort(by: {$0.seconds > $1.seconds})
 
-            updatePostDates(date: date, seconds: newPost.seconds)
+            updatePostDates(date: date, seconds: post.seconds)
             
             self.tableView.reloadData()
         }
@@ -313,15 +321,23 @@ class SpotViewController: UIViewController {
     }
     
     func addAddToSpot() {
-        ///add addToSpot button over the top of custom tab bar
         
+        ///add addToSpot button over the top of custom tab bar
         let addY = mapVC.largeScreen ? UIScreen.main.bounds.height - 89 : UIScreen.main.bounds.height - 74
         let addX = mapVC.largeScreen ? UIScreen.main.bounds.width - 73 : UIScreen.main.bounds.width - 69
         addToSpotButton = UIButton(frame: CGRect(x: addX, y: addY, width: 55, height: 55))
         addToSpotButton.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
         addToSpotButton.addTarget(self, action: #selector(addToSpotTap(_:)), for: .touchUpInside)
-        addToSpotButton.isHidden = selectedIndex == 0 && children.count == 2
+        addToSpotButton.isHidden = selectedIndex == 1 || children.count > 2
         mapVC.view.addSubview(addToSpotButton)
+        
+        /// patch fix for annotations disappearing on hide from feed uploads
+       if !mapVC.mapView.annotations.isEmpty && openOnUpload {
+            openOnUpload = false
+            let annotations = mapVC.mapView.annotations
+            mapVC.mapView.removeAnnotations(annotations)
+            mapVC.mapView.addAnnotations(annotations)
+        }
     }
     
     func getVisitorInfo(refresh: Bool) {
@@ -424,6 +440,21 @@ class SpotViewController: UIViewController {
         if selectedIndex == 0 {
             guard let header = tableView.headerView(forSection: 1) as? SpotSegHeader else { return }
             header.animateBar(index: 1)
+        }
+    }
+    
+    func scrollSegmentToTop() {
+        
+        if mapVC.prePanY != 0 { return }
+        
+        if shadowScroll.contentOffset.y > sec0Height {
+                        
+            UIView.animate(withDuration: 0.2) {
+                self.selectedIndex == 0 ? self.spotPostsController.postsCollection.setContentOffset(CGPoint(x: self.spotPostsController.postsCollection.contentOffset.x, y: 0), animated: false) : self.spotVisitorsController.visitorsCollection.setContentOffset(CGPoint(x: self.spotVisitorsController.visitorsCollection.contentOffset.x, y: 0), animated: false)
+            } completion: { [weak self] (_) in
+                guard let self = self else { return }
+                self.shadowScroll.setContentOffset(CGPoint(x: self.shadowScroll.contentOffset.x, y: self.sec0Height), animated: false)
+            }
         }
     }
     
@@ -563,6 +594,7 @@ class SpotViewController: UIViewController {
     func resetAnnos() {
         
         /// add main target annotation and individual posts back to map
+        
         let annotations = mapVC.mapView.annotations
         mapVC.mapView.removeAnnotations(annotations)
         
@@ -760,7 +792,7 @@ class SpotViewController: UIViewController {
                         let postInfo = try post?.data(as: MapPost.self)
                         guard var info = postInfo else { self.postEscape(); return }
                         
-                        info.seconds = info.timestamp.seconds
+                        info.seconds = info.actualTimestamp?.seconds ?? info.timestamp.seconds
                         info.id = post!.documentID
                                                 
                         if self.spotObject.privacyLevel == "public" {
@@ -954,6 +986,8 @@ class SpotViewController: UIViewController {
         
         let increment = newUsers.count - oldUsers.count
         if increment > 0 { DispatchQueue.global(qos: .utility).async { self.incrementSpotScore(user: self.uid, increment: increment) } }
+        
+        NotificationCenter.default.post(Notification(name: Notification.Name("EditSpot"), object: nil, userInfo: ["spot" : spotObject as Any])) /// send edit notifications to update spot objects throughout the app
     }
     
     func sendInviteNotification(user: String) {
@@ -1492,7 +1526,7 @@ class SpotSegHeader: UITableViewHeaderFooterView {
         self.selectedIndex = selectedIndex
         
         if segmentedControl != nil { segmentedControl.removeFromSuperview() }
-        segmentedControl = ProfileSegmentedControl(frame: CGRect(x: 10, y: 10, width: 204, height: 20))
+        segmentedControl = SpotSegmentedControl(frame: CGRect(x: 10, y: 10, width: 204, height: 20))
         segmentedControl.backgroundColor = nil
         segmentedControl.selectedSegmentIndex = selectedIndex
         
@@ -1536,8 +1570,17 @@ class SpotSegHeader: UITableViewHeaderFooterView {
     }
     
     @objc func segmentedControlValueChanged(_ sender: UISegmentedControl) {
+        
+        Mixpanel.mainInstance().track(event: "SpotSwitchSegments")
+        
+        // scroll to top of collection on same index tap
+        if sender.selectedSegmentIndex == selectedIndex {
+            guard let spotVC = viewContainingController() as? SpotViewController else { return }
+            spotVC.scrollSegmentToTop()
+            return
+        }
+        
         // change selected segment on new index tap
-        selectedIndex = sender.selectedSegmentIndex
         animateBar(index: sender.selectedSegmentIndex)
     }
     
@@ -1547,6 +1590,7 @@ class SpotSegHeader: UITableViewHeaderFooterView {
         let minX: CGFloat = index == 0 ? 10 : 114
         
         DispatchQueue.main.async {
+            
             UIView.animate(withDuration: 0.15) {  self.buttonBar.frame = CGRect(x: minX, y: self.buttonBar.frame.minY, width: self.buttonBar.frame.width, height: self.buttonBar.frame.height)
                 
                 let postSegIm = index == 0 ? UIImage(named: "PostsActive")?.withRenderingMode(.alwaysOriginal) : UIImage(named: "PostsInactive")?.withRenderingMode(.alwaysOriginal)
@@ -1554,10 +1598,12 @@ class SpotSegHeader: UITableViewHeaderFooterView {
                 
                 self.segmentedControl.setImage(postSegIm, forSegmentAt: 0)
                 self.segmentedControl.setImage(visitorSegIm, forSegmentAt: 1)
+                
+            } completion: { [weak self] (_) in
+                if self == nil { return }
+                spotVC.resetIndex(index: index)
             }
         }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { spotVC.resetIndex(index: index) }
     }
 }
 
@@ -1592,6 +1638,21 @@ class SpotSegCell: UITableViewCell {
             return
         }
     }
+}
 
+class SpotSegmentedControl: UISegmentedControl {
+    // scroll to top of gallery on tap
+    // this is only called on the second segmented control change tap for some reason
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+
+        let previousIndex = self.selectedSegmentIndex
+        super.touchesEnded(touches, with: event)
+        
+        if previousIndex == self.selectedSegmentIndex {
+            if let spotVC = self.superview?.viewContainingController() as? SpotViewController {
+                spotVC.scrollSegmentToTop()
+            }
+        }
+    }
 }
 

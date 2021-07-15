@@ -81,7 +81,7 @@ class GIFPreviewController: UIViewController {
         previewView.isUserInteractionEnabled = true
         previewView.layer.cornerRadius = 12
         view.addSubview(previewView)
-        if gif { previewView.animationImages = filteredImages; previewView.animateGIF(directionUp: true, counter: 0, frames: filteredImages.count) }
+        if gif { previewView.animationImages = filteredImages; previewView.animateGIF(directionUp: true, counter: 0, frames: filteredImages.count, alive: true) }
                    
         draftsButton = UIButton(frame: CGRect(x: previewView.frame.maxX - 104, y: previewView.frame.maxY - 51, width: 88, height: 35))
         draftsButton.setImage(UIImage(named: "SaveToDraftsButton"), for: .normal)

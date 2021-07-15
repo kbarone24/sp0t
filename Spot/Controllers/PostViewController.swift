@@ -73,7 +73,7 @@ class PostViewController: UIViewController {
         } else {
             if self.children.count != 0 { return }
             resetView()
-            tableView.reloadData()
+           /// tableView.reloadData() / commented out bc was causing alives to restart animation unnecessarily. need to see if any unforseen consequences
         }
     }
     
@@ -188,8 +188,10 @@ class PostViewController: UIViewController {
                 
                 spotNameBanner.sizeToFit()
                 
-                let tapButton = UIButton(frame: CGRect(x: 4, y: 14, width: spotNameLabel.frame.width + 30, height: spotNameBanner.frame.height + 8))
-                tapButton.backgroundColor = nil
+                let tempLabel = spotNameLabel
+                tempLabel.sizeToFit()
+                
+                let tapButton = UIButton(frame: CGRect(x: 4, y: 14, width: tempLabel.frame.width + 35, height: tempLabel.frame.height + 15))
                 tapButton.addTarget(self, action: #selector(spotNameTap(_:)), for: .touchUpInside)
                 view.addSubview(tapButton)
                 
@@ -198,15 +200,16 @@ class PostViewController: UIViewController {
     }
     
     @objc func notifyImageChange(_ sender: NSNotification) {
-        
+
         if let info = sender.userInfo as? [String: Any] {
             
             guard let id = info["id"] as? String else { return }
             if id != vcid { return }
             guard let post = info["post"] as? MapPost else { return }
             
-            /// this really just resets the selected image index of the post before reloading data
-            postsList[selectedPostIndex].selectedImageIndex = post.selectedImageIndex
+            if postsList[selectedPostIndex].selectedImageIndex != post.selectedImageIndex { if let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell { cell.animationCounter = 0; cell.postImage.animationImages?.removeAll() } } /// reset animation counter so that next post, if gif, starts animating at 0
+            
+            postsList[selectedPostIndex].selectedImageIndex = post.selectedImageIndex /// this really just resets the selected image index of the post before reloading data
             updateParentImageIndex(post: post)
             
             DispatchQueue.main.async { [weak self] in
@@ -263,8 +266,10 @@ class PostViewController: UIViewController {
             
             /// animate to next post after vertical scroll
             if let index = info["index"] as? Int {
-                selectedPostIndex = index
                 
+                if selectedPostIndex != index { if let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell { cell.animationCounter = 0; cell.postImage.animationImages?.removeAll() } }  /// reset animation counter so that next post, if gif, starts animating at 0
+                selectedPostIndex = index
+
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     self.tableView.reloadData()
@@ -327,21 +332,16 @@ class PostViewController: UIViewController {
         guard let postCell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell else { return }
         if postCell.editPostView == nil { return }
         
-        if let selectedRange = postCell.editPostView.postCaption.selectedTextRange {
-            let startPosition: UITextPosition =  postCell.editPostView.postCaption.beginningOfDocument
-            let cursorPosition =  postCell.editPostView.postCaption.offset(from: startPosition, to: selectedRange.start)
-            
-            let text = postCell.editPostView.postCaption.text ?? ""
-            let tagText = addTaggedUserTo(text: text, username: username, cursorPosition: cursorPosition)
-            postCell.editPostView.postCaption.text = tagText
-        }
+        let cursorPosition = postCell.editPostView.postCaption.getCursorPosition()
+        let text = postCell.editPostView.postCaption.text ?? ""
+        let tagText = addTaggedUserTo(text: text, username: username, cursorPosition: cursorPosition)
+        postCell.editPostView.postCaption.text = tagText
     }
     
     func resetView() {
 
         mapVC.postsList = postsList
         mapVC.navigationController?.setNavigationBarHidden(true, animated: false)
-        
         
         if parentVC == .notifications {
             if let tabBar = parent?.parent as? CustomTabBar {
@@ -469,7 +469,7 @@ class PostViewController: UIViewController {
         
         Mixpanel.mainInstance().track(event: "PostOpenDrawer", properties: ["swipe": swipe])
 
-        guard let post = postsList[safe: selectedPostIndex] else { print("return 1", selectedPostIndex); return }
+        guard let post = postsList[safe: selectedPostIndex] else { return }
         let zoomDistance: CLLocationDistance = parentVC == .spot ? 1000 : 100000
         let adjust = 0.00000845 * zoomDistance
         let adjustedCoordinate = CLLocationCoordinate2D(latitude: post.postLat - adjust, longitude: post.postLong)
@@ -483,7 +483,7 @@ class PostViewController: UIViewController {
         hideFeedButtons()
 
         let duration: TimeInterval = swipe ? 0.15 : 0.30
-        guard let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell else { print("return 2", selectedPostIndex); return }
+        guard let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell else { return }
        
         UIView.animate(withDuration: duration) { [weak self] in
             
@@ -555,11 +555,10 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
         /// update cell image and related properties on completion
         
         let updateCellImage: ([UIImage]?) -> () = { [weak self] (images) in
+            
             guard let self = self else { return }
             
-            if let index = self.postsList.lastIndex(where: {$0.id == post.id}) {
-                if indexPath.row != index { return }
-            }
+            if let index = self.postsList.lastIndex(where: {$0.id == post.id}) { if indexPath.row != index { return }  }
         
             if indexPath.row == self.selectedPostIndex { self.currentImageSet = (id: post.id ?? "", images: images ?? []) }
             
@@ -577,22 +576,24 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
             let edit = self.editedPost == nil ? post : self.editedPost
             if self.editPostView && indexPath.row == self.selectedPostIndex && post.posterID == self.uid { cell.addEditPostView(editedPost: edit!) }
 
-            self.loadingOperations.removeValue(forKey: post.id ?? "")
+     //       self.loadingOperations.removeValue(forKey: post.id ?? "")
         }
         
         /// Try to find an existing data loader
         if let dataLoader = loadingOperations[post.id ?? ""] {
+            
             /// Has the data already been loaded?
             if dataLoader.images.count == post.imageURLs.count {
 
                 cell.finishImageSetUp(images: dataLoader.images)
-                loadingOperations.removeValue(forKey: post.id ?? "")
+              //  loadingOperations.removeValue(forKey: post.id ?? "")
             } else {
                 /// No data loaded yet, so add the completion closure to update the cell once the data arrives
                 dataLoader.loadingCompleteHandler = updateCellImage
             }
         } else {
-            /// Need to create a data loaded for this index path
+            
+            /// Need to create a data loader for this index path
             if indexPath.row == self.selectedPostIndex && self.currentImageSet.id == post.id ?? "" {
                 updateCellImage(currentImageSet.images)
                 return
@@ -658,7 +659,7 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
         
         for indexPath in indexPaths {
             
-            if abs(indexPath.row - selectedPostIndex) > 4 { return }
+            if abs(indexPath.row - selectedPostIndex) > 3 { return }
             
             guard let post = postsList[safe: indexPath.row] else { return }
             if let _ = loadingOperations[post.id ?? ""] { return }
@@ -825,6 +826,7 @@ class PostCell: UITableViewCell {
     var closedY: CGFloat = 0
     var tabBarHeight: CGFloat = 0
     var beginningSwipe: CGFloat = 0
+    var animationCounter = 0
 
     func setUp(post: MapPost, selectedPostIndex: Int, postsCount: Int, parentVC: PostViewController.parentViewController, selectedSegmentIndex: Int, currentLocation: CLLocation, vcid: String, row: Int, cellHeight: CGFloat, tabBarHeight: CGFloat, closedY: CGFloat) {
         
@@ -903,8 +905,10 @@ class PostCell: UITableViewCell {
             
             spotNameBanner.sizeToFit()
             
-            tapButton = UIButton(frame: CGRect(x: 4, y: 14, width: spotNameLabel.frame.width + 30, height: spotNameBanner.frame.height - 5))
-            tapButton.backgroundColor = nil
+            let tempLabel = spotNameLabel
+            tempLabel!.sizeToFit()
+            
+            tapButton = UIButton(frame: CGRect(x: 4, y: 14, width: tempLabel!.frame.width + 35, height: tempLabel!.frame.height + 15))
             tapButton.addTarget(self, action: #selector(spotNameTap(_:)), for: .touchUpInside)
             addSubview(tapButton)
         }
@@ -1042,7 +1046,7 @@ class PostCell: UITableViewCell {
     }
     
     func finishImageSetUp(images: [UIImage]) {
-        
+                
         resetImageInfo()
         var frameIndexes = post.frameIndexes ?? []
         if post.imageURLs.count == 0 { return }
@@ -1050,10 +1054,13 @@ class PostCell: UITableViewCell {
         post.frameIndexes = frameIndexes
 
         if images.isEmpty { return }
+        let animationImages = getGifImages(selectedImages: images, frameIndexes: frameIndexes)
+        let isGif = !animationImages.isEmpty
+        
         post.postImage = images
         
         guard let currentImage = images[safe: frameIndexes[post.selectedImageIndex]] else { return }
-        postImage.image = currentImage
+        if !isGif { postImage.image = currentImage }
 
         let im = currentImage
         let aspect = im.size.height / im.size.width
@@ -1083,11 +1090,12 @@ class PostCell: UITableViewCell {
         }
 
         imageY = minY
-        let animationImages = getGifImages(selectedImages: images, frameIndexes: frameIndexes)
-        let isGif = !animationImages.isEmpty
+        print("animation counter", animationCounter)
+
         if isGif {
             postImage.animationImages = animationImages
-            animationImages.count == 5 ? postImage.animate5FrameAlive(directionUp: true, counter: 0) : postImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count)  /// use old animation for 5 frame alives
+            ///there may be a rare case where there is a single post of a 5 frame alive. but i wasnt sure which posts 
+            animationImages.count == 5 && frameIndexes.count == 1 ? postImage.animate5FrameAlive(directionUp: true, counter: animationCounter) : postImage.animateGIF(directionUp: true, counter: animationCounter, frames: animationImages.count, alive: post.gif ?? false)  /// use old animation for 5 frame alives
         }
         
         postImage.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: adjustedHeight)
@@ -1176,7 +1184,7 @@ class PostCell: UITableViewCell {
         if likeButton != nil { likeButton.setImage(UIImage(), for: .normal) }
         if numLikes != nil { numLikes.text = "" }
         if postCaption != nil { postCaption.text = "" }
-        if postImage != nil { postImage.image = UIImage(); postImage.removeFromSuperview() }
+        if postImage != nil { postImage.image = UIImage(); postImage.removeFromSuperview(); postImage.animationImages?.removeAll() }
     }
     
     func resetImageInfo() {
@@ -1207,11 +1215,12 @@ class PostCell: UITableViewCell {
     }
     
     override func prepareForReuse() {
+        
         super.prepareForReuse()
 
         if imageManager != nil { imageManager.cancelAll(); imageManager = nil }
         if profilePic != nil { profilePic.removeFromSuperview(); profilePic.sd_cancelCurrentImageLoad() }
-        if postImage != nil { postImage.removeFromSuperview(); postImage = nil }
+        if postImage != nil { postImage.removeFromSuperview(); postImage.animationImages?.removeAll(); postImage = nil }
     }
         
     @objc func spotNameTap(_ sender: UIButton) {
@@ -1239,11 +1248,12 @@ class PostCell: UITableViewCell {
     
     
     @objc func usernameTap(_ sender: UIButton) {
+        if post.userInfo == nil { return }
         openProfile(user: post.userInfo)
     }
     
     func openProfile(user: UserProfile) {
-        
+                
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
             
             Mixpanel.mainInstance().track(event: "PostOpenProfile")
@@ -1320,7 +1330,7 @@ class PostCell: UITableViewCell {
                         openProfile(user: friend)
                     } else {
                         /// pass blank user object to open func, run get user func on profile load
-                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "")
+                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "", userBio: "")
                         user.id = ""
                         self.openProfile(user: user)
                     }
@@ -1883,11 +1893,11 @@ extension PostCell {
             
             do {
                 let userInfo = try snap?.data(as: UserProfile.self)
-                guard var info = userInfo else {completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "")); return }
+                guard var info = userInfo else {completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")); return }
                 info.id = snap!.documentID
                 completion(info)
                 
-            } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "")); return }
+            } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")); return }
         }
     }
     
@@ -2188,6 +2198,7 @@ extension PostCell {
                         NotificationCenter.default.post(name: Notification.Name("DeletePost"), object: nil, userInfo: infoPass)
                     }
                     
+                    
                 case .cancel:
                     print("cancel")
                 case .destructive:
@@ -2470,7 +2481,7 @@ class PostImageLoader: Operation {
     init(_ post: MapPost) {
         self.post = post
     }
-    
+        
     override func main() {
 
         if isCancelled { return }
@@ -2489,20 +2500,36 @@ class PostImageLoader: Operation {
                 self.loadingCompleteHandler?(images)
             }
         }
+        
+        if post.imageURLs.count == 0 { return }
 
-        for postURL in post.imageURLs {
-            SDWebImageManager.shared.loadImage(with: URL(string: postURL), options: .highPriority, context: .none, progress: nil) { (image, data, err, cache, download, url) in
+        var frameIndexes = post.frameIndexes ?? []
+        if frameIndexes.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i) } }
+        
+        var aspectRatios = post.aspectRatios ?? []
+        if aspectRatios.isEmpty { for _ in 0...post.imageURLs.count - 1 { aspectRatios.append(1.3333) } }
+
+        var currentAspect: CGFloat = 1
+        
+        for x in 0...post.imageURLs.count - 1 {
+            
+            let postURL = post.imageURLs[x]
+            if let y = frameIndexes.firstIndex(where: {$0 == x}) { currentAspect = aspectRatios[y] }
+            
+            let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2, height: UIScreen.main.bounds.width * 2 * currentAspect), scaleMode: .aspectFit)
+
+            SDWebImageManager.shared.loadImage(with: URL(string: postURL), options: [.highPriority, .scaleDownLargeImages], context: [.imageTransformer: transformer], progress: nil) { (rawImage, data, err, cache, download, url) in
                 DispatchQueue.main.async { [weak self] in
                     
                     guard let self = self else { return }
                     if self.isCancelled { return }
                     
                     let i = self.post.imageURLs.lastIndex(where: {$0 == postURL})
-                    images[i ?? 0] = image ?? UIImage()
+                    guard let image = rawImage else { images[i ?? 0] = UIImage(); imageEscape(); return } /// return blank image on failed download
+                    images[i ?? 0] = image
                     imageEscape()
                 }
             }
         }
     }
 }
-

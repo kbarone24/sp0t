@@ -728,10 +728,10 @@ class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
         let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
         
         if let editVC = self.viewContainingController() as? EditSpotController {
-            if updatedText.count <= 27 { editVC.spotObject.spotName = updatedText }
+            if updatedText.count <= 60 { editVC.spotObject.spotName = updatedText }
         }
         
-        return updatedText.count <= 27
+        return updatedText.count <= 60
         
     }
 }

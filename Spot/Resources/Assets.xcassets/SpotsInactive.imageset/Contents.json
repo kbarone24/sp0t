@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "SpotsInactive1x.png",
+      "filename" : "SpotsInactive1x (1).png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "SpotsInactive2x.png",
+      "filename" : "SpotsInactive2x (1).png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "SpotsInactive3x.png",
+      "filename" : "SpotsInactive3x (1).png",
       "idiom" : "universal",
       "scale" : "3x"
     }

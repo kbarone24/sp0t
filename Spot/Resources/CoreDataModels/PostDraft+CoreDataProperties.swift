@@ -37,6 +37,7 @@ extension PostDraft {
     @NSManaged public var isFirst: Bool
     @NSManaged public var visitorList: [String]?
     @NSManaged public var frameIndexes: [Int]?
+    @NSManaged public var gif: Bool
 }
 
 // MARK: Generated accessors for images

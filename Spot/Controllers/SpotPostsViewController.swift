@@ -11,6 +11,7 @@ import UIKit
 import Firebase
 import SDWebImage
 import MapKit
+import Mixpanel
 
 class SpotPostsViewController: UIViewController {
     
@@ -48,6 +49,11 @@ class SpotPostsViewController: UIViewController {
         view.addSubview(postsCollection)
         
         postsCollection.removeGestureRecognizer(postsCollection.panGestureRecognizer)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "SpotPostsOpen")
     }
     
     func resetView() {
@@ -154,7 +160,11 @@ extension SpotPostsViewController: UICollectionViewDelegate, UICollectionViewDat
         
         guard let preview = subset[safe: indexPath.row] else { return }
         
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 300, height: 300), scaleMode: .aspectFill)
+        let itemWidth = (UIScreen.main.bounds.width - 10.5) / 3
+        let itemHeight = itemWidth * 1.374
+
+        /// resize to aspect ratio * 2 + added padding for rounding errors
+        let transformer = SDImageResizingTransformer(size: CGSize(width: itemWidth * 2, height: itemHeight * 2 + 5), scaleMode: .aspectFill)
         cell.imagePreview.sd_setImage(with: URL(string: preview.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer], progress: nil)
         
     }
@@ -202,9 +212,9 @@ class TimestampHeader: UICollectionReusableView {
     
     func setUp(date: String) {
         if dateLabel != nil { dateLabel.text = "" }
-        dateLabel = UILabel(frame: CGRect(x: 9, y: 13, width: UIScreen.main.bounds.width - 28, height: 16))
+        dateLabel = UILabel(frame: CGRect(x: 9, y: 13.5, width: UIScreen.main.bounds.width - 28, height: 16))
         dateLabel.text = date
-        dateLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        dateLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
         dateLabel.textColor = UIColor(red: 0.60, green: 0.60, blue: 0.60, alpha: 1.00)
         dateLabel.sizeToFit()
         addSubview(dateLabel)

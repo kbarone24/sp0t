@@ -21,11 +21,16 @@ class EditProfileViewController: UIViewController {
     var usernameText = ""
     
     var newProfilePic: UIImage!
-    var newName, newUsername, newCity: String! /// use separate values for changed fields to avoid mixing up with original profile values
+    var newName, newUsername, newCity, newBio: String! /// use separate values for changed fields to avoid mixing up with original profile values
     
     var imageView: UIImageView!
     var statusIcon: UIImageView!
     var nameField, usernameField, cityField: UITextField!
+    
+    var editBio = false
+    var bioContainer: UIView!
+    var bioView: UITextView!
+    var line4: UIView!
     
     var errorBox: UIView!
     var errorLabel: UILabel!
@@ -205,6 +210,34 @@ class EditProfileViewController: UIViewController {
         line3.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
         cityContainer.addSubview(line3)
         
+        bioContainer = UIView(frame: CGRect(x: 0, y: cityContainer.frame.maxY, width: UIScreen.main.bounds.width, height: 70))
+        bioContainer.backgroundColor = nil
+        view.addSubview(bioContainer)
+                
+        let bioLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 65, height: 12))
+        bioLabel.text = "Bio"
+        bioLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        bioLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        bioContainer.addSubview(bioLabel)
+        
+        bioView = UITextView(frame: CGRect(x: 10, y: bioLabel.frame.maxY + 3, width: UIScreen.main.bounds.width - 28, height: 28))
+        bioView.backgroundColor = nil
+        bioView.delegate = self
+        bioView.isScrollEnabled = false
+        bioView.text = profileVC.userInfo.userBio == " " ? "" : profileVC.userInfo.userBio
+        bioView.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
+        bioView.font = UIFont(name: "SFCamera-Regular", size: 17)
+        bioView.keyboardDistanceFromTextField = 60
+        bioContainer.addSubview(bioView)
+        
+        if editBio { bioView.becomeFirstResponder() }
+                
+        line4 = UIView(frame: CGRect(x: 0, y: 48.5, width: UIScreen.main.bounds.width, height: 1.5))
+        line4.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
+        bioContainer.addSubview(line4)
+        
+        resizeTextView()
+        
         /// add error box
         errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 150, width: UIScreen.main.bounds.width, height: 32))
         errorBox.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
@@ -260,7 +293,9 @@ class EditProfileViewController: UIViewController {
         
         newName = nameField.text ?? ""
         newCity = cityField.text ?? ""
-        
+        newBio = bioView.text ?? ""
+        if newBio == "" { newBio = " " }
+                
         sender.isEnabled = false
         loadingIndicator.startAnimating()
 
@@ -398,10 +433,13 @@ class EditProfileViewController: UIViewController {
         ref.updateData(["name" : newName!,
                         "currentLocation" : newCity!,
                         "lowercaseName": lowercaseName,
-                        "nameKeywords": nameKeywords])
+                        "nameKeywords": nameKeywords,
+                        "userBio": newBio!])
                 
         profileVC.userInfo.name = newName
         profileVC.userInfo.currentLocation = newCity
+        profileVC.userInfo.userBio = newBio
+
         if newUsername != nil {
             profileVC.userInfo.username = newUsername
             let usernameKeywords = newUsername.getKeywordArray()
@@ -560,7 +598,7 @@ extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigati
     }
 }
 
-extension EditProfileViewController: UITextFieldDelegate {
+extension EditProfileViewController: UITextFieldDelegate, UITextViewDelegate {
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         
@@ -582,7 +620,28 @@ extension EditProfileViewController: UITextFieldDelegate {
         default:
             return false
         }
-
+    }
+    
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        
+        let currentText = textView.text ?? ""
+        guard let stringRange = Range(range, in: currentText) else { return false }
+        let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
+        
+        resizeTextView()
+        return updatedText.count <= 62
+    }
+    
+    func resizeTextView() {
+        var size = bioView.sizeThatFits(CGSize(width: bioView.frame.size.width, height: 200))
+        /// resize to adjust textView to line changes
+        if size.height == 30 { size = CGSize(width: size.width, height: 22) }
+        if size.height != bioView.frame.size.height {
+            let diff = size.height - bioView.frame.height
+            bioContainer.frame = CGRect(x: bioContainer.frame.minX, y: bioContainer.frame.minY, width: bioContainer.frame.width, height: bioContainer.frame.height + diff)
+            bioView.frame = CGRect(x: bioView.frame.minX, y: bioView.frame.minY, width: bioView.frame.width, height: bioView.frame.height + diff)
+            line4.frame = CGRect(x: line4.frame.minX, y: bioContainer.frame.height - 1.5, width: line4.frame.width, height: line4.frame.height)
+        }
     }
 }
 
