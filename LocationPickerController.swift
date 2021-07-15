@@ -29,10 +29,9 @@ class LocationPickerController: UIViewController {
     var draftID: Int64!
     
     var mapView: MKMapView!
-    var bottomMask: UIView!
-    var addressLabel: UILabel!
+    var addressText = ""
     
-    var maskView: UIView!
+    var maskView, bottomMask: UIView!
     var searchBarContainer: UIView!
     var searchBar: UISearchBar!
     var cancelButton: UIButton!
@@ -49,7 +48,7 @@ class LocationPickerController: UIViewController {
     var postAnnotation: CustomPointAnnotation!
     var spotAnnotation: CustomSpotAnnotation!
     
-    var userLocationButton, toggleMapButton: UIButton!
+    var searchButton, userLocationButton, toggleMapButton: UIButton!
     
     var passedLocation: CLLocation!
     var secondaryLocation: CLLocation!
@@ -140,7 +139,7 @@ class LocationPickerController: UIViewController {
             mapView = MKMapView(frame: mapVC.mapView.bounds)
         }
         
-        mapView.frame = CGRect(x: 0, y: navBarHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navBarHeight)
+        mapView.frame = CGRect(x: 0, y: navBarHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         
         let annotations = mapView.annotations
         mapView.removeAnnotations(annotations)
@@ -153,13 +152,17 @@ class LocationPickerController: UIViewController {
         mapView.showsCompass = false
         mapView.showsTraffic = false
         mapView.showsUserLocation = true
+        mapView.userLocation.title = ""
         mapView.tintColor = .systemBlue
-        mapView.register(StandardPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Post")
+        mapView.register(LocationPickerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Post")
         DispatchQueue.main.async { self.view.addSubview(self.mapView) }
         
         mapView.delegate = self
-        
-        userLocationButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 61, y: UIScreen.main.bounds.height - 200 - navBarHeight, width: 50, height: 50))
+                
+        addSearchBar()
+
+        let minY = mapVC.largeScreen ? UIScreen.main.bounds.height - 105 - navBarHeight : UIScreen.main.bounds.height - 85 - navBarHeight
+        userLocationButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 61, y: minY, width: 50, height: 50))
         userLocationButton.setImage(UIImage(named: "UserLocationButton"), for: .normal)
         userLocationButton.addTarget(self, action: #selector(userLocationTap(_:)), for: .touchUpInside)
         userLocationButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -170,6 +173,12 @@ class LocationPickerController: UIViewController {
         toggleMapButton.addTarget(self, action: #selector(toggle3D(_:)), for: .touchUpInside)
         toggleMapButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         DispatchQueue.main.async { self.mapView.addSubview(self.toggleMapButton) }
+        
+        searchButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 61, y:  toggleMapButton.frame.minY - 58, width: 50, height: 50))
+        searchButton.setImage(UIImage(named: "MapSearchButton"), for: .normal)
+        searchButton.addTarget(self, action: #selector(searchButtonTap(_:)), for: .touchUpInside)
+        searchButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        DispatchQueue.main.async { self.mapView.addSubview(self.searchButton) }
 
         /// map tap will allow user to set the location of the post by tapping the map
         let mapTap = UITapGestureRecognizer(target: self, action: #selector(mapTap(_:)))
@@ -178,8 +187,6 @@ class LocationPickerController: UIViewController {
         
         locationManager = CLLocationManager()
         locationManager.delegate = self
-        
-        addBottomMask()
     }
         
     func setUpNavBar() {
@@ -194,7 +201,7 @@ class LocationPickerController: UIViewController {
         navigationItem.backBarButtonItem?.tintColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         navigationItem.backBarButtonItem?.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .selected)
         
-        navigationItem.title = "Confirm location"
+        navigationItem.title = "Place on map"
         
         let btnTitle = passedLocation == nil ? "Next" : "Done"
         let action = passedLocation == nil ? #selector(nextTap(_:)) : #selector(doneTap(_:))
@@ -202,38 +209,25 @@ class LocationPickerController: UIViewController {
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([NSAttributedString.Key.foregroundColor : UIColor(named: "SpotGreen")!, NSAttributedString.Key.font : UIFont(name: "SFCamera-Semibold", size: 15)!], for: .normal)
     }
     
-    func addBottomMask() {
-                        
-        let maskHeight: CGFloat = mapVC.largeScreen ? 175 : 145
-        bottomMask = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - maskHeight, width: UIScreen.main.bounds.width, height: maskHeight))
+    func addSearchBar() {
+        
+        let maskHeight: CGFloat = 297
+        bottomMask = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - maskHeight - navBarHeight, width: UIScreen.main.bounds.width, height: maskHeight))
         bottomMask.backgroundColor = nil
         bottomMask.isUserInteractionEnabled = false
         let layer0 = CAGradientLayer()
         layer0.frame = bottomMask.bounds
         layer0.colors = [
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.1).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.3).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.8).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 1).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 1).cgColor
-        ]
-        layer0.locations = [0, 0.12, 0.2, 0.39, 0.6, 1]
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.33).cgColor
+          ]
+        layer0.locations = [0.44, 1]
         layer0.startPoint = CGPoint(x: 0.5, y: 0)
         layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
         bottomMask.layer.addSublayer(layer0)
-        
-        DispatchQueue.main.async { self.view.addSubview(self.bottomMask) }
-        
-        addressLabel = UILabel(frame: CGRect(x: 18, y: 45, width: UIScreen.main.bounds.width - 32, height: 20))
-        addressLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        addressLabel.font = UIFont(name: "SFCamera-Regular", size: 16)
-        addressLabel.lineBreakMode = .byTruncatingTail
-        DispatchQueue.main.async { self.bottomMask.addSubview(self.addressLabel) }
-        
-        /// if add flow add next button, edit flow add save button
-        
-        searchBarContainer = UIView(frame: CGRect(x: 0, y: self.bottomMask.frame.minY + 75, width: UIScreen.main.bounds.width, height: 75))
+        DispatchQueue.main.async { self.mapView.addSubview(self.bottomMask) }
+
+        searchBarContainer = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height, width: UIScreen.main.bounds.width, height: 75))
         searchBarContainer.backgroundColor = nil
         searchBarContainer.layer.cornerRadius = 8
         DispatchQueue.main.async { self.view.addSubview(self.searchBarContainer) }
@@ -361,12 +355,14 @@ class LocationPickerController: UIViewController {
         
         reverseGeocodeFromCoordinate(numberOfFields: 4, location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) { [weak self] (addy) in
             guard let self = self else { return }
-            self.addressLabel.text = addy
-            self.addressLabel.sizeThatFits(CGSize(width: UIScreen.main.bounds.width - 120, height: 40))
+            self.setAddress(address: addy)
         }
     }
     
     @objc func toggle2D(_ sender: UIButton) {
+        
+        Mixpanel.mainInstance().track(event: "LocationPickerToggleMap2D")
+        
         mapView.mapType = .mutedStandard
         mapView.camera.pitch = 0
         
@@ -376,6 +372,9 @@ class LocationPickerController: UIViewController {
     }
     
     @objc func toggle3D(_ sender: UIButton) {
+        
+        Mixpanel.mainInstance().track(event: "LocationPickerToggleMap3D")
+
         mapView.mapType = .hybridFlyover
         mapView.camera.pitch = 60
 
@@ -399,9 +398,25 @@ class LocationPickerController: UIViewController {
         
         reverseGeocodeFromCoordinate(numberOfFields: 4, location: CLLocation(latitude: currentLocation.coordinate.latitude, longitude: currentLocation.coordinate.longitude)) { [weak self] (addy) in
             guard let self = self else { return }
-            self.addressLabel.text = addy
-            self.addressLabel.sizeThatFits(CGSize(width: UIScreen.main.bounds.width - 120, height: 40))
+            self.setAddress(address: addy)
         }
+    }
+    
+    func setAddress(address: String) {
+
+        addressText = address
+
+        if let annotationView = self.mapView.view(for: self.postAnnotation) as? LocationPickerAnnotationView {
+            
+            let nibView = loadPostNib()
+            nibView.postImage.image = selectedImages.first ?? UIImage()
+            nibView.postAddress.text = address
+            
+            let nibImage = nibView.asImage()
+            annotationView.image = nibImage
+            annotationView.sizeToFit()
+        }
+
     }
     
     // skip choose spot if add-to-spot flow
@@ -518,8 +533,7 @@ extension LocationPickerController: CLLocationManagerDelegate {
                 mapView.addAnnotation(self.postAnnotation)
             }
             
-            addressLabel.text = passedAddress
-            addressLabel.sizeThatFits(CGSize(width: UIScreen.main.bounds.width - 120, height: 40))
+            setAddress(address: passedAddress)
             return
             
         } else {
@@ -536,8 +550,7 @@ extension LocationPickerController: CLLocationManagerDelegate {
                     
         self.reverseGeocodeFromCoordinate(numberOfFields: 4, location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) { [weak self] (addy) in
             guard let self = self else { return }
-            self.addressLabel.text = addy
-            self.addressLabel.sizeThatFits(CGSize(width: UIScreen.main.bounds.width - 120, height: 40))
+            self.setAddress(address: addy)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -559,6 +572,8 @@ extension LocationPickerController: CLLocationManagerDelegate {
             if imLat != 0.0 { lat = imLat }
             let imLong = galleryLocation.coordinate.longitude
             if imLong != 0.0 { long = imLong }
+            
+        /// use spot location if no image location and posting to spot
         } else if spotObject != nil && !imageFromCamera && lat == currentLocation.coordinate.latitude {
             lat = spotObject.spotLat
             long = spotObject.spotLong
@@ -604,17 +619,20 @@ extension LocationPickerController: CLLocationManagerDelegate {
 extension LocationPickerController: MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+                
         if annotation is CustomPointAnnotation {
-            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Post") as? StandardPostAnnotationView
+            
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Post") as? LocationPickerAnnotationView
             if annotationView == nil {
-                annotationView = StandardPostAnnotationView(annotation: annotation, reuseIdentifier: "Post")
+                annotationView = LocationPickerAnnotationView(annotation: annotation, reuseIdentifier: "Post")
             } else {
                 annotationView!.annotation = annotation
             }
             
             let nibView = loadPostNib()
-            nibView.galleryImage.image = selectedImages.first ?? UIImage()
-            nibView.count.isHidden = true
+            nibView.postImage.image = selectedImages.first ?? UIImage()
+            nibView.postAddress.text = addressText
+            
             let nibImage = nibView.asImage()
             annotationView!.image = nibImage
             annotationView!.sizeToFit()
@@ -623,8 +641,9 @@ extension LocationPickerController: MKMapViewDelegate {
             annotationView!.isSelected = true
             annotationView!.clusteringIdentifier = nil
             
-            annotationView!.centerOffset = CGPoint(x: 6.25, y: -26)
+            annotationView!.centerOffset = CGPoint(x: -1, y: -5)
             return annotationView
+            
         } else if let anno = annotation as? CustomSpotAnnotation {
             var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier) as? SpotAnnotationView
             if annotationView == nil {
@@ -647,6 +666,11 @@ extension LocationPickerController: MKMapViewDelegate {
         } else { return nil }
     }
     
+    func mapView(_ mapView: MKMapView, didAdd views: [MKAnnotationView]) {
+        /// disable userlocation callout on tap
+        if let userView = mapView.view(for: mapView.userLocation) { userView.isEnabled = false }
+    }
+    
     func mapViewDidFinishRenderingMap(_ mapView: MKMapView, fullyRendered: Bool) {
         checkLocation()
     }
@@ -657,20 +681,19 @@ extension LocationPickerController: MKMapViewDelegate {
         
     //   func mapViewdidmo
     
-    func loadPostNib() -> MarkerInfoWindow {
-        let infoWindow = MarkerInfoWindow.instanceFromNib() as! MarkerInfoWindow
+    func loadPostNib() -> LocationPickerWindow {
+        
+        let infoWindow = LocationPickerWindow.instanceFromNib() as! LocationPickerWindow
         infoWindow.clipsToBounds = true
         
-        infoWindow.galleryImage.contentMode = .scaleAspectFill
-        infoWindow.galleryImage.layer.cornerRadius = 3
-        infoWindow.galleryImage.clipsToBounds = true
+        infoWindow.postImage.contentMode = .scaleAspectFill
+        infoWindow.postImage.layer.cornerRadius = 3
+        infoWindow.postImage.clipsToBounds = true
         
-        infoWindow.count.font = UIFont(name: "SFCamera-Semibold", size: 12)
-        infoWindow.count.textColor = .black
-        let attText = NSAttributedString(string: (infoWindow.count.text)!, attributes: [NSAttributedString.Key.kern: 0.8])
-        infoWindow.count.attributedText = attText
-        infoWindow.count.textAlignment = .center
-        infoWindow.count.clipsToBounds = true
+        infoWindow.postAddress.clipsToBounds = true
+        infoWindow.postAddress.textColor = .white
+        infoWindow.postAddress.lineBreakMode = .byTruncatingTail
+        infoWindow.postAddress.font = UIFont(name: "SFCamera-Semibold", size: 13)
         
         return infoWindow
     }
@@ -765,7 +788,7 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
             guard let placemark = response?.mapItems[0].placemark else { return }
             
             let coordinate = placemark.coordinate
-            let adjustedCenter = CLLocationCoordinate2D(latitude: coordinate.latitude - 0.0016, longitude: coordinate.longitude)
+            let adjustedCenter = CLLocationCoordinate2D(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
             let camera = MKMapCamera(lookingAtCenter: adjustedCenter, fromDistance: 2000, pitch: self.mapView.camera.pitch, heading: 0)
             self.mapView.camera = camera
@@ -776,13 +799,17 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
                 self.postAnnotation.coordinate = coordinate
             }
             
-            self.addressLabel.text = placemark.addressFormatter(number: true)
+            self.setAddress(address: placemark.addressFormatter(number: true))
             self.searchBar.endEditing(true)
         }
     }
         
     @objc func searchCancelTap(_ sender: UIButton) {
         searchBar.endEditing(true)
+    }
+    
+    @objc func searchButtonTap(_ sender: UIButton) {
+        searchBar.becomeFirstResponder()
     }
     
     
@@ -806,7 +833,6 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
             self.searchBarContainer.frame = CGRect(x: 0, y: 40 + self.navBarHeight, width: UIScreen.main.bounds.width, height: 60)
             self.searchBarContainer.backgroundColor = UIColor(named: "SpotBlack")
             self.resultsTable.frame = CGRect(x: 0, y: 95 + self.navBarHeight, width: UIScreen.main.bounds.width, height: self.resultsTable.frame.height)
-            self.addressLabel.alpha = 0.0
             self.cancelButton.alpha = 1.0
         }
     }
@@ -817,11 +843,10 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
         UIView.animate(withDuration: 0.25) {
             self.maskView.alpha = 0.0
             self.searchBarContainer.backgroundColor = nil
-            self.searchBarContainer.frame = CGRect(x: 0, y: self.bottomMask.frame.minY + 75, width: UIScreen.main.bounds.width, height: 75)
+            self.searchBarContainer.frame = CGRect(x: 0, y: UIScreen.main.bounds.height, width: UIScreen.main.bounds.width, height: 75)
             self.searchBar.frame = CGRect(x: self.searchBar.frame.minX, y: 11, width: UIScreen.main.bounds.width - 28, height: self.searchBar.frame.height)
             self.resultsTable.frame = CGRect(x: 0, y: self.view.bounds.height, width: UIScreen.main.bounds.width, height: self.view.bounds.height - 200)
 
-            self.addressLabel.alpha = 1.0
             self.cancelButton.alpha = 0.0
         }
         
@@ -869,3 +894,17 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
     }
 }
 
+class LocationPickerAnnotationView: MKAnnotationView {
+    
+    override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
+        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
+        canShowCallout = false
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    
+    
+}

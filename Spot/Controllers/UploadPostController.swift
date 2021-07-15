@@ -353,14 +353,10 @@ class UploadPostController: UIViewController {
         if tag != 2 { return } /// tag 2 for upload tag. This notification should only come through if tag = 2 because upload will always be topmost VC
         guard let uploadOverviewCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
         
-        /// get where user is currently editing
-        if let selectedRange = uploadOverviewCell.descriptionField.selectedTextRange {
-            let startPosition: UITextPosition =  uploadOverviewCell.descriptionField.beginningOfDocument
-            let cursorPosition =  uploadOverviewCell.descriptionField.offset(from: startPosition, to: selectedRange.start)
-            let tagText = addTaggedUserTo(text: caption ?? "", username: username, cursorPosition: cursorPosition)
-            caption = tagText
-            uploadOverviewCell.descriptionField.text = tagText
-        }
+        let cursorPosition = uploadOverviewCell.descriptionField.getCursorPosition()
+        let tagText = addTaggedUserTo(text: caption ?? "", username: username, cursorPosition: cursorPosition)
+        caption = tagText
+        uploadOverviewCell.descriptionField.text = tagText        
     }
     
     @objc func privacyTap(_ sender: UIButton) {
@@ -582,7 +578,8 @@ class UploadPostController: UIViewController {
             if !animationImages.isEmpty {
                 self.maskImage.animationImages = animationImages
                 /// 5 frame alive check for old alive draft
-                animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count) }
+                let alive = self.imageFromCamera && self.selectedImages.count > 1
+                animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count, alive: alive) }
         }
     }
     
@@ -628,7 +625,8 @@ class UploadPostController: UIViewController {
             maskImage.frame = CGRect(x: 0, y:(viewHeight - height - navBarHeight)/2 - 10, width: UIScreen.main.bounds.width, height: height)
             maskImage.image = selectedImages[selectedFrame]
             let animationImages = getGifImages()
-            if !animationImages.isEmpty { animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count) }
+            let alive = selectedImages.count > 1 && imageFromCamera
+            if !animationImages.isEmpty { maskImage.animationImages = animationImages; animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count, alive: alive) }
         }
         
         var nHeight: CGFloat = height
@@ -1019,13 +1017,11 @@ class UploadOverviewCell: UITableViewCell, UITextFieldDelegate, UITextViewDelega
     
     func textViewDidChange(_ textView: UITextView) {
         
-        /// add tag table if this is the same word after @ was typed
-        if let selectedRange = textView.selectedTextRange {
-            let startPosition: UITextPosition = textView.beginningOfDocument
-            let cursorPosition = textView.offset(from: startPosition, to: selectedRange.start)
-            guard let uploadVC = viewContainingController() as? UploadPostController else { return }
-            uploadVC.addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursorPosition, tableParent: .upload)
-        }
+        /// add tag table if this is the same word after @ was type     d
+        let cursor = textView.getCursorPosition()
+        guard let uploadVC = viewContainingController() as? UploadPostController else { return }
+        uploadVC.addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursor, tableParent: .upload)
+        
     }
         
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
@@ -1517,7 +1513,8 @@ extension UploadPostController {
             
             if self.uploadFailed { return }
 
-            if self.imageFromCamera { self.saveToPhotos(images: self.selectedImages) }
+            /// cut for ipad crash
+        //    if self.imageFromCamera { self.saveToPhotos(images: self.selectedImages) }
             
             DispatchQueue.main.async { self.progressView.setProgress(1.0, animated: true) }
             
@@ -1571,6 +1568,12 @@ extension UploadPostController {
             if !postFriends.contains(self.uid) && !self.hideFromFeed { postFriends.append(self.uid) }
             let gif = self.imageFromCamera && self.selectedImages.count > 1 /// for legacy builds gif still corresponds to image animation
             
+            var aspectRatios: [CGFloat] = []
+            for index in self.frameIndexes {
+                let image = self.selectedImages[index]
+                aspectRatios.append(image.size.height/image.size.width)
+            }
+            
             let postValues = ["caption" : self.caption ?? "",
                               "posterID": self.uid,
                               "likers": [],
@@ -1582,6 +1585,7 @@ extension UploadPostController {
                               "privacyLevel": adjustedPostPrivacy,
                               "imageURLs" : imageURLs,
                               "frameIndexes" : self.frameIndexes,
+                              "aspectRatios": aspectRatios,
                               "gif": gif,
                               "spotName" : self.spotName ?? "",
                               "createdBy": createdBy,
@@ -1604,15 +1608,16 @@ extension UploadPostController {
             
             let commentObject = MapComment(id: commentID, comment: self.caption ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, taggedUsers: taggedUsernames, commentHeight: self.getCommentHeight(comment: self.caption ?? ""), seconds: Int64(interval))
             
-            var postObject = MapPost(id: postID, caption: self.caption ?? "", postLat: self.postLocation.latitude, postLong: self.postLocation.longitude, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spotID, city: self.postCity, frameIndexes: self.frameIndexes, imageURLs: imageURLs, postImage: self.selectedImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: taggedUsernames, spotName: self.spotName, spotLat: spotCoordinate?.latitude ?? 0.0, spotLong: spotCoordinate?.longitude ?? 0.0, privacyLevel: adjustedPostPrivacy, createdBy: self.uid, inviteList: self.inviteList)
+            var postObject = MapPost(id: postID, caption: self.caption ?? "", postLat: self.postLocation.latitude, postLong: self.postLocation.longitude, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spotID, city: self.postCity, frameIndexes: self.frameIndexes, aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: self.selectedImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: taggedUsernames, spotName: self.spotName, spotLat: spotCoordinate?.latitude ?? 0.0, spotLong: spotCoordinate?.longitude ?? 0.0, privacyLevel: adjustedPostPrivacy, createdBy: self.uid, inviteList: self.inviteList)
             postObject.friendsList = postFriends
             postObject.actualTimestamp = Timestamp(date: actualTimestamp)
             
             /// notify feed + any other open view controllers (profile posts, nearby) of new post
             NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
             
-                        
             let db = Firestore.firestore()
+            
+            self.checkForFirstPost()
             
             db.collection("posts").document(postID).setData(postValues)
             db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
@@ -1670,7 +1675,7 @@ extension UploadPostController {
                     db.collection("users").document(self.uid).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : timestamp, "postsList" : [postID], "city": self.postCity])
                     
                     /// set spot for public submission
-                    if self.submitPublic { db.collection("submissions").document(spotID).setData(["spotID" : spotID])}
+                    if self.submitPublic { db.collection("submissions").document(spotID).setData(["spotID" : spotID]) }
                     
                     self.setSpotLocations(spotLocation: spotCoordinate!, spotID: spotID)
                     
@@ -1751,6 +1756,32 @@ extension UploadPostController {
                 
                 if (token != nil && token != "") {
                     sender.sendPushNotification(token: token, title: "", body: "\(self.mapVC.userInfo.username) posted at \(spotObject.spotName)")
+                }
+            }
+        }
+    }
+    
+    func checkForFirstPost() {
+        
+        /// send notis to friends on first upload
+        if postPrivacy != "invite" && !hideFromFeed && mapVC.userSpotsLoaded && mapVC.userSpots.count == 0 {
+
+            let db = Firestore.firestore()
+
+            for friend in mapVC.friendsList {
+                let sender = PushNotificationSender()
+                var token: String!
+                
+                db.collection("users").document(friend.id!).getDocument { [weak self] (tokenSnap, err) in
+                    
+                    guard let self = self else { return }
+                    if (tokenSnap == nil) { return }
+                      
+                    token = tokenSnap?.get("notificationToken") as? String
+                    
+                    if (token != nil && token != "") {
+                        sender.sendPushNotification(token: token, title: "", body: "\(self.mapVC.userInfo.username) posted their first spot!")
+                    }
                 }
             }
         }
@@ -1999,6 +2030,7 @@ extension UploadPostController {
             spotObject.postToPOI = postType == .postToPOI
             spotObject.hideFromFeed = hideFromFeed
             spotObject.frameIndexes = frameIndexes
+            spotObject.gif = imageFromCamera && selectedImages.count > 1
             
             let timestamp = postDate == nil ? Date().timeIntervalSince1970 : postDate!.timeIntervalSince1970
             let seconds = Int64(timestamp)
@@ -2034,6 +2066,7 @@ extension UploadPostController {
             postObject.visitorList = visitorList
             postObject.hideFromFeed = hideFromFeed
             postObject.frameIndexes = frameIndexes
+            postObject.gif = imageFromCamera && selectedImages.count > 1
             
             let timestamp = postDate == nil ? Date().timeIntervalSince1970 : postDate!.timeIntervalSince1970
             let seconds = Int64(timestamp)

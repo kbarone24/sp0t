@@ -34,6 +34,8 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     
     var single = false
     var isFetching = false
+    var fetchingIndex = -1
+    var cancelOnDismiss = false
     var editSpotMode = true
     
     var context: PHLivePhotoEditingContext!
@@ -45,9 +47,13 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(false, animated: true)
+        cancelOnDismiss = false
     }
     
     override func viewWillDisappear(_ animated: Bool) {
+        
+        cancelOnDismiss = true
+
         if self.isMovingFromParent {
             let controllers = self.navigationController?.viewControllers
             if let container = controllers![controllers!.count - 1] as? PhotosContainerController {
@@ -100,6 +106,10 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         if !selectedObjects.isEmpty { addNextButton() }
     }
     
+    deinit {
+        imageManager.stopCachingImagesForAllAssets()
+    }
+
     @objc func maskTap(_ sender: UITapGestureRecognizer) {
         removePreviews()
         maskView.removeFromSuperview()
@@ -182,6 +192,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
             self.addPreviewView(object: selectedObject, selectedIndex: selectedIndex, galleryIndex: index)
             
         } else {
+            Mixpanel.mainInstance().track(event: "ClusterPickerCircleTap", properties: ["selected": false])
             selectedObjects.removeAll(where: {$0.index == index})
             if selectedObjects.count == 0 { removeNextButton() }
             DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
@@ -191,14 +202,18 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     func select(index: Int, circleTap: Bool) {
         
         guard let selectedObject = imageObjects[safe: index] else { return }
-        let paths = getSelectedPaths(newRow: index)
         if selectedObjects.count > 4 { showMaxImagesAlert(); return }
-        if editSpotMode && selectedObjects.count > 0 { return } 
+        if editSpotMode && selectedObjects.count > 0 { return }
+        
+        let paths = getSelectedPaths(newRow: index)
 
         if selectedObject.stillImage != UIImage() {
+            
             if !circleTap {
                 self.addPreviewView(object: selectedObject, selectedIndex: 0, galleryIndex: index)
+                
             } else {
+                Mixpanel.mainInstance().track(event: "ClusterPickerCircleTap", properties: ["selected": true])
                 selectedObjects.append((selectedObject, index))
                 self.checkForNext()
                 DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
@@ -214,30 +229,29 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                 if let isLocal = resourceArray.first?.value(forKey: "locallyAvailable") as? Bool { local = isLocal }
                 
                 /// this cell is fetching, cancel fetch and return
-                if cell.activityIndicator.isAnimating {
-                    cell.activityIndicator.stopAnimating()
-                    currentAsset.cancelContentEditingInputRequest(contentRequestID)
-                    if context != nil { context.cancel() }
-                    imageManager.cancelImageRequest(requestID)
-                    self.isFetching = false
-                    return
-                }
+                if cell.activityIndicator.isAnimating { cancelFetchForRowAt(index: index); return  }
                 
-                if self.isFetching { return } /// another cell is fetching, just return
+                if isFetching { cancelFetchForRowAt(index: fetchingIndex) } /// another cell is fetching cancel that fetch
                 cell.addActivityIndicator()
                 
-                self.isFetching = true
-                if imageObjects[index].asset.mediaSubtypes.contains(.photoLive) {
+                isFetching = true
+                fetchingIndex = index
+                
+                if imageObjects[index].asset.mediaSubtypes.contains(.photoLive) && !editSpotMode {
                     
                     fetchLivePhoto(item: index, isLocal: local, selected: false) { [weak self] animationImages, stillImage, failed in
                         
                         guard let self = self else { return }
                         
                         self.isFetching = false
+                        self.fetchingIndex = -1
                         cell.removeActivityIndicator()
                         
+                        if self.cancelOnDismiss { return }
                         if failed { self.showFailedDownloadAlert(); return }
                         if stillImage == UIImage() { return } /// canceled
+                        
+                        self.imageObjects[index] = (ImageObject(asset: self.imageObjects[index].asset, rawLocation: self.imageObjects[index].rawLocation, stillImage: stillImage, animationImages: animationImages, gifMode: true, creationDate: self.imageObjects[index].creationDate))
 
                         ///fetch image is async so need to make sure another image wasn't appended while this one was being fetched
                         if self.selectedObjects.count < 5 {
@@ -248,21 +262,27 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                                 self.addPreviewView(object: newObject.0, selectedIndex: 0, galleryIndex: index)
                                 
                             } else {
+                                Mixpanel.mainInstance().track(event: "ClusterPickerCircleTap", properties: ["selected": true])
                                 self.selectedObjects.append(newObject)
                                 self.checkForNext()
-                                DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
+                                DispatchQueue.main.async {
+                                    if self.cancelOnDismiss { return }
+                                    self.collectionView.reloadItems(at: paths)
+                                }
                             }
                         }
                     }
                     
                 } else {
                     
-                    self.fetchImage(item: index, isLocal: local, selected: true) { [weak self] result, failed  in
+                    self.fetchImage(item: index, isLocal: local, selected: true, livePhoto: false) { [weak self] result, failed  in
                         
                         guard let self = self else { return }
                         self.isFetching = false
+                        self.fetchingIndex = -1
                         cell.removeActivityIndicator()
                         
+                        if self.cancelOnDismiss { return }
                         ///return on download fail
                         if failed { self.showFailedDownloadAlert(); return }
                         if result == UIImage() { return } /// canceled
@@ -279,7 +299,9 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                             } else {
                                 self.selectedObjects.append(newObject)
                                 self.checkForNext()
-                                DispatchQueue.main.async { self.collectionView.reloadItems(at: paths)
+                                DispatchQueue.main.async {
+                                    if self.cancelOnDismiss { return }
+                                    self.collectionView.reloadItems(at: paths)
                                 }
                             }
                         }
@@ -287,6 +309,23 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                 }
             }
         }
+    }
+    
+    func cancelFetchForRowAt(index: Int) {
+        
+        Mixpanel.mainInstance().track(event: "ClusterPickerCancelFetch")
+        
+        guard let cell = collectionView.cellForItem(at: IndexPath(item: index, section: 0)) as? GalleryCell else { return }
+        guard let currentObject = imageObjects[safe: index] else { return }
+        let currentAsset = currentObject.asset
+
+        cell.activityIndicator.stopAnimating()
+        currentAsset.cancelContentEditingInputRequest(contentRequestID)
+        if context != nil { context.cancel() }
+        imageManager.cancelImageRequest(requestID)
+        
+        isFetching = false
+        fetchingIndex = -1
     }
     
     func getSelectedPaths(newRow: Int) -> [IndexPath] {
@@ -300,6 +339,23 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     }
 
     
+    func addPreviewView(object: ImageObject, selectedIndex: Int, galleryIndex: Int) {
+                
+        if maskView != nil && maskView.superview != nil { return }
+        
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+        window?.addSubview(maskView)
+
+        let width = UIScreen.main.bounds.width - 50
+        let pY = UIScreen.main.bounds.height/2 - width * 0.667
+        
+        previewView = GalleryPreviewView(frame: CGRect(x: 25, y: pY, width: width, height: width * 1.3333))
+        previewView.isUserInteractionEnabled = true
+        previewView.cluster = self
+        previewView.setUp(object: object, selectedIndex: selectedIndex, galleryIndex: galleryIndex)
+        maskView.addSubview(previewView)
+    }
+
     func checkForNext() {
         if self.selectedObjects.count == 1 {
             self.addNextButton()
@@ -330,26 +386,86 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         }
     }
 
-    
-    func addPreviewView(object: ImageObject, selectedIndex: Int, galleryIndex: Int) {
+    func fetchLivePhoto(item: Int, isLocal: Bool, selected: Bool, completion: @escaping(_ animationImages: [UIImage], _ stillImage: UIImage, _ failed: Bool) -> Void) {
+        
+        var stillImage = UIImage()
+        var animationImages: [UIImage] = []
+        let currentAsset = imageObjects[item].asset
+        var downloadCount = 0
+        
+        let editingOptions = PHContentEditingInputRequestOptions()
+        editingOptions.isNetworkAccessAllowed = true
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            
+            /// download live photos by cycling through frame processor and capturing frames
+            self.contentRequestID = currentAsset.requestContentEditingInput(with: editingOptions) { [weak self] input, info in
                 
-        if maskView != nil && maskView.superview != nil { return }
-        
-        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        window?.addSubview(maskView)
+                guard let self = self else { return }
+                
+                if info["PHContentEditingInputCancelledKey"] != nil { completion([UIImage()], UIImage(), false); return }
+                if info["PHContentEditingInputErrorKey"] != nil { completion([UIImage()], UIImage(), true); return }
+                
+                var frameImages: [UIImage] = []
+                
+                if let input = input {
+                    
+                    self.context = PHLivePhotoEditingContext(livePhotoEditingInput: input)
+                    
+                    self.context!.frameProcessor = { frame, _ in
+                        frameImages.append(UIImage(ciImage: frame.image))
+                        return frame.image
+                    }
+                                    
+                    let output = PHContentEditingOutput(contentEditingInput: input)
 
-        let width = UIScreen.main.bounds.width - 50
-        let pY = UIScreen.main.bounds.height/2 - width * 0.667
+                    self.context?.saveLivePhoto(to: output, options: nil, completionHandler: { [weak self] success, err in
+
+                        guard let self = self else { return }
+                        if !success || err != nil || frameImages.isEmpty { completion([UIImage()], UIImage(), false); return }
+                        
+                        
+                        let distanceBetweenFrames: Double = 2
+                        let rawFrames = Double(frameImages.count) / distanceBetweenFrames
+                        let numberOfFrames: Double = rawFrames > 11 ? 9 : rawFrames > 7 ? max(7, rawFrames - 2) : rawFrames
+                        let rawOffsest = max((rawFrames - numberOfFrames) * distanceBetweenFrames/2, 2) /// offset on beginning and ending of the frames
+                        let offset = Int(rawOffsest)
+                        
+                        let aspect = frameImages[0].size.height / frameImages[0].size.width
+                        let size = CGSize(width: min(frameImages[0].size.width, UIScreen.main.bounds.width * 1.5), height: min(frameImages[0].size.height, aspect * UIScreen.main.bounds.width * 1.5))
+                        
+                        let image0 = self.ResizeImage(with: frameImages[offset], scaledToFill: size)
+                        animationImages.append(image0 ?? UIImage())
+                        
+                        /// add middle frames, trimming first couple and last couple
+                        let intMultiplier = (frameImages.count - offset * 2)/Int(numberOfFrames)
+                        for i in 1...Int(numberOfFrames) {
+                            let multiplier = offset + intMultiplier * i
+                            let j = multiplier > frameImages.count - 1 ? frameImages.count - 1 : multiplier
+                            let image = self.ResizeImage(with: frameImages[j], scaledToFill: size)
+                            animationImages.append(image ?? UIImage())
+                        }
+
+                        downloadCount += 1
+                        if downloadCount == 2 { DispatchQueue.main.async { completion(animationImages, stillImage, false) } }
+                        return
+                    })
+                }
+            }
         
-        previewView = GalleryPreviewView(frame: CGRect(x: 25, y: pY, width: width, height: width * 1.3333))
-        previewView.isUserInteractionEnabled = true
-        previewView.cluster = self
-        previewView.setUp(object: object, selectedIndex: selectedIndex, galleryIndex: galleryIndex)
-        maskView.addSubview(previewView)
+            /// download still image regularly
+            self.fetchImage(item: item, isLocal: isLocal, selected: selected, livePhoto: true) { result, failed in
+                
+                if failed || result == UIImage() { completion([UIImage()], UIImage(), false); return }
+                stillImage = result
+                
+                downloadCount += 1
+                if downloadCount == 2 { DispatchQueue.main.async { completion(animationImages, stillImage, false) } }
+            }
+        }
     }
 
-    
-    func fetchImage(item: Int, isLocal: Bool, selected: Bool, completion: @escaping(_ result: UIImage, _ failed: Bool) -> Void) {
+    func fetchImage(item: Int, isLocal: Bool, selected: Bool, livePhoto: Bool, completion: @escaping(_ result: UIImage, _ failed: Bool) -> Void) {
         
         let currentAsset = imageObjects[item].asset
         
@@ -370,83 +486,17 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                     guard let result = image else { completion( UIImage(), true); return }
                     
                     let aspect = result.size.height / result.size.width
-                    let size = CGSize(width: min(result.size.width, UIScreen.main.bounds.width * 1.5), height: min(result.size.height, aspect * UIScreen.main.bounds.width * 1.5))
+                    let size = CGSize(width: min(result.size.width, UIScreen.main.bounds.width * 2.0), height: min(result.size.height, aspect * UIScreen.main.bounds.width * 2.0))
                     let resizedImage = self.ResizeImage(with: result, scaledToFill: size)
                     
                     /// update with new image, set thumbnail to false
-                    self.imageObjects[item] = (ImageObject(asset: self.imageObjects[item].asset, rawLocation: self.imageObjects[item].rawLocation, stillImage: resizedImage ?? UIImage(), animationImages: [], gifMode: false, creationDate: self.imageObjects[item].creationDate))
+                    if !livePhoto { self.imageObjects[item] = (ImageObject(asset: self.imageObjects[item].asset, rawLocation: self.imageObjects[item].rawLocation, stillImage: resizedImage ?? UIImage(), animationImages: [], gifMode: false, creationDate: self.imageObjects[item].creationDate)) }
                     completion(resizedImage ?? UIImage(), false)
                     return
                 }
             }
         }
     }
-    
-    func fetchLivePhoto(item: Int, isLocal: Bool, selected: Bool, completion: @escaping(_ animationImages: [UIImage], _ stillImage: UIImage, _ failed: Bool) -> Void) {
-        
-        let currentAsset = imageObjects[item].asset
-        
-        let editingOptions = PHContentEditingInputRequestOptions()
-        editingOptions.isNetworkAccessAllowed = true
-        
-        contentRequestID = currentAsset.requestContentEditingInput(with: editingOptions) { [weak self] input, info in
-            
-            if info["PHContentEditingInputCancelledKey"] != nil { completion([UIImage()], UIImage(), false); return }
-            if info["PHContentEditingInputErrorKey"] != nil { completion([UIImage()], UIImage(), true); return }
-            
-            if let input = input {
-                guard let self = self else { return }
-
-                self.context = PHLivePhotoEditingContext(livePhotoEditingInput: input)
-                var frameImages: [UIImage] = []
-                var stillImage = UIImage()
-                
-                let keyTime = self.context.photoTime
-                self.context!.frameProcessor = { frame, _ in
-                    frameImages.append(UIImage(ciImage: frame.image))
-                    if frame.time == keyTime { stillImage = UIImage(ciImage: frame.image) }
-                    return frame.image
-                }
-                                
-                let output = PHContentEditingOutput(contentEditingInput: input)
-
-                self.context?.saveLivePhoto(to: output, options: nil, completionHandler: { success, err in
-
-                    if !success || err != nil || frameImages.isEmpty { completion([UIImage()], UIImage(), false); return }
-                    
-                    
-                    var animationImages: [UIImage] = []
-                    
-                    let distanceBetweenFrames = frameImages.count < 20 ? 3 : frameImages.count < 40 ? 4 : 5
-                    let rawFrames = frameImages.count / distanceBetweenFrames
-                    let numberOfFrames = rawFrames > 12 ? 10 : rawFrames > 8 ? max(8, rawFrames - 2) : rawFrames
-                    let offset = max((rawFrames - numberOfFrames) * distanceBetweenFrames/2, 2)
-                                            
-                    let aspect = frameImages[0].size.height / frameImages[0].size.width
-                    let size = CGSize(width: UIScreen.main.bounds.width * 1.2, height: aspect * UIScreen.main.bounds.width * 1.2)
-                    let image0 = self.ResizeImage(with: frameImages[offset], scaledToFill: size)
-                    animationImages.append(image0 ?? UIImage())
-
-                    /// add middle frames, trimming first couple and last couple
-                    let intMultiplier = (frameImages.count - offset)/numberOfFrames
-                    for i in 1...numberOfFrames {
-                        let multiplier = offset + intMultiplier * i
-                        let j = multiplier > frameImages.count - 1 ? frameImages.count - 1 : multiplier
-                        let image = self.ResizeImage(with: frameImages[j], scaledToFill: size)
-                        animationImages.append(image ?? UIImage())
-                    }
-                    
-                    let stillSize = CGSize(width: min(stillImage.size.width, UIScreen.main.bounds.width * 1.5), height: min(stillImage.size.height, aspect * UIScreen.main.bounds.width * 1.5))
-                    stillImage = self.ResizeImage(with: stillImage, scaledToFill: stillSize) ?? UIImage()
-
-                    self.imageObjects[item] = (ImageObject(asset: self.imageObjects[item].asset, rawLocation: self.imageObjects[item].rawLocation, stillImage: stillImage, animationImages: animationImages, gifMode: true, creationDate: self.imageObjects[item].creationDate))
-                    completion(animationImages, stillImage, false)
-                    return
-                })
-            }
-        }
-    }
-
     
     func showFailedDownloadAlert() {
         let alert = UIAlertController(title: "Unable to download image from iCloud", message: "\n Your iPhone storage may be full", preferredStyle: .alert)

@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 import SDWebImage
+import Mixpanel
 
 class SpotVisitorsViewController: UIViewController {
     
@@ -54,6 +55,11 @@ class SpotVisitorsViewController: UIViewController {
             guard let visitorCell = cell as? SpotVisitorCell else { return }
             visitorCell.profilePic.sd_cancelCurrentImageLoad()
         }
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "SpotVisitorsOpen")
     }
 }
 
@@ -134,7 +140,7 @@ class SpotVisitorCell: UICollectionViewCell {
         
         let url = user.imageURL
         if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 200, height: 200), scaleMode: .aspectFill)
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
             profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
         }
         
@@ -157,257 +163,3 @@ class SpotVisitorCell: UICollectionViewCell {
         addSubview(usernameLabel)
     }
 }
-
-/*
-
-class SpotFriendsCollectionCell: UITableViewCell, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-    
-    var usersCollection: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
-    var friendVisitors: [UserProfile] = []
-    var privacyLevel = ""
-    var halfScreenUserCount = 0, fullScreenUserCount = 0
-    var usersMoreNeeded = false
-    var expandUsers = false
-    var founder = false
-    var member = false
-    
-    func setUp(friendVisitors: [UserProfile], privacyLevel: String, halfScreenUserCount: Int, fullScreenUserCount: Int, usersMoreNeeded: Bool, expandUsers: Bool, collectionHeight: CGFloat, founder: Bool, member: Bool) {
-        
-        self.selectionStyle = .none
-        self.backgroundColor = UIColor(named: "SpotBlack")
-        
-        self.friendVisitors = friendVisitors
-        self.privacyLevel = privacyLevel
-        self.halfScreenUserCount = halfScreenUserCount
-        self.fullScreenUserCount = fullScreenUserCount
-        self.usersMoreNeeded = usersMoreNeeded
-        self.expandUsers = expandUsers
-        self.founder = founder
-        self.member = member
-        
-        let usersLayout = LeftAlignedCollectionViewFlowLayout()
-        usersLayout.headerReferenceSize = CGSize(width: UIScreen.main.bounds.width, height: 33)
-
-        usersCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: collectionHeight)
-        usersCollection.contentInset = UIEdgeInsets(top: 0, left: 14, bottom: 0, right: 14)
-        usersCollection.delegate = self
-        usersCollection.dataSource = self
-        usersCollection.backgroundColor = nil
-        usersCollection.register(SpotFriendsHeader.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "SpotFriendsHeader")
-        usersCollection.register(SpotFriendsCell.self, forCellWithReuseIdentifier: "SpotFriendsCell")
-        usersCollection.register(MoreCell.self, forCellWithReuseIdentifier: "MoreCell")
-        usersCollection.isScrollEnabled = false
-        usersCollection.bounces = false
-        self.addSubview(usersCollection)
-        
-        usersCollection.reloadData()
-        usersCollection.setCollectionViewLayout(usersLayout, animated: false)
-        
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return expandUsers ? fullScreenUserCount : halfScreenUserCount
-    }
-    
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
-        /// add more button for halfscreen view with user overflow
-        if indexPath.row == halfScreenUserCount - 1 && usersMoreNeeded && !expandUsers {
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MoreCell", for: indexPath) as? MoreCell else { return UICollectionViewCell() }
-            let trueHalf = usersMoreNeeded ? halfScreenUserCount - 1 : halfScreenUserCount
-            cell.setUp(count: fullScreenUserCount - trueHalf, spotPage:  true)
-            return cell
-        }
-                
-        /// regular user cell
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SpotFriendsCell", for: indexPath) as? SpotFriendsCell else { return UICollectionViewCell() }
-        guard let user = friendVisitors[safe: indexPath.row] else { return cell }
-        
-        cell.setUp(user: user)
-        return cell
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        
-        if indexPath.row == halfScreenUserCount - 1 && usersMoreNeeded && !expandUsers {
-            /// add +more button if users aren't going to fit on 2 lines for this section, and hasn't already been expanded
-            let moreWidth = getMoreWidth(extraCount: fullScreenUserCount - halfScreenUserCount)
-            return CGSize(width: moreWidth, height: 28)
-        }
-        
-        guard let user = friendVisitors[safe: indexPath.row] else { return CGSize(width: 0, height: 0) }
-        let width = getWidth(name: user.username)
-        
-        return CGSize(width: width, height: 24)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        guard let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "SpotFriendsHeader", for: indexPath) as? SpotFriendsHeader else { return UICollectionReusableView() }
-        header.setUp(friendCount: friendVisitors.count, privacyLevel: privacyLevel, founder: founder, member: member)
-        return header
-    }
-
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
-        guard let spotVC = self.viewContainingController() as? SpotViewController else { return }
-        if spotVC.mapVC.prePanY < 200 { spotVC.shadowScroll.setContentOffset(CGPoint(x: 0, y: 1), animated: false)}
-        
-        if collectionView.cellForItem(at: indexPath) is SpotFriendsCell {
-            
-            guard let user = friendVisitors[safe: indexPath.row] else { return }
-            spotVC.openProfile(user: user)
-            
-        } else {
-
-            guard let spotVC = self.viewContainingController() as? SpotViewController else { return }
-            /// more button tap -> expand to full and resize section
-            spotVC.expandUsers = true
-            if spotVC.mapVC.prePanY != 0 {
-                spotVC.mapVC.animateSpotToFull(forceRefresh: true)
-            } else {
-                spotVC.resizeTable(halfScreen: false, forceRefresh: true)
-            }
-        }
-    }
-    
-    func getWidth(name: String) -> CGFloat {
-            
-        let username = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 16))
-        username.text = name
-        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        username.sizeToFit()
-        return 30 + username.frame.width
-    }
-    
-    func getMoreWidth(extraCount: Int) -> CGFloat {
-        
-        let moreLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 100, height: 16))
-        moreLabel.font = UIFont(name: "SFCamera-Regular", size: 11.5)
-        moreLabel.text = "+ \(extraCount) more"
-        moreLabel.sizeToFit()
-        
-        return moreLabel.frame.width + 15
-    }
-    
-    override func prepareForReuse() {
-        
-        /// collection was getting readded and not removing cells
-        for cell in usersCollection.visibleCells {
-            guard let cell = cell as? SpotFriendsCell else { return }
-            if cell.username != nil { cell.username.text = "" }
-            if cell.profilePic != nil { cell.profilePic.image = UIImage() }
-        }
-        
-        guard let header = usersCollection.supplementaryView(forElementKind: UICollectionView.elementKindSectionHeader, at: IndexPath(item: 0, section: 0)) as? SpotFriendsHeader else { return }
-        if header.label != nil { header.label.text = "" }
-        if header.privacyIcon != nil { header.privacyIcon.image = UIImage() }
-        if header.addIcon != nil { header.addIcon.setImage(UIImage(), for: .normal) }
-
-        usersCollection = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
-    }
-}
-
-
-class SpotFriendsHeader: UICollectionReusableView {
-    
-    var label: UILabel!
-    var privacyIcon: UIImageView!
-    var addIcon: UIButton!
-    
-    func setUp(friendCount: Int, privacyLevel: String, founder: Bool, member: Bool) {
-        
-        if label != nil { label.text = "" }
-        label = UILabel(frame: CGRect(x: 0, y: 7, width: 200, height: 16))
-        label.text = "\(friendCount) friend"
-        if friendCount != 1 { label.text! += "s" }
-        label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 12)
-        label.sizeToFit()
-        addSubview(label)
-        
-        if privacyIcon != nil { print("privacy = 0"); privacyIcon.image = UIImage() }
-
-        switch privacyLevel {
-        
-        case "friends":
-            privacyIcon = UIImageView(frame: CGRect(x: label.frame.maxX + 7, y: 4.5, width: 98, height: 19))
-            privacyIcon.image = UIImage(named: "SpotPageFriends")
-            addSubview(privacyIcon)
-            
-        case "invite":
-            privacyIcon = UIImageView(frame: CGRect(x: label.frame.maxX + 7, y: 4.5, width: 68, height: 19))
-            privacyIcon.image = UIImage(named: "SpotPagePrivate")
-            addSubview(privacyIcon)
-        default:
-            print("public")
-        }
-        
-        if (privacyLevel == "public" && !member) || (privacyLevel != "public" && !founder) { return }
-        
-        if addIcon != nil { addIcon.setImage(UIImage(), for: .normal) }
-        let addX = privacyLevel == "public" ? label.frame.maxX : privacyIcon.frame.maxX
-        addIcon = UIButton(frame: CGRect(x: addX, y: 2.5, width: 23, height: 23))
-        addIcon.imageEdgeInsets = UIEdgeInsets(top: 7, left: 7, bottom: 7, right: 7)
-        addIcon.setImage(UIImage(named: "AddIcon"), for: .normal)
-        addIcon.addTarget(self, action: #selector(addFriendsTap(_:)), for: .touchUpInside)
-        addSubview(addIcon)
-    }
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    @objc func addFriendsTap(_ sender: UIButton) {
-        guard let spotVC = viewContainingController() as? SpotViewController else { return }
-        spotVC.launchFriendsPicker()
-    }
-
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        
-    }
-}
-
-class SpotFriendsCell: UICollectionViewCell {
-    
-    var profilePic: UIImageView!
-    var username: UILabel!
-    
-    func setUp(user: UserProfile) {
-        
-        backgroundColor = nil
-        
-        if profilePic != nil { profilePic.image = UIImage() }
-        profilePic = UIImageView(frame: CGRect(x: 0, y: 0, width: 22, height: 22))
-        profilePic.layer.cornerRadius = 11
-        profilePic.layer.masksToBounds = true
-        profilePic.contentMode = .scaleAspectFill
-        self.addSubview(profilePic)
-        
-        let url = user.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-        }
-
-        if username != nil { username.text = "" }
-        username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 6, y: 3, width: self.bounds.width - 28, height: 16))
-        username.text = user.username
-        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        username.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        username.sizeToFit()
-        self.addSubview(username)
-    }
-    
-    override func prepareForReuse() {
-        /// cancel image fetch when cell leaves screen
-        super.prepareForReuse()
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
-    }
-}*/
-

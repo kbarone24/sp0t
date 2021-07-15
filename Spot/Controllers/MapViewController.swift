@@ -59,6 +59,7 @@ class MapViewController: UIViewController {
     
     var friendsLoaded = false
     var feedLoaded = false
+    var userSpotsLoaded = false /// used for sending first spot notification
     var shouldUpdateRegion = true /// shouldUpdateRegion is true when circleQuery should update when user changes visible map
     var shouldUpdateCity = true /// shouldUpdateCity is true when nearby drawer should update city when user changes visible map
     var shouldCluster = true /// should cluster is false when nearby (tab index 1) selected and max zoom enabled
@@ -114,6 +115,7 @@ class MapViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(selectFromProfile(_:)), name: NSNotification.Name("OpenSpotFromProfile"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(selectFromNotis(_:)), name: NSNotification.Name("OpenSpotFromNotis"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyAcceptFriend(_:)), name: NSNotification.Name(("FriendRequestAccept")), object: nil)
         
         mapView = MKMapView(frame: UIScreen.main.bounds)
         mapView.delegate = self
@@ -164,7 +166,7 @@ class MapViewController: UIViewController {
         
         selectedSpotID = ""
         selectedProfileID = ""
-
+        
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -230,7 +232,7 @@ class MapViewController: UIViewController {
                 for friend in self.friendIDs {
                     
                     if !self.friendsList.contains(where: {$0.id == friend}) {
-                        var emptyProfile = UserProfile(username: "", name: "", imageURL: "", currentLocation: "")
+                        var emptyProfile = UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
                         emptyProfile.id = friend
                         self.friendsList.append(emptyProfile) } /// append empty here so they appear in order
                     
@@ -268,17 +270,25 @@ class MapViewController: UIViewController {
                             spotsList.append(doc.documentID)
                             if spotsList.count == spotsSnap?.documents.count {
                                 self.userSpots = spotsList
+                                self.userSpotsLoaded = true 
                                 if self.searchPageOpen() { self.loadNearbySpots() }
                             }
                         }
+                        
                     }
                 }
-            } catch { print("catch"); return }
+            } catch {  return }
         })
     }
     
-    @objc func notifyFriendsLoad(_ sender: NSNotification) {
+    @objc func notifyFriendsLoad(_ notification: NSNotification) {
         friendsLoaded = true
+    }
+    
+    @objc func notifyAcceptFriend(_ notification: NSNotification) {
+        if let friendID = notification.userInfo?.first?.value as? String {
+            if !friendIDs.contains(friendID) { friendIDs.append(friendID) }
+        }
     }
     
     func setUpNavBar() {
@@ -447,7 +457,7 @@ class MapViewController: UIViewController {
         mapView.removeAnnotations(annotations)
         
         if let feedVC = self.customTabBar.viewControllers![0] as? FeedViewController {
-            self.postsList = feedVC.selectedPostIndex == 0 ? feedVC.friendPosts : feedVC.nearbyPosts
+            self.postsList = feedVC.selectedSegmentIndex == 0 ? feedVC.friendPosts : feedVC.nearbyPosts
             if feedVC.postVC != nil {
                 self.addSelectedPostToMap(index: feedVC.postVC.selectedPostIndex, parentVC: .feed)
             }
@@ -1034,7 +1044,6 @@ extension MapViewController: UIGestureRecognizerDelegate {
     
     func animateToFullScreen() {
         
-        print("animate to full")
         removeBottomBar()
         self.prePanY = 0
         
@@ -1301,7 +1310,7 @@ extension MapViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
 
         if annotation is MKUserLocation { return nil }
-        
+      
         //posts list is not empty whenever post page is open
         if postsList.isEmpty && (self.selectedSpotID == "" || self.selectedProfileID != "") {
             
@@ -1773,6 +1782,7 @@ extension MapViewController: MKMapViewDelegate {
         
         let annotations = self.mapView.annotations
         mapView.removeAnnotations(annotations)
+        
         let selectedSpotAnno = MKPointAnnotation()
         selectedSpotAnno.coordinate = selectedCoordinate
         mapView.addAnnotation(selectedSpotAnno)
@@ -1968,7 +1978,7 @@ class SpotAnnotationView: MKAnnotationView {
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         collisionMode = .circle
-        self.canShowCallout = false
+        canShowCallout = false
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -2044,7 +2054,7 @@ class SinglePostAnnotationView: MKAnnotationView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    
+
     func updateImage(post: MapPost) {
         
         let nibView = loadNib()
@@ -2249,7 +2259,7 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource {
             let height: CGFloat = largeScreen ? 330 : 275
             tagTable.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: height)
         default:
-            let height: CGFloat = 165 /// originally using 220 for large screen but was cutting off for post-to spot
+            let height: CGFloat = largeScreen ? 175 : 135 /// originally using 220 for large screen but was cutting off for post-to spot
             tagTable.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: height)
         }
     }

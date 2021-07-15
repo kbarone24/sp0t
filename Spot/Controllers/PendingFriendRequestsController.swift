@@ -19,8 +19,8 @@ class PendingFriendRequestsController: UIViewController, UITableViewDelegate, UI
     
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    let acceptNotificationName = Notification.Name("friendRequestAccept")
-    let deleteNotificationName = Notification.Name("friendRequestReject")
+    let acceptNotificationName = Notification.Name("FriendRequestAccept")
+    let deleteNotificationName = Notification.Name("FriendRequestReject")
     unowned var notiVC: NotificationsViewController!
     
     

@@ -28,6 +28,7 @@ class NearbyViewController: UIViewController {
     var cityIcon: UIImageView!
     var cityName: UILabel!
     var changeCityButton: UIButton!
+    
     var selectedCity: (name: String, coordinate: CLLocationCoordinate2D)! /// currently selected city
     var userCity: (name: String, coordinate: CLLocationCoordinate2D)! /// user city based on currentLocation
     
@@ -575,8 +576,8 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
 
             if indexPath.row == 0 && halfScreenUserCount == 0 {
                 /// empty state cell. Add room for add  friends button if user has <15 friends
-                let lowFriends = mapVC.friendIDs.count < 15
-                let emptyHeight: CGFloat = lowFriends ? 110 : 65
+                let lowFriends = !cityFriends.contains(where: {!$0.spotsList.isEmpty}) && mapVC.friendIDs.count < 15
+                let emptyHeight: CGFloat = lowFriends ? 110 : 50
                 
                 return CGSize(width: UIScreen.main.bounds.width, height: emptyHeight)
                 
@@ -616,7 +617,7 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         /// return userCount if all users showing or userCount + 1 if adding the +more button
         if collectionView.tag == 0 {
-            if halfScreenUserCount == 0 { return 1 } /// add empty state
+            if halfScreenUserCount == 0 && !cityFriends.contains(where: {!$0.spotsList.isEmpty}) && mapVC.friendIDs.count < 15 { return 1 } /// add empty state
             return expandUsers ? fullScreenUserCount : halfScreenUserCount
         } else {
             return expandTags ? fullScreenTagsCount : halfScreenTagsCount
@@ -642,7 +643,7 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
             if indexPath.row == 0 && halfScreenUserCount == 0 {
                 /// emptyView cell
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "NearbyEmptyCell", for: indexPath) as? NearbyEmptyCell else { return UICollectionViewCell() }
-                cell.setUp(lowFriends: mapVC.friendIDs.count < 15)
+                cell.setUp(lowFriends: !cityFriends.contains(where: {!$0.spotsList.isEmpty}) && mapVC.friendIDs.count < 15)
                 return cell
                 
             } else if indexPath.row == halfScreenUserCount - 1 && usersMoreNeeded && !expandUsers {
@@ -1490,6 +1491,7 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
     
     func checkForCityChange() {
         
+        if selectedCity == nil { return }
         let coordinate = mapVC.mapView.centerCoordinate
         
         reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) { [weak self] cityString in
@@ -2032,7 +2034,7 @@ class NearbySpotCell: UITableViewCell {
     }
     
     @objc func rejectPublicSpot(_ sender: UIButton) {
-        sendRejectPublicNotification(spot: spotObject)
+      ///  sendRejectPublicNotification(spot: spotObject) -> don't really think this is even necessary
         if let reviewPublic = viewContainingController() as? ReviewPublicController {
             reviewPublic.pendingSpots.removeAll(where: {$0.id == spotObject.id})
             reviewPublic.spotsTable.reloadData()
@@ -2636,7 +2638,7 @@ extension NearbyViewController {
         /// 0.25 on drawer animations, 0.35 otherwise
      
         /// adjust halfScreenUserHeight to accomodate empty state
-        if halfScreenUserHeight == 0 { halfScreenUserHeight = mapVC.friendIDs.count < 15 ? 110 : 65 }
+        if halfScreenUserHeight == 0 { halfScreenUserHeight = (!cityFriends.contains(where: {!$0.spotsList.isEmpty}) && mapVC.friendIDs.count < 15) ? 110 : 50 }
         
         let speed: TimeInterval = refresh ? 0.25 : 0.35
 
@@ -2645,6 +2647,7 @@ extension NearbyViewController {
             UIView.animate(withDuration: speed) { [weak self] in
                 guard let self = self else { return }
                 let height = self.expandUsers ? self.fullScreenUserHeight : self.halfScreenUserHeight
+                print("half screen height", self.halfScreenUserHeight)
                 self.usersCollection.frame = CGRect(x: self.usersCollection.frame.minX, y: 0, width: self.usersCollection.frame.width, height: height)
                 
                 let indexSet: IndexSet = IndexSet(0...0)
@@ -2791,7 +2794,7 @@ extension NearbyViewController {
         var filterTags: [Tag] = []
         for tag in selectedTags { filterTags.append(cityTags.first(where: {$0.name == tag})!) }
         
-        var selectedUser = CityUser(user: UserProfile(username: "", name: "", imageURL: "", currentLocation: ""))
+        var selectedUser = CityUser(user: UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: ""))
         if let user = cityFriends.first(where: {$0.selected}) {
             selectedUser = user
         }

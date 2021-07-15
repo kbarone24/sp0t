@@ -40,6 +40,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     var previewView: GalleryPreviewView!
 
     var downloadCircle: UIActivityIndicatorView!
+    var fetchingIndex = -1
     var isFetching = false
     var cancelOnDismiss = false
     
@@ -93,16 +94,13 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         collectionView.dataSource = self
         collectionView.allowsSelection = true
         collectionView.setCollectionViewLayout(layout, animated: false)
+        collectionView.scrollsToTop = false
         view.addSubview(collectionView)
-        
-        let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(leftSwipe(_:)))
-        leftSwipe.direction = .left
-        collectionView.addGestureRecognizer(leftSwipe)
-        
+                
         maskView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         maskView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(maskTap(_:))))
         maskView.isUserInteractionEnabled = true
-        maskView.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        maskView.backgroundColor = UIColor.black.withAlphaComponent(0.85)
         
         collectionView.register(galleryActivityIndicator.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: "footerView")
         
@@ -130,11 +128,6 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PhotoGalleryOpen")
-    }
-    
-    @objc func leftSwipe(_ sender: UISwipeGestureRecognizer) {
-        guard let parentVC = parent as? PhotosContainerController else { return }
-        if parentVC.selectedIndex == 0 { parentVC.switchToMapSeg() }
     }
     
     @objc func scrollToTop(_ sender: NSNotification) {
@@ -177,6 +170,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         options.version = .current
         
         var fetchObject: PHFetchResult<PHAsset>!
+        
         if first {
             fetchObject = assetsFirst
         } else {
@@ -199,7 +193,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             let imageObj = ImageObject(asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], gifMode: false, creationDate: creationDate)
             localObjects.append(imageObj)
 
-            if localObjects.count == 1000 || parentVC.assetsFull != nil && self.imageObjects.count + localObjects.count == parentVC.assetsFull.count {
+            if localObjects.count == 1000 || self.assetsFirst.count < 1000 && localObjects.count == self.assetsFirst.count || parentVC.assetsFull != nil && self.imageObjects.count + localObjects.count == parentVC.assetsFull.count {
                 /// if self.imageObjects.count == (self.refreshes + 1) * 1000 || (parentVC.assetsFull != nil && self.imageObjects.count == parentVC.assetsFull.count) {
                 
                 self.imageObjects.append(contentsOf: localObjects)
@@ -318,7 +312,6 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
 
         var path = [IndexPath]()
         path.append(indexPath)
-        
         guard let parentVC = parent as? PhotosContainerController else { return }
                 
         if parentVC.selectedObjects.contains(where: {$0.index == indexPath.row}) {
@@ -341,6 +334,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             self.addPreviewView(object: selectedObject, selectedIndex: selectedIndex, galleryIndex: index)
             
         } else {
+            Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": false])
             parentVC.selectedObjects.removeAll(where: {$0.index == index})
             if parentVC.selectedObjects.count == 0 { parentVC.removeNextButton() }
             DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
@@ -357,10 +351,13 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         let paths = getSelectedPaths(newRow: index)
         
         if selectedObject.stillImage != UIImage() {
-            
+
             if !circleTap {
                 self.addPreviewView(object: selectedObject, selectedIndex: 0, galleryIndex: index)
+           
             } else {
+                
+                Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": true])
                 parentVC.selectedObjects.append((selectedObject, index))
                 self.checkForNext()
                 DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
@@ -376,19 +373,14 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                 if let isLocal = resourceArray.first?.value(forKey: "locallyAvailable") as? Bool { local = isLocal }
 
                 /// this cell is fetching, cancel fetch and return
-                if cell.activityIndicator.isAnimating {
-                    cell.activityIndicator.stopAnimating()
-                    currentAsset.cancelContentEditingInputRequest(contentRequestID)
-                    if context != nil { context.cancel() }
-                    imageManager.cancelImageRequest(requestID)
-                    self.isFetching = false
-                    return
-                }
+                if cell.activityIndicator.isAnimating { cancelFetchForRowAt(index: index); return  }
 
-                if self.isFetching { return } /// another cell is fetching, just return
+                if isFetching { cancelFetchForRowAt(index: fetchingIndex) } /// another cell is fetching cancel that fetch
                 cell.addActivityIndicator()
                 
-                self.isFetching = true
+                isFetching = true
+                fetchingIndex = index
+                
                 if imageObjects[index].asset.mediaSubtypes.contains(.photoLive) && !parentVC.editSpotMode {
                     
                     fetchLivePhoto(item: index, isLocal: local, selected: false) { [weak self] animationImages, stillImage, failed in
@@ -396,6 +388,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                         guard let self = self else { return }
                         
                         self.isFetching = false
+                        self.fetchingIndex = -1
                         cell.removeActivityIndicator()
                         
                         if self.cancelOnDismiss { return }
@@ -425,10 +418,11 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                     
                 } else {
                     
-                    self.fetchImage(item: index, isLocal: local, selected: true) { [weak self] result, failed  in
+                    self.fetchImage(item: index, isLocal: local, selected: true, livePhoto: false) { [weak self] result, failed  in
                         
                         guard let self = self else { return }
                         self.isFetching = false
+                        self.fetchingIndex = -1
                         cell.removeActivityIndicator()
                         
                         if self.cancelOnDismiss { return }
@@ -445,7 +439,9 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                             
                             if !circleTap {
                                 self.addPreviewView(object: newObject.0, selectedIndex: 0, galleryIndex: index)
+                                
                             } else {
+                                Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": true])
                                 parentVC.selectedObjects.append(newObject)
                                 self.checkForNext()
                                 DispatchQueue.main.async {
@@ -458,6 +454,23 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                 }
             }
         }
+    }
+    
+    func cancelFetchForRowAt(index: Int) {
+        
+        Mixpanel.mainInstance().track(event: "GalleryCancelImageFetch")
+
+        guard let cell = collectionView.cellForItem(at: IndexPath(item: index, section: 0)) as? GalleryCell else { return }
+        guard let currentObject = imageObjects[safe: index] else { return }
+        let currentAsset = currentObject.asset
+
+        cell.activityIndicator.stopAnimating()
+        currentAsset.cancelContentEditingInputRequest(contentRequestID)
+        if context != nil { context.cancel() }
+        imageManager.cancelImageRequest(requestID)
+        
+        isFetching = false
+        fetchingIndex = -1
     }
     
     func getSelectedPaths(newRow: Int) -> [IndexPath] {
@@ -545,18 +558,20 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                     }
                                     
                     let output = PHContentEditingOutput(contentEditingInput: input)
-
+                    
                     self.context?.saveLivePhoto(to: output, options: nil, completionHandler: { [weak self] success, err in
 
                         guard let self = self else { return }
                         if !success || err != nil || frameImages.isEmpty { completion([UIImage()], UIImage(), false); return }
-                        
                                                 
-                        let distanceBetweenFrames = frameImages.count < 20 ? 3 : frameImages.count < 40 ? 4 : 5
-                        let rawFrames = frameImages.count / distanceBetweenFrames
-                        let numberOfFrames = rawFrames > 12 ? 10 : rawFrames > 8 ? max(8, rawFrames - 2) : rawFrames
-                        let offset = max((rawFrames - numberOfFrames) * distanceBetweenFrames/2, 2)
-                                     
+                        print("frameimages", frameImages.count, "duration", self.context.duration.seconds)
+                        
+                        let distanceBetweenFrames: Double = 2
+                        let rawFrames = Double(frameImages.count) / distanceBetweenFrames
+                        let numberOfFrames: Double = rawFrames > 11 ? 9 : rawFrames > 7 ? max(7, rawFrames - 2) : rawFrames
+                        let rawOffsest = max((rawFrames - numberOfFrames) * distanceBetweenFrames/2, 2) /// offset on beginning and ending of the frames
+                        let offset = Int(rawOffsest)
+                        
                         let aspect = frameImages[0].size.height / frameImages[0].size.width
                         let size = CGSize(width: min(frameImages[0].size.width, UIScreen.main.bounds.width * 1.5), height: min(frameImages[0].size.height, aspect * UIScreen.main.bounds.width * 1.5))
 
@@ -564,11 +579,11 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                         animationImages.append(image0 ?? UIImage())
 
                         /// add middle frames, trimming first couple and last couple
-                        let intMultiplier = (frameImages.count - offset)/numberOfFrames
-                        for i in 1...numberOfFrames {
+                        let intMultiplier = (frameImages.count - offset * 2)/Int(numberOfFrames)
+                        for i in 1...Int(numberOfFrames) {
                             let multiplier = offset + intMultiplier * i
                             let j = multiplier > frameImages.count - 1 ? frameImages.count - 1 : multiplier
-                            let image = self.ResizeImage(with: frameImages[j], scaledToFill: size)
+                             let image = self.ResizeImage(with: frameImages[j], scaledToFill: size)
                             animationImages.append(image ?? UIImage())
                         }
                         
@@ -580,7 +595,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             }
         
             /// download still image regularly
-            self.fetchImage(item: item, isLocal: isLocal, selected: selected) { result, failed in
+            self.fetchImage(item: item, isLocal: isLocal, selected: selected, livePhoto: true) { result, failed in
                 
                 if failed || result == UIImage() { completion([UIImage()], UIImage(), false); return }
                 stillImage = result
@@ -591,7 +606,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         }
     }
     
-    func fetchImage(item: Int, isLocal: Bool, selected: Bool, completion: @escaping(_ result: UIImage, _ failed: Bool) -> Void) {
+    func fetchImage(item: Int, isLocal: Bool, selected: Bool, livePhoto: Bool, completion: @escaping(_ result: UIImage, _ failed: Bool) -> Void) {
         
         let currentAsset = imageObjects[item].asset
         
@@ -610,7 +625,6 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                 DispatchQueue.main.async { [weak self] in
                     /// return blank image on error
                     if info?["PHImageCancelledKey"] != nil { completion(UIImage(), false); return }
-                    
                     guard let self = self else { completion(UIImage(), true); return}
                     guard let result = image else { completion( UIImage(), true); return }
                     
@@ -618,8 +632,8 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                     let size = CGSize(width: min(result.size.width, UIScreen.main.bounds.width * 2.0), height: min(result.size.height, aspect * UIScreen.main.bounds.width * 2.0))
                     let resizedImage = self.ResizeImage(with: result, scaledToFill: size)
                     
-                    /// update with new image, set thumbnail to false
-                    self.imageObjects[item] = (ImageObject(asset: self.imageObjects[item].asset, rawLocation: self.imageObjects[item].rawLocation, stillImage: resizedImage ?? UIImage(), animationImages: [], gifMode: false, creationDate: self.imageObjects[item].creationDate))
+                    /// update with new image, set thumbnail to false (only if this is a still image fetch)
+                    if !livePhoto { self.imageObjects[item] = (ImageObject(asset: self.imageObjects[item].asset, rawLocation: self.imageObjects[item].rawLocation, stillImage: resizedImage ?? UIImage(), animationImages: [], gifMode: false, creationDate: self.imageObjects[item].creationDate)) }
                     completion(resizedImage ?? UIImage(), false)
                     return
                 }
@@ -721,13 +735,15 @@ class GalleryCell: UICollectionViewCell {
         image.contentMode = .scaleAspectFill
         image.isUserInteractionEnabled = false
         addSubview(image)
+        
+        activityIndicator = UIActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height))
+        activityIndicator.color = .white
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.8, y: 1.8)
+        activityIndicator.isHidden = true
+        addSubview(activityIndicator)
                 
         /// add mask for selected images
-        if index != 0 {
-            imageMask = UIView(frame: self.bounds)
-            imageMask.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(0.5)
-            addSubview(imageMask)
-        }
+        if index != 0 { addImageMask() }
         
         if asset.mediaSubtypes.contains(.photoLive) && !editSpot {
             liveIndicator = UIImageView(frame: CGRect(x: self.bounds.midX - 9, y: self.bounds.midY - 9, width: 18, height: 18))
@@ -757,6 +773,27 @@ class GalleryCell: UICollectionViewCell {
         }
     }
     
+    private func addImageMask() {
+        
+        imageMask = UIView(frame: self.bounds)
+        imageMask.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(0.5)
+        
+        let layer = CAGradientLayer()
+        layer.frame = imageMask.bounds
+        layer.colors = [
+          UIColor(red: 0.098, green: 0.783, blue: 0.701, alpha: 0.13).cgColor,
+          UIColor(red: 0.098, green: 0.784, blue: 0.702, alpha: 0.03).cgColor,
+          UIColor(red: 0.098, green: 0.784, blue: 0.702, alpha: 0.1).cgColor,
+          UIColor(red: 0.098, green: 0.783, blue: 0.701, alpha: 0.33).cgColor
+        ]
+        layer.locations = [0, 0.3, 0.66, 1]
+        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        imageMask.layer.addSublayer(layer)
+        
+        addSubview(imageMask)
+    }
+    
     private func setUpThumbnailSize() {
         let scale = UIScreen.main.scale * 0.75
         thumbnailSize = CGSize(width: self.bounds.width * scale, height: self.bounds.height * scale)
@@ -766,13 +803,8 @@ class GalleryCell: UICollectionViewCell {
     
     
     func addActivityIndicator() {
-        if activityIndicator.superview != nil { activityIndicator.startAnimating(); return }
-        activityIndicator = UIActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height))
-        activityIndicator.color = .white
-        activityIndicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
-        activityIndicator.startAnimating()
-        addSubview(activityIndicator)
         bringSubviewToFront(activityIndicator)
+        activityIndicator.startAnimating()
     }
     
     func removeActivityIndicator() {
@@ -781,15 +813,14 @@ class GalleryCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        activityIndicator.stopAnimating()
         imageManager.cancelImageRequest(requestID)
         image.image = nil
-        if imageMask != nil { imageMask.backgroundColor = nil }
+        if imageMask != nil { for layer in imageMask.layer.sublayers ?? [] { layer.removeFromSuperlayer() } }
     }
     
     deinit {
         imageManager.cancelImageRequest(requestID)
-        imageManager.stopCachingImagesForAllAssets()
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ScrollGallery"), object: nil)
     }
     
     func resetCell() {
@@ -884,160 +915,3 @@ public extension UIImage {
     }
 }
 
-class CircleView: UIView {
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func setUp(index: Int) {
-        layer.borderWidth = 1.25
-        isUserInteractionEnabled = false
-        layer.borderColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.85).cgColor
-        layer.cornerRadius = bounds.width/2
-        
-        if index > 0 {
-            
-            backgroundColor = UIColor(red: 0.03, green: 0.604, blue: 0.604, alpha: 0.8)
-            
-            let minY: CGFloat = bounds.height > 25 ? 5.5 : 4
-            let number = UILabel(frame: CGRect(x: 0, y: minY, width: bounds.width, height: 15))
-            number.text = String(index)
-            number.textColor = .white
-            number.font = UIFont(name: "SFCamera-Semibold", size: 14)
-            number.textAlignment = .center
-            addSubview(number)
-            
-        } else { backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.15) }
-    }
-}
-
-class GalleryPreviewView: UIView {
-    
-    var imageView: UIImageView!
-    var imageMask: UIView!
-    var selectButton: UIButton!
-    var aliveToggle: UIButton!
-    
-    var circleView: CircleView!
-    var object: ImageObject!
-    var selectedIndex = 0
-    var galleryIndex = 0
-    
-    unowned var picker: PhotoGalleryPicker!
-    unowned var cluster: ClusterPickerController!
-    
-    func setUp(object: ImageObject, selectedIndex: Int, galleryIndex: Int) {
-        
-        backgroundColor = UIColor(named: "SpotBlack")
-        layer.cornerRadius = 9
-        layer.masksToBounds = true
-        
-        self.selectedIndex = selectedIndex
-        self.object = object
-        self.galleryIndex = galleryIndex
-                
-        if imageView != nil { imageView.image = UIImage(); imageView.animationImages?.removeAll() }
-        imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: self.bounds.width, height: self.bounds.height))
-        imageView.layer.cornerRadius = 9
-        
-        let images = !object.gifMode ? [object.stillImage] : object.animationImages
-        let aspect = images.first!.size.height / images.first!.size.width
-        imageView.contentMode = aspect > 1.3 ? .scaleAspectFill : .scaleAspectFit
-        addSubview(imageView)
-
-        if !object.gifMode {
-            imageView.image = images.first!
-        } else {
-            imageView.animationImages = images
-            /// only animate for active index
-            if frame.minX == 25 { imageView.animateGIF(directionUp: true, counter: 0, frames: images.count) } else { imageView.image = images.first! }
-        }
-        
-        if aspect > 1.1 { imageView.addTopMask() }
-
-        if selectButton != nil { selectButton.setTitle("", for: .normal) }
-        selectButton = UIButton(frame: CGRect(x: bounds.width - 150, y: 18, width: 100, height: 20))
-        let title = selectedIndex > 0 ? "Selected" : "Select"
-        selectButton.setTitle(title, for: .normal)
-        selectButton.contentHorizontalAlignment = .right
-        selectButton.contentVerticalAlignment = .center
-        selectButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
-        selectButton.setTitleColor(.white, for: .normal)
-        selectButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
-        addSubview(selectButton)
-        
-        if circleView != nil { for sub in circleView.subviews { sub.removeFromSuperview()}; circleView = CircleView() }
-        circleView = CircleView(frame: CGRect(x: bounds.width - 41, y: 15, width: 26, height: 26))
-        let index = selectedIndex
-        circleView.setUp(index: index)
-        addSubview(circleView)
-        
-        let circleButton = UIButton(frame: CGRect(x: bounds.width - 46, y: 10, width: 36, height: 36))
-        circleButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
-        addSubview(circleButton)
-        
-        if !object.animationImages.isEmpty {
-            if aliveToggle != nil { aliveToggle.setImage(UIImage(), for: .normal) }
-            aliveToggle = UIButton(frame: CGRect(x: self.bounds.width - 86, y: self.bounds.height - 49, width: 81, height: 44))
-            aliveToggle.setImage(UIImage(named: "AliveToggle"), for: .normal)
-            aliveToggle.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-            aliveToggle.alpha = object.gifMode ? 1.0 : 0.5
-            aliveToggle.addTarget(self, action: #selector(toggleAlive(_:)), for: .touchUpInside)
-            addSubview(aliveToggle)
-        }
-    }
-    
-    @objc func circleTap(_ sender: UIButton) {
-
-        
-        let selected = selectedIndex == 0
-        let text = selected ? "Selected" : "Select"
-        selectButton.setTitle(text, for: .normal)
-        
-        if picker != nil, let container = picker.parent as? PhotosContainerController {
-            selected ? picker.select(index: galleryIndex, circleTap: true) : picker.deselect(index: galleryIndex, circleTap: true)
-            selectedIndex = selected ? container.selectedObjects.count : 0
-        } else if cluster != nil {
-            selected ? cluster.select(index: galleryIndex, circleTap: true) : cluster.deselect(index: galleryIndex, circleTap: true)
-            selectedIndex = selected ? cluster.selectedObjects.count : 0
-        }
-                
-        for sub in circleView.subviews { sub.removeFromSuperview() }
-        circleView.setUp(index: selectedIndex)
-        addSubview(circleView)
-    }
-    
-    @objc func toggleAlive(_ sender: UIButton) {
-                
-        object.gifMode = !object.gifMode
-        aliveToggle.alpha = object.gifMode ? 1.0 : 0.5
-        
-        if object.gifMode {
-            /// animate with gif images
-            imageView.animationImages = object.animationImages
-            imageView.animateGIF(directionUp: true, counter: 0, frames: object.animationImages.count)
-        } else {
-            /// remove to stop animation and set to still image
-            imageView.isHidden = true
-            imageView.image = object.stillImage
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.07) { [weak self] in
-                guard let self = self else { return }
-                self.imageView.isHidden = false
-            }
-        }
-        
-        if picker != nil, let container = picker.parent as? PhotosContainerController {
-            picker.imageObjects[galleryIndex].gifMode = object.gifMode
-            if selectedIndex > 0 { container.selectedObjects[selectedIndex - 1].object.gifMode = object.gifMode } /// adjust selected objects if object was selected
-            
-        } else if cluster != nil {
-            cluster.imageObjects[galleryIndex].gifMode = object.gifMode
-            if selectedIndex > 0 { cluster.selectedObjects[selectedIndex - 1].object.gifMode = object.gifMode } /// adjust selected objects if object was selected
-        }
-    }
-}

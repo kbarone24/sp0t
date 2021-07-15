@@ -85,8 +85,11 @@ class ProfilePostsViewController: UIViewController {
     @objc func notifyNewPost(_ sender: NSNotification) {
         if let newPost = sender.userInfo?.first?.value as? MapPost {
 
-            postsList.insert(newPost, at: 0)
-            
+            var post = newPost
+            post.seconds = post.actualTimestamp?.seconds ?? post.timestamp.seconds /// adjust seconds to reflect profile posts sorting
+            postsList.append(newPost)
+            postsList.sort(by: {$0.seconds > $1.seconds})
+
             var frameIndexes = newPost.frameIndexes ?? []
             if frameIndexes.isEmpty { for i in 0...newPost.imageURLs.count - 1 { frameIndexes.append(i)} }
 
@@ -149,12 +152,11 @@ class ProfilePostsViewController: UIViewController {
                 self.postsCollection.reloadData()
                 if postsList.count == 0 { return } /// cancel post page funcs on spotDelete
                 
-                if let postVC = self.children.first as? PostViewController {
-                    
+                if let postVC = profileVC.children.last(where: {$0 is PostViewController}) as? PostViewController {
+
                     postVC.postsList = self.postsList
                     postVC.tableView.beginUpdates()
                     postVC.tableView.deleteRows(at: [IndexPath(row: postVC.selectedPostIndex, section: 0)], with: .bottom)
-                    postVC.tableView.endUpdates()
                     
                     /// scroll table to previous row if necessary
                     if postVC.selectedPostIndex >= postVC.postsList.count {
@@ -162,6 +164,8 @@ class ProfilePostsViewController: UIViewController {
                         postVC.tableView.scrollToRow(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .top, animated: true)
                         postVC.tableView.reloadData()
                     }
+                    
+                    postVC.tableView.endUpdates()
 
                     let mapPass = ["selectedPost": postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": PostViewController.parentViewController.profile] as [String : Any]
                     NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass)
@@ -210,6 +214,7 @@ class ProfilePostsViewController: UIViewController {
     
     func addAnnotations() {
         
+        print("remove on profile posts")
         let annotations = mapVC.mapView.annotations
         mapVC.mapView.removeAnnotations(annotations)
         
@@ -284,7 +289,7 @@ class ProfilePostsViewController: UIViewController {
                     let postInfo = try doc.data(as: MapPost.self)
                     guard var info = postInfo else { self.docIndex += 1; if self.docIndex == docs.count  { self.finishPostsLoad() }; continue }
 
-                    info.seconds = info.timestamp.seconds
+                    info.seconds = info.actualTimestamp?.seconds ?? info.timestamp.seconds
                     info.id = doc.documentID
                     
                     //access check
@@ -395,6 +400,8 @@ class ProfilePostsViewController: UIViewController {
     
     func loadPostToMap(post: MapPost, docCount: Int) {
         
+        if mapVC.deletedPostIDs.contains(post.id ?? "") { return }
+
         if postsList.contains(where: {$0.id == post.id}) {
 
             /// already contains post - active listener found a change, probably a comment or like
@@ -420,7 +427,6 @@ class ProfilePostsViewController: UIViewController {
             
         } else {
             
-            if mapVC.deletedPostIDs.contains(post.id ?? "") { return }
             postsList.append(post)
             
             let postDate = getDateTimestamp(seconds: post.actualTimestamp?.seconds ?? post.seconds)
@@ -524,7 +530,11 @@ extension ProfilePostsViewController: UICollectionViewDelegate, UICollectionView
         
         guard let preview = subset[safe: indexPath.row] else { return }
         
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 300, height: 300), scaleMode: .aspectFill)
+        let itemWidth = (UIScreen.main.bounds.width - 10.5) / 3
+        let itemHeight = itemWidth * 1.374
+
+        /// resize to aspect ratio * 2 + added padding for rounding errors
+        let transformer = SDImageResizingTransformer(size: CGSize(width: itemWidth * 2, height: itemHeight * 2 + 5), scaleMode: .aspectFill)
         cell.imagePreview.sd_setImage(with: URL(string: preview.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer], progress: nil)
         
     }

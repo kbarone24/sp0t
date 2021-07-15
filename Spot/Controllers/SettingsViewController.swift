@@ -166,7 +166,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
     }
     
     @objc func editProfile(_ sender: UIButton) {
-        profileVC.editProfile()
+        profileVC.editProfile(editBio: false)
         dismiss(animated: false, completion: nil)
     }
     

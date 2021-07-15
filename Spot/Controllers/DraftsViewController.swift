@@ -742,7 +742,7 @@ extension DraftsViewController: UICollectionViewDelegate, UICollectionViewDataSo
             if draft.0.count > 1 {
                 DispatchQueue.main.async {
                     self.previewView.animationImages = draft.0
-                    draft.0.count == 5 ? self.previewView.animate5FrameAlive(directionUp: true, counter: 0) : self.previewView.animateGIF(directionUp: true, counter: 0, frames: draft.0.count)
+                    draft.0.count == 5 ? self.previewView.animate5FrameAlive(directionUp: true, counter: 0) : self.previewView.animateGIF(directionUp: true, counter: 0, frames: draft.0.count, alive: true)
                 }
             } else { previewView.image = draft.0[0] }
             
@@ -872,6 +872,12 @@ extension DraftsViewController {
                 if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
             }
             
+            var aspectRatios: [CGFloat] = []
+            for index in post.frameIndexes ?? [] {
+                let image = UIImage(data: uploadImages[index]) ?? UIImage()
+                aspectRatios.append(image.size.height/image.size.width)
+            }
+            
             let postValues = ["caption" : post.caption ?? "",
                               "posterID": self.uid,
                               "likers": [],
@@ -893,7 +899,9 @@ extension DraftsViewController {
                               "isFirst": false,
                               "spotPrivacy" : post.spotPrivacy ?? "",
                               "hideFromFeed": post.hideFromFeed,
-                              "frameIndexes": post.frameIndexes ?? []] as [String : Any]
+                              "frameIndexes": post.frameIndexes ?? [],
+                              "aspectRatios": aspectRatios,
+                              "gif": post.gif] as [String : Any]
             
             let commentValues = ["commenterID" : self.uid,
                                  "comment" : post.caption ?? "",
@@ -914,7 +922,7 @@ extension DraftsViewController {
                 postImages.append(image)
             }
             
-            var postObject = MapPost(id: postID, caption: post.caption ?? "", postLat: post.postLat, postLong: post.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: post.spotID ?? "", city: city, frameIndexes: post.frameIndexes, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: post.taggedUsers, spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, privacyLevel: post.privacyLevel, spotPrivacy: post.spotPrivacy ?? "friends", createdBy: self.uid, inviteList: post.inviteList ?? [])
+            var postObject = MapPost(id: postID, caption: post.caption ?? "", postLat: post.postLat, postLong: post.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: post.spotID ?? "", city: city, frameIndexes: post.frameIndexes, aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: post.taggedUsers, spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, privacyLevel: post.privacyLevel, spotPrivacy: post.spotPrivacy ?? "friends", createdBy: self.uid, inviteList: post.inviteList ?? [])
             postObject.friendsList = postFriends
             
             NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
@@ -1028,6 +1036,12 @@ extension DraftsViewController {
                     postFriends = spot.privacyLevel == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
                     if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
                 }
+                
+                var aspectRatios: [CGFloat] = []
+                for index in spot.frameIndexes ?? [] {
+                    let image = UIImage(data: uploadImages[index]) ?? UIImage()
+                    aspectRatios.append(image.size.height/image.size.width)
+                }
 
                 let postValues = ["caption" : spot.spotDescription ?? "",
                                   "posterID": self.uid,
@@ -1050,7 +1064,9 @@ extension DraftsViewController {
                                   "isFirst": true,
                                   "spotPrivacy" : spotPrivacy,
                                   "hideFromFeed": spot.hideFromFeed,
-                                  "frameIndexes": spot.frameIndexes ?? []] as [String : Any]
+                                  "frameIndexes": spot.frameIndexes ?? [],
+                                  "aspectRatios": aspectRatios,
+                                  "gif": spot.gif] as [String : Any]
                 
                 let commentValues = ["commenterID" : self.uid,
                                      "comment" : spot.spotDescription ?? "",
@@ -1071,7 +1087,7 @@ extension DraftsViewController {
                     postImages.append(image)
                 }
                 
-                var postObject = MapPost(id: postID, caption: spot.spotDescription ?? "", postLat: spot.spotLat, postLong: spot.spotLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spot.spotID ?? "", city: city, frameIndexes: spot.frameIndexes, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: spot.taggedUsernames, spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, privacyLevel: spot.privacyLevel ?? "friends", spotPrivacy: spot.privacyLevel ?? "friends", createdBy: self.uid, inviteList: spot.inviteList ?? [])
+                var postObject = MapPost(id: postID, caption: spot.spotDescription ?? "", postLat: spot.spotLat, postLong: spot.spotLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spot.spotID ?? "", city: city, frameIndexes: spot.frameIndexes, aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: spot.taggedUsernames, spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, privacyLevel: spot.privacyLevel ?? "friends", spotPrivacy: spot.privacyLevel ?? "friends", createdBy: self.uid, inviteList: spot.inviteList ?? [])
                 postObject.friendsList = postFriends
                 
                 NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))

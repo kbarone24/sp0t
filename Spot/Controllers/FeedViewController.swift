@@ -48,11 +48,7 @@ class FeedViewController: UIViewController {
     unowned var mapVC: MapViewController!
     var postVC: PostViewController!
     var tabBar: CustomTabBar!
-    
-    deinit {
-        print("deinit feed")
-    }
-    
+        
     enum refreshStatus {
         case yesRefresh
         case refreshing
@@ -364,13 +360,9 @@ class FeedViewController: UIViewController {
                         
                     } else {
                         /// insert at 0 if at the of the feed (usually a new load), insert at post + 1 otherwise
-                        if postVC.selectedPostIndex == 0 {
-                            scrollToFirstRow = true
-                            friendPosts.insert(post, at: 0)
-                            
-                        } else {
-                            friendPosts.insert(post, at: postVC.selectedPostIndex + 1)
-                        }
+                        
+                        friendPosts.insert(post, at: 0)
+                        if postVC != nil { scrollToFirstRow = postVC.selectedPostIndex == 0 }
                     }
                 }
                 
@@ -468,7 +460,6 @@ class FeedViewController: UIViewController {
             let _ = circleQuery?.observeReady {
                 self.queryReady = true
                 if self.nearbyEnteredCount == 0 && self.activeRadius < 1024 {
-                    print("get nearby on 0", self.activeRadius * 2)
                     self.activeRadius *= 2; self.getNearbyPosts(radius: self.activeRadius)
                 } else { self.accessEscape() }
             }
@@ -484,7 +475,6 @@ class FeedViewController: UIViewController {
             let _ = circleQuery?.observeReady {
                 self.queryReady = true
                 if self.nearbyEnteredCount == 0 && self.activeRadius < 1024 {
-                    print("get nearby on 0", self.activeRadius * 2)
                     self.activeRadius *= 2; self.getNearbyPosts(radius: self.activeRadius)
                 } else { self.accessEscape() }
             }
@@ -571,13 +561,10 @@ class FeedViewController: UIViewController {
     }
 
     func accessEscape() {
-        print("no acc", noAccessCount, "cur", currentNearbyPosts.count, "nearby entered", nearbyEnteredCount, queryReady)
         if noAccessCount + currentNearbyPosts.count == nearbyEnteredCount && queryReady {
             if currentNearbyPosts.count < 10 && activeRadius < 1000 { /// force reload if active radius reaches 1024
                activeRadius *= 2; getNearbyPosts(radius: activeRadius)
-                print("get nearby posts", activeRadius)
             } else {
-                print("get nearby user info", activeRadius)
                 self.getNearbyUserInfo()
             }
         }
@@ -874,7 +861,7 @@ class FeedViewController: UIViewController {
     }
     
     func openOrScrollToFirst(animated: Bool, newPost: Bool) {
-        
+
         if postVC != nil {
             
             if postVC.postsList.count < 2 { return }
@@ -886,6 +873,7 @@ class FeedViewController: UIViewController {
                     /// scroll to first row for new post or when drawer is already open 
                     if newPost || self.mapVC.prePanY < 200 {
                         self.scrollToFirstRow(animated: animated)
+                        
                     } else if self.mapVC.prePanY > 200 {
                         self.postVC.openDrawer(swipe: false)
                     }
@@ -978,7 +966,6 @@ class FeedViewController: UIViewController {
         /// reset alphas in case drawer was closed on exit
         mapVC.feedMask.alpha = 1.0
         feedSeg.alpha = 1.0
-        feedSeg.alpha = 1.0
         mapVC.feedMask.addSubview(feedSegBlur)
         mapVC.feedMask.addSubview(feedSeg)
     }
@@ -999,6 +986,7 @@ class FeedViewController: UIViewController {
         activityIndicator.stopAnimating()
         
         if postVC != nil && postVC.tableView != nil {
+            
             postVC.cancelDownloads()
             postVC.selectedPostIndex = friendsPostIndex
             postVC.postsList = friendPosts
