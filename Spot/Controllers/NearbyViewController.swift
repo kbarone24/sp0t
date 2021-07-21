@@ -2034,7 +2034,11 @@ class NearbySpotCell: UITableViewCell {
     }
     
     @objc func rejectPublicSpot(_ sender: UIButton) {
+        
       ///  sendRejectPublicNotification(spot: spotObject) -> don't really think this is even necessary
+        let db = Firestore.firestore()
+        db.collection("submissions").document(spotObject.id!).delete() /// deleting here now that not deleting from noti send
+        
         if let reviewPublic = viewContainingController() as? ReviewPublicController {
             reviewPublic.pendingSpots.removeAll(where: {$0.id == spotObject.id})
             reviewPublic.spotsTable.reloadData()

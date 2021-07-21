@@ -141,7 +141,8 @@ class SpotViewController: UIViewController {
         
         if mapVC.userInfo == nil { return }
         
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
             self.getVisitorInfo(refresh: false)
             self.getSpotPosts()
         }
@@ -777,44 +778,42 @@ class SpotViewController: UIViewController {
         //sort on timestamp
         guard let _ = spotObject.id else { return }
         postIndex = 0
-        // enter dispatch for each post on get post image, get user info, get comments
         
-        DispatchQueue.global(qos: .userInitiated).async {
+        for doc in self.spotObject.postIDs {
             
-            for doc in self.spotObject.postIDs {
-                
-                self.db.collection("posts").document(doc).getDocument { [weak self] (post, err) in
-                    guard let self = self else { return }
-                    /// post escape called every time a post is loaded to the collection
+            self.db.collection("posts").document(doc).getDocument { [weak self] (post, err) in
+
+                guard let self = self else { return }
+
+                /// post escape called every time a post is loaded to the collection
+                do {
                     
-                    do {
-                        
-                        let postInfo = try post?.data(as: MapPost.self)
-                        guard var info = postInfo else { self.postEscape(); return }
-                        
-                        info.seconds = info.actualTimestamp?.seconds ?? info.timestamp.seconds
-                        info.id = post!.documentID
-                                                
-                        if self.spotObject.privacyLevel == "public" {
-                            ///if this is a public spot, you shouldn't be able to see posts by people you aren't friends with unless the posts are public
-                            if info.privacyLevel == "friends" && info.posterID != self.uid && info.createdBy != self.uid {
-                                if !self.mapVC.friendIDs.contains(where: {$0 == info.posterID}) { self.postEscape(); return }
-                            }
+                    let postInfo = try post?.data(as: MapPost.self)
+                    guard var info = postInfo else { self.postEscape(); return }
+                    
+                    info.seconds = info.actualTimestamp?.seconds ?? info.timestamp.seconds
+                    info.id = post!.documentID
+                    
+                    if self.spotObject.privacyLevel == "public" {
+                        ///if this is a public spot, you shouldn't be able to see posts by people you aren't friends with unless the posts are public
+                        if info.privacyLevel == "friends" && info.posterID != self.uid && info.createdBy != self.uid {
+                            if !self.mapVC.friendIDs.contains(where: {$0 == info.posterID}) { self.postEscape(); return }
                         }
-                        
-                        var urls: [URL] = []
-                        for postURL in info.imageURLs {
-                            guard let url = URL(string: postURL) else { continue }
-                            urls.append(url)
-                        }
-                        
-                        /// get user from users friends list or fetch if not a friend
-                        self.getComments(post: info)
-                        
-                    } catch { self.postEscape(); return }
-                }
+                    }
+                    
+                    var urls: [URL] = []
+                    for postURL in info.imageURLs {
+                        guard let url = URL(string: postURL) else { continue }
+                        urls.append(url)
+                    }
+                    
+                    /// get user from users friends list or fetch if not a friend
+                    self.getComments(post: info)
+                    
+                } catch { self.postEscape(); return }
             }
         }
+        
     }
     
     func getComments(post: MapPost) {

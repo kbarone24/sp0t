@@ -359,6 +359,8 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
                     
                     let spotName = post.spotName
                     let timestampID = post.timestamp
+                    
+                    if post.images == nil { return }
                     let images = post.images! as! Set<ImageModel>
                     let firstImageData = images.first?.imageData
                     if firstImageData == nil {
@@ -769,13 +771,15 @@ extension DraftsViewController: UICollectionViewDelegate, UICollectionViewDataSo
             
             let retry = UIAlertAction(title: "Retry",
                                       style: .default) {
-                                        [unowned self] action in
-                                        self.retryUpload(item: indexPath.row)
+                                        [weak self] action in
+                guard let self = self else { return }
+                self.retryUpload(item: indexPath.row)
             }
             let delete = UIAlertAction(title: "Delete",
                                        style: .destructive) {
-                                        [unowned self] action in
-                                        self.deleteUpload(item: indexPath.row)
+                                        [weak self] action in
+                guard let self = self else { return }
+                self.deleteUpload(item: indexPath.row)
             }
             
             let cancel = UIAlertAction(title: "Cancel",
@@ -915,6 +919,7 @@ extension DraftsViewController {
             guard let model = post.images as? Set<ImageModel> else { self.uploadFailed(); return }
             let mod = model.sorted(by: {$0.position < $1.position})
             
+            if mod.count == 0 { self.uploadFailed(); return }
             for i in 0...mod.count - 1 {
                 let im = mod[i]
                 let imageData = im.imageData
@@ -997,7 +1002,7 @@ extension DraftsViewController {
         // save post to spots -> feedpost
         let postID = UUID().uuidString
         
-        let model = spot.images! as! Set<ImageModel>
+        guard let model = spot.images as? Set<ImageModel> else { self.uploadFailed(); return }
         let mod = model.sorted(by: {$0.position < $1.position})
         
         var uploadImages: [Data] = []
@@ -1076,10 +1081,10 @@ extension DraftsViewController {
                 let commentID = UUID().uuidString
                 let commentObject = MapComment(id: commentID, comment: spot.spotDescription ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, taggedUsers: spot.taggedUsernames ?? [], commentHeight: self.getCommentHeight(comment: spot.spotDescription ?? ""), seconds: Int64(interval))
                 
+                if spot.images == nil { self.uploadFailed(); return }
                 var postImages: [UIImage] = []
-                let model = spot.images! as! Set<ImageModel> /// crash inducing line 
-                let mod = model.sorted(by: {$0.position < $1.position})
                 
+                if mod.count == 0 { self.uploadFailed(); return }
                 for i in 0...mod.count - 1 {
                     let im = mod[i]
                     let imageData = im.imageData

@@ -420,7 +420,7 @@ class UploadPostController: UIViewController {
         infoView.addSubview(botComment)
         
         let submitButton = UIButton(frame: CGRect(x: 12, y: botComment.frame.maxY + 15, width: 95, height: 35))
-        submitButton.setTitle("Submit", for: .normal)
+        submitButton.setTitle("Okay", for: .normal)
         submitButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
         submitButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
         submitButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
@@ -559,7 +559,7 @@ class UploadPostController: UIViewController {
             maskImageNext.isUserInteractionEnabled = true
             maskView.addSubview(maskImageNext)
             
-            setImageBounds(first: true)
+            setImageBounds(first: true, selectedIndex: 0)
         }
             /// animate image preview expand
         UIView.animate(withDuration: 0.2) {
@@ -595,10 +595,13 @@ class UploadPostController: UIViewController {
         }
     }
     
-    func setImageBounds(first: Bool) {
+    func setImageBounds(first: Bool, selectedIndex: Int) {
         
         // first = true on original mask expand (will animate the frame of the mask image)
         /// setImageBounds also called on swipe between images
+        
+        let sameIndex = selectedIndex == self.selectedIndex
+        self.selectedIndex = selectedIndex
         
         let selectedFrame = frameIndexes[selectedIndex]
         let aspect = selectedImages[selectedFrame].size.height / selectedImages[selectedFrame].size.width
@@ -623,10 +626,10 @@ class UploadPostController: UIViewController {
         if !first {
             let selectedFrame = frameIndexes[selectedIndex]
             maskImage.frame = CGRect(x: 0, y:(viewHeight - height - navBarHeight)/2 - 10, width: UIScreen.main.bounds.width, height: height)
-            maskImage.image = selectedImages[selectedFrame]
+            if !sameIndex && !first { maskImage.image = selectedImages[selectedFrame] } /// avoid resetting image while animation is happening
             let animationImages = getGifImages()
             let alive = selectedImages.count > 1 && imageFromCamera
-            if !animationImages.isEmpty { maskImage.animationImages = animationImages; animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count, alive: alive) }
+            if !animationImages.isEmpty && (!sameIndex && !first) { maskImage.animationImages = animationImages; animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count, alive: alive) }
         }
         
         var nHeight: CGFloat = height
@@ -700,13 +703,12 @@ class UploadPostController: UIViewController {
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                         guard let self = self else { return }
-                        self.selectedIndex += 1
-                        self.setImageBounds(first: false)
+                        self.setImageBounds(first: false, selectedIndex: self.selectedIndex + 1)
                         return
                     }
                 } else {
                     //return to original state
-                    UIView.animate(withDuration: 0.2) { self.setImageBounds(first: false) }
+                    UIView.animate(withDuration: 0.2) { self.setImageBounds(first: false, selectedIndex: self.selectedIndex) }
                 }
                 
             } else {
@@ -726,13 +728,12 @@ class UploadPostController: UIViewController {
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                         guard let self = self else { return }
-                        self.selectedIndex -= 1
-                        self.setImageBounds(first: false)
+                        self.setImageBounds(first: false, selectedIndex: self.selectedIndex - 1)
                         return
                     }
                 } else {
                     //return to original state
-                    UIView.animate(withDuration: 0.2) { self.setImageBounds(first: false)
+                    UIView.animate(withDuration: 0.2) { self.setImageBounds(first: false, selectedIndex: self.selectedIndex)
                     }
                 }
             }

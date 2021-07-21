@@ -550,14 +550,12 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
-        guard let cell = cell as? PostCell else { return }
-        guard let post = postsList[safe: indexPath.row] else { return }
-        /// update cell image and related properties on completion
-        
         let updateCellImage: ([UIImage]?) -> () = { [weak self] (images) in
             
             guard let self = self else { return }
-            
+            guard let post = self.postsList[safe: indexPath.row] else { return }
+            guard let cell = cell as? PostCell else { return } /// declare cell within closure in case cancelled
+
             if let index = self.postsList.lastIndex(where: {$0.id == post.id}) { if indexPath.row != index { return }  }
         
             if indexPath.row == self.selectedPostIndex { self.currentImageSet = (id: post.id ?? "", images: images ?? []) }
@@ -579,12 +577,15 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
      //       self.loadingOperations.removeValue(forKey: post.id ?? "")
         }
         
+        guard let post = postsList[safe: indexPath.row] else { return }
+        
         /// Try to find an existing data loader
         if let dataLoader = loadingOperations[post.id ?? ""] {
             
             /// Has the data already been loaded?
             if dataLoader.images.count == post.imageURLs.count {
-
+                
+                guard let cell = cell as? PostCell else { return }
                 cell.finishImageSetUp(images: dataLoader.images)
               //  loadingOperations.removeValue(forKey: post.id ?? "")
             } else {
@@ -1090,7 +1091,6 @@ class PostCell: UITableViewCell {
         }
 
         imageY = minY
-        print("animation counter", animationCounter)
 
         if isGif {
             postImage.animationImages = animationImages

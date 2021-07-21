@@ -538,7 +538,6 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         
         DispatchQueue.global(qos: .userInitiated).async {
             
-            /// download live photos by cycling through frame processor and capturing frames
             self.contentRequestID = currentAsset.requestContentEditingInput(with: editingOptions) { [weak self] input, info in
                 
                 guard let self = self else { return }
@@ -552,6 +551,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                     
                     self.context = PHLivePhotoEditingContext(livePhotoEditingInput: input)
                     
+                    /// download live photos by cycling through frame processor and capturing frames
                     self.context!.frameProcessor = { frame, _ in
                         frameImages.append(UIImage(ciImage: frame.image))
                         return frame.image
@@ -564,8 +564,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                         guard let self = self else { return }
                         if !success || err != nil || frameImages.isEmpty { completion([UIImage()], UIImage(), false); return }
                                                 
-                        print("frameimages", frameImages.count, "duration", self.context.duration.seconds)
-                        
+                        /// distanceBetweenFrames fixed at 2 right now, always taking the middle 16 frames of the Live often with large offsets. This number is variable though
                         let distanceBetweenFrames: Double = 2
                         let rawFrames = Double(frameImages.count) / distanceBetweenFrames
                         let numberOfFrames: Double = rawFrames > 11 ? 9 : rawFrames > 7 ? max(7, rawFrames - 2) : rawFrames
