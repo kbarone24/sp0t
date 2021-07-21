@@ -179,7 +179,7 @@ class EditSpotController: UIViewController {
         infoView.addSubview(botComment)
         
         let submitButton = UIButton(frame: CGRect(x: 12, y: botComment.frame.maxY + 15, width: 95, height: 35))
-        submitButton.setTitle("Submit", for: .normal)
+        submitButton.setTitle("Okay", for: .normal)
         submitButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
         submitButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
         submitButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor

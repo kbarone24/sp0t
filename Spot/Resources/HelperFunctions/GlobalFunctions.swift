@@ -177,7 +177,7 @@ extension UIViewController {
         let wordLength = nextWordIndex - currentWordIndex - 2
         /// remove any characters after the @
 
-        /// patch fix for emojis not working at the end of strings
+        /// patch fix for emojis not working at the end of strings -> start from end of string and work backwards
         if nextWordIndex == tagText.count {
             while tagText.last != "@" { tagText.removeLast() }
             tagText.append(contentsOf: username)
@@ -189,7 +189,6 @@ extension UIViewController {
             tagText.insert(contentsOf: username, at: fromIndex) //// append username
         }
 
-        
         return tagText
     }
 

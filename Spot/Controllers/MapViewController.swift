@@ -237,6 +237,7 @@ class MapViewController: UIViewController {
                         self.friendsList.append(emptyProfile) } /// append empty here so they appear in order
                     
                     self.db.collection("users").document(friend).getDocument { (friendSnap, err) in
+                        
                         do {
                             let friendInfo = try friendSnap?.data(as: UserProfile.self)
                             guard var info = friendInfo else {                            self.friendIDs.removeAll(where: {$0 == friend})
@@ -286,6 +287,7 @@ class MapViewController: UIViewController {
     }
     
     @objc func notifyAcceptFriend(_ notification: NSNotification) {
+        /// notify accept so that friendIDs immediately so that the app recognizes the new friend as a friend everywhere, esp profile
         if let friendID = notification.userInfo?.first?.value as? String {
             if !friendIDs.contains(friendID) { friendIDs.append(friendID) }
         }

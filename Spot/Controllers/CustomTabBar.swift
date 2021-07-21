@@ -14,7 +14,6 @@ class CustomTabBar: UITabBarController {
     @IBInspectable var defaultIndex: Int = 0
         
     var mapVC: MapViewController!
-    var cameraController: AVCameraController!
     
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
@@ -31,7 +30,6 @@ class CustomTabBar: UITabBarController {
             mapVC = (parent as! MapViewController)
             self.delegate = mapVC
         }
-        cameraController = AVCameraController()
         
         let pan = UIPanGestureRecognizer(target: self, action: #selector(tabBarPan(_:)))
         self.tabBar.addGestureRecognizer(pan)
@@ -64,12 +62,18 @@ class CustomTabBar: UITabBarController {
     }
     
     func pushCamera() {
-        let transition = CATransition()
-        transition.duration = 0.3
-        transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-        transition.type = CATransitionType.push
-        transition.subtype = CATransitionSubtype.fromTop
-        navigationController?.view.layer.add(transition, forKey: kCATransition)
-        navigationController?.pushViewController(cameraController, animated: false)
+        
+        if navigationController == nil { return }
+        if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
+        
+        if let cameraController = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
+            let transition = CATransition()
+            transition.duration = 0.3
+            transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
+            transition.type = CATransitionType.push
+            transition.subtype = CATransitionSubtype.fromTop
+            navigationController?.view.layer.add(transition, forKey: kCATransition)
+            navigationController?.pushViewController(cameraController, animated: false)
+        }
     }
 }
