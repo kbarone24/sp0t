@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "showonfeedON1x.png",
+      "filename" : "FriendsFeedOn1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "showonfeedON2x.png",
+      "filename" : "FriendsFeedOn2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "showonfeedON3x.png",
+      "filename" : "FriendsFeedOn3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

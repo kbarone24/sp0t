@@ -136,7 +136,7 @@ class ProfileViewController: UIViewController {
         /// dont hide nav bar for edit spot (only stacks that will happen from profile are edit cover image and edit address)
         if mapVC.spotViewController != nil { return }
         
-        if !(self.parent is ProfileViewController) {
+        if !(parent is ProfileViewController || parent is PostViewController) {
             mapVC.profileViewController = nil
             mapVC.selectedProfileID = ""
             mapVC.navigationItem.titleView = nil
@@ -161,8 +161,8 @@ class ProfileViewController: UIViewController {
         
         /// get  userInfo on first load
         if userInfo == nil && id == uid {
-            if mapVC.userInfo == nil { return }
-            userInfo = mapVC.userInfo
+            if UserDataModel.shared.userInfo.id == "" { return }
+            userInfo = UserDataModel.shared.userInfo
             
         } else if passedUsername != nil {
             getUserFromUsername()
@@ -204,9 +204,9 @@ class ProfileViewController: UIViewController {
         // user info only nil when its active user or passed from a profile tap of a non-friend user
         if userInfo == nil {
             /// will call runFunctions() again on updateUser from notification for current user, get user from username for non-active user
-            if mapVC.userInfo == nil || id != uid { return }
-            userInfo = mapVC.userInfo
-            userInfo.friendsList = mapVC.friendsList
+            if UserDataModel.shared.userInfo.id == "" || id != uid { return }
+            userInfo = UserDataModel.shared.userInfo
+            userInfo.friendsList = UserDataModel.shared.friendsList
         } else if id == "" { return } /// patch fix for a crash when id = "". will just show a blank screen for now
                         
         add(asChildViewController: profileSpotsController)
@@ -215,7 +215,7 @@ class ProfileViewController: UIViewController {
         resizeSec0()
         
         /// check if active user is friends with this profile
-        if uid != id && !mapVC.friendIDs.contains(id) {
+        if uid != id && !UserDataModel.shared.friendIDs.contains(id) {
             getFriendRequestInfo()
         } else {
             status = .friends
@@ -235,7 +235,7 @@ class ProfileViewController: UIViewController {
             
         } else {
             /// update userInfo even if its not nil if current user
-            if id == uid { userInfo = mapVC.userInfo }
+            if id == uid { userInfo = UserDataModel.shared.userInfo }
             tableView.reloadData()
         }
     }
@@ -256,7 +256,6 @@ class ProfileViewController: UIViewController {
         
     @objc func addFirstSpotTap(_ sender: UIButton) {
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
-            vc.mapVC = mapVC
             let transition = CATransition()
             transition.duration = 0.3
             transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
@@ -330,7 +329,7 @@ class ProfileViewController: UIViewController {
         mapVC.navigationController?.setNavigationBarHidden(false, animated: false)
         mapVC.navigationController?.navigationBar.isTranslucent = mapVC.prePanY != 0
         mapVC.navigationController?.navigationBar.removeShadow()
-        mapVC.prePanY == 0 ? mapVC.navigationController?.navigationBar.addBackgroundImage(alpha: 1.0) : mapVC.navigationController?.navigationBar.removeBackgroundImage()
+        mapVC.prePanY == 0 ? mapVC.navigationController?.navigationBar.addGradientBackground(alpha: 1.0) : mapVC.navigationController?.navigationBar.removeBackgroundImage()
         
         mapVC.navigationController?.navigationBar.isUserInteractionEnabled = true
         
@@ -435,12 +434,12 @@ class ProfileViewController: UIViewController {
     
     func updateFriendsLists(friendID: String) {
         ///add this user to the active user's friends list
-        mapVC.friendsList.append(self.userInfo)
-        mapVC.friendIDs.append(self.userInfo.id!)
+        UserDataModel.shared.friendsList.append(self.userInfo)
+        UserDataModel.shared.friendIDs.append(self.userInfo.id!)
         /// add active user to this user's frined list
         userInfo.friendIDs.append(self.uid)
         if !userInfo.friendsList.isEmpty {
-            userInfo.friendsList.append(mapVC.userInfo)
+            userInfo.friendsList.append(UserDataModel.shared.userInfo)
         }
     }
     
@@ -578,7 +577,6 @@ class ProfileViewController: UIViewController {
         
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "Settings") as? SettingsViewController {
             vc.profileVC = self
-            vc.mapVC = mapVC
             DispatchQueue.main.async {
                 self.present(vc, animated: true, completion: nil)
             }
@@ -589,7 +587,6 @@ class ProfileViewController: UIViewController {
         
         if userInfo == nil { return }
         if let vc = storyboard?.instantiateViewController(identifier: "FindFriends") as? FindFriendsController {
-            vc.mapVC = mapVC
             present(vc, animated: true, completion: nil)
         }
     }
@@ -657,7 +654,7 @@ class ProfileViewController: UIViewController {
         // only can scroll if active seg is loaded
         shadowScroll.isScrollEnabled = (selectedIndex == 0 && profileSpotsController.loaded) || (selectedIndex == 1 && profilePostsController.loaded)
         
-        navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
+        navigationController?.navigationBar.addGradientBackground(alpha: 1.0)
         navigationController?.navigationBar.isTranslucent = false
         /// no shadow on profile even with translucent nav bar 
         mapVC.navigationController?.navigationBar.removeShadow()
@@ -763,7 +760,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
                 
             default:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "NotFriendsCell", for: indexPath) as! NotFriendsCell
-                let activeUser = self.uid == id ? userInfo : self.mapVC.userInfo
+                let activeUser = self.uid == id ? userInfo : UserDataModel.shared.userInfo
                 cell.setUp(status: status ?? .add, user: userInfo, activeUser: activeUser!)
                 return cell
             }
@@ -1010,7 +1007,7 @@ class UserViewCell: UITableViewCell {
                 friendsListVC.profileVC = profileVC
                 friendsListVC.friendIDs = userInfo.friendIDs.reversed()
                 if uid == userInfo.id {
-                    userInfo.friendsList = mapVC.friendsList.reversed()
+                    userInfo.friendsList = UserDataModel.shared.friendsList.reversed()
                 }
                 if !userInfo.friendsList.isEmpty { friendsListVC.friendsList = userInfo.friendsList }
                 DispatchQueue.main.async {
@@ -1450,8 +1447,8 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
         userInfo.friendIDs.removeAll(where: {$0 == uid})
         
         /// remove from active user
-        mapVC.userInfo.friendsList.removeAll(where: {$0.id == friendID})
-        mapVC.userInfo.friendIDs.removeAll(where: {$0 == friendID})
+        UserDataModel.shared.userInfo.friendsList.removeAll(where: {$0.id == friendID})
+        UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == friendID})
         
         mapVC.deletedFriendIDs.append(friendID)
         

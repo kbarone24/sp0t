@@ -65,9 +65,8 @@ class SpotPhotoAlbum: NSObject {
         }
 
         func save(image: UIImage) {
-            if assetCollection == nil {
-                return                          // if there was an error upstream, skip the save
-            }
+            
+            if assetCollection == nil { return }
 
             PHPhotoLibrary.shared().performChanges({
                 let assetChangeRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
@@ -80,9 +79,9 @@ class SpotPhotoAlbum: NSObject {
         }
     
     func save(videoURL: URL) {
-        if assetCollection == nil {
-            return                          // if there was an error upstream, skip the save
-        }
+        
+        if assetCollection == nil { return }
+        
         PHPhotoLibrary.shared().performChanges({
             let assetChangeRequest = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: videoURL)
             let assetPlaceHolder = assetChangeRequest?.placeholderForCreatedAsset
@@ -91,6 +90,30 @@ class SpotPhotoAlbum: NSObject {
             albumChangeRequest!.addAssets(enumeration)
 
         }, completionHandler: nil)
+    }
+    
+    func save(videoURL: URL, imageData: Data, completion: @escaping (_ complete: Bool, _ placeholder: PHObjectPlaceholder) -> Void)  {
+        
+        if assetCollection == nil { return }
+        var assetPlaceHolder = PHObjectPlaceholder()
+        
+        PHPhotoLibrary.shared().performChanges({
+            
+            let creationRequest = PHAssetCreationRequest.forAsset()
+            
+            let options = PHAssetResourceCreationOptions()
+            options.shouldMoveFile = true
+            creationRequest.addResource(with: .photo, data: imageData, options: nil)
+            creationRequest.addResource(with: .pairedVideo, fileURL: videoURL, options: options)
+            
+            assetPlaceHolder = creationRequest.placeholderForCreatedAsset!
+            let albumChangeRequest = PHAssetCollectionChangeRequest(for: self.assetCollection)
+            let enumeration: NSArray = [assetPlaceHolder]
+            albumChangeRequest!.addAssets(enumeration)
+
+        }) { complete, err in
+            completion(complete, assetPlaceHolder)
+        }
     }
 }
     

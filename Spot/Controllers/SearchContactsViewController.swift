@@ -19,7 +19,6 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
     
     let db: Firestore! = Firestore.firestore()
     var uid : String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    unowned var mapVC: MapViewController!
     
     lazy var contacts: [Contact] = []
     lazy var numbers: [String] = []
@@ -31,9 +30,7 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
     var emptyState: UIView!
     var tableView : UITableView!
     var activityIndicatorView: CustomActivityIndicator!
-        
-    private let locationManager = CLLocationManager()
-    
+            
     override func viewDidLoad() {
         
         super.viewDidLoad()
@@ -436,18 +433,15 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
         emptyLabel.sizeToFit()
         emptyState.addSubview(emptyLabel)
         
-        if mapVC != nil {
-            let emptyButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: emptyLabel.frame.maxY + 5, width: 200, height: 40))
-            emptyButton.setTitle("Invite Friends", for: .normal)
-            emptyButton.contentHorizontalAlignment = .center
-            emptyButton.addTarget(self, action: #selector(inviteFriendsTap(_:)), for: .touchUpInside)
-            emptyState.addSubview(emptyButton)
-        }
+        let emptyButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: emptyLabel.frame.maxY + 5, width: 200, height: 40))
+        emptyButton.setTitle("Invite Friends", for: .normal)
+        emptyButton.contentHorizontalAlignment = .center
+        emptyButton.addTarget(self, action: #selector(inviteFriendsTap(_:)), for: .touchUpInside)
+        emptyState.addSubview(emptyButton)
     }
     
     @objc func inviteFriendsTap(_ sender: UIButton) {
         if let vc = storyboard?.instantiateViewController(identifier: "SendInvites") as? SendInvitesController {
-            vc.mapVC = mapVC
             present(vc, animated: true, completion: nil)
         }
     }

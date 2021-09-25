@@ -86,7 +86,8 @@ class ProfilePostsViewController: UIViewController {
         if let newPost = sender.userInfo?.first?.value as? MapPost {
 
             var post = newPost
-            post.seconds = post.actualTimestamp?.seconds ?? post.timestamp.seconds /// adjust seconds to reflect profile posts sorting
+            post = setSecondaryPostValues(post: post)
+
             postsList.append(newPost)
             postsList.sort(by: {$0.seconds > $1.seconds})
 
@@ -203,7 +204,7 @@ class ProfilePostsViewController: UIViewController {
         active = true
         addAnnotations()
         
-        if postsList.isEmpty && mapVC.userInfo.spotScore ?? 0 > 0 {
+        if postsList.isEmpty && UserDataModel.shared.userInfo.spotScore ?? 0 > 0 {
             resumeIndicatorAnimation()
             
         } else {
@@ -286,17 +287,17 @@ class ProfilePostsViewController: UIViewController {
                                 
                 do {
                     
-                    let postInfo = try doc.data(as: MapPost.self)
-                    guard var info = postInfo else { self.docIndex += 1; if self.docIndex == docs.count  { self.finishPostsLoad() }; continue }
+                    let info = try doc.data(as: MapPost.self)
+                    guard var postInfo = info else { self.docIndex += 1; if self.docIndex == docs.count  { self.finishPostsLoad() }; continue }
 
-                    info.seconds = info.actualTimestamp?.seconds ?? info.timestamp.seconds
-                    info.id = doc.documentID
+                    postInfo.id = doc.documentID
+                    postInfo = self.setSecondaryPostValues(post: postInfo)
                     
                     //access check
                     /// check user access if the profile isn't from current user, friend check will happen over the top so don't need to check if user is friends with current user
                     if self.uid != profileVC.id {
-                        if info.createdBy != self.uid && info.privacyLevel == "invite" {
-                            if !(info.inviteList?.contains(where: {$0 == self.uid}) ?? false) {
+                        if postInfo.createdBy != self.uid && postInfo.privacyLevel == "invite" {
+                            if !(postInfo.inviteList?.contains(where: {$0 == self.uid}) ?? false) {
                                 self.docIndex += 1; if self.docIndex == docs.count {
                                     self.finishPostsLoad(); continue
                                 } else { continue }
@@ -308,12 +309,12 @@ class ProfilePostsViewController: UIViewController {
 
                     /// animate map to first post location if this isn't the active user
                     if spotIndex == 1 && self.postsList.isEmpty && self.uid != profileVC.id {
-                        profileVC.mapVC.animateToProfileLocation(active: false, coordinate: CLLocationCoordinate2D(latitude: info.postLat, longitude: info.postLong))
+                        profileVC.mapVC.animateToProfileLocation(active: false, coordinate: CLLocationCoordinate2D(latitude: postInfo.postLat, longitude: postInfo.postLong))
                     }
                                         
                     /// set user data -- don't need another listener here because poster is same for all posts
-                    info.userInfo = profileVC.userInfo
-                    self.getComments(post: info, docCount: docs.count)
+                    postInfo.userInfo = profileVC.userInfo
+                    self.getComments(post: postInfo, docCount: docs.count)
                     continue
                     
                 } catch { self.docIndex += 1; if self.docIndex == docs.count { self.finishPostsLoad() }; continue }

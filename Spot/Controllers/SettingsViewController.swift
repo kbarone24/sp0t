@@ -16,7 +16,6 @@ import Mixpanel
 class SettingsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
     unowned var profileVC: ProfileViewController!
-    unowned var mapVC: MapViewController!
     var tableView: UITableView!
     
     override func viewDidLoad() {
@@ -42,7 +41,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
         tableView.register(SettingsFeedbackCell.self, forCellReuseIdentifier: "FeedbackCell")
         view.addSubview(tableView)
         
-        let offsetY: CGFloat = mapVC.largeScreen ? 150 : 115
+        let offsetY: CGFloat = UserDataModel.shared.largeScreen ? 150 : 115
         let logoutButton = UIButton(frame: CGRect(x: 20, y: UIScreen.main.bounds.height - offsetY, width: 100, height: 25))
         logoutButton.setTitle("Log Out", for: .normal)
         logoutButton.contentVerticalAlignment = .center
@@ -147,11 +146,15 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
     }
     
     func logOut() {
+        
         do {
             try Auth.auth().signOut()
         } catch let signOutError as NSError {
             print ("Error signing out: %@", signOutError)
         }
+        
+        UserDataModel.shared.destroy()
+        
         if let loginVC = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
             //  loginVC.modalPresentationStyle = .fullScreen
             
@@ -173,7 +176,6 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
     @objc func openFindFriends(_ sender: UIButton) {
         
         if let vc = storyboard?.instantiateViewController(identifier: "FindFriends") as? FindFriendsController {
-            vc.mapVC = mapVC
             present(vc, animated: true, completion: nil)
         }
     }
@@ -188,7 +190,6 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
     @objc func openManageAccount(_ sender: UIButton) {
 
         if let vc = storyboard?.instantiateViewController(identifier: "ManageAccount") as? ManageAccountController {
-            vc.mapVC = mapVC
             present(vc, animated: true, completion: nil)
         }
     }

@@ -14,17 +14,8 @@ import CoreLocation
 import Mixpanel
 import FirebaseUI
 
-struct ImageObject {
-    let asset: PHAsset
-    let rawLocation: CLLocation
-    var stillImage: UIImage
-    var animationImages: [UIImage]
-    var gifMode: Bool
-    let creationDate: Date
-}
-
 class MapPickerController: UIViewController, MKMapViewDelegate {
-    
+        
     var maskView: UIView!
     var activityIndicator, refreshIndicator: CustomActivityIndicator!
     var currentLocation: CLLocation!
@@ -33,109 +24,58 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
     private var infoWindow = MarkerInfoWindow()
     
     lazy var locationManager = CLLocationManager()
-    lazy var locationObjects: [ImageObject] = []
     lazy var annotations: [CustomPointAnnotation] = []
     
     var firstTimeGettingLocation = true
     var shouldUpdateRegion = true
-    var loaded = false
     
     override func viewDidLoad() {
         self.navigationItem.title = "Photo map"
+        setUpMap()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
-        
         super.viewWillDisappear(animated)
-        guard let parentVC = parent as? PhotosContainerController else { return }
-        
-        /// remove mapview delegate when view disappears bc either going to location picker or back to main mapVC
-        if parentVC.mapView != nil && !isMovingFromParent {
-            storedCamera = parentVC.mapView.camera
-            parentVC.mapView.delegate = nil
-            parentVC.mapView.removeAnnotations(annotations)
-            parentVC.mapView.removeFromSuperview()
-        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
         Mixpanel.mainInstance().track(event: "MapPickerOpen")
-                
+        locationManager.delegate = self
+        checkLocation()
+        super.viewDidAppear(animated)
+    }
+    
+    func setUpMap() {
+        
         guard let parentVC = parent as? PhotosContainerController else { return }
 
-        print("view appear")
+        baseSize = CGSize(width: UIScreen.main.bounds.width/4 - 0.1, height: UIScreen.main.bounds.width/4 - 0.1)
+        parentVC.mapView = MKMapView(frame: UIScreen.main.bounds)
+        parentVC.mapView.delegate = self
+        parentVC.mapView.overrideUserInterfaceStyle = .dark
+        parentVC.mapView.register(StandardPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier)
+        parentVC.mapView.register(PostClusterView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
+        parentVC.mapView.setCameraZoomRange(MKMapView.CameraZoomRange(minCenterCoordinateDistance: 1000), animated: false)
+        parentVC.mapView.isUserInteractionEnabled = true
         
-        if self.locationObjects.isEmpty {
-            
-            /// original load
-            view.isUserInteractionEnabled = false
-            
-            baseSize = CGSize(width: UIScreen.main.bounds.width/4 - 0.1, height: UIScreen.main.bounds.width/4 - 0.1)
-            parentVC.mapView = MKMapView(frame: UIScreen.main.bounds)
-            parentVC.mapView.delegate = self
-            parentVC.mapView.overrideUserInterfaceStyle = .dark
-            parentVC.mapView.register(StandardPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier)
-            parentVC.mapView.register(PostClusterView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
-            parentVC.mapView.setCameraZoomRange(MKMapView.CameraZoomRange(minCenterCoordinateDistance: 1000), animated: false)
-            parentVC.mapView.isUserInteractionEnabled = true
-            
-            maskView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-            maskView.backgroundColor = UIColor.black.withAlphaComponent(0.8)
-            
-            activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 140, width: UIScreen.main.bounds.width, height: 30))
-            
-            let textMask = UILabel(frame: CGRect(x: 0, y: 230, width: UIScreen.main.bounds.width, height: 30))
-            textMask.text = "Loading photo map"
-            textMask.textAlignment = .center
-            textMask.textColor = .white
-            textMask.font = UIFont(name: "SFCamera-Regular", size: 14)
-            
-            DispatchQueue.main.async {
-                self.view.addSubview(parentVC.mapView)
-                self.view.addSubview(self.maskView)
-                self.maskView.addSubview(self.activityIndicator)
-                self.maskView.addSubview(textMask)
-                self.activityIndicator.startAnimating()
-            }
-            
-            locationManager.delegate = self
-            checkLocation()
-            
-        } else if parentVC.mapView != nil {
-            print("add mapview")
-            /// reset delegate after return from location picker
-
-            if locationObjects.count > 0 { self.view.isUserInteractionEnabled = true }
-            
-            DispatchQueue.main.async {
-                
-                parentVC.mapView.mapType = .mutedStandard
-                parentVC.mapView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-                self.view.addSubview(parentVC.mapView)
-                
-                
-                if self.storedCamera != nil {
-                    parentVC.mapView.camera = self.storedCamera
-                    self.storedCamera = nil
-                } else if self.currentLocation != nil {             parentVC.mapView.setRegion(MKCoordinateRegion(center: self.currentLocation.coordinate, latitudinalMeters: 50000, longitudinalMeters: 50000), animated: false) }
-                
-                /// add annotations for this map rect
-                parentVC.mapView.delegate = self
-                
-                /// main thread was getting clogged with map updates
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                    guard let self = self else { return }
-                    guard let containerVC = self.parent as? PhotosContainerController else { return }
-                    
-                    self.addRefreshIndicator()
-                    if containerVC.mapView == nil { return }
-                    print("mass add annotations")
-                    containerVC.mapView.addAnnotations(self.annotations)
-                }
-            }
+        maskView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        maskView.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        
+        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 140, width: UIScreen.main.bounds.width, height: 30))
+        
+        let textMask = UILabel(frame: CGRect(x: 0, y: 230, width: UIScreen.main.bounds.width, height: 30))
+        textMask.text = "Loading photo map"
+        textMask.textAlignment = .center
+        textMask.textColor = .white
+        textMask.font = UIFont(name: "SFCamera-Regular", size: 14)
+        
+        DispatchQueue.main.async {
+            self.view.addSubview(parentVC.mapView)
+            self.view.addSubview(self.maskView)
+            self.maskView.addSubview(self.activityIndicator)
+            self.maskView.addSubview(textMask)
+            self.activityIndicator.startAnimating()
         }
-        
-        super.viewDidAppear(animated)
     }
     
     func addRefreshIndicator() {
@@ -189,7 +129,6 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
             
         case .authorizedWhenInUse, .authorizedAlways:
             locationManager.startUpdatingLocation()
-            
             break
             
         @unknown default:
@@ -197,70 +136,51 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
         }
     }
     
-    func getImages() {
-       
-        var assetIndex = 0
-        
+    func addAnnotations() {
+               
         /// reload images once assets full is fetched from container
         guard let parentVC = parent as? PhotosContainerController else { return }
-        if parentVC.assetsFull == nil || parentVC.assetsFull.count == 0 {
-            DispatchQueue.main.async { self.maskView.isHidden = true }
-            return
-        }
         
-        parentVC.assetsFull.enumerateObjects({ (object, count, stop) in
-            /// stop adding images once mapView disappears
+        for object in UploadImageModel.shared.imageObjects.map({$0.image}) {
             
-            if parentVC.mapView == nil { stop.pointee = true }
-            if let l = object.location {
-                
-                var creationDate = Date()
-                if let d = object.creationDate { creationDate = d }
-                
-                if !self.locationObjects.contains(where: {$0.asset == object })  {
-                    
-                    let annotation = CustomPointAnnotation()
-                    annotation.coordinate = l.coordinate
-                    annotation.asset = object
+            let annotation = CustomPointAnnotation()
+            
+            annotation.coordinate = object.rawLocation.coordinate
+            annotation.asset = object.asset
+            annotation.assetID = object.id
 
-                    if parentVC.mapView == nil { return }
-                    
-                    parentVC.mapView.addAnnotation(annotation)
-                    self.annotations.append(annotation)
-                    self.locationObjects.append(ImageObject(asset: object, rawLocation: l, stillImage: UIImage(), animationImages: [], gifMode: false, creationDate: creationDate))
-                        
-                    assetIndex += 1
-                    
-                    /// enable mapView interactions once annotations all loaded
-                    if assetIndex == parentVC.assetsFull.count { self.enableMap() }
-                }
-                
-            } else {
-                /// no location data for this image
-                assetIndex += 1
-                if assetIndex == parentVC.assetsFull.count {
-                    self.enableMap()
-                }
-            }
-        })
+            if parentVC.mapView == nil { return }
+            
+            parentVC.mapView.addAnnotation(annotation)
+            self.annotations.append(annotation)
+        }
+
+        enableMap()
     }
     
     func enableMap() {
         view.isUserInteractionEnabled = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: { [weak self] in
             guard let self = self else { return }
              self.maskView.isHidden = true
+            
+            guard let parentVC = self.parent as? PhotosContainerController else { return }
+            if self.locationIsEmpty(location: UserDataModel.shared.currentLocation) { return }
+            let centerCoordinate = parentVC.spotObject != nil ? CLLocationCoordinate2D(latitude: parentVC.spotObject.spotLat, longitude: parentVC.spotObject.spotLong) : self.currentLocation.coordinate
+            let zoomLevel: CLLocationDistance = parentVC.spotObject != nil ? 500 : 35000
+            parentVC.mapView.setRegion(MKCoordinateRegion(center: centerCoordinate, latitudinalMeters: zoomLevel, longitudinalMeters: zoomLevel), animated: false)
+
         })
     }
     
     
     func mapViewDidFinishRenderingMap(_ mapView: MKMapView, fullyRendered: Bool) {
-        if loaded && self.locationObjects.isEmpty {
-            self.getImages()
-        }
+        if annotations.isEmpty {
+            DispatchQueue.global(qos: .userInitiated).async { self.addAnnotations() } }
     }
             
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        
         if annotation.coordinate.latitude == 0.0 { return MKAnnotationView() }
         if annotation is CustomPointAnnotation {
             
@@ -274,9 +194,9 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
                         
             ///if nibview for this coordinate doesn't exist, create it, add to object
             ///if nibview for this coordinate does exist, fetch and add to annotation
-            if let i = self.locationObjects.lastIndex(where: {$0.rawLocation.coordinate.latitude == annotation.coordinate.latitude && $0.rawLocation.coordinate.longitude == annotation.coordinate.longitude}) {
+            if let object = UploadImageModel.shared.imageObjects.first(where: {$0.0.rawLocation.coordinate.latitude == annotation.coordinate.latitude && $0.0.rawLocation.coordinate.longitude == annotation.coordinate.longitude}) {
               
-                annotationView!.updateImage(object: self.locationObjects[i])
+                annotationView!.updateImage(object: object.image)
                 
             } else {
                 annotationView!.image = UIImage()
@@ -300,7 +220,7 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
             
             /// update image to have the number of member annotations in the cluster showing
             
-            annotationView!.updateImage(imageObjects: self.locationObjects)
+            annotationView!.updateImage(imageObjects:UploadImageModel.shared.imageObjects.map({$0.image}))
             
             let tap = MapPickerTap(target: self, action: #selector(clusterTap(_:)))
             tap.coordinates = annotation.coordinate
@@ -319,31 +239,30 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
     
     func openMarker(latitude: Double, longitude: Double) {
         
-        var passObjects: [(ImageObject)] = []
+        var passObjects: [(ImageObject, Bool)] = []
         guard let parentVC = parent as? PhotosContainerController else { return }
-        if let match = self.locationObjects.first(where: {$0.rawLocation.coordinate.longitude == longitude && $0.rawLocation.coordinate.latitude == latitude}) {
+        if let match = UploadImageModel.shared.imageObjects.first(where: {$0.0.rawLocation.coordinate.longitude == longitude && $0.0.rawLocation.coordinate.latitude == latitude}) {
             
-            passObjects.append(match)
+            passObjects.append((match.image, match.selected))
             if let vc = storyboard?.instantiateViewController(withIdentifier: "ClusterPicker") as? ClusterPickerController {
                 
-                vc.mapVC = parentVC.mapVC
-                vc.containerVC = parentVC
                 vc.spotObject = parentVC.spotObject
                 vc.editSpotMode = parentVC.editSpotMode
                 
                 vc.tappedLocation = CLLocation(latitude: latitude, longitude: longitude)
                 vc.zoomLevel = "city"
                 vc.imageObjects = passObjects
-                if !parentVC.selectedObjects.isEmpty {
+                
+                if !UploadImageModel.shared.selectedObjects.isEmpty {
                     var index = 0
-                    for obj in parentVC.selectedObjects {
-                        vc.imageObjects.insert(obj.object, at: index)
-                        vc.selectedObjects.append((object: obj.object, index: index))
+                    for obj in UploadImageModel.shared.selectedObjects {
+                        vc.imageObjects.insert((obj, true), at: index)
                         index += 1
                     }
                 } else {
                     vc.single = true
                 }
+                
                 DispatchQueue.main.async { parentVC.navigationController?.pushViewController(vc, animated: true) }
             }
         }
@@ -355,7 +274,7 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
         let longitude = sender.coordinates.longitude
         
         var index = 0
-        var passObjects: [ImageObject] = []
+        var passObjects: [(ImageObject, Bool)] = []
         guard let parentVC = parent as? PhotosContainerController else { return }
         
         if let cluster = parentVC.mapView.annotations.last(where: {$0.coordinate.latitude == latitude && $0.coordinate.longitude == longitude}) as? MKClusterAnnotation {
@@ -363,9 +282,9 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
                 if let cp = member as? CustomPointAnnotation {
                     
                     /// add all images in cluster to images for cluster picker
-                    if let match = self.locationObjects.first(where: {$0.asset == cp.asset}) {
-                        if !passObjects.contains(where: {$0.asset == match.asset}) {
-                            passObjects.append(match)
+                    if let match = UploadImageModel.shared.imageObjects.first(where: {$0.image.id == cp.assetID}) {
+                        if !passObjects.contains(where: {$0.0.id == match.image.id}) {
+                            passObjects.append((match.image, match.selected))
                         }
                     }
                 }
@@ -385,24 +304,28 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
                             vc.zoomLevel = "country"
                         }
                         
-                        vc.mapVC = parentVC.mapVC
-                        vc.containerVC = parentVC
                         vc.spotObject = parentVC.spotObject
                         vc.editSpotMode = parentVC.editSpotMode
                         
                         vc.tappedLocation = CLLocation(latitude: cluster.coordinate.latitude, longitude: cluster.coordinate.longitude)
                         vc.imageObjects = passObjects
-                        vc.imageObjects.sort(by: {$0.creationDate > $1.creationDate})
+
                         
-                        
-                        if !parentVC.selectedObjects.isEmpty {
+                        if !UploadImageModel.shared.selectedObjects.isEmpty {
                             var index = 0
-                            for obj in parentVC.selectedObjects {
-                                vc.imageObjects.insert(obj.object, at: index)
-                                vc.selectedObjects.append((object: obj.object, index: index))
+                            for obj in UploadImageModel.shared.selectedObjects {
+                                if !vc.imageObjects.contains(where: {$0.0.id == obj.id}) {
+                                        /// insert objects it doesnt contain
+                                        vc.imageObjects.insert((obj, true), at: index)
+                                    }
                                 index += 1
                             }
                         }
+                        
+                        
+                        /// sort for selected to show first
+                        vc.imageObjects.sort(by: {!$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected})
+                        
                         DispatchQueue.main.async { parentVC.navigationController?.pushViewController(vc, animated: true) }
                     }
                 }
@@ -410,18 +333,6 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
         } else {
             openMarker(latitude: latitude, longitude: longitude)
         }
-    }
-    
-    func annoWithinBounds(annoCoordinates: CLLocationCoordinate2D) -> Bool {
-        
-        guard let parentVC = parent as? PhotosContainerController else { return false }
-        let coordinates = parentVC.mapView.region.boundingBoxCoordinates
-        
-        if !(annoCoordinates.latitude < coordinates[0].latitude && annoCoordinates.latitude > coordinates[2].latitude && annoCoordinates.longitude > coordinates[0].longitude && annoCoordinates.longitude < coordinates[2].longitude) {
-            return false
-        }
-        
-        return true
     }
 }
 
@@ -436,17 +347,12 @@ extension MapPickerController: CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         
-        guard let parentVC = parent as? PhotosContainerController else { return }
         guard let location = locations.last else { return }
         
         if (firstTimeGettingLocation) {
             
             currentLocation = location
             self.firstTimeGettingLocation = false
-            
-            let centerCoordinate = parentVC.spotObject != nil ? CLLocationCoordinate2D(latitude: parentVC.spotObject.spotLat, longitude: parentVC.spotObject.spotLong) : location.coordinate
-            let zoomLevel: CLLocationDistance = parentVC.spotObject != nil ? 500 : 35000
-            parentVC.mapView.setRegion(MKCoordinateRegion(center: centerCoordinate, latitudinalMeters: zoomLevel, longitudinalMeters: zoomLevel), animated: false)
 
         } else {
             currentLocation = location
@@ -770,6 +676,7 @@ class CustomPointAnnotation: MKPointAnnotation {
   //  lazy var imageURL: String = ""
     lazy var asset: PHAsset = PHAsset()
     var hidden = false
+    var assetID: String = ""
     var postID: String = ""
     
     override init() {

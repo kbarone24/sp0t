@@ -23,7 +23,6 @@ class SendInvitesController: UIViewController {
     
     let db: Firestore! = Firestore.firestore()
     var uid : String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    unowned var mapVC: MapViewController!
 
     var sectionTitles: [String] = []
     var numbers: [String] = []
@@ -53,7 +52,7 @@ class SendInvitesController: UIViewController {
         view.backgroundColor = UIColor(named: "SpotBlack")
                 
         titleView = SendInvitesTitleView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 60))
-        titleView.setUp(count: 8 - mapVC.userInfo.sentInvites.count)
+        titleView.setUp(count: 8 - UserDataModel.shared.userInfo.sentInvites.count)
         view.addSubview(titleView)
         
         searchBarContainer = UIView(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 40))
@@ -203,7 +202,7 @@ class SendInvitesController: UIViewController {
     func getNumbers() {
         
         /// get users sent invites in correct format
-        for invite in mapVC.userInfo.sentInvites {
+        for invite in UserDataModel.shared.userInfo.sentInvites {
             print("formatted", invite.formatNumber())
             sentInvites.append(invite.formatNumber())
         }
@@ -454,8 +453,8 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
 
             let formattedNumber = pendingNumber.formatNumber()
         /// update header
-            mapVC.userInfo.sentInvites.append(formattedNumber)
-            titleView.setUp(count: 8 - mapVC.userInfo.sentInvites.count)
+            UserDataModel.shared.userInfo.sentInvites.append(formattedNumber)
+            titleView.setUp(count: 8 - UserDataModel.shared.userInfo.sentInvites.count)
             
         /// update local sentInvites
             sentInvites.append(formattedNumber)
@@ -479,8 +478,8 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
 
     func sendInvite(number: String) {
         
-        let adminID = mapVC.uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || mapVC.uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
-        if mapVC.userInfo.sentInvites.count == 8 && !adminID {
+        let adminID = uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
+        if UserDataModel.shared.userInfo.sentInvites.count == 8 && !adminID {
             errorBox.isHidden = false
             return
         }

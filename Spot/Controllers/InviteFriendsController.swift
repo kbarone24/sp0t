@@ -11,11 +11,16 @@ import UIKit
 import Firebase
 import Mixpanel
 
+protocol InviteFriendsDelegate {
+    func finishPassingSelectedFriends(selected: [UserProfile])
+}
+
 class InviteFriendsController: UIViewController {
     
-    weak var uploadVC: UploadPostController!
     weak var editVC: EditSpotController!
     weak var spotVC: SpotViewController!
+    
+    var delegate: InviteFriendsDelegate?
     
     var searchBarContainer: UIView!
     var searchBar: UISearchBar!
@@ -33,39 +38,29 @@ class InviteFriendsController: UIViewController {
         super.viewDidLoad()
         
         Mixpanel.mainInstance().track(event: "InviteFriendsOpen")
-        addTopBar()
+        setUpNavBar()
         setUpViews()
     }
     
-    func addTopBar() {
-        let topBar = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 45))
-        topBar.backgroundColor = nil
-        view.addSubview(topBar)
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         
-        let backButton = UIButton(frame: CGRect(x: 16, y: 18, width: 24, height: 18.66))
-        backButton.setImage(UIImage(named: "BackArrow"), for: .normal)
-        backButton.addTarget(self, action: #selector(backTapped(_:)), for: .touchUpInside)
-        backButton.tintColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        topBar.addSubview(backButton)
-        
-        let titleView = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 75, y: 14, width: 150, height: 23))
-        titleView.text = "Invite friends"
-        titleView.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        titleView.font = UIFont(name: "SFCamera-Regular", size: 15)
-        titleView.textAlignment = .center
-        topBar.addSubview(titleView)
-        
-        let doneButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 53, y: 19, width: 40, height: 16))
-        doneButton.setTitle("Done", for: .normal)
-        doneButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        doneButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 15)
-        doneButton.addTarget(self, action: #selector(doneTapped(_:)), for: .touchUpInside)
-        topBar.addSubview(doneButton)
+        if searchBar != nil { searchBar.becomeFirstResponder() }
     }
     
+    func setUpNavBar() {
+                        
+        navigationController?.navigationBar.tintColor = .white
+        title = "Invite friends"
+        
+        let doneButton = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(doneTapped(_:)));
+        doneButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
+        navigationItem.setRightBarButton(doneButton, animated: false)
+    }
+
     func setUpViews() {
         
-        searchBarContainer = UIView(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 40))
+        searchBarContainer = UIView(frame: CGRect(x: 0, y: 10, width: UIScreen.main.bounds.width, height: 55))
         searchBarContainer.backgroundColor = nil
         view.addSubview(searchBarContainer)
         
@@ -97,18 +92,21 @@ class InviteFriendsController: UIViewController {
         cancelButton.isHidden = true
         searchBarContainer.addSubview(cancelButton)
         
-        tableView = UITableView(frame: CGRect(x: 0, y: 110, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        let bottomLine = UIView(frame: CGRect(x: 0, y: 54, width: UIScreen.main.bounds.width, height: 1))
+        bottomLine.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
+        searchBarContainer.addSubview(bottomLine)
+        
+        tableView = UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY + 5, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         tableView.backgroundColor = UIColor(named: "SpotBlack")
-        tableView.separatorStyle = .singleLine
-        tableView.separatorInset = UIEdgeInsets(top: 0, left: -20, bottom: 0, right: 0)
-        tableView.separatorColor = UIColor(named: "SpotBlack")
+        tableView.separatorStyle = .none
         tableView.dataSource = self
         tableView.delegate = self
         tableView.isUserInteractionEnabled = true
         tableView.showsVerticalScrollIndicator = false
         tableView.allowsMultipleSelection = true
-        tableView.contentInset = UIEdgeInsets(top: 15, left: 0, bottom: 150, right: 0)
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
         tableView.register(FriendsListCell.self, forCellReuseIdentifier: "FriendsListCell")
+        tableView.register(SelectedFriendsHeader.self, forHeaderFooterViewReuseIdentifier: "SelectedHeader")
         view.addSubview(tableView)
         tableView.reloadData()
     }
@@ -119,13 +117,7 @@ class InviteFriendsController: UIViewController {
     
     @objc func doneTapped(_ sender: UIButton) {
         
-        if uploadVC != nil {
-            /// for uploadVC we want to just show 1 friend, it's implied the user has access
-            uploadVC.inviteList = self.selectedFriends.map({($0.id ?? "")})
-            uploadVC.postPrivacy = "invite"
-            uploadVC.tableView.reloadData()
-            
-        } else if editVC != nil {
+       if editVC != nil {
             var inviteList = self.selectedFriends.map({($0.id!)})
             if !inviteList.contains(editVC.uid) { inviteList.append(editVC.uid) }
             editVC.spotObject.privacyLevel = "invite"
@@ -153,8 +145,10 @@ class InviteFriendsController: UIViewController {
             ///update db
         }
         
+        delegate?.finishPassingSelectedFriends(selected: selectedFriends)
+        
         Mixpanel.mainInstance().track(event: "InviteFriendsSave", properties: ["friendCount": self.selectedFriends.count])
-        self.dismiss(animated: true, completion: nil)
+        self.navigationController?.popViewController(animated: true)
     }
 }
 
@@ -171,6 +165,7 @@ extension InviteFriendsController: UISearchBarDelegate {
     }
     
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        
         self.searchBar.text = ""
         self.queryFriends = self.friendsList
         queried = false
@@ -241,28 +236,23 @@ extension InviteFriendsController: UITableViewDataSource, UITableViewDelegate {
         return cell
     }
     
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return selectedFriends.count == 0 ? 0 : 60
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        guard let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "SelectedHeader") as? SelectedFriendsHeader else { return UITableViewHeaderFooterView() }
+        header.setUp(selectedFriends: selectedFriends)
+        return header
+    }
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let friend = queryFriends[indexPath.row]
-        if let cell = tableView.cellForRow(at: indexPath) as? FriendsListCell {
         
-            if let index = selectedFriends.firstIndex(where: {$0.id == friend.id}) {
-                
-                ///cant uninvite a user that has visited
-                if editVC != nil && editVC.spotObject.posterIDs.contains(where: {$0 == friend.id}) { self.showVisitorMessage(); return }
-                if spotVC != nil && spotVC.spotObject.posterIDs.contains(where: {$0 == friend.id}) { self.showVisitorMessage(); return }
-                
-                self.selectedFriends.remove(at: index)
-                cell.setSelected(false, animated: false)
-                cell.backgroundColor = UIColor(named: "SpotBlack")
-                tableView.reloadData()
-                
-            } else {
-                self.selectedFriends.append(friend)
-                cell.setSelected(true, animated: false)
-                cell.backgroundColor = UIColor(red: 0.045, green: 0.454, blue: 0.405, alpha: 0.45)
-                tableView.reloadData()
-            }
-        }
+        let friend = queried ? queryFriends[indexPath.row] : friendsList[indexPath.row]
+        selectedFriends.insert(friend, at: 0)
+        queryFriends.removeAll(where: {$0.id == friend.id})
+        friendsList.removeAll(where: {$0.id == friend.id})
+        DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
     func showVisitorMessage() {
@@ -288,4 +278,77 @@ extension InviteFriendsController: UITableViewDataSource, UITableViewDelegate {
         return 61
     }
     
+}
+
+class SelectedFriendsHeader: UITableViewHeaderFooterView {
+    
+    var bottomLine: UIView!
+    var selectedFriends: [UserProfile] = []
+    
+    var addFriendsCollection: UploadPillCollectionView  = UploadPillCollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
+    
+    func setUp(selectedFriends: [UserProfile]) {
+        
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = UIColor(named: "SpotBlack")
+        self.backgroundView = backgroundView
+        
+        self.selectedFriends = selectedFriends
+        
+        if bottomLine != nil { bottomLine.backgroundColor = nil }
+        bottomLine = UIView(frame: CGRect(x: 0, y: 59, width: UIScreen.main.bounds.width, height: 1))
+        bottomLine.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
+        addSubview(bottomLine)
+        
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 13, bottom: 0, right: 13)
+        
+        if addFriendsCollection.numberOfItems(inSection: 0) > 0 {
+            addFriendsCollection.reloadData()
+            return
+        }
+        
+        addFriendsCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 48)
+        addFriendsCollection.backgroundColor = nil
+        addFriendsCollection.delegate = self
+        addFriendsCollection.dataSource = self
+        addFriendsCollection.register(UploadFriendCell.self, forCellWithReuseIdentifier: "FriendCell")
+        addFriendsCollection.register(UploadSearchFriendsCell.self, forCellWithReuseIdentifier: "SearchCell")
+        addFriendsCollection.showsHorizontalScrollIndicator = false
+        addFriendsCollection.setCollectionViewLayout(layout, animated: false)
+        addSubview(addFriendsCollection)
+    }
+
+}
+
+extension SelectedFriendsHeader: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return selectedFriends.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FriendCell", for: indexPath) as? UploadFriendCell else { return UICollectionViewCell() }
+        cell.setUp(user: selectedFriends[indexPath.row], header: true)
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: getCellWidth(user: selectedFriends[indexPath.row]), height: 47)
+    }
+    
+    func getCellWidth(user: UserProfile) -> CGFloat {
+        
+        let tempName = UILabel(frame: CGRect(x: 0, y: 0, width: 250, height: 18))
+        tempName.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+    
+        tempName.text = user.username
+        tempName.sizeToFit()
+        
+        let nameWidth = tempName.frame.width
+        
+        return nameWidth + 49
+    }
 }

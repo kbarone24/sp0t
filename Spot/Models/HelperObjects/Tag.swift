@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 
-class Tag {
+struct Tag {
     
     var name: String
     var image: UIImage

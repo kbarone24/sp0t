@@ -10,7 +10,7 @@ import Foundation
 import CoreLocation
 import MapKit
 
-class POI {
+struct POI {
     
     var id: String
     var name: String
@@ -19,6 +19,7 @@ class POI {
     var type: MKPointOfInterestCategory
     var phone: String
     var address: String = ""
+    var selected: Bool = false
     
     // init for nearby
     init(name: String, coordinate: CLLocationCoordinate2D, distance: CLLocationDistance, type: MKPointOfInterestCategory, phone: String) {

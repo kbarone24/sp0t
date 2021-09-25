@@ -20,7 +20,6 @@ enum FriendStatus {
 
 class FindFriendsController: UIViewController {
     
-    unowned var mapVC: MapViewController!
     let db: Firestore = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     
@@ -158,7 +157,7 @@ class FindFriendsController: UIViewController {
         view.addSubview(mainView)
         
         sendInvitesView = SendInvitesView(frame: CGRect(x: 0, y: 5, width: UIScreen.main.bounds.width, height: 76))
-        sendInvitesView.setUp(invites: 8 - mapVC.userInfo.sentInvites.count)
+        sendInvitesView.setUp(invites: 8 - UserDataModel.shared.userInfo.sentInvites.count)
         sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
         mainView.addSubview(sendInvitesView)
         
@@ -195,28 +194,26 @@ class FindFriendsController: UIViewController {
                 suggestedUsers[i].1 = .pending
                 suggestedTable.reloadData()
             }
-            mapVC.userInfo.pendingFriendRequests.append(receiverID)
+            UserDataModel.shared.userInfo.pendingFriendRequests.append(receiverID)
         }
     }
     
     @objc func notifyInviteSent(_ sender: NSNotification) {
-        sendInvitesView.setUp(invites: 8 - mapVC.userInfo.sentInvites.count)
+        sendInvitesView.setUp(invites: 8 - UserDataModel.shared.userInfo.sentInvites.count)
     }
     
     @objc func presentSendInvites(_ sender: UITapGestureRecognizer) {
         
-        let adminID = mapVC.uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || mapVC.uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
-        if mapVC.userInfo.sentInvites.count > 7 && !adminID { return }
+        let adminID = uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
+        if UserDataModel.shared.userInfo.sentInvites.count > 7 && !adminID { return }
         
         if let vc = storyboard?.instantiateViewController(identifier: "SendInvites") as? SendInvitesController {
-            vc.mapVC = mapVC
             present(vc, animated: true, completion: nil)
         }
     }
     
     @objc func presentSearchContacts(_ sender: UITapGestureRecognizer) {
         if let vc = storyboard?.instantiateViewController(identifier: "SearchContacts") as? SearchContactsViewController {
-            vc.mapVC = mapVC
             present(vc, animated: true, completion: nil)
         }
     }
@@ -238,27 +235,27 @@ class FindFriendsController: UIViewController {
         
         var x = 0 /// outer friends list counter
                 
-        for friend in mapVC.friendsList {
+        for friend in UserDataModel.shared.friendsList {
             
             var y = 0 /// inner friendslist counter
-            if mapVC.adminIDs.contains(friend.id!) { x += 1; if x == mapVC.friendsList.count { runMutualSort(mutuals: mutuals) }; continue }
+            if UserDataModel.shared.adminIDs.contains(friend.id!) { x += 1; if x == UserDataModel.shared.friendsList.count { runMutualSort(mutuals: mutuals) }; continue }
             
             for id in friend.friendIDs {
                 
                 /// only add non-friends + people we haven't sent a request to yet
-                if !mapVC.friendIDs.contains(id) && !mapVC.userInfo.pendingFriendRequests.contains(id) && id != uid {
+                if !UserDataModel.shared.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) && id != uid {
                     
                     
                     if let i = mutuals.firstIndex(where: {$0.id == id}) {
                         /// increment mutuals index if already added to mutuals
                         mutuals[i].count += 1
-                        y += 1; if y == friend.friendIDs.count { x += 1; if x == mapVC.friendsList.count { runMutualSort(mutuals: mutuals) }}
+                        y += 1; if y == friend.friendIDs.count { x += 1; if x == UserDataModel.shared.friendsList.count { runMutualSort(mutuals: mutuals) }}
                     } else {
                         /// add new mutual to mutuals
                         mutuals.append((id: id, count: 1))
-                        y += 1; if y == friend.friendIDs.count { x += 1; if x == mapVC.friendsList.count { runMutualSort(mutuals: mutuals) }}
+                        y += 1; if y == friend.friendIDs.count { x += 1; if x == UserDataModel.shared.friendsList.count { runMutualSort(mutuals: mutuals) }}
                     }
-                } else { y += 1; if y == friend.friendIDs.count { x += 1; if x == mapVC.friendsList.count { runMutualSort(mutuals: mutuals) }} }
+                } else { y += 1; if y == friend.friendIDs.count { x += 1; if x == UserDataModel.shared.friendsList.count { runMutualSort(mutuals: mutuals) }} }
             }
         }
     }
@@ -279,7 +276,7 @@ class FindFriendsController: UIViewController {
     
     func getPendingFriends(mutuals: [(id: String, count: Int)]) {
         
-        var pendingRequests = mapVC.userInfo.pendingFriendRequests
+        var pendingRequests = UserDataModel.shared.userInfo.pendingFriendRequests
 //        if pendingRequests.count == 0 { getUserSpots(mutuals: mutuals) }
         
         var mutuals = mutuals
@@ -295,7 +292,7 @@ class FindFriendsController: UIViewController {
                 if let friendsList = snap?.get("friendsList") as? [String] {
                     
                     for id in friendsList {
-                        if !self.mapVC.friendIDs.contains(id) && !self.mapVC.userInfo.pendingFriendRequests.contains(id) {
+                        if !UserDataModel.shared.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) {
                             
                             if let i = secondaryMutuals.firstIndex(where: {$0.id == id}) {
                                 secondaryMutuals[i].secondaryCount += 1
@@ -393,7 +390,7 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         let dataSource = tableView.tag == 0 ? suggestedUsers : queryUsers
-        let maxRows = mapVC.largeScreen ? 5 : 4
+        let maxRows = UserDataModel.shared.largeScreen ? 5 : 4
         return dataSource.count > maxRows ? maxRows : dataSource.count
     }
     
@@ -512,7 +509,7 @@ extension FindFriendsController: UISearchBarDelegate {
                     /// add any user who matches here except for active user
                     if !self.queryUsers.contains(where: {$0.0.id == info.id}) && info.id != self.uid {
                         if !self.queryValid(searchText: searchText) { return }
-                        let status: FriendStatus = self.mapVC.friendIDs.contains(info.id!) ? .friends : self.mapVC.userInfo.pendingFriendRequests.contains(info.id!) ? .pending : .none
+                        let status: FriendStatus = UserDataModel.shared.friendIDs.contains(info.id!) ? .friends : UserDataModel.shared.userInfo.pendingFriendRequests.contains(info.id!) ? .pending : .none
                         self.queryUsers.append((info, status))
                     }
 
@@ -546,7 +543,7 @@ extension FindFriendsController: UISearchBarDelegate {
                     /// add any user who matches here except for active user
                     if !self.queryUsers.contains(where: {$0.0.id == info.id}) && info.id != self.uid {
                         if !self.queryValid(searchText: searchText) { return }
-                        let status: FriendStatus = self.mapVC.friendIDs.contains(info.id!) ? .friends : self.mapVC.userInfo.pendingFriendRequests.contains(info.id!) ? .pending : .none
+                        let status: FriendStatus = UserDataModel.shared.friendIDs.contains(info.id!) ? .friends : UserDataModel.shared.userInfo.pendingFriendRequests.contains(info.id!) ? .pending : .none
                         self.queryUsers.append((info, status))
                     }
                     
@@ -816,12 +813,12 @@ class SuggestedFriendCell: UITableViewCell {
             Mixpanel.mainInstance().track(event: "FindFriendsAddFriend")
 
             /// add friend from DB
-            DispatchQueue.global(qos: .utility).async { self.addFriend(senderProfile: vc.mapVC.userInfo, receiverID: self.userID) }
+            DispatchQueue.global(qos: .utility).async { self.addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: self.userID) }
             
             /// adjust UX with new pending
             if let i = vc.suggestedUsers.firstIndex(where: {$0.0.id == userID}) {
                 vc.suggestedUsers[i].1 = .pending
-                vc.mapVC.userInfo.pendingFriendRequests.append(userID)
+                UserDataModel.shared.userInfo.pendingFriendRequests.append(userID)
                 DispatchQueue.main.async { vc.suggestedTable.reloadData() }
             }
         }
@@ -906,12 +903,12 @@ class SuggestedFriendSearchCell: UITableViewCell {
             Mixpanel.mainInstance().track(event: "FindFriendsSearchAddFriend")
 
         /// send friend request from DB
-            DispatchQueue.global(qos: .utility).async { self.addFriend(senderProfile: vc.mapVC.userInfo, receiverID: self.userID) }
+            DispatchQueue.global(qos: .utility).async { self.addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: self.userID) }
             
             /// update local data
             if let i = vc.queryUsers.firstIndex(where: {$0.0.id == userID}) {
                 vc.queryUsers[i].1 = .pending
-                vc.mapVC.userInfo.pendingFriendRequests.append(userID)
+                UserDataModel.shared.userInfo.pendingFriendRequests.append(userID)
                 DispatchQueue.main.async { vc.resultsTable.reloadData() }
                 
                 if let i = vc.suggestedUsers.firstIndex(where: {$0.0.id == userID}) {

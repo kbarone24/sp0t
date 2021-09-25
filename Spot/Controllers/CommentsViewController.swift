@@ -51,7 +51,7 @@ class CommentsViewController: UIViewController {
         super.viewDidLoad()
         
         NotificationCenter.default.addObserver(self, selector: #selector(tagSelect(_:)), name: NSNotification.Name("TagSelect"), object: nil)
-        if userInfo == nil { userInfo = postVC.mapVC.userInfo }
+        if userInfo == nil { userInfo = UserDataModel.shared.userInfo }
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         
         addTable()
@@ -223,7 +223,7 @@ class CommentsViewController: UIViewController {
         for w in words {
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
-                if let f = postVC.mapVC.friendsList.first(where: {$0.username == username}) {
+                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
                     selectedUsers.append(f)
                 }
             }
@@ -310,7 +310,7 @@ class CommentsViewController: UIViewController {
                         token = tokenSnap?.get("notificationToken") as? String
                     }
                     if (token != nil && token != "") {
-                        sender.sendPushNotification(token: token, title: "", body: "\(self.postVC.mapVC.userInfo.username) tagged you in a comment")
+                        sender.sendPushNotification(token: token, title: "", body: "\(UserDataModel.shared.userInfo.username) tagged you in a comment")
                     }
                 }
             }
@@ -556,7 +556,7 @@ class CommentCell: UITableViewCell {
         commentText.font = UIFont(name: "SFCamera-Regular", size: 12.5)
         
         if !(comment.taggedUsers?.isEmpty ?? true) {
-             let attString = self.getAttString(caption: comment.comment, taggedFriends: comment.taggedUsers!)
+            let attString = self.getAttString(caption: comment.comment, taggedFriends: comment.taggedUsers!, fontSize: 12.5)
              commentText.attributedText = attString.0
              tagRect = attString.1
              
@@ -587,18 +587,16 @@ class CommentCell: UITableViewCell {
     
     @objc func tappedLabel(_ sender: UITapGestureRecognizer) {
         // tag tap
-        if let commentsVC = self.viewContainingController() as? CommentsViewController {
-            for r in tagRect {
-                if r.rect.contains(sender.location(in: sender.view)) {
-                    /// open tag from friends list
-                    if let friend = commentsVC.postVC.mapVC.friendsList.first(where: {$0.username == r.username}) {
-                        openProfile(user: friend)
-                    } else {
-                        /// pass blank user object to open func, run get user func on profile load
-                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "", userBio: "")
-                        user.id = ""
-                        self.openProfile(user: user)
-                    }
+        for r in tagRect {
+            if r.rect.contains(sender.location(in: sender.view)) {
+                /// open tag from friends list
+                if let friend = UserDataModel.shared.friendsList.first(where: {$0.username == r.username}) {
+                    openProfile(user: friend)
+                } else {
+                    /// pass blank user object to open func, run get user func on profile load
+                    var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "", userBio: "")
+                    user.id = ""
+                    self.openProfile(user: user)
                 }
             }
         }
@@ -744,20 +742,19 @@ class CommentHeader: UITableViewHeaderFooterView {
     }
     
     @objc func tappedLabel(_ sender: UIGestureRecognizer) {
-        if let commentsVC = self.viewContainingController() as? CommentsViewController {
-            for r in tagRect {
-                if r.rect.contains(sender.location(in: sender.view)) {
-                    // open tag from friends list
-                    if let friend = commentsVC.postVC.mapVC.friendsList.first(where: {$0.username == r.username}) {
-                        openProfile(user: friend)
-                    } else {
-                        /// pass blank user object to open func, run get user func on profile load
-                        var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "", userBio: "")
-                        user.id = ""
-                        self.openProfile(user: user)
-                    }
+        for r in tagRect {
+            if r.rect.contains(sender.location(in: sender.view)) {
+                // open tag from friends list
+                if let friend = UserDataModel.shared.friendsList.first(where: {$0.username == r.username}) {
+                    openProfile(user: friend)
+                } else {
+                    /// pass blank user object to open func, run get user func on profile load
+                    var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "", userBio: "")
+                    user.id = ""
+                    self.openProfile(user: user)
                 }
             }
+            
         }
     }
     

@@ -20,18 +20,16 @@ class FeedViewController: UIViewController {
     var friendsPostIndex = 0
     var selectedPostIndex = 0
     var selectedSegmentIndex = 0
-    var feedSegBlur: UIImageView!
     var feedSeg: UIView!
     var friendsSegment: UIButton!
-    var nearbySegment: UIButton!
-    var selectedSegmentHighlight: UIView!
+    var citySegment: UIButton!
     
     var nearbyPosts: [MapPost] = []
     var nearbyEnteredCount = 0
     var noAccessCount = 0
     var nearbyEscapeCount = 0
     var currentNearbyPosts: [MapPost] = [] /// keep track of posts for the current circleQuery to reload all at once
-    var activeRadius = 0.5
+    var activeRadius = 0.75
     var circleQuery: GFSCircleQuery?
 
     var endDocument: DocumentSnapshot!
@@ -69,6 +67,7 @@ class FeedViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name("NewPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditPost(_:)), name: NSNotification.Name("EditPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyDeletePost(_:)), name: NSNotification.Name("DeletePost"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostLike(_:)), name: NSNotification.Name("PostLike"), object: nil)
         
         NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [unowned self] notification in
             ///stop indicator freeze after view enters background
@@ -89,6 +88,18 @@ class FeedViewController: UIViewController {
         
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+    }
+    
+    @objc func notifyPostLike(_ sender: NSNotification) {
+        
+        if let info = sender.userInfo as? [String: Any] {
+            
+            guard let id = info["id"] as? String else { return }
+            guard let index = info["index"] as? Int else { return }
+            if postVC != nil && id != postVC.vcid { return }
+            
+            if let post = info["post"] as? MapPost { if selectedSegmentIndex == 0 { friendPosts[index] = post } else { nearbyPosts[index] = post } }
+        }
     }
     
     @objc func notifyIndexChange(_ sender: NSNotification) {
@@ -123,8 +134,11 @@ class FeedViewController: UIViewController {
                 
         if let newPost = sender.userInfo?.first?.value as? MapPost {
             
-            if !newPost.friendsList.contains(uid) { return }
-            friendPosts.insert(newPost, at: 0)
+            var post = newPost
+            post = setSecondaryPostValues(post: post)
+            
+            if !post.friendsList.contains(uid) { return }
+            friendPosts.insert(post, at: 0)
             
             if postVC != nil {
                 postVC.postsEmpty = false
@@ -282,56 +296,32 @@ class FeedViewController: UIViewController {
                 
                 let postIn = try doc.data(as: MapPost.self)
                 guard var postInfo = postIn else { index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts)}; continue }
-                
-                    postInfo.seconds = postInfo.timestamp.seconds
                     postInfo.id = doc.documentID
-                
-                if let user = self.mapVC.friendsList.first(where: {$0.id == postInfo.posterID}) {
+                    postInfo = self.setSecondaryPostValues(post: postInfo)
+
+                    if let user = UserDataModel.shared.friendsList.first(where: {$0.id == postInfo.posterID}) {
                     postInfo.userInfo = user
                     
                 } else if postInfo.posterID == self.uid {
-                    postInfo.userInfo = self.mapVC.userInfo
+                    postInfo.userInfo = UserDataModel.shared.userInfo
                     
                 } else {
                     /// friend not in users friendslist, might have removed them as a friend
                     index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts)}; continue
                 }
                     
-                    var commentList: [MapComment] = []
-                    self.listener2 = self.db.collection("posts").document(postInfo.id!).collection("comments").order(by: "timestamp", descending: true).addSnapshotListener({ [weak self] (commentSnap, err) in
-                        
-                        guard let self = self else { return }
-                        if err != nil { index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts)}; return }
-                        
-                        if commentSnap!.documents.count == 0 { index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts) }}
-                        
-                        for doc in commentSnap!.documents {
-                            do {
-                                
-                                let commInfo = try doc.data(as: MapComment.self)
-                                guard var commentInfo = commInfo else { if doc == commentSnap!.documents.last { index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts) }}; continue }
-                                
-                                commentInfo.id = doc.documentID
-                                commentInfo.seconds = commentInfo.timestamp.seconds
-                                commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
-                                
-                                if !commentList.contains(where: {$0.id == doc.documentID}) {
-                                    commentList.append(commentInfo)
-                                    commentList.sort(by: {$0.seconds < $1.seconds})
-                                }
-
-                                if doc == commentSnap!.documents.last {
-                                    
-                                    postInfo.commentList = commentList
-                                    localPosts.append(postInfo)
-                                    
-                                    index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts) }}
-                                
-                            } catch {
-                                if doc == commentSnap!.documents.last { index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts) }; continue }
-                            }
-                        }
-                    })
+                    /// check for addedUsers + getComments -> exitCount will == 2 when these async functions are done running (avoid using dispatch due to loop)
+                    var exitCount = 0
+                    
+                    self.getComments(postID: postInfo.id!) { commentList in
+                        postInfo.commentList = commentList
+                        exitCount += 1; if exitCount == 2 { localPosts.append(postInfo); index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts) }}
+                    }
+                    
+                    self.getUserInfos(userIDs: postInfo.addedUsers ?? []) { users in
+                        postInfo.addedUserProfiles = users
+                        exitCount += 1; if exitCount == 2 { localPosts.append(postInfo); index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts) }}
+                    }
 
                 } catch {
                     index += 1
@@ -399,6 +389,7 @@ class FeedViewController: UIViewController {
                             if self.friendsRefresh != .noRefresh { self.friendsRefresh = .yesRefresh }
 
                         } else if self.postVC.tableView != nil {
+                            
                             self.checkTutorialRemove() /// check if need to remove tutorialView
                             self.postVC.tableView.reloadData()
                             self.postVC.tableView.performBatchUpdates(nil, completion: {
@@ -432,12 +423,13 @@ class FeedViewController: UIViewController {
                             postVC.postsList[postIndex] = post
                             postVC.postsList[postIndex].selectedImageIndex = selected1
                         
-                            if post.id == posts.last?.id {
+                            /// table reloaded constantly - really no need for this
+                        /*    if post.id == posts.last?.id {
 
                                 if postVC.tableView != nil {
                                     DispatchQueue.main.async { self.postVC.tableView.reloadData() }
                                 }
-                            }
+                            } */
                         }
                     }
                 }
@@ -453,7 +445,7 @@ class FeedViewController: UIViewController {
         
         /// instantiate or update radius for circleQuery
         if circleQuery == nil {
-            circleQuery = geoFire.query(withCenter: GeoPoint(latitude: mapVC.currentLocation.coordinate.latitude, longitude: mapVC.currentLocation.coordinate.longitude), radius: radius)
+            circleQuery = geoFire.query(withCenter: GeoPoint(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude), radius: radius)
             ///circleQuery?.searchLimit = 500
             let _ = circleQuery?.observe(.documentEntered, with: loadPostFromDB)
             
@@ -469,7 +461,7 @@ class FeedViewController: UIViewController {
             queryReady = false
             circleQuery?.removeAllObservers()
             circleQuery?.radius = radius
-            circleQuery?.center = mapVC.currentLocation
+            circleQuery?.center = UserDataModel.shared.currentLocation
 
             let _ = circleQuery?.observe(.documentEntered, with: loadPostFromDB)
             let _ = circleQuery?.observeReady {
@@ -499,9 +491,9 @@ class FeedViewController: UIViewController {
                 guard var postInfo = postIn else { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return }
                 if self.mapVC.deletedPostIDs.contains(where: {$0 == postKey}) { self.noAccessCount += 1; self.accessEscape(); return }
                 
-                postInfo.seconds = postInfo.timestamp.seconds
                 postInfo.id = doc!.documentID
-                
+                postInfo = self.setSecondaryPostValues(post: postInfo)
+
                 if self.nearbyPosts.contains(where: {$0.id == postKey}) {
                     /// fetching new circle query form DB and this post is already there
                     if self.noAccessCount + self.currentNearbyPosts.count < self.nearbyEnteredCount { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return
@@ -511,7 +503,7 @@ class FeedViewController: UIViewController {
                     }
                 }
                 
-                if !self.hasPostAccess(post: postInfo, mapVC: self.mapVC) { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return }
+                if !self.hasPostAccess(post: postInfo) { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return }
                 
                 /// fix for current nearby posts growing too big - possibly due to active listener finding a change? this is all happening inside the listener closure so just update post object if necessary, don't need to increment and escape like above
                 if !self.currentNearbyPosts.contains(where: {$0.id == postInfo.id}) { self.currentNearbyPosts.append(postInfo) }
@@ -545,7 +537,10 @@ class FeedViewController: UIViewController {
             }
         }
         
-        getNearbyComments(postID: post.id!, refresh: true)
+        getComments(postID: post.id!) { [weak self] commentList in
+            guard let self = self else { return }
+            self.updateNearbyPostComments(comments: commentList, postID: post.id!)
+        }
     }
     
     func updateNearbyPostComments(comments: [MapComment], postID: String) {
@@ -574,97 +569,32 @@ class FeedViewController: UIViewController {
         
         for i in 0...currentNearbyPosts.count - 1 {
             
-            let post = currentNearbyPosts[i]
+            var post = currentNearbyPosts[i]
             
-            if let user = self.mapVC.friendsList.first(where: {$0.id == post.posterID}) {
-                currentNearbyPosts[i].userInfo = user
-                getNearbyComments(postID: post.id!, refresh: false)
-                
-            } else if post.posterID == self.uid {
-                currentNearbyPosts[i].userInfo = self.mapVC.userInfo
-                getNearbyComments(postID: post.id!, refresh: false)
-                
-            } else {
-                
-                var userLeaveCalled = false
-                
-                self.listener4 = self.db.collection("users").document(post.posterID).addSnapshotListener({  [weak self] (userSnap, err) in
-                    
-                    guard let self = self else { return }
-                    
-                    if err == nil {
-                        do {
-                            let profInfo = try userSnap?.data(as: UserProfile.self)
-                            guard var prof = profInfo else { self.nearbyEscape(); return }
-                            
-                            prof.id = userSnap?.documentID
-                            self.currentNearbyPosts[i].userInfo = prof
-
-                            if !userLeaveCalled {
-                                userLeaveCalled = true
-                                self.getNearbyComments(postID: post.id!, refresh: false)
-                            }
-                            
-                        } catch { self.nearbyEscape(); return }
-                    } else { self.nearbyEscape(); return }
-                })
+            var exitCount = 0
+            self.getComments(postID: post.id!) { commentList in
+                post.commentList = commentList
+                self.currentNearbyPosts[i].commentList = commentList
+                exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
+            }
+            
+            /// get poster user info
+            self.getUserInfos(userIDs: [post.posterID]) { userInfos in
+                let user = userInfos.first ?? UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
+                post.userInfo = user
+                self.currentNearbyPosts[i].userInfo = user
+                exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
+            }
+            
+            /// get added user infos
+            self.getUserInfos(userIDs: post.addedUsers ?? []) { userInfos in
+                post.addedUserProfiles = userInfos
+                self.currentNearbyPosts[i].addedUserProfiles = userInfos
+                exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
             }
         }
     }
-    
-    func getNearbyComments(postID: String, refresh: Bool) {
         
-        guard let i = currentNearbyPosts.firstIndex(where: {$0.id == postID}) else { nearbyEscape(); return }
-        let info = currentNearbyPosts[i]
-        
-        var commentList: [MapComment] = []
-        var commentCount = 0
-
-        let commentRef = self.db.collection("posts").document(info.id!).collection("comments").order(by: "timestamp", descending: true)
-
-        self.listener3 = commentRef.addSnapshotListener({ [weak self] (commentSnap, err) in
-            
-            guard let self = self else { return }
-            
-            let docCount = commentSnap!.documents.count
-            if docCount == 0 { if refresh { self.updateNearbyPostComments(comments: commentList, postID: postID); return }; self.nearbyEscape(); return }
-            
-            for doc in commentSnap!.documents {
-                
-                do {
-
-                    let commInfo = try doc.data(as: MapComment.self)
-                    guard var commentInfo = commInfo else { commentCount += 1; if commentCount == docCount {
-                        if refresh { self.updateNearbyPostComments(comments: commentList, postID: postID); continue }; self.currentNearbyPosts[i].commentList = commentList; self.nearbyEscape() }; continue }
-                    
-                    commentInfo.id = doc.documentID
-                    commentInfo.seconds = commentInfo.timestamp.seconds
-                    commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
-                    
-                    if !commentList.contains(where: {$0.id == doc.documentID}) {
-                        commentList.append(commentInfo)
-                        commentList.sort(by: {$0.seconds < $1.seconds})
-                    }
-                    
-                    commentCount += 1; if commentCount == docCount {
-                        if refresh { self.updateNearbyPostComments(comments: commentList, postID: postID); return  }
-                        self.currentNearbyPosts[i].commentList = commentList
-                        self.nearbyEscape()
-                    }
-
-                } catch {
-                    
-                    commentCount += 1; if commentCount == docCount {
-                        if refresh { self.updateNearbyPostComments(comments: commentList, postID: postID); return  }
-                        self.currentNearbyPosts[i].commentList = commentList
-                        self.nearbyEscape()
-                    }
-                    continue
-                }
-            }
-        })
-    }
-    
     func nearbyEscape() {
         /// check if got all posts + get spot rank + reload feed
         nearbyEscapeCount += 1
@@ -680,7 +610,7 @@ class FeedViewController: UIViewController {
         
         var scoreMultiplier = 0.0
         
-        let distance = max(CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: CLLocation(latitude: mapVC.currentLocation.coordinate.latitude, longitude: mapVC.currentLocation.coordinate.longitude)), 1)
+        let distance = max(CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: CLLocation(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude)), 1)
 
         let postTime = Float(post.seconds)
         let current = NSDate().timeIntervalSince1970
@@ -692,16 +622,16 @@ class FeedViewController: UIViewController {
         scoreMultiplier = Double(pow(factor, 3)) * 10
 
         /// content bonuses
-        if mapVC.friendIDs.contains(post.posterID) { scoreMultiplier += 50 }
+        if UserDataModel.shared.friendIDs.contains(post.posterID) { scoreMultiplier += 50 }
         
         for like in post.likers {
             scoreMultiplier += 20
-            if mapVC.friendIDs.contains(like) { scoreMultiplier += 5 }
+            if UserDataModel.shared.friendIDs.contains(like) { scoreMultiplier += 5 }
         }
         
         for comment in post.commentList {
             scoreMultiplier += 10
-            if mapVC.friendIDs.contains(comment.commenterID) { scoreMultiplier += 2.5 }
+            if UserDataModel.shared.friendIDs.contains(comment.commenterID) { scoreMultiplier += 2.5 }
         }
         
         return scoreMultiplier/distance
@@ -812,6 +742,75 @@ class FeedViewController: UIViewController {
         }
     }
 
+    func getUserInfos(userIDs: [String], completion: @escaping (_ users: [UserProfile]) -> Void) {
+        
+        var users: [UserProfile] = []
+        if userIDs.isEmpty { completion(users); return }
+        var userCount = 0
+        
+        for userID in userIDs {
+            
+            if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
+                users.append(user)
+                userCount += 1
+                if userCount == userIDs.count { completion(users) }
+                
+            } else if userID == mapVC.uid {
+                users.append(UserDataModel.shared.userInfo)
+                userCount += 1
+                if userCount == userIDs.count { completion(users) }
+                
+            } else {
+                db.collection("users").document(userID).getDocument { (doc, err) in
+                    if err != nil { return }
+
+                    do {
+                        let userInfo = try doc!.data(as: UserProfile.self)
+                        guard var info = userInfo else { userCount += 1; if userCount == userIDs.count { completion(users) }; return }
+
+                        info.id = doc!.documentID
+                        users.append(info)
+                        userCount += 1
+                        if userCount == userIDs.count { completion(users) }
+
+                    } catch { userCount += 1; if userCount == userIDs.count { completion(users); return } }
+                }
+            }
+        }
+    }
+        
+    func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
+        
+        var commentList: [MapComment] = []
+        
+        listener2 = db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).addSnapshotListener { [weak self] (commentSnap, err) in
+            
+            if err != nil { completion(commentList); return }
+            if commentSnap!.documents.count == 0 { completion(commentList); return }
+            guard let self = self else { return }
+
+            for doc in commentSnap!.documents {
+                do {
+                    let commentInf = try doc.data(as: MapComment.self)
+                    guard var commentInfo = commentInf else { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
+                    
+                    commentInfo.id = doc.documentID
+                    commentInfo.seconds = commentInfo.timestamp.seconds
+                    commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
+                    
+                    if !commentList.contains(where: {$0.id == doc.documentID}) {
+                        commentList.append(commentInfo)
+                        commentList.sort(by: {$0.seconds < $1.seconds})
+                    }
+                                        
+                    if doc == commentSnap!.documents.last { completion(commentList) }
+                    
+                } catch { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
+            }
+        }
+    }
+
+
     
     func checkTutorialRemove() {
         postVC.postsEmpty = false
@@ -894,80 +893,59 @@ class FeedViewController: UIViewController {
     func addFeedSeg(selectedIndex: Int) {
         
         self.selectedSegmentIndex = selectedIndex
-        
-        let wideScreen = UIScreen.main.bounds.width > 400
-        let segY: CGFloat = !mapVC.largeScreen ? 18 : UIScreen.main.bounds.width > 400 ? 53 : 42
-        
-        mapVC.feedMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-        mapVC.feedMask.backgroundColor = UIColor.black.withAlphaComponent(0.15)
-        mapVC.mapView.addSubview(mapVC.feedMask)
-        
-        feedSegBlur = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 150, y: 0, width: 300, height: segY * 2 + 35))
-        feedSegBlur.image = UIImage(named: "FeedSegBlur")
-        mapVC.feedMask.addSubview(feedSegBlur)
-        
-        let segWidth: CGFloat = wideScreen ? 82 : 78 /// includes edge insets
-        feedSeg = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - segWidth - 2.5, y: segY, width: segWidth * 2 + 10, height: 35))
-        feedSeg.backgroundColor = nil
-        mapVC.feedMask.addSubview(feedSeg)
+                
+        feedSeg = UIView(frame: CGRect(x: 20, y: 0, width: UIScreen.main.bounds.width - 40, height: 35))
 
-        let selectedX = selectedIndex == 0 ? 5 : segWidth + 8.5
-        let selectedY: CGFloat = wideScreen ? 3 : 4
-        let selectedHeight: CGFloat = wideScreen ? 29 : 27
-        
-        selectedSegmentHighlight = UIView(frame: CGRect(x: selectedX, y: selectedY, width: segWidth - 10, height: selectedHeight))
-        selectedSegmentHighlight.backgroundColor = UIColor(red: 0.11, green: 0.54, blue: 0.54, alpha: 1.00)
-        selectedSegmentHighlight.layer.cornerRadius = 9
-        selectedSegmentHighlight.layer.borderWidth = 1.25
-        selectedSegmentHighlight.layer.borderColor = UIColor(red: 0.36, green: 0.69, blue: 0.71, alpha: 1.00).cgColor
-        selectedSegmentHighlight.isUserInteractionEnabled = true
-        selectedSegmentHighlight.clipsToBounds = true
-        feedSeg.addSubview(selectedSegmentHighlight)
-        
-        let fontSize: CGFloat = wideScreen ? 14.5 : 13.5
+        let friendsColor = selectedIndex == 0 ? UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00) : UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
+        let friendsFont: CGFloat = selectedIndex == 0 ? 18 : 17
+        let segWidth = feedSeg.frame.width/2 - 4
         
         friendsSegment = UIButton(frame: CGRect(x: 0, y: 0, width: segWidth, height: 35))
-        friendsSegment.titleEdgeInsets = UIEdgeInsets(top: 5, left: 6, bottom: 5, right: 5)
+        friendsSegment.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         friendsSegment.setTitle("Friends", for: .normal)
-        friendsSegment.setTitleColor(UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.00), for: .normal)
-        friendsSegment.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: fontSize)
-        friendsSegment.contentHorizontalAlignment = .center
+        friendsSegment.setTitleColor(friendsColor, for: .normal)
+        friendsSegment.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: friendsFont)
+        friendsSegment.contentHorizontalAlignment = .right
         friendsSegment.contentVerticalAlignment = .center
         friendsSegment.addTarget(self, action: #selector(friendsSegmentTap(_:)), for: .touchUpInside)
         feedSeg.addSubview(friendsSegment)
         
-        nearbySegment = UIButton(frame: CGRect(x: segWidth + 5, y: 0, width: segWidth, height: 35))
-        nearbySegment.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        nearbySegment.setTitle("Nearby", for: .normal)
-        nearbySegment.setTitleColor(UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.00), for: .normal)
-        nearbySegment.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: fontSize)
-        nearbySegment.contentHorizontalAlignment = .center
-        nearbySegment.contentVerticalAlignment = .center
-        nearbySegment.addTarget(self, action: #selector(nearbySegmentTap(_:)), for: .touchUpInside)
-        feedSeg.addSubview(nearbySegment)
-
+        let nearbyColor = selectedIndex == 1 ? UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00) : UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
+        let nearbyFont: CGFloat = selectedIndex == 1 ? 18 : 17
+        
+        let commaIndex = UserDataModel.shared.userCity.indices(of: ",")
+        let rawCity = String(UserDataModel.shared.userCity.prefix(commaIndex.first ?? 0))
+        
+        citySegment = UIButton(frame: CGRect(x: segWidth + 8, y: 0, width: segWidth, height: 35))
+        citySegment.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        citySegment.setTitle(rawCity, for: .normal)
+        citySegment.setTitleColor(nearbyColor, for: .normal)
+        citySegment.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: nearbyFont)
+        citySegment.contentHorizontalAlignment = .left
+        citySegment.contentVerticalAlignment = .center
+        citySegment.addTarget(self, action: #selector(nearbySegmentTap(_:)), for: .touchUpInside)
+        feedSeg.addSubview(citySegment)
+        
+        let separatorLine = UIView(frame: CGRect(x: feedSeg.bounds.width/2 - 1.5, y: feedSeg.frame.midY - 0.5, width: 3, height: 3))
+        separatorLine.backgroundColor = UIColor(red: 0.262, green: 0.262, blue: 0.262, alpha: 1)
+        separatorLine.layer.cornerRadius = separatorLine.frame.width/2
+        feedSeg.addSubview(separatorLine)
+        
         /// hide feed seg if user already clicked off the feed
-        if mapVC.customTabBar.selectedIndex != 0 { hideFeedSeg() }
+        if mapVC.customTabBar.selectedIndex == 0 { mapVC.navigationItem.titleView = feedSeg }
+
     }
     
     func hideFeedSeg() {
-        if mapVC.feedMask == nil { return }
-        for sub in mapVC.feedMask.subviews { sub.removeFromSuperview() }
-        mapVC.feedMask.isHidden = true
+        mapVC.navigationItem.titleView = nil
     }
     
     func unhideFeedSeg() {
         
-        if !mapVC.feedMask.isHidden { return }
         if feedSeg == nil { return }
         if mapVC.customTabBar.selectedIndex != 0 { return }
         
-        mapVC.feedMask.isHidden = false
-        /// reset alphas in case drawer was closed on exit
-        mapVC.feedMask.alpha = 1.0
-        feedSeg.alpha = 1.0
-        mapVC.feedMask.addSubview(feedSegBlur)
-        mapVC.feedMask.addSubview(feedSeg)
+        mapVC.navigationItem.titleView = feedSeg
     }
     
     @objc func friendsSegmentTap(_ sender: UIButton) {
@@ -1011,8 +989,8 @@ class FeedViewController: UIViewController {
     @objc func nearbySegmentTap(_ sender: UIButton) {
         /// scroll to top if currently selected segment, switch segments otherwise
         Mixpanel.mainInstance().track(event: "FeedNearbySegmentTap")
-        switchToNearbySegment()
         if selectedSegmentIndex == 1 { openOrScrollToFirst(animated: true, newPost: false); return }
+        switchToNearbySegment()
     }
     
     func switchToNearbySegment() {
@@ -1036,7 +1014,7 @@ class FeedViewController: UIViewController {
                 postVC.tableView.reloadData()
                 view.bringSubviewToFront(activityIndicator)
                 activityIndicator.startAnimating()
-                getNearbyPosts(radius: 0.5)
+                getNearbyPosts(radius: activeRadius)
             /// switch to nearby seg
                 
             } else {
@@ -1056,19 +1034,23 @@ class FeedViewController: UIViewController {
     }
     
     func animateSegmentSwitch() {
-        let wideScreen = UIScreen.main.bounds.width > 400
-        let segWidth: CGFloat = wideScreen ? 82 : 78
-        let minX = selectedSegmentIndex == 0 ? 5 : segWidth + 8.5
-        UIView.animate(withDuration: 0.2) {
-            self.selectedSegmentHighlight.frame = CGRect(x: minX, y: self.selectedSegmentHighlight.frame.minY, width: self.selectedSegmentHighlight.frame.width, height: self.selectedSegmentHighlight.frame.height)
-        }
+        
+        let friendsColor = selectedSegmentIndex == 0 ? UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00) : UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
+        let friendsFont: CGFloat = selectedSegmentIndex == 0 ? 18 : 17
+        friendsSegment.setTitleColor(friendsColor, for: .normal)
+        friendsSegment.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: friendsFont)
+
+        let nearbyColor = selectedSegmentIndex == 1 ? UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00) : UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
+        let nearbyFont: CGFloat = selectedSegmentIndex == 1 ? 18 : 17
+        citySegment.setTitleColor(nearbyColor, for: .normal)
+        citySegment.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: nearbyFont)
     }
     
     func checkForLocationChange() {
         
         if postVC != nil && postVC.tableView != nil && selectedSegmentIndex == 1  && activeRadius < 1000 {
             /// rerun circleQuery to updated location. Animate activity indicator so user expects new posts to appear
-            let clCoordinate = mapVC.currentLocation.coordinate
+            let clCoordinate = UserDataModel.shared.currentLocation.coordinate
             let queryCoordinate = circleQuery?.center.coordinate
             let latDif = abs(clCoordinate.latitude - (queryCoordinate?.latitude ?? 0.0))
             let longDif = abs(clCoordinate.longitude - (queryCoordinate?.longitude ?? 0.0))
@@ -1078,6 +1060,19 @@ class FeedViewController: UIViewController {
             getNearbyPosts(radius: activeRadius)
             view.bringSubviewToFront(activityIndicator)
             activityIndicator.startAnimating()
+            
+            /// check for city change
+            mapVC.getCity { [weak self] city in
+                
+                guard let self = self else { return }
+                if city == "" { return }
+                UserDataModel.shared.userCity = city
+
+                let commaIndex = city.indices(of: ",")
+                let rawCity = String(city.prefix(commaIndex.first ?? 0))
+                
+                self.citySegment.setTitle(rawCity, for: .normal)
+            }
         }
     }
 }

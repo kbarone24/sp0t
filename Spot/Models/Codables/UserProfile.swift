@@ -31,7 +31,10 @@ struct UserProfile: Identifiable, Codable {
     
     var pendingFriendRequests: [String] = []
     var sentInvites: [String] = []
-    var mutualFriends: Int = 0 
+    var mutualFriends: Int = 0
+    var selected: Bool = false
+    
+    var topFriends: [String: Int] = [:]
     
     enum CodingKeys: String, CodingKey {
         case username
@@ -45,5 +48,6 @@ struct UserProfile: Identifiable, Codable {
         case tutorialList
         case pendingFriendRequests
         case sentInvites
+        case topFriends
     }
 }

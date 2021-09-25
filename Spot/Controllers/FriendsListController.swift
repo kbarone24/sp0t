@@ -15,6 +15,8 @@ import FirebaseUI
 class FriendsListController: UIViewController {
         
     unowned var profileVC: ProfileViewController!
+    unowned var postVC: PostViewController!
+    
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
@@ -74,8 +76,10 @@ class FriendsListController: UIViewController {
             tableOffset = 0
         }
         
+        if profileVC == nil { return }
+        
         if uid == profileVC.id {
-            let offsetY: CGFloat = profileVC.mapVC.largeScreen ? 145 : 125
+            let offsetY: CGFloat = UserDataModel.shared.largeScreen ? 145 : 125
             let addFriendsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 158, y: UIScreen.main.bounds.height - offsetY, width: 138, height: 49))
             addFriendsButton.setImage(UIImage(named: "FriendsListAddFriends"), for: .normal)
             addFriendsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -153,14 +157,14 @@ class FriendsListController: UIViewController {
     @objc func updateFriendsList(_ sender: NSNotification) {
         /// update friends list if selected before full friends list loaded on
         if profileVC != nil && uid == profileVC.id {
-            friendsList = profileVC.mapVC.friendsList
+            friendsList = UserDataModel.shared.friendsList
             self.tableView.reloadData()
         }
     }
     
     @objc func addFriendsTap(_ sender: UIButton) {
+        
         if let vc = storyboard?.instantiateViewController(identifier: "FindFriends") as? FindFriendsController {
-            vc.mapVC = profileVC.mapVC
             present(vc, animated: true, completion: nil)
         }
     }
@@ -206,18 +210,32 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
             
             vc.userInfo = selectedUser
-            vc.mapVC = self.profileVC.mapVC
             vc.id = selectedUser.id!
             
-            profileVC.shadowScroll.isScrollEnabled = false
-            profileVC.friendsListScrollDistance = tableView.contentOffset.y
+            if profileVC != nil {
+                /// add on top of profile
+                profileVC.shadowScroll.isScrollEnabled = false
+                profileVC.friendsListScrollDistance = tableView.contentOffset.y
+                vc.mapVC = profileVC.mapVC
+                
+                vc.view.frame = profileVC.view.frame
+                profileVC.addChild(vc)
+                profileVC.view.addSubview(vc.view)
+                vc.didMove(toParent: profileVC)
+
+                profileVC.mapVC.customTabBar.tabBar.isHidden = true
             
-            vc.view.frame = profileVC.view.frame
-            profileVC.addChild(vc)
-            profileVC.view.addSubview(vc.view)
-            vc.didMove(toParent: profileVC)
+            } else {
+                /// add on top of post
+                vc.mapVC = postVC.mapVC
+                postVC.openFriendsList = true
+                
+                vc.view.frame = postVC.view.frame
+                postVC.addChild(vc)
+                postVC.view.addSubview(vc.view)
+                vc.didMove(toParent: postVC)
+            }
             
-            profileVC.mapVC.customTabBar.tabBar.isHidden = true
             self.dismiss(animated: false, completion: nil)
         }
     }
