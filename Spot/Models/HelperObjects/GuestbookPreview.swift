@@ -8,7 +8,7 @@
 
 import Foundation
 
-class GuestbookPreview {
+struct GuestbookPreview {
     
     var postID: String
     var frameIndex: Int /// the frame to display in preview

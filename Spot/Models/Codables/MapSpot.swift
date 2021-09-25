@@ -25,6 +25,7 @@ struct MapSpot: Identifiable, Codable {
     var posterIDs: [String] = []
     var postTimestamps: [Firebase.Timestamp] = []
     var postPrivacies: [String] = []
+    var posterUsername: String? = ""
     var visitorList: [String] = [] 
     var inviteList: [String]? = []
     var tags: [String] = []
@@ -33,13 +34,15 @@ struct MapSpot: Identifiable, Codable {
     var taggedUsers: [String]? = []
     var city: String? = ""
     var phone: String? = ""
+    var poiCategory: String? = ""
     
     var checkInTime: Int64 = 0
     var friendVisitors = 0
     var visiblePosts = 0
-    var spotScore: Float = 0
+    var spotScore: Double = 0
     var distance: CLLocationDistance = CLLocationDistance()
     var friendImage = false
+    var selected: Bool? = false
     var postFetchID = "" 
     
     enum CodingKeys: String, CodingKey {
@@ -57,9 +60,11 @@ struct MapSpot: Identifiable, Codable {
         case spotLong
         case city
         case phone
+        case poiCategory
         case postIDs
         case posterIDs
         case postTimestamps
         case postPrivacies
+        case posterUsername
     }
 }

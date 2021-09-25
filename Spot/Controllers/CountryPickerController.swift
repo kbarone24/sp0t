@@ -307,7 +307,7 @@ extension CountryPickerController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let code = countries[indexPath.row]
         phoneController.resetCountry(country: code)
-        Mixpanel.mainInstance().track(event: "CountryPickerSelectCountry", properties: ["country": code.name ?? ""])
+        Mixpanel.mainInstance().track(event: "CountryPickerSelectCountry", properties: ["country": code.name])
         self.dismiss(animated: true, completion: nil)
     }
 }

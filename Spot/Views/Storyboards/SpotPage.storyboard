@@ -58,7 +58,7 @@
         <!--Post View Controller-->
         <scene sceneID="GiP-j4-Ff6">
             <objects>
-                <viewController storyboardIdentifier="Post" id="VlY-vj-ZMJ" customClass="PostViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="Post" extendedLayoutIncludesOpaqueBars="YES" id="VlY-vj-ZMJ" customClass="PostViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="N1m-io-lLg">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

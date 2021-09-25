@@ -261,7 +261,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     
     func addFriendRequest(notiID: String, userID: String, timestamp: Firebase.Timestamp, accepted: Bool) {
         
-        getUserInfo(userID: userID, mapVC: mapVC) { (user) in
+        getUserInfo(userID: userID) { (user) in
             let noti = FriendRequest(notiID: notiID, userInfo: user, timestamp: timestamp, accepted: accepted)
             if self.friendRequests.contains(where: { $0.notiID == notiID }) || self.friendRequestsPending.contains(where: {$0.notiID == notiID}) || self.removedRequestList.contains(where: {$0 == notiID}) { return }
             
@@ -280,7 +280,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
 
     func getPostForNotification(notiID: String, userID: String, postID: String, timestamp: Firebase.Timestamp, type: String, originalPoster: String) {
         
-        getUserInfo(userID: userID, mapVC: mapVC) { (userInfo) in
+        getUserInfo(userID: userID) { (userInfo) in
             
             self.getMapPost(postID: postID) { (post) in
                 
@@ -304,7 +304,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     }
     
     func getSpotForNotification(notiID: String, userID: String, spotID: String, timestamp: Firebase.Timestamp, type: String, originalPoster: String) {
-        getUserInfo(userID: userID, mapVC: mapVC) { userInfo in
+        getUserInfo(userID: userID) { userInfo in
             self.getMapSpot(spotID: spotID) { (spot) in
                 
                 /// update spot noti
@@ -332,15 +332,15 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
-    func getUserInfo(userID: String, mapVC: MapViewController, completion: @escaping (_ user: UserProfile) -> Void) {
+    func getUserInfo(userID: String, completion: @escaping (_ user: UserProfile) -> Void) {
         
         let db: Firestore! = Firestore.firestore()
         
-        if let user = mapVC.friendsList.first(where: {$0.id == userID}) {
+        if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
             completion(user)
             
         } else if userID == mapVC.uid {
-            completion(mapVC.userInfo)
+            completion(UserDataModel.shared.userInfo)
             
         } else {
             db.collection("users").document(userID).getDocument { (doc, err) in
@@ -369,27 +369,27 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             
             do {
                 
-                let postInfo = try doc?.data(as: MapPost.self)
-                guard var info = postInfo else { return }
+                let info = try doc?.data(as: MapPost.self)
+                guard var postInfo = info else { return }
                 guard let self = self else { return }
                 
-                info.seconds = info.timestamp.seconds
-                info.id = doc!.documentID
+                postInfo.id = doc!.documentID
+                postInfo = self.setSecondaryPostValues(post: postInfo)
                 
                 dispatch.enter()
                 dispatch.enter()
                 
-                self.getUserInfo(userID: info.posterID, mapVC: self.mapVC) { (userInfo) in
-                    if userInfo.id != "" { info.userInfo = userInfo }
+                self.getUserInfo(userID: postInfo.posterID) { (userInfo) in
+                    if userInfo.id != "" { postInfo.userInfo = userInfo }
                     dispatch.leave()
                 }
                                                 
                 self.getComments(postID: postID) { (comments) in
-                    info.commentList = comments
+                    postInfo.commentList = comments
                     dispatch.leave()
                 }
                 
-                dispatch.notify(queue: .main) { completion(info) }
+                dispatch.notify(queue: .main) { completion(postInfo) }
                                 
             } catch { return }
         }
@@ -533,7 +533,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
                 }
             }
             if currentRequest == nil { return blank! }
-            cell.setUpAll(request: currentRequest, currentUsername: self.mapVC.userInfo.username)
+            cell.setUpAll(request: currentRequest, currentUsername: UserDataModel.shared.userInfo.username)
             cell.setUpAccepted()
             return cell
             

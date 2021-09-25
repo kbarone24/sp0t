@@ -40,8 +40,8 @@ class EditSpotController: UIViewController {
         tableView.delegate = self
         tableView.isScrollEnabled = UIScreen.main.bounds.height < 600 /// only need scroll for SE
         tableView.register(EditOverviewCell.self, forCellReuseIdentifier: "EditOverviewCell")
-        tableView.register(SpotTagCell.self, forCellReuseIdentifier: "SpotTagCell")
-        tableView.register(SpotPrivacyCell.self, forCellReuseIdentifier: "SpotPrivacyCell")
+//        tableView.register(SpotTagCell.self, forCellReuseIdentifier: "SpotTagCell")
+//        tableView.register(SpotPrivacyCell.self, forCellReuseIdentifier: "SpotPrivacyCell")
         tableView.register(EditSpotHeader.self, forHeaderFooterViewReuseIdentifier: "EditSpotHeader")
         view.addSubview(tableView)
         
@@ -247,20 +247,20 @@ class EditSpotController: UIViewController {
             
             inviteVC.editVC = self
             
-            var noBotList = mapVC.friendsList
+            var noBotList = UserDataModel.shared.friendsList
             noBotList.removeAll(where: {$0.id == "T4KMLe3XlQaPBJvtZVArqXQvaNT2"})
             
             inviteVC.friendsList = noBotList
             inviteVC.queryFriends = noBotList
             
             for invite in spotObject.inviteList ?? [] {
-                if let friend = mapVC.friendsList.first(where: {$0.id == invite}) {
+                if let friend = UserDataModel.shared.friendsList.first(where: {$0.id == invite}) {
                     inviteVC.selectedFriends.append(friend)
                 }
             }
             
             for visitor in spotObject.visitorList {
-                if let friend = mapVC.friendsList.first(where: {$0.id == visitor}) {
+                if let friend = UserDataModel.shared.friendsList.first(where: {$0.id == visitor}) {
                     if !inviteVC.selectedFriends.contains(where: {$0.id == friend.id}) { inviteVC.selectedFriends.append(friend) }
                 }
             }
@@ -273,24 +273,23 @@ class EditSpotController: UIViewController {
 extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 3
+        return 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let screenSize = UIScreen.main.bounds.height > 800 ? 2 : UIScreen.main.bounds.height < 600 ? 0 : 1
 
-        switch indexPath.row {
+       // switch indexPath.row {
         
-        case 0:
+      //  case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: "EditOverviewCell") as! EditOverviewCell
             cell.setUp(spot: spotObject, editVC: self)
             return cell
-            
+    /*
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "SpotTagCell") as! SpotTagCell
             let spotTags: [String] = spotObject.privacyLevel == "public" ? spotObject.tags : []
-            let tagsHeight: CGFloat = screenSize == 0 ? 315 : screenSize == 1 ? 230 : 240
+            let tagsHeight: CGFloat = UserDataModel.shared.largeScreen == 0 ? 315 : UserDataModel.shared.largeScreen == 1 ? 230 : 240
             cell.setUp(selectedTags: spotObject.tags, spotTags: spotTags, collectionHeight: tagsHeight - 30)
             return cell
             
@@ -298,21 +297,19 @@ extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
             let cell = tableView.dequeueReusableCell(withIdentifier: "SpotPrivacyCell") as! SpotPrivacyCell
             let postType: UploadPostController.PostType = .newSpot
             cell.setUp(type: postType, postPrivacy: spotObject.privacyLevel, spotPrivacy: spotPrivacy, inviteList: spotObject.inviteList ?? [], uploadPost: false, spotNameEmpty: false, visitorList: spotObject.visitorList)
-            return cell
-        }
+            return cell */
     }
+    
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
-        let screenSize = UIScreen.main.bounds.height > 800 ? 2 : UIScreen.main.bounds.height < 600 ? 0 : 1
-
         switch indexPath.row {
         
         case 0:
-            return screenSize == 2 ? 290 : 280
+            return UserDataModel.shared.screenSize == 2 ? 290 : 280
             
         case 1:
-            let tagsHeight: CGFloat = screenSize == 0 ? 315 : screenSize == 1 ? 230 : 240
+            let tagsHeight: CGFloat = UserDataModel.shared.screenSize == 0 ? 315 : UserDataModel.shared.screenSize == 1 ? 230 : 240
             return tagsHeight
             
         default:
@@ -397,7 +394,7 @@ class EditSpotHeader: UITableViewHeaderFooterView {
             for w in words {
                 let username = String(w.dropFirst())
                 if w.hasPrefix("@") {
-                    if let f = editVC.mapVC.friendsList.first(where: {$0.username == username}) {
+                    if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
                         selectedUsers.append(f)
                     }
                 }
@@ -472,7 +469,7 @@ class EditSpotHeader: UITableViewHeaderFooterView {
         
         /// send invites to newly invited users, remove invite notis from old users in case this was sent recently
         let firstPostID = editVC.spotVC.postsList.last?.id ?? "" /// first post is last sorted by timestamp
-        updateNotificationsList(oldList: originalInvites, newList: editVC.spotObject.inviteList ?? [], user: editVC.mapVC.userInfo, spot: editVC.spotObject, firstPostID: firstPostID, city: editVC.spotObject.city ?? "")
+        updateNotificationsList(oldList: originalInvites, newList: editVC.spotObject.inviteList ?? [], user: UserDataModel.shared.userInfo, spot: editVC.spotObject, firstPostID: firstPostID, city: editVC.spotObject.city ?? "")
         
     }
     
@@ -684,7 +681,6 @@ class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
             
             vc.selectedImages = [spot.spotImage]
-            vc.mapVC = editVC.mapVC
             vc.passedLocation = CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)
             vc.passedAddress = addressButton.titleLabel?.text ?? ""
             vc.spotObject = editVC.spotObject
@@ -699,7 +695,6 @@ class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
         if let photosVC = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "PhotosContainer") as? PhotosContainerController {
             
             photosVC.editSpotMode = true
-            photosVC.mapVC = editVC.mapVC
             
             self.editVC.spotVC.editedSpot = self.editVC.spotObject
             self.editVC.mapVC.navigationController?.setNavigationBarHidden(false, animated: false)

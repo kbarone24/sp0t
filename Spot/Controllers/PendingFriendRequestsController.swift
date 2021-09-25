@@ -85,7 +85,7 @@ class PendingFriendRequestsController: UIViewController, UITableViewDelegate, UI
         
         let currentRequest = requests[indexPath.row].0
         
-        cell.setUpAll(request: currentRequest, currentUsername: notiVC.mapVC.userInfo.username)
+        cell.setUpAll(request: currentRequest, currentUsername: UserDataModel.shared.userInfo.username)
         
         if (requests[indexPath.row].1 == "pending") {
             cell.setUpPending()

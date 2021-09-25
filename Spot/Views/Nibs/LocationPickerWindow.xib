@@ -6,47 +6,34 @@
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
-    <customFonts key="customFonts">
-        <array key="SFCamera-Regular.otf">
-            <string>SFCamera-Regular</string>
-        </array>
-    </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
         <view contentMode="scaleToFill" id="KX6-ZT-qvZ" customClass="LocationPickerWindow" customModule="Spot" customModuleProvider="target">
-            <rect key="frame" x="0.0" y="0.0" width="350" height="60"/>
+            <rect key="frame" x="0.0" y="0.0" width="350" height="79"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ovp-SR-jfz">
-                    <rect key="frame" x="157" y="3" width="37" height="27"/>
+                    <rect key="frame" x="159" y="2" width="32" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 </imageView>
-                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="PostInfoWindow" id="x7m-xH-m8u">
-                    <rect key="frame" x="147" y="0.0" width="57" height="38"/>
+                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ConfirmLocationProfile" id="x7m-xH-m8u">
+                    <rect key="frame" x="157" y="0.0" width="36" height="59"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 </imageView>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vRC-R9-xYM">
-                    <rect key="frame" x="0.0" y="45" width="350" height="13"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" name="SFCamera-Regular" family="SFCamera" pointSize="12"/>
-                    <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                    <nil key="highlightedColor"/>
-                </label>
             </subviews>
             <viewLayoutGuide key="safeArea" id="54o-FV-fkz"/>
             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <color key="tintColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <connections>
-                <outlet property="postAddress" destination="vRC-R9-xYM" id="HLF-RC-4wm"/>
-                <outlet property="postBackground" destination="x7m-xH-m8u" id="8rD-1C-QYN"/>
-                <outlet property="postImage" destination="ovp-SR-jfz" id="bgX-vC-0o6"/>
+                <outlet property="background" destination="x7m-xH-m8u" id="22H-Qx-NUZ"/>
+                <outlet property="profileImage" destination="ovp-SR-jfz" id="G0r-QY-RXO"/>
             </connections>
-            <point key="canvasLocation" x="-17800" y="-11664.508928571428"/>
+            <point key="canvasLocation" x="-17800" y="-11658.147321428571"/>
         </view>
     </objects>
     <resources>
-        <image name="PostInfoWindow" width="63.5" height="53.5"/>
+        <image name="ConfirmLocationProfile" width="36" height="59"/>
     </resources>
 </document>

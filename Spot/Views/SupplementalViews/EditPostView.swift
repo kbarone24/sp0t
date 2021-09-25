@@ -337,7 +337,7 @@ class EditPostView: UIView, UITextViewDelegate {
     @objc func editSpotTap(_ sender: UIButton) {
         removeEditPost()
         postVC.editPostView = false
-        postVC.openSpotPage(edit: true)
+        postVC.openSpotPage(edit: true, post: post)
     }
     
     @objc func editAddress(_ sender: UIButton) {
@@ -345,7 +345,6 @@ class EditPostView: UIView, UITextViewDelegate {
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
             
             vc.selectedImages = post.postImage
-            vc.mapVC = postVC.mapVC
             vc.passedLocation = CLLocation(latitude: post.postLat, longitude: post.postLong)
             if post.spotID != "" {
                 vc.secondaryLocation = CLLocation(latitude: post.spotLat ?? post.postLong, longitude: post.spotLong ?? post.postLong)
@@ -463,7 +462,7 @@ class EditPostView: UIView, UITextViewDelegate {
         for w in words {
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
-                if let f = postVC.mapVC.friendsList.first(where: {$0.username == username}) {
+                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
                     selectedUsers.append(f)
                 }
             }
@@ -477,6 +476,8 @@ class EditPostView: UIView, UITextViewDelegate {
         postVC.postsList[postVC.selectedPostIndex].postLong = postVC.editedPost.postLong
         postVC.postsList[postVC.selectedPostIndex].postLat = postVC.editedPost.postLat
         postVC.postsList[postVC.selectedPostIndex].privacyLevel = postVC.editedPost.privacyLevel
+        postVC.postsList[postVC.selectedPostIndex] = postVC.setSecondaryPostValues(post: postVC.postsList[postVC.selectedPostIndex])
+        
         if editedDate { postVC.postsList[postVC.selectedPostIndex].actualTimestamp = postVC.editedPost.actualTimestamp }
         
         let uploadPost = postVC.postsList[postVC.selectedPostIndex]

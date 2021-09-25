@@ -66,14 +66,17 @@ class CustomTabBar: UITabBarController {
         if navigationController == nil { return }
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         
-        if let cameraController = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
+        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
+            
+            vc.mapVC = mapVC
+            
             let transition = CATransition()
             transition.duration = 0.3
             transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
             transition.type = CATransitionType.push
             transition.subtype = CATransitionSubtype.fromTop
             navigationController?.view.layer.add(transition, forKey: kCATransition)
-            navigationController?.pushViewController(cameraController, animated: false)
+            navigationController?.pushViewController(vc, animated: false)
         }
     }
 }

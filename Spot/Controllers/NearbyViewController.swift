@@ -213,13 +213,13 @@ class NearbyViewController: UIViewController {
         /// notify user friendsList load -> if user friendsList empty, run initial get functions
         if friendsEmpty {
             
-            cityFriends.append(CityUser(user: mapVC.userInfo))
-            for friend in mapVC.friendsList {
-                if mapVC.adminIDs.contains(friend.id ?? "") { continue }
+            cityFriends.append(CityUser(user: UserDataModel.shared.userInfo))
+            for friend in UserDataModel.shared.friendsList {
+                if UserDataModel.shared.adminIDs.contains(friend.id ?? "") { continue }
                 cityFriends.append(CityUser(user: friend))
             }
             
-            getUserCity()
+            setCityInfo()
             friendsEmpty = false
         }
     }
@@ -282,7 +282,7 @@ class NearbyViewController: UIViewController {
           /// set up filters and spots table
         loadMainScroll()
         
-        if mapVC.currentLocation == nil { return }
+        if locationIsEmpty(location: UserDataModel.shared.currentLocation) { return }
         
         /// map hasn't fetched friends list yet
         if !mapVC.friendsLoaded {
@@ -291,44 +291,40 @@ class NearbyViewController: UIViewController {
         }
         
         /// initialize city friends objects for use in first collection
-        cityFriends.append(CityUser(user: mapVC.userInfo))
-        for friend in mapVC.friendsList {
-            if mapVC.adminIDs.contains(friend.id ?? "") { continue }
+        cityFriends.append(CityUser(user: UserDataModel.shared.userInfo))
+        for friend in UserDataModel.shared.friendsList {
+            if UserDataModel.shared.adminIDs.contains(friend.id ?? "") { continue }
             cityFriends.append(CityUser(user: friend))
         }
 
-        /// fetch city from users current location if available
-        getUserCity()
+        /// city fetch already happened on initial load so grab city and go
+        setCityInfo()
     }
     
-    func getUserCity() {
+    func setCityInfo() {
+            
+        cityIcon.isHidden = false
         
-        getCity(completion: { [weak self] (city) in
-            guard let self = self else { return}
-            
-            self.cityIcon.isHidden = false
-            
-            self.cityName.text = city
-            self.cityName.sizeToFit()
-            
-            self.changeCityButton.frame = CGRect(x: self.cityName.frame.minX - 4.5, y: self.cityName.frame.minY - 4, width: self.cityName.frame.width + 86, height: 30)
+        cityName.text = UserDataModel.shared.userCity
+        cityName.sizeToFit()
+        
+        changeCityButton.frame = CGRect(x: cityName.frame.minX - 4.5, y: cityName.frame.minY - 4, width: cityName.frame.width + 86, height: 30)
 
-            let userCoordinate = self.mapVC.currentLocation.coordinate
-            self.selectedCity = (name: city, coordinate: userCoordinate)
-            self.userCity = (name: city, coordinate: userCoordinate)
-            
-            var city = City(id: "", cityName: city, cityLat: userCoordinate.latitude, cityLong: userCoordinate.longitude)
-            city.activeCity = true
-            
-            if !self.nearbyCities.contains(where: {$0.cityName == city.cityName}) { self.nearbyCities.append(city) }
-            self.enteredCities.append(city.cityName)
-            
-            self.nearbyCityCounter += 1
-            
-            DispatchQueue.global(qos: .userInitiated).async { self.getSpots() } /// run nearby spots search on userInitiated background thread
-            
-            DispatchQueue.global(qos: .default).async {  self.getNearbyCities(radius: self.cityRadius) } /// run nearby city search on default background thread thread because cities are hidden from view before click
-        })
+        let userCoordinate = UserDataModel.shared.currentLocation.coordinate
+        selectedCity = (name: UserDataModel.shared.userCity, coordinate: userCoordinate)
+        userCity = (name: UserDataModel.shared.userCity, coordinate: userCoordinate)
+        
+        var city = City(id: "", cityName: UserDataModel.shared.userCity, cityLat: userCoordinate.latitude, cityLong: userCoordinate.longitude)
+        city.activeCity = true
+        
+        if !nearbyCities.contains(where: {$0.cityName == city.cityName}) { nearbyCities.append(city) }
+        enteredCities.append(city.cityName)
+        
+        nearbyCityCounter += 1
+        
+        DispatchQueue.global(qos: .userInitiated).async { self.getSpots() } /// run nearby spots search on userInitiated background thread
+        
+        DispatchQueue.global(qos: .default).async {  self.getNearbyCities(radius: self.cityRadius) } /// run nearby city search on default background thread thread because cities are hidden from view before click
     }
     
     func resetToUserCity() {
@@ -336,12 +332,12 @@ class NearbyViewController: UIViewController {
         ///called when clicking current location icon on the map
         if cityFriends.isEmpty { return }
         
-        getCity(completion: { [weak self] (cityString) in
+        mapVC.getCity(completion: { [weak self] (cityString) in
             
             guard let self = self else { return }
             if self.selectedCity != nil && cityString == self.selectedCity.name { return }
             
-            self.selectedCity = (name: cityString, coordinate: CLLocationCoordinate2D(latitude: self.mapVC.currentLocation.coordinate.latitude, longitude: self.mapVC.currentLocation.coordinate.longitude))
+            self.selectedCity = (name: cityString, coordinate: CLLocationCoordinate2D(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude))
             
             self.resetCity()
         })
@@ -415,7 +411,7 @@ class NearbyViewController: UIViewController {
         searchBarContainer.alpha = 0.0
         view.addSubview(searchBarContainer)
         
-        let searchBarY: CGFloat = mapVC.largeScreen ? 66 : 36
+        let searchBarY: CGFloat = UserDataModel.shared.largeScreen ? 66 : 36
         searchBar = UISearchBar(frame: CGRect(x: 14, y: searchBarY, width: UIScreen.main.bounds.width - 85, height: 36))
         searchBar.searchBarStyle = .default
         searchBar.barTintColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
@@ -576,7 +572,7 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
 
             if indexPath.row == 0 && halfScreenUserCount == 0 {
                 /// empty state cell. Add room for add  friends button if user has <15 friends
-                let lowFriends = !cityFriends.contains(where: {!$0.spotsList.isEmpty}) && mapVC.friendIDs.count < 15
+                let lowFriends = !cityFriends.contains(where: {!$0.spotsList.isEmpty}) && UserDataModel.shared.friendIDs.count < 15
                 let emptyHeight: CGFloat = lowFriends ? 110 : 50
                 
                 return CGSize(width: UIScreen.main.bounds.width, height: emptyHeight)
@@ -617,7 +613,7 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         /// return userCount if all users showing or userCount + 1 if adding the +more button
         if collectionView.tag == 0 {
-            if halfScreenUserCount == 0 && !cityFriends.contains(where: {!$0.spotsList.isEmpty}) && mapVC.friendIDs.count < 15 { return 1 } /// add empty state
+            if halfScreenUserCount == 0 && !cityFriends.contains(where: {!$0.spotsList.isEmpty}) && UserDataModel.shared.friendIDs.count < 15 { return 1 } /// add empty state
             return expandUsers ? fullScreenUserCount : halfScreenUserCount
         } else {
             return expandTags ? fullScreenTagsCount : halfScreenTagsCount
@@ -643,7 +639,7 @@ extension NearbyViewController: UICollectionViewDelegate, UICollectionViewDataSo
             if indexPath.row == 0 && halfScreenUserCount == 0 {
                 /// emptyView cell
                 guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "NearbyEmptyCell", for: indexPath) as? NearbyEmptyCell else { return UICollectionViewCell() }
-                cell.setUp(lowFriends: !cityFriends.contains(where: {!$0.spotsList.isEmpty}) && mapVC.friendIDs.count < 15)
+                cell.setUp(lowFriends: !cityFriends.contains(where: {!$0.spotsList.isEmpty}) && UserDataModel.shared.friendIDs.count < 15)
                 return cell
                 
             } else if indexPath.row == halfScreenUserCount - 1 && usersMoreNeeded && !expandUsers {
@@ -863,7 +859,7 @@ extension NearbyViewController: UISearchBarDelegate {
             self.offsetCityName(position: 2)
         }
         
-        if !mapVC.largeScreen { removeTopRadius() }
+        if !UserDataModel.shared.largeScreen { removeTopRadius() }
         
         mapVC.prePanY = 0
         
@@ -906,7 +902,7 @@ extension NearbyViewController: UISearchBarDelegate {
             self.searchBarContainer.isHidden = true
         }
         
-        if !mapVC.largeScreen { addTopRadius() }
+        if !UserDataModel.shared.largeScreen { addTopRadius() }
         
         shadowScroll.isScrollEnabled = false
         //hide results view
@@ -964,7 +960,7 @@ extension NearbyViewController: UISearchBarDelegate {
         mapVC.profileViewController = nil
         mapVC.spotViewController = nil
         
-        userSpots = mapVC.userSpots
+        userSpots = UserDataModel.shared.userSpots
         
         let minY: CGFloat = shadowScroll.contentOffset.y == 0 ? mapVC.halfScreenY : 0
         mapVC.prePanY = minY
@@ -985,7 +981,7 @@ extension NearbyViewController: UISearchBarDelegate {
             passedCamera = nil
         } else { mapVC.animateToUserLocation(animated: false) }
         
-        if mapVC.currentLocation != nil {
+        if !locationIsEmpty(location: UserDataModel.shared.currentLocation) {
             DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.2, execute: {
                 self.mapVC.loadNearbySpots()
             })
@@ -1033,7 +1029,7 @@ extension NearbyViewController: UISearchBarDelegate {
         
         /// position: 0 = closed, 1 = half, 2 = full
 
-        let minY: CGFloat = position != 2 ? 25 : self.mapVC.largeScreen ? 60 : 35
+        let minY: CGFloat = position != 2 ? 25 : UserDataModel.shared.largeScreen ? 60 : 35
         let cityOffset: CGFloat = position == 0 ? 5 : 0
         let scrollOffset: CGFloat = position == 0 ? 35 : position == 2 ? 17 : 14
 
@@ -1192,7 +1188,7 @@ extension NearbyViewController: UISearchBarDelegate {
                         self.getSpotScores(distanceSpots: distanceSpots, searchText: searchText) }; return }
                     info.id = doc.documentID
                     
-                    if self.hasSpotAccess(spot: info, mapVC: self.mapVC) {
+                    if self.hasSpotAccess(spot: info) {
                                                     
                         let location = CLLocation(latitude: info.spotLat, longitude: info.spotLong)
                         let distanceFromCity = location.distance(from: CLLocation(latitude: self.selectedCity.coordinate.latitude, longitude: self.selectedCity.coordinate.longitude))
@@ -1388,14 +1384,12 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
             /// set up city cell
             if showQuery {
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: "SpotSearchCell") as? SpotSearchCell else { return UITableViewCell() }
-                print("city", queryCities[indexPath.row])
                 let city = queryCities[indexPath.row].cityFormatter()
                 cell.setUpCity(cityName: city)
                 return cell
                 
             } else {
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: "NearbyCityCell") as? NearbyCityCell else { return UITableViewCell() }
-                print("city", nearbyCities[indexPath.row])
                 let city = nearbyCities[indexPath.row]
                 cell.setUp(city: city)
                 return cell
@@ -1670,7 +1664,7 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
         /// scroll spotsTable to top after filter tap
         DispatchQueue.main.async {
             
-            let offset: CGFloat = self.mapVC.largeScreen ? 65 : 40
+            let offset: CGFloat = UserDataModel.shared.largeScreen ? 65 : 40
             let sec0Height = self.spotsTable.frame.minY - offset
             
             if self.shadowScroll.contentOffset.y > sec0Height {
@@ -1875,7 +1869,7 @@ class LeftAlignedCollectionViewFlowLayout: UICollectionViewFlowLayout {
 
     required override init() {super.init(); common()}
     required init?(coder aDecoder: NSCoder) {super.init(coder: aDecoder); common()}
-    
+        
     private func common() {
         estimatedItemSize = UICollectionViewFlowLayout.automaticSize
         minimumLineSpacing = 10
@@ -1901,6 +1895,7 @@ class LeftAlignedCollectionViewFlowLayout: UICollectionViewFlowLayout {
         
         return att
     }
+    
 
 }
 ///https://stackoverflow.com/questions/22539979/left-align-cells-in-uicollectionview
@@ -2290,7 +2285,6 @@ class NearbyEmptyCell: UICollectionViewCell {
     @objc func addFriendsTap(_ sender: UIButton) {
         if let nearbyVC = viewContainingController() as? NearbyViewController {
             if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "FindFriends") as? FindFriendsController {
-                vc.mapVC = nearbyVC.mapVC
                 nearbyVC.present(vc, animated: true, completion: nil)
             }
         }
@@ -2299,19 +2293,12 @@ class NearbyEmptyCell: UICollectionViewCell {
 
 // all fetch functions
 extension NearbyViewController {
-    
-    func getCity(completion: @escaping (_ city: String) -> Void) {
-        if mapVC.currentLocation == nil { completion(""); return }
-        reverseGeocodeFromCoordinate(numberOfFields: 2, location: mapVC.currentLocation) {  city in
-            completion(city)
-        }
-    }
-    
+        
     func getNearbyCities(radius: Double) {
         
         let geoFire = GeoFirestore(collectionRef: Firestore.firestore().collection("cities"))
         
-        circleQuery = geoFire.query(withCenter: GeoPoint(latitude: self.mapVC.currentLocation.coordinate.latitude, longitude: self.mapVC.currentLocation.coordinate.longitude), radius: radius)
+        circleQuery = geoFire.query(withCenter: GeoPoint(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude), radius: radius)
         let _ = circleQuery?.observe(.documentEntered, with: loadCityFromDB)
     }
     
@@ -2389,7 +2376,7 @@ extension NearbyViewController {
                     }
 
                     /// check for user access, increment friend visitors to cityFriends
-                    if self.hasSpotAccess(spot: spotInfo, mapVC: self.mapVC) {
+                    if self.hasSpotAccess(spot: spotInfo) {
                         
                         for visitor in spotInfo.visitorList {
                             if self.isFriends(id: visitor) && !cityInfo.friends.contains(visitor) {
@@ -2431,7 +2418,7 @@ extension NearbyViewController {
         for i in 0...nearbyCities.count - 1 {
             let city = nearbyCities[i]
             let cityLocation = CLLocation(latitude: city.cityLat, longitude: city.cityLong)
-            let distanceFromUser = cityLocation.distance(from: mapVC.currentLocation)
+            let distanceFromUser = cityLocation.distance(from: UserDataModel.shared.currentLocation)
             nearbyCities[i].score = (100000/distanceFromUser) * (5 * Double(city.friends.count) + 2 * Double(city.spotCount))
         }
         
@@ -2468,7 +2455,7 @@ extension NearbyViewController {
                     
                     info.id = spot.documentID
                     
-                    if self.hasSpotAccess(spot: info, mapVC: self.mapVC) {
+                    if self.hasSpotAccess(spot: info) {
                         
                         /// only way a spot will be filtered here is typically if already filtered on reset city
                         var filtered = self.selectedUserID != nil && !info.visitorList.contains(where: {$0 == self.selectedUserID})
@@ -2487,14 +2474,14 @@ extension NearbyViewController {
                             if let index = self.cityTags.firstIndex(where: {$0.name == tag}) {
                                 if !filtered { self.cityTags[index].spotCount += 1 }
                             } else {
-                                let newTag = Tag(name: tag)
+                                var newTag = Tag(name: tag)
                                 if !filtered { newTag.spotCount = 1 }
                                 self.cityTags.append(newTag)
                             }
                         }
                                                 
                         let spotLocation = CLLocation(latitude: info.spotLat, longitude: info.spotLong)
-                        let distanceFromImage = spotLocation.distance(from: self.mapVC.currentLocation)
+                        let distanceFromImage = spotLocation.distance(from: UserDataModel.shared.currentLocation)
                         info.distance = distanceFromImage
                         
                         info.friendVisitors = self.getFriendVisitors(visitorList: info.visitorList)
@@ -2550,16 +2537,10 @@ extension NearbyViewController {
     func getFriendVisitors(visitorList: [String]) -> Int {
         var friendCount = 0
         for visitor in visitorList {
-            if self.mapVC.friendIDs.contains(visitor) && !mapVC.adminIDs.contains(visitor) || visitor == uid { friendCount += 1 }
+            if UserDataModel.shared.friendIDs.contains(visitor) && !UserDataModel.shared.adminIDs.contains(visitor) || visitor == uid { friendCount += 1 }
         }
         return friendCount
-    }
-    
-    func isFriends(id: String) -> Bool {
-        if id == uid || (mapVC.friendIDs.contains(where: {$0 == id}) && !(mapVC.adminIDs.contains(id))) { return true }
-        return false
-    }
-    
+    }    
     func getUsersSize() {
         /// reset usersCollection values on resize
         usersMoreNeeded = false
@@ -2642,7 +2623,7 @@ extension NearbyViewController {
         /// 0.25 on drawer animations, 0.35 otherwise
      
         /// adjust halfScreenUserHeight to accomodate empty state
-        if halfScreenUserHeight == 0 { halfScreenUserHeight = (!cityFriends.contains(where: {!$0.spotsList.isEmpty}) && mapVC.friendIDs.count < 15) ? 110 : 50 }
+        if halfScreenUserHeight == 0 { halfScreenUserHeight = (!cityFriends.contains(where: {!$0.spotsList.isEmpty}) && UserDataModel.shared.friendIDs.count < 15) ? 110 : 50 }
         
         let speed: TimeInterval = refresh ? 0.25 : 0.35
 
@@ -2651,7 +2632,6 @@ extension NearbyViewController {
             UIView.animate(withDuration: speed) { [weak self] in
                 guard let self = self else { return }
                 let height = self.expandUsers ? self.fullScreenUserHeight : self.halfScreenUserHeight
-                print("half screen height", self.halfScreenUserHeight)
                 self.usersCollection.frame = CGRect(x: self.usersCollection.frame.minX, y: 0, width: self.usersCollection.frame.width, height: height)
                 
                 let indexSet: IndexSet = IndexSet(0...0)
@@ -2828,27 +2808,27 @@ extension NearbyViewController {
             let spot = citySpots[i].spot
             
             /// increment score for each friend visitor
-            var score: Float = 0
+            var score: Double = 0
             for visitor in spot.visitorList {
-                score = score + 1
-                if mapVC.friendIDs.contains(where: {$0 == visitor}) {
-                    score = score + 1
+                score += 1
+                if UserDataModel.shared.friendIDs.contains(where: {$0 == visitor}) {
+                    score += 1
                 }
             }
             
             for j in 0 ... spot.postIDs.count - 1 {
                 
-                var postScore: Float = 2
+                var postScore: Double = 2
                 
                 /// increment for each friend post
                 if spot.posterIDs.count <= j { return }
                 if isFriends(id: spot.posterIDs[j]) { postScore = postScore + 2 }
 
                 let timestamp = spot.postTimestamps[j]
-                let postTime = Float(timestamp.seconds)
+                let postTime = Double(timestamp.seconds)
                 
                 let current = NSDate().timeIntervalSince1970
-                let currentTime = Float(current)
+                let currentTime = Double(current)
                 let timeSincePost = currentTime - postTime
                 
                 /// add multiplier for recent posts
@@ -2866,10 +2846,10 @@ extension NearbyViewController {
     }
         
     func filter() {
-        if let selectedUser = mapVC.friendsList.first(where: {$0.id == selectedUserID}) {
+        if let selectedUser = UserDataModel.shared.friendsList.first(where: {$0.id == selectedUserID}) {
             mapVC.filterUser = selectedUser
         } else if selectedUserID == uid {
-            mapVC.filterUser = mapVC.userInfo
+            mapVC.filterUser = UserDataModel.shared.userInfo
         } else { mapVC.filterUser = nil }
         
         /// update filter view and filter map based on selected tags / user
@@ -2995,10 +2975,7 @@ extension MKLocalSearchCompletion {
             if c == "," { commaPositions.append(index) }
             index += 1
         }
-        
-        print("title", title)
-        print("subtitle", subtitle)
-        
+                
         /// format 1
         if subtitle == "" {
             

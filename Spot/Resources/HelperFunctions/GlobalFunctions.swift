@@ -12,7 +12,7 @@ import CoreLocation
 import Photos
 import Firebase
 import Geofirestore
-
+import MapKit
 
 extension UIViewController {
     //reverse geocode should a string based on lat/long input and amount of detail that it wants to return
@@ -32,6 +32,7 @@ extension UIViewController {
                     addressString = addressString + placemark.subThoroughfare! + " "
                 }
             }
+            
             if numberOfFields > 2 {
                 if placemark.thoroughfare != nil {
                     addressString = addressString + placemark.thoroughfare!
@@ -192,19 +193,100 @@ extension UIViewController {
         return tagText
     }
 
+    /// get map rank used for clustering on map -> solely a popularity ranking
+    func getMapRank(spot: MapSpot) -> CGFloat {
+        
+        var score: Float = 0
+        for visitor in spot.visitorList {
+            score = score + 1
+            if isFriends(id: visitor) {
+                score = score + 1
+            }
+        }
+        
+        if spot.postIDs.count == 0 { return(CGFloat(score)) }
+        for i in 0 ... spot.postIDs.count - 1 {
+            
+            var postScore: Float = 2
+            
+            /// increment for each friend post
+            if spot.posterIDs.count <= i { return CGFloat(score) }
+            if isFriends(id: spot.posterIDs[i]) { postScore = postScore + 2 }
+
+            let timestamp = spot.postTimestamps[i]
+            let postTime = Float(timestamp.seconds)
+            
+            let current = NSDate().timeIntervalSince1970
+            let currentTime = Float(current)
+            let timeSincePost = currentTime - postTime
+            
+            /// add multiplier for recent posts
+            var factor = min(1 + (1000000 / timeSincePost), 5)
+            let multiplier = pow(1.5, factor)
+            factor = multiplier
+            
+            postScore = postScore * factor
+            score = score + postScore
+        }
+        
+        return CGFloat(score)
+    }
     
-    func hasPOILevelAccess(creatorID: String, privacyLevel: String, inviteList: [String], mapVC: MapViewController) -> Bool {
+    /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score
+    func getSpotRank(spot: MapSpot, location: CLLocation) -> Double {
+        
+        var scoreMultiplier = spot.postIDs.isEmpty ? 10.0 : 50.0 /// 5x boost to any spot that has posts at it
+        let distance = max(CLLocation(latitude: spot.spotLat, longitude: spot.spotLong).distance(from: location), 1)
+        
+        if spot.postIDs.count > 0 { for i in 0 ... spot.postIDs.count - 1 {
+
+            var postScore: Double = 10
+            
+            /// increment for each friend post
+            if spot.posterIDs.count <= i { continue }
+            if isFriends(id: spot.posterIDs[i]) { postScore += 5 }
+
+            let timestamp = spot.postTimestamps[i]
+            let postTime = Double(timestamp.seconds)
+            
+            let current = NSDate().timeIntervalSince1970
+            let currentTime = Double(current)
+            let timeSincePost = currentTime - postTime
+            
+            /// add multiplier for recent posts
+            var factor = min(1 + (1000000 / timeSincePost), 5)
+            let multiplier = pow(1.2, factor)
+            factor = multiplier
+            
+            postScore *= factor
+            print("post score", postScore)
+            scoreMultiplier += postScore
+        } }
+
+        print("score multiplier", spot.spotName, scoreMultiplier)
+        print("distance adjustment", spot.spotName, pow(distance, 1.8))
+        let finalScore = scoreMultiplier/pow(distance, 1.7)
+        return finalScore
+    }
+    
+    func isFriends(id: String) -> Bool {
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        if id == uid || (UserDataModel.shared.friendIDs.contains(where: {$0 == id}) && !(UserDataModel.shared.adminIDs.contains(id))) { return true }
+        return false
+    }
+    
+    func hasPOILevelAccess(creatorID: String, privacyLevel: String, inviteList: [String]) -> Bool {
         
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
-        if mapVC.adminIDs.contains(where: {$0 == creatorID}) {
+        if UserDataModel.shared.adminIDs.contains(where: {$0 == creatorID}) {
             if uid != creatorID {
                 return false
             }
         }
         
         if privacyLevel == "friends" {
-            if !mapVC.friendIDs.contains(where: {$0 == creatorID}){
+            if !UserDataModel.shared.friendIDs.contains(where: {$0 == creatorID}){
                 if uid != creatorID {
                     return false
                 }
@@ -218,18 +300,18 @@ extension UIViewController {
         return true
     }
     
-    func hasSpotAccess(spot: MapSpot, mapVC: MapViewController) -> Bool {
-        
+    func hasSpotAccess(spot: MapSpot) -> Bool {
+                
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        
-        if mapVC.adminIDs.contains(where: {$0 == spot.founderID}) {
+
+        if UserDataModel.shared.adminIDs.contains(where: {$0 == spot.founderID}) {
             if uid != spot.founderID {
                 return false
             }
         }
         
         if spot.privacyLevel == "friends" {
-            if mapVC.friendIDs.contains(where: {$0 == spot.founderID}) || uid == spot.founderID {
+            if UserDataModel.shared.friendIDs.contains(where: {$0 == spot.founderID}) || uid == spot.founderID {
                 return true
             }
             
@@ -240,7 +322,7 @@ extension UIViewController {
             
         } else {
             for posterID in spot.posterIDs {
-                if mapVC.friendIDs.contains(posterID) || mapVC.uid == posterID { return true }
+                if UserDataModel.shared.friendIDs.contains(posterID) || UserDataModel.shared.uid == posterID { return true }
             }
             for postPrivacy in spot.postPrivacies {
                 if postPrivacy == "public" { return true }
@@ -249,15 +331,15 @@ extension UIViewController {
         
         return false
     }
-    
-    func hasPostAccess(post: MapPost, mapVC: MapViewController) -> Bool {
+        
+    func hasPostAccess(post: MapPost) -> Bool {
         
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         if uid == post.posterID { return true }
-        if mapVC.adminIDs.contains(where: {$0 == post.posterID}) { return false }
+        if UserDataModel.shared.adminIDs.contains(where: {$0 == post.posterID}) { return false }
         
         if post.privacyLevel == "friends" {
-            if !mapVC.friendIDs.contains(post.posterID) { return false }
+            if !UserDataModel.shared.friendIDs.contains(post.posterID) { return false }
         } else if post.privacyLevel == "invite" {
             if !(post.inviteList?.contains(uid) ?? false) { return false }
         }
@@ -740,6 +822,41 @@ extension UIViewController {
         }
     }
     
+    func setSecondaryPostValues(post: MapPost) -> MapPost {
+        
+        let smallScreen = UIScreen.main.bounds.height < 800
+        var newPost = post
+        
+        newPost.seconds = newPost.timestamp.seconds
+        
+        let superMax: CGFloat = smallScreen ? 1.3 : 1.5
+        let maxAspect =  min((newPost.aspectRatios?.max() ?? 0.033) - 0.033, superMax)
+        newPost.imageHeight = smallScreen ? maxAspect * 288 : maxAspect * (UIScreen.main.bounds.width - 82)
+        
+        let noImage = newPost.imageHeight == 0
+        newPost.captionHeight = self.getTruncatedCaptionHeight(caption: newPost.caption, noImage: noImage)
+        
+        newPost.cellHeight = 140 + newPost.captionHeight + newPost.imageHeight
+        newPost.cellHeight += noImage ? 20 : 0
+        newPost.cellHeight -= newPost.captionHeight == 0 ? 10 : 0 /// adjust for smaller cell with no caption
+        
+        return newPost
+    }
+    
+    func getTruncatedCaptionHeight(caption: String, noImage: Bool) -> CGFloat {
+                
+        let fontSize: CGFloat = noImage ? 24 : 14.5
+        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 44, height: 20))
+        tempLabel.text = caption
+        tempLabel.font = UIFont(name: "SFCamera-Regular", size: fontSize)
+        tempLabel.numberOfLines = 0
+        tempLabel.lineBreakMode = .byWordWrapping
+        tempLabel.sizeToFit()
+        
+        let minReturn: CGFloat = noImage ? 200 : 54
+        return min(minReturn, tempLabel.frame.height)
+    }
+    
     func getNewCaption(oldUsername: String, newUsername: String, caption: String) -> String {
         
         var newCaption = caption
@@ -769,7 +886,7 @@ extension UIViewController {
         let scale: CGFloat = max(size.width / (image?.size.width ?? 0.0), size.height / (image?.size.height ?? 0.0))
         let width: CGFloat = round((image?.size.width ?? 0.0) * scale)
         let height: CGFloat =  round((image?.size.height ?? 0.0) * scale)
-        let imageRect = CGRect(x: (size.width - width) / 2.0, y: (size.height - height) / 2.0 - 0.5, width: width, height: height)
+        let imageRect = CGRect(x: (size.width - width) / 2.0 - 1.0, y: (size.height - height) / 2.0 - 1.5, width: width + 2.0, height: height + 3.0)
         
         /// if image rect size > image size, make them the same?
         
@@ -793,9 +910,14 @@ extension UIViewController {
         let dateString = dateFormatter.string(from: date)
         return dateString
     }
+    
+    func locationIsEmpty(location: CLLocation) -> Bool {
+        return location.coordinate.longitude == 0.0 && location.coordinate.latitude == 0.0
+    }
 }
 
 extension CLPlacemark {
+    
     func addressFormatter(number: Bool) -> String {
         
         var addressString = ""
@@ -1007,7 +1129,7 @@ extension UITableViewCell {
         })
     }
         
-    func getAttString(caption: String, taggedFriends: [String]) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
+    func getAttString(caption: String, taggedFriends: [String], fontSize: CGFloat) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
         
         let attString = NSMutableAttributedString(string: caption)
         var freshRect: [(rect: CGRect, username: String)] = []
@@ -1031,7 +1153,7 @@ extension UITableViewCell {
                     tags.append(tag)
                     let range = NSMakeRange(currentIndex, word.count)
                     /// bolded range out of username + @
-                    attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCamera-Semibold", size: 12.5) as Any, range: range)
+                    attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCamera-Semibold", size: fontSize) as Any, range: range)
                 }
             }
         }
@@ -1417,7 +1539,7 @@ extension UIImageView {
         
         var newDirection = directionUp
         var newCount = counter
-        if let postCell = superview as? PostCell { postCell.animationCounter = newCount } /// for smooth animations on likes / other table reloads
+        if let postImage = self as? PostImageView { postImage.animationCounter = newCount } /// for smooth animations on likes / other table reloads
         
         if directionUp {
             if counter == frames - 1 {
@@ -1500,7 +1622,8 @@ extension UIImageView {
             if boundsScale > imageScale {
                 drawingRect.size.width =  drawingRect.size.height * imageScale
                 drawingRect.origin.x = (bounds.size.width - drawingRect.size.width) / 2
-            }else {
+                
+            } else {
                 drawingRect.size.height = drawingRect.size.width / imageScale
                 drawingRect.origin.y = (bounds.size.height - drawingRect.size.height) / 2
             }
@@ -1511,83 +1634,25 @@ extension UIImageView {
         }
     }
     
-    func enableZoom() {
-        
-        isUserInteractionEnabled = true
-        
-        guard let postCell = superview as? PostCell else { return } /// not ideal way to access delegate but right now zoom only enabled on post so its fine
-        
-        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(zoom(_:)))
-        pinchGesture.delegate = postCell
-        addGestureRecognizer(pinchGesture)
-        
-        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
-        panGesture.delegate = postCell
-        addGestureRecognizer(panGesture)
+    func addBottomMask() {
+        let bottomMask = UIView(frame: CGRect(x: 0, y: bounds.height - 140, width: UIScreen.main.bounds.width, height: 140))
+        bottomMask.backgroundColor = nil
+        let layer0 = CAGradientLayer()
+        layer0.frame = bottomMask.bounds
+        layer0.colors = [
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.01).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.06).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.23).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.85).cgColor
+        ]
+        layer0.locations = [0, 0.11, 0.24, 0.43, 0.65, 1]
+        layer0.startPoint = CGPoint(x: 0.5, y: 0)
+        layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
+        bottomMask.layer.addSublayer(layer0)
+        addSubview(bottomMask)
     }
-
-        
-    @objc func zoom(_ sender: UIPinchGestureRecognizer) {
-        
-        switch sender.state {
-        
-        case .began:
-            guard let postCell = superview as? PostCell else { return }
-            postCell.isZooming = true
-            postCell.originalCenter = center
-            
-        case .changed:
-            let pinchCenter = CGPoint(x: sender.location(in: self).x - self.bounds.midX,
-                                      y: sender.location(in: self).y - self.bounds.midY)
-            
-            let transform = self.transform.translatedBy(x: pinchCenter.x, y: pinchCenter.y)
-                .scaledBy(x: sender.scale, y: sender.scale)
-                .translatedBy(x: -pinchCenter.x, y: -pinchCenter.y)
-            
-            let currentScale = self.frame.size.width / self.bounds.size.width
-            var newScale = currentScale*sender.scale
-            if newScale < 1 {
-                newScale = 1
-                let transform = CGAffineTransform(scaleX: newScale, y: newScale)
-                self.transform = transform
-            } else {
-                //   let transform = CGAffineTransform(scaleX: newScale, y: newScale)
-                self.transform = transform
-                sender.scale = 1
-            }
-            
-        case .ended, .cancelled, .failed:
-            UIView.animate(withDuration: 0.3, animations: { [weak self] in
-                guard let self = self else { return }
-                guard let postCell = self.superview as? PostCell else { return }
-                self.center = postCell.originalCenter
-                
-                self.transform = CGAffineTransform.identity
-            })
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [ weak self] in
-                guard let self = self else { return }
-                guard let postCell = self.superview as? PostCell else { return }
-                postCell.isZooming = false
-            }
-            
-        default: return
-        }
-    }
-    
-    @objc func pan(_ sender: UIPanGestureRecognizer) {
-        
-        guard let postCell = superview as? PostCell else { return }
-        
-        if postCell.isZooming && sender.state == .changed {
-            let translation = sender.translation(in: self)
-            let currentScale = self.frame.size.width / self.bounds.size.width
-            center = CGPoint(x: center.x + (translation.x * currentScale), y: center.y + (translation.y * currentScale))
-            sender.setTranslation(CGPoint.zero, in: superview)
-        }
-    }
-    
-    /// source: https://medium.com/@jeremysh/instagram-pinch-to-zoom-pan-gesture-tutorial-772681660dfe
 }
 
 extension UINavigationBar {
@@ -1619,7 +1684,7 @@ extension UINavigationBar {
         layer.shadowOffset = CGSize(width: 0, height: 0)
     }
     
-    func addBackgroundImage(alpha: CGFloat) {
+    func addGradientBackground(alpha: CGFloat) {
         /// gradient nav bar background
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
@@ -1634,6 +1699,10 @@ extension UINavigationBar {
         gradient.startPoint = CGPoint(x: 0.5, y: 0.0)
         gradient.endPoint = CGPoint(x: 0.5, y: 1.0)
         setBackgroundImage(self.image(fromLayer: gradient), for: .default)
+    }
+    
+    func addBlackBackground() {
+        setBackgroundImage(UIImage(color: UIColor.black), for: .default)
     }
     
     func removeBackgroundImage() {
@@ -1662,5 +1731,22 @@ extension UITextView {
             cursorPosition = text.distance(from: text.startIndex, to: indexPosition)
         }
         return cursorPosition
+    }
+}
+
+class PaddedTextField: UITextField {
+    
+    let padding = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 5)
+    
+    override open func textRect(forBounds bounds: CGRect) -> CGRect {
+        return bounds.inset(by: padding)
+    }
+    
+    override open func placeholderRect(forBounds bounds: CGRect) -> CGRect {
+        return bounds.inset(by: padding)
+    }
+    
+    override open func editingRect(forBounds bounds: CGRect) -> CGRect {
+        return bounds.inset(by: padding)
     }
 }

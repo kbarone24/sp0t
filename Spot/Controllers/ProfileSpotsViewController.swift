@@ -325,7 +325,7 @@ class ProfileSpotsViewController: UIViewController {
             if profileVC.userInfo != nil && profileVC.userInfo.id == self.uid {
                 
                 profileVC.userInfo.spotsList = self.spotsList.map({$0.id ?? ""})
-                self.mapVC.userInfo.spotsList = self.spotsList.map({$0.id ?? ""})
+                UserDataModel.shared.userInfo.spotsList = self.spotsList.map({$0.id ?? ""})
                 
                 if alreadyLoaded && profileVC.openSpotID != "" { return } /// wil open new spot from resetView
                 if self.checkForOpenSpot() { profileVC.removeEmptyState(); return }
@@ -364,7 +364,7 @@ class ProfileSpotsViewController: UIViewController {
         annotation.title = spot.spotName
         spotAnnotations.updateValue(annotation, forKey: spot.id!)
         
-        let rank = mapVC.getSpotRank(spot: spot)
+        let rank = mapVC.getMapRank(spot: spot)
         spotAnnotations[spot.id!]?.rank = rank
         
 ///        only add if adding spot coordinate while the view is active (on the initial load)
@@ -382,7 +382,7 @@ class ProfileSpotsViewController: UIViewController {
                     return false
                 }
             case "friends":
-                if !mapVC.friendIDs.contains(where: {$0 == spot.founderID}) {
+                if !UserDataModel.shared.friendIDs.contains(where: {$0 == spot.founderID}) {
                     return false
                 }
             default:

@@ -89,7 +89,6 @@ class SpotViewController: UIViewController {
         let storyboard = UIStoryboard(name: "SpotPage", bundle: Bundle.main)
         var vc = storyboard.instantiateViewController(withIdentifier: "SpotVisitors") as! SpotVisitorsViewController
         vc.spotVC = self
-        vc.mapVC = mapVC
         self.addChild(vc)
         return vc
     }()
@@ -139,7 +138,7 @@ class SpotViewController: UIViewController {
     
     func runInitialFuncs() {
         
-        if mapVC.userInfo == nil { return }
+        if UserDataModel.shared.userInfo.id == "" { return }
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -218,7 +217,8 @@ class SpotViewController: UIViewController {
         if let newPost = sender.userInfo?.first?.value as? MapPost {
             
             var post = newPost
-            post.seconds = post.actualTimestamp?.seconds ?? post.timestamp.seconds /// adjust seconds to reflect spot page sorting
+            post = setSecondaryPostValues(post: post)
+            
             postsList.append(post)
             postsList.sort(by: {$0.seconds > $1.seconds})
 
@@ -324,8 +324,8 @@ class SpotViewController: UIViewController {
     func addAddToSpot() {
         
         ///add addToSpot button over the top of custom tab bar
-        let addY = mapVC.largeScreen ? UIScreen.main.bounds.height - 89 : UIScreen.main.bounds.height - 74
-        let addX = mapVC.largeScreen ? UIScreen.main.bounds.width - 73 : UIScreen.main.bounds.width - 69
+        let addY = UserDataModel.shared.largeScreen ? UIScreen.main.bounds.height - 89 : UIScreen.main.bounds.height - 74
+        let addX = UserDataModel.shared.largeScreen ? UIScreen.main.bounds.width - 73 : UIScreen.main.bounds.width - 69
         addToSpotButton = UIButton(frame: CGRect(x: addX, y: addY, width: 55, height: 55))
         addToSpotButton.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
         addToSpotButton.addTarget(self, action: #selector(addToSpotTap(_:)), for: .touchUpInside)
@@ -350,13 +350,13 @@ class SpotViewController: UIViewController {
         for visitor in list {
             
             /// get visitor from user friendsList
-            if let user = self.mapVC.friendsList.first(where: {$0.id == visitor}) {
+            if let user = UserDataModel.shared.friendsList.first(where: {$0.id == visitor}) {
                 memberList.append(user)
                 visitorEscape(refresh: refresh)
                 
             /// get visitor from userInfo
             } else if visitor == uid {
-                memberList.append(mapVC.userInfo)
+                memberList.append(UserDataModel.shared.userInfo)
                 visitorEscape(refresh: refresh)
                 
             } else {
@@ -417,7 +417,6 @@ class SpotViewController: UIViewController {
         // push camera
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
             
-            vc.mapVC = self.mapVC
             vc.spotObject = self.spotObject
             
             let transition = CATransition()
@@ -554,7 +553,7 @@ class SpotViewController: UIViewController {
         /// set content offset back to 0 to avoid weird scrolling
         if shadowScroll.contentOffset.y == 1 { shadowScroll.contentOffset.y = 0 }
         
-        navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
+        navigationController?.navigationBar.addGradientBackground(alpha: 1.0)
         navigationController?.navigationBar.removeShadow()
         navigationController?.navigationBar.isTranslucent = false
         
@@ -788,27 +787,27 @@ class SpotViewController: UIViewController {
                 /// post escape called every time a post is loaded to the collection
                 do {
                     
-                    let postInfo = try post?.data(as: MapPost.self)
-                    guard var info = postInfo else { self.postEscape(); return }
+                    let info = try post?.data(as: MapPost.self)
+                    guard var postInfo = info else { self.postEscape(); return }
                     
-                    info.seconds = info.actualTimestamp?.seconds ?? info.timestamp.seconds
-                    info.id = post!.documentID
+                    postInfo.id = post!.documentID
+                    postInfo = self.setSecondaryPostValues(post: postInfo)
                     
                     if self.spotObject.privacyLevel == "public" {
                         ///if this is a public spot, you shouldn't be able to see posts by people you aren't friends with unless the posts are public
-                        if info.privacyLevel == "friends" && info.posterID != self.uid && info.createdBy != self.uid {
-                            if !self.mapVC.friendIDs.contains(where: {$0 == info.posterID}) { self.postEscape(); return }
+                        if postInfo.privacyLevel == "friends" && postInfo.posterID != self.uid && postInfo.createdBy != self.uid {
+                            if !UserDataModel.shared.friendIDs.contains(where: {$0 == postInfo.posterID}) { self.postEscape(); return }
                         }
                     }
                     
                     var urls: [URL] = []
-                    for postURL in info.imageURLs {
+                    for postURL in postInfo.imageURLs {
                         guard let url = URL(string: postURL) else { continue }
                         urls.append(url)
                     }
                     
                     /// get user from users friends list or fetch if not a friend
-                    self.getComments(post: info)
+                    self.getComments(post: postInfo)
                     
                 } catch { self.postEscape(); return }
             }
@@ -882,9 +881,9 @@ class SpotViewController: UIViewController {
             updatePostDates(date: postDate, seconds: post.seconds)
             
             var frameIndexes = post.frameIndexes ?? []
-            if frameIndexes.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i)} }
+            if frameIndexes.isEmpty && !post.imageURLs.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i)} }
 
-            for i in 0...frameIndexes.count - 1 { guestbookPreviews.append(GuestbookPreview(postID: post.id!, frameIndex: frameIndexes[i], imageIndex: i, imageURL: post.imageURLs[frameIndexes[i]], seconds: post.seconds, date: postDate)) }
+            if !frameIndexes.isEmpty { for i in 0...frameIndexes.count - 1 { guestbookPreviews.append(GuestbookPreview(postID: post.id!, frameIndex: frameIndexes[i], imageIndex: i, imageURL: post.imageURLs[frameIndexes[i]], seconds: post.seconds, date: postDate)) } }
             guestbookPreviews.sort(by: {$0.seconds > $1.seconds})
             
             let annotation = CustomPointAnnotation()
@@ -940,7 +939,7 @@ class SpotViewController: UIViewController {
         if let inviteVC = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "InviteFriends") as? InviteFriendsController {
             
             inviteVC.spotVC = self
-            var noBotList = mapVC.friendsList
+            var noBotList = UserDataModel.shared.friendsList
             noBotList.removeAll(where: {$0.id == "T4KMLe3XlQaPBJvtZVArqXQvaNT2"})
             
             inviteVC.friendsList = noBotList
@@ -948,14 +947,14 @@ class SpotViewController: UIViewController {
 
             if spotObject.privacyLevel == "invite" {
                 for invite in spotObject.inviteList ?? [] {
-                    if let friend = mapVC.friendsList.first(where: {$0.id == invite}) {
+                    if let friend = UserDataModel.shared.friendsList.first(where: {$0.id == invite}) {
                         inviteVC.selectedFriends.append(friend)
                     }
                 }
                 
             } else {
                 for visitor in spotObject.visitorList {
-                    if let friend = mapVC.friendsList.first(where: {$0.id == visitor}) {
+                    if let friend = UserDataModel.shared.friendsList.first(where: {$0.id == visitor}) {
                          inviteVC.selectedFriends.append(friend)
                     }
                 }
@@ -1010,11 +1009,10 @@ class SpotViewController: UIViewController {
         var token: String!
         
         db.collection("users").document(user).getDocument { [weak self] (tokenSnap, err) in
-            guard let self = self else { return }
             if (tokenSnap == nil) { return }
             token = tokenSnap?.get("notificationToken") as? String
             if (token != nil && token != "") {
-                sender.sendPushNotification(token: token, title: "", body: "\(self.mapVC.userInfo.username) added you to a spot")
+                sender.sendPushNotification(token: token, title: "", body: "\(UserDataModel.shared.userInfo.username) added you to a spot")
             }
         }
     }
@@ -1253,7 +1251,7 @@ class SpotViewController: UIViewController {
                                         case .destructive:
                                             let textField = alert.textFields![0]
                                             let spotID = self.spotID
-                                            self.reportUser(reportedSpot: spotID!, description: textField.text ?? "")
+                                            self.reportSpot(reportedSpot: spotID!, description: textField.text ?? "")
 
                                         @unknown default:
                                             fatalError()
@@ -1262,7 +1260,7 @@ class SpotViewController: UIViewController {
         self.present(alert, animated: true, completion: nil)
     }
     
-    func reportUser(reportedSpot: String, description: String) {
+    func reportSpot(reportedSpot: String, description: String) {
         
         let db = Firestore.firestore()
         let uuid = UUID().uuidString
@@ -1301,7 +1299,7 @@ extension SpotViewController: UITableViewDataSource, UITableViewDelegate {
         
         case 0:
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "SpotDescription") as? SpotDescriptionCell else { return UITableViewCell() }
-            cell.setUp(spot: spotObject, userLocation: mapVC.currentLocation)
+            cell.setUp(spot: spotObject, userLocation: UserDataModel.shared.currentLocation)
             return cell
                         
         case 1:
@@ -1473,7 +1471,7 @@ class SpotDescriptionCell: UITableViewCell {
         tag.getImageURL { [weak self] url in
             guard let self = self else { return }
             
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 70, height: 70), scaleMode: .aspectFill)
             
             switch position {
             case 1: if self.tag1Icon != nil { self.tag1Icon.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) }

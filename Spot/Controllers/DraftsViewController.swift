@@ -14,9 +14,14 @@ import Firebase
 import Geofirestore
 import Mixpanel
 
+protocol DraftsDelegate {
+    func finishPassingFromDrafts(images: [UIImage], date: Date, location: CLLocation)
+}
+
 class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
     
     unowned var mapVC: MapViewController!
+    var delegate: DraftsDelegate?
     var spotObject: MapSpot!
     
     lazy var aliveCollection: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: LeftAlignedCollectionViewFlowLayout.init())
@@ -87,7 +92,11 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        mapVC.customTabBar.tabBar.isHidden = true
+        
+        if let mapVC = navigationController?.viewControllers.first(where: {$0 is MapViewController}) as? MapViewController {
+            mapVC.customTabBar.tabBar.isHidden = true
+        }
+        
         Mixpanel.mainInstance().track(event: "DraftsOpen")
         setUpNavBar()
     }
@@ -211,7 +220,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         navigationController?.navigationBar.tintColor = .white
         navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.addShadow()
-        navigationController?.navigationBar.addBackgroundImage(alpha: 1.0)
+        navigationController?.navigationBar.addGradientBackground(alpha: 1.0)
     }
     
     func addEmptyState() {
@@ -639,31 +648,12 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         }
     }
     
-    @objc func nextTapped(_ sender: UIBarButtonItem) {
-        
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "LocationPicker") as? LocationPickerController {
-            
-            Mixpanel.mainInstance().track(event: "DraftsGIFSelection")
-            let draft = aliveDrafts[selectedItem]
-            
-            /// selected item represents the row selected before the gif preview appears
-            let selectedImages = draft.0
-            vc.mapVC = mapVC
-            vc.spotObject = spotObject
-            
-            vc.selectedImages = selectedImages
-            vc.frameIndexes = [0] /// always only one image grouping for drafts
-            
-            if aliveDrafts[selectedItem].2 != CLLocation() {
-                /// gallery location sets location on location picker
-                vc.galleryLocation = draft.2
-            }
-                
-                            
-            vc.postDate = Date(timeIntervalSince1970: TimeInterval(draft.1))
-            vc.draftID = draft.1
-            self.navigationController!.pushViewController(vc, animated: true)
-        }
+    @objc func selectTapped(_ sender: UIBarButtonItem) {
+        Mixpanel.mainInstance().track(event: "DraftsGIFSelection")
+        let draft = aliveDrafts[selectedItem]
+        let date = Date(timeIntervalSince1970: TimeInterval(draft.1))
+        delegate?.finishPassingFromDrafts(images: draft.0, date: date, location: draft.2)
+        if let uploadVC = navigationController?.viewControllers.first(where: {$0 is UploadPostController}) { navigationController?.popToViewController(uploadVC, animated: false)}
     }
     
     func removeAlives() {
@@ -758,7 +748,7 @@ extension DraftsViewController: UICollectionViewDelegate, UICollectionViewDataSo
             
             selectedItem = indexPath.row
             
-            let nextBtn = UIBarButtonItem(title: "Next", style: .plain, target: self, action: #selector(nextTapped(_:)))
+            let nextBtn = UIBarButtonItem(title: "Select", style: .plain, target: self, action: #selector(selectTapped(_:)))
             nextBtn.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Semibold", size: 16) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
             self.navigationItem.setRightBarButton(nextBtn, animated: true)
             self.navigationItem.rightBarButtonItem?.tintColor = nil
@@ -872,7 +862,7 @@ extension DraftsViewController {
 
             var postFriends: [String] = []
             if !post.hideFromFeed {
-                postFriends = post.privacyLevel == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
+                postFriends = post.privacyLevel == "invite" ? finalInvites.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
                 if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
             }
             
@@ -913,7 +903,7 @@ extension DraftsViewController {
                                  "taggedUsers": post.taggedUsers ?? []] as [String : Any]
 
             let commentID = UUID().uuidString
-            let commentObject = MapComment(id: commentID, comment: post.caption ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, taggedUsers: post.taggedUsers ?? [], commentHeight: self.getCommentHeight(comment: post.caption ?? ""), seconds: Int64(interval))
+            let commentObject = MapComment(id: commentID, comment: post.caption ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: UserDataModel.shared.userInfo, taggedUsers: post.taggedUsers ?? [], commentHeight: self.getCommentHeight(comment: post.caption ?? ""), seconds: Int64(interval))
             
             var postImages: [UIImage] = []
             guard let model = post.images as? Set<ImageModel> else { self.uploadFailed(); return }
@@ -927,7 +917,7 @@ extension DraftsViewController {
                 postImages.append(image)
             }
             
-            var postObject = MapPost(id: postID, caption: post.caption ?? "", postLat: post.postLat, postLong: post.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: post.spotID ?? "", city: city, frameIndexes: post.frameIndexes, aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: post.taggedUsers, spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, privacyLevel: post.privacyLevel, spotPrivacy: post.spotPrivacy ?? "friends", createdBy: self.uid, inviteList: post.inviteList ?? [])
+            var postObject = MapPost(id: postID, caption: post.caption ?? "", postLat: post.postLat, postLong: post.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: UserDataModel.shared.userInfo, spotID: post.spotID ?? "", city: city, frameIndexes: post.frameIndexes, aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: post.taggedUsers, spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, privacyLevel: post.privacyLevel, spotPrivacy: post.spotPrivacy ?? "friends", createdBy: self.uid, inviteList: post.inviteList ?? [])
             postObject.friendsList = postFriends
             
             NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
@@ -1038,7 +1028,7 @@ extension DraftsViewController {
                 
                 var postFriends: [String] = []
                 if !spot.hideFromFeed {
-                    postFriends = spot.privacyLevel == "invite" ? finalInvites.filter(self.mapVC.friendIDs.contains) : self.mapVC.friendIDs
+                    postFriends = spot.privacyLevel == "invite" ? finalInvites.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
                     if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
                 }
                 
@@ -1079,7 +1069,7 @@ extension DraftsViewController {
                                      "taggedUsers": spot.taggedUsernames ?? []] as [String : Any]
 
                 let commentID = UUID().uuidString
-                let commentObject = MapComment(id: commentID, comment: spot.spotDescription ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, taggedUsers: spot.taggedUsernames ?? [], commentHeight: self.getCommentHeight(comment: spot.spotDescription ?? ""), seconds: Int64(interval))
+                let commentObject = MapComment(id: commentID, comment: spot.spotDescription ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: UserDataModel.shared.userInfo, taggedUsers: spot.taggedUsernames ?? [], commentHeight: self.getCommentHeight(comment: spot.spotDescription ?? ""), seconds: Int64(interval))
                 
                 if spot.images == nil { self.uploadFailed(); return }
                 var postImages: [UIImage] = []
@@ -1092,7 +1082,7 @@ extension DraftsViewController {
                     postImages.append(image)
                 }
                 
-                var postObject = MapPost(id: postID, caption: spot.spotDescription ?? "", postLat: spot.spotLat, postLong: spot.spotLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: self.mapVC.userInfo, spotID: spot.spotID ?? "", city: city, frameIndexes: spot.frameIndexes, aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: spot.taggedUsernames, spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, privacyLevel: spot.privacyLevel ?? "friends", spotPrivacy: spot.privacyLevel ?? "friends", createdBy: self.uid, inviteList: spot.inviteList ?? [])
+                var postObject = MapPost(id: postID, caption: spot.spotDescription ?? "", postLat: spot.spotLat, postLong: spot.spotLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: UserDataModel.shared.userInfo, spotID: spot.spotID ?? "", city: city, frameIndexes: spot.frameIndexes, aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: spot.taggedUsernames, spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, privacyLevel: spot.privacyLevel ?? "friends", spotPrivacy: spot.privacyLevel ?? "friends", createdBy: self.uid, inviteList: spot.inviteList ?? [])
                 postObject.friendsList = postFriends
                 
                 NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
@@ -1142,7 +1132,7 @@ extension DraftsViewController {
                 spotObject.checkInTime = Int64(interval)
                 
                 /// send notifications if this is an invite only spot
-                self.sendInviteNotis(spotObject: spotObject, postObject: postObject, username: self.mapVC.userInfo.username)
+                self.sendInviteNotis(spotObject: spotObject, postObject: postObject, username: UserDataModel.shared.userInfo.username)
 
                 /// add city to list of cities if this is the first post there
                 DispatchQueue.global().async { self.addToCityList(city: city) }

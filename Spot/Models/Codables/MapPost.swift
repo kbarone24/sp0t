@@ -30,15 +30,19 @@ struct MapPost: Identifiable, Codable {
     var postImage: [UIImage] = []
     var seconds: Int64 = 0
     var selectedImageIndex = 0
-    var postScore: Double = 0 
+    var postScore: Double = 0
     var commentList: [MapComment] = []
     var likers: [String]
     var taggedUsers: [String]? = []
     
+    var captionHeight: CGFloat = 0
+    var imageHeight: CGFloat = 0
+    var cellHeight: CGFloat = 0
+    
     var spotName: String? = ""
     var spotLat: Double? = 0.0
     var spotLong: Double? = 0.0
-    var privacyLevel: String? = ""
+    var privacyLevel: String? = "friends"
     var spotPrivacy: String? = ""
     var createdBy: String? = ""
     var inviteList: [String]? = []
@@ -46,6 +50,10 @@ struct MapPost: Identifiable, Codable {
     var isFirst: Bool? = false
     var hideFromFeed: Bool? = false
     var gif: Bool? = false
+    
+    var addedUsers: [String]? = []
+    var addedUserProfiles: [UserProfile] = []
+    var tag: String? = ""
     
     enum CodingKeys: String, CodingKey {
         case caption
@@ -71,5 +79,7 @@ struct MapPost: Identifiable, Codable {
         case isFirst
         case hideFromFeed
         case gif
+        case addedUsers
+        case tag
     }
 }

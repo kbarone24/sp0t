@@ -12,9 +12,7 @@ import Mixpanel
 import Firebase
 
 class ManageAccountController: UIViewController {
-    
-    unowned var mapVC: MapViewController!
-    
+        
     var tableView: UITableView!
     var deleteMask: UIView!
     var activityIndicator: CustomActivityIndicator!
@@ -135,8 +133,8 @@ extension ManageAccountController: UITableViewDelegate, UITableViewDataSource {
     func deleteAccount2() {
         deleteMask.isHidden = false
         activityIndicator.startAnimating()
-        deleteFromFriends(friendIDs: mapVC.userInfo.friendIDs)
-        deleteUser(username: mapVC.userInfo.username)
+        deleteFromFriends(friendIDs: UserDataModel.shared.userInfo.friendIDs)
+        deleteUser(username: UserDataModel.shared.userInfo.username)
     }
 }
 
@@ -274,6 +272,7 @@ extension ManageAccountController {
     
     func logOut() {
         
+        UserDataModel.shared.destroy()
         /// this should eventually delete the user but they'll need to re-enter credentials so will have to manually delete from Auth for now
         do {
             try Auth.auth().signOut()

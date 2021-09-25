@@ -15,7 +15,6 @@ import Mixpanel
 class SpotVisitorsViewController: UIViewController {
     
     unowned var spotVC: SpotViewController!
-    unowned var mapVC: MapViewController!
     
     var visitorsCollection: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
     let layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout.init()

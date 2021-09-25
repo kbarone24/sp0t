@@ -11,9 +11,8 @@ import UIKit
 
 class LocationPickerWindow: UIView {
 
-    @IBOutlet weak var postImage: UIImageView!
-    @IBOutlet weak var postBackground: UIImageView!
-    @IBOutlet weak var postAddress: UILabel!
+    @IBOutlet weak var profileImage: UIImageView!
+    @IBOutlet weak var background: UIImageView!
     
     class func instanceFromNib() -> UIView {
         return UINib(nibName: "LocationPickerWindow", bundle: nil).instantiate(withOwner: self, options: nil).first as! UIView

@@ -13,59 +13,36 @@ import Photos
 import Mixpanel
 import PhotosUI
 
-protocol PhotoGalleryDelegate {
-    func FinishPassing(images: [(UIImage, Int, CLLocation)])
-}
-
 class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, PHPhotoLibraryChangeObserver {
-    
+        
     let collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
     lazy var layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout.init()
-    lazy var imageObjects: [ImageObject] = []
     lazy var imageManager = PHCachingImageManager()
     
     var baseSize: CGSize!
     
-    var delegate: PhotoGalleryDelegate?
     var editSpotCount = 0
     var offset: CGFloat = 0
     var maxOffset: CGFloat = (UIScreen.main.bounds.width/4 * 75)
-    var assetsFirst: PHFetchResult<PHAsset>!
     
-    var refreshSafe = false
-    var fullGallery = false 
+    var fullGallery = false
     var refreshes = 0
     
     var maskView: UIView!
     var previewView: GalleryPreviewView!
 
     var downloadCircle: UIActivityIndicatorView!
-    var fetchingIndex = -1
-    var isFetching = false
     var cancelOnDismiss = false
-    
-    var context: PHLivePhotoEditingContext!
-    var requestID: Int32 = 1
-    var contentRequestID: Int = 1
+        
+    lazy var imageFetcher = ImageFetcher()
     
     override func viewWillAppear(_ animated: Bool) {
         
         super.viewWillDisappear(animated)
         navigationItem.title = "Photo gallery"
-        
-        
-        guard let parentVC = parent as? PhotosContainerController else { return }
-        parentVC.mapVC.customTabBar.tabBar.isHidden = true
         cancelOnDismiss = false
     }
-    
-    override func viewWillDisappear(_ animated: Bool) {
         
-        super.viewWillDisappear(animated)
-        cancelOnDismiss = true
-        removePreviews()
-    }
-    
     deinit {
         imageManager.stopCachingImagesForAllAssets()
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ScrollGallery"), object: nil)
@@ -102,12 +79,9 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         maskView.isUserInteractionEnabled = true
         maskView.backgroundColor = UIColor.black.withAlphaComponent(0.85)
         
-        collectionView.register(galleryActivityIndicator.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: "footerView")
-        
-        getGalleryImages()
-        
         NotificationCenter.default.addObserver(self, selector: #selector(scrollToTop(_:)), name: NSNotification.Name("ScrollGallery"), object: nil)
         
+        if !UploadImageModel.shared.imageObjects.isEmpty { refreshTable() } /// eventually need exemption handling for reloading once != 0
         
         guard let containerVC = self.parent as? PhotosContainerController else { return }
         if containerVC.limited {
@@ -123,6 +97,9 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         /// reset nav bar colors (only set if limited picker was shown)
         UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .normal)
         UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .highlighted)
+        
+        cancelOnDismiss = true
+        removePreviews()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -134,80 +111,11 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         collectionView.setContentOffset(CGPoint(x: 0, y: 10), animated: true)
     }
     
-    func getGalleryImages() {
-        
-        /// get first 1000 images here for quick load on gallery
-        
-        let fetchOptions = PHFetchOptions()
-        fetchOptions.fetchLimit = 1000
-        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
-        
-        guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
-        
-        //get assets first to load initial view and not have to wait for all of initial assets to be fetched
-        assetsFirst = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions)
-        if assetsFirst.count == 0 { return }
-        
-        var indexSet: IndexSet!
-        if assetsFirst.count > 1000 {
-            indexSet =  IndexSet(0...999)
-        } else {
-            indexSet = IndexSet(0...assetsFirst.count - 1)
-        }
-        
-        fetchAssets(indexSet: indexSet, first: true)
-    }
-    
-    func fetchAssets(indexSet: IndexSet, first: Bool) {
-        
-        guard let parentVC = parent as? PhotosContainerController else { return }
-        
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.isSynchronous = true
-        options.isNetworkAccessAllowed = true
-        options.version = .current
-        
-        var fetchObject: PHFetchResult<PHAsset>!
-        
-        if first {
-            fetchObject = assetsFirst
-        } else {
-            fetchObject = parentVC.assetsFull
-        }
-        
-        var localObjects: [ImageObject] = []
-
-        /// try not specifiying queue until reload
-        DispatchQueue.global(qos: .userInitiated).async { fetchObject.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
+    func refreshTable() {
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-
-            var location = CLLocation()
-            if let l = object.location { location = l }
-            
-            var creationDate = Date()
-            if let d = object.creationDate { creationDate = d }
-            
-            if localObjects.contains(where: {$0.asset == object}) || self.imageObjects.contains(where: {$0.asset == object}) { return }
-            let imageObj = ImageObject(asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], gifMode: false, creationDate: creationDate)
-            localObjects.append(imageObj)
-
-            if localObjects.count == 1000 || self.assetsFirst.count < 1000 && localObjects.count == self.assetsFirst.count || parentVC.assetsFull != nil && self.imageObjects.count + localObjects.count == parentVC.assetsFull.count {
-                /// if self.imageObjects.count == (self.refreshes + 1) * 1000 || (parentVC.assetsFull != nil && self.imageObjects.count == parentVC.assetsFull.count) {
-                
-                self.imageObjects.append(contentsOf: localObjects)
-                self.imageObjects.sort(by: {$0.creationDate > $1.creationDate})
-
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    self.collectionView.reloadData()
-                    self.refreshSafe = true
-                }
-    
-                fetchObject = nil /// seems to be preventing memory leak
-            }
-        }}
+            self.collectionView.reloadData()
+        }
     }
     
     func showLimitedAlert() {
@@ -247,9 +155,9 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
 
         /// remove saved images from image objects to avoid memory pile up
         if previewView != nil && previewView.selectedIndex == 0 {
-            if let i = imageObjects.firstIndex(where: {$0.asset == previewView.object.asset}) {
-                imageObjects[i].animationImages.removeAll()
-                imageObjects[i].stillImage = UIImage()
+            if let i = UploadImageModel.shared.imageObjects.firstIndex(where: {$0.0.id == previewView.object.id}) {
+              UploadImageModel.shared.imageObjects[i].0.animationImages.removeAll()
+              UploadImageModel.shared.imageObjects[i].0.stillImage = UIImage()
             }
         }
         
@@ -261,39 +169,19 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return self.imageObjects.count
-        
+        let maxImages = (refreshes + 1) * 1000
+        let imageCount = UploadImageModel.shared.imageObjects.count
+        return min(maxImages, imageCount)
     }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
-        return CGSize(width: collectionView.bounds.width, height: 50)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        
-        guard let parentVC = parent as? PhotosContainerController else { return UICollectionReusableView() }
-
-        let footerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "footerView", for: indexPath) as! galleryActivityIndicator
-        if parentVC.assetsFull != nil && self.imageObjects.count == parentVC.assetsFull.count  || fullGallery {
-            footerView.setUp(animate: false)
-        } else {
-            /// animate footer if refresh isn't done
-            footerView.setUp(animate: true)
-        }
-        return footerView
-    }
-    
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "galleryCell", for: indexPath) as! GalleryCell
-        guard let parentVC = parent as? PhotosContainerController else { return UICollectionViewCell() }
-        // cell.image = nil
         
-        if let imageObject = imageObjects[safe: indexPath.row] {
+        if let imageObject = UploadImageModel.shared.imageObjects[safe: indexPath.row] {
             var index = 0
-            if let trueIndex = parentVC.selectedObjects.lastIndex(where: {$0.index == indexPath.row}) { index = trueIndex + 1 }
-            cell.setUp(asset: imageObject.asset, row: indexPath.row, index: index, editSpot: parentVC.editSpotMode)
+            if let trueIndex = UploadImageModel.shared.selectedObjects.lastIndex(where: {$0.id == imageObject.0.id}) { index = trueIndex + 1 }
+            cell.setUp(asset: imageObject.0.asset, row: indexPath.row, index: index, editSpot: false, id: imageObject.0.id, cameraImage: imageObject.0.stillImage)
         }
         
         return cell
@@ -310,11 +198,9 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
 
-        var path = [IndexPath]()
-        path.append(indexPath)
-        guard let parentVC = parent as? PhotosContainerController else { return }
+        let imageObject = UploadImageModel.shared.imageObjects[indexPath.row]
                 
-        if parentVC.selectedObjects.contains(where: {$0.index == indexPath.row}) {
+        if UploadImageModel.shared.selectedObjects.contains(where: {$0.id == imageObject.image.id}) {
             deselect(index: indexPath.row, circleTap: false)
             
         } else {
@@ -325,28 +211,27 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     func deselect(index: Int, circleTap: Bool) {
                 
         let paths = getSelectedPaths(newRow: index)
-        guard let parentVC = parent as? PhotosContainerController else { return }
-        guard let selectedObject = imageObjects[safe: index] else { return }
+        guard let selectedObject = UploadImageModel.shared.imageObjects[safe: index]?.image else { return }
 
         if !circleTap {
             var selectedIndex = 0
-            if let trueIndex = parentVC.selectedObjects.lastIndex(where: {$0.index == index}) { selectedIndex = trueIndex + 1 }
+            if let trueIndex = UploadImageModel.shared.selectedObjects.lastIndex(where: {$0.id == selectedObject.id}) { selectedIndex = trueIndex + 1 }
             self.addPreviewView(object: selectedObject, selectedIndex: selectedIndex, galleryIndex: index)
             
         } else {
             Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": false])
-            parentVC.selectedObjects.removeAll(where: {$0.index == index})
-            if parentVC.selectedObjects.count == 0 { parentVC.removeNextButton() }
-            DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
+          UploadImageModel.shared.selectObject(imageObject: selectedObject, selected: false)
+            DispatchQueue.main.async { self.collectionView.reloadItems(at: paths)
+            }
         }
     }
     
     func select(index: Int, circleTap: Bool) {
         
         guard let parentVC = parent as? PhotosContainerController else { return }
-        guard let selectedObject = imageObjects[safe: index] else { return }
-        if parentVC.selectedObjects.count > 4 { showMaxImagesAlert(); return }
-        if parentVC.editSpotMode && parentVC.selectedObjects.count > 0 { return }
+        guard let selectedObject = UploadImageModel.shared.imageObjects[safe: index]?.image else { return }
+        if UploadImageModel.shared.selectedObjects.count > 4 { showMaxImagesAlert(); return }
+        if parentVC.editSpotMode && UploadImageModel.shared.selectedObjects.count > 0 { return }
     
         let paths = getSelectedPaths(newRow: index)
         
@@ -358,8 +243,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             } else {
                 
                 Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": true])
-                parentVC.selectedObjects.append((selectedObject, index))
-                self.checkForNext()
+              UploadImageModel.shared.selectObject(imageObject: selectedObject, selected: true)
                 DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
             }
             
@@ -367,47 +251,38 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
 
             if let cell = collectionView.cellForItem(at: IndexPath(item: index, section: 0)) as? GalleryCell {
                 
-                let currentAsset = self.imageObjects[index].asset
-                var local = true
-                let resourceArray = PHAssetResource.assetResources(for: currentAsset)
-                if let isLocal = resourceArray.first?.value(forKey: "locallyAvailable") as? Bool { local = isLocal }
+                let currentAsset = UploadImageModel.shared.imageObjects[index].image.asset
 
                 /// this cell is fetching, cancel fetch and return
                 if cell.activityIndicator.isAnimating { cancelFetchForRowAt(index: index); return  }
 
-                if isFetching { cancelFetchForRowAt(index: fetchingIndex) } /// another cell is fetching cancel that fetch
+                if imageFetcher.isFetching { cancelFetchForRowAt(index: imageFetcher.fetchingIndex) } /// another cell is fetching cancel that fetch
                 cell.addActivityIndicator()
                 
-                isFetching = true
-                fetchingIndex = index
-                
-                if imageObjects[index].asset.mediaSubtypes.contains(.photoLive) && !parentVC.editSpotMode {
+                if UploadImageModel.shared.imageObjects[index].image.asset.mediaSubtypes.contains(.photoLive) {
                     
-                    fetchLivePhoto(item: index, isLocal: local, selected: false) { [weak self] animationImages, stillImage, failed in
+                    imageFetcher.fetchLivePhoto(currentAsset: currentAsset, item: index) { [weak self] animationImages, stillImage, failed in
 
                         guard let self = self else { return }
                         
-                        self.isFetching = false
-                        self.fetchingIndex = -1
                         cell.removeActivityIndicator()
                         
                         if self.cancelOnDismiss { return }
                         if failed { self.showFailedDownloadAlert(); return }
                         if stillImage == UIImage() { return } /// canceled
 
-                        self.imageObjects[index] = (ImageObject(asset: self.imageObjects[index].asset, rawLocation: self.imageObjects[index].rawLocation, stillImage: stillImage, animationImages: animationImages, gifMode: true, creationDate: self.imageObjects[index].creationDate))
+                        UploadImageModel.shared.imageObjects[index].image.stillImage = stillImage
+                        UploadImageModel.shared.imageObjects[index].image.animationImages = animationImages
+                        UploadImageModel.shared.imageObjects[index].image.gifMode = true
 
                         ///fetch image is async so need to make sure another image wasn't appended while this one was being fetched
-                        if parentVC.selectedObjects.count < 5 {
-                            
-                            let newObject = (ImageObject(asset: selectedObject.asset, rawLocation: selectedObject.rawLocation, stillImage: stillImage, animationImages: animationImages, gifMode: true, creationDate: selectedObject.creationDate), index)
-                            
+                        if UploadImageModel.shared.selectedObjects.count < 5 {
+                                                        
                             if !circleTap {
-                                self.addPreviewView(object: newObject.0, selectedIndex: 0, galleryIndex: index)
+                                self.addPreviewView(object:  UploadImageModel.shared.imageObjects[index].image, selectedIndex: 0, galleryIndex: index)
                                 
                             } else {
-                                parentVC.selectedObjects.append(newObject)
-                                self.checkForNext()
+                                UploadImageModel.shared.selectObject(imageObject:  UploadImageModel.shared.imageObjects[index].image, selected: true)
                                 DispatchQueue.main.async {
                                     if self.cancelOnDismiss { return }
                                     self.collectionView.reloadItems(at: paths)
@@ -418,32 +293,31 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                     
                 } else {
                     
-                    self.fetchImage(item: index, isLocal: local, selected: true, livePhoto: false) { [weak self] result, failed  in
-                        
+                    imageFetcher.fetchImage(currentAsset: currentAsset, item: index, livePhoto: false) { [weak self] stillImage, failed  in
+
                         guard let self = self else { return }
-                        self.isFetching = false
-                        self.fetchingIndex = -1
                         cell.removeActivityIndicator()
                         
                         if self.cancelOnDismiss { return }
                         ///return on download fail
                         if failed { self.showFailedDownloadAlert(); return }
-                        if result == UIImage() { return } /// canceled
+                        if stillImage == UIImage() { return } /// canceled
                         
                         ///fetch image is async so need to make sure another image wasn't appended while this one was being fetched
-                        if parentVC.selectedObjects.count < 5 {
+                        UploadImageModel.shared.imageObjects[index].image.stillImage = stillImage
+                        
+                        if UploadImageModel.shared.selectedObjects.count < 5 {
                             
                             /// append new image object with fetched image
-                            let newObject = (ImageObject(asset: selectedObject.asset, rawLocation: selectedObject.rawLocation, stillImage: result, animationImages: [], gifMode: false, creationDate: selectedObject.creationDate), index)
+                            
                             cell.removeActivityIndicator()
                             
                             if !circleTap {
-                                self.addPreviewView(object: newObject.0, selectedIndex: 0, galleryIndex: index)
+                                self.addPreviewView(object: UploadImageModel.shared.imageObjects[index].image, selectedIndex: 0, galleryIndex: index)
                                 
                             } else {
                                 Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": true])
-                                parentVC.selectedObjects.append(newObject)
-                                self.checkForNext()
+                                UploadImageModel.shared.selectObject(imageObject: UploadImageModel.shared.imageObjects[index].image, selected: true)
                                 DispatchQueue.main.async {
                                     if self.cancelOnDismiss { return }
                                     self.collectionView.reloadItems(at: paths)
@@ -461,24 +335,22 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         Mixpanel.mainInstance().track(event: "GalleryCancelImageFetch")
 
         guard let cell = collectionView.cellForItem(at: IndexPath(item: index, section: 0)) as? GalleryCell else { return }
-        guard let currentObject = imageObjects[safe: index] else { return }
+        guard let currentObject = UploadImageModel.shared.imageObjects[safe: index]?.image else { return }
         let currentAsset = currentObject.asset
 
         cell.activityIndicator.stopAnimating()
-        currentAsset.cancelContentEditingInputRequest(contentRequestID)
-        if context != nil { context.cancel() }
-        imageManager.cancelImageRequest(requestID)
-        
-        isFetching = false
-        fetchingIndex = -1
+        imageFetcher.cancelFetchForAsset(asset: currentAsset)
     }
     
     func getSelectedPaths(newRow: Int) -> [IndexPath] {
         
         var selectedPaths: [IndexPath] = []
-        guard let parentVC = parent as? PhotosContainerController else { return selectedPaths }
-        let selectedRows = parentVC.selectedObjects.map({$0.index})
-        for row in selectedRows { selectedPaths.append(IndexPath(item: row, section: 0)) }
+        for object in UploadImageModel.shared.selectedObjects {
+            if let index = UploadImageModel.shared.imageObjects.firstIndex(where: {$0.image.id == object.id}) {
+                selectedPaths.append(IndexPath(item: Int(index), section: 0))
+            }
+        }
+        
         let newPath = IndexPath(item: newRow, section: 0)
         if !selectedPaths.contains(where: {$0 == newPath}) { selectedPaths.append(newPath) }
         return selectedPaths
@@ -500,12 +372,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         previewView.setUp(object: object, selectedIndex: selectedIndex, galleryIndex: galleryIndex)
         maskView.addSubview(previewView)
     }
-        
-    func checkForNext() {
-        guard let parentVC = parent as? PhotosContainerController else { return }
-        if parentVC.selectedObjects.count == 1 { parentVC.addNextButton() }
-    }
-    
+            
     func showMaxImagesAlert() {
         
         let errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 200, width: UIScreen.main.bounds.width, height: 32))
@@ -525,162 +392,24 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             errorBox.removeFromSuperview()
         }
     }
-    
-    func fetchLivePhoto(item: Int, isLocal: Bool, selected: Bool, completion: @escaping(_ animationImages: [UIImage], _ stillImage: UIImage, _ failed: Bool) -> Void) {
         
-        var stillImage = UIImage()
-        var animationImages: [UIImage] = []
-        let currentAsset = imageObjects[item].asset
-        var downloadCount = 0
-        
-        let editingOptions = PHContentEditingInputRequestOptions()
-        editingOptions.isNetworkAccessAllowed = true
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            
-            self.contentRequestID = currentAsset.requestContentEditingInput(with: editingOptions) { [weak self] input, info in
-                
-                guard let self = self else { return }
-                
-                if info["PHContentEditingInputCancelledKey"] != nil { completion([UIImage()], UIImage(), false); return }
-                if info["PHContentEditingInputErrorKey"] != nil { completion([UIImage()], UIImage(), true); return }
-                
-                var frameImages: [UIImage] = []
-                
-                if let input = input {
-                    
-                    self.context = PHLivePhotoEditingContext(livePhotoEditingInput: input)
-                    
-                    /// download live photos by cycling through frame processor and capturing frames
-                    self.context!.frameProcessor = { frame, _ in
-                        frameImages.append(UIImage(ciImage: frame.image))
-                        return frame.image
-                    }
-                                    
-                    let output = PHContentEditingOutput(contentEditingInput: input)
-                    
-                    self.context?.saveLivePhoto(to: output, options: nil, completionHandler: { [weak self] success, err in
-
-                        guard let self = self else { return }
-                        if !success || err != nil || frameImages.isEmpty { completion([UIImage()], UIImage(), false); return }
-                                                
-                        /// distanceBetweenFrames fixed at 2 right now, always taking the middle 16 frames of the Live often with large offsets. This number is variable though
-                        let distanceBetweenFrames: Double = 2
-                        let rawFrames = Double(frameImages.count) / distanceBetweenFrames
-                        let numberOfFrames: Double = rawFrames > 11 ? 9 : rawFrames > 7 ? max(7, rawFrames - 2) : rawFrames
-                        let rawOffsest = max((rawFrames - numberOfFrames) * distanceBetweenFrames/2, 2) /// offset on beginning and ending of the frames
-                        let offset = Int(rawOffsest)
-                        
-                        let aspect = frameImages[0].size.height / frameImages[0].size.width
-                        let size = CGSize(width: min(frameImages[0].size.width, UIScreen.main.bounds.width * 1.5), height: min(frameImages[0].size.height, aspect * UIScreen.main.bounds.width * 1.5))
-
-                        let image0 = self.ResizeImage(with: frameImages[offset], scaledToFill: size)
-                        animationImages.append(image0 ?? UIImage())
-
-                        /// add middle frames, trimming first couple and last couple
-                        let intMultiplier = (frameImages.count - offset * 2)/Int(numberOfFrames)
-                        for i in 1...Int(numberOfFrames) {
-                            let multiplier = offset + intMultiplier * i
-                            let j = multiplier > frameImages.count - 1 ? frameImages.count - 1 : multiplier
-                             let image = self.ResizeImage(with: frameImages[j], scaledToFill: size)
-                            animationImages.append(image ?? UIImage())
-                        }
-                        
-                        downloadCount += 1
-                        if downloadCount == 2 { DispatchQueue.main.async { completion(animationImages, stillImage, false) } }
-                        return
-                    })
-                }
-            }
-        
-            /// download still image regularly
-            self.fetchImage(item: item, isLocal: isLocal, selected: selected, livePhoto: true) { result, failed in
-                
-                if failed || result == UIImage() { completion([UIImage()], UIImage(), false); return }
-                stillImage = result
-                
-                downloadCount += 1
-                if downloadCount == 2 { DispatchQueue.main.async { completion(animationImages, stillImage, false) } }
-            }
-        }
-    }
-    
-    func fetchImage(item: Int, isLocal: Bool, selected: Bool, livePhoto: Bool, completion: @escaping(_ result: UIImage, _ failed: Bool) -> Void) {
-        
-        let currentAsset = imageObjects[item].asset
-        
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.isNetworkAccessAllowed = true
-                        
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            
-            guard let self = self else { return }
-            self.requestID = self.imageManager.requestImage(for: currentAsset,
-                                                         targetSize: CGSize(width: currentAsset.pixelWidth, height: currentAsset.pixelHeight),
-                                                         contentMode: .aspectFill,
-                                                         options: options) { (image, info) in
-                
-                DispatchQueue.main.async { [weak self] in
-                    /// return blank image on error
-                    if info?["PHImageCancelledKey"] != nil { completion(UIImage(), false); return }
-                    guard let self = self else { completion(UIImage(), true); return}
-                    guard let result = image else { completion( UIImage(), true); return }
-                    
-                    let aspect = result.size.height / result.size.width
-                    let size = CGSize(width: min(result.size.width, UIScreen.main.bounds.width * 2.0), height: min(result.size.height, aspect * UIScreen.main.bounds.width * 2.0))
-                    let resizedImage = self.ResizeImage(with: result, scaledToFill: size)
-                    
-                    /// update with new image, set thumbnail to false (only if this is a still image fetch)
-                    if !livePhoto { self.imageObjects[item] = (ImageObject(asset: self.imageObjects[item].asset, rawLocation: self.imageObjects[item].rawLocation, stillImage: resizedImage ?? UIImage(), animationImages: [], gifMode: false, creationDate: self.imageObjects[item].creationDate)) }
-                    completion(resizedImage ?? UIImage(), false)
-                    return
-                }
-            }
-        }
-    }
-    
     func showFailedDownloadAlert() {
         let alert = UIAlertController(title: "Unable to download image from iCloud", message: "\n Your iPhone storage may be full", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
-                                        switch action.style{
-                                        case .default:
-                                            print("ok")
-                                        case .cancel:
-                                            print("cancel")
-                                        case .destructive:
-                                            print("destruct")
-                                        @unknown default:
-                                            fatalError()
-                                        }}))
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         present(alert, animated: true)
     }
     
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         //max offset is the value at which the tableview should reload data -> starting point is after 700 of the first 1000 pictures
-        guard let parentVC = parent as? PhotosContainerController else { return }
-
         offset = scrollView.contentOffset.y
-        if offset > maxOffset && refreshSafe {
+        
+        if offset > maxOffset {
             //refresh after 900 posts past the 1000x mark
             self.maxOffset = (UIScreen.main.bounds.width/4 * 225) + UIScreen.main.bounds.width/4 * (250 * CGFloat(self.refreshes))
-            if self.imageObjects.count < parentVC.assetsFull.count {
-                refreshSafe = false
-                var indexSet: IndexSet!
-                if refreshes > 8 {
-                    self.fullGallery = true
-                    DispatchQueue.main.async { self.collectionView.reloadData() }
-                    return
-                }
+            if (refreshes + 1) * 1000 < UploadImageModel.shared.imageObjects.count {
                 self.refreshes = self.refreshes + 1
-                if parentVC.assetsFull.count > (self.refreshes + 1) * 1000 {
-                    indexSet =  IndexSet(self.refreshes * 1000 ... ((self.refreshes + 1) * 1000) - 1)
-                } else {
-                    indexSet = IndexSet(self.refreshes * 1000 ... parentVC.assetsFull.count - 1)
-                    self.fullGallery = true
-                }
-                self.fetchAssets(indexSet: indexSet, first: false)
+                self.refreshTable()
             }
         }
     }
@@ -689,12 +418,11 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     func photoLibraryDidChange(_ changeInstance: PHChange) {
 
         DispatchQueue.main.async {
-         
-            if changeInstance.changeDetails(for: self.assetsFirst) != nil {
+                     
+            if changeInstance.changeDetails(for: UploadImageModel.shared.assetsFull) != nil {
               /// couldn't get change handler to work so just reload everything for now
-                self.imageObjects.removeAll()
+                UploadImageModel.shared.imageObjects.removeAll()
                 self.collectionView.reloadData()
-                self.getGalleryImages()
             }
         }
     }
@@ -709,15 +437,19 @@ class GalleryCell: UICollectionViewCell {
     lazy var activityIndicator = UIActivityIndicatorView()
     
     var globalRow: Int!
+    var asset: PHAsset!
+    var id: String!
     var thumbnailSize: CGSize!
     lazy var requestID: Int32 = 1
     lazy var imageManager = PHCachingImageManager()
     var liveIndicator: UIImageView!
     
-    func setUp(asset: PHAsset, row: Int, index: Int, editSpot: Bool) {
+    func setUp(asset: PHAsset, row: Int, index: Int, editSpot: Bool, id: String, cameraImage: UIImage) {
         
         self.backgroundColor = UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1)
+        self.asset = asset
         self.globalRow = row
+        self.id = id
         
         layer.shouldRasterize = true
         layer.rasterizationScale = UIScreen.main.scale
@@ -751,6 +483,7 @@ class GalleryCell: UICollectionViewCell {
         }
         
         addCircle(index: index)
+        if cameraImage != UIImage() { image.image = cameraImage; return } /// image from camera, set to image and return
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             
@@ -794,8 +527,8 @@ class GalleryCell: UICollectionViewCell {
     }
     
     private func setUpThumbnailSize() {
-        let scale = UIScreen.main.scale * 0.75
-        thumbnailSize = CGSize(width: self.bounds.width * scale, height: self.bounds.height * scale)
+        let scale = UIScreen.main.bounds.width * 1/4
+        thumbnailSize = CGSize(width: scale, height: scale)
     }
     
     ///https://stackoverflow.com/questions/40226949/ios-phimagemanager-cancelimagerequest-not-working
@@ -847,48 +580,15 @@ class GalleryCell: UICollectionViewCell {
     }
     
     @objc func circleTap(_ sender: UIButton) {
-        guard let picker = viewContainingController() as? PhotoGalleryPicker else { pickFromCluster(); return }
-        guard let container = picker.parent as? PhotosContainerController else { return }
         
-        let selectedRows = container.selectedObjects.map({$0.index})
-        var selectedPaths: [IndexPath] = []
-        for row in selectedRows { selectedPaths.append(IndexPath(item: row, section: 0)) }
-        let newPath = IndexPath(item: globalRow, section: 0)
-        if !selectedPaths.contains(where: {$0 == newPath}) { selectedPaths.append(newPath) }
-
-        container.selectedObjects.contains(where: {$0.index == globalRow}) ? picker.deselect(index: globalRow, circleTap: true) : picker.select(index: globalRow, circleTap: true)
+        guard let picker = viewContainingController() as? PhotoGalleryPicker else { pickFromCluster(); return }
+        UploadImageModel.shared.selectedObjects.contains(where: {$0.id == id}) ? picker.deselect(index: globalRow, circleTap: true) : picker.select(index: globalRow, circleTap: true)
     }
     
     func pickFromCluster() {
         
         guard let cluster = viewContainingController() as? ClusterPickerController else { return }
-        
-        let selectedRows = cluster.selectedObjects.map({$0.index})
-        var selectedPaths: [IndexPath] = []
-        for row in selectedRows { selectedPaths.append(IndexPath(item: row, section: 0)) }
-        let newPath = IndexPath(item: globalRow, section: 0)
-        if !selectedPaths.contains(where: {$0 == newPath}) { selectedPaths.append(newPath) }
-
-        cluster.selectedObjects.contains(where: {$0.index == globalRow}) ? cluster.deselect(index: globalRow, circleTap: true) : cluster.select(index: globalRow, circleTap: true)
-    }
-}
-
-class galleryActivityIndicator: UICollectionReusableView {
-    
-    var activityIndicator: CustomActivityIndicator!
-    
-    func setUp(animate: Bool) {
-        
-        if activityIndicator != nil { activityIndicator.removeFromSuperview() }
-        
-        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 0, width: self.bounds.width, height: 30))
-        self.addSubview(activityIndicator)
-        
-        if animate {
-            activityIndicator.startAnimating()
-        } else {
-            activityIndicator.stopAnimating()
-        }
+        UploadImageModel.shared.selectedObjects.contains(where: {$0.id == id}) ? cluster.deselect(index: globalRow, circleTap: true) : cluster.select(index: globalRow, circleTap: true)
     }
 }
 
