@@ -14,6 +14,7 @@ import MapKit
 import Mixpanel
 import FirebaseUI
 import Geofirestore
+import FirebaseFunctions
 
 //add create post delegate
 class SpotViewController: UIViewController {
@@ -415,9 +416,11 @@ class SpotViewController: UIViewController {
     
     @objc func addToSpotTap(_ sender: UIButton) {
         // push camera
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
+        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
             
-            vc.spotObject = self.spotObject
+            vc.mapVC = mapVC
+            vc.spotObject = spotObject
+            vc.passedSpot = spotObject
             
             let transition = CATransition()
             transition.duration = 0.3
@@ -1008,7 +1011,7 @@ class SpotViewController: UIViewController {
         let sender = PushNotificationSender()
         var token: String!
         
-        db.collection("users").document(user).getDocument { [weak self] (tokenSnap, err) in
+        db.collection("users").document(user).getDocument { (tokenSnap, err) in
             if (tokenSnap == nil) { return }
             token = tokenSnap?.get("notificationToken") as? String
             if (token != nil && token != "") {
@@ -1207,16 +1210,18 @@ class SpotViewController: UIViewController {
     }
     
     func makeDeletes() {
-        /// local objects to stay alive on spot page remove
-        let postsCopy = self.postsList
-        let spotCopy = self.spotObject!
+
         sendNotification() /// send deelte notifications to other VCs
 
         DispatchQueue.global(qos: .userInitiated).async {
-            self.userDelete(spot: spotCopy) /// delete from users spot list
-            self.spotNotificationDelete(spot: spotCopy) /// delete all notifications pertaining to this spot
-            self.postDelete(postsList: postsCopy, spotID: "") /// delete spot posts
-            self.spotDelete(spotID: spotCopy.id!) /// delete spot
+            
+            let functions = Functions.functions()
+            let spot = self.spotObject!
+            let posters = spot.visitorList
+            
+            functions.httpsCallable("postDelete").call(["postIDs": spot.postIDs, "spotID": spot.id!, "uid": self.uid, "posters": posters, "postTag": "", "spotDelete": true]) { result, error in
+                print("result", result?.data as Any, error as Any)
+            }
         }
     }
         

@@ -142,7 +142,7 @@ class FeedViewController: UIViewController {
             
             if postVC != nil {
                 postVC.postsEmpty = false
-                switchToFriendsSegment()
+                switchToFriendsSegment(newPost: true)
                 openOrScrollToFirst(animated: true, newPost: true)
             }
         }
@@ -424,12 +424,6 @@ class FeedViewController: UIViewController {
                             postVC.postsList[postIndex].selectedImageIndex = selected1
                         
                             /// table reloaded constantly - really no need for this
-                        /*    if post.id == posts.last?.id {
-
-                                if postVC.tableView != nil {
-                                    DispatchQueue.main.async { self.postVC.tableView.reloadData() }
-                                }
-                            } */
                         }
                     }
                 }
@@ -952,10 +946,10 @@ class FeedViewController: UIViewController {
         /// scroll to top if currently selected segment, switch segments otherwise
         Mixpanel.mainInstance().track(event: "FeedFriendsSegmentTap")
         if selectedSegmentIndex == 0 { openOrScrollToFirst(animated: true, newPost: false); return }
-        switchToFriendsSegment()
+        switchToFriendsSegment(newPost: false)
     }
     
-    func switchToFriendsSegment() {
+    func switchToFriendsSegment(newPost: Bool) {
         
         selectedSegmentIndex = 0
         selectedPostIndex = friendsPostIndex
@@ -972,16 +966,20 @@ class FeedViewController: UIViewController {
             postVC.tableView.reloadData()
             
             /// scroll to first row if theres a post there + open post on map
-            if postVC.postsList.count != 0 {
+            /// force refresh if user just posted for the first time
+            if postVC.postsList.count > 0 && !newPost {
                 postVC.tableView.scrollToRow(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .top, animated: false)
                 let mapPass = ["selectedPost": postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": PostViewController.parentViewController.feed as Any] as [String : Any]
                 NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass)
                 
             } else if refresh != .noRefresh {
                 /// add activityIndicator if first refresh not finished yet
-                if endDocument == nil { getFriendPosts(refresh: false) } /// endDocument should almost always be nil when refresh != noRefresh (more than 10 posts available to user)
-                view.bringSubviewToFront(activityIndicator)
-                activityIndicator.startAnimating()
+                /// endDocument should almost always be nil when refresh != noRefresh (more than 10 posts available to user)
+                if endDocument == nil {
+                    getFriendPosts(refresh: false)
+                    view.bringSubviewToFront(activityIndicator)
+                    activityIndicator.startAnimating()
+                }
             }
         }
     }

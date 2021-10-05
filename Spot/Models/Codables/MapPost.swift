@@ -47,7 +47,6 @@ struct MapPost: Identifiable, Codable {
     var createdBy: String? = ""
     var inviteList: [String]? = []
     var friendsList: [String] = [] 
-    var isFirst: Bool? = false
     var hideFromFeed: Bool? = false
     var gif: Bool? = false
     
@@ -76,7 +75,6 @@ struct MapPost: Identifiable, Codable {
         case spotPrivacy
         case createdBy
         case inviteList
-        case isFirst
         case hideFromFeed
         case gif
         case addedUsers

@@ -168,7 +168,6 @@ class MapViewController: UIViewController {
         
         selectedSpotID = ""
         selectedProfileID = ""
-        
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -212,6 +211,8 @@ class MapViewController: UIViewController {
                 
                 activeUser.id = userSnap!.documentID
                 let firstLoad = UserDataModel.shared.userInfo.id == ""
+                if userSnap!.documentID != self.uid { return } /// logout + object not being destroyed
+                
                 UserDataModel.shared.userInfo = activeUser
                 
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)

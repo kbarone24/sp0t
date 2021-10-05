@@ -323,6 +323,7 @@ class LocationPickerController: UIViewController {
                     
                     var spotInfo = MapSpot(spotDescription: item.type.toString(), spotName: item.name, spotLat: item.coordinate.latitude, spotLong: item.coordinate.longitude, founderID: "", privacyLevel: "public", imageURL: "")
                     spotInfo.phone = item.phone
+                    spotInfo.poiCategory = item.type.toString()
                     annotation.spotInfo = spotInfo
                     
                     let hidden = self.spotFilteredByLocation(spotCoordinates: item.coordinate)
@@ -365,7 +366,7 @@ class LocationPickerController: UIViewController {
                 
                 /// set spot description to friends' name (founder) or POI level category info
                 if spotInfo.privacyLevel != "public" {
-                    spotInfo.spotDescription = spotInfo.posterUsername == "" ? "" : "By \(spotInfo.posterUsername!)"
+                    spotInfo.spotDescription = spotInfo.posterUsername == "" ? "" : "By \(spotInfo.posterUsername ?? "")"
                     
                 } else {
                     spotInfo.spotDescription = spotInfo.poiCategory ?? ""
@@ -378,7 +379,7 @@ class LocationPickerController: UIViewController {
                 annotation.title = spotInfo.spotName
                 
                 /// POI already loaded to map, replace with real spot object - remove from everywhere first
-                if let index = self.nearbyAnnotations.firstIndex(where: {$0.value.spotInfo.spotName == spotInfo.spotName || $0.value.spotInfo.phone == spotInfo.phone ?? ""}) {
+                if let index = self.nearbyAnnotations.firstIndex(where: {$0.value.spotInfo.spotName == spotInfo.spotName || ($0.value.spotInfo.phone ?? "" == spotInfo.phone ?? "" && spotInfo.phone ?? "" != "")}) {
                     
                     let anno = self.nearbyAnnotations[index]
                     self.mapView.removeAnnotation(anno.value)
@@ -726,22 +727,25 @@ extension LocationPickerController: MKMapViewDelegate {
     
     func addPassedSpots(coordinate: CLLocationCoordinate2D) {
         
-        for i in 0...UploadImageModel.shared.nearbySpots.count - 1 {
+        if !UploadImageModel.shared.nearbySpots.isEmpty {
             
-            let spot = UploadImageModel.shared.nearbySpots[i]
-            
-            let annotation = CustomSpotAnnotation()
-            annotation.coordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
-            
-            annotation.spotInfo = spot
-            let rank = getMapRank(spot: annotation.spotInfo)
-            annotation.rank = rank
-            nearbyAnnotations.updateValue(annotation, forKey: spot.id!)
-            
-            DispatchQueue.main.async { self.mapView.addAnnotation(annotation) }
-        }
+            for i in 0...UploadImageModel.shared.nearbySpots.count - 1 {
                 
-        UploadImageModel.shared.nearbySpots.sort(by: {$0.spotScore > $1.spotScore})
+                let spot = UploadImageModel.shared.nearbySpots[i]
+                
+                let annotation = CustomSpotAnnotation()
+                annotation.coordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
+                
+                annotation.spotInfo = spot
+                let rank = getMapRank(spot: annotation.spotInfo)
+                annotation.rank = rank
+                nearbyAnnotations.updateValue(annotation, forKey: spot.id!)
+                
+                DispatchQueue.main.async { self.mapView.addAnnotation(annotation) }
+            }
+            UploadImageModel.shared.nearbySpots.sort(by: {$0.spotScore > $1.spotScore})
+        }
+        
         DispatchQueue.main.async { self.nearbyTable.reloadData() }
     }
     
@@ -987,13 +991,15 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
 
                 if item.name != nil {
 
-                    if self.querySpots.contains(where: {$0.spotName == item.name || $0.phone == item.phoneNumber ?? ""}) { index += 1; if index == response.mapItems.count { self.reloadResultsTable(searchText: searchText) }; continue }
+                    if self.querySpots.contains(where: {$0.spotName == item.name || ($0.phone ?? "" == item.phoneNumber ?? "" && item.phoneNumber ?? "" != "")}) { index += 1; if index == response.mapItems.count { self.reloadResultsTable(searchText: searchText) }; continue }
                                         
                     let name = item.name!.count > 60 ? String(item.name!.prefix(60)) : item.name!
                                     
                     var spotInfo = MapSpot(spotDescription: item.pointOfInterestCategory?.toString() ?? "", spotName: name, spotLat: item.placemark.coordinate.latitude, spotLong: item.placemark.coordinate.longitude, founderID: "", privacyLevel: "public", imageURL: "")
+                    
                     spotInfo.phone = item.phoneNumber ?? ""
                     spotInfo.id = UUID().uuidString
+                    spotInfo.poiCategory = item.pointOfInterestCategory?.toString() ?? ""
                     
                     self.querySpots.append(spotInfo)
                     index += 1
@@ -1031,10 +1037,9 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
                     spotInfo.id = doc.documentID
                     
                     if self.hasPOILevelAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? []) {
-                        print("has poi level")
                         
                         if spotInfo.privacyLevel != "public" {
-                            spotInfo.spotDescription = spotInfo.posterUsername == "" ? "" : "By \(spotInfo.posterUsername!)"
+                            spotInfo.spotDescription = spotInfo.posterUsername == "" ? "" : "By \(spotInfo.posterUsername ?? "")"
                             
                         } else {
                             spotInfo.spotDescription = spotInfo.poiCategory ?? ""

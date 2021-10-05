@@ -14,6 +14,7 @@ import CoreLocation
 import Mixpanel
 import FirebaseUI
 import Geofirestore
+import FirebaseFunctions
 
 class PostViewController: UIViewController {
 
@@ -2337,6 +2338,8 @@ extension PostCell {
     
     func postDelete(deletePost: MapPost, spotDelete: Bool, spot: MapSpot) {
         
+        let functions = Functions.functions()
+
         let postCopy = deletePost
         
         if let postVC = self.viewContainingController() as? PostViewController {
@@ -2344,23 +2347,25 @@ extension PostCell {
             /// delete funcs
             DispatchQueue.global(qos: .userInitiated).async {
                 
+                let spotID = postCopy.spotID!
+
                 if spotDelete {
+                                        
+                    /// posters is visitorList here just to adjust users' spotsList
+                    let posters = spot.visitorList
                     
-                    let spotID = postCopy.spotID!
-                    postVC.postDelete(postsList: [postCopy], spotID: "")
-                    postVC.spotDelete(spotID: spotID)
-                    postVC.userDelete(spot: spot)
-                    
+                    functions.httpsCallable("postDelete").call(["postIDs": [postCopy.id], "spotID": spotID, "uid": self.uid, "posters": posters, "postTag": postCopy.tag ?? "", "spotDelete": true]) { result, error in
+                        print("result", result?.data as Any, error as Any)
+                    }
+
                     postVC.mapVC.deletedSpotIDs.append(spotID)
                     
+                    /// pass spotDelete noti and pop off of spot page if applicable
                     DispatchQueue.main.async {
                         let infoPass: [String: Any] = ["spotID": spotID as Any]
                         NotificationCenter.default.post(name: Notification.Name("DeleteSpot"), object: nil, userInfo: infoPass)
-                    }
-                    
-                    if let spotVC = postVC.parent as? SpotViewController {
                         
-                        DispatchQueue.main.async {
+                        if let spotVC = postVC.parent as? SpotViewController {
                             postVC.willMove(toParent: nil)
                             postVC.view.removeFromSuperview()
                             postVC.removeFromParent()
@@ -2369,14 +2374,22 @@ extension PostCell {
                     }
                     
                 } else {
-                    /// pass spotID through to delete post info from spot page when not deleting the spot
-                    postVC.postDelete(postsList: [postCopy], spotID: postCopy.spotID ?? "")
-
-                    /// remove post from this users spotsList document or remove from users spotsList
-                    postVC.checkUserSpotsOnPostDelete(spotID: postCopy.spotID!, deletedID: deletePost.id!)
                     
-                    /// spot score incremented in delete spot method otherwise
-                    self.incrementSpotScore(user: self.uid, increment: -3)
+                    var posters = deletePost.addedUsers ?? []
+                    posters.append(self.uid)
+
+                    functions.httpsCallable("postDelete").call(["postIDs": [postCopy.id], "spotID": spotID, "uid": self.uid, "saspotDelete": false, "posters": posters, "postTag": postCopy.tag ?? ""]) { result, error in
+                        print("result", result?.data)
+                        guard let data = result?.data as? [String: Any], let userDelete = data["userDelete"] as? Bool else { return }
+                        print("user delete", userDelete)
+                        /// send local notification to remove from usersSpotsList if deleted here
+                        if userDelete {
+                            DispatchQueue.main.async {
+                                let infoPass: [String: Any] = ["spotID": spotID as Any]
+                                NotificationCenter.default.post(name: Notification.Name("DeleteSpot"), object: nil, userInfo: infoPass)
+                            }
+                        }
+                    }
                 }
             }
         }

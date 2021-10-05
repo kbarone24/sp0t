@@ -76,10 +76,10 @@ class UploadChooseSpotCell: UITableViewCell {
             chooseSpotCollection.delegate = self
             chooseSpotCollection.dataSource = self
             chooseSpotCollection.showsHorizontalScrollIndicator = false
-            chooseSpotCollection.setCollectionViewLayout(layout, animated: false)
             chooseSpotCollection.register(ChooseSpotCollectionCell.self, forCellWithReuseIdentifier: "ChooseSpotCollection")
             chooseSpotCollection.register(AddSpotCell.self, forCellWithReuseIdentifier: "AddSpot")
             chooseSpotCollection.register(SeeAllCell.self, forCellWithReuseIdentifier: "SeeAll")
+            chooseSpotCollection.setCollectionViewLayout(layout, animated: false)
             contentView.addSubview(chooseSpotCollection)
             
             chooseSpotCollection.reloadSections(IndexSet(0...0))
@@ -133,7 +133,7 @@ extension UploadChooseSpotCell: UICollectionViewDelegate, UICollectionViewDataSo
         
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ChooseSpotCollection", for: indexPath) as? ChooseSpotCollectionCell else { return UICollectionViewCell() }
         
-        let spot = UploadImageModel.shared.nearbySpots[indexPath.row - 1]
+        guard let spot = UploadImageModel.shared.nearbySpots[safe: indexPath.row - 1] else { return UICollectionViewCell() }
         cell.setUp(spot: spot)
         if spot.selected! { alpha = 1.0 }
         cell.setAlphas(alpha: alpha)
@@ -143,10 +143,10 @@ extension UploadChooseSpotCell: UICollectionViewDelegate, UICollectionViewDataSo
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         
-        if indexPath.row == 0 { return CGSize(width: 43, height: 43) }
-        if indexPath.row == min(UploadImageModel.shared.nearbySpots.count + 1, 8) { return CGSize(width: loaded && UploadImageModel.shared.nearbySpots.count == 0 ? 152 : 57, height: 43) } /// return full width if empty state, otherwise just "see all"
+        if indexPath.row == 0 { print("return 0"); return CGSize(width: 43, height: 43) }
+        if indexPath.row == min(UploadImageModel.shared.nearbySpots.count + 1, 8) { print("return size1"); return CGSize(width: loaded && UploadImageModel.shared.nearbySpots.count == 0 ? 152 : 57, height: 43) } /// return full width if empty state, otherwise just "see all"
         
-        let spot = UploadImageModel.shared.nearbySpots[indexPath.row - 1]
+        guard let spot = UploadImageModel.shared.nearbySpots[safe: indexPath.row - 1] else { return CGSize(width: 10, height: 10) }
         let cellWidth = getCellWidth(spot: spot)
         return CGSize(width: cellWidth, height: 43)
     }
