@@ -40,7 +40,11 @@ class UserDataModel {
         adminIDs.removeAll()
         friendIDs.removeAll()
         friendsList.removeAll()
+        
+        userInfo = nil
         userInfo = UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
+        userInfo.id = ""
+        
         userSpots.removeAll()
         userCity = ""
     }

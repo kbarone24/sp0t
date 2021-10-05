@@ -46,6 +46,7 @@ class UploadImageModel {
     }
     
     func destroy() {
+        nearbySpots.removeAll()
         selectedObjects.removeAll()
         imageObjects.removeAll()
         friendObjects.removeAll()

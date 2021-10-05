@@ -12,6 +12,7 @@ import CoreLocation
 import Photos
 import MapKit
 
+
 class PhotosContainerController: UIViewController {
         
     unowned var uploadVC: UploadPostController!

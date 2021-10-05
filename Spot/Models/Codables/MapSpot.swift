@@ -34,7 +34,7 @@ struct MapSpot: Identifiable, Codable {
     var taggedUsers: [String]? = []
     var city: String? = ""
     var phone: String? = ""
-    var poiCategory: String? = ""
+    var poiCategory: String? ///  poi category is a nil value to check on uploadPost for spot v poi
     
     var checkInTime: Int64 = 0
     var friendVisitors = 0
@@ -53,7 +53,6 @@ struct MapSpot: Identifiable, Codable {
         case privacyLevel
         case visitorList
         case inviteList
-        case tags
         case imageURL
         case taggedUsers
         case spotLat

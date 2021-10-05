@@ -13,6 +13,7 @@ import Photos
 import Firebase
 import Geofirestore
 import MapKit
+import FirebaseFunctions
 
 extension UIViewController {
     //reverse geocode should a string based on lat/long input and amount of detail that it wants to return
@@ -259,12 +260,9 @@ extension UIViewController {
             factor = multiplier
             
             postScore *= factor
-            print("post score", postScore)
             scoreMultiplier += postScore
         } }
 
-        print("score multiplier", spot.spotName, scoreMultiplier)
-        print("distance adjustment", spot.spotName, pow(distance, 1.8))
         let finalScore = scoreMultiplier/pow(distance, 1.7)
         return finalScore
     }
@@ -407,206 +405,6 @@ extension UIViewController {
         }) { _,_ in  }
     }
     
-    func checkUserSpotsOnPostDelete(spotID: String, deletedID: String) {
-        
-        if spotID == "" { return }
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        let db: Firestore = Firestore.firestore()
-        
-        var deleteUser = true
-        db.collection("spots").document(spotID).getDocument { (snap, err) in
-            
-            do {
-                let spot = try snap?.data(as: MapSpot.self)
-                guard let spotInfo = spot else { return }
-                
-                if spotInfo.postIDs.count == 0 { return }
-                for i in 0 ... spotInfo.postIDs.count - 1 {
-                    if spotInfo.postIDs[i] != deletedID && spotInfo.posterIDs[i] == uid {
-                        deleteUser = false
-                    }
-                    
-                    if i == spotInfo.postIDs.count - 1 {
-                        /// if we didn't find a post with current users uid, remove from that users spot list, remove that user from the visitor list
-                        if deleteUser {
-                            db.collection("users").document(uid).collection("spotsList").document(spotID).delete()
-                            DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("UserListRemove"), object: nil, userInfo: ["spotID" : spotID]) }
-                            db.collection("spots").document(spotID).updateData(["visitorList" : FieldValue.arrayRemove([uid])])
-                        } else {
-                            /// else remove the post from postslist in spotsList
-                            db.collection("users").document(uid).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayRemove([deletedID])])
-                        }
-                    }
-                }
-            } catch { return }
-        }
-    }
-    
-    /// on spot delete (could be multiple posts / visitors)
-    func userDelete(spot: MapSpot) {
-        
-        let db: Firestore = Firestore.firestore()
-
-        for visitor in spot.visitorList {
-            db.collection("users").document(visitor).collection("spotsList").document(spot.id!).delete()
-        }
-        
-        for invite in spot.inviteList ?? [] {
-            if !spot.visitorList.contains(invite) {            db.collection("users").document(invite).collection("spotsList").document(spot.id!).delete()
-            }
-        }
-    }
-    
-    /// on post delete (1 post / 1 user)
-    func userDelete(spotID: String) {
-        let db: Firestore = Firestore.firestore()
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        db.collection("users").document(uid).collection("spotsList").document(spotID).delete()
-    }
-    
-    func spotNotificationDelete(spot: MapSpot) {
-        //delete any spot level notifications
-        
-        let db: Firestore = Firestore.firestore()
-
-        for visitor in spot.visitorList {
-            let postNotiRef = db.collection("users").document(visitor).collection("notifications")
-            let query = postNotiRef.whereField("spotID", isEqualTo: spot.id!)
-            query.getDocuments { (querysnapshot, err) in
-                for doc in querysnapshot!.documents {
-                    doc.reference.delete()
-                }
-            }
-        }
-        
-        for invite in spot.inviteList ?? [] {
-            let postNotiRef = db.collection("users").document(invite).collection("notifications")
-            let query = postNotiRef.whereField("spotID", isEqualTo: spot.id!)
-            query.getDocuments { (querysnapshot, err) in
-                for doc in querysnapshot!.documents {
-                    doc.reference.delete()
-                }
-            }
-        }
-    }
-    
-    func spotDelete(spotID: String) {
-        
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        let db: Firestore = Firestore.firestore()
-        
-        self.incrementSpotScore(user: uid, increment: -6)
-        db.collection("spots").document(spotID).delete()
-        
-        /// user delete for each user on spot page
-    }
-    
-    func postNotificationDelete(createdBy: String, posterID: String, postID: String) {
-        
-        let db: Firestore = Firestore.firestore()
-
-        let postNotiRef = db.collection("users").document(posterID).collection("notifications")
-        let query = postNotiRef.whereField("postID", isEqualTo: postID)
-        
-        query.getDocuments {(querysnapshot, err) in
-
-            for doc in querysnapshot!.documents {
-                doc.reference.delete()
-            }
-        }
-        
-        if createdBy != "" {
-            
-            let spotNotiRef = db.collection("users").document(createdBy).collection("notifications")
-            let spotQuery = spotNotiRef.whereField("postID", isEqualTo: postID)
-            spotQuery.getDocuments {(querysnapshot, err) in
-                
-                for doc in querysnapshot!.documents {
-                    doc.reference.delete()
-                }
-            }
-        }
-    }
-    
-    func postDelete(postsList: [MapPost], spotID: String) {
-        ///delete all spot posts / post objects and comments
-        /// spotID != "" when spot isn't being deleted
-        
-        let db: Firestore = Firestore.firestore()
-        for post in postsList {
-            
-            let postRef = db.collection("posts").document(post.id!)
-            postRef.collection("comments").getDocuments { (querysnapshot, err) in
-
-                if querysnapshot?.documents.count == 0 || err != nil { postRef.delete() }
-                
-                for doc in querysnapshot!.documents {
-                    postRef.collection("comments").document(doc.documentID).delete()
-                    
-                    if doc == querysnapshot?.documents.last {
-                        self.postNotificationDelete(createdBy: post.createdBy ?? "", posterID: post.posterID, postID: post.id! )
-                        
-                        /// spotID != "" when the spot is not being deleted -> need to run transaction
-                        if spotID != "" {
-                                                        
-                            /// can be identical values for posterIDs + postPrivacies so need to run transactions
-                            let db: Firestore! = Firestore.firestore()
-                            let ref = db.collection("spots").document(spotID)
-                            
-                            db.runTransaction({ (transaction, errorPointer) -> Any? in
-                                
-                                let myDoc: DocumentSnapshot
-                                do {
-                                    try myDoc = transaction.getDocument(ref)
-                                } catch let fetchError as NSError {
-                                    errorPointer?.pointee = fetchError
-                                    return nil
-                                }
-                                
-                                var postIDs: [String] = []
-                                var postTimestamps: [Firebase.Timestamp] = []
-                                var posterIDs: [String] = []
-                                var postPrivacies: [String] = []
-                                
-                                postIDs = myDoc.data()?["postIDs"] as? [String] ?? []
-                                let arrayIndex = postIDs.firstIndex(where: {$0 == post.id!}) ?? 0
-
-                                postTimestamps = myDoc.data()?["postTimestamps"] as? [Firebase.Timestamp] ?? []
-                                posterIDs = myDoc.data()?["posterIDs"] as? [String] ?? []
-                                postPrivacies = myDoc.data()?["postPrivacies"] as? [String] ?? []
-                                
-                                if postIDs.count > arrayIndex { postIDs.remove(at: arrayIndex) }
-                                
-                                if postTimestamps.count > arrayIndex { postTimestamps.remove(at: arrayIndex) }
-                                
-                                if posterIDs.count > arrayIndex { posterIDs.remove(at: arrayIndex) }
-                                
-                                if postPrivacies.count > arrayIndex {
-                                    postPrivacies.remove(at: arrayIndex)
-                                }
-                                
-                                    transaction.updateData([
-                                        "postIDs": postIDs,
-                                        "postTimestamps": postTimestamps,
-                                        "posterIDs" : posterIDs,
-                                        "postPrivacies" : postPrivacies
-                                    ], forDocument: ref)
-                                
-                                return nil
-                                
-                            }) { (object, error) in
-                                if error != nil {
-                                    postRef.delete()
-                                } else {
-                                    postRef.delete()
-                                }
-                            }
-                        } else { postRef.delete() }
-                    }
-                }
-            }
-        }
-    }
     
     func removeFriendFromPosts(posterID: String, friendID: String, completion: @escaping (_ complete: Bool) -> Void) {
         
@@ -916,6 +714,235 @@ extension UIViewController {
     }
 }
 
+/// upload post functions
+extension UIViewController {
+    
+    func uploadPost(post: MapPost, actualTimestamp: Date) {
+        
+        let interval = Date().timeIntervalSince1970
+        let postTimestamp = Date(timeIntervalSince1970: TimeInterval(interval))
+        
+        let postValues = ["caption" : post.caption,
+                          "posterID": post.posterID,
+                          "likers": [],
+                          "actualTimestamp": actualTimestamp,
+                          "timestamp": postTimestamp,
+                          "taggedUsers": post.taggedUsers!,
+                          "gif": post.gif!,
+                          "postLat": post.postLat,
+                          "postLong": post.postLong,
+                          "privacyLevel": post.privacyLevel!,
+                          "imageURLs" : post.imageURLs,
+                          "frameIndexes" : post.frameIndexes!,
+                          "aspectRatios" : post.aspectRatios!,
+                          "spotName" : post.spotName!,
+                          "createdBy": post.createdBy!,
+                          "city" : post.city!,
+                          "inviteList" : post.inviteList!,
+                          "friendsList" : post.friendsList,
+                          "spotID": post.spotID!,
+                          "spotLat": post.spotLat!,
+                          "spotLong": post.spotLong!,
+                          "spotPrivacy" : post.spotPrivacy!,
+                          "hideFromFeed": post.hideFromFeed!,
+                          "addedUsers" : post.addedUsers!,
+                          "tag" : post.tag!
+        ] as [String : Any]
+
+        let commentValues = ["commenterID" : post.posterID,
+                             "comment" : post.caption,
+                             "timestamp" : postTimestamp,
+                             "taggedUsers": post.taggedUsers!] as [String : Any]
+        let commentID = UUID().uuidString
+        
+        var notiPost = post
+        let commentObject = MapComment(id: commentID, comment: post.caption, commenterID: post.posterID, timestamp: Timestamp(date: postTimestamp as Date), userInfo: UserDataModel.shared.userInfo, taggedUsers: post.taggedUsers, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(interval))
+        notiPost.commentList = [commentObject]
+        
+        
+        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
+        
+        let db = Firestore.firestore()
+        db.collection("posts").document(post.id!).setData(postValues)
+        db.collection("posts").document(post.id!).collection("comments").document(commentID).setData(commentValues, merge:true)
+        
+    }
+    
+    func uploadPostImage(_ images: [UIImage], postID: String, progressView: UIProgressView, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
+        
+        if images.isEmpty { completion([], false); return } /// complete immediately for no  image post
+        
+        var index = 0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+            if progressView.progress != 1.0 {
+                completion([], true)
+                return
+            }
+        }
+        
+        var progress = 0.7/Double(images.count)
+        print("progress", progress)
+        var URLs: [String] = []
+        for _ in images {
+            URLs.append("")
+        }
+        for image in images {
+            let imageID = UUID().uuidString
+            let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageID)")
+            
+            guard var imageData = image.jpegData(compressionQuality: 0.5) else { completion([], true); return }
+            
+            if imageData.count > 1000000 {
+                imageData = image.jpegData(compressionQuality: 0.3)!
+            }
+            
+            let metadata = StorageMetadata()
+            metadata.contentType = "image/jpeg"
+            
+            DispatchQueue.global(qos: .userInitiated).async {
+                storageRef.putData(imageData, metadata: metadata) { metadata, error in
+                    
+                    if error != nil { completion([], true); return }
+                    storageRef.downloadURL { (url, err) in
+                        if error != nil { completion([], true); return }
+                        let urlString = url!.absoluteString
+                        
+                        let i = images.lastIndex(where: {$0 == image})
+                        URLs[i ?? 0] = urlString
+                        
+                        DispatchQueue.main.async {
+                            progressView.setProgress(Float(0.3 + progress), animated: true)
+                        }
+                        
+                        progress = progress * Double(index + 1)
+                        
+                        index += 1
+                        if index == images.count {
+                            DispatchQueue.main.async {
+                                completion(URLs, false)
+                                return
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    func uploadSpot(post: MapPost, spot: MapSpot, postType: UploadPostController.PostType, submitPublic: Bool) {
+        
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
+        let db: Firestore = Firestore.firestore()
+        
+        let interval = Date().timeIntervalSince1970
+        let timestamp = Date(timeIntervalSince1970: TimeInterval(interval))
+
+        switch postType {
+        case .newSpot, .postToPOI:
+            
+            let lowercaseName = spot.spotName.lowercased()
+            let keywords = lowercaseName.getKeywordArray()
+            
+            var tagDictionary: [String: Any] = [:]
+            if post.tag ?? "" != "" {
+                tagDictionary.updateValue(1, forKey: post.tag!)
+            }
+            
+            var spotVisitors = [uid]
+            spotVisitors.append(contentsOf: post.addedUsers ?? [])
+            
+            var posterDictionary: [String: Any] = [:]
+            posterDictionary[post.id!] = spotVisitors
+            
+            let spotValues =  ["city" : post.city ?? "",
+                               "spotName" : spot.spotName,
+                               "lowercaseName": lowercaseName,
+                               "description": post.caption,
+                               "createdBy": uid,
+                               "posterUsername" : UserDataModel.shared.userInfo.username,
+                               "visitorList": spotVisitors,
+                               "inviteList" : post.inviteList ?? [],
+                               "privacyLevel": spot.privacyLevel,
+                               "taggedUsers": post.taggedUsers ?? [],
+                               "spotLat": spot.spotLat,
+                               "spotLong" : spot.spotLong,
+                               "imageURL" : post.imageURLs.first ?? "",
+                               "phone" : spot.phone ?? "",
+                               "postIDs": [post.id!],
+                               "postTimestamps": [timestamp],
+                               "posterIDs": [uid],
+                               "postPrivacies": [post.privacyLevel!],
+                               "searchKeywords": keywords,
+                               "tagDictionary": tagDictionary,
+                               "posterDictionary": posterDictionary] as [String : Any]
+            
+            
+            db.collection("spots").document(spot.id!).setData(spotValues, merge: true)
+            
+            
+            
+            /// visitorList empty here since new spot
+            setUserValues(poster: uid, post: post, spotID: spot.id!, visitorList: [])
+                        
+            if submitPublic { db.collection("submissions").document(spot.id!).setData(["spotID" : spot.id!])}
+            self.setSpotLocations(spotLocation: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), spotID: spot.id!)
+            
+            var notiSpot = spot
+            notiSpot.checkInTime = Int64(interval)
+            NotificationCenter.default.post(name: NSNotification.Name("NewSpot"), object: nil, userInfo: ["spot" : notiSpot])
+            
+            /// add city to list of cities if this is the first post there
+            self.addToCityList(city: post.city ?? "")
+            
+            /// increment users spot score by 6
+        default:
+            
+            setUserValues(poster: uid, post: post, spotID: spot.id!, visitorList: spot.visitorList)
+            
+            /// run spot transactions
+            var posters = post.addedUsers ?? []
+            posters.append(uid)
+
+            let functions = Functions.functions()
+            functions.httpsCallable("runSpotTransactions").call(["spotID": spot.id!, "postID": post.id!, "uid": uid, "postPrivacy": post.privacyLevel!, "postTag": post.tag ?? "", "posters": posters]) { result, error in
+                print(result?.data as Any, error as Any)
+            }
+        }
+    }
+    
+    func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String]) {
+        
+        let tag = post.tag ?? ""
+        let addedUsers = post.addedUsers ?? []
+        
+        var posters = [poster]
+        posters.append(contentsOf: addedUsers)
+        
+        let db: Firestore = Firestore.firestore()
+        
+        // adjust user values for added users
+        for poster in posters {
+            
+            if visitorList.contains(where: {$0 == poster}) {
+                db.collection("users").document(poster).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayUnion([post.id!])])
+            } else {
+                db.collection("users").document(poster).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : post.timestamp, "postsList" : [post.id!], "city": post.city!], merge:true)
+            }
+
+            /// increment addedUsers spotScore by 1
+            var userValues = ["spotScore" : FieldValue.increment(Int64(3))]
+            if tag != "" { userValues["tagDictionary.\(tag)"] = FieldValue.increment(Int64(1)) }
+            
+            /// remove this user for topFriends increments
+            var dictionaryFriends = posters
+            dictionaryFriends.removeAll(where: {$0 == poster})
+            for user in dictionaryFriends { userValues["topFriends.\(user)"] = FieldValue.increment(Int64(1)) } /// increment top friends if added friends
+            
+            db.collection("users").document(poster).updateData(userValues)
+        }
+    }
+}
+
 extension CLPlacemark {
     
     func addressFormatter(number: Bool) -> String {
@@ -989,9 +1016,7 @@ extension UITableViewCell {
         let notiID = UUID().uuidString
         let ref = db.collection("users").document(receiverID).collection("notifications").document(notiID)
         
-        let timestamp = NSDate().timeIntervalSince1970
-        let myTimeInterval = TimeInterval(timestamp)
-        let time = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
+        let time = Date()
         
         let values = ["senderID" : uid,
                       "type" : "friendRequest",
