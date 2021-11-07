@@ -16,7 +16,6 @@ class UploadImageModel {
     lazy var selectedObjects: [ImageObject] = []
     lazy var imageObjects: [(image: ImageObject, selected: Bool)] = []
     lazy var nearbySpots: [MapSpot] = []
-    lazy var friendObjects: [UserProfile] = [] 
     
     var cameraAccess: AVAuthorizationStatus = .notDetermined
     var micAccess: AVAudioSession.RecordPermission = .undetermined
@@ -49,7 +48,6 @@ class UploadImageModel {
         nearbySpots.removeAll()
         selectedObjects.removeAll()
         imageObjects.removeAll()
-        friendObjects.removeAll()
         assetsFull = nil
     }
 }

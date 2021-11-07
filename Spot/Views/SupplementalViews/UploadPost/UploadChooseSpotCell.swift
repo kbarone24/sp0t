@@ -24,8 +24,8 @@ class UploadChooseSpotCell: UITableViewCell {
 
     func setUp(newSpotName: String, post: MapPost) {
         
-        backgroundColor = .black
-        contentView.backgroundColor = .black
+        backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
+        contentView.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
                 
         resetView()
         
@@ -72,7 +72,8 @@ class UploadChooseSpotCell: UITableViewCell {
             layout.sectionInset = UIEdgeInsets(top: 0, left: 13, bottom: 0, right: 13)
             
             chooseSpotCollection.frame = CGRect(x: 0, y: 39, width: UIScreen.main.bounds.width, height: 43)
-            chooseSpotCollection.backgroundColor = .black
+            chooseSpotCollection.backgroundColor = nil
+
             chooseSpotCollection.delegate = self
             chooseSpotCollection.dataSource = self
             chooseSpotCollection.showsHorizontalScrollIndicator = false
@@ -143,8 +144,8 @@ extension UploadChooseSpotCell: UICollectionViewDelegate, UICollectionViewDataSo
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         
-        if indexPath.row == 0 { print("return 0"); return CGSize(width: 43, height: 43) }
-        if indexPath.row == min(UploadImageModel.shared.nearbySpots.count + 1, 8) { print("return size1"); return CGSize(width: loaded && UploadImageModel.shared.nearbySpots.count == 0 ? 152 : 57, height: 43) } /// return full width if empty state, otherwise just "see all"
+        if indexPath.row == 0 { return CGSize(width: 43, height: 43) }
+        if indexPath.row == min(UploadImageModel.shared.nearbySpots.count + 1, 8) { return CGSize(width: loaded && UploadImageModel.shared.nearbySpots.count == 0 ? 152 : 57, height: 43) } /// return full width if empty state, otherwise just "see all"
         
         guard let spot = UploadImageModel.shared.nearbySpots[safe: indexPath.row - 1] else { return CGSize(width: 10, height: 10) }
         let cellWidth = getCellWidth(spot: spot)
@@ -169,7 +170,7 @@ extension UploadChooseSpotCell: UICollectionViewDelegate, UICollectionViewDataSo
         }
         
         /// select id, spot/poi, reload parent which will reload the cell -> this is kind of sloppy
-        let spot = UploadImageModel.shared.nearbySpots[indexPath.row - 1]
+        guard let spot = UploadImageModel.shared.nearbySpots[safe: indexPath.row - 1] else { return }
         uploadVC.selectSpot(index: indexPath.row - 1, select: !spot.selected!, fromMap: false)
     }
     
@@ -280,7 +281,7 @@ class ChooseSpotCollectionCell: UICollectionViewCell {
         if spotName != nil { spotName.text = "" }
         spotName = UILabel(frame: CGRect(x: 8, y: 5, width: self.bounds.width - 16, height: 18.5))
         spotName.text = spot.spotName
-        spotName.textColor = UIColor(red: 0.567, green: 0.567, blue: 0.567, alpha: 1)
+        spotName.textColor = UIColor(red: 0.565, green: 0.565, blue: 0.565, alpha: 1)
         spotName.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
         addSubview(spotName)
         
@@ -288,7 +289,7 @@ class ChooseSpotCollectionCell: UICollectionViewCell {
         detailView = UILabel(frame: CGRect(x: 9, y: spotName.frame.maxY, width: self.bounds.width - 18, height: 15))
         detailView.text = spot.spotDescription
         detailView.font = UIFont(name: "SFCamera-Semibold", size: 11)
-        detailView.textColor = UIColor(red: 0.34, green: 0.34, blue: 0.34, alpha: 1.00)
+        detailView.textColor = UIColor(red: 0.342, green: 0.342, blue: 0.342, alpha: 1)
         addSubview(detailView)
         
         /// highlight founder username if applicable

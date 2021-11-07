@@ -17,6 +17,8 @@ extension SpotDraft {
         return NSFetchRequest<SpotDraft>(entityName: "SpotDraft")
     }
     
+    @NSManaged public var addedUsers: [String]?
+    @NSManaged public var aspectRatios: [Float]?
     @NSManaged public var spotName: String?
     @NSManaged public var spotDescription: String?
     @NSManaged public var tags: [String]?
@@ -32,12 +34,14 @@ extension SpotDraft {
     @NSManaged public var uid: String?
     @NSManaged public var privacyLevel: String?
     @NSManaged public var inviteList: [String]?
+    @NSManaged public var friendsList: [String]?
     @NSManaged public var phone: String?
     @NSManaged public var submitPublic: Bool
     @NSManaged public var postToPOI: Bool
     @NSManaged public var hideFromFeed: Bool
     @NSManaged public var frameIndexes: [Int]?
     @NSManaged public var gif: Bool
+    @NSManaged public var city: String?
 }
 
 // MARK: Generated accessors for images

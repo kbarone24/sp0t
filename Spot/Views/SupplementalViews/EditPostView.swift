@@ -15,6 +15,7 @@ import Mixpanel
 
 class EditPostView: UIView, UITextViewDelegate {
     
+    var row = 0
     var postingToView: UIView!
     var spotNameLabel: UILabel!
     
@@ -101,14 +102,20 @@ class EditPostView: UIView, UITextViewDelegate {
         captionView.backgroundColor = nil
         self.addSubview(captionView)
         
-        postImage = UIImageView(frame: CGRect(x: 14, y: 36, width: 71, height: 99))
-        postImage.image = post.postImage.first ?? UIImage(color: UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1.0))
-        postImage.clipsToBounds = true
-        postImage.layer.cornerRadius = 3.33
-        postImage.contentMode = .scaleAspectFill
-        captionView.addSubview(postImage)
+        var minX: CGFloat = 14
         
-        timestampLabel = UILabel(frame: CGRect(x: postImage.frame.maxX + 12, y: postImage.frame.minY + 2, width: 100, height: 15))
+        if post.postImage.first ?? UIImage() != UIImage() {
+            postImage = UIImageView(frame: CGRect(x: minX, y: 36, width: 71, height: 99))
+            postImage.image = post.postImage.first ?? UIImage(color: UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1.0))
+            postImage.clipsToBounds = true
+            postImage.layer.cornerRadius = 3.33
+            postImage.contentMode = .scaleAspectFill
+            captionView.addSubview(postImage)
+            
+            minX += 80
+        }
+        
+        timestampLabel = UILabel(frame: CGRect(x: minX + 3, y: 38, width: 100, height: 15))
         let postTimestamp = post.actualTimestamp == nil ? post.timestamp : post.actualTimestamp
         timestampLabel.text = getDateTimestamp(postTime: postTimestamp!)
         timestampLabel.textColor = UIColor(red: 0.442, green: 0.442, blue: 0.442, alpha: 1)
@@ -125,7 +132,7 @@ class EditPostView: UIView, UITextViewDelegate {
         editButton.addTarget(self, action: #selector(editDateTap(_:)), for: .touchUpInside)
         captionView.addSubview(editButton)
         
-        postCaption = VerticallyCenteredTextView(frame: CGRect(x: postImage.frame.maxX + 9, y: editImage.frame.maxY + 7, width: 219, height: 80))
+        postCaption = VerticallyCenteredTextView(frame: CGRect(x: minX, y: editImage.frame.maxY + 7, width: bounds.width - minX - 14, height: 80))
         postCaption.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         
         if post.caption == "" {
@@ -319,7 +326,7 @@ class EditPostView: UIView, UITextViewDelegate {
             privacyLabel.sizeToFit()
             
             friendCount.frame = CGRect(x: privacyIcon.frame.maxX + 8, y: privacyLabel.frame.maxY + 2, width: 70, height: 14)
-            var countText = "\(post.inviteList?.count ?? 0) friend"
+            var countText = "\(post.inviteList?.count ?? 1) friend"
             if post.inviteList?.count != 1 { countText += "s"}
             friendCount.text = countText
             friendCount.sizeToFit()
@@ -342,7 +349,7 @@ class EditPostView: UIView, UITextViewDelegate {
     
     @objc func editAddress(_ sender: UIButton) {
         
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
+  /*      if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
             
             vc.selectedImages = post.postImage
             vc.passedLocation = CLLocation(latitude: post.postLat, longitude: post.postLong)
@@ -356,7 +363,7 @@ class EditPostView: UIView, UITextViewDelegate {
             postVC.addedLocationPicker = true
             
             removeEditPost()
-        }
+        } */
     }
     
     @objc func actionTap(_ sender: UIButton) {
@@ -471,23 +478,23 @@ class EditPostView: UIView, UITextViewDelegate {
         taggedUsernames = selectedUsers.map({$0.username})
         
         
-        postVC.postsList[postVC.selectedPostIndex].caption = captionText ?? ""
-        postVC.postsList[postVC.selectedPostIndex].taggedUsers = taggedUsernames
-        postVC.postsList[postVC.selectedPostIndex].postLong = postVC.editedPost.postLong
-        postVC.postsList[postVC.selectedPostIndex].postLat = postVC.editedPost.postLat
-        postVC.postsList[postVC.selectedPostIndex].privacyLevel = postVC.editedPost.privacyLevel
-        postVC.postsList[postVC.selectedPostIndex] = postVC.setSecondaryPostValues(post: postVC.postsList[postVC.selectedPostIndex])
+        postVC.postsList[row].caption = captionText ?? ""
+        postVC.postsList[row].taggedUsers = taggedUsernames
+        postVC.postsList[row].postLong = postVC.editedPost.postLong
+        postVC.postsList[row].postLat = postVC.editedPost.postLat
+        postVC.postsList[row].privacyLevel = postVC.editedPost.privacyLevel
+        postVC.postsList[row] = postVC.setSecondaryPostValues(post: postVC.postsList[row])
         
-        if editedDate { postVC.postsList[postVC.selectedPostIndex].actualTimestamp = postVC.editedPost.actualTimestamp }
+        if editedDate { postVC.postsList[row].actualTimestamp = postVC.editedPost.actualTimestamp }
         
-        let uploadPost = postVC.postsList[postVC.selectedPostIndex]
+        let uploadPost = postVC.postsList[row]
         
         postVC.editedPost = nil
         postVC.editPostView = false
                 
         //reset annotation
         postVC.mapVC.postsList = postVC.postsList
-        let mapPass = ["selectedPost": postVC.selectedPostIndex as Any, "firstOpen": false, "parentVC": postVC.parentVC] as [String : Any]
+        let mapPass = ["selectedPost": row as Any, "firstOpen": false, "parentVC": postVC.parentVC] as [String : Any]
         let infoPass: [String: Any] = ["post": uploadPost as Any]
         
         DispatchQueue.main.async {

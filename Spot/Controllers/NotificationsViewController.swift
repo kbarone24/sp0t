@@ -70,7 +70,6 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         getNotifications(refresh: false)
         getFriendRequests()
-        removeSeen()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -343,17 +342,17 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             completion(UserDataModel.shared.userInfo)
             
         } else {
+
             db.collection("users").document(userID).getDocument { (doc, err) in
                 if err != nil { return }
 
                 do {
                     let userInfo = try doc!.data(as: UserProfile.self)
                     guard var info = userInfo else { return }
-                    print("fetch", info.username)
                     info.id = doc!.documentID
                     completion(info)
                     
-                } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")); return }
+                } catch { print("catch"); completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")); return }
             }
         }
     }
@@ -448,7 +447,8 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         if (self.activityIndicator.isAnimating()) { self.activityIndicator.stopAnimating() }
     }
     
-    func removeSeen() {
+    func markNotisSeen() {
+        
         let notiRef = db.collection("users").document(uid).collection("notifications")
         let query = notiRef.whereField("seen", isEqualTo: false)
         
@@ -476,29 +476,32 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             }
         }
     }
-    
-    func markNotisSeen() {
         
-        let notiRef = db.collection("users").document(uid).collection("notifications")
-        let query = notiRef.whereField("seen", isEqualTo: false)
-        
-        query.getDocuments { (docs, err) in
-            if err != nil { return }
-            if docs!.count > 0 { }
-            for doc in docs!.documents {
-                self.db.collection("users").document(self.uid).collection("notifications").document(doc.documentID).updateData(["seen" : true])
-            }
-        }
-    }
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return notificationList.count
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch notificationList[indexPath.row].superType {
+            
         case 0: return 80
-        default: return 170
+            
+        // smaller cell for no imageURL
+        case 1:
+            if (postNotifications.isEmpty) { return 0 }
+            let currentNotificationID = notificationList[indexPath.row].notiID
+            let currentRequest = postNotifications.first(where: {$0.notiID == currentNotificationID })
+            if currentRequest?.post.imageURLs.isEmpty ?? true { return 80 }
+            return 170
+
+        case 2:
+            if (spotNotifications.isEmpty) { return 0 }
+            let currentNotificationID = notificationList[indexPath.row].notiID
+            let currentRequest = spotNotifications.first(where: {$0.notiID == currentNotificationID })
+            if currentRequest?.spot.imageURL == "" { return 80 }
+            return 170
+            
+        default: return 0
         }
     }
     
@@ -571,7 +574,6 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         if !friendsEmpty { return }
         getNotifications(refresh: false)
         getFriendRequests()
-        removeSeen()
     }
     
     
@@ -797,7 +799,7 @@ class FriendRequestCell: UITableViewCell {
         self.removeButton.setImage(UIImage(), for: .normal)
         
         let friendID = userInfo.id!
-        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID, uid: self.uid, username: self.username) }
+        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID) }
         
         let infoPass = ["friendID": friendID] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("FriendRequestAccept"), object: nil, userInfo: infoPass)
@@ -888,19 +890,21 @@ class PostNotificationCell: UITableViewCell {
         detail.lineBreakMode = .byWordWrapping
         self.addSubview(detail)
         
-        contentImage = UIImageView(frame: CGRect(x: 103, y: 78, width: 50, height: 75))
-        contentImage.layer.cornerRadius = 3
-        contentImage.clipsToBounds = true
-        contentImage.contentMode = .scaleAspectFill
-        contentImage.isHidden = false
-        contentImage.isUserInteractionEnabled = true
-        contentImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openPost(_:))))
-        self.addSubview(contentImage)
-                
-        let contentURL = notification.post.imageURLs.first ?? ""
-        if contentURL != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 200), scaleMode: .aspectFill)
-            contentImage.sd_setImage(with: URL(string: contentURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+        if !(notification.post.imageURLs.isEmpty) {
+            contentImage = UIImageView(frame: CGRect(x: 103, y: 78, width: 50, height: 75))
+            contentImage.layer.cornerRadius = 3
+            contentImage.clipsToBounds = true
+            contentImage.contentMode = .scaleAspectFill
+            contentImage.isHidden = false
+            contentImage.isUserInteractionEnabled = true
+            contentImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openPost(_:))))
+            self.addSubview(contentImage)
+                    
+            let contentURL = notification.post.imageURLs.first ?? ""
+            if contentURL != "" {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 200), scaleMode: .aspectFill)
+                contentImage.sd_setImage(with: URL(string: contentURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            }
         }
         
         if notification.type == "like" {
@@ -938,8 +942,16 @@ class PostNotificationCell: UITableViewCell {
             icon.frame = newFrame
             icon.image = UIImage(named: "PrivateNotiIcon") ?? UIImage()
             
+        } else if notification.type == "postAdd" {
+            detail.text = "added you to a post"
+            detail.sizeToFit()
+            var newFrame = icon.frame
+            newFrame.size.height = 18
+            icon.frame = newFrame
+            icon.image = UIImage(named: "PostNotification") ?? UIImage()
+            
         } else if notification.type == "commentTag" {
-            detail.text = "tagged you in a comment"
+            detail.text = "mentioned you in a comment"
             detail.sizeToFit()
             var newFrame = icon.frame
             newFrame.size.height = 16
@@ -957,14 +969,14 @@ class PostNotificationCell: UITableViewCell {
             icon.image = UIImage(named: "PlainSpotIcon") ?? UIImage()
             
         } else if notification.type == "postTag" {
-            detail.text = "tagged you in a post"
+            detail.text = "mentioned you in a post"
             detail.sizeToFit()
             var newFrame = icon.frame
             newFrame.size.height = 18
             icon.frame = newFrame
             icon.image = UIImage(named: "PostNotification") ?? UIImage()
             
-        } else if notification.type == "commentComment" {
+        } else if notification.type == "commentComment" || notification.type == "commentOnAdd" {
             detail.text = "commented on \(notification.originalPoster)'s post"
             detail.sizeToFit()
             var newFrame = icon.frame
@@ -972,6 +984,15 @@ class PostNotificationCell: UITableViewCell {
             newFrame.size.width = 16
             icon.frame = newFrame
             icon.image = UIImage(named: "CommentNotification") ?? UIImage()
+            
+        } else if notification.type == "likeOnAdd" {
+            detail.text = "liked \(notification.originalPoster)'s post"
+            detail.sizeToFit()
+            var newFrame = icon.frame
+            newFrame.size.width = 16
+            newFrame.size.height = 16
+            icon.frame = newFrame
+            icon.image = UIImage(named: "LikeNotification") ?? UIImage()
             
         } else if notification.type == "publicSpotAccepted" {
             detail.text = "Your public submission was approved!"
@@ -994,7 +1015,9 @@ class PostNotificationCell: UITableViewCell {
             icon.image = UIImage(named: "PublicSubmissionDenied") ?? UIImage()
         }
         
-        contentImage.frame = CGRect(x: contentImage.frame.minX, y: detail.frame.maxY + 10, width: contentImage.frame.width, height: contentImage.frame.height)
+        if contentImage != nil {
+            contentImage.frame = CGRect(x: contentImage.frame.minX, y: detail.frame.maxY + 10, width: contentImage.frame.width, height: contentImage.frame.height)
+        }
 
         usernameLabel.isHidden = false
     }
@@ -1133,19 +1156,21 @@ class SpotNotificationCell: UITableViewCell {
         detail.lineBreakMode = .byWordWrapping
         self.addSubview(detail)
         
-        spotImage = UIImageView(frame: CGRect(x: 103, y: 78, width: 50, height: 75))
-        spotImage.layer.cornerRadius = 3
-        spotImage.clipsToBounds = true
-        spotImage.contentMode = .scaleAspectFill
-        spotImage.isHidden = false
-        spotImage.isUserInteractionEnabled = true
-        spotImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openSpot(_:))))
-        self.addSubview(spotImage)
-                        
-        let contentURL = notification.spot.imageURL
-        if contentURL != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 200), scaleMode: .aspectFill)
-            spotImage.sd_setImage(with: URL(string: contentURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+        if (notification.spot.imageURL != "") {
+            spotImage = UIImageView(frame: CGRect(x: 103, y: 78, width: 50, height: 75))
+            spotImage.layer.cornerRadius = 3
+            spotImage.clipsToBounds = true
+            spotImage.contentMode = .scaleAspectFill
+            spotImage.isHidden = false
+            spotImage.isUserInteractionEnabled = true
+            spotImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openSpot(_:))))
+            self.addSubview(spotImage)
+                            
+            let contentURL = notification.spot.imageURL
+            if contentURL != "" {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 200), scaleMode: .aspectFill)
+                spotImage.sd_setImage(with: URL(string: contentURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            }
         }
         
         if notification.type == "invite" {

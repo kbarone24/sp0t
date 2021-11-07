@@ -55,7 +55,6 @@ class AVSpotCamera: NSObject {
         // Using the CachesDirectory ensures the file won't be included in a backup of the app.
         let fileManager = FileManager.default
         if let tmpDirURL = try? fileManager.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true) {
-            print("filename", videoFilename, videoFilenameExt)
             return tmpDirURL.appendingPathComponent(videoFilename).appendingPathExtension(videoFilenameExt)
         }
         fatalError("URLForDirectory() failed")
@@ -126,7 +125,7 @@ class AVSpotCamera: NSObject {
             if captureSession.canAddOutput(photoOutput!) { captureSession.addOutput(photoOutput!) }
             
             photoOutput!.isHighResolutionCaptureEnabled = true
-            setLiveEnabled()
+            setLiveEnabled(gifMode: false)
 
             captureSession.startRunning()
         }
@@ -153,8 +152,9 @@ class AVSpotCamera: NSObject {
         }
     }
     
-    func setLiveEnabled() {
-        let live = photoOutput!.isLivePhotoCaptureSupported
+    func setLiveEnabled(gifMode: Bool) {
+        print("gif mode", gifMode)
+        let live = photoOutput!.isLivePhotoCaptureSupported && gifMode
         photoOutput!.isLivePhotoCaptureEnabled = live
         photoOutput?.isLivePhotoAutoTrimmingEnabled = live
         liveEnabled = live
@@ -230,7 +230,7 @@ class AVSpotCamera: NSObject {
         else { throw CameraControllerError.invalidOperation }
     }
     
-    func captureImage(completion: @escaping (UIImage?, Error?, Bool?, Data?, URL?) -> Void) {
+    func captureImage(gifMode: Bool, completion: @escaping (UIImage?, Error?, Bool?, Data?, URL?) -> Void) {
         
         guard let captureSession = captureSession, captureSession.isRunning else { return }
         photoCaptureCompletionBlock = completion
@@ -240,8 +240,8 @@ class AVSpotCamera: NSObject {
         
         removeFileAtURL(fileURL: outputURL)
         
-        setLiveEnabled()
-        if liveEnabled { settings.livePhotoMovieFileURL = outputURL }
+        setLiveEnabled(gifMode: gifMode)
+        if liveEnabled && gifMode { settings.livePhotoMovieFileURL = outputURL }
         
         photoOutput?.capturePhoto(with: settings, delegate: self)
     }
@@ -255,7 +255,7 @@ extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputS
                      photoDisplayTime: CMTime,
                      resolvedSettings: AVCaptureResolvedPhotoSettings,
                      error: Error?) {
-                
+            
         self.photoCaptureCompletionBlock?(stillImage, error, liveEnabled, stillImageData, outputFileURL)
     }
     
@@ -271,6 +271,7 @@ extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputS
         let image = UIImage(data: data ?? Data())
         stillImage = image
         
+        print("live enabled here", liveEnabled)
         if !liveEnabled { self.photoCaptureCompletionBlock?(image, error, liveEnabled, data, URL(string: "")) }
     }
     

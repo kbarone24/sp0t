@@ -1265,10 +1265,8 @@ class NotFriendsCell: UITableViewCell {
         /// add friend in db
         Mixpanel.mainInstance().track(event: "ProfileFriendRequestAccepted")
 
-        let friendID = userInfo.id!
-        let uid = self.uid
-        
-        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID, uid: uid, username: self.activeUser.username) }
+        let friendID = userInfo.id!        
+        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID) }
                 
         let infoPass = ["friendID": friendID] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("FriendRequestAccept"), object: nil, userInfo: infoPass)
@@ -1472,57 +1470,23 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
         }
         
         status = .add
+        exitEditOverview()
         tableView.reloadData()
     }
     
     func makeFirebaseDeletes(friendID: String) {
-        
-        loadingIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 200, width: UIScreen.main.bounds.width, height: 30))
-        loadingIndicator.startAnimating()
-        editMask.addSubview(loadingIndicator)
-        
-        editMask.removeGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(tapExitEditOverview(_:))))
-        exitButton.isEnabled = false
-        
+
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
         
         DispatchQueue.global(qos: .userInitiated).async {
             
             /// remove from both users friendsLists
-            self.db.collection("users").document(uid).updateData(["friendsList" : FieldValue.arrayRemove([friendID])])
-            self.db.collection("users").document(friendID).updateData(["friendsList" : FieldValue.arrayRemove([uid])])
+            self.db.collection("users").document(uid).updateData(["friendsList" : FieldValue.arrayRemove([friendID]), "topFriends.\(friendID)": FieldValue.delete()])
+            self.db.collection("users").document(friendID).updateData(["friendsList" : FieldValue.arrayRemove([uid]), "topFriends.\(uid)": FieldValue.delete()])
             
-            // need to use deleteIndex because need to ensure that the deletes work before exiting. Eventually need to move to background thread
-            /// remove from both users posts
-            var deleteIndex = 0
-            
-            self.removeFriendFromPosts(posterID: uid, friendID: friendID) { (complete) in
-                deleteIndex += 1
-                if deleteIndex == 4 {
-                    self.exitEditOverview()
-                }
-            }
-            
-            self.removeFriendFromPosts(posterID: friendID, friendID: uid) { (complete) in
-                deleteIndex += 1
-                if deleteIndex == 4 {
-                    self.exitEditOverview()
-                }
-            }
-        
-            /// remove from both users notifications
-            self.removeFriendFromNotis(posterID: uid, friendID: friendID) { (complete) in
-                deleteIndex += 1
-                if deleteIndex == 4 {
-                    self.exitEditOverview()
-                }
-            }
-            
-            self.removeFriendFromNotis(posterID: friendID, friendID: uid) { (complete) in
-                deleteIndex += 1
-                if deleteIndex == 4 {
-                    self.exitEditOverview()
-                }
+            let functions = Functions.functions()
+            functions.httpsCallable("removeFriend").call(["userID": uid, "friendID": friendID]) { result, error in
+                print(result?.data as Any, error as Any)
             }
         }
     }
@@ -1533,7 +1497,7 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
         alert.addTextField { (textField) in textField.text = "" }
         alert.addAction(UIAlertAction(title: "Report", style: .destructive, handler: { action in
                                         
-                                        switch action.style{
+                                        switch action.style {
                                         
                                         case .default:
                                             return

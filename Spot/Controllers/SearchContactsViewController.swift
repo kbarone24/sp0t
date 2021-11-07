@@ -178,35 +178,15 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
         DispatchQueue.global(qos: .utility).async {
         
             let values = ["senderID" : uid,
+                          "senderUsername" : UserDataModel.shared.userInfo.username,
                           "type" : "friendRequest",
                           "timestamp" : time,
                           "status" : "pending",
                           "seen" : false
                 ] as [String : Any]
-            
             ref.setData(values)
 
             db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
-            
-            self.db.collection("users").document(receiverID).getDocument { (tokenSnap, err) in
-                            
-                if (tokenSnap == nil) {
-                    return
-                } else {
-                    token = tokenSnap?.get("notificationToken") as? String
-                }
-                
-                db.collection("users").document(uid).getDocument { (userSnap, err) in
-                    if (userSnap == nil) {
-                        return
-                    } else {
-                        senderName = userSnap?.get("username") as? String
-                        if (token != nil && token != "") {
-                            sender.sendPushNotification(token: token, title: "", body: "\(senderName ?? "someone") sent you a friend request")
-                        }
-                    }
-                }
-            }
         }
     }
     

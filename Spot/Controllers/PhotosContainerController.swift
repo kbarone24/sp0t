@@ -67,10 +67,7 @@ class PhotosContainerController: UIViewController {
     }
     
     func setUpViews() {
-        
-        /// show photoMap first if posting to a spot
-        if spotObject != nil { selectedIndex = 1 }
-        
+
         activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 150, width: UIScreen.main.bounds.width, height: 30))
         activityIndicator.startAnimating()
         view.addSubview(activityIndicator)

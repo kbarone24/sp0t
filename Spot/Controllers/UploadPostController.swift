@@ -24,13 +24,13 @@ struct postType {
 
 class UploadPostController: UIViewController {
     
-    var scrollObjects: [ScrollObject] = []
+    var scrollObjects: [ImageObject] = []
     
     unowned var mapVC: MapViewController!
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("spots"))
-
+    
     var passedSpot: MapSpot!
     var spotObject: MapSpot!
     var postObject: MapPost!
@@ -61,7 +61,10 @@ class UploadPostController: UIViewController {
     var postType: PostType = .none
     var submitPublic = false
     var privacyCloseTap: UITapGestureRecognizer!
-
+    
+    var privacyView: UploadPrivacyPicker!
+    var showOnFeed: UploadShowOnFeedView!
+    
     enum PostType {
         case none
         case postToPOI
@@ -80,13 +83,11 @@ class UploadPostController: UIViewController {
         
         NotificationCenter.default.addObserver(self, selector: #selector(tagSelect(_:)), name: NSNotification.Name("TagSelect"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name("InitialUserLoad"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name("InitialFriendsLoad"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCurrentLocation(_:)), name: Notification.Name("UpdateLocation"), object: nil)
-
-
+        
+        
         setUpPost()
         setUpTable()
-        getTopFriends()
         fetchAssets()
         
         if spotObject == nil { DispatchQueue.global().async {
@@ -106,7 +107,7 @@ class UploadPostController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-      //  cancelOnDismiss = true
+        //  cancelOnDismiss = true
     }
     
     deinit {
@@ -149,28 +150,29 @@ class UploadPostController: UIViewController {
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
         navBarHeight = statusHeight +
-            (self.navigationController?.navigationBar.frame.height ?? 44.0)
+        (self.navigationController?.navigationBar.frame.height ?? 44.0)
         
         
         tableView = UITableView(frame: CGRect(x: 0, y: navBarHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navBarHeight))
-        tableView.backgroundColor = UIColor(red: 0.008, green: 0.008, blue: 0.008, alpha: 1)
+        tableView.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
         tableView.separatorStyle = .none
         tableView.delegate = self
         tableView.dataSource = self
         tableView.isUserInteractionEnabled = true
         tableView.allowsSelection = false
-        tableView.isScrollEnabled = UserDataModel.shared.screenSize == 0 /// scroll only needed for smaller screens
+        tableView.isScrollEnabled = true
         tableView.showsVerticalScrollIndicator = false
         tableView.register(UploadOverviewCell.self, forCellReuseIdentifier: "UploadOverview")
         tableView.register(UploadChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpot")
-        tableView.register(UploadChooseTagCell.self, forCellReuseIdentifier: "ChooseTag")
-        tableView.register(UploadAddFriendsCell.self, forCellReuseIdentifier: "AddFriends")
-        tableView.register(UploadShowOnFeedCell.self, forCellReuseIdentifier: "ShowOnFeed")
+        tableView.register(UploadImagesCell.self, forCellReuseIdentifier: "UploadImages")
         tableView.register(UploadPrivacyCell.self, forCellReuseIdentifier: "Privacy")
         view.addSubview(tableView)
         
         maskView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-        maskView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(maskTap(_:))))
+        maskView.tag = 5
+        let maskTap = UITapGestureRecognizer(target: self, action: #selector(maskTap(_:)))
+        maskTap.delegate = self
+        maskView.addGestureRecognizer(maskTap)
         maskView.isUserInteractionEnabled = true
         maskView.backgroundColor = UIColor.black.withAlphaComponent(0.85)
         
@@ -184,6 +186,7 @@ class UploadPostController: UIViewController {
         progressView.progress = 0.0
     }
     
+    /*
     func getTopFriends() {
         
         UploadImageModel.shared.friendObjects.removeAll()
@@ -197,55 +200,19 @@ class UploadPostController: UIViewController {
             UploadImageModel.shared.friendObjects.append(friendObject)
         }}
         
-        /// if not enough top friends, append first friends from regular friendslist 
+        /// if not enough top friends, append first friends from regular friendslist
         if UploadImageModel.shared.friendObjects.count < 7 {
             for friend in UserDataModel.shared.friendsList {
                 if UploadImageModel.shared.friendObjects.count < 7 && !UploadImageModel.shared.friendObjects.contains(where: {$0.id == friend.id}) { UploadImageModel.shared.friendObjects.append(friend) }
             }
         }
-    }
+    } */
     
     func fetchAssets() {
         if UploadImageModel.shared.galleryAccess != .authorized { askForGallery(first: true) }
-        fetchInitialAssets()
         fetchFullAssets()
     }
-    
-    func fetchInitialAssets() {
-                
-        // fetch first 5 photos for initial load
-        let fetchOptions = PHFetchOptions()
-        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
-        fetchOptions.fetchLimit = 5
         
-        guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
-        
-        let assets = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions)
-        if assets.count == 0 { return }
-        let indexSet = assets.count > 5 ? IndexSet(0...4) : IndexSet(0...assets.count - 1)
-        
-        
-        DispatchQueue.global(qos: .userInitiated).async { assets.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
-            guard let self = self else { return }
-            
-            var location = CLLocation()
-            if let l = object.location { location = l }
-            
-            var creationDate = Date()
-            if let d = object.creationDate { creationDate = d }
-            
-            let imageObj = ImageObject(id: UUID().uuidString, asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], gifMode: false, creationDate: creationDate)
-            self.scrollObjects.append(ScrollObject(imageObject: imageObj, selected: false, fromCamera: false))
-            UploadImageModel.shared.imageObjects.append((imageObj, false))
-            
-            if self.scrollObjects.count == assets.count {
-                self.scrollObjects.sort(by: {$0.imageObject.creationDate > $1.imageObject.creationDate})
-                DispatchQueue.main.async { self.tableView.reloadData() }
-            }
-        }}
-    }
-    
     func fetchFullAssets() {
         
         /// fetch the first 5 assets and show them in the image scroll, fetch next 10000 for gallery/photo map/proximity-to-spot pics
@@ -257,13 +224,10 @@ class UploadPostController: UIViewController {
         guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
         
         let assetsFull = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions)
-        if assetsFull.count < 6 { return }
-        
-        let indexSet = assetsFull.count > 10000 ? IndexSet(4...9999) : IndexSet(4...assetsFull.count - 1)
+
+        let indexSet = assetsFull.count > 10000 ? IndexSet(0...9999) : IndexSet(0...assetsFull.count - 1)
         UploadImageModel.shared.assetsFull = assetsFull
-        
-      //  var localObjects: [(ImageObject, Bool)] = []
-        
+
         DispatchQueue.global(qos: .default).async { assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
             
             guard let self = self else { return }
@@ -274,16 +238,18 @@ class UploadPostController: UIViewController {
             var creationDate = Date()
             if let d = object.creationDate { creationDate = d }
             
-                let imageObj = (ImageObject(id: UUID().uuidString, asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], gifMode: false, creationDate: creationDate), false)
-                UploadImageModel.shared.imageObjects.append(imageObj)
+            let imageObj = (ImageObject(id: UUID().uuidString, asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], gifMode: false, creationDate: creationDate, fromCamera: false), false)
+            UploadImageModel.shared.imageObjects.append(imageObj)
+            
+            print("ct", UploadImageModel.shared.imageObjects.count)
+            if UploadImageModel.shared.imageObjects.count == assetsFull.count {
                 
-                if UploadImageModel.shared.imageObjects.count % 1000 == 0 ||  UploadImageModel.shared.imageObjects.count == assetsFull.count {
-                    
-                    /// don't sort if photos container already added
-                    if !(self.navigationController?.viewControllers.contains(where: {$0 is PhotosContainerController}) ?? false) { UploadImageModel.shared.imageObjects.sort(by: {!$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected}) }
-                }
+                /// don't sort if photos container already added
+                if !(self.navigationController?.viewControllers.contains(where: {$0 is PhotosContainerController}) ?? false) { UploadImageModel.shared.imageObjects.sort(by: {!$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected}) }
+                guard let imagesCell = self.tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
+                imagesCell.setImages()
             }
-        }
+        }}
     }
     
     @objc func notifyCurrentLocation(_ sender: NSNotification) {
@@ -297,18 +263,11 @@ class UploadPostController: UIViewController {
     @objc func notifyUserLoad(_ sender: NSNotification) {
         
         postObject.userInfo = UserDataModel.shared.userInfo
-
+        
         /// reload for loaded user profile pic
         if tableView != nil { DispatchQueue.main.async { self.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .none) } }
     }
-    
-    @objc func notifyFriendsLoad(_ sender: NSNotification) {
-        ///rerun getTopFriends search if not fully loaded on initial open
-        getTopFriends()
-        guard let cell = tableView.cellForRow(at: IndexPath(row: 3, section: 0)) as? UploadAddFriendsCell else { return }
-        DispatchQueue.main.async { cell.addFriendsCollection.reloadData() }
-    }
-    
+        
     @objc func tagSelect(_ sender: NSNotification) {
         
         guard let infoPass = sender.userInfo as? [String: Any] else { return }
@@ -346,7 +305,7 @@ class UploadPostController: UIViewController {
         
         /// disable post button
         self.navigationItem.rightBarButtonItem?.isEnabled = false
-
+        
         guard let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
         if cell.captionView != nil { cell.captionView.resignFirstResponder() }
         mapVC.removeTable()
@@ -363,9 +322,7 @@ class UploadPostController: UIViewController {
         var aspectRatios: [CGFloat] = []
         
         for obj in scrollObjects {
-            if !obj.selected { break }
-            
-            let images = obj.imageObject.gifMode ? obj.imageObject.animationImages : [obj.imageObject.stillImage]
+            let images = obj.gifMode ? obj.animationImages : [obj.stillImage]
             selectedImages.append(contentsOf: images)
             frameIndexes.append(frameCounter)
             aspectRatios.append(selectedImages[frameCounter].size.height/selectedImages[frameCounter].size.width)
@@ -373,60 +330,69 @@ class UploadPostController: UIViewController {
             frameCounter += images.count
         }
         
+        self.postObject.frameIndexes = frameIndexes
+        self.postObject.aspectRatios = aspectRatios
+        
+        var uploadSpot = self.spotObject
+        
+        if uploadSpot == nil {
+            let adjustedPrivacy = self.postObject.privacyLevel == "public" ? "friends" : self.postObject.privacyLevel /// submit public are friends spots as default until being approved
+            self.postObject.privacyLevel = adjustedPrivacy
+            uploadSpot = MapSpot(spotDescription: self.postObject.caption, spotName: self.newSpotName, spotLat: self.postObject.postLat, spotLong: self.postObject.postLong, founderID: self.uid, privacyLevel: adjustedPrivacy!, imageURL: self.postObject.imageURLs.first ?? "")
+            uploadSpot!.id = UUID().uuidString
+            if adjustedPrivacy == "invite" {
+                uploadSpot!.inviteList = self.postObject.addedUsers
+                uploadSpot!.inviteList!.append(uid)
+            }
+            
+        } else {
+            /// poiCategory will be nil for nonPOI
+            if uploadSpot!.poiCategory != nil { self.postType = .postToPOI }
+        }
+        
+        /// set post level spot info. spotObject will be nil only for a new spot
+        self.postObject.createdBy = uploadSpot!.founderID
+        self.postObject.spotID = uploadSpot!.id!
+        self.postObject.spotLat = uploadSpot!.spotLat
+        self.postObject.spotLong = uploadSpot!.spotLong
+        self.postObject.spotPrivacy = uploadSpot!.privacyLevel
+        self.postObject.inviteList = uploadSpot!.inviteList ?? []
+        
+        /// set timestamp to original post date or current date
+        let actualTimestamp = self.scrollObjects.first!.creationDate
+        
+        var taggedProfiles: [UserProfile] = []
+        
+        ///for tagging users on comment post
+        let word = self.postObject.caption.split(separator: " ")
+        
+        for w in word {
+            let username = String(w.dropFirst())
+            if w.hasPrefix("@") {
+                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
+                    self.postObject.taggedUsers!.append(username)
+                    self.postObject.taggedUserIDs.append(f.id!)
+                    taggedProfiles.append(f)
+                }
+            }
+        }
+        
+        var postFriends = self.postObject.hideFromFeed! ? [] : self.postObject.privacyLevel == "invite" ? uploadSpot!.inviteList!.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
+        if !postFriends.contains(self.uid) && !self.postObject.hideFromFeed! { postFriends.append(self.uid) }
+        self.postObject.friendsList = postFriends
+        self.postObject.isFirst = (self.postType == .newSpot || self.postType == .postToPOI)
+        
         /// 1. upload post image
         uploadPostImage(selectedImages, postID: postObject.id!, progressView: progressView) { [weak self] (imageURLs, failed) in
             
             guard let self = self else { return }
-            if imageURLs.isEmpty && failed { return } /// run failed upload here
+            if imageURLs.isEmpty && failed {
+                self.runFailedUpload(spot: uploadSpot!, post: self.postObject, selectedImages: selectedImages, actualTimestamp: actualTimestamp)
+                return
+            }
             
             self.postObject.imageURLs = imageURLs
-            self.postObject.frameIndexes = frameIndexes
-            self.postObject.aspectRatios = aspectRatios
-            
-            var uploadSpot = self.spotObject
-            
-            if uploadSpot == nil {
-                let adjustedPrivacy = self.postObject.privacyLevel == "public" ? "friends" : self.postObject.privacyLevel /// submit public are friends spots as default until being approved
-                self.postObject.privacyLevel = adjustedPrivacy
-                uploadSpot = MapSpot(spotDescription: self.postObject.caption, spotName: self.newSpotName, spotLat: self.postObject.postLat, spotLong: self.postObject.postLong, founderID: self.uid, privacyLevel: adjustedPrivacy!, imageURL: self.postObject.imageURLs.first ?? "")
-                uploadSpot!.id = UUID().uuidString
-                
-            } else {
-                /// poiCategory will be nil for nonPOI
-                if uploadSpot!.poiCategory != nil { self.postType = .postToPOI }
-            }
-            
-            /// set post level spot info. spotObject will be nil only for a new spot
-            self.postObject.createdBy = uploadSpot!.founderID
-            self.postObject.spotID = uploadSpot!.id!
-            self.postObject.spotLat = uploadSpot!.spotLat
-            self.postObject.spotLong = uploadSpot!.spotLong
-            self.postObject.spotPrivacy = uploadSpot!.privacyLevel
-            
-            /// set timestamp to original post date or current date
-            let actualTimestamp = self.scrollObjects.first!.imageObject.creationDate
-
-            var taggedProfiles: [UserProfile] = []
-            
-            ///for tagging users on comment post
-            let word = self.postObject.caption.split(separator: " ")
-            
-            for w in word {
-                let username = String(w.dropFirst())
-                if w.hasPrefix("@") {
-                    if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
-                        self.postObject.taggedUsers!.append(username)
-                        taggedProfiles.append(f)
-                    }
-                }
-            }
-            
-            /// add current user to invite list if applicable
-            if self.postObject.privacyLevel == "invite" { self.postObject.inviteList = self.postObject.addedUsers; self.postObject.inviteList!.append(self.uid) }
-            
-            var postFriends = self.postObject.hideFromFeed! ? [] : self.postObject.privacyLevel == "invite" ? self.postObject.addedUsers!.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
-            if !postFriends.contains(self.uid) && !self.postObject.hideFromFeed! { postFriends.append(self.uid) }
-            self.postObject.friendsList = postFriends
+            uploadSpot!.imageURL = imageURLs.first ?? ""
             
             /// 2. set post values, pass post notification to feed and other VC's
             self.uploadPost(post: self.postObject, actualTimestamp: actualTimestamp)
@@ -436,7 +402,7 @@ class UploadPostController: UIViewController {
     }
     
     func transitionToMap(postID: String, spotID: String) {
-
+        
         DispatchQueue.main.async {
             
             /// if not transitioning right to spot page prepare for transition
@@ -449,7 +415,7 @@ class UploadPostController: UIViewController {
             }
             
             self.navigationController?.popViewController(animated: true)
-
+            
         }
     }
     
@@ -472,12 +438,12 @@ class UploadPostController: UIViewController {
     func runChooseSpotFetch() {
         /// called initially and also after an image is selected
         if !UploadImageModel.shared.nearbySpots.isEmpty { UploadImageModel.shared.nearbySpots.removeAll(where: {!$0.selected!}) }
-                
+        
         queryReady = false
         nearbyEnteredCount = 0
         noAccessCount = 0
         nearbyRefreshCount = 0
-
+        
         getNearbySpots()
         getNearbyPOIs()
     }
@@ -495,11 +461,11 @@ class UploadPostController: UIViewController {
     
     /// recursive func called with an increasing radius -> Ensure always fetching the closest POI's since max limit is 25
     func runPOIFetch(request: MKLocalPointsOfInterestRequest) {
-            
+        
         if search != nil { search.cancel() }
         search = MKLocalSearch(request: request)
         search.start { [weak self] response, error in
-
+            
             guard let self = self else { return }
             
             let newRequest = MKLocalPointsOfInterestRequest(center: CLLocationCoordinate2D(latitude: self.postObject.postLat, longitude: self.postObject.postLong), radius: request.radius * 2)
@@ -518,15 +484,15 @@ class UploadPostController: UIViewController {
             var index = 0
             
             for item in response.mapItems {
-
+                
                 if item.pointOfInterestCategory != nil && item.name != nil {
-
+                    
                     let phone = item.phoneNumber ?? ""
                     let name = item.name!.count > 60 ? String(item.name!.prefix(60)) : item.name!
                     
                     /// check for spot duplicate
                     if UploadImageModel.shared.nearbySpots.contains(where: {$0.spotName == name || ($0.phone ?? "" == phone && phone != "")}) { index += 1; if index == response.mapItems.count { self.endQuery() }; continue }
-                                    
+                    
                     var spotInfo = MapSpot(spotDescription: item.pointOfInterestCategory?.toString() ?? "", spotName: name, spotLat: item.placemark.coordinate.latitude, spotLong: item.placemark.coordinate.longitude, founderID: "", privacyLevel: "public", imageURL: "")
                     spotInfo.phone = phone
                     spotInfo.poiCategory = item.pointOfInterestCategory?.toString() ?? ""
@@ -534,7 +500,7 @@ class UploadPostController: UIViewController {
                     
                     let postLocation = CLLocation(latitude: self.postObject.postLat, longitude: self.postObject.postLong)
                     spotInfo.spotScore = self.getSpotRank(spot: spotInfo, location: postLocation)
-
+                    
                     self.nearbyEnteredCount += 1 /// only need to increment here to keep values consistent for the nearby spot access escape
                     UploadImageModel.shared.nearbySpots.append(spotInfo)
                     
@@ -546,13 +512,13 @@ class UploadPostController: UIViewController {
             }
         }
     }
-
+    
     
     func getNearbySpots() {
-
+        
         circleQuery = geoFirestore.query(withCenter: GeoPoint(latitude: postObject.postLat, longitude: postObject.postLong), radius: 0.5)
         let _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
-
+        
         let _ = circleQuery?.observeReady { [weak self] in
             
             guard let self = self else { return }
@@ -570,29 +536,29 @@ class UploadPostController: UIViewController {
     }
     
     func loadSpotFromDB(key: String?, location: CLLocation?) {
-
+        
         if UploadImageModel.shared.nearbySpots.contains(where: {$0.id == key}) { accessEscape(); return }
         guard let spotKey = key else { accessEscape(); return }
         guard let coordinate = location?.coordinate else { accessEscape(); return }
         
         nearbyEnteredCount += 1
-
+        
         let ref = db.collection("spots").document(spotKey)
-         ref.getDocument { [weak self] (doc, err) in
+        ref.getDocument { [weak self] (doc, err) in
             
             guard let self = self else { return }
-
+            
             do {
                 
                 let unwrappedInfo = try doc?.data(as: MapSpot.self)
                 guard var spotInfo = unwrappedInfo else { self.noAccessCount += 1; self.accessEscape(); return }
-
+                
                 spotInfo.spotLat = coordinate.latitude
                 spotInfo.spotLong = coordinate.longitude
                 spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
-                                
+                
                 if self.hasPOILevelAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? []) {
-
+                    
                     let postLocation = CLLocation(latitude: self.postObject.postLat, longitude: self.postObject.postLong)
                     spotInfo.spotScore = self.getSpotRank(spot: spotInfo, location: postLocation)
                     
@@ -606,6 +572,7 @@ class UploadPostController: UIViewController {
                     /// replace POI with actual spot object
                     if let i = UploadImageModel.shared.nearbySpots.firstIndex(where: {$0.spotName == spotInfo.spotName || ($0.phone == spotInfo.phone ?? "" && spotInfo.phone ?? "" != "") }) {
                         UploadImageModel.shared.nearbySpots[i] = spotInfo
+                        UploadImageModel.shared.nearbySpots[i].poiCategory = nil
                         self.noAccessCount += 1; self.accessEscape(); return
                     }
                     
@@ -614,7 +581,7 @@ class UploadPostController: UIViewController {
                     
                 } else { self.noAccessCount += 1; self.accessEscape(); return }
             } catch { self.noAccessCount += 1; self.accessEscape(); return }
-         }
+        }
     }
     
     
@@ -637,7 +604,7 @@ class UploadPostController: UIViewController {
         spotObject = nil
         
         var selectedLocation = CLLocation(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude)
-
+        
         if select {
             postType = postObject.createdBy == "" ? .postToPOI : .postToSpot
             UploadImageModel.shared.nearbySpots[index].selected = true
@@ -645,19 +612,29 @@ class UploadPostController: UIViewController {
             selectedLocation = CLLocation(latitude: UploadImageModel.shared.nearbySpots[index].spotLat, longitude: UploadImageModel.shared.nearbySpots[index].spotLong)
             spotObject = UploadImageModel.shared.nearbySpots[index]
         }
-            
+        
+        let spotPrivacy = spotObject != nil ? spotObject.privacyLevel : submitPublic ? "public" : "friends"
+        postObject.privacyLevel = spotPrivacy == "invite" ? "invite" : spotPrivacy == "friends" ? "friends" : postObject.privacyLevel == "invite" ? "friends" : spotPrivacy
+        
         resetImages(newLocation: selectedLocation)
-        sortAndReloadImages(newSelection: false)
-        if select { setPostLocation() } 
+        if select { setPostLocation() }
         reloadChooseSpot(resort: fromMap)
         addPostButton() /// set postButtonAlpha based on if spot selected
     }
     
     func reloadChooseSpot(resort: Bool) {
-            
+        
         DispatchQueue.main.async { [weak self] in
+            
             guard let self = self else { return }
             
+            self.reloadOverviewDetail()
+
+            if self.spotObject != nil || self.newSpotName != "" {
+                self.tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .fade)
+                return
+            }
+                    
             guard let chooseCell = self.tableView.cellForRow(at: IndexPath(row: 1, section: 0)) as? UploadChooseSpotCell else { return }
             
             /// sort by spotscore the first time through
@@ -686,37 +663,21 @@ class UploadPostController: UIViewController {
                 
                 chooseCell.chooseSpotCollection.reloadSections(IndexSet(0...0))
             }
-            
-            self.reloadOverviewDetail()
         }
     }
     
     func resetImages(newLocation: CLLocation) {
-        
-        scrollObjects.removeAll(where: {!$0.selected && !$0.fromCamera})
-        
-        var tempObjects = UploadImageModel.shared.imageObjects
-        
-        /// sort by recency if current location used
-        if newLocation.coordinate.latitude == UserDataModel.shared.currentLocation.coordinate.latitude && newLocation.coordinate.longitude == UserDataModel.shared.currentLocation.coordinate.longitude {
-        
-            /// sort by location if spot location being used
-        } else {
-            tempObjects.sort(by: { !$0.selected && !$1.selected ? $0.image.rawLocation.distance(from: newLocation) < $1.image.rawLocation.distance(from: newLocation) : !$0.selected && $1.selected })
-        }
-        
-        for object in tempObjects.prefix(5) {
-            scrollObjects.append(ScrollObject(imageObject: object.image, selected: false, fromCamera: false))
-        }
+        guard let imagesCell = tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
+        imagesCell.sortAndReload(location: newLocation)
     }
-    
+        
     func presentAddNew() {
         
         if maskView != nil && maskView.superview != nil { return }
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         window?.addSubview(maskView)
-
+        
         let newView = NewSpotNameView(frame: CGRect(x: 32, y: view.bounds.height/3, width: view.bounds.width - 64, height: 98))
         newView.delegate = self
         maskView.addSubview(newView)
@@ -724,8 +685,20 @@ class UploadPostController: UIViewController {
         newView.textField.becomeFirstResponder()
     }
     
-    func openCamera() {
+    func presentTagPicker() {
+        if maskView != nil && maskView.superview != nil { return }
+        
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+        window?.addSubview(maskView)
                 
+        let tagView = UploadChooseTagView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 300, width: UIScreen.main.bounds.width, height: 300))
+        tagView.setUp(tag: postObject.tag ?? "")
+        tagView.delegate = self
+        maskView.addSubview(tagView)
+    }
+    
+    func openCamera() {
+        
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
             DispatchQueue.main.async {
                 self.navigationController?.pushViewController(vc, animated: true)
@@ -751,7 +724,6 @@ class UploadPostController: UIViewController {
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
             
             vc.passedLocation = CLLocation(latitude: postObject.postLat, longitude: postObject.postLong)
-            vc.spotObject = spotObject
             vc.delegate = self
             
             navigationController?.pushViewController(vc, animated: true)
@@ -764,13 +736,11 @@ class UploadPostController: UIViewController {
             
             var friends = UserDataModel.shared.friendsList
             friends.removeAll(where: {$0.id == "T4KMLe3XlQaPBJvtZVArqXQvaNT2"})
-                        
+            
             /// add selected friends to show in header, remove from table friendslist
-            for obj in UploadImageModel.shared.friendObjects {
-                if obj.selected {
-                    inviteVC.selectedFriends.append(obj)
-                    friends.removeAll(where: {$0.id == obj.id})
-                }
+            for friend in postObject.addedUserProfiles {
+                inviteVC.selectedFriends.append(friend)
+                friends.removeAll(where: {$0.id == friend.id})
             }
             
             inviteVC.friendsList = friends
@@ -786,13 +756,9 @@ class UploadPostController: UIViewController {
         postType = .none
         newSpotName = ""
         postObject.spotName = ""
-        
-        var rows = [IndexPath(row: 1, section: 0)]
-        /// reload privacy view if necessary - can only have invite-only for a new spot. for public - want user to be notified that they're submitting
-        if postObject.privacyLevel != "friends" { postObject.privacyLevel = "friends"; rows.append(IndexPath(row: 5, section: 0)) }
+        postObject.privacyLevel = "friends"
         
         DispatchQueue.main.async {
-            self.tableView.reloadRows(at: rows, with: .none)
             self.reloadOverviewDetail()
             self.addPostButton()
         }
@@ -803,50 +769,11 @@ class UploadPostController: UIViewController {
         if abs(coordinate1.latitude - coordinate2.latitude) + abs(coordinate1.longitude - coordinate2.longitude) < 0.01 { return true }
         return false
     }
-    
-    func selectTag(tag: Tag) {
         
-        /// reloading entire table resetting collection content offsets so just reloading where needed
-        
-        postObject.tag = tag.selected ? tag.name : ""
-        
-        /// reload choose tag to show highlighted tag
-        guard let cell = tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadChooseTagCell else { return }
-        for i in 0...cell.tags.count - 1 { cell.tags[i].selected = cell.tags[i].name == postObject.tag }
-        
-        DispatchQueue.main.async {
-            cell.chooseTagCollection.reloadSections(IndexSet(0...0))
-            self.reloadOverviewDetail()
-        }
-    }
-    
-    func selectUser(index: Int) {
-        
-        UploadImageModel.shared.friendObjects[index].selected = !UploadImageModel.shared.friendObjects[index].selected
-        
-        let friend = UploadImageModel.shared.friendObjects[index]
-        if friend.selected {
-            postObject.addedUsers!.append(friend.id!)
-            postObject.addedUserProfiles.append(friend)
-        } else {
-            postObject.addedUsers?.removeAll(where: {$0 == friend.id!})
-            postObject.addedUserProfiles.removeAll(where: {$0.id == friend.id})
-        }
-        
-        guard let cell = tableView.cellForRow(at: IndexPath(row: 3, section: 0)) as? UploadAddFriendsCell else { return }
-        
-        DispatchQueue.main.async {
-            cell.addFriendsCollection.reloadSections(IndexSet(0...0))
-            self.reloadOverviewDetail()
-        }
-    }
-    
     /// reload detail view to show "is ___" + spotName
     func reloadOverviewDetail() {
         guard let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
-        if cell.usernameDetail != nil { for sub in cell.usernameDetail.subviews { sub.removeFromSuperview() } }
-        if cell.spotLabel != nil { cell.spotLabel.text = "" }
-        cell.addDetail(post: postObject)
+        cell.loadDetailView(post: postObject)
     }
     
     @objc func maskTap(_ sender: UITapGestureRecognizer) {
@@ -860,16 +787,158 @@ class UploadPostController: UIViewController {
         
         if previewView != nil { for sub in previewView.subviews { sub.removeFromSuperview()}; previewView.removeFromSuperview(); previewView = nil }
     }
+    
+    func runFailedUpload(spot: MapSpot, post: MapPost, selectedImages: [UIImage], actualTimestamp: Date) {
+        saveToDrafts(spot: spot, post: post, selectedImages: selectedImages, actualTimestamp: actualTimestamp)
+        showFailAlert()
+    }
+    
+    func saveToDrafts(spot: MapSpot, post: MapPost, selectedImages: [UIImage], actualTimestamp: Date) {
+        
+        guard let appDelegate =
+                UIApplication.shared.delegate as? AppDelegate else { return }
+        
+        let managedContext =
+        appDelegate.persistentContainer.viewContext
+        
+        var imageObjects : [ImageModel] = []
+        
+        var index: Int16 = 0
+        for image in selectedImages {
+            let im = ImageModel(context: managedContext)
+            im.imageData = image.jpegData(compressionQuality: 0.5)
+            im.position = index
+            imageObjects.append(im)
+            index += 1
+        }
+        
+        var aspectRatios: [Float] = []
+        for aspect in post.aspectRatios ?? [] { aspectRatios.append(Float(aspect)) }
+        
+        switch postType {
+            
+        case .newSpot, .postToPOI:
+            
+            let spotObject = SpotDraft(context: managedContext)
+            
+            spotObject.spotName = spot.spotName
+            spotObject.spotDescription = spot.spotDescription
+            spotObject.tags = [post.tag ?? ""]
+            spotObject.taggedUsernames = post.taggedUsers!
+            spotObject.taggedIDs = post.taggedUserIDs
+            spotObject.postLat = post.postLat
+            spotObject.postLong = post.postLong
+            spotObject.spotLat = spot.spotLat
+            spotObject.spotLong = spot.spotLong
+            spotObject.images = NSSet(array: imageObjects)
+            spotObject.spotID = UUID().uuidString
+            spotObject.privacyLevel = spot.privacyLevel
+            spotObject.inviteList = spot.inviteList ?? []
+            spotObject.uid = uid
+            spotObject.phone = postType == .postToPOI ? spot.phone : ""
+            spotObject.submitPublic = submitPublic
+            spotObject.postToPOI = postType == .postToPOI
+            spotObject.hideFromFeed = post.hideFromFeed ?? false
+            spotObject.frameIndexes = post.frameIndexes
+            spotObject.aspectRatios = aspectRatios
+            spotObject.gif = post.gif ?? false
+            spotObject.friendsList = post.friendsList
+            spotObject.city = post.city ?? ""
+            
+            let timestamp = actualTimestamp.timeIntervalSince1970
+            let seconds = Int64(timestamp)
+            spotObject.timestamp = seconds
+            
+        default:
+            
+            let postObject = PostDraft(context: managedContext)
+            postObject.caption = post.caption
+            postObject.city = post.city ?? ""
+            postObject.createdBy = post.createdBy
+            postObject.privacyLevel = post.privacyLevel
+            postObject.spotPrivacy = spot.privacyLevel
+            postObject.spotID = spot.id!
+            postObject.inviteList = spot.inviteList ?? []
+            postObject.postLat = post.postLat
+            postObject.postLong = post.postLong
+            postObject.spotLat = spot.spotLat
+            postObject.spotLong = spot.spotLong
+            postObject.spotName = spot.spotName
+            postObject.taggedUsers = post.taggedUsers
+            postObject.taggedUserIDs = post.taggedUserIDs
+            postObject.images = NSSet(array: imageObjects)
+            postObject.uid = uid
+            postObject.isFirst = false
+            postObject.visitorList = spot.visitorList
+            postObject.hideFromFeed = post.hideFromFeed ?? false
+            postObject.frameIndexes = post.frameIndexes ?? []
+            postObject.aspectRatios = aspectRatios
+            postObject.gif = post.gif ?? false
+            postObject.friendsList = post.friendsList
+            
+            let timestamp = actualTimestamp.timeIntervalSince1970
+            let seconds = Int64(timestamp)
+            postObject.timestamp = seconds
+        }
+        do {
+            try managedContext.save()
+        } catch let error as NSError {
+            print("Could not save. \(error), \(error.userInfo)")
+        }
+    }
+    
+    func showFailAlert() {
+        let alert = UIAlertController(title: "Upload failed", message: "Spot saved to your drafts", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
+            switch action.style{
+            case .default:
+                self.transitionToMap(postID: "", spotID: "")
+            case .cancel:
+                self.transitionToMap(postID: "", spotID: "")
+            case .destructive:
+                self.transitionToMap(postID: "", spotID: "")
+            @unknown default:
+                fatalError()
+            }}))
+        present(alert, animated: true, completion: nil)
+    }
 }
 
 // image methods
-extension UploadPostController: GIFPreviewDelegate, DraftsDelegate, NewSpotNameDelegate, LocationPickerDelegate, InviteFriendsDelegate {
+extension UploadPostController: GIFPreviewDelegate, DraftsDelegate, NewSpotNameDelegate, LocationPickerDelegate, InviteFriendsDelegate, ChooseTagDelegate, PrivacyPickerDelegate, ShowOnFeedDelegate {
     
     func finishPassingLocationPicker(spot: MapSpot) {
         if let i = UploadImageModel.shared.nearbySpots.firstIndex(where: {$0.id == spot.id}) { selectSpot(index: i, select: true, fromMap: true) } else {
             UploadImageModel.shared.nearbySpots.append(spot)
             selectSpot(index: UploadImageModel.shared.nearbySpots.count - 1, select: true, fromMap: true)
         }
+    }
+    
+    func finishPassingPrivacy(tag: Int) {
+
+        switch tag {
+        case 0:
+            if postType == .newSpot {
+                launchSubmitPublic()
+                return
+                
+            } else {
+                postObject.privacyLevel = "public"
+                privacyView.setUp(privacyLevel: postObject.privacyLevel ?? "friends", postType: postType)
+            }
+            
+        case 1:
+            postObject.privacyLevel = "friends"
+            privacyView.setUp(privacyLevel: postObject.privacyLevel ?? "friends", postType: postType)
+            
+        default:
+            postObject.privacyLevel = "invite"
+            pushInviteFriends()
+        }
+    }
+    
+    func finishPassingVisibility(hide: Bool) {
+        postObject.hideFromFeed = hide
     }
     
     func finishPassingName(name: String) {
@@ -887,180 +956,119 @@ extension UploadPostController: GIFPreviewDelegate, DraftsDelegate, NewSpotNameD
         }
     }
     
-    func finishPassingSelectedFriends(selected: [UserProfile]) {
+    func finishPassingTag(tag: Tag) {
+        print("select tag")
+        postObject.tag = tag.selected ? tag.name : ""
         
-        var addedNewUser = false /// if adding a new user, scroll to row 1 to show the user they were selected
-        
-        for user in selected {
-            
-            if user.selected { continue }
-            /// select from topFriends if user isn't already selected
-            if let i = UploadImageModel.shared.friendObjects.firstIndex(where: {$0.id == user.id}) {
-                selectUser(index: i)
-                
-            ///append new user object
-            } else {
-                UploadImageModel.shared.friendObjects.insert(user, at: 0)
-                selectUser(index: 0)
-                addedNewUser = true
-            }
-        }
-        
-        /// deselect users that were deselected from search (not contained in selected)
-        for i in 0...UploadImageModel.shared.friendObjects.count - 1 {
-            let user = UploadImageModel.shared.friendObjects[i]
-            if user.selected && !selected.contains(where: {$0.id == user.id}) {
-                selectUser(index: i)
-            }
-        }
-        
-        if addedNewUser {
-            DispatchQueue.main.async {
-                guard let cell = self.tableView.cellForRow(at: IndexPath(row: 3, section: 0)) as? UploadAddFriendsCell else { return }
-                cell.addFriendsCollection.scrollToItem(at: IndexPath(item: 0, section: 0), at: .right, animated: false)
-            }
+        DispatchQueue.main.async {
+            self.removePreviews()
+            self.reloadOverviewDetail()
         }
     }
-
+    
+    func finishPassingSelectedFriends(selected: [UserProfile]) {
+        
+        postObject.addedUsers = selected.map({$0.id ?? ""})
+        postObject.addedUserProfiles = selected
+                
+        DispatchQueue.main.async {
+            self.reloadOverviewDetail()
+        }
+    }
+    
     func finishPassingFromDrafts(images: [UIImage], date: Date, location: CLLocation) {
+        /*
         let gifMode = images.count > 1
-        let object = ScrollObject(imageObject: ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: location, stillImage: images.first ?? UIImage(), animationImages: gifMode ? images : [], gifMode: gifMode, creationDate: date), selected: true, fromCamera: false)
+        let object = ScrollObject(imageObject: ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: location, stillImage: images.first ?? UIImage(), animationImages: gifMode ? images : [], gifMode: gifMode, creationDate: date))
         scrollObjects.append(object)
         
         let index = UploadImageModel.shared.selectedObjects.count
-        UploadImageModel.shared.imageObjects.insert((image: object.imageObject, selected: true), at: index)
-        UploadImageModel.shared.selectedObjects.append(object.imageObject)
+        UploadImageModel.shared.imageObjects.insert((image: object, selected: true), at: index)
+        UploadImageModel.shared.selectedObjects.append(object)
         sortAndReloadImages(newSelection: true)
+        */
     }
     
     
     func finishPassingFromCamera(images: [UIImage]) {
+        
         let gifMode = images.count > 1
-        let object = ScrollObject(imageObject: ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: images.first ?? UIImage(), animationImages: gifMode ? images : [], gifMode: gifMode, creationDate: Date()), selected: true, fromCamera: true)
+        let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: images.first ?? UIImage(), animationImages: gifMode ? images : [], gifMode: gifMode, creationDate: Date(), fromCamera: true)
         scrollObjects.append(object)
         
         let index = UploadImageModel.shared.selectedObjects.count
-        UploadImageModel.shared.imageObjects.insert((image: object.imageObject, selected: true), at: index)
-        UploadImageModel.shared.selectedObjects.append(object.imageObject)
-        sortAndReloadImages(newSelection: true)
+        UploadImageModel.shared.imageObjects.insert((image: object, selected: true), at: index)
+        UploadImageModel.shared.selectedObjects.append(object)
+        sortAndReloadImages(newSelection: true, fromGallery: false)
     }
     
     /// not a delegate method because just notifying to check selected images on select tap
     func finishPassingFromGallery() {
         
-        /// select/deselect existing  scroll objects from selected images
-        for i in 0...scrollObjects.count - 1 {
-            scrollObjects[i].selected = UploadImageModel.shared.selectedObjects.contains(where: {$0.id == scrollObjects[i].imageObject.id})
-        }
-         
+        scrollObjects.removeAll()
         for object in UploadImageModel.shared.selectedObjects {
-            
-            if !scrollObjects.contains(where: {$0.imageObject.id == object.id}) {
-                /// add new scroll objects from selected image
-                scrollObjects.append(ScrollObject(imageObject: object, selected: true, fromCamera: false))
-            }
+            scrollObjects.append(object)
         }
         
-        sortAndReloadImages(newSelection: true)
+        sortAndReloadImages(newSelection: true, fromGallery: true)
     }
     
     func cancelFromGallery() {
         
-        let gallerySelectedCount = UploadImageModel.shared.selectedObjects.count
-            
-        /// reset selectedImages to match up with scroll objects
+        /// reset selectedImages and imageObjects
         UploadImageModel.shared.selectedObjects.removeAll()
-        for object in scrollObjects { if object.selected { UploadImageModel.shared.selectedObjects.append(object.imageObject) } }
+        while let i = UploadImageModel.shared.imageObjects.firstIndex(where: {$0.selected}) {
+            UploadImageModel.shared.imageObjects[i].selected = false
+        }
         
-        /// reset imageObjects to match up with scroll objects
-        
-        /// sort first to get all selected objects in front
-        UploadImageModel.shared.imageObjects.sort(by: {!$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected})
-
-
-        /// deselect imageObjects that werent previously selected
-        if gallerySelectedCount > 0 { for i in 0...gallerySelectedCount - 1 {
-            if let object = scrollObjects.first(where: {$0.imageObject.id == UploadImageModel.shared.imageObjects[i].image.id}) {
-                UploadImageModel.shared.imageObjects[i].selected = object.selected
+        for object in scrollObjects {
+            UploadImageModel.shared.selectedObjects.append(object)
+            if let index = UploadImageModel.shared.imageObjects.firstIndex(where: {$0.image.id == object.id}) {
+                UploadImageModel.shared.imageObjects[index].selected = true
             }
-        } }
+        }
         
-        sortAndReloadImages(newSelection: false)
+        sortAndReloadImages(newSelection: false, fromGallery: true)
     }
     
-    func selectImage(index: Int, circleTap: Bool) {
+    func selectImage(cellIndex: Int, galleryIndex: Int, circleTap: Bool) {
         
         if UploadImageModel.shared.selectedObjects.count > 4 { return } /// show error alert
-        guard let selectedObject = scrollObjects[safe: index] else { return }
+        guard let selectedObject = UploadImageModel.shared.imageObjects[safe: galleryIndex] else { return }
         
-        if selectedObject.imageObject.stillImage != UIImage() {
-            
-            if !circleTap {
-                addPreviewView(object: selectedObject, selectedIndex: 0, galleryIndex: index)
-                
-            } else {
-                Mixpanel.mainInstance().track(event: "UploadCircleTap", properties: ["selected": true])
-                setCircleTapAt(index: index, selected: true)
-            }
+        if selectedObject.image.stillImage != UIImage() {
+            Mixpanel.mainInstance().track(event: "UploadCircleTap", properties: ["selected": true])
+            setCircleTapAt(index: galleryIndex, selected: true)
             
         } else {
-            
-            guard let overviewCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
-            guard let cell = overviewCell.cameraCollection.cellForItem(at: IndexPath(row: index + 1, section: 0)) as? UploadImageCell else { return }
+            guard let imagesCell = tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
+            guard let cell = imagesCell.imagesCollection.cellForItem(at: IndexPath(row: cellIndex, section: 0)) as? ImagePreviewCell else { return }
             
             /// this cell is fetching, cancel fetch and return
-            if cell.activityIndicator.isAnimating { cancelFetchForRowAt(index: index); return  }
+            if cell.activityIndicator.isAnimating { cancelFetchForRowAt(index: cellIndex); return  }
             
             if imageFetcher.isFetching { cancelFetchForRowAt(index: imageFetcher.fetchingIndex) } /// another cell is fetching cancel that fetch
             cell.addActivityIndicator()
             
-            let asset = scrollObjects[index].imageObject.asset
-            if asset.mediaSubtypes.contains(.photoLive) {
+            let asset = UploadImageModel.shared.imageObjects[galleryIndex].image.asset
+            imageFetcher.fetchImage(currentAsset: asset, item: galleryIndex) { [weak self] stillImage, failed  in
                 
-                imageFetcher.fetchLivePhoto(currentAsset: asset, item: index) { [weak self] animationImages, stillImage, failed in
-                    
-                    guard let self = self else { return }
-                    
+                guard let self = self else { return }
+                cell.removeActivityIndicator()
+                
+                if self.cancelOnDismiss { return }
+                if failed { self.showFailedDownloadAlert(); return }
+                if stillImage == UIImage() { return } /// canceled
+                
+                UploadImageModel.shared.imageObjects[galleryIndex].image.stillImage = stillImage
+                
+                ///fetch image is async so need to make sure another image wasn't appended while this one was being fetched
+                if UploadImageModel.shared.selectedObjects.count < 5 {
+                    /// append new image object with fetched image
                     cell.removeActivityIndicator()
                     
-                    if self.cancelOnDismiss { return }
-                    if failed { self.showFailedDownloadAlert(); return }
-                    if stillImage == UIImage() { return } /// canceled
-                    
-                    self.scrollObjects[index].imageObject.stillImage = stillImage
-                    self.scrollObjects[index].imageObject.animationImages = animationImages
-                    self.scrollObjects[index].imageObject.gifMode = true
-                    
-                    ///fetch image is async so need to make sure another image wasn't appended while this one was being fetched
-                    if UploadImageModel.shared.selectedObjects.count < 5 { circleTap ? self.setCircleTapAt(index: index, selected: true) : self.addPreviewView(object: self.scrollObjects[index], selectedIndex: 0, galleryIndex: index) }
-                }
-                
-            } else {
-                
-                imageFetcher.fetchImage(currentAsset: asset, item: index, livePhoto: false) { [weak self] stillImage, failed  in
-                    
-                    guard let self = self else { return }
-                    cell.removeActivityIndicator()
-                    
-                    if self.cancelOnDismiss { return }
-                    if failed { self.showFailedDownloadAlert(); return }
-                    if stillImage == UIImage() { return } /// canceled
-                    
-                    self.scrollObjects[index].imageObject.stillImage = stillImage
-                    
-                    ///fetch image is async so need to make sure another image wasn't appended while this one was being fetched
-                    if UploadImageModel.shared.selectedObjects.count < 5 {
-                        /// append new image object with fetched image
-                        cell.removeActivityIndicator()
-                        
-                        if !circleTap {
-                            self.addPreviewView(object: self.scrollObjects[index], selectedIndex: 0, galleryIndex: index)
-                            
-                        } else {
-                            Mixpanel.mainInstance().track(event: "UploadCircleTap", properties: ["selected": true])
-                            self.setCircleTapAt(index: index, selected: true)
-                        }
-                    }
+                    Mixpanel.mainInstance().track(event: "UploadCircleTap", properties: ["selected": true])
+                    self.setCircleTapAt(index: galleryIndex, selected: true)
                 }
             }
         }
@@ -1068,46 +1076,43 @@ extension UploadPostController: GIFPreviewDelegate, DraftsDelegate, NewSpotNameD
     
     func setCircleTapAt(index: Int, selected: Bool) {
         
-        DispatchQueue.main.async {
-            UIView.animate(withDuration: 0.25) {
-                guard let overviewCell = self.tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
-                let increment = selected ? 2 : 1 /// move to the last selected slot (will become first unselected) if deselecting, move to the first unselected if selecting
-                let selectedIndexPath = IndexPath(item: (self.scrollObjects.lastIndex(where: {$0.selected}) ?? -1) + increment, section: 0)
-                overviewCell.cameraCollection.moveItem(at: IndexPath(item: index + 1, section: 0), to: selectedIndexPath)
-                
-            } completion: { [weak self] _ in
-                
-                guard let self = self else { return }
-                self.scrollObjects[index].selected = selected
-                
-                let imageObject = self.scrollObjects[index].imageObject
-                UploadImageModel.shared.selectObject(imageObject: imageObject, selected: selected)
-                
-                self.sortAndReloadImages(newSelection: selected)
-            }
-        }
-        
+        /// add/remove image to scroll objects and selected images
+        let imageObject = UploadImageModel.shared.imageObjects[index].image
+        selected ? scrollObjects.append(imageObject) : scrollObjects.removeAll(where: {$0.asset == imageObject.asset})
+        /// update image model
+        UploadImageModel.shared.selectObject(imageObject: imageObject, selected: selected)
+        /// reload cells 0 & 2
+        sortAndReloadImages(newSelection: selected, fromGallery: false)
     }
     
-    func sortAndReloadImages(newSelection: Bool) {
-
+    func sortAndReloadImages(newSelection: Bool, fromGallery: Bool) {
+        
         if cancelOnDismiss { return }
-        scrollObjects.sort(by: {$0.selected && !$1.selected})
-        UploadImageModel.shared.imageObjects.sort(by: {!$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected})
-                
+       // UploadImageModel.shared.imageObjects.sort(by: {!$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected})
+        
         if newSelection { setPostLocation() }
-            
+        
         guard let overviewCell = self.tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
         overviewCell.scrollObjects = scrollObjects
         
+        guard let imageCell = tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
+        imageCell.setImages()
+
         DispatchQueue.main.async {
-            overviewCell.cameraCollection.performBatchUpdates {
-                overviewCell.cameraCollection.reloadSections(IndexSet(0...0)) }
+                        
+            /// if removing or adding the collection, reload everything. otherwise reload the collection
+            if (self.scrollObjects.count == 0) || (self.scrollObjects.count == 1 && newSelection) || (fromGallery) {
+                self.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .fade)
+            }
+            overviewCell.selectedCollection.performBatchUpdates {
+                overviewCell.selectedCollection.reloadSections(IndexSet(0...0))
+            } completion: { [weak self] complete in
+                guard let self = self else { return }
+                /// scroll to selected item if newSelection
+                if complete && newSelection { overviewCell.selectedCollection.scrollToItem(at: IndexPath(row: self.scrollObjects.count - 1, section: 0), at: .right, animated: true) }
+            }
+
         }
-        
-        if !newSelection { return } /// scroll to last selected item only if selecting a new cell
-        let lastSelectedItem = scrollObjects.lastIndex(where: {$0.selected}) ?? 0
-        overviewCell.cameraCollection.scrollToItem(at: IndexPath(item: lastSelectedItem, section: 0), at: .left, animated: true)
     }
     
     func setPostLocation() {
@@ -1115,17 +1120,17 @@ extension UploadPostController: GIFPreviewDelegate, DraftsDelegate, NewSpotNameD
         /// update post location, if this is a new post in post #1, re-run choose spot fetch with new location
         let previousLong = postObject.postLong
         var runFetch = false
-
+        
         if !scrollObjects.isEmpty {
             
             /// default: postLocation = user's current location
             var postLocation = CLLocationCoordinate2D(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude)
-
+            
             /// 1. if theres a selected image with location, use that location
-            if scrollObjects.first!.selected && scrollObjects.first!.imageObject.rawLocation.coordinate.longitude != 0 && scrollObjects.first!.imageObject.rawLocation.coordinate.latitude != 0 {
-                postLocation = scrollObjects.first!.imageObject.rawLocation.coordinate
+            if !scrollObjects.isEmpty && scrollObjects.first!.rawLocation.coordinate.longitude != 0 && scrollObjects.first!.rawLocation.coordinate.latitude != 0 {
+                postLocation = scrollObjects.first!.rawLocation.coordinate
                 
-            /// 2. use tapped location from map if applicable
+                /// 2. use tapped location from map if applicable
             } else if !locationIsEmpty(location: UploadImageModel.shared.tappedLocation) {
                 postLocation = CLLocationCoordinate2D(latitude: UploadImageModel.shared.tappedLocation.coordinate.latitude, longitude: UploadImageModel.shared.tappedLocation.coordinate.longitude)
             }
@@ -1141,9 +1146,9 @@ extension UploadPostController: GIFPreviewDelegate, DraftsDelegate, NewSpotNameD
             postObject.postLong = postLocation.longitude
             
             /// get a new batch of nearby spots if selecting an image
-            if runFetch && postObject.postLong != previousLong {
+            if postObject.postLong != previousLong {
                 setPostCity() /// set post city with every location change
-                if !UploadImageModel.shared.nearbySpots.contains(where: {$0.selected!}) { runChooseSpotFetch() }
+                if runFetch { runChooseSpotFetch() }
             }
         }
     }
@@ -1156,27 +1161,19 @@ extension UploadPostController: GIFPreviewDelegate, DraftsDelegate, NewSpotNameD
     }
     
     func deselectImage(index: Int, circleTap: Bool) {
-        
-        if !circleTap {
-            guard let object = scrollObjects[safe: index] else { return }
-            addPreviewView(object: object, selectedIndex: index + 1, galleryIndex: index)
-            /// gallery index reflects position in the scroll, selected index is the # selected which is always the images actual index because sorted by selected
-            
-        } else {
-            Mixpanel.mainInstance().track(event: "UploadCircleTap", properties: ["selected": false])
-            setCircleTapAt(index: index, selected: false)
-        }
+        Mixpanel.mainInstance().track(event: "UploadCircleTap", properties: ["selected": false])
+        setCircleTapAt(index: index, selected: false)
     }
     
     func cancelFetchForRowAt(index: Int) {
         
         Mixpanel.mainInstance().track(event: "UploadCancelImageFetch")
         
-        guard let overviewCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
-        guard let cell = overviewCell.cameraCollection.cellForItem(at: IndexPath(row: index + 1, section: 0)) as? UploadImageCell else { return }
+        guard let imageCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadImagesCell else { return }
+        guard let cell = imageCell.imagesCollection.cellForItem(at: IndexPath(row: index + 1, section: 0)) as? ImagePreviewCell else { return }
         
         guard let currentObject = scrollObjects[safe: index] else { return }
-        let currentAsset = currentObject.imageObject.asset
+        let currentAsset = currentObject.asset
         
         cell.activityIndicator.stopAnimating()
         imageFetcher.cancelFetchForAsset(asset: currentAsset)
@@ -1185,21 +1182,21 @@ extension UploadPostController: GIFPreviewDelegate, DraftsDelegate, NewSpotNameD
     func askForGallery(first: Bool) {
         
         switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
-        
+            
         case .notDetermined:
             PHPhotoLibrary.requestAuthorization { _ in self.askForGallery(first: false) }
             
         case .restricted, .denied:
             
             if first {UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return }
-
+            
             let alert = UIAlertController(title: "Allow gallery access to upload pictures from your camera roll", message: nil, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
                 UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil) }))
             alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: nil))
             present(alert, animated: true, completion: nil)
             
-
+            
         case .authorized, .limited:
             UploadImageModel.shared.galleryAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite)
             fetchAssets()
@@ -1208,30 +1205,12 @@ extension UploadPostController: GIFPreviewDelegate, DraftsDelegate, NewSpotNameD
         }
     }
     
-    func addPreviewView(object: ScrollObject, selectedIndex: Int, galleryIndex: Int) {
-        
-        if maskView != nil && maskView.superview != nil { return }
-        
-        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        window?.addSubview(maskView)
-        
-        let width = UIScreen.main.bounds.width - 50
-        let pY = UIScreen.main.bounds.height/2 - width * 0.667
-        
-        previewView = GalleryPreviewView(frame: CGRect(x: 25, y: pY, width: width, height: width * 1.3333))
-        previewView.isUserInteractionEnabled = true
-        previewView.upload
-            = self
-        previewView.setUp(object: object.imageObject, selectedIndex: selectedIndex, galleryIndex: galleryIndex)
-        maskView.addSubview(previewView)
-    }
-    
     func showFailedDownloadAlert() {
         let alert = UIAlertController(title: "Unable to download image from iCloud", message: "\n Your iPhone storage may be full", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         present(alert, animated: true)
     }
-
+    
     func showError() {
         
         let errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 100, width: UIScreen.main.bounds.width, height: 32))
@@ -1259,7 +1238,8 @@ extension UploadPostController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         
         // only close view on touch outside of textView
-        if touch.view!.isKind(of: UITextView.self) { return false }
+        if (touch.view!.isKind(of: UploadChooseTagView.self) || touch.view!.isKind(of: UICollectionView.self) || touch.view!.isKind(of: UploadTagCell.self)) { return false }
+        if touch.view!.isKind(of: UITextView.self) { return false } /// for keyboard close
         
         return true
     }
@@ -1269,7 +1249,7 @@ extension UploadPostController: UIGestureRecognizerDelegate {
 extension UploadPostController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 6
+        return 4
     }
     
     
@@ -1283,27 +1263,17 @@ extension UploadPostController: UITableViewDelegate, UITableViewDataSource {
         case 1:
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseSpot") as? UploadChooseSpotCell else { return UITableViewCell() }
             cell.setUp(newSpotName: newSpotName, post: postObject)
-            cell.clipsToBounds = true 
+            cell.clipsToBounds = true
             return cell
             
         case 2:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseTag") as? UploadChooseTagCell else { return UITableViewCell() }
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "UploadImages") as? UploadImagesCell else { return UITableViewCell() }
             cell.setUp()
             return cell
             
         case 3:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "AddFriends") as? UploadAddFriendsCell else { return UITableViewCell() }
-            cell.setUp(post: postObject)
-            return cell
-            
-        case 4:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "ShowOnFeed") as? UploadShowOnFeedCell else { return UITableViewCell() }
-            cell.setUp(hide: postObject.hideFromFeed ?? false)
-            return cell
-            
-        case 5:
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "Privacy") as? UploadPrivacyCell else { return UITableViewCell() }
-            cell.setUp(postPrivacy: postObject.privacyLevel ?? "friends", spotPrivacy: spotObject == nil ? "public" : spotObject.privacyLevel)
+            cell.setUp()
             return cell
             
         default: return UITableViewCell()
@@ -1312,11 +1282,12 @@ extension UploadPostController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch indexPath.row {
-        case 0: return UserDataModel.shared.screenSize == 0 ? 244 : UserDataModel.shared.screenSize == 1 ? 265 : 337
-        case 1: return passedSpot == nil ? 96 : 0
-        case 2: return 141
-        case 3: return 84
-        default: return 48
+       // case 0: return UserDataModel.shared.screenSize == 0 ? scrollObjects.isEmpty ? 160 : 360 : UserDataModel.shared.screenSize == 1 ? scrollObjects.isEmpty ? 190 : 390 : scrollObjects.isEmpty ? 220 : 420
+        case 0: return scrollObjects.isEmpty ? 220 : 420
+        case 1: return spotObject == nil && newSpotName == "" ? 96 : 0
+        case 2: return 236
+        case 3: return 48
+        default: return 0
         }
     }
 }

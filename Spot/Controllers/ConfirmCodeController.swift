@@ -225,6 +225,8 @@ class ConfirmCodeController: UIViewController {
                       "pendingFriendRequests" : [],
                       "usernameKeywords": usernameKeywords,
                       "nameKeywords" : nameKeywords,
+                      "tagDictionary": [:],
+                      "topFriends": [:],
             ] as [String : Any]
         
         db.collection("users").document(uid).setData(values, merge: true)
@@ -235,103 +237,11 @@ class ConfirmCodeController: UIViewController {
         let docID = UUID().uuidString
         db.collection("usernames").document(docID).setData(["username" : newUser.username])
         
-        DispatchQueue.global().async { self.addInitialFriends() }
-    }
-    
-    func addInitialFriends() {
-        
-        let db = Firestore.firestore()
-        var initialFriends = [(id: "T4KMLe3XlQaPBJvtZVArqXQvaNT2", textInvite: false)]
-        var yetToJoin: [String] = []
-        var queryCount = 0
-        
-        // text invites
-        db.collection("users").whereField("sentInvites", arrayContains: newUser.phone.formatNumber()).getDocuments { [weak self] snap, err in
-            
-            guard let self = self else { return }
-            if err != nil || snap?.documents.count == 0 { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
-            
-            for doc in snap!.documents {
-                if !initialFriends.contains(where: {$0.id == doc.documentID}) { initialFriends.append((doc.documentID, true)) }
-                if doc == snap!.documents.last { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
-            }
+        let functions = Functions.functions()
+        let phone = newUser.phone.formatNumber()
+        functions.httpsCallable("addInitialFriends").call(["userID": uid, "username": newUser.username, "phone": phone]) { result, error in
+            print(result?.data as Any, error as Any)
         }
-        
-        // signup group contains linked users that haven't signed up yet
-        db.collection("users").whereField("signupGroup", arrayContains: newUser.email).getDocuments { [weak self] snap, err in
-                    
-            guard let self = self else { return }
-            if err != nil || snap?.documents.count == 0 {  queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
-            
-            for doc in snap!.documents {
-                if !initialFriends.contains(where: {$0.id == doc.documentID}) { initialFriends.insert((doc.documentID, false), at: 0) }
-                if doc == snap!.documents.last { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
-            }
-        }
-        
-        // email invites for people who havent signed up yet
-        db.collection("signups").whereField("emails", arrayContains: newUser.email).getDocuments { [weak self] snap, err in
-            
-            guard let self = self else { return }
-            if err != nil || snap?.documents.count == 0 { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
-
-            if let doc = snap!.documents.first {
-                let emails = doc.get("emails") as! [String]
-                for email in emails {
-                    if !yetToJoin.contains(email) { yetToJoin.append(email) }
-                    if email == emails.last { queryCount += 1; if queryCount == 3 { self.sendFriendRequests(initialFriends: initialFriends, yetToJoin: yetToJoin) } }
-                }
-            }
-        }
-    }
-        
-    func sendFriendRequests(initialFriends: [(id: String, textInvite: Bool)], yetToJoin: [String]) {
-                
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-        
-        let timestamp = NSDate().timeIntervalSince1970
-        let myTimeInterval = TimeInterval(timestamp)
-        let time = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
-        
-        for friend in initialFriends {
-            
-            /// 1. send friend request notis to bot + inviter
-            let friendNoti = UUID().uuidString
-            let friendRef = db.collection("users").document(friend.id).collection("notifications").document(friendNoti)
-            friendRef.setData(["status" : "accepted", "timestamp" : time, "senderID": uid, "type": "friendRequest", "seen": false])
-            /// send push to the inviter
-            if friend.id != "T4KMLe3XlQaPBJvtZVArqXQvaNT2" { let username = newUser.username; sendInviterNoti(receiverID: friend.id, username: username, textInvite: friend.textInvite) }
-            
-            /// 2. add notifications to new user in DB
-            let userNoti = UUID().uuidString
-            let acceptRef = db.collection("users").document(uid).collection("notifications").document(userNoti)
-            acceptRef.setData(["status" : "accepted", "timestamp" : time, "senderID": friend.id, "type": "friendRequest", "seen": false])
-            
-            /// 3. update friends lists
-          ///  addFriend(friendID: uid, frienderID: friend.id)
-            addFriend(friendID: friend.id, frienderID: uid)
-            if friend.id != "T4KMLe3XlQaPBJvtZVArqXQvaNT2" { adjustPostsFriendsList(userID: friend.id, friendID: uid) }
-        }
-        
-        /// update user friend list all at once (test)
-        addFriends(friendIDs: initialFriends.map{$0.id}, uid: uid, yetToJoin: yetToJoin)
-    }
-    
-    func sendInviterNoti(receiverID: String, username: String, textInvite: Bool) {
-        
-        let db = Firestore.firestore()
-        let sender = PushNotificationSender()
-        
-        let body = textInvite ? "\(username) accepted your invite and is now on sp0t!" : "\(username) just joined sp0t!"
-        
-        db.collection("users").document(receiverID).getDocument { (tokenSnap, err) in
-            if (tokenSnap != nil) {
-                guard let token = tokenSnap?.get("notificationToken") as? String else { return }
-                sender.sendPushNotification(token: token, title: "", body: body)
-            }
-        }
-
     }
     
     func animateToMap() {

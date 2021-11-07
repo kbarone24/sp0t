@@ -19,5 +19,6 @@ struct ImageObject {
     var animationImages: [UIImage]
     var gifMode: Bool
     let creationDate: Date
+    var fromCamera: Bool
 }
 

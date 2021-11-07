@@ -340,7 +340,7 @@ class FeedViewController: UIViewController {
                 
                 var scrollToFirstRow = false
                 
-                if !mapVC.deletedPostIDs.contains(post.id ?? "") {
+                if !mapVC.deletedPostIDs.contains(post.id ?? "") && !mapVC.deletedFriendIDs.contains(post.posterID) {
 
                     let newPost = friendPosts.count > 10 && post.timestamp.seconds > friendPosts.first?.timestamp.seconds ?? 100000000000
 

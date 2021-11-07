@@ -21,14 +21,12 @@ class ImageFetcher {
 
     lazy var imageManager = PHCachingImageManager()
 
-    func fetchLivePhoto(currentAsset: PHAsset, item: Int, completion: @escaping(_ animationImages: [UIImage], _ stillImage: UIImage, _ failed: Bool) -> Void) {
+    func fetchLivePhoto(currentAsset: PHAsset, animationImages: [UIImage], completion: @escaping(_ animationImages: [UIImage], _ failed: Bool) -> Void) {
         
+        if !animationImages.isEmpty { completion(animationImages, false); return }
         isFetching = true
-        fetchingIndex = item
 
-        var stillImage = UIImage()
         var animationImages: [UIImage] = []
-        var downloadCount = 0
         
         let editingOptions = PHContentEditingInputRequestOptions()
         editingOptions.isNetworkAccessAllowed = true
@@ -36,16 +34,16 @@ class ImageFetcher {
         DispatchQueue.global(qos: .userInitiated).async {
             
             self.contentRequestID = currentAsset.requestContentEditingInput(with: editingOptions) { [weak self] input, info in
-                
+
                 guard let self = self else { return }
                 
-                if info["PHContentEditingInputCancelledKey"] != nil { completion([UIImage()], UIImage(), false); return }
-                if info["PHContentEditingInputErrorKey"] != nil { completion([UIImage()], UIImage(), true); return }
+                if info["PHContentEditingInputCancelledKey"] != nil { completion([UIImage()], false); return }
+                if info["PHContentEditingInputErrorKey"] != nil { completion([UIImage()], true); return }
                 
                 var frameImages: [UIImage] = []
                 
                 if let input = input {
-                    
+
                     self.context = PHLivePhotoEditingContext(livePhotoEditingInput: input)
                     
                     /// download live photos by cycling through frame processor and capturing frames
@@ -59,8 +57,7 @@ class ImageFetcher {
                     self.context?.saveLivePhoto(to: output, options: nil, completionHandler: { [weak self] success, err in
                         
                         guard let self = self else { return }
-                        if !success || err != nil || frameImages.isEmpty { completion([UIImage()], UIImage(), false); return }
-                        
+                        if !success || err != nil || frameImages.isEmpty { completion([UIImage()], false); return }
                         /// distanceBetweenFrames fixed at 2 right now, always taking the middle 16 frames of the Live often with large offsets. This number is variable though
                         let distanceBetweenFrames: Double = 2
                         let rawFrames = Double(frameImages.count) / distanceBetweenFrames
@@ -82,33 +79,18 @@ class ImageFetcher {
                             let image = self.ResizeImage(with: frameImages[j], scaledToFill: size)
                             animationImages.append(image ?? UIImage())
                         }
-                        
-                        downloadCount += 1
-                        if downloadCount == 2 {
-                            self.isFetching = false
-                            self.fetchingIndex = -1
-                            DispatchQueue.main.async { completion(animationImages, stillImage, false) } }
+                    
+                        self.isFetching = false
+                        self.fetchingIndex = -1
+                        DispatchQueue.main.async { completion(animationImages, false) }
                         return
                     })
                 }
             }
-            
-            /// download still image regularly
-            self.fetchImage(currentAsset: currentAsset, item: item, livePhoto: true) { result, failed in
-                
-                if failed || result == UIImage() { completion([UIImage()], UIImage(), false); return }
-                stillImage = result
-                
-                downloadCount += 1
-                if downloadCount == 2 {
-                    self.isFetching = false
-                    self.fetchingIndex = -1
-                    DispatchQueue.main.async { completion(animationImages, stillImage, false) } }
-            }
         }
     }
     
-    func fetchImage(currentAsset: PHAsset, item: Int, livePhoto: Bool, completion: @escaping(_ result: UIImage, _ failed: Bool) -> Void) {
+    func fetchImage(currentAsset: PHAsset, item: Int, completion: @escaping(_ result: UIImage, _ failed: Bool) -> Void) {
         
         // let currentAsset = imageObjects[item].asset
         
