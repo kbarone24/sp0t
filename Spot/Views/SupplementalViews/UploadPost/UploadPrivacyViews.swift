@@ -8,106 +8,45 @@
 
 import Foundation
 import UIKit
+import Mixpanel
 
 extension UploadPostController {
-    
+        
     func presentPrivacyPicker() {
 
         if maskView != nil && maskView.superview != nil { return }
+        privacyCloseTap = UITapGestureRecognizer(target: self, action: #selector(closePrivacyPicker(_:)))
+        maskView.addGestureRecognizer(privacyCloseTap)
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         window?.addSubview(maskView)
         
-        let pickerView = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 300, width: UIScreen.main.bounds.width, height: 300))
+        let pickerHeight: CGFloat = postType == .newSpot ? 390 : 320
+        let pickerView = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - pickerHeight, width: UIScreen.main.bounds.width, height: pickerHeight))
         pickerView.backgroundColor = UIColor(named: "SpotBlack")
         maskView.addSubview(pickerView)
         
-        let titleLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: 10, width: 200, height: 20))
-        titleLabel.text = "Privacy"
-        titleLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        titleLabel.font = UIFont(name: "SFCamera-Semibold", size: 14)
-        titleLabel.textAlignment = .center
-        pickerView.addSubview(titleLabel)
+        let privacyHeight: CGFloat = postType == .newSpot ? 250 : 180
+        privacyView = UploadPrivacyPicker(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: privacyHeight))
+        privacyView.setUp(privacyLevel: postObject.privacyLevel ?? "friends", postType: postType)
+        privacyView.delegate = self
+        pickerView.addSubview(privacyView)
         
-        let whoCanSee = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: 28, width: 200, height: 20))
-        whoCanSee.text = "Who can see your post?"
-        whoCanSee.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        whoCanSee.font = UIFont(name: "SFCamera-Regular", size: 12)
-        whoCanSee.textAlignment = .center
-        pickerView.addSubview(whoCanSee)
-        
-        /// can't post non POI spots publicly
-        let publicButton = UIButton(frame: CGRect(x: 14, y: 65, width: 171, height: 54))
-        publicButton.setImage(UIImage(named: "PublicButton"), for: .normal)
-        publicButton.layer.cornerRadius = 7.5
-        publicButton.tag = 0
-        publicButton.addTarget(self, action: #selector(privacySelect(_:)), for: .touchUpInside)
-        
-        if postObject.privacyLevel == "public" {
-            publicButton.layer.borderWidth = 1
-            publicButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-        }
-        pickerView.addSubview(publicButton)
-                        
-        let friendsButton = UIButton(frame: CGRect(x: 14, y: 119, width: 171, height: 54))
-        friendsButton.setImage(UIImage(named: "FriendsButton"), for: .normal)
-        friendsButton.layer.cornerRadius = 7.5
-        friendsButton.tag = 1
-        friendsButton.addTarget(self, action: #selector(privacySelect(_:)), for: .touchUpInside)
-        
-        if postObject.privacyLevel == "friends" {
-            friendsButton.layer.borderWidth = 1
-            friendsButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-        }
-        
-        pickerView.addSubview(friendsButton)
-        
-        // only can do invite only spots not posts
-        if postType == .newSpot {
-            let inviteButton = UIButton(frame: CGRect(x: 14, y: friendsButton.frame.maxY + 10, width: 171, height: 54))
-            inviteButton.setImage(UIImage(named: "InviteButton"), for: .normal)
-            inviteButton.layer.cornerRadius = 7.5
-            inviteButton.tag = 2
-            inviteButton.addTarget(self, action: #selector(privacySelect(_:)), for: .touchUpInside)
-            if postObject.privacyLevel == "invite" {
-                inviteButton.layer.borderWidth = 1
-                inviteButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-            }
-            pickerView.addSubview(inviteButton)
-        }
+        showOnFeed = UploadShowOnFeedView(frame: CGRect(x: 0, y: privacyHeight + 20, width: UIScreen.main.bounds.width, height: 50))
+        showOnFeed.setUp(hide: postObject.hideFromFeed ?? false)
+        showOnFeed.delegate = self
+        pickerView.addSubview(showOnFeed)
     }
     
-    @objc func privacySelect(_ sender: UIButton) {
-        
-        if maskView == nil { return }
+    @objc func closePrivacyPicker(_ sender: UITapGestureRecognizer) {
+        closePrivacyPicker()
+    }
+    
+    func closePrivacyPicker() {
         for subview in maskView.subviews { subview.removeFromSuperview() }
-
-        switch sender.tag {
-        
-        case 0:
-            
-            if postType == .newSpot {
-                launchSubmitPublic()
-                return
-                
-            } else {
-                postObject.privacyLevel = "public"
-            }
-
-        case 1:
-            postObject.privacyLevel = "friends"
-            
-        default:
-            postObject.privacyLevel = "invite"
-            pushInviteFriends()
-        }
-
         maskView.removeGestureRecognizer(privacyCloseTap)
         maskView.removeFromSuperview()
-        
-        DispatchQueue.main.async { self.tableView.reloadRows(at: [IndexPath(row: 5, section: 0)], with: .none) }
     }
-    
     
     func launchSubmitPublic() {
         
@@ -194,17 +133,164 @@ extension UploadPostController {
         okButton.layer.cornerRadius = 10
         okButton.addTarget(self, action: #selector(submitPublicOkay(_:)), for: .touchUpInside)
         infoView.addSubview(okButton)
-        
-        DispatchQueue.main.async { self.tableView.reloadRows(at: [(IndexPath(row: 5, section: 0))], with: .none)}
     }
         
     @objc func submitPublicOkay(_ sender: UIButton) {
         closePrivacyPicker()
     }
+
+}
+
+protocol PrivacyPickerDelegate {
+    func finishPassingPrivacy(tag: Int)
+}
+
+class UploadPrivacyPicker: UIView {
     
-    func closePrivacyPicker() {
-        for subview in maskView.subviews { subview.removeFromSuperview() }
-        maskView.removeGestureRecognizer(privacyCloseTap)
-        maskView.removeFromSuperview()
+    var privacyLevel: String!
+    var postType: UploadPostController.PostType!
+    var delegate: PrivacyPickerDelegate?
+    
+    var titleLabel, whoCanSee: UILabel!
+    var publicButton, friendsButton, InviteButton: UIButton!
+    
+    func setUp(privacyLevel: String, postType: UploadPostController.PostType) {
+        
+        self.privacyLevel = privacyLevel
+        self.postType = postType
+        resetView()
+
+        titleLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: 10, width: 200, height: 20))
+        titleLabel.text = "Privacy"
+        titleLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        titleLabel.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        titleLabel.textAlignment = .center
+        addSubview(titleLabel)
+        
+        whoCanSee = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: 28, width: 200, height: 20))
+        whoCanSee.text = "Who can see your post?"
+        whoCanSee.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        whoCanSee.font = UIFont(name: "SFCamera-Regular", size: 12)
+        whoCanSee.textAlignment = .center
+        addSubview(whoCanSee)
+        
+        /// can't post non POI spots publicly
+        publicButton = UIButton(frame: CGRect(x: 14, y: 65, width: 171, height: 54))
+        publicButton.setImage(UIImage(named: "PublicButton"), for: .normal)
+        publicButton.layer.cornerRadius = 7.5
+        publicButton.tag = 0
+        publicButton.addTarget(self, action: #selector(privacySelect(_:)), for: .touchUpInside)
+        
+        if privacyLevel == "public" {
+            publicButton.layer.borderWidth = 1
+            publicButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
+        }
+        
+        addSubview(publicButton)
+                        
+        friendsButton = UIButton(frame: CGRect(x: 14, y: 119, width: 171, height: 54))
+        friendsButton.setImage(UIImage(named: "FriendsButton"), for: .normal)
+        friendsButton.layer.cornerRadius = 7.5
+        friendsButton.tag = 1
+        friendsButton.addTarget(self, action: #selector(privacySelect(_:)), for: .touchUpInside)
+        
+        if privacyLevel == "friends" {
+            friendsButton.layer.borderWidth = 1
+            friendsButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
+        }
+        
+        addSubview(friendsButton)
+        
+        var minY: CGFloat = 200
+        // only can do invite only spots not posts
+        if postType == .newSpot {
+            let inviteButton = UIButton(frame: CGRect(x: 14, y: friendsButton.frame.maxY + 10, width: 171, height: 54))
+            inviteButton.setImage(UIImage(named: "InviteButton"), for: .normal)
+            inviteButton.layer.cornerRadius = 7.5
+            inviteButton.tag = 2
+            inviteButton.addTarget(self, action: #selector(privacySelect(_:)), for: .touchUpInside)
+            
+            if privacyLevel == "invite" {
+                inviteButton.layer.borderWidth = 1
+                inviteButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
+            }
+            
+            addSubview(inviteButton)
+            minY += 70
+        }
+    }
+    
+    func resetView() {
+        for sub in subviews { sub.removeFromSuperview() }
+    }
+
+    
+    @objc func privacySelect(_ sender: UIButton) {
+        delegate?.finishPassingPrivacy(tag: sender.tag)
+    }
+}
+
+protocol ShowOnFeedDelegate {
+    func finishPassingVisibility(hide: Bool)
+}
+
+class UploadShowOnFeedView: UIView {
+    
+    var icon: UIImageView!
+    var topLine: UIView!
+    var label: UILabel!
+    var toggle: UIButton!
+    
+    var hide = false
+    var delegate: ShowOnFeedDelegate?
+    
+    func setUp(hide: Bool) {
+        
+        backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
+        
+        self.hide = hide
+        resetView()
+        
+        topLine = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 1))
+        topLine.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
+        addSubview(topLine)
+        
+        icon = UIImageView(frame: CGRect(x: 14, y: 12, width: 28, height: 25))
+        icon.image = UIImage(named: "ShowOnFeedIcon")
+        icon.contentMode = .scaleAspectFit
+        addSubview(icon)
+        
+        if label != nil { label.text = "" }
+        label = UILabel(frame: CGRect(x: 49, y: 15, width: 150, height: 18))
+        label.text = "Post to friends feed"
+        label.textColor = UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
+        label.font = UIFont(name: "SFCamera-Regular", size: 13.5)
+        addSubview(label)
+        
+        toggle = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 71.5, y: 5, width: 57.5, height: 38))
+        let image = hide ? UIImage(named: "HideToggleOff") : UIImage(named: "HideToggleOn")
+        toggle.setImage(image, for: .normal)
+        toggle.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        toggle.addTarget(self, action: #selector(toggle(_:)), for: .touchUpInside)
+        addSubview(toggle)
+    }
+    
+    func resetView() {
+        if topLine != nil { topLine.backgroundColor = nil }
+        if icon != nil { icon.image = UIImage() }
+        if toggle != nil { toggle.setImage(UIImage(), for: .normal) }
+
+    }
+    
+    @objc func toggle(_ sender: UIButton) {
+        
+        hide = !hide
+        let image = hide ? UIImage(named: "HideToggleOff") : UIImage(named: "HideToggleOn")
+        toggle.setImage(image, for: .normal)
+        
+        let event = hide ? "HideToggleOff" : "HideToggleOn"
+        Mixpanel.mainInstance().track(event: event)
+        
+        delegate?.finishPassingVisibility(hide: hide)
     }
 }

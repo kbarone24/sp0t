@@ -30,8 +30,6 @@ class LocationPickerController: UIViewController {
     let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("spots"))
     let db = Firestore.firestore()
     
-    var spotObject: MapSpot!
-    var selectedImages: [UIImage] = []
     var frameIndexes: [Int] = []
 
     var galleryLocation: CLLocation!
@@ -63,14 +61,10 @@ class LocationPickerController: UIViewController {
     lazy var querySpots: [MapSpot] = []
     
     var postAnnotation: CustomPointAnnotation!
-    var spotAnnotation: CustomSpotAnnotation!
-    
     var nearbyAnnotations = [String: CustomSpotAnnotation]()
         
     var passedLocation: CLLocation!
-    var secondaryLocation: CLLocation!
     var spotName = ""
-    var passedAddress = ""
     
     var navBarHeight: CGFloat = 88
     var localSearch: MKLocalSearch!
@@ -95,26 +89,7 @@ class LocationPickerController: UIViewController {
         
         NotificationCenter.default.removeObserver(self, name: Notification.Name("UpdateLocation"), object: nil)
     }
-    
-    override func viewDidDisappear(_ animated: Bool) {
         
-        super.viewDidDisappear(animated)
-        
-        ///if came from image picker, nav bar shouldnt be translucent
-        if passedLocation == nil {
-            navigationController?.navigationBar.isTranslucent = false
-            navigationController?.navigationBar.addShadow()
-            navigationController?.navigationBar.addGradientBackground(alpha: 1.0)
-        }
-    }
-
-    
-    
-    override func viewDidAppear(_ animated: Bool) {
-
-        super.viewDidAppear(animated)
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -470,17 +445,12 @@ class LocationPickerController: UIViewController {
         
         let location = sender.location(in: mapView)
         let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
+    
+        postAnnotation.coordinate = coordinate
+        UploadImageModel.shared.tappedLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        geocodeAddress(coordinate: coordinate)
         
-        if postAnnotation == nil {
-            spotAnnotation.coordinate = coordinate
-            
-        } else {
-            postAnnotation.coordinate = coordinate
-            UploadImageModel.shared.tappedLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-            geocodeAddress(coordinate: coordinate)
-            
-            sortAndReloadNearby(coordinate: coordinate)
-        }
+        sortAndReloadNearby(coordinate: coordinate)
     }
     
     func sortAndReloadNearby(coordinate: CLLocationCoordinate2D) {
@@ -510,16 +480,6 @@ class LocationPickerController: UIViewController {
         if addressLabel == nil { return }
         addressLabel.text = address
     }
-        
-    @objc func doneTap(_ sender: UIBarButtonItem) {
-        // send notification, return to spotVC
-        self.navigationController?.popViewController(animated: true)
-        let coordinate = postAnnotation == nil ? spotAnnotation.coordinate : postAnnotation.coordinate
-        let userInfo: [String: Any] = ["coordinate": coordinate]
-        let notiName = spotObject == nil ? NSNotification.Name("PostAddressChange") : NSNotification.Name("SpotAddressChange")
-        NotificationCenter.default.post(Notification(name: notiName, object: nil, userInfo: userInfo))
-    }
-    
 }
 
 extension LocationPickerController: UIGestureRecognizerDelegate {
@@ -570,17 +530,11 @@ extension LocationPickerController: MKMapViewDelegate {
                 annotationView!.annotation = annotation
             }
 
-            if self.shouldCluster && spotObject == nil {
-                annotationView?.clusteringIdentifier = Bundle.main.bundleIdentifier! + ".SpotAnnotationView"
-            } else {
-                annotationView?.clusteringIdentifier = nil
-            }
-            
+            annotationView?.clusteringIdentifier = Bundle.main.bundleIdentifier! + ".SpotAnnotationView"
             let nibView = loadSpotNib()
             
             var spotName = ""
-            if spotObject != nil { spotName = spotObject.spotName }
-            else if let anno = self.nearbyAnnotations.first(where: {$0.value.coordinate.latitude == annotation.coordinate.latitude && $0.value.coordinate.longitude == annotation.coordinate.longitude}) {
+            if let anno = self.nearbyAnnotations.first(where: {$0.value.coordinate.latitude == annotation.coordinate.latitude && $0.value.coordinate.longitude == annotation.coordinate.longitude}) {
                 spotName = anno.value.spotInfo.spotName
             }
             
@@ -631,7 +585,6 @@ extension LocationPickerController: MKMapViewDelegate {
         
         let span = mapView.region.span
         if span.longitudeDelta < 0.001 {
-            
             /// remove clustering if zoomed in far (check here if zoom went over boundary on this zoom)
             if self.shouldCluster {
                 self.shouldCluster = false
@@ -641,7 +594,6 @@ extension LocationPickerController: MKMapViewDelegate {
                     self.mapView.addAnnotations(annotations)
                 }
             }
-            
         } else {
             if !self.shouldCluster {
                 self.shouldCluster = true
@@ -684,21 +636,7 @@ extension LocationPickerController: MKMapViewDelegate {
     func addAnnotations() {
         
         firstTimeGettingLocation = false
-        
-        if passedLocation == nil {
-            
-            ///upload new
-            self.addInitialAnnotation()
-            
-            if self.spotObject != nil {
-                ///post to spot, show spot on map in addition to post annotation
-                self.addSpotAnnotation(coordinate: CLLocationCoordinate2D(latitude: spotObject.spotLat, longitude: spotObject.spotLong))
-            }
-            
-        } else {
-            ///edit post / spot
-            self.addFromPassedLocation()
-        }
+        addFromPassedLocation()
         
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1.5) { [weak self] in
             ///run on delay to avoid updating region immediately on open
@@ -713,13 +651,7 @@ extension LocationPickerController: MKMapViewDelegate {
         let camera = MKMapCamera(lookingAtCenter: adjustedCenter, fromDistance: 1000, pitch: 0, heading: 0)
 
         mapView.camera = camera
-        
-        if postAnnotation == nil {
-            mapView.addAnnotation(self.spotAnnotation)
-        } else {
-            mapView.addAnnotation(self.postAnnotation)
-        }
-        
+        mapView.addAnnotation(self.postAnnotation)
         geocodeAddress(coordinate: coordinate)
         return
     }
@@ -748,67 +680,17 @@ extension LocationPickerController: MKMapViewDelegate {
         
         DispatchQueue.main.async { self.nearbyTable.reloadData() }
     }
-    
-    func addInitialAnnotation() {
         
-        postAnnotation = CustomPointAnnotation()
-
-        var lat = UserDataModel.shared.currentLocation.coordinate.latitude
-        var long = UserDataModel.shared.currentLocation.coordinate.longitude
-        
-        /// if from gallery get image location if it exists
-        if galleryLocation != nil {
-            let imLat = galleryLocation.coordinate.latitude
-            if imLat != 0.0 { lat = imLat }
-            let imLong = galleryLocation.coordinate.longitude
-            if imLong != 0.0 { long = imLong }
-            
-        /// use spot location if no image location and posting to spot
-        } else if spotObject != nil && !imageFromCamera && lat == UserDataModel.shared.currentLocation.coordinate.latitude {
-            lat = spotObject.spotLat
-            long = spotObject.spotLong
-        }
-        
-        let selectedCoordinate = CLLocationCoordinate2D(latitude: lat, longitude: long)
-        postAnnotation.coordinate = selectedCoordinate
-        
-        self.animateToSelectedLocation(coordinate: selectedCoordinate, passed: false)
-    }
-    
     func addFromPassedLocation() {
         
         let selectedCoordinate = CLLocationCoordinate2D(latitude: passedLocation.coordinate.latitude, longitude: passedLocation.coordinate.longitude)
-        
-        if spotObject != nil {
-            //edit spot, add spot annotation as primary annotation
-            spotAnnotation = CustomSpotAnnotation()
-            spotAnnotation.coordinate = selectedCoordinate
-            spotAnnotation.title = spotObject.spotName
-            
-        } else {
             //edit post
-            postAnnotation = CustomPointAnnotation()
-            postAnnotation.coordinate = selectedCoordinate
-            
-            if secondaryLocation != nil {
-                ///add spot annotation as secondary annotation
-                self.addSpotAnnotation(coordinate: secondaryLocation.coordinate)
-            }
-        }
-        
+        postAnnotation = CustomPointAnnotation()
+        postAnnotation.coordinate = selectedCoordinate
+    
         self.addPassedSpots(coordinate: selectedCoordinate)
         self.animateToSelectedLocation(coordinate: selectedCoordinate, passed: true)
     }
-    
-    func addSpotAnnotation(coordinate: CLLocationCoordinate2D) {
-        spotAnnotation = CustomSpotAnnotation()
-        spotAnnotation.coordinate = coordinate
-        spotAnnotation.title = spotObject == nil ? spotName : spotObject.spotName
-        mapView.addAnnotation(spotAnnotation)
-    }
-
-    
-    //   func mapViewdidmo
     
     func loadProfileNib() -> LocationPickerWindow {
         
@@ -1044,8 +926,14 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
                         } else {
                             spotInfo.spotDescription = spotInfo.poiCategory ?? ""
                         }
-
-                        self.querySpots.append(spotInfo)
+                        
+                        /// replace duplicate POI with correct spotObject
+                        if let i = self.querySpots.firstIndex(where: {$0.spotName == spotInfo.spotName || ($0.phone == spotInfo.phone ?? "" && spotInfo.phone ?? "" != "") }) {
+                            self.querySpots[i] = spotInfo
+                            self.querySpots[i].poiCategory = nil
+                        } else {
+                            self.querySpots.append(spotInfo)
+                        }
                     }
                     
                     if doc == docs.last {

@@ -40,8 +40,6 @@ class EditSpotController: UIViewController {
         tableView.delegate = self
         tableView.isScrollEnabled = UIScreen.main.bounds.height < 600 /// only need scroll for SE
         tableView.register(EditOverviewCell.self, forCellReuseIdentifier: "EditOverviewCell")
-//        tableView.register(SpotTagCell.self, forCellReuseIdentifier: "SpotTagCell")
-//        tableView.register(SpotPrivacyCell.self, forCellReuseIdentifier: "SpotPrivacyCell")
         tableView.register(EditSpotHeader.self, forHeaderFooterViewReuseIdentifier: "EditSpotHeader")
         view.addSubview(tableView)
         
@@ -294,10 +292,11 @@ extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
             return cell
             
         default:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "SpotPrivacyCell") as! SpotPrivacyCell
-            let postType: UploadPostController.PostType = .newSpot
-            cell.setUp(type: postType, postPrivacy: spotObject.privacyLevel, spotPrivacy: spotPrivacy, inviteList: spotObject.inviteList ?? [], uploadPost: false, spotNameEmpty: false, visitorList: spotObject.visitorList)
-            return cell */
+             guard let cell = tableView.dequeueReusableCell(withIdentifier: "Privacy") as? UploadPrivacyCell else { return UITableViewCell() }
+             cell.setUp(postPrivacy: postObject.privacyLevel ?? "friends", spotPrivacy: spotObject == nil ? "public" : spotObject.privacyLevel)
+             return cell
+
+            */
     }
     
     
@@ -549,21 +548,6 @@ class EditSpotHeader: UITableViewHeaderFooterView {
                 let notiValues = ["seen" : false, "timestamp" : timestamp, "senderID": user.id!, "type": "invite", "spotID": spot.id!, "postID" : firstPostID, "imageURL": spot.imageURL, "spotName": spot.spotName] as [String : Any]
                 
                 acceptRef.setData(notiValues)
-                
-                let sender = PushNotificationSender()
-                var token: String!
-                
-                db.collection("users").document(newUser).getDocument { (tokenSnap, err) in
-                    
-                    if (tokenSnap == nil) {
-                        return
-                    } else {
-                        token = tokenSnap?.get("notificationToken") as? String
-                    }
-                    if (token != nil && token != "") {
-                        sender.sendPushNotification(token: token, title: "", body: "\(user.username) added you to a spot")
-                    }
-                }
             }
         }
         
@@ -678,7 +662,7 @@ class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
     }
     
     @objc func editAddress(_ sender: UIButton) {
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
+     /*   if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
             
             vc.selectedImages = [spot.spotImage]
             vc.passedLocation = CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)
@@ -688,7 +672,7 @@ class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
             editVC.mapVC.navigationController?.pushViewController(vc, animated: true)
             editVC.spotVC.editedSpot = editVC.spotObject
             editVC.dismiss(animated: false)
-        }
+        } */
     }
     
     @objc func editImage(_ sender: UIButton) {

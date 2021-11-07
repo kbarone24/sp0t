@@ -1463,7 +1463,15 @@ class PostCell: UITableViewCell {
         
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": self.selectedPostIndex as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("NotifyPostLike"), object: nil, userInfo: infoPass)
-        DispatchQueue.global(qos: .utility).async { self.likePostDB(post: self.post) }
+        DispatchQueue.global().async {
+            if self.post.id == "" { return }
+            self.db.collection("posts").document(self.post.id!).updateData(["likers" : FieldValue.arrayUnion([self.uid])])
+            
+            let functions = Functions.functions()
+            functions.httpsCallable("likePost").call(["likerID": self.uid, "username": UserDataModel.shared.userInfo.username, "postID": self.post.id!, "imageURL": self.post.imageURLs.first ?? "", "spotID": self.post.spotID ?? "", "addedUsers": self.post.addedUsers ?? [], "posterID": self.post.posterID, "posterUsername": self.post.userInfo.username]) { result, error in
+                print(result?.data as Any, error as Any)
+            }
+        }
     }
     
     @objc func unlikePost(_ sender: UIButton) {
@@ -1477,7 +1485,17 @@ class PostCell: UITableViewCell {
         //update main data source -- send notification to map, update comments
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": self.selectedPostIndex as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("NotifyPostLike"), object: nil, userInfo: infoPass)
-        DispatchQueue.global(qos: .utility).async { self.unlikePostDB(post: self.post) }
+        
+        if post.id == "" { return }
+        let updatePost = post! /// local object
+        
+        DispatchQueue.global().async {
+            self.db.collection("posts").document(updatePost.id!).updateData(["likers" : FieldValue.arrayRemove([self.uid])])
+            let functions = Functions.functions()
+            functions.httpsCallable("unlikePost").call(["postID": updatePost.id!, "posterID": updatePost.posterID, "likerID": self.uid]) { result, error in
+                print(result?.data as Any, error as Any)
+            }
+        }
     }
     
     func layoutLikesAndComments() {
@@ -2196,6 +2214,7 @@ extension PostCell {
         
         let viewHeight: CGFloat = post.spotID == "" ? 348 : 410
         editPostView = EditPostView(frame: CGRect(x: (UIScreen.main.bounds.width - 331)/2, y: UIScreen.main.bounds.height/2 - 220, width: 331, height: viewHeight))
+        editPostView.row = globalRow
         
         if postMask == nil { self.addPostMask(edit: true) }
         
@@ -2611,44 +2630,6 @@ class PostImageLoader: Operation {
                     imageEscape()
                 }
             }
-        }
-    }
-}
-
-class AddedUsersView: UIView {
-    
-    func setUp(users: [UserProfile]) {
-
-        /// add extra cell (first because working right to left
-        var minX = bounds.width - 23
-        if users.count > 3 {
-            let extraView = UILabel(frame: CGRect(x: minX, y: 2, width: 23, height: 23))
-            extraView.text = "+ \(users.count - 3)"
-            extraView.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-            extraView.font = UIFont(name: "SFCamera-Semibold", size: 13)
-            extraView.textAlignment = .center
-            addSubview(extraView)
-            minX -= 23
-        }
-        
-        /// add first 3 tagged users
-        for user in users.prefix(3).reversed() {
-
-            let userView = UIImageView(frame: CGRect(x: minX, y: 0, width: 25, height: 25))
-            userView.layer.cornerRadius = userView.bounds.width/2
-            userView.layer.borderWidth = 2
-            userView.layer.borderColor = UIColor(red: 0.07, green: 0.07, blue: 0.07, alpha: 1.00).cgColor
-            userView.clipsToBounds = true
-            userView.backgroundColor = UIColor(named: "FeedBlack")
-            addSubview(userView)
-            
-            let url = user.imageURL
-            if url != "" {
-                let transformer = SDImageResizingTransformer(size: CGSize(width: 200, height: 200), scaleMode: .aspectFill)
-                userView.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-            }
-            
-            minX -= 17
         }
     }
 }

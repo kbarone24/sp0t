@@ -17,6 +17,8 @@ extension PostDraft {
         return NSFetchRequest<PostDraft>(entityName: "PostDraft")
     }
 
+    @NSManaged public var addedUsers: [String]?
+    @NSManaged public var aspectRatios: [Float]?
     @NSManaged public var caption: String?
     @NSManaged public var city: String?
     @NSManaged public var createdBy: String?
@@ -30,14 +32,17 @@ extension PostDraft {
     @NSManaged public var spotLong: Double
     @NSManaged public var spotName: String?
     @NSManaged public var taggedUsers: [String]?
+    @NSManaged public var taggedUserIDs: [String]?
     @NSManaged public var timestamp: Int64
     @NSManaged public var images: NSSet?
     @NSManaged public var hideFromFeed: Bool
     @NSManaged public var uid: String?
     @NSManaged public var isFirst: Bool
     @NSManaged public var visitorList: [String]?
+    @NSManaged public var friendsList: [String]?
     @NSManaged public var frameIndexes: [Int]?
     @NSManaged public var gif: Bool
+    @NSManaged public var tag: String
 }
 
 // MARK: Generated accessors for images

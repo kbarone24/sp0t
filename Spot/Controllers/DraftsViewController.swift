@@ -827,323 +827,116 @@ extension DraftsViewController {
     
     func uploadPost(post: PostDraft) {
         
-        // save post to spots -> feedpost
-        let postID = UUID().uuidString
+        if post.spotID == "" { uploadFailed(); return }
         
-        let model = post.images! as! Set<ImageModel>
-        let mod = model.sorted(by: {$0.position < $1.position})
-        
-        var uploadImages: [Data] = []
-        
-        for i in 0...mod.count - 1 {
-            let im = mod[i]
-            let imageData = im.imageData
-            uploadImages.append(imageData!)
-        }
-        
-        var city = post.city ?? ""
-        if city == "" {
-            self.reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: post.postLat, longitude: post.postLong)) { (postCity) in
-                city = postCity
-            }
-        }
-        
-        self.uploadPostImage(uploadImages, postID: postID) { (imageURLs) in
+        /// need visitor list to determine whether to update users spotsList. Its also a useful check to make sure that the spot this is posting to still exists and hasn't been deleted or altered
+        getVisitorList(spotID: post.spotID!) { visitorList in
+            if visitorList.isEmpty { self.uploadFailed(); return }
             
-            if imageURLs.isEmpty {  self.uploadFailed(); return }
+            // save post to spots -> feedpost
+            let postID = UUID().uuidString
             
-            let interval = NSDate().timeIntervalSince1970
-            let myTimeInterval = TimeInterval(interval)
-            let timestamp = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
-            let actualTimestamp = Date(timeIntervalSince1970: TimeInterval(post.timestamp))
-
-            var finalInvites = post.inviteList ?? []
-            finalInvites.append(self.uid)
-
-            var postFriends: [String] = []
-            if !post.hideFromFeed {
-                postFriends = post.privacyLevel == "invite" ? finalInvites.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
-                if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
-            }
-            
-            var aspectRatios: [CGFloat] = []
-            for index in post.frameIndexes ?? [] {
-                let image = UIImage(data: uploadImages[index]) ?? UIImage()
-                aspectRatios.append(image.size.height/image.size.width)
-            }
-            
-            let postValues = ["caption" : post.caption ?? "",
-                              "posterID": self.uid,
-                              "likers": [],
-                              "timestamp": timestamp,
-                              "actualTimestamp": actualTimestamp,
-                              "taggedUsers": post.taggedUsers ?? [],
-                              "postLat": post.postLat,
-                              "postLong": post.postLong,
-                              "privacyLevel": post.privacyLevel ?? "friends",
-                              "imageURLs" : imageURLs,
-                              "spotName" : post.spotName ?? "",
-                              "createdBy": post.createdBy ?? "",
-                              "city" : city,
-                              "inviteList" : finalInvites,
-                              "friendsList" : postFriends,
-                              "spotID": post.spotID ?? "",
-                              "spotLat": post.spotLat,
-                              "spotLong": post.spotLong,
-                              "isFirst": false,
-                              "spotPrivacy" : post.spotPrivacy ?? "",
-                              "hideFromFeed": post.hideFromFeed,
-                              "frameIndexes": post.frameIndexes ?? [],
-                              "aspectRatios": aspectRatios,
-                              "gif": post.gif] as [String : Any]
-            
-            let commentValues = ["commenterID" : self.uid,
-                                 "comment" : post.caption ?? "",
-                                 "timestamp" : timestamp,
-                                 "taggedUsers": post.taggedUsers ?? []] as [String : Any]
-
-            let commentID = UUID().uuidString
-            let commentObject = MapComment(id: commentID, comment: post.caption ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: UserDataModel.shared.userInfo, taggedUsers: post.taggedUsers ?? [], commentHeight: self.getCommentHeight(comment: post.caption ?? ""), seconds: Int64(interval))
-            
-            var postImages: [UIImage] = []
             guard let model = post.images as? Set<ImageModel> else { self.uploadFailed(); return }
             let mod = model.sorted(by: {$0.position < $1.position})
             
-            if mod.count == 0 { self.uploadFailed(); return }
+            var uploadImages: [UIImage] = []
+            
             for i in 0...mod.count - 1 {
                 let im = mod[i]
-                let imageData = im.imageData
-                let image = UIImage(data: imageData! as Data) ?? UIImage()
-                postImages.append(image)
+                let imageData = im.imageData ?? Data()
+                uploadImages.append(UIImage(data: imageData) ?? UIImage())
             }
             
-            var postObject = MapPost(id: postID, caption: post.caption ?? "", postLat: post.postLat, postLong: post.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: UserDataModel.shared.userInfo, spotID: post.spotID ?? "", city: city, frameIndexes: post.frameIndexes, aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: post.taggedUsers, spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, privacyLevel: post.privacyLevel, spotPrivacy: post.spotPrivacy ?? "friends", createdBy: self.uid, inviteList: post.inviteList ?? [])
-            postObject.friendsList = postFriends
+            if mod.count == 0 || uploadImages.isEmpty { self.uploadFailed(); return }
             
-            NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
-            
-            self.db.collection("posts").document(postID).setData(postValues)
-            self.db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
-            self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: postID)
-
-            /// add to users spotslist if not already there
-            if post.visitorList != nil && post.visitorList!.contains(where: {$0 == self.uid}) {
-                self.db.collection("users").document(self.uid).collection("spotsList").document(post.spotID!).updateData(["postsList" : FieldValue.arrayUnion([postID])])
-            } else {
-                self.db.collection("users").document(self.uid).collection("spotsList").document(post.spotID!).setData(["spotID" : post.spotID!, "checkInTime" : timestamp, "postsList" : [postID], "city": city], merge:true)
+            var city = post.city ?? ""
+            if city == "" {
+                self.reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: post.postLat, longitude: post.postLong)) { (spotCity) in
+                    city = spotCity
+                }
             }
+            var aspectRatios: [CGFloat] = []
+            for aspect in post.aspectRatios ?? [] { aspectRatios.append(CGFloat(aspect)) }
             
-            if post.createdBy != nil { self.incrementSpotScore(user: post.createdBy!, increment: 1) }
-            self.incrementSpotScore(user: self.uid, increment: 3)
-
-            self.runSpotTransactions(spotID: post.spotID!, postPrivacy: post.privacyLevel ?? "friends", postID: postID, timestamp: timestamp as Date, post: post)
+            self.uploadPostImage(uploadImages, postID: postID, progressView: self.progressView) { (imageURLs, failed)  in
+                
+                if imageURLs.isEmpty && failed { self.uploadFailed(); return }
+                
+                let timestamp = Date()
+                let actualTimestamp = Date(timeIntervalSince1970: TimeInterval(post.timestamp))
+                
+                let postObject = MapPost(id: postID, caption: post.caption ?? "", postLat: post.postLat, postLong: post.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp), actualTimestamp: Timestamp(date: actualTimestamp), userInfo: UserDataModel.shared.userInfo, spotID: post.spotID, city: city, frameIndexes: post.frameIndexes ?? [], aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: uploadImages, seconds: 0, selectedImageIndex: 0, postScore: 0, commentList: [], likers: [], taggedUsers: post.taggedUsers ?? [], taggedUserIDs:  post.taggedUserIDs ?? [], captionHeight: 0, imageHeight: 0, cellHeight: 0, spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, privacyLevel: post.privacyLevel, spotPrivacy: post.spotPrivacy, createdBy: self.uid, inviteList: post.inviteList ?? [], friendsList: post.friendsList ?? [], hideFromFeed: post.hideFromFeed, gif: post.gif, isFirst: false, addedUsers: post.addedUsers ?? [], addedUserProfiles: [], tag: post.tag)
+                
+                var uploadSpot = MapSpot(spotDescription: "", spotName: post.spotName ?? "", spotLat: post.spotLat, spotLong: post.spotLong, founderID: "", privacyLevel: post.spotPrivacy ?? "", imageURL: "")
+                uploadSpot.id = post.spotID!
+                uploadSpot.visitorList = visitorList
+                
+                self.uploadPost(post: postObject, actualTimestamp: actualTimestamp)
+                self.uploadSpot(post: postObject, spot: uploadSpot, postType: .postToSpot, submitPublic: false)
+                self.finishPostUpload(post: post)
+            }
         }
     }
     
-    func runSpotTransactions(spotID: String, postPrivacy: String, postID: String, timestamp: Date, post: PostDraft) {
-        
-        let db = Firestore.firestore()
-        let ref = db.collection("spots").document(spotID)
-        
-        db.runTransaction({ (transaction, errorPointer) -> Any? in
-            let spotDoc: DocumentSnapshot
-            do {
-                try spotDoc = transaction.getDocument(ref)
-            } catch let fetchError as NSError {
-                errorPointer?.pointee = fetchError
-                return nil
-            }
-            
-            var posterIDs = spotDoc.data()?["posterIDs"] as? [String] ?? []
-            posterIDs.append(self.uid)
-            
-            var postPrivacies = spotDoc.data()?["postPrivacies"] as? [String] ?? []
-            postPrivacies.append(postPrivacy)
-            
-            var visitorList = spotDoc.data()?["visitorList"] as? [String] ?? []
-            if !visitorList.contains(self.uid) { visitorList.append(self.uid) }
-            
-            var postIDs = spotDoc.data()?["postIDs"] as? [String] ?? []
-            postIDs.append(postID)
-            
-            var postTimestamps = spotDoc.data()?["postTimestamps"] as? [Firebase.Timestamp] ?? []
-            let firTimestamp = Firebase.Timestamp(date: timestamp as Date)
-            postTimestamps.append(firTimestamp)
-                        
-            transaction.updateData([
-                "posterIDs": posterIDs,
-                "postPrivacies" : postPrivacies,
-                "visitorList" : visitorList,
-                "postIDs" : postIDs,
-                "postTimestamps" : postTimestamps,
-            ], forDocument: ref)
-            
-            return nil
-            
-        }) { (object, error) in
-            self.finishPostUpload(post: post)
-        }
-    }
-
         
     func uploadSpot(spot: SpotDraft) {
         /// upload to posts
 
         // save post to spots -> feedpost
-        let postID = UUID().uuidString
         
-        guard let model = spot.images as? Set<ImageModel> else { self.uploadFailed(); return }
-        let mod = model.sorted(by: {$0.position < $1.position})
-        
-        var uploadImages: [Data] = []
-        
-        for i in 0...mod.count - 1 {
-            let im = mod[i]
-            let imageData = im.imageData
-            uploadImages.append(imageData!)
-        }
-        
-        var city = ""
-        self.reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)) { (spotCity) in
-            city = spotCity
-        }
-
-        self.uploadPostImage(uploadImages, postID: postID) { (imageURLs) in
+        self.checkForPOI(spot: spot) { [weak self] (duplicateID) in
             
-            if imageURLs.isEmpty { self.uploadFailed(); return }
-
-            self.checkForPOI(spot: spot) { (duplicateID) in
+            guard let self = self else { return }
+            
+            let postID = UUID().uuidString
+            let spotID = duplicateID == "" ? spot.spotID! : duplicateID
+            
+            guard let model = spot.images as? Set<ImageModel> else { self.uploadFailed(); return }
+            let mod = model.sorted(by: {$0.position < $1.position})
+            
+            var uploadImages: [UIImage] = []
+            
+            for i in 0...mod.count - 1 {
+                let im = mod[i]
+                let imageData = im.imageData ?? Data()
+                uploadImages.append(UIImage(data: imageData) ?? UIImage())
+            }
+            
+            if mod.count == 0 || uploadImages.isEmpty { self.uploadFailed(); return }
+            
+            /// run reverse geocode bc draft will use post location for city
+            var city = spot.city ?? ""
+            self.reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)) { (spotCity) in
+                city = spotCity
+            }
+            
+            var aspectRatios: [CGFloat] = []
+            for aspect in spot.aspectRatios ?? [] { aspectRatios.append(CGFloat(aspect)) }
+            
+            self.uploadPostImage(uploadImages, postID: postID, progressView: self.progressView) { (imageURLs, failed)  in
                 
-                let interval = Date().timeIntervalSince1970
-                let myTimeInterval = TimeInterval(interval)
-                let timestamp = Date(timeIntervalSince1970: TimeInterval(myTimeInterval))
-                let actualTimestamp = Date(timeIntervalSince1970: TimeInterval(spot.timestamp))
+                if imageURLs.isEmpty && failed { self.uploadFailed(); return }
                 
-                let spotPrivacy = spot.postToPOI ? "public" : spot.privacyLevel ?? "friends"
-                let postPrivacy = spot.privacyLevel ?? "friends"
-                
-                var finalInvites = spot.inviteList ?? []
-                if spot.privacyLevel == "invite" { finalInvites.append(self.uid) }
-                
-                
-                var postFriends: [String] = []
-                if !spot.hideFromFeed {
-                    postFriends = spot.privacyLevel == "invite" ? finalInvites.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
-                    if !postFriends.contains(self.uid) { postFriends.append(self.uid) }
+                self.checkForPOI(spot: spot) { (duplicateID) in
+                    
+                    let timestamp = Date()
+                    let actualTimestamp = Date(timeIntervalSince1970: TimeInterval(spot.timestamp))
+                    
+                    let spotPrivacy = spot.postToPOI ? "public" : spot.privacyLevel ?? "friends"
+                    let postPrivacy = spot.privacyLevel ?? "friends"
+                    
+                    let postObject = MapPost(id: postID, caption: spot.spotDescription ?? "", postLat: spot.postLat, postLong: spot.postLong, posterID: self.uid, timestamp: Timestamp(date: timestamp), actualTimestamp: Timestamp(date: actualTimestamp), userInfo: UserDataModel.shared.userInfo, spotID: spotID, city: city, frameIndexes: spot.frameIndexes ?? [], aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: uploadImages, seconds: 0, selectedImageIndex: 0, postScore: 0, commentList: [], likers: [], taggedUsers: spot.taggedUsernames ?? [], taggedUserIDs:  spot.taggedIDs ?? [], captionHeight: 0, imageHeight: 0, cellHeight: 0, spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, privacyLevel: postPrivacy, spotPrivacy: spotPrivacy, createdBy: self.uid, inviteList: spot.inviteList ?? [], friendsList: spot.friendsList ?? [], hideFromFeed: spot.hideFromFeed, gif: spot.gif, isFirst: true, addedUsers: spot.addedUsers ?? [], addedUserProfiles: [], tag: spot.tags?.first ?? "")
+                    var uploadSpot = MapSpot(spotDescription: spot.spotDescription ?? "", spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, founderID: self.uid, privacyLevel: spotPrivacy, imageURL: imageURLs.first ?? "")
+                    uploadSpot.id = spotID
+                    
+                    let postType: UploadPostController.PostType = spot.postToPOI ? .postToPOI : .newSpot
+                    self.uploadPost(post: postObject, actualTimestamp: actualTimestamp)
+                    self.uploadSpot(post: postObject, spot: uploadSpot, postType: postType, submitPublic: spot.submitPublic)
+                    self.finishSpotUpload(spot: spot)
                 }
-                
-                var aspectRatios: [CGFloat] = []
-                for index in spot.frameIndexes ?? [] {
-                    let image = UIImage(data: uploadImages[index]) ?? UIImage()
-                    aspectRatios.append(image.size.height/image.size.width)
-                }
-
-                let postValues = ["caption" : spot.spotDescription ?? "",
-                                  "posterID": self.uid,
-                                  "likers": [],
-                                  "timestamp": timestamp,
-                                  "actualTimestamp": actualTimestamp,
-                                  "taggedUsers": spot.taggedUsernames ?? [],
-                                  "postLat": spot.postLat,
-                                  "postLong": spot.postLong,
-                                  "privacyLevel": postPrivacy,
-                                  "imageURLs" : imageURLs,
-                                  "spotName" : spot.spotName ?? "",
-                                  "createdBy": self.uid ,
-                                  "city" : city,
-                                  "inviteList" : finalInvites,
-                                  "friendsList" : postFriends,
-                                  "spotID": spot.spotID ?? "",
-                                  "spotLat": spot.spotLat,
-                                  "spotLong": spot.spotLong,
-                                  "isFirst": true,
-                                  "spotPrivacy" : spotPrivacy,
-                                  "hideFromFeed": spot.hideFromFeed,
-                                  "frameIndexes": spot.frameIndexes ?? [],
-                                  "aspectRatios": aspectRatios,
-                                  "gif": spot.gif] as [String : Any]
-                
-                let commentValues = ["commenterID" : self.uid,
-                                     "comment" : spot.spotDescription ?? "",
-                                     "timestamp" : timestamp,
-                                     "taggedUsers": spot.taggedUsernames ?? []] as [String : Any]
-
-                let commentID = UUID().uuidString
-                let commentObject = MapComment(id: commentID, comment: spot.spotDescription ?? "", commenterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: UserDataModel.shared.userInfo, taggedUsers: spot.taggedUsernames ?? [], commentHeight: self.getCommentHeight(comment: spot.spotDescription ?? ""), seconds: Int64(interval))
-                
-                if spot.images == nil { self.uploadFailed(); return }
-                var postImages: [UIImage] = []
-                
-                if mod.count == 0 { self.uploadFailed(); return }
-                for i in 0...mod.count - 1 {
-                    let im = mod[i]
-                    let imageData = im.imageData
-                    let image = UIImage(data: imageData! as Data) ?? UIImage()
-                    postImages.append(image)
-                }
-                
-                var postObject = MapPost(id: postID, caption: spot.spotDescription ?? "", postLat: spot.spotLat, postLong: spot.spotLong, posterID: self.uid, timestamp: Timestamp(date: timestamp as Date), userInfo: UserDataModel.shared.userInfo, spotID: spot.spotID ?? "", city: city, frameIndexes: spot.frameIndexes, aspectRatios: aspectRatios, imageURLs: imageURLs, postImage: postImages, seconds: Int64(interval), selectedImageIndex: 0, commentList: [commentObject], likers: [], taggedUsers: spot.taggedUsernames, spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, privacyLevel: spot.privacyLevel ?? "friends", spotPrivacy: spot.privacyLevel ?? "friends", createdBy: self.uid, inviteList: spot.inviteList ?? [])
-                postObject.friendsList = postFriends
-                
-                NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : postObject]))
-                
-                
-                self.db.collection("posts").document(postID).setData(postValues)
-                self.db.collection("posts").document(postID).collection("comments").document(commentID).setData(commentValues, merge:true)
-                self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), postID: postID)
-
-                ///upload spot
-                
-                let lowercaseName = spot.spotName?.lowercased() ?? ""
-                let keywords = lowercaseName.getKeywordArray()
-                
-                let spotValues =  ["city" : city,
-                                   "spotName" : spot.spotName ?? "",
-                                   "lowercaseName": lowercaseName,
-                                   "description": spot.spotDescription ?? "",
-                                   "tags": spot.tags ?? [],
-                                   "createdBy": self.uid,
-                                   "visitorList": [self.uid],
-                                   "inviteList" : finalInvites,
-                                   "privacyLevel": spotPrivacy,
-                                   "taggedUsers": spot.taggedUsernames ?? [],
-                                   "spotLat": spot.spotLat,
-                                   "spotLong" : spot.spotLong,
-                                   "imageURL" : imageURLs.first ?? "",
-                                   "phone": spot.phone as Any,
-                                   "postIDs": [postID],
-                                   "postTimestamps": [timestamp],
-                                   "posterIDs": [self.uid],
-                                   "postPrivacies": [spot.privacyLevel ?? "friends"],
-                                   "searchKeywords": keywords] as [String : Any]
-                
-                let spotID = duplicateID == "" ? spot.spotID! : duplicateID
-                
-                if duplicateID == "" { self.db.collection("spots").document(spotID).setData(spotValues, merge: true) }
-                
-                self.db.collection("users").document(self.uid).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : timestamp, "postsList" : [postID], "city": city], merge:true)
-                
-                /// set spot for public submission
-                if spot.submitPublic { self.db.collection("submissions").document(spotID).setData(["spotID" : spotID]) }
-                
-                if duplicateID == "" { self.setSpotLocations(spotLocation: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), spotID: spotID) }
-                
-                var spotObject = MapSpot(id: spotID, spotDescription: spot.spotDescription ?? "", spotName: spot.spotName ?? "", spotLat: spot.spotLat, spotLong: spot.spotLong, founderID: self.uid, privacyLevel: spot.privacyLevel ?? "friends", visitorList: [self.uid], inviteList: spot.inviteList ?? [], tags: spot.tags ?? [], imageURL: imageURLs.first ?? "", spotImage: postImages.first ?? UIImage(), taggedUsers: spot.taggedUsernames ?? [], city: city, friendVisitors: 0, distance: 0)
-                spotObject.checkInTime = Int64(interval)
-                
-                /// send notifications if this is an invite only spot
-                self.sendInviteNotis(spotObject: spotObject, postObject: postObject, username: UserDataModel.shared.userInfo.username)
-
-                /// add city to list of cities if this is the first post there
-                DispatchQueue.global().async { self.addToCityList(city: city) }
-                
-                /// increment users spotScore
-                self.incrementSpotScore(user: self.uid, increment: 6)
-
-                NotificationCenter.default.post(name: NSNotification.Name("NewSpot"), object: nil, userInfo: ["spot" : spotObject])
-                self.finishSpotUpload(spot: spot)
             }
         }
+
     }
     
     func finishPostUpload(post: PostDraft) {
@@ -1193,56 +986,7 @@ extension DraftsViewController {
              self.failedUploadCollection.reloadData()
         }
     }
-    
-    func uploadPostImage(_ imageData: [Data], postID: String, completion: @escaping ((_ urls: [String]) -> ())){
-        var index = 0
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
-            guard let self = self else { return }
-            if self.progressView.progress != 1.0 {
-                completion([])
-                return
-            }
-        }
-        
-        var progress = 0.7/Double(imageData.count)
-        var URLs: [String] = []
-        for _ in imageData {
-            URLs.append("")
-        }
-        for image in imageData {
-            let imageID = UUID().uuidString
-            let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageID)")
-            let metadata = StorageMetadata()
-            metadata.contentType = "image/jpeg"
-            
-            storageRef.putData(image, metadata: metadata){metadata, error in
-                if error != nil { completion([]); return }
-                storageRef.downloadURL { [weak self] (url, err) in
-                    
-                    guard let self = self else { return }
-                    
-                    if error != nil { completion([]); return }
-                    let urlString = url!.absoluteString
-                    
-                    let i = imageData.lastIndex(where: {$0 == image})
-                    URLs[i ?? 0] = urlString
-                    
-                    DispatchQueue.main.async { self.progressView.setProgress(Float(0.3 + progress), animated: true) }
-                    progress = progress * Double(index + 1)
-                    
-                    index += 1
-                    if index == imageData.count {
-                        DispatchQueue.main.async {
-                            completion(URLs)
-                            return
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
     func checkForPOI(spot: SpotDraft, completion: @escaping(_ id: String) -> () ) {
         
         if !spot.postToPOI { completion(""); return }
@@ -1268,6 +1012,22 @@ extension DraftsViewController {
                 } catch { completion(""); return }
             }
         }
+    }
+    
+    func getVisitorList(spotID: String, completion: @escaping(_ visitorList: [String]) -> () ) {
+        
+        db.collection("spots").document(spotID).getDocument { snap, err in
+            if !(snap?.exists ?? false) || err != nil { completion([]); return }
+            
+            if let visitorList = snap!.get("visitorList") as? [String] {
+                completion(visitorList)
+                return
+                
+            } else {
+                completion([]); return
+            }
+        }
+        
     }
     
     func locationsClose(coordinate1: CLLocationCoordinate2D, coordinate2: CLLocationCoordinate2D) -> Bool {

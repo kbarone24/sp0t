@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="18154" systemVersion="20F71" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="19206" systemVersion="20F71" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
     <entity name="ImageModel" representedClassName="ImageModel" syncable="YES">
         <attribute name="imageData" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
         <attribute name="position" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
@@ -15,10 +15,13 @@
         <relationship name="images" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ImageModel" inverseName="imagesArray" inverseEntity="ImageModel"/>
     </entity>
     <entity name="PostDraft" representedClassName="PostDraft" syncable="YES">
+        <attribute name="addedUsers" optional="YES" attributeType="Transformable"/>
+        <attribute name="aspectRatios" optional="YES" attributeType="Transformable"/>
         <attribute name="caption" optional="YES" attributeType="String"/>
         <attribute name="city" optional="YES" attributeType="String"/>
         <attribute name="createdBy" optional="YES" attributeType="String"/>
         <attribute name="frameIndexes" optional="YES" attributeType="Transformable"/>
+        <attribute name="friendsList" optional="YES" attributeType="Transformable"/>
         <attribute name="gif" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="hideFromFeed" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="inviteList" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
@@ -31,6 +34,8 @@
         <attribute name="spotLong" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="spotName" optional="YES" attributeType="String"/>
         <attribute name="spotPrivacy" optional="YES" attributeType="String"/>
+        <attribute name="tag" optional="YES" attributeType="String"/>
+        <attribute name="taggedUserIDs" optional="YES" attributeType="Transformable"/>
         <attribute name="taggedUsers" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
         <attribute name="timestamp" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="uid" optional="YES" attributeType="String"/>
@@ -38,7 +43,11 @@
         <relationship name="images" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ImageModel" inverseName="post" inverseEntity="ImageModel"/>
     </entity>
     <entity name="SpotDraft" representedClassName="SpotDraft" syncable="YES">
+        <attribute name="addedUsers" optional="YES" attributeType="Transformable"/>
+        <attribute name="aspectRatios" optional="YES" attributeType="Transformable"/>
+        <attribute name="city" optional="YES" attributeType="String"/>
         <attribute name="frameIndexes" optional="YES" attributeType="Transformable"/>
+        <attribute name="friendsList" optional="YES" attributeType="Transformable"/>
         <attribute name="gif" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="hideFromFeed" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="inviteList" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
@@ -63,7 +72,7 @@
     <elements>
         <element name="ImageModel" positionX="-269.27734375" positionY="9.0234375" width="128" height="118"/>
         <element name="ImagesArray" positionX="-54" positionY="9" width="128" height="104"/>
-        <element name="PostDraft" positionX="-162" positionY="36" width="128" height="344"/>
-        <element name="SpotDraft" positionX="-162" positionY="117" width="128" height="344"/>
+        <element name="PostDraft" positionX="-162" positionY="36" width="128" height="419"/>
+        <element name="SpotDraft" positionX="-162" positionY="117" width="128" height="404"/>
     </elements>
 </model>

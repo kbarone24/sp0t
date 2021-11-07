@@ -208,7 +208,7 @@ class CommentsViewController: UIViewController {
         postVC.mapVC.removeTable()
         
         let timestamp = NSDate().timeIntervalSince1970
-        let date = Date(timeIntervalSince1970: timestamp)
+        let date = Date()
         let firTimestamp = Firebase.Timestamp(date: date)
         
         let commentID = UUID().uuidString
@@ -248,105 +248,22 @@ class CommentsViewController: UIViewController {
         tableView.removeGestureRecognizer(panGesture)
         
         resizeFooter(type: 2)
+        let commenterIDList = commentList.map({$0.commenterID})
+        let taggedUserIDs = selectedUsers.map({$0.id ?? ""})
         
-        let values = ["comment" : commentText,
+        let values = ["addedUsers" : post.addedUsers ?? [],
+                      "comment" : commentText,
                       "commenterID" : self.uid,
+                      "commenterIDList" : commenterIDList,
+                      "commenterUsername" : UserDataModel.shared.userInfo.username,
+                      "imageURL" : post.imageURLs.first ?? "",
+                      "posterID": post.posterID,
+                      "posterUsername" : post.userInfo.username,
                       "timestamp" : firTimestamp,
-                      "taggedUsers": taggedUsernames] as [String : Any]
+                      "taggedUsersIDs": taggedUserIDs]  as [String : Any]
                 
         DispatchQueue.global(qos: .userInitiated).async {
             self.db.collection("posts").document(self.post.id!).collection("comments").document(commentID).setData(values, merge: true)
-            self.incrementSpotScore(user: self.post.posterID, increment: 1)
-        }
-        
-        // send comment notification to the original poster first
-        var dontSendList: [String] = [self.uid]
-        
-        if self.uid != self.post.posterID {
-            dontSendList.append(self.post.posterID)
-            
-            let notiID = UUID().uuidString
-            let notificationRef = self.db.collection("users").document(self.post.posterID).collection("notifications")
-            
-            let acceptRef = notificationRef.document(notiID)
-            
-            let notiValues = ["seen" : false, "timestamp" : firTimestamp, "senderID": self.uid, "type": "comment", "spotID": self.post.spotID!, "postID": self.post.id!, "imageURL": self.post.imageURLs.first ?? "" as Any] as [String : Any]
-            
-            acceptRef.setData(notiValues)
-            
-            let sender = PushNotificationSender()
-            var token: String!
-            
-            self.db.collection("users").document(self.post.posterID).getDocument { (tokenSnap, err) in
-                if (tokenSnap == nil) {
-                    return
-                } else {
-                    token = tokenSnap?.get("notificationToken") as? String
-                    if (token != nil && token != "") {
-                        sender.sendPushNotification(token: token, title: "", body: "\(self.userInfo.username) commented on your post")
-                    }
-                }
-            }
-        }
-        
-        // send notifications to tagged users
-        if !selectedUsers.isEmpty {
-            let values = ["seen" : false, "timestamp" : firTimestamp, "senderID": self.uid, "type": "commentTag", "spotID": post.spotID ?? "", "postID": post.id!, "imageURL": self.post.imageURLs.first ?? "" as Any] as [String : Any]
-            
-            for user in selectedUsers {
-                if dontSendList.contains(user.id!) { continue }
-                dontSendList.append(user.id!)
-                let nID = UUID().uuidString
-                let notiRef = self.db.collection("users").document(user.id!).collection("notifications").document(nID)
-                notiRef.setData(values)
-                
-                let sender = PushNotificationSender()
-                var token: String!
-                
-                db.collection("users").document(user.id!).getDocument { (tokenSnap, err) in
-                    if (tokenSnap == nil) {
-                        return
-                    } else {
-                        token = tokenSnap?.get("notificationToken") as? String
-                    }
-                    if (token != nil && token != "") {
-                        sender.sendPushNotification(token: token, title: "", body: "\(UserDataModel.shared.userInfo.username) tagged you in a comment")
-                    }
-                }
-            }
-        }
-        
-        // send notifications to other commenters
-        if commentList.count > 2 {
-            
-            for comment in commentList {
-                if (!dontSendList.contains(comment.commenterID)) {
-                    dontSendList.append(comment.commenterID)
-                    let nID = UUID().uuidString
-                    let notiRef = self.db.collection("users").document(comment.commenterID).collection("notifications").document(nID)
-                    
-                    let sender = PushNotificationSender()
-                    var token: String!
-                    
-                    self.db.collection("users").document(comment.commenterID).getDocument { [weak self] (tokenSnap, err) in
-                        
-                        guard let self = self else { return }
-                        
-                        if (tokenSnap == nil) {
-                            return
-                        } else {
-                            token = tokenSnap?.get("notificationToken") as? String
-                        }
-                        
-                        guard let posterInfo = self.post.userInfo else { return }
-                        let username = posterInfo.username
-                        
-                        sender.sendPushNotification(token: token, title: "", body: "\(self.userInfo.username) also commented on \(username)'s post")
-                        let values = ["seen" : false, "timestamp" : firTimestamp, "senderID": self.uid, "type": "commentComment", "spotID": self.post.spotID!, "postID": self.post.id!, "imageURL": self.post.imageURLs.first ?? "" as Any, "originalPoster": username] as [String : Any]
-                        notiRef.setData(values)
-                    }
-                }
-            }
         }
     }
     
@@ -485,13 +402,9 @@ extension CommentsViewController: UITableViewDelegate, UITableViewDataSource {
             
             let commentID = commentList[indexPath.row + 1].id!
             let postID = post.id!
-            let posterID = post.posterID
             
-            DispatchQueue.global(qos: .default).async {
-                self.postVC.incrementSpotScore(user: posterID, increment: -1)
-                let postsRef = self.db.collection("posts").document(postID).collection("comments").document(commentID)
+            let postsRef = self.db.collection("posts").document(postID).collection("comments").document(commentID)
                     postsRef.delete()
-            }
                 
             commentList.remove(at: indexPath.row + 1)
             

@@ -9,32 +9,22 @@
 import Foundation
 import UIKit
 
-class UploadChooseTagCell: UITableViewCell {
-    
-    var topLine: UIView!
-    var titleLabel: UILabel!
+protocol ChooseTagDelegate {
+    func finishPassingTag(tag: Tag)
+}
 
+class UploadChooseTagView: UIView {
+    
     var chooseTagCollection: UICollectionView  = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
     var tags: [Tag] = [Tag(name: "Active"), Tag(name: "Art"), Tag(name: "Boogie"), Tag(name: "Chill"), Tag(name: "Coffee"), Tag(name: "Drink"), Tag(name: "Eat"), Tag(name: "Historic"), Tag(name: "Home"), Tag(name: "Nature"), Tag(name: "Shop"), Tag(name: "Smoke"), Tag(name: "Sunset"), Tag(name: "Swim"), Tag(name: "View"), Tag(name: "Weird")]
-    
+    var delegate: ChooseTagDelegate?
 
-    func setUp() {
+    func setUp(tag: String) {
         
-        backgroundColor = .black
-        contentView.backgroundColor = .black
+        backgroundColor = UIColor(named: "SpotBlack")
         
         resetView()
-        
-        topLine = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 1))
-        topLine.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
-        contentView.addSubview(topLine)
-        
-        titleLabel = UILabel(frame: CGRect(x: 16, y: 12, width: 150, height: 18))
-        titleLabel.text = "Add tag"
-        titleLabel.textColor = UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
-        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 13.5)
-        contentView.addSubview(titleLabel)
-        
+                
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
         layout.itemSize = CGSize(width: 40, height: 40)
@@ -42,7 +32,7 @@ class UploadChooseTagCell: UITableViewCell {
         layout.minimumInteritemSpacing = 8
         layout.sectionInset = UIEdgeInsets(top: 0, left: 13, bottom: 0, right: 13)
         
-        chooseTagCollection.frame = CGRect(x: 0, y: 39, width: UIScreen.main.bounds.width, height: 89)
+        chooseTagCollection.frame = CGRect(x: 0, y: 30, width: UIScreen.main.bounds.width, height: 89)
         chooseTagCollection.backgroundColor = nil
         chooseTagCollection.delegate = self
         chooseTagCollection.dataSource = self
@@ -51,16 +41,16 @@ class UploadChooseTagCell: UITableViewCell {
         chooseTagCollection.setCollectionViewLayout(layout, animated: false)
         addSubview(chooseTagCollection)
         
+        if tag != "", let index = tags.firstIndex(where: {$0.name == tag}) { tags[index].selected = true }
         chooseTagCollection.reloadData()
     }
         
     func resetView() {
-        if topLine != nil { topLine.backgroundColor = nil }
-        if titleLabel != nil { titleLabel.text = "" }
+       // chooseTagCollection.removeFromSuperview()
     }
 }
 
-extension UploadChooseTagCell: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+extension UploadChooseTagView: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return tags.count
@@ -78,10 +68,10 @@ extension UploadChooseTagCell: UICollectionViewDelegate, UICollectionViewDataSou
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let uploadVC = viewContainingController() as? UploadPostController else { return }
+        print("select")
         var tag = tags[indexPath.row]
         tag.selected = !tag.selected
-        uploadVC.selectTag(tag: tag)
+        delegate?.finishPassingTag(tag: tag)
     }
 }
 
@@ -114,7 +104,7 @@ class UploadTagCell: UICollectionViewCell {
     
     func setAlphas(alpha: CGFloat) {
         tagImage.alpha = alpha
-        backgroundColor = postTag.selected ? UIColor(red: 0.00, green: 0.09, blue: 0.09, alpha: 1.00) : UIColor(red: 0.112, green: 0.112, blue: 0.112, alpha: 1).withAlphaComponent(alpha)
-        layer.borderColor = postTag.selected ? UIColor(named: "SpotGreen")!.cgColor : UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: alpha).cgColor
+        backgroundColor = postTag.selected ? UIColor(red: 0.00, green: 0.09, blue: 0.09, alpha: 1.00) : UIColor(red: 0.094, green: 0.094, blue: 0.094, alpha: 1).withAlphaComponent(alpha)
+        layer.borderColor = postTag.selected ? UIColor(named: "SpotGreen")!.cgColor : UIColor(red: 0.112, green: 0.112, blue: 0.112, alpha: 1).cgColor
     }
 }

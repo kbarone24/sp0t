@@ -29,6 +29,7 @@ class AVCameraController: UIViewController {
     var flashButton: UIButton!
     var cancelButton: UIButton!
     var cameraRotateButton: UIButton!
+    var aliveToggle: UIButton!
     var gifText: UIButton!
     var stillText: UIButton!
     var cameraMask: UIView!
@@ -200,6 +201,14 @@ class AVCameraController: UIViewController {
         cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
         view.addSubview(cancelButton)
         
+        aliveToggle = UIButton(frame: CGRect(x: 5.7, y: minY + cameraHeight - 56, width: 94, height: 53))
+        /// 74 x 33
+        let image = gifMode ? UIImage(named: "AliveOn") : UIImage(named: "AliveOff")
+        aliveToggle.setImage(image, for: .normal)
+        aliveToggle.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        aliveToggle.addTarget(self, action: #selector(toggleAlive(_:)), for: .touchUpInside)
+        view.addSubview(aliveToggle)
+
         /// pan gesture will allow camera dismissal on swipe down
         pan = UIPanGestureRecognizer.init(target: self, action: #selector(panGesture))
         view.addGestureRecognizer(pan)
@@ -251,6 +260,13 @@ class AVCameraController: UIViewController {
     
     @objc func cameraRotateTap(_ sender: UIButton) {
         switchCameras()
+    }
+    
+    @objc func toggleAlive(_ sender: UIButton) {
+        gifMode = !gifMode
+        Mixpanel.mainInstance().track(event: "CameraToggleAlive", properties: ["on": gifMode])
+        let image = gifMode ? UIImage(named: "AliveOn") : UIImage(named: "AliveOff")
+        aliveToggle.setImage(image, for: .normal)
     }
     
     func switchCameras() {
@@ -311,8 +327,8 @@ class AVCameraController: UIViewController {
         Mixpanel.mainInstance().track(event: "CameraAliveCapture", properties: ["flash": flash, "selfie": selfie])
         
         DispatchQueue.main.async {
-            self.addDots(count: 0)
-            self.captureGIF()
+            if self.gifMode { self.addDots(count: 0) }
+            self.captureImage()
         }
     }
         
@@ -416,9 +432,9 @@ class AVCameraController: UIViewController {
         view.bringSubviewToFront(draftsNotification)
     }
     
-    func captureGIF() {
+    func captureImage() {
         
-        cameraController.captureImage { [weak self] image, err, gifMode, data, outputURL in
+        cameraController.captureImage(gifMode: gifMode, completion: { [weak self] image, err, gifMode, data, outputURL in
             
             guard let self = self else { return }
             if self.cancelOnDismiss { return }
@@ -441,7 +457,7 @@ class AVCameraController: UIViewController {
                     DispatchQueue.main.async { navController.pushViewController(vc, animated: true) }
                 }
             }
-        }
+        })
     }
     
     func addDot(count: Int) {

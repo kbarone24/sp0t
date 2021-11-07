@@ -34,6 +34,7 @@ struct MapPost: Identifiable, Codable {
     var commentList: [MapComment] = []
     var likers: [String]
     var taggedUsers: [String]? = []
+    var taggedUserIDs: [String] = []
     
     var captionHeight: CGFloat = 0
     var imageHeight: CGFloat = 0
@@ -49,6 +50,7 @@ struct MapPost: Identifiable, Codable {
     var friendsList: [String] = [] 
     var hideFromFeed: Bool? = false
     var gif: Bool? = false
+    var isFirst: Bool? = false
     
     var addedUsers: [String]? = []
     var addedUserProfiles: [UserProfile] = []
@@ -79,5 +81,6 @@ struct MapPost: Identifiable, Codable {
         case gif
         case addedUsers
         case tag
+        case isFirst
     }
 }

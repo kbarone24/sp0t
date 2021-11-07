@@ -963,7 +963,7 @@ class SpotViewController: UIViewController {
                 }
             }
             
-            self.present(inviteVC, animated: true, completion: nil)
+            mapVC.navigationController?.pushViewController(inviteVC, animated: true)
         }
     }
     
@@ -973,64 +973,13 @@ class SpotViewController: UIViewController {
         let newList = spotObject.privacyLevel == "invite" ? spotObject.inviteList! : spotObject.visitorList
         let newUsers = newList.filter({!initialList.contains($0)})
         let oldUsers = initialList.filter({!newList.contains($0)})
-
-        /// 2. update visitorList for friends spot, inviteList for invite spot
-        var values: [String: Any] = [:]
-        if spotObject.privacyLevel == "invite" { values["inviteList"] = newList } else { values["visitorList"] = newList }
-        db.collection("spots").document(spotID).updateData(values)
         
-        /// 4. add to new users spots list, send notification
-        for user in newUsers { sendInviteNotification(user: user) }
-        
-        /// 5. remove from removed users spots list
-        for user in oldUsers { removeSpotNotifications(user: user) }
-        
-        let increment = newUsers.count - oldUsers.count
-        if increment > 0 { DispatchQueue.global(qos: .utility).async { self.incrementSpotScore(user: self.uid, increment: increment) } }
+        let functions = Functions.functions()
+        functions.httpsCallable("updateUserList").call(["spotID": spotObject.id!, "newUsers": newUsers, "oldUsers": oldUsers, "city": spotObject.city ?? "", "imageURL": spotObject.imageURL, "senderID": self.uid, "senderUsername": UserDataModel.shared.userInfo.username, "spotName": spotObject.spotName]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
         
         NotificationCenter.default.post(Notification(name: Notification.Name("EditSpot"), object: nil, userInfo: ["spot" : spotObject as Any])) /// send edit notifications to update spot objects throughout the app
-    }
-    
-    func sendInviteNotification(user: String) {
-        
-        if user == uid { return }
-        let interval = NSDate().timeIntervalSince1970
-        let timestamp = NSDate(timeIntervalSince1970: TimeInterval(interval))
-        
-        /// update users spotsList
-        db.collection("users").document(user).collection("spotsList").document(spotID!).setData(["spotID" : spotID!, "checkInTime" : timestamp, "postsList" : [], "city": spotObject.city ?? ""], merge: true)
-
-        let notiID = UUID().uuidString
-        let notificationRef = db.collection("users").document(user).collection("notifications")
-        let acceptRef = notificationRef.document(notiID)
-        
-        let notiValues = ["seen" : false, "timestamp" : timestamp, "senderID": uid, "type": "invite", "spotID": spotID!, "postID" : postsList.last!.id!, "imageURL": spotObject.imageURL, "spotName": spotObject.spotName] as [String : Any]
-        
-        acceptRef.setData(notiValues)
-        
-        let sender = PushNotificationSender()
-        var token: String!
-        
-        db.collection("users").document(user).getDocument { (tokenSnap, err) in
-            if (tokenSnap == nil) { return }
-            token = tokenSnap?.get("notificationToken") as? String
-            if (token != nil && token != "") {
-                sender.sendPushNotification(token: token, title: "", body: "\(UserDataModel.shared.userInfo.username) added you to a spot")
-            }
-        }
-    }
-    
-    func removeSpotNotifications(user: String) {
-        
-        let notiRef = db.collection("users").document(user).collection("notifications")
-        let query = notiRef.whereField("spotID", isEqualTo: spotID!)
-        
-        query.getDocuments { (querysnapshot, err) in
-            for doc in querysnapshot!.documents { doc.reference.delete() }
-        }
-        
-        /// delete from users spots list
-        db.collection("users").document(user).collection("spotsList").document(spotID).delete()
     }
     
      func openPostPage(postID: String, imageIndex: Int) {
