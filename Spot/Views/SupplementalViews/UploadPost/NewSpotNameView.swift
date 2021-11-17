@@ -26,6 +26,7 @@ class NewSpotNameView: UIView {
         
         backgroundColor = nil
         
+        if textField != nil { textField.text = "" }
         textField = PaddedTextField(frame: CGRect(x: 0, y: 0, width: frame.width, height: 45))
         textField.placeholder = "Name your spot"
         textField.tintColor = .white
@@ -37,6 +38,7 @@ class NewSpotNameView: UIView {
         textField.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
         addSubview(textField)
         
+        if confirmButton != nil { confirmButton.setTitle("", for: .normal) }
         confirmButton = UIButton(frame: CGRect(x: frame.width/2 - 51.3, y: textField.frame.maxY + 19, width: 102.7, height: 34))
         confirmButton.setTitle("Confirm", for: .normal)
         confirmButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 18)

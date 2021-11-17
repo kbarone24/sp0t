@@ -39,27 +39,13 @@ class AVSpotCamera: NSObject {
     var videoOutput: AVCaptureVideoDataOutput?
     var previewLayer: AVCaptureVideoPreviewLayer?
     var flashMode = AVCaptureDevice.FlashMode.off
-    var photoCaptureCompletionBlock: ((UIImage?, Error?, Bool?, Data?, URL?) -> Void)?
+    var photoCaptureCompletionBlock: ((UIImage?, Error?) -> Void)?
     var previewShown = false
-        
-    var liveEnabled = false
-    var stillImageData: Data!
-    var stillImage: UIImage!
+    
+    var start: CFAbsoluteTime!
+    var gifCaptureCompletionBlock: (([UIImage]) -> Void)?
     lazy var aliveImages: [UIImage] = []
-    
-    let videoFilename = "render"
-    let videoFilenameExt = "mov"
-    
-    var outputURL: URL {
-        // Use the CachesDirectory so the rendered video file sticks around as long as we need it to.
-        // Using the CachesDirectory ensures the file won't be included in a backup of the app.
-        let fileManager = FileManager.default
-        if let tmpDirURL = try? fileManager.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true) {
-            return tmpDirURL.appendingPathComponent(videoFilename).appendingPathExtension(videoFilenameExt)
-        }
-        fatalError("URLForDirectory() failed")
-    }
-
+        
     func prepare(position: CameraPosition, completionHandler: @escaping (Error?) -> Void) {
         
         
@@ -80,6 +66,7 @@ class AVSpotCamera: NSObject {
                     
                     try camera.lockForConfiguration()
                     camera.focusMode = .continuousAutoFocus
+                //    camera.exposureMode = .continuousAutoExposure
                     camera.unlockForConfiguration()
                 }
             }
@@ -89,7 +76,7 @@ class AVSpotCamera: NSObject {
         func configureDeviceInputs() throws {
             
             guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
-                        
+            
             if position == .rear, let rearCamera = self.rearCamera {
                 self.rearCameraInput = try AVCaptureDeviceInput(device: rearCamera)
                 
@@ -106,11 +93,9 @@ class AVSpotCamera: NSObject {
                 else { throw CameraControllerError.inputsAreInvalid }
                 
                 currentCameraPosition = .front
+            }
                 
-            } else {
-                throw CameraControllerError.noCamerasAvailable }
-            
-            captureSession.commitConfiguration()
+            else { throw CameraControllerError.noCamerasAvailable }
         }
         
         func configurePhotoOutput() throws {
@@ -120,14 +105,26 @@ class AVSpotCamera: NSObject {
             photoOutput = AVCapturePhotoOutput()
             photoOutput!.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey : AVVideoCodecType.jpeg])], completionHandler: nil)
             
-            captureSession.sessionPreset = .photo
-            
             if captureSession.canAddOutput(photoOutput!) { captureSession.addOutput(photoOutput!) }
             
-            photoOutput!.isHighResolutionCaptureEnabled = true
-            setLiveEnabled(gifMode: false)
-
             captureSession.startRunning()
+        }
+        
+        func configureVideoOutput() throws {
+            
+            guard let captureSession = captureSession else { throw CameraControllerError.captureSessionIsMissing }
+            
+            videoOutput = AVCaptureVideoDataOutput()
+            if let videoDataOutputConnection = videoOutput?.connection(with: .video), videoDataOutputConnection.isVideoStabilizationSupported {
+                videoDataOutputConnection.preferredVideoStabilizationMode = .cinematic
+                
+            }
+            
+            videoOutput!.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as String) : NSNumber(value: kCVPixelFormatType_32BGRA as UInt32)]
+            videoOutput!.alwaysDiscardsLateVideoFrames = true
+            videoOutput!.setSampleBufferDelegate(self as AVCaptureVideoDataOutputSampleBufferDelegate, queue: DispatchQueue(label: "sample buffer delegate", attributes: []))
+            
+            if captureSession.canAddOutput(videoOutput!) {  captureSession.addOutput(videoOutput!)  }
         }
         
         DispatchQueue(label: "prepare").async {
@@ -136,6 +133,7 @@ class AVSpotCamera: NSObject {
                 try configureCaptureDevices()
                 try configureDeviceInputs()
                 try configurePhotoOutput()
+                try configureVideoOutput()
             }
                 
             catch {
@@ -152,13 +150,7 @@ class AVSpotCamera: NSObject {
         }
     }
     
-    func setLiveEnabled(gifMode: Bool) {
-        print("gif mode", gifMode)
-        let live = photoOutput!.isLivePhotoCaptureSupported && gifMode
-        photoOutput!.isLivePhotoCaptureEnabled = live
-        photoOutput?.isLivePhotoAutoTrimmingEnabled = live
-        liveEnabled = live
-    }
+    
     
     func displayPreview(on view: UIView) throws {
         
@@ -173,7 +165,6 @@ class AVSpotCamera: NSObject {
 
         view.layer.insertSublayer(previewLayer!, at: 0)
         previewLayer?.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: cameraHeight)
-        previewLayer?.cornerRadius = 12
         previewShown = true
     }
     
@@ -206,7 +197,7 @@ class AVSpotCamera: NSObject {
         
         if captureSession!.canAddInput(self.frontCameraInput!) {
             captureSession!.addInput(self.frontCameraInput!)
-            print("inputs", captureSession!.inputs)
+            
             self.currentCameraPosition = .front
         }
             
@@ -229,60 +220,140 @@ class AVSpotCamera: NSObject {
             
         else { throw CameraControllerError.invalidOperation }
     }
-    
-    func captureImage(gifMode: Bool, completion: @escaping (UIImage?, Error?, Bool?, Data?, URL?) -> Void) {
-        
-        guard let captureSession = captureSession, captureSession.isRunning else { return }
-        photoCaptureCompletionBlock = completion
 
+   func captureImage(completion: @escaping (UIImage?, Error?) -> Void) {
+    
+       guard let captureSession = captureSession, captureSession.isRunning else { completion(nil, CameraControllerError.captureSessionIsMissing); return }
+    
+       let settings = AVCapturePhotoSettings()
+       settings.flashMode = self.flashMode
+    
+       photoOutput?.capturePhoto(with: settings, delegate: self)
+       photoCaptureCompletionBlock = completion
+   }
+    
+    func captureGIF(completion: @escaping ([UIImage]) -> Void) {
+        
+        guard let captureSession = captureSession, captureSession.isRunning else { completion([]); return }
+        
         let settings = AVCapturePhotoSettings()
         settings.flashMode = self.flashMode
         
-        removeFileAtURL(fileURL: outputURL)
-        
-        setLiveEnabled(gifMode: gifMode)
-        if liveEnabled && gifMode { settings.livePhotoMovieFileURL = outputURL }
-        
-        photoOutput?.capturePhoto(with: settings, delegate: self)
+        start = CFAbsoluteTimeGetCurrent()
+        gifCaptureCompletionBlock = completion
     }
+    
 }
 
 extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
-        
-    func photoOutput(_ output: AVCapturePhotoOutput,
-                     didFinishProcessingLivePhotoToMovieFileAt outputFileURL: URL,
-                     duration: CMTime,
-                     photoDisplayTime: CMTime,
-                     resolvedSettings: AVCaptureResolvedPhotoSettings,
-                     error: Error?) {
-            
-        self.photoCaptureCompletionBlock?(stillImage, error, liveEnabled, stillImageData, outputFileURL)
-    }
     
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        
+        /// start a timer when alive capture initiated
+        /// show if timer >  .0.12, take image as capture, pass to avcameracontroller, reset timer
+        /// stop timer on 10th capture
+        
+        if start != nil {
+            
+            let diff = CFAbsoluteTimeGetCurrent() - start
+            if diff > 0.08 {
+                
+                let orientation = currentCameraPosition == .front ? UIImage.Orientation.leftMirrored : UIImage.Orientation.right
+                var image = imageFromSampleBuffer(sampleBuffer: sampleBuffer)
+                image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: orientation)
+
+                aliveImages.append(image)
+                start = CFAbsoluteTimeGetCurrent()
+                
+                if aliveImages.count == 10 {
+                    gifCaptureCompletionBlock?(aliveImages)
+                    start = nil
+                    aliveImages = []
+                }
+            }
+        }
+    }
     
     func photoOutput(_ output: AVCapturePhotoOutput,
     didFinishProcessingPhoto photo: AVCapturePhoto,
     error: Error?) {
-        if let error = error { self.photoCaptureCompletionBlock?(nil, error, false, Data(), URL(string: "")) }
+        if let error = error { self.photoCaptureCompletionBlock?(nil, error) }
 
         let data = photo.fileDataRepresentation() ?? UIImage().pngData()
-        stillImageData = data
-        
         let image = UIImage(data: data ?? Data())
-        stillImage = image
-        
-        print("live enabled here", liveEnabled)
-        if !liveEnabled { self.photoCaptureCompletionBlock?(image, error, liveEnabled, data, URL(string: "")) }
+        self.photoCaptureCompletionBlock?(image, nil)
     }
     
-    func removeFileAtURL(fileURL: URL) {
+    func imageFromSampleBuffer(sampleBuffer : CMSampleBuffer) -> UIImage
+    {
+      // Get a CMSampleBuffer's Core Video image buffer for the media data
+      let  imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+      // Lock the base address of the pixel buffer
+      CVPixelBufferLockBaseAddress(imageBuffer!, CVPixelBufferLockFlags.readOnly);
+
+
+      // Get the number of bytes per row for the pixel buffer
+      let baseAddress = CVPixelBufferGetBaseAddress(imageBuffer!);
+
+      // Get the number of bytes per row for the pixel buffer
+      let bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer!);
+      // Get the pixel buffer width and height
+      let width = CVPixelBufferGetWidth(imageBuffer!);
+      let height = CVPixelBufferGetHeight(imageBuffer!);
+
+      // Create a device-dependent RGB color space
+      let colorSpace = CGColorSpaceCreateDeviceRGB();
+
+      // Create a bitmap graphics context with the sample buffer data
+      var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Little.rawValue
+      bitmapInfo |= CGImageAlphaInfo.premultipliedFirst.rawValue & CGBitmapInfo.alphaInfoMask.rawValue
+      //let bitmapInfo: UInt32 = CGBitmapInfo.alphaInfoMask.rawValue
+      let context = CGContext.init(data: baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)
+      // Create a Quartz image from the pixel data in the bitmap graphics context
+      let quartzImage = context?.makeImage();
+      // Unlock the pixel buffer
+      CVPixelBufferUnlockBaseAddress(imageBuffer!, CVPixelBufferLockFlags.readOnly);
+
+      // Create an image object from the Quartz image
+      let image = UIImage.init(cgImage: quartzImage!);
+
+      return (image)
         
+    }
+    
+}
+
+extension AVCaptureDevice {
+
+    /// toggles the device's flashlight, if possible
+    func toggleFlashlight() {
+        guard let device = AVCaptureDevice.default(for: AVMediaType.video), device.hasTorch else { return }
         do {
-            try FileManager.default.removeItem(atPath: fileURL.path)
-        }
-        catch _ as NSError {
-            // Assume file doesn't exist.
+            try device.lockForConfiguration()
+            let torchOn = !device.isTorchActive
+            try device.setTorchModeOn(level: 1.0)
+            device.torchMode = torchOn ? .on : .off
+            device.unlockForConfiguration()
+        } catch {
+            print("Error toggling Flashlight: \(error)")
         }
     }
-
 }
+
+
+///source: https://www.appcoda.com/avfoundation-swift-guide/
+extension CMSampleBuffer {
+    func image(orientation: UIImage.Orientation,
+               scale: CGFloat = 1.0) -> UIImage? {
+        if let buffer = CMSampleBufferGetImageBuffer(self) {
+            let ciImage = CIImage(cvPixelBuffer: buffer)
+
+            return UIImage(ciImage: ciImage,
+                           scale: scale,
+                           orientation: orientation)
+        }
+
+        return nil
+    }
+}
+///https://stackoverflow.com/questions/15726761/make-an-uiimage-from-a-cmsamplebuffer

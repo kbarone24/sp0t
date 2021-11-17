@@ -2397,8 +2397,7 @@ extension PostCell {
                     var posters = deletePost.addedUsers ?? []
                     posters.append(self.uid)
 
-                    functions.httpsCallable("postDelete").call(["postIDs": [postCopy.id], "spotID": spotID, "uid": self.uid, "saspotDelete": false, "posters": posters, "postTag": postCopy.tag ?? ""]) { result, error in
-                        print("result", result?.data)
+                    functions.httpsCallable("postDelete").call(["postIDs": [postCopy.id], "spotID": spotID, "uid": self.uid, "spotDelete": false, "posters": posters, "postTag": postCopy.tag ?? ""]) { result, error in
                         guard let data = result?.data as? [String: Any], let userDelete = data["userDelete"] as? Bool else { return }
                         print("user delete", userDelete)
                         /// send local notification to remove from usersSpotsList if deleted here

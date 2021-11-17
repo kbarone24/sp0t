@@ -200,9 +200,6 @@
 		59E23549246F0E550071B047 /* Drafts.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 59E23547246F0E550071B047 /* Drafts.xcdatamodeld */; };
 		59E2354A246F0E550071B047 /* Drafts.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 59E23547246F0E550071B047 /* Drafts.xcdatamodeld */; };
 		59E2354B246F0E550071B047 /* Drafts.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 59E23547246F0E550071B047 /* Drafts.xcdatamodeld */; };
-		59E23551246F396C0071B047 /* DraftsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E23550246F396C0071B047 /* DraftsViewController.swift */; };
-		59E23552246F396C0071B047 /* DraftsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E23550246F396C0071B047 /* DraftsViewController.swift */; };
-		59E23553246F396C0071B047 /* DraftsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E23550246F396C0071B047 /* DraftsViewController.swift */; };
 		59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F4701D2368933C00BB79CC /* SceneDelegate.swift */; };
 		59F4701F2368933C00BB79CC /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F4701D2368933C00BB79CC /* SceneDelegate.swift */; };
 		59F470202368933C00BB79CC /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F4701D2368933C00BB79CC /* SceneDelegate.swift */; };
@@ -269,9 +266,6 @@
 		8C29879C2693A05A0071E75A /* CircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C29879B2693A05A0071E75A /* CircleView.swift */; };
 		8C29879D2693A05A0071E75A /* CircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C29879B2693A05A0071E75A /* CircleView.swift */; };
 		8C29879E2693A05A0071E75A /* CircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C29879B2693A05A0071E75A /* CircleView.swift */; };
-		8C2987A02693A06F0071E75A /* GalleryPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C29879F2693A06F0071E75A /* GalleryPreviewView.swift */; };
-		8C2987A12693A06F0071E75A /* GalleryPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C29879F2693A06F0071E75A /* GalleryPreviewView.swift */; };
-		8C2987A22693A06F0071E75A /* GalleryPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C29879F2693A06F0071E75A /* GalleryPreviewView.swift */; };
 		8C2EB0D825E97E6400698D8F /* VideoConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2EB0D725E97E6400698D8F /* VideoConverter.swift */; };
 		8C2EB0D925E97E6400698D8F /* VideoConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2EB0D725E97E6400698D8F /* VideoConverter.swift */; };
 		8C2EB0DA25E97E6400698D8F /* VideoConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2EB0D725E97E6400698D8F /* VideoConverter.swift */; };
@@ -321,9 +315,6 @@
 		8C5361C126F3BF0E008888B7 /* UploadOverviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5361C026F3BF0E008888B7 /* UploadOverviewCell.swift */; };
 		8C5361C226F3BF0E008888B7 /* UploadOverviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5361C026F3BF0E008888B7 /* UploadOverviewCell.swift */; };
 		8C5361C326F3BF0E008888B7 /* UploadOverviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5361C026F3BF0E008888B7 /* UploadOverviewCell.swift */; };
-		8C5361C526F3BF7F008888B7 /* UploadChooseSpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5361C426F3BF7F008888B7 /* UploadChooseSpotCell.swift */; };
-		8C5361C626F3BF7F008888B7 /* UploadChooseSpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5361C426F3BF7F008888B7 /* UploadChooseSpotCell.swift */; };
-		8C5361C726F3BF7F008888B7 /* UploadChooseSpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5361C426F3BF7F008888B7 /* UploadChooseSpotCell.swift */; };
 		8C53FC102731C8D3001F64BB /* UploadImagesCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53FC0F2731C8D3001F64BB /* UploadImagesCell.swift */; };
 		8C53FC112731C8D3001F64BB /* UploadImagesCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53FC0F2731C8D3001F64BB /* UploadImagesCell.swift */; };
 		8C53FC122731C8D3001F64BB /* UploadImagesCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53FC0F2731C8D3001F64BB /* UploadImagesCell.swift */; };
@@ -369,6 +360,12 @@
 		8CAC69E026FB989000E8B04E /* UploadPrivacyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAC69DF26FB989000E8B04E /* UploadPrivacyViews.swift */; };
 		8CAC69E126FB989000E8B04E /* UploadPrivacyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAC69DF26FB989000E8B04E /* UploadPrivacyViews.swift */; };
 		8CAC69E226FB989000E8B04E /* UploadPrivacyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAC69DF26FB989000E8B04E /* UploadPrivacyViews.swift */; };
+		8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
+		8CB400BE2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
+		8CB400BF2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
+		8CB400C1273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400C0273C7DD100DFFCEE /* UploadChooseSpotCell.swift */; };
+		8CB400C2273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400C0273C7DD100DFFCEE /* UploadChooseSpotCell.swift */; };
+		8CB400C3273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400C0273C7DD100DFFCEE /* UploadChooseSpotCell.swift */; };
 		8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2A54926BC7F99000ADA7A /* ImageObject.swift */; };
 		8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2A54926BC7F99000ADA7A /* ImageObject.swift */; };
 		8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2A54926BC7F99000ADA7A /* ImageObject.swift */; };
@@ -472,7 +469,6 @@
 		59DFA25122C27B4800A59D29 /* CommentsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsViewController.swift; sourceTree = "<group>"; };
 		59E0CCF925ACDCC8006587AF /* CityUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CityUser.swift; sourceTree = "<group>"; };
 		59E23548246F0E550071B047 /* Drafts.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Drafts.xcdatamodel; sourceTree = "<group>"; };
-		59E23550246F396C0071B047 /* DraftsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftsViewController.swift; sourceTree = "<group>"; };
 		59F4701D2368933C00BB79CC /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		59F6ABAE234EA73500E18AAF /* Contact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Contact.swift; sourceTree = "<group>"; };
 		59F6ABB82356689F00E18AAF /* PushNotificationSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationSender.swift; sourceTree = "<group>"; };
@@ -503,7 +499,6 @@
 		8C214BB3260BD85500E0C4FC /* AuthenticationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AuthenticationServices.framework; path = System/Library/Frameworks/AuthenticationServices.framework; sourceTree = SDKROOT; };
 		8C214BB8260C276D00E0C4FC /* NewUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewUser.swift; sourceTree = "<group>"; };
 		8C29879B2693A05A0071E75A /* CircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleView.swift; sourceTree = "<group>"; };
-		8C29879F2693A06F0071E75A /* GalleryPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryPreviewView.swift; sourceTree = "<group>"; };
 		8C2EB0D725E97E6400698D8F /* VideoConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoConverter.swift; sourceTree = "<group>"; };
 		8C3209D42614DB6500FB32BA /* ManageAccountController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageAccountController.swift; sourceTree = "<group>"; };
 		8C3209F026168A5900FB32BA /* ReviewPublicController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewPublicController.swift; sourceTree = "<group>"; };
@@ -521,7 +516,6 @@
 		8C4A5FF626B1BFCD00ECB8CC /* MaskImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaskImageView.swift; sourceTree = "<group>"; };
 		8C516BA426573E570079B863 /* EditPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditPostView.swift; sourceTree = "<group>"; };
 		8C5361C026F3BF0E008888B7 /* UploadOverviewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOverviewCell.swift; sourceTree = "<group>"; };
-		8C5361C426F3BF7F008888B7 /* UploadChooseSpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadChooseSpotCell.swift; sourceTree = "<group>"; };
 		8C53FC0F2731C8D3001F64BB /* UploadImagesCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadImagesCell.swift; sourceTree = "<group>"; };
 		8C5DEC8626CED7B5001BAE3A /* NearbyID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyID.swift; sourceTree = "<group>"; };
 		8C5DEC8A26D01862001BAE3A /* NewSpotNameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewSpotNameView.swift; sourceTree = "<group>"; };
@@ -537,6 +531,8 @@
 		8C988C32267D1AE80047A474 /* SpotNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotNotification.swift; sourceTree = "<group>"; };
 		8CAC69D726FB939C00E8B04E /* UploadPrivacyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPrivacyCell.swift; sourceTree = "<group>"; };
 		8CAC69DF26FB989000E8B04E /* UploadPrivacyViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPrivacyViews.swift; sourceTree = "<group>"; };
+		8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
+		8CB400C0273C7DD100DFFCEE /* UploadChooseSpotCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UploadChooseSpotCell.swift; sourceTree = "<group>"; };
 		8CC2A54926BC7F99000ADA7A /* ImageObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObject.swift; sourceTree = "<group>"; };
 		8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFetcher.swift; sourceTree = "<group>"; };
 		8CC3653926C5E9A900AC40AB /* UploadImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadImageModel.swift; sourceTree = "<group>"; };
@@ -773,7 +769,6 @@
 			isa = PBXGroup;
 			children = (
 				597072FD24292367008A481A /* AVCameraController.swift */,
-				59E23550246F396C0071B047 /* DraftsViewController.swift */,
 				5995F91724085936007BA334 /* GIFPreviewController.swift */,
 				59826E9E244FA078004B858F /* PhotosContainerController.swift */,
 				595D279023AD6FB600B82AE5 /* PhotoGalleryPicker.swift */,
@@ -967,7 +962,7 @@
 		8CAC69E326FD29A500E8B04E /* CameraAndGallery */ = {
 			isa = PBXGroup;
 			children = (
-				8C29879F2693A06F0071E75A /* GalleryPreviewView.swift */,
+				8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */,
 				8C4A5FF626B1BFCD00ECB8CC /* MaskImageView.swift */,
 				8C92898626CB18F10028DB69 /* CameraAccessView.swift */,
 				8C29879B2693A05A0071E75A /* CircleView.swift */,
@@ -979,8 +974,8 @@
 		8CF5A5B626F3E8EA00320033 /* UploadPost */ = {
 			isa = PBXGroup;
 			children = (
+				8CB400C0273C7DD100DFFCEE /* UploadChooseSpotCell.swift */,
 				8C5361C026F3BF0E008888B7 /* UploadOverviewCell.swift */,
-				8C5361C426F3BF7F008888B7 /* UploadChooseSpotCell.swift */,
 				8CF5A5B726F3E91400320033 /* UploadChooseTagView.swift */,
 				8CAC69D726FB939C00E8B04E /* UploadPrivacyCell.swift */,
 				8CAC69DF26FB989000E8B04E /* UploadPrivacyViews.swift */,
@@ -1336,6 +1331,7 @@
 				5916A8BB24A566F400118E83 /* ResultUser.swift in Sources */,
 				59FCF5AF24734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C5DEC8B26D01862001BAE3A /* NewSpotNameView.swift in Sources */,
+				8CB400C1273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */,
 				59E23549246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				5958A58F248B16460017D56F /* FriendsListController.swift in Sources */,
 				59CF4D97244A74B900855B26 /* ClusterPickerController.swift in Sources */,
@@ -1374,7 +1370,6 @@
 				8C71AE6026968ACE001E29B5 /* LocationPickerWindow.swift in Sources */,
 				593AC545243E56D400C08237 /* LandingPageController.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */,
-				59E23551246F396C0071B047 /* DraftsViewController.swift in Sources */,
 				8C5DEC8726CED7B5001BAE3A /* NearbyID.swift in Sources */,
 				7A37801C22174BB1008B835A /* MapViewController.swift in Sources */,
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
@@ -1404,11 +1399,10 @@
 				59FCF5C424734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */,
 				59FCF5C124734EAA0012207D /* SpotDraft+CoreDataClass.swift in Sources */,
 				59A8881E22EFC2FD00F8863B /* SettingsViewController.swift in Sources */,
+				8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				592EADD923316DCA0076FBC5 /* InviteFriendsController.swift in Sources */,
 				595D279123AD6FB700B82AE5 /* PhotoGalleryPicker.swift in Sources */,
-				8C5361C526F3BF7F008888B7 /* UploadChooseSpotCell.swift in Sources */,
-				8C2987A02693A06F0071E75A /* GalleryPreviewView.swift in Sources */,
 				8C4A5FF726B1BFCD00ECB8CC /* MaskImageView.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				598B700B2305D24400613AFD /* NotificationsViewController.swift in Sources */,
@@ -1427,7 +1421,6 @@
 				59F6ABB0234EA73500E18AAF /* Contact.swift in Sources */,
 				8C2EB0D925E97E6400698D8F /* VideoConverter.swift in Sources */,
 				8C4A5FF826B1BFCD00ECB8CC /* MaskImageView.swift in Sources */,
-				8C2987A12693A06F0071E75A /* GalleryPreviewView.swift in Sources */,
 				5995F91924085936007BA334 /* GIFPreviewController.swift in Sources */,
 				593AC542243CE36500C08237 /* GlobalFunctions.swift in Sources */,
 				593AC54E243FAA2B00C08237 /* PhoneController.swift in Sources */,
@@ -1481,6 +1474,7 @@
 				59004E1922CA5CA9004E06EF /* ProfileViewController.swift in Sources */,
 				5916A8B424A27F8500118E83 /* MapSpot.swift in Sources */,
 				59CF4D942448F70A00855B26 /* MapPickerController.swift in Sources */,
+				8CB400C2273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C53FC112731C8D3001F64BB /* UploadImagesCell.swift in Sources */,
 				8C3BAF59260C413F00349091 /* ConfirmCodeController.swift in Sources */,
@@ -1505,12 +1499,11 @@
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11424B6A6CF0051516C /* MapPost.swift in Sources */,
 				59F6ABBE23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
-				59E23552246F396C0071B047 /* DraftsViewController.swift in Sources */,
+				8CB400BE2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				8CAC69D926FB939C00E8B04E /* UploadPrivacyCell.swift in Sources */,
 				59826EA0244FA078004B858F /* PhotosContainerController.swift in Sources */,
 				592EADDA23316DCA0076FBC5 /* InviteFriendsController.swift in Sources */,
 				8C29879D2693A05A0071E75A /* CircleView.swift in Sources */,
-				8C5361C626F3BF7F008888B7 /* UploadChooseSpotCell.swift in Sources */,
 				59004E1722CA5CA4004E06EF /* MapViewController.swift in Sources */,
 				8C214BBA260C276D00E0C4FC /* NewUser.swift in Sources */,
 				597A626F25A8F9910052C560 /* Tag.swift in Sources */,
@@ -1539,7 +1532,6 @@
 				59F6ABB1234EA73500E18AAF /* Contact.swift in Sources */,
 				8C2EB0DA25E97E6400698D8F /* VideoConverter.swift in Sources */,
 				8C4A5FF926B1BFCD00ECB8CC /* MaskImageView.swift in Sources */,
-				8C2987A22693A06F0071E75A /* GalleryPreviewView.swift in Sources */,
 				5995F91A24085936007BA334 /* GIFPreviewController.swift in Sources */,
 				593AC543243CE36500C08237 /* GlobalFunctions.swift in Sources */,
 				593AC54F243FAA2B00C08237 /* PhoneController.swift in Sources */,
@@ -1593,6 +1585,7 @@
 				59004E1A22CA5CA9004E06EF /* ProfileViewController.swift in Sources */,
 				5916A8B524A27F8500118E83 /* MapSpot.swift in Sources */,
 				59CF4D952448F70A00855B26 /* MapPickerController.swift in Sources */,
+				8CB400C3273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C53FC122731C8D3001F64BB /* UploadImagesCell.swift in Sources */,
 				8C3BAF5A260C413F00349091 /* ConfirmCodeController.swift in Sources */,
@@ -1617,12 +1610,11 @@
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11524B6A6CF0051516C /* MapPost.swift in Sources */,
 				59F6ABBF23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
-				59E23553246F396C0071B047 /* DraftsViewController.swift in Sources */,
+				8CB400BF2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				8CAC69DA26FB939C00E8B04E /* UploadPrivacyCell.swift in Sources */,
 				59826EA1244FA078004B858F /* PhotosContainerController.swift in Sources */,
 				592EADDB23316DCA0076FBC5 /* InviteFriendsController.swift in Sources */,
 				8C29879E2693A05A0071E75A /* CircleView.swift in Sources */,
-				8C5361C726F3BF7F008888B7 /* UploadChooseSpotCell.swift in Sources */,
 				59004E1822CA5CA4004E06EF /* MapViewController.swift in Sources */,
 				8C214BBB260C276D00E0C4FC /* NewUser.swift in Sources */,
 				597A627025A8F9910052C560 /* Tag.swift in Sources */,
@@ -1810,9 +1802,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 59;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 64;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1865,7 +1857,7 @@
 				MARKETING_VERSION = 0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE_SPECIFIER = "sp0t ios profile";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -1880,9 +1872,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 59;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 64;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
@@ -1935,7 +1927,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE_SPECIFIER = "sp0t ios profile";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;

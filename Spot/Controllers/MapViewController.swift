@@ -167,8 +167,7 @@ class MapViewController: UIViewController {
         }
         
         selectedSpotID = ""
-        selectedProfileID = ""
-    }
+        selectedProfileID = ""    }
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)

@@ -15,6 +15,7 @@ extension UploadPostController {
     func presentPrivacyPicker() {
 
         if maskView != nil && maskView.superview != nil { return }
+        
         privacyCloseTap = UITapGestureRecognizer(target: self, action: #selector(closePrivacyPicker(_:)))
         maskView.addGestureRecognizer(privacyCloseTap)
         
@@ -26,13 +27,14 @@ extension UploadPostController {
         pickerView.backgroundColor = UIColor(named: "SpotBlack")
         maskView.addSubview(pickerView)
         
-        let privacyHeight: CGFloat = postType == .newSpot ? 250 : 180
+        /// 3 options, new spot, 1 option for post to private spot
+        let privacyHeight: CGFloat = postType == .newSpot ? 250 : postType != .postToSpot || postObject.spotPrivacy == "public" ? 180 : 120
         privacyView = UploadPrivacyPicker(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: privacyHeight))
-        privacyView.setUp(privacyLevel: postObject.privacyLevel ?? "friends", postType: postType)
+        privacyView.setUp(privacyLevel: postObject.privacyLevel ?? "friends", spotPrivacy: postObject.spotPrivacy ?? "friends", postType: postType)
         privacyView.delegate = self
         pickerView.addSubview(privacyView)
         
-        showOnFeed = UploadShowOnFeedView(frame: CGRect(x: 0, y: privacyHeight + 20, width: UIScreen.main.bounds.width, height: 50))
+        showOnFeed = UploadShowOnFeedView(frame: CGRect(x: 0, y: privacyHeight + 20, width: UIScreen.main.bounds.width, height: 60))
         showOnFeed.setUp(hide: postObject.hideFromFeed ?? false)
         showOnFeed.delegate = self
         pickerView.addSubview(showOnFeed)
@@ -43,6 +45,9 @@ extension UploadPostController {
     }
     
     func closePrivacyPicker() {
+        /// these views were holding strong references for some reason -> setting to nil seems to fix it
+        if privacyView != nil { privacyView.delegate = nil; privacyView = nil }
+        if showOnFeed != nil { showOnFeed.delegate = nil; showOnFeed = nil }
         for subview in maskView.subviews { subview.removeFromSuperview() }
         maskView.removeGestureRecognizer(privacyCloseTap)
         maskView.removeFromSuperview()
@@ -50,12 +55,18 @@ extension UploadPostController {
     
     func launchSubmitPublic() {
         
+        if postObject.privacyLevel == "public" { return }
+        
+        privacyMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        privacyMask.backgroundColor = UIColor.black.withAlphaComponent(0.9)
+        maskView.addSubview(privacyMask)
+        
         let infoView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 116, y: UIScreen.main.bounds.height/2 - 140, width: 232, height: 190))
         infoView.backgroundColor = UIColor(named: "SpotBlack")
         infoView.layer.cornerRadius = 7.5
         infoView.clipsToBounds = true
         infoView.tag = 2
-        maskView.addSubview(infoView)
+        privacyMask.addSubview(infoView)
         
         let botPic = UIImageView(frame: CGRect(x: 21, y: 22, width: 30, height: 34.44))
         botPic.image = UIImage(named: "OnboardB0t")
@@ -84,7 +95,7 @@ extension UploadPostController {
         submitButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
         submitButton.layer.borderWidth = 1
         submitButton.layer.cornerRadius = 8
-        submitButton.addTarget(self, action: #selector(submitPublicTap(_:)), for: .touchUpInside)
+        submitButton.addTarget(self, action: #selector(submitPublicOkay(_:)), for: .touchUpInside)
         submitButton.tag = 4
         infoView.addSubview(submitButton)
         
@@ -101,42 +112,22 @@ extension UploadPostController {
     }
     
     @objc func cancelSubmitPublic(_ sender: UIButton) {
-        closePrivacyPicker()
+        removeSubmitPublic()
     }
-
-    @objc func submitPublicTap(_ sender: UIButton) {
         
-        postObject.privacyLevel = "public"
-        submitPublic = true
-        
-        guard let infoView = maskView.subviews.first(where: {$0.tag == 2}) else { return }
+    @objc func submitPublicOkay(_ sender: UIButton) {
+        removeSubmitPublic()
+        finishPassingPrivacy(tag: 3)
+    }
+    
+    func removeSubmitPublic() {
+        guard let infoView = privacyMask.subviews.first(where: {$0.tag == 2}) else { return }
         for sub in infoView.subviews {
             if sub.tag > 2 { sub.removeFromSuperview() }
         }
         
-        let botComment = UILabel(frame: CGRect(x: 22, y: 75, width: 196, height: 15))
-        botComment.text = "I'll let you know if your spot gets approved!"
-        botComment.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        botComment.font = UIFont(name: "SFCamera-Regular", size: 14)
-        botComment.numberOfLines = 0
-        botComment.lineBreakMode = .byWordWrapping
-        botComment.sizeToFit()
-        botComment.tag = 2
-        infoView.addSubview(botComment)
-        
-        let okButton = UIButton(frame: CGRect(x: 22, y: botComment.frame.maxY + 15, width: 196, height: 40))
-        okButton.setTitle("Okay", for: .normal)
-        okButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        okButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
-        okButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-        okButton.layer.borderWidth = 1
-        okButton.layer.cornerRadius = 10
-        okButton.addTarget(self, action: #selector(submitPublicOkay(_:)), for: .touchUpInside)
-        infoView.addSubview(okButton)
-    }
-        
-    @objc func submitPublicOkay(_ sender: UIButton) {
-        closePrivacyPicker()
+        infoView.removeFromSuperview()
+        privacyMask.removeFromSuperview()
     }
 
 }
@@ -154,7 +145,7 @@ class UploadPrivacyPicker: UIView {
     var titleLabel, whoCanSee: UILabel!
     var publicButton, friendsButton, InviteButton: UIButton!
     
-    func setUp(privacyLevel: String, postType: UploadPostController.PostType) {
+    func setUp(privacyLevel: String, spotPrivacy: String, postType: UploadPostController.PostType) {
         
         self.privacyLevel = privacyLevel
         self.postType = postType
@@ -174,21 +165,26 @@ class UploadPrivacyPicker: UIView {
         whoCanSee.textAlignment = .center
         addSubview(whoCanSee)
         
+        var minY: CGFloat = 65
+
         /// can't post non POI spots publicly
-        publicButton = UIButton(frame: CGRect(x: 14, y: 65, width: 171, height: 54))
-        publicButton.setImage(UIImage(named: "PublicButton"), for: .normal)
-        publicButton.layer.cornerRadius = 7.5
-        publicButton.tag = 0
-        publicButton.addTarget(self, action: #selector(privacySelect(_:)), for: .touchUpInside)
-        
-        if privacyLevel == "public" {
-            publicButton.layer.borderWidth = 1
-            publicButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
+        if spotPrivacy == "public" || postType != .postToSpot {
+            publicButton = UIButton(frame: CGRect(x: 14, y: 65, width: 171, height: 54))
+            publicButton.setImage(UIImage(named: "PublicButton"), for: .normal)
+            publicButton.layer.cornerRadius = 7.5
+            publicButton.tag = 0
+            publicButton.addTarget(self, action: #selector(privacySelect(_:)), for: .touchUpInside)
+            
+            if privacyLevel == "public" {
+                publicButton.layer.borderWidth = 1
+                publicButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
+            }
+            
+            addSubview(publicButton)
+            minY += 54
         }
-        
-        addSubview(publicButton)
-                        
-        friendsButton = UIButton(frame: CGRect(x: 14, y: 119, width: 171, height: 54))
+                                
+        friendsButton = UIButton(frame: CGRect(x: 14, y: minY, width: 171, height: 54))
         friendsButton.setImage(UIImage(named: "FriendsButton"), for: .normal)
         friendsButton.layer.cornerRadius = 7.5
         friendsButton.tag = 1
@@ -201,7 +197,6 @@ class UploadPrivacyPicker: UIView {
         
         addSubview(friendsButton)
         
-        var minY: CGFloat = 200
         // only can do invite only spots not posts
         if postType == .newSpot {
             let inviteButton = UIButton(frame: CGRect(x: 14, y: friendsButton.frame.maxY + 10, width: 171, height: 54))
@@ -216,7 +211,6 @@ class UploadPrivacyPicker: UIView {
             }
             
             addSubview(inviteButton)
-            minY += 70
         }
     }
     
@@ -246,7 +240,7 @@ class UploadShowOnFeedView: UIView {
     
     func setUp(hide: Bool) {
         
-        backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
+        backgroundColor = nil
         
         self.hide = hide
         resetView()
@@ -255,19 +249,19 @@ class UploadShowOnFeedView: UIView {
         topLine.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
         addSubview(topLine)
         
-        icon = UIImageView(frame: CGRect(x: 14, y: 12, width: 28, height: 25))
+        icon = UIImageView(frame: CGRect(x: 14, y: 22, width: 28, height: 25))
         icon.image = UIImage(named: "ShowOnFeedIcon")
         icon.contentMode = .scaleAspectFit
         addSubview(icon)
         
         if label != nil { label.text = "" }
-        label = UILabel(frame: CGRect(x: 49, y: 15, width: 150, height: 18))
+        label = UILabel(frame: CGRect(x: 49, y: 25, width: 150, height: 18))
         label.text = "Post to friends feed"
-        label.textColor = UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
+        label.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         label.font = UIFont(name: "SFCamera-Regular", size: 13.5)
         addSubview(label)
         
-        toggle = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 71.5, y: 5, width: 57.5, height: 38))
+        toggle = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 71.5, y: 15, width: 57.5, height: 38))
         let image = hide ? UIImage(named: "HideToggleOff") : UIImage(named: "HideToggleOn")
         toggle.setImage(image, for: .normal)
         toggle.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)

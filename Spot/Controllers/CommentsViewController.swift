@@ -260,7 +260,8 @@ class CommentsViewController: UIViewController {
                       "posterID": post.posterID,
                       "posterUsername" : post.userInfo.username,
                       "timestamp" : firTimestamp,
-                      "taggedUsersIDs": taggedUserIDs]  as [String : Any]
+                      "taggedUsers" : taggedUsernames,
+                      "taggedUserIDs": taggedUserIDs]  as [String : Any]
                 
         DispatchQueue.global(qos: .userInitiated).async {
             self.db.collection("posts").document(self.post.id!).collection("comments").document(commentID).setData(values, merge: true)

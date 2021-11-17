@@ -188,8 +188,8 @@ class GalleryPreviewView: UIView {
             if selectedIndex > 0 { UploadImageModel.shared.selectedObjects[selectedIndex - 1].gifMode = imageObject.gifMode } /// adjust selected objects if object was selected
             
         } else if upload != nil {
-            upload.scrollObjects[galleryIndex].gifMode = imageObject.gifMode
-            upload.scrollObjects[galleryIndex].animationImages = imageObject.animationImages
+            UploadImageModel.shared.scrollObjects[galleryIndex].gifMode = imageObject.gifMode
+            UploadImageModel.shared.scrollObjects[galleryIndex].animationImages = imageObject.animationImages
         }
     }
 }
