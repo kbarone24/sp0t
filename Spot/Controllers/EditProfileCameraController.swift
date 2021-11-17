@@ -223,7 +223,7 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
     
     @objc func captureImage(_ sender: UIButton) {
         
-        cameraController.captureImage(gifMode: false) {(image, error, _, _, _) in
+        cameraController.captureImage {(image, error) in
             guard var image = image else {
                 return
             }

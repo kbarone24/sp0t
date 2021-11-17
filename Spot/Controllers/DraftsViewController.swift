@@ -5,7 +5,7 @@
 //  Created by kbarone on 5/15/20.
 //  Copyright © 2020 sp0t, LLC. All rights reserved.
 //
-
+/*
 import Foundation
 import UIKit
 import CoreData
@@ -245,12 +245,7 @@ class DraftsViewController: UIViewController, UIGestureRecognizerDelegate {
         returnButton.titleLabel?.textAlignment = .center
         returnButton.addTarget(self, action: #selector(returnToCamera(_:)), for: .touchUpInside)
         returnButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
-        mainScroll.addSubview(returnButton)
-        
-        if let camera = parent as? AVCameraController {
-            camera.draftsActive = false
-        }
-    }
+        mainScroll.addSubview(returnButton)    }
     
     @objc func returnToCamera(_ sender: UIButton) {
         self.navigationController?.popViewController(animated: true)
@@ -1105,3 +1100,4 @@ class FailedUploadHeader: UICollectionReusableView {
     }
 
 }
+*/

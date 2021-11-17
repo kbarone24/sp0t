@@ -22,7 +22,9 @@ class UploadChooseSpotCell: UITableViewCell {
     
     var chooseSpotCollection: UploadPillCollectionView  = UploadPillCollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
 
-    func setUp(newSpotName: String, post: MapPost) {
+    func setUp(newSpotName: String, selected: Bool, post: MapPost) {
+        
+        if newSpotName != "" || selected { print("return"); return } /// no need to reload when cell collapsed
         
         backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
         contentView.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
@@ -35,56 +37,27 @@ class UploadChooseSpotCell: UITableViewCell {
         
         titleLabel = UILabel(frame: CGRect(x: 16, y: 12, width: 150, height: 18))
         titleLabel.text = newSpotName == "" ? "Choose a spot" : "New spot"
-        titleLabel.textColor = UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
+        titleLabel.textColor = UIColor(red: 0.52, green: 0.52, blue: 0.52, alpha: 1.00)
         titleLabel.font = UIFont(name: "SFCamera-Regular", size: 13.5)
         contentView.addSubview(titleLabel)
+                
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 13, bottom: 0, right: 13)
         
-        /// add new spot label
-        if newSpotName != "" {
-            
-            newSpotView = UIView(frame: CGRect(x: 16, y: titleLabel.frame.maxY + 10, width: UIScreen.main.bounds.width - 16, height: 40))
-            newSpotView.backgroundColor = nil
-            contentView.addSubview(newSpotView)
-            
-            let spotName = UILabel(frame: CGRect(x: 0, y: 0, width: newSpotView.bounds.width, height: 20))
-            spotName.text = newSpotName
-            spotName.textColor = UIColor(red: 0.525, green: 0.525, blue: 0.525, alpha: 1)
-            spotName.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
-            newSpotView.addSubview(spotName)
-            
-            let usernameLabel = UILabel(frame: CGRect(x: 0, y: spotName.frame.maxY + 4, width: newSpotView.bounds.width - 32, height: 13))
-            usernameLabel.text = post.userInfo == nil ? "" : "by \(post.userInfo.username)"
-            usernameLabel.textColor = UIColor(red: 0.262, green: 0.262, blue: 0.262, alpha: 1.0)
-            usernameLabel.font = UIFont(name: "SFCamera-Semibold", size: 11)
-            newSpotView.addSubview(usernameLabel)
-            
-            exitButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 52, y: spotName.frame.minY, width: 32, height: 32))
-            exitButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            exitButton.setImage(UIImage(named: "CancelButton")?.withTintColor(UIColor(red: 0.77, green: 0.77, blue: 0.77, alpha: 1.00)), for: .normal)
-            exitButton.addTarget(self, action: #selector(exitNewSpot(_:)), for: .touchUpInside)
-            newSpotView.addSubview(exitButton)
+        chooseSpotCollection.frame = CGRect(x: 0, y: 39, width: UIScreen.main.bounds.width, height: 43)
+        chooseSpotCollection.backgroundColor = nil
 
-        } else {
-        /// add choose spot collection
-            
-            let layout = UICollectionViewFlowLayout()
-            layout.scrollDirection = .horizontal
-            layout.sectionInset = UIEdgeInsets(top: 0, left: 13, bottom: 0, right: 13)
-            
-            chooseSpotCollection.frame = CGRect(x: 0, y: 39, width: UIScreen.main.bounds.width, height: 43)
-            chooseSpotCollection.backgroundColor = nil
-
-            chooseSpotCollection.delegate = self
-            chooseSpotCollection.dataSource = self
-            chooseSpotCollection.showsHorizontalScrollIndicator = false
-            chooseSpotCollection.register(ChooseSpotCollectionCell.self, forCellWithReuseIdentifier: "ChooseSpotCollection")
-            chooseSpotCollection.register(AddSpotCell.self, forCellWithReuseIdentifier: "AddSpot")
-            chooseSpotCollection.register(SeeAllCell.self, forCellWithReuseIdentifier: "SeeAll")
-            chooseSpotCollection.setCollectionViewLayout(layout, animated: false)
-            contentView.addSubview(chooseSpotCollection)
-            
-            chooseSpotCollection.reloadSections(IndexSet(0...0))
-        }
+        chooseSpotCollection.delegate = self
+        chooseSpotCollection.dataSource = self
+        chooseSpotCollection.showsHorizontalScrollIndicator = false
+        chooseSpotCollection.register(ChooseSpotCollectionCell.self, forCellWithReuseIdentifier: "ChooseSpotCollection")
+        chooseSpotCollection.register(AddSpotCell.self, forCellWithReuseIdentifier: "AddSpot")
+        chooseSpotCollection.register(SeeAllCell.self, forCellWithReuseIdentifier: "SeeAll")
+        chooseSpotCollection.setCollectionViewLayout(layout, animated: false)
+        contentView.addSubview(chooseSpotCollection)
+        
+        chooseSpotCollection.reloadSections(IndexSet(0...0))
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -98,7 +71,6 @@ class UploadChooseSpotCell: UITableViewCell {
     func resetView() {
         if topLine != nil { topLine.backgroundColor = nil }
         if titleLabel != nil { titleLabel.text = "" }
-        if newSpotView != nil { for sub in newSpotView.subviews {sub.removeFromSuperview()} }
         if profilePic != nil { profilePic.image = UIImage(); profilePic.sd_cancelCurrentImageLoad() }
         chooseSpotCollection.removeFromSuperview()
     }
@@ -133,8 +105,8 @@ extension UploadChooseSpotCell: UICollectionViewDelegate, UICollectionViewDataSo
         }
         
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ChooseSpotCollection", for: indexPath) as? ChooseSpotCollectionCell else { return UICollectionViewCell() }
+        guard let spot = UploadImageModel.shared.nearbySpots[safe: indexPath.row - 1] else { return cell }
         
-        guard let spot = UploadImageModel.shared.nearbySpots[safe: indexPath.row - 1] else { return UICollectionViewCell() }
         cell.setUp(spot: spot)
         if spot.selected! { alpha = 1.0 }
         cell.setAlphas(alpha: alpha)

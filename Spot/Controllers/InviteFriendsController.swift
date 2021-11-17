@@ -45,8 +45,6 @@ class InviteFriendsController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
-        if searchBar != nil { searchBar.becomeFirstResponder() }
     }
     
     func setUpNavBar() {
@@ -105,7 +103,7 @@ class InviteFriendsController: UIViewController {
         tableView.isUserInteractionEnabled = true
         tableView.showsVerticalScrollIndicator = false
         tableView.allowsMultipleSelection = true
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 430, right: 0)
         tableView.register(FriendsListCell.self, forCellReuseIdentifier: "FriendsListCell")
         tableView.register(SelectedFriendsHeader.self, forHeaderFooterViewReuseIdentifier: "SelectedHeader")
         view.addSubview(tableView)
@@ -316,7 +314,6 @@ class SelectedFriendsHeader: UITableViewHeaderFooterView {
         addFriendsCollection.delegate = self
         addFriendsCollection.dataSource = self
         addFriendsCollection.register(UploadFriendCell.self, forCellWithReuseIdentifier: "FriendCell")
-        addFriendsCollection.register(UploadSearchFriendsCell.self, forCellWithReuseIdentifier: "SearchCell")
         addFriendsCollection.showsHorizontalScrollIndicator = false
         addFriendsCollection.setCollectionViewLayout(layout, animated: false)
         addSubview(addFriendsCollection)
@@ -333,7 +330,7 @@ extension SelectedFriendsHeader: UICollectionViewDataSource, UICollectionViewDel
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FriendCell", for: indexPath) as? UploadFriendCell else { return UICollectionViewCell() }
-        cell.setUp(user: selectedFriends[indexPath.row], header: true)
+        cell.setUp(user: selectedFriends[indexPath.row])
         return cell
     }
     
@@ -364,24 +361,21 @@ class UploadFriendCell: UICollectionViewCell {
     
     var user: UserProfile!
         
-    // header is true when setting up inviteFriends header
-    func setUp(user: UserProfile, header: Bool) {
+    func setUp(user: UserProfile) {
         
         resetView()
         backgroundColor = nil
         self.user = user
         
-        /// allow room for x button on header cell
-        let userBounds = !header ? self.bounds : CGRect(x: 0, y: 11, width: self.bounds.width - 9, height: 36)
-        userView = UIView(frame: userBounds)
-        userView.backgroundColor = header ? UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1) : user.selected ? UIColor(red: 0.00, green: 0.09, blue: 0.09, alpha: 1.00) : UIColor(red: 0.112, green: 0.112, blue: 0.112, alpha: 1)
+        userView = UIView(frame: CGRect(x: 0, y: 11, width: self.bounds.width - 9, height: 36))
+        userView.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
         userView.layer.borderWidth = 1
         userView.layer.cornerRadius = 10
         userView.layer.cornerCurve = .continuous
-        userView.layer.borderColor = user.selected && !header ? UIColor(named: "SpotGreen")!.cgColor : header ? UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1).cgColor : UIColor(red: 0.112, green: 0.112, blue: 0.112, alpha: 1).cgColor
+        userView.layer.borderColor = UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1).cgColor
         addSubview(userView)
         
-        profilePic = UIImageView(frame: CGRect(x: 6, y: 5, width: 21, height: 21))
+        profilePic = UIImageView(frame: CGRect(x: 6, y: 5, width: 24, height: 24))
         profilePic.layer.cornerRadius = 12
         profilePic.layer.cornerCurve = .continuous
         profilePic.layer.masksToBounds = true
@@ -394,20 +388,18 @@ class UploadFriendCell: UICollectionViewCell {
             profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
         }
 
-        username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 4, y: 8, width: self.bounds.width - profilePic.frame.maxX - 10, height: 16))
+        username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 4, y: 10, width: self.bounds.width - profilePic.frame.maxX - 10, height: 16))
         username.text = user.username
         username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
         username.textColor = UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
         username.sizeToFit()
         userView.addSubview(username)
-        
-        if header {
-            exitButton = UIButton(frame: CGRect(x: self.bounds.width - 23, y: 0, width: 27, height: 27))
-            exitButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            exitButton.setImage(UIImage(named: "CheckInX"), for: .normal)
-            exitButton.addTarget(self, action: #selector(exitTap(_:)), for: .touchUpInside)
-            addSubview(exitButton)
-        }
+    
+        exitButton = UIButton(frame: CGRect(x: self.bounds.width - 23, y: 0, width: 27, height: 27))
+        exitButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        exitButton.setImage(UIImage(named: "CheckInX"), for: .normal)
+        exitButton.addTarget(self, action: #selector(exitTap(_:)), for: .touchUpInside)
+        addSubview(exitButton)
     }
     
     @objc func exitTap(_ sender: UIButton) {
@@ -425,34 +417,7 @@ class UploadFriendCell: UICollectionViewCell {
     func resetView() {
         if profilePic != nil { profilePic.image = UIImage() }
         if username != nil { username.text = "" }
-        if userView != nil { for sub in userView.subviews { sub.removeFromSuperview() }; userView.backgroundColor = nil; userView.layer.borderColor = nil }
+        if userView != nil { for sub in userView.subviews { sub.removeFromSuperview() }; userView.backgroundColor = .clear; userView.layer.borderColor = UIColor.clear.cgColor }
         if exitButton != nil { exitButton.setImage(UIImage(), for: .normal)}
-    }
-}
-
-class UploadSearchFriendsCell: UICollectionViewCell {
-    
-    override init(frame: CGRect) {
-        
-        super.init(frame: frame)
-        
-        backgroundColor = UIColor(red: 0.112, green: 0.112, blue: 0.112, alpha: 1)
-        layer.cornerRadius = 10
-        layer.cornerCurve = .continuous
-        layer.borderWidth = 1
-        
-        let searchIcon = UIImageView(frame: CGRect(x: 8, y: 9.5, width: 12, height: 12.3))
-        searchIcon.image = UIImage(named: "SearchIcon")
-        addSubview(searchIcon)
-        
-        let titleLabel = UILabel(frame: CGRect(x: searchIcon.frame.maxX + 5, y: 7.5, width: 44, height: 16))
-        titleLabel.text = "Search"
-        titleLabel.textColor = UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
-        titleLabel.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
-        addSubview(titleLabel)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 }

@@ -17,7 +17,6 @@ class CameraAccessView: UIView {
     var label1: UILabel!
     
     var cameraAccess: UIButton!
-    var micAccess: UIButton!
     var galleryAccess: UIButton!
     
     override init(frame: CGRect) {
@@ -34,7 +33,7 @@ class CameraAccessView: UIView {
         cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
         addSubview(cancelButton)
 
-        label0 = UILabel(frame: CGRect(x: 50, y: UIScreen.main.bounds.height/5, width: UIScreen.main.bounds.width - 100, height: 20))
+        label0 = UILabel(frame: CGRect(x: 50, y: UIScreen.main.bounds.height/4, width: UIScreen.main.bounds.width - 100, height: 20))
         label0.text = "Share on sp0t"
         label0.textColor = .white
         label0.font = UIFont(name: "SFCamera-Semibold", size: 22)
@@ -59,19 +58,9 @@ class CameraAccessView: UIView {
         if !cameraAuthorized { cameraAccess.addTarget(self, action: #selector(cameraAccessTap(_:)), for: .touchUpInside)}
         addSubview(cameraAccess)
         
-        let micAuthorized = UploadImageModel.shared.micAccess == .granted
-        micAccess = UIButton(frame: CGRect(x: 30, y: cameraAccess.frame.maxY + 10, width: UIScreen.main.bounds.width - 60, height: 40))
-        micAccess.titleEdgeInsets = UIEdgeInsets(top: 10, left: 5, bottom: 10, right: 5)
-        micAccess.setTitle("Enable microphone access", for: .normal)
-        micAccess.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        micAccess.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
-        micAccess.contentHorizontalAlignment = .center
-        micAccess.alpha = micAuthorized ? 0.3 : 1.0
-        if !micAuthorized { micAccess.addTarget(self, action: #selector(micAccessTap(_:)), for: .touchUpInside)}
-        addSubview(micAccess)
 
         let galleryAuthorized = UploadImageModel.shared.galleryAccess == .authorized
-        galleryAccess = UIButton(frame: CGRect(x: 30, y: micAccess.frame.maxY + 10, width: UIScreen.main.bounds.width - 60, height: 40))
+        galleryAccess = UIButton(frame: CGRect(x: 30, y: cameraAccess.frame.maxY + 10, width: UIScreen.main.bounds.width - 60, height: 40))
         galleryAccess.titleEdgeInsets = UIEdgeInsets(top: 10, left: 5, bottom: 10, right: 5)
         galleryAccess.setTitle("Enable gallery access", for: .normal)
         galleryAccess.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
@@ -138,40 +127,7 @@ class CameraAccessView: UIView {
         default: return
         }
     }
-    
-    @objc func micAccessTap(_ sender: UIButton) {
-        askForMicrophone(first: true)
-    }
-    
-    func askForMicrophone(first: Bool) {
         
-        guard let camera = viewContainingController() as? AVCameraController else { return }
-
-        switch AVAudioSession.sharedInstance().recordPermission {
-        case .undetermined:
-            AVAudioSession.sharedInstance().requestRecordPermission { _ in
-                self.askForMicrophone(first: false)
-                }
-            
-        case .denied:
-            
-            if first {UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return }
-
-            let alert = UIAlertController(title: "Allow mic access to take a picture", message: nil, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
-                UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil )}
-            ))
-            alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: nil))
-            camera.present(alert, animated: false, completion: nil)
-            
-        case .granted:
-            UploadImageModel.shared.micAccess = .granted
-            checkForRemove()
-            
-        default: return
-        }
-    }
-    
     @objc func galleryAccessTap(_ sender: UIButton) {
         askForGallery(first: true)
     }

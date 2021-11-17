@@ -233,39 +233,6 @@ extension UIViewController {
         return CGFloat(score)
     }
     
-    /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score
-    func getSpotRank(spot: MapSpot, location: CLLocation) -> Double {
-        
-        var scoreMultiplier = spot.postIDs.isEmpty ? 10.0 : 50.0 /// 5x boost to any spot that has posts at it
-        let distance = max(CLLocation(latitude: spot.spotLat, longitude: spot.spotLong).distance(from: location), 1)
-        
-        if spot.postIDs.count > 0 { for i in 0 ... spot.postIDs.count - 1 {
-
-            var postScore: Double = 10
-            
-            /// increment for each friend post
-            if spot.posterIDs.count <= i { continue }
-            if isFriends(id: spot.posterIDs[i]) { postScore += 5 }
-
-            let timestamp = spot.postTimestamps[i]
-            let postTime = Double(timestamp.seconds)
-            
-            let current = NSDate().timeIntervalSince1970
-            let currentTime = Double(current)
-            let timeSincePost = currentTime - postTime
-            
-            /// add multiplier for recent posts
-            var factor = min(1 + (1000000 / timeSincePost), 5)
-            let multiplier = pow(1.2, factor)
-            factor = multiplier
-            
-            postScore *= factor
-            scoreMultiplier += postScore
-        } }
-
-        let finalScore = scoreMultiplier/pow(distance, 1.7)
-        return finalScore
-    }
     
     func isFriends(id: String) -> Bool {
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
@@ -561,10 +528,17 @@ extension UIViewController {
                           "posterUsername" : UserDataModel.shared.userInfo.username
         ] as [String : Any]
 
-        let commentValues = ["commenterID" : post.posterID,
+        let commentValues = ["addedUsers" : post.addedUsers ?? [],
                              "comment" : post.caption,
+                             "commenterID" : post.posterID,
+                             "commenterIDList": [],
+                             "commenterUsername" : UserDataModel.shared.userInfo.username,
+                             "imageURL": post.imageURLs.first ?? "",
+                             "posterID": post.posterID,
+                             "posterUsername": UserDataModel.shared.userInfo.username,
                              "timestamp" : postTimestamp,
-                             "taggedUsers": post.taggedUsers!] as [String : Any]
+                             "taggedUsers": post.taggedUsers!,
+                             "taggedUserIDs" : []] as [String : Any]
         let commentID = UUID().uuidString
         
         var notiPost = post
@@ -1110,7 +1084,7 @@ extension UIImageView {
     
     func animateGIF(directionUp: Bool, counter: Int, frames: Int, alive: Bool) {
         
-        if superview == nil || isHidden || animationImages?.isEmpty ?? true { print("cancel"); return }
+        if superview == nil || isHidden || animationImages?.isEmpty ?? true { return }
         
         var newDirection = directionUp
         var newCount = counter

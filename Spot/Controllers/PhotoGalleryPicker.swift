@@ -28,8 +28,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     var fullGallery = false
     var refreshes = 0
     
-    var maskView: UIView!
-    var previewView: GalleryPreviewView!
+    var imagePreview: ImagePreviewView!
     
     var downloadCircle: UIActivityIndicatorView!
     var cancelOnDismiss = false
@@ -46,6 +45,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     deinit {
         imageManager.stopCachingImagesForAllAssets()
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ScrollGallery"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PreviewRemove"), object: nil)
         PHPhotoLibrary.shared().unregisterChangeObserver(self)
     }
     
@@ -73,13 +73,9 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         collectionView.setCollectionViewLayout(layout, animated: false)
         collectionView.scrollsToTop = false
         view.addSubview(collectionView)
-        
-        maskView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-        maskView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(maskTap(_:))))
-        maskView.isUserInteractionEnabled = true
-        maskView.backgroundColor = UIColor.black.withAlphaComponent(0.85)
-        
+                
         NotificationCenter.default.addObserver(self, selector: #selector(scrollToTop(_:)), name: NSNotification.Name("ScrollGallery"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(removePreview(_:)), name: NSNotification.Name("PreviewRemove"), object: nil)
         
         if !UploadImageModel.shared.imageObjects.isEmpty { refreshTable() } /// eventually need exemption handling for reloading once != 0
         
@@ -145,23 +141,17 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         
     }
     
-    @objc func maskTap(_ sender: UITapGestureRecognizer) {
-        removePreviews()
-    }
-    
     func removePreviews() {
-        
-        maskView.removeFromSuperview()
-        
+                
         /// remove saved images from image objects to avoid memory pile up
-        if previewView != nil && previewView.selectedIndex == 0 {
-            if let i = UploadImageModel.shared.imageObjects.firstIndex(where: {$0.0.id == previewView.imageObject.id}) {
+        if imagePreview != nil && imagePreview.selectedIndex == 0 {
+            if let i = UploadImageModel.shared.imageObjects.firstIndex(where: {$0.0.id == imagePreview.imageObjects.first?.id}) {
                 UploadImageModel.shared.imageObjects[i].0.animationImages.removeAll()
                 UploadImageModel.shared.imageObjects[i].0.stillImage = UIImage()
             }
         }
         
-        if previewView != nil { for sub in previewView.subviews { sub.removeFromSuperview()}; previewView.removeFromSuperview(); previewView = nil }
+        if imagePreview != nil { for sub in imagePreview.subviews { sub.removeFromSuperview()}; imagePreview.removeFromSuperview(); imagePreview = nil }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
@@ -214,9 +204,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         guard let selectedObject = UploadImageModel.shared.imageObjects[safe: index]?.image else { return }
         
         if !circleTap {
-            var selectedIndex = 0
-            if let trueIndex = UploadImageModel.shared.selectedObjects.lastIndex(where: {$0.id == selectedObject.id}) { selectedIndex = trueIndex + 1 }
-            self.addPreviewView(object: selectedObject, selectedIndex: selectedIndex, galleryIndex: index)
+            self.addPreviewView(object: selectedObject, galleryIndex: index)
             
         } else {
             Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": false])
@@ -238,7 +226,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         if selectedObject.stillImage != UIImage() {
             
             if !circleTap {
-                self.addPreviewView(object: selectedObject, selectedIndex: 0, galleryIndex: index)
+                self.addPreviewView(object: selectedObject, galleryIndex: index)
                 
             } else {
                 
@@ -279,7 +267,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                         cell.removeActivityIndicator()
                         
                         if !circleTap {
-                            self.addPreviewView(object: UploadImageModel.shared.imageObjects[index].image, selectedIndex: 0, galleryIndex: index)
+                            self.addPreviewView(object: UploadImageModel.shared.imageObjects[index].image, galleryIndex: index)
                             
                         } else {
                             Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": true])
@@ -321,21 +309,19 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         return selectedPaths
     }
     
-    func addPreviewView(object: ImageObject, selectedIndex: Int, galleryIndex: Int) {
+    func addPreviewView(object: ImageObject, galleryIndex: Int) {
         
-        if maskView != nil && maskView.superview != nil { return }
+        guard let cell = collectionView.cellForItem(at: IndexPath(row: galleryIndex, section: 0)) as? GalleryCell else { return }
+                        
+        imagePreview = ImagePreviewView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        imagePreview.alpha = 0.0
+        imagePreview.galleryCollection = collectionView
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        window?.addSubview(maskView)
-        
-        let width = UIScreen.main.bounds.width - 50
-        let pY = UIScreen.main.bounds.height/2 - width * 0.667
-        
-        previewView = GalleryPreviewView(frame: CGRect(x: 25, y: pY, width: width, height: width * 1.3333))
-        previewView.isUserInteractionEnabled = true
-        previewView.picker = self
-        previewView.setUp(object: object, selectedIndex: selectedIndex, galleryIndex: galleryIndex)
-        maskView.addSubview(previewView)
+        window?.addSubview(imagePreview)
+                
+        let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
+        imagePreview.expand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])
     }
     
     func showMaxImagesAlert() {
@@ -389,6 +375,13 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                 UploadImageModel.shared.imageObjects.removeAll()
                 self.collectionView.reloadData()
             }
+        }
+    }
+    
+    @objc func removePreview(_ sender: NSNotification) {
+        if imagePreview != nil {
+            imagePreview.removeFromSuperview()
+            imagePreview = nil
         }
     }
 }

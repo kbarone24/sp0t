@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "AliveOn1x (1)(1).png",
+      "filename" : "AliveOn1x (2).png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "AliveOn2x (1)(1).png",
+      "filename" : "AliveOn2x (2).png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "AliveOn3x (1)(1).png",
+      "filename" : "AliveOn3x (2).png",
       "idiom" : "universal",
       "scale" : "3x"
     }

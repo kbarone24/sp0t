@@ -24,7 +24,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     
     var baseSize: CGSize!
     var maskView: UIView!
-    var previewView: GalleryPreviewView!
+    var imagePreview: ImagePreviewView!
     
     var zoomLevel = ""
     lazy var tappedLocation = CLLocation()
@@ -35,6 +35,11 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     var downloadCircle: UIActivityIndicatorView!
     var cancelOnDismiss = false
     lazy var imageFetcher = ImageFetcher()
+    
+    deinit {
+        imageManager.stopCachingImagesForAllAssets()
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PreviewRemove"), object: nil)
+    }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -81,11 +86,10 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         collectionView.reloadData()
         
         getTitle()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(removePreview(_:)), name: NSNotification.Name("PreviewRemove"), object: nil)
     }
     
-    deinit {
-        imageManager.stopCachingImagesForAllAssets()
-    }
     
     @objc func maskTap(_ sender: UITapGestureRecognizer) {
         removePreviews()
@@ -112,14 +116,14 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     func removePreviews() {
         
         /// remove saved images from image objects to avoid memory pile up
-        if previewView != nil && previewView.selectedIndex == 0 {
-            if let i = imageObjects.firstIndex(where: {$0.0.id == previewView.imageObject.id}) {
+        if imagePreview != nil && !(UploadImageModel.shared.selectedObjects.contains(where: {$0.id == imagePreview.imageObjects.first?.id ?? ""})) {
+            if let i = imageObjects.firstIndex(where: {$0.0.id == imagePreview.imageObjects.first?.id ?? ""}) {
                 imageObjects[i].0.animationImages.removeAll()
                 imageObjects[i].0.stillImage = UIImage()
             }
         }
         
-        if previewView != nil { for sub in previewView.subviews { sub.removeFromSuperview()}; previewView.removeFromSuperview() }
+        if imagePreview != nil { for sub in imagePreview.subviews { sub.removeFromSuperview()}; imagePreview.removeFromSuperview() }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -182,9 +186,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         guard let selectedObject = imageObjects[safe: index] else { return }
         
         if !circleTap {
-            var selectedIndex = 0
-            if let trueIndex = UploadImageModel.shared.selectedObjects.lastIndex(where: {$0.id == selectedObject.0.id}) { selectedIndex = trueIndex + 1 }
-            self.addPreviewView(object: selectedObject.0, selectedIndex: selectedIndex, galleryIndex: index)
+            self.addPreviewView(object: selectedObject.0, galleryIndex: index)
             
         } else {
             Mixpanel.mainInstance().track(event: "ClusterPickerCircleTap", properties: ["selected": false])
@@ -205,7 +207,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         if selectedObject.stillImage != UIImage() {
             
             if !circleTap {
-                self.addPreviewView(object: selectedObject, selectedIndex: 0, galleryIndex: index)
+                self.addPreviewView(object: selectedObject, galleryIndex: index)
                 
             } else {
                 Mixpanel.mainInstance().track(event: "ClusterPickerCircleTap", properties: ["selected": true])
@@ -244,7 +246,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                         cell.removeActivityIndicator()
                         
                         if !circleTap {
-                            self.addPreviewView(object: self.imageObjects[index].image, selectedIndex: 0, galleryIndex: index)
+                            self.addPreviewView(object: self.imageObjects[index].image, galleryIndex: index)
                             
                         } else {
                             UploadImageModel.shared.selectObject(imageObject: self.imageObjects[index].image, selected: true)
@@ -286,21 +288,19 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     }
     
     
-    func addPreviewView(object: ImageObject, selectedIndex: Int, galleryIndex: Int) {
+    func addPreviewView(object: ImageObject, galleryIndex: Int) {
         
-        if maskView != nil && maskView.superview != nil { return }
+        guard let cell = collectionView.cellForItem(at: IndexPath(row: galleryIndex, section: 0)) as? GalleryCell else { return }
+                        
+        imagePreview = ImagePreviewView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        imagePreview.alpha = 0.0
+        imagePreview.galleryCollection = collectionView
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        window?.addSubview(maskView)
-        
-        let width = UIScreen.main.bounds.width - 50
-        let pY = UIScreen.main.bounds.height/2 - width * 0.667
-        
-        previewView = GalleryPreviewView(frame: CGRect(x: 25, y: pY, width: width, height: width * 1.3333))
-        previewView.isUserInteractionEnabled = true
-        previewView.cluster = self
-        previewView.setUp(object: object, selectedIndex: selectedIndex, galleryIndex: galleryIndex)
-        maskView.addSubview(previewView)
+        window?.addSubview(imagePreview)
+                
+        let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
+        imagePreview.expand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])
     }
     
     func showMaxImagesAlert() {
@@ -337,6 +337,13 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                 fatalError()
             }}))
         present(alert, animated: true)
+    }
+    
+    @objc func removePreview(_ sender: NSNotification) {
+        if imagePreview != nil {
+            imagePreview.removeFromSuperview()
+            imagePreview = nil
+        }
     }
     
     func getTitle() {

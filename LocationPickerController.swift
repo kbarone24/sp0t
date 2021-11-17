@@ -18,6 +18,7 @@ import FirebaseUI
 
 protocol LocationPickerDelegate {
     func finishPassingLocationPicker(spot: MapSpot)
+    func locationPickerNewSpotTap()
 }
 
 class LocationPickerController: UIViewController {
@@ -29,7 +30,8 @@ class LocationPickerController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("spots"))
     let db = Firestore.firestore()
-    
+    lazy var imageManager = SDWebImageManager()
+
     var frameIndexes: [Int] = []
 
     var galleryLocation: CLLocation!
@@ -106,6 +108,9 @@ class LocationPickerController: UIViewController {
         navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.addShadow()
         navigationController?.navigationBar.addGradientBackground(alpha: 1.0)
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "+ New Spot", style: .plain, target: self, action: #selector(newSpotTap(_:)))
+        navigationItem.rightBarButtonItem?.setTitleTextAttributes([NSAttributedString.Key.foregroundColor : UIColor(named: "SpotGreen")!, NSAttributedString.Key.font : UIFont(name: "SFCamera-Semibold", size: 15)!], for: .normal)
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
@@ -277,7 +282,7 @@ class LocationPickerController: UIViewController {
             let newRequest = MKLocalPointsOfInterestRequest(center: CLLocationCoordinate2D(latitude: request.coordinate.latitude, longitude: request.coordinate.longitude), radius: request.radius * 2)
             newRequest.pointOfInterestFilter = request.pointOfInterestFilter
             
-            guard let response = response else { print("responsenil"); return }
+            guard let response = response else { return }
             
             for item in response.mapItems {
 
@@ -299,6 +304,12 @@ class LocationPickerController: UIViewController {
                     var spotInfo = MapSpot(spotDescription: item.type.toString(), spotName: item.name, spotLat: item.coordinate.latitude, spotLong: item.coordinate.longitude, founderID: "", privacyLevel: "public", imageURL: "")
                     spotInfo.phone = item.phone
                     spotInfo.poiCategory = item.type.toString()
+                    
+                    let spotLocation = CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)
+                    let postLocation = CLLocation(latitude: self.postAnnotation.coordinate.latitude, longitude: self.postAnnotation.coordinate.longitude)
+                    spotInfo.distance = postLocation.distance(from: spotLocation)
+                    spotInfo.spotScore = spotInfo.getSpotRank(location: postLocation)
+                    
                     annotation.spotInfo = spotInfo
                     
                     let hidden = self.spotFilteredByLocation(spotCoordinates: item.coordinate)
@@ -349,10 +360,15 @@ class LocationPickerController: UIViewController {
 
                 if !self.hasPOILevelAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? []) { return }
                 if self.nearbyAnnotations.contains(where: {$0.value.spotInfo.spotName == spotInfo.spotName}) { return }
-                
+                                
+                let spotLocation = CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)
+                let postLocation = CLLocation(latitude: self.postAnnotation.coordinate.latitude, longitude: self.postAnnotation.coordinate.longitude)
+                spotInfo.distance = postLocation.distance(from: spotLocation)
+                spotInfo.spotScore = spotInfo.getSpotRank(location: postLocation)
+                    
                 annotation.spotInfo = spotInfo
                 annotation.title = spotInfo.spotName
-                
+
                 /// POI already loaded to map, replace with real spot object - remove from everywhere first
                 if let index = self.nearbyAnnotations.firstIndex(where: {$0.value.spotInfo.spotName == spotInfo.spotName || ($0.value.spotInfo.phone ?? "" == spotInfo.phone ?? "" && spotInfo.phone ?? "" != "")}) {
                     
@@ -362,7 +378,7 @@ class LocationPickerController: UIViewController {
                     UploadImageModel.shared.nearbySpots.removeAll(where: {$0.id == self.nearbyAnnotations[index].value.spotInfo.id})
                     self.nearbyAnnotations.remove(at: index)
                 }
-                    
+                
                 UploadImageModel.shared.nearbySpots.append(annotation.spotInfo)
                 
                 /// if spot isnt already out of frame, load to map
@@ -456,20 +472,15 @@ class LocationPickerController: UIViewController {
     func sortAndReloadNearby(coordinate: CLLocationCoordinate2D) {
         
         /// resort based on new annotation location
-        
         if UploadImageModel.shared.nearbySpots.count == 0 { return }
-        
-        /// resort based on new location
-        for i in 0...UploadImageModel.shared.nearbySpots.count - 1 { UploadImageModel.shared.nearbySpots[i].spotScore = getSpotRank(spot: UploadImageModel.shared.nearbySpots[i], location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) }
-        UploadImageModel.shared.nearbySpots.sort(by: {$0.spotScore > $1.spotScore})
-        
+        UploadImageModel.shared.resortSpots(coordinate: coordinate)
         DispatchQueue.main.async { self.nearbyTable.reloadSections(IndexSet(0...0), with: .fade)}
     }
-    
+        
     func geocodeAddress(coordinate: CLLocationCoordinate2D) {
         reverseGeocodeFromCoordinate(numberOfFields: 4, location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) { [weak self] (addy) in
             guard let self = self else { return }
-            self.setAddress(address: addy)
+            DispatchQueue.main.async { self.setAddress(address: addy) }
         }
     }
             
@@ -479,6 +490,11 @@ class LocationPickerController: UIViewController {
         
         if addressLabel == nil { return }
         addressLabel.text = address
+    }
+    
+    @objc func newSpotTap(_ sender: UIBarButtonItem) {
+        delegate?.locationPickerNewSpotTap()
+        navigationController?.popViewController(animated: false)
     }
 }
 
@@ -495,6 +511,7 @@ extension LocationPickerController: MKMapViewDelegate {
         if annotation is CustomPointAnnotation {
             
             var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Profile") as? LocationPickerAnnotationView
+            
             if annotationView == nil {
                 annotationView = LocationPickerAnnotationView(annotation: annotation, reuseIdentifier: "Profile")
             } else {
@@ -502,25 +519,12 @@ extension LocationPickerController: MKMapViewDelegate {
             }
             
             let nibView = loadProfileNib()
+            nibView.profileImage.image = UserDataModel.shared.userInfo.profilePic
             
-            let url = UserDataModel.shared.userInfo.imageURL
-            if url != "" {
-                let transformer = SDImageResizingTransformer(size: CGSize(width: 200, height: 200), scaleMode: .aspectFill)
-                nibView.profileImage.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-            }
-            
-            let nibImage = nibView.asImage()
-            annotationView!.image = nibImage
+            annotationView!.image = nibView.asImage()
             annotationView!.sizeToFit()
-            
-            annotationView!.isEnabled = true
-            annotationView!.isDraggable = true
-            annotationView!.isSelected = true
-            annotationView!.clusteringIdentifier = nil
-            
-            annotationView!.centerOffset = CGPoint(x: 0, y: -15)
             return annotationView
-            
+                            
         } else if let anno = annotation as? CustomSpotAnnotation {
             
             var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier) as? SpotAnnotationView
@@ -645,13 +649,16 @@ extension LocationPickerController: MKMapViewDelegate {
         }
     }
     
-    func animateToSelectedLocation(coordinate: CLLocationCoordinate2D, passed: Bool) {
+    func animateToSelectedLocation(coordinate: CLLocationCoordinate2D) {
         
         let adjustedCenter = CLLocationCoordinate2D(latitude: coordinate.latitude - 0.0004, longitude: coordinate.longitude)
         let camera = MKMapCamera(lookingAtCenter: adjustedCenter, fromDistance: 1000, pitch: 0, heading: 0)
 
-        mapView.camera = camera
-        mapView.addAnnotation(self.postAnnotation)
+        DispatchQueue.main.async {
+            self.mapView.camera = camera
+            self.mapView.addAnnotation(self.postAnnotation)
+        }
+        
         geocodeAddress(coordinate: coordinate)
         return
     }
@@ -661,11 +668,15 @@ extension LocationPickerController: MKMapViewDelegate {
         
         if !UploadImageModel.shared.nearbySpots.isEmpty {
             
+            /// resort for choose spot table
+            UploadImageModel.shared.resortSpots(coordinate: coordinate)
+            
+            /// add annotations
             for i in 0...UploadImageModel.shared.nearbySpots.count - 1 {
                 
-                let spot = UploadImageModel.shared.nearbySpots[i]
-                
-                let annotation = CustomSpotAnnotation()
+                guard let spot = UploadImageModel.shared.nearbySpots[safe: i] else { continue }
+                if spot.id == "" { continue }
+                                let annotation = CustomSpotAnnotation()
                 annotation.coordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
                 
                 annotation.spotInfo = spot
@@ -675,7 +686,6 @@ extension LocationPickerController: MKMapViewDelegate {
                 
                 DispatchQueue.main.async { self.mapView.addAnnotation(annotation) }
             }
-            UploadImageModel.shared.nearbySpots.sort(by: {$0.spotScore > $1.spotScore})
         }
         
         DispatchQueue.main.async { self.nearbyTable.reloadData() }
@@ -684,12 +694,22 @@ extension LocationPickerController: MKMapViewDelegate {
     func addFromPassedLocation() {
         
         let selectedCoordinate = CLLocationCoordinate2D(latitude: passedLocation.coordinate.latitude, longitude: passedLocation.coordinate.longitude)
-            //edit post
         postAnnotation = CustomPointAnnotation()
         postAnnotation.coordinate = selectedCoordinate
     
         self.addPassedSpots(coordinate: selectedCoordinate)
-        self.animateToSelectedLocation(coordinate: selectedCoordinate, passed: true)
+        self.animateToSelectedLocation(coordinate: selectedCoordinate)
+    }
+        
+    func loadSpotNib() -> MapTarget {
+        let infoWindow = MapTarget.instanceFromNib() as! MapTarget
+        infoWindow.clipsToBounds = true
+        infoWindow.spotNameLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        infoWindow.spotNameLabel.numberOfLines = 2
+        infoWindow.spotNameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        infoWindow.spotNameLabel.lineBreakMode = .byWordWrapping
+        
+        return infoWindow
     }
     
     func loadProfileNib() -> LocationPickerWindow {
@@ -704,17 +724,6 @@ extension LocationPickerController: MKMapViewDelegate {
                 
         return infoWindow
     }
-    
-    func loadSpotNib() -> MapTarget {
-        let infoWindow = MapTarget.instanceFromNib() as! MapTarget
-        infoWindow.clipsToBounds = true
-        infoWindow.spotNameLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
-        infoWindow.spotNameLabel.numberOfLines = 2
-        infoWindow.spotNameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        infoWindow.spotNameLabel.lineBreakMode = .byWordWrapping
-        
-        return infoWindow
-    }
 }
 
 // extensions for handling location search
@@ -726,9 +735,10 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch tableView.tag {
         case 0:
-            return nearbyAnnotations.count > 25 ? 25 : nearbyAnnotations.count
+            if postAnnotation == nil { return 0 }
+            return min(UploadImageModel.shared.nearbySpots.count, 25)
         default:
-            return querySpots.count > 7 ? 7 : querySpots.count
+            return min(querySpots.count, 7)
         }
     }
     
@@ -737,7 +747,6 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseSpotCell") as? LocationPickerSpotCell else { return UITableViewCell() }
         let spot = tableView.tag == 0 ? UploadImageModel.shared.nearbySpots[indexPath.row] : querySpots[indexPath.row]
         cell.tag = tableView.tag
-        if tableView.tag == 0 { cell.annotationLocation = CLLocation(latitude: postAnnotation.coordinate.latitude, longitude: postAnnotation.coordinate.longitude) }
         cell.setUp(spot: spot)
         return cell
     }
@@ -825,7 +834,7 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
       
         self.searchTextGlobal = searchText
         emptyQueries()
-        resultsTable.reloadData()
+        DispatchQueue.main.async { self.resultsTable.reloadData() }
         
         if searchBar.text == "" { self.searchIndicator.stopAnimating(); return }
         if !self.searchIndicator.isAnimating() { self.searchIndicator.startAnimating() }
@@ -838,7 +847,7 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
     @objc func runQuery() {
         
         emptyQueries()
-        resultsTable.reloadData()
+        DispatchQueue.main.async { self.resultsTable.reloadData() }
         
         DispatchQueue.global(qos: .userInitiated).async {
             self.runPOIQuery(searchText: self.searchTextGlobal)
@@ -984,6 +993,11 @@ class LocationPickerAnnotationView: MKAnnotationView {
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         canShowCallout = false
+        isEnabled = true
+        isDraggable = true
+        isSelected = true
+        clusteringIdentifier = nil
+        centerOffset = CGPoint(x: 0, y: -15)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -1000,7 +1014,6 @@ class LocationPickerSpotCell: UITableViewCell {
     var separatorView: UIView!
     var cityLabel: UILabel!
     
-    var annotationLocation: CLLocation!
     var locationIcon: UIImageView!
     var distanceLabel: UILabel!
     
@@ -1075,11 +1088,7 @@ class LocationPickerSpotCell: UITableViewCell {
             contentView.addSubview(locationIcon)
             
             distanceLabel = UILabel(frame: CGRect(x: locationIcon.frame.maxX + 4, y: 21, width: 50, height: 15))
-            
-            let spotLocation = CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)
-            let distanceFromImage = annotationLocation.distance(from: spotLocation)
-            distanceLabel.text = distanceFromImage.getLocationString()
-            
+            distanceLabel.text = spot.distance.getLocationString()
             distanceLabel.textColor = UIColor(red: 0.262, green: 0.262, blue: 0.262, alpha: 1)
             distanceLabel.font = UIFont(name: "SFCamera-Regular", size: 10.5)
             contentView.addSubview(distanceLabel)

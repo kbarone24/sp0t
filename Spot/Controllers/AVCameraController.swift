@@ -24,8 +24,6 @@ class AVCameraController: UIViewController {
     
     var cameraButton: UIButton!
     var galleryButton: UIButton!
-    var draftsButton: UIButton!
-    var draftsNotification: UIImageView!
     var flashButton: UIButton!
     var cancelButton: UIButton!
     var cameraRotateButton: UIButton!
@@ -37,20 +35,25 @@ class AVCameraController: UIViewController {
     var gifMode = false
         
     lazy var animationImages: [UIImage] = []
-    var dotView: UIView!
+    
+    var gifView: UIView!
+    var holdStillLabel: UILabel!
+    var aliveBar: UIView!
+    var aliveFill: UIView!
     
     var lastZoomFactor: CGFloat = 1.0
+    var initialBrightness: CGFloat = 0.0
     
     var beginPan: CGPoint!
     var pan: UIPanGestureRecognizer!
     var tapIndicator: UIImageView!
+    var frontFlashView: UIView!
     
     var start: CFAbsoluteTime!
     var cameraHeight: CGFloat!
     
     let db: Firestore! = Firestore.firestore()
     
-    var draftsActive = false
     var cancelOnDismiss = false
     
     var accessMask: CameraAccessView!
@@ -69,8 +72,6 @@ class AVCameraController: UIViewController {
         } else {
             cameraController.previewLayer?.connection?.isEnabled = true
             cameraController.captureSession?.startRunning()
-            draftsNotification.isHidden = true
-            checkForDrafts()
             enableButtons()
         }
     }
@@ -118,8 +119,10 @@ class AVCameraController: UIViewController {
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 82 : 2
-        var cameraY: CGFloat = minY + cameraHeight + 3
+        var cameraY: CGFloat = minY + cameraHeight + 27
         if minY == 82 { cameraY += 7 }
+        
+        let textY: CGFloat = minY == 2 ? cameraY - 24 : minY + cameraHeight + 10
                                 
         cameraButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 47, y: cameraY, width: 94, height: 94))
         cameraButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
@@ -128,14 +131,61 @@ class AVCameraController: UIViewController {
         cameraButton.imageView?.contentMode = .scaleAspectFill
         
         view.addSubview(cameraButton)
+        
+        stillText = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 27.5, y: textY, width: 55, height: 25))
+        stillText.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        stillText.setTitle("PHOTO", for: .normal)
+        stillText.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        stillText.setTitleColor(UIColor.white, for: .normal)
+        stillText.titleLabel!.layer.shadowColor = UIColor.black.cgColor
+        stillText.titleLabel!.layer.shadowRadius = 2.5
+        stillText.titleLabel!.layer.shadowOpacity = 0.6
+        stillText.titleLabel!.layer.shadowOffset = CGSize(width: 0, height: 1.5)
+        stillText.titleLabel!.layer.masksToBounds = false
+        stillText.titleLabel?.textAlignment = .center
+        stillText.addTarget(self, action: #selector(transitionToStill(_:)), for: .touchUpInside)
+        view.addSubview(stillText)
+        
+        gifText = UIButton(frame: CGRect(x: stillText.frame.maxX + 10, y: textY, width: 55, height: 25))
+        gifText.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        gifText.setTitle("ALIVE", for: .normal)
+        gifText.setTitleColor(UIColor.white.withAlphaComponent(0.65), for: .normal)
+        gifText.titleLabel?.textAlignment = .center
+        gifText.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        gifText.titleLabel!.layer.shadowColor = UIColor.black.cgColor
+        gifText.titleLabel!.layer.shadowRadius = 2.5
+        gifText.titleLabel!.layer.shadowOpacity = 0.6
+        gifText.titleLabel!.layer.shadowOffset = CGSize(width: 0, height: 1.5)
+        gifText.titleLabel!.layer.masksToBounds = false
+        gifText.addTarget(self, action: #selector(transitionToGIF(_:)), for: .touchUpInside)
+        view.addSubview(gifText)
                 
-        let dotY: CGFloat = cameraButton.frame.minY - 21
-        dotView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 30, y: dotY, width: 60, height: 10))
-        dotView.backgroundColor = nil
-        view.addSubview(dotView)
+        let gifY: CGFloat = cameraY - 80
+        gifView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 45, y: gifY, width: 90, height: 32))
+        gifView.backgroundColor = nil
+        gifView.isHidden = true
+        view.addSubview(gifView)
         
+        holdStillLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 90, height: 16))
+        holdStillLabel.text = "HOLD STILL!"
+        holdStillLabel.textColor = UIColor(named: "SpotGreen")
+        holdStillLabel.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
+        holdStillLabel.textAlignment = .center
+        gifView.addSubview(holdStillLabel)
         
-        galleryButton = UIButton(frame: CGRect(x: 37, y: cameraY + 35.5, width: 34, height: 29))
+        aliveBar = UIView(frame: CGRect(x: 0, y: holdStillLabel.frame.maxY + 3, width: 90, height: 13))
+        aliveBar.backgroundColor = UIColor(named: "SpotGreen")?.withAlphaComponent(0.22)
+        aliveBar.layer.cornerRadius = 4
+        aliveBar.layer.borderWidth = 2
+        aliveBar.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
+        gifView.addSubview(aliveBar)
+        
+        aliveFill = UIView(frame: CGRect(x: 1, y: aliveBar.frame.minY + 1, width: 0, height: 11))
+        aliveFill.backgroundColor = UIColor(named: "SpotGreen")
+        aliveFill.layer.cornerRadius = 4
+        gifView.addSubview(aliveFill)
+        
+        galleryButton = UIButton(frame: CGRect(x: 37, y: cameraY + 32, width: 34, height: 29))
         galleryButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         galleryButton.setImage(UIImage(named: "PhotoGalleryButton"), for: .normal)
         galleryButton.imageView?.contentMode = .scaleAspectFill
@@ -150,49 +200,25 @@ class AVCameraController: UIViewController {
         galleryText.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         galleryText.font = UIFont(name: "SFCamera-Semibold", size: 11)
         galleryText.textAlignment = .center
-        galleryText.text = "Gallery"
+        galleryText.text = "GALLERY"
         view.addSubview(galleryText)
         
-        draftsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 67, y: cameraY + 32, width: 32, height: 33))
-        draftsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        draftsButton.setImage(UIImage(named: "DraftsButton"), for: .normal)
-        draftsButton.imageView?.alpha = 0.89
-        draftsButton.imageView?.contentMode = .scaleAspectFit
-        draftsButton.addTarget(self, action: #selector(draftsTap(_:)), for: .touchUpInside)
-        view.addSubview(draftsButton)
-        
-        draftsNotification = UIImageView(frame: CGRect(x: draftsButton.frame.maxX - 12, y: draftsButton.frame.minY - 12, width: 24, height: 24))
-        draftsNotification.image = UIImage(named: "DraftAlert")
-        draftsNotification.contentMode = .scaleAspectFit
-        draftsNotification.isHidden = true
-        view.addSubview(draftsNotification)
-        
-        /// unhide drafts notification if there are failed uploads
-        checkForDrafts()
-        
-        let draftsText = UILabel(frame: CGRect(x: draftsButton.frame.minX - 10, y: draftsButton.frame.maxY + 1, width: 52, height: 18))
-        draftsText.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        draftsText.font = UIFont(name: "SFCamera-Semibold", size: 11)
-        draftsText.textAlignment = .center
-        draftsText.text = "Drafts"
-        view.addSubview(draftsText)
-        
-        flashButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 50, y: minY + 27, width: 38.28, height: 38.28))
-        flashButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        flashButton.contentHorizontalAlignment = .fill
-        flashButton.contentVerticalAlignment = .fill
-        flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
-        flashButton.addTarget(self, action: #selector(switchFlash(_:)), for: .touchUpInside)
-        view.addSubview(flashButton)
-        
-        cameraRotateButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 49, y: flashButton.frame.maxY + 20, width: 33.62, height: 37.82))
+        cameraRotateButton = UIButton(frame: CGRect(x: cameraButton.frame.maxX + 30, y: cameraY + 32, width: 33.62, height: 37.82))
         cameraRotateButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         cameraRotateButton.contentHorizontalAlignment = .fill
         cameraRotateButton.contentVerticalAlignment = .fill
         cameraRotateButton.setImage(UIImage(named: "CameraRotateAlt"), for: .normal)
         cameraRotateButton.addTarget(self, action: #selector(cameraRotateTap(_:)), for: .touchUpInside)
         view.addSubview(cameraRotateButton)
-        
+
+        flashButton = UIButton(frame: CGRect(x: cameraRotateButton.frame.maxX + 25, y: cameraY + 32, width: 38.28, height: 38.28))
+        flashButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        flashButton.contentHorizontalAlignment = .fill
+        flashButton.contentVerticalAlignment = .fill
+        flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
+        flashButton.addTarget(self, action: #selector(switchFlash(_:)), for: .touchUpInside)
+        view.addSubview(flashButton)
+                
         cancelButton = UIButton(frame: CGRect(x: 4, y: minY + 17, width: 50, height: 50))
         cancelButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         cancelButton.contentHorizontalAlignment = .fill
@@ -201,14 +227,6 @@ class AVCameraController: UIViewController {
         cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
         view.addSubview(cancelButton)
         
-        aliveToggle = UIButton(frame: CGRect(x: 5.7, y: minY + cameraHeight - 56, width: 94, height: 53))
-        /// 74 x 33
-        let image = gifMode ? UIImage(named: "AliveOn") : UIImage(named: "AliveOff")
-        aliveToggle.setImage(image, for: .normal)
-        aliveToggle.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        aliveToggle.addTarget(self, action: #selector(toggleAlive(_:)), for: .touchUpInside)
-        view.addSubview(aliveToggle)
-
         /// pan gesture will allow camera dismissal on swipe down
         pan = UIPanGestureRecognizer.init(target: self, action: #selector(panGesture))
         view.addGestureRecognizer(pan)
@@ -235,6 +253,11 @@ class AVCameraController: UIViewController {
         tapIndicator.image = UIImage(named: "TapFocusIndicator")
         tapIndicator.isHidden = true
         view.addSubview(tapIndicator)
+        
+        frontFlashView = UIView(frame: view.frame)
+        frontFlashView.backgroundColor = .white
+        frontFlashView.isHidden = true
+        view.addSubview(frontFlashView)
                 
         volumeHandler = JPSVolumeButtonHandler(up: {self.capture()}, downBlock: {self.capture()})
         volumeHandler.start(true)
@@ -262,12 +285,6 @@ class AVCameraController: UIViewController {
         switchCameras()
     }
     
-    @objc func toggleAlive(_ sender: UIButton) {
-        gifMode = !gifMode
-        Mixpanel.mainInstance().track(event: "CameraToggleAlive", properties: ["on": gifMode])
-        let image = gifMode ? UIImage(named: "AliveOn") : UIImage(named: "AliveOff")
-        aliveToggle.setImage(image, for: .normal)
-    }
     
     func switchCameras() {
         do {
@@ -299,7 +316,6 @@ class AVCameraController: UIViewController {
         cameraButton.isEnabled = false
         cancelButton.isUserInteractionEnabled = false
         galleryButton.isUserInteractionEnabled = false
-        draftsButton.isUserInteractionEnabled = false
         volumeHandler.stop()
     }
     
@@ -308,7 +324,6 @@ class AVCameraController: UIViewController {
         cameraButton.isEnabled = true
         cancelButton.isUserInteractionEnabled = true
         galleryButton.isUserInteractionEnabled = true
-        draftsButton.isUserInteractionEnabled = true
         volumeHandler.start(true)
     }
     
@@ -321,151 +336,132 @@ class AVCameraController: UIViewController {
         
         disableButtons()
         
-        let flash = flashButton.image(for: .normal) == UIImage(named: "FlashOn")
-        let selfie = cameraController.currentCameraPosition == .front
-        
-        Mixpanel.mainInstance().track(event: "CameraAliveCapture", properties: ["flash": flash, "selfie": selfie])
-        
-        DispatchQueue.main.async {
-            if self.gifMode { self.addDots(count: 0) }
-            self.captureImage()
-        }
-    }
-        
-    func addDots(count: Int) {
-        
-        //dots show progress with each successive gif image capture
-        if count < 5 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-                guard let self = self else { return }
-                self.addDot(count: count)
-                self.addDots(count: count + 1)
-            }
+        if gifMode {
             
+            let flash = flashButton.image(for: .normal) == UIImage(named: "FlashOn")
+            let selfie = cameraController.currentCameraPosition == .front
+            
+            Mixpanel.mainInstance().track(event: "CameraAliveCapture", properties: ["flash": flash, "selfie": selfie])
+            
+            fillInBar()
+            
+            if flash {
+                if selfie {
+                    self.initialBrightness = UIScreen.main.brightness
+                    self.frontFlashView.isHidden = false
+                    view.bringSubviewToFront(frontFlashView)
+                    UIScreen.main.brightness = 1.0
+                    //account for flash turn on delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                        guard let self = self else { return }
+                        self.captureGIF()
+                    }
+                    
+                } else {
+                    let device = cameraController.rearCamera
+                    device?.toggleFlashlight()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                        guard let self = self else { return }
+                        self.captureGIF()
+                    }
+                }
+                
+            } else {
+                DispatchQueue.main.async {
+                    self.captureGIF()
+                }
+            }
         } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-                guard let self = self else { return }
-                for sub in self.dotView.subviews {
-                    sub.removeFromSuperview()
-                }
+            DispatchQueue.main.async {
+                self.captureImage()
             }
         }
-    }
-    
-    func checkForDrafts() {
-        
-        guard let appDelegate =
-                UIApplication.shared.delegate as? AppDelegate else {
-            return
-        }
-        
-        let managedContext =
-            appDelegate.persistentContainer.viewContext
-        
-        ///fetch request checks for any failed post uploads
-        let postFetch =
-            NSFetchRequest<NSNumber>(entityName: "PostDraft")
-        ///check to make sure uid on post = current uid because coredata stuff saves to the device not the database
-        postFetch.predicate = NSPredicate(format: "uid == %@", self.uid)
-        postFetch.resultType = .countResultType
-        
-        do {
-            let draftsCount: [NSNumber] = try managedContext.fetch(postFetch)
-            for count in draftsCount {
-                if count.intValue > 0 {
-                    self.addExclamationPoint()
-                }
-            }
-        } catch let error as NSError {
-            print("Could not fetch. \(error), \(error.userInfo)")
-        }
-        
-        ///fetch request checks for any failed spot uploads
-        let spotFetch = NSFetchRequest<NSNumber>(entityName: "SpotDraft")
-        ///check to make sure uid on post = current uid because coredata stuff saves to the device not the database
-        spotFetch.predicate = NSPredicate(format: "uid == %@", self.uid)
-        spotFetch.resultType = .countResultType
-        
-        do {
-            let draftsCount: [NSNumber] = try managedContext.fetch(spotFetch)
-            for count in draftsCount {
-                if count.intValue > 0 {
-                    self.addExclamationPoint()
-                }
-            }
-            
-        } catch let error as NSError {
-            print("Could not fetch. \(error), \(error.userInfo)")
-        }
-        
-        checkAlives()
-        //check for alives to see if drafts button is active
-    }
-    func checkAlives() {
-        
-        guard let appDelegate =
-                UIApplication.shared.delegate as? AppDelegate else {
-            return
-        }
-        
-        let managedContext =
-            appDelegate.persistentContainer.viewContext
-        
-        let alivesFetch = NSFetchRequest<NSNumber>(entityName: "ImagesArray")
-        alivesFetch.predicate = NSPredicate(format: "uid == %@", self.uid)
-        alivesFetch.resultType = .countResultType
-        do {
-            let alivesCount: [NSNumber] = try managedContext.fetch(alivesFetch)
-            for count in alivesCount {
-                if count.intValue > 0 {
-                    self.draftsActive = true
-                }
-            }
-        } catch let error as NSError {
-            print("Could not fetch. \(error), \(error.userInfo)")
-        }
-    }
-    
-    func addExclamationPoint() {
-        draftsActive = true
-        draftsNotification.isHidden = false
-        view.bringSubviewToFront(draftsNotification)
     }
     
     func captureImage() {
         
-        cameraController.captureImage(gifMode: gifMode, completion: { [weak self] image, err, gifMode, data, outputURL in
+        self.cameraController.captureImage {(image, error) in
             
-            guard let self = self else { return }
-            if self.cancelOnDismiss { return }
+            guard var image = image else { return }
             
+            let flash = self.flashButton.image(for: .normal) == UIImage(named: "FlashOn")
+            let selfie = self.cameraController.currentCameraPosition == .front
+            
+            Mixpanel.mainInstance().track(event: "CameraStillCapture", properties: ["flash": flash, "selfie": selfie])
+            
+            if selfie {
+                /// flip image orientation on selfie
+                image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
+            }
+            
+            let resizedImage = self.ResizeImage(with: image, scaledToFill:  CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
+                        
             if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "GIFPreview") as? GIFPreviewController {
                 
-                var rotatedImage = (image ?? UIImage()).fixOrientation() ?? UIImage()
-                let frontFacing = self.cameraController.currentCameraPosition == .front
-                if frontFacing { rotatedImage = UIImage(cgImage: rotatedImage.cgImage!, scale: rotatedImage.scale, orientation: UIImage.Orientation.upMirrored) }
-                
-                vc.unfilteredStill = rotatedImage
-                vc.gifMode = gifMode ?? false
-                vc.imageData = data
-                vc.outputURL = outputURL
-                vc.frontFacing = frontFacing
+                vc.selectedImages = [resizedImage]
+                vc.gifMode = false
+                vc.spotObject = self.spotObject
                 
                 if let uploadVC = self.navigationController!.viewControllers.first(where: {$0 is UploadPostController}) as? UploadPostController { vc.delegate = uploadVC }
                 
                 if let navController = self.navigationController {
-                    DispatchQueue.main.async { navController.pushViewController(vc, animated: true) }
+                    navController.pushViewController(vc, animated: true)
                 }
             }
-        })
+        }
+        
     }
     
-    func addDot(count: Int) {
-        let offset = CGFloat(count * 11) + 4.5
-        let view = UIImageView(frame: CGRect(x: offset, y: 1, width: 7, height: 7))
-        view.layer.cornerRadius = 3.5
-        view.backgroundColor = .white
-        dotView.addSubview(view)
+    func captureGIF() {
+
+        cameraController.captureGIF { (images) in
+
+            self.animationImages.removeAll()
+            
+            for i in 0...images.count - 1 {
+                let im2 = self.ResizeImage(with: images[i], scaledToFill:  CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
+                self.animationImages.append(im2)
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                
+                /// reset front flash brightness after blasting it for fron flash
+                if self.frontFlashView.isHidden == false {
+                    UIScreen.main.brightness = self.initialBrightness
+                    self.frontFlashView.isHidden = true
+                    
+                } else if self.cameraController.currentCameraPosition == .rear && self.flashButton.image(for: .normal) == UIImage(named: "FlashOn")! && self.gifMode {
+                    ///special rear flash used for gif mode so reset this on the final image
+                    let device = self.cameraController.rearCamera
+                    device?.toggleFlashlight()
+                }
+                
+                if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "GIFPreview") as? GIFPreviewController {
+                    
+                    vc.selectedImages = self.animationImages
+                    vc.gifMode = true 
+                    vc.spotObject = self.spotObject
+                    
+                    if let uploadVC = self.navigationController!.viewControllers.first(where: {$0 is UploadPostController}) as? UploadPostController { vc.delegate = uploadVC }
+                    
+                    if let navController = self.navigationController {
+                        navController.pushViewController(vc, animated: true)
+                    }
+                }
+            }
+        }
+    }
+
+    func fillInBar() {
+        
+        UIView.animate(withDuration: 1.0) {
+            self.aliveFill.frame = CGRect(x: self.aliveFill.frame.minX, y: self.aliveFill.frame.minY, width: 88, height: self.aliveFill.frame.height)
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) { [weak self] in
+            guard let self = self else { return }
+            self.aliveFill.frame = CGRect(x: self.aliveFill.frame.minX, y: self.aliveFill.frame.minY, width: 0, height: self.aliveFill.frame.height)
+        }
     }
     
     @objc func cancelTap(_ sender: UIButton) {
@@ -509,22 +505,7 @@ class AVCameraController: UIViewController {
         }
         device.unlockForConfiguration()
     }
-    
-    @objc func draftsTap(_ sender: UIButton) {
         
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "Drafts") as? DraftsViewController {
-            
-            vc.emptyState = !self.draftsActive
-            vc.spotObject = self.spotObject
-            
-            if let uploadVC = self.navigationController!.viewControllers.first(where: {$0 is UploadPostController}) as? UploadPostController { vc.delegate = uploadVC }
-
-            DispatchQueue.main.async {
-                self.navigationController?.pushViewController(vc, animated: true)
-            }
-        }
-    }
-    
     @objc func openCamRoll(_ sender: UIButton) {
         self.openCamRoll()
     }
@@ -552,14 +533,20 @@ class AVCameraController: UIViewController {
         
         } else if gesture.state == .ended {
         
-            if abs(direction.x) > abs(direction.y) && direction.x > 200 && beginPan.x < 100 {
+            if !gifMode && abs(direction.x) > abs(direction.y) && direction.x > 200 && beginPan.x < 100 {
                 navigationController?.popViewController(animated: true)
+                
+            } else if abs(direction.x) > abs(direction.y) && direction.x > 200 {
+                if self.gifMode {
+                    self.transitionToStill()
+                }
+                
+            } else if abs(direction.x) > abs(direction.y) && direction.x < 200 {
+                if !self.gifMode {
+                    self.transitionToGIF()
+                }
             }
         }
-    }
-    
-    func swipeToExit() {
-        self.navigationController?.popViewController(animated: true)
     }
     
     @objc func pinch(_ pinch: UIPinchGestureRecognizer) {
@@ -673,6 +660,69 @@ class AVCameraController: UIViewController {
             self.lastZoomFactor = 1.0
         } catch {
             print("\(error.localizedDescription)")
+        }
+    }
+    
+    @objc func transitionToStill(_ sender: UIButton) {
+        transitionToStill()
+    }
+    
+    func transitionToStill() {
+        
+        if self.gifMode {
+            
+            self.gifMode = false
+            
+            /// aniimate gifView remove
+            UIView.animate(withDuration: 0.15) {
+                self.gifView.alpha = 0.0
+                
+            } completion: { [weak self] _ in
+                guard let self = self else { return }
+                self.gifView.isHidden = true
+                self.gifView.alpha = 1.0
+            }
+            
+            /// animate switch between labels
+            UIView.animate(withDuration: 0.3, animations: {
+                
+                self.stillText.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+                self.gifText.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+                self.stillText.frame = CGRect(x: UIScreen.main.bounds.width/2 - 27.5, y: self.stillText.frame.minY, width: self.stillText.frame.width, height: self.stillText.frame.height)
+                self.gifText.frame = CGRect(x: self.stillText.frame.maxX + 10, y: self.gifText.frame.minY, width: self.gifText.frame.width, height: self.gifText.frame.height)
+                self.gifText.setTitleColor(UIColor.white.withAlphaComponent(0.65), for: .normal)
+                self.stillText.setTitleColor(UIColor.white, for: .normal)
+                self.gifView.alpha = 0.0
+            })
+            
+            setStillFlash()
+        }
+    }
+    
+    @objc func transitionToGIF(_ sender: UIButton) {
+        transitionToGIF()
+    }
+    
+    func transitionToGIF() {
+        
+        if !self.gifMode {
+            
+            self.gifMode = true
+            self.gifView.alpha = 0.0
+            self.gifView.isHidden = false
+            UIView.animate(withDuration: 0.15) { self.gifView.alpha = 1.0 }
+            
+            UIView.animate(withDuration: 0.3) {
+                
+                self.stillText.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+                self.gifText.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+                self.gifText.frame = CGRect(x: UIScreen.main.bounds.width/2 - 27.5, y: self.gifText.frame.minY, width: self.gifText.frame.width, height: self.gifText.frame.height)
+                self.stillText.frame = CGRect(x: self.gifText.frame.minX - 65, y: self.stillText.frame.minY, width: self.stillText.frame.width, height: self.stillText.frame.height)
+                self.stillText.setTitleColor(UIColor.white.withAlphaComponent(0.65), for: .normal)
+                self.gifText.setTitleColor(UIColor.white, for: .normal)
+            }
+            
+            setGifFlash()
         }
     }
 }

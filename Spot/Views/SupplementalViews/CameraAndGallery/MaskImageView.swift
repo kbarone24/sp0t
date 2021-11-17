@@ -28,7 +28,6 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
     var zooming = false
     var originalCenter: CGPoint!
     
-    unowned var uploadVC: UploadPostController!
     unowned var postCell: PostCell!
     
     override init(frame: CGRect) {
@@ -223,7 +222,7 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                             guard let self = self else { return }
                             self.setImageBounds(first: false, selectedIndex: self.selectedIndex + 1)
-                            if self.postCell != nil { self.animatePostTo(index: self.selectedIndex) }
+                            if self.postCell != nil { self.postCell.scrollToImageAt(position: self.selectedIndex, animated: false) }
                             return
                         }
                     } else {
@@ -249,7 +248,7 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                             guard let self = self else { return }
                             self.setImageBounds(first: false, selectedIndex: self.selectedIndex - 1)
-                            if self.postCell != nil { self.animatePostTo(index: self.selectedIndex) }
+                            if self.postCell != nil { self.postCell.scrollToImageAt(position: self.selectedIndex, animated: false) }
                             return
                         }
                     } else {
@@ -278,7 +277,7 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                             guard let self = self else { return }
                             self.setImageBounds(first: false, selectedIndex: self.selectedIndex + 1)
-                            if self.postCell != nil { self.animatePostTo(index: self.selectedIndex) }
+                            if self.postCell != nil { self.postCell.scrollToImageAt(position: self.selectedIndex, animated: false) }
                             return
                         }
                     } else {
@@ -304,7 +303,7 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                             guard let self = self else { return }
                             self.setImageBounds(first: false, selectedIndex: self.selectedIndex - 1)
-                            if self.postCell != nil { self.animatePostTo(index: self.selectedIndex) }
+                            if self.postCell != nil { self.postCell.scrollToImageAt(position: self.selectedIndex, animated: false) }
                             return
                         }
                     } else {
@@ -334,7 +333,7 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                             guard let self = self else { return }
                             self.setImageBounds(first: false, selectedIndex: self.selectedIndex + 1)
-                            if self.postCell != nil { self.animatePostTo(index: self.selectedIndex) }
+                            if self.postCell != nil { self.postCell.scrollToImageAt(position: self.selectedIndex, animated: false) }
                             return
                         }
                     } else {
@@ -360,7 +359,7 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                             guard let self = self else { return }
                             self.setImageBounds(first: false, selectedIndex: self.selectedIndex - 1)
-                            if self.postCell != nil { self.animatePostTo(index: self.selectedIndex) }
+                            if self.postCell != nil { self.postCell.scrollToImageAt(position: self.selectedIndex, animated: false) }
                             return
                         }
                     } else {
@@ -373,10 +372,6 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
         default:
             return
         }
-    }
-    
-    func animatePostTo(index: Int) {
-        postCell.scrollToImageAt(position: index, animated: false)
     }
     
     @objc func closeImageExpand(_ sender: UITapGestureRecognizer) {
@@ -406,11 +401,7 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
                 self.isHidden = true
                 self.backgroundColor = UIColor(named: "SpotBlack")
                 self.removeGestureRecognizer(self.imageCloseTap)
-                
-              /*  if let uploadVC = self.uploadVC {
-                    uploadVC.selectedIndex = self.selectedIndex
-                    uploadVC.tableView.reloadData()
-                }  */
+
             }
         }
     }
@@ -456,6 +447,7 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
             /// 1.  rotate animationImages if gif
             let animationImages = self.getGifImages()
             if !animationImages.isEmpty {
+                self.maskImage.animationImages?.removeAll()
                 self.maskImage.animationImages = animationImages
                 
             } else {
