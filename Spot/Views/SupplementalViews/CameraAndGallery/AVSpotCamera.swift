@@ -160,11 +160,10 @@ class AVSpotCamera: NSObject {
         previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
         previewLayer?.connection?.videoOrientation = .portrait
         
-        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 82 : 2
         let cameraHeight = UIScreen.main.bounds.width * 1.5
 
         view.layer.insertSublayer(previewLayer!, at: 0)
-        previewLayer?.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: cameraHeight)
+        previewLayer?.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: cameraHeight)
         previewShown = true
     }
     

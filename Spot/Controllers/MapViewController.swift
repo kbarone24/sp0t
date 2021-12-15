@@ -142,7 +142,6 @@ class MapViewController: UIViewController {
         imageManager = SDWebImageManager()
         
         addTabBar() /// add customTabBar child
-        setUpNavBar() /// hides nav bar
         addMapButtons() /// add map buttons and filter view
         addTagView() /// add tag table for @'ing users
         getAdmins() /// get admin users to exclude from searches (sp0tb0t, black-owned)
@@ -167,7 +166,9 @@ class MapViewController: UIViewController {
         }
         
         selectedSpotID = ""
-        selectedProfileID = ""    }
+        selectedProfileID = ""
+        
+    }
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
@@ -436,19 +437,7 @@ class MapViewController: UIViewController {
     func pushUploadPost() {
         
         customTabBar.view.isUserInteractionEnabled = false
-        
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
-            
-            vc.mapVC = self
-            
-        /*    let transition = CATransition()
-            transition.duration = 0.3
-            transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-            transition.type = CATransitionType.push
-            transition.subtype = CATransitionSubtype.fromTop
-            navigationController?.view.layer.add(transition, forKey: kCATransition) */
-            navigationController?.pushViewController(vc, animated: false)
-        }
+        customTabBar.pushCamera()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             guard let self = self else { return }
@@ -473,10 +462,19 @@ class MapViewController: UIViewController {
         customTabBar.selectedIndex = 4
     }
     
+    /// custom reset nav bar (patch fix for CATransition)
+    func uploadMapReset() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self = self else { return }
+            if self.customTabBar.selectedIndex != 0 { return }
+            self.navigationController?.navigationBar.alpha = 1.0
+            self.setUpNavBar()
+        }
+    }
+    
     func feedUploadReset() {
         
         customTabBar.selectedIndex = 0
-        setUpNavBar()
         
         // reset map after post upload
         self.prePanY = 0
@@ -1959,6 +1957,7 @@ class SpotAnnotationView: MKAnnotationView {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         collisionMode = .circle
         canShowCallout = false
+        centerOffset = CGPoint(x: 1, y: -18.5)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -1983,6 +1982,7 @@ class SpotClusterView: MKAnnotationView {
     
     // update spot banner with the top spot in the cluster
     func updateImage(annotations: [CustomSpotAnnotation]) {
+        
         let nibView = loadNib()
         if let clusterAnnotation = annotation as? MKClusterAnnotation {
             var topSpot: CustomSpotAnnotation!
@@ -1996,6 +1996,7 @@ class SpotClusterView: MKAnnotationView {
                     }
                 }
             }
+            
             if topSpot != nil {
                 nibView.spotNameLabel.text = topSpot.spotInfo.spotName
                 let temp = nibView.spotNameLabel
@@ -2050,8 +2051,8 @@ class SinglePostAnnotationView: MKAnnotationView {
         }
     }
     
-    func loadNib() -> SinglePost {
-        let infoWindow = SinglePost.instanceFromNib() as! SinglePost
+    func loadNib() -> SinglePostWindow {
+        let infoWindow = SinglePostWindow.instanceFromNib() as! SinglePostWindow
         infoWindow.clipsToBounds = true
         infoWindow.postImage.contentMode = .scaleAspectFill
         infoWindow.postImage.clipsToBounds = true

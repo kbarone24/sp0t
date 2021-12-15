@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "FriendsFeedOff1x.png",
+      "filename" : "FriendsFeedSwitchOFf1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "FriendsFeedOff2x.png",
+      "filename" : "FriendsFeedSwitchOFf2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "FriendsFeedOff3x.png",
+      "filename" : "FriendsFeedSwitchOFf3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

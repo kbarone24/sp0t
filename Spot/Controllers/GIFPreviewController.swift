@@ -43,7 +43,7 @@ class GIFPreviewController: UIViewController {
             
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        Mixpanel.mainInstance().track(event: "GIFOpen")
+        Mixpanel.mainInstance().track(event: "CameraPreviewOpen")
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -69,7 +69,7 @@ class GIFPreviewController: UIViewController {
         
         if gifMode {
             previewView.animationImages = selectedImages
-            previewView.animateGIF(directionUp: true, counter: 0, frames: selectedImages.count, alive: false)
+            previewView.animateGIF(directionUp: true, counter: 0, alive: false)
         } else {
             previewView.image = selectedImages.first ?? UIImage()
         }
@@ -100,7 +100,6 @@ class GIFPreviewController: UIViewController {
     }
                 
     @objc func selectTap(_ sender: UIButton) {
-        
         if delegate != nil { delegate?.finishPassingFromCamera(images: selectedImages) }
         if let uploadVC = navigationController?.viewControllers.first(where: {$0 is UploadPostController}) as? UploadPostController {
             navigationController?.popToViewController(uploadVC, animated: false)

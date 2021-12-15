@@ -165,7 +165,8 @@ class ConfirmCodeController: UIViewController {
                 let db = Firestore.firestore()
                 guard let uid = Auth.auth().currentUser?.uid else { return }
                 /// update to confirm user multiauth
-                db.collection("users").document(uid).updateData(["phone" : self.phoneNumber ?? "" as Any, "verifiedPhone": true])
+                let phone = self.phoneNumber ?? ""
+                db.collection("users").document(uid).updateData(["phone" : phone as Any, "verifiedPhone": true])
                 
                 let defaults = UserDefaults.standard
                 defaults.set(true, forKey: "verifiedPhone")

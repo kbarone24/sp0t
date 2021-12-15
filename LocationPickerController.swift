@@ -243,7 +243,6 @@ class LocationPickerController: UIViewController {
         DispatchQueue.main.async { self.searchContainer.addSubview(self.resultsTable) }
 
         pan = UIPanGestureRecognizer(target: self, action: #selector(closeTable(_:)))
-        
     }
 
     
@@ -312,7 +311,7 @@ class LocationPickerController: UIViewController {
                     
                     annotation.spotInfo = spotInfo
                     
-                    let hidden = self.spotFilteredByLocation(spotCoordinates: item.coordinate)
+                    let hidden = self.mapView.spotFilteredByLocation(spotCoordinates: item.coordinate)
                     self.nearbyAnnotations.updateValue(annotation, forKey: item.id)
                     UploadImageModel.shared.nearbySpots.append(spotInfo)
                     
@@ -382,7 +381,7 @@ class LocationPickerController: UIViewController {
                 UploadImageModel.shared.nearbySpots.append(annotation.spotInfo)
                 
                 /// if spot isnt already out of frame, load to map
-                if self.spotFilteredByLocation(spotCoordinates: CLLocationCoordinate2D(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)) {
+                if self.mapView.spotFilteredByLocation(spotCoordinates: CLLocationCoordinate2D(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)) {
                     self.loadSpotToMap(annotation: annotation, id: key ?? "", hidden: true)
                 } else {
                     self.loadSpotToMap(annotation: annotation, id: key ?? "", hidden: false)
@@ -412,7 +411,7 @@ class LocationPickerController: UIViewController {
         
         for anno in nearbyAnnotations {
             
-             if spotFilteredByLocation(spotCoordinates: anno.value.coordinate) {
+            if mapView.spotFilteredByLocation(spotCoordinates: anno.value.coordinate) {
                 DispatchQueue.main.async {
                     anno.value.isHidden = true
                     self.mapView.removeAnnotation(anno.value)
@@ -428,15 +427,7 @@ class LocationPickerController: UIViewController {
             }
         }
     }
-    
-    func spotFilteredByLocation(spotCoordinates: CLLocationCoordinate2D) -> Bool {
-        let coordinates = mapView.region.boundingBoxCoordinates
-        if !(spotCoordinates.latitude < coordinates[0].latitude && spotCoordinates.latitude > coordinates[2].latitude && spotCoordinates.longitude > coordinates[0].longitude && spotCoordinates.longitude < coordinates[2].longitude) {
-            return true
-        }
-        return false
-    }
-    
+        
     @objc func keyboardWillShow(_ sender: NSNotification) {
         if let keyboardFrame: NSValue = sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
             
@@ -452,6 +443,7 @@ class LocationPickerController: UIViewController {
         if !firstTimeGettingLocation { return }
         addAnnotations()
         loadNearbySpots()
+        loadNearbyPOIs()
     }
     
     // set location on tap
@@ -487,7 +479,6 @@ class LocationPickerController: UIViewController {
     func setAddress(address: String) {
 
         addressText = address
-        
         if addressLabel == nil { return }
         addressLabel.text = address
     }
@@ -518,9 +509,7 @@ extension LocationPickerController: MKMapViewDelegate {
                 annotationView!.annotation = annotation
             }
             
-            let nibView = loadProfileNib()
-            nibView.profileImage.image = UserDataModel.shared.userInfo.profilePic
-            
+            let nibView = loadUploadNib()
             annotationView!.image = nibView.asImage()
             annotationView!.sizeToFit()
             return annotationView
@@ -634,7 +623,6 @@ extension LocationPickerController: MKMapViewDelegate {
                 self.filterSpots()
             }
         }
-
     }
     
     func addAnnotations() {
@@ -676,7 +664,7 @@ extension LocationPickerController: MKMapViewDelegate {
                 
                 guard let spot = UploadImageModel.shared.nearbySpots[safe: i] else { continue }
                 if spot.id == "" { continue }
-                                let annotation = CustomSpotAnnotation()
+                let annotation = CustomSpotAnnotation()
                 annotation.coordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
                 
                 annotation.spotInfo = spot
@@ -712,16 +700,10 @@ extension LocationPickerController: MKMapViewDelegate {
         return infoWindow
     }
     
-    func loadProfileNib() -> LocationPickerWindow {
+    func loadUploadNib() -> UploadAnnotationWindow {
         
-        let infoWindow = LocationPickerWindow.instanceFromNib() as! LocationPickerWindow
+        let infoWindow = UploadAnnotationWindow.instanceFromNib() as! UploadAnnotationWindow
         infoWindow.clipsToBounds = true
-        
-        infoWindow.profileImage.contentMode = .scaleAspectFill
-        infoWindow.profileImage.layer.cornerRadius = infoWindow.profileImage.bounds.width/2
-        infoWindow.profileImage.clipsToBounds = true
-        infoWindow.bringSubviewToFront(infoWindow.profileImage)
-                
         return infoWindow
     }
 }
@@ -988,312 +970,3 @@ extension LocationPickerController: UISearchBarDelegate, MKLocalSearchCompleterD
     }
 }
 
-class LocationPickerAnnotationView: MKAnnotationView {
-    
-    override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
-        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
-        canShowCallout = false
-        isEnabled = true
-        isDraggable = true
-        isSelected = true
-        clusteringIdentifier = nil
-        centerOffset = CGPoint(x: 0, y: -15)
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class LocationPickerSpotCell: UITableViewCell {
-    
-    var topLine: UIView!
-    var spotName: UILabel!
-    var descriptionLabel: UILabel!
-    
-    var separatorView: UIView!
-    var cityLabel: UILabel!
-    
-    var locationIcon: UIImageView!
-    var distanceLabel: UILabel!
-    
-    func setUp(spot: MapSpot) {
-        
-        self.backgroundColor = .black
-        self.selectionStyle = .none
-        
-        resetCell()
-                
-        let nameY: CGFloat = tag == 0 ? 17 : 11
-        spotName = UILabel(frame: CGRect(x: 18, y: nameY, width: UIScreen.main.bounds.width - 78, height: 16))
-        spotName.text = spot.spotName
-        spotName.lineBreakMode = .byTruncatingTail
-        spotName.font = UIFont(name: "SFCamera-Regular", size: 15)
-        spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        contentView.addSubview(spotName)
-        
-        var separatorX: CGFloat = 18
-        if spot.spotDescription != "" {
-            descriptionLabel = UILabel(frame: CGRect(x: 18, y: spotName.frame.maxY + 2, width: UIScreen.main.bounds.width - 78, height: 16))
-            descriptionLabel.text = spot.spotDescription
-            descriptionLabel.textColor = UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1)
-            descriptionLabel.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
-            descriptionLabel.lineBreakMode = .byTruncatingTail
-            descriptionLabel.sizeToFit()
-            contentView.addSubview(descriptionLabel)
-            
-            separatorX = descriptionLabel.frame.maxX + 4
-            
-        } else if tag == 0 {
-            /// move spot name down for nearby cell only
-            spotName.frame = CGRect(x: spotName.frame.minX, y: spotName.frame.minY + 8, width: spotName.frame.width, height: spotName.frame.height)
-        }
-        
-        if tag == 1 {
-            /// add city for search cell
-            if separatorX != 18 {
-                separatorView = UIView(frame: CGRect(x: separatorX, y: descriptionLabel.frame.midY - 1, width: 3, height: 3))
-                separatorView.backgroundColor = UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1)
-                separatorView.layer.cornerRadius = 1.5
-                contentView.addSubview(separatorView)
-                
-                separatorX += 7
-            }
-            
-            cityLabel = UILabel(frame: CGRect(x: separatorX, y: spotName.frame.maxY + 2, width: UIScreen.main.bounds.width - separatorX - 18, height: 16))
-            cityLabel.text = spot.city ?? ""
-            cityLabel.textColor = UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1)
-            cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
-            cityLabel.lineBreakMode = .byTruncatingTail
-            contentView.addSubview(cityLabel)
-            
-            /// for POIs will need to fetch city here
-            let localName = spot.spotName
-            if cityLabel.text == "" {
-                reverseGeocodeFromCoordinate(numberOfFields: 2, location: CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)) { [weak self] city in
-                    guard let self = self else { return }
-                    if localName == spot.spotName { self.cityLabel.text = city }
-                }
-            }
-            
-        } else {
-            
-            topLine = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 1))
-            topLine.backgroundColor = UIColor(red: 0.062, green: 0.062, blue: 0.062, alpha: 1)
-            contentView.addSubview(topLine)
-
-            /// add distance for nearby cell
-            locationIcon = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width - 58, y: 22, width: 7, height: 10))
-            locationIcon.image = UIImage(named: "DistanceIcon")?.withTintColor(UIColor(red: 0.262, green: 0.262, blue: 0.262, alpha: 1))
-            contentView.addSubview(locationIcon)
-            
-            distanceLabel = UILabel(frame: CGRect(x: locationIcon.frame.maxX + 4, y: 21, width: 50, height: 15))
-            distanceLabel.text = spot.distance.getLocationString()
-            distanceLabel.textColor = UIColor(red: 0.262, green: 0.262, blue: 0.262, alpha: 1)
-            distanceLabel.font = UIFont(name: "SFCamera-Regular", size: 10.5)
-            contentView.addSubview(distanceLabel)
-        }
-    }
-        
-    func resetCell() {
-        if topLine != nil { topLine.backgroundColor = nil }
-        if spotName != nil { spotName.text = "" }
-        if descriptionLabel != nil { descriptionLabel.text = "" }
-        if separatorView != nil { separatorView.backgroundColor = nil }
-        if cityLabel != nil { cityLabel.text = "" }
-        if locationIcon != nil { locationIcon.image = UIImage() }
-        if distanceLabel != nil { distanceLabel.text = "" }
-    }
-}
-
-class SpotSearchCell: UITableViewCell {
-
-    var thumbnailImage: UIImageView!
-    var spotName: UILabel!
-    var profilePic: UIImageView!
-    var name: UILabel!
-    var username: UILabel!
-    var address: UILabel!
-    var bottomLine: UIView!
-    
-    func setUp(spot: MapSpot) {
-        
-        backgroundColor = UIColor(named: "SpotBlack")
-        selectionStyle = .none
-        
-        resetCell()
-        
-        thumbnailImage = UIImageView(frame: CGRect(x: 18, y: 7, width: 36, height: 36))
-        thumbnailImage.layer.cornerRadius = 4
-        thumbnailImage.layer.masksToBounds = true
-        thumbnailImage.clipsToBounds = true
-        thumbnailImage.contentMode = .scaleAspectFill
-        addSubview(thumbnailImage)
-
-        let url = spot.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            thumbnailImage.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-        } else {
-            /// adjust cell to look like POI cell
-            thumbnailImage.image = UIImage(named: "POIIcon")
-            thumbnailImage.frame = CGRect(x: 16, y: 5, width: 38, height: 38)
-        }
-
-        spotName = UILabel(frame: CGRect(x: thumbnailImage.frame.maxX + 12, y: 15, width: 250, height: 16))
-        spotName.text = spot.spotName
-        spotName.font = UIFont(name: "SFCamera-Regular", size: 13)
-        spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        spotName.sizeToFit()
-        addSubview(spotName)
-    }
-    
-    func setUp(POI: POI) {
-        
-        backgroundColor = UIColor(named: "SpotBlack")
-        selectionStyle = .none
-        
-        resetCell()
-        
-        thumbnailImage = UIImageView(frame: CGRect(x: 16, y: 7, width: 38, height: 38))
-        thumbnailImage.layer.cornerRadius = 4
-        thumbnailImage.layer.masksToBounds = true
-        thumbnailImage.clipsToBounds = true
-        thumbnailImage.contentMode = .scaleAspectFill
-        thumbnailImage.image = UIImage(named: "POIIcon")
-        addSubview(thumbnailImage)
-
-        spotName = UILabel(frame: CGRect(x: thumbnailImage.frame.maxX + 12, y: 9, width: UIScreen.main.bounds.width - 84, height: 16))
-        spotName.lineBreakMode = .byTruncatingTail
-        spotName.text = POI.name
-        spotName.font = UIFont(name: "SFCamera-Semibold", size: 13)
-        spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        addSubview(spotName)
-
-        address = UILabel(frame: CGRect(x: thumbnailImage.frame.maxX + 12, y: spotName.frame.maxY + 1, width: UIScreen.main.bounds.width - 84, height: 16))
-        address.text = POI.address
-        address.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        address.font = UIFont(name: "SFCamera-Regular", size: 12)
-        address.lineBreakMode = .byTruncatingTail
-        addSubview(address)
-    }
-    
-    
-    func setUpSpot(spot: ResultSpot) {
-        
-        backgroundColor = UIColor(named: "SpotBlack")
-        selectionStyle = .none
-        
-        resetCell()
-
-        thumbnailImage = UIImageView(frame: CGRect(x: 18, y: 12, width: 36, height: 36))
-        thumbnailImage.layer.cornerRadius = 4
-        thumbnailImage.layer.masksToBounds = true
-        thumbnailImage.clipsToBounds = true
-        thumbnailImage.contentMode = .scaleAspectFill
-        addSubview(thumbnailImage)
-        
-        let url = spot.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            thumbnailImage.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-        }
-
-        
-        spotName = UILabel(frame: CGRect(x: thumbnailImage.frame.maxX + 8, y: 22, width: 250, height: 16))
-        spotName.text = spot.spotName
-        spotName.font = UIFont(name: "SFCamera-Regular", size: 13)
-        spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        spotName.sizeToFit()
-        addSubview(spotName)
-    }
-        
-    func setUpUser(user: UserProfile) {
-
-        backgroundColor = UIColor(named: "SpotBlack")
-        selectionStyle = .none
-        
-        resetCell()
-        
-        profilePic = UIImageView(frame: CGRect(x: 18, y: 12, width: 36, height: 36))
-        profilePic.layer.cornerRadius = 18
-        profilePic.clipsToBounds = true
-        profilePic.layer.masksToBounds = true
-        profilePic.contentMode = .scaleAspectFill
-        addSubview(profilePic)
-
-        let url = user.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-        }
-
-        name = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: 12, width: 250, height: 20))
-        name.text = user.name
-        name.font = UIFont(name: "SFCamera-Semibold", size: 13)
-        name.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        name.sizeToFit()
-        addSubview(name)
-        
-        username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: name.frame.maxY + 1, width: 250, height: 20))
-        username.text = user.username
-        username.font = UIFont(name: "SFCamera-Regular", size: 13)
-        username.textColor = UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1)
-        username.sizeToFit()
-        addSubview(username)
-    }
-    
-    func setUpCity(cityName: String) {
-
-        backgroundColor = UIColor(named: "SpotBlack")
-        selectionStyle = .none
-        
-        resetCell()
-        
-        spotName = UILabel(frame: CGRect(x: 28.5, y: 22, width: 250, height: 16))
-        spotName.text = cityName
-        spotName.font = UIFont(name: "SFCamera-Semibold", size: 15)
-        spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        spotName.sizeToFit()
-        addSubview(spotName)
-        
-        bottomLine = UIView(frame: CGRect(x: 14, y: 64, width: UIScreen.main.bounds.width - 28, height: 1))
-        bottomLine.backgroundColor = UIColor(red: 0.121, green: 0.121, blue: 0.121, alpha: 1)
-        addSubview(bottomLine)
-    }
-    
-    func resetCell() {
-        if thumbnailImage != nil { thumbnailImage.image = UIImage() }
-        if spotName != nil {spotName.text = ""}
-        if profilePic != nil {profilePic.image = UIImage()}
-        if name != nil {name.text = ""}
-        if username != nil {username.text = ""}
-        if address != nil { address.text = "" }
-        if bottomLine != nil { bottomLine.backgroundColor = nil }
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        if thumbnailImage != nil { thumbnailImage.sd_cancelCurrentImageLoad(); thumbnailImage.image = UIImage() }
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
-    }
-}
-
-extension MKPointOfInterestCategory {
-    
-    func toString() -> String {
-        
-        /// convert POI type into readable string
-        var text = rawValue
-        var counter = 13
-        while counter > 0 { text = String(text.dropFirst()); counter -= 1 }
-        
-        /// insert space in POI type if necessary
-        counter = 0
-        var uppercaseIndex = 0
-        for letter in text {if letter.isUppercase && counter != 0 { uppercaseIndex = counter }; counter += 1}
-        if uppercaseIndex != 0 { text.insert(" ", at: text.index(text.startIndex, offsetBy: uppercaseIndex)) }
-
-        return text
-    }
-}

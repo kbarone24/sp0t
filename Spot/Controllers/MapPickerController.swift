@@ -239,6 +239,8 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
     
     func openMarker(latitude: Double, longitude: Double) {
         
+        if (navigationController?.viewControllers.contains(where: {$0.isKind(of: ClusterPickerController.self)}) ?? false) { return }
+
         var passObjects: [(ImageObject, Bool)] = []
         guard let parentVC = parent as? PhotosContainerController else { return }
         if let match = UploadImageModel.shared.imageObjects.first(where: {$0.0.rawLocation.coordinate.longitude == longitude && $0.0.rawLocation.coordinate.latitude == latitude}) {
@@ -269,6 +271,8 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
     }
     
     @objc func clusterTap(_ sender: MapPickerTap) {
+        
+        if (navigationController?.viewControllers.contains(where: {$0.isKind(of: ClusterPickerController.self)}) ?? false) { return }
         
         let latitude = sender.coordinates.latitude
         let longitude = sender.coordinates.longitude

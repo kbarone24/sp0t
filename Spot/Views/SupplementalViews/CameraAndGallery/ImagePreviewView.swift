@@ -34,17 +34,15 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .black
+        Mixpanel.mainInstance().track(event: "ImagePreviewOpen", properties: nil)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    deinit {
-        print("preview deinit")
-    }
     
-    func expand(originalFrame: CGRect, selectedIndex: Int, galleryIndex: Int, imageObjects: [ImageObject]) {
+    func imageExpand(originalFrame: CGRect, selectedIndex: Int, galleryIndex: Int, imageObjects: [ImageObject]) {
         
         self.originalFrame = originalFrame
         self.selectedIndex = selectedIndex
@@ -56,6 +54,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
         addGestureRecognizer(imageCloseTap)
         
         let currentObject = imageObjects[selectedIndex]
+
         maskImage = ImagePreview(frame: originalFrame)
         maskImage.image = currentObject.stillImage
         addSubview(maskImage)
@@ -99,30 +98,38 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     
     func setImageBounds(first: Bool, selectedIndex: Int) {
         
-        let sameIndex = selectedIndex == self.selectedIndex
         self.selectedIndex = selectedIndex
-        
-        let maskHeight: CGFloat = UIScreen.main.bounds.width * 1.5
-        let maskY = 20 + (UIScreen.main.bounds.height - maskHeight - 40)/2
 
         if !first {
             let selectedObject = imageObjects[selectedIndex]
-                        
+            
+            let maskAspect = min(selectedObject.stillImage.size.height/selectedObject.stillImage.size.width, 1.5)
+            let maskHeight = maskAspect * UIScreen.main.bounds.width
+            let maskY = 20 + (UIScreen.main.bounds.height - maskHeight - 40)/2
+
             maskImage.frame = CGRect(x: 0, y: maskY, width: UIScreen.main.bounds.width, height: maskHeight)
             maskImage.setUp(imageObject: selectedObject)
-            let selectedImage = selectedObject.stillImage
-            if !sameIndex && !first { maskImage.image = selectedImage } /// avoid resetting image while animation is happening
         }
         
         if imageObjects.count > 1 {
             
-            maskImagePrevious.frame = CGRect(x: -UIScreen.main.bounds.width, y: maskY, width: UIScreen.main.bounds.width, height: maskHeight)
+            /// blank frame or use filled aspect ratio of next object
+            let pAspect = selectedIndex > 0 ? min(imageObjects[selectedIndex - 1].stillImage.size.height/imageObjects[selectedIndex - 1].stillImage.size.width, 1.5) : 1.5
+            let pHeight = pAspect * UIScreen.main.bounds.width
+            let py = 20 + (UIScreen.main.bounds.height - pHeight - 40)/2
+
+            maskImagePrevious.frame = CGRect(x: -UIScreen.main.bounds.width, y: py, width: UIScreen.main.bounds.width, height: pHeight)
             maskImagePrevious.image = UIImage()
+            
             if selectedIndex > 0 {
                 maskImagePrevious.setUp(imageObject: imageObjects[selectedIndex - 1])
             }
+            
+            let nAspect = selectedIndex < imageObjects.count - 1 ? min(imageObjects[selectedIndex + 1].stillImage.size.height/imageObjects[selectedIndex + 1].stillImage.size.width, 1.5) : 1.5
+            let nHeight = nAspect * UIScreen.main.bounds.width
+            let ny = 20 + (UIScreen.main.bounds.height - nHeight - 40)/2
 
-            maskImageNext.frame = CGRect(x: UIScreen.main.bounds.width, y: maskY, width: UIScreen.main.bounds.width, height: maskHeight)
+            maskImageNext.frame = CGRect(x: UIScreen.main.bounds.width, y: ny, width: UIScreen.main.bounds.width, height: nHeight)
             maskImageNext.image = UIImage()
             if selectedIndex < imageObjects.count - 1 {
                 maskImageNext.setUp(imageObject: imageObjects[selectedIndex + 1])
@@ -166,6 +173,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                         guard let self = self else { return }
+                        self.setAnimationIndex(newIndex: self.selectedIndex + 1)
                         self.setImageBounds(first: false, selectedIndex: self.selectedIndex + 1)
                         if self.imagesCollection != nil { self.imagesCollection.scrollToItem(at: IndexPath(row: self.selectedIndex, section: 0), at: .left, animated: false)}
                         return
@@ -192,6 +200,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                         guard let self = self else { return }
+                        self.setAnimationIndex(newIndex: self.selectedIndex - 1)
                         self.setImageBounds(first: false, selectedIndex: self.selectedIndex - 1)
                         if self.imagesCollection != nil { self.imagesCollection.scrollToItem(at: IndexPath(row: self.selectedIndex, section: 0), at: .left, animated: false)}
                         return
@@ -202,11 +211,17 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                     }
                 }
             }
-            /// image swipe from counter clockwise landscape orientation
+
         default:
             return
         }
         
+    }
+    
+    // set animationIndex to maintain animation state on image swipe
+    func setAnimationIndex(newIndex: Int) {
+         imageObjects[newIndex].animationIndex = newIndex > selectedIndex ? maskImageNext.animationIndex : maskImagePrevious.animationIndex
+        imageObjects[newIndex].directionUp = newIndex > selectedIndex ? maskImageNext.directionUp : maskImagePrevious.directionUp
     }
     
     @objc func closeImageExpand(_ sender: UITapGestureRecognizer) {
@@ -267,9 +282,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                 self.isHidden = true
                 self.backgroundColor = UIColor(named: "SpotBlack")
                 self.removeGestureRecognizer(self.imageCloseTap)
-                self.maskImage = nil
-                self.maskImageNext = nil
-                self.maskImagePrevious = nil
+                Mixpanel.mainInstance().track(event: "ImagePreviewClose", properties: nil)
                 NotificationCenter.default.post(name: Notification.Name("PreviewRemove"), object: nil, userInfo: nil)
             }
         }
@@ -295,10 +308,12 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     var galleryCircle: CircleView!
     
     var imageObject: ImageObject!
-    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var activityIndicator = UIActivityIndicatorView()
     lazy var imageFetcher = ImageFetcher()
     
     var circleIndex = 0
+    var animationIndex = 0
+    var directionUp = true
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -319,20 +334,23 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     func setUp(imageObject: ImageObject) {
         
         self.imageObject = imageObject
-        image = imageObject.stillImage
+        if !imageObject.gifMode { image = imageObject.stillImage }
         contentMode = .scaleAspectFill
-        animationImages?.removeAll()
         
         if aliveToggle != nil { aliveToggle.setImage(UIImage(), for: .normal)}
         if imageMask != nil { imageMask.removeFromSuperview() }
         activityIndicator.removeFromSuperview()
-                        
-        if !imageObject.animationImages.isEmpty {
-            animationImages = imageObject.animationImages
-            if imageObject.gifMode { self.animateGIF(directionUp: true, counter: 0, frames: imageObject.animationImages.count, alive: false) }
+        
+        let animating = !(animationImages?.isEmpty ?? true)
+        animationImages = imageObject.animationImages
+        animationIndex = imageObject.animationIndex
+        
+        /// only animate if not already animating + if this is maskImage
+        if imageObject.gifMode && !animating {
+            self.animatePreviewGif()
         }
         
-        contentView = UIView(frame: getTrueFrame())
+        contentView = UIView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height))
         contentView.backgroundColor = nil
         addSubview(contentView)
         
@@ -366,8 +384,10 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             aliveToggle.addTarget(self, action: #selector(toggleAlive(_:)), for: .touchUpInside)
             contentView.addSubview(aliveToggle)
             
-            activityIndicator = CustomActivityIndicator(frame: CGRect(x: 14, y: contentView.frame.height - 273, width: 30, height: 30))
+            activityIndicator = UIActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height))
             activityIndicator.isHidden = true
+            activityIndicator.color = .white
+            activityIndicator.transform = CGAffineTransform(scaleX: 2.5, y: 2.5)
             contentView.addSubview(activityIndicator)
         }
         
@@ -407,18 +427,27 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         } else {
             /// for animation back to upload
             cancelButton = UIButton(frame: CGRect(x: contentView.frame.width - 39, y: 4, width: 35, height: 35))
-            cancelButton.setImage(UIImage(named: "CheckInX"), for: .normal)
+            cancelButton.setImage(UIImage(named: "ImageCancelButton"), for: .normal)
             cancelButton.isHidden = true
             cancelButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             contentView.addSubview(cancelButton)
         }
     }
     
+    func addActivityIndicator() {
+        bringSubviewToFront(activityIndicator)
+        activityIndicator.startAnimating()
+    }
+    
+    func removeActivityIndicator() {
+        activityIndicator.stopAnimating()
+    }
+
     @objc func toggleAlive(_ sender: UIButton) {
         
         imageObject.gifMode = !imageObject.gifMode
         
-        Mixpanel.mainInstance().track(event: "MaskToggleAlive", properties: ["on": imageObject.gifMode])
+        Mixpanel.mainInstance().track(event: "ImagePreviewToggleAlive", properties: ["on": imageObject.gifMode])
 
         let image = imageObject.gifMode ? UIImage(named: "AliveOn") : UIImage(named: "AliveOff")
         aliveToggle.setImage(image, for: .normal)
@@ -432,6 +461,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             imageFetcher.fetchLivePhoto(currentAsset: imageObject.asset, animationImages: imageObject.animationImages) { [weak self] animationImages, failed in
 
                 guard let self = self else { return }
+                if animationImages.isEmpty { return }
                 
                 self.activityIndicator.stopAnimating()
                 self.aliveToggle.isHidden = false
@@ -440,7 +470,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
                 
                 /// animate with gif images
                 self.animationImages = self.imageObject.animationImages
-                self.animateGIF(directionUp: true, counter: 0, frames: self.imageObject.animationImages.count, alive: false)
+                self.animatePreviewGif()
                 self.updateParent()
                 ///fetch image is async so need to make sure another image wasn't appended while this one was being fetched
             }
@@ -460,7 +490,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         let text = selected ? "Selected" : "Select"
         selectButton.setTitle(text, for: .normal)
         
-        Mixpanel.mainInstance().track(event: "GalleryPreviewToggle", properties: ["selected": selected])
+        Mixpanel.mainInstance().track(event: "ImagePreviewSelectImage", properties: ["selected": selected])
         
         guard let previewView = superview as? ImagePreviewView else { return }
         
@@ -512,6 +542,8 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     
     
     @objc func zoom(_ sender: UIPinchGestureRecognizer) {
+        
+        Mixpanel.mainInstance().track(event: "ImagePreviewZoomOnImage", properties: nil)
         
         switch sender.state {
             
@@ -571,10 +603,44 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return gestureRecognizer.view?.tag == 85 && otherGestureRecognizer.view?.tag == 85 /// only user for postImage zoom / swipe
     }
+            
+    /// custom animateGif func for maintaining animationIndex
+    func animatePreviewGif() {
+
+        if superview == nil || isHidden || animationImages?.isEmpty ?? true { return }
         
-    func getTrueFrame() -> CGRect {
-      //  let maskAspect = min(imageObject.stillImage.size.height/imageObject.stillImage.size.width, 1.5)
-       // let maskHeight = maskAspect * UIScreen.main.bounds.width
-        return CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height)
+        UIView.transition(with: self, duration: 0.06, options: [.allowUserInteraction, .beginFromCurrentState], animations: { [weak self] in
+                            guard let self = self else { return }
+            if self.animationImages?.isEmpty ?? true { return }
+            if self.animationIndex >= self.animationImages?.count ?? 0 { return }
+            self.image = self.animationImages![self.animationIndex] },
+                          completion: nil)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.06 + 0.005) { [weak self] in
+            guard let self = self else { return }
+            
+            var newDirection = self.directionUp
+            var newCount = self.animationIndex
+            
+            if self.directionUp {
+                if self.animationIndex == self.animationImages!.count - 1 {
+                    newDirection = false
+                    newCount = self.animationImages!.count - 2
+                } else {
+                    newCount += 1
+                }
+            } else {
+                if self.animationIndex == 0 {
+                    newDirection = true
+                    newCount = 1
+                } else {
+                    newCount -= 1
+                }
+            }
+
+            self.animationIndex = newCount
+            self.directionUp = newDirection
+            self.animatePreviewGif()
+        }
     }
 }

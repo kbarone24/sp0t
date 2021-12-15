@@ -215,7 +215,7 @@ class PostViewController: UIViewController {
             /// animate to next post after vertical scroll
             if let index = info["index"] as? Int {
                 
-            ///    if selectedPostIndex != index { if let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell { cell.animationCounter = 0; cell.postImage.animationImages?.removeAll() } }  /// reset animation counter so that next post, if gif, starts animating at 0
+            ///    if selectedPostIndex != index { if let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell { cell.animationIndex = 0; cell.postImage.animationImages?.removeAll() } }  /// reset animation counter so that next post, if gif, starts animating at 0
                 selectedPostIndex = index
 
                 DispatchQueue.main.async { [weak self] in
@@ -1121,7 +1121,7 @@ class PostCell: UITableViewCell {
             imageView.animationImages = animationImages
             
             if !animationImages.isEmpty {
-                animationImages.count == 5 && frameIndexes.count == 1 ? imageView.animate5FrameAlive(directionUp: true, counter: imageView.animationCounter) : imageView.animateGIF(directionUp: true, counter: imageView.animationCounter, frames: animationImages.count, alive: post.gif ?? false)  /// use old animation for 5 frame alives
+                animationImages.count == 5 && frameIndexes.count == 1 ? imageView.animate5FrameAlive(directionUp: true, counter: imageView.animationIndex) : imageView.animateGIF(directionUp: true, counter: imageView.animationIndex, alive: post.gif ?? false)  /// use old animation for 5 frame alives
             }
             
             minX += imageWidth + 9
@@ -2636,7 +2636,7 @@ class PostImageLoader: Operation {
 class PostImageView: UIImageView {
     
     var stillImage: UIImage = UIImage()
-    var animationCounter = 0
+    var animationIndex = 0
     var navBarHeight: CGFloat!
     
     override init(frame: CGRect) {

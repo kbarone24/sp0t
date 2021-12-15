@@ -23,6 +23,8 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
     lazy var layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout.init()
     
     var baseSize: CGSize!
+    let options = PHImageRequestOptions()
+    
     var maskView: UIView!
     var imagePreview: ImagePreviewView!
     
@@ -47,23 +49,30 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         cancelOnDismiss = false
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "ClusterPickerOpen")
+    }
+    
     override func viewWillDisappear(_ animated: Bool) {
         cancelOnDismiss = true
     }
     
     override func viewDidLoad() {
+                
+        baseSize = CGSize(width: UIScreen.main.bounds.width/4 - 0.1, height: UIScreen.main.bounds.width/4 - 0.1)
         
-        Mixpanel.mainInstance().track(event: "ClusterPickerOpen")
-        
-        collectionView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        options.deliveryMode = .highQualityFormat
+        options.isSynchronous = false
+        options.isNetworkAccessAllowed = true
         
         view.backgroundColor = UIColor(named: "SpotBlack")
+
+        collectionView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         collectionView.backgroundColor = UIColor(named: "SpotBlack")
         collectionView.showsVerticalScrollIndicator = false
         collectionView.register(GalleryCell.self, forCellWithReuseIdentifier: "galleryCell")
-        
-        baseSize = CGSize(width: UIScreen.main.bounds.width/4 - 0.1, height: UIScreen.main.bounds.width/4 - 0.1)
-        
+                
         layout.scrollDirection = .vertical
         layout.itemSize = baseSize
         layout.minimumLineSpacing = 0.1
@@ -104,6 +113,14 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         nextBtn.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
         self.navigationItem.setRightBarButton(nextBtn, animated: true)
         self.navigationItem.rightBarButtonItem?.tintColor = nil
+                
+        let backButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(backTap(_:)))
+        navigationItem.setLeftBarButton(backButton, animated: false)
+        self.navigationItem.leftBarButtonItem?.tintColor = nil
+    }
+    
+    @objc func backTap(_ sender: UIBarButtonItem) {
+        navigationController?.popViewController(animated: true)
     }
     
     @objc func nextTap(_ sender: UIBarButtonItem) {
@@ -148,12 +165,17 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         
         if self.imageObjects.isEmpty { return cell }
         
-        print("ct", UploadImageModel.shared.selectedObjects.count)
         if let imageObject = imageObjects[safe: indexPath.row] {
             var index = 0
             if let trueIndex = UploadImageModel.shared.selectedObjects.lastIndex(where: {$0.id == imageObject.0.id}) { index = trueIndex + 1 }
-            print("trueindex", index != 0)
             cell.setUp(asset: imageObject.0.asset, row: indexPath.row, index: index, editSpot: editSpotMode, id: imageObject.0.id, cameraImage: imageObject.0.stillImage)
+            
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                cell.requestID = self.imageManager.requestImage(for: imageObject.0.asset, targetSize: self.baseSize, contentMode: .aspectFill, options: self.options) { (result, info) in
+                    DispatchQueue.main.async { if result != nil { cell.image.image = result! } }
+                }
+            }
         }
         
         return cell
@@ -189,7 +211,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
             self.addPreviewView(object: selectedObject.0, galleryIndex: index)
             
         } else {
-            Mixpanel.mainInstance().track(event: "ClusterPickerCircleTap", properties: ["selected": false])
+            Mixpanel.mainInstance().track(event: "ClusterSelectImage", properties: ["selected": false])
             UploadImageModel.shared.selectObject(imageObject: selectedObject.0, selected: false)
             DispatchQueue.main.async { self.collectionView.reloadItems(at: paths)
             }
@@ -210,7 +232,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
                 self.addPreviewView(object: selectedObject, galleryIndex: index)
                 
             } else {
-                Mixpanel.mainInstance().track(event: "ClusterPickerCircleTap", properties: ["selected": true])
+                Mixpanel.mainInstance().track(event: "ClusterSelectImage", properties: ["selected": true])
                 UploadImageModel.shared.selectObject(imageObject: selectedObject, selected: true)
                 DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
             }
@@ -300,7 +322,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         window?.addSubview(imagePreview)
                 
         let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
-        imagePreview.expand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])
+        imagePreview.imageExpand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])
     }
     
     func showMaxImagesAlert() {

@@ -493,7 +493,7 @@ extension UIViewController {
 /// upload post functions
 extension UIViewController {
     
-    func uploadPost(post: MapPost, actualTimestamp: Date) {
+    func uploadPost(post: MapPost) {
         
         let interval = Date().timeIntervalSince1970
         let postTimestamp = Date(timeIntervalSince1970: TimeInterval(interval))
@@ -501,7 +501,7 @@ extension UIViewController {
         let postValues = ["caption" : post.caption,
                           "posterID": post.posterID,
                           "likers": [],
-                          "actualTimestamp": actualTimestamp,
+                          "actualTimestamp": post.actualTimestamp as Any,
                           "timestamp": postTimestamp,
                           "taggedUsers": post.taggedUsers!,
                           "taggedUserIDs": post.taggedUserIDs,
@@ -525,7 +525,8 @@ extension UIViewController {
                           "hideFromFeed": post.hideFromFeed!,
                           "addedUsers" : post.addedUsers!,
                           "tag" : post.tag!,
-                          "posterUsername" : UserDataModel.shared.userInfo.username
+                          "posterUsername" : UserDataModel.shared.userInfo.username,
+                          "imageLocations" : post.imageLocations!
         ] as [String : Any]
 
         let commentValues = ["addedUsers" : post.addedUsers ?? [],
@@ -555,13 +556,14 @@ extension UIViewController {
         setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
     }
     
-    func uploadPostImage(_ images: [UIImage], postID: String, progressView: UIProgressView, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
+    func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
         
+        let fullWidth: CGFloat = UIScreen.main.bounds.width - 100
         if images.isEmpty { completion([], false); return } /// complete immediately for no  image post
         
         var index = 0
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
-            if progressView.progress != 1.0 {
+            if progressFill.bounds.width != fullWidth {
                 completion([], true)
                 return
             }
@@ -599,7 +601,10 @@ extension UIViewController {
                         URLs[i ?? 0] = urlString
                         
                         DispatchQueue.main.async {
-                            progressView.setProgress(Float(0.3 + progress), animated: true)
+                            let frameWidth: CGFloat = min(((0.3 + progress) * UIScreen.main.bounds.width - 100), UIScreen.main.bounds.width - 101)
+                            UIView.animate(withDuration: 0.2) {
+                                progressFill.frame = CGRect(x: progressFill.frame.minX, y: progressFill.frame.minY, width: frameWidth, height: progressFill.frame.height)
+                            }
                         }
                         
                         progress = progress * Double(index + 1)
@@ -656,6 +661,7 @@ extension UIViewController {
                                "spotLong" : spot.spotLong,
                                "imageURL" : post.imageURLs.first ?? "",
                                "phone" : spot.phone ?? "",
+                               "poiCategory" : spot.poiCategory ?? "",
                                "postIDs": [post.id!],
                                "postTimestamps": [timestamp],
                                "posterIDs": [uid],
@@ -726,6 +732,21 @@ extension UIViewController {
             
             db.collection("users").document(poster).updateData(userValues)
         }
+    }
+    
+    func spotFilteredByLocation(mapCoordinates: [CLLocationCoordinate2D], spotCoordinates: CLLocationCoordinate2D) -> Bool {
+        if !(spotCoordinates.latitude < mapCoordinates[0].latitude && spotCoordinates.latitude > mapCoordinates[2].latitude && spotCoordinates.longitude > mapCoordinates[0].longitude && spotCoordinates.longitude < mapCoordinates[2].longitude) {
+            return true
+        }
+        return false
+    }
+}
+
+extension MKMapView {
+    func spotFilteredByLocation(spotCoordinates: CLLocationCoordinate2D) -> Bool {
+        let mapCoordinates = region.boundingBoxCoordinates
+        let adjustment = currentRadius()/2 /// patch fix for bounding box error on upload -> top of map wasnt being included in bounding box so just extend the region by a bit
+        return !(spotCoordinates.latitude - abs(adjustment) < mapCoordinates[0].latitude && spotCoordinates.latitude + abs(adjustment) > mapCoordinates[2].latitude && spotCoordinates.longitude + abs(adjustment) > mapCoordinates[0].longitude && spotCoordinates.longitude - abs(adjustment) < mapCoordinates[2].longitude)
     }
 }
 
@@ -1082,18 +1103,20 @@ extension UIScrollView {
 
 extension UIImageView {
     
-    func animateGIF(directionUp: Bool, counter: Int, frames: Int, alive: Bool) {
+    func animateGIF(directionUp: Bool, counter: Int, alive: Bool) {
         
         if superview == nil || isHidden || animationImages?.isEmpty ?? true { return }
         
         var newDirection = directionUp
         var newCount = counter
-        if let postImage = self as? PostImageView { postImage.animationCounter = newCount } /// for smooth animations on likes / other table reloads
+        
+        if let postImage = self as? PostImageView { postImage.animationIndex = newCount }
+        /// for smooth animations on likes / other table reloads
         
         if directionUp {
-            if counter == frames - 1 {
+            if counter == animationImages!.count - 1 {
                 newDirection = false
-                newCount = frames - 2
+                newCount = animationImages!.count - 2
             } else {
                 newCount += 1
             }
@@ -1117,7 +1140,7 @@ extension UIImageView {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.005) { [weak self] in
             guard let self = self else { return }
-            self.animateGIF(directionUp: newDirection, counter: newCount, frames: frames, alive: alive)
+            self.animateGIF(directionUp: newDirection, counter: newCount, alive: alive)
         }
     }
         
@@ -1254,6 +1277,7 @@ extension UINavigationBar {
             appearance.backgroundImage = self.image(fromLayer: gradient)
             standardAppearance = appearance
             scrollEdgeAppearance = appearance
+            print("gradient fire")
         } else {
             setBackgroundImage(self.image(fromLayer: gradient), for: .default)
         }
@@ -1278,6 +1302,7 @@ extension UINavigationBar {
             appearance.backgroundImage = UIImage()
             standardAppearance = appearance
             scrollEdgeAppearance = appearance
+            print("remove background image")
         } else {
             setBackgroundImage(UIImage(), for: .default)
         }
@@ -1289,6 +1314,26 @@ extension UINavigationBar {
         let outputImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return outputImage!
+    }
+}
+
+extension UINavigationItem {
+    func addBlackBackground() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundImage = UIImage()
+        standardAppearance = appearance
+        scrollEdgeAppearance = appearance
+    }
+    
+    func removeBackgroundImage() {
+        if #available(iOS 15.0, *) {
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithTransparentBackground()
+            appearance.backgroundImage = UIImage()
+            standardAppearance = appearance
+            scrollEdgeAppearance = appearance
+        }
     }
 }
 

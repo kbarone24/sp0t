@@ -37,8 +37,8 @@ class ImageFetcher {
 
                 guard let self = self else { return }
                 
-                if info["PHContentEditingInputCancelledKey"] != nil { completion([UIImage()], false); return }
-                if info["PHContentEditingInputErrorKey"] != nil { completion([UIImage()], true); return }
+                if info["PHContentEditingInputCancelledKey"] != nil { completion([], false); return }
+                if info["PHContentEditingInputErrorKey"] != nil { completion([], true); return }
                 
                 var frameImages: [UIImage] = []
                 
@@ -57,7 +57,7 @@ class ImageFetcher {
                     self.context?.saveLivePhoto(to: output, options: nil, completionHandler: { [weak self] success, err in
                         
                         guard let self = self else { return }
-                        if !success || err != nil || frameImages.isEmpty { completion([UIImage()], false); return }
+                        if !success || err != nil || frameImages.isEmpty { completion([], false); return }
                         /// distanceBetweenFrames fixed at 2 right now, always taking the middle 16 frames of the Live often with large offsets. This number is variable though
                         let distanceBetweenFrames: Double = 2
                         let rawFrames = Double(frameImages.count) / distanceBetweenFrames

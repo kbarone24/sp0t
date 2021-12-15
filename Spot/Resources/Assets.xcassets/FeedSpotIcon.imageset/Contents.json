@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "spoticon1x (2).png",
+      "filename" : "sp0t1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "spoticon2x (1).png",
+      "filename" : "sp0t2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "spoticon3x (1).png",
+      "filename" : "sp0t3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

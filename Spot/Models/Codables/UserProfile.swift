@@ -35,6 +35,7 @@ struct UserProfile: Identifiable, Codable {
     var selected: Bool = false
     
     var topFriends: [String: Int] = [:]
+    var tagDictionary: [String: Int] = [:]
     
     enum CodingKeys: String, CodingKey {
         case username
@@ -49,5 +50,21 @@ struct UserProfile: Identifiable, Codable {
         case pendingFriendRequests
         case sentInvites
         case topFriends
+        case tagDictionary
+    }
+    
+    var tagCategories: [String: Any] {
+        var catDictionary = ["Active": 0, "EatAndDrink": 0, "Life": 0, "Nature": 0]
+        for tag in tagDictionary {
+            let category = Tag(name: tag.key).category
+            switch category {
+            case 1: catDictionary["Active"]! += tag.value
+            case 2: catDictionary["EatAndDrink"]! += tag.value
+            case 3: catDictionary["Life"]! += tag.value
+            case 4: catDictionary["Nature"]! += tag.value
+            default: continue
+            }
+        }
+        return catDictionary
     }
 }
