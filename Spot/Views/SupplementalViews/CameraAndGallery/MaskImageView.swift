@@ -108,12 +108,12 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
             self.maskImage.animationImages = animationImages
             /// 5 frame alive check for old alive draft
         
-            var animationCounter = 0
+            var animationIndex = 0
             if self.postCell != nil, let imageView = self.postCell.imageScroll.subviews.first(where: {$0.tag == self.selectedIndex && $0 is PostImageView}) as? PostImageView {
-                animationCounter = imageView.animationCounter
+                animationIndex = imageView.animationIndex
             }
             
-            animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: animationCounter) : self.maskImage.animateGIF(directionUp: true, counter: animationCounter, frames: animationImages.count, alive: self.alive) }
+            animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: animationIndex) : self.maskImage.animateGIF(directionUp: true, counter: animationIndex, alive: self.alive) }
 
             /// animate image preview expand -> use scale aspect fill at first for smooth animation then aspect fit within larger image frame
         UIView.animate(withDuration: 0.2) {
@@ -143,7 +143,7 @@ class MaskImageView: UIView, UIGestureRecognizerDelegate {
         //    if landscape { selectedImage = selectedImage.rotate(byAngle: CGFloat(Double.pi/2)) }
             if !sameIndex && !first { maskImage.image = selectedImage } /// avoid resetting image while animation is happening
             let animationImages = getGifImages()
-            if !animationImages.isEmpty && (!sameIndex && !first) { maskImage.animationImages = animationImages; animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, frames: animationImages.count, alive: alive) }
+            if !animationImages.isEmpty && (!sameIndex && !first) { maskImage.animationImages = animationImages; animationImages.count == 5 ? self.maskImage.animate5FrameAlive(directionUp: true, counter: 0) : self.maskImage.animateGIF(directionUp: true, counter: 0, alive: alive) }
         }
         
         if frameIndexes.count > 1 {

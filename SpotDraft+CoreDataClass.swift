@@ -12,5 +12,5 @@ import CoreData
 
 @objc(SpotDraft)
 public class SpotDraft: NSManagedObject {
-
+    
 }

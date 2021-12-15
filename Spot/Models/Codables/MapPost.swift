@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 import FirebaseFirestoreSwift
+import CoreLocation
 
 struct MapPost: Identifiable, Codable {
     
@@ -55,6 +56,9 @@ struct MapPost: Identifiable, Codable {
     var addedUsers: [String]? = []
     var addedUserProfiles: [UserProfile] = []
     var tag: String? = ""
+    var posterUsername: String? = ""
+    
+    var imageLocations: [[String: Any]]? = [[:]]
     
     enum CodingKeys: String, CodingKey {
         case caption

@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "privacyanyone (2).png",
+      "filename" : "Everyone1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "privacyanyone (1).png",
+      "filename" : "Everyone2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "privacyanyone-1.png",
+      "filename" : "Everyone3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

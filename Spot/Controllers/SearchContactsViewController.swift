@@ -161,12 +161,7 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
         
         tableView.reloadData()
         
-        let sender = PushNotificationSender()
-        var token: String!
-        var senderName: String!
-        
         /// localize variables to avoid losing self on async call
-        
         let receiverID = self.contacts[row].id
         let uid = self.uid
         let db = Firestore.firestore()

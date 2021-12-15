@@ -20,7 +20,6 @@ class PhotosContainerController: UIViewController {
     var mapView: MKMapView!
     var spotObject: MapSpot!
     var editSpotMode = false
-    var limited = false /// limited gallery access
         
     var baseSize: CGSize!
     var activityIndicator: CustomActivityIndicator!
@@ -60,6 +59,11 @@ class PhotosContainerController: UIViewController {
             mapView.removeAnnotations(mapView.annotations)
             mapView = nil
         }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.navigationBar.removeBackgroundImage() /// smoother transition back to upload
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -108,6 +112,14 @@ class PhotosContainerController: UIViewController {
 
         setUpNavBar()
         selectedIndex == 0 ? add(asChildViewController: galleryController) : add(asChildViewController: photoMapController)
+        
+        let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(leftSwipe(_:)))
+        leftSwipe.direction = .left
+        view.addGestureRecognizer(leftSwipe)
+
+        let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(rightSwipe(_:)))
+        rightSwipe.direction = .right
+        view.addGestureRecognizer(rightSwipe)
     }
     
     func setUpNavBar() {
@@ -119,8 +131,7 @@ class PhotosContainerController: UIViewController {
         navigationController?.navigationBar.removeShadow()
         navigationController?.navigationBar.addGradientBackground(alpha: 1.0)
                 
-        let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(cancelTap(_:)))
-        cancelButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Regular", size: 14.5) as Any, NSAttributedString.Key.foregroundColor: UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1) as Any], for: .normal)
+        let cancelButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(cancelTap(_:)))
         navigationItem.setLeftBarButton(cancelButton, animated: false)
         self.navigationItem.leftBarButtonItem?.tintColor = nil
         
@@ -129,6 +140,15 @@ class PhotosContainerController: UIViewController {
         self.navigationItem.setRightBarButton(nextBtn, animated: true)
         self.navigationItem.rightBarButtonItem?.tintColor = nil
     }
+    
+    @objc func leftSwipe(_ sender: UISwipeGestureRecognizer) {
+        if selectedIndex == 0 { switchToMapSeg() }
+    }
+    
+    @objc func rightSwipe(_ sender: UISwipeGestureRecognizer) {
+        if selectedIndex == 1 { switchToRecentSeg() } else { navigationController?.popViewController(animated: true) }
+    }
+
     
     @objc func cancelTap(_ sender: UIButton) {
         if let uploadVC = navigationController?.viewControllers.first(where: {$0 is UploadPostController}) as? UploadPostController {

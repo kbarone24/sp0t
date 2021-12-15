@@ -64,19 +64,27 @@ class CustomTabBar: UITabBarController {
     func pushCamera() {
         
         if navigationController == nil { return }
-        if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
+        if navigationController!.viewControllers.contains(where: {$0 is UploadPostController}) { return } /// crash on double stack was happening here
         
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
+        DispatchQueue.main.async {
             
-            vc.mapVC = mapVC
-            
-            let transition = CATransition()
-            transition.duration = 0.3
-            transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-            transition.type = CATransitionType.push
-            transition.subtype = CATransitionSubtype.fromTop
-            navigationController?.view.layer.add(transition, forKey: kCATransition)
-            navigationController?.pushViewController(vc, animated: false)
+            if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
+                
+                vc.mapVC = self.mapVC
+                
+                let transition = CATransition()
+                transition.duration = 0.3
+                transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
+                transition.type = CATransitionType.push
+                transition.subtype = CATransitionSubtype.fromTop
+                self.navigationController?.view.layer.add(transition, forKey: kCATransition)
+                self.navigationController?.pushViewController(vc, animated: false)
+                    
+                /// for smooth nav bar animation
+                UIView.animate(withDuration: 0.2) {
+                    self.navigationController?.navigationBar.alpha = 0.0
+                }
+            }
         }
     }
 }

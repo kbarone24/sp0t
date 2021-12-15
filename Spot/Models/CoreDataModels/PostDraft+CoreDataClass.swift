@@ -12,5 +12,5 @@ import CoreData
 
 @objc(PostDraft)
 public class PostDraft: NSManagedObject {
-
+    
 }

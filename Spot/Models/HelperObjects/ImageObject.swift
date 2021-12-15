@@ -17,6 +17,8 @@ struct ImageObject {
     let rawLocation: CLLocation
     var stillImage: UIImage
     var animationImages: [UIImage]
+    var animationIndex: Int
+    var directionUp: Bool
     var gifMode: Bool
     let creationDate: Date
     var fromCamera: Bool

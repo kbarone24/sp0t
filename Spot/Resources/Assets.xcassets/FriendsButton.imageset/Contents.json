@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "friends-onlybutton1x.png",
+      "filename" : "FriendsOnly1x-1.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "friends-onlybutton2x.png",
+      "filename" : "FriendsOnly2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "friends-onlybutton3x.png",
+      "filename" : "FriendsOnly3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

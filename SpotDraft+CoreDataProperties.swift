@@ -21,7 +21,7 @@ extension SpotDraft {
     @NSManaged public var aspectRatios: [Float]?
     @NSManaged public var spotName: String?
     @NSManaged public var spotDescription: String?
-    @NSManaged public var tags: [String]?
+    @NSManaged public var tag: String?
     @NSManaged public var taggedUsernames: [String]?
     @NSManaged public var taggedIDs: [String]?
     @NSManaged public var spotLat: Double
@@ -42,6 +42,7 @@ extension SpotDraft {
     @NSManaged public var frameIndexes: [Int]?
     @NSManaged public var gif: Bool
     @NSManaged public var city: String?
+    @NSManaged public var poiCategory: String?
 }
 
 // MARK: Generated accessors for images

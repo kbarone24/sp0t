@@ -20,6 +20,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     lazy var imageManager = PHCachingImageManager()
     
     var baseSize: CGSize!
+    let options = PHImageRequestOptions()
     
     var editSpotCount = 0
     var offset: CGFloat = 0
@@ -50,15 +51,20 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     }
     
     override func viewDidLoad() {
-        super.viewDidLoad()
         
+        super.viewDidLoad()
         collectionView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         baseSize = CGSize(width: UIScreen.main.bounds.width/4 - 0.1, height: UIScreen.main.bounds.width/4 - 0.1)
+        
+        options.deliveryMode = .highQualityFormat
+        options.isSynchronous = false
+        options.isNetworkAccessAllowed = true
         
         view.backgroundColor = UIColor(named: "SpotBlack")
         collectionView.backgroundColor = UIColor(named: "SpotBlack")
         collectionView.showsVerticalScrollIndicator = false
         collectionView.register(GalleryCell.self, forCellWithReuseIdentifier: "galleryCell")
+        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         
         layout.scrollDirection = .vertical
         layout.minimumLineSpacing = 0.1
@@ -79,8 +85,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         
         if !UploadImageModel.shared.imageObjects.isEmpty { refreshTable() } /// eventually need exemption handling for reloading once != 0
         
-        guard let containerVC = self.parent as? PhotosContainerController else { return }
-        if containerVC.limited {
+        if UploadImageModel.shared.galleryAccess == .limited {
             PHPhotoLibrary.shared().register(self) /// eventually probably want to do this after
             showLimitedAlert()
         }
@@ -106,7 +111,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     @objc func scrollToTop(_ sender: NSNotification) {
         collectionView.setContentOffset(CGPoint(x: 0, y: 10), animated: true)
     }
-    
+        
     func refreshTable() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -116,7 +121,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     
     func showLimitedAlert() {
         
-        let alert = UIAlertController(title: "Allow sp0t to access your photos", message: "You've allowed access to a limited number of photos", preferredStyle: .alert)
+        let alert = UIAlertController(title: "You've allowed access to a limited number of photos", message: "", preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Allow access to all photos", style: .default, handler: { action in
             switch action.style{
@@ -169,9 +174,18 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "galleryCell", for: indexPath) as! GalleryCell
         
         if let imageObject = UploadImageModel.shared.imageObjects[safe: indexPath.row] {
+            
             var index = 0
             if let trueIndex = UploadImageModel.shared.selectedObjects.lastIndex(where: {$0.id == imageObject.0.id}) { index = trueIndex + 1 }
             cell.setUp(asset: imageObject.0.asset, row: indexPath.row, index: index, editSpot: false, id: imageObject.0.id, cameraImage: imageObject.0.stillImage)
+            
+            /// set cellImage from here -> processes weren't consistently offloading with deinit 
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                cell.requestID = self.imageManager.requestImage(for: imageObject.0.asset, targetSize: self.baseSize, contentMode: .aspectFill, options: self.options) { (result, info) in
+                    DispatchQueue.main.async { if result != nil { cell.image.image = result! } }
+                }
+            }
         }
         
         return cell
@@ -207,7 +221,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             self.addPreviewView(object: selectedObject, galleryIndex: index)
             
         } else {
-            Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": false])
+            Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": false])
             UploadImageModel.shared.selectObject(imageObject: selectedObject, selected: false)
             DispatchQueue.main.async { self.collectionView.reloadItems(at: paths)
             }
@@ -230,7 +244,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
                 
             } else {
                 
-                Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": true])
+                Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": true])
                 UploadImageModel.shared.selectObject(imageObject: selectedObject, selected: true)
                 DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
             }
@@ -321,7 +335,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         window?.addSubview(imagePreview)
                 
         let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
-        imagePreview.expand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])
+        imagePreview.imageExpand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])
     }
     
     func showMaxImagesAlert() {
@@ -399,7 +413,6 @@ class GalleryCell: UICollectionViewCell {
     var id: String!
     var thumbnailSize: CGSize!
     lazy var requestID: Int32 = 1
-    lazy var imageManager = PHCachingImageManager()
     var liveIndicator: UIImageView!
     
     func setUp(asset: PHAsset, row: Int, index: Int, editSpot: Bool, id: String, cameraImage: UIImage) {
@@ -427,7 +440,7 @@ class GalleryCell: UICollectionViewCell {
         
         activityIndicator = UIActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height))
         activityIndicator.color = .white
-        activityIndicator.transform = CGAffineTransform(scaleX: 1.8, y: 1.8)
+        activityIndicator.transform = CGAffineTransform(scaleX: 1.7, y: 1.7)
         activityIndicator.isHidden = true
         addSubview(activityIndicator)
         
@@ -442,25 +455,7 @@ class GalleryCell: UICollectionViewCell {
         
         addCircle(index: index)
         if cameraImage != UIImage() { image.image = cameraImage; return } /// image from camera, set to image and return
-        
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            
-            guard let self = self else { return }
-            
-            let options = PHImageRequestOptions()
-            options.deliveryMode = .highQualityFormat
-            options.isSynchronous = false
-            options.isNetworkAccessAllowed = true
-            
-            self.requestID = self.imageManager.requestImage(for: asset, targetSize: self.thumbnailSize, contentMode: .aspectFill, options: options) { (result, info) in
-                
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    if row != self.globalRow { return }
-                    if result != nil { self.image.image = result! }
-                }
-            }
-        }
+
     }
     
     private func addImageMask() {
@@ -504,15 +499,13 @@ class GalleryCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         activityIndicator.stopAnimating()
-        imageManager.cancelImageRequest(requestID)
         image.image = nil
         if imageMask != nil { for layer in imageMask.layer.sublayers ?? [] { layer.removeFromSuperlayer() } }
+        if let galleryVC = viewContainingController() as? PhotoGalleryPicker {
+            galleryVC.imageManager.cancelImageRequest(requestID)
+        }
     }
-    
-    deinit {
-        imageManager.cancelImageRequest(requestID)
-    }
-    
+        
     func resetCell() {
         
         if image != nil { image.image = nil }

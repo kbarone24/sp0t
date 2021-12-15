@@ -39,7 +39,6 @@ class InviteFriendsController: UIViewController {
         super.viewDidLoad()
         
         Mixpanel.mainInstance().track(event: "InviteFriendsOpen")
-        setUpNavBar()
         setUpViews()
     }
     
@@ -47,23 +46,28 @@ class InviteFriendsController: UIViewController {
         super.viewDidAppear(animated)
     }
     
-    func setUpNavBar() {
-                        
-        navigationController?.navigationBar.tintColor = .white
-        title = "Invite friends"
-        
-        let doneButton = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(doneTapped(_:)));
-        doneButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
-        navigationItem.setRightBarButton(doneButton, animated: false)
-    }
-
     func setUpViews() {
         
-        searchBarContainer = UIView(frame: CGRect(x: 0, y: 10, width: UIScreen.main.bounds.width, height: 55))
+        searchBarContainer = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 122))
         searchBarContainer.backgroundColor = nil
         view.addSubview(searchBarContainer)
         
-        searchBar = UISearchBar(frame: CGRect(x: 14, y: 3, width: UIScreen.main.bounds.width - 28, height: 36))
+        let inviteLabel = UILabel(frame: CGRect(x: 21, y: 30, width: 200, height: 20))
+        inviteLabel.text = "Invite friends"
+        inviteLabel.font = UIFont(name: "SFCamera-Semibold", size: 17)
+        inviteLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        searchBarContainer.addSubview(inviteLabel)
+
+        let doneButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 63, y: 15, width: 56, height: 26))
+        doneButton.setTitle("Done", for: .normal)
+        doneButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
+        doneButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        doneButton.addTarget(self, action: #selector(doneTapped(_:)), for: .touchUpInside)
+        doneButton.contentHorizontalAlignment = .center
+        doneButton.contentVerticalAlignment = .center
+        searchBarContainer.addSubview(doneButton)
+        
+        searchBar = UISearchBar(frame: CGRect(x: 16, y: 66, width: UIScreen.main.bounds.width - 97, height: 36))
         searchBar.searchBarStyle = .default
         searchBar.barTintColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
         searchBar.tintColor = .white
@@ -82,7 +86,7 @@ class InviteFriendsController: UIViewController {
         searchBar.placeholder = "Search friends"
         searchBarContainer.addSubview(searchBar)
         
-        cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 65, y: 5.5, width: 50, height: 30))
+        cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 68, y: 67, width: 50, height: 30))
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1), for: .normal)
         cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
@@ -91,11 +95,11 @@ class InviteFriendsController: UIViewController {
         cancelButton.isHidden = true
         searchBarContainer.addSubview(cancelButton)
         
-        let bottomLine = UIView(frame: CGRect(x: 0, y: 54, width: UIScreen.main.bounds.width, height: 1))
+        let bottomLine = UIView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY - 1, width: UIScreen.main.bounds.width, height: 1))
         bottomLine.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
         searchBarContainer.addSubview(bottomLine)
         
-        tableView = UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY + 5, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        tableView = UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - searchBarContainer.frame.maxY))
         tableView.backgroundColor = UIColor(named: "SpotBlack")
         tableView.separatorStyle = .none
         tableView.dataSource = self
@@ -148,19 +152,20 @@ class InviteFriendsController: UIViewController {
         }
         
         Mixpanel.mainInstance().track(event: "InviteFriendsSave", properties: ["friendCount": self.selectedFriends.count])
-        self.navigationController?.popViewController(animated: true)
+        self.dismiss(animated: true, completion: nil)
     }
 }
 
 extension InviteFriendsController: UISearchBarDelegate {
     
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
-        self.queried = true
-
-        self.searchBar.frame = CGRect(x: self.searchBar.frame.minX, y: self.searchBar.frame.minY, width: UIScreen.main.bounds.width - 85, height: self.searchBar.frame.height)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.cancelButton.isHidden = false
+        queried = true
+        cancelButton.alpha = 0.0
+        cancelButton.isHidden = false
+        
+        UIView.animate(withDuration: 0.1) {
+            self.cancelButton.alpha = 1.0
         }
     }
     
@@ -170,12 +175,13 @@ extension InviteFriendsController: UISearchBarDelegate {
         self.queryFriends = self.friendsList
         queried = false
         
-        UIView.animate(withDuration: 0.1) {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.cancelButton.alpha = 0.0
+
+        }) { [weak self] _ in
+            guard let self = self else { return }
             self.cancelButton.isHidden = true
-            self.searchBar.frame = CGRect(x: self.searchBar.frame.minX, y: self.searchBar.frame.minY, width: UIScreen.main.bounds.width - 28, height: self.searchBar.frame.height)
         }
-        
-        DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {

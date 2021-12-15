@@ -14,14 +14,12 @@ import Mixpanel
 /// upload overview cell and subclasses for UploadPostController
 class UploadOverviewCell: UITableViewCell, UITextViewDelegate {
     
-    var profilePic: UIImageView!
-    var spotImage: UIImageView!
+    var cellHeight, bodyHeight, collectionHeight: CGFloat!
+    
+    var spotIcon: UIImageView!
     var spotLabel: UILabel!
     var spotButton: UIButton!
     
-    var tagImage: UIImageView!
-    var tagImageButton: UIButton!
-    var addedUsersView: AddedUsersView!
     var addedUsersButton: UIButton!
     
     var captionView: UITextView!
@@ -31,125 +29,94 @@ class UploadOverviewCell: UITableViewCell, UITextViewDelegate {
     
     var friendsButton: UIButton!
     var tagButton: UIButton!
+    var privacyButton: UIButton!
     
+    lazy var imageFetcher = ImageFetcher()
+
     deinit {
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PreviewRemove"), object: nil)
     }
     
     func setUp(post: MapPost) {
         
+        ///hardcode cell height in case its laid out before view fully appears -> hard code body height so mask stays with cell change
+        bodyHeight = 96
+        bodyHeight += UserDataModel.shared.screenSize == 0 ? 112 : UserDataModel.shared.screenSize == 1 ? 117 : 140
+        collectionHeight = 15
+        collectionHeight += UserDataModel.shared.screenSize == 0 ? 120 * 1.3266 : UserDataModel.shared.screenSize == 1 ? 130 * 1.3266 : 160 * 1.3266
+        cellHeight = bodyHeight + collectionHeight
+
         backgroundColor = .black
-        contentView.backgroundColor = .black
-        
-        resetCell()
-        
         selectionStyle = .none
-        
+        resetCell()
+
         let bigScreen = UserDataModel.shared.screenSize == 2
-        var minY: CGFloat = bigScreen ? 15 : 9
+        let minY: CGFloat = bigScreen ? 15 : 9
         
-        if !UploadImageModel.shared.scrollObjects.isEmpty {
-            let cameraLayout = UICollectionViewFlowLayout()
-            cameraLayout.scrollDirection = .horizontal
-            let itemWidth: CGFloat = UserDataModel.shared.screenSize == 0 ? 120 : UserDataModel.shared.screenSize == 1 ? 130 : 150
-            cameraLayout.itemSize = CGSize(width: itemWidth, height: itemWidth * 1.3266)
-            cameraLayout.minimumInteritemSpacing = 9
-            cameraLayout.sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
-            
-            selectedCollection.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: itemWidth * 1.3266 + 1)
-            selectedCollection.backgroundColor = .black
-            selectedCollection.delegate = self
-            selectedCollection.dataSource = self
-            selectedCollection.isScrollEnabled = true
-            selectedCollection.setCollectionViewLayout(cameraLayout, animated: false)
-            selectedCollection.showsHorizontalScrollIndicator = false
-            selectedCollection.register(SelectedImageCell.self, forCellWithReuseIdentifier: "SelectedImage")
-            addSubview(selectedCollection)
-            
-            selectedCollection.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
-            minY += selectedCollection.frame.height + 15
-        }
+        let cameraLayout = UICollectionViewFlowLayout()
+        cameraLayout.scrollDirection = .horizontal
+        let itemWidth: CGFloat = UserDataModel.shared.screenSize == 0 ? 120 : UserDataModel.shared.screenSize == 1 ? 130 : 160
+        cameraLayout.itemSize = CGSize(width: itemWidth, height: itemWidth * 1.3266)
+        cameraLayout.minimumInteritemSpacing = 9
+        cameraLayout.sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
         
-        profilePic = UIImageView(frame: CGRect(x: 17, y: minY, width: 48, height: 51))
-        profilePic.layer.cornerRadius = 10
-        profilePic.clipsToBounds = true
-        profilePic.contentMode = .scaleAspectFill
-        profilePic.image = post.userInfo.id == "" ? UIImage(color: UIColor(named: "BlankImage")!) : post.userInfo.profilePic
-        contentView.addSubview(profilePic)
+        selectedCollection.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: itemWidth * 1.3266 + 1)
+        selectedCollection.backgroundColor = nil
+        selectedCollection.delegate = self
+        selectedCollection.dataSource = self
+        selectedCollection.isScrollEnabled = true
+        selectedCollection.setCollectionViewLayout(cameraLayout, animated: false)
+        selectedCollection.showsHorizontalScrollIndicator = false
+        selectedCollection.register(SelectedImageCell.self, forCellWithReuseIdentifier: "SelectedImage")
+        contentView.addSubview(selectedCollection)
         
+        selectedCollection.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
         loadDetailView(post: post)
         
+        /// call function when imagePreview is removed from view hierarchy
         NotificationCenter.default.addObserver(self, selector: #selector(removePreview(_:)), name: NSNotification.Name("PreviewRemove"), object: nil)
     }
     
     func loadDetailView(post: MapPost) {
         
+        // load separately to avoid re-laying out collection on reload
+        
         resetDetailView()
-        var minY: CGFloat = profilePic.frame.minY
+        let minY: CGFloat = selectedCollection.frame.maxY + 13
         let bigScreen = UserDataModel.shared.screenSize == 2
-        
-        if post.tag ?? "" != "" {
-                        
-            let tag = Tag(name: post.tag!)
-            tagImage = UIImageView(frame: CGRect(x: profilePic.frame.minX - 6, y: minY + 33, width: 24, height: 24))
-            tagImage.contentMode = .scaleAspectFit
-            tagImage.image = tag.image
-            tagImage.layer.cornerRadius = 6
-            tagImage.backgroundColor = .black
-            contentView.addSubview(tagImage)
-            
-            tagImageButton = UIButton(frame: CGRect(x: tagImage.frame.minX - 5, y: tagImage.frame.minY - 5, width: tagImage.frame.width + 10, height: tagImage.frame.height + 10))
-            tagImageButton.addTarget(self, action: #selector(tagTap(_:)), for: .touchUpInside)
-            contentView.addSubview(tagImageButton)
-        }
-        
-        if !(post.addedUsers?.isEmpty ?? true) {
-            /// add addedUsersView
-
-            let usersWidth: CGFloat = post.addedUsers!.count > 3 ? 74 : CGFloat(post.addedUsers!.count) * 17
-            
-            addedUsersView = AddedUsersView(frame: CGRect(x: profilePic.frame.maxX + 14, y: minY, width: usersWidth, height: 25))
-            addedUsersView.setUp(users: post.addedUserProfiles)
-            contentView.addSubview(addedUsersView)
-            
-            addedUsersButton = UIButton(frame: CGRect(x: addedUsersView.frame.minX - 5, y: addedUsersView.frame.minY - 5, width: addedUsersView.frame.width + 10, height: addedUsersView.frame.height + 10))
-            addedUsersButton.addTarget(self, action: #selector(friendsTap(_:)), for: .touchUpInside)
-            contentView.addSubview(addedUsersButton)
-            
-            minY += 28
-        }
-        
-        minY += 5
-        
+                
         let alpha = post.spotName == "" ? 0.55 : 1.0
-        spotImage = UIImageView(frame: CGRect(x: profilePic.frame.maxX + 13, y: minY, width: 10, height: 13))
-        spotImage.image = UIImage(named: "LocationIcon")
-        spotImage.alpha = alpha
-        contentView.addSubview(spotImage)
+        spotIcon = UIImageView(frame: CGRect(x: 15, y: minY, width: 17, height: 17))
+        spotIcon.image = post.tag == "" ? UIImage(named: "FeedSpotIcon") : Tag(name: post.tag!).image
+        spotIcon.alpha = alpha
+        contentView.addSubview(spotIcon)
+        
+        if post.tag != "" {
+            let spotImageButton = UIButton(frame: CGRect(x: spotIcon.frame.minX - 3, y: spotIcon.frame.minY - 3, width: spotIcon.frame.width + 6, height: spotIcon.frame.height + 6))
+            spotImageButton.addTarget(self, action: #selector(tagTap(_:)), for: .touchUpInside)
+            contentView.addSubview(spotImageButton)
+        }
                 
         if post.spotName != "" {
             
-            spotImage.alpha = 1.0
+            spotIcon.alpha = 1.0
             
-            spotLabel = UILabel(frame: CGRect(x: spotImage.frame.maxX + 6, y: minY, width: UIScreen.main.bounds.width - spotImage.frame.maxX - 17, height: 15))
+            spotLabel = UILabel(frame: CGRect(x: spotIcon.frame.maxX + 8, y: minY + 2, width: UIScreen.main.bounds.width - spotIcon.frame.maxX - 17, height: 15))
             spotLabel.text = post.spotName
             spotLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
             spotLabel.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+            spotLabel.sizeToFit()
             contentView.addSubview(spotLabel)
             
-            spotButton = UIButton(frame: CGRect(x: spotImage.frame.minX - 5, y: minY - 5, width: UIScreen.main.bounds.width - spotImage.frame.minX - 10, height: 25))
+            /// extend past bounds to expand touch area
+            spotButton = UIButton(frame: CGRect(x: spotLabel.frame.minX - 3, y: minY - 5, width: spotLabel.frame.width + 15, height: spotLabel.frame.height + 14))
             spotButton.addTarget(self, action: #selector(spotNameTap(_:)), for: .touchUpInside)
             contentView.addSubview(spotButton)
             
-        } else { spotImage.alpha = 0.55 }
+        } else { spotIcon.alpha = 0.55 }
 
-        ///hardcode cell height in case its laid out before view fully appears
-        let bodyHeight: CGFloat = UserDataModel.shared.screenSize == 0 ? 172 : UserDataModel.shared.screenSize == 1 ? 177 : 200
-        var collectionHeight: CGFloat = 15
-        if !UploadImageModel.shared.scrollObjects.isEmpty { collectionHeight += UserDataModel.shared.screenSize == 0 ? 120 * 1.3266 : UserDataModel.shared.screenSize == 1 ? 130 * 1.3266 : 150 * 1.3266 }
-        let cellHeight = bodyHeight + collectionHeight
-
-        captionView = UITextView(frame: CGRect(x: spotImage.frame.minX - 4, y: spotImage.frame.maxY + 2, width: UIScreen.main.bounds.width - 100, height: cellHeight - spotImage.frame.maxY - 47))
+        let sizeAdjust: CGFloat = post.spotName == "" ? 45 : 0
+        captionView = UITextView(frame: CGRect(x: spotIcon.frame.minX - 4, y: spotIcon.frame.maxY + 2, width: UIScreen.main.bounds.width - 100, height: cellHeight - spotIcon.frame.maxY - 65 - sizeAdjust))
         captionView.backgroundColor = nil
         let captionEmpty = post.caption == ""
         captionView.text = captionEmpty ? "What's up..." : post.caption
@@ -165,34 +132,23 @@ class UploadOverviewCell: UITableViewCell, UITextViewDelegate {
         
         if spotButton != nil { contentView.bringSubviewToFront(spotButton) }
         
-        let friendsColor = post.addedUsers?.isEmpty ?? true ? UIColor(red: 0.525, green: 0.525, blue: 0.525, alpha: 1) : UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        let friendsBorder = post.addedUsers?.isEmpty ?? true ? UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1).cgColor : UIColor(red: 0.525, green: 0.525, blue: 0.525, alpha: 1).cgColor
-
-        friendsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 162, y: cellHeight - 40, width: 75, height: 24))
-        friendsButton.setTitle("Friends", for: .normal)
-        friendsButton.setTitleColor(friendsColor, for: .normal)
-        friendsButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        friendsButton.contentHorizontalAlignment = .center
-        friendsButton.layer.borderWidth = 1
-        friendsButton.layer.borderColor = friendsBorder
-        friendsButton.layer.cornerRadius = 4
-        friendsButton.layer.cornerCurve = .continuous
+        friendsButton = UIButton(frame: CGRect(x: 8, y: cellHeight - 56.5, width: 95, height: 42))
+        friendsButton.setImage(UIImage(named: "UploadFriendsButton"), for: .normal)
+        friendsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         friendsButton.addTarget(self, action: #selector(friendsTap(_:)), for: .touchUpInside)
         contentView.addSubview(friendsButton)
         
-        let tagColor = post.tag == "" ? UIColor(red: 0.525, green: 0.525, blue: 0.525, alpha: 1) : UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        let tagBorder = post.tag == "" ? UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1).cgColor : UIColor(red: 0.525, green: 0.525, blue: 0.525, alpha: 1).cgColor
-        tagButton = UIButton(frame: CGRect(x: friendsButton.frame.maxX + 9, y: friendsButton.frame.minY, width: 63, height: 24))
-        tagButton.setTitle("Tags", for: .normal)
-        tagButton.setTitleColor(tagColor, for: .normal)
-        tagButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 12.5)
-        tagButton.contentHorizontalAlignment = .center
-        tagButton.layer.borderWidth = 1
-        tagButton.layer.borderColor = tagBorder
-        tagButton.layer.cornerRadius = 4
-        tagButton.layer.cornerCurve = .continuous
+        tagButton = UIButton(frame: CGRect(x: friendsButton.frame.maxX + 2, y: friendsButton.frame.minY, width: 78, height: 42))
+        tagButton.setImage(UIImage(named: "UploadTagsButton"), for: .normal)
+        tagButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         tagButton.addTarget(self, action: #selector(tagTap(_:)), for: .touchUpInside)
         contentView.addSubview(tagButton)
+        
+        privacyButton = UIButton(frame: CGRect(x: tagButton.frame.maxX + 2, y: friendsButton.frame.minY, width: 95, height: 42))
+        privacyButton.setImage(UIImage(named: "UploadPrivacyButton"), for: .normal)
+        privacyButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        privacyButton.addTarget(self, action: #selector(privacyTap(_:)), for: .touchUpInside)
+        contentView.addSubview(privacyButton)
     }
 
     @objc func friendsTap(_ sender: UIButton) {
@@ -205,39 +161,46 @@ class UploadOverviewCell: UITableViewCell, UITextViewDelegate {
         uploadVC.presentTagPicker()
     }
     
+    @objc func privacyTap(_ sender: UIButton) {
+        guard let uploadVC = viewContainingController() as? UploadPostController else { return }
+        uploadVC.presentPrivacyPicker()
+    }
+    
     @objc func spotNameTap(_ sender: UIButton) {
         guard let uploadVC = viewContainingController() as? UploadPostController else { return }
-        uploadVC.pushLocationPicker()
+        uploadVC.switchToChooseSpot()
     }
     
     func resetCell() {
-        if profilePic != nil { profilePic.image = UIImage() }
         selectedCollection.removeFromSuperview()
     }
-    
+     
     @objc func removePreview(_ sender: NSNotification) {
         if imagePreview != nil {
+            guard let cell = selectedCollection.cellForItem(at: IndexPath(item: imagePreview.selectedIndex, section: 0)) as? SelectedImageCell else { return }
+            cell.animationIndex = imagePreview.maskImage.animationIndex
+            cell.directionUp = imagePreview.maskImage.directionUp
             imagePreview.removeFromSuperview()
             imagePreview = nil
         }
     }
     
     func resetDetailView() {
-        if tagImage != nil { tagImage.image = UIImage() }
-        if addedUsersView != nil { for sub in addedUsersView.subviews {sub.removeFromSuperview()} }
         if captionView != nil { captionView.text = "" }
-        if spotImage != nil { spotImage.image = UIImage() }
+        if spotIcon != nil { spotIcon.image = UIImage() }
         if spotLabel != nil { spotLabel.text = "" }
-        if friendsButton != nil { friendsButton.setTitle("", for: .normal) }
-        if tagButton != nil { tagButton.setTitle("", for: .normal) }
+        if friendsButton != nil { friendsButton.setImage(UIImage(), for: .normal) }
+        if tagButton != nil { tagButton.setImage(UIImage(), for: .normal) }
+        if privacyButton != nil { privacyButton.setImage(UIImage(), for: .normal) }
     }
     
     func textViewDidBeginEditing(_ textView: UITextView) {
         
         if let uploadVC = viewContainingController() as? UploadPostController {
-            uploadVC.tableView.addGestureRecognizer(uploadVC.tapToClose)
+            uploadVC.uploadTable.addGestureRecognizer(uploadVC.tapToClose)
         }
         
+        /// tag = 2 for spot during editing / when text isn't empty
         if textView.tag == 1 {
             textView.text = nil
             textView.tag = 2
@@ -249,9 +212,10 @@ class UploadOverviewCell: UITableViewCell, UITextViewDelegate {
         
         if let uploadVC = viewContainingController() as? UploadPostController {
             uploadVC.mapVC.removeTable()
-            uploadVC.tableView.removeGestureRecognizer(uploadVC.tapToClose)
+            uploadVC.uploadTable.removeGestureRecognizer(uploadVC.tapToClose)
         }
         
+        /// tag = 1 for placeholder
         if textView.tag == 2 && textView.text.isEmpty {
             textView.text = "What's up..."
             textView.tag = 1
@@ -292,12 +256,14 @@ extension UploadOverviewCell: UICollectionViewDelegate, UICollectionViewDataSour
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SelectedImage", for: indexPath) as? SelectedImageCell else { return UICollectionViewCell() }
         cell.setUp(imageObject: UploadImageModel.shared.scrollObjects[indexPath.row])
+        if cell.imageObject.asset.mediaSubtypes.contains(.photoLive) { cell.aliveToggle.addTarget(self, action: #selector(aliveTap(_:)), for: .touchUpInside); cell.aliveToggle.tag = indexPath.row }
         cell.globalRow = indexPath.row
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
+        // show image preview on image tap
         guard let cell = collectionView.cellForItem(at: indexPath) as? SelectedImageCell else { return }
         
         scrollToImageAt(position: indexPath.row, animated: true)
@@ -306,20 +272,72 @@ extension UploadOverviewCell: UICollectionViewDelegate, UICollectionViewDataSour
         imagePreview.alpha = 0.0
         imagePreview.imagesCollection = collectionView
         
-        DispatchQueue.main.async {
-            let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-            window?.addSubview(self.imagePreview)
-        }
         
         let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
         
-        imagePreview.expand(originalFrame: frame, selectedIndex: indexPath.row, galleryIndex: 0, imageObjects: UploadImageModel.shared.scrollObjects)
+        UploadImageModel.shared.scrollObjects[indexPath.row].animationIndex = cell.animationIndex
+        UploadImageModel.shared.scrollObjects[indexPath.row].directionUp = cell.directionUp
+        
+        DispatchQueue.main.async {
+            let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+            window?.addSubview(self.imagePreview)
+            self.imagePreview.imageExpand(originalFrame: frame, selectedIndex: indexPath.row, galleryIndex: 0, imageObjects: UploadImageModel.shared.scrollObjects)
+        }
+
+        Mixpanel.mainInstance().track(event: "UploadImagePreviewTap", properties: nil)
     }
     
     func scrollToImageAt(position: Int, animated: Bool) {
         DispatchQueue.main.async {
             self.selectedCollection.scrollToItem(at: IndexPath(item: position, section: 0), at: .left, animated: animated)
         }
+    }
+    
+    @objc func aliveTap(_ sender: UIButton) {
+        
+        let row = sender.tag
+        let imageObject = UploadImageModel.shared.scrollObjects[row]
+        
+        let indexPath = IndexPath(item: row, section: 0)
+        guard let cell = selectedCollection.cellForItem(at: indexPath) as? SelectedImageCell else { return }
+        Mixpanel.mainInstance().track(event: "UploadImageScrollToggleGif", properties: ["gif": imageObject.gifMode])
+        
+        if !imageObject.gifMode {
+            
+            cell.addActivityIndicator()
+            cancelFetchForItemAt(index: imageFetcher.fetchingIndex)
+            imageFetcher.fetchingIndex = row
+            
+            imageFetcher.fetchLivePhoto(currentAsset: imageObject.asset, animationImages: imageObject.animationImages) { [weak self] animationImages, failed in
+                
+                if failed || animationImages.isEmpty { return }
+                guard let self = self else { return }
+                
+                guard let cell = self.selectedCollection.cellForItem(at: IndexPath(item: row, section: 0)) as? SelectedImageCell else { return }
+                cell.removeActivityIndicator()
+                
+                UploadImageModel.shared.scrollObjects[row].gifMode = true
+                UploadImageModel.shared.scrollObjects[row].animationImages = animationImages
+                DispatchQueue.main.async { self.selectedCollection.reloadItems(at: [indexPath]) }
+                return
+            }
+            
+        } else {
+            UploadImageModel.shared.scrollObjects[row].gifMode = false
+            DispatchQueue.main.async { self.selectedCollection.reloadItems(at: [indexPath]) }
+        }
+    }
+    
+    func cancelFetchForItemAt(index: Int) {
+
+        if index < 0 { return }
+        
+        guard let cell = selectedCollection.cellForItem(at: IndexPath(item: index, section: 0)) as? SelectedImageCell else { return }
+        guard let currentObject = UploadImageModel.shared.scrollObjects[safe: index] else { return }
+        let currentAsset = currentObject.asset
+        
+        cell.activityIndicator.stopAnimating()
+        imageFetcher.cancelFetchForAsset(asset: currentAsset)
     }
 }
 
@@ -331,37 +349,43 @@ class SelectedImageCell: UICollectionViewCell {
     var cancelButton: UIButton!
     var aliveToggle: UIButton!
     
-    var activityIndicator: CustomActivityIndicator!
-    lazy var imageFetcher = ImageFetcher()
-    lazy var globalRow = 0
+    lazy var activityIndicator = UIActivityIndicatorView()
+    var globalRow = 0
     
-    deinit {
-        imageFetcher.cancelFetchForAsset(asset: imageObject.asset)
-    }
-    
+    var directionUp = true
+    var animationIndex = 0
+        
     func setUp(imageObject: ImageObject) {
         
         backgroundColor = nil
         resetCell()
         
         self.imageObject = imageObject
+        /// only set imageview when necessary to keep animation state
+        if imageView == nil {
+            imageView = UIImageView(frame: self.bounds)
+            imageView.clipsToBounds = true
+            imageView.contentMode = .scaleAspectFill
+            imageView.layer.cornerRadius = 9
+            imageView.layer.cornerCurve = .continuous
+            imageView.isUserInteractionEnabled = true
+            addSubview(imageView)
+        }
         
-        imageView = UIImageView(frame: self.bounds)
-        imageView.image = imageObject.stillImage
-        imageView.clipsToBounds = true
-        imageView.contentMode = .scaleAspectFill
-        imageView.layer.cornerRadius = 9
-        imageView.layer.cornerCurve = .continuous
-        imageView.isUserInteractionEnabled = true
-        addSubview(imageView)
+        let animating = !(imageView.animationImages?.isEmpty ?? true)
         
-         if imageObject.gifMode {
+        /// remove animation images to stop animation
+        if !imageObject.gifMode {
+            imageView.image = imageObject.stillImage
+            imageView.animationImages?.removeAll()
+            
+        } else {
             imageView.animationImages = imageObject.animationImages
-            imageView.animateGIF(directionUp: true, counter: 0, frames: imageObject.animationImages.count, alive: false)
+            if !animating { animateScrollGif() }
         }
         
         cancelButton = UIButton(frame: CGRect(x: bounds.width - 39, y: 4, width: 35, height: 35))
-        cancelButton.setImage(UIImage(named: "CheckInX"), for: .normal)
+        cancelButton.setImage(UIImage(named: "ImageCancelButton"), for: .normal)
         cancelButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
         addSubview(cancelButton)
@@ -375,20 +399,30 @@ class SelectedImageCell: UICollectionViewCell {
             aliveToggle.contentHorizontalAlignment = .fill
             aliveToggle.contentVerticalAlignment = .fill
             aliveToggle.imageEdgeInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
-            aliveToggle.addTarget(self, action: #selector(toggleAlive(_:)), for: .touchUpInside)
             addSubview(aliveToggle)
             
-            activityIndicator = CustomActivityIndicator(frame: CGRect(x: 14, y: 79, width: 30, height: 30))
+            activityIndicator = UIActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height))
             activityIndicator.isHidden = true
+            activityIndicator.color = .white
+            activityIndicator.transform = CGAffineTransform(scaleX: 1.8, y: 1.8)
             addSubview(activityIndicator)
         }
     }
     
     func resetCell() {
-        if imageView != nil { imageView.image = UIImage();         imageView.animationImages?.removeAll() }
+        if imageView != nil { imageView.image = UIImage() }
         if cancelButton != nil { cancelButton.setImage(UIImage(), for: .normal) }
         if aliveToggle != nil { aliveToggle.setImage(UIImage(), for: .normal) }
-        if activityIndicator != nil { activityIndicator.removeFromSuperview() }
+        activityIndicator.removeFromSuperview()
+    }
+    
+    func addActivityIndicator() {
+        bringSubviewToFront(activityIndicator)
+        activityIndicator.startAnimating()
+    }
+    
+    func removeActivityIndicator() {
+        activityIndicator.stopAnimating()
     }
     
     @objc func cancelTap(_ sender: UIButton) {
@@ -396,51 +430,48 @@ class SelectedImageCell: UICollectionViewCell {
         var index = -1 /// -1 for image from camera
         if let i = UploadImageModel.shared.imageObjects.firstIndex(where: {$0.image.id == imageObject.id}) { index = i }
         uploadVC.deselectImage(index: index, circleTap: true)
+        imageObject = nil
+        imageView = nil
     }
     
-    @objc func toggleAlive(_ sender: UIButton) {
-                        
-        imageObject.gifMode = !imageObject.gifMode
-        
-        Mixpanel.mainInstance().track(event: "UploadToggleAlive", properties: ["on": imageObject.gifMode])
+    func animateScrollGif() {
 
-        let image = imageObject.gifMode ? UIImage(named: "AliveOn") : UIImage(named: "AliveOff")
-        aliveToggle.setImage(image, for: .normal)
-        
-        if imageObject.gifMode {
-            
-            aliveToggle.isHidden = true
-            activityIndicator.startAnimating()
-            
-            /// download alive if available and not yet downloaded
-            imageFetcher.fetchLivePhoto(currentAsset: imageObject.asset, animationImages: imageObject.animationImages) { [weak self] animationImages, failed in
+        if imageView == nil || imageView.isHidden || imageView.animationImages?.isEmpty ?? true { return }
+        let animationImages = imageView.animationImages
 
-                guard let self = self else { return }
-                
-                self.activityIndicator.stopAnimating()
-                self.aliveToggle.isHidden = false
-                
-                self.imageObject.animationImages = animationImages
-                
-                /// animate with gif images
-                self.imageView.animationImages = self.imageObject.animationImages
-                self.imageView.animateGIF(directionUp: true, counter: 0, frames: self.imageObject.animationImages.count, alive: false)
-                self.updateParent()
-                ///fetch image is async so need to make sure another image wasn't appended while this one was being fetched
+        UIView.transition(with: self, duration: 0.06, options: [.allowUserInteraction, .beginFromCurrentState], animations: { [weak self] in
+                            guard let self = self else { return }
+            if animationImages?.isEmpty ?? true { return }
+            if self.animationIndex >= animationImages?.count ?? 0 { return }
+            self.imageView.image = animationImages![self.animationIndex] },
+                          completion: nil)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.06 + 0.005) { [weak self] in
+            guard let self = self else { return }
+            
+            var newDirection = self.directionUp
+            var newCount = self.animationIndex
+            
+            if self.directionUp {
+                if self.animationIndex == animationImages!.count - 1 {
+                    newDirection = false
+                    newCount = animationImages!.count - 2
+                } else {
+                    newCount += 1
+                }
+            } else {
+                if self.animationIndex == 0 {
+                    newDirection = true
+                    newCount = 1
+                } else {
+                    newCount -= 1
+                }
             }
 
-        } else {
-            /// remove to stop animation and set to still image
-         ///   imageView.isHidden = true
-            imageView.image = imageObject.stillImage
-            imageView.animationImages?.removeAll()
-            updateParent()
+            self.animationIndex = newCount
+            self.directionUp = newDirection
+            self.animateScrollGif()
         }
-    }
-    
-    func updateParent() {
-        UploadImageModel.shared.scrollObjects[globalRow].gifMode = imageObject.gifMode
-        UploadImageModel.shared.scrollObjects[globalRow].animationImages = imageObject.animationImages
     }
 
 }

@@ -22,6 +22,7 @@ class AVCameraController: UIViewController {
     var spotObject: MapSpot!
     var volumeHandler: JPSVolumeButtonHandler!
     
+    var cameraView: UIView!
     var cameraButton: UIButton!
     var galleryButton: UIButton!
     var flashButton: UIButton!
@@ -66,8 +67,8 @@ class AVCameraController: UIViewController {
         ///set up camera view if not already loaded
         if self.cameraController == nil {
             cameraController = AVSpotCamera()
-            if UploadImageModel.shared.allAuths() { configureCameraController() } else { addAccessMask() }
             /// else show preview
+            if UploadImageModel.shared.allAuths() { configureCameraController() } else { addAccessMask() }
             
         } else {
             cameraController.previewLayer?.connection?.isEnabled = true
@@ -113,23 +114,70 @@ class AVCameraController: UIViewController {
                 
         view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         view.backgroundColor = UIColor(named: "SpotBlack")
-        
+                
         /// camera height will be 667 for iphone 6-10, 736.4 for XR + 11
         let cameraAspect: CGFloat = 1.5
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 82 : 2
-        var cameraY: CGFloat = minY + cameraHeight + 27
-        if minY == 82 { cameraY += 7 }
+        let textY: CGFloat = minY == 2 ? minY + cameraHeight - 30 : minY + cameraHeight + 10
+        let cameraY: CGFloat = textY + 27
+        let gifY: CGFloat = cameraY - 80
         
-        let textY: CGFloat = minY == 2 ? cameraY - 24 : minY + cameraHeight + 10
-                                
+        cameraView = UIView(frame: CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: cameraHeight))
+        cameraView.backgroundColor = .black
+        view.addSubview(cameraView)
+                        
+        gifView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 45, y: gifY, width: 90, height: 32))
+        gifView.backgroundColor = nil
+        gifView.isHidden = true
+        view.addSubview(gifView)
+        
+        holdStillLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 90, height: 16))
+        holdStillLabel.text = "HOLD STILL!"
+        holdStillLabel.textColor = UIColor(named: "SpotGreen")
+        holdStillLabel.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
+        holdStillLabel.textAlignment = .center
+        gifView.addSubview(holdStillLabel)
+        
+        aliveBar = UIView(frame: CGRect(x: 0, y: holdStillLabel.frame.maxY + 3, width: 90, height: 13))
+        aliveBar.backgroundColor = UIColor(named: "SpotGreen")?.withAlphaComponent(0.22)
+        aliveBar.layer.cornerRadius = 4
+        aliveBar.layer.borderWidth = 2
+        aliveBar.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
+        gifView.addSubview(aliveBar)
+        
+        aliveFill = UIView(frame: CGRect(x: 1, y: aliveBar.frame.minY + 1, width: 0, height: 11))
+        aliveFill.backgroundColor = UIColor(named: "SpotGreen")
+        aliveFill.layer.cornerRadius = 4
+        gifView.addSubview(aliveFill)
+                    
+        cancelButton = UIButton(frame: CGRect(x: 4, y: 13, width: 50, height: 50))
+        cancelButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        cancelButton.contentHorizontalAlignment = .fill
+        cancelButton.contentVerticalAlignment = .fill
+        cancelButton.setImage(UIImage(named: "CancelButton"), for: .normal)
+        cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+        cameraView.addSubview(cancelButton)
+                
+        tapIndicator = UIImageView(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        tapIndicator.image = UIImage(named: "TapFocusIndicator")
+        tapIndicator.isHidden = true
+        cameraView.addSubview(tapIndicator)
+        
+        frontFlashView = UIView(frame: view.frame)
+        frontFlashView.backgroundColor = .white
+        frontFlashView.isHidden = true
+        cameraView.addSubview(frontFlashView)
+                
+        volumeHandler = JPSVolumeButtonHandler(up: {self.capture()}, downBlock: {self.capture()})
+        volumeHandler.start(true)
+                                                
         cameraButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 47, y: cameraY, width: 94, height: 94))
         cameraButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         cameraButton.setImage(UIImage(named: "CameraButton"), for: .normal)
         cameraButton.addTarget(self, action: #selector(captureImage(_:)), for: .touchUpInside)
         cameraButton.imageView?.contentMode = .scaleAspectFill
-        
         view.addSubview(cameraButton)
         
         stillText = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 27.5, y: textY, width: 55, height: 25))
@@ -159,33 +207,8 @@ class AVCameraController: UIViewController {
         gifText.titleLabel!.layer.masksToBounds = false
         gifText.addTarget(self, action: #selector(transitionToGIF(_:)), for: .touchUpInside)
         view.addSubview(gifText)
-                
-        let gifY: CGFloat = cameraY - 80
-        gifView = UIView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 45, y: gifY, width: 90, height: 32))
-        gifView.backgroundColor = nil
-        gifView.isHidden = true
-        view.addSubview(gifView)
         
-        holdStillLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 90, height: 16))
-        holdStillLabel.text = "HOLD STILL!"
-        holdStillLabel.textColor = UIColor(named: "SpotGreen")
-        holdStillLabel.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
-        holdStillLabel.textAlignment = .center
-        gifView.addSubview(holdStillLabel)
-        
-        aliveBar = UIView(frame: CGRect(x: 0, y: holdStillLabel.frame.maxY + 3, width: 90, height: 13))
-        aliveBar.backgroundColor = UIColor(named: "SpotGreen")?.withAlphaComponent(0.22)
-        aliveBar.layer.cornerRadius = 4
-        aliveBar.layer.borderWidth = 2
-        aliveBar.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-        gifView.addSubview(aliveBar)
-        
-        aliveFill = UIView(frame: CGRect(x: 1, y: aliveBar.frame.minY + 1, width: 0, height: 11))
-        aliveFill.backgroundColor = UIColor(named: "SpotGreen")
-        aliveFill.layer.cornerRadius = 4
-        gifView.addSubview(aliveFill)
-        
-        galleryButton = UIButton(frame: CGRect(x: 37, y: cameraY + 32, width: 34, height: 29))
+        galleryButton = UIButton(frame: CGRect(x: 37, y: cameraY + 29, width: 34, height: 29))
         galleryButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         galleryButton.setImage(UIImage(named: "PhotoGalleryButton"), for: .normal)
         galleryButton.imageView?.contentMode = .scaleAspectFill
@@ -218,49 +241,28 @@ class AVCameraController: UIViewController {
         flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
         flashButton.addTarget(self, action: #selector(switchFlash(_:)), for: .touchUpInside)
         view.addSubview(flashButton)
-                
-        cancelButton = UIButton(frame: CGRect(x: 4, y: minY + 17, width: 50, height: 50))
-        cancelButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        cancelButton.contentHorizontalAlignment = .fill
-        cancelButton.contentVerticalAlignment = .fill
-        cancelButton.setImage(UIImage(named: "CancelButton"), for: .normal)
-        cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
-        view.addSubview(cancelButton)
         
         /// pan gesture will allow camera dismissal on swipe down
         pan = UIPanGestureRecognizer.init(target: self, action: #selector(panGesture))
-        view.addGestureRecognizer(pan)
+        cameraView.addGestureRecognizer(pan)
         
         let zoom = UIPinchGestureRecognizer(target: self, action: #selector(pinch(_:)))
-        view.addGestureRecognizer(zoom)
+        cameraView.addGestureRecognizer(zoom)
         
         let tap = UITapGestureRecognizer(target: self, action: #selector(tap(_:)))
         tap.numberOfTapsRequired = 1
         tap.delegate = self
-        view.addGestureRecognizer(tap)
+        cameraView.addGestureRecognizer(tap)
         
         let doubleTap = UITapGestureRecognizer(target: self, action: #selector(doubleTap(_:)))
         doubleTap.numberOfTapsRequired = 2
         doubleTap.delegate = self
-        view.addGestureRecognizer(doubleTap)
+        cameraView.addGestureRecognizer(doubleTap)
         
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(self.setAutoExposure(_:)),
                                                name: NSNotification.Name.AVCaptureDeviceSubjectAreaDidChange,
                                                object: nil)
-        
-        tapIndicator = UIImageView(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
-        tapIndicator.image = UIImage(named: "TapFocusIndicator")
-        tapIndicator.isHidden = true
-        view.addSubview(tapIndicator)
-        
-        frontFlashView = UIView(frame: view.frame)
-        frontFlashView.backgroundColor = .white
-        frontFlashView.isHidden = true
-        view.addSubview(frontFlashView)
-                
-        volumeHandler = JPSVolumeButtonHandler(up: {self.capture()}, downBlock: {self.capture()})
-        volumeHandler.start(true)
     }
     
     func addAccessMask() {
@@ -290,7 +292,7 @@ class AVCameraController: UIViewController {
         do {
             try cameraController.switchCameras()
             self.resetZoom()
-            self.setFocus(position: view.center)
+            self.setFocus(position: cameraView.center)
         }
         
         catch {
@@ -477,7 +479,7 @@ class AVCameraController: UIViewController {
 
         cameraController.prepare(position: .rear) { [weak self] (error) in
             guard let self = self else { return }
-            DispatchQueue.main.async { try? self.cameraController.displayPreview(on: self.view) }
+            DispatchQueue.main.async { try? self.cameraController.displayPreview(on: self.cameraView) }
             self.setAutoExposure()
         }
     }
@@ -516,8 +518,6 @@ class AVCameraController: UIViewController {
             
             vc.spotObject = self.spotObject
             
-            if PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited { vc.limited = true }
-            
             DispatchQueue.main.async {
                 self.navigationController?.pushViewController(vc, animated: true)
             }
@@ -526,10 +526,10 @@ class AVCameraController: UIViewController {
     
     @objc func panGesture(_ gesture: UIPanGestureRecognizer) {
         /// swipe between camera types
-        let direction = gesture.velocity(in: view)
+        let direction = gesture.velocity(in: cameraView)
         
         if gesture.state == .began {
-            beginPan = gesture.location(in: view)
+            beginPan = gesture.location(in: cameraView)
         
         } else if gesture.state == .ended {
         
@@ -588,7 +588,7 @@ class AVCameraController: UIViewController {
     }
     
     @objc func tap(_ tapGesture: UITapGestureRecognizer){
-        let position = tapGesture.location(in: view)
+        let position = tapGesture.location(in: cameraView)
         setFocus(position: position)
     }
     

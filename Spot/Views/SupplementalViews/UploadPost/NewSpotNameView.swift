@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import Mixpanel
 
 protocol NewSpotNameDelegate {
     func finishPassingName(name: String)
@@ -24,6 +25,8 @@ class NewSpotNameView: UIView {
 
         super.init(frame: frame)
         
+        Mixpanel.mainInstance().track(event: "NewSpotNameOpen", properties: nil)
+
         backgroundColor = nil
         
         if textField != nil { textField.text = "" }
@@ -39,14 +42,10 @@ class NewSpotNameView: UIView {
         addSubview(textField)
         
         if confirmButton != nil { confirmButton.setTitle("", for: .normal) }
-        confirmButton = UIButton(frame: CGRect(x: frame.width/2 - 51.3, y: textField.frame.maxY + 19, width: 102.7, height: 34))
-        confirmButton.setTitle("Confirm", for: .normal)
-        confirmButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 18)
+        confirmButton = UIButton(frame: CGRect(x: frame.width/2 - 51.3, y: textField.frame.maxY + 19, width: 96, height: 36))
+        confirmButton.setImage(UIImage(named: "NewSpotConfirm"), for: .normal)
         confirmButton.contentHorizontalAlignment = .center
         confirmButton.contentVerticalAlignment = .center
-        confirmButton.setTitleColor(UIColor(named: "SpotBlack"), for: .normal)
-        confirmButton.backgroundColor = UIColor(named: "SpotGreen")
-        confirmButton.layer.cornerRadius = 12
         addSubview(confirmButton)
         
         shadowButton = UIButton(frame: CGRect(x: confirmButton.frame.minX - 15, y: confirmButton.frame.minY - 15, width: confirmButton.frame.width + 30, height: confirmButton.frame.height + 30))

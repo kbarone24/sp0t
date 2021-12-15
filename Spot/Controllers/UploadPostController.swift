@@ -29,28 +29,55 @@ class UploadPostController: UIViewController {
     var spotObject: MapSpot!
     var postObject: MapPost!
     
-    var tableView: UITableView!
+    var mapView: MKMapView!
+    var mapGradient: CAGradientLayer!
+    var gradientContainer: UIView!
+    var uploadTable: UITableView!
     var maskView: UIView!
-    var progressView: UIProgressView!
+    var progressBar: UIView!
+    var progressFill: UIView!
     var newView: NewSpotNameView!
+    
+    var searchContainer: UIView!
+    var exitButton: UIButton!
+    var chooseLabel: UILabel!
+    var searchBarContainer: UIView!
+    var searchBar: UISearchBar!
+    var cancelButton: UIButton!
+    var searchIndicator: CustomActivityIndicator!
+    var newSpotButton: UIButton!
+    
+    lazy var searchTextGlobal = ""
+    lazy var searchRefreshCount = 0
+    lazy var querySpots: [MapSpot] = []
+
+    var resultsTable: UITableView!
+    var nearbyTable: UITableView!
     
     var tapToClose: UITapGestureRecognizer!
     var navBarHeight: CGFloat!
     
     lazy var imageFetcher = ImageFetcher()
     var cancelOnDismiss = false /// cancel downloads
-    var editedLocation = false
+    var transitioningToMap = false /// cancels bobbing pin animation on upload
+    var chooseSpotMode = false /// true when upload table is collapsed
+    
     var newSpotName = ""
+    var newSpotID = ""
     
     var circleQuery: GFSCircleQuery?
     var search: MKLocalSearch!
     let searchFilters: [MKPointOfInterestCategory] = [.airport, .amusementPark, .aquarium, .bakery, .beach, .brewery, .cafe, .campground, .foodMarket, .library, .marina, .museum, .movieTheater, .nightlife, .nationalPark, .park, .restaurant, .store, .school, .stadium, .theater, .university, .winery, .zoo]
     
-    var queryReady = false
+    var queryReady = true
+    var fetchImmediately = true /// initial load + new spot selection, dont run choose spot fetch on delay
+    var shouldUpdateRegion = true /// used on updateVisibleRegion, rerun spot/poi fetch when true
+    var shouldCluster = true /// de-cluster variable on zoom in
     
     var nearbyEnteredCount = 0
     var noAccessCount = 0
     var nearbyRefreshCount = 0
+    var appendCount = 0
     
     var postType: PostType = .none
     var submitPublic = false
@@ -59,6 +86,13 @@ class UploadPostController: UIViewController {
     var privacyView: UploadPrivacyPicker!
     var showOnFeed: UploadShowOnFeedView!
     var privacyMask: UIView!
+    
+    var postAnnotation = CustomPointAnnotation()
+    var nearbyAnnotations = [String: CustomSpotAnnotation]()
+    var shadowAnnotation: UIImageView! /// replace post annotation with this on transition
+    
+    var spotDraft: SpotDraft!
+    var postDraft: PostDraft!
         
     enum PostType {
         case none
@@ -82,14 +116,19 @@ class UploadPostController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name("InitialFriendsLoad"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCurrentLocation(_:)), name: Notification.Name("UpdateLocation"), object: nil)
                 
-        setUpPost()
-        setUpTable()
-        fetchAssets()
-        getTopFriends()
+        addMapView() /// add map and gradient
+        setUpPost() /// set beginning postObject
+        setUpTable() /// add uploadTable and maskView
+        addSearch() /// add search, search container, nearby + results tables
+        addProgressBar() /// add progress bar + fill
+        fetchAssets() /// fetch image assets and reload
+        getTopFriends() /// top friends to show in friend picker
+        getFailedUploads() /// show pop up if failed uploads available
         
-        if spotObject == nil { DispatchQueue.global().async {
-            self.runChooseSpotFetch()
-        }}
+        if spotObject != nil {
+            addSpotAnno(spot: spotObject)
+            postType = .postToSpot
+        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -101,17 +140,24 @@ class UploadPostController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        setUpNavBar()
+        let delay: DispatchTime = uploadTable == nil ? .now() + 0.3 : .now()
+        DispatchQueue.main.asyncAfter(deadline: delay) { [weak self] in
+            guard let self = self else { return }
+            self.setUpNavBar()
+            self.navigationController?.navigationBar.alpha = 1.0
+        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-        if isMovingFromParent { cancelOnDismiss = true }
+        if isMovingFromParent {
+            cancelOnDismiss = true
+            circleQuery?.removeAllObservers() /// was causing strong reference so put here instead of deinit
+        }
     }
     
     deinit {
-        print("deinit")
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("TagSelect"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("InitialUserLoad"), object: nil)
         NotificationCenter.default.removeObserver(self, name: Notification.Name("UpdateLocation"), object: nil)
@@ -120,10 +166,9 @@ class UploadPostController: UIViewController {
     
     func setUpNavBar() {
         
-        navigationController?.setNavigationBarHidden(false, animated: true)
-        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.setNavigationBarHidden(false, animated: false)
+        navigationController?.navigationBar.removeBackgroundImage()
         navigationController?.navigationBar.removeShadow()
-        navigationController?.navigationBar.addBlackBackground()
         navigationItem.titleView = nil
         
         let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(cancelTap(_:)))
@@ -134,19 +179,23 @@ class UploadPostController: UIViewController {
     }
     
     func addPostButton() {
+        /// call on set up and spot select to set alpha
         let alpha: CGFloat = spotObject == nil && newSpotName == "" ? 0.3 : 1.0
         let postImage = UIImage(named: "PostButton")?.alpha(alpha).withRenderingMode(.alwaysOriginal)
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: postImage, style: .plain, target: self, action: #selector(postTap(_:)))
     }
     
     func setUpPost() {
-        /// add currentLocation == nil check
         let coordinate = spotObject == nil ? UserDataModel.shared.currentLocation.coordinate : CLLocationCoordinate2D(latitude: spotObject.spotLat, longitude: spotObject.spotLong)
         postObject = MapPost(id: UUID().uuidString, caption: "", postLat: coordinate.latitude, postLong: coordinate.longitude, posterID: uid, timestamp: Timestamp(date: Date()), actualTimestamp: Timestamp(date: Date()), userInfo: UserDataModel.shared.userInfo, spotID: spotObject == nil ? UUID().uuidString : spotObject.id, city: "", frameIndexes: [], aspectRatios: [], imageURLs: [], postImage: [], seconds: 0, selectedImageIndex: 0, postScore: 0, commentList: [], likers: [], taggedUsers: [], captionHeight: 0, imageHeight: 0, cellHeight: 0, spotName: spotObject == nil ? "" : spotObject.spotName, spotLat: spotObject == nil ? 0 : spotObject.spotLat, spotLong: spotObject == nil ? 0 : spotObject.spotLong, privacyLevel: spotObject == nil ? "friends" : spotObject.privacyLevel, spotPrivacy: spotObject == nil ? "" : spotObject.privacyLevel, createdBy: spotObject == nil ? uid : spotObject.founderID, inviteList: [], friendsList: [], hideFromFeed: false, gif: false, addedUsers: [], addedUserProfiles: [], tag: "")
-        setPostCity()
+        setPostCity() /// set with every location change to avoid async lag on upload
+        
+        if coordinate.longitude != 0.0 || coordinate.latitude != 0.0 {
+            setPostAnnotation(first: true, animated: false)
+        }
     }
     
-    func setUpTable() {
+    func addMapView() {
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
@@ -154,21 +203,79 @@ class UploadPostController: UIViewController {
         (self.navigationController?.navigationBar.frame.height ?? 44.0)
         view.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
         
-        tableView = UITableView(frame: CGRect(x: 0, y: navBarHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navBarHeight))
-        tableView.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
-        tableView.separatorStyle = .none
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.isUserInteractionEnabled = true
-        tableView.allowsSelection = false
-        tableView.isScrollEnabled = false
-        tableView.showsVerticalScrollIndicator = false
-        tableView.register(UploadOverviewCell.self, forCellReuseIdentifier: "UploadOverview")
-        tableView.register(UploadChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpot")
-        tableView.register(UploadImagesCell.self, forCellReuseIdentifier: "UploadImages")
-        tableView.register(UploadPrivacyCell.self, forCellReuseIdentifier: "Privacy")
-        view.addSubview(tableView)
-        tableView.reloadData()
+        mapView = MKMapView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 300))
+        mapView.isUserInteractionEnabled = true
+        mapView.userLocation.title = ""
+        mapView.mapType = .mutedStandard
+        mapView.overrideUserInterfaceStyle = .dark
+        mapView.pointOfInterestFilter = .excludingAll
+        mapView.showsCompass = false
+        mapView.showsTraffic = false
+        mapView.showsUserLocation = false
+        mapView.userLocation.title = ""
+        mapView.tintColor = .systemBlue
+        mapView.register(UploadAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Upload")
+        self.view.addSubview(self.mapView)
+
+        mapView.delegate = self
+        
+        let gradientAdjust: CGFloat = UserDataModel.shared.screenSize == 0 ? 0 : -20
+
+        gradientContainer = UIView(frame: CGRect(x: mapView.frame.minX - 10, y: mapView.frame.minY - (mapView.frame.height/2) - gradientAdjust, width: mapView.frame.width + 20, height: mapView.frame.height))
+        gradientContainer.backgroundColor = nil
+        gradientContainer.isUserInteractionEnabled = false
+        mapView.addSubview(gradientContainer)
+        
+        mapGradient = CAGradientLayer()
+        mapGradient.type = .radial
+        mapGradient.frame = gradientContainer.bounds
+        mapGradient.startPoint = CGPoint(x: 0.5, y: 0.5)
+        mapGradient.endPoint = CGPoint(x: 1.0, y: 1.0)
+        mapGradient.colors = [UIColor.black.withAlphaComponent(0.1).cgColor, UIColor.black.withAlphaComponent(0.45).cgColor, UIColor.black.withAlphaComponent(0.65).cgColor, UIColor.black.withAlphaComponent(0.9).cgColor, UIColor.black.withAlphaComponent(1.0).cgColor]
+        mapGradient.locations = [0.0, 0.6, 0.7, 0.85, 1.0]
+        gradientContainer.layer.addSublayer(mapGradient)
+        
+        /// map tap will allow user to set the location of the post by tapping the map
+        let mapTap = UITapGestureRecognizer(target: self, action: #selector(mapTap(_:)))
+        mapTap.numberOfTouchesRequired = 1
+        mapView.addGestureRecognizer(mapTap)
+    }
+    
+    func addProgressBar() {
+        progressBar = UIView(frame: CGRect(x: 50, y: UIScreen.main.bounds.height - 150, width: UIScreen.main.bounds.width - 100, height: 18))
+        progressBar.backgroundColor = UIColor(named: "SpotGreen")?.withAlphaComponent(0.22)
+        progressBar.layer.cornerRadius = 6
+        progressBar.layer.borderWidth = 2
+        progressBar.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
+        progressBar.isHidden = true
+        view.addSubview(progressBar)
+        
+        progressFill = UIView(frame: CGRect(x: 1, y: 1, width: 0, height: 16))
+        progressFill.backgroundColor = UIColor(named: "SpotGreen")
+        progressFill.layer.cornerRadius = 6
+        progressBar.addSubview(progressFill)
+    }
+    
+    func setUpTable() {
+
+        var minY: CGFloat = navBarHeight
+        minY += UserDataModel.shared.screenSize == 0 ? 30 : UserDataModel.shared.screenSize == 1 ? 50 : 80
+        uploadTable = UITableView(frame: CGRect(x: 0, y: navBarHeight + 70, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navBarHeight - 70))
+        uploadTable.backgroundColor = nil
+        uploadTable.separatorStyle = .none
+        uploadTable.delegate = self
+        uploadTable.dataSource = self
+        uploadTable.isUserInteractionEnabled = true
+        uploadTable.allowsSelection = false
+        uploadTable.isScrollEnabled = false
+        uploadTable.showsVerticalScrollIndicator = false
+        uploadTable.tag = 0
+        uploadTable.register(UploadOverviewCell.self, forCellReuseIdentifier: "UploadOverview")
+        uploadTable.register(UploadChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpot")
+        uploadTable.register(UploadImagesCell.self, forCellReuseIdentifier: "UploadImages")
+        uploadTable.register(UploadPrivacyCell.self, forCellReuseIdentifier: "Privacy")
+        view.addSubview(uploadTable)
+        uploadTable.reloadData()
         
         maskView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         maskView.tag = 5
@@ -177,17 +284,99 @@ class UploadPostController: UIViewController {
         maskView.addGestureRecognizer(maskTap)
         maskView.isUserInteractionEnabled = true
         maskView.backgroundColor = UIColor.black.withAlphaComponent(0.85)
-        
-        progressView = UIProgressView(frame: CGRect(x: 50, y: UIScreen.main.bounds.height - 160, width: UIScreen.main.bounds.width - 100, height: 15))
-        progressView.transform = progressView.transform.scaledBy(x: 1, y: 2.3)
-        progressView.layer.cornerRadius = 3
-        progressView.layer.sublayers![1].cornerRadius = 3
-        progressView.subviews[1].clipsToBounds = true
-        progressView.clipsToBounds = true
-        progressView.progressTintColor = UIColor(named: "SpotGreen")
-        progressView.progress = 0.0
     }
     
+    func addSearch() {
+        
+        searchContainer = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navBarHeight - 150))
+        searchContainer.backgroundColor = UIColor(named: "SpotBlack")
+        searchContainer.layer.cornerRadius = 8
+        searchContainer.layer.cornerCurve = .continuous
+        view.addSubview(searchContainer)
+        
+        searchBarContainer = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 95))
+        searchBarContainer.backgroundColor = nil
+        searchBarContainer.layer.cornerRadius = 8
+        searchBarContainer.layer.cornerCurve = .continuous
+        searchContainer.addSubview(searchBarContainer)
+        
+        chooseLabel = UILabel(frame: CGRect(x: 16, y: 13, width: 200, height: 20))
+        chooseLabel.text = "Choose a spot"
+        chooseLabel.font = UIFont(name: "SFCamera-Semibold", size: 17)
+        chooseLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        searchContainer.addSubview(chooseLabel)
+        
+        exitButton = UIButton(frame: CGRect(x: searchContainer.bounds.width - 51, y: 8, width: 43, height: 43))
+        exitButton.setImage(UIImage(named: "ChooseSpotExit"), for: .normal)
+        exitButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        exitButton.addTarget(self, action: #selector(exitTap(_:)), for: .touchUpInside)
+        searchBarContainer.addSubview(exitButton)
+
+        searchBar = UISearchBar(frame: CGRect(x: 12, y: 46, width: UIScreen.main.bounds.width - 130, height: 36))
+        searchBar.searchBarStyle = .default
+        searchBar.tintColor = .white
+        searchBar.barTintColor = UIColor(red: 0.098, green: 0.098, blue: 0.098, alpha: 1)
+        searchBar.searchTextField.backgroundColor = UIColor(red: 0.098, green: 0.098, blue: 0.098, alpha: 1)
+        searchBar.delegate = self
+        searchBar.autocapitalizationType = .none
+        searchBar.autocorrectionType = .no
+        searchBar.placeholder = " Find spot"
+        searchBar.searchTextField.font = UIFont(name: "SFCamera-Regular", size: 15)
+        searchBar.clipsToBounds = true
+        searchBar.layer.masksToBounds = true
+        searchBar.searchTextField.layer.masksToBounds = true
+        searchBar.layer.cornerRadius = 8
+        searchBar.searchTextField.layer.cornerRadius = 8
+        searchBarContainer.addSubview(searchBar)
+        
+        cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 70, y: 27, width: 50, height: 30))
+        cancelButton.setTitle("Cancel", for: .normal)
+        cancelButton.setTitleColor(UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1), for: .normal)
+        cancelButton.alpha = 0.8
+        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
+        cancelButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
+        cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
+        cancelButton.isHidden = true
+        searchBarContainer.addSubview(cancelButton)
+            
+        /// calculate height for post-animation
+        let height: CGFloat = UIScreen.main.bounds.height - navBarHeight - 150
+        nearbyTable = UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY, width: UIScreen.main.bounds.width, height: height))
+        nearbyTable.backgroundColor = .black
+        nearbyTable.contentInset = UIEdgeInsets(top: 1, left: 0, bottom: 150, right: 0)
+        nearbyTable.showsVerticalScrollIndicator = false
+        nearbyTable.separatorStyle = .none
+        nearbyTable.dataSource = self
+        nearbyTable.delegate = self
+        nearbyTable.tag = 1
+        nearbyTable.register(LocationPickerSpotCell.self, forCellReuseIdentifier: "ChooseSpotCell")
+        self.searchContainer.addSubview(self.nearbyTable)
+        
+        /// bottom of nearby table - content inset
+        newSpotButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 118, y: nearbyTable.frame.height - 98, width: 101, height: 58))
+        newSpotButton.backgroundColor = nil
+        newSpotButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        newSpotButton.setImage(UIImage(named: "ChooseSpotNew"), for: .normal)
+        newSpotButton.addTarget(self, action: #selector(newSpotTap(_:)), for: .touchUpInside)
+        searchContainer.addSubview(newSpotButton)
+        
+        /// results table unhidden when search bar is interacted with - update with keyboard height
+        resultsTable = UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY - 15, width: UIScreen.main.bounds.width, height: 400))
+        resultsTable.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
+        resultsTable.dataSource = self
+        resultsTable.delegate = self
+        resultsTable.backgroundColor = .black
+        resultsTable.separatorStyle = .none
+        resultsTable.showsVerticalScrollIndicator = false
+        resultsTable.isHidden = true
+        resultsTable.register(LocationPickerSpotCell.self, forCellReuseIdentifier: "ChooseSpotCell")
+        resultsTable.tag = 2
+        
+        searchIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 30))
+        searchIndicator.isHidden = true
+        resultsTable.addSubview(searchIndicator)
+        searchContainer.addSubview(resultsTable)
+    }
     
     func getTopFriends() {
         
@@ -207,8 +396,13 @@ class UploadPostController: UIViewController {
     }
     
     func fetchAssets() {
-        if UploadImageModel.shared.galleryAccess != .authorized { askForGallery(first: true) }
-        fetchFullAssets()
+        
+        if UploadImageModel.shared.galleryAccess == .authorized || UploadImageModel.shared.galleryAccess == .limited {
+            fetchFullAssets()
+            
+        } else {
+            askForGallery(first: true)
+        }
     }
         
     func fetchFullAssets() {
@@ -236,9 +430,10 @@ class UploadPostController: UIViewController {
             var creationDate = Date()
             if let d = object.creationDate { creationDate = d }
             
-            let imageObj = (ImageObject(id: UUID().uuidString, asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], gifMode: false, creationDate: creationDate, fromCamera: false), false)
+            let imageObj = (ImageObject(id: UUID().uuidString, asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], animationIndex: 0, directionUp: true, gifMode: false, creationDate: creationDate, fromCamera: false), false)
             UploadImageModel.shared.imageObjects.append(imageObj)
             
+            /// immediate load to show top images in scroll then reload full assets
             let firstLoad = UploadImageModel.shared.imageObjects.count == 50
             let finalLoad = UploadImageModel.shared.imageObjects.count == assetsFull.count
             
@@ -247,18 +442,23 @@ class UploadPostController: UIViewController {
                 if !(self.navigationController?.viewControllers.contains(where: {$0 is PhotosContainerController}) ?? false) { UploadImageModel.shared.imageObjects.sort(by: {!$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected}) }
 
                 DispatchQueue.main.async {
-                    guard let imagesCell = self.tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
-                    imagesCell.setImages(reload: firstLoad)
+                    guard let imagesCell = self.uploadTable.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
+                    imagesCell.setImages(reload: !firstLoad)
                 }
             }
         }}
     }
     
     @objc func notifyCurrentLocation(_ sender: NSNotification) {
+        /// if user location not set by location manager before  initial open
         if postObject.postLat == 0.0 && postObject.postLong == 0.0 {
-            postObject.postLat = UserDataModel.shared.currentLocation.coordinate.latitude
-            postObject.postLong = UserDataModel.shared.currentLocation.coordinate.longitude
+            let coordinate = CLLocationCoordinate2D(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude)
+            postObject.postLat = coordinate.latitude
+            postObject.postLong = coordinate.longitude
+            
             setPostCity()
+            setPostAnnotation(first: true, animated: false)
+            mapView.addAnnotation(postAnnotation)
         }
     }
     
@@ -267,7 +467,7 @@ class UploadPostController: UIViewController {
         postObject.userInfo = UserDataModel.shared.userInfo
         
         /// reload for loaded user profile pic
-        if tableView != nil { DispatchQueue.main.async { self.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .none) } }
+        if uploadTable != nil { DispatchQueue.main.async { self.uploadTable.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .none) } }
     }
     
     @objc func notifyFriendsLoad(_ sender: NSNotification) {
@@ -280,7 +480,7 @@ class UploadPostController: UIViewController {
         guard let username = infoPass["username"] as? String else { return }
         guard let tag = infoPass["tag"] as? Int else { return }
         if tag != 2 { return } /// tag 2 for upload tag. This notification should only come through if tag = 2 because upload will always be topmost VC
-        guard let uploadOverviewCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
+        guard let uploadOverviewCell = uploadTable.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
         
         let cursorPosition = uploadOverviewCell.captionView.getCursorPosition()
         let tagText = addTaggedUserTo(text: postObject.caption, username: username, cursorPosition: cursorPosition)
@@ -293,7 +493,12 @@ class UploadPostController: UIViewController {
     }
     
     @objc func closeKeyboard(_ sender: UITapGestureRecognizer) {
-        guard let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
+        /// called on tap of background on newSpotName
+        closeKeyboard()
+    }
+    
+    func closeKeyboard() {
+        guard let cell = uploadTable.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
         if cell.captionView != nil { cell.captionView.resignFirstResponder() }
     }
     
@@ -311,25 +516,16 @@ class UploadPostController: UIViewController {
     @objc func postTap(_ sender: UIButton) {
         
         /// remove if no spot selected
-        if spotObject == nil && newSpotName.trimmingCharacters(in: .whitespacesAndNewlines) == "" { showError(); return }
-        
-        /// disable post button
-        self.navigationItem.rightBarButtonItem?.isEnabled = false
-        
-        guard let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
-        if cell.captionView != nil { cell.captionView.resignFirstResponder() }
-        mapVC.removeTable()
-        
-        view.addSubview(maskView)
-        
-        maskView.addSubview(progressView)
-        progressView.setProgress(0.1, animated: true)
+        if spotObject == nil && newSpotName.trimmingCharacters(in: .whitespacesAndNewlines) == "" { showError(message: "Choose a spot before posting"); return }
         
         /// get post images and frame indexes from selected scrollObjects
         var selectedImages: [UIImage] = []
         var frameCounter = 0
         var frameIndexes: [Int] = []
         var aspectRatios: [CGFloat] = []
+        var imageLocations: [[String: Any]] = []
+
+        let postLocation = CLLocation(latitude: postObject.postLat, longitude: postObject.postLong)
         
         for obj in UploadImageModel.shared.scrollObjects {
             let images = obj.gifMode ? obj.animationImages : [obj.stillImage]
@@ -337,77 +533,180 @@ class UploadPostController: UIViewController {
             frameIndexes.append(frameCounter)
             aspectRatios.append(selectedImages[frameCounter].size.height/selectedImages[frameCounter].size.width)
             
+            let location = locationIsEmpty(location: obj.rawLocation) ? postLocation : obj.rawLocation
+            imageLocations.append(["lat": location.coordinate.latitude, "long": location.coordinate.longitude])
+            
             frameCounter += images.count
         }
         
-        self.postObject.frameIndexes = frameIndexes
-        self.postObject.aspectRatios = aspectRatios
+        postObject.frameIndexes = frameIndexes
+        postObject.aspectRatios = aspectRatios
+        postObject.postImage = selectedImages
+        postObject.imageLocations = imageLocations
         
-        var uploadSpot = self.spotObject
+        let actualTimestamp = UploadImageModel.shared.scrollObjects.first?.creationDate ?? Date()
+        postObject.actualTimestamp = Timestamp(date: actualTimestamp)
         
-        if uploadSpot == nil {
+        if spotObject == nil {
             let adjustedPrivacy = self.postObject.privacyLevel == "public" ? "friends" : self.postObject.privacyLevel /// submit public are friends spots as default until being approved
             self.postObject.privacyLevel = adjustedPrivacy
-            uploadSpot = MapSpot(spotDescription: self.postObject.caption, spotName: self.newSpotName, spotLat: self.postObject.postLat, spotLong: self.postObject.postLong, founderID: self.uid, privacyLevel: adjustedPrivacy!, imageURL: self.postObject.imageURLs.first ?? "")
-            uploadSpot!.id = UUID().uuidString
+            spotObject = MapSpot(spotDescription: self.postObject.caption, spotName: self.newSpotName, spotLat: self.postObject.postLat, spotLong: self.postObject.postLong, founderID: self.uid, privacyLevel: adjustedPrivacy!, imageURL: self.postObject.imageURLs.first ?? "")
+            spotObject.id = UUID().uuidString
             if adjustedPrivacy == "invite" {
-                uploadSpot!.inviteList = self.postObject.addedUsers
-                uploadSpot!.inviteList!.append(uid)
+                spotObject.inviteList = self.postObject.addedUsers
+                spotObject.inviteList!.append(uid)
             }
             
-        } else {
-            /// poiCategory will be nil for nonPOI
-            if uploadSpot!.poiCategory != nil { self.postType = .postToPOI }
         }
         
         /// set post level spot info. spotObject will be nil only for a new spot
-        self.postObject.createdBy = uploadSpot!.founderID
-        self.postObject.spotID = uploadSpot!.id!
-        self.postObject.spotLat = uploadSpot!.spotLat
-        self.postObject.spotLong = uploadSpot!.spotLong
-        self.postObject.spotPrivacy = uploadSpot!.privacyLevel
-        self.postObject.inviteList = uploadSpot!.inviteList ?? []
+        postObject.createdBy = spotObject.founderID
+        postObject.spotID = spotObject.id!
+        postObject.spotLat = spotObject.spotLat
+        postObject.spotLong = spotObject.spotLong
+        postObject.spotPrivacy = spotObject.privacyLevel
+        postObject.inviteList = spotObject.inviteList ?? []
         
         /// set timestamp to original post date or current date
-        let actualTimestamp = UploadImageModel.shared.scrollObjects.first!.creationDate
-        
         var taggedProfiles: [UserProfile] = []
         
         ///for tagging users on comment post
-        let word = self.postObject.caption.split(separator: " ")
+        let word = postObject.caption.split(separator: " ")
         
         for w in word {
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
                 if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
-                    self.postObject.taggedUsers!.append(username)
-                    self.postObject.taggedUserIDs.append(f.id!)
+                    postObject.taggedUsers!.append(username)
+                    postObject.taggedUserIDs.append(f.id!)
                     taggedProfiles.append(f)
                 }
             }
         }
         
-        var postFriends = self.postObject.hideFromFeed! ? [] : self.postObject.privacyLevel == "invite" ? uploadSpot!.inviteList!.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
-        if !postFriends.contains(self.uid) && !self.postObject.hideFromFeed! { postFriends.append(self.uid) }
-        self.postObject.friendsList = postFriends
-        self.postObject.isFirst = (self.postType == .newSpot || self.postType == .postToPOI)
+        var postFriends = postObject.hideFromFeed! ? [] : postObject.privacyLevel == "invite" ? spotObject.inviteList!.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
+        if !postFriends.contains(uid) && !postObject.hideFromFeed! { postFriends.append(uid) }
+        postObject.friendsList = postFriends
+        postObject.isFirst = (postType == .newSpot || postType == .postToPOI)
+
+        uploadPost()
+    }
+    
+    func uploadPost() {
+        
+        /// disable post button
+        self.navigationItem.rightBarButtonItem?.isEnabled = false
+        
+        guard let cell = uploadTable.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
+        if cell.captionView != nil { cell.captionView.resignFirstResponder() }
+        mapVC.removeTable()
+                
+        cancelOnDismiss = true /// stop all other methods
+        DispatchQueue.main.async { self.animateIntoMapview() }
         
         /// 1. upload post image
-        uploadPostImage(selectedImages, postID: postObject.id!, progressView: progressView) { [weak self] (imageURLs, failed) in
+        uploadPostImage(postObject.postImage, postID: postObject.id!, progressFill: progressFill) { [weak self] (imageURLs, failed) in
             
             guard let self = self else { return }
+            self.transitioningToMap = true
+            
             if imageURLs.isEmpty && failed {
-                self.runFailedUpload(spot: uploadSpot!, post: self.postObject, selectedImages: selectedImages, actualTimestamp: actualTimestamp)
+                self.runFailedUpload(spot: self.spotObject!, post: self.postObject, selectedImages: self.postObject.postImage, actualTimestamp: self.postObject.actualTimestamp!.dateValue())
                 return
             }
             
             self.postObject.imageURLs = imageURLs
-            uploadSpot!.imageURL = imageURLs.first ?? ""
+            self.spotObject.imageURL = imageURLs.first ?? ""
+            
+            Mixpanel.mainInstance().track(event: "UploadPostSuccessful", properties: nil)
             
             /// 2. set post values, pass post notification to feed and other VC's
-            self.uploadPost(post: self.postObject, actualTimestamp: actualTimestamp)
-            self.uploadSpot(post: self.postObject, spot: uploadSpot!, postType: self.postType, submitPublic: self.submitPublic)
-            self.transitionToMap(postID: self.postObject.id!, spotID: uploadSpot!.id!)
+            self.uploadPost(post: self.postObject)
+            self.uploadSpot(post: self.postObject, spot: self.spotObject, postType: self.postType, submitPublic: self.submitPublic)
+        }
+    }
+    
+    func animateIntoMapview() {
+        
+        /// remove spot annotation for upload animation
+        if let spotAnnotation = mapView.annotations.first(where: {$0.isKind(of: CustomSpotAnnotation.self)}) {
+            mapView.removeAnnotation(spotAnnotation)
+        }
+        
+        /// add uiimageview in place of annotation for easier animations
+        shadowAnnotation = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 33, y: UIScreen.main.bounds.height/2 - 150, width: 70, height: 70))
+        shadowAnnotation.contentMode = .scaleAspectFill
+        shadowAnnotation.image = loadUploadNib().asImage()
+        mapView.addSubview(shadowAnnotation)
+        mapView.removeAnnotation(postAnnotation)
+        
+        let coordinate = CLLocationCoordinate2D(latitude: postObject.postLat, longitude: postObject.postLong)
+        let adjustedCenter = CLLocationCoordinate2D(latitude: coordinate.latitude - 0.0005, longitude: coordinate.longitude)
+        let camera = MKMapCamera(lookingAtCenter: adjustedCenter, fromDistance: 300, pitch: 0, heading: 0)
+        mapView.setCamera(camera, animated: false)
+
+        progressBar.isHidden = false
+        
+        addTempGradient(hide: true)
+        UIView.animate(withDuration: 0.15) { self.gradientContainer.alpha = 0.0 }
+        
+        UIView.animate(withDuration: 0.3, animations: {
+            self.progressFill.frame = CGRect(x: self.progressFill.frame.minX, y: self.progressFill.frame.minY, width: (UIScreen.main.bounds.width - 100) * 0.1, height: self.progressFill.frame.height)
+            self.mapView.frame = CGRect(x: self.mapView.frame.minX, y: self.mapView.frame.minY, width: self.mapView.frame.width, height: UIScreen.main.bounds.height)
+            self.uploadTable.frame = CGRect(x: self.uploadTable.frame.minX, y: UIScreen.main.bounds.height, width: self.uploadTable.frame.width, height: self.uploadTable.frame.height)
+        }) { [weak self] _ in
+            guard let self = self else { return }
+            if !self.transitioningToMap { self.animatePin(position: 0, down: true) }
+        }
+    }
+    
+    func animatePin(position: Int, down: Bool) {
+
+        /// 0 = up, 1 = middle, 2 = down
+        let nib = position == 0 ? loadUploadNib().asImage() : position == 1 ? loadUploadMiddle().asImage() : loadUploadDown().asImage()
+        
+        DispatchQueue.main.async {
+            
+            let options: UIView.AnimationOptions = position == 1 ? [.transitionCrossDissolve, .curveEaseIn] : [.transitionCrossDissolve, .curveEaseOut]
+            UIView.transition(with: self.shadowAnnotation, duration: 0.2, options: options, animations: {
+                self.shadowAnnotation.image = nib
+                
+            }, completion: { [weak self] _ in
+                
+                guard let self = self else { return }
+                let newPosition = down ? position + 1 : position - 1
+                let newDown = newPosition == 1 ? down : !down
+                let delay: DispatchTime = newPosition == 1 ? .now() + 0.1 : .now()
+                
+                DispatchQueue.main.asyncAfter(deadline: delay) { [weak self] in
+                    guard let self = self else { return }
+                    self.transitioningToMap && position == 0 ? self.transitionAnnotations() : self.animatePin(position: newPosition, down: newDown)
+                }
+            })
+        }
+    }
+    
+    func transitionAnnotations() {
+
+        let nib0 = self.loadPostUp().asImage()
+        let nib1 = self.loadPostDown().asImage()
+
+        /// show animation transform, zoom in, adjust center
+        UIView.transition(with: shadowAnnotation, duration: 0.4, options: [.transitionFlipFromLeft, .beginFromCurrentState]) {
+            self.shadowAnnotation.image = nib0
+            
+        } completion: { [weak self] _ in
+            guard let self = self else { return }
+            UIView.transition(with: self.shadowAnnotation, duration: 0.45, options: [.beginFromCurrentState]) {
+                self.shadowAnnotation.image = nib1
+
+            } completion: { _ in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+                    guard let self = self else { return }
+                    self.deleteDrafts()
+                    self.transitionToMap(postID: self.postObject.id!, spotID: self.spotObject.id!)
+                }
+            }
         }
     }
     
@@ -418,20 +717,25 @@ class UploadPostController: UIViewController {
             /// if not transitioning right to spot page prepare for transition
             if (self.postType == .postToSpot && self.mapVC.spotViewController != nil) {
                 self.mapVC.spotViewController.newPostReset(tags: [])
+                self.navigationController?.popViewController(animated: true)
                 /// go to spot page
             } else {
                 self.mapVC.customTabBar.tabBar.isHidden = false
                 self.postObject.hideFromFeed! && postID != "" ? self.mapVC.profileUploadReset(spotID: spotID, postID: postID, tags: []) : self.mapVC.feedUploadReset()
+                self.popToMap()
             }
-            
-            self.navigationController?.popViewController(animated: true)
-            
         }
+    }
+    
+    func deleteDrafts() {
+        deletePostDraft(timestampID: postObject.actualTimestamp!.seconds, upload: true)
+        deleteSpotDraft(timestampID: postObject.actualTimestamp!.seconds, upload: true)
     }
     
     func popToMap() {
         
         mapVC.customTabBar.tabBar.isHidden = false
+        mapVC.uploadMapReset()
         
         let transition = CATransition()
         transition.duration = 0.3
@@ -443,23 +747,40 @@ class UploadPostController: UIViewController {
             self.navigationController?.view.layer.add(transition, forKey:kCATransition)
             self.navigationController?.popViewController(animated: false)
         }
+        
+        /// for smooth animation, reset on feedUploadReset
+        UIView.animate(withDuration: 0.2) {
+            self.navigationController?.navigationBar.alpha = 0.0
+        }
     }
     
     func runChooseSpotFetch() {
         /// called initially and also after an image is selected
-        if !UploadImageModel.shared.nearbySpots.isEmpty { UploadImageModel.shared.nearbySpots.removeAll(where: {!$0.selected!}) }
-        
         queryReady = false
-        nearbyEnteredCount = 0
-        noAccessCount = 0
-        nearbyRefreshCount = 0
+        nearbyEnteredCount = 0 /// total number of spots in the circle query
+        noAccessCount = 0 /// no privacy access ct
+        appendCount = 0 /// spots appended on this fetch
+        nearbyRefreshCount = 0 /// incremented once with POI load, once with Spot load
+        if fetchImmediately { showSpotLoadingState() } /// show loading state if resetting post location
         
         getNearbySpots()
         getNearbyPOIs()
     }
     
+    func showSpotLoadingState() {
+        /// show empty row during fetch to account for lag beteen location change/spot fetch
+        if newSpotName != "" || spotObject != nil { return }
+        if let spotCell = uploadTable.cellForRow(at: IndexPath(row: 1, section: 0)) as? UploadChooseSpotCell {
+            DispatchQueue.main.async {
+                spotCell.loading = true
+                spotCell.chooseSpotCollection.reloadData()
+            }
+        }
+    }
+    
     func getNearbyPOIs() {
         
+        if search != nil { search.cancel() }
         let searchRequest = MKLocalPointsOfInterestRequest(center: CLLocationCoordinate2D(latitude: postObject.postLat, longitude: postObject.postLong), radius: 200)
         
         /// these filters will omit POI's with nil as their category. This can occasionally exclude some desirable POI's but primarily excludes junk
@@ -515,8 +836,21 @@ class UploadPostController: UIViewController {
                     spotInfo.distance = postLocation.distance(from: spotLocation)
                     spotInfo.spotScore = spotInfo.getSpotRank(location: postLocation)
                     
-                    self.nearbyEnteredCount += 1 /// only need to increment here to keep values consistent for the nearby spot access escape
                     UploadImageModel.shared.nearbySpots.append(spotInfo)
+                    
+                    /// add spot annotation
+                    let annotation = CustomSpotAnnotation()
+                    annotation.coordinate = spotLocation.coordinate
+                    annotation.rank = 0.01
+                    annotation.spotInfo = spotInfo
+                    annotation.isHidden = true
+                    
+                    self.nearbyAnnotations.updateValue(annotation, forKey: spotInfo.id!)
+                    
+                    if !self.spotFilteredByLocation(mapCoordinates: self.mapView.region.boundingBoxCoordinates, spotCoordinates: spotLocation.coordinate) && self.spotObject == nil && self.newSpotName == "" {
+                        self.nearbyAnnotations[spotInfo.id!]?.isHidden = false
+                        DispatchQueue.main.async { self.mapView.addAnnotation(annotation) }
+                    }
                     
                     index += 1; if index == response.mapItems.count { self.endQuery() }
                     
@@ -530,35 +864,48 @@ class UploadPostController: UIViewController {
     
     func getNearbySpots() {
         
-        circleQuery = geoFirestore.query(withCenter: GeoPoint(latitude: postObject.postLat, longitude: postObject.postLong), radius: 0.5)
-        let _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
+        let radius = self.mapView.currentRadius()
+        if locationIsEmpty(location: UserDataModel.shared.currentLocation) || radius == 0 || radius > 6000 { return }
+
+        let fetchRadius: CLLocationDistance = min(max(mapView.currentRadius(), 0.5), 100.0)
+        if circleQuery == nil {
+            /// radius between 0.5 and 100.0
+            circleQuery = geoFirestore.query(withCenter: GeoPoint(latitude: postObject.postLat, longitude: postObject.postLong), radius: fetchRadius)
+            let _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
         
+        } else {
+            /// active listener will account for change
+            circleQuery?.center = self.mapView.centerCoordinate.location
+            circleQuery?.radius = fetchRadius
+            return
+        }
+
         let _ = circleQuery?.observeReady { [weak self] in
-            
+
             guard let self = self else { return }
             if self.cancelOnDismiss { return }
 
             self.queryReady = true
             
+            /// observe ready is sometimes called after all spots loaded, sometimes before due to async nature. Reload here if no spots entered or load is finished
             if self.nearbyEnteredCount == 0 {
                 self.endQuery()
                 
-            } else if self.noAccessCount + UploadImageModel.shared.nearbySpots.count == self.nearbyEnteredCount {
+            } else if self.noAccessCount + self.appendCount == self.nearbyEnteredCount {
                 self.endQuery()
             }
-            
-            self.circleQuery?.removeAllObservers()
         }
     }
     
     func loadSpotFromDB(key: String?, location: CLLocation?) {
         
-        if UploadImageModel.shared.nearbySpots.contains(where: {$0.id == key}) { accessEscape(); return }
+        // 1. check that marker isn't already shown on map
         guard let spotKey = key else { accessEscape(); return }
         guard let coordinate = location?.coordinate else { accessEscape(); return }
-        
+                
+        if self.nearbyAnnotations.contains(where: {$0.key == key}) { accessEscape(); return }
         nearbyEnteredCount += 1
-        
+
         let ref = db.collection("spots").document(spotKey)
         ref.getDocument { [weak self] (doc, err) in
             
@@ -597,8 +944,25 @@ class UploadPostController: UIViewController {
                         self.noAccessCount += 1; self.accessEscape(); return
                     }
                     
+                    self.appendCount += 1
                     UploadImageModel.shared.nearbySpots.append(spotInfo)
                     self.accessEscape()
+                    
+                    /// add spot to map
+                    let annotation = CustomSpotAnnotation()
+                    annotation.coordinate = coordinate
+                    annotation.spotInfo = spotInfo
+                    annotation.title = spotInfo.spotName
+                    annotation.rank = self.getMapRank(spot: annotation.spotInfo)
+                    annotation.isHidden = true
+                    
+                    self.nearbyAnnotations.updateValue(annotation, forKey: spotInfo.id!)
+                    
+                    if !self.spotFilteredByLocation(mapCoordinates: self.mapView.region.boundingBoxCoordinates, spotCoordinates: spotLocation.coordinate) && self.spotObject == nil && self.newSpotName == "" {
+                        self.nearbyAnnotations[spotInfo.id!]?.isHidden = false
+                        DispatchQueue.main.async { self.mapView.addAnnotation(annotation) }
+                    }
+                    
                     
                 } else { self.noAccessCount += 1; self.accessEscape(); return }
             } catch { self.noAccessCount += 1; self.accessEscape(); return }
@@ -607,84 +971,88 @@ class UploadPostController: UIViewController {
     
     
     func accessEscape() {
-        if noAccessCount + UploadImageModel.shared.nearbySpots.count == nearbyEnteredCount && queryReady { endQuery() }
+        if noAccessCount + appendCount == nearbyEnteredCount && queryReady { endQuery() }
     }
     
     func endQuery() {
         nearbyRefreshCount += 1
         if nearbyRefreshCount < 2 { return } /// avoid refresh on the initial POI fetch for smoother tableView loading
-        reloadChooseSpot(resort: true)
+        reloadChooseSpot(resort: true, spotSelect: false)
     }
     
     func selectSpot(index: Int, select: Bool, fromMap: Bool) {
         
-        /// deselect spot,, select new if applicable
+        Mixpanel.mainInstance().track(event: "UploadSpotSelect", properties: ["select": fromMap, "fromMap": fromMap])
         
+        /// deselect spot,, select new if applicable
         if let i = UploadImageModel.shared.nearbySpots.firstIndex(where: {$0.selected!}) { UploadImageModel.shared.nearbySpots[i].selected = false }
         postObject.spotName = ""
         spotObject = nil
                 
         if select {
-            postType = postObject.createdBy == "" ? .postToPOI : .postToSpot
             UploadImageModel.shared.nearbySpots[index].selected = true
             postObject.spotName = UploadImageModel.shared.nearbySpots[index].spotName
             spotObject = UploadImageModel.shared.nearbySpots[index]
             postObject.spotPrivacy = spotObject.privacyLevel
+            postType = spotObject.founderID == "" ? .postToPOI : .postToSpot
+            UploadImageModel.shared.tappedLocation = CLLocation() /// reset tapped location on spot select-> user can choose a new location in relation to the new spot
         }
         
         let spotPrivacy = spotObject != nil ? spotObject.privacyLevel : submitPublic ? "public" : "friends"
         postObject.privacyLevel = spotPrivacy == "invite" ? "invite" : spotPrivacy == "friends" ? "friends" : postObject.privacyLevel == "invite" ? "friends" : spotPrivacy
         postObject.spotPrivacy = spotPrivacy
         
+        filterSpots() /// filter map before moving map on set post location to get correct hidden values set
         if select { setPostLocation() }
-        resetImages()
-        reloadChooseSpot(resort: fromMap)
+        resetImages() /// resort images by location
+        reloadChooseSpot(resort: fromMap, spotSelect: true)
         addPostButton() /// set postButtonAlpha based on if spot selected
+
+        /// show just this spot anno on th
+        /// e map
+        if !nearbyAnnotations.contains(where: {$0.key == spotObject.id!}) {
+            addSpotAnno(spot: spotObject)
+        }
     }
     
-    func reloadChooseSpot(resort: Bool) {
-        
+    func reloadChooseSpot(resort: Bool, spotSelect: Bool) {
+
         DispatchQueue.main.async { [weak self] in
             
             guard let self = self else { return }
             
-            self.reloadOverviewDetail()
-
-            if self.spotObject != nil || self.newSpotName != "" {
-                self.tableView.performBatchUpdates {
-                    self.tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .fade)
+            /// spotSelect is true for select AND deselect
+            if spotSelect {
+                self.reloadOverviewDetail()
+                if self.spotObject != nil || self.newSpotName != "" {
+                    self.uploadTable.performBatchUpdates {
+                        self.uploadTable.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .fade)
+                    }
+                    /// only need to show the selected spot / remove the choose spot row if selecting new
+                    return
                 }
-                return
             }
                     
-            guard let chooseCell = self.tableView.cellForRow(at: IndexPath(row: 1, section: 0)) as? UploadChooseSpotCell else { return }
-            
-            /// sort by spotscore the first time through
-            if !chooseCell.loaded {
-                UploadImageModel.shared.nearbySpots.sort(by: {$0.spotScore > $1.spotScore})
-                chooseCell.loaded = true
-            }
+            guard let chooseCell = self.uploadTable.cellForRow(at: IndexPath(row: 1, section: 0)) as? UploadChooseSpotCell else { return }
             
             chooseCell.chooseSpotCollection.performBatchUpdates {
                 
                 if resort {
-                    /// put selected spot first if sorting from map
+                    /// if not selecting, resort
                     if !UploadImageModel.shared.nearbySpots.isEmpty {
                         let postCoordinate = CLLocationCoordinate2D(latitude: self.postObject.postLat, longitude: self.postObject.postLong)
                         UploadImageModel.shared.resortSpots(coordinate: postCoordinate)
-                        if chooseCell.chooseSpotCollection.numberOfItems(inSection: 0) > 0 {
-                            chooseCell.chooseSpotCollection.scrollToItem(at: IndexPath(item: 0, section: 0), at: .left, animated: true)
-                        }
                     }
                 }
                 
+                chooseCell.loading = false
                 chooseCell.chooseSpotCollection.reloadSections(IndexSet(0...0))
             }
         }
     }
     
     func resetImages() {
-        guard let imagesCell = tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
+        guard let imagesCell = uploadTable.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
         imagesCell.sortAndReload(location: CLLocation(latitude: postObject.postLat, longitude: postObject.postLong))
     }
         
@@ -703,19 +1071,26 @@ class UploadPostController: UIViewController {
     }
     
     func presentTagPicker() {
+        
         if maskView != nil && maskView.superview != nil { return }
+        closeKeyboard() /// close caption keyboard if open
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         window?.addSubview(maskView)
                 
-        let tagView = UploadChooseTagView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 300, width: UIScreen.main.bounds.width, height: 300))
-        tagView.setUp(tag: postObject.tag ?? "")
+        let tagView = UploadChooseTagView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 350, width: UIScreen.main.bounds.width, height: 350))
+        tagView.layer.cornerRadius = 8
+        tagView.layer.cornerCurve = .continuous
+        tagView.tag = 100
+        tagView.setUp()
         tagView.delegate = self
         maskView.addSubview(tagView)
     }
     
     func openCamera() {
         
+        if navigationController?.viewControllers.contains(where: {$0.isKind(of: AVCameraController.self)}) ?? false { return }
+
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
             DispatchQueue.main.async {
                 self.navigationController?.pushViewController(vc, animated: true)
@@ -725,31 +1100,28 @@ class UploadPostController: UIViewController {
     
     func openGallery() {
         
+        if navigationController?.viewControllers.contains(where: {$0.isKind(of: PhotosContainerController.self)}) ?? false { return }
+        
         if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "PhotosContainer") as? PhotosContainerController {
             
             vc.spotObject = spotObject
-            if PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited { vc.limited = true }
-            
             DispatchQueue.main.async {
                 self.navigationController?.pushViewController(vc, animated: true)
             }
         }
     }
     
-    func pushLocationPicker() {
-        
+    func switchToChooseSpot() {
         if passedSpot != nil { return } /// cant edit spot on passed spot
-        
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "LocationPicker") as? LocationPickerController {
-            
-            vc.passedLocation = CLLocation(latitude: postObject.postLat, longitude: postObject.postLong)
-            vc.delegate = self
-            
-            navigationController?.pushViewController(vc, animated: true)
-        }
+        closeKeyboard() /// close caption keyboard if open
+        animateToChooseSpot()
+        nearbyTable.reloadData()
     }
     
     func pushInviteFriends() {
+        
+        if navigationController?.viewControllers.contains(where: {$0.isKind(of: InviteFriendsController.self)}) ?? false { return }
+        closeKeyboard() /// close caption keyboard if open
         
         if let inviteVC = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "InviteFriends") as? InviteFriendsController {
             
@@ -766,7 +1138,7 @@ class UploadPostController: UIViewController {
             inviteVC.queryFriends = friends
             inviteVC.delegate = self
             
-            navigationController?.pushViewController(inviteVC, animated: true)
+            self.present(inviteVC, animated: true, completion: nil)
         }
     }
     
@@ -774,6 +1146,7 @@ class UploadPostController: UIViewController {
         
         postType = .none
         newSpotName = ""
+        newSpotID = ""
         postObject.spotName = ""
         postObject.privacyLevel = "friends"
         
@@ -788,10 +1161,26 @@ class UploadPostController: UIViewController {
         if abs(coordinate1.latitude - coordinate2.latitude) + abs(coordinate1.longitude - coordinate2.longitude) < 0.01 { return true }
         return false
     }
+    
+    /// show flip animation from spotIcon to tag
+    func runTagTransition() {
         
+        guard let overviewCell = self.uploadTable.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
+        UIView.transition(with: overviewCell.spotIcon,
+                          duration: 0.5,
+                          options: .transitionFlipFromRight,
+                          animations: {
+                            overviewCell.spotIcon.image = Tag(name: UploadImageModel.shared.selectedTag).image
+            
+        }) { [weak self] _ in
+            guard let self = self else { return }
+            self.reloadOverviewDetail()
+        }
+    }
+                          
     /// reload detail view to show "is ___" + spotName
     func reloadOverviewDetail() {
-        guard let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
+        guard let cell = uploadTable.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
         cell.loadDetailView(post: postObject)
     }
     
@@ -800,12 +1189,12 @@ class UploadPostController: UIViewController {
     }
     
     func removePreviews() {
-        
         for sub in maskView.subviews { sub.removeFromSuperview() }
         maskView.removeFromSuperview()
     }
     
     func runFailedUpload(spot: MapSpot, post: MapPost, selectedImages: [UIImage], actualTimestamp: Date) {
+        Mixpanel.mainInstance().track(event: "UploadPostFailed", properties: nil)
         saveToDrafts(spot: spot, post: post, selectedImages: selectedImages, actualTimestamp: actualTimestamp)
         showFailAlert()
     }
@@ -840,7 +1229,7 @@ class UploadPostController: UIViewController {
             
             spotObject.spotName = spot.spotName
             spotObject.spotDescription = spot.spotDescription
-            spotObject.tags = [post.tag ?? ""]
+            spotObject.tag = post.tag ?? ""
             spotObject.taggedUsernames = post.taggedUsers!
             spotObject.taggedIDs = post.taggedUserIDs
             spotObject.postLat = post.postLat
@@ -861,6 +1250,7 @@ class UploadPostController: UIViewController {
             spotObject.gif = post.gif ?? false
             spotObject.friendsList = post.friendsList
             spotObject.city = post.city ?? ""
+            spotObject.poiCategory = spot.poiCategory ?? ""
             
             let timestamp = actualTimestamp.timeIntervalSince1970
             let seconds = Int64(timestamp)
@@ -921,13 +1311,9 @@ class UploadPostController: UIViewController {
     }
 }
 
-// image methods
-extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, LocationPickerDelegate, InviteFriendsDelegate, ChooseTagDelegate, PrivacyPickerDelegate, ShowOnFeedDelegate {
-    
-    func locationPickerNewSpotTap() {
-        presentAddNew()
-    }
-    
+// delegate methods
+extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, InviteFriendsDelegate, ChooseTagDelegate, PrivacyPickerDelegate, ShowOnFeedDelegate {
+        
     func finishPassingLocationPicker(spot: MapSpot) {
         
         /// deselect old spot
@@ -935,7 +1321,16 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
             UploadImageModel.shared.nearbySpots[i].selected = false
         }
         
+        /// remove new spot anno from map
+        if newSpotID != "" {
+            if let anno = nearbyAnnotations.first(where: {$0.key == newSpotID}) {
+                mapView.removeAnnotation(anno.value)
+                nearbyAnnotations.removeValue(forKey: newSpotID)
+            }
+        }
+        
         newSpotName = ""
+        newSpotID = ""
         
         /// select new spot
         if let i = UploadImageModel.shared.nearbySpots.firstIndex(where: {$0.id == spot.id}) { selectSpot(index: i, select: true, fromMap: true) } else {
@@ -945,6 +1340,8 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
     }
     
     func finishPassingPrivacy(tag: Int) {
+
+        Mixpanel.mainInstance().track(event: "UploadPrivacySelected", properties: ["tag": tag])
 
         switch tag {
             
@@ -978,6 +1375,7 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
     }
     
     func finishPassingVisibility(hide: Bool) {
+        Mixpanel.mainInstance().track(event: "UploadVisibilitySelected", properties: ["hide": hide])
         postObject.hideFromFeed = hide
     }
     
@@ -988,6 +1386,8 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
             UploadImageModel.shared.nearbySpots[i].selected = false
             overrideSelection = true
         }
+        
+        Mixpanel.mainInstance().track(event: "UploadNameSelected", properties: ["override selection": overrideSelection])
 
         newSpotName = name
         postObject.spotName = name
@@ -995,22 +1395,33 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
         
         removePreviews()
         newView = nil
-        reloadChooseSpot(resort: false)
+        reloadChooseSpot(resort: false, spotSelect: true)
         addPostButton()
 
+        /// spot location will be in the same place if no spot already selected, only need to reset if spot selected before
         if overrideSelection {
             setPostLocation()
             resetImages()
         }
+        
+        var newSpot = MapSpot(spotDescription: "", spotName: newSpotName, spotLat: postObject.postLat, spotLong: postObject.postLong, founderID: uid, privacyLevel: "", imageURL: "")
+        newSpot.id = UUID().uuidString
+        newSpotID = newSpot.id!
+        addSpotAnno(spot: newSpot)
+        filterSpots()
     }
     
     func finishPassingTag(tag: Tag) {
 
+        let animate = tag.selected && UploadImageModel.shared.selectedTag == ""
         postObject.tag = tag.selected ? tag.name : ""
+        UploadImageModel.shared.selectedTag = tag.selected ? tag.name : ""
         
+        Mixpanel.mainInstance().track(event: "UploadTagSelected", properties: ["tag": tag.name, "selected": tag.selected])
+
         DispatchQueue.main.async {
             self.removePreviews()
-            self.reloadOverviewDetail()
+            animate ? self.runTagTransition() : self.reloadOverviewDetail()
         }
     }
     
@@ -1018,6 +1429,7 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
         
         postObject.addedUsers = selected.map({$0.id ?? ""})
         postObject.addedUserProfiles = selected
+        Mixpanel.mainInstance().track(event: "UploadFriendsSelected", properties: ["friendCount": selected.count, "privacyLevel": postObject.privacyLevel ?? "friends"])
         
         if postObject.privacyLevel == "invite" {
             postObject.inviteList = postObject.addedUsers!
@@ -1031,17 +1443,20 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
     
     func finishPassingFromCamera(images: [UIImage]) {
         
+        Mixpanel.mainInstance().track(event: "UploadSelectFromCamera", properties: nil)
+
         let gifMode = images.count > 1
-        let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: images.first ?? UIImage(), animationImages: gifMode ? images : [], gifMode: gifMode, creationDate: Date(), fromCamera: true)
+        let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: images.first ?? UIImage(), animationImages: gifMode ? images : [], animationIndex: 0, directionUp: true, gifMode: gifMode, creationDate: Date(), fromCamera: true)
         UploadImageModel.shared.scrollObjects.append(object)
         
-        UploadImageModel.shared.selectedObjects.append(object)
         sortAndReloadImages(newSelection: true, fromGallery: false)
     }
     
     /// not a delegate method because just notifying to check selected images on select tap
     func finishPassingFromGallery() {
         
+        Mixpanel.mainInstance().track(event: "UploadSelectFromGallery", properties: nil)
+
         UploadImageModel.shared.scrollObjects.removeAll()
         for object in UploadImageModel.shared.selectedObjects {
             UploadImageModel.shared.scrollObjects.append(object)
@@ -1051,6 +1466,8 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
     }
     
     func cancelFromGallery() {
+        
+        Mixpanel.mainInstance().track(event: "UploadCancelFromGallery", properties: nil)
         
         /// reset selectedImages and imageObjects
         UploadImageModel.shared.selectedObjects.removeAll()
@@ -1069,16 +1486,16 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
     }
     
     func selectImage(cellIndex: Int, galleryIndex: Int, circleTap: Bool) {
-        
+                
         if UploadImageModel.shared.selectedObjects.count > 4 { return } /// show error alert
         guard let selectedObject = UploadImageModel.shared.imageObjects[safe: galleryIndex] else { return }
         
         if selectedObject.image.stillImage != UIImage() {
-            Mixpanel.mainInstance().track(event: "UploadCircleTap", properties: ["selected": true])
+            Mixpanel.mainInstance().track(event: "UploadSelectImage", properties: ["selected": true])
             setCircleTapAt(index: galleryIndex, selected: true)
             
         } else {
-            guard let imagesCell = tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
+            guard let imagesCell = uploadTable.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
             guard let cell = imagesCell.imagesCollection.cellForItem(at: IndexPath(row: cellIndex, section: 0)) as? ImagePreviewCell else { return }
             
             /// this cell is fetching, cancel fetch and return
@@ -1104,7 +1521,7 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
                     /// append new image object with fetched image
                     cell.removeActivityIndicator()
                     
-                    Mixpanel.mainInstance().track(event: "UploadCircleTap", properties: ["selected": true])
+                    Mixpanel.mainInstance().track(event: "UploadSelectImage", properties: ["selected": true])
                     self.setCircleTapAt(index: galleryIndex, selected: true)
                 }
             }
@@ -1133,19 +1550,15 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
         
         if cancelOnDismiss { return }
         
-        if newSelection { setPostLocation() }
+        if newSelection || UploadImageModel.shared.scrollObjects.count == 0 { setPostLocation() }
         
-        guard let overviewCell = self.tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
+        guard let overviewCell = self.uploadTable.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadOverviewCell else { return }
         
-        guard let imageCell = tableView.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
+        guard let imageCell = uploadTable.cellForRow(at: IndexPath(row: 2, section: 0)) as? UploadImagesCell else { return }
         imageCell.setImages(reload: true)
 
         DispatchQueue.main.async {
                         
-            /// if removing or adding the collection, reload everything. otherwise reload the collection
-            if (UploadImageModel.shared.scrollObjects.count == 0) || (UploadImageModel.shared.scrollObjects.count == 1 && newSelection) || (fromGallery) {
-                self.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .fade)
-            }
             overviewCell.selectedCollection.performBatchUpdates {
                 overviewCell.selectedCollection.reloadSections(IndexSet(0...0))
                 
@@ -1163,7 +1576,7 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
         
         /// update post location, if this is a new post in post #1, re-run choose spot fetch with new location
         let previousLong = postObject.postLong
-        var runFetch = false
+        let previousLat = postObject.postLat
         
         /// default: postLocation = user's current location
         var postLocation = CLLocationCoordinate2D(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude)
@@ -1175,25 +1588,25 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
             
             /// 2. use tapped location from map if applicable
         } else if !locationIsEmpty(location: UploadImageModel.shared.tappedLocation) {
-            print("set to tapped location")
             postLocation = CLLocationCoordinate2D(latitude: UploadImageModel.shared.tappedLocation.coordinate.latitude, longitude: UploadImageModel.shared.tappedLocation.coordinate.longitude)
         }
         
         /// 3. use selected spot location
         else if let spot = UploadImageModel.shared.nearbySpots.first(where: {$0.selected!}) {
-            print("use spot location")
             postLocation = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
         }
-        
-        runFetch = !UploadImageModel.shared.nearbySpots.contains(where: {$0.selected!}) /// only run choose spot fetch if spot not selected
-        
+                
         postObject.postLat = postLocation.latitude
         postObject.postLong = postLocation.longitude
         
+        
+        let animated = (abs(postObject.postLat - previousLat) + abs(postObject.postLong - previousLong)) < (abs(mapView.region.span.latitudeDelta) + abs(mapView.region.span.longitudeDelta)) /// only want to animate nearby stuff, animation over a mile or 2 takes too long
+        setPostAnnotation(first: false, animated: animated)
+        
         /// get a new batch of nearby spots if selecting an image
         if postObject.postLong != previousLong {
+            fetchImmediately = true
             setPostCity() /// set post city with every location change
-            if runFetch { runChooseSpotFetch() }
         }
     }
     
@@ -1205,7 +1618,7 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
     }
     
     func deselectImage(index: Int, circleTap: Bool) {
-        Mixpanel.mainInstance().track(event: "UploadCircleTap", properties: ["selected": false])
+        Mixpanel.mainInstance().track(event: "UploadSelectImage", properties: ["selected": false])
         setCircleTapAt(index: index, selected: false)
     }
     
@@ -1213,7 +1626,7 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
         
         Mixpanel.mainInstance().track(event: "UploadCancelImageFetch")
         
-        guard let imageCell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadImagesCell else { return }
+        guard let imageCell = uploadTable.cellForRow(at: IndexPath(row: 0, section: 0)) as? UploadImagesCell else { return }
         guard let cell = imageCell.imagesCollection.cellForItem(at: IndexPath(row: index + 1, section: 0)) as? ImagePreviewCell else { return }
         
         guard let currentObject = UploadImageModel.shared.scrollObjects[safe: index] else { return }
@@ -1228,10 +1641,14 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
         switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
             
         case .notDetermined:
+            /// set nav bar item colors in case using limited gallery
+            UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.systemBlue], for: .normal)
+            UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.systemBlue], for: .highlighted)
             PHPhotoLibrary.requestAuthorization { _ in self.askForGallery(first: false) }
             
         case .restricted, .denied:
             
+            /// if restricted / denied on the first time asking for gallery, prompt user to open settings
             if first {UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return }
             
             let alert = UIAlertController(title: "Allow gallery access to upload pictures from your camera roll", message: nil, preferredStyle: .alert)
@@ -1242,6 +1659,8 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
             
             
         case .authorized, .limited:
+            UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .normal)
+            UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .highlighted)
             UploadImageModel.shared.galleryAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite)
             fetchAssets()
             
@@ -1255,7 +1674,7 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
         present(alert, animated: true)
     }
     
-    func showError() {
+    func showError(message: String) {
         
         let errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 100, width: UIScreen.main.bounds.width, height: 32))
         errorBox.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
@@ -1266,7 +1685,7 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
         errorText.numberOfLines = 0
         errorText.textColor = UIColor.white
         errorText.textAlignment = .center
-        errorText.text = "Choose a spot before posting"
+        errorText.text = message
         errorText.font = UIFont(name: "SFCamera-Regular", size: 14)!
         errorBox.addSubview(errorText)
         
@@ -1280,15 +1699,14 @@ extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, Locatio
 extension UploadPostController: UIGestureRecognizerDelegate {
     
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        
+
         if touch.view == nil { return false }
-        // only close view on touch outside of textView
-        if (touch.view!.isKind(of: UploadChooseTagView.self) || touch.view!.isKind(of: UICollectionView.self) || touch.view!.isKind(of: UploadTagCell.self)) { return false }
+        /// only close view on touch outside of textView. use tag of 100 when tag not used for other properties
+        if touch.view!.isKind(of: UICollectionView.self) || touch.view!.isKind(of: UploadTagCell.self) || touch.view!.isKind(of: TagCategoryCell.self) || touch.view!.tag == 100 { return false }
         // avoid accidental closures when typing new spot name
         if (touch.view!.isKind(of: NewSpotNameView.self)) { return false }
         // for keyboard close
         if touch.view!.isKind(of: UITextView.self) { return false }
-        
         return true
     }
     
@@ -1297,56 +1715,332 @@ extension UploadPostController: UIGestureRecognizerDelegate {
 extension UploadPostController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 4
+        switch tableView.tag {
+        case 0: return 3 /// uploadTable
+        case 1: return min(UploadImageModel.shared.nearbySpots.count, 25) /// nearbyTable
+        case 2: return min(querySpots.count, 7) /// resultsTable
+        default: return 0
+        }
     }
     
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        switch indexPath.row {
+        switch tableView.tag {
         case 0:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "UploadOverview") as? UploadOverviewCell else { return UITableViewCell() }
-            cell.setUp(post: postObject)
-            return cell
+            switch indexPath.row {
+            case 0:
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: "UploadOverview") as? UploadOverviewCell else { return UITableViewCell() }
+                cell.setUp(post: postObject)
+                cell.clipsToBounds = true
+                return cell
+                
+            case 1:
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseSpot") as? UploadChooseSpotCell else { return UITableViewCell() }
+                let selected = spotObject != nil
+                cell.setUp(newSpotName: newSpotName, selected: selected, post: postObject)
+                cell.clipsToBounds = true
+                return cell
+                
+            case 2:
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: "UploadImages") as? UploadImagesCell else { return UITableViewCell() }
+                cell.setUp()
+                return cell
+                
+            default: return UITableViewCell()
+            }
             
-        case 1:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseSpot") as? UploadChooseSpotCell else { return UITableViewCell() }
-            let selected = spotObject != nil
-            cell.setUp(newSpotName: newSpotName, selected: selected, post: postObject)
-            cell.clipsToBounds = true
+        default:
+            /// used for both choose spot / results tables
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseSpotCell") as? LocationPickerSpotCell else { return UITableViewCell() }
+            let spot = tableView.tag == 1 ? UploadImageModel.shared.nearbySpots[indexPath.row] : querySpots[indexPath.row]
+            cell.tag = tableView.tag
+            cell.setUp(spot: spot)
             return cell
-            
-        case 2:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "UploadImages") as? UploadImagesCell else { return UITableViewCell() }
-            cell.setUp()
-            return cell
-            
-        case 3:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "Privacy") as? UploadPrivacyCell else { return UITableViewCell() }
-            cell.setUp()
-            cell.clipsToBounds = true
-            return cell
-            
-        default: return UITableViewCell()
         }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        
-        let screenSize = UserDataModel.shared.screenSize
-        let bodyHeight: CGFloat = screenSize == 0 ? 172 : screenSize == 1 ? 177 : 200
-        var collectionHeight: CGFloat = 15
-        if !UploadImageModel.shared.scrollObjects.isEmpty { collectionHeight += screenSize == 0 ? 120 * 1.3266 : screenSize == 1 ? 130 * 1.3266 : 150 * 1.3266 }
-        
-        let imageWidth = UIScreen.main.bounds.width / 5.4166
-        let imageHeight = imageWidth * 1.21388
-        let imagesCellHeight: CGFloat = screenSize == 0 ? imageHeight + 50 : imageHeight * 2 + 58
-        
-        switch indexPath.row {
-        case 0: return collectionHeight + bodyHeight
-        case 1: return spotObject == nil && newSpotName == "" ? 96 : 0
-        case 2: return imagesCellHeight
-        case 3: return spotObject == nil && newSpotName == "" ? 0 : 48
+        switch tableView.tag {
+        case 0:
+            let screenSize = UserDataModel.shared.screenSize
+            var bodyHeight: CGFloat = spotObject == nil && newSpotName == "" ? 0 : 96
+            bodyHeight += screenSize == 0 ? 112 : screenSize == 1 ? 117 : 140
+            var collectionHeight: CGFloat = 15
+            collectionHeight += screenSize == 0 ? 120 * 1.3266 : screenSize == 1 ? 130 * 1.3266 : 160 * 1.3266
+            
+            let imageWidth = UIScreen.main.bounds.width / 5.4166
+            let imageHeight = imageWidth * 1.21388
+            let imagesCellHeight: CGFloat = screenSize == 0 ? imageHeight + 50 : imageHeight * 2 + 58
+            
+            switch indexPath.row {
+                case 0: return collectionHeight + bodyHeight
+                case 1: return spotObject == nil && newSpotName == "" ? 96 : 0
+                case 2: return imagesCellHeight
+                default: return 0
+            }
+        case 1: return 62
+        case 2: return 53
         default: return 0
         }
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        /// new spot selection from nearby/upload
+        let spot = tableView.tag == 1 ? UploadImageModel.shared.nearbySpots[indexPath.row] : querySpots[indexPath.row]
+        searchBar.endEditing(true)
+        finishPassingLocationPicker(spot: spot)
+        animateToUpload()
+    }
 }
+
+extension UploadPostController: MKMapViewDelegate {
+        
+    func setPostAnnotation(first: Bool, animated: Bool) {
+        
+        let distance: CLLocationDistance = first ? 1000 : mapView.camera.centerCoordinateDistance
+        let coordinate = CLLocationCoordinate2D(latitude: postObject.postLat, longitude: postObject.postLong)
+        let centerOffset = chooseSpotMode ? 0.0008 : 0.0018
+        let adjustedCenter = CLLocationCoordinate2D(latitude: coordinate.latitude - centerOffset, longitude: coordinate.longitude)
+        let camera = MKMapCamera(lookingAtCenter: adjustedCenter, fromDistance: distance, pitch: 0, heading: 0)
+
+        DispatchQueue.main.async {
+            self.mapView.setCamera(camera, animated: animated)
+            self.postAnnotation.coordinate = coordinate
+            if first { self.mapView.addAnnotation(self.postAnnotation) }
+        }
+
+        return
+    }
+    
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+                
+        if annotation is CustomPointAnnotation {
+            /// main location annotation
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Upload") as? UploadAnnotationView
+            
+            if annotationView == nil {
+                annotationView = UploadAnnotationView(annotation: annotation, reuseIdentifier: "Upload")
+            } else {
+                annotationView!.annotation = annotation
+            }
+            
+            if !cancelOnDismiss {
+                let nibView = loadUploadNib()
+                annotationView!.image = nibView.asImage()
+                
+            } else {
+                let nibView = self.loadPostDown()
+                annotationView!.image = nibView.asImage()
+            }
+                        
+            annotationView!.sizeToFit()
+            return annotationView
+                            
+        } else if let anno = annotation as? CustomSpotAnnotation {
+            
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier) as? SpotAnnotationView
+            if annotationView == nil {
+                annotationView = SpotAnnotationView(annotation: anno, reuseIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier)
+            } else {
+                annotationView!.annotation = annotation
+            }
+
+            annotationView?.clusteringIdentifier = Bundle.main.bundleIdentifier! + ".SpotAnnotationView"
+            let nibView = loadSpotNib()
+            
+            var spotName = ""
+            if let anno = self.nearbyAnnotations.first(where: {$0.value.spotInfo.id == anno.spotInfo.id}) {
+                spotName = anno.value.spotInfo.spotName
+            }
+            
+            nibView.spotNameLabel.text = spotName
+            
+            let temp = nibView.spotNameLabel
+            temp?.sizeToFit()
+            nibView.resizeBanner(width: temp?.frame.width ?? 0)
+            
+            let nibImage = nibView.asImage()
+            annotationView!.image = nibImage
+            annotationView!.alpha = 0.25
+            annotationView!.isUserInteractionEnabled = false
+            
+            return annotationView
+            
+        } else if annotation is MKClusterAnnotation {
+            // spot banner view as cluster
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier) as? SpotClusterView
+            
+            if annotationView == nil {
+                annotationView = SpotClusterView(annotation: annotation, reuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
+            }
+            
+            else { annotationView?.annotation = annotation }
+            
+            annotationView!.alpha = 0.4
+            annotationView!.updateImage(annotations: Array(nearbyAnnotations.values))
+            annotationView!.isUserInteractionEnabled = false
+            
+            return annotationView
+        }
+        else { return nil }
+    }
+    
+    func mapView(_ mapView: MKMapView, didAdd views: [MKAnnotationView]) {
+        /// disable userlocation callout on tap
+        if let userView = mapView.view(for: mapView.userLocation) { userView.isEnabled = false }
+        if let uploadView = views.first(where: {$0 is UploadAnnotationView}) { mapView.bringSubviewToFront(uploadView) } /// bring profile in front of other spots
+    }
+    
+    func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+
+        let span = mapView.region.span
+        if span.longitudeDelta < 0.001 {
+            /// remove clustering if zoomed in far (check here if zoom went over boundary on this zoom)
+            if self.shouldCluster {
+                self.shouldCluster = false
+                let annotations = self.mapView.annotations
+                DispatchQueue.main.async {
+                    self.mapView.removeAnnotations(annotations)
+                    self.mapView.addAnnotations(annotations)
+                }
+            }
+        } else {
+            if !self.shouldCluster {
+                self.shouldCluster = true
+                let annotations = self.mapView.annotations
+                DispatchQueue.main.async {
+                    self.mapView.removeAnnotations(annotations)
+                    self.mapView.addAnnotations(annotations)
+                }
+            }
+        }
+        
+        /// should update region is on a delay so that it doesn't get called constantly on the map pan
+        if shouldUpdateRegion && queryReady {
+        
+            shouldUpdateRegion = false
+            let delay = fetchImmediately ? 0.0 : 2.0
+            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + delay) { [weak self] in
+                
+                guard let self = self else { return }
+                
+                self.shouldUpdateRegion = true
+                if !mapView.region.IsValid { return }
+                self.filterSpots()
+                self.runChooseSpotFetch()
+                self.fetchImmediately = false
+            }
+        }
+    }
+
+    // set location on tap
+    @objc func mapTap(_ sender: UITapGestureRecognizer) {
+        
+        Mixpanel.mainInstance().track(event: "UploadMapTap")
+        
+        let location = sender.location(in: mapView)
+        let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
+    
+        UploadImageModel.shared.tappedLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude) /// tappedLocation will take precedence over spot
+        postObject.postLat = coordinate.latitude
+        postObject.postLong = coordinate.longitude
+        setPostAnnotation(first: false, animated: true)
+        
+        setPostCity() /// set post city with every location change
+        resetImages()
+        reloadChooseSpot(resort: true, spotSelect: false)
+        DispatchQueue.main.async { self.nearbyTable.reloadSections(IndexSet(0...0), with: .automatic) }
+    }
+
+    func filterSpots() {
+        
+        for anno in nearbyAnnotations {
+            
+            if spotObject != nil || newSpotName != "" {
+                
+                if (spotObject != nil && anno.value.spotInfo.id != spotObject.id) || (newSpotName != "" && anno.value.spotInfo.spotName != newSpotName) {
+                    DispatchQueue.main.async { self.hideAnnotation(anno: anno.value) }
+                    
+                } else if !cancelOnDismiss {
+                    DispatchQueue.main.async { self.unhideAnnotation(anno: anno.value) }
+                }
+                continue
+                
+            } else if mapView.spotFilteredByLocation(spotCoordinates: anno.value.coordinate) {
+                DispatchQueue.main.async { self.hideAnnotation(anno: anno.value) }
+                
+            } else if anno.value.isHidden {
+                /// check if we're adding it back on search page reappear or filter values changed
+                DispatchQueue.main.async { self.unhideAnnotation(anno: anno.value) }
+            }
+        }
+    }
+    
+    func hideAnnotation(anno: CustomSpotAnnotation) {
+        self.nearbyAnnotations[anno.spotInfo.id!]?.isHidden = true
+        self.mapView.removeAnnotation(anno)
+    }
+    
+    func unhideAnnotation(anno: CustomSpotAnnotation) {
+        self.nearbyAnnotations[anno.spotInfo.id!]?.isHidden = true
+        self.mapView.addAnnotation(anno)
+    }
+    
+    func addSpotAnno(spot: MapSpot) {
+        let annotation = CustomSpotAnnotation()
+        annotation.coordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
+        annotation.spotInfo = spot
+        nearbyAnnotations.updateValue(annotation, forKey: spot.id!)
+        DispatchQueue.main.async { self.mapView.addAnnotation(annotation) }
+    }
+
+    func loadSpotNib() -> MapTarget {
+        let infoWindow = MapTarget.instanceFromNib() as! MapTarget
+        infoWindow.clipsToBounds = true
+        infoWindow.spotNameLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        infoWindow.spotNameLabel.numberOfLines = 2
+        infoWindow.spotNameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        infoWindow.spotNameLabel.lineBreakMode = .byWordWrapping
+        
+        return infoWindow
+    }
+    
+    func loadUploadNib() -> UploadAnnotationWindow {
+        let infoWindow = UploadAnnotationWindow.instanceFromNib() as! UploadAnnotationWindow
+        infoWindow.clipsToBounds = true
+        return infoWindow
+    }
+    
+    func loadUploadMiddle() -> UploadWindowMiddle {
+        let infoWindow = UploadWindowMiddle.instanceFromNib() as! UploadWindowMiddle
+        infoWindow.clipsToBounds = true
+        return infoWindow
+    }
+    
+    func loadUploadDown() -> UploadWindowDown {
+        let infoWindow = UploadWindowDown.instanceFromNib() as! UploadWindowDown
+        infoWindow.clipsToBounds = true
+        return infoWindow
+    }
+    
+    func loadPostUp() -> UploadPostUp {
+        let infoWindow = UploadPostUp.instanceFromNib() as! UploadPostUp
+        infoWindow.clipsToBounds = true
+        infoWindow.postImage.contentMode = .scaleAspectFill
+        infoWindow.postImage.clipsToBounds = true
+        infoWindow.postImage.layer.cornerRadius = 8
+        infoWindow.postImage.image = postObject.postImage.first ?? UIImage()
+        return infoWindow
+    }
+    
+    func loadPostDown() -> UploadPostDown {
+        let infoWindow = UploadPostDown.instanceFromNib() as! UploadPostDown
+        infoWindow.clipsToBounds = true
+        infoWindow.postImage.contentMode = .scaleAspectFill
+        infoWindow.postImage.clipsToBounds = true
+        infoWindow.postImage.layer.cornerRadius = 8
+        infoWindow.postImage.image = postObject.postImage.first ?? UIImage()
+        return infoWindow
+    }
+}
+
