@@ -66,7 +66,6 @@ class AVSpotCamera: NSObject {
                     
                     try camera.lockForConfiguration()
                     camera.focusMode = .continuousAutoFocus
-                //    camera.exposureMode = .continuousAutoExposure
                     camera.unlockForConfiguration()
                 }
             }

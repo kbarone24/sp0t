@@ -20,7 +20,7 @@ class UploadChooseTagView: UIView {
     var categoryCollection: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
     var chooseTagCollection: UICollectionView  = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
     
-    var categories: [TagCategory] = [TagCategory(name: "RANDOM", index: 0), TagCategory(name: "ACTIVE", index: 1), TagCategory(name: "EAT & DRINK", index: 2), TagCategory(name: "LIFE", index: 3), TagCategory(name: "NATURE", index: 4)]
+    var categories: [TagCategory] = [TagCategory(name: "RANDOM", index: 0), TagCategory(name: "ACTIVITY", index: 1), TagCategory(name: "EAT & DRINK", index: 2), TagCategory(name: "LIFE", index: 3), TagCategory(name: "NATURE", index: 4)]
     
     var filteredTags: [Tag] = []
    
@@ -43,14 +43,13 @@ class UploadChooseTagView: UIView {
         
         backgroundColor = nil
         
-        filteredTags = UploadImageModel.shared.tags
+        filteredTags = UploadImageModel.shared.sortedTags
         
-        tagWidth = (UIScreen.main.bounds.width - 84) / 6
-        resetView()
+        tagWidth = (UIScreen.main.bounds.width - 84) / 6 - 0.1
         
         let categoryLayout = UICollectionViewFlowLayout()
         categoryLayout.minimumLineSpacing = 10
-        categoryLayout.minimumInteritemSpacing = 15
+        categoryLayout.minimumInteritemSpacing = UserDataModel.shared.screenSize == 2 ? 15 : 10
         categoryLayout.scrollDirection = .horizontal
         
         /// add extra container to show as the background view -> touch area was too tight on the main view so this expands the view up by 20pts and wont close on an accidental mask tap
@@ -66,7 +65,7 @@ class UploadChooseTagView: UIView {
         categoryCollection.register(TagCategoryCell.self, forCellWithReuseIdentifier: "CategoryCell")
         categoryCollection.setCollectionViewLayout(categoryLayout, animated: false)
         categoryCollection.tag = 0
-        categoryCollection.showsHorizontalScrollIndicator = false
+        categoryCollection.isScrollEnabled = false
         backgroundContainer.addSubview(categoryCollection)
         
         let tagLayout = UICollectionViewFlowLayout()
@@ -82,13 +81,24 @@ class UploadChooseTagView: UIView {
         chooseTagCollection.tag = 1
         backgroundContainer.addSubview(chooseTagCollection)
         
+        let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(leftSwipe(_:)))
+        leftSwipe.direction = .left
+        chooseTagCollection.addGestureRecognizer(leftSwipe)
+        
+        let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(rightSwipe(_:)))
+        rightSwipe.direction = .right
+        chooseTagCollection.addGestureRecognizer(rightSwipe)
+
         chooseTagCollection.reloadData()
     }
         
-    func resetView() {
-       // chooseTagCollection.removeFromSuperview()
+    @objc func leftSwipe(_ sender: UISwipeGestureRecognizer) {
+        if selectedIndex < categories.count - 1 { categoryTap(row: selectedIndex + 1) }
     }
     
+    @objc func rightSwipe(_ sender: UISwipeGestureRecognizer) {
+        if selectedIndex > 0 { categoryTap(row: selectedIndex - 1) }
+    }
 }
 
 extension UploadChooseTagView: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -130,25 +140,9 @@ extension UploadChooseTagView: UICollectionViewDelegate, UICollectionViewDataSou
         let selectedTag = UploadImageModel.shared.selectedTag
         
         switch collectionView.tag {
-        case 0:
-            for i in 0...categories.count - 1 { categories[i].selected = false }
-            categories[indexPath.row].selected = true
-            selectedIndex = indexPath.row
             
-            if selectedIndex == 0 {
-                /// random sorting, shuffle if not selected
-                /// shuffle model tags as well to keep order consistent for reopen
-                if selectedTag == "" { UploadImageModel.shared.tags = UploadImageModel.shared.tags.shuffled() }
-                filteredTags = UploadImageModel.shared.tags
-                
-            } else if selectedIndex > 0 {
-                filteredTags = UploadImageModel.shared.tags
-                filteredTags = filteredTags.filter({$0.category == selectedIndex})
-            }
-            /// move selected tag first
-            DispatchQueue.main.async { self.categoryCollection.reloadData(); self.chooseTagCollection.reloadData() }
-            Mixpanel.mainInstance().track(event: "UploadTagCategorySelected", properties: nil)
-
+        case 0: categoryTap(row: indexPath.row)
+            
         case 1:
             let row = indexPath.section * itemsInTagSection + indexPath.row
             var tag = filteredTags[row]
@@ -157,6 +151,29 @@ extension UploadChooseTagView: UICollectionViewDelegate, UICollectionViewDataSou
         
         default: return
         }
+    }
+    
+    func categoryTap(row: Int) {
+        
+        let selectedTag = UploadImageModel.shared.selectedTag
+
+        for i in 0...categories.count - 1 { categories[i].selected = false }
+        categories[row].selected = true
+        selectedIndex = row
+        
+        if selectedIndex == 0 {
+            /// random sorting, shuffle if not selected
+            /// shuffle model tags as well to keep order consistent for reopen
+            if selectedTag == "" { UploadImageModel.shared.sortedTags = UploadImageModel.shared.sortedTags.shuffled() }
+            filteredTags = UploadImageModel.shared.sortedTags
+            
+        } else if selectedIndex > 0 {
+            filteredTags = UploadImageModel.shared.tags() /// use static tags to preserve sorted order
+            filteredTags = filteredTags.filter({$0.category == selectedIndex})
+        }
+        /// move selected tag first
+        DispatchQueue.main.async { self.categoryCollection.reloadData(); self.chooseTagCollection.reloadData() }
+        Mixpanel.mainInstance().track(event: "UploadTagCategorySelected", properties: nil)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -168,11 +185,12 @@ extension UploadChooseTagView: UICollectionViewDelegate, UICollectionViewDataSou
         switch collectionView.tag {
         case 0:
             var sectionWidth: CGFloat = 0
+            let interitemSpacing: CGFloat = UserDataModel.shared.screenSize == 2 ? 15 : 10
             for i in 0...categories.count - 1 {
                 /// add width in between categories if this isn't the last cell in the section
-                sectionWidth += getCategorySize(category: categories[i]).width + (i == categories.count - 1 ? 0 : 15)
+                sectionWidth += getCategorySize(category: categories[i]).width + (i == categories.count - 1 ? 0 : interitemSpacing)
             }
-            let inset = max((UIScreen.main.bounds.width - sectionWidth)/2, 15)
+            let inset = max((UIScreen.main.bounds.width - sectionWidth)/2, 12)
             return UIEdgeInsets(top: 5, left: inset, bottom: 0, right: inset)
 
         case 1:
@@ -194,9 +212,17 @@ extension UploadChooseTagView: UICollectionViewDelegate, UICollectionViewDataSou
     }
     
     func getCategorySize(category: TagCategory) -> CGSize {
+        
         let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 300, height: 18))
         tempLabel.text = category.name
         tempLabel.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        
+        if category.index == 2 {
+            let attString = NSMutableAttributedString(string: tempLabel.text!)
+            attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCamera-Semibold", size: 10) as Any, range: NSRange(location: 4, length: 1))
+            tempLabel.attributedText = attString
+        }
+        
         tempLabel.sizeToFit()
         return CGSize(width: tempLabel.frame.width + 6, height: 30)
     }
@@ -215,6 +241,14 @@ class TagCategoryCell: UICollectionViewCell {
         label.textAlignment = .center
         label.textColor = category.selected ? .white : UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1)
         label.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        
+        /// make & smaller for eat & drink
+        if category.index == 2 {
+            let attString = NSMutableAttributedString(string: label.text!)
+            attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCamera-Semibold", size: 10) as Any, range: NSRange(location: 4, length: 1))
+            label.attributedText = attString
+        }
+        
         addSubview(label)
         
         if underLine != nil { underLine.backgroundColor = nil }

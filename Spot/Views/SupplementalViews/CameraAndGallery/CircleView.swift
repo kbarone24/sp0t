@@ -11,6 +11,8 @@ import UIKit
 
 class CircleView: UIView {
     
+    var number: UILabel!
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
     }
@@ -21,17 +23,20 @@ class CircleView: UIView {
     
     func setUp(index: Int) {
         
-        layer.borderWidth = 1.25
-        isUserInteractionEnabled = false
-        layer.borderColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.85).cgColor
-        layer.cornerRadius = bounds.width/2
+        let gallery = bounds.height < 25
         
+        layer.borderWidth = gallery ? 1.25 : 1.5
+        isUserInteractionEnabled = false
+        layer.borderColor = UIColor(red: 1, green: 1, blue: 1, alpha: 1).cgColor
+        layer.cornerRadius = gallery ? 9 : 16
+        
+        if number != nil { number.text = "" }
+        number = UILabel(frame: CGRect(x: 0, y: bounds.height/2 - 15/2, width: bounds.width, height: 15))
+
         if index > 0 {
             
-            backgroundColor = UIColor(red: 0.07, green: 0.75, blue: 0.71, alpha: 1.00)
+            backgroundColor = UIColor(red: 0.18, green: 0.776, blue: 0.816, alpha: 1)
             
-            let minY: CGFloat = bounds.height > 25 ? 6.5 : 4
-            let number = UILabel(frame: CGRect(x: 0, y: minY, width: bounds.width, height: 15))
             number.text = String(index)
             number.textColor = .white
             let size: CGFloat = bounds.height > 25 ? 16 : 14

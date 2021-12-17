@@ -1,5 +1,5 @@
 //
-//  UploadAnnotationView.swift
+//  UploadWindowUp.swift
 //  Spot
 //
 //  Created by Kenny Barone on 11/22/21.
@@ -9,8 +9,8 @@
 import Foundation
 import UIKit
 
-class UploadAnnotationWindow: UIView {
+class UploadWindowUp: UIView {
     class func instanceFromNib() -> UIView {
-        return UINib(nibName: "UploadAnnotationWindow", bundle: nil).instantiate(withOwner: self, options: nil).first as! UIView
+        return UINib(nibName: "UploadWindowUp", bundle: nil).instantiate(withOwner: self, options: nil).first as! UIView
     }
 }

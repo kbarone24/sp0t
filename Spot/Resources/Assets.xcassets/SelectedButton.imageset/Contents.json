@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "ImagePreviewAliveOn1x.png",
+      "filename" : "Selected1x(1).png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "ImagePreviewAliveOn2x.png",
+      "filename" : "Selected2x(1).png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "ImagePreviewAliveOn3x.png",
+      "filename" : "Selected3x(1).png",
       "idiom" : "universal",
       "scale" : "3x"
     }

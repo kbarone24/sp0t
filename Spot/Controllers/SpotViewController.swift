@@ -322,6 +322,12 @@ class SpotViewController: UIViewController {
         getVisitorInfo(refresh: true)
     }
     
+    /// returning from upload 
+    func uploadReset() {
+        setUpNavBar()
+        UIView.animate(withDuration: 0.2) { self.navigationController?.navigationBar.alpha = 1.0 }
+    }
+    
     func addAddToSpot() {
         
         ///add addToSpot button over the top of custom tab bar
@@ -422,13 +428,19 @@ class SpotViewController: UIViewController {
             vc.spotObject = spotObject
             vc.passedSpot = spotObject
             
+            mapVC.navigationItem.title = ""
+            mapVC.navigationController?.navigationBar.alpha = 0.0
+
             let transition = CATransition()
             transition.duration = 0.3
             transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
             transition.type = CATransitionType.push
             transition.subtype = CATransitionSubtype.fromTop
-            mapVC.navigationController?.view.layer.add(transition, forKey: kCATransition)
-            mapVC.navigationController?.pushViewController(vc, animated: false)
+
+            DispatchQueue.main.async {
+                self.mapVC.navigationController?.view.layer.add(transition, forKey: kCATransition)
+                self.mapVC.navigationController?.pushViewController(vc, animated: false)
+            }
         }
     }
     
@@ -565,7 +577,6 @@ class SpotViewController: UIViewController {
         shadowScroll.isScrollEnabled = true
         
         UIView.animate(withDuration: 0.15) {
-            print("offset", self.shadowScroll.contentOffset.y)
             self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height )
         }
     }

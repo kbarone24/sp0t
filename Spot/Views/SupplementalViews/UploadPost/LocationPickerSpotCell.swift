@@ -22,7 +22,7 @@ class LocationPickerSpotCell: UITableViewCell {
     
     func setUp(spot: MapSpot) {
         
-        self.backgroundColor = .black
+        self.backgroundColor = spot.selected ?? false ? UIColor(red: 0.18, green: 0.78, blue: 0.82, alpha: 0.2) : UIColor.black
         self.selectionStyle = .none
         
         resetCell()

@@ -39,7 +39,7 @@ extension UploadPostController: UISearchBarDelegate {
 
         DispatchQueue.main.async {
             UIView.animate(withDuration: 0.25) {
-                self.uploadTable.frame = CGRect(x: self.uploadTable.frame.minX, y: self.navBarHeight + 70, width: self.uploadTable.frame.width, height: self.uploadTable.frame.height)
+                self.uploadTable.frame = CGRect(x: self.uploadTable.frame.minX, y: self.navBarHeight + 45, width: self.uploadTable.frame.width, height: self.uploadTable.frame.height)
                 self.searchContainer.frame = CGRect(x: self.searchContainer.frame.minX, y: UIScreen.main.bounds.height, width: self.searchContainer.frame.width, height: self.searchContainer.frame.height)
                 self.navigationController?.navigationBar.alpha = 1.0
             }
@@ -55,16 +55,19 @@ extension UploadPostController: UISearchBarDelegate {
     func addTempGradient(hide: Bool) {
         /// add temp black mask to fade and make gradient change look smoother
         
-        let alpha0: CGFloat = hide ? 1.0 : 0.0
-        let alpha1: CGFloat = hide ? 0.0 : 1.0
+        let alpha0: CGFloat = hide ? 0.8 : 0.0
+        let alpha1: CGFloat = hide ? 0.0 : 0.8
 
-        let tempGradient = UIView(frame: CGRect(x: 0, y: mapGradient.frame.maxY - 130, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - mapGradient.frame.maxY))
+        let height0: CGFloat = hide ? 0 : UIScreen.main.bounds.height - gradientContainer.frame.maxY
+        let height1 : CGFloat = hide ? UIScreen.main.bounds.height - gradientContainer.frame.maxY : 0
+        let tempGradient = UIView(frame: CGRect(x: 0, y: gradientContainer.frame.maxY, width: UIScreen.main.bounds.width, height: height0))
         tempGradient.backgroundColor = .black
         tempGradient.alpha = alpha0
         mapView.addSubview(tempGradient)
         
         UIView.animate(withDuration: 0.15, animations: {
             tempGradient.alpha = alpha1
+            tempGradient.frame = CGRect(x: tempGradient.frame.minX, y: tempGradient.frame.minY, width: tempGradient.frame.width, height: height1)
         }) { _ in tempGradient.removeFromSuperview()}
     }
 

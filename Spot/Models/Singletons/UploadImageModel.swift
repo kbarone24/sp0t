@@ -20,8 +20,8 @@ class UploadImageModel {
     var nearbySpots: [MapSpot] = []
     var friendObjects: [UserProfile] = []
     
-    lazy var tags: [Tag] = []
     var selectedTag = ""
+    var sortedTags: [Tag] = []
     
     var cameraAccess: AVAuthorizationStatus = .notDetermined
     var galleryAccess: PHAuthorizationStatus = .notDetermined
@@ -29,11 +29,12 @@ class UploadImageModel {
     var tappedLocation: CLLocation!
     static let shared = UploadImageModel()
     
+    
     init() {
         cameraAccess = AVCaptureDevice.authorizationStatus(for: .video)
         galleryAccess = PHPhotoLibrary.authorizationStatus()
         tappedLocation = CLLocation()
-        tags = getTags().shuffled()
+        sortedTags = tags().shuffled()
     }
     
     func selectObject(imageObject: ImageObject, selected: Bool) {
@@ -64,10 +65,9 @@ class UploadImageModel {
         nearbySpots.sort(by: { !$0.selected! && !$1.selected! ? $0.spotScore > $1.spotScore : $0.selected! && !$1.selected! })
     }
 
-    func getTags() -> [Tag] {
-        let tags = [
+    let tags = {
             /// Activity
-            Tag(name: "Music"),
+           [Tag(name: "Music"),
             Tag(name: "Art"),
             Tag(name: "Active"),
             Tag(name: "Boat"),
@@ -182,7 +182,6 @@ class UploadImageModel {
             Tag(name: "Star"),
             Tag(name: "Cityset")
         ]
-        return tags
     }
     
     func allAuths() -> Bool {

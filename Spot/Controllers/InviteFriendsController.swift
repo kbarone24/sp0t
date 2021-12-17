@@ -315,7 +315,7 @@ class SelectedFriendsHeader: UITableViewHeaderFooterView {
             return
         }
         
-        addFriendsCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 48)
+        addFriendsCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 43)
         addFriendsCollection.backgroundColor = nil
         addFriendsCollection.delegate = self
         addFriendsCollection.dataSource = self
@@ -341,7 +341,7 @@ extension SelectedFriendsHeader: UICollectionViewDataSource, UICollectionViewDel
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: getCellWidth(user: selectedFriends[indexPath.row]), height: 47)
+        return CGSize(width: getCellWidth(user: selectedFriends[indexPath.row]), height: 42)
     }
     
     func getCellWidth(user: UserProfile) -> CGFloat {
@@ -373,7 +373,7 @@ class UploadFriendCell: UICollectionViewCell {
         backgroundColor = nil
         self.user = user
         
-        userView = UIView(frame: CGRect(x: 0, y: 11, width: self.bounds.width - 9, height: 36))
+        userView = UIView(frame: CGRect(x: 0, y: 6, width: self.bounds.width - 9, height: 36))
         userView.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
         userView.layer.borderWidth = 1
         userView.layer.cornerRadius = 10
@@ -401,7 +401,7 @@ class UploadFriendCell: UICollectionViewCell {
         username.sizeToFit()
         userView.addSubview(username)
     
-        exitButton = UIButton(frame: CGRect(x: self.bounds.width - 23, y: 0, width: 27, height: 27))
+        exitButton = UIButton(frame: CGRect(x: self.bounds.width - 23, y: -5, width: 27, height: 27))
         exitButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         exitButton.setImage(UIImage(named: "CheckInX"), for: .normal)
         exitButton.addTarget(self, action: #selector(exitTap(_:)), for: .touchUpInside)
