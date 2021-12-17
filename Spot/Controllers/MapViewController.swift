@@ -464,11 +464,10 @@ class MapViewController: UIViewController {
     
     /// custom reset nav bar (patch fix for CATransition)
     func uploadMapReset() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
+        DispatchQueue.main.async {
             if self.customTabBar.selectedIndex != 0 { return }
-            self.navigationController?.navigationBar.alpha = 1.0
             self.setUpNavBar()
+            UIView.animate(withDuration: 0.2) { self.navigationController?.navigationBar.alpha = 1.0 }
         }
     }
     

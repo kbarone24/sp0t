@@ -1277,7 +1277,6 @@ extension UINavigationBar {
             appearance.backgroundImage = self.image(fromLayer: gradient)
             standardAppearance = appearance
             scrollEdgeAppearance = appearance
-            print("gradient fire")
         } else {
             setBackgroundImage(self.image(fromLayer: gradient), for: .default)
         }
@@ -1302,7 +1301,6 @@ extension UINavigationBar {
             appearance.backgroundImage = UIImage()
             standardAppearance = appearance
             scrollEdgeAppearance = appearance
-            print("remove background image")
         } else {
             setBackgroundImage(UIImage(), for: .default)
         }

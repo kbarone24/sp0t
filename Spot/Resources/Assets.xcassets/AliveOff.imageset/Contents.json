@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "AliveOff1x(1).png",
+      "filename" : "ImagePreviewAliveOff1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "AliveOff2x(1).png",
+      "filename" : "ImagePreviewAliveOff2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "AliveOff3x(1).png",
+      "filename" : "ImagePreviewAliveOff3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

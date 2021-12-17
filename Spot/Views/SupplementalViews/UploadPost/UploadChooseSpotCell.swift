@@ -66,7 +66,7 @@ class UploadChooseSpotCell: UITableViewCell {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         
         /// push location picker once content offset pushes 50 pts past the natural boundary
-        if scrollView.contentOffset.x > scrollView.contentSize.width - UIScreen.main.bounds.width + 60 && !loading {
+        if scrollView.contentOffset.x > scrollView.contentSize.width - UIScreen.main.bounds.width + 80 && !loading {
             guard let uploadVC = viewContainingController() as? UploadPostController else { return }
             if !uploadVC.chooseSpotMode {
                 Mixpanel.mainInstance().track(event: "UploadScrollLaunchMap", properties: nil)

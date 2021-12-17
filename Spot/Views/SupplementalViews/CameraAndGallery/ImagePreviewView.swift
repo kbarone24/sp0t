@@ -80,15 +80,15 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
         let maskAspect = min(currentObject.stillImage.size.height/currentObject.stillImage.size.width, 1.5)
         let maskHeight = maskAspect * UIScreen.main.bounds.width
         let maskY = 20 + (UIScreen.main.bounds.height - maskHeight - 40)/2
-
         /// animate image preview expand -> use scale aspect fill at first for smooth animation then aspect fit within larger image frame
+        
         UIView.animate(withDuration: 0.25) {
             self.alpha = 1.0 /// animate mask appearing
             let finalRect = CGRect(x: 0, y: maskY, width: UIScreen.main.bounds.width, height: maskHeight)
             self.maskImage.frame = finalRect
-            if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.frame = CGRect(x: 4, y: finalRect.height - 57, width: 79.4, height: 52.67) }
-            if self.maskImage.circleView != nil { self.maskImage.circleView.frame = CGRect(x: finalRect.maxX - 47, y: finalRect.height - 51, width: 30, height: 30) }
-            if self.maskImage.selectButton != nil { self.maskImage.selectButton.frame = CGRect(x: finalRect.maxX - 168, y: finalRect.height - 56, width: 120, height: 40) }
+            if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.frame = CGRect(x: 7, y: finalRect.height - 54, width: 74, height: 46) }
+            if self.maskImage.circleView != nil { self.maskImage.circleView.frame = CGRect(x: finalRect.maxX - 52, y: finalRect.height - 53, width: 40, height: 40); self.maskImage.circleView.number.frame = CGRect(x: 0, y: self.maskImage.circleView.bounds.height/2 - 15/2, width: self.maskImage.circleView.bounds.width, height: 15) }
+            if self.maskImage.selectButton != nil { self.maskImage.selectButton.frame = CGRect(x: finalRect.maxX - 150, y: finalRect.height - 54, width: 98, height: 43) }
             
         } completion: { [weak self] _ in
             guard let self = self else { return }
@@ -245,27 +245,31 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                 /// unhide cancelbutton for smooth animation
                 self.maskImage.cancelButton.alpha = 0.0
                 self.maskImage.cancelButton.isHidden = false
-                self.maskImage.cancelButton.frame = CGRect(x: endFrame!.width - 39, y: 4, width: 35, height: 35)
             } else {
                 /// animate to gallery -> unhide circle for smooth animation
                 self.maskImage.galleryCircle.alpha = 0.0
                 self.maskImage.galleryCircle.isHidden = false
-                self.maskImage.galleryCircle.frame = CGRect(x: endFrame!.width - 27, y: 6, width: 23, height: 23)
+                if self.maskImage.circleView != nil { self.maskImage.circleView.isHidden = true }
+                if self.maskImage.selectButton != nil { self.maskImage.selectButton.isHidden = true }
+                if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.isHidden = true }
             }
             
             /// main animation
             UIView.animate(withDuration: 0.25) {
+                
                 self.maskImage.frame = endFrame ?? CGRect()
                 
                 /// set alive toggle to its height in the cell + adjust borders to fit original views
                 if self.imagesCollection != nil {
-                    if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.frame = CGRect(x: -2, y: endFrame!.height - 44, width: 64, height: 46) }
+                    if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.frame = CGRect(x: 0, y: endFrame!.height - 42, width: 60, height: 42) }
                     self.maskImage.cancelButton.alpha = 1.0
+                    self.maskImage.cancelButton.frame = CGRect(x: endFrame!.width - 35, y: 2, width: 33, height: 33)
                     self.maskImage.layer.cornerRadius = 9
                     self.maskImage.layer.cornerCurve = .continuous
                     
                 } else {
                     self.maskImage.galleryCircle.alpha = 1.0
+                    self.maskImage.galleryCircle.frame = CGRect(x: endFrame!.width - 27, y: 6, width: 23, height: 23)
                     self.maskImage.layer.borderColor = UIColor(named: "SpotBlack")!.cgColor
                     self.maskImage.layer.borderWidth = 1
                 }
@@ -354,33 +358,21 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         contentView.backgroundColor = nil
         addSubview(contentView)
         
-        /// mask so can more clearly see toggle
-       /* imageMask = UIView(frame: contentView.bounds)
-        imageMask.backgroundColor = nil
-        let layer0 = CAGradientLayer()
-        layer0.frame = imageMask.bounds
-        layer0.colors = [
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.01).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.06).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.23).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor
-        ]
-        layer0.locations = [0, 0.11, 0.33, 0.65, 1]
-        layer0.startPoint = CGPoint(x: 0.5, y: 0)
-        layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
-        imageMask.layer.addSublayer(layer0)
-        contentView.addSubview(imageMask) */
+        guard let previewView = superview as? ImagePreviewView else { return }
 
+        /// scale button as frame expands
+        let galleryAnimation = contentView.bounds.width < 150 && previewView.galleryCollection != nil
         if self.imageObject.asset.mediaSubtypes.contains(.photoLive) {
             
-            aliveToggle = UIButton(frame: CGRect(x: 4, y: contentView.frame.height - 57, width: 79.4, height: 52.67))
+            if aliveToggle != nil { aliveToggle.setImage(UIImage(), for: .normal)}
+            let aliveFrame = galleryAnimation ? CGRect(x: 0, y: contentView.frame.height - 19.5, width: 24, height: 19.5) : CGRect(x: 7, y: contentView.frame.height - 54, width: 74, height: 46)
+            aliveToggle = UIButton(frame: aliveFrame)
             let image = imageObject.gifMode ? UIImage(named: "AliveOn") : UIImage(named: "AliveOff")
             aliveToggle.imageView?.contentMode = .scaleAspectFit
             aliveToggle.contentHorizontalAlignment = .fill
             aliveToggle.contentVerticalAlignment = .fill
             aliveToggle.setImage(image, for: .normal)
-            aliveToggle.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+            aliveToggle.imageEdgeInsets = UIEdgeInsets(top: 7, left: 7, bottom: 7, right: 7)
             aliveToggle.addTarget(self, action: #selector(toggleAlive(_:)), for: .touchUpInside)
             contentView.addSubview(aliveToggle)
             
@@ -391,27 +383,27 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             contentView.addSubview(activityIndicator)
         }
         
-        guard let previewView = superview as? ImagePreviewView else { return }
-        
         if previewView.galleryCollection != nil {
             
             var index = 0
             if let i = UploadImageModel.shared.selectedObjects.firstIndex(where: {$0.id == imageObject.id}) { index = i + 1; circleIndex = i + 1 }
             
-            if selectButton != nil { selectButton.setTitle("", for: .normal) }
-            selectButton = UIButton(frame: CGRect(x: contentView.frame.maxX - 168, y: contentView.frame.height - 56, width: 120, height: 40))
-            let title = circleIndex > 0 ? "Selected" : "Select"
-            selectButton.setTitle(title, for: .normal)
-            selectButton.titleEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+            if selectButton != nil { selectButton.setImage(UIImage(), for: .normal) }
+            let selectFrame = galleryAnimation ? CGRect(x: contentView.frame.width - 50, y: contentView.frame.height - 18, width: 39.5, height: 15) : CGRect(x: contentView.frame.maxX - 148, y: contentView.frame.height - 54, width: 98, height: 43)
+            selectButton = UIButton(frame: selectFrame)
+            let image = circleIndex > 0 ? UIImage(named: "SelectedButton") : UIImage(named: "SelectButton")
+            selectButton.setImage(image, for: .normal)
+            selectButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+            selectButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
             selectButton.contentHorizontalAlignment = .right
             selectButton.contentVerticalAlignment = .center
-            selectButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
-            selectButton.setTitleColor(.white, for: .normal)
-            selectButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
             contentView.addSubview(selectButton)
             
-            circleView = CircleView(frame: CGRect(x: frame.maxX - 47, y: contentView.frame.height - 51, width: 30, height: 30))
+            if circleView != nil { circleView.removeFromSuperview() }
+            let circleFrame = galleryAnimation ? CGRect(x: contentView.frame.maxX - 17, y: contentView.frame.height - 17, width: 15, height: 15) : CGRect(x: contentView.frame.maxX - 52, y: contentView.frame.height - 53, width: 40, height: 40)
+            circleView = CircleView(frame: circleFrame)
             circleView.setUp(index: index)
+            circleView.layer.cornerRadius = 16
             contentView.addSubview(circleView)
             
             let circleButton = UIButton(frame: CGRect(x: bounds.width - 52, y: contentView.frame.height - 56, width: 46, height: 46))
@@ -426,7 +418,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             
         } else {
             /// for animation back to upload
-            cancelButton = UIButton(frame: CGRect(x: contentView.frame.width - 39, y: 4, width: 35, height: 35))
+            cancelButton = UIButton(frame: CGRect(x: contentView.frame.width - 35, y: 2, width: 33, height: 33))
             cancelButton.setImage(UIImage(named: "ImageCancelButton"), for: .normal)
             cancelButton.isHidden = true
             cancelButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -454,7 +446,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         
         if imageObject.gifMode {
             
-            aliveToggle.isHidden = true
+            aliveToggle.isEnabled = false
             activityIndicator.startAnimating()
             
             /// download alive if available and not yet downloaded
@@ -464,7 +456,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
                 if animationImages.isEmpty { return }
                 
                 self.activityIndicator.stopAnimating()
-                self.aliveToggle.isHidden = false
+                self.aliveToggle.isEnabled = true
                 
                 self.imageObject.animationImages = animationImages
                 
@@ -487,8 +479,8 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     @objc func circleTap(_ sender: UIButton) {
         
         let selected = circleIndex == 0
-        let text = selected ? "Selected" : "Select"
-        selectButton.setTitle(text, for: .normal)
+        let image = selected ? UIImage(named: "SelectedButton") : UIImage(named: "SelectButton")
+        selectButton.setImage(image, for: .normal)
         
         Mixpanel.mainInstance().track(event: "ImagePreviewSelectImage", properties: ["selected": selected])
         
