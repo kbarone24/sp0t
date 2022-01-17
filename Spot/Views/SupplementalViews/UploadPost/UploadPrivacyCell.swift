@@ -40,7 +40,7 @@ class UploadPrivacyCell: UITableViewCell {
         label = UILabel(frame: CGRect(x: 49, y: 15, width: 150, height: 18))
         label.text = "Privacy options"
         label.textColor = UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 13.5)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 13.5)
         contentView.addSubview(label)
         
         privacyButton = UIButton(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 48))

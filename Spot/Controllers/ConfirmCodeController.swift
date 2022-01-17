@@ -49,13 +49,13 @@ class ConfirmCodeController: UIViewController {
         label = UILabel(frame: CGRect(x: 10, y: 134, width: UIScreen.main.bounds.width - 20, height: 18))
         label.text = "Enter your code:"
         label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 15)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 15)
         label.textAlignment = .center
         view.addSubview(label)
         
         codeField = PaddedTextField(frame: CGRect(x: 27, y: label.frame.maxY + 31, width: UIScreen.main.bounds.width - 54, height: 60))
         codeField.backgroundColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        codeField.font = UIFont(name: "SFCamera-Semibold", size: 28)
+        codeField.font = UIFont(name: "SFCompactText-Semibold", size: 28)
         codeField.textAlignment = .center
         codeField.tintColor = UIColor(named: "SpotGreen")
         codeField.textColor = .black
@@ -87,7 +87,7 @@ class ConfirmCodeController: UIViewController {
         errorLabel.numberOfLines = 0
         errorLabel.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
         errorLabel.textAlignment = .center
-        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        errorLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
         errorLabel.text = "Invalid credentials, please try again."
         errorLabel.isHidden = true
         errorBox.addSubview(errorLabel)

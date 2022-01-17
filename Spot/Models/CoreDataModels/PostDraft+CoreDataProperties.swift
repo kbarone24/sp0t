@@ -25,12 +25,12 @@ extension PostDraft {
     @NSManaged public var inviteList: [String]?
     @NSManaged public var privacyLevel: String?
     @NSManaged public var spotPrivacy: String?
-    @NSManaged public var spotID: String?
+    @NSManaged public var spotIDs: [String]?
     @NSManaged public var postLat: Double
     @NSManaged public var postLong: Double
     @NSManaged public var spotLat: Double
     @NSManaged public var spotLong: Double
-    @NSManaged public var spotName: String?
+    @NSManaged public var spotNames: [String]?
     @NSManaged public var taggedUsers: [String]?
     @NSManaged public var taggedUserIDs: [String]?
     @NSManaged public var timestamp: Int64
@@ -41,8 +41,12 @@ extension PostDraft {
     @NSManaged public var visitorList: [String]?
     @NSManaged public var friendsList: [String]?
     @NSManaged public var frameIndexes: [Int]?
-    @NSManaged public var gif: Bool
-    @NSManaged public var tag: String
+    @NSManaged public var tags: [String]?
+    @NSManaged public var newSpot: Bool
+    @NSManaged public var postToPOI: Bool
+    @NSManaged public var poiCategory: String
+    @NSManaged public var phone: String
+    @NSManaged public var spotIndexes: [Int]?
 }
 
 // MARK: Generated accessors for images

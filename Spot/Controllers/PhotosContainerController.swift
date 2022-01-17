@@ -88,7 +88,7 @@ class PhotosContainerController: UIViewController {
         recentSeg.setTitle("Recent", for: .normal)
         recentSeg.setTitleColor(.white, for: .normal)
         recentSeg.titleLabel?.alpha = selectedIndex == 0 ? 1.0 : 0.6
-        recentSeg.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        recentSeg.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         recentSeg.contentHorizontalAlignment = .center
         recentSeg.contentVerticalAlignment = .center
         recentSeg.addTarget(self, action: #selector(recentSegTap(_:)), for: .touchUpInside)
@@ -99,7 +99,7 @@ class PhotosContainerController: UIViewController {
         mapSeg.setTitle("Photomap", for: .normal)
         mapSeg.setTitleColor(.white, for: .normal)
         mapSeg.titleLabel?.alpha = selectedIndex == 1 ? 1.0 : 0.6
-        mapSeg.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        mapSeg.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         mapSeg.contentHorizontalAlignment = .center
         mapSeg.contentVerticalAlignment = .center
         mapSeg.addTarget(self, action: #selector(mapSegTap(_:)), for: .touchUpInside)
@@ -136,7 +136,7 @@ class PhotosContainerController: UIViewController {
         self.navigationItem.leftBarButtonItem?.tintColor = nil
         
         let nextBtn = UIBarButtonItem(title: "Next", style: .plain, target: self, action: #selector(nextTap(_:)))
-        nextBtn.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
+        nextBtn.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
         self.navigationItem.setRightBarButton(nextBtn, animated: true)
         self.navigationItem.rightBarButtonItem?.tintColor = nil
     }
@@ -196,11 +196,10 @@ class PhotosContainerController: UIViewController {
         
         let segWidth: CGFloat = 90
         let minX = selectedIndex == 0 ? UIScreen.main.bounds.width/2 - segWidth - 40 : UIScreen.main.bounds.width/2 + 40
-        UIView.animate(withDuration: 0.2) {
-            self.buttonBar.frame = CGRect(x: minX, y: self.buttonBar.frame.minY, width: self.buttonBar.frame.width, height: self.buttonBar.frame.height)
-            self.recentSeg.titleLabel?.alpha = self.selectedIndex == 0 ? 1.0 : 0.6
-            self.mapSeg.titleLabel?.alpha = self.selectedIndex == 1 ? 1.0 : 0.6
-        }
+        
+        buttonBar.frame = CGRect(x: minX, y: buttonBar.frame.minY, width: buttonBar.frame.width, height: buttonBar.frame.height)
+        recentSeg.titleLabel?.alpha = self.selectedIndex == 0 ? 1.0 : 0.6
+        mapSeg.titleLabel?.alpha = self.selectedIndex == 1 ? 1.0 : 0.6
     }
 
     

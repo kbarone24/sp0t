@@ -124,7 +124,7 @@ class UploadPrivacyPicker: UIView {
         titleLabel = UILabel(frame: CGRect(x: 24, y: 25, width: 200, height: 20))
         titleLabel.text = "Who can see my post"
         titleLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        titleLabel.font = UIFont(name: "SFCamera-Semibold", size: 17)
+        titleLabel.font = UIFont(name: "SFCompactText-Semibold", size: 17)
         addSubview(titleLabel)
         
         var minY: CGFloat = titleLabel.frame.maxY + 20
@@ -217,7 +217,7 @@ class UploadShowOnFeedView: UIView {
         label = UILabel(frame: CGRect(x: 24, y: 25, width: 250, height: 18))
         label.text = "Post to friends feed"
         label.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Semibold", size: 17)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 17)
         addSubview(label)
         
         toggle = UIButton(frame: CGRect(x: 20, y: label.frame.maxY + 10, width: 62, height: 42))
@@ -276,7 +276,7 @@ class BotDetailView: UIView {
         
         detail = UILabel(frame: CGRect(x: 22, y: image.frame.maxY + 21, width: 196, height: 15))
         detail.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        detail.font = UIFont(name: "SFCamera-Regular", size: 14)
+        detail.font = UIFont(name: "SFCompactText-Regular", size: 14)
         detail.numberOfLines = 0
         detail.lineBreakMode = .byWordWrapping
         detail.tag = 3
@@ -284,7 +284,7 @@ class BotDetailView: UIView {
         
         actionButton = UIButton(frame: CGRect(x: 20, y: bounds.height - 45, width: 85, height: 30))
         actionButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        actionButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
+        actionButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
         actionButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
         actionButton.layer.borderWidth = 1
         actionButton.layer.cornerRadius = 8
@@ -293,7 +293,7 @@ class BotDetailView: UIView {
         
         cancelButton = UIButton(frame: CGRect(x: bounds.width - 105, y: bounds.height - 45, width: 85, height: 30))
         cancelButton.setTitleColor(UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
         cancelButton.layer.borderColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1).cgColor
         cancelButton.layer.borderWidth = 1
         cancelButton.layer.cornerRadius = 8
@@ -324,28 +324,11 @@ class BotDetailView: UIView {
         self.image.layer.masksToBounds = true
         
         name.frame = CGRect(x: self.image.frame.maxX + 12, y: 37, width: bounds.width - self.image.frame.maxX - 8, height: 20)
-        name.text = postDraft.spotName ?? ""
+        name.text = postDraft.spotNames?.first ?? ""
         
         detail.frame = CGRect(x: 22, y: self.image.frame.maxY + 21, width: 196, height: 15)
         detail.text = "Retry failed upload?"
         
-        actionButton.setTitle("Submit", for: .normal)
-        cancelButton.setTitle("Delete", for: .normal)
-    }
-    
-    func setUp(spotDraft: SpotDraft, image: UIImage) {
-        
-        self.image.image = image
-        self.image.frame = CGRect(x: 21, y: 22, width: 42, height: 54)
-        self.image.layer.cornerRadius = 6
-        self.image.layer.masksToBounds = true
-        
-        name.frame = CGRect(x: self.image.frame.maxX + 12, y: 37, width: bounds.width - self.image.frame.maxX - 8, height: 20)
-        name.text = spotDraft.spotName ?? ""
-        
-        detail.frame = CGRect(x: 22, y: self.image.frame.maxY + 21, width: 196, height: 15)
-        detail.text = "Retry failed upload?"
-
         actionButton.setTitle("Submit", for: .normal)
         cancelButton.setTitle("Delete", for: .normal)
     }

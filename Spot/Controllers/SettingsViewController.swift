@@ -47,7 +47,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
         logoutButton.contentVerticalAlignment = .center
         logoutButton.contentHorizontalAlignment = .left
         logoutButton.setTitleColor(UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha:1.0), for: .normal)
-        logoutButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
+        logoutButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
         logoutButton.addTarget(self, action: #selector(showAlert(_:)), for: .touchUpInside)
         view.addSubview(logoutButton)
     }
@@ -213,7 +213,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
             if cell.successLabel != nil { return }
             cell.successLabel = UILabel(frame: CGRect(x: 20, y: 220, width: UIScreen.main.bounds.width - 40, height: 100))
             cell.successLabel.text = "Thanks 👍"
-            cell.successLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+            cell.successLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
             cell.successLabel.textColor = UIColor.white
             cell.successLabel.textAlignment = .center
             cell.successLabel.lineBreakMode = .byWordWrapping
@@ -256,7 +256,7 @@ class SettingsHeader: UITableViewHeaderFooterView {
         settingsTitle.text = "Settings"
         settingsTitle.textColor = .white
         settingsTitle.textAlignment = .center
-        settingsTitle.font = UIFont(name: "SFCamera-Regular", size: 16)
+        settingsTitle.font = UIFont(name: "SFCompactText-Regular", size: 16)
         addSubview(settingsTitle)
         
         let bottomLine = UIView(frame: CGRect(x: 15, y: 49, width: UIScreen.main.bounds.width - 40, height: 1))
@@ -285,7 +285,7 @@ class SettingsEditCell: UITableViewCell {
         editButton.setTitle("Edit Profile", for: .normal)
         editButton.setTitleColor(UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0), for: .normal)
         editButton.titleLabel?.textAlignment = .left
-        editButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        editButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         contentView.addSubview(editButton)
         
         let bottomLine = UIView(frame: CGRect(x: 15, y: 49, width: UIScreen.main.bounds.width - 40, height: 1))
@@ -315,7 +315,7 @@ class SettingsTermsCell: UITableViewCell {
         privacyButton.setTitle("Terms of use", for: .normal)
         privacyButton.setTitleColor(UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0), for: .normal)
         privacyButton.titleLabel?.textAlignment = .left
-        privacyButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        privacyButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         contentView.addSubview(privacyButton)
         
         let bottomLine = UIView(frame: CGRect(x: 15, y: 49, width: UIScreen.main.bounds.width - 40, height: 1))
@@ -352,13 +352,13 @@ class SettingsFeedbackCell: UITableViewCell {
         contactLabel = UILabel(frame: CGRect(x: botImage.frame.maxX + 10, y: 20, width: 100, height: 18))
         contactLabel.text = "Feedback"
         contactLabel.textColor = UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0)
-        contactLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        contactLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
         contentView.addSubview(contactLabel)
         
         improveLabel = UILabel(frame: CGRect(x: botImage.frame.maxX + 10, y: 40, width: UIScreen.main.bounds.width - 40, height: 16))
         improveLabel.text = "Help us improve sp0t!"
         improveLabel.textColor = UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha:1.0)
-        improveLabel.font = UIFont(name: "SFCamera-Regular", size: 12)
+        improveLabel.font = UIFont(name: "SFCompactText-Regular", size: 12)
         contentView.addSubview(improveLabel)
         
         titleButton = UIButton(frame: CGRect(x: 10, y: 10, width: UIScreen.main.bounds.width - 20, height: 60))
@@ -370,7 +370,7 @@ class SettingsFeedbackCell: UITableViewCell {
         textView.backgroundColor = UIColor(red: 0.11, green: 0.11, blue: 0.11, alpha:1.0)
         textView.layer.cornerRadius = 7.5
         textView.textColor = UIColor.white
-        textView.font = UIFont(name: "SFCamera-regular", size: 12)
+        textView.font = UIFont(name: "SFCompactText-regular", size: 12)
         textView.isScrollEnabled = false
         textView.textContainer.lineBreakMode = .byTruncatingHead
         textView.textContainerInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
@@ -379,7 +379,7 @@ class SettingsFeedbackCell: UITableViewCell {
         submitButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 74, y: 195, width: 50, height: 20))
         submitButton.setTitle("Submit", for: .normal)
         submitButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        submitButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        submitButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         contentView.addSubview(submitButton)
     }
     
@@ -408,7 +408,7 @@ class SettingsFindFriendsCell: UITableViewCell {
         findFriendsButton.setTitle("Add friends", for: .normal)
         findFriendsButton.setTitleColor(UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0), for: .normal)
         findFriendsButton.contentHorizontalAlignment = .left
-        findFriendsButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        findFriendsButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         contentView.addSubview(findFriendsButton)
         
         let bottomLine = UIView(frame: CGRect(x: 15, y: 49, width: UIScreen.main.bounds.width - 40, height: 1))
@@ -437,7 +437,7 @@ class SettingsManageAccount: UITableViewCell {
         manageAccountButton.setTitle("Manage Account", for: .normal)
         manageAccountButton.setTitleColor(UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0), for: .normal)
         manageAccountButton.contentHorizontalAlignment = .left
-        manageAccountButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        manageAccountButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         contentView.addSubview(manageAccountButton)
         
         let bottomLine = UIView(frame: CGRect(x: 15, y: 49, width: UIScreen.main.bounds.width - 40, height: 1))
@@ -466,7 +466,7 @@ class SettingsReviewCell: UITableViewCell {
         reviewButton.setTitle("Review public submissions", for: .normal)
         reviewButton.setTitleColor(UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0), for: .normal)
         reviewButton.contentHorizontalAlignment = .left
-        reviewButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        reviewButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         contentView.addSubview(reviewButton)
         
         let bottomLine = UIView(frame: CGRect(x: 15, y: 49, width: UIScreen.main.bounds.width - 40, height: 1))

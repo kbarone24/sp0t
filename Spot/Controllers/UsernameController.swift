@@ -43,7 +43,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         let usernameLabel = UILabel(frame: CGRect(x: 50, y: 150, width: UIScreen.main.bounds.width - 100, height: 18))
         usernameLabel.text = "Pick your username!"
         usernameLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        usernameLabel.font = UIFont(name: "SFCamera-Regular", size: 15)
+        usernameLabel.font = UIFont(name: "SFCompactText-Regular", size: 15)
         usernameLabel.textAlignment = .center
         view.addSubview(usernameLabel)
         
@@ -54,7 +54,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         usernameField.autocapitalizationType = .none
         usernameField.delegate = self
         usernameField.textAlignment = .center
-        usernameField.font = UIFont(name: "SFCamera-Regular", size: 28)!
+        usernameField.font = UIFont(name: "SFCompactText-Regular", size: 28)!
         usernameField.addTarget(self, action: #selector(usernameChanged(_:)), for: .editingChanged)
         view.addSubview(usernameField)
         
@@ -87,7 +87,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         errorLabel.numberOfLines = 0
         errorLabel.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
         errorLabel.textAlignment = .center
-        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        errorLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
         errorLabel.text = "Invalid credentials, please try again."
         errorBox.addSubview(errorLabel)
         errorLabel.isHidden = true

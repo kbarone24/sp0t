@@ -68,7 +68,7 @@ class EditPostView: UIView, UITextViewDelegate {
             let postingToLabel = UILabel(frame: CGRect(x: 14, y: 14, width: 65, height: 15))
             postingToLabel.text = "Posting to"
             postingToLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-            postingToLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+            postingToLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
             postingToView.addSubview(postingToLabel)
             
             let targetIcon = UIImageView(frame: CGRect(x: 14, y: 34, width: 17, height: 17))
@@ -78,7 +78,7 @@ class EditPostView: UIView, UITextViewDelegate {
             spotNameLabel = UILabel(frame: CGRect(x: targetIcon.frame.maxX + 6, y: 34, width: self.bounds.width - 40, height: 17))
             spotNameLabel.text = post.spotName
             spotNameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-            spotNameLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+            spotNameLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
             spotNameLabel.lineBreakMode = .byTruncatingTail
             postingToView.addSubview(spotNameLabel)
             
@@ -86,7 +86,7 @@ class EditPostView: UIView, UITextViewDelegate {
                 let editSpotButton = UIButton(frame: CGRect(x: spotNameLabel.frame.maxX + 2, y: 36, width: 55, height: 15))
                 editSpotButton.setTitle("EDIT SPOT", for: .normal)
                 editSpotButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-                editSpotButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 9.5)
+                editSpotButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 9.5)
                 editSpotButton.addTarget(self, action: #selector(editSpotTap(_:)), for: .touchUpInside)
                 postingToView.addSubview(editSpotButton)
                 
@@ -119,7 +119,7 @@ class EditPostView: UIView, UITextViewDelegate {
         let postTimestamp = post.actualTimestamp == nil ? post.timestamp : post.actualTimestamp
         timestampLabel.text = getDateTimestamp(postTime: postTimestamp!)
         timestampLabel.textColor = UIColor(red: 0.442, green: 0.442, blue: 0.442, alpha: 1)
-        timestampLabel.font = UIFont(name: "SFCamera-Semibold", size: 11.25)
+        timestampLabel.font = UIFont(name: "SFCompactText-Semibold", size: 11.25)
         timestampLabel.sizeToFit()
         captionView.addSubview(timestampLabel)
         
@@ -142,7 +142,7 @@ class EditPostView: UIView, UITextViewDelegate {
             postCaption.text = post.caption
         }
         
-        postCaption.font = UIFont(name: "SFCamera-Regular", size: 13)
+        postCaption.font = UIFont(name: "SFCompactText-Regular", size: 13)
         postCaption.backgroundColor = nil
         postCaption.isScrollEnabled = true
         postCaption.textContainer.lineBreakMode = .byTruncatingHead
@@ -161,12 +161,12 @@ class EditPostView: UIView, UITextViewDelegate {
         let postLabel = UILabel(frame: CGRect(x: 14, y: 10, width: 100, height: 17))
         postLabel.text = "Post location"
         postLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        postLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        postLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         locationView.addSubview(postLabel)
         
         addressButton = UIButton(frame: CGRect(x: 14, y: postLabel.frame.maxY - 4, width: self.bounds.width - 50, height: 15))
         addressButton.setTitleColor(UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1), for: .normal)
-        addressButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
+        addressButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 11.5)
         addressButton.titleLabel?.lineBreakMode = .byTruncatingTail
         addressButton.addTarget(self, action: #selector(editAddress(_:)), for: .touchUpInside)
         
@@ -195,7 +195,7 @@ class EditPostView: UIView, UITextViewDelegate {
         whoCanSee = UILabel(frame: CGRect(x: 14, y: 10, width: 100, height: 17))
         whoCanSee.text = "Who can see?"
         whoCanSee.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        whoCanSee.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        whoCanSee.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         privacyView.addSubview(whoCanSee)
         
         privacyIcon = UIImageView()
@@ -203,11 +203,11 @@ class EditPostView: UIView, UITextViewDelegate {
         
         privacyLabel = UILabel()
         privacyLabel.textColor = .white
-        privacyLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)
+        privacyLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13)
         
         friendCount = UILabel()
         friendCount.textColor = UIColor(named: "SpotGreen")
-        friendCount.font = UIFont(name: "SFCamera-Regular", size: 10.5)
+        friendCount.font = UIFont(name: "SFCompactText-Regular", size: 10.5)
         
         actionArrow = UIButton()
         actionArrow.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -228,7 +228,7 @@ class EditPostView: UIView, UITextViewDelegate {
         cancelButton.titleEdgeInsets = UIEdgeInsets(top: 2.5, left: 2.5, bottom: 2.5, right: 2.5)
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor(red: 0.769, green: 0.769, blue: 0.769, alpha: 1), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
         privacyView.addSubview(cancelButton)
         
@@ -236,7 +236,7 @@ class EditPostView: UIView, UITextViewDelegate {
         saveButton.titleEdgeInsets = UIEdgeInsets(top: 2.5, left: 2.5, bottom: 2.5, right: 2.5)
         saveButton.setTitle("Save", for: .normal)
         saveButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        saveButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        saveButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         saveButton.addTarget(self, action: #selector(saveTap(_:)), for: .touchUpInside)
         privacyView.addSubview(saveButton)
     }
@@ -259,10 +259,10 @@ class EditPostView: UIView, UITextViewDelegate {
         toolbar.sizeToFit()
         
         let doneButton = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(doneDatePicker(_:)));
-        doneButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
+        doneButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
         let spaceButton = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(cancelDatePicker(_:)));
-        cancelButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Regular", size: 14) as Any, NSAttributedString.Key.foregroundColor: UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1) as Any], for: .normal)
+        cancelButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Regular", size: 14) as Any, NSAttributedString.Key.foregroundColor: UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1) as Any], for: .normal)
         toolbar.setItems([cancelButton, spaceButton, doneButton], animated: false)
         
         textDatePicker = UITextField()
@@ -381,7 +381,7 @@ class EditPostView: UIView, UITextViewDelegate {
             let titleLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: 10, width: 200, height: 20))
             titleLabel.text = "Who can see this?"
             titleLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-            titleLabel.font = UIFont(name: "SFCamera-Semibold", size: 15)
+            titleLabel.font = UIFont(name: "SFCompactText-Semibold", size: 15)
             titleLabel.textAlignment = .center
             pickerView.addSubview(titleLabel)
             

@@ -36,14 +36,14 @@ class CameraAccessView: UIView {
         label0 = UILabel(frame: CGRect(x: 50, y: UIScreen.main.bounds.height/4, width: UIScreen.main.bounds.width - 100, height: 20))
         label0.text = "Share on sp0t"
         label0.textColor = .white
-        label0.font = UIFont(name: "SFCamera-Semibold", size: 22)
+        label0.font = UIFont(name: "SFCompactText-Semibold", size: 22)
         label0.textAlignment = .center
         addSubview(label0)
         
         label1 = UILabel(frame: CGRect(x: 30, y: label0.frame.maxY + 10, width: UIScreen.main.bounds.width - 60, height: 15))
         label1.text = "Enable access to take pictures."
         label1.textColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0)
-        label1.font = UIFont(name: "SFCamera-Regular", size: 15)
+        label1.font = UIFont(name: "SFCompactText-Regular", size: 15)
         label1.textAlignment = .center
         addSubview(label1)
         
@@ -52,7 +52,7 @@ class CameraAccessView: UIView {
         cameraAccess.titleEdgeInsets = UIEdgeInsets(top: 10, left: 5, bottom: 10, right: 5)
         cameraAccess.setTitle("Enable camera access", for: .normal)
         cameraAccess.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        cameraAccess.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
+        cameraAccess.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
         cameraAccess.contentHorizontalAlignment = .center
         cameraAccess.alpha = cameraAuthorized ? 0.3 : 1.0
         if !cameraAuthorized { cameraAccess.addTarget(self, action: #selector(cameraAccessTap(_:)), for: .touchUpInside)}
@@ -64,7 +64,7 @@ class CameraAccessView: UIView {
         galleryAccess.titleEdgeInsets = UIEdgeInsets(top: 10, left: 5, bottom: 10, right: 5)
         galleryAccess.setTitle("Enable gallery access", for: .normal)
         galleryAccess.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        galleryAccess.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
+        galleryAccess.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
         galleryAccess.contentHorizontalAlignment = .center
         galleryAccess.alpha = galleryAuthorized ? 0.3 : 1.0
         if !galleryAuthorized { galleryAccess.addTarget(self, action: #selector(galleryAccessTap(_:)), for: .touchUpInside)}

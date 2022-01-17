@@ -49,7 +49,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
         self.galleryIndex = galleryIndex
         self.imageObjects = imageObjects
 
-        imageCloseTap = UITapGestureRecognizer(target: self, action: #selector(closeImageExpand(_:)))
+        imageCloseTap = UITapGestureRecognizer(target: self, action: #selector(closeImageTap(_:)))
         imageCloseTap.delegate = self
         addGestureRecognizer(imageCloseTap)
         
@@ -89,7 +89,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
             if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.frame = CGRect(x: 7, y: finalRect.height - 54, width: 74, height: 46) }
             if self.maskImage.circleView != nil { self.maskImage.circleView.frame = CGRect(x: finalRect.maxX - 52, y: finalRect.height - 53, width: 40, height: 40); self.maskImage.circleView.number.frame = CGRect(x: 0, y: self.maskImage.circleView.bounds.height/2 - 15/2, width: self.maskImage.circleView.bounds.width, height: 15) }
             if self.maskImage.selectButton != nil { self.maskImage.selectButton.frame = CGRect(x: finalRect.maxX - 150, y: finalRect.height - 54, width: 98, height: 43) }
-            
+
         } completion: { [weak self] _ in
             guard let self = self else { return }
             self.maskImage.setUp(imageObject: imageObjects[selectedIndex])
@@ -224,7 +224,12 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
         imageObjects[newIndex].directionUp = newIndex > selectedIndex ? maskImageNext.directionUp : maskImagePrevious.directionUp
     }
     
-    @objc func closeImageExpand(_ sender: UITapGestureRecognizer) {
+    @objc func closeImageTap(_ sender: UITapGestureRecognizer) {
+        if maskImage.imageFetcher.isFetching { maskImage.cancelImageFetch(); return }
+        closeImageExpand()
+    }
+    
+    func closeImageExpand() {
         
         let selectedImage = imageObjects[selectedIndex].stillImage
         let maskAspect = min(selectedImage.size.height/selectedImage.size.width, 1.5)
@@ -389,7 +394,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             if let i = UploadImageModel.shared.selectedObjects.firstIndex(where: {$0.id == imageObject.id}) { index = i + 1; circleIndex = i + 1 }
             
             if selectButton != nil { selectButton.setImage(UIImage(), for: .normal) }
-            let selectFrame = galleryAnimation ? CGRect(x: contentView.frame.width - 50, y: contentView.frame.height - 18, width: 39.5, height: 15) : CGRect(x: contentView.frame.maxX - 148, y: contentView.frame.height - 54, width: 98, height: 43)
+            let selectFrame = galleryAnimation ? CGRect(x: contentView.frame.width - 50, y: contentView.frame.height - 18, width: 39.5, height: 15) : CGRect(x: contentView.frame.maxX - 150, y: contentView.frame.height - 54, width: 98, height: 43)
             selectButton = UIButton(frame: selectFrame)
             let image = circleIndex > 0 ? UIImage(named: "SelectedButton") : UIImage(named: "SelectButton")
             selectButton.setImage(image, for: .normal)
@@ -437,18 +442,15 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
 
     @objc func toggleAlive(_ sender: UIButton) {
         
-        imageObject.gifMode = !imageObject.gifMode
         
         Mixpanel.mainInstance().track(event: "ImagePreviewToggleAlive", properties: ["on": imageObject.gifMode])
-
-        let image = imageObject.gifMode ? UIImage(named: "AliveOn") : UIImage(named: "AliveOff")
-        aliveToggle.setImage(image, for: .normal)
         
-        if imageObject.gifMode {
+        if !imageObject.gifMode {
             
             aliveToggle.isEnabled = false
             activityIndicator.startAnimating()
-            
+            imageFetcher.fetchingIndex = 0
+
             /// download alive if available and not yet downloaded
             imageFetcher.fetchLivePhoto(currentAsset: imageObject.asset, animationImages: imageObject.animationImages) { [weak self] animationImages, failed in
 
@@ -457,7 +459,9 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
                 
                 self.activityIndicator.stopAnimating()
                 self.aliveToggle.isEnabled = true
-                
+                self.aliveToggle.setImage(UIImage(named: "AliveOn"), for: .normal)
+                self.imageObject.gifMode = true
+
                 self.imageObject.animationImages = animationImages
                 
                 /// animate with gif images
@@ -468,12 +472,22 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             }
 
         } else {
-            /// remove to stop animation and set to still image
-         ///   imageView.isHidden = true
+
+            aliveToggle.setImage(UIImage(named: "AliveOff"), for: .normal)
+            imageObject.gifMode = false
+            
             self.image = imageObject.stillImage
             self.animationImages?.removeAll()
             updateParent()
         }
+    }
+    
+    func cancelImageFetch() {
+        
+        activityIndicator.stopAnimating()
+        aliveToggle.isEnabled = true
+        
+        imageFetcher.cancelFetchForAsset(asset: imageObject.asset)
     }
     
     @objc func circleTap(_ sender: UIButton) {

@@ -55,7 +55,7 @@ class PostFriendsView: UIView {
         label0 = UILabel(frame: CGRect(x: 20, y: botImage.frame.maxY + 15, width: UIScreen.main.bounds.width - 40, height: 20))
         label0.text = "Your friends posts will show here"
         label0.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        label0.font = UIFont(name: "SFCamera-Semibold", size: 15.5)
+        label0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
         label0.textAlignment = .center
         addSubview(label0)
         
@@ -63,7 +63,7 @@ class PostFriendsView: UIView {
         label1 = UILabel(frame: CGRect(x: 20, y: label0.frame.maxY + 3, width: UIScreen.main.bounds.width - 40, height: 16))
         label1.text = "Get started by adding some friends"
         label1.textColor = UIColor(red: 0.479, green: 0.479, blue: 0.479, alpha: 1)
-        label1.font = UIFont(name: "SFCamera-Regular", size: 13)
+        label1.font = UIFont(name: "SFCompactText-Regular", size: 13)
         label1.textAlignment = .center
         addSubview(label1)
         

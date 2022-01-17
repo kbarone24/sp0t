@@ -40,7 +40,7 @@ class UploadChooseSpotCell: UITableViewCell {
         titleLabel = UILabel(frame: CGRect(x: 16, y: 12, width: 150, height: 18))
         titleLabel.text = newSpotName == "" ? "Choose a spot" : "New spot"
         titleLabel.textColor = UIColor(red: 0.52, green: 0.52, blue: 0.52, alpha: 1.00)
-        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 13.5)
+        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 13.5)
         contentView.addSubview(titleLabel)
                 
         let layout = UICollectionViewFlowLayout()
@@ -151,10 +151,10 @@ extension UploadChooseSpotCell: UICollectionViewDelegate, UICollectionViewDataSo
     func getCellWidth(spot: MapSpot) -> CGFloat {
         
         let tempName = UILabel(frame: CGRect(x: 0, y: 0, width: 250, height: 20))
-        tempName.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        tempName.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
     
         let tempDetail = UILabel(frame: CGRect(x: 0, y: 0, width: 250, height: 15))
-        tempDetail.font = UIFont(name: "SFCamera-Semibold", size: 11)
+        tempDetail.font = UIFont(name: "SFCompactText-Semibold", size: 11)
         
         tempName.text = spot.spotName
         tempName.sizeToFit()
@@ -206,7 +206,7 @@ class SeeAllCell: UICollectionViewCell {
             noneNearby = UILabel(frame: CGRect(x: minX, y: 16, width: 90, height: 14))
             noneNearby.text = "No spots nearby"
             noneNearby.textColor = UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1)
-            noneNearby.font = UIFont(name: "SFCamera-Regular", size: 12)
+            noneNearby.font = UIFont(name: "SFCompactText-Regular", size: 12)
             addSubview(noneNearby)
             
             minX += 97
@@ -216,7 +216,7 @@ class SeeAllCell: UICollectionViewCell {
         seeAll = UILabel(frame: CGRect(x: minX, y: 16, width: 55, height: 14))
         seeAll.text = "See all ->"
         seeAll.textColor = UIColor(named: "SpotGreen")
-        seeAll.font = UIFont(name: "SFCamera-Regular", size: 12)
+        seeAll.font = UIFont(name: "SFCompactText-Regular", size: 12)
         addSubview(seeAll)
     }
 }
@@ -251,14 +251,14 @@ class ChooseSpotCollectionCell: UICollectionViewCell {
         spotName = UILabel(frame: CGRect(x: 8, y: minY, width: self.bounds.width - 16, height: 18.5))
         spotName.text = spot.spotName
         spotName.textColor = UIColor(red: 0.565, green: 0.565, blue: 0.565, alpha: 1)
-        spotName.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        spotName.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         addSubview(spotName)
         
         if detailView != nil { detailView.text = "" }
         if spot.spotDescription != "" {
             detailView = UILabel(frame: CGRect(x: 9, y: spotName.frame.maxY, width: self.bounds.width - 18, height: 15))
             detailView.text = spot.spotDescription
-            detailView.font = UIFont(name: "SFCamera-Semibold", size: 11)
+            detailView.font = UIFont(name: "SFCompactText-Semibold", size: 11)
             detailView.textColor = UIColor(red: 0.342, green: 0.342, blue: 0.342, alpha: 1)
             addSubview(detailView)
         }

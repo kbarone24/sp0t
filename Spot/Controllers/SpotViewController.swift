@@ -114,8 +114,8 @@ class SpotViewController: UIViewController {
         
         mapVC.spotViewController = self
         mapVC.profileViewController = nil
-        mapVC.nearbyViewController = nil
-        mapVC.customTabBar.tabBar.isHidden = true
+
+    ///  mapVC.customTabBar.tabBar.isHidden = true
         mapVC.hideNearbyButtons()
 
         Mixpanel.mainInstance().track(event: "SpotPageOpen")
@@ -401,7 +401,7 @@ class SpotViewController: UIViewController {
             
         let username = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 16))
         username.text = name
-        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        username.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         username.sizeToFit()
         return 30 + username.frame.width
     }
@@ -409,7 +409,7 @@ class SpotViewController: UIViewController {
     func getMoreWidth(extraCount: Int) -> CGFloat {
 
         let moreLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 100, height: 16))
-        moreLabel.font = UIFont(name: "SFCamera-Regular", size: 11.5)
+        moreLabel.font = UIFont(name: "SFCompactText-Regular", size: 11.5)
         moreLabel.text = "+ \(extraCount) more"
         moreLabel.sizeToFit()
 
@@ -518,8 +518,6 @@ class SpotViewController: UIViewController {
             postVC.resetView()
             postVC.tableView.reloadData() 
             if delete && postVC.postsList.count == 0 { postVC.exitPosts() }
-        } else if let nearbyVC = parent as? NearbyViewController {
-            nearbyVC.resetView()
         } else if let profileVC = parent as? ProfileViewController {
             mapVC.postsList.removeAll()
             profileVC.resetProfile()
@@ -549,7 +547,6 @@ class SpotViewController: UIViewController {
         mapVC.selectedSpotID = spotID ?? ""
         mapVC.spotViewController = self
         mapVC.profileViewController = nil
-        mapVC.nearbyViewController = nil
         
         mapVC.postsList = postsList
         setUpNavBar()
@@ -577,7 +574,7 @@ class SpotViewController: UIViewController {
         shadowScroll.isScrollEnabled = true
         
         UIView.animate(withDuration: 0.15) {
-            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height )
+          ///  self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height )
         }
     }
     
@@ -642,7 +639,7 @@ class SpotViewController: UIViewController {
         
         // override tableView content offset when view isn't completely pulled to the top
         
-        if mapVC.prePanY != mapVC.customTabBar.view.frame.minY { return }
+     ///   if mapVC.prePanY != mapVC.customTabBar.view.frame.minY { return }
         if scrollView.tag != 60 { return }
         if selectedIndex == 0 && spotPostsController.children.count > 0 { return }
         if selectedIndex == 1 && spotVisitorsController.children.count > 0 { return }
@@ -651,7 +648,7 @@ class SpotViewController: UIViewController {
     }
     
     func setContentOffsets() {
-        print("set content offsets ")
+
         if !(self.tableView.cellForRow(at: IndexPath(row: 0, section: 1)) is SpotSegCell) { return }
         
         DispatchQueue.main.async {
@@ -763,7 +760,8 @@ class SpotViewController: UIViewController {
     
     func postEscape() {
         postIndex += 1
-        if postIndex == spotObject.postIDs.count {
+        print("postindex", postIndex, spotObject.postIDs.count)
+        if postIndex == spotObject.postIDs.count || postIndex == 41 {
             escapeIndex += 1
             if escapeIndex == 2 { finishLoad() }
         }
@@ -931,7 +929,7 @@ class SpotViewController: UIViewController {
         
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
          
-            mapVC.customTabBar.tabBar.isHidden = true
+            /// mapVC.customTabBar.tabBar.isHidden = true
             mapVC.spotViewController = nil
             mapVC.hideSpotButtons()
             
@@ -1375,13 +1373,13 @@ class SpotDescriptionCell: UITableViewCell {
         spotName = UILabel(frame: CGRect(x: 14, y: nameY, width: UIScreen.main.bounds.width - 28, height: 18))
         spotName.text = spot.spotName
         spotName.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        spotName.font = UIFont(name: "SFCamera-Semibold", size: 17.5)
+        spotName.font = UIFont(name: "SFCompactText-Semibold", size: 17.5)
         addSubview(spotName)
         
         cityName = UILabel(frame: CGRect(x: 14, y: spotName.frame.maxY + 3, width: UIScreen.main.bounds.width - 100, height: 14))
         cityName.text = spot.city ?? ""
         cityName.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        cityName.font = UIFont(name: "SFCamera-Regular", size: 13)
+        cityName.font = UIFont(name: "SFCompactText-Regular", size: 13)
         cityName.sizeToFit()
         addSubview(cityName)
         
@@ -1401,7 +1399,7 @@ class SpotDescriptionCell: UITableViewCell {
         distanceLabel = UILabel(frame: CGRect(x: distanceX, y: spotName.frame.maxY + 3, width: UIScreen.main.bounds.width - distanceX - 14, height: 14))
         distanceLabel.text = distance.getLocationString()
         distanceLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        distanceLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        distanceLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
         distanceLabel.sizeToFit()
         addSubview(distanceLabel)
         

@@ -347,7 +347,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         errorLabel.textColor = UIColor.white
         errorLabel.textAlignment = .center
         errorLabel.text = "5 photos max"
-        errorLabel.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        errorLabel.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         
         view.addSubview(errorBox)
         errorBox.addSubview(errorLabel)

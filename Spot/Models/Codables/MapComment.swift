@@ -17,15 +17,18 @@ struct MapComment: Identifiable, Codable {
     var comment: String
     var commenterID: String
     var timestamp: Firebase.Timestamp
+    var likers: [String]? = []
     var userInfo: UserProfile?
 
     var taggedUsers: [String]? = []
     var commentHeight: CGFloat = 0
+    var feedHeight: CGFloat = 0
     var seconds: Int64 = 0
     
     enum CodingKeys: String, CodingKey {
         case comment
         case commenterID
+        case likers
         case taggedUsers
         case timestamp
     }

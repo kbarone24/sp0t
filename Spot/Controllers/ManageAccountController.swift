@@ -47,7 +47,7 @@ class ManageAccountController: UIViewController {
         indicatorText = UILabel(frame: CGRect(x: 30, y: activityIndicator.frame.maxY + 30, width: UIScreen.main.bounds.width - 60, height: 40))
         indicatorText.text = "Deleting your account. Do not exit the app or your account might not be deleted"
         indicatorText.textColor = .white
-        indicatorText.font = UIFont(name: "SFCamera-Regular", size: 14)
+        indicatorText.font = UIFont(name: "SFCompactText-Regular", size: 14)
         indicatorText.textAlignment = .center
         indicatorText.lineBreakMode = .byWordWrapping
         indicatorText.numberOfLines = 0
@@ -158,7 +158,7 @@ class ManageAccountHeader: UITableViewHeaderFooterView {
         manageTitle.text = "Manage Account"
         manageTitle.textColor = .white
         manageTitle.textAlignment = .center
-        manageTitle.font = UIFont(name: "SFCamera-Regular", size: 16)
+        manageTitle.font = UIFont(name: "SFCompactText-Regular", size: 16)
         addSubview(manageTitle)
     }
     
@@ -185,7 +185,7 @@ class DeleteAccountCell: UITableViewCell {
         deleteButton.setTitle("Delete Account", for: .normal)
         deleteButton.setTitleColor(UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1), for: .normal)
         deleteButton.titleLabel?.textAlignment = .left
-        deleteButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        deleteButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         contentView.addSubview(deleteButton)
     }
     

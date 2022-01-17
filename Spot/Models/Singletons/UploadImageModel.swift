@@ -41,7 +41,7 @@ class UploadImageModel {
         
         if let i = imageObjects.firstIndex(where: {$0.image.id == imageObject.id}) {
             imageObjects[i].selected = selected
-            if !selected { imageObjects[i].image.animationImages.removeAll() }
+            if !selected { imageObjects[i].image.animationImages.removeAll(); imageObjects[i].image.gifMode = false }
         } 
         
         if selected { selectedObjects.append(imageObject) } else {

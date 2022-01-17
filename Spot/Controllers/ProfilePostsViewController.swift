@@ -392,7 +392,7 @@ class ProfilePostsViewController: UIViewController {
                 if profileVC.selectedIndex == 1 {
                     
                     profileVC.shadowScroll.contentSize = CGSize(width: UIScreen.main.bounds.width, height: max(UIScreen.main.bounds.height - profileVC.sec0Height, self.postsCollection.contentSize.height + profileVC.sec0Height + 250))
-                    if self.mapVC.customTabBar.view.frame.minY < 200 { profileVC.shadowScroll.isScrollEnabled = true }
+                ///    if self.mapVC.customTabBar.view.frame.minY < 200 { profileVC.shadowScroll.isScrollEnabled = true }
                     
                 }
             })
@@ -577,7 +577,6 @@ extension ProfilePostsViewController: UICollectionViewDelegate, UICollectionView
             mapVC.profileViewController = nil
             mapVC.toggleMapTouch(enable: true)
             
-            mapVC.customTabBar.tabBar.isHidden = true
             mapVC.navigationItem.titleView = nil
     //        mapVC.navigationController?.setNavigationBarHidden(true, animated: false)
 

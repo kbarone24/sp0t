@@ -54,7 +54,7 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
             navigationController?.navigationBar.backIndicatorTransitionMaskImage = UIImage()
 
             let doneButton = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(doneTap(_:)))
-            doneButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
+            doneButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
             navigationItem.setRightBarButton(doneButton, animated: true)
             self.navigationItem.rightBarButtonItem?.tintColor = nil
 
@@ -401,7 +401,7 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
         let emptyLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 80, y: botImage.frame.maxY + 10, width: 160, height: 40))
         emptyLabel.text = "Looks like you don’t have any friends on sp0t yet"
         emptyLabel.textColor = UIColor(red: 0.842, green: 0.842, blue: 0.842, alpha: 1)
-        emptyLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        emptyLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
         emptyLabel.textAlignment = .center
         emptyLabel.numberOfLines = 0
         emptyLabel.lineBreakMode = .byWordWrapping
@@ -446,12 +446,12 @@ class ContactCell: UITableViewCell {
         
         name = UILabel(frame: CGRect(x: 61, y: 12, width: UIScreen.main.bounds.width - 70, height: 17))
         name.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        name.font = UIFont(name: "SFCamera-Semibold", size: 13)
+        name.font = UIFont(name: "SFCompactText-Semibold", size: 13)
         self.addSubview(name)
         
         username = UILabel(frame: CGRect(x: 61, y: name.frame.maxY + 1, width: UIScreen.main.bounds.width - 70, height: 20))
         username.textColor = UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1)
-        username.font = UIFont(name: "SFCamera-Regular", size: 13)
+        username.font = UIFont(name: "SFCompactText-Regular", size: 13)
         self.addSubview(username)
         
         bottomLine = UIView(frame: CGRect(x: 18, y: self.bounds.height - 0.25, width: UIScreen.main.bounds.width - 28, height: 0.25))
@@ -541,7 +541,7 @@ class ContactHeader: UITableViewHeaderFooterView {
         
         titleLabel = UILabel(frame: CGRect(x: 100, y: 15, width: UIScreen.main.bounds.width - 200, height: 16))
         titleLabel.text = "Search contacts"
-        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 16)
+        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 16)
         titleLabel.textColor = .white
         titleLabel.textAlignment = .center
         self.addSubview(titleLabel)

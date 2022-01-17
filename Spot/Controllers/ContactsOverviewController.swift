@@ -24,7 +24,7 @@ class ContactsOverviewController: UIViewController {
         let label = UILabel(frame: CGRect(x: 14, y: 225, width: UIScreen.main.bounds.width - 28, height: 16))
         label.text = "See which of your friends are already on sp0t!"
         label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 15)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 15)
         label.clipsToBounds = false
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
@@ -39,7 +39,7 @@ class ContactsOverviewController: UIViewController {
         let skipButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 50, y: searchContactsButton.frame.maxY + 15, width: 100, height: 36))
         skipButton.setTitle("Skip", for: .normal)
         skipButton.setTitleColor(UIColor(red: 0.479, green: 0.479, blue: 0.479, alpha: 1), for: .normal)
-        skipButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 15)
+        skipButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 15)
         skipButton.backgroundColor = nil
         skipButton.contentHorizontalAlignment = .center
         skipButton.contentVerticalAlignment = .center

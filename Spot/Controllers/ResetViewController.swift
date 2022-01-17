@@ -44,7 +44,7 @@ class ResetViewController: UIViewController {
         emailLabel = UILabel(frame: CGRect(x: 31, y: 40, width: 40, height: 12))
         emailLabel.text = "Email"
         emailLabel.textColor = UIColor(named: "SpotGreen")
-        emailLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        emailLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         view.addSubview(emailLabel)
 
         emailField = PaddedTextField(frame: CGRect(x: 27, y: emailLabel.frame.maxY + 8, width: UIScreen.main.bounds.width - 54, height: 40))
@@ -56,7 +56,7 @@ class ResetViewController: UIViewController {
         emailField.autocorrectionType = .no
         emailField.tag = 1
         emailField.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
-        emailField.font = UIFont(name: "SFCamera-Regular", size: 16)!
+        emailField.font = UIFont(name: "SFCompactText-Regular", size: 16)!
         emailField.textContentType = .emailAddress
         emailField.keyboardType = .emailAddress
         emailField.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
@@ -66,7 +66,7 @@ class ResetViewController: UIViewController {
         descriptionLabel.textColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha:1)
         descriptionLabel.textAlignment = .center
         descriptionLabel.text = "We’ll send a link to reset your password."
-        descriptionLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        descriptionLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
         view.addSubview(descriptionLabel)
         
         //Load 'Email Link' button background
@@ -87,7 +87,7 @@ class ResetViewController: UIViewController {
         errorLabel.numberOfLines = 0
         errorLabel.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
         errorLabel.textAlignment = .center
-        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        errorLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
         errorLabel.text = "Invalid email"
         errorBox.addSubview(errorLabel)
         errorLabel.isHidden = true
@@ -143,7 +143,7 @@ class ResetViewController: UIViewController {
         
         let confirmationLabel = UILabel(frame: CGRect(x: 108, y: 80, width: 236, height: 38))
         confirmationLabel.textColor = UIColor(named: "SpotGreen")
-        confirmationLabel.font = UIFont(name: "SFCamera-Regular", size: 16)
+        confirmationLabel.font = UIFont(name: "SFCompactText-Regular", size: 16)
         confirmationLabel.text = "Got it! Check your inbox for a link to reset your password."
         confirmationLabel.numberOfLines = 0
         confirmationLabel.lineBreakMode = .byWordWrapping

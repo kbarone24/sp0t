@@ -40,7 +40,7 @@ class CircleView: UIView {
             number.text = String(index)
             number.textColor = .white
             let size: CGFloat = bounds.height > 25 ? 16 : 14
-            number.font = UIFont(name: "SFCamera-Semibold", size: size)
+            number.font = UIFont(name: "SFCompactText-Semibold", size: size)
             number.textAlignment = .center
             addSubview(number)
             

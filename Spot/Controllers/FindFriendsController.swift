@@ -85,7 +85,7 @@ class FindFriendsController: UIViewController {
         
         let titleLabel = UILabel(frame: CGRect(x: 100, y: 15, width: UIScreen.main.bounds.width - 200, height: 16))
         titleLabel.text = "Add friends"
-        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 16)
+        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 16)
         titleLabel.textColor = .white
         titleLabel.textAlignment = .center
         titleView.addSubview(titleLabel)
@@ -112,7 +112,7 @@ class FindFriendsController: UIViewController {
         searchBar.autocapitalizationType = .none
         searchBar.autocorrectionType = .no
         searchBar.placeholder = "Search for users"
-        searchBar.searchTextField.font = UIFont(name: "SFCamera-Regular", size: 13)
+        searchBar.searchTextField.font = UIFont(name: "SFCompactText-Regular", size: 13)
         searchBar.clipsToBounds = true
         searchBar.layer.masksToBounds = true
         searchBar.searchTextField.layer.masksToBounds = true
@@ -125,7 +125,7 @@ class FindFriendsController: UIViewController {
         cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 60, y: 13, width: 50, height: 30))
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         cancelButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
         cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
         cancelButton.isHidden = true
@@ -590,7 +590,7 @@ class SendInvitesView: UIView {
         sendLabel = UILabel(frame: CGRect(x: sendImage.frame.maxX + 12, y: 24, width: 100, height: 14))
         sendLabel.text = "Send Invites"
         sendLabel.textColor = invites == 0 ? UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1) : UIColor.white
-        sendLabel.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        sendLabel.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         addSubview(sendLabel)
         
         if invitesLabel != nil { invitesLabel.text = "" }
@@ -598,7 +598,7 @@ class SendInvitesView: UIView {
         let contactsString = invites == 1 ? "\(invites) invite" : "\(invites) invites"
         invitesLabel.text = contactsString + " remaining"
         invitesLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        invitesLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        invitesLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
         addSubview(invitesLabel)
     }
     
@@ -626,13 +626,13 @@ class SearchContactsView: UIView {
         let searchLabel = UILabel(frame: CGRect(x: contactsImage.frame.maxX + 12, y: 24, width: 150, height: 14))
         searchLabel.text = "Search contacts"
         searchLabel.textColor = UIColor.white
-        searchLabel.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        searchLabel.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         addSubview(searchLabel)
         
         let contactsLabel = UILabel(frame: CGRect(x: contactsImage.frame.maxX + 12, y: searchLabel.frame.maxY + 2, width: UIScreen.main.bounds.width - (contactsImage.frame.maxX + 12), height: 16))
         contactsLabel.text = "See which of your friends are already on sp0t"
         contactsLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        contactsLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        contactsLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
         contactsLabel.clipsToBounds = false
         contactsLabel.numberOfLines = 0
         contactsLabel.lineBreakMode = .byWordWrapping
@@ -661,7 +661,7 @@ class SuggestedFriendsHeader: UITableViewHeaderFooterView {
         label = UILabel(frame: CGRect(x: 14, y: 3, width: 125, height: 20))
         label.text = "Suggested friends"
         label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 13)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 13)
         addSubview(label)
         
         if refreshButton != nil { refreshButton.setTitle("", for: .normal) }
@@ -669,7 +669,7 @@ class SuggestedFriendsHeader: UITableViewHeaderFooterView {
         refreshButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         refreshButton.setTitle("REFRESH", for: .normal)
         refreshButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        refreshButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 10.5)
+        refreshButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 10.5)
         refreshButton.contentVerticalAlignment = .center
         refreshButton.contentHorizontalAlignment = .center
         refreshButton.addTarget(self, action: #selector(refreshTap(_:)), for: .touchUpInside)
@@ -727,7 +727,7 @@ class SuggestedFriendCell: UITableViewCell {
         nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 11, y: 13.5, width: 200, height: 15))
         nameLabel.text = user.name
         nameLabel.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        nameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         nameLabel.sizeToFit()
         nameLabel.textAlignment = .left
         
@@ -736,7 +736,7 @@ class SuggestedFriendCell: UITableViewCell {
         usernameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 11, y: nameLabel.frame.maxY + 1, width: 200, height: 16))
         usernameLabel.text = "@" + user.username
         usernameLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        usernameLabel.font = UIFont(name: "SFCamera-Regular", size: 12)
+        usernameLabel.font = UIFont(name: "SFCompactText-Regular", size: 12)
         usernameLabel.sizeToFit()
         addSubview(usernameLabel)
         
@@ -746,7 +746,7 @@ class SuggestedFriendCell: UITableViewCell {
             mutualsText += user.mutualFriends == 1 ? " mutual friend" : " mutual friends"
             mutualsLabel.text = mutualsText
             mutualsLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-            mutualsLabel.font = UIFont(name: "SFCamera-Regular", size: 12)
+            mutualsLabel.font = UIFont(name: "SFCompactText-Regular", size: 12)
             mutualsLabel.sizeToFit()
             addSubview(mutualsLabel)
             
@@ -765,7 +765,7 @@ class SuggestedFriendCell: UITableViewCell {
             spotsText += user.spotsList.count == 1 ? " spot" : " spots"
             spotsLabel.text = spotsText
             spotsLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-            spotsLabel.font = UIFont(name: "SFCamera-Regular", size: 12)
+            spotsLabel.font = UIFont(name: "SFCompactText-Regular", size: 12)
             addSubview(spotsLabel)
         }
 
@@ -859,7 +859,7 @@ class SuggestedFriendSearchCell: UITableViewCell {
         nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: 16, width: 200, height: 15))
         nameLabel.text = user.name
         nameLabel.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        nameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         nameLabel.sizeToFit()
         nameLabel.textAlignment = .left
         
@@ -868,7 +868,7 @@ class SuggestedFriendSearchCell: UITableViewCell {
         usernameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: nameLabel.frame.maxY + 1, width: 200, height: 16))
         usernameLabel.text = "@" + user.username
         usernameLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        usernameLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        usernameLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         usernameLabel.sizeToFit()
         addSubview(usernameLabel)
         

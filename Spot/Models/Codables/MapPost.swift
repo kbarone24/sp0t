@@ -37,9 +37,10 @@ struct MapPost: Identifiable, Codable {
     var taggedUsers: [String]? = []
     var taggedUserIDs: [String] = []
     
-    var captionHeight: CGFloat = 0
     var imageHeight: CGFloat = 0
+    var captionHeight: CGFloat = 0
     var cellHeight: CGFloat = 0
+    var commentsHeight: CGFloat = 0
     
     var spotName: String? = ""
     var spotLat: Double? = 0.0

@@ -68,7 +68,7 @@ class SendInvitesController: UIViewController {
         searchBar.autocapitalizationType = .none
         searchBar.autocorrectionType = .no
         searchBar.showsCancelButton = false
-        searchBar.searchTextField.font = UIFont(name: "SFCamera-Regular", size: 13)
+        searchBar.searchTextField.font = UIFont(name: "SFCompactText-Regular", size: 13)
         searchBar.clipsToBounds = true
         searchBar.layer.masksToBounds = true
         searchBar.searchTextField.layer.masksToBounds = true
@@ -81,7 +81,7 @@ class SendInvitesController: UIViewController {
         cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 65, y: 5.5, width: 50, height: 30))
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
         cancelButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
         cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
         cancelButton.isHidden = true
@@ -126,7 +126,7 @@ class SendInvitesController: UIViewController {
         errorText.textColor = UIColor.white
         errorText.textAlignment = .center
         errorText.text = "You're all out of invites!"
-        errorText.font = UIFont(name: "SFCamera-Regular", size: 14)!
+        errorText.font = UIFont(name: "SFCompactText-Regular", size: 14)!
         errorBox.addSubview(errorText)
 
         checkAuth()
@@ -512,7 +512,7 @@ class SendInvitesTitleView: UIView {
         if titleLabel != nil { titleLabel.text = "" }
         titleLabel = UILabel(frame: CGRect(x: 100, y: 15, width: UIScreen.main.bounds.width - 200, height: 16))
         titleLabel.text = "Send invites"
-        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 16)
+        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 16)
         titleLabel.textColor = .white
         titleLabel.textAlignment = .center
         addSubview(titleLabel)
@@ -520,7 +520,7 @@ class SendInvitesTitleView: UIView {
         if subtitleLabel != nil { subtitleLabel.text = "" }
         subtitleLabel = UILabel(frame: CGRect(x: 100, y: titleLabel.frame.maxY + 1, width: UIScreen.main.bounds.width - 200, height: 16))
         subtitleLabel.text = "\(count) remaining"
-        subtitleLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        subtitleLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         subtitleLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
         subtitleLabel.textAlignment = .center
         addSubview(subtitleLabel)
@@ -575,14 +575,14 @@ class SendInviteCell: UITableViewCell {
         nameLabel.lineBreakMode = .byTruncatingTail
         nameLabel.text = contactName
         nameLabel.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        nameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         addSubview(nameLabel)
         
         if numberLabel != nil { numberLabel.text = "" }
         numberLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: nameLabel.frame.maxY + 1, width: 150, height: 15))
         numberLabel.text = number
         numberLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        numberLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        numberLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         addSubview(numberLabel)
         
         if inviteButton != nil { inviteButton.setImage(UIImage(), for: .normal) }

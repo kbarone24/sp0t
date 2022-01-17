@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Like1x.png",
+      "filename" : "Liked1x (2).png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Like2x.png",
+      "filename" : "Liked2x (2).png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Like3x.png",
+      "filename" : "Liked3x (2).png",
       "idiom" : "universal",
       "scale" : "3x"
     }
