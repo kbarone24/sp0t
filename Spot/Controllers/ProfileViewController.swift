@@ -113,7 +113,7 @@ class ProfileViewController: UIViewController {
         runFunctions()
         
         /// set drawer to half-screen
-        mapVC.customTabBar.view.frame = CGRect(x: 0, y: mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - mapVC.halfScreenY)
+        /// mapVC.customTabBar.view.frame = CGRect(x: 0, y: mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - mapVC.halfScreenY)
         mapVC.prePanY = mapVC.halfScreenY
         
         NotificationCenter.default.addObserver(self, selector: #selector(updateUser(_:)), name: NSNotification.Name("InitialUserLoad"), object: nil)
@@ -141,8 +141,6 @@ class ProfileViewController: UIViewController {
             mapVC.selectedProfileID = ""
             mapVC.navigationItem.titleView = nil
         }
-        
-        if parent is CustomTabBar { scrollDistance = self.shadowScroll.contentOffset.y }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -181,7 +179,6 @@ class ProfileViewController: UIViewController {
         /// set profile view controller for map filtering and drawer animations
         mapVC.profileViewController = self
         mapVC.spotViewController = nil
-        mapVC.nearbyViewController = nil
         mapVC.selectedProfileID = id
         
         /// selectedProfileID == "" used interchangeably with profileViewController == nil on map for filtering - should remove for redundancy
@@ -242,9 +239,7 @@ class ProfileViewController: UIViewController {
         
     func addEmptyState() {
         
-        let tabBarHeight = mapVC.customTabBar.tabBar.frame.height
-
-        addFirstSpotButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 95, y: UIScreen.main.bounds.height - mapVC.halfScreenY - tabBarHeight - 64, width: 190, height: 47))
+        addFirstSpotButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 95, y: UIScreen.main.bounds.height - mapVC.halfScreenY - 64, width: 190, height: 47))
         addFirstSpotButton.setImage(UIImage(named: "ProfileEmptyState"), for: .normal)
         addFirstSpotButton.addTarget(self, action: #selector(addFirstSpotTap(_:)), for: .touchUpInside)
         
@@ -339,7 +334,7 @@ class ProfileViewController: UIViewController {
         titleLabel.textAlignment = .center
         titleLabel.text = self.userInfo == nil ? "" : self.userInfo.username
         titleLabel.textColor = .white
-        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 20)
+        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 20)
         
         let scoreLabel = UILabel(frame: CGRect(x: 0, y: 21, width: 200, height: 15))
         scoreLabel.font = UIFont(name: "Gameplay", size: 11)
@@ -355,7 +350,7 @@ class ProfileViewController: UIViewController {
         mapVC.navigationItem.titleView = titleView
         mapVC.toggleMapTouch(enable: false) /// patch fix, maybe. map wasn't receiving touch events on profile occasionally for some reason.
         
-        if !(parent is CustomTabBar) {
+      /*  if !(parent is CustomTabBar) {
             
             let backButton = UIBarButtonItem(image: UIImage(named: "CircleBackButton")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(removeProfile(_:)))
             backButton.imageInsets = UIEdgeInsets(top: 0, left: -2, bottom: 0, right: 0)
@@ -368,7 +363,7 @@ class ProfileViewController: UIViewController {
                 mapVC.navigationItem.rightBarButtonItem = moreButton
             }
 
-        } else {
+        } else { */
             let settingsButton = UIBarButtonItem(image: UIImage(named: "SettingsIcon")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(openSettings(_:)))
             settingsButton.imageInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: -2)
             mapVC.navigationItem.rightBarButtonItem = settingsButton
@@ -376,12 +371,11 @@ class ProfileViewController: UIViewController {
             let addFriendsButton = UIBarButtonItem(image: UIImage(named: "ProfileAddFriends")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(openAddFriends(_:)))
             addFriendsButton.imageInsets = UIEdgeInsets(top: 0, left: -2, bottom: 0, right: 0)
             mapVC.navigationItem.leftBarButtonItem = addFriendsButton
-        }
+     //   }
         
         mapVC.selectedProfileID = id
         mapVC.profileViewController = self
         mapVC.spotViewController = nil
-        mapVC.nearbyViewController = nil
     }
  
     func reloadProfile() {
@@ -478,10 +472,7 @@ class ProfileViewController: UIViewController {
         profileSpotsController.active = false
         
         /// this is like the equivalent of running a viewWillAppear method from the underneath view controller
-        if let nearbyVC = parent as? NearbyViewController{
-            nearbyVC.resetView()
-            
-        } else if let postVC = parent as? PostViewController {
+        if let postVC = parent as? PostViewController {
             postVC.resetView()
             if commentsSelectedPost != nil { openComments() }
             
@@ -640,11 +631,9 @@ class ProfileViewController: UIViewController {
                 
         mapVC.profileViewController = self
         mapVC.spotViewController = nil
-        mapVC.nearbyViewController = nil
         mapVC.selectedProfileID = self.id
         
         mapVC.navigationController?.setNavigationBarHidden(false, animated: false)
-        if self.parent is CustomTabBar { mapVC.customTabBar.tabBar.isHidden = false }
         
         selectedIndex == 0 ? profileSpotsController.resetView() : profilePostsController.resetView()
     }
@@ -660,12 +649,12 @@ class ProfileViewController: UIViewController {
         mapVC.navigationController?.navigationBar.removeShadow()
         mapVC.removeBottomBar()
         
-        let preAnimationY = mapVC.customTabBar.tabBar.isHidden ? mapVC.tabBarClosedY : mapVC.tabBarOpenY /// offset from return to profile seems to be about the same even when coming from half/closed screen 
+        let preAnimationY = mapVC.tabBarClosedY /// offset from return to profile seems to be about the same even when coming from half/closed screen
         let preAnimationOffset = shadowScroll.contentOffset.y
         mapVC.prePanY = 0
         
         UIView.animate(withDuration: 0.15) {
-            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height )
+           /// self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height )
             self.shadowScroll.contentOffset.y = preAnimationOffset + preAnimationY! - 20
             /// this is hacky but the content view was sliding down with the animation to top after post showing and this seems to work for most screen sizes
             // need to adjust for half screen and closed screen transitions from spot pages 
@@ -689,7 +678,7 @@ class ProfileViewController: UIViewController {
         
         mapVC.prePanY = mapVC.halfScreenY
         UIView.animate(withDuration: 0.15) {
-            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: self.mapVC.halfScreenY, width: self.view.frame.width, height: UIScreen.main.bounds.height - self.mapVC.halfScreenY)
+          ///  self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: self.mapVC.halfScreenY, width: self.view.frame.width, height: UIScreen.main.bounds.height - self.mapVC.halfScreenY)
         }
     }
     
@@ -791,7 +780,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
 
         /// dont offset scroll if drawer is moved
-        if mapVC.prePanY != mapVC.customTabBar.view.frame.minY { return }
+       /// if mapVC.prePanY != mapVC.customTabBar.view.frame.minY { return }
         
         /// reset scrolling before selected view controller has loaded content
         if (selectedIndex == 0 && !profileSpotsController.loaded) || (selectedIndex == 1 && !profilePostsController.loaded) {
@@ -823,6 +812,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
     
     func setContentOffsets() {
                 
+        /*
         DispatchQueue.main.async {
             
             if self.shadowScroll.contentOffset.y <= self.sec0Height {
@@ -856,7 +846,7 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
                 }
             }
         }
-
+*/
     }
     
     func scrollSegmentToTop() {
@@ -922,19 +912,19 @@ class UserViewCell: UITableViewCell {
         nameLabel = UILabel(frame: CGRect(x: profileImage.frame.maxX + 12, y: 28, width: UIScreen.main.bounds.width - 208, height: 17))
         nameLabel.text = user.name
         nameLabel.textColor = UIColor.white
-        nameLabel.font = UIFont(name: "SFCamera-Semibold", size: 17.5)!
+        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 17.5)!
         addSubview(nameLabel)
                 
         usernameLabel = UILabel(frame: CGRect(x: nameLabel.frame.minX, y: nameLabel.frame.maxY + 7, width: UIScreen.main.bounds.width - 120, height: 14))
         usernameLabel.text = "@" + user.username
         usernameLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        usernameLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        usernameLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
         addSubview(usernameLabel)
         
         bioLabel = UILabel(frame: CGRect(x: 14, y: profileImage.frame.maxY + 17, width: UIScreen.main.bounds.width - 28, height: 17))
         bioLabel.text = user.userBio == "" && uid == user.id ? "Add a bio" : user.userBio
         bioLabel.textColor = UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00)
-        bioLabel.font = UIFont(name: "SFCamera-Regular", size: 14.5)
+        bioLabel.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
         addSubview(bioLabel)
         
         if bioLabel.text == "Add a bio" {
@@ -965,7 +955,7 @@ class UserViewCell: UITableViewCell {
             cityLabel = UILabel(frame: CGRect(x: cityIcon.frame.maxX + 5, y: minY + 1, width: UIScreen.main.bounds.width - 120, height: 20))
             cityLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
             cityLabel.text = user.currentLocation
-            cityLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+            cityLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
             cityLabel.sizeToFit()
             addSubview(cityLabel)
             
@@ -981,7 +971,7 @@ class UserViewCell: UITableViewCell {
         var friendString = "\(user.friendIDs.count) friend"; if user.friendIDs.count > 1 { friendString += "s" }
         friendCountButton.setTitle(friendString, for: .normal)
         friendCountButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        friendCountButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 13)
+        friendCountButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 13)
         friendCountButton.contentHorizontalAlignment = .left
         friendCountButton.contentVerticalAlignment = .top
         
@@ -1209,7 +1199,7 @@ class NotFriendsCell: UITableViewCell {
             receivedLabel.text = "Sent you a friend request"
             receivedLabel.textAlignment = .center
             receivedLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-            receivedLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+            receivedLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
             self.addSubview(receivedLabel)
             
             acceptButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 117.5, y: receivedLabel.frame.maxY + 15, width: 235, height: 39))
@@ -1220,7 +1210,7 @@ class NotFriendsCell: UITableViewCell {
             removeButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 95.5, y: acceptButton.frame.maxY + 10, width: 191, height: 37))
             removeButton.setTitle("Remove", for: .normal)
             removeButton.setTitleColor(UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1), for: .normal)
-            removeButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 13)
+            removeButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
             removeButton.titleLabel?.textAlignment = .center
             removeButton.addTarget(self, action: #selector(removeTap(_:)), for: .touchUpInside)
             self.addSubview(removeButton)
@@ -1231,7 +1221,7 @@ class NotFriendsCell: UITableViewCell {
             pendingLabel = UILabel(frame: CGRect(x: 20, y: 120, width: UIScreen.main.bounds.width - 40, height: 20))
             pendingLabel.text = "Friend request pending"
             pendingLabel.textAlignment = .center
-            pendingLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+            pendingLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
             pendingLabel.textColor = UIColor(named: "SpotGreen")
             self.addSubview(pendingLabel)
             
@@ -1240,7 +1230,7 @@ class NotFriendsCell: UITableViewCell {
             removedLabel = UILabel(frame: CGRect(x: 20, y: 110, width: UIScreen.main.bounds.width - 40, height: 20))
             removedLabel.text = "Friend request removed"
             removedLabel.textAlignment = .center
-            removedLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+            removedLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
             removedLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
             self.addSubview(removedLabel)
         }
@@ -1367,7 +1357,7 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
             let removeButton = UIButton(frame: CGRect(x: 50, y: 37, width: 124, height: 49))
             removeButton.setTitle("Remove friend", for: .normal)
             removeButton.setTitleColor(UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0), for: .normal)
-            removeButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 16)
+            removeButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 16)
             removeButton.contentHorizontalAlignment = .center
             removeButton.contentVerticalAlignment = .center
             removeButton.titleLabel?.textAlignment = .center
@@ -1380,7 +1370,7 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
         let reportButton = UIButton(frame: CGRect(x: 50, y: minY, width: 124, height: 49))
         reportButton.setTitle("Report user", for: .normal)
         reportButton.setTitleColor(UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1), for: .normal)
-        reportButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 16)
+        reportButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         reportButton.titleLabel?.textAlignment = .center
         reportButton.contentHorizontalAlignment = .center
         reportButton.contentVerticalAlignment = .center
@@ -1450,7 +1440,7 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
         
         mapVC.deletedFriendIDs.append(friendID)
         
-        if let feedVC = mapVC.customTabBar.viewControllers?.first(where: {$0 is FeedViewController}) as? FeedViewController {
+        if let feedVC = mapVC.feedViewController {
             
             /// add to deleted post ids so that post doesnt re-enter feed
             for post in feedVC.friendPosts { if post.posterID == friendID { mapVC.deletedPostIDs.append(post.id!) } }
@@ -1462,11 +1452,6 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
                 feedVC.postVC.postsList.removeAll(where: {$0.posterID == friendID})
                 if feedVC.postVC.tableView != nil { feedVC.postVC.tableView.reloadData() }
             }
-        }
-        
-        if let nearbyVC = mapVC.customTabBar.viewControllers?.first(where: {$0 is NearbyViewController}) as? NearbyViewController {
-            nearbyVC.cityFriends.removeAll(where: {$0.user.id == friendID})
-            nearbyVC.usersCollection.reloadData()
         }
         
         status = .add

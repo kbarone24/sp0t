@@ -32,7 +32,7 @@ class LocationPickerSpotCell: UITableViewCell {
         spotName = UILabel(frame: CGRect(x: 18, y: nameY, width: UIScreen.main.bounds.width - 78, height: 16))
         spotName.text = spot.spotName
         spotName.lineBreakMode = .byTruncatingTail
-        spotName.font = UIFont(name: "SFCamera-Regular", size: 15)
+        spotName.font = UIFont(name: "SFCompactText-Regular", size: 15)
         spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         contentView.addSubview(spotName)
         
@@ -41,7 +41,7 @@ class LocationPickerSpotCell: UITableViewCell {
             descriptionLabel = UILabel(frame: CGRect(x: 18, y: spotName.frame.maxY + 2, width: UIScreen.main.bounds.width - 78, height: 16))
             descriptionLabel.text = spot.spotDescription
             descriptionLabel.textColor = UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1)
-            descriptionLabel.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
+            descriptionLabel.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
             descriptionLabel.lineBreakMode = .byTruncatingTail
             descriptionLabel.sizeToFit()
             contentView.addSubview(descriptionLabel)
@@ -67,7 +67,7 @@ class LocationPickerSpotCell: UITableViewCell {
             cityLabel = UILabel(frame: CGRect(x: separatorX, y: spotName.frame.maxY + 2, width: UIScreen.main.bounds.width - separatorX - 18, height: 16))
             cityLabel.text = spot.city ?? ""
             cityLabel.textColor = UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1)
-            cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
+            cityLabel.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
             cityLabel.lineBreakMode = .byTruncatingTail
             contentView.addSubview(cityLabel)
             
@@ -91,7 +91,7 @@ class LocationPickerSpotCell: UITableViewCell {
             distanceLabel.text = spot.distance.getLocationString()
             distanceLabel.textAlignment = .right
             distanceLabel.textColor = UIColor(red: 0.262, green: 0.262, blue: 0.262, alpha: 1)
-            distanceLabel.font = UIFont(name: "SFCamera-Semibold", size: 10.5)
+            distanceLabel.font = UIFont(name: "SFCompactText-Semibold", size: 10.5)
             contentView.addSubview(distanceLabel)
         }
     }

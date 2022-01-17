@@ -44,7 +44,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         let nameLabel = UILabel(frame: CGRect(x: 31, y: 40, width: 45, height: 12))
         nameLabel.text = "Name"
         nameLabel.textColor = UIColor(named: "SpotGreen")
-        nameLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        nameLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         view.addSubview(nameLabel)
         
         nameField = PaddedTextField(frame: CGRect(x: 27, y: nameLabel.frame.maxY + 8, width: UIScreen.main.bounds.width - 54, height: 40))
@@ -53,7 +53,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         nameField.layer.borderColor = UIColor(red: 0.158, green: 0.158, blue: 0.158, alpha: 1).cgColor
         nameField.layer.borderWidth = 1
         nameField.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
-        nameField.font = UIFont(name: "SFCamera-regular", size: 16)!
+        nameField.font = UIFont(name: "SFCompactText-regular", size: 16)!
         nameField.autocorrectionType = .no
         nameField.autocapitalizationType = .words
         nameField.tag = 0
@@ -65,7 +65,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         let emailLabel = UILabel(frame: CGRect(x: 31, y: nameField.frame.maxY + 17, width: 40, height: 12))
         emailLabel.text = "Email"
         emailLabel.textColor = UIColor(named: "SpotGreen")
-        emailLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        emailLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         view.addSubview(emailLabel)
         
         emailField = PaddedTextField(frame: CGRect(x: 27, y: emailLabel.frame.maxY + 8, width: UIScreen.main.bounds.width - 54, height: 40))
@@ -78,7 +78,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         emailField.tag = 1
         emailField.delegate = self
         emailField.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
-        emailField.font = UIFont(name: "SFCamera-Regular", size: 16)!
+        emailField.font = UIFont(name: "SFCompactText-Regular", size: 16)!
         emailField.textContentType = .username
         emailField.keyboardType = .emailAddress
         emailField.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
@@ -87,7 +87,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         let passwordLabel = UILabel(frame: CGRect(x: 31, y: emailField.frame.maxY + 17, width: 56, height: 12))
         passwordLabel.text = "Password"
         passwordLabel.textColor = UIColor(named: "SpotGreen")
-        passwordLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        passwordLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         view.addSubview(passwordLabel)
         
         //load username text field
@@ -103,7 +103,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         passwordField.delegate = self
         passwordField.textContentType = .newPassword
         passwordField.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
-        passwordField.font = UIFont(name: "SFCamera-Regular", size: 16)!
+        passwordField.font = UIFont(name: "SFCompactText-Regular", size: 16)!
         passwordField.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
         view.addSubview(passwordField)
 
@@ -122,7 +122,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         let attString = NSMutableAttributedString(string: "By signing up, you are agreeing to sp0t’s privacy policy and terms of service")
         let termsRange = NSRange(location: attString.length - 16, length: 16)
         let totalRange = NSRange(location: 0, length: attString.length - 1)
-        attString.addAttribute(.font, value: UIFont(name: "SFCamera-Semibold", size: 12)!, range: totalRange)
+        attString.addAttribute(.font, value: UIFont(name: "SFCompactText-Semibold", size: 12)!, range: totalRange)
         
         let style = NSMutableParagraphStyle()
         style.alignment = NSTextAlignment.center
@@ -148,7 +148,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         errorLabel.numberOfLines = 0
         errorLabel.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
         errorLabel.textAlignment = .center
-        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        errorLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
         errorLabel.text = "Invalid credentials, please try again."
         errorBox.addSubview(errorLabel)
         errorLabel.isHidden = true

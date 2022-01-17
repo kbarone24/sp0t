@@ -60,7 +60,7 @@ class LandingPageController: UIViewController {
         beenHereLabel.text = "Been here before?"
         beenHereLabel.textAlignment = .center
         beenHereLabel.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        beenHereLabel.font = UIFont(name: "SFCamera-Regular", size: 16)
+        beenHereLabel.font = UIFont(name: "SFCompactText-Regular", size: 16)
         view.addSubview(beenHereLabel)
         
         let loginWithEmail = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 152, y: beenHereLabel.frame.maxY + 9, width: 304, height: 45))

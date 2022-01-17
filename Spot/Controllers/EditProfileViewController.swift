@@ -61,7 +61,7 @@ class EditProfileViewController: UIViewController {
         let titleLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 60, y: 11, width: 120, height: 22))
         titleLabel.text = "Edit Profile"
         titleLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 18)
+        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 18)
         titleLabel.textAlignment = .center
         headerView.addSubview(titleLabel)
         
@@ -69,7 +69,7 @@ class EditProfileViewController: UIViewController {
         cancelButton.titleEdgeInsets = UIEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
         headerView.addSubview(cancelButton)
         
@@ -77,7 +77,7 @@ class EditProfileViewController: UIViewController {
         saveButton.titleEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         saveButton.setTitle("Save", for: .normal)
         saveButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        saveButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        saveButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         saveButton.addTarget(self, action: #selector(saveTap(_:)), for: .touchUpInside)
         headerView.addSubview(saveButton)
     }
@@ -108,7 +108,7 @@ class EditProfileViewController: UIViewController {
         let changeLabel = UILabel(frame: CGRect(x: 0, y: imageView.bounds.maxY - 33, width: imageView.bounds.width, height: 18))
         changeLabel.text = "Change"
         changeLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        changeLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        changeLabel.font = UIFont(name: "SFCompactText-Semibold", size: 12)
         changeLabel.textAlignment = .center
         imageView.addSubview(changeLabel)
         
@@ -127,7 +127,7 @@ class EditProfileViewController: UIViewController {
         let nameLabel = UILabel(frame: CGRect(x: 14, y: 0, width: 60, height: 12))
         nameLabel.text = "Name"
         nameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        nameLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 12)
         nameContainer.addSubview(nameLabel)
         
         nameField = UITextField(frame: CGRect(x: 14, y: nameLabel.frame.maxY + 3, width: UIScreen.main.bounds.width - 28, height: 28))
@@ -136,7 +136,7 @@ class EditProfileViewController: UIViewController {
         nameField.autocapitalizationType = .words
         nameField.autocorrectionType = .no
         nameField.text = profileVC.userInfo.name
-        nameField.font = UIFont(name: "SFCamera-Regular", size: 17)
+        nameField.font = UIFont(name: "SFCompactText-Regular", size: 17)
         nameField.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
         nameContainer.addSubview(nameField)
         
@@ -152,13 +152,13 @@ class EditProfileViewController: UIViewController {
         let usernameLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 65, height: 12))
         usernameLabel.text = "Username"
         usernameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        usernameLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        usernameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 12)
         usernameContainer.addSubview(usernameLabel)
                 
         let atLabel = UILabel(frame: CGRect(x: 14, y: usernameLabel.frame.maxY + 10, width: 18, height: 16))
         atLabel.text = "@"
         atLabel.textColor =  UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        atLabel.font = UIFont(name: "SFCamera-Regular", size: 17)
+        atLabel.font = UIFont(name: "SFCompactText-Regular", size: 17)
         usernameContainer.addSubview(atLabel)
         
         usernameField = UITextField(frame: CGRect(x: atLabel.frame.maxX, y: usernameLabel.frame.maxY + 7, width: UIScreen.main.bounds.width - 102, height: 22))
@@ -168,7 +168,7 @@ class EditProfileViewController: UIViewController {
         usernameField.autocapitalizationType = .none
         usernameField.delegate = self
         usernameField.text = profileVC.userInfo.username
-        usernameField.font = UIFont(name: "SFCamera-Regular", size: 17)
+        usernameField.font = UIFont(name: "SFCompactText-Regular", size: 17)
         usernameField.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
         usernameField.addTarget(self, action: #selector(usernameChanged(_:)), for: .editingChanged)
         usernameContainer.addSubview(usernameField)
@@ -190,7 +190,7 @@ class EditProfileViewController: UIViewController {
         let cityLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 65, height: 12))
         cityLabel.text = "Home city"
         cityLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        cityLabel.font = UIFont(name: "SFCompactText-Semibold", size: 12)
         cityContainer.addSubview(cityLabel)
         
         let cityIcon = UIImageView(frame: CGRect(x: 14, y: cityLabel.frame.maxY + 9, width: 12.14, height: 16.35))
@@ -202,7 +202,7 @@ class EditProfileViewController: UIViewController {
         cityField.delegate = self
         cityField.text = profileVC.userInfo.currentLocation
         cityField.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        cityField.font = UIFont(name: "SFCamera-Regular", size: 17)
+        cityField.font = UIFont(name: "SFCompactText-Regular", size: 17)
         cityField.backgroundColor = nil
         cityContainer.addSubview(cityField)
         
@@ -217,7 +217,7 @@ class EditProfileViewController: UIViewController {
         let bioLabel = UILabel(frame: CGRect(x: 14, y: 16.5, width: 65, height: 12))
         bioLabel.text = "Bio"
         bioLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        bioLabel.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        bioLabel.font = UIFont(name: "SFCompactText-Semibold", size: 12)
         bioContainer.addSubview(bioLabel)
         
         bioView = UITextView(frame: CGRect(x: 10, y: bioLabel.frame.maxY + 3, width: UIScreen.main.bounds.width - 28, height: 28))
@@ -226,7 +226,7 @@ class EditProfileViewController: UIViewController {
         bioView.isScrollEnabled = false
         bioView.text = profileVC.userInfo.userBio == " " ? "" : profileVC.userInfo.userBio
         bioView.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        bioView.font = UIFont(name: "SFCamera-Regular", size: 17)
+        bioView.font = UIFont(name: "SFCompactText-Regular", size: 17)
         bioView.keyboardDistanceFromTextField = 60
         bioContainer.addSubview(bioView)
         
@@ -251,7 +251,7 @@ class EditProfileViewController: UIViewController {
         errorLabel.textColor = UIColor.white
         errorLabel.textAlignment = .center
         errorLabel.text = "this is a generic placeholder error message"
-        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 14)!
+        errorLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)!
         errorBox.addSubview(errorLabel)
         errorLabel.isHidden = true
         
@@ -587,11 +587,11 @@ extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigati
             imageCropVC.dataSource = self
             imageCropVC.cancelButton.setTitleColor(.systemBlue, for: .normal)
             imageCropVC.chooseButton.setTitleColor(.systemBlue, for: .normal)
-            imageCropVC.chooseButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
-            imageCropVC.cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
+            imageCropVC.chooseButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
+            imageCropVC.cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
             imageCropVC.cancelButton.setTitle("Back", for: .normal)
             imageCropVC.moveAndScaleLabel.text = "Preview Image"
-            imageCropVC.moveAndScaleLabel.font = UIFont(name: "SFCamera-Regular", size: 20)
+            imageCropVC.moveAndScaleLabel.font = UIFont(name: "SFCompactText-Regular", size: 20)
             
             self.present(imageCropVC, animated: true, completion: nil)
         })

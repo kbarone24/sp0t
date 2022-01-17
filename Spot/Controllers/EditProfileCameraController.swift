@@ -123,7 +123,7 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
 
         let galleryText = UILabel(frame: CGRect(x: galleryButton.frame.minX - 10, y: galleryButton.frame.maxY + 1, width: 54, height: 18))
         galleryText.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        galleryText.font = UIFont(name: "SFCamera-Semibold", size: 11)
+        galleryText.font = UIFont(name: "SFCompactText-Semibold", size: 11)
         galleryText.textAlignment = .center
         galleryText.text = "Gallery"
         view.addSubview(galleryText)
@@ -244,11 +244,11 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
             imageCropVC.dataSource = self
             imageCropVC.cancelButton.setTitleColor(.systemBlue, for: .normal)
             imageCropVC.chooseButton.setTitleColor(.systemBlue, for: .normal)
-            imageCropVC.chooseButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
-            imageCropVC.cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
+            imageCropVC.chooseButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
+            imageCropVC.cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
             imageCropVC.cancelButton.setTitle("Back", for: .normal)
             imageCropVC.moveAndScaleLabel.text = "Preview Image"
-            imageCropVC.moveAndScaleLabel.font = UIFont(name: "SFCamera-Regular", size: 20)
+            imageCropVC.moveAndScaleLabel.font = UIFont(name: "SFCompactText-Regular", size: 20)
             
             imageCropVC.modalPresentationStyle = .fullScreen
             self.present(imageCropVC, animated: true, completion: nil)
@@ -538,11 +538,11 @@ extension EditProfileCameraController: UIImagePickerControllerDelegate, RSKImage
         imageCropVC.dataSource = self
         imageCropVC.cancelButton.setTitleColor(.systemBlue, for: .normal)
         imageCropVC.chooseButton.setTitleColor(.systemBlue, for: .normal)
-        imageCropVC.chooseButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
-        imageCropVC.cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 18)
+        imageCropVC.chooseButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
+        imageCropVC.cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 18)
         imageCropVC.cancelButton.setTitle("Back", for: .normal)
         imageCropVC.moveAndScaleLabel.text = "Preview Image"
-        imageCropVC.moveAndScaleLabel.font = UIFont(name: "SFCamera-Regular", size: 20)
+        imageCropVC.moveAndScaleLabel.font = UIFont(name: "SFCompactText-Regular", size: 20)
         
         imageCropVC.modalPresentationStyle = .fullScreen
         picker.present(imageCropVC, animated: true, completion: nil)

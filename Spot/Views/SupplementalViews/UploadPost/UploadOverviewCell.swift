@@ -124,12 +124,12 @@ class UploadOverviewCell: UITableViewCell, UITextViewDelegate {
             spotIcon.alpha = 1.0
             
             let labelWidth: CGFloat = UIScreen.main.bounds.width - spotIcon.frame.maxX - 17
-            spotLabel = UILabel(frame: CGRect(x: spotIcon.frame.maxX + 8, y: minY + 2, width: labelWidth, height: 15))
+            spotLabel = UILabel(frame: CGRect(x: spotIcon.frame.maxX + 8, y: minY + 1.5, width: labelWidth, height: 15))
             spotLabel.text = post.spotName
             spotLabel.lineBreakMode = .byTruncatingTail
             spotLabel.numberOfLines = 1
             spotLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-            spotLabel.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+            spotLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
             spotLabel.sizeToFit()
             if spotLabel.frame.width > labelWidth { spotLabel.frame = CGRect(x: spotIcon.frame.maxX + 8, y: minY + 2, width: labelWidth, height: 15) } /// prevent overflow on sizetofit
             contentView.addSubview(spotLabel)
@@ -149,7 +149,7 @@ class UploadOverviewCell: UITableViewCell, UITextViewDelegate {
         captionView.text = captionEmpty ? "What's up..." : post.caption
         captionView.textColor = captionEmpty ? UIColor(red: 0.267, green: 0.267, blue: 0.267, alpha: 1) : UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00)
         captionView.tag = captionEmpty ? 1 : 2 /// 1 is for placeholder text, 2 for acitve text
-        captionView.font = UIFont(name: "SFCamera-Regular", size: 15)
+        captionView.font = UIFont(name: "SFCompactText-Regular", size: 15)
         captionView.keyboardDistanceFromTextField = 100
         captionView.isUserInteractionEnabled = true
         captionView.delegate = self
@@ -167,7 +167,7 @@ class UploadOverviewCell: UITableViewCell, UITextViewDelegate {
             let labelWidth: CGFloat = UIScreen.main.bounds.width - addedUsersIcon.frame.maxX - 20
             addedUsersLabel = UILabel(frame: CGRect(x: addedUsersIcon.frame.maxX + 5, y: captionView.frame.maxY + 5, width: labelWidth, height: 16))
             addedUsersLabel.textColor = UIColor(red: 0.412, green: 0.412, blue: 0.412, alpha: 1)
-            addedUsersLabel.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+            addedUsersLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
             addedUsersLabel.lineBreakMode = .byTruncatingTail
             addedUsersLabel.numberOfLines = 1
             addedUsersLabel.backgroundColor = nil
@@ -317,9 +317,15 @@ extension UploadOverviewCell: UICollectionViewDelegate, UICollectionViewDataSour
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
+        // cancel fetch if tapping an image while fetching happening
+        if imageFetcher.fetchingIndex == indexPath.row {
+            toggleAliveAt(row: indexPath.row)
+            return
+        }
+        
         // show image preview on image tap
         guard let cell = collectionView.cellForItem(at: indexPath) as? SelectedImageCell else { return }
-        
+
         scrollToImageAt(position: indexPath.row, animated: true)
         
         imagePreview = ImagePreviewView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
@@ -348,8 +354,12 @@ extension UploadOverviewCell: UICollectionViewDelegate, UICollectionViewDataSour
     }
     
     @objc func aliveTap(_ sender: UIButton) {
-        
         let row = sender.tag
+        toggleAliveAt(row: row)
+    }
+    
+    func toggleAliveAt(row: Int) {
+        
         let imageObject = UploadImageModel.shared.scrollObjects[row]
         
         let indexPath = IndexPath(item: row, section: 0)
@@ -359,7 +369,11 @@ extension UploadOverviewCell: UICollectionViewDelegate, UICollectionViewDataSour
         if !imageObject.gifMode {
             
             cell.addActivityIndicator()
-            cancelFetchForItemAt(index: imageFetcher.fetchingIndex)
+            
+            let sameRow = imageFetcher.fetchingIndex == row
+            self.cancelFetchForItemAt(index: imageFetcher.fetchingIndex) /// fetching index reset here
+            if sameRow { return } /// cancel for double tap toggle
+            
             imageFetcher.fetchingIndex = row
             
             imageFetcher.fetchLivePhoto(currentAsset: imageObject.asset, animationImages: imageObject.animationImages) { [weak self] animationImages, failed in

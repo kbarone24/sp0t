@@ -45,7 +45,7 @@ class FeedViewController: UIViewController {
     
     unowned var mapVC: MapViewController!
     var postVC: PostViewController!
-    var tabBar: CustomTabBar!
+    var addButton: UIButton!
         
     enum refreshStatus {
         case yesRefresh
@@ -73,9 +73,6 @@ class FeedViewController: UIViewController {
             ///stop indicator freeze after view enters background
             resumeIndicatorAnimation()
         }
-        
-        if let customTab = self.parent as? CustomTabBar { tabBar = customTab }
-        if let map = tabBar.parent as? MapViewController { mapVC = map }
     }
 
     
@@ -297,7 +294,6 @@ class FeedViewController: UIViewController {
                 let postIn = try doc.data(as: MapPost.self)
                 guard var postInfo = postIn else { index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts)}; continue }
                     postInfo.id = doc.documentID
-                    postInfo = self.setSecondaryPostValues(post: postInfo)
 
                     if let user = UserDataModel.shared.friendsList.first(where: {$0.id == postInfo.posterID}) {
                     postInfo.userInfo = user
@@ -315,6 +311,7 @@ class FeedViewController: UIViewController {
                     
                     self.getComments(postID: postInfo.id!) { commentList in
                         postInfo.commentList = commentList
+                        postInfo = self.setSecondaryPostValues(post: postInfo)
                         exitCount += 1; if exitCount == 2 { localPosts.append(postInfo); index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts) }}
                     }
                     
@@ -365,8 +362,10 @@ class FeedViewController: UIViewController {
                         
                         postVC.postsList = friendPosts
 
-                        if tabBar.selectedIndex == 0 && postVC.children.count == 0 {
-                            mapVC.postsList = postVC.postsList }
+                    /*    if tabBar.selectedIndex == 0 && postVC.children.count == 0 {
+                            mapVC.postsList = postVC.postsList }*/
+                        if postVC.children.count == 0 {
+                            mapVC.postsList = postVC.postsList } /// replacement
                         
                         if originalPostCount == postVC.selectedPostIndex {
                             /// send notification to map to animate to new post annotation if its on the loading page
@@ -654,8 +653,10 @@ class FeedViewController: UIViewController {
                             scrollToFirstRow = originalPostCount == 0
                             
                             postVC.postsList = nearbyPosts
-                            if tabBar.selectedIndex == 0 && postVC.children.count == 0 {
-                                mapVC.postsList = postVC.postsList }
+                          /*  if tabBar.selectedIndex == 0 && postVC.children.count == 0 {
+                                mapVC.postsList = postVC.postsList } */
+                            if postVC.children.count == 0 {
+                                  mapVC.postsList = postVC.postsList }
                             
                             if originalPostCount == postVC.selectedPostIndex {
                                 /// send notification to map to animate to new post annotation if its on the loading page
@@ -684,7 +685,9 @@ class FeedViewController: UIViewController {
                                     for i in 0...self.nearbyPosts.count - 1 { self.nearbyPosts[i].postScore = self.getPostScore(post: self.nearbyPosts[i]) } /// update post scores on location change
                                     self.nearbyPosts.sort(by: {$0.postScore > $1.postScore})
                                     if self.selectedSegmentIndex == 1 { self.postVC.postsList = self.nearbyPosts }
-                                    if self.tabBar.selectedIndex == 0 && self.postVC.children.count == 0 {
+                                    /*if self.tabBar.selectedIndex == 0 && self.postVC.children.count == 0 {
+                                        self.mapVC.postsList = self.postVC.postsList } */
+                                    if self.postVC.children.count == 0 {
                                         self.mapVC.postsList = self.postVC.postsList }
                                     scrollToFirstRow = true
                                 }
@@ -792,13 +795,40 @@ class FeedViewController: UIViewController {
                     commentInfo.seconds = commentInfo.timestamp.seconds
                     commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
                     
-                    if !commentList.contains(where: {$0.id == doc.documentID}) {
-                        commentList.append(commentInfo)
-                        commentList.sort(by: {$0.seconds < $1.seconds})
-                    }
-                                        
-                    if doc == commentSnap!.documents.last { completion(commentList) }
+                    /// get commenter user info from friends list or from database
+                    var tempFriends = UserDataModel.shared.friendsList
+                    tempFriends.append(UserDataModel.shared.userInfo)
                     
+                    if let i = tempFriends.firstIndex(where: {$0.id == commentInfo.commenterID}) {
+                        commentInfo.userInfo = tempFriends[i]
+                        if !commentList.contains(where: {$0.id == doc.documentID}) {
+                            commentList.append(commentInfo)
+                            commentList.sort(by: {$0.seconds < $1.seconds})
+                        }
+                        
+                        if doc == commentSnap!.documents.last { completion(commentList) }
+                        
+                    } else {
+                        
+                        self.db.collection("users").document(commentInfo.commenterID).getDocument { (snap, err) in
+                            
+                            do {
+                                let userProf = try snap?.data(as: UserProfile.self)
+                                guard var userProfile = userProf else { if doc == commentSnap!.documents.last { completion(commentList) }; return }
+                                
+                                userProfile.id = snap!.documentID
+                                commentInfo.userInfo = userProfile
+                                
+                                if !commentList.contains(where: {$0.id == doc.documentID}) {
+                                    commentList.append(commentInfo)
+                                    commentList.sort(by: {$0.seconds < $1.seconds})
+                                }
+                                
+                                if doc == commentSnap!.documents.last { completion(commentList) }
+                                
+                            } catch { if doc == commentSnap!.documents.last { completion(commentList) }; return }
+                        }
+                    }
                 } catch { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
             }
         }
@@ -845,12 +875,47 @@ class FeedViewController: UIViewController {
             self.view.addSubview(vc.view)
             vc.didMove(toParent: self)
             
-            if self.tabBar.selectedIndex == 0 {
+         ///   if self.tabBar.selectedIndex == 0 {
                 self.mapVC.postsList = activePosts
                 let infoPass = ["selectedPost": self.selectedPostIndex, "firstOpen": true, "parentVC":  PostViewController.parentViewController.feed] as [String : Any]
                 NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: infoPass)
+         ///   }
+            ///
+            let addY = UserDataModel.shared.largeScreen ? UIScreen.main.bounds.height - 89 : UIScreen.main.bounds.height - 74
+            let addX = UserDataModel.shared.largeScreen ? UIScreen.main.bounds.width - 73 : UIScreen.main.bounds.width - 69
+            addButton = UIButton(frame: CGRect(x: addX, y: addY, width: 55, height: 55))
+            addButton.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
+            addButton.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
+          //  view.addSubview(addButton)
+        }
+    }
+    
+    @objc func addTap(_ sender: UIButton) {
+        
+        if mapVC.navigationController == nil { return }
+        if mapVC.navigationController!.viewControllers.contains(where: {$0 is UploadPostController}) { return } /// crash on double stack was happening here
+        
+        DispatchQueue.main.async {
+            
+            if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
+                
+                vc.mapVC = self.mapVC
+                
+                let transition = CATransition()
+                transition.duration = 0.3
+                transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
+                transition.type = CATransitionType.push
+                transition.subtype = CATransitionSubtype.fromTop
+                self.mapVC.navigationController?.view.layer.add(transition, forKey: kCATransition)
+                self.mapVC.navigationController?.pushViewController(vc, animated: false)
+                    
+                /// for smooth nav bar animation
+                UIView.animate(withDuration: 0.2) {
+                    self.mapVC.navigationController?.navigationBar.alpha = 0.0
+                }
             }
         }
+
     }
     
     func openOrScrollToFirst(animated: Bool, newPost: Bool) {
@@ -886,6 +951,7 @@ class FeedViewController: UIViewController {
     
     func addFeedSeg(selectedIndex: Int) {
         
+        /*
         self.selectedSegmentIndex = selectedIndex
                 
         feedSeg = UIView(frame: CGRect(x: 20, y: 0, width: UIScreen.main.bounds.width - 40, height: 35))
@@ -898,7 +964,7 @@ class FeedViewController: UIViewController {
         friendsSegment.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         friendsSegment.setTitle("Friends", for: .normal)
         friendsSegment.setTitleColor(friendsColor, for: .normal)
-        friendsSegment.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: friendsFont)
+        friendsSegment.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: friendsFont)
         friendsSegment.contentHorizontalAlignment = .right
         friendsSegment.contentVerticalAlignment = .center
         friendsSegment.addTarget(self, action: #selector(friendsSegmentTap(_:)), for: .touchUpInside)
@@ -914,7 +980,7 @@ class FeedViewController: UIViewController {
         citySegment.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         citySegment.setTitle(rawCity, for: .normal)
         citySegment.setTitleColor(nearbyColor, for: .normal)
-        citySegment.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: nearbyFont)
+        citySegment.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: nearbyFont)
         citySegment.contentHorizontalAlignment = .left
         citySegment.contentVerticalAlignment = .center
         citySegment.addTarget(self, action: #selector(nearbySegmentTap(_:)), for: .touchUpInside)
@@ -926,8 +992,8 @@ class FeedViewController: UIViewController {
         feedSeg.addSubview(separatorLine)
         
         /// hide feed seg if user already clicked off the feed
-        if mapVC.customTabBar.selectedIndex == 0 { mapVC.navigationItem.titleView = feedSeg }
-
+        mapVC.navigationItem.titleView = feedSeg
+         */
     }
     
     func hideFeedSeg() {
@@ -937,8 +1003,6 @@ class FeedViewController: UIViewController {
     func unhideFeedSeg() {
         
         if feedSeg == nil { return }
-        if mapVC.customTabBar.selectedIndex != 0 { return }
-        
         mapVC.navigationItem.titleView = feedSeg
     }
     
@@ -950,7 +1014,7 @@ class FeedViewController: UIViewController {
     }
     
     func switchToFriendsSegment(newPost: Bool) {
-        
+        /*
         selectedSegmentIndex = 0
         selectedPostIndex = friendsPostIndex
         refresh = friendsRefresh
@@ -981,7 +1045,7 @@ class FeedViewController: UIViewController {
                     activityIndicator.startAnimating()
                 }
             }
-        }
+        } */
     }
     
     @objc func nearbySegmentTap(_ sender: UIButton) {
@@ -1036,12 +1100,12 @@ class FeedViewController: UIViewController {
         let friendsColor = selectedSegmentIndex == 0 ? UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00) : UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
         let friendsFont: CGFloat = selectedSegmentIndex == 0 ? 18 : 17
         friendsSegment.setTitleColor(friendsColor, for: .normal)
-        friendsSegment.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: friendsFont)
+        friendsSegment.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: friendsFont)
 
         let nearbyColor = selectedSegmentIndex == 1 ? UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00) : UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
         let nearbyFont: CGFloat = selectedSegmentIndex == 1 ? 18 : 17
         citySegment.setTitleColor(nearbyColor, for: .normal)
-        citySegment.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: nearbyFont)
+        citySegment.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: nearbyFont)
     }
     
     func checkForLocationChange() {

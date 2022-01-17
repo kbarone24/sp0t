@@ -136,7 +136,7 @@ class AVCameraController: UIViewController {
         holdStillLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 90, height: 16))
         holdStillLabel.text = "HOLD STILL!"
         holdStillLabel.textColor = UIColor(named: "SpotGreen")
-        holdStillLabel.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
+        holdStillLabel.font = UIFont(name: "SFCompactText-Semibold", size: 11.5)
         holdStillLabel.textAlignment = .center
         gifView.addSubview(holdStillLabel)
         
@@ -183,7 +183,7 @@ class AVCameraController: UIViewController {
         stillText = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 27.5, y: textY, width: 55, height: 25))
         stillText.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         stillText.setTitle("PHOTO", for: .normal)
-        stillText.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        stillText.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         stillText.setTitleColor(UIColor.white, for: .normal)
         stillText.titleLabel!.layer.shadowColor = UIColor.black.cgColor
         stillText.titleLabel!.layer.shadowRadius = 2.5
@@ -199,7 +199,7 @@ class AVCameraController: UIViewController {
         gifText.setTitle("ALIVE", for: .normal)
         gifText.setTitleColor(UIColor.white.withAlphaComponent(0.65), for: .normal)
         gifText.titleLabel?.textAlignment = .center
-        gifText.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        gifText.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         gifText.titleLabel!.layer.shadowColor = UIColor.black.cgColor
         gifText.titleLabel!.layer.shadowRadius = 2.5
         gifText.titleLabel!.layer.shadowOpacity = 0.6
@@ -221,7 +221,7 @@ class AVCameraController: UIViewController {
         
         let galleryText = UILabel(frame: CGRect(x: galleryButton.frame.minX - 10, y: galleryButton.frame.maxY + 1, width: 54, height: 18))
         galleryText.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        galleryText.font = UIFont(name: "SFCamera-Semibold", size: 11)
+        galleryText.font = UIFont(name: "SFCompactText-Semibold", size: 11)
         galleryText.textAlignment = .center
         galleryText.text = "GALLERY"
         view.addSubview(galleryText)
@@ -686,8 +686,8 @@ class AVCameraController: UIViewController {
             /// animate switch between labels
             UIView.animate(withDuration: 0.3, animations: {
                 
-                self.stillText.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
-                self.gifText.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+                self.stillText.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
+                self.gifText.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
                 self.stillText.frame = CGRect(x: UIScreen.main.bounds.width/2 - 27.5, y: self.stillText.frame.minY, width: self.stillText.frame.width, height: self.stillText.frame.height)
                 self.gifText.frame = CGRect(x: self.stillText.frame.maxX + 10, y: self.gifText.frame.minY, width: self.gifText.frame.width, height: self.gifText.frame.height)
                 self.gifText.setTitleColor(UIColor.white.withAlphaComponent(0.65), for: .normal)
@@ -714,8 +714,8 @@ class AVCameraController: UIViewController {
             
             UIView.animate(withDuration: 0.3) {
                 
-                self.stillText.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
-                self.gifText.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+                self.stillText.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
+                self.gifText.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
                 self.gifText.frame = CGRect(x: UIScreen.main.bounds.width/2 - 27.5, y: self.gifText.frame.minY, width: self.gifText.frame.width, height: self.gifText.frame.height)
                 self.stillText.frame = CGRect(x: self.gifText.frame.minX - 65, y: self.stillText.frame.minY, width: self.stillText.frame.width, height: self.stillText.frame.height)
                 self.stillText.setTitleColor(UIColor.white.withAlphaComponent(0.65), for: .normal)

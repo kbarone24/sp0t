@@ -99,11 +99,11 @@ extension UIViewController {
     func getCommentHeight(comment: String) -> CGFloat {
         let temp = UILabel(frame: CGRect(x: 54, y: 0, width: UIScreen.main.bounds.width - 68, height: 18))
         temp.text = comment
-        temp.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        temp.font = UIFont(name: "SFCompactText-Regular", size: 13.5)
         temp.numberOfLines = 0
         temp.lineBreakMode = .byWordWrapping
         temp.sizeToFit()
-        let commentHeight: CGFloat = temp.bounds.height < 15 ? 15 : temp.bounds.height
+        let commentHeight: CGFloat = temp.bounds.height < 16 ? 16 : temp.bounds.height
         return commentHeight
     }
     
@@ -398,37 +398,94 @@ extension UIViewController {
     
     func setSecondaryPostValues(post: MapPost) -> MapPost {
         
-        let smallScreen = UIScreen.main.bounds.height < 800
         var newPost = post
-        
         newPost.seconds = newPost.timestamp.seconds
         
-        let superMax: CGFloat = smallScreen ? 1.3 : 1.5
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 40.0
+        let navBarHeight = statusHeight +
+                    (self.navigationController?.navigationBar.frame.height ?? 44.0)
+        let smallScreen = UserDataModel.shared.screenSize == 0
+
+        let superMax: CGFloat = 1.3
         let maxAspect =  min((newPost.aspectRatios?.max() ?? 0.033) - 0.033, superMax)
-        newPost.imageHeight = smallScreen ? maxAspect * 288 : maxAspect * (UIScreen.main.bounds.width - 82)
+        let imageHeight = UIScreen.main.bounds.width * maxAspect
+        let noImage = imageHeight == 0
+
+        newPost.imageHeight = UIScreen.main.bounds.width * maxAspect
+        /// 55/90 = bottom spacing for button bar, 55.5 on big screens = topview indent above image
+        let fixedAreas: CGFloat = smallScreen || noImage ? navBarHeight + 55 : navBarHeight + 55.5 + 90
+        let textHeight: CGFloat = UIScreen.main.bounds.height - fixedAreas - imageHeight
         
-        let noImage = newPost.imageHeight == 0
-        newPost.captionHeight = self.getTruncatedCaptionHeight(caption: newPost.caption, noImage: noImage)
+        var maxCaption = textHeight - 22 /// subtract timestamp height and spacing
+        /// min 2 comments showing for small screen, 1 comment for large screen
+        let minComments = smallScreen ? 1 : 2
+        maxCaption -=  CGFloat(min(max(0, post.commentList.count - 1), minComments) * 20)
         
-        newPost.cellHeight = 140 + newPost.captionHeight + newPost.imageHeight
-        newPost.cellHeight += noImage ? 20 : 0
-        newPost.cellHeight -= newPost.captionHeight == 0 ? 10 : 0 /// adjust for smaller cell with no caption
+        /// round to nearest line height
+        let captionMultiplier: CGFloat = noImage ? 29 : 18
+        maxCaption = (captionMultiplier * (maxCaption / captionMultiplier)).rounded(.down)
+        newPost.captionHeight = self.getCaptionHeight(caption: newPost.caption, noImage: noImage, maxCaption: maxCaption, truncated: true)
         
+        let commentsHeight = textHeight - newPost.captionHeight
+        newPost.commentList = getFeedCommentsHeight(height: commentsHeight, commentsList: newPost.commentList)
+        for comment in newPost.commentList { newPost.commentsHeight += comment.feedHeight }
+        
+        newPost.cellHeight = imageHeight + textHeight + fixedAreas
         return newPost
     }
     
-    func getTruncatedCaptionHeight(caption: String, noImage: Bool) -> CGFloat {
+    func getCaptionHeight(caption: String, noImage: Bool, maxCaption: CGFloat, truncated: Bool) -> CGFloat {
                 
-        let fontSize: CGFloat = noImage ? 24 : 14.5
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 44, height: 20))
+        let fontSize: CGFloat = noImage ? 24 : 14.2
+        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 16, height: 20))
         tempLabel.text = caption
-        tempLabel.font = UIFont(name: "SFCamera-Regular", size: fontSize)
+        tempLabel.font = UIFont(name: "SFCompactText-Regular", size: fontSize)
         tempLabel.numberOfLines = 0
         tempLabel.lineBreakMode = .byWordWrapping
         tempLabel.sizeToFit()
+        print("height", tempLabel.frame.height)
         
-        let minReturn: CGFloat = noImage ? 200 : 54
-        return min(minReturn, tempLabel.frame.height)
+        return truncated ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
+    }
+    
+    func getFeedCommentsHeight(height: CGFloat, commentsList: [MapComment]) -> ([MapComment]) {
+        
+        if commentsList.count < 1 { return commentsList }
+
+        var spaceRemaining = height
+        var newComments = commentsList
+
+        for i in 0...commentsList.count - 1 {
+            let height = getFeedCommentHeight(comment: commentsList[i])
+            /// save room for the second comment  if i==0
+            if (i == 0 && height <= spaceRemaining - 20) || (i != 0 && height <= spaceRemaining) {
+                newComments[i].feedHeight = height
+                spaceRemaining -= height
+            } else {
+                newComments[i].feedHeight = 20
+            }
+        }
+
+        return newComments
+    }
+    
+    func getFeedCommentHeight(comment: MapComment) -> CGFloat {
+        
+        let username = UIButton(frame: CGRect(x: 8, y: 1, width: 150, height: 18))
+        username.setTitle(comment.userInfo?.username ?? "", for: .normal)
+        username.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13.25)
+        username.sizeToFit()
+        username.frame = CGRect(x: 3, y: 1, width: username.frame.width + 10, height: 18)
+        
+        let commentLabel = UILabel(frame: CGRect(x: username.frame.maxX, y: 2.5, width: UIScreen.main.bounds.width - username.frame.maxX - 8, height: UIScreen.main.bounds.height))
+        commentLabel.text = comment.comment
+        commentLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
+        commentLabel.lineBreakMode = .byWordWrapping
+        commentLabel.numberOfLines = 0
+        commentLabel.sizeToFit()
+        
+        return commentLabel.frame.height + 5
     }
     
     func getNewCaption(oldUsername: String, newUsername: String, caption: String) -> String {
@@ -505,7 +562,6 @@ extension UIViewController {
                           "timestamp": postTimestamp,
                           "taggedUsers": post.taggedUsers!,
                           "taggedUserIDs": post.taggedUserIDs,
-                          "gif": post.gif!,
                           "isFirst": post.isFirst!,
                           "postLat": post.postLat,
                           "postLong": post.postLong,
@@ -513,18 +569,22 @@ extension UIViewController {
                           "imageURLs" : post.imageURLs,
                           "frameIndexes" : post.frameIndexes!,
                           "aspectRatios" : post.aspectRatios!,
-                          "spotName" : post.spotName!,
                           "createdBy": post.createdBy!,
                           "city" : post.city!,
                           "inviteList" : post.inviteList!,
                           "friendsList" : post.friendsList,
-                          "spotID": post.spotID!,
+                          "spotName" : post.spotName!,
+                          "spotNames" : [post.spotName!],
+                          "spotID" : post.spotID!,
+                          "spotIDs" : [post.spotID!],
+                          "spotIndexes" : [0], /// preloading DB for multiple sp0t upload
                           "spotLat": post.spotLat!,
                           "spotLong": post.spotLong!,
                           "spotPrivacy" : post.spotPrivacy!,
                           "hideFromFeed": post.hideFromFeed!,
                           "addedUsers" : post.addedUsers!,
                           "tag" : post.tag!,
+                          "tags" : [post.tag!], /// prepare for switch to multiple tags
                           "posterUsername" : UserDataModel.shared.userInfo.username,
                           "imageLocations" : post.imageLocations!
         ] as [String : Any]
@@ -535,6 +595,7 @@ extension UIViewController {
                              "commenterIDList": [],
                              "commenterUsername" : UserDataModel.shared.userInfo.username,
                              "imageURL": post.imageURLs.first ?? "",
+                             "likers" : [],
                              "posterID": post.posterID,
                              "posterUsername": UserDataModel.shared.userInfo.username,
                              "timestamp" : postTimestamp,
@@ -558,12 +619,32 @@ extension UIViewController {
     
     func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
         
+        var failed = false
+        
         let fullWidth: CGFloat = UIScreen.main.bounds.width - 100
         if images.isEmpty { completion([], false); return } /// complete immediately for no  image post
         
+        var URLs: [String] = []
+        for _ in images {
+            URLs.append("")
+        }
+
         var index = 0
-        DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
-            if progressFill.bounds.width != fullWidth {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 18) {
+            /// no downloaded URLs means that this post isnt even close to uploading so trigger failed upload earlier to avoid making the user wait
+            if progressFill.bounds.width != fullWidth && !URLs.contains(where: {$0 != ""}) && !failed {
+                print("run failed 1")
+                failed = true
+                completion([], true)
+                return
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
+            /// run failed upload on second try if it wasnt already run
+            if progressFill.bounds.width != fullWidth && !failed {
+                print("run failed 2")
+                failed = true
                 completion([], true)
                 return
             }
@@ -571,12 +652,9 @@ extension UIViewController {
         
         var progress = 0.7/Double(images.count)
 
-        var URLs: [String] = []
-        for _ in images {
-            URLs.append("")
-        }
         
         for image in images {
+            
             let imageID = UUID().uuidString
             let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageID)")
             
@@ -588,33 +666,34 @@ extension UIViewController {
             
             let metadata = StorageMetadata()
             metadata.contentType = "image/jpeg"
-            
-            DispatchQueue.global(qos: .userInitiated).async {
-                storageRef.putData(imageData, metadata: metadata) { metadata, error in
+        
+            storageRef.putData(imageData, metadata: metadata) { metadata, error in
+                
+                if error != nil { if !failed { failed = true; completion([], true)}; return }
+                storageRef.downloadURL { (url, err) in
+                    if error != nil { if !failed { failed = true; completion([], true)}; return }
+                    let urlString = url!.absoluteString
                     
-                    if error != nil { print("error 2"); completion([], true); return }
-                    storageRef.downloadURL { (url, err) in
-                        if error != nil { print("error 3"); completion([], true); return }
-                        let urlString = url!.absoluteString
-                        
-                        let i = images.lastIndex(where: {$0 == image})
-                        URLs[i ?? 0] = urlString
-                        
-                        DispatchQueue.main.async {
-                            let frameWidth: CGFloat = min(((0.3 + progress) * UIScreen.main.bounds.width - 100), UIScreen.main.bounds.width - 101)
-                            UIView.animate(withDuration: 0.2) {
-                                progressFill.frame = CGRect(x: progressFill.frame.minX, y: progressFill.frame.minY, width: frameWidth, height: progressFill.frame.height)
-                            }
+                    let i = images.lastIndex(where: {$0 == image})
+                    URLs[i ?? 0] = urlString
+                    
+                    DispatchQueue.main.async {
+                        let frameWidth: CGFloat = min(((0.3 + progress) * UIScreen.main.bounds.width - 100), UIScreen.main.bounds.width - 101)
+                        UIView.animate(withDuration: 0.2) {
+                            progressFill.frame = CGRect(x: progressFill.frame.minX, y: progressFill.frame.minY, width: frameWidth, height: progressFill.frame.height)
                         }
-                        
-                        progress = progress * Double(index + 1)
-                        
-                        index += 1
-                        if index == images.count {
-                            DispatchQueue.main.async {
-                                completion(URLs, false)
-                                return
-                            }
+                    }
+                    
+                    progress = progress * Double(index + 1)
+                    
+                    index += 1
+                    
+                    if failed { return } /// dont want to return anything after failed upload runs
+
+                    if index == images.count {
+                        DispatchQueue.main.async {
+                            completion(URLs, false)
+                            return
                         }
                     }
                 }
@@ -877,7 +956,7 @@ extension UITableViewCell {
                     tags.append(tag)
                     let range = NSMakeRange(currentIndex, word.count)
                     /// bolded range out of username + @
-                    attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCamera-Semibold", size: fontSize) as Any, range: range)
+                    attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCompactText-Semibold", size: fontSize) as Any, range: range)
                 }
             }
         }
@@ -1365,5 +1444,44 @@ class PaddedTextField: UITextField {
     
     override open func editingRect(forBounds bounds: CGRect) -> CGRect {
         return bounds.inset(by: padding)
+    }
+}
+
+extension UIView {
+    
+    func getTimestamp(postTime: Firebase.Timestamp) -> String {
+        let seconds = postTime.seconds
+        let current = NSDate().timeIntervalSince1970
+        let currentTime = Int64(current)
+        let timeSincePost = currentTime - seconds
+        
+        if timeSincePost < 604800 {
+            // return time since post
+            
+            if (timeSincePost <= 86400) {
+                if (timeSincePost <= 3600) {
+                    if (timeSincePost <= 60) {
+                        return "\(timeSincePost)s"
+                    } else {
+                        let minutes = timeSincePost / 60
+                        return "\(minutes)m"
+                    }
+                } else {
+                    let hours = timeSincePost / 3600
+                    return "\(hours)h"
+                }
+            } else {
+                let days = timeSincePost / 86400
+                return "\(days)d"
+            }
+        } else {
+            // return date
+            let timeInterval = TimeInterval(integerLiteral: seconds)
+            let date = Date(timeIntervalSince1970: timeInterval)
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "M/dd/yy"
+            let dateString = dateFormatter.string(from: date)
+            return dateString
+        }
     }
 }

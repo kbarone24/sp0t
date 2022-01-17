@@ -214,7 +214,7 @@ class TimestampHeader: UICollectionReusableView {
         if dateLabel != nil { dateLabel.text = "" }
         dateLabel = UILabel(frame: CGRect(x: 9, y: 13.5, width: UIScreen.main.bounds.width - 28, height: 16))
         dateLabel.text = date
-        dateLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        dateLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
         dateLabel.textColor = UIColor(red: 0.60, green: 0.60, blue: 0.60, alpha: 1.00)
         dateLabel.sizeToFit()
         addSubview(dateLabel)

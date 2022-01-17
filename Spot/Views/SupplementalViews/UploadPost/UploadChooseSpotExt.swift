@@ -326,10 +326,9 @@ extension UploadPostController: UISearchBarDelegate {
             do {
                 
                 let failedPosts = try managedContext.fetch(postsRequest)
-                
                 if let post = failedPosts.first {
                     ///if add-to-spot mode, only get failed uploads that are posts to this spot
-                    if self.spotObject != nil {  if post.spotID != self.spotObject.id { return } }
+                    if self.spotObject != nil {  if (post.spotIDs?.first ?? "") != self.spotObject.id { return } }
                     /// test for corrupted draft or old draft (pre 1.0)
                     let timestampID = post.timestamp
                     
@@ -363,54 +362,6 @@ extension UploadPostController: UISearchBarDelegate {
                 print("Could not fetch. \(error), \(error.userInfo)")
             }
         }
-                
-        let spotsRequest = NSFetchRequest<SpotDraft>(entityName: "SpotDraft")
-        spotsRequest.relationshipKeyPathsForPrefetching = ["images"]
-        spotsRequest.returnsObjectsAsFaults = false
-        let timeSort2 = NSSortDescriptor(key: "timestamp", ascending: false)
-        spotsRequest.sortDescriptors = [timeSort2]
-        spotsRequest.predicate = NSPredicate(format: "uid == %@", self.uid)
-        
-        if spotObject != nil { return }
-        
-        DispatchQueue.global().async {
-
-            do {
-                
-                let failedSpots = try managedContext.fetch(spotsRequest)
-                if let spot = failedSpots.first {
-                    
-                    
-                    let timestampID = spot.timestamp
-                    let images = spot.images! as! Set<ImageModel>
-                    let firstImageData = images.first?.imageData
-                    /// test for corrupted draft or old draft (pre 1.0)
-                    if firstImageData == nil || spot.addedUsers == nil {
-                        self.deleteSpotDraft(timestampID: timestampID, upload: false)
-                        
-                    } else {
-                        self.spotDraft = spot
-                        let postImage = UIImage(data: firstImageData! as Data) ?? UIImage()
-                        
-                        DispatchQueue.main.async {
-                            let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-                            window?.addSubview(self.maskView)
-
-                            let infoView = BotDetailView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 116, y: UIScreen.main.bounds.height/2 - 140, width: 232, height: 190))
-                            infoView.setUp(spotDraft: spot, image: postImage)
-                            infoView.actionButton.addTarget(self, action: #selector(self.submitSpotDraft(_:)), for: .touchUpInside)
-                            infoView.cancelButton.addTarget(self, action: #selector(self.deleteSpotDraft(_:)), for: .touchUpInside)
-                            self.maskView.addSubview(infoView)
-
-                            return
-                        }
-                    }
-                }
-                
-            } catch let error as NSError {
-                print("Could not fetch. \(error), \(error.userInfo)")
-            }
-        }
     }
     
     @objc func submitPostDraft(_ sender: UIButton) {
@@ -436,12 +387,17 @@ extension UploadPostController: UISearchBarDelegate {
         var aspectRatios: [CGFloat] = []
         for ratio in postDraft.aspectRatios ?? [] { aspectRatios.append(CGFloat(ratio)) }
         
-        postObject = MapPost(id: postObject.id!, caption: postDraft.caption!, postLat: postDraft.postLat, postLong: postDraft.postLong, posterID: uid, timestamp: Timestamp(date: Date()), actualTimestamp: actualTimestamp, userInfo: UserDataModel.shared.userInfo, spotID: postDraft.spotID, city: postDraft.city, frameIndexes: postDraft.frameIndexes, aspectRatios: aspectRatios, imageURLs: [], postImage: uploadImages, seconds: postDraft.timestamp, selectedImageIndex: 0, postScore: 0, commentList: [], likers: [], taggedUsers: postDraft.taggedUsers ?? [], taggedUserIDs: postDraft.taggedUserIDs ?? [], captionHeight: 0, imageHeight: 0, cellHeight: 0, spotName: postDraft.spotName, spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, privacyLevel: postDraft.privacyLevel, spotPrivacy: postDraft.spotPrivacy ?? "friends", createdBy: postDraft.createdBy ?? "", inviteList: postDraft.inviteList ?? [], friendsList: postDraft.friendsList ?? [], hideFromFeed: postDraft.hideFromFeed, gif: postDraft.gif, isFirst: postDraft.isFirst, addedUsers: postDraft.addedUsers ?? [], addedUserProfiles: [], tag: postDraft.tag)
+        postObject = MapPost(id: postObject.id!, caption: postDraft.caption!, postLat: postDraft.postLat, postLong: postDraft.postLong, posterID: uid, timestamp: Timestamp(date: Date()), actualTimestamp: actualTimestamp, userInfo: UserDataModel.shared.userInfo, spotID: postDraft.spotIDs?.first!, city: postDraft.city, frameIndexes: postDraft.frameIndexes, aspectRatios: aspectRatios, imageURLs: [], postImage: uploadImages, seconds: postDraft.timestamp, selectedImageIndex: 0, postScore: 0, commentList: [], likers: [], taggedUsers: postDraft.taggedUsers ?? [], taggedUserIDs: postDraft.taggedUserIDs ?? [], imageHeight: 0, captionHeight: 0, cellHeight: 0, spotName: postDraft.spotNames?.first!, spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, privacyLevel: postDraft.privacyLevel, spotPrivacy: postDraft.spotPrivacy ?? "friends", createdBy: postDraft.createdBy ?? "", inviteList: postDraft.inviteList ?? [], friendsList: postDraft.friendsList ?? [], hideFromFeed: postDraft.hideFromFeed, gif: false, isFirst: postDraft.isFirst, addedUsers: postDraft.addedUsers ?? [], addedUserProfiles: [], tag: postDraft.tags?.first!)
         postObject.posterUsername = UserDataModel.shared.userInfo.username
 
-        spotObject = MapSpot(spotDescription: postDraft.caption ?? "", spotName: postDraft.spotName ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, founderID: postDraft.createdBy ?? "", privacyLevel: postDraft.spotPrivacy ?? "friends", imageURL: "")
-        spotObject.id = postDraft.spotID ?? ""
-        postType = .postToSpot
+        spotObject = MapSpot(spotDescription: postDraft.caption ?? "", spotName: postDraft.spotNames?.first ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, founderID: postDraft.createdBy ?? "", privacyLevel: postDraft.spotPrivacy ?? "friends", imageURL: "")
+        
+        spotObject.id = postDraft.spotIDs?.first!
+        spotObject.posterUsername = UserDataModel.shared.userInfo.username
+        spotObject.poiCategory = postDraft.poiCategory
+        spotObject.phone = postDraft.phone
+        
+        postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : .postToSpot
 
         setPostAnnotation(first: false, animated: false)
         
@@ -449,57 +405,13 @@ extension UploadPostController: UISearchBarDelegate {
             self.uploadPost()
         }
     }
-    
-    @objc func submitSpotDraft(_ sender: UIButton) {
-        
-        Mixpanel.mainInstance().track(event: "UploadSubmitSpotDraft", properties: nil)
-
-        /// 1. remove preview
-        removeBotDetail()
-        
-        /// 2. convert draft to spotObject
-        
-        let model = spotDraft.images! as! Set<ImageModel>
-        let mod = model.sorted(by: {$0.position < $1.position})
-        
-        var uploadImages: [UIImage] = []
-        
-        for i in 0...mod.count - 1 {
-            let im = mod[i]
-            let imageData = im.imageData
-            uploadImages.append(UIImage(data: imageData!) ?? UIImage())
-        }
-        
-        let actualTimestamp = Timestamp(seconds: spotDraft.timestamp, nanoseconds: 0)
-        var aspectRatios: [CGFloat] = []
-        for ratio in spotDraft.aspectRatios ?? [] { aspectRatios.append(CGFloat(ratio)) }
-        
-        postObject = MapPost(id: postObject.id!, caption: spotDraft.spotDescription ?? "", postLat: spotDraft.postLat, postLong: spotDraft.postLong, posterID: uid, timestamp: Timestamp(date: Date()), actualTimestamp: actualTimestamp, userInfo: UserDataModel.shared.userInfo, spotID: spotDraft.spotID, city: spotDraft.city, frameIndexes: spotDraft.frameIndexes, aspectRatios: aspectRatios, imageURLs: [], postImage: uploadImages, seconds: spotDraft.timestamp, selectedImageIndex: 0, postScore: 0, commentList: [], likers: [], taggedUsers: spotDraft.taggedUsernames ?? [], taggedUserIDs: spotDraft.taggedIDs ?? [], captionHeight: 0, imageHeight: 0, cellHeight: 0, spotName: spotDraft.spotName, spotLat: spotDraft.spotLat, spotLong: spotDraft.spotLong, privacyLevel: spotDraft.privacyLevel, spotPrivacy: spotDraft.privacyLevel ?? "friends", createdBy: uid, inviteList: spotDraft.inviteList ?? [], friendsList: spotDraft.friendsList ?? [], hideFromFeed: spotDraft.hideFromFeed, gif: spotDraft.gif, isFirst: true, addedUsers: spotDraft.addedUsers ?? [], addedUserProfiles: [], tag: spotDraft.tag ?? "")
-        postObject.posterUsername = UserDataModel.shared.userInfo.username
-        
-        spotObject = MapSpot(spotDescription: spotDraft.spotDescription ?? "", spotName: spotDraft.spotName ?? "", spotLat: spotDraft.spotLat, spotLong: spotDraft.spotLong, founderID: uid, privacyLevel: spotDraft.privacyLevel ?? "friends", imageURL: "")
-        spotObject.posterUsername = UserDataModel.shared.userInfo.username
-        spotObject.poiCategory = spotDraft.poiCategory ?? ""
-        spotObject.id = spotDraft.spotID ?? ""
-        spotObject.phone = spotDraft.phone ?? ""
-        
-        postType = spotDraft.postToPOI ? .postToPOI : .newSpot
-
-        uploadPost()
-    }
 
     @objc func deletePostDraft(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "UploadDeletePostDraft", properties: nil)
         deletePostDraft(timestampID: postDraft.timestamp, upload: false)
         removeBotDetail()
     }
-    
-    @objc func deleteSpotDraft(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "UploadDeleteSpotDraft", properties: nil)
-        deleteSpotDraft(timestampID: spotDraft.timestamp, upload: false)
-        removeBotDetail()
-    }
-    
+
     func deletePostDraft(timestampID: Int64, upload: Bool) {
 
         guard let appDelegate =
@@ -526,34 +438,6 @@ extension UploadPostController: UISearchBarDelegate {
             print("could not fetch. \(error)")
         }
       }
-    
-    func deleteSpotDraft(timestampID: Int64, upload: Bool) {
-        
-        guard let appDelegate =
-            UIApplication.shared.delegate as? AppDelegate else { return }
-        let managedContext =
-            appDelegate.persistentContainer.viewContext
-        let fetchRequest =
-            NSFetchRequest<SpotDraft>(entityName: "SpotDraft")
-        fetchRequest.predicate = NSPredicate(format: "timestamp == %d", timestampID)
-        
-        do {
-            let drafts = try managedContext.fetch(fetchRequest)
-            
-            for draft in drafts {
-                managedContext.delete(draft)
-            }
-            
-            do {
-                try managedContext.save()
-            } catch let error as NSError {
-                print("could not save. \(error)")
-            }
-        }
-        catch let error as NSError {
-            print("could not fetch. \(error)")
-        }
-    }
 }
 
 class LocationPickerAnnotationView: MKAnnotationView {

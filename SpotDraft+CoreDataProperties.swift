@@ -40,7 +40,6 @@ extension SpotDraft {
     @NSManaged public var postToPOI: Bool
     @NSManaged public var hideFromFeed: Bool
     @NSManaged public var frameIndexes: [Int]?
-    @NSManaged public var gif: Bool
     @NSManaged public var city: String?
     @NSManaged public var poiCategory: String?
 }

@@ -215,11 +215,11 @@ extension UploadChooseTagView: UICollectionViewDelegate, UICollectionViewDataSou
         
         let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 300, height: 18))
         tempLabel.text = category.name
-        tempLabel.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        tempLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         
         if category.index == 2 {
             let attString = NSMutableAttributedString(string: tempLabel.text!)
-            attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCamera-Semibold", size: 10) as Any, range: NSRange(location: 4, length: 1))
+            attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCompactText-Semibold", size: 10) as Any, range: NSRange(location: 4, length: 1))
             tempLabel.attributedText = attString
         }
         
@@ -240,12 +240,12 @@ class TagCategoryCell: UICollectionViewCell {
         label.text = category.name
         label.textAlignment = .center
         label.textColor = category.selected ? .white : UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         
         /// make & smaller for eat & drink
         if category.index == 2 {
             let attString = NSMutableAttributedString(string: label.text!)
-            attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCamera-Semibold", size: 10) as Any, range: NSRange(location: 4, length: 1))
+            attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCompactText-Semibold", size: 10) as Any, range: NSRange(location: 4, length: 1))
             label.attributedText = attString
         }
         

@@ -146,7 +146,7 @@ class PendingHeader: UITableViewHeaderFooterView {
         var friendText = "\(friendCount) friend requests"
         if friendCount == 1 {friendText = String(friendText.dropLast())}
         numRequests.text = friendText
-        numRequests.font = UIFont(name: "SFCamera-Regular", size: 14)
+        numRequests.font = UIFont(name: "SFCompactText-Regular", size: 14)
         numRequests.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
         numRequests.textAlignment = .center
         self.addSubview(numRequests)

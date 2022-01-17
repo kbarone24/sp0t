@@ -23,7 +23,6 @@ class GIFPreviewController: UIViewController {
     var delegate: GIFPreviewDelegate?
     
     var imageData: Data!
-    var outputURL: URL!
     var frontFacing = false /// to rotate gif images when returned to the user
         
     var selectedImages: [UIImage] = []
@@ -79,7 +78,7 @@ class GIFPreviewController: UIViewController {
         retakeButton.contentVerticalAlignment = .center
         retakeButton.setTitle("Retake", for: .normal)
         retakeButton.setTitleColor(.white, for: .normal)
-        retakeButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        retakeButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         retakeButton.layer.borderWidth = 1.5
         retakeButton.layer.borderColor = UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1).cgColor
         retakeButton.layer.cornerRadius = 12
@@ -91,7 +90,7 @@ class GIFPreviewController: UIViewController {
         selectButton.contentVerticalAlignment = .center
         selectButton.setTitle("Use photo", for: .normal)
         selectButton.setTitleColor(.black, for: .normal)
-        selectButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        selectButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         selectButton.backgroundColor = UIColor(named: "SpotGreen")
         selectButton.layer.cornerRadius = 12
         selectButton.addTarget(self, action: #selector(selectTap(_:)), for: .touchUpInside)

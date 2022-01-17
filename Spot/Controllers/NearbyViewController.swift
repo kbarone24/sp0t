@@ -5,7 +5,7 @@
 //  Created by kbarone on 1/28/20.
 //  Copyright © 2020 sp0t, LLC. All rights reserved.
 //
-
+/*
 import Foundation
 import UIKit
 import Firebase
@@ -265,7 +265,7 @@ class NearbyViewController: UIViewController {
         headerView.addSubview(cityIcon)
         
         cityName = UILabel(frame: CGRect(x: cityIcon.frame.maxX + 8, y: cityIcon.frame.minY + 2, width: UIScreen.main.bounds.width - 28, height: 20))
-        cityName.font = UIFont(name: "SFCamera-Semibold", size: 17)
+        cityName.font = UIFont(name: "SFCompactText-Semibold", size: 17)
         cityName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         headerView.addSubview(self.cityName)
         
@@ -273,7 +273,7 @@ class NearbyViewController: UIViewController {
         changeCityButton = UIButton(frame: CGRect(x: cityName.frame.minX - 4.5, y: cityName.frame.minY - 4, width: cityName.frame.width + 86, height: 30))
         changeCityButton.setTitle("CHANGE CITY", for: .normal)
         changeCityButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        changeCityButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 10.5)
+        changeCityButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 10.5)
         changeCityButton.contentVerticalAlignment = .center
         changeCityButton.contentHorizontalAlignment = .right
         changeCityButton.addTarget(self, action: #selector(changeCityTap(_:)), for: .touchUpInside)
@@ -420,7 +420,7 @@ class NearbyViewController: UIViewController {
         searchBar.autocapitalizationType = .none
         searchBar.autocorrectionType = .no
         searchBar.placeholder = ""
-        searchBar.searchTextField.font = UIFont(name: "SFCamera-Regular", size: 13)
+        searchBar.searchTextField.font = UIFont(name: "SFCompactText-Regular", size: 13)
         searchBar.clipsToBounds = true
         searchBar.layer.masksToBounds = true
         searchBar.searchTextField.layer.masksToBounds = true
@@ -433,7 +433,7 @@ class NearbyViewController: UIViewController {
         cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 60, y: searchBarY + 2, width: 50, height: 30))
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         cancelButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
         cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
         searchBarContainer.addSubview(cancelButton)
@@ -443,7 +443,7 @@ class NearbyViewController: UIViewController {
     func getMoreWidth(extraCount: Int) -> CGFloat {
 
         let moreLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 100, height: 16))
-        moreLabel.font = UIFont(name: "SFCamera-Regular", size: 11.5)
+        moreLabel.font = UIFont(name: "SFCompactText-Regular", size: 11.5)
         moreLabel.text = "+ \(extraCount) more"
         moreLabel.sizeToFit()
         
@@ -550,13 +550,13 @@ class NearbyViewController: UIViewController {
         
         let username = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 16))
         username.text = name
-        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        username.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         username.sizeToFit()
         width += username.frame.width
         
         let spotsCount = UILabel(frame: CGRect(x: username.frame.maxX + 5, y: 9, width: 20, height: 14))
         spotsCount.text = String(spotCount)
-        spotsCount.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
+        spotsCount.font = UIFont(name: "SFCompactText-Semibold", size: 11.5)
         spotsCount.sizeToFit()
         width += spotsCount.frame.width
         
@@ -1594,7 +1594,7 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
         let titleLabel = UILabel(frame: CGRect(x: 17, y: 14, width: 100, height: 20))
         titleLabel.text = "Sort spots by"
         titleLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
         titleLabel.textAlignment = .left
         pickerView.addSubview(titleLabel)
 
@@ -1612,7 +1612,7 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
         let locationLabel = UILabel(frame: CGRect(x: locationIcon.frame.maxX + 15.5, y: locationIcon.frame.minY + 1, width: 60, height: 20))
         locationLabel.text = "Nearest"
         locationLabel.textColor = sortByScore ? grayTint : whiteTint
-        locationLabel.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        locationLabel.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         pickerView.addSubview(locationLabel)
         
         let topIcon = UIImageView(frame: CGRect(x: 17, y: locationLabel.frame.maxY + 25, width: 19, height: 18.5))
@@ -1622,7 +1622,7 @@ extension NearbyViewController: UITableViewDelegate, UITableViewDataSource {
         let topLabel = UILabel(frame: CGRect(x: topIcon.frame.maxX + 15, y: topIcon.frame.minY + 1, width: 40, height: 20))
         topLabel.text = "Top"
         topLabel.textColor = sortByScore ? whiteTint : grayTint
-        topLabel.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        topLabel.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         pickerView.addSubview(topLabel)
 
         if sortByScore { locationIcon.image = UIImage(named: "LocationIcon")?.withTintColor(grayTint) } else { topIcon.image = UIImage(named: "TopIcon")?.withTintColor(grayTint) }
@@ -1716,14 +1716,14 @@ class NearbyUserCell: UICollectionViewCell {
 
         username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 5, y: 9, width: self.bounds.width, height: 16))
         username.text = user.username
-        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        username.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         username.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
         username.sizeToFit()
         self.addSubview(username)
         
         spotsCount = UILabel(frame: CGRect(x: username.frame.maxX + 5, y: 10, width: 20, height: 14))
         spotsCount.text = String(count)
-        spotsCount.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
+        spotsCount.font = UIFont(name: "SFCompactText-Semibold", size: 11.5)
         spotsCount.textColor = UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1)
         spotsCount.sizeToFit()
         self.addSubview(spotsCount)
@@ -1755,7 +1755,7 @@ class NearbyUsersHeader: UICollectionReusableView {
         label = UILabel(frame: CGRect(x: 3, y: 3, width: 100, height: 16))
         label.text = "Filter by friend"
         label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 13)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 13)
         addSubview(label)
     }
     
@@ -1796,14 +1796,14 @@ class NearbyTagCell: UICollectionViewCell {
 
         tagName = UILabel(frame: CGRect(x: tagPic.frame.maxX + 5, y: 9, width: self.bounds.width, height: 16))
         tagName.text = tag.name
-        tagName.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        tagName.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         tagName.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
         tagName.sizeToFit()
         self.addSubview(tagName)
         
         spotsCount = UILabel(frame: CGRect(x: tagName.frame.maxX + 5, y: 10, width: 20, height: 14))
         spotsCount.text = String(count)
-        spotsCount.font = UIFont(name: "SFCamera-Semibold", size: 11.5)
+        spotsCount.font = UIFont(name: "SFCompactText-Semibold", size: 11.5)
         spotsCount.textColor = UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1)
         spotsCount.sizeToFit()
         self.addSubview(spotsCount)
@@ -1834,7 +1834,7 @@ class NearbyTagsHeader: UICollectionReusableView {
         label = UILabel(frame: CGRect(x: 3, y: 3, width: 100, height: 16))
         label.text = "Filter by tag"
         label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 13)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 13)
         addSubview(label)
     }
     
@@ -1856,7 +1856,7 @@ class MoreCell: UICollectionViewCell {
         
         let labelY = spotPage ? 6.5 : 9
         label = UILabel(frame: CGRect(x: 7, y: labelY, width: 100, height: 16))
-        label.font = UIFont(name: "SFCamera-Regular", size: 11.5)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 11.5)
         label.text = "+ \(count) more"
         label.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
         label.sizeToFit()
@@ -1865,39 +1865,6 @@ class MoreCell: UICollectionViewCell {
 }
 
 
-class LeftAlignedCollectionViewFlowLayout: UICollectionViewFlowLayout {
-
-    required override init() {super.init(); common()}
-    required init?(coder aDecoder: NSCoder) {super.init(coder: aDecoder); common()}
-        
-    private func common() {
-        estimatedItemSize = UICollectionViewFlowLayout.automaticSize
-        minimumLineSpacing = 10
-        minimumInteritemSpacing = 11
-    }
-    
-    override func layoutAttributesForElements(
-                    in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-        
-        guard let att = super.layoutAttributesForElements(in:rect) else {return []}
-        var x: CGFloat = sectionInset.left
-        var y: CGFloat = -1.0
-        
-        for a in att {
-
-            if a.representedElementCategory != .cell { continue }
-            
-            if a.frame.origin.y >= y { x = sectionInset.left }
-            a.frame.origin.x = x
-            x += a.frame.width + minimumInteritemSpacing
-            y = a.frame.maxY
-        }
-        
-        return att
-    }
-    
-
-}
 ///https://stackoverflow.com/questions/22539979/left-align-cells-in-uicollectionview
 
 class NearbySpotCell: UITableViewCell {
@@ -1947,7 +1914,7 @@ class NearbySpotCell: UITableViewCell {
             friendCount = UILabel(frame: CGRect(x: spotImage.frame.maxX + 10, y: 14, width: 30, height: 16))
             friendCount.text = String(spot.friendVisitors)
             friendCount.textColor = UIColor(named: "SpotGreen")
-            friendCount.font = UIFont(name: "SFCamera-Semibold", size: 13)
+            friendCount.font = UIFont(name: "SFCompactText-Semibold", size: 13)
             friendCount.sizeToFit()
             addSubview(friendCount)
             
@@ -1960,14 +1927,14 @@ class NearbySpotCell: UITableViewCell {
             
         spotName = UILabel(frame: CGRect(x: spotImage.frame.maxX + 10, y: nameY, width: UIScreen.main.bounds.width - (spotImage.frame.maxX + 10) - 66, height: 16))
         spotName.text = spot.spotName
-        spotName.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        spotName.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         spotName.lineBreakMode = .byTruncatingTail
         spotName.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
         addSubview(spotName)
         
         spotDescription = UILabel(frame: CGRect(x: spotImage.frame.maxX + 10, y: spotName.frame.maxY + 2, width: UIScreen.main.bounds.width - 103, height: 29))
         spotDescription.text = spot.spotDescription
-        spotDescription.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        spotDescription.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         spotDescription.textColor = UIColor(red: 0.773, green: 0.773, blue: 0.773, alpha: 1)
         let descriptionHeight = getDescriptonHeight(spotDescription: spot.spotDescription)
         spotDescription.numberOfLines = descriptionHeight > 17 ? 2 : 1
@@ -1987,7 +1954,7 @@ class NearbySpotCell: UITableViewCell {
         distanceLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 45, y: 17, width: 70, height: 15))
         distanceLabel.text = spot.distance.getLocationString()
         distanceLabel.textColor = UIColor(red: 0.688, green: 0.688, blue: 0.688, alpha: 1)
-        distanceLabel.font = UIFont(name: "SFCamera-Regular", size: 10.5)
+        distanceLabel.font = UIFont(name: "SFCompactText-Regular", size: 10.5)
         distanceLabel.sizeToFit()
         distanceLabel.frame = CGRect(x: UIScreen.main.bounds.width - distanceLabel.frame.width - 10, y: 17, width: distanceLabel.frame.width, height: distanceLabel.frame.height)
         addSubview(distanceLabel)
@@ -2004,7 +1971,7 @@ class NearbySpotCell: UITableViewCell {
         acceptButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 110, y: 100, width: 100, height: 25))
         acceptButton.setTitle("Accept", for: .normal)
         acceptButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        acceptButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        acceptButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         acceptButton.contentVerticalAlignment = .center
         acceptButton.contentHorizontalAlignment = .center
         acceptButton.addTarget(self, action: #selector(acceptPublicSpot(_:)), for: .touchUpInside)
@@ -2013,7 +1980,7 @@ class NearbySpotCell: UITableViewCell {
         rejectButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 + 10, y: 100, width: 100, height: 25))
         rejectButton.setTitle("Reject", for: .normal)
         rejectButton.setTitleColor(UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1), for: .normal)
-        rejectButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        rejectButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         rejectButton.contentVerticalAlignment = .center
         rejectButton.contentHorizontalAlignment = .center
         rejectButton.addTarget(self, action: #selector(rejectPublicSpot(_:)), for: .touchUpInside)
@@ -2043,7 +2010,7 @@ class NearbySpotCell: UITableViewCell {
     func getDescriptonHeight(spotDescription: String) -> CGFloat {
         let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 103, height: 29))
         tempLabel.text = spotDescription
-        tempLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        tempLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         tempLabel.numberOfLines = 0
         tempLabel.lineBreakMode = .byWordWrapping
         tempLabel.sizeToFit()
@@ -2101,7 +2068,7 @@ class NearbySpotsHeader: UIView {
         if spotCount != 1 { sortLabel.text = sortLabel.text! + "s"}
         sortLabel.text = sortLabel.text! + " by"
         sortLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        sortLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        sortLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         sortLabel.sizeToFit()
         titleView.addSubview(sortLabel)
         
@@ -2109,7 +2076,7 @@ class NearbySpotsHeader: UIView {
         sortBy = UILabel(frame: CGRect(x: sortLabel.frame.maxX + 5, y: 11, width: 50, height: 23))
         sortBy.text = sortType
         sortBy.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        sortBy.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        sortBy.font = UIFont(name: "SFCompactText-Semibold", size: 12)
         sortBy.sizeToFit()
         titleView.addSubview(sortBy)
         
@@ -2205,14 +2172,14 @@ class NearbyCityCell: UITableViewCell {
             currentLabel = UILabel(frame: CGRect(x: 14, y: 0, width: 100, height: 16))
             currentLabel.text = "Current"
             currentLabel.textColor = UIColor(named: "SpotGreen")
-            currentLabel.font = UIFont(name: "SFCamera-Regular", size: 11)
+            currentLabel.font = UIFont(name: "SFCompactText-Regular", size: 11)
             addSubview(currentLabel)
         }
         
         cityLabel = UILabel(frame: CGRect(x: 14, y: 16, width: 300, height: 18))
         cityLabel.text = city.cityName
         cityLabel.textColor = city.activeCity ? UIColor(named: "SpotGreen") : UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        cityLabel.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        cityLabel.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         cityLabel.sizeToFit()
         addSubview(cityLabel)
         
@@ -2221,7 +2188,7 @@ class NearbyCityCell: UITableViewCell {
             friendsLabel.text = "\(city.friends.count) friend"
             if city.friends.count != 1 { friendsLabel.text! += "s" }
             friendsLabel.textColor = UIColor(red: 0.773, green: 0.773, blue: 0.773, alpha: 1)
-            friendsLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+            friendsLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
             friendsLabel.sizeToFit()
             addSubview(friendsLabel)
             
@@ -2237,7 +2204,7 @@ class NearbyCityCell: UITableViewCell {
         spotsLabel.text = "\(city.spotCount) spot"
         if city.spotCount != 1 { spotsLabel.text! += "s" }
         spotsLabel.textColor = UIColor(red: 0.773, green: 0.773, blue: 0.773, alpha: 1)
-        spotsLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        spotsLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         spotsLabel.sizeToFit()
         addSubview(spotsLabel)
         
@@ -2270,7 +2237,7 @@ class NearbyEmptyCell: UICollectionViewCell {
         label = UILabel(frame: CGRect(x: 3, y: 0, width: 150, height: 16))
         label.text = "No friends in this city yet"
         label.textColor = UIColor(red: 0.479, green: 0.479, blue: 0.479, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 12)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 12)
         addSubview(label)
         
         if lowFriends {
@@ -3015,3 +2982,4 @@ extension MKLocalSearchCompletion {
     }
 }
 
+*/

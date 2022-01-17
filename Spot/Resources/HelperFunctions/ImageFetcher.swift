@@ -24,6 +24,7 @@ class ImageFetcher {
     func fetchLivePhoto(currentAsset: PHAsset, animationImages: [UIImage], completion: @escaping(_ animationImages: [UIImage], _ failed: Bool) -> Void) {
         
         if !animationImages.isEmpty { completion(animationImages, false); return }
+        
         isFetching = true
 
         var animationImages: [UIImage] = []
@@ -57,7 +58,9 @@ class ImageFetcher {
                     self.context?.saveLivePhoto(to: output, options: nil, completionHandler: { [weak self] success, err in
                         
                         guard let self = self else { return }
+                        if self.isFetching == false || self.fetchingIndex == -1 { return } /// return on canceled fetch
                         if !success || err != nil || frameImages.isEmpty { completion([], false); return }
+                        
                         /// distanceBetweenFrames fixed at 2 right now, always taking the middle 16 frames of the Live often with large offsets. This number is variable though
                         let distanceBetweenFrames: Double = 2
                         let rawFrames = Double(frameImages.count) / distanceBetweenFrames
@@ -82,6 +85,7 @@ class ImageFetcher {
                     
                         self.isFetching = false
                         self.fetchingIndex = -1
+                        print("completion")
                         DispatchQueue.main.async { completion(animationImages, false) }
                         return
                     })
@@ -91,8 +95,9 @@ class ImageFetcher {
     }
     
     func fetchImage(currentAsset: PHAsset, item: Int, completion: @escaping(_ result: UIImage, _ failed: Bool) -> Void) {
-        
-        // let currentAsset = imageObjects[item].asset
+                
+        isFetching = true
+        fetchingIndex = item
         
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
@@ -108,9 +113,11 @@ class ImageFetcher {
                                                             options: options) { (image, info) in
                 
                 DispatchQueue.main.async { [weak self] in
+                    
                     /// return blank image on error
+                    guard let self = self else { return }
+                    if self.isFetching == false || self.fetchingIndex == -1 { return } /// return on canceled fetch
                     if info?["PHImageCancelledKey"] != nil { completion(UIImage(), false); return }
-                    guard let self = self else { completion(UIImage(), true); return}
                     guard let result = image else { completion( UIImage(), true); return }
                     
                     let aspect = result.size.height / result.size.width
@@ -147,7 +154,7 @@ class ImageFetcher {
     }
 
     func cancelFetchForAsset(asset: PHAsset) {
-        
+        print("cancel fetch for asset")
         asset.cancelContentEditingInputRequest(contentRequestID)
         
         if context != nil { context.cancel() }

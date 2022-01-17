@@ -203,9 +203,6 @@
 		59F6ABAF234EA73500E18AAF /* Contact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F6ABAE234EA73500E18AAF /* Contact.swift */; };
 		59F6ABB0234EA73500E18AAF /* Contact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F6ABAE234EA73500E18AAF /* Contact.swift */; };
 		59F6ABB1234EA73500E18AAF /* Contact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F6ABAE234EA73500E18AAF /* Contact.swift */; };
-		59F6ABB92356689F00E18AAF /* PushNotificationSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F6ABB82356689F00E18AAF /* PushNotificationSender.swift */; };
-		59F6ABBA2356689F00E18AAF /* PushNotificationSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F6ABB82356689F00E18AAF /* PushNotificationSender.swift */; };
-		59F6ABBB2356689F00E18AAF /* PushNotificationSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F6ABB82356689F00E18AAF /* PushNotificationSender.swift */; };
 		59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */; };
 		59F6ABBE23566A3600E18AAF /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */; };
 		59F6ABBF23566A3600E18AAF /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */; };
@@ -296,9 +293,6 @@
 		8C2CBAF12767FACC003E68B7 /* UploadWindowMiddle.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8C2CBAF02767FACC003E68B7 /* UploadWindowMiddle.xib */; };
 		8C2CBAF22767FACC003E68B7 /* UploadWindowMiddle.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8C2CBAF02767FACC003E68B7 /* UploadWindowMiddle.xib */; };
 		8C2CBAF32767FACC003E68B7 /* UploadWindowMiddle.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8C2CBAF02767FACC003E68B7 /* UploadWindowMiddle.xib */; };
-		8C2EB0D825E97E6400698D8F /* VideoConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2EB0D725E97E6400698D8F /* VideoConverter.swift */; };
-		8C2EB0D925E97E6400698D8F /* VideoConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2EB0D725E97E6400698D8F /* VideoConverter.swift */; };
-		8C2EB0DA25E97E6400698D8F /* VideoConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2EB0D725E97E6400698D8F /* VideoConverter.swift */; };
 		8C3209D52614DB6500FB32BA /* ManageAccountController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3209D42614DB6500FB32BA /* ManageAccountController.swift */; };
 		8C3209D62614DB6500FB32BA /* ManageAccountController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3209D42614DB6500FB32BA /* ManageAccountController.swift */; };
 		8C3209D72614DB6500FB32BA /* ManageAccountController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3209D42614DB6500FB32BA /* ManageAccountController.swift */; };
@@ -378,12 +372,24 @@
 		8C988C33267D1AE80047A474 /* SpotNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C988C32267D1AE80047A474 /* SpotNotification.swift */; };
 		8C988C34267D1AE80047A474 /* SpotNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C988C32267D1AE80047A474 /* SpotNotification.swift */; };
 		8C988C35267D1AE80047A474 /* SpotNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C988C32267D1AE80047A474 /* SpotNotification.swift */; };
+		8C9C32B62794ACE5007813CA /* SF-Compact-Text-Semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8C9C32B52794ACE5007813CA /* SF-Compact-Text-Semibold.otf */; };
+		8C9C32B72794ACE5007813CA /* SF-Compact-Text-Semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8C9C32B52794ACE5007813CA /* SF-Compact-Text-Semibold.otf */; };
+		8C9C32B82794ACE5007813CA /* SF-Compact-Text-Semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8C9C32B52794ACE5007813CA /* SF-Compact-Text-Semibold.otf */; };
+		8C9C32BA2794ACF7007813CA /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8C9C32B92794ACF7007813CA /* SF-Compact-Text-Regular.otf */; };
+		8C9C32BB2794ACF7007813CA /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8C9C32B92794ACF7007813CA /* SF-Compact-Text-Regular.otf */; };
+		8C9C32BC2794ACF7007813CA /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8C9C32B92794ACF7007813CA /* SF-Compact-Text-Regular.otf */; };
+		8C9C32BE2794AD02007813CA /* SF-Compact-Text-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8C9C32BD2794AD02007813CA /* SF-Compact-Text-Bold.otf */; };
+		8C9C32BF2794AD02007813CA /* SF-Compact-Text-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8C9C32BD2794AD02007813CA /* SF-Compact-Text-Bold.otf */; };
+		8C9C32C02794AD02007813CA /* SF-Compact-Text-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8C9C32BD2794AD02007813CA /* SF-Compact-Text-Bold.otf */; };
 		8CAC69D826FB939C00E8B04E /* UploadPrivacyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAC69D726FB939C00E8B04E /* UploadPrivacyCell.swift */; };
 		8CAC69D926FB939C00E8B04E /* UploadPrivacyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAC69D726FB939C00E8B04E /* UploadPrivacyCell.swift */; };
 		8CAC69DA26FB939C00E8B04E /* UploadPrivacyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAC69D726FB939C00E8B04E /* UploadPrivacyCell.swift */; };
 		8CAC69E026FB989000E8B04E /* UploadPrivacyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAC69DF26FB989000E8B04E /* UploadPrivacyViews.swift */; };
 		8CAC69E126FB989000E8B04E /* UploadPrivacyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAC69DF26FB989000E8B04E /* UploadPrivacyViews.swift */; };
 		8CAC69E226FB989000E8B04E /* UploadPrivacyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAC69DF26FB989000E8B04E /* UploadPrivacyViews.swift */; };
+		8CB14482277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB14481277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift */; };
+		8CB14483277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB14481277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift */; };
+		8CB14484277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB14481277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift */; };
 		8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
 		8CB400BE2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
 		8CB400BF2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
@@ -509,7 +515,6 @@
 		59E23548246F0E550071B047 /* Drafts.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Drafts.xcdatamodel; sourceTree = "<group>"; };
 		59F4701D2368933C00BB79CC /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		59F6ABAE234EA73500E18AAF /* Contact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Contact.swift; sourceTree = "<group>"; };
-		59F6ABB82356689F00E18AAF /* PushNotificationSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationSender.swift; sourceTree = "<group>"; };
 		59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
 		59FCF5A624734A1C0012207D /* PostDraft+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostDraft+CoreDataClass.swift"; sourceTree = "<group>"; };
 		59FCF5A724734A1C0012207D /* PostDraft+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostDraft+CoreDataProperties.swift"; sourceTree = "<group>"; };
@@ -548,7 +553,6 @@
 		8C2CBAE727643D87003E68B7 /* UploadPostDown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPostDown.swift; sourceTree = "<group>"; };
 		8C2CBAEC2767FA97003E68B7 /* UploadWindowMiddle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadWindowMiddle.swift; sourceTree = "<group>"; };
 		8C2CBAF02767FACC003E68B7 /* UploadWindowMiddle.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = UploadWindowMiddle.xib; sourceTree = "<group>"; };
-		8C2EB0D725E97E6400698D8F /* VideoConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoConverter.swift; sourceTree = "<group>"; };
 		8C3209D42614DB6500FB32BA /* ManageAccountController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageAccountController.swift; sourceTree = "<group>"; };
 		8C3209F026168A5900FB32BA /* ReviewPublicController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewPublicController.swift; sourceTree = "<group>"; };
 		8C320C472735A31B003DE81F /* AddedUsersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddedUsersView.swift; sourceTree = "<group>"; };
@@ -576,8 +580,12 @@
 		8C92898626CB18F10028DB69 /* CameraAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraAccessView.swift; sourceTree = "<group>"; };
 		8C988C2E267BFB450047A474 /* GuestbookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestbookPreview.swift; sourceTree = "<group>"; };
 		8C988C32267D1AE80047A474 /* SpotNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotNotification.swift; sourceTree = "<group>"; };
+		8C9C32B52794ACE5007813CA /* SF-Compact-Text-Semibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SF-Compact-Text-Semibold.otf"; path = "../../../../Library/Fonts/SF-Compact-Text-Semibold.otf"; sourceTree = "<group>"; };
+		8C9C32B92794ACF7007813CA /* SF-Compact-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SF-Compact-Text-Regular.otf"; path = "../../../../Library/Fonts/SF-Compact-Text-Regular.otf"; sourceTree = "<group>"; };
+		8C9C32BD2794AD02007813CA /* SF-Compact-Text-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SF-Compact-Text-Bold.otf"; path = "../../../../Library/Fonts/SF-Compact-Text-Bold.otf"; sourceTree = "<group>"; };
 		8CAC69D726FB939C00E8B04E /* UploadPrivacyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPrivacyCell.swift; sourceTree = "<group>"; };
 		8CAC69DF26FB989000E8B04E /* UploadPrivacyViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPrivacyViews.swift; sourceTree = "<group>"; };
+		8CB14481277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeftAlignedCollectionViewLayout.swift; sourceTree = "<group>"; };
 		8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
 		8CB400C0273C7DD100DFFCEE /* UploadChooseSpotCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UploadChooseSpotCell.swift; sourceTree = "<group>"; };
 		8CC2A54926BC7F99000ADA7A /* ImageObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObject.swift; sourceTree = "<group>"; };
@@ -760,6 +768,9 @@
 		59056A56231DDF0300C7E753 /* fonts */ = {
 			isa = PBXGroup;
 			children = (
+				8C9C32B92794ACF7007813CA /* SF-Compact-Text-Regular.otf */,
+				8C9C32B52794ACE5007813CA /* SF-Compact-Text-Semibold.otf */,
+				8C9C32BD2794AD02007813CA /* SF-Compact-Text-Bold.otf */,
 				8C780B1D25BA169900B766BB /* SFCamera-Regular.otf */,
 				8C780B2725BA16A000B766BB /* SFCamera-Semibold.otf */,
 				8C780B1325BA169300B766BB /* Gameplay.ttf */,
@@ -939,6 +950,7 @@
 				8C8304C026E99EDA00EEBCFC /* PostFriendsCell.swift */,
 				8CE18CA827488B8F00BB27BF /* SpotSearchCell.swift */,
 				8C320C472735A31B003DE81F /* AddedUsersView.swift */,
+				8CB14481277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift */,
 			);
 			path = SupplementalViews;
 			sourceTree = "<group>";
@@ -947,8 +959,6 @@
 			isa = PBXGroup;
 			children = (
 				593AC540243CE36400C08237 /* GlobalFunctions.swift */,
-				8C2EB0D725E97E6400698D8F /* VideoConverter.swift */,
-				59F6ABB82356689F00E18AAF /* PushNotificationSender.swift */,
 				59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */,
 				8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */,
 			);
@@ -1204,6 +1214,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C9C32B62794ACE5007813CA /* SF-Compact-Text-Semibold.otf in Resources */,
 				8C2CBAE327643BFC003E68B7 /* UploadPostDown.xib in Resources */,
 				7A24FE78226F832A0084576C /* map-style.json in Resources */,
 				8C2CBAD32763E251003E68B7 /* UploadWindowDown.xib in Resources */,
@@ -1221,6 +1232,8 @@
 				59A5A3D5253A87EC00789B7E /* GoogleService-Info.plist in Resources */,
 				8C1D769E261D1FA00056B453 /* LandingScreenVideo.mp4 in Resources */,
 				3E18C6D3226E5FDB000751E6 /* TabBar.storyboard in Resources */,
+				8C9C32BE2794AD02007813CA /* SF-Compact-Text-Bold.otf in Resources */,
+				8C9C32BA2794ACF7007813CA /* SF-Compact-Text-Regular.otf in Resources */,
 				8C780B1E25BA169900B766BB /* SFCamera-Regular.otf in Resources */,
 				8C271E1C276AAFF6007A545F /* UploadWindowUp.xib in Resources */,
 				8C2CBADB27643A6D003E68B7 /* UploadPostUp.xib in Resources */,
@@ -1235,6 +1248,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C9C32B72794ACE5007813CA /* SF-Compact-Text-Semibold.otf in Resources */,
 				8C2CBAE427643BFC003E68B7 /* UploadPostDown.xib in Resources */,
 				59004E2122CBB1D3004E06EF /* MarkerInfoWindowView.xib in Resources */,
 				8C2CBAD42763E251003E68B7 /* UploadWindowDown.xib in Resources */,
@@ -1252,6 +1266,8 @@
 				59A5A3D3253A874600789B7E /* Info.plist in Resources */,
 				8C1D769F261D1FA10056B453 /* LandingScreenVideo.mp4 in Resources */,
 				5978F07124D0734300582B83 /* SinglePost.xib in Resources */,
+				8C9C32BF2794AD02007813CA /* SF-Compact-Text-Bold.otf in Resources */,
+				8C9C32BB2794ACF7007813CA /* SF-Compact-Text-Regular.otf in Resources */,
 				8C780B1F25BA169900B766BB /* SFCamera-Regular.otf in Resources */,
 				8C271E1D276AAFF6007A545F /* UploadWindowUp.xib in Resources */,
 				8C2CBADC27643A6D003E68B7 /* UploadPostUp.xib in Resources */,
@@ -1266,6 +1282,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C9C32B82794ACE5007813CA /* SF-Compact-Text-Semibold.otf in Resources */,
 				8C2CBAE527643BFC003E68B7 /* UploadPostDown.xib in Resources */,
 				59004E2222CBB1D3004E06EF /* MarkerInfoWindowView.xib in Resources */,
 				8C2CBAD52763E251003E68B7 /* UploadWindowDown.xib in Resources */,
@@ -1283,6 +1300,8 @@
 				59A5A3D4253A874600789B7E /* Info.plist in Resources */,
 				8C1D76A0261D1FA10056B453 /* LandingScreenVideo.mp4 in Resources */,
 				5978F07224D0734300582B83 /* SinglePost.xib in Resources */,
+				8C9C32C02794AD02007813CA /* SF-Compact-Text-Bold.otf in Resources */,
+				8C9C32BC2794ACF7007813CA /* SF-Compact-Text-Regular.otf in Resources */,
 				8C780B2025BA169900B766BB /* SFCamera-Regular.otf in Resources */,
 				8C271E1E276AAFF6007A545F /* UploadWindowUp.xib in Resources */,
 				8C2CBADD27643A6D003E68B7 /* UploadPostUp.xib in Resources */,
@@ -1466,6 +1485,7 @@
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
 				5992A5AA245B666E009DAA8B /* CircleProgress.swift in Sources */,
 				8C516BA526573E570079B863 /* EditPostView.swift in Sources */,
+				8CB14482277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift in Sources */,
 				8C342073260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */,
 				8C29879C2693A05A0071E75A /* CircleView.swift in Sources */,
 				8CC2A55226BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
@@ -1479,10 +1499,8 @@
 				597A626425A7F5EE0052C560 /* EditProfileCameraController.swift in Sources */,
 				5978F07424D073EE00582B83 /* SinglePostWindow.swift in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
-				59F6ABB92356689F00E18AAF /* PushNotificationSender.swift in Sources */,
 				8C3209F126168A5900FB32BA /* ReviewPublicController.swift in Sources */,
 				8CE18CAE27488BD400BB27BF /* LocationPickerSpotCell.swift in Sources */,
-				8C2EB0D825E97E6400698D8F /* VideoConverter.swift in Sources */,
 				597072FE24292367008A481A /* AVCameraController.swift in Sources */,
 				7A5E07912233174600B53B58 /* MarkerInfoWindow.swift in Sources */,
 				8CE18CA927488B8F00BB27BF /* SpotSearchCell.swift in Sources */,
@@ -1523,7 +1541,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				59F6ABB0234EA73500E18AAF /* Contact.swift in Sources */,
-				8C2EB0D925E97E6400698D8F /* VideoConverter.swift in Sources */,
 				8C4A5FF826B1BFCD00ECB8CC /* MaskImageView.swift in Sources */,
 				5995F91924085936007BA334 /* GIFPreviewController.swift in Sources */,
 				593AC542243CE36500C08237 /* GlobalFunctions.swift in Sources */,
@@ -1564,13 +1581,13 @@
 				595D279223AD6FB700B82AE5 /* PhotoGalleryPicker.swift in Sources */,
 				8CE18CBF274C4A6A00BB27BF /* UploadAnnotationWindow.swift in Sources */,
 				59056A5423197E4B00C7E753 /* PostNotification.swift in Sources */,
+				8CB14483277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift in Sources */,
 				597A626525A7F5EE0052C560 /* EditProfileCameraController.swift in Sources */,
 				59FCF5C524734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */,
 				59004E2322CBB1D7004E06EF /* MarkerInfoWindow.swift in Sources */,
 				8CC2A55326BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				5976CE3B252FF45800FAC8F6 /* Friend.swift in Sources */,
-				59F6ABBA2356689F00E18AAF /* PushNotificationSender.swift in Sources */,
 				593AC546243E56D400C08237 /* LandingPageController.swift in Sources */,
 				8C2CBAEE2767FA97003E68B7 /* UploadWindowMiddle.swift in Sources */,
 				5992A5AB245B666E009DAA8B /* CircleProgress.swift in Sources */,
@@ -1642,7 +1659,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				59F6ABB1234EA73500E18AAF /* Contact.swift in Sources */,
-				8C2EB0DA25E97E6400698D8F /* VideoConverter.swift in Sources */,
 				8C4A5FF926B1BFCD00ECB8CC /* MaskImageView.swift in Sources */,
 				5995F91A24085936007BA334 /* GIFPreviewController.swift in Sources */,
 				593AC543243CE36500C08237 /* GlobalFunctions.swift in Sources */,
@@ -1683,13 +1699,13 @@
 				595D279323AD6FB700B82AE5 /* PhotoGalleryPicker.swift in Sources */,
 				8CE18CC0274C4A6A00BB27BF /* UploadAnnotationWindow.swift in Sources */,
 				59056A5523197E4B00C7E753 /* PostNotification.swift in Sources */,
+				8CB14484277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift in Sources */,
 				597A626625A7F5EE0052C560 /* EditProfileCameraController.swift in Sources */,
 				59FCF5C624734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */,
 				59004E2422CBB1D7004E06EF /* MarkerInfoWindow.swift in Sources */,
 				8CC2A55426BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				5976CE3C252FF45800FAC8F6 /* Friend.swift in Sources */,
-				59F6ABBB2356689F00E18AAF /* PushNotificationSender.swift in Sources */,
 				593AC547243E56D400C08237 /* LandingPageController.swift in Sources */,
 				8C2CBAEF2767FA97003E68B7 /* UploadWindowMiddle.swift in Sources */,
 				5992A5AC245B666E009DAA8B /* CircleProgress.swift in Sources */,
@@ -1922,9 +1938,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 68;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 70;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1977,7 +1993,7 @@
 				MARKETING_VERSION = 0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "sp0t ios profile";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -1992,9 +2008,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 68;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 70;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
@@ -2047,7 +2063,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "sp0t ios profile";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;

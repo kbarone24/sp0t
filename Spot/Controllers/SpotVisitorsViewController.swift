@@ -147,7 +147,7 @@ class SpotVisitorCell: UICollectionViewCell {
         nameLabel = UILabel(frame: CGRect(x: 10, y: profilePic.frame.maxY + 9, width: cellSize.width - 20, height: 16))
         nameLabel.text = user.name
         nameLabel.textColor = .white
-        nameLabel.font = UIFont(name: "SFCamera-Semibold", size: 16)
+        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         nameLabel.textAlignment = .center
         nameLabel.lineBreakMode = .byTruncatingTail
         addSubview(nameLabel)
@@ -156,7 +156,7 @@ class SpotVisitorCell: UICollectionViewCell {
         usernameLabel = UILabel(frame: CGRect(x: 10, y: nameLabel.frame.maxY + 3, width: cellSize.width - 20, height: 16))
         usernameLabel.text = user.username
         usernameLabel.textColor = UIColor(red: 0.60, green: 0.60, blue: 0.60, alpha: 1.00)
-        usernameLabel.font = UIFont(name: "SFCamera-Regular", size: 14.5)
+        usernameLabel.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
         usernameLabel.textAlignment = .center
         usernameLabel.lineBreakMode = .byTruncatingTail
         addSubview(usernameLabel)

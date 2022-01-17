@@ -110,7 +110,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         self.navigationController?.setNavigationBarHidden(false, animated: true)
         
         let nextBtn = UIBarButtonItem(title: "Next", style: .plain, target: self, action: #selector(nextTap(_:)))
-        nextBtn.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCamera-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
+        nextBtn.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
         self.navigationItem.setRightBarButton(nextBtn, animated: true)
         self.navigationItem.rightBarButtonItem?.tintColor = nil
                 
@@ -334,7 +334,7 @@ class ClusterPickerController: UIViewController, UICollectionViewDelegate, UICol
         errorLabel.textColor = UIColor.white
         errorLabel.textAlignment = .center
         errorLabel.text = "5 photos max"
-        errorLabel.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        errorLabel.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         
         view.addSubview(errorBox)
         errorBox.addSubview(errorLabel)

@@ -70,7 +70,7 @@ class PhoneController: UIViewController {
         label = UILabel(frame: CGRect(x: minX, y: 120, width: UIScreen.main.bounds.width - 20, height: 36))
         label.text = labelText
         label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCamera-Regular", size: 15)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 15)
         label.textAlignment = codeType == .newAccount ? .center : .left
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
@@ -78,7 +78,7 @@ class PhoneController: UIViewController {
         
         phoneField = UITextField(frame: CGRect(x: 27, y: label.frame.maxY + 22, width: UIScreen.main.bounds.width - 54, height: 60))
         phoneField.backgroundColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        phoneField.font = UIFont(name: "SFCamera-Semibold", size: 28)
+        phoneField.font = UIFont(name: "SFCompactText-Semibold", size: 28)
         phoneField.textAlignment = .left
         phoneField.tintColor = UIColor(named: "SpotGreen")
         phoneField.textColor = .black
@@ -118,7 +118,7 @@ class PhoneController: UIViewController {
         errorLabel.numberOfLines = 0
         errorLabel.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
         errorLabel.textAlignment = .center
-        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        errorLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
         errorLabel.text = "Invalid credentials, please try again."
         errorLabel.isHidden = true
         errorBox.addSubview(errorLabel)
@@ -293,7 +293,7 @@ class CountryCodeView: UIView {
         number = UILabel(frame: CGRect(x: 0, y: 5, width: 60, height: 30))
         number.text = country.code
         number.textColor = .black
-        number.font = UIFont(name: "SFCamera-Semibold", size: 28)
+        number.font = UIFont(name: "SFCompactText-Semibold", size: 28)
         number.textAlignment = .left
         number.sizeToFit()
         addSubview(number)

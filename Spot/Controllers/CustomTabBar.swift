@@ -6,6 +6,7 @@
 //  Copyright © 2019 sp0t, LLC. All rights reserved.
 //
 
+/*
 import Foundation
 import UIKit
 import Firebase
@@ -88,3 +89,4 @@ class CustomTabBar: UITabBarController {
         }
     }
 }
+*/

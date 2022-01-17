@@ -41,7 +41,7 @@ class EmailLoginController: UIViewController {
         let emailLabel = UILabel(frame: CGRect(x: 31, y: 40, width: 40, height: 12))
         emailLabel.text = "Email"
         emailLabel.textColor = UIColor(named: "SpotGreen")
-        emailLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        emailLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         view.addSubview(emailLabel)
         
         emailField = PaddedTextField(frame: CGRect(x: 27, y: emailLabel.frame.maxY + 8, width: UIScreen.main.bounds.width - 54, height: 40))
@@ -53,7 +53,7 @@ class EmailLoginController: UIViewController {
         emailField.autocorrectionType = .no
         emailField.tag = 1
         emailField.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
-        emailField.font = UIFont(name: "SFCamera-Regular", size: 16)!
+        emailField.font = UIFont(name: "SFCompactText-Regular", size: 16)!
         emailField.textContentType = .username
         emailField.keyboardType = .emailAddress
         view.addSubview(emailField)
@@ -61,7 +61,7 @@ class EmailLoginController: UIViewController {
         let passwordLabel = UILabel(frame: CGRect(x: 31, y: emailField.frame.maxY + 17, width: 56, height: 12))
         passwordLabel.text = "Password"
         passwordLabel.textColor = UIColor(named: "SpotGreen")
-        passwordLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        passwordLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         view.addSubview(passwordLabel)
 
         passwordField = PaddedTextField(frame: CGRect(x: 27, y: passwordLabel.frame.maxY + 8, width: UIScreen.main.bounds.width - 54, height: 40))
@@ -75,7 +75,7 @@ class EmailLoginController: UIViewController {
         passwordField.tag = 2
         passwordField.textContentType = .password
         passwordField.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
-        passwordField.font = UIFont(name: "SFCamera-Regular", size: 16)!
+        passwordField.font = UIFont(name: "SFCompactText-Regular", size: 16)!
         passwordField.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
         view.addSubview(passwordField)
         
@@ -83,7 +83,7 @@ class EmailLoginController: UIViewController {
         forgotPasswordButton.setTitle("Forgot password?", for: .normal)
         forgotPasswordButton.setTitleColor(UIColor(red:0.78, green:0.78, blue:0.78, alpha:1.00), for: .normal)
         forgotPasswordButton.titleLabel?.textAlignment = .center
-        forgotPasswordButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 14)
+        forgotPasswordButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
         forgotPasswordButton.addTarget(self, action: #selector(handleForgotPwd(_:)), for: .touchUpInside)
         view.addSubview(forgotPasswordButton)
         
@@ -105,7 +105,7 @@ class EmailLoginController: UIViewController {
         errorLabel.numberOfLines = 0
         errorLabel.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
         errorLabel.textAlignment = .center
-        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 14)
+        errorLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
         errorLabel.text = "Invalid login. Double check your email and password and try again."
         errorLabel.sizeToFit()
         errorBox.addSubview(errorLabel)

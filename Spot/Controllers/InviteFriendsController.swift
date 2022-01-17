@@ -54,14 +54,14 @@ class InviteFriendsController: UIViewController {
         
         let inviteLabel = UILabel(frame: CGRect(x: 21, y: 30, width: 200, height: 20))
         inviteLabel.text = "Invite friends"
-        inviteLabel.font = UIFont(name: "SFCamera-Semibold", size: 17)
+        inviteLabel.font = UIFont(name: "SFCompactText-Semibold", size: 17)
         inviteLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         searchBarContainer.addSubview(inviteLabel)
 
         let doneButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 63, y: 15, width: 56, height: 26))
         doneButton.setTitle("Done", for: .normal)
         doneButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        doneButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        doneButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         doneButton.addTarget(self, action: #selector(doneTapped(_:)), for: .touchUpInside)
         doneButton.contentHorizontalAlignment = .center
         doneButton.contentVerticalAlignment = .center
@@ -76,7 +76,7 @@ class InviteFriendsController: UIViewController {
         searchBar.autocapitalizationType = .none
         searchBar.autocorrectionType = .no
         searchBar.showsCancelButton = false
-        searchBar.searchTextField.font = UIFont(name: "SFCamera-Regular", size: 13)
+        searchBar.searchTextField.font = UIFont(name: "SFCompactText-Regular", size: 13)
         searchBar.clipsToBounds = true
         searchBar.layer.masksToBounds = true
         searchBar.searchTextField.layer.masksToBounds = true
@@ -89,7 +89,7 @@ class InviteFriendsController: UIViewController {
         cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 68, y: 67, width: 50, height: 30))
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 16)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
         cancelButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
         cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
         cancelButton.isHidden = true
@@ -269,7 +269,7 @@ extension InviteFriendsController: UITableViewDataSource, UITableViewDelegate {
         errorLabel.textColor = UIColor.white
         errorLabel.textAlignment = .center
         errorLabel.text = "This person has already posted here"
-        errorLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        errorLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
         
         view.addSubview(errorBox)
         errorBox.addSubview(errorLabel)
@@ -347,7 +347,7 @@ extension SelectedFriendsHeader: UICollectionViewDataSource, UICollectionViewDel
     func getCellWidth(user: UserProfile) -> CGFloat {
         
         let tempName = UILabel(frame: CGRect(x: 0, y: 0, width: 250, height: 18))
-        tempName.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        tempName.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
     
         tempName.text = user.username
         tempName.sizeToFit()
@@ -396,7 +396,7 @@ class UploadFriendCell: UICollectionViewCell {
 
         username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 4, y: 10, width: self.bounds.width - profilePic.frame.maxX - 10, height: 16))
         username.text = user.username
-        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        username.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         username.textColor = UIColor(red: 0.471, green: 0.471, blue: 0.471, alpha: 1)
         username.sizeToFit()
         userView.addSubview(username)

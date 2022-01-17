@@ -67,7 +67,7 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
         textMask.text = "Loading photo map"
         textMask.textAlignment = .center
         textMask.textColor = .white
-        textMask.font = UIFont(name: "SFCamera-Regular", size: 14)
+        textMask.font = UIFont(name: "SFCompactText-Regular", size: 14)
         
         DispatchQueue.main.async {
             self.view.addSubview(parentVC.mapView)
@@ -453,7 +453,7 @@ class StandardPostAnnotationView: MKAnnotationView {
         infoWindow.galleryImage.layer.cornerRadius = 3
         infoWindow.galleryImage.clipsToBounds = true
         
-        infoWindow.count.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        infoWindow.count.font = UIFont(name: "SFCompactText-Semibold", size: 12)
         infoWindow.count.textColor = .black
         let attText = NSAttributedString(string: (infoWindow.count.text)!, attributes: [NSAttributedString.Key.kern: 0.8])
         infoWindow.count.attributedText = attText
@@ -654,7 +654,7 @@ class PostClusterView: MKAnnotationView {
         infoWindow.galleryImage.layer.cornerRadius = 3
         infoWindow.galleryImage.clipsToBounds = true
         
-        infoWindow.count.font = UIFont(name: "SFCamera-Semibold", size: 12)
+        infoWindow.count.font = UIFont(name: "SFCompactText-Semibold", size: 12)
         infoWindow.count.textColor = .black
         infoWindow.count.textAlignment = .center
         infoWindow.count.clipsToBounds = true

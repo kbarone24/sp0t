@@ -22,7 +22,7 @@ class AddedUsersView: UIView {
             let extraView = UILabel(frame: CGRect(x: minX, y: 2, width: 23, height: 23))
             extraView.text = "+ \(users.count - 3)"
             extraView.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-            extraView.font = UIFont(name: "SFCamera-Semibold", size: 13)
+            extraView.font = UIFont(name: "SFCompactText-Semibold", size: 13)
             extraView.textAlignment = .center
             addSubview(extraView)
             minX -= 23

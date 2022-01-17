@@ -80,7 +80,7 @@ class EditSpotController: UIViewController {
         let titleLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: 10, width: 200, height: 20))
         titleLabel.text = "Who can see this?"
         titleLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        titleLabel.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        titleLabel.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         titleLabel.textAlignment = .center
         pickerView.addSubview(titleLabel)
         
@@ -169,7 +169,7 @@ class EditSpotController: UIViewController {
         let botComment = UILabel(frame: CGRect(x: 22, y: botPic.frame.maxY + 21, width: 196, height: 15))
         botComment.text = "You can submit your spot for approval on the public map."
         botComment.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        botComment.font = UIFont(name: "SFCamera-Regular", size: 14)
+        botComment.font = UIFont(name: "SFCompactText-Regular", size: 14)
         botComment.numberOfLines = 0
         botComment.lineBreakMode = .byWordWrapping
         botComment.sizeToFit()
@@ -179,7 +179,7 @@ class EditSpotController: UIViewController {
         let submitButton = UIButton(frame: CGRect(x: 12, y: botComment.frame.maxY + 15, width: 95, height: 35))
         submitButton.setTitle("Okay", for: .normal)
         submitButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        submitButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
+        submitButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
         submitButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
         submitButton.layer.borderWidth = 1
         submitButton.layer.cornerRadius = 8
@@ -190,7 +190,7 @@ class EditSpotController: UIViewController {
         let cancelButton = UIButton(frame: CGRect(x: 122, y: botComment.frame.maxY + 15, width: 95, height: 35))
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor.lightGray, for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
         cancelButton.layer.borderColor = UIColor.lightGray.cgColor
         cancelButton.layer.borderWidth = 1
         cancelButton.layer.cornerRadius = 8
@@ -211,7 +211,7 @@ class EditSpotController: UIViewController {
         let botComment = UILabel(frame: CGRect(x: 22, y: 75, width: 196, height: 15))
         botComment.text = "I'll let you know if your spot gets approved!"
         botComment.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        botComment.font = UIFont(name: "SFCamera-Regular", size: 14)
+        botComment.font = UIFont(name: "SFCompactText-Regular", size: 14)
         botComment.numberOfLines = 0
         botComment.lineBreakMode = .byWordWrapping
         botComment.sizeToFit()
@@ -221,7 +221,7 @@ class EditSpotController: UIViewController {
         let okButton = UIButton(frame: CGRect(x: 22, y: botComment.frame.maxY + 15, width: 196, height: 40))
         okButton.setTitle("Okay", for: .normal)
         okButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        okButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
+        okButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
         okButton.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
         okButton.layer.borderWidth = 1
         okButton.layer.cornerRadius = 10
@@ -308,7 +308,7 @@ extension EditSpotController: UITableViewDelegate, UITableViewDataSource {
             return UserDataModel.shared.screenSize == 2 ? 290 : 280
             
         case 1:
-            let tagsHeight: CGFloat = UserDataModel.shared.screenSize == 0 ? 315 : UserDataModel.shared.screenSize == 1 ? 230 : 240
+            let tagsHeight: CGFloat = UserDataModel.shared.smallScreen ? 315 : UserDataModel.shared.screenSize == 1 ? 230 : 240
             return tagsHeight
             
         default:
@@ -344,7 +344,7 @@ class EditSpotHeader: UITableViewHeaderFooterView {
         cancelButton.titleEdgeInsets = UIEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         cancelButton.addTarget(self, action: #selector(backTapped(_:)), for: .touchUpInside)
         self.addSubview(cancelButton)
         
@@ -352,14 +352,14 @@ class EditSpotHeader: UITableViewHeaderFooterView {
         titleLabel.text = "Edit Spot"
         titleLabel.textAlignment = .center
         titleLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        titleLabel.font = UIFont(name: "SFCamera-Regular", size: 16)
+        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 16)
         self.addSubview(titleLabel)
         
         saveButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 60, y: 27, width: 50, height: 18))
         saveButton.titleEdgeInsets = UIEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
         saveButton.setTitle("Save", for: .normal)
         saveButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        saveButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        saveButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         saveButton.addTarget(self, action: #selector(saveTap(_:)), for: .touchUpInside)
         self.addSubview(saveButton)
     }
@@ -617,7 +617,7 @@ class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
         spotNameField.text = spot.spotName
         spotNameField.textAlignment = .center
         spotNameField.textColor = UIColor(named: "SpotGreen")
-        spotNameField.font = UIFont(name: "SFCamera-Regular", size: 14)
+        spotNameField.font = UIFont(name: "SFCompactText-Regular", size: 14)
         spotNameField.backgroundColor = .black
         spotNameField.layer.cornerRadius = 6
         spotNameField.layer.borderWidth = 1.5
@@ -628,12 +628,12 @@ class EditOverviewCell: UITableViewCell, UITextFieldDelegate {
         locationLabel = UILabel(frame: CGRect(x: 14, y: spotNameField.frame.maxY + 25, width: 60, height: 20))
         locationLabel.text = "Location"
         locationLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        locationLabel.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        locationLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         self.addSubview(locationLabel)
         
         addressButton = UIButton(frame: CGRect(x: 14, y: locationLabel.frame.maxY, width: UIScreen.main.bounds.width - 60, height: 20))
         addressButton.titleLabel?.lineBreakMode = .byTruncatingTail
-        addressButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 12.5)
+        addressButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
         addressButton.setTitleColor(UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1), for: .normal)
         self.addSubview(addressButton)
         

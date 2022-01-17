@@ -327,7 +327,7 @@ class CountryCell: UITableViewCell {
         countryName = UILabel(frame: CGRect(x: 14, y: 20, width: UIScreen.main.bounds.width - 114, height: 20))
         countryName.text = country.name
         countryName.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1.0)
-        countryName.font = UIFont(name: "SFCamera-Regular", size: 16)
+        countryName.font = UIFont(name: "SFCompactText-Regular", size: 16)
         countryName.textAlignment = .left
         addSubview(countryName)
         
@@ -335,7 +335,7 @@ class CountryCell: UITableViewCell {
         countryCode = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 100, y: 20, width: 86, height: 20))
         countryCode.text = country.code
         countryCode.textColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0)
-        countryCode.font = UIFont(name: "SFCamera-Regular", size: 16)
+        countryCode.font = UIFont(name: "SFCompactText-Regular", size: 16)
         countryCode.textAlignment = .right
         addSubview(countryCode)
         
@@ -365,7 +365,7 @@ class CountryPickerHeader: UITableViewHeaderFooterView {
         label.text = "Select country"
         label.textColor = .white
         label.textAlignment = .center
-        label.font = UIFont(name: "SFCamera-Regular", size: 16)
+        label.font = UIFont(name: "SFCompactText-Regular", size: 16)
         addSubview(label)
         
         let exitButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 45, y: 9, width: 35, height: 35))

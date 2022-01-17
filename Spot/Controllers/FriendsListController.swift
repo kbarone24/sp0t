@@ -222,8 +222,6 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
                 profileVC.addChild(vc)
                 profileVC.view.addSubview(vc.view)
                 vc.didMove(toParent: profileVC)
-
-                profileVC.mapVC.customTabBar.tabBar.isHidden = true
             
             } else {
                 /// add on top of post
@@ -270,13 +268,13 @@ class FriendsListCell: UITableViewCell {
         name.lineBreakMode = .byTruncatingTail
         name.text = friend.name
         name.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        name.font = UIFont(name: "SFCamera-Semibold", size: 13.5)
+        name.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         self.addSubview(name)
                 
         username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: name.frame.maxY + 1, width: 150, height: 15))
         username.text = friend.username
         username.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        username.font = UIFont(name: "SFCamera-Regular", size: 12.5)
+        username.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         username.textAlignment = .left
         self.addSubview(username)
     }
@@ -312,7 +310,7 @@ class FriendsListHeader: UITableViewHeaderFooterView {
         var friendText = "\(friendCount) friends"
         if friendCount == 1 {friendText = String(friendText.dropLast())}
         numFriends.text = friendText
-        numFriends.font = UIFont(name: "SFCamera-Regular", size: 16)
+        numFriends.font = UIFont(name: "SFCompactText-Regular", size: 16)
         numFriends.textColor = .white
         numFriends.textAlignment = .center
         self.addSubview(numFriends)

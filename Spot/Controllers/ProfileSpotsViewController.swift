@@ -307,7 +307,7 @@ class ProfileSpotsViewController: UIViewController {
             guard let self = self else { return }
             guard let profileVC = self.profileVC else { return }
 
-            if self.mapVC.customTabBar.view.frame.minY < 200 && profileVC.selectedIndex == 0 { profileVC.shadowScroll.isScrollEnabled = true }
+       ///     if self.mapVC.customTabBar.view.frame.minY < 200 && profileVC.selectedIndex == 0 { profileVC.shadowScroll.isScrollEnabled = true }
             
             let alreadyLoaded = self.loaded /// check if loaded before for openspotID
             self.loaded = true
@@ -514,7 +514,7 @@ extension ProfileSpotsViewController: UICollectionViewDelegate, UICollectionView
             spotVC.didMove(toParent: profileVC)
             
             self.mapVC.prePanY = self.mapVC.halfScreenY
-            DispatchQueue.main.async { self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: self.mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - self.mapVC.halfScreenY) }
+        ///    DispatchQueue.main.async { self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: self.mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - self.mapVC.halfScreenY) }
         }
     }
 }
@@ -542,7 +542,7 @@ class SpotCollectionCell: UICollectionViewCell {
         if spotName != nil { spotName.text = "" }
         spotName = UILabel(frame: CGRect(x: 52, y: 7, width: self.frame.width - 54, height: 16))
         spotName.text = spot.spotName
-        spotName.font = UIFont(name: "SFCamera-Semibold", size: 13)
+        spotName.font = UIFont(name: "SFCompactText-Semibold", size: 13)
         spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         spotName.clipsToBounds = true
         spotName.textAlignment = .left
@@ -562,7 +562,7 @@ class CityHeader: UICollectionReusableView {
         if cityLabel != nil { cityLabel.text = "" }
         cityLabel = UILabel(frame: CGRect(x: 0, y: 14, width: UIScreen.main.bounds.width - 28, height: 16))
         cityLabel.text = city
-        cityLabel.font = UIFont(name: "SFCamera-Regular", size: 13)
+        cityLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
         cityLabel.textColor = UIColor(red: 0.61, green: 0.61, blue: 0.61, alpha: 1.00)
         cityLabel.sizeToFit()
         self.addSubview(cityLabel)

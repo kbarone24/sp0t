@@ -34,7 +34,7 @@ class NewSpotNameView: UIView {
         textField.placeholder = "Name your spot"
         textField.tintColor = .white
         textField.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        textField.font = UIFont(name: "SFCamera-Semibold", size: 17.5)
+        textField.font = UIFont(name: "SFCompactText-Semibold", size: 17.5)
         textField.backgroundColor = UIColor(red: 0.062, green: 0.062, blue: 0.062, alpha: 1)
         textField.layer.cornerRadius = 10
         textField.layer.borderWidth = 1

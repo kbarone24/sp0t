@@ -47,7 +47,7 @@ class SpotSearchCell: UITableViewCell {
 
         spotName = UILabel(frame: CGRect(x: thumbnailImage.frame.maxX + 12, y: 15, width: 250, height: 16))
         spotName.text = spot.spotName
-        spotName.font = UIFont(name: "SFCamera-Regular", size: 13)
+        spotName.font = UIFont(name: "SFCompactText-Regular", size: 13)
         spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         spotName.sizeToFit()
         addSubview(spotName)
@@ -71,14 +71,14 @@ class SpotSearchCell: UITableViewCell {
         spotName = UILabel(frame: CGRect(x: thumbnailImage.frame.maxX + 12, y: 9, width: UIScreen.main.bounds.width - 84, height: 16))
         spotName.lineBreakMode = .byTruncatingTail
         spotName.text = POI.name
-        spotName.font = UIFont(name: "SFCamera-Semibold", size: 13)
+        spotName.font = UIFont(name: "SFCompactText-Semibold", size: 13)
         spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         addSubview(spotName)
 
         address = UILabel(frame: CGRect(x: thumbnailImage.frame.maxX + 12, y: spotName.frame.maxY + 1, width: UIScreen.main.bounds.width - 84, height: 16))
         address.text = POI.address
         address.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        address.font = UIFont(name: "SFCamera-Regular", size: 12)
+        address.font = UIFont(name: "SFCompactText-Regular", size: 12)
         address.lineBreakMode = .byTruncatingTail
         addSubview(address)
     }
@@ -107,7 +107,7 @@ class SpotSearchCell: UITableViewCell {
         
         spotName = UILabel(frame: CGRect(x: thumbnailImage.frame.maxX + 8, y: 22, width: 250, height: 16))
         spotName.text = spot.spotName
-        spotName.font = UIFont(name: "SFCamera-Regular", size: 13)
+        spotName.font = UIFont(name: "SFCompactText-Regular", size: 13)
         spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         spotName.sizeToFit()
         addSubview(spotName)
@@ -135,14 +135,14 @@ class SpotSearchCell: UITableViewCell {
 
         name = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: 12, width: 250, height: 20))
         name.text = user.name
-        name.font = UIFont(name: "SFCamera-Semibold", size: 13)
+        name.font = UIFont(name: "SFCompactText-Semibold", size: 13)
         name.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         name.sizeToFit()
         addSubview(name)
         
         username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: name.frame.maxY + 1, width: 250, height: 20))
         username.text = user.username
-        username.font = UIFont(name: "SFCamera-Regular", size: 13)
+        username.font = UIFont(name: "SFCompactText-Regular", size: 13)
         username.textColor = UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1)
         username.sizeToFit()
         addSubview(username)
@@ -157,7 +157,7 @@ class SpotSearchCell: UITableViewCell {
         
         spotName = UILabel(frame: CGRect(x: 28.5, y: 22, width: 250, height: 16))
         spotName.text = cityName
-        spotName.font = UIFont(name: "SFCamera-Semibold", size: 15)
+        spotName.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         spotName.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         spotName.sizeToFit()
         addSubview(spotName)

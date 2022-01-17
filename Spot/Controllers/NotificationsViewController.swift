@@ -13,6 +13,7 @@ import CoreLocation
 import Mixpanel
 import FirebaseUI
 
+
 class NotificationsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
     private var activityIndicator: CustomActivityIndicator!
@@ -35,12 +36,18 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     
     unowned var mapVC: MapViewController!
     
-    var refresh: NearbyViewController.refreshStatus = .refreshing
+    var refresh: refreshStatus = .refreshing
     
     lazy var sentFromPending = false
     lazy var active = false
     lazy var friendsEmpty = false
     lazy var addedNewNoti = false
+    
+    enum refreshStatus {
+        case yesRefresh
+        case refreshing
+        case noRefresh
+    }
     
     //finish passing method reloads data if friend request action was taken in profile
     
@@ -100,8 +107,8 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         super.viewWillDisappear(false)
         active = false
         
-        mapVC.customTabBar.tabBar.items?[3].image = UIImage(named: "NotificationsInactive")?.withRenderingMode(.alwaysOriginal)
-        mapVC.customTabBar.tabBar.items?[3].selectedImage = UIImage(named: "NotificationsActive")?.withRenderingMode(.alwaysOriginal)
+       /// mapVC.customTabBar.tabBar.items?[3].image = UIImage(named: "NotificationsInactive")?.withRenderingMode(.alwaysOriginal)
+       /// mapVC.customTabBar.tabBar.items?[3].selectedImage = UIImage(named: "NotificationsActive")?.withRenderingMode(.alwaysOriginal)
     }
     
     func setUpViews() {
@@ -141,14 +148,14 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         mapVC.hideNearbyButtons()
         mapVC.hideSpotButtons()
-        mapVC.customTabBar.tabBar.isHidden = false
+        ///mapVC.customTabBar.tabBar.isHidden = false
         mapVC.setUpNavBar()
         
         mapVC.prePanY = 0
         mapVC.removeBottomBar()
         
         UIView.animate(withDuration: 0.15) {
-            self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        ///    self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         }
     }
     
@@ -618,7 +625,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             
             vc.mapVC = self.mapVC
             active = false
-            mapVC.customTabBar.tabBar.isHidden = true
+        ///    mapVC.customTabBar.tabBar.isHidden = true
             
             vc.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - mapVC.tabBarClosedY)
             self.addChild(vc)
@@ -656,7 +663,7 @@ class FriendRequestCell: UITableViewCell {
                 
         usernameLabel = UILabel(frame: CGRect(x: 103, y: 27, width: 200, height: 20))
         usernameLabel.text = request.userInfo.username
-        usernameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)!
+        usernameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13)!
         usernameLabel.textColor = UIColor(red:0.82, green:0.82, blue:0.82, alpha:1.0)
         self.addSubview(usernameLabel)
         
@@ -681,7 +688,7 @@ class FriendRequestCell: UITableViewCell {
         time = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 80, y: 32, width: 40, height: 15))
         time.textColor = UIColor(red:0.78, green:0.78, blue:0.78, alpha:1.0)
         time.textAlignment = .right
-        time.font = UIFont(name: "SFCamera-Regular", size: 12)
+        time.font = UIFont(name: "SFCompactText-Regular", size: 12)
         time.text = getNotiTimestamp(timestamp: request.timestamp)
         self.addSubview(time)
         
@@ -696,7 +703,7 @@ class FriendRequestCell: UITableViewCell {
         
         detail = UILabel(frame: CGRect(x: 103, y: 43, width: 200, height: 15))
         detail.textColor = UIColor(red:0.71, green:0.71, blue:0.71, alpha:1.0)
-        detail.font = UIFont(name: "SFCamera-regular", size: 14)
+        detail.font = UIFont(name: "SFCompactText-regular", size: 14)
         detail.text = "sent you a friend request"
         detail.lineBreakMode = .byWordWrapping
         detail.numberOfLines = 0
@@ -713,7 +720,7 @@ class FriendRequestCell: UITableViewCell {
         removeButton.layer.cornerRadius = 15
         removeButton.setTitle("Remove", for: UIControl.State.normal)
         removeButton.setTitleColor(UIColor(red:0.61, green:0.61, blue:0.61, alpha:1), for: UIControl.State.normal)
-        removeButton.titleLabel?.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        removeButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         removeButton.addTarget(self, action: #selector(removeTap(_:)), for: .touchUpInside)
         self.addSubview(removeButton)
     }
@@ -726,7 +733,7 @@ class FriendRequestCell: UITableViewCell {
         acceptedLabel = UILabel(frame: CGRect(x: 103, y: 44, width: 200, height: 15))
         acceptedLabel.text = "is now your friend!"
         acceptedLabel.textColor = (UIColor(named: "SpotGreen"))
-        acceptedLabel.font = UIFont(name: "SFCamera-regular", size: 14)
+        acceptedLabel.font = UIFont(name: "SFCompactText-regular", size: 14)
         acceptedLabel.numberOfLines = 0
         acceptedLabel.lineBreakMode = .byWordWrapping
         acceptedLabel.sizeToFit()
@@ -741,7 +748,7 @@ class FriendRequestCell: UITableViewCell {
         rejectedLabel = UILabel(frame: CGRect(x: 103, y: 44, width: 200, height: 15))
         rejectedLabel.text = "Friend request removed"
         rejectedLabel.textColor = UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0)
-        rejectedLabel.font = UIFont(name: "SFCamera-regular", size: 14)
+        rejectedLabel.font = UIFont(name: "SFCompactText-regular", size: 14)
         rejectedLabel.numberOfLines = 0
         rejectedLabel.lineBreakMode = .byWordWrapping
         rejectedLabel.sizeToFit()
@@ -779,7 +786,7 @@ class FriendRequestCell: UITableViewCell {
                 vc.mapVC = pendingVC.notiVC.mapVC
                 
                 pendingVC.notiVC.active = false
-                pendingVC.notiVC.mapVC.customTabBar.tabBar.isHidden = true
+               /// pendingVC.notiVC.mapVC.customTabBar.tabBar.isHidden = true
                 pendingVC.notiVC.sentFromPending = true
                 
                 pendingVC.dismiss(animated: false, completion: nil)
@@ -846,7 +853,7 @@ class PostNotificationCell: UITableViewCell {
         usernameLabel = UILabel(frame: CGRect(x: 103, y: 27, width: 70, height: 20))
         usernameLabel.isHidden = false
         usernameLabel.text = notification.userInfo.username
-        usernameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)!
+        usernameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13)!
         usernameLabel.textColor = UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0)
         usernameLabel.sizeToFit()
         self.addSubview(usernameLabel)
@@ -874,7 +881,7 @@ class PostNotificationCell: UITableViewCell {
         time = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 80, y: 32, width: 40, height: 15))
         time.textColor = UIColor(red:0.78, green:0.78, blue:0.78, alpha:1.0)
         time.textAlignment = .right
-        time.font = UIFont(name: "SFCamera-Regular", size: 12)
+        time.font = UIFont(name: "SFCompactText-Regular", size: 12)
         time.isHidden = false
         time.text = getNotiTimestamp(timestamp: notification.timestamp)
         self.addSubview(time)
@@ -884,7 +891,7 @@ class PostNotificationCell: UITableViewCell {
         
         detail = UILabel(frame: CGRect(x: 103, y: 43, width: UIScreen.main.bounds.width - 188, height: 15))
         detail.textColor = UIColor(red:0.71, green:0.71, blue:0.71, alpha:1.0)
-        detail.font = UIFont(name: "SFCamera-regular", size: 14)
+        detail.font = UIFont(name: "SFCompactText-regular", size: 14)
         detail.isHidden = false
         detail.numberOfLines = 0
         detail.lineBreakMode = .byWordWrapping
@@ -959,6 +966,15 @@ class PostNotificationCell: UITableViewCell {
             icon.frame = newFrame
             icon.image = UIImage(named: "CommentNotification") ?? UIImage()
             
+        } else if notification.type == "commentLike" {
+            detail.text = "liked your comment"
+            detail.sizeToFit()
+            var newFrame = icon.frame
+            newFrame.size.height = 16
+            newFrame.size.width = 16
+            icon.frame = newFrame
+            icon.image = UIImage(named: "LikeNotification") ?? UIImage()
+
         } else if notification.type == "spotTag" {
             detail.text = "tagged you at a spot"
             detail.sizeToFit()
@@ -1068,7 +1084,7 @@ class PostNotificationCell: UITableViewCell {
             if notification.type == "commentComment" || notification.type == "commentTag" || notification.type == "comment" { vc.commentNoti = true }
             
             notiVC.mapVC.navigationItem.title = ""
-            notiVC.mapVC.customTabBar.tabBar.isHidden = true
+            /// notiVC.mapVC.customTabBar.tabBar.isHidden = true
             notiVC.mapVC.navigationController?.navigationBar.removeShadow()
             notiVC.mapVC.navigationController?.navigationBar.removeBackgroundImage()
             notiVC.mapVC.toggleMapTouch(enable: true )
@@ -1112,7 +1128,7 @@ class SpotNotificationCell: UITableViewCell {
         usernameLabel = UILabel(frame: CGRect(x: 103, y: 27, width: 70, height: 20))
         usernameLabel.isHidden = false
         usernameLabel.text = notification.userInfo.username
-        usernameLabel.font = UIFont(name: "SFCamera-Semibold", size: 13)!
+        usernameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13)!
         usernameLabel.textColor = UIColor(red:0.88, green:0.88, blue:0.88, alpha:1.0)
         usernameLabel.sizeToFit()
         self.addSubview(usernameLabel)
@@ -1140,7 +1156,7 @@ class SpotNotificationCell: UITableViewCell {
         time = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 80, y: 32, width: 40, height: 15))
         time.textColor = UIColor(red:0.78, green:0.78, blue:0.78, alpha:1.0)
         time.textAlignment = .right
-        time.font = UIFont(name: "SFCamera-Regular", size: 12)
+        time.font = UIFont(name: "SFCompactText-Regular", size: 12)
         time.isHidden = false
         time.text = getNotiTimestamp(timestamp: notification.timestamp)
         self.addSubview(time)
@@ -1150,7 +1166,7 @@ class SpotNotificationCell: UITableViewCell {
         
         detail = UILabel(frame: CGRect(x: 103, y: 43, width: UIScreen.main.bounds.width - 188, height: 15))
         detail.textColor = UIColor(red:0.71, green:0.71, blue:0.71, alpha:1.0)
-        detail.font = UIFont(name: "SFCamera-regular", size: 14)
+        detail.font = UIFont(name: "SFCompactText-regular", size: 14)
         detail.isHidden = false
         detail.numberOfLines = 0
         detail.lineBreakMode = .byWordWrapping
@@ -1247,7 +1263,7 @@ class SpotNotificationCell: UITableViewCell {
             spotVC.didMove(toParent: notiVC)
             
             notiVC.mapVC.prePanY = notiVC.mapVC.halfScreenY
-            DispatchQueue.main.async { notiVC.mapVC.customTabBar.view.frame = CGRect(x: 0, y: notiVC.mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - notiVC.mapVC.halfScreenY) }
+         ///   DispatchQueue.main.async { notiVC.mapVC.customTabBar.view.frame = CGRect(x: 0, y: notiVC.mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - notiVC.mapVC.halfScreenY) }
             
             let infoPass = ["spot": spot as Any] as [String : Any]
             NotificationCenter.default.post(name: Notification.Name("OpenSpotFromNotis"), object: nil, userInfo: infoPass)
@@ -1288,7 +1304,7 @@ class FriendRequestHeader: UITableViewHeaderFooterView {
         var labelText = "\(friendRequestCount) Friend Request"
         if friendRequestCount > 1 { labelText += "s" }
         friendRequestsLabel.text = labelText
-        friendRequestsLabel.font = UIFont(name: "SFCamera-Semibold", size: 14)
+        friendRequestsLabel.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         friendRequestsLabel.textColor = .white
         friendRequestsLabel.textAlignment = .left
         self.addSubview(friendRequestsLabel)
