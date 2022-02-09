@@ -26,16 +26,16 @@ class MapViewController: UIViewController {
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     var mapView: MKMapView!
+    var topMapMask, bottomMapMask: UIView!
     
     let locationManager = CLLocationManager()
     var firstTimeGettingLocation = true
     
-    var feedViewController: FeedViewController!
     var feedLayer: CAShapeLayer!
     var regionQuery: GFSRegionQuery?
     let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("spots"))
     
-    var listener1: ListenerRegistration!
+    var userListener: ListenerRegistration!
         
     let locationGroup = DispatchGroup()
     let feedGroup = DispatchGroup()
@@ -91,52 +91,75 @@ class MapViewController: UIViewController {
     
     var tileRenderer: MKTileOverlayRenderer!
     var overlayImage: UIImage!
-        
+    
+    var notiListener: ListenerRegistration!
+    var postAnnotations = [String: CustomPointAnnotation]()
+
+    // feed stuff
+    var selectedSegmentIndex = 0
+    var friendPosts: [MapPost] = []
+    var nearbyPosts: [MapPost] = []
+    var nearbyEnteredCount = 0
+    var noAccessCount = 0
+    var nearbyEscapeCount = 0
+    var currentNearbyPosts: [MapPost] = [] /// keep track of posts for the current circleQuery to reload all at once
+    var activeRadius = 0.75
+    var circleQuery: GFSCircleQuery?
+
+    var endDocument: DocumentSnapshot!
+    var refresh: refreshStatus = .refreshing
+    var friendsRefresh: refreshStatus = .yesRefresh
+    var nearbyRefresh: refreshStatus = .yesRefresh
+    var queryReady = false /// circlequery returned
+    var friendsListener, nearbyListener, commentListener: ListenerRegistration!
+    
+    var feedTableContainer: UIView!
+    var postsLabel: UILabel!
+    var feedTableButton: UIButton!
+    var feedTableHighlight: UIView!
+    var feedTable: UITableView!
+    var feedPan: UIPanGestureRecognizer!
+    lazy var loadingIndicator = CustomActivityIndicator()
+    
+    var originalOffset: CGFloat = 0
+    var feedRowOffset: CGFloat = 0
+    var selectedFeedIndex = -1
+
+    enum refreshStatus {
+        case yesRefresh
+        case refreshing
+        case noRefresh
+    }
+
     /// tag table added over top of view to window then result passed to active VC
     enum TagTableParent {
         case comments
         case upload
         case post
     }
-        
+    
+    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge {
+        return UIRectEdge.bottom
+    }
+      
     override func viewDidLoad() {
         
         ///add tab bar controller as child -> won't even need to override methods, the tab bar controller height as a whole is manipulated so that the tab bars can be selected naturally
         self.view.backgroundColor = UIColor(named: "SpotBlack")
-        NotificationCenter.default.addObserver(self, selector: #selector(postOpen(_:)), name: NSNotification.Name("PostOpen"), object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(postOpen(_:)), name: NSNotification.Name("PostIndexChange"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(postIndexChange(_:)), name: NSNotification.Name("PostOpen"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostLike(_:)), name: Notification.Name("PostLike"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostComment(_:)), name: Notification.Name("PostComment"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(selectFromPost(_:)), name: NSNotification.Name("OpenSpotFromPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(selectFromProfile(_:)), name: NSNotification.Name("OpenSpotFromProfile"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(selectFromNotis(_:)), name: NSNotification.Name("OpenSpotFromNotis"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyAcceptFriend(_:)), name: NSNotification.Name(("FriendRequestAccept")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+
         
-        mapView = MKMapView(frame: UIScreen.main.bounds)        
-        mapView.delegate = self
-        mapView.isUserInteractionEnabled = true
-        mapView.mapType = .mutedStandard
-        mapView.overrideUserInterfaceStyle = .dark
-        mapView.pointOfInterestFilter = .excludingAll
-        mapView.showsCompass = false
-        mapView.showsTraffic = false
-        mapView.showsUserLocation = true
-        mapView.userLocation.title = ""
-        mapView.tag = 1
-        mapView.register(SpotAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier)
-        mapView.register(SpotClusterView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
-        mapView.register(StandardPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Post")
-        mapView.register(PostClusterView.self, forAnnotationViewWithReuseIdentifier: "postCluster")
-        mapView.register(SinglePostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "singlePost")
-        
-        // gesture recognizers to close drawer on user interaction with map
-        let mapPan = UIPanGestureRecognizer(target: self, action: #selector(mapPan(_:)))
-        mapPan.delegate = self
-        mapView.addGestureRecognizer(mapPan)
-        
-        let mapPinch = UIPinchGestureRecognizer(target: self, action: #selector(mapPinch(_:)))
-        mapPinch.delegate = self
-        mapView.addGestureRecognizer(mapPinch)
-        
-        view.addSubview(mapView)
+        addMapView()
         
         overrideUserInterfaceStyle = .dark
         
@@ -146,7 +169,7 @@ class MapViewController: UIViewController {
         addMapButtons() /// add map buttons and filter view
         addTagView() /// add tag table for @'ing users
         getAdmins() /// get admin users to exclude from searches (sp0tb0t, black-owned)
-        addFeed() /// push feed onto view hierarcy
+        addFeed() /// add feed table
                 
         navigationController?.navigationBar.addGradientBackground(alpha: 1.0) /// add shadow to nav bar
         
@@ -162,14 +185,12 @@ class MapViewController: UIViewController {
         }
         
         feedGroup.notify(queue: DispatchQueue.main) {
-            if !self.feedLoaded {
-                NotificationCenter.default.post(Notification(name: Notification.Name("InitialFriendsLoad"))) } /// full friendObjects loaded
-            self.loadFeed()
+            if !self.feedLoaded { self.loadFeed() }
+            self.getFriendPosts(refresh: false)
         }
         
         selectedSpotID = ""
         selectedProfileID = ""
-        
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -184,6 +205,7 @@ class MapViewController: UIViewController {
         Mixpanel.mainInstance().track(event: "MapOpen")
         if mapView != nil { mapView.delegate = self }
         setUpNavBar()
+        addFeedAnnotations()
     }
     
     func getAdmins() {
@@ -201,7 +223,7 @@ class MapViewController: UIViewController {
     
     func getFriends() {
         
-        listener1 = self.db.collection("users").document(self.uid).addSnapshotListener(includeMetadataChanges: true, listener: { (userSnap, err) in
+        userListener = self.db.collection("users").document(self.uid).addSnapshotListener(includeMetadataChanges: true, listener: { (userSnap, err) in
             
             if userSnap?.metadata.isFromCache ?? false { return }
             if err != nil { return }
@@ -216,6 +238,7 @@ class MapViewController: UIViewController {
                 if userSnap!.documentID != self.uid { return } /// logout + object not being destroyed
                 
                 UserDataModel.shared.userInfo = activeUser
+                self.setUpNavBar()
                 
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
                 self.imageManager.loadImage(with: URL(string: activeUser.imageURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { (image, data, err, cache, download, url) in
@@ -286,40 +309,145 @@ class MapViewController: UIViewController {
         })
     }
     
-    func addFeed() {
+    func addMapView() {
+        mapView = MKMapView(frame: UIScreen.main.bounds)
+        mapView.delegate = self
+        mapView.isUserInteractionEnabled = true
+        mapView.mapType = .mutedStandard
+        mapView.overrideUserInterfaceStyle = .dark
+        mapView.pointOfInterestFilter = .excludingAll
+        mapView.showsCompass = false
+        mapView.showsTraffic = false
+        mapView.showsUserLocation = true
+        mapView.userLocation.title = ""
+        mapView.tag = 1
+        mapView.register(SpotAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier)
+        mapView.register(SpotClusterView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
+        mapView.register(StandardPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Post")
+        mapView.register(TextPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "TextPost")
+        mapView.register(PostClusterView.self, forAnnotationViewWithReuseIdentifier: "postCluster")
+        mapView.register(SinglePostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "singlePost")
         
-        /// needed for drawer movement
-        halfScreenY = UIScreen.main.bounds.height - 350
-        tabBarOpenY = UserDataModel.shared.largeScreen ? UIScreen.main.bounds.height - (UIScreen.main.bounds.width * 1.72267) : UIScreen.main.bounds.height - (UIScreen.main.bounds.width * 1.5)
-        tabBarClosedY = tabBarOpenY + 30
-
-        guard let feed = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(withIdentifier: "Feed") as? FeedViewController else { return }
+        // gesture recognizers to close drawer on user interaction with map
+        let mapPan = UIPanGestureRecognizer(target: self, action: #selector(mapPan(_:)))
+        mapPan.delegate = self
+        mapView.addGestureRecognizer(mapPan)
         
-        feed.view.frame = UIScreen.main.bounds
-        feed.view.clipsToBounds = true
-        feed.mapVC = self
+        let mapPinch = UIPinchGestureRecognizer(target: self, action: #selector(mapPinch(_:)))
+        mapPinch.delegate = self
+        mapView.addGestureRecognizer(mapPinch)
         
-        /// add layers for rounded drawer
-        if UserDataModel.shared.largeScreen {
-            feed.view.layer.cornerRadius = 10
-            feed.view.layer.cornerCurve = .continuous
-        } else {
-            feedLayer = CAShapeLayer()
-            feedLayer.path = UIBezierPath(roundedRect: view.bounds, byRoundingCorners: [.topLeft, .topRight], cornerRadii: CGSize(width: 10, height: 10)).cgPath
-            feed.view.layer.mask = feedLayer
-        }
+        view.addSubview(mapView)
         
-        prePanY = halfScreenY
-        feedViewController = feed
+        topMapMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 134))
+        topMapMask.isUserInteractionEnabled = false
+        mapView.addSubview(topMapMask)
         
-        view.addSubview(feed.view)
-        addChild(feed)
+        let layer0 = CAGradientLayer()
+        layer0.colors = [
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.12).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor
+        ]
+        layer0.locations = [0, 0.66, 1]
+        layer0.frame = topMapMask.bounds
+        layer0.startPoint = CGPoint(x: 0.5, y: 0.0)
+        layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
+        topMapMask.layer.addSublayer(layer0)
         
-        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(panGesture(_:)))
-        panGesture.delegate = self
-        feed.view.addGestureRecognizer(panGesture)
+        bottomMapMask = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height/2, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height/2))
+        bottomMapMask.isUserInteractionEnabled = false
+        mapView.addSubview(bottomMapMask)
+        
+        let layer1 = CAGradientLayer()
+        layer1.colors = [
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0.86).cgColor,
+          UIColor(red: 0, green: 0, blue: 0, alpha: 1).cgColor
+        ]
+        layer1.locations = [0, 0.56, 1]
+        layer1.frame = bottomMapMask.bounds
+        layer1.startPoint = CGPoint(x: 0.5, y: 0.0)
+        layer1.endPoint = CGPoint(x: 0.5, y: 1.0)
+        bottomMapMask.layer.addSublayer(layer1)
     }
     
+    
+    func addFeed() {
+        
+        feedTableContainer = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height * 3/5, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 2/5))
+        feedTableContainer.backgroundColor = .clear
+        view.addSubview(feedTableContainer)
+        
+        postsLabel = UILabel(frame: CGRect(x: 13, y: 10, width: 115, height: 21))
+        postsLabel.text = "Latest posts"
+        postsLabel.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
+        postsLabel.font = UIFont(name: "SFCompactText-Bold", size: 18.5)
+        feedTableContainer.addSubview(postsLabel)
+        
+        feedTableButton = UIButton(frame: CGRect(x: postsLabel.frame.maxX, y: 7, width: 28, height: 28))
+      //  feedTableButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        feedTableButton.setImage(UIImage(named: "MapFeedMinimize"), for: .normal)
+        feedTableButton.addTarget(self, action: #selector(feedButtonTap(_:)), for: .touchUpInside)
+        feedTableContainer.addSubview(feedTableButton)
+        
+        feedTableHighlight = UIView(frame: CGRect(x: 12, y: postsLabel.frame.maxY + 10, width: UIScreen.main.bounds.width - 101, height: 48))
+        feedTableHighlight.backgroundColor =  UIColor(red: 0.18, green: 0.778, blue: 0.817, alpha: 0.15)
+        feedTableHighlight.layer.borderWidth = 1.5
+        feedTableHighlight.layer.cornerRadius = 12
+        feedTableHighlight.layer.borderColor = UIColor(red: 0.096, green: 0.249, blue: 0.258, alpha: 1).cgColor
+        feedTableHighlight.isHidden = selectedFeedIndex == -1
+        feedTableContainer.addSubview(feedTableHighlight)
+            
+        feedTable = UITableView(frame: CGRect(x: 0, y: postsLabel.frame.maxY + 10, width: UIScreen.main.bounds.width, height: feedTableContainer.frame.height - 41))
+        feedTable.tag = 0
+        feedTable.backgroundColor = UIColor.clear
+        feedTable.separatorStyle = .none
+        feedTable.delegate = self
+        feedTable.dataSource = self
+        feedTable.isScrollEnabled = false
+        feedTable.allowsSelection = true
+        feedTable.register(MapFeedCell.self, forCellReuseIdentifier: "FeedCell")
+        feedTable.register(MapFeedLoadingCell.self, forCellReuseIdentifier: "FeedLoadingCell")
+        feedTable.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: feedTable.frame.height, right: 0)
+        feedTableContainer.addSubview(feedTable)
+        
+        feedPan = UIPanGestureRecognizer(target: self, action: #selector(feedPan(_:)))
+        feedTable.addGestureRecognizer(feedPan)
+        
+        let addY = UserDataModel.shared.largeScreen ? UIScreen.main.bounds.height - 130 : UIScreen.main.bounds.height - 94
+        let addX = UserDataModel.shared.largeScreen ? UIScreen.main.bounds.width - 90 : UIScreen.main.bounds.width - 87
+        let addButton = UIButton(frame: CGRect(x: addX, y: addY, width: 61, height: 61))
+        addButton.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
+        addButton.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
+        view.addSubview(addButton)
+    }
+    
+    @objc func addTap(_ sender: UIButton) {
+        if navigationController!.viewControllers.contains(where: {$0 is UploadPostController}) { return } /// crash on double stack was happening here
+        
+        DispatchQueue.main.async {
+            
+            if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
+                
+                vc.mapVC = self
+                
+                let transition = CATransition()
+                transition.duration = 0.3
+                transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
+                transition.type = CATransitionType.push
+                transition.subtype = CATransitionSubtype.fromTop
+                self.navigationController?.view.layer.add(transition, forKey: kCATransition)
+                self.navigationController?.pushViewController(vc, animated: false)
+                    
+                /// for smooth nav bar animation
+                UIView.animate(withDuration: 0.2) {
+                    self.navigationController?.navigationBar.alpha = 0.0
+                }
+            }
+        }
+    }
+        
     @objc func notifyFriendsLoad(_ notification: NSNotification) {
         friendsLoaded = true
     }
@@ -333,10 +461,11 @@ class MapViewController: UIViewController {
     
     func setUpNavBar() {
         
-        setOpaqueNav()
-        navigationItem.title = "Friends posts"
+        navigationItem.leftBarButtonItem = nil
+        navigationItem.rightBarButtonItem = nil
         
-     /*   let navView = UIView(frame: CGRect(x: 20, y: 0, width: UIScreen.main.bounds.width - 40, height: 35))
+        setTranslucentNav()
+        let navView = UIView(frame: CGRect(x: 20, y: 0, width: UIScreen.main.bounds.width - 40, height: 35))
         
         let signUpLogo = UIImageView(frame: CGRect(x: 10, y: -5, width: 35, height: 35))
         signUpLogo.image = UIImage(named: "Signuplogo")
@@ -352,13 +481,41 @@ class MapViewController: UIViewController {
         
         let notiButton = UIButton(frame: CGRect(x: searchButton.frame.maxX + 25, y: 5, width: 20, height: 20))
         notiButton.setImage(UIImage(named: "NotificationsInactive"), for: .normal)
+        notiButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
         buttonView.addSubview(notiButton)
         
-        let profileButton = UIButton(frame: CGRect(x: notiButton.frame.maxX + 25, y: 5, width: 20, height: 20))
-        profileButton.setImage(UIImage(named: "FriendNotification"), for: .normal)
-        buttonView.addSubview(profileButton)
+        let notificationRef = self.db.collection("users").document(self.uid).collection("notifications")
+        let query = notificationRef.whereField("seen", isEqualTo: false)
         
-        navigationItem.titleView = navView */
+        if notiListener != nil { notiListener.remove() }
+        notiListener = query.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
+            if err != nil || snap?.metadata.isFromCache ?? false {
+                return
+            } else {
+                if snap!.documents.count > 0 {
+                    notiButton.setImage(UIImage(named: "NotificationIconFilled")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                }
+            }
+        }
+
+        if UserDataModel.shared.userInfo != nil {
+            let profileButton = UIButton(frame: CGRect(x: notiButton.frame.maxX + 25, y: 1.5, width: 27.5, height: 27.5))
+            profileButton.layer.cornerRadius = profileButton.bounds.width/2
+            profileButton.layer.borderColor = UIColor.white.cgColor
+            profileButton.layer.borderWidth = 1.8
+            profileButton.layer.masksToBounds = true
+            profileButton.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.imageURL), for: .normal, completed: nil)
+            buttonView.addSubview(profileButton)
+        }
+        
+        navigationItem.titleView = navView
+    }
+    
+    @objc func openNotis(_ sender: UIButton) {
+        if let notificationsVC = storyboard?.instantiateViewController(withIdentifier: "Notifications") as? NotificationsViewController {
+            notificationsVC.mapVC = self
+            navigationController?.pushViewController(notificationsVC, animated: true)
+        }
     }
     
     func setOpaqueNav() {
@@ -386,38 +543,37 @@ class MapViewController: UIViewController {
         }
     }
     
+    
     func loadFeed() {
         
         if feedLoaded { return }
-        NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
-    
         feedLoaded = true
+        
+        /// full friendObjects loaded
+        NotificationCenter.default.post(Notification(name: Notification.Name("InitialFriendsLoad")))
+        NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
+
+        /*
         let selectedIndex = UserDataModel.shared.friendIDs.count > 3 ? 0 : 1
         feedViewController.addFeedSeg(selectedIndex: selectedIndex)
         feedViewController.friendsRefresh = .refreshing
-        selectedIndex == 0 ?  feedViewController.getFriendPosts(refresh: false) : feedViewController.getNearbyPosts(radius: 0.5)
+        selectedIndex == 0 ?  feedViewController.getFriendPosts(refresh: false) : feedViewController.getNearbyPosts(radius: 0.5) */
     }
     
     /// close the drawer when user pans the map a decent amount
     @objc func mapPan(_ sender: UIPanGestureRecognizer) {
-      /*  let translation = sender.translation(in: mapView)
+        let translation = sender.translation(in: mapView)
         let direction = sender.velocity(in: mapView)
-        if (sender.state == .changed && (abs(translation.x) > 120 || abs(translation.y) > 120)) || ((sender.state == .ended || sender.state == .cancelled) && (abs(direction.x) > 300 || abs(direction.y) > 300)) {
-            if customTabBar.view.frame.minY == halfScreenY {
-                if profileViewController != nil && profileViewController.userInfo.id == uid && UserDataModel.shared.userInfo.spotsList.count == 0 { return } /// patch fix for not closing the drawer on new user
-                self.animateClosed()
-            }
-        } */
+        if (sender.state == .changed && (abs(translation.x) > 80 || abs(translation.y) > 80)) || ((sender.state == .ended || sender.state == .cancelled) && (abs(direction.x) > 200 || abs(direction.y) > 200)) {
+            if feedTableButton.tag == 0 { closeFeedDrawer() }
+        }
     }
     
     /// close the drawer on a pinch gesture
     @objc func mapPinch(_ sender: UIPinchGestureRecognizer) {
-     /*   if sender.state == .changed && abs(1 - sender.scale) > 0.2 {
-            if customTabBar.view.frame.minY == halfScreenY {
-                if profileViewController != nil && profileViewController.userInfo.id == uid && UserDataModel.shared.userInfo.spotsList.count == 0 { return } /// patch fix for not closing the drawer on new user
-                self.animateClosed()
-            }
-        } */
+       if sender.state == .changed && abs(1 - sender.scale) > 0.2 {
+           if feedTableButton.tag == 0 { closeFeedDrawer() }
+        }
     }
     
      
@@ -467,7 +623,7 @@ class MapViewController: UIViewController {
     }
     
     func feedUploadReset() {
-        
+      /*
      ///   customTabBar.selectedIndex = 0
         
         // reset map after post upload
@@ -485,7 +641,9 @@ class MapViewController: UIViewController {
             if feedViewController.postVC != nil {
                 self.addSelectedPostToMap(index: feedViewController.postVC.selectedPostIndex, parentVC: .feed)
             }
-        }
+        } */
+        
+        
     }
     
     
@@ -559,7 +717,8 @@ class MapViewController: UIViewController {
     
     
     @objc func postOpen(_ sender: NSNotification) {
-        
+  
+     /*   print("post open")
         if let infoPass = sender.userInfo as? [String: Any] {
             /// if selected from nearby posts set postslist from there (only sent from nearby)
             
@@ -576,9 +735,40 @@ class MapViewController: UIViewController {
                     self.addSelectedPostToMap(index: selectedPost, parentVC: parentVC)}
                 
             } else { self.addSelectedPostToMap(index: selectedPost, parentVC: parentVC) }
+        } */
+    }
+    
+    @objc func notifyPostLike(_ sender: NSNotification) {
+        
+        if let info = sender.userInfo as? [String: Any] {
+            guard let post = info["post"] as? MapPost else { return }
+            guard let index = self.postsList.firstIndex(where: {$0.id == post.id}) else { return }
+            self.postsList[index] = post
+            
+            guard let anno = postAnnotations.first(where: {$0.key == post.id}) else { return }
+            
+            if let annoView = mapView.view(for: anno.value) as? StandardPostAnnotationView  {
+                annoView.updateLargeImage(post: post, animated: false)
+            } else if let annoView = mapView.view(for: anno.value) as? TextPostAnnotationView {
+                annoView.updateLargeImage(post: post, animated: false)
+            }
         }
     }
     
+    @objc func notifyPostComment(_ sender: NSNotification) {
+        
+        if let info = sender.userInfo as? [String: Any] {
+            guard let commentList = info["commentList"] as? [MapComment] else { return }
+            guard let postID = info["postID"] as? String else { return }
+            guard let index = self.postsList.firstIndex(where: {$0.id == postID}) else { return }
+            self.postsList[index].commentList = commentList
+            
+            guard let anno = postAnnotations.first(where: {$0.key == postID}) else { return }
+            guard let annoView = mapView.view(for: anno.value) as? StandardPostAnnotationView else { return }
+            annoView.updateLargeImage(post: self.postsList[index], animated: false)
+        }
+    }
+
     // add current feed post to map and offset so it shows in the window above drawer
     func addSelectedPostToMap(index: Int, parentVC: PostViewController.parentViewController) {
         
@@ -594,7 +784,8 @@ class MapViewController: UIViewController {
         
         self.mapView.addAnnotation(postAnnotation)
         
-        var offset = UIScreen.main.bounds.height/2 - feedViewController.view.frame.minY/2 - 25
+      //  var offset = UIScreen.main.bounds.height/2 - feedViewController.view.frame.minY/2 - 25
+        var offset = 200
         if !UserDataModel.shared.largeScreen { offset += 20 }
         
         var distance: Double = 0
@@ -692,9 +883,9 @@ extension MapViewController: CLLocationManagerDelegate {
             
             /// set current location to show while feed loads
             mapView.setRegion(MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 400000, longitudinalMeters: 400000), animated: false)
-            var offset = UIScreen.main.bounds.height/2 - feedViewController.view.frame.minY/2 - 25
-            if !UserDataModel.shared.largeScreen { offset += 20 }
-            offsetCenterCoordinate(selectedCoordinate: location.coordinate, offset: offset, animated: false, region: MKCoordinateRegion())
+          //  var offset = UIScreen.main.bounds.height/2 - feedViewController.view.frame.minY/2 - 25
+          //  if !UserDataModel.shared.largeScreen { offset += 20 }
+          //  offsetCenterCoordinate(selectedCoordinate: location.coordinate, offset: offset, animated: false, region: MKCoordinateRegion())
             
             self.firstTimeGettingLocation = false
             locationGroup.leave()
@@ -729,6 +920,7 @@ extension MapViewController: CLLocationManagerDelegate {
 
 extension MapViewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+
         if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
             return false
         }
@@ -736,7 +928,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
     }
     
     func drawerIsOffset() -> Bool {
-        if feedViewController.view.frame.minY != prePanY { return true }
+     //   if feedViewController.view.frame.minY != prePanY { return true }
         return false
     }
     
@@ -1301,22 +1493,33 @@ extension MapViewController: MKMapViewDelegate {
                 return annotationView
             }
             
-        } else if annotation is CustomPointAnnotation {
+        } else if let anno = annotation as? CustomPointAnnotation {
             // post annotation for spot page
-            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Post") as? StandardPostAnnotationView
-            if annotationView == nil {
-                annotationView = StandardPostAnnotationView(annotation: annotation, reuseIdentifier: "Post")
-            } else {
-                annotationView!.annotation = annotation
-            }
-            
-            if let post = self.postsList.last(where: {$0.postLat == annotation.coordinate.latitude && $0.postLong == annotation.coordinate.longitude}) {
+            guard let i = postsList.lastIndex(where: {$0.id == anno.postID}) else { return MKAnnotationView() }
+            if postsList[i].imageURLs.isEmpty || postsList[i].imageURLs.first ?? "" == "" {
+                /// text post
+                var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "TextPost") as? TextPostAnnotationView
+                if annotationView == nil || annotationView?.bounds.width ?? 0 > 50 {
+                    annotationView = TextPostAnnotationView(annotation: annotation, reuseIdentifier: "Post")
+                } else {
+                    annotationView!.annotation = annotation
+                }
                 
-                annotationView!.updateImage(post: post)
-                annotationView!.spotID = post.id ?? ""
-                annotationView!.clusteringIdentifier = "postCluster"
-                annotationView!.centerOffset = CGPoint(x: 6.25, y: -26)
-                annotationView!.isSelected = true
+                i == selectedFeedIndex ? annotationView?.updateLargeImage(post: postsList[i], animated: false) : annotationView?.updateSmallImage(post: postsList[i])
+                return annotationView
+                
+            } else {
+                
+                var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Post") as? StandardPostAnnotationView
+                /// dont reuse large annotationviews
+                if annotationView == nil || annotationView?.bounds.width ?? 0 > 50 {
+                    annotationView = StandardPostAnnotationView(annotation: annotation, reuseIdentifier: "Post")
+                } else {
+                    annotationView!.annotation = annotation
+                }
+                
+                i == selectedFeedIndex ? annotationView?.updateLargeImage(post: postsList[i], animated: false) : annotationView?.updateSmallImage(post: postsList[i])
+                
                 return annotationView
             }
             
@@ -1355,20 +1558,8 @@ extension MapViewController: MKMapViewDelegate {
             annotationView.clusteringIdentifier = nil
             return annotationView
         }
-        return nil
     }
-    
-    func loadPostAnnotationImage(post: MapPost, completion: @escaping (_ image: UIImage) -> Void) {
-        guard let url = URL(string: post.imageURLs.first ?? "") else { completion(UIImage()); return }
         
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 80, height: 50), scaleMode: .aspectFill)
-        self.imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { (image, data, err, cache, download, url) in
-
-            let postImage = image ?? UIImage()
-            completion(postImage)
-        }
-    }
-    
     func mapView(_ mapView: MKMapView, didAdd views: [MKAnnotationView]) {
         let userView = mapView.view(for: mapView.userLocation)
         userView?.isUserInteractionEnabled = false
@@ -1508,6 +1699,18 @@ extension MapViewController: MKMapViewDelegate {
         return infoWindow
     }
     
+    func loadPostNib() -> MapPostWindow {
+        
+        let infoWindow = MapPostWindow.instanceFromNib() as! MapPostWindow
+        infoWindow.clipsToBounds = true
+        
+        infoWindow.galleryImage.contentMode = .scaleAspectFill
+        infoWindow.galleryImage.layer.cornerRadius = 3
+        infoWindow.galleryImage.clipsToBounds = true
+        
+        return infoWindow
+    }
+
     
     func openPostPage(id: String) {
         if let post = self.postsList.first(where: {$0.id == id})  {
@@ -1516,7 +1719,6 @@ extension MapViewController: MKMapViewDelegate {
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        ///full spot annotations, entry points from search page and profile
         
         // spot target select from map
         if let clusterView = view as? SpotClusterView {
@@ -1550,16 +1752,19 @@ extension MapViewController: MKMapViewDelegate {
             }
             
         } else if let annoView = view as? StandardPostAnnotationView {
-            Mixpanel.mainInstance().track(event: "MapSelectPost")
+            Mixpanel.mainInstance().track(event: "FeedPostTap")
+            if annoView.frame.height > 50 { return } /// dont respond to tap on large frame
+            guard let row = postsList.firstIndex(where: {$0.id == annoView.postID}) else { return }
+            selectPostAt(index: row)
+            openFeedDrawer()
             
-            if spotViewController != nil {
-                openPostPage(id: annoView.spotID)
-            } else {
-                ///open from profile
-                let infoPass = ["id": annoView.spotID] as [String : Any]
-                NotificationCenter.default.post(name: Notification.Name("PostTap"), object: nil, userInfo: infoPass)
-            }
-            
+        } else if let annoView = view as? TextPostAnnotationView {
+            if annoView.frame.height > 50 { return }
+            Mixpanel.mainInstance().track(event: "FeedPostTap")
+            guard let row = postsList.firstIndex(where: {$0.id == annoView.postID}) else { return }
+            selectPostAt(index: row)
+            openFeedDrawer()
+
         } else if view is SinglePostAnnotationView {
             NotificationCenter.default.post(name: Notification.Name("FeedPostTap"), object: nil, userInfo: nil)
         }
@@ -1701,6 +1906,16 @@ extension MapViewController: MKMapViewDelegate {
         openSpotPage(selectedSpot: spot)
     }
     
+    func centerSelectedAnnotation(selectedCoordinate: CLLocationCoordinate2D) {
+        
+        let center = mapView.centerCoordinate
+        let animated = (abs(selectedCoordinate.latitude - center.latitude) + abs(selectedCoordinate.longitude - center.longitude)) < (abs(mapView.region.span.latitudeDelta) + abs(mapView.region.span.longitudeDelta)) && mapView.region.span.latitudeDelta < 0.15 /// only want to animate nearby stuff, animation over a mile or 2 takes too long
+
+        let span = MKCoordinateSpan(latitudeDelta: min(mapView.region.span.latitudeDelta, 0.1), longitudeDelta: min(mapView.region.span.longitudeDelta, 0.1))
+        let region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: selectedCoordinate.latitude - span.latitudeDelta/20, longitude: selectedCoordinate.longitude), span: span)
+        mapView.setRegion(region, animated: animated)
+    }
+    
     
     func offsetCenterCoordinate(selectedCoordinate: CLLocationCoordinate2D, offset: CGFloat, animated: Bool, region: MKCoordinateRegion) {
         // offset center coordinate (offset pts)
@@ -1806,6 +2021,34 @@ extension MapViewController: MKMapViewDelegate {
             }
         }
     }
+    
+    func checkFeedLocations() {
+        /// zoom out map on spot page select to show all annotations in view
+        /// need to set a max distance here
+        
+        var farthestDistance: CLLocationDistance = 0
+        
+        for post in postsList {
+            
+            let postLocation = CLLocation(latitude: post.postLat, longitude: post.postLong)
+            let postDistance = postLocation.distance(from: UserDataModel.shared.currentLocation)
+            if postDistance < 1500000 && postDistance > farthestDistance { farthestDistance = postDistance }
+            
+            if post.id == postsList.last?.id ?? "" {
+                /// max distance = 160 in all directions
+                
+                var region = MKCoordinateRegion(center: UserDataModel.shared.currentLocation.coordinate, latitudinalMeters: farthestDistance * 2.5, longitudinalMeters: farthestDistance * 2.5)
+                
+                /// adjust if invalid region
+                if region.span.latitudeDelta > 50 { region.span.latitudeDelta = 50 }
+                if region.span.longitudeDelta > 50 { region.span.longitudeDelta = 50 }
+                
+                let offset: CGFloat = UserDataModel.shared.largeScreen ? 100 : 130
+                self.offsetCenterCoordinate(selectedCoordinate: UserDataModel.shared.currentLocation.coordinate, offset: offset, animated: true, region: region)
+            }
+        }
+    }
+    
 }
 
 extension MKMapView {
@@ -1858,149 +2101,6 @@ extension MKCoordinateRegion {
 }
 
 
-class CustomSpotAnnotation: MKPointAnnotation {
-    
-    var spotInfo: MapSpot!
-    var rank: CGFloat = 0
-    var isHidden = true
-    
-    override init() {
-        super.init()
-    }
-}
-
-class SpotClusterAnnotation: MKClusterAnnotation {
-    //  var topSpot: ((MapSpot, Int))!
-    override init(memberAnnotations: [MKAnnotation]) {
-        super.init(memberAnnotations: memberAnnotations)
-    }
-}
-
-class SpotAnnotationView: MKAnnotationView {
-    var spotID = ""
-    
-    override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
-        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
-        collisionMode = .circle
-        canShowCallout = false
-        centerOffset = CGPoint(x: 1, y: -18.5)
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class SpotClusterView: MKAnnotationView {
-    var topSpotID = ""
-    
-    static let preferredClusteringIdentifier = Bundle.main.bundleIdentifier! + ".SpotClusterView"
-    
-    override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
-        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
-        collisionMode = .circle
-        self.canShowCallout = false
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    // update spot banner with the top spot in the cluster
-    func updateImage(annotations: [CustomSpotAnnotation]) {
-        
-        let nibView = loadNib()
-        if let clusterAnnotation = annotation as? MKClusterAnnotation {
-            var topSpot: CustomSpotAnnotation!
-            
-            for member in clusterAnnotation.memberAnnotations {
-                if let spot = annotations.first(where: {$0.spotInfo.spotLat == member.coordinate.latitude && $0.spotInfo.spotLong == member.coordinate.longitude}) {
-                    if topSpot == nil {
-                        topSpot = spot
-                    } else if spot.rank > topSpot.rank {
-                        topSpot = spot
-                    }
-                }
-            }
-            
-            if topSpot != nil {
-                nibView.spotNameLabel.text = topSpot.spotInfo.spotName
-                let temp = nibView.spotNameLabel
-                temp?.sizeToFit()
-                nibView.resizeBanner(width: temp?.frame.width ?? 0)
-                let nibImage = nibView.asImage()
-                self.image = nibImage
-                self.topSpotID = topSpot.spotInfo.id ?? ""
-            } else {
-                self.image = UIImage(named: "RainbowSpotIcon")
-            }
-        }
-    }
-    
-    func loadNib() -> MapTarget {
-        let infoWindow = MapTarget.instanceFromNib() as! MapTarget
-        infoWindow.clipsToBounds = true
-        infoWindow.spotNameLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
-        infoWindow.spotNameLabel.numberOfLines = 1
-        infoWindow.spotNameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        
-        return infoWindow
-    }
-}
-
-class SinglePostAnnotationView: MKAnnotationView {
-    
-    lazy var id: String = ""
-    lazy var imageManager = SDWebImageManager()
-    
-    override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
-        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-
-    func updateImage(post: MapPost) {
-        
-        let nibView = loadNib()
-        id = post.id ?? ""
-        guard let url = URL(string: post.imageURLs.first ?? "") else { image = nibView.asImage(); return }
-
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 80, height: 50), scaleMode: .aspectFill)
-        self.imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
-            guard let self = self else { return }
-            
-            nibView.postImage.image = image
-            self.image = nibView.asImage()
-        }
-    }
-    
-    func loadNib() -> SinglePostWindow {
-        let infoWindow = SinglePostWindow.instanceFromNib() as! SinglePostWindow
-        infoWindow.clipsToBounds = true
-        infoWindow.postImage.contentMode = .scaleAspectFill
-        infoWindow.postImage.clipsToBounds = true
-        infoWindow.postImage.layer.cornerRadius = 8
-        return infoWindow
-    }
-    
-    override func prepareForReuse() {
-        imageManager.cancelAll()
-        image = nil
-    }
-}
-
-class SinglePostAnnotation: MKPointAnnotation {
-    
-    var id: String!
-    
-    override init() {
-        super.init()
-    }
-}
-
 // supplementary methods for offsetCenterCoordinate
 extension CLLocationCoordinate2D {
     var location: CLLocation {
@@ -2041,106 +2141,173 @@ extension CLLocationCoordinate2D {
 ///https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
 
 
-class ActiveFilterView: UIView {
-    
-    var closeButton: UIButton!
-    var filterName: UILabel!
-    var filterimage: UIImageView!
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-    }
-    
-    deinit {
-        filterimage.sd_cancelCurrentImageLoad()
-    }
-    
-    func setUpFilter(name: String, image: UIImage, imageURL: String) {
-        
-        backgroundColor =  UIColor(red: 0.58, green: 0.58, blue: 0.58, alpha: 0.65)
-        layer.borderColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00).cgColor
-        layer.borderWidth = 1
-        layer.cornerRadius = 7.5
-
-        filterimage = UIImageView(frame: CGRect(x: 8, y: 5, width: 20, height: 20))
-        filterimage.backgroundColor = nil
-        
-        /// get from image url for user profile picture or  tag from db
-        if image == UIImage() {
-            /// returns same URL for profile pic, fetches new one for tag from DB
-            getImageURL(name: name, imageURL: imageURL) { [weak self] url in
-                guard let self = self else { return }
-                if url == "" { return }
-                
-                let transformer = SDImageResizingTransformer(size: CGSize(width: 70, height: 70), scaleMode: .aspectFill)
-                self.filterimage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, _, _, _) in
-                    guard let self = self else { return }
-                    if image != nil { self.filterimage.image = image!}
-                    self.filterimage.layer.cornerRadius = 10
-                    self.filterimage.layer.masksToBounds = true
-                }
-            }
-        } else { filterimage.image = image }
-        
-        filterimage.contentMode = .scaleAspectFit
-        self.addSubview(filterimage)
-        
-        filterName = UILabel(frame: CGRect(x: filterimage.frame.maxX + 5, y: 8, width: 40, height: 15))
-        filterName.text = name
-        filterName.font = UIFont(name: "SFCompactText-Semibold", size: 12)
-        filterName.textColor = .white
-        if image == UIImage() { filterName.sizeToFit() }
-        self.addSubview(filterName)
-        
-        closeButton = UIButton(frame: CGRect(x: bounds.width - 29, y: 1, width: 28, height: 28))
-        closeButton.imageEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
-        closeButton.setImage(UIImage(named: "CheckInX"), for: .normal)
-        self.addSubview(closeButton)
-    }
-    
-    func getImageURL(name: String, imageURL: String, completion: @escaping (_ URL: String) -> Void) {
-        if imageURL != "" { completion(imageURL); return }
-        let tag = Tag(name: name)
-        tag.getImageURL { url in
-            completion(url)
-        }
-    }
-
-    required init(coder: NSCoder) {
-        fatalError()
-    }
-    
-}
-
 extension MapViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        var maxRows = 2
-        if tagTable.frame.height > 300 {
-            maxRows = 5
-        } else if tagTable.frame.height > 250 {
-            maxRows = 4
-        } else if tagTable.frame.height > 200 {
-            maxRows = 3
+        switch tableView.tag {
+        case 0: return refresh == .noRefresh ? postsList.count : postsList.count + 1
+        case 1:
+            var maxRows = 2
+            if tagTable.frame.height > 300 {
+                maxRows = 5
+            } else if tagTable.frame.height > 250 {
+                maxRows = 4
+            } else if tagTable.frame.height > 200 {
+                maxRows = 3
+            }
+            return tagUsers.count > maxRows ? maxRows : tagUsers.count
+        default: return 0
         }
-        return tagUsers.count > maxRows ? maxRows : tagUsers.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "FriendsListCell", for: indexPath) as! FriendsListCell
-        cell.setUp(friend: tagUsers[indexPath.row])
-        return cell
+        switch tableView.tag {
+            
+        case 0:
+            if indexPath.row < postsList.count {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "FeedCell", for: indexPath) as! MapFeedCell
+                cell.setUp(post: postsList[indexPath.row], row: indexPath.row, selected: indexPath.row == selectedFeedIndex)
+                return cell
+                
+            } else {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "FeedLoadingCell", for: indexPath) as! MapFeedLoadingCell
+                cell.setUp()
+                return cell
+            }
+            
+        case 1:
+            let cell = tableView.dequeueReusableCell(withIdentifier: "FriendsListCell", for: indexPath) as! FriendsListCell
+            cell.setUp(friend: tagUsers[indexPath.row])
+            return cell
+            
+        default: return UITableViewCell()
+        }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 52
+        return tableView.tag == 1 ? 52 : 45
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let username = tagUsers[indexPath.row].username
-        let infoPass = ["username": username, "tag": tagTable.tag] as [String : Any]
-        NotificationCenter.default.post(name: Notification.Name("TagSelect"), object: nil, userInfo: infoPass)
-        removeTable()
+
+        switch tableView.tag {
+        case 1:
+            let username = tagUsers[indexPath.row].username
+            let infoPass = ["username": username, "tag": tagTable.tag] as [String : Any]
+            NotificationCenter.default.post(name: Notification.Name("TagSelect"), object: nil, userInfo: infoPass)
+            removeTable()
+            
+        default: return
+        }
+    }
+        
+    /// panGesture interfering with didSelect touches -> selectFromCell through tapGesture
+    func selectPostAt(index: Int) {
+        index == selectedFeedIndex ? openPosts(row: index, openComments: false) : selectNewPost(index: index, animated: true, dragging: false)
+    }
+    
+    func selectNewPost(index: Int, animated: Bool, dragging: Bool) {
+                
+        let oldIndex = selectedFeedIndex
+        selectedFeedIndex = index
+        feedTableHighlight.isHidden = selectedFeedIndex == -1
+
+        let id = selectedFeedIndex == -1 ? "" : postsList[index].id!
+        if oldIndex != index { selectAnnotation(id: id, oldIndex: oldIndex) }
+        
+        /// reset feed to deselected position
+        if selectedFeedIndex == -1 {
+            DispatchQueue.main.async { self.feedTable.reloadData() }
+            return
+        }
+        
+        /// dragging is true while the user is interacting with the feedTable
+        if !dragging { setSelectedPost(oldIndex: oldIndex) }
+        
+        
+        DispatchQueue.main.async {
+            if animated {
+                UIView.animate(withDuration: 0.25) { self.feedTable.setContentOffset(CGPoint(x: 0, y: 45 * self.selectedFeedIndex), animated: false) }
+            }
+        }
+        
+        checkForFeedReload()
+    }
+    
+    func setSelectedPost(oldIndex: Int) {
+                
+        if let currentCell = feedTable.cellForRow(at: IndexPath(row: selectedFeedIndex, section: 0)) as? MapFeedCell {
+            currentCell.setSelectedValues()
+        }
+        
+        if oldIndex != selectedFeedIndex, let pCell = feedTable.cellForRow(at: IndexPath(row: oldIndex, section: 0)) as? MapFeedCell {
+            pCell.setUnselectedValues()
+        }
+    }
+    
+    func selectAnnotation(id: String, oldIndex: Int) {
+        
+        /// remove old annotation to set back to normal size
+        if oldIndex > -1 {
+            let id = postsList[oldIndex].id!
+            if let anno = postAnnotations.first(where: {$0.key == id}) {
+                if selectedFeedIndex == -1 { deselectAnnotationAnimated(anno: anno.value); return } /// animate removal if not selecting another
+                DispatchQueue.main.async { self.mapView.removeAnnotation(anno.value); self.mapView.addAnnotation(anno.value) }
+                if selectedFeedIndex == -1 { return }
+            }
+        }
+        
+        if selectedFeedIndex == -1 { return } /// called to deselect annotaiton on
+        
+        guard let post = postsList.first(where: {$0.id == id}) else { return }
+        centerSelectedAnnotation(selectedCoordinate: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong))
+
+        /// scale selected annotation
+        if let anno = postAnnotations.first(where: {$0.key == id}) {
+            if let annoView = mapView.view(for: anno.value) as? StandardPostAnnotationView {
+                
+                annoView.isSelected = true
+                annoView.transform = CGAffineTransform(scaleX: 44/290, y: 44/275)
+                annoView.updateLargeImage(post: post, animated: true)
+                
+            } else if let annoView = mapView.view(for: anno.value) as? TextPostAnnotationView {
+                
+                annoView.isSelected = true
+                annoView.transform = CGAffineTransform(scaleX: 46/137, y: 41/47)
+                annoView.updateLargeImage(post: post, animated: true)
+            } 
+        }
+    }
+    
+    func deselectAnnotationAnimated(anno: CustomPointAnnotation) {
+        
+        if let view = mapView.view(for: anno) as? StandardPostAnnotationView {
+            
+            view.isSelected = false
+
+            /// minimize view first, then change to
+            DispatchQueue.main.async { UIView.animate(withDuration: 0.3, delay: 0.0, options: [.transitionCrossDissolve, .curveLinear]) {
+                guard let post = self.postsList.first(where: {$0.id == anno.postID}) else { return }
+                view.updateSmallImage(post: post)
+            } }
+        } else if let view = mapView.view(for: anno) as? TextPostAnnotationView {
+            
+            view.isSelected = false
+            DispatchQueue.main.async { UIView.animate(withDuration: 0.3, delay: 0.0, options: [.transitionCrossDissolve, .curveLinear]) {
+                guard let post = self.postsList.first(where: {$0.id == anno.postID}) else { return }
+                view.updateSmallImage(post: post)
+            } }
+        }
+    }
+    
+    func checkForFeedReload() {
+        if selectedFeedIndex > postsList.count - 4 && refresh == .yesRefresh {
+            refresh = .refreshing
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                self.getFriendPosts(refresh: false)
+            }
+        }
     }
     
     func addTable(text: String, parent: TagTableParent) {
@@ -2385,60 +2552,7 @@ extension MapViewController {
         Mixpanel.mainInstance().track(event: "MapUserLocation")
         animateToUserLocation(animated: true)
     }
-    
-    /*
-    func filterFromNearby() {
-        DispatchQueue.main.async { self.addSelectedFilters() }
-        DispatchQueue.global(qos: .userInitiated).async { self.filterSpots(refresh: false) }
-    }
-    
-    func addSelectedFilters() {
-        
-        Mixpanel.mainInstance().track(event: "MapFilterSave", properties: ["tags": filterTags])
-        
-        for sub in activeFilterView.subviews {
-            for s in sub.subviews {
-                s.removeFromSuperview()
-            }
-            sub.removeFromSuperview()
-        }
-        
-        mapView.bringSubviewToFront(activeFilterView)
-        
-        var minY: CGFloat = 80
-        
-        if filterUser != nil {
             
-            let temp = UILabel(frame: CGRect(x: 0, y: 0, width: 50, height: 15))
-            temp.text = filterUser.username
-            temp.font = UIFont(name: "SFCompactText-Semibold", size: 12)
-            temp.sizeToFit()
-            
-            let filterView = ActiveFilterView(frame: CGRect(x: 13, y: minY, width: temp.bounds.width + 65, height: 30))
-            filterView.setUpFilter(name: filterUser.username, image: UIImage(), imageURL: filterUser.imageURL)
-            filterView.closeButton.tag = 10
-            filterView.closeButton.addTarget(self, action: #selector(deselectFilter(_:)), for: .touchUpInside)
-            activeFilterView.addSubview(filterView)
-
-            minY -= 40
-        }
-        
-        var count = 0
-        
-        for tag in filterTags {
-            
-            let filterView = ActiveFilterView(frame: CGRect(x: 13, y: minY, width: 105, height: 30))
-            let tag = Tag(name: tag)
-            filterView.setUpFilter(name: tag.name, image: tag.image, imageURL: "")
-            filterView.closeButton.tag = count
-            filterView.closeButton.addTarget(self, action: #selector(deselectFilter(_:)), for: .touchUpInside)
-            self.activeFilterView.addSubview(filterView)
-            
-            count += 1
-            minY -= 40
-        }
-    } */
-        
     func unhideNearbyButtons(nearby: Bool) {
         toggleMapButton.isHidden = false
         userLocationButton.isHidden = false
@@ -2477,6 +2591,7 @@ extension MapViewController {
     
     func addTagView() {
         tagTable = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 350))
+        tagTable.tag = 1
         tagTable.backgroundColor = UIColor(named: "SpotBlack")
         tagTable.separatorStyle = .none
         tagTable.dataSource = self
