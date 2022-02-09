@@ -120,7 +120,7 @@ class PostViewController: UIViewController {
         closedY = safeBottom + 115
         cellHeight = UIScreen.main.bounds.width * 1.5
         
-        tableView = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 2))
+        tableView = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         tableView.tag = 16
         tableView.backgroundColor = .black
         tableView.allowsSelection = false
@@ -130,7 +130,7 @@ class PostViewController: UIViewController {
         tableView.prefetchDataSource = self
         tableView.isScrollEnabled = false
         tableView.showsVerticalScrollIndicator = false
-        tableView.contentInset = UIEdgeInsets(top: navBarHeight, left: 0, bottom: 0, right: 0)
+        tableView.contentInset = UIEdgeInsets(top: navBarHeight, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
         tableView.register(PostCell.self, forCellReuseIdentifier: "PostCell")
         tableView.register(LoadingCell.self, forCellReuseIdentifier: "LoadingCell")
         tableView.register(PostFriendsCell.self, forCellReuseIdentifier: "PostFriendsCell")
@@ -187,9 +187,10 @@ class PostViewController: UIViewController {
     @objc func notifyPostLike(_ sender: NSNotification) {
         
         if let info = sender.userInfo as? [String: Any] {
-            guard let id = info["id"] as? String else { return }
-            if id != vcid { return }
-            if let post = info["post"] as? MapPost { self.postsList[selectedPostIndex] = post }
+            if let post = info["post"] as? MapPost {
+                guard let index = self.postsList.firstIndex(where: {$0.id == post.id}) else { return }
+                self.postsList[index] = post
+            }
         }
     }
     
@@ -316,15 +317,18 @@ class PostViewController: UIViewController {
         mapVC.navigationItem.leftBarButtonItem = nil
         mapVC.navigationItem.rightBarButtonItem = nil
         
-        mapVC.setOpaqueNav()
+      //  mapVC.setOpaqueNav()
 
-        if parentVC == .feed { return }
+        if parentVC == .feed {
+            mapVC.setOpaqueNav()
+            mapVC.navigationItem.titleView = nil
+            mapVC.navigationItem.title = "Friend Posts"
+        }
         
         /// add exit button over top of feed for profile and spot page
         let backButton = UIBarButtonItem(image: UIImage(named: "CircleBackButton")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(exitPosts(_:)))
         backButton.imageInsets = UIEdgeInsets(top: 0, left: -2, bottom: 0, right: 0)
         mapVC.navigationItem.leftBarButtonItem = backButton
-        mapVC.navigationItem.title = ""
         mapVC.navigationItem.rightBarButtonItem = nil
     }
     
@@ -646,14 +650,14 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
     func exitPosts() {
         
         /// posts will always be a child of feed vc
-        if parentVC == .feed { return }
-        
         self.willMove(toParent: nil)
         view.removeFromSuperview()
         
         mapVC.toggleMapTouch(enable: false)
         
-        if let spotVC = parent as? SpotViewController {
+        if let mapVC = parent as? MapViewController {
+            mapVC.resetFeed()
+        } else if let spotVC = parent as? SpotViewController {
             spotVC.resetView()
         } else if let profileVC = parent as? ProfileViewController {
             profileVC.resetProfile()
@@ -920,7 +924,6 @@ class PostCell: UITableViewCell {
         commentsTable.dataSource = self
         commentsTable.delegate = self
         commentsTable.isUserInteractionEnabled = true
-        commentsTable.backgroundColor = nil
         commentsTable.isScrollEnabled = false
         commentsTable.backgroundColor = nil
         commentsTable.register(PostCommentCell.self, forCellReuseIdentifier: "PostComment")
@@ -1090,6 +1093,7 @@ class PostCell: UITableViewCell {
 
         if imageManager != nil { imageManager.cancelAll(); imageManager = nil }
         if profilePic != nil { profilePic.removeFromSuperview(); profilePic.sd_cancelCurrentImageLoad() }
+        if tagIcon != nil { tagIcon.removeFromSuperview(); tagIcon.sd_cancelCurrentImageLoad() }
     }
     
     @objc func spotNameTap(_ sender: UIButton) {
@@ -1499,7 +1503,7 @@ class PostCell: UITableViewCell {
             
         guard let postVC = viewContainingController() as? PostViewController else { return }
         
-        if imageScroll.imageZoom { return }
+        if imageScroll != nil && imageScroll.imageZoom { return }
         
         if let tableView = self.superview as? UITableView {
             

@@ -444,7 +444,6 @@ extension UIViewController {
         tempLabel.numberOfLines = 0
         tempLabel.lineBreakMode = .byWordWrapping
         tempLabel.sizeToFit()
-        print("height", tempLabel.frame.height)
         
         return truncated ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
     }

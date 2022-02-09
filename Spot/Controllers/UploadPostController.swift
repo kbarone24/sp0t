@@ -114,7 +114,7 @@ class UploadPostController: UIViewController {
         
         NotificationCenter.default.addObserver(self, selector: #selector(tagSelect(_:)), name: NSNotification.Name("TagSelect"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name("InitialUserLoad"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name("InitialFriendsLoad"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name("FriendsListLoad"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCurrentLocation(_:)), name: Notification.Name("UpdateLocation"), object: nil)
                 
         addMapView() /// add map and gradient
@@ -593,8 +593,7 @@ class UploadPostController: UIViewController {
         if !postFriends.contains(uid) && !postObject.hideFromFeed! { postFriends.append(uid) }
         postObject.friendsList = postFriends
         postObject.isFirst = (postType == .newSpot || postType == .postToPOI)
-        runFailedUpload(spot: spotObject, post: postObject, selectedImages: selectedImages, actualTimestamp: actualTimestamp)
-       // uploadPost()
+        uploadPost()
     }
     
     func uploadPost() {

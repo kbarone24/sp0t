@@ -46,11 +46,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         UIView.appearance().isExclusiveTouch = true
         
-        for family in UIFont.familyNames.sorted() {
-            let names = UIFont.fontNames(forFamilyName: family)
-            print("Family: \(family) Font names: \(names)")
-        }
-        
         let navigationBarAppearance = UINavigationBar.appearance()
         navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor:UIColor.white, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Regular", size: 18)!]
         navigationBarAppearance.backgroundColor = nil

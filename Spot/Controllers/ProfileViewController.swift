@@ -1440,6 +1440,7 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
         
         mapVC.deletedFriendIDs.append(friendID)
         
+        /*
         if let feedVC = mapVC.feedViewController {
             
             /// add to deleted post ids so that post doesnt re-enter feed
@@ -1452,7 +1453,7 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
                 feedVC.postVC.postsList.removeAll(where: {$0.posterID == friendID})
                 if feedVC.postVC.tableView != nil { feedVC.postVC.tableView.reloadData() }
             }
-        }
+        } */
         
         status = .add
         exitEditOverview()

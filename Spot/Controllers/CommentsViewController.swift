@@ -93,7 +93,7 @@ class CommentsViewController: UIViewController {
         super.viewWillDisappear(animated)
         active = false
         for download in downloads { download.cancel() }
-        postVC.mapVC.removeTable()
+        if postVC != nil && postVC.mapVC != nil { postVC.mapVC.removeTable() }
         
         IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("TagSelect"), object: nil)
@@ -291,7 +291,10 @@ class CommentsViewController: UIViewController {
             postVC.postsList[index].commentList = self.commentList
             postVC.postsList[index] = setSecondaryPostValues(post: postVC.postsList[index])
         }
+        
         postVC.tableView.reloadData()
+        let infoPass = ["commentList": self.commentList, "postID": post.id!] as [String : Any]
+        NotificationCenter.default.post(name: Notification.Name("PostComment"), object: nil, userInfo: infoPass)
     }
 }
 
