@@ -344,7 +344,7 @@ class EditPostView: UIView, UITextViewDelegate {
     @objc func editSpotTap(_ sender: UIButton) {
         removeEditPost()
         postVC.editPostView = false
-        postVC.openSpotPage(edit: true, post: post)
+    //    postVC.openSpotPage(edit: true, post: post)
     }
     
     @objc func editAddress(_ sender: UIButton) {

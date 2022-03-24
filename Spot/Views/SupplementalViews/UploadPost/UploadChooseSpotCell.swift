@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import Mixpanel
+import CoreLocation
 
 class UploadChooseSpotCell: UITableViewCell {
     
@@ -22,64 +23,103 @@ class UploadChooseSpotCell: UITableViewCell {
     var profilePic: UIImageView!
     var exitButton: UIButton!
 
-    var chooseSpotCollection: UploadPillCollectionView  = UploadPillCollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
+    var spotScroll: UIScrollView!
+    var collection0: UploadPillCollectionView!
+    var collection1: UploadPillCollectionView!
 
     func setUp(newSpotName: String, selected: Bool, post: MapPost) {
         
         if newSpotName != "" || selected { return } /// no need to reload when cell collapsed
         
-        backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
-        contentView.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.06, alpha: 1.00)
+        backgroundColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
+        contentView.backgroundColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
                 
         resetView()
         
         topLine = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 1))
-        topLine.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
+        topLine.backgroundColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         contentView.addSubview(topLine)
         
         titleLabel = UILabel(frame: CGRect(x: 16, y: 12, width: 150, height: 18))
         titleLabel.text = newSpotName == "" ? "Choose a spot" : "New spot"
-        titleLabel.textColor = UIColor(red: 0.52, green: 0.52, blue: 0.52, alpha: 1.00)
-        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 13.5)
+        titleLabel.textColor = UIColor(red: 0.479, green: 0.479, blue: 0.479, alpha: 1)
+        titleLabel.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
         contentView.addSubview(titleLabel)
-                
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.minimumInteritemSpacing = 6
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 13, bottom: 0, right: 13)
+                        
+        spotScroll = UIScrollView(frame: CGRect(x: 0, y: 39, width: UIScreen.main.bounds.width, height: 70))
+        spotScroll.backgroundColor = .clear
+        spotScroll.showsHorizontalScrollIndicator = false
+        contentView.addSubview(spotScroll)
         
-        chooseSpotCollection.frame = CGRect(x: 0, y: 39, width: UIScreen.main.bounds.width, height: 43)
-        chooseSpotCollection.backgroundColor = nil
+        let layout0 = UICollectionViewFlowLayout()
+        layout0.scrollDirection = .horizontal
+        layout0.minimumInteritemSpacing = 6
 
-        chooseSpotCollection.delegate = self
-        chooseSpotCollection.dataSource = self
-        chooseSpotCollection.showsHorizontalScrollIndicator = false
-        chooseSpotCollection.register(ChooseSpotCollectionCell.self, forCellWithReuseIdentifier: "ChooseSpotCollection")
-        chooseSpotCollection.register(AddSpotCell.self, forCellWithReuseIdentifier: "AddSpot")
-        chooseSpotCollection.register(SeeAllCell.self, forCellWithReuseIdentifier: "SeeAll")
-        chooseSpotCollection.setCollectionViewLayout(layout, animated: false)
-        contentView.addSubview(chooseSpotCollection)
+        collection0 = UploadPillCollectionView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 32), collectionViewLayout: layout0)
+        collection0.delegate = self
+        collection0.dataSource = self
+        spotScroll.addSubview(collection0)
         
-        chooseSpotCollection.reloadSections(IndexSet(0...0))
+        let layout1 = UICollectionViewFlowLayout()
+        layout1.scrollDirection = .horizontal
+        layout1.minimumInteritemSpacing = 6
+        
+        collection1 = UploadPillCollectionView(frame: CGRect(x: 0, y: collection0.frame.maxY + 6, width: UIScreen.main.bounds.width, height: 32), collectionViewLayout: layout1)
+        collection1.delegate = self
+        collection1.dataSource = self
+        collection1.tag = 1
+        spotScroll.addSubview(collection1)
     }
     
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    func reloadCollections(animated: Bool, resort: Bool, coordinate: CLLocationCoordinate2D) {
         
-        /// push location picker once content offset pushes 50 pts past the natural boundary
-        if scrollView.contentOffset.x > scrollView.contentSize.width - UIScreen.main.bounds.width + 80 && !loading {
-            guard let uploadVC = viewContainingController() as? UploadPostController else { return }
-            if !uploadVC.chooseSpotMode {
-                Mixpanel.mainInstance().track(event: "UploadScrollLaunchMap", properties: nil)
-                uploadVC.switchToChooseSpot()
+        if collection0 == nil || collection1 == nil { return }
+        
+        DispatchQueue.main.async {
+            
+            if !animated {
+                self.collection0.reloadData()
+                self.collection1.reloadData()
+                
+            } else {
+                self.loading = false
+                
+                if resort {
+                    /// if not selecting, resort
+                    if !UploadImageModel.shared.nearbySpots.isEmpty {
+                        UploadImageModel.shared.resortSpots(coordinate: coordinate)
+                    }
+                }
+                self.setScrollViewSize()
             }
         }
+    }
+    
+    func setScrollViewSize() {
+        var topWidth: CGFloat = 20 /// edge insets 13 px each side - 6 px for last space
+        var bottomWidth: CGFloat = 20
+        let cellCount = min(UploadImageModel.shared.nearbySpots.count + 2, 14)
+        for i in 0...cellCount - 1 {
+            let topRow = i % 2 == 0
+            let index = i / 2
+            let width = getSizeForCell(row: index, collectionTag: topRow ? 0 : 1).width
+            if topRow { topWidth += 6 + width } else { bottomWidth += 6 + width }
+        }
+        let contentWidth = max(UIScreen.main.bounds.width, max(topWidth, bottomWidth))
+        
+        spotScroll.contentSize = CGSize(width: contentWidth, height: spotScroll.contentSize.height)
+        collection0.frame = CGRect(x: collection0.frame.minX, y: collection0.frame.minY, width: topWidth, height: collection0.frame.height)
+        collection1.frame = CGRect(x: collection1.frame.minX, y: collection1.frame.minY, width: bottomWidth, height: collection1.frame.height)
+        collection0.reloadData()
+        collection1.reloadData()
     }
     
     func resetView() {
         if topLine != nil { topLine.backgroundColor = nil }
         if titleLabel != nil { titleLabel.text = "" }
         if profilePic != nil { profilePic.image = UIImage(); profilePic.sd_cancelCurrentImageLoad() }
-        chooseSpotCollection.removeFromSuperview()
+        if collection0 != nil { collection0.removeFromSuperview() }
+        if collection1 != nil { collection1.removeFromSuperview() }
     }
     
     @objc func exitNewSpot(_ sender: UIButton) {
@@ -92,24 +132,24 @@ extension UploadChooseSpotCell: UICollectionViewDelegate, UICollectionViewDataSo
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         /// just show add new while loading
-        return loading ? 1 : min(UploadImageModel.shared.nearbySpots.count + 2, 9)
+        return loading ? 1 : min((UploadImageModel.shared.nearbySpots.count + 2)/2, 7)
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         if indexPath.row == 0 {
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddSpot", for: indexPath) as? AddSpotCell else { return UICollectionViewCell() }
-            return cell
+            if collectionView.tag == 0 {
+                guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Add", for: indexPath) as? ChooseSpotAddCell else { return UICollectionViewCell() }
+                return cell
+            } else {
+                guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Search", for: indexPath) as? ChooseSpotSearchCell else { return UICollectionViewCell() }
+                return cell
+            }
         }
-        
-        if indexPath.row == min(UploadImageModel.shared.nearbySpots.count + 1, 8) {
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SeeAll", for: indexPath) as? SeeAllCell else { return UICollectionViewCell() }
-            cell.setUp(empty: loaded && UploadImageModel.shared.nearbySpots.count == 0)
-            return cell
-        }
-        
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ChooseSpotCollection", for: indexPath) as? ChooseSpotCollectionCell else { return UICollectionViewCell() }
-        guard let spot = UploadImageModel.shared.nearbySpots[safe: indexPath.row - 1] else { return cell }
+
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Collection", for: indexPath) as? ChooseSpotCollectionCell else { return UICollectionViewCell() }
+        let index = indexPath.row * 2 - (collectionView.tag == 0 ? 2 : 1)
+        guard let spot = UploadImageModel.shared.nearbySpots[safe: index] else { return cell }
         
         cell.setUp(spot: spot)
         if spot.selected! { alpha = 1.0 }
@@ -117,13 +157,22 @@ extension UploadChooseSpotCell: UICollectionViewDelegate, UICollectionViewDataSo
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return getSizeForCell(row: indexPath.row, collectionTag: collectionView.tag)
+    }
+    
+    func getSizeForCell(row: Int, collectionTag: Int) -> CGSize {
         
-        if indexPath.row == 0 { return CGSize(width: 47, height: 43) }
-        if indexPath.row == min(UploadImageModel.shared.nearbySpots.count + 1, 8) { return CGSize(width: loaded && UploadImageModel.shared.nearbySpots.count == 0 ? 152 : 57, height: 43) } /// return full width if empty state, otherwise just "see all"
+        if row == 0 { return collectionTag == 0 ? CGSize(width: 52, height: 32) : CGSize(width: 81, height: 32) }
         
-        guard let spot = UploadImageModel.shared.nearbySpots[safe: indexPath.row - 1] else { return CGSize(width: 10, height: 10) }
+        let index = row * 2 - (collectionTag == 0 ? 2 : 1)
+        guard let spot = UploadImageModel.shared.nearbySpots[safe: index] else { return CGSize(width: 100, height: 32) }
         let cellWidth = getCellWidth(spot: spot)
-        return CGSize(width: cellWidth, height: 43)
+        return CGSize(width: cellWidth, height: 32)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+
+        return UIEdgeInsets(top: 0, left: 13, bottom: 0, right: 13)
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -132,58 +181,54 @@ extension UploadChooseSpotCell: UICollectionViewDelegate, UICollectionViewDataSo
 
         /// present screen to name the new spot
         if indexPath.row == 0 {
-            uploadVC.presentAddNew()
-            return
-        }
-        
-        if indexPath.row == min(UploadImageModel.shared.nearbySpots.count + 1, 8) {
-            Mixpanel.mainInstance().track(event: "UploadSeeAllLaunchMap", properties: nil)
-            uploadVC.switchToChooseSpot()
-            return
+            if collectionView.tag == 0 {
+                uploadVC.presentAddNew()
+                return
+            } else {
+                Mixpanel.mainInstance().track(event: "UploadSeeAllLaunchMap", properties: nil)
+                uploadVC.switchToChooseSpot()
+                return
+            }
         }
         
         /// select id, spot/poi, reload parent which will reload the cell -> this is kind of sloppy
-        guard let spot = UploadImageModel.shared.nearbySpots[safe: indexPath.row - 1] else { return }
-        uploadVC.selectSpot(index: indexPath.row - 1, select: !spot.selected!, fromMap: false)
+        let index = indexPath.row * 2 - (collectionView.tag == 0 ? 2 : 1)
+        guard let spot = UploadImageModel.shared.nearbySpots[safe: index] else { return }
+        uploadVC.selectSpot(index: index, select: !spot.selected!, fromMap: false)
     }
     
     
     func getCellWidth(spot: MapSpot) -> CGFloat {
         
         let tempName = UILabel(frame: CGRect(x: 0, y: 0, width: 250, height: 20))
-        tempName.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
+        tempName.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
     
-        let tempDetail = UILabel(frame: CGRect(x: 0, y: 0, width: 250, height: 15))
-        tempDetail.font = UIFont(name: "SFCompactText-Semibold", size: 11)
-        
         tempName.text = spot.spotName
         tempName.sizeToFit()
 
-        tempDetail.text = spot.spotDescription
-        tempDetail.sizeToFit()
-        
-        let nameWidth = tempName.frame.width + 16
-        let detailWidth = tempDetail.frame.width + 18
-        
-        return max(nameWidth, detailWidth)
+        return tempName.frame.width + 16
     }
 }
 
-class AddSpotCell: UICollectionViewCell {
+class ChooseSpotAddCell: UICollectionViewCell {
     
-    var plusIcon: UIImageView!
+    var newLabel: UILabel!
     
     override init(frame: CGRect) {
-        
         super.init(frame: frame)
+        
         layer.cornerRadius = 8
         layer.cornerCurve = .continuous
-        backgroundColor = UIColor(red: 0.112, green: 0.112, blue: 0.112, alpha: alpha)
+        backgroundColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
         
-        plusIcon = UIImageView(frame: CGRect(x: 11, y: 5, width: 25, height: 33.5))
-        plusIcon.image = UIImage(named: "NewSpotButton")
-        plusIcon.isUserInteractionEnabled = false
-        addSubview(plusIcon)
+        if newLabel != nil { newLabel.text = "" }
+        
+        newLabel = UILabel(frame: CGRect(x: 9, y: 8, width: 34, height: 16))
+        newLabel.text = "NEW"
+        newLabel.textColor = UIColor(named: "SpotGreen")
+        newLabel.font = UIFont(name: "SFCompactText-Bold", size: 13)
+        newLabel.textAlignment = .center
+        addSubview(newLabel)
     }
     
     required init?(coder: NSCoder) {
@@ -191,33 +236,29 @@ class AddSpotCell: UICollectionViewCell {
     }
 }
 
-class SeeAllCell: UICollectionViewCell {
+class ChooseSpotSearchCell: UICollectionViewCell {
     
-    var noneNearby: UILabel!
-    var seeAll: UILabel!
+    var searchLabel: UILabel!
     
-    func setUp(empty: Bool) {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         
-        var minX = 2
+        layer.cornerRadius = 8
+        layer.cornerCurve = .continuous
+        backgroundColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+                
+        if searchLabel != nil { searchLabel.text = "" }
         
-        if noneNearby != nil { noneNearby.text = "" }
-        
-        if empty {
-            noneNearby = UILabel(frame: CGRect(x: minX, y: 16, width: 90, height: 14))
-            noneNearby.text = "No spots nearby"
-            noneNearby.textColor = UIColor(red: 0.363, green: 0.363, blue: 0.363, alpha: 1)
-            noneNearby.font = UIFont(name: "SFCompactText-Regular", size: 12)
-            addSubview(noneNearby)
-            
-            minX += 97
-        }
-        
-        if seeAll != nil { seeAll.text = "" }
-        seeAll = UILabel(frame: CGRect(x: minX, y: 16, width: 55, height: 14))
-        seeAll.text = "See all ->"
-        seeAll.textColor = UIColor(named: "SpotGreen")
-        seeAll.font = UIFont(name: "SFCompactText-Regular", size: 12)
-        addSubview(seeAll)
+        searchLabel = UILabel(frame: CGRect(x: 9, y: 8, width: 63.5, height: 16))
+        searchLabel.text = "SEARCH"
+        searchLabel.textColor = UIColor(red: 0.421, green: 0.421, blue: 0.421, alpha: 1)
+        searchLabel.font = UIFont(name: "SFCompactText-Bold", size: 13)
+        searchLabel.textAlignment = .center
+        addSubview(searchLabel)
+    }
+ 
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
     }
 }
 
@@ -230,11 +271,9 @@ class ChooseSpotCollectionCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        layer.borderWidth = 1
         layer.cornerRadius = 8
         layer.cornerCurve = .continuous
-        backgroundColor = UIColor(red: 0.112, green: 0.112, blue: 0.112, alpha: alpha)
-        layer.borderColor = UIColor(red: 0.112, green: 0.112, blue: 0.112, alpha: alpha).cgColor
+        backgroundColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
     }
     
     required init?(coder: NSCoder) {
@@ -246,32 +285,13 @@ class ChooseSpotCollectionCell: UICollectionViewCell {
         self.spot = spot
         
         /// slide spot name down if no description
-        let minY: CGFloat = spot.spotDescription == "" ? 11 : 5
+        let minY: CGFloat = 5
         if spotName != nil { spotName.text = "" }
-        spotName = UILabel(frame: CGRect(x: 8, y: minY, width: self.bounds.width - 16, height: 18.5))
+        spotName = UILabel(frame: CGRect(x: 8, y: minY, width: self.bounds.width - 16, height: 20))
         spotName.text = spot.spotName
-        spotName.textColor = UIColor(red: 0.565, green: 0.565, blue: 0.565, alpha: 1)
-        spotName.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
+        spotName.textColor = UIColor(red: 0.567, green: 0.567, blue: 0.567, alpha: 1)
+        spotName.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
         addSubview(spotName)
-        
-        if detailView != nil { detailView.text = "" }
-        if spot.spotDescription != "" {
-            detailView = UILabel(frame: CGRect(x: 9, y: spotName.frame.maxY, width: self.bounds.width - 18, height: 15))
-            detailView.text = spot.spotDescription
-            detailView.font = UIFont(name: "SFCompactText-Semibold", size: 11)
-            detailView.textColor = UIColor(red: 0.342, green: 0.342, blue: 0.342, alpha: 1)
-            addSubview(detailView)
-        }
-        
-        /// highlight founder username if applicable
-        if spot.privacyLevel != "public" {
-            let detail = spot.spotDescription
-            let word = detail.getKeywordArray().last ?? ""
-            let userNameRange = (detail as NSString).range(of: word)
-            let attributedString = NSMutableAttributedString(string: detail)
-            attributedString.setAttributes([NSAttributedString.Key.foregroundColor : UIColor(red: 0.47, green: 0.47, blue: 0.47, alpha: 1.00)], range: userNameRange)
-            detailView.attributedText = attributedString
-        }
     }
 }
 
@@ -286,6 +306,20 @@ class UploadPillCollectionView: UICollectionView {
 
     override var intrinsicContentSize: CGSize {
         return contentSize
+    }
+    
+    override init(frame: CGRect, collectionViewLayout: UICollectionViewLayout) {
+        super.init(frame: frame, collectionViewLayout: collectionViewLayout)
+        backgroundColor = nil
+        showsHorizontalScrollIndicator = false
+        isScrollEnabled = false
+        register(ChooseSpotCollectionCell.self, forCellWithReuseIdentifier: "Collection")
+        register(ChooseSpotAddCell.self, forCellWithReuseIdentifier: "Add")
+        register(ChooseSpotSearchCell.self, forCellWithReuseIdentifier: "Search")
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
 

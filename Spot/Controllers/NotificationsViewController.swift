@@ -143,17 +143,11 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         active = true
         
-        let annotations = mapVC.mapView.annotations
-        mapVC.mapView.removeAnnotations(annotations)
+     //   let annotations = mapVC.UserDataModel.shared.mapViewannotations
+      //  mapVC.UserDataModel.shared.mapViewremoveAnnotations(annotations)
         
-        mapVC.hideNearbyButtons()
-        mapVC.hideSpotButtons()
         ///mapVC.customTabBar.tabBar.isHidden = false
         mapVC.setUpNavBar()
-        
-        mapVC.prePanY = 0
-        mapVC.removeBottomBar()
-        
         UIView.animate(withDuration: 0.15) {
         ///    self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         }
@@ -617,7 +611,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     }
     
     func openProfile(user: UserProfile) {
-        
+        /*
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
          
             vc.userInfo = user
@@ -631,7 +625,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
             self.addChild(vc)
             view.addSubview(vc.view)
             vc.didMove(toParent: self)
-        }
+        } */
     }
 }
 
@@ -773,7 +767,7 @@ class FriendRequestCell: UITableViewCell {
     }
     
     @objc func openProfile(_ sender: UIButton) {
-        
+        /*
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
             if let notiVC = self.viewContainingController() as? NotificationsViewController {
                 
@@ -796,7 +790,7 @@ class FriendRequestCell: UITableViewCell {
                 pendingVC.notiVC.view.addSubview(vc.view)
                 vc.didMove(toParent: pendingVC.notiVC)
             }
-        }
+        } */
     }
     
     @objc func acceptTap(_ sender: UIButton) {
@@ -1087,7 +1081,6 @@ class PostNotificationCell: UITableViewCell {
             /// notiVC.mapVC.customTabBar.tabBar.isHidden = true
             notiVC.mapVC.navigationController?.navigationBar.removeShadow()
             notiVC.mapVC.navigationController?.navigationBar.removeBackgroundImage()
-            notiVC.mapVC.toggleMapTouch(enable: true )
             
             vc.view.frame = notiVC.view.frame
             notiVC.addChild(vc)
@@ -1149,7 +1142,6 @@ class SpotNotificationCell: UITableViewCell {
 
         userButton = UIButton(frame: CGRect(x: usernameLabel.frame.minX - 40, y: usernameLabel.frame.minY - 5, width: usernameLabel.frame.maxX + 5, height: 40))
         userButton.backgroundColor = nil
-        userButton.addTarget(self, action: #selector(openProfile(_:)), for: .touchUpInside)
         self.addSubview(userButton)
         
         
@@ -1179,7 +1171,6 @@ class SpotNotificationCell: UITableViewCell {
             spotImage.contentMode = .scaleAspectFill
             spotImage.isHidden = false
             spotImage.isUserInteractionEnabled = true
-            spotImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openSpot(_:))))
             self.addSubview(spotImage)
                             
             let contentURL = notification.spot.imageURL
@@ -1239,35 +1230,6 @@ class SpotNotificationCell: UITableViewCell {
         if time != nil { time.text = "" }
         if detail != nil { detail.text = "" }
         if icon != nil { icon.image = UIImage() }
-    }
-    
-    @objc func openProfile(_ sender: UIButton) {
-        if let notiVC = self.viewContainingController() as? NotificationsViewController {
-            notiVC.openProfile(user: self.userInfo!)
-        }
-    }
-    
-    @objc func openSpot(_ sender: UIButton) {
-        guard let notiVC = viewContainingController() as? NotificationsViewController else { return }
-        if let spotVC = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "SpotPage") as? SpotViewController {
-            
-            let spot = notification.spot
-            
-            spotVC.spotID = spot.id ?? ""
-            spotVC.spotObject = spot
-            spotVC.mapVC = notiVC.mapVC
-            
-            spotVC.view.frame = notiVC.view.frame
-            notiVC.addChild(spotVC)
-            notiVC.view.addSubview(spotVC.view)
-            spotVC.didMove(toParent: notiVC)
-            
-            notiVC.mapVC.prePanY = notiVC.mapVC.halfScreenY
-         ///   DispatchQueue.main.async { notiVC.mapVC.customTabBar.view.frame = CGRect(x: 0, y: notiVC.mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - notiVC.mapVC.halfScreenY) }
-            
-            let infoPass = ["spot": spot as Any] as [String : Any]
-            NotificationCenter.default.post(name: Notification.Name("OpenSpotFromNotis"), object: nil, userInfo: infoPass)
-        }
     }
     
     

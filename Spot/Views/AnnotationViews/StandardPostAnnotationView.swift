@@ -58,7 +58,7 @@ class StandardPostAnnotationView: MKAnnotationView {
         }
 
         // load post image
-        loadPostAnnotationImage(post: post, enlarged: false) { [weak self] (image) in
+        loadPostAnnotationImage(post: post) { [weak self] (image) in
             guard let self = self else { return }
             self.smallImage = image
             nibView.galleryImage.image = image
@@ -99,7 +99,7 @@ class StandardPostAnnotationView: MKAnnotationView {
         }
 
         // load post image
-        loadPostAnnotationImage(post: post, enlarged: true) { [weak self] (image) in
+        loadPostAnnotationImage(post: post) { [weak self] (image) in
             guard let self = self else { return }
             
             nibView.galleryImage.image = image
@@ -114,17 +114,17 @@ class StandardPostAnnotationView: MKAnnotationView {
         self.image = nibImage
 
         UIView.animate(withDuration: animated ? 0.25 : 0.0, delay: 0.0, options: [.beginFromCurrentState, .curveLinear]) {
-            self.transform = .identity.translatedBy(x: 0, y: -90)
+            self.transform = .identity.translatedBy(x: 0, y: -43.5)
         }
         smallImage = nil
     }
     
-    func loadPostAnnotationImage(post: MapPost, enlarged: Bool, completion: @escaping (_ image: UIImage) -> Void) {
+    func loadPostAnnotationImage(post: MapPost, completion: @escaping (_ image: UIImage) -> Void) {
         
         guard let url = URL(string: post.imageURLs.first ?? "") else { completion(UIImage()); return }
         if imageManager == nil { imageManager = SDWebImageManager() }
         
-        let width: CGFloat = enlarged ? 200 : 60
+        let width: CGFloat = 100
         let transformer = SDImageResizingTransformer(size: CGSize(width: width, height: width * 1.5), scaleMode: .aspectFill)
         imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
                 guard self != nil else { return }
@@ -183,6 +183,7 @@ class StandardPostAnnotationView: MKAnnotationView {
           as [NSAttributedString.Key : Any]
         infoWindow.spotName.attributedText = NSMutableAttributedString(string: post.spotName ?? "", attributes: strokeTextAttributes)
         infoWindow.spotName.sizeToFit()
+        if infoWindow.spotName.frame.width > infoWindow.bounds.width - 45 { infoWindow.spotName.frame = CGRect(x: infoWindow.spotName.frame.minX, y: infoWindow.spotName.frame.minY, width: infoWindow.bounds.width - 45, height: infoWindow.spotName.bounds.height)}
 
         let totalWidth = 23 + infoWindow.spotName.frame.width
         infoWindow.tagImage.frame = CGRect(x: (infoWindow.frame.width - totalWidth) / 2, y: infoWindow.tagImage.frame.minY, width: infoWindow.tagImage.frame.width, height: infoWindow.tagImage.frame.height)
@@ -218,32 +219,30 @@ class StandardPostAnnotationView: MKAnnotationView {
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         
         if event?.timestamp == lastTapTimestamp { return false }
-        if self.bounds.height < 50 { return false }
+        if self.bounds.height < 60 { return false }
         
         /// check if point is inside like or comment frame
-        if point.x > 224 && point.x < 269 && point.y > 151 && point.y < 187 {
-            lastTapTimestamp = event?.timestamp ?? 0
+        if point.x > 136 && point.x < 176 && point.y > 63 && point.y < 99 {
             // like tap
+            lastTapTimestamp = event?.timestamp ?? 0
             let uid = UserDataModel.shared.uid
             if post.likers.contains(uid) { post.likers.removeAll(where: {$0 == uid})} else { post.likers.append(uid) }
             let infoPass = ["post": self.post as Any, "id": "map" as Any] as [String : Any]
             NotificationCenter.default.post(name: Notification.Name("PostLike"), object: nil, userInfo: infoPass)
             return true
             
-        } else if point.x > 224 && point.x < 269 && point.y > 193 && point.y < 225 {
+        } else if point.x > 136 && point.x < 176 && point.y > 105 && point.y < 141 {
             // comment tap
             lastTapTimestamp = event?.timestamp ?? 0
             guard let mapVC = viewContainingController() as? MapViewController else { return false }
             mapVC.openPosts(row: mapVC.selectedFeedIndex, openComments: true)
-            print("open posts stand")
             return true
             
-        } else if point.x > 57 && point.x < 241 && point.y > 12 && point.y < 249 {
+        } else if point.x > 52 && point.x < 143 && point.y > 23 && point.y < 138 {
             // post frame tap
             lastTapTimestamp = event?.timestamp ?? 0
             guard let mapVC = viewContainingController() as? MapViewController else { return false }
             mapVC.openPosts(row: mapVC.selectedFeedIndex, openComments: false)
-            print("open posts stand")
             return true
         }
         return false

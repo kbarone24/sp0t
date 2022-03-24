@@ -41,11 +41,7 @@ class PostViewController: UIViewController {
     var active = true
     var addedLocationPicker = false
     var openFriendsList = false
-    
-    private lazy var loadingQueue = OperationQueue()
-    private lazy var loadingOperations = [String: PostImageLoader]()
-    lazy var currentImageSet: (id: String, images: [UIImage]) = (id: "", images: [])
-    
+        
     enum parentViewController {
         case feed
         case spot
@@ -61,15 +57,12 @@ class PostViewController: UIViewController {
         
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
-        mapVC.hideNearbyButtons()
         
         if tableView == nil {
             
             vcid = UUID().uuidString
             self.setUpTable()
             
-            guard let feedVC = parent as? FeedViewController else { return }
-            feedVC.unhideFeedSeg()
             /// unhide feed seg in case it was hidden after user clicked off feed during initial load
 
         } else {
@@ -90,21 +83,18 @@ class PostViewController: UIViewController {
         super.viewDidDisappear(animated)
         active = false
         cancelDownloads()
-        if let feedVC = parent as? FeedViewController { feedVC.hideFeedSeg() }
     }
     
     func cancelDownloads() {
         
         // cancel image loading operations and reset map
-        for op in loadingOperations {
-            guard let imageLoader = loadingOperations[op.key] else { continue }
+        for op in PostImageModel.shared.loadingOperations {
+            guard let imageLoader = PostImageModel.shared.loadingOperations[op.key] else { continue }
             imageLoader.cancel()
-            loadingOperations.removeValue(forKey: op.key)
+            PostImageModel.shared.loadingOperations.removeValue(forKey: op.key)
         }
         
-        loadingQueue.cancelAllOperations()
-        if parentVC != .spot { hideFeedButtons() } /// feed buttons needed for spot page too
-        mapVC.toggleMapTouch(enable: false)
+        PostImageModel.shared.loadingQueue.cancelAllOperations()
     }
     
     
@@ -163,27 +153,8 @@ class PostViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyAddressChange(_:)), name: NSNotification.Name("PostAddressChange"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostTap(_:)), name: NSNotification.Name("FeedPostTap"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostLike(_:)), name: NSNotification.Name("PostLike"), object: nil)
-
-        
-        if parentVC != .feed { mapVC.toggleMapTouch(enable: true) }
-        
     }
-    
-    func updateParentImageIndex(post: MapPost, row: Int) {
-        if let feedVC = parent as? FeedViewController {
-            if feedVC.selectedSegmentIndex == 0 {
-                if feedVC.selectedPostIndex != selectedPostIndex { return } /// these should always be equal but caused a crash once for index out of bounds so checking that edge case
-                feedVC.friendPosts[row].selectedImageIndex = post.selectedImageIndex
-            } else {
-                if feedVC.selectedPostIndex != selectedPostIndex { return }
-                feedVC.nearbyPosts[row].selectedImageIndex = post.selectedImageIndex
-            }
-        } else if let profilePostsVC = parent as? ProfilePostsViewController {
-            if profilePostsVC.postsList.count <= selectedPostIndex { return }
-            profilePostsVC.postsList[row].selectedImageIndex = post.selectedImageIndex
-        }
-    }
-    
+        
     @objc func notifyPostLike(_ sender: NSNotification) {
         
         if let info = sender.userInfo as? [String: Any] {
@@ -257,8 +228,7 @@ class PostViewController: UIViewController {
     
     @objc func notifyPostTap(_ sender: NSNotification) {
         /// deselect annotation so tap works again
-        for annotation in mapVC.mapView.selectedAnnotations { mapVC.mapView.deselectAnnotation(annotation, animated: false) }
-        openDrawer(swipe: false)
+       // for annotation in mapVC.mapView.selectedAnnotations { mapVC.mapView.deselectAnnotation(annotation, animated: false) }
     }
     
     @objc func tagSelect(_ sender: NSNotification) {
@@ -278,29 +248,16 @@ class PostViewController: UIViewController {
         postCell.editPostView.postCaption.text = tagText
     }
     
+    func updateParentImageIndex(post: MapPost, row: Int) {
+        /// update selected image index for selected post
+    }
+
     func resetView() {
 
         mapVC.postsList = postsList
         mapVC.navigationController?.setNavigationBarHidden(false, animated: false)
         
-        /*
-        if parentVC == .notifications {
-            if let tabBar = parent?.parent as? CustomTabBar {
-                tabBar.view.frame = CGRect(x: 0, y: mapVC.tabBarClosedY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-            }
-        } */
-        
         setUpNavBar()
-        
-        if parentVC == .feed {
-            
-            if let feedVC = parent as? FeedViewController { feedVC.unhideFeedSeg() }
-
-            if selectedPostIndex == 0 && tableView != nil {
-                if postsList.count == 0 { self.mapVC.animateToFullScreen(); return }
-                DispatchQueue.main.async { self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
-            }
-        }
         
         ///notify map to show this post
         let firstOpen = !addedLocationPicker /// fucked up nav bar after edit post location
@@ -308,7 +265,7 @@ class PostViewController: UIViewController {
         NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: mapPass)
         
         addedLocationPicker = false
-        
+
         if openFriendsList { presentFriendsList() }
     }
     
@@ -334,7 +291,7 @@ class PostViewController: UIViewController {
     
     func openComments(row: Int) {
         
-        if let commentsVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Comments") as? CommentsViewController {
+        if let commentsVC = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "Comments") as? CommentsViewController {
             
             Mixpanel.mainInstance().track(event: "PostOpenComments")
 
@@ -359,97 +316,14 @@ class PostViewController: UIViewController {
         tempLabel.sizeToFit()
         return tempLabel.frame.height
     }
-    
-    func closeDrawer(swipe: Bool) {
-                
-        Mixpanel.mainInstance().track(event: "PostCloseDrawer", properties: ["swipe": swipe])
-
-        guard let post = postsList[safe: selectedPostIndex] else { return }
-        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        let safeBottom = window?.safeAreaInsets.bottom ?? 0
-
-        let closedY = safeBottom + 115
         
-        let maxZoom: CLLocationDistance = parentVC == .spot ? 300 : 600
-        let adjust: CLLocationDistance = 0.00000345 * maxZoom
-        let adjustedCoordinate = CLLocationCoordinate2D(latitude: post.postLat - Double(adjust), longitude: post.postLong)
-        mapVC.mapView.animatedZoom(zoomRegion: MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: maxZoom, longitudinalMeters: maxZoom), duration: 0.4)
-
-        /*
-        let duration: TimeInterval = swipe ? 0.15 : 0.30
-        guard let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell else { return }
-      
-        UIView.animate(withDuration: duration, animations: { [weak self] in
-         ///   self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: UIScreen.main.bounds.height - closedY, width: UIScreen.main.bounds.width, height: closedY)
-          ///  cell.postImage.frame = CGRect(x: cell.postImage.frame.minX, y: 0, width: cell.postImage.frame.width, height: cell.postImage.frame.height)
-            if cell.topView != nil { cell.bringSubviewToFront(cell.topView) }
-            if cell.tapButton != nil { cell.bringSubviewToFront(cell.tapButton) }
-        }) */
-        
-        /// animate post view at same duration as animated zoom -> crash here? -> try to alleviate with weak self call. Could be reference to mapvc?
-        UIView.animate(withDuration: 0.4, animations: { [weak self] in
-            guard let self = self else { return }
-            
-            if let annoView = self.mapVC.mapView.view(for: self.mapVC.postAnnotation) {
-                annoView.alpha = 1.0
-            }
-        })
-
-        mapVC.prePanY = UIScreen.main.bounds.height - closedY
-        mapVC.toggleMapTouch(enable: false)
-        unhideFeedButtons()
-    }
-    
-    func openDrawer(swipe: Bool) {
-        
-        Mixpanel.mainInstance().track(event: "PostOpenDrawer", properties: ["swipe": swipe])
-
-        guard let post = postsList[safe: selectedPostIndex] else { return }
-        let zoomDistance: CLLocationDistance = parentVC == .spot ? 1000 : 100000
-        let adjust = 0.00000845 * zoomDistance
-        let adjustedCoordinate = CLLocationCoordinate2D(latitude: post.postLat - adjust, longitude: post.postLong)
-        mapVC.mapView.animatedZoom(zoomRegion: MKCoordinateRegion(center: adjustedCoordinate, latitudinalMeters: zoomDistance, longitudinalMeters: zoomDistance), duration: 0.3)
-
-        mapVC.removeBottomBar()
-        if parentVC != .feed { mapVC.toggleMapTouch(enable: true) }
-        
-        let prePanY: CGFloat = 0
-        mapVC.prePanY = prePanY
-        hideFeedButtons()
-
-        /*
-        let duration: TimeInterval = swipe ? 0.15 : 0.30
-        guard let cell = tableView.cellForRow(at: IndexPath(row: selectedPostIndex, section: 0)) as? PostCell else { return }
-       
-        UIView.animate(withDuration: duration) { [weak self] in
-            
-            guard let self = self else { return }
-
-         ///   self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: prePanY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - prePanY)
-         ///   cell.postImage.frame = CGRect(x: cell.postImage.frame.minX, y: cell.postImage.frame.minY, width: cell.postImage.frame.width, height: cell.postImage.frame.height)
-            if cell.topView != nil { cell.bringSubviewToFront(cell.topView) }
-            if cell.tapButton != nil { cell.bringSubviewToFront(cell.tapButton) }
-        }
-        */
-        /// animate post view at same duration as animated zoom
-        UIView.animate(withDuration: 0.4, animations: { [weak self] in
-            guard let self = self else { return }
-            
-            if let annoView = self.mapVC.mapView.view(for: self.mapVC.postAnnotation) {
-                annoView.alpha = 0.0
-            }
-            
-            /// hide feed seg on animation
-        })
-    }
-    
     @objc func exitPosts(_ sender: UIBarButtonItem) {
         exitPosts()
     }
     
     func presentFriendsList() {
         
-        openFriendsList = false
+     /*   openFriendsList = false
         guard let post = postsList[safe: selectedPostIndex] else { return }
         
         if let friendsListVC = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "FriendsList") as? FriendsListController {
@@ -459,7 +333,7 @@ class PostViewController: UIViewController {
             friendsListVC.friendsList = post.addedUserProfiles
             
             DispatchQueue.main.async { self.present(friendsListVC, animated: true, completion: nil) }
-        }
+        } */
     }
 }
 
@@ -467,15 +341,7 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        var postCount = postsList.count
-
-        /// increment postCount if added loading cell at the end. 6 is earliest that cell refresh can happen
-        if let postParent = parent as? FeedViewController {
-            if postParent.selectedSegmentIndex == 0 && postsEmpty { return 1 } /// only show the postsempty cell if 0 posts available on the friends feed
-            if postParent.refresh != .noRefresh && postCount > 0 { postCount += 1 }
-        }
-
-        return postCount
+        return postsList.count
     }
     
     
@@ -490,11 +356,11 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
 
             if let index = self.postsList.lastIndex(where: {$0.id == post.id}) { if indexPath.row != index { return }  }
         
-            if indexPath.row == self.selectedPostIndex { self.currentImageSet = (id: post.id ?? "", images: images ?? []) }
+            if indexPath.row == self.selectedPostIndex { PostImageModel.shared.currentImageSet = (id: post.id ?? "", images: images ?? []) }
             
             /// on big jumps in scrolling cancellation doesnt seem to always work
             if !(tableView.indexPathsForVisibleRows?.contains(indexPath) ?? true) {
-                self.loadingOperations.removeValue(forKey: post.id ?? "")
+                PostImageModel.shared.loadingOperations.removeValue(forKey: post.id ?? "")
                 return
             }
             
@@ -512,7 +378,7 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
         guard let post = postsList[safe: indexPath.row] else { return }
         
         /// Try to find an existing data loader
-        if let dataLoader = loadingOperations[post.id ?? ""] {
+        if let dataLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
             
             /// Has the data already been loaded?
             if dataLoader.images.count == post.imageURLs.count {
@@ -527,16 +393,16 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
         } else {
             
             /// Need to create a data loader for this index path
-            if indexPath.row == self.selectedPostIndex && self.currentImageSet.id == post.id ?? "" {
-                updateCellImage(currentImageSet.images)
+            if indexPath.row == self.selectedPostIndex && PostImageModel.shared.currentImageSet.id == post.id ?? "" {
+                updateCellImage(PostImageModel.shared.currentImageSet.images)
                 return
             }
                 
             let dataLoader = PostImageLoader(post)
                 /// Provide the completion closure, and kick off the loading operation
             dataLoader.loadingCompleteHandler = updateCellImage
-            loadingQueue.addOperation(dataLoader)
-            loadingOperations[post.id ?? ""] = dataLoader
+            PostImageModel.shared.loadingQueue.addOperation(dataLoader)
+            PostImageModel.shared.loadingOperations[post.id ?? ""] = dataLoader
         }
     }
     
@@ -545,20 +411,13 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         var selectedSegmentIndex = 0 /// selectedSegmentIndex will not be 0 for nearby feed
-        if let feedVC = parent as? FeedViewController { selectedSegmentIndex = feedVC.selectedSegmentIndex }
 
         if indexPath.row < self.postsList.count {
 
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "PostCell") as? PostCell else { return UITableViewCell() }
             
             let post = postsList[indexPath.row]
-            var postsCount = self.postsList.count
-            
-            /// increment postCount if added loading cell at the end
-
-            if let postParent = parent as? FeedViewController {
-                if postParent.refresh != .noRefresh && postsList.count > 6 { postsCount += 1 }
-            }
+            let postsCount = self.postsList.count
             
             cell.setUp(post: post, selectedPostIndex: selectedPostIndex, postsCount: postsCount, parentVC: parentVC, selectedSegmentIndex: selectedSegmentIndex, currentLocation: UserDataModel.shared.currentLocation, vcid: vcid, row: indexPath.row, tabBarHeight: 0, navBarHeight: navBarHeight, closedY: closedY)
             
@@ -590,21 +449,25 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
         
     func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
         
+        if parentVC == .feed { return } /// prefetch from map for feed
+
         for indexPath in indexPaths {
             
             if abs(indexPath.row - selectedPostIndex) > 3 { return }
             
             guard let post = postsList[safe: indexPath.row] else { return }
-            if let _ = loadingOperations[post.id ?? ""] { return }
+            if let _ = PostImageModel.shared.loadingOperations[post.id ?? ""] { return }
 
             let dataLoader = PostImageLoader(post)
             dataLoader.queuePriority = .high
-            loadingQueue.addOperation(dataLoader)
-            loadingOperations[post.id ?? ""] = dataLoader
+            PostImageModel.shared.loadingQueue.addOperation(dataLoader)
+            PostImageModel.shared.loadingOperations[post.id ?? ""] = dataLoader
         }
     }
     
     func tableView(_ tableView: UITableView, cancelPrefetchingForRowsAt indexPaths: [IndexPath]) {
+        
+        if parentVC == .feed { return } /// prefetch from map for feed
         
         for indexPath in indexPaths {
             /// I think due to the size of the table, prefetching was being cancelled for way too many rows, some like 1 or 2 rows away from the selected post index. This is kind of a hacky fix to ensure that fetching isn't cancelled when we'll need the image soon
@@ -612,57 +475,21 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
 
             guard let post = postsList[safe: indexPath.row] else { return }
 
-            if let imageLoader = loadingOperations[post.id ?? ""] {
+            if let imageLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
                 imageLoader.cancel()
-                loadingOperations.removeValue(forKey: post.id ?? "")
+                PostImageModel.shared.loadingOperations.removeValue(forKey: post.id ?? "")
             }
         }
     }
-    
-    func openSpotPage(edit: Bool, post: MapPost) {
         
-        guard let spotVC = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(withIdentifier: "SpotPage") as? SpotViewController else { return }
-        
-        spotVC.spotID = post.spotID
-        spotVC.spotName = post.spotName
-        spotVC.mapVC = self.mapVC
-        
-        if edit { spotVC.editSpotMode = true }
-
-        self.mapVC.postsList.removeAll()
-        self.cancelDownloads()
-        if let feedVC = parent as? FeedViewController { feedVC.hideFeedSeg() }
-        
-        spotVC.view.frame = self.view.frame
-        self.addChild(spotVC)
-        self.view.addSubview(spotVC.view)
-        spotVC.didMove(toParent: self)
-        
-        //re-enable spot button
-        if let cell = self.tableView.cellForRow(at: IndexPath(row: self.selectedPostIndex, section: 0)) as? PostCell {
-            if cell.tapButton != nil { cell.tapButton.isEnabled = true }
-        }
-        
-        self.mapVC.prePanY = self.mapVC.halfScreenY
-     ///   DispatchQueue.main.async { self.mapVC.customTabBar.view.frame = CGRect(x: 0, y: self.mapVC.halfScreenY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - self.mapVC.halfScreenY) }
-    }
-    
     func exitPosts() {
         
         /// posts will always be a child of feed vc
         self.willMove(toParent: nil)
         view.removeFromSuperview()
         
-        mapVC.toggleMapTouch(enable: false)
-        
         if let mapVC = parent as? MapViewController {
             mapVC.resetFeed()
-        } else if let spotVC = parent as? SpotViewController {
-            spotVC.resetView()
-        } else if let profileVC = parent as? ProfileViewController {
-            profileVC.resetProfile()
-        } else if let notificationsVC = parent as? NotificationsViewController {
-            notificationsVC.resetView()
         }
         
         removeFromParent()
@@ -672,18 +499,6 @@ extension PostViewController: UITableViewDelegate, UITableViewDataSource, UITabl
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostLike"), object: nil)
         NotificationCenter.default.removeObserver(self,  name: NSNotification.Name("TagSelect"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("FeedPostTap"), object: nil)
-    }
-    
-    func unhideFeedButtons() {
-        mapVC.toggleMapButton.isHidden = false
-        mapVC.directionsButton.isHidden = false
-        mapVC.directionsButton.addTarget(self, action: #selector(directionsTap(_:)), for: .touchUpInside)
-    }
-    
-    func hideFeedButtons() {
-        mapVC.toggleMapButton.isHidden = true
-        mapVC.directionsButton.isHidden = true
-        mapVC.directionsButton.removeTarget(self, action: #selector(directionsTap(_:)), for: .touchUpInside)
     }
     
     @objc func directionsTap(_ sender: UIButton) {
@@ -1111,7 +926,7 @@ class PostCell: UITableViewCell {
                 sender.isEnabled = true
                 return
             }
-            postVC.openSpotPage(edit: false, post: post)
+ //           postVC.openSpotPage(edit: false, post: post)
         }
     }
     
@@ -1169,31 +984,7 @@ class PostCell: UITableViewCell {
     }
     
     func openProfile(user: UserProfile) {
-                
-        if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
-            
-            Mixpanel.mainInstance().track(event: "PostOpenProfile")
-
-            if user.id != "" {
-                vc.userInfo = user /// already have user info 
-            } else {
-                vc.passedUsername = user.username /// run username query from tapped tag on profile open
-            }
-            
-            if let postVC = self.viewContainingController() as? PostViewController {
-                
-                vc.mapVC = postVC.mapVC
-                vc.id = user.id ?? ""
-                
-                postVC.cancelDownloads()
-                if let feedVC = postVC.parent as? FeedViewController { feedVC.hideFeedSeg() } /// hide feed seg on feed
-                
-                vc.view.frame = postVC.view.frame
-                postVC.addChild(vc)
-                postVC.view.addSubview(vc.view)
-                vc.didMove(toParent: postVC)
-            }
-        }
+       
     }
     
     @objc func captionTap(_ sender: UITapGestureRecognizer) {
@@ -2028,7 +1819,7 @@ extension PostCell {
             /// present with blank spot object because wont need it
             presentDeleteMenu(message: "", deleteSpot: false, spot: postSpot)
             
-        } else if parentVC == .spot {
+        }/* else if parentVC == .spot {
             guard let postVC = self.viewContainingController() as? PostViewController else { return }
             guard let spotVC = postVC.parent as? SpotViewController else { return }
             let deleteSpot = spotVC.postsList.count == 1
@@ -2036,7 +1827,7 @@ extension PostCell {
             let message = deleteSpot && spotVC.spotObject.privacyLevel != "public" ? singlePostMessage : ""
             presentDeleteMenu(message: message, deleteSpot: deleteSpot, spot: spotVC.spotObject)
             
-        } else {
+        } */ else {
             
             addDeleteIndicator()
             
@@ -2160,12 +1951,12 @@ extension PostCell {
                         let infoPass: [String: Any] = ["spotID": spotID as Any]
                         NotificationCenter.default.post(name: Notification.Name("DeleteSpot"), object: nil, userInfo: infoPass)
                         
-                        if let spotVC = postVC.parent as? SpotViewController {
+                       /* if let spotVC = postVC.parent as? SpotViewController {
                             postVC.willMove(toParent: nil)
                             postVC.view.removeFromSuperview()
                             postVC.removeFromParent()
                             spotVC.removeSpotPage(delete: true)
-                        }
+                        } */
                     }
                     
                 } else {
@@ -2412,69 +2203,6 @@ extension UILabel {
     }
 }
 ///https://stackoverflow.com/questions/32309247/add-read-more-to-the-end-of-uilabel
-
-class PostImageLoader: Operation {
-    
-    /// set of operations for loading a postImage 
-    var images: [UIImage] = []
-    var loadingCompleteHandler: (([UIImage]?) -> ())?
-    private var post: MapPost
-    
-    init(_ post: MapPost) {
-        self.post = post
-    }
-        
-    override func main() {
-
-        if isCancelled { return }
-        
-        var imageCount = 0
-        var images: [UIImage] = []
-        for _ in post.imageURLs {
-            images.append(UIImage())
-        }
-        
-        func imageEscape() {
-            
-            imageCount += 1
-            if imageCount == post.imageURLs.count {
-                self.images = images
-                self.loadingCompleteHandler?(images)
-            }
-        }
-        
-        if post.imageURLs.count == 0 { return }
-
-        var frameIndexes = post.frameIndexes ?? []
-        if frameIndexes.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i) } }
-        
-        var aspectRatios = post.aspectRatios ?? []
-        if aspectRatios.isEmpty { for _ in 0...post.imageURLs.count - 1 { aspectRatios.append(1.3333) } }
-
-        var currentAspect: CGFloat = 1
-        
-        for x in 0...post.imageURLs.count - 1 {
-            
-            let postURL = post.imageURLs[x]
-            if let y = frameIndexes.firstIndex(where: {$0 == x}) { currentAspect = aspectRatios[y] }
-            
-            let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2, height: UIScreen.main.bounds.width * 2 * currentAspect), scaleMode: .aspectFit)
-
-            SDWebImageManager.shared.loadImage(with: URL(string: postURL), options: [.highPriority, .scaleDownLargeImages], context: [.imageTransformer: transformer], progress: nil) { (rawImage, data, err, cache, download, url) in
-                DispatchQueue.main.async { [weak self] in
-                    
-                    guard let self = self else { return }
-                    if self.isCancelled { return }
-                    
-                    let i = self.post.imageURLs.lastIndex(where: {$0 == postURL})
-                    guard let image = rawImage else { images[i ?? 0] = UIImage(); imageEscape(); return } /// return blank image on failed download
-                    images[i ?? 0] = image
-                    imageEscape()
-                }
-            }
-        }
-    }
-}
 
 class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     

@@ -175,7 +175,6 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                         guard let self = self else { return }
                         self.setAnimationIndex(newIndex: self.selectedIndex + 1)
                         self.setImageBounds(first: false, selectedIndex: self.selectedIndex + 1)
-                        if self.imagesCollection != nil { self.imagesCollection.scrollToItem(at: IndexPath(row: self.selectedIndex, section: 0), at: .left, animated: false)}
                         return
                     }
                 } else {
@@ -202,7 +201,6 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                         guard let self = self else { return }
                         self.setAnimationIndex(newIndex: self.selectedIndex - 1)
                         self.setImageBounds(first: false, selectedIndex: self.selectedIndex - 1)
-                        if self.imagesCollection != nil { self.imagesCollection.scrollToItem(at: IndexPath(row: self.selectedIndex, section: 0), at: .left, animated: false)}
                         return
                     }
                 } else {
@@ -239,51 +237,43 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
         DispatchQueue.main.async {
             
             self.maskImage.frame = CGRect(x: 0, y: maskY, width: UIScreen.main.bounds.width, height: maskHeight)
-            var endFrame = self.originalFrame
+            var endFrame = self.originalFrame ?? CGRect()
+            var imageRemoved = false
             
-            /// get updated frame (scroll objects resort)
             if self.imagesCollection != nil {
-                guard let cell = self.imagesCollection.cellForItem(at: IndexPath(row: self.selectedIndex, section: 0)) as? SelectedImageCell else { return }
-                endFrame = self.imagesCollection.convert(cell.frame, to: nil)
-                self.imagesCollection.reloadData()
-                
-                /// unhide cancelbutton for smooth animation
-                self.maskImage.cancelButton.alpha = 0.0
-                self.maskImage.cancelButton.isHidden = false
-            } else {
-                /// animate to gallery -> unhide circle for smooth animation
-                self.maskImage.galleryCircle.alpha = 0.0
-                self.maskImage.galleryCircle.isHidden = false
-                if self.maskImage.circleView != nil { self.maskImage.circleView.isHidden = true }
-                if self.maskImage.selectButton != nil { self.maskImage.selectButton.isHidden = true }
-                if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.isHidden = true }
+                /// animate to center of screen if selected
+                if self.maskImage.circleIndex > 0 { endFrame = CGRect(x: (UIScreen.main.bounds.width - endFrame.width)/2, y: (UIScreen.main.bounds.height/2 - endFrame.height)/2, width: endFrame.width, height: endFrame.height); imageRemoved = true }
             }
+            
+            self.maskImage.galleryCircle.alpha = 0.0
+            self.maskImage.galleryCircle.isHidden = false
+            if self.maskImage.circleView != nil { self.maskImage.circleView.isHidden = true }
+            if self.maskImage.selectButton != nil { self.maskImage.selectButton.isHidden = true }
+            if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.isHidden = true }
             
             /// main animation
             UIView.animate(withDuration: 0.25) {
                 
-                self.maskImage.frame = endFrame ?? CGRect()
+                self.maskImage.frame = endFrame
                 
                 /// set alive toggle to its height in the cell + adjust borders to fit original views
                 if self.imagesCollection != nil {
-                    if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.frame = CGRect(x: 0, y: endFrame!.height - 42, width: 60, height: 42) }
-                    self.maskImage.cancelButton.alpha = 1.0
-                    self.maskImage.cancelButton.frame = CGRect(x: endFrame!.width - 35, y: 2, width: 33, height: 33)
-                    self.maskImage.layer.cornerRadius = 9
+                    self.maskImage.layer.cornerRadius = 8
                     self.maskImage.layer.cornerCurve = .continuous
                     
                 } else {
                     self.maskImage.galleryCircle.alpha = 1.0
-                    self.maskImage.galleryCircle.frame = CGRect(x: endFrame!.width - 27, y: 6, width: 23, height: 23)
+                    self.maskImage.galleryCircle.frame = CGRect(x: endFrame.width - 27, y: 6, width: 23, height: 23)
                     self.maskImage.layer.borderColor = UIColor(named: "SpotBlack")!.cgColor
                     self.maskImage.layer.borderWidth = 1
                 }
             }
             
             /// background animation -> fade is only necessary for upload overview
-            let duration: CGFloat = self.imagesCollection != nil ? 0.45 : 0.26
+            let duration: CGFloat = 0.26
             UIView.animate(withDuration: duration) {
                 self.backgroundColor = UIColor(named: "SpotBlack")!.withAlphaComponent(0.0)
+                if imageRemoved { self.alpha = 0.0 }
                 
             } completion: { [weak self] complete in
                 guard let self = self else { return }
@@ -387,48 +377,37 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             activityIndicator.transform = CGAffineTransform(scaleX: 2.5, y: 2.5)
             contentView.addSubview(activityIndicator)
         }
+                
+        var index = 0
+        if let i = UploadImageModel.shared.selectedObjects.firstIndex(where: {$0.id == imageObject.id}) { index = i + 1; circleIndex = i + 1 }
         
-        if previewView.galleryCollection != nil {
-            
-            var index = 0
-            if let i = UploadImageModel.shared.selectedObjects.firstIndex(where: {$0.id == imageObject.id}) { index = i + 1; circleIndex = i + 1 }
-            
-            if selectButton != nil { selectButton.setImage(UIImage(), for: .normal) }
-            let selectFrame = galleryAnimation ? CGRect(x: contentView.frame.width - 50, y: contentView.frame.height - 18, width: 39.5, height: 15) : CGRect(x: contentView.frame.maxX - 150, y: contentView.frame.height - 54, width: 98, height: 43)
-            selectButton = UIButton(frame: selectFrame)
-            let image = circleIndex > 0 ? UIImage(named: "SelectedButton") : UIImage(named: "SelectButton")
-            selectButton.setImage(image, for: .normal)
-            selectButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-            selectButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
-            selectButton.contentHorizontalAlignment = .right
-            selectButton.contentVerticalAlignment = .center
-            contentView.addSubview(selectButton)
-            
-            if circleView != nil { circleView.removeFromSuperview() }
-            let circleFrame = galleryAnimation ? CGRect(x: contentView.frame.maxX - 17, y: contentView.frame.height - 17, width: 15, height: 15) : CGRect(x: contentView.frame.maxX - 52, y: contentView.frame.height - 53, width: 40, height: 40)
-            circleView = CircleView(frame: circleFrame)
-            circleView.setUp(index: index)
-            circleView.layer.cornerRadius = 16
-            contentView.addSubview(circleView)
-            
-            let circleButton = UIButton(frame: CGRect(x: bounds.width - 52, y: contentView.frame.height - 56, width: 46, height: 46))
-            circleButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
-            contentView.addSubview(circleButton)
-            
-            /// for animation back to gallery
-            galleryCircle = CircleView(frame: CGRect(x: contentView.frame.width - 27, y: 6, width: 23, height: 23))
-            galleryCircle.setUp(index: index)
-            galleryCircle.isHidden = true
-            contentView.addSubview(galleryCircle)
-            
-        } else {
-            /// for animation back to upload
-            cancelButton = UIButton(frame: CGRect(x: contentView.frame.width - 35, y: 2, width: 33, height: 33))
-            cancelButton.setImage(UIImage(named: "ImageCancelButton"), for: .normal)
-            cancelButton.isHidden = true
-            cancelButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            contentView.addSubview(cancelButton)
-        }
+        if selectButton != nil { selectButton.setImage(UIImage(), for: .normal) }
+        let selectFrame = galleryAnimation ? CGRect(x: contentView.frame.width - 50, y: contentView.frame.height - 18, width: 39.5, height: 15) : CGRect(x: contentView.frame.maxX - 150, y: contentView.frame.height - 54, width: 98, height: 43)
+        selectButton = UIButton(frame: selectFrame)
+        let image = circleIndex > 0 ? UIImage(named: "SelectedButton") : UIImage(named: "SelectButton")
+        selectButton.setImage(image, for: .normal)
+        selectButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        selectButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
+        selectButton.contentHorizontalAlignment = .right
+        selectButton.contentVerticalAlignment = .center
+        contentView.addSubview(selectButton)
+        
+        if circleView != nil { circleView.removeFromSuperview() }
+        let circleFrame = galleryAnimation ? CGRect(x: contentView.frame.maxX - 17, y: contentView.frame.height - 17, width: 15, height: 15) : CGRect(x: contentView.frame.maxX - 52, y: contentView.frame.height - 53, width: 40, height: 40)
+        circleView = CircleView(frame: circleFrame)
+        circleView.setUp(index: index)
+        circleView.layer.cornerRadius = 16
+        contentView.addSubview(circleView)
+        
+        let circleButton = UIButton(frame: CGRect(x: bounds.width - 52, y: contentView.frame.height - 56, width: 46, height: 46))
+        circleButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
+        contentView.addSubview(circleButton)
+        
+        /// for animation back to gallery
+        galleryCircle = CircleView(frame: CGRect(x: contentView.frame.width - 27, y: 6, width: 23, height: 23))
+        galleryCircle.setUp(index: index)
+        galleryCircle.isHidden = true
+        contentView.addSubview(galleryCircle)
     }
     
     func addActivityIndicator() {
@@ -501,12 +480,13 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         guard let previewView = superview as? ImagePreviewView else { return }
         
         // defer to gallery/cluster select methods
-        if let gallery = previewView.galleryCollection.viewContainingController() as? PhotoGalleryPicker {
-            selected ? gallery.select(index: previewView.galleryIndex, circleTap: true) : gallery.deselect(index: previewView.galleryIndex, circleTap: true)
+        
+        if previewView.imagesCollection != nil, let upload = previewView.imagesCollection.viewContainingController() as? UploadPostController {
+            upload.selectImageAt(index: previewView.galleryIndex, selected: selected)
             circleIndex = selected ? UploadImageModel.shared.selectedObjects.count : 0
-            
-        } else if let cluster = previewView.galleryCollection.viewContainingController() as? ClusterPickerController {
-            selected ? cluster.select(index: previewView.galleryIndex, circleTap: true) : cluster.deselect(index: previewView.galleryIndex, circleTap: true)
+
+        } else if let gallery = previewView.galleryCollection.viewContainingController() as? PhotoGalleryController {
+            selected ? gallery.select(index: previewView.galleryIndex, circleTap: true) : gallery.deselect(index: previewView.galleryIndex, circleTap: true)
             circleIndex = selected ? UploadImageModel.shared.selectedObjects.count : 0
         }
         

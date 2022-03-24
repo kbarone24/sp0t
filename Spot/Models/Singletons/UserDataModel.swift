@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import CoreLocation
 import Firebase
+import MapboxMaps
 
 /// keep main user data in a singleton to avoid having to pass mapVC too much. Serves the function of the primary global variable
 class UserDataModel {
@@ -30,6 +31,7 @@ class UserDataModel {
     var smallScreen = UIScreen.main.bounds.height < 800
     
     var currentLocation: CLLocation!
+    var mapView: MapView!
     
     init() {
         userInfo = UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")

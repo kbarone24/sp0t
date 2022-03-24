@@ -13,7 +13,7 @@ import RSKImageCropper
 import Mixpanel
 
 class EditProfileViewController: UIViewController {
-    
+    /*
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     let db = Firestore.firestore()
     
@@ -642,6 +642,6 @@ extension EditProfileViewController: UITextFieldDelegate, UITextViewDelegate {
             bioView.frame = CGRect(x: bioView.frame.minX, y: bioView.frame.minY, width: bioView.frame.width, height: bioView.frame.height + diff)
             line4.frame = CGRect(x: line4.frame.minX, y: bioContainer.frame.height - 1.5, width: line4.frame.width, height: line4.frame.height)
         }
-    }
+    } */
 }
 

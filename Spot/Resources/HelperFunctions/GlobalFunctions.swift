@@ -14,6 +14,7 @@ import Firebase
 import Geofirestore
 import MapKit
 import FirebaseFunctions
+import MapboxMaps
 
 extension UIViewController {
     //reverse geocode should a string based on lat/long input and amount of detail that it wants to return
@@ -811,22 +812,15 @@ extension UIViewController {
             db.collection("users").document(poster).updateData(userValues)
         }
     }
-    
-    func spotFilteredByLocation(mapCoordinates: [CLLocationCoordinate2D], spotCoordinates: CLLocationCoordinate2D) -> Bool {
-        if !(spotCoordinates.latitude < mapCoordinates[0].latitude && spotCoordinates.latitude > mapCoordinates[2].latitude && spotCoordinates.longitude > mapCoordinates[0].longitude && spotCoordinates.longitude < mapCoordinates[2].longitude) {
-            return true
-        }
-        return false
+}
+
+extension MapView {
+    func spotInBounds(spotCoordinates: CLLocationCoordinate2D) -> Bool {
+        let boundingBox = mapboxMap.coordinateBounds(for: bounds)
+        return boundingBox.containsLatitude(forLatitude: spotCoordinates.latitude) && boundingBox.containsLongitude(forLongitude: spotCoordinates.longitude)
     }
 }
 
-extension MKMapView {
-    func spotFilteredByLocation(spotCoordinates: CLLocationCoordinate2D) -> Bool {
-        let mapCoordinates = region.boundingBoxCoordinates
-        let adjustment = currentRadius()/2 /// patch fix for bounding box error on upload -> top of map wasnt being included in bounding box so just extend the region by a bit
-        return !(spotCoordinates.latitude - abs(adjustment) < mapCoordinates[0].latitude && spotCoordinates.latitude + abs(adjustment) > mapCoordinates[2].latitude && spotCoordinates.longitude + abs(adjustment) > mapCoordinates[0].longitude && spotCoordinates.longitude - abs(adjustment) < mapCoordinates[2].longitude)
-    }
-}
 
 extension CLPlacemark {
     
@@ -1447,6 +1441,18 @@ class PaddedTextField: UITextField {
 }
 
 extension UIView {
+    
+    ///https://gist.github.com/AJMiller/0def0fd492a09ca22fee095c4526cf68
+    func roundedView() {
+        let maskPath1 = UIBezierPath(roundedRect: bounds,
+            byRoundingCorners: [.topLeft , .topRight],
+            cornerRadii: CGSize(width: 8, height: 8))
+        let maskLayer1 = CAShapeLayer()
+        maskLayer1.frame = bounds
+        maskLayer1.path = maskPath1.cgPath
+        layer.mask = maskLayer1
+    }
+
     
     func getTimestamp(postTime: Firebase.Timestamp) -> String {
         let seconds = postTime.seconds

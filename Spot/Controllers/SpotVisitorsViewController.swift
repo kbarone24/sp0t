@@ -13,7 +13,7 @@ import SDWebImage
 import Mixpanel
 
 class SpotVisitorsViewController: UIViewController {
-    
+    /*
     unowned var spotVC: SpotViewController!
     
     var visitorsCollection: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
@@ -160,5 +160,5 @@ class SpotVisitorCell: UICollectionViewCell {
         usernameLabel.textAlignment = .center
         usernameLabel.lineBreakMode = .byTruncatingTail
         addSubview(usernameLabel)
-    }
+    } */
 }

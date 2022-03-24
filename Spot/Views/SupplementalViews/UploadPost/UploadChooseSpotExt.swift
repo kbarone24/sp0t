@@ -21,8 +21,7 @@ extension UploadPostController: UISearchBarDelegate {
         setPostAnnotation(first: false, animated: true) /// adjust postAnno center point
         ///
         DispatchQueue.main.async {
-            self.addTempGradient(hide: true)
-            UIView.animate(withDuration: 0.15) { self.gradientContainer.alpha = 0.0 }
+          //  self.addTempGradient(hide: true)
 
             UIView.animate(withDuration: 0.3) {
                 self.searchContainer.frame = CGRect(x: self.searchContainer.frame.minX, y: self.navBarHeight + 150, width: self.searchContainer.frame.width, height: self.searchContainer.frame.height)
@@ -39,19 +38,21 @@ extension UploadPostController: UISearchBarDelegate {
 
         DispatchQueue.main.async {
             UIView.animate(withDuration: 0.25) {
-                self.uploadTable.frame = CGRect(x: self.uploadTable.frame.minX, y: self.navBarHeight + 45, width: self.uploadTable.frame.width, height: self.uploadTable.frame.height)
+                self.uploadTable.frame = CGRect(x: self.uploadTable.frame.minX, y: self.tableY, width: self.uploadTable.frame.width, height: self.uploadTable.frame.height)
                 self.searchContainer.frame = CGRect(x: self.searchContainer.frame.minX, y: UIScreen.main.bounds.height, width: self.searchContainer.frame.width, height: self.searchContainer.frame.height)
                 self.navigationController?.navigationBar.alpha = 1.0
             }
             
+            /*
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
                 guard let self = self else { return }
                 self.addTempGradient(hide: false)
                 UIView.animate(withDuration: 0.15, animations: { self.gradientContainer.alpha = 1.0 })
-            }
+            } */
         }
     }
     
+    /*
     func addTempGradient(hide: Bool) {
         /// add temp black mask to fade and make gradient change look smoother
         
@@ -70,6 +71,7 @@ extension UploadPostController: UISearchBarDelegate {
             tempGradient.frame = CGRect(x: tempGradient.frame.minX, y: tempGradient.frame.minY, width: tempGradient.frame.width, height: height1)
         }) { _ in tempGradient.removeFromSuperview()}
     }
+    */
 
     @objc func searchCancelTap(_ sender: UIButton) {
         searchBar.endEditing(true)
@@ -187,7 +189,7 @@ extension UploadPostController: UISearchBarDelegate {
         let search = MKLocalSearch.Request()
         search.naturalLanguageQuery = searchText
         search.resultTypes = .pointOfInterest
-        search.region = MKCoordinateRegion(center: mapView.centerCoordinate, latitudinalMeters: 5000, longitudinalMeters: 5000)
+        search.region = MKCoordinateRegion(center: UserDataModel.shared.mapView.cameraState.center, latitudinalMeters: 5000, longitudinalMeters: 5000)
         search.pointOfInterestFilter = MKPointOfInterestFilter(excluding: [.atm, .carRental, .evCharger, .parking, .police])
         
         let searcher = MKLocalSearch(request: search)

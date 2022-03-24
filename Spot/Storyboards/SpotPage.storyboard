@@ -86,6 +86,21 @@
             </objects>
             <point key="canvasLocation" x="2545" y="2724"/>
         </scene>
+        <!--Comments View Controller-->
+        <scene sceneID="ZCd-Cm-nEe">
+            <objects>
+                <viewController storyboardIdentifier="Comments" extendedLayoutIncludesOpaqueBars="YES" id="Nwh-JT-Nsu" customClass="CommentsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Cg2-du-cWT">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="osD-rk-DGH"/>
+                        <color key="backgroundColor" name="SpotBlack"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="BqZ-IE-WrZ" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1438" y="4576"/>
+        </scene>
     </scenes>
     <resources>
         <namedColor name="SpotBlack">
