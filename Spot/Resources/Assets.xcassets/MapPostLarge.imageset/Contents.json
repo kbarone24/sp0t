@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "PostFocus1x (1).png",
+      "filename" : "PostFocusNEW1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "PostFocus2x (1).png",
+      "filename" : "PostFocusNEW2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "PostFocus3x (1).png",
+      "filename" : "PostFocusNEW3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

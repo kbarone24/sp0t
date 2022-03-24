@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "PostSmallNEW1x.png",
+      "filename" : "CreatePostFrame1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "PostSmallNEW2x.png",
+      "filename" : "CreatePostFrame2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "PostSmallNEW3x.png",
+      "filename" : "CreatePostFrame3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

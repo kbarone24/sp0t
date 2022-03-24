@@ -10,15 +10,116 @@ import Foundation
 import CoreLocation
 import UIKit
 import FirebaseUI
+import MapboxMaps
+import Firebase
+import Geofirestore
 
 extension MapViewController {
     
     func addFeedAnnotations() {
-        if !postAnnotations.isEmpty { for anno in postAnnotations {
+       /* if !postAnnotations.isEmpty { for anno in postAnnotations {
             mapView.addAnnotation(anno.value)
-        } }
+        } } */
     }
     
+    func addPostAnnotation(post: MapPost, segment: Int) {
+        /// probably need to break out into 2 funcs -> will add every post to map regardless of segment rn
+        let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
+        var customPointAnnotation = PointAnnotation(id: post.id!, coordinate: coordinate)
+        customPointAnnotation.symbolSortKey = post.postScore
+
+        if post.imageURLs.isEmpty || post.imageURLs.first ?? "" == "" {
+            /// add text post anno
+            let infoWindow = TextPostWindow.instanceFromNib() as! TextPostWindow
+            infoWindow.clipsToBounds = true
+            
+            customPointAnnotation.image = .init(image: infoWindow.asImage(), name: "TextPost")
+            addAnnotationToMap(annotation: customPointAnnotation, segment: segment)
+            
+        } else {
+            /// add image anno
+                        
+            let tagImage = post.tag ?? "" == "" ? UIImage() : Tag(name: post.tag!).image
+            var count = 0
+            
+            let nibView = MapPostWindow.instanceFromNib() as! MapPostWindow
+            nibView.clipsToBounds = true
+            
+            nibView.galleryImage.contentMode = .scaleAspectFill
+            nibView.galleryImage.layer.cornerRadius = 6
+            nibView.galleryImage.clipsToBounds = true
+            nibView.bringSubviewToFront(nibView.tagImage)
+
+            if tagImage == UIImage() && post.tag != "" && post.tag != nil {
+                loadTagImage(tag: post.tag!) { [weak self] image in
+                    guard let self = self else { return }
+                    nibView.tagImage.image = image
+                    count += 1
+                    if count == 2 {
+                        let nibImage = nibView.asImage()
+                        customPointAnnotation.image = .init(image: nibImage, name: UUID().uuidString)
+                        self.addAnnotationToMap(annotation: customPointAnnotation, segment: segment)
+                    }
+                }
+                
+            } else {
+                nibView.tagImage.image = tagImage
+                count += 1
+            }
+
+            // load post image
+            loadPostAnnotationImage(post: post) { [weak self] image in
+                guard let self = self else { return }
+                nibView.galleryImage.image = image
+                count += 1
+                if count == 2 {
+                    let nibImage = nibView.asImage()
+                    customPointAnnotation.image = .init(image: nibImage, name: UUID().uuidString)
+                    self.addAnnotationToMap(annotation: customPointAnnotation, segment: segment)
+                }
+            }
+        }
+    }
+    
+    func addAnnotationToMap(annotation: PointAnnotation, segment: Int) {
+        
+        if segment == 0 { nearbyAnnotations.append(annotation) } else { friendAnnotations.append(annotation) }
+        
+        if segment == selectedSegmentIndex {
+            postAnnotationManager.annotations.append(annotation)
+            pointAnnotations.append(annotation)
+        }
+    }
+    
+    func loadPostAnnotationImage(post: MapPost, completion: @escaping (_ image: UIImage) -> Void) {
+        
+        guard let url = URL(string: post.imageURLs.first ?? "") else { completion(UIImage()); return }
+        
+        let width: CGFloat = 100
+        let transformer = SDImageResizingTransformer(size: CGSize(width: width, height: width * 1.5), scaleMode: .aspectFill)
+        imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
+                guard self != nil else { return }
+            let image = image ?? UIImage()
+            completion(image)
+        }
+    }
+    
+    func loadTagImage(tag: String, completion: @escaping (_ image: UIImage) -> Void) {
+        
+        let tag = Tag(name: tag)
+        /// get tag image url from db and update image
+        tag.getImageURL { [weak self] urlString in
+            guard let self = self else { return }
+
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 60, height: 60), scaleMode: .aspectFill)
+            self.imageManager.loadImage(with: URL(string: urlString), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
+                guard self != nil else { return }
+                let image = image ?? UIImage()
+                completion(image)
+            }
+        }
+    }
+
     func getFriendPosts(refresh: Bool) {
         
         var query = db.collection("posts").order(by: "timestamp", descending: true).whereField("friendsList", arrayContains: self.uid).limit(to: 16)
@@ -32,7 +133,7 @@ extension MapViewController {
             
             if longDocs.count < 16 && !(snap?.metadata.isFromCache ?? false) {
                 self.friendsRefresh = .noRefresh
-                if self.selectedSegmentIndex == 0 { self.refresh = .noRefresh }
+                if self.selectedSegmentIndex == 1 { self.refresh = .noRefresh }
             } else {
                 self.endDocument = longDocs.last
             }
@@ -86,6 +187,257 @@ extension MapViewController {
         })
     }
     
+    func getNearbyPosts(radius: Double) {
+
+        nearbyEnteredCount = 0; currentNearbyPosts.removeAll(); noAccessCount = 0; nearbyEscapeCount = 0 /// reset counters to quickly check for post access on each query
+        let geoFire = GeoFirestore(collectionRef: Firestore.firestore().collection("posts"))
+        
+        /// instantiate or update radius for circleQuery
+        if circleQuery == nil {
+            circleQuery = geoFire.query(withCenter: GeoPoint(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude), radius: radius)
+            ///circleQuery?.searchLimit = 500
+            let _ = circleQuery?.observe(.documentEntered, with: loadPostFromDB)
+            
+            let _ = circleQuery?.observeReady {
+                self.queryReady = true
+                if self.nearbyEnteredCount == 0 && self.activeRadius < 64 {
+                    self.activeRadius *= 2; self.getNearbyPosts(radius: self.activeRadius)
+                } else { self.accessEscape() }
+            }
+            
+        } else {
+            
+            queryReady = false
+            circleQuery?.removeAllObservers()
+            circleQuery?.radius = radius
+            circleQuery?.center = UserDataModel.shared.currentLocation
+
+            let _ = circleQuery?.observe(.documentEntered, with: loadPostFromDB)
+            let _ = circleQuery?.observeReady {
+                self.queryReady = true
+                if self.nearbyEnteredCount == 0 && self.activeRadius < 1024 {
+                    self.activeRadius *= 2; self.getNearbyPosts(radius: self.activeRadius)
+                } else { self.accessEscape() }
+            }
+        }
+    }
+    
+    func loadPostFromDB(key: String?, location: CLLocation?) {
+
+        guard let postKey = key else { return }
+        
+        nearbyEnteredCount += 1
+        var escaped = false /// variable denotes whether to increment noAccessCount (whether active listener found change or this is a new post entering)
+        
+        let ref = db.collection("posts").document(postKey)
+        nearbyListener = ref.addSnapshotListener({ [weak self] (doc, err) in
+            
+            guard let self = self else { return }
+
+            do {
+                /// get spot and check for access
+                let postIn = try doc?.data(as: MapPost.self)
+                guard var postInfo = postIn else { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return }
+                if self.deletedPostIDs.contains(where: {$0 == postKey}) { self.noAccessCount += 1; self.accessEscape(); return }
+                
+                postInfo.id = doc!.documentID
+                postInfo = self.setSecondaryPostValues(post: postInfo)
+
+                if self.nearbyPosts.contains(where: {$0.id == postKey}) {
+                    /// fetching new circle query form DB and this post is already there
+                    if self.noAccessCount + self.currentNearbyPosts.count < self.nearbyEnteredCount { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return
+                    } else {
+                    /// active listener found a change
+                        self.updateNearbyPostFromDB(post: postInfo); return
+                    }
+                }
+                
+                if !self.hasPostAccess(post: postInfo) { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return }
+                
+                /// fix for current nearby posts growing too big - possibly due to active listener finding a change? this is all happening inside the listener closure so just update post object if necessary, don't need to increment and escape like above
+                if !self.currentNearbyPosts.contains(where: {$0.id == postInfo.id}) { self.currentNearbyPosts.append(postInfo) }
+                else if let i = self.currentNearbyPosts.firstIndex(where: {$0.id == postInfo.id }) { self.currentNearbyPosts[i] = postInfo; if !escaped { self.noAccessCount += 1 }; escaped = true; }
+                self.accessEscape()
+                
+            } catch { if !escaped { self.noAccessCount += 1 }; escaped = true; self.accessEscape(); return }
+        })
+    }
+    
+    /// update post in nearbyPosts when change made from
+    func updateNearbyPostFromDB(post: MapPost) {
+        
+        if let i = nearbyPosts.firstIndex(where: {$0.id == post.id}) {
+            let userInfo = nearbyPosts[i].userInfo
+            let postScore = nearbyPosts[i].postScore
+            nearbyPosts[i] = post
+            nearbyPosts[i].userInfo = userInfo /// not fetching user info again so need to set it manually
+            nearbyPosts[i].postScore = postScore /// not fetching post score again so need to set it manually
+        }
+        
+        /// add if condition for if nearby posts selected
+        if selectedSegmentIndex == 0, let i = postsList.firstIndex(where: {$0.id == post.id}) {
+            let userInfo = postsList[i].userInfo
+            let postScore = postsList[i].postScore
+            postsList[i] = post
+            postsList[i].userInfo = userInfo /// not fetching user info again so need to set it manually
+            postsList[i].postScore = postScore /// not fetching post score again so need to set it manually
+            ///  DispatchQueue.main.async { self.postVC.tableView.reloadData() }
+        }
+        
+        getComments(postID: post.id!) { [weak self] commentList in
+            guard let self = self else { return }
+            self.updateNearbyPostComments(comments: commentList, postID: post.id!)
+        }
+    }
+    
+    func updateNearbyPostComments(comments: [MapComment], postID: String) {
+        if let i = nearbyPosts.firstIndex(where: {$0.id == postID}) {
+            nearbyPosts[i].commentList = comments
+            /// segment index check
+            if selectedSegmentIndex == 0, let i = postsList.firstIndex(where: {$0.id == postID}) {
+                postsList[i].commentList = comments
+              ///  DispatchQueue.main.async { self.postVC.tableView.reloadData() }
+            }
+        }
+    }
+
+    func accessEscape() {
+        if noAccessCount + currentNearbyPosts.count == nearbyEnteredCount && queryReady {
+            if currentNearbyPosts.count < 10 && activeRadius < 1000 { /// force reload if active radius reaches 1024
+               activeRadius *= 2; getNearbyPosts(radius: activeRadius)
+            } else {
+                self.getNearbyUserInfo()
+            }
+        }
+    }
+    
+    func getNearbyUserInfo() {
+        
+        for i in 0...currentNearbyPosts.count - 1 {
+            
+            var post = currentNearbyPosts[i]
+            
+            var exitCount = 0
+            self.getComments(postID: post.id!) { commentList in
+                post.commentList = commentList
+                self.currentNearbyPosts[i].commentList = commentList
+                exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
+            }
+            
+            /// get poster user info
+            self.getUserInfos(userIDs: [post.posterID]) { userInfos in
+                let user = userInfos.first ?? UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
+                post.userInfo = user
+                self.currentNearbyPosts[i].userInfo = user
+                exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
+            }
+            
+            /// get added user infos
+            self.getUserInfos(userIDs: post.addedUsers ?? []) { userInfos in
+                post.addedUserProfiles = userInfos
+                self.currentNearbyPosts[i].addedUserProfiles = userInfos
+                exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
+            }
+        }
+    }
+        
+    func nearbyEscape() {
+        /// check if got all posts + get spot rank + reload feed
+        nearbyEscapeCount += 1
+        if nearbyEscapeCount == currentNearbyPosts.count {
+            for i in 0...currentNearbyPosts.count - 1 {
+                currentNearbyPosts[i].postScore = getPostScore(post: currentNearbyPosts[i])
+                if i == currentNearbyPosts.count - 1 { loadNearbyPostsToFeed() }
+            }
+        }
+    }
+    
+    func getPostScore(post: MapPost) -> Double {
+        
+        var scoreMultiplier = 0.0
+        
+        let distance = max(CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: CLLocation(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude)), 1)
+
+        let postTime = Float(post.seconds)
+        let current = NSDate().timeIntervalSince1970
+        let currentTime = Float(current)
+        let timeSincePost = currentTime - postTime
+
+        /// add multiplier for recent posts
+        let factor = Double(min(1 + (100000000 / timeSincePost), 2000))
+        scoreMultiplier = Double(pow(factor, 3)) * 10
+
+        /// content bonuses
+        if UserDataModel.shared.friendIDs.contains(post.posterID) { scoreMultiplier += 50 }
+        
+        for like in post.likers {
+            scoreMultiplier += 20
+            if UserDataModel.shared.friendIDs.contains(like) { scoreMultiplier += 5 }
+        }
+        
+        for comment in post.commentList {
+            scoreMultiplier += 10
+            if UserDataModel.shared.friendIDs.contains(comment.commenterID) { scoreMultiplier += 2.5 }
+        }
+        
+        return scoreMultiplier/distance
+    }
+    
+    func loadNearbyPostsToFeed() {
+
+        currentNearbyPosts.sort(by: {$0.postScore > $1.postScore})
+        
+        for post in currentNearbyPosts {
+            
+            if !nearbyPosts.contains(where: {$0.id == post.id}) {
+                
+                /// nil user info leaks through because nearby escape is called for an error on user fetch. itll be fine for nil comments but nil user is bad
+                if post.userInfo != nil { nearbyPosts.append(post) }
+                self.addPostAnnotation(post: post, segment: 0)
+
+                /// only update if active segment
+                if post.id == currentNearbyPosts.last?.id {
+                    
+                    if selectedSegmentIndex == 0 {
+                        
+                        DispatchQueue.main.async {
+                                                        
+                            for i in 0...self.nearbyPosts.count - 1 { self.nearbyPosts[i].postScore = self.getPostScore(post: self.nearbyPosts[i]) } /// update post scores on location change
+                            self.nearbyPosts.sort(by: {$0.postScore > $1.postScore})
+                            self.postsList = self.nearbyPosts
+                            
+                            if self.nearbyRefresh != .noRefresh { self.nearbyRefresh = .yesRefresh }
+                            if self.refresh != .noRefresh { self.refresh = .yesRefresh }
+                        }
+                        
+                        /// just update refresh index otherwise
+                    } else { if self.nearbyRefresh != .noRefresh { self.nearbyRefresh = .yesRefresh } }
+                }
+                
+            } else {
+                
+                if let index = self.nearbyPosts.firstIndex(where: {$0.id == post.id}) {
+
+                    let selected0 = nearbyPosts[index].selectedImageIndex
+                    self.nearbyPosts[index] = post
+                    self.nearbyPosts[index].selectedImageIndex = selected0
+                    
+                    if let postVC = children.first as? PostViewController, selectedSegmentIndex == 0 {
+                        
+                        /// if this is the active segment
+                        if let postIndex = postVC.postsList.firstIndex(where: {$0.id == post.id}) {
+                                                        
+                            let selected1 = postVC.postsList[postIndex].selectedImageIndex
+                            postVC.postsList[postIndex] = post
+                            postVC.postsList[postIndex].selectedImageIndex = selected1
+                        
+                        }
+                    }
+                }
+
+            }
+        }
+    }
     func loadFriendPostsToFeed(posts: [MapPost]) {
 
         for post in posts {
@@ -96,12 +448,14 @@ extension MapViewController {
                 
                 if !deletedPostIDs.contains(post.id ?? "") && !deletedFriendIDs.contains(post.posterID) {
 
-                    let postAnnotation = CustomPointAnnotation()
+                  /*  let postAnnotation = CustomPointAnnotation()
                     postAnnotation.coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
                     postAnnotation.postID = post.id ?? ""
                     postAnnotations[post.id!] = postAnnotation
 
-                    if selectedSegmentIndex == 0 {                         mapView.addAnnotation(postAnnotation) }
+                    if selectedSegmentIndex == 0 {                         mapView.addAnnotation(postAnnotation) } */
+                    
+                    self.addPostAnnotation(post: post, segment: 1)
                     
                     let newPost = friendPosts.count > 10 && post.timestamp.seconds > friendPosts.first?.timestamp.seconds ?? 100000000000
 
@@ -115,11 +469,11 @@ extension MapViewController {
                        /// if postVC != nil { scrollToFirstRow = postVC.selectedPostIndex == 0 }
                     }
                     
-                    if selectedSegmentIndex == 0 { postsList = friendPosts }
+                    if selectedSegmentIndex == 1 { postsList = friendPosts }
                 }
                 
                if post.id == posts.last?.id {
-                if selectedSegmentIndex == 0 {
+                if selectedSegmentIndex == 1 {
                     // reload posts table
                     DispatchQueue.main.async {
                         if self.feedTable.numberOfRows(inSection: 0) == 0 { self.checkFeedLocations() }
@@ -146,7 +500,7 @@ extension MapViewController {
                     friendPosts[index] = post
                     friendPosts[index].selectedImageIndex = selected0
                     
-                    if let postVC = children.first as? PostViewController, selectedSegmentIndex == 0 {
+                    if let postVC = children.first as? PostViewController, selectedSegmentIndex == 1 {
                         
                         /// account for possiblity of postslist / postvc.postslist not matching up
                         if let postIndex = postVC.postsList.firstIndex(where: {$0.id == post.id}) {
@@ -281,7 +635,7 @@ extension MapViewController {
     }
     
     @objc func notifyNewPost(_ notification: NSNotification) {
-        
+        /// needs to be reworked with mapbox funcs
         if let newPost = notification.userInfo?.first?.value as? MapPost {
             
             var post = newPost
@@ -294,7 +648,7 @@ extension MapViewController {
             postAnnotation.postID = post.id ?? ""
             postAnnotations[post.id!] = postAnnotation
             
-            DispatchQueue.main.async { self.mapView.addAnnotation(postAnnotation) }
+            addPostAnnotation(post: post, segment: 1)
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
                 guard let self = self else { return }
@@ -333,7 +687,7 @@ extension MapViewController {
             self.feedTable.alpha = 0.0
             self.feedTable.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
             self.feedTableButton.frame = CGRect(x: self.postsLabel.frame.maxX, y: self.feedTableButton.frame.minY, width: self.feedTableButton.frame.width, height: self.feedTableButton.frame.height)
-            self.addClosedDrawerMask()
+         //   self.addClosedDrawerMask()
         }
     }
     
@@ -343,11 +697,11 @@ extension MapViewController {
         addTempGradient() /// simulate smooth map mask animation
 
         UIView.animate(withDuration: 0.3) {
-            self.feedTableContainer.frame = CGRect(x: 0, y: UIScreen.main.bounds.height * 3/5, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 2/5)
+            self.feedTableContainer.frame = CGRect(x: 0, y: UIScreen.main.bounds.height * 2/5, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 3/5)
             self.postsLabel.frame = CGRect(x: self.postsLabel.frame.minX, y: self.postsLabel.frame.minY, width: self.postsLabel.frame.width, height: self.postsLabel.frame.height)
             self.feedTable.alpha = 1.0
             self.feedTableButton.frame = CGRect(x: self.postsLabel.frame.maxX, y: self.feedTableButton.frame.minY, width: self.feedTableButton.frame.width, height: self.feedTableButton.frame.height)
-            self.addOpenDrawerMask()
+          //  self.addOpenDrawerMask()
         }
     }
     
@@ -368,7 +722,7 @@ extension MapViewController {
     func addTempGradient() {
         
         let tempView = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height * 3/4, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 1/4))
-        mapView.addSubview(tempView)
+        UserDataModel.shared.mapView.addSubview(tempView)
         
         let layer1 = CAGradientLayer()
         layer1.colors = [

@@ -639,7 +639,7 @@ class CommentCell: UITableViewCell {
     }
     
     func openProfile(user: UserProfile) {
-        if let commentsVC = self.viewContainingController() as? CommentsViewController {
+      /*  if let commentsVC = self.viewContainingController() as? CommentsViewController {
             
             if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
                 
@@ -664,7 +664,7 @@ class CommentCell: UITableViewCell {
                                 
                 commentsVC.dismiss(animated: false, completion: nil)
             }
-        }
+        } */
     }
 }
 
@@ -835,7 +835,9 @@ class CommentHeader: UITableViewHeaderFooterView {
     }
     
     func openProfile(user: UserProfile) {
-        if let commentsVC = self.viewContainingController() as? CommentsViewController {
+        
+        /// there are 2 openProfile funcs?
+    /*    if let commentsVC = self.viewContainingController() as? CommentsViewController {
             if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
                 
                 if user.id != "" {
@@ -859,7 +861,7 @@ class CommentHeader: UITableViewHeaderFooterView {
                 
                 commentsVC.dismiss(animated: false, completion: nil)
             }
-        }
+        } */
     }
     
     func getDateTimestamp(postTime: Firebase.Timestamp) -> String {

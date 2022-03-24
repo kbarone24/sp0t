@@ -21,13 +21,9 @@ use_frameworks!
   pod 'FirebaseUI/Storage'
   pod 'JPSVolumeButtonHandler'
   pod 'Firebase/Functions'
-    
-  target 'SpotTests' do
-    inherit! :search_paths
-    # Pods for testing
-  end
+  pod 'MapboxMaps', '10.3.0'
 
-  target 'SpotUITests' do
+  target 'SpotTests' do
     inherit! :search_paths
     # Pods for testing
   end

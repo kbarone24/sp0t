@@ -36,7 +36,7 @@ class TextPostAnnotationView: MKAnnotationView {
         let nibView = loadSmallNib()
         
         self.isEnabled = true
-        centerOffset = CGPoint(x: 0, y: -5)
+        centerOffset = CGPoint(x: 0, y: -14)
 
         // load post image
         let tagImage = post.tag ?? "" == "" ? UIImage(named: "FeedSpotIcon") : Tag(name: post.tag!).image
@@ -60,7 +60,7 @@ class TextPostAnnotationView: MKAnnotationView {
         postID = post.id!
         self.post = post
         
-        centerOffset = CGPoint(x: 0, y: -45)
+        centerOffset = CGPoint(x: 0, y: -47)
         
         let nibView = loadLargeNib()
         image = nibView.asImage()
@@ -130,8 +130,7 @@ class TextPostAnnotationView: MKAnnotationView {
 
         /// check if point is inside like or comment frame
         print("x", point.x, "y", point.y)
-        if point.x > 210 && point.x < 255 && point.y > 20 && point.y < 55 {
-            print("like")
+        if point.x > 210 && point.x < 255 && point.y > 20 && point.y < 56 {
             // like tap
             lastTapTimestamp = event?.timestamp ?? 0
             let uid = UserDataModel.shared.uid
@@ -140,16 +139,14 @@ class TextPostAnnotationView: MKAnnotationView {
             NotificationCenter.default.post(name: Notification.Name("PostLike"), object: nil, userInfo: infoPass)
             return true
             
-        } else if point.x > 210 && point.x < 255 && point.y > 60 && point.y < 100 {
+        } else if point.x > 210 && point.x < 255 && point.y > 62 && point.y < 98 {
             // comment tap
-            print("comment")
             lastTapTimestamp = event?.timestamp ?? 0
             guard let mapVC = viewContainingController() as? MapViewController else { return false }
             mapVC.openPosts(row: mapVC.selectedFeedIndex, openComments: true)
             return true
             
         } else if point.x > 40 && point.x < 210 && point.y > 17 && point.y < 106 {
-            print("open")
             // post frame tap
             lastTapTimestamp = event?.timestamp ?? 0
             guard let mapVC = viewContainingController() as? MapViewController else { return false }

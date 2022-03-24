@@ -13,6 +13,7 @@ import MapKit
 import CoreLocation
 import Mixpanel
 import FirebaseUI
+import MapboxMaps
 
 class MapPickerController: UIViewController, MKMapViewDelegate {
         
@@ -50,6 +51,22 @@ class MapPickerController: UIViewController, MKMapViewDelegate {
         guard let parentVC = parent as? PhotosContainerController else { return }
 
         baseSize = CGSize(width: UIScreen.main.bounds.width/4 - 0.1, height: UIScreen.main.bounds.width/4 - 0.1)
+        
+        UserDataModel.shared.mapView.frame = UIScreen.main.bounds
+        UserDataModel.shared.mapView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        UserDataModel.shared.mapView.ornaments.options.compass.visibility = .hidden
+        UserDataModel.shared.mapView.ornaments.options.scaleBar.visibility = .hidden
+        view.addSubview(UserDataModel.shared.mapView)
+        
+        let options = CameraOptions(center: <#T##CLLocationCoordinate2D?#>, padding: <#T##UIEdgeInsets?#>, anchor: <#T##CGPoint?#>, zoom: <#T##CGFloat?#>, bearing: <#T##CLLocationDirection?#>, pitch: <#T##CGFloat?#>)
+        UserDataModel.shared.mapView.camera.ease(to: <#T##CameraOptions#>, duration: <#T##TimeInterval#>)
+
+        
+        parentVC.annotationManager = UserDataModel.shared.mapView.annotations.makePointAnnotationManager()
+        parentVC.annotationManager.iconIgnorePlacement = false
+        parentVC.annotationManager.iconOptional = true
+
+
         parentVC.mapView = MKMapView(frame: UIScreen.main.bounds)
         parentVC.mapView.delegate = self
         parentVC.mapView.overrideUserInterfaceStyle = .dark

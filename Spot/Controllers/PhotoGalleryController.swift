@@ -1,25 +1,30 @@
-
 //
-//  PhotoGalleryPicker.swift
+//  PhotoGalleryController.swift
 //  Spot
 //
-//  Created by kbarone on 12/20/19.
-//  Copyright © 2019 sp0t, LLC. All rights reserved.
+//  Created by kbarone on 4/21/20.
+//  Copyright © 2020 sp0t, LLC. All rights reserved.
 //
+
 import Foundation
 import UIKit
-import Firebase
+import CoreLocation
 import Photos
-import Mixpanel
 import PhotosUI
+import MapKit
+import MapboxMaps
+import Mixpanel
 
-class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, PHPhotoLibraryChangeObserver {
+class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
+        
+    var spotObject: MapSpot!
+    var editSpotMode = false
+        
+    var baseSize: CGSize!
     
     let collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
     lazy var layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout.init()
     lazy var imageManager = PHCachingImageManager()
-    
-    var baseSize: CGSize!
     let options = PHImageRequestOptions()
     
     var editSpotCount = 0
@@ -35,24 +40,21 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     var cancelOnDismiss = false
     
     lazy var imageFetcher = ImageFetcher()
-    
-    override func viewWillAppear(_ animated: Bool) {
-        
-        super.viewWillDisappear(animated)
-        navigationItem.title = "Photo gallery"
-        cancelOnDismiss = false
-    }
-    
+
     deinit {
         imageManager.stopCachingImagesForAllAssets()
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ScrollGallery"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PreviewRemove"), object: nil)
         PHPhotoLibrary.shared().unregisterChangeObserver(self)
     }
-    
+
     override func viewDidLoad() {
         
         super.viewDidLoad()
+        self.view.backgroundColor = UIColor(named: "SpotBlack")
+        
+        setUpNavBar()
+        
         collectionView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         baseSize = CGSize(width: UIScreen.main.bounds.width/4 - 0.1, height: UIScreen.main.bounds.width/4 - 0.1)
         
@@ -89,12 +91,17 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             PHPhotoLibrary.shared().register(self) /// eventually probably want to do this after
             showLimitedAlert()
         }
+
     }
     
     override func viewDidDisappear(_ animated: Bool) {
-        
         super.viewDidDisappear(animated)
-        
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.navigationBar.removeBackgroundImage() /// smoother transition back to upload
+
         /// reset nav bar colors (only set if limited picker was shown)
         UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .normal)
         UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .highlighted)
@@ -104,8 +111,41 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
+        super.viewWillAppear(animated)
         Mixpanel.mainInstance().track(event: "PhotoGalleryOpen")
+    }
+    
+    func setUpNavBar() {
+        
+        navigationItem.title = "Gallery"
+        navigationController?.setNavigationBarHidden(false, animated: true)
+        navigationController?.navigationBar.tintColor = .white
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.removeShadow()
+        navigationController?.navigationBar.addGradientBackground(alpha: 1.0)
+                
+        let cancelButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(cancelTap(_:)))
+        navigationItem.setLeftBarButton(cancelButton, animated: false)
+        self.navigationItem.leftBarButtonItem?.tintColor = nil
+        
+        let nextBtn = UIBarButtonItem(title: "Next", style: .plain, target: self, action: #selector(nextTap(_:)))
+        nextBtn.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
+        self.navigationItem.setRightBarButton(nextBtn, animated: true)
+        self.navigationItem.rightBarButtonItem?.tintColor = nil
+    }
+        
+    @objc func cancelTap(_ sender: UIButton) {
+        if let uploadVC = navigationController?.viewControllers.first(where: {$0 is UploadPostController}) as? UploadPostController {
+            uploadVC.cancelFromGallery()
+            navigationController?.popToViewController(uploadVC, animated: true)
+        }
+    }
+    
+    @objc func nextTap(_ sender: UIButton) {
+        if let uploadVC = navigationController?.viewControllers.first(where: {$0 is UploadPostController}) as? UploadPostController {
+            uploadVC.finishPassingFromGallery()
+            navigationController?.popToViewController(uploadVC, animated: true)
+        }
     }
     
     @objc func scrollToTop(_ sender: NSNotification) {
@@ -118,7 +158,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             self.collectionView.reloadData()
         }
     }
-    
+
     func showLimitedAlert() {
         
         let alert = UIAlertController(title: "You've allowed access to a limited number of photos", message: "", preferredStyle: .alert)
@@ -158,6 +198,69 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         
         if imagePreview != nil { for sub in imagePreview.subviews { sub.removeFromSuperview()}; imagePreview.removeFromSuperview(); imagePreview = nil }
     }
+
+    func showMaxImagesAlert() {
+        
+        let errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 200, width: UIScreen.main.bounds.width, height: 32))
+        let errorLabel = UILabel(frame: CGRect(x: 23, y: 6, width: UIScreen.main.bounds.width - 46, height: 18))
+        
+        errorBox.backgroundColor = UIColor.lightGray
+        errorLabel.textColor = UIColor.white
+        errorLabel.textAlignment = .center
+        errorLabel.text = "5 photos max"
+        errorLabel.font = UIFont(name: "SFCompactText-Semibold", size: 14)
+        
+        view.addSubview(errorBox)
+        errorBox.addSubview(errorLabel)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            errorLabel.removeFromSuperview()
+            errorBox.removeFromSuperview()
+        }
+    }
+    
+    func showFailedDownloadAlert() {
+        let alert = UIAlertController(title: "Unable to download image from iCloud", message: "\n Your iPhone storage may be full", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(alert, animated: true)
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        //max offset is the value at which the tableview should reload data -> starting point is after 700 of the first 1000 pictures
+        offset = scrollView.contentOffset.y
+        
+        if offset > maxOffset {
+            //refresh after 900 posts past the 1000x mark
+            self.maxOffset = (UIScreen.main.bounds.width/4 * 225) + UIScreen.main.bounds.width/4 * (250 * CGFloat(self.refreshes))
+            if (refreshes + 1) * 1000 < UploadImageModel.shared.imageObjects.count {
+                self.refreshes = self.refreshes + 1
+                self.refreshTable()
+            }
+        }
+    }
+    
+    // for .limited photoGallery access
+    func photoLibraryDidChange(_ changeInstance: PHChange) {
+        
+        DispatchQueue.main.async {
+            
+            if changeInstance.changeDetails(for: UploadImageModel.shared.assetsFull) != nil {
+                /// couldn't get change handler to work so just reload everything for now
+                UploadImageModel.shared.imageObjects.removeAll()
+                self.collectionView.reloadData()
+            }
+        }
+    }
+    
+    @objc func removePreview(_ sender: NSNotification) {
+        if imagePreview != nil {
+            imagePreview.removeFromSuperview()
+            imagePreview = nil
+        }
+    }
+}
+
+extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
         return UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
@@ -179,7 +282,7 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
             if let trueIndex = UploadImageModel.shared.selectedObjects.lastIndex(where: {$0.id == imageObject.0.id}) { index = trueIndex + 1 }
             cell.setUp(asset: imageObject.0.asset, row: indexPath.row, index: index, editSpot: false, id: imageObject.0.id, cameraImage: imageObject.0.stillImage)
             
-            /// set cellImage from here -> processes weren't consistently offloading with deinit 
+            /// set cellImage from here -> processes weren't consistently offloading with deinit
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else { return }
                 cell.requestID = self.imageManager.requestImage(for: imageObject.0.asset, targetSize: self.baseSize, contentMode: .aspectFill, options: self.options) { (result, info) in
@@ -230,10 +333,9 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
     
     func select(index: Int, circleTap: Bool) {
         
-        guard let parentVC = parent as? PhotosContainerController else { return }
         guard let selectedObject = UploadImageModel.shared.imageObjects[safe: index]?.image else { return }
         if UploadImageModel.shared.selectedObjects.count > 4 { showMaxImagesAlert(); return }
-        if parentVC.editSpotMode && UploadImageModel.shared.selectedObjects.count > 0 { return }
+        if editSpotMode && UploadImageModel.shared.selectedObjects.count > 0 { return }
         
         let paths = getSelectedPaths(newRow: index)
         
@@ -337,69 +439,17 @@ class PhotoGalleryPicker: UIViewController, UICollectionViewDelegate, UICollecti
         let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
         imagePreview.imageExpand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])
     }
-    
-    func showMaxImagesAlert() {
-        
-        let errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 200, width: UIScreen.main.bounds.width, height: 32))
-        let errorLabel = UILabel(frame: CGRect(x: 23, y: 6, width: UIScreen.main.bounds.width - 46, height: 18))
-        
-        errorBox.backgroundColor = UIColor.lightGray
-        errorLabel.textColor = UIColor.white
-        errorLabel.textAlignment = .center
-        errorLabel.text = "5 photos max"
-        errorLabel.font = UIFont(name: "SFCompactText-Semibold", size: 14)
-        
-        view.addSubview(errorBox)
-        errorBox.addSubview(errorLabel)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-            errorLabel.removeFromSuperview()
-            errorBox.removeFromSuperview()
-        }
-    }
-    
-    func showFailedDownloadAlert() {
-        let alert = UIAlertController(title: "Unable to download image from iCloud", message: "\n Your iPhone storage may be full", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true)
-    }
-    
-    
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        //max offset is the value at which the tableview should reload data -> starting point is after 700 of the first 1000 pictures
-        offset = scrollView.contentOffset.y
-        
-        if offset > maxOffset {
-            //refresh after 900 posts past the 1000x mark
-            self.maxOffset = (UIScreen.main.bounds.width/4 * 225) + UIScreen.main.bounds.width/4 * (250 * CGFloat(self.refreshes))
-            if (refreshes + 1) * 1000 < UploadImageModel.shared.imageObjects.count {
-                self.refreshes = self.refreshes + 1
-                self.refreshTable()
-            }
-        }
-    }
-    
-    // for .limited photoGallery access
-    func photoLibraryDidChange(_ changeInstance: PHChange) {
-        
-        DispatchQueue.main.async {
-            
-            if changeInstance.changeDetails(for: UploadImageModel.shared.assetsFull) != nil {
-                /// couldn't get change handler to work so just reload everything for now
-                UploadImageModel.shared.imageObjects.removeAll()
-                self.collectionView.reloadData()
-            }
-        }
-    }
-    
-    @objc func removePreview(_ sender: NSNotification) {
-        if imagePreview != nil {
-            imagePreview.removeFromSuperview()
-            imagePreview = nil
+
+}
+
+extension UIColor {
+    func image(_ size: CGSize = CGSize(width: 1, height: 1)) -> UIImage {
+        return UIGraphicsImageRenderer(size: size).image { rendererContext in
+            self.setFill()
+            rendererContext.fill(CGRect(origin: .zero, size: size))
         }
     }
 }
-
 
 class GalleryCell: UICollectionViewCell {
     
@@ -501,7 +551,7 @@ class GalleryCell: UICollectionViewCell {
         activityIndicator.stopAnimating()
         image.image = nil
         if imageMask != nil { for layer in imageMask.layer.sublayers ?? [] { layer.removeFromSuperlayer() } }
-        if let galleryVC = viewContainingController() as? PhotoGalleryPicker {
+        if let galleryVC = viewContainingController() as? PhotoGalleryController {
             galleryVC.imageManager.cancelImageRequest(requestID)
         }
     }
@@ -532,14 +582,8 @@ class GalleryCell: UICollectionViewCell {
     
     @objc func circleTap(_ sender: UIButton) {
         
-        guard let picker = viewContainingController() as? PhotoGalleryPicker else { pickFromCluster(); return }
+        guard let picker = viewContainingController() as? PhotoGalleryController else { return }
         UploadImageModel.shared.selectedObjects.contains(where: {$0.id == id}) ? picker.deselect(index: globalRow, circleTap: true) : picker.select(index: globalRow, circleTap: true)
-    }
-    
-    func pickFromCluster() {
-        
-        guard let cluster = viewContainingController() as? ClusterPickerController else { return }
-        UploadImageModel.shared.selectedObjects.contains(where: {$0.id == id}) ? cluster.deselect(index: globalRow, circleTap: true) : cluster.select(index: globalRow, circleTap: true)
     }
 }
 
@@ -562,6 +606,12 @@ public extension UIImage {
         
         guard let cgImage = image?.cgImage else { return nil }
         self.init(cgImage: cgImage)
+    }
+    
+    func alpha(_ a: CGFloat) -> UIImage {
+        return UIGraphicsImageRenderer(size: size, format: imageRendererFormat).image { (_) in
+            draw(in: CGRect(origin: .zero, size: size), blendMode: .normal, alpha: a)
+        }
     }
 }
 

@@ -16,8 +16,9 @@ class LeftAlignedCollectionViewFlowLayout: UICollectionViewFlowLayout {
         
     private func common() {
         estimatedItemSize = UICollectionViewFlowLayout.automaticSize
-        minimumLineSpacing = 10
-        minimumInteritemSpacing = 11
+        
+    //    minimumLineSpacing = 10
+    //    minimumInteritemSpacing = 11
     }
     
     override func layoutAttributesForElements(

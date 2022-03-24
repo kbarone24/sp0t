@@ -39,6 +39,8 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>MBXAccessToken</key>
+	<string>pk.eyJ1Ijoic3AwdGtlbm55IiwiYSI6ImNrem9tYzhkODAycmUydW50bXVza2JhZmgifQ.Cl0TokRRaMo8UZDImGqp0A</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Allow sp0t to access your camera</string>
 	<key>NSContactsUsageDescription</key>

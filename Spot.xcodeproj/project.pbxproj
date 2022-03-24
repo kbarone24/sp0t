@@ -19,12 +19,6 @@
 		3E18C6D3226E5FDB000751E6 /* TabBar.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D2226E5FDB000751E6 /* TabBar.storyboard */; };
 		3E6189572213DEAD00A7CFF4 /* EmailLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6189562213DEAD00A7CFF4 /* EmailLoginController.swift */; };
 		3ED3F1A622147EAE008CC29B /* ResetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED3F1A522147EAE008CC29B /* ResetViewController.swift */; };
-		59004DF422C56A4E004E06EF /* ProfileSpotsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59004DF322C56A4E004E06EF /* ProfileSpotsViewController.swift */; };
-		59004DF522C56A4E004E06EF /* ProfileSpotsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59004DF322C56A4E004E06EF /* ProfileSpotsViewController.swift */; };
-		59004DF622C56A4E004E06EF /* ProfileSpotsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59004DF322C56A4E004E06EF /* ProfileSpotsViewController.swift */; };
-		59004DF822C56A9D004E06EF /* ProfilePostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59004DF722C56A9D004E06EF /* ProfilePostsViewController.swift */; };
-		59004DF922C56A9D004E06EF /* ProfilePostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59004DF722C56A9D004E06EF /* ProfilePostsViewController.swift */; };
-		59004DFA22C56A9D004E06EF /* ProfilePostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59004DF722C56A9D004E06EF /* ProfilePostsViewController.swift */; };
 		59004DFF22C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E0022C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E0522CA5C78004E06EF /* SpotViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D649044226D18880000CD8E /* SpotViewController.swift */; };
@@ -39,10 +33,6 @@
 		59004E1622CA5CA1004E06EF /* SignUpViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03622089F4500BA0C36 /* SignUpViewController.swift */; };
 		59004E1722CA5CA4004E06EF /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801B22174BB1008B835A /* MapViewController.swift */; };
 		59004E1822CA5CA4004E06EF /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801B22174BB1008B835A /* MapViewController.swift */; };
-		59004E1922CA5CA9004E06EF /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801D22174BD6008B835A /* ProfileViewController.swift */; };
-		59004E1A22CA5CA9004E06EF /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801D22174BD6008B835A /* ProfileViewController.swift */; };
-		59004E1B22CA5CAC004E06EF /* FeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801F22174BEA008B835A /* FeedViewController.swift */; };
-		59004E1C22CA5CAC004E06EF /* FeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801F22174BEA008B835A /* FeedViewController.swift */; };
 		59004E2122CBB1D3004E06EF /* MarkerInfoWindowView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A5E078E2233165B00B53B58 /* MarkerInfoWindowView.xib */; };
 		59004E2222CBB1D3004E06EF /* MarkerInfoWindowView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A5E078E2233165B00B53B58 /* MarkerInfoWindowView.xib */; };
 		59004E2322CBB1D7004E06EF /* MarkerInfoWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5E07902233174600B53B58 /* MarkerInfoWindow.swift */; };
@@ -98,18 +88,12 @@
 		5958A58F248B16460017D56F /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5958A58E248B16460017D56F /* FriendsListController.swift */; };
 		5958A590248B16460017D56F /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5958A58E248B16460017D56F /* FriendsListController.swift */; };
 		5958A591248B16460017D56F /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5958A58E248B16460017D56F /* FriendsListController.swift */; };
-		595D279123AD6FB700B82AE5 /* PhotoGalleryPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595D279023AD6FB600B82AE5 /* PhotoGalleryPicker.swift */; };
-		595D279223AD6FB700B82AE5 /* PhotoGalleryPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595D279023AD6FB600B82AE5 /* PhotoGalleryPicker.swift */; };
-		595D279323AD6FB700B82AE5 /* PhotoGalleryPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595D279023AD6FB600B82AE5 /* PhotoGalleryPicker.swift */; };
 		597072FA24291993008A481A /* AVSpotCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597072F924291992008A481A /* AVSpotCamera.swift */; };
 		597072FB24291993008A481A /* AVSpotCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597072F924291992008A481A /* AVSpotCamera.swift */; };
 		597072FC24291993008A481A /* AVSpotCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597072F924291992008A481A /* AVSpotCamera.swift */; };
 		597072FE24292367008A481A /* AVCameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597072FD24292367008A481A /* AVCameraController.swift */; };
 		597072FF24292367008A481A /* AVCameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597072FD24292367008A481A /* AVCameraController.swift */; };
 		5970730024292367008A481A /* AVCameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597072FD24292367008A481A /* AVCameraController.swift */; };
-		59724E37237B6F9E00CCBF35 /* Feed.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 59724E36237B6F9E00CCBF35 /* Feed.storyboard */; };
-		59724E38237B6F9E00CCBF35 /* Feed.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 59724E36237B6F9E00CCBF35 /* Feed.storyboard */; };
-		59724E39237B6F9E00CCBF35 /* Feed.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 59724E36237B6F9E00CCBF35 /* Feed.storyboard */; };
 		59724E3F237B728600CCBF35 /* AddSpot.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 59724E3E237B728600CCBF35 /* AddSpot.storyboard */; };
 		59724E40237B728600CCBF35 /* AddSpot.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 59724E3E237B728600CCBF35 /* AddSpot.storyboard */; };
 		59724E41237B728600CCBF35 /* AddSpot.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 59724E3E237B728600CCBF35 /* AddSpot.storyboard */; };
@@ -125,9 +109,9 @@
 		597A626E25A8F9910052C560 /* Tag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597A626D25A8F9910052C560 /* Tag.swift */; };
 		597A626F25A8F9910052C560 /* Tag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597A626D25A8F9910052C560 /* Tag.swift */; };
 		597A627025A8F9910052C560 /* Tag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597A626D25A8F9910052C560 /* Tag.swift */; };
-		59826E9F244FA078004B858F /* PhotosContainerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59826E9E244FA078004B858F /* PhotosContainerController.swift */; };
-		59826EA0244FA078004B858F /* PhotosContainerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59826E9E244FA078004B858F /* PhotosContainerController.swift */; };
-		59826EA1244FA078004B858F /* PhotosContainerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59826E9E244FA078004B858F /* PhotosContainerController.swift */; };
+		59826E9F244FA078004B858F /* PhotoGalleryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59826E9E244FA078004B858F /* PhotoGalleryController.swift */; };
+		59826EA0244FA078004B858F /* PhotoGalleryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59826E9E244FA078004B858F /* PhotoGalleryController.swift */; };
+		59826EA1244FA078004B858F /* PhotoGalleryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59826E9E244FA078004B858F /* PhotoGalleryController.swift */; };
 		598616FC23720F490019C935 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5947712E2326E091008E50B9 /* Assets.xcassets */; };
 		598616FD23720F490019C935 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5947712E2326E091008E50B9 /* Assets.xcassets */; };
 		598616FE23720F4A0019C935 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5947712E2326E091008E50B9 /* Assets.xcassets */; };
@@ -171,15 +155,6 @@
 		59BAF9DA2360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BAF9D72360FBEB00F607B7 /* CustomActivityIndicator.swift */; };
 		59BAF9DF23674F3400F607B7 /* NotificationsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 598B700A2305D24400613AFD /* NotificationsViewController.swift */; };
 		59BAF9E023674F3500F607B7 /* NotificationsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 598B700A2305D24400613AFD /* NotificationsViewController.swift */; };
-		59BE80F523E0F42C00566A62 /* NearbyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BE80F423E0F42C00566A62 /* NearbyViewController.swift */; };
-		59BE80F623E0F42C00566A62 /* NearbyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BE80F423E0F42C00566A62 /* NearbyViewController.swift */; };
-		59BE80F723E0F42C00566A62 /* NearbyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BE80F423E0F42C00566A62 /* NearbyViewController.swift */; };
-		59CF4D932448F70A00855B26 /* MapPickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CF4D922448F70A00855B26 /* MapPickerController.swift */; };
-		59CF4D942448F70A00855B26 /* MapPickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CF4D922448F70A00855B26 /* MapPickerController.swift */; };
-		59CF4D952448F70A00855B26 /* MapPickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CF4D922448F70A00855B26 /* MapPickerController.swift */; };
-		59CF4D97244A74B900855B26 /* ClusterPickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CF4D96244A74B900855B26 /* ClusterPickerController.swift */; };
-		59CF4D98244A74B900855B26 /* ClusterPickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CF4D96244A74B900855B26 /* ClusterPickerController.swift */; };
-		59CF4D99244A74B900855B26 /* ClusterPickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CF4D96244A74B900855B26 /* ClusterPickerController.swift */; };
 		59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */; };
 		59CF623824479D57008E25DE /* SpotPhotoAlbum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */; };
 		59CF623924479D57008E25DE /* SpotPhotoAlbum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */; };
@@ -236,8 +211,6 @@
 		611FA3082267991000310ED2 /* EditProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611FA3072267991000310ED2 /* EditProfileViewController.swift */; };
 		7A24FE78226F832A0084576C /* map-style.json in Resources */ = {isa = PBXBuildFile; fileRef = 7A24FE77226F832A0084576C /* map-style.json */; };
 		7A37801C22174BB1008B835A /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801B22174BB1008B835A /* MapViewController.swift */; };
-		7A37801E22174BD6008B835A /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801D22174BD6008B835A /* ProfileViewController.swift */; };
-		7A37802022174BEA008B835A /* FeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801F22174BEA008B835A /* FeedViewController.swift */; };
 		7A5E078F2233165B00B53B58 /* MarkerInfoWindowView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A5E078E2233165B00B53B58 /* MarkerInfoWindowView.xib */; };
 		7A5E07912233174600B53B58 /* MarkerInfoWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5E07902233174600B53B58 /* MarkerInfoWindow.swift */; };
 		7CAB429503F23FD2A9F314E6 /* Pods_SpotTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70FE6EF09984CC560FD9D79C /* Pods_SpotTests.framework */; };
@@ -354,6 +327,12 @@
 		8C3BAF67260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF68260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF6D260D229100349091 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C3BAF6C260D229100349091 /* MapKit.framework */; };
+		8C3DA16D27C9707A00727C4F /* CreatePostWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8C3DA16C27C9707A00727C4F /* CreatePostWindow.xib */; };
+		8C3DA16E27C9707A00727C4F /* CreatePostWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8C3DA16C27C9707A00727C4F /* CreatePostWindow.xib */; };
+		8C3DA16F27C9707A00727C4F /* CreatePostWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8C3DA16C27C9707A00727C4F /* CreatePostWindow.xib */; };
+		8C3DA17127C9716800727C4F /* CreatePostWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3DA17027C9716800727C4F /* CreatePostWindow.swift */; };
+		8C3DA17227C9716800727C4F /* CreatePostWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3DA17027C9716800727C4F /* CreatePostWindow.swift */; };
+		8C3DA17327C9716800727C4F /* CreatePostWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3DA17027C9716800727C4F /* CreatePostWindow.swift */; };
 		8C44ADF32682654C00C0504B /* SpotPostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C44ADF22682654C00C0504B /* SpotPostsViewController.swift */; };
 		8C44ADF42682654C00C0504B /* SpotPostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C44ADF22682654C00C0504B /* SpotPostsViewController.swift */; };
 		8C44ADF52682654C00C0504B /* SpotPostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C44ADF22682654C00C0504B /* SpotPostsViewController.swift */; };
@@ -393,6 +372,16 @@
 		8C8304C126E99EDA00EEBCFC /* PostFriendsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304C026E99EDA00EEBCFC /* PostFriendsCell.swift */; };
 		8C8304C226E99EDA00EEBCFC /* PostFriendsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304C026E99EDA00EEBCFC /* PostFriendsCell.swift */; };
 		8C8304C326E99EDA00EEBCFC /* PostFriendsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304C026E99EDA00EEBCFC /* PostFriendsCell.swift */; };
+		8C88B0E727B46E3900DB4039 /* PostImageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0E627B46E3900DB4039 /* PostImageModel.swift */; };
+		8C88B0EB27BCA7A900DB4039 /* ProfilePostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0E827BCA7A900DB4039 /* ProfilePostsViewController.swift */; };
+		8C88B0EC27BCA7A900DB4039 /* ProfilePostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0E827BCA7A900DB4039 /* ProfilePostsViewController.swift */; };
+		8C88B0ED27BCA7A900DB4039 /* ProfilePostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0E827BCA7A900DB4039 /* ProfilePostsViewController.swift */; };
+		8C88B0EE27BCA7A900DB4039 /* ProfileSpotsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0E927BCA7A900DB4039 /* ProfileSpotsViewController.swift */; };
+		8C88B0EF27BCA7A900DB4039 /* ProfileSpotsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0E927BCA7A900DB4039 /* ProfileSpotsViewController.swift */; };
+		8C88B0F027BCA7A900DB4039 /* ProfileSpotsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0E927BCA7A900DB4039 /* ProfileSpotsViewController.swift */; };
+		8C88B0F127BCA7A900DB4039 /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0EA27BCA7A900DB4039 /* ProfileViewController.swift */; };
+		8C88B0F227BCA7A900DB4039 /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0EA27BCA7A900DB4039 /* ProfileViewController.swift */; };
+		8C88B0F327BCA7A900DB4039 /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C88B0EA27BCA7A900DB4039 /* ProfileViewController.swift */; };
 		8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C92898626CB18F10028DB69 /* CameraAccessView.swift */; };
 		8C92898826CB18F10028DB69 /* CameraAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C92898626CB18F10028DB69 /* CameraAccessView.swift */; };
 		8C92898926CB18F10028DB69 /* CameraAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C92898626CB18F10028DB69 /* CameraAccessView.swift */; };
@@ -483,7 +472,6 @@
 		8CFD73EA2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
 		8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
 		8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
-		8E69EACB2973BF7AF2C54691 /* Pods_SpotUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 403D631FFAE4EC042521E5C9 /* Pods_SpotUITests.framework */; };
 		94CCAEDBE22BD4BD080DFB40 /* Pods_Spot.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CCE453E39170B954D39EDD55 /* Pods_Spot.framework */; };
 /* End PBXBuildFile section */
 
@@ -505,7 +493,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		1C07E183E4BC4BD08E249BFC /* Pods-SpotUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SpotUITests.release.xcconfig"; path = "Target Support Files/Pods-SpotUITests/Pods-SpotUITests.release.xcconfig"; sourceTree = "<group>"; };
 		1D649044226D18880000CD8E /* SpotViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotViewController.swift; sourceTree = "<group>"; };
 		1DF6E03122089F4500BA0C36 /* Spot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Spot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF6E03422089F4500BA0C36 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -522,9 +509,6 @@
 		3E18C6D2226E5FDB000751E6 /* TabBar.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = TabBar.storyboard; sourceTree = "<group>"; };
 		3E6189562213DEAD00A7CFF4 /* EmailLoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailLoginController.swift; sourceTree = "<group>"; };
 		3ED3F1A522147EAE008CC29B /* ResetViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetViewController.swift; sourceTree = "<group>"; };
-		403D631FFAE4EC042521E5C9 /* Pods_SpotUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SpotUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		59004DF322C56A4E004E06EF /* ProfileSpotsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProfileSpotsViewController.swift; path = Spot/Controllers/ProfileSpotsViewController.swift; sourceTree = SOURCE_ROOT; };
-		59004DF722C56A9D004E06EF /* ProfilePostsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePostsViewController.swift; sourceTree = "<group>"; };
 		59056A5223197E4B00C7E753 /* PostNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostNotification.swift; sourceTree = "<group>"; };
 		5916A8B224A27F8500118E83 /* MapSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSpot.swift; sourceTree = "<group>"; };
 		5916A8B624A5542800118E83 /* ResultSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultSpot.swift; sourceTree = "<group>"; };
@@ -541,16 +525,14 @@
 		594CE11224B6A6CF0051516C /* MapPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPost.swift; sourceTree = "<group>"; };
 		594CE11A24C939040051516C /* MapComment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapComment.swift; sourceTree = "<group>"; };
 		5958A58E248B16460017D56F /* FriendsListController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsListController.swift; sourceTree = "<group>"; };
-		595D279023AD6FB600B82AE5 /* PhotoGalleryPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoGalleryPicker.swift; sourceTree = "<group>"; };
 		597072F924291992008A481A /* AVSpotCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVSpotCamera.swift; sourceTree = "<group>"; };
 		597072FD24292367008A481A /* AVCameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVCameraController.swift; sourceTree = "<group>"; };
-		59724E36237B6F9E00CCBF35 /* Feed.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Feed.storyboard; sourceTree = "<group>"; };
 		59724E3E237B728600CCBF35 /* AddSpot.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = AddSpot.storyboard; sourceTree = "<group>"; };
 		5976CE39252FF45800FAC8F6 /* Friend.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Friend.swift; sourceTree = "<group>"; };
 		5978F06F24D0734300582B83 /* SinglePost.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SinglePost.xib; sourceTree = "<group>"; };
 		597A626325A7F5ED0052C560 /* EditProfileCameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileCameraController.swift; sourceTree = "<group>"; };
 		597A626D25A8F9910052C560 /* Tag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tag.swift; sourceTree = "<group>"; };
-		59826E9E244FA078004B858F /* PhotosContainerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotosContainerController.swift; sourceTree = "<group>"; };
+		59826E9E244FA078004B858F /* PhotoGalleryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoGalleryController.swift; sourceTree = "<group>"; };
 		598B700A2305D24400613AFD /* NotificationsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsViewController.swift; sourceTree = "<group>"; };
 		598B700C2305E49500613AFD /* FriendRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendRequest.swift; sourceTree = "<group>"; };
 		598B701023146EED00613AFD /* CustomTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTabBar.swift; sourceTree = "<group>"; };
@@ -565,9 +547,6 @@
 		59A8881D22EFC2FC00F8863B /* SettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		59BA812224D9C9CB00FFCDFA /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		59BAF9D72360FBEB00F607B7 /* CustomActivityIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomActivityIndicator.swift; sourceTree = "<group>"; };
-		59BE80F423E0F42C00566A62 /* NearbyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyViewController.swift; sourceTree = "<group>"; };
-		59CF4D922448F70A00855B26 /* MapPickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPickerController.swift; sourceTree = "<group>"; };
-		59CF4D96244A74B900855B26 /* ClusterPickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterPickerController.swift; sourceTree = "<group>"; };
 		59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPhotoAlbum.swift; sourceTree = "<group>"; };
 		59DFA25122C27B4800A59D29 /* CommentsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsViewController.swift; sourceTree = "<group>"; };
 		59E0CCF925ACDCC8006587AF /* CityUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CityUser.swift; sourceTree = "<group>"; };
@@ -590,8 +569,6 @@
 		70FE6EF09984CC560FD9D79C /* Pods_SpotTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SpotTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A24FE77226F832A0084576C /* map-style.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "map-style.json"; path = "Spot/Resources/map-style.json"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.json; };
 		7A37801B22174BB1008B835A /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MapViewController.swift; path = Spot/Controllers/MapViewController.swift; sourceTree = SOURCE_ROOT; };
-		7A37801D22174BD6008B835A /* ProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ProfileViewController.swift; path = Spot/Controllers/ProfileViewController.swift; sourceTree = SOURCE_ROOT; };
-		7A37801F22174BEA008B835A /* FeedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FeedViewController.swift; path = Spot/Controllers/FeedViewController.swift; sourceTree = SOURCE_ROOT; };
 		7A5E078E2233165B00B53B58 /* MarkerInfoWindowView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MarkerInfoWindowView.xib; sourceTree = "<group>"; };
 		7A5E07902233174600B53B58 /* MarkerInfoWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkerInfoWindow.swift; sourceTree = "<group>"; };
 		7A9A551522273F71007469C7 /* Chapel Hill.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "Chapel Hill.gpx"; path = "Spot/Chapel Hill.gpx"; sourceTree = "<group>"; };
@@ -634,6 +611,8 @@
 		8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerController.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
 		8C3BAF6C260D229100349091 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		8C3DA16C27C9707A00727C4F /* CreatePostWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CreatePostWindow.xib; sourceTree = "<group>"; };
+		8C3DA17027C9716800727C4F /* CreatePostWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePostWindow.swift; sourceTree = "<group>"; };
 		8C44ADF22682654C00C0504B /* SpotPostsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPostsViewController.swift; sourceTree = "<group>"; };
 		8C44ADF62682656900C0504B /* SpotVisitorsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotVisitorsViewController.swift; sourceTree = "<group>"; };
 		8C4A5FF626B1BFCD00ECB8CC /* MaskImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaskImageView.swift; sourceTree = "<group>"; };
@@ -647,6 +626,10 @@
 		8C780B2725BA16A000B766BB /* SFCamera-Semibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SFCamera-Semibold.otf"; path = "../../Library/Fonts/SFCamera-Semibold.otf"; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C8304C026E99EDA00EEBCFC /* PostFriendsCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostFriendsCell.swift; sourceTree = "<group>"; };
+		8C88B0E627B46E3900DB4039 /* PostImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageModel.swift; sourceTree = "<group>"; };
+		8C88B0E827BCA7A900DB4039 /* ProfilePostsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfilePostsViewController.swift; sourceTree = "<group>"; };
+		8C88B0E927BCA7A900DB4039 /* ProfileSpotsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileSpotsViewController.swift; sourceTree = "<group>"; };
+		8C88B0EA27BCA7A900DB4039 /* ProfileViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
 		8C92898626CB18F10028DB69 /* CameraAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraAccessView.swift; sourceTree = "<group>"; };
 		8C988C2E267BFB450047A474 /* GuestbookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestbookPreview.swift; sourceTree = "<group>"; };
 		8C988C32267D1AE80047A474 /* SpotNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotNotification.swift; sourceTree = "<group>"; };
@@ -680,7 +663,6 @@
 		994C18FD0D847CBE77336F96 /* Pods-Spot.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.release.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.release.xcconfig"; sourceTree = "<group>"; };
 		A296FC0C74CC7D5302353491 /* Pods-SpotTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SpotTests.debug.xcconfig"; path = "Target Support Files/Pods-SpotTests/Pods-SpotTests.debug.xcconfig"; sourceTree = "<group>"; };
 		CCE453E39170B954D39EDD55 /* Pods_Spot.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Spot.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		D7A1FFCB0D535613637A8618 /* Pods-SpotUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SpotUITests.debug.xcconfig"; path = "Target Support Files/Pods-SpotUITests/Pods-SpotUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		F762098B71569C89C087B675 /* Pods-Spot.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.debug.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -707,7 +689,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8E69EACB2973BF7AF2C54691 /* Pods_SpotUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -828,7 +809,6 @@
 				8C3BAF6C260D229100349091 /* MapKit.framework */,
 				8C214BB3260BD85500E0C4FC /* AuthenticationServices.framework */,
 				70FE6EF09984CC560FD9D79C /* Pods_SpotTests.framework */,
-				403D631FFAE4EC042521E5C9 /* Pods_SpotUITests.framework */,
 				CCE453E39170B954D39EDD55 /* Pods_Spot.framework */,
 			);
 			name = Frameworks;
@@ -841,8 +821,6 @@
 				994C18FD0D847CBE77336F96 /* Pods-Spot.release.xcconfig */,
 				A296FC0C74CC7D5302353491 /* Pods-SpotTests.debug.xcconfig */,
 				600C7B20AA16C3A36CB4A1BD /* Pods-SpotTests.release.xcconfig */,
-				D7A1FFCB0D535613637A8618 /* Pods-SpotUITests.debug.xcconfig */,
-				1C07E183E4BC4BD08E249BFC /* Pods-SpotUITests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -882,7 +860,6 @@
 				598B701023146EED00613AFD /* CustomTabBar.swift */,
 				7A37801B22174BB1008B835A /* MapViewController.swift */,
 				598B700A2305D24400613AFD /* NotificationsViewController.swift */,
-				59BE80F423E0F42C00566A62 /* NearbyViewController.swift */,
 				599BD2B523C51EC500ECB84A /* PendingFriendRequestsController.swift */,
 			);
 			name = TabBar;
@@ -891,9 +868,9 @@
 		599BD2C423C6539200ECB84A /* Profile */ = {
 			isa = PBXGroup;
 			children = (
-				7A37801D22174BD6008B835A /* ProfileViewController.swift */,
-				59004DF722C56A9D004E06EF /* ProfilePostsViewController.swift */,
-				59004DF322C56A4E004E06EF /* ProfileSpotsViewController.swift */,
+				8C88B0E827BCA7A900DB4039 /* ProfilePostsViewController.swift */,
+				8C88B0E927BCA7A900DB4039 /* ProfileSpotsViewController.swift */,
+				8C88B0EA27BCA7A900DB4039 /* ProfileViewController.swift */,
 				5958A58E248B16460017D56F /* FriendsListController.swift */,
 				8C3209E8261631B500FB32BA /* Manage */,
 				8C3209E9261631D800FB32BA /* Discovery */,
@@ -904,7 +881,6 @@
 		599BD2C523C653DC00ECB84A /* Feed */ = {
 			isa = PBXGroup;
 			children = (
-				7A37801F22174BEA008B835A /* FeedViewController.swift */,
 				59DFA25122C27B4800A59D29 /* CommentsViewController.swift */,
 			);
 			name = Feed;
@@ -915,10 +891,7 @@
 			children = (
 				597072FD24292367008A481A /* AVCameraController.swift */,
 				5995F91724085936007BA334 /* GIFPreviewController.swift */,
-				59826E9E244FA078004B858F /* PhotosContainerController.swift */,
-				595D279023AD6FB600B82AE5 /* PhotoGalleryPicker.swift */,
-				59CF4D922448F70A00855B26 /* MapPickerController.swift */,
-				59CF4D96244A74B900855B26 /* ClusterPickerController.swift */,
+				59826E9E244FA078004B858F /* PhotoGalleryController.swift */,
 				592CAEF9251418D600202E4F /* UploadPostController.swift */,
 				592EADD823316DCA0076FBC5 /* InviteFriendsController.swift */,
 			);
@@ -1068,7 +1041,6 @@
 				1DF6E03822089F4500BA0C36 /* Main.storyboard */,
 				3E18C6D2226E5FDB000751E6 /* TabBar.storyboard */,
 				3E18C6D0226E55F3000751E6 /* Profile.storyboard */,
-				59724E36237B6F9E00CCBF35 /* Feed.storyboard */,
 				59724E3E237B728600CCBF35 /* AddSpot.storyboard */,
 				3E18C6CE226E543A000751E6 /* SpotPage.storyboard */,
 				1DF6E03D22089F4800BA0C36 /* LaunchScreen.storyboard */,
@@ -1087,6 +1059,7 @@
 				8C0D1EAA27A8720000F4B885 /* MapPostWindowLarge.xib */,
 				8C0D1EB227AB36AF00F4B885 /* TextPostWindowLarge.xib */,
 				8C0D1EBA27AB39BD00F4B885 /* TextPostWindow.xib */,
+				8C3DA16C27C9707A00727C4F /* CreatePostWindow.xib */,
 			);
 			path = Nibs;
 			sourceTree = "<group>";
@@ -1150,6 +1123,7 @@
 				8C0D1EAE27A873C000F4B885 /* MapPostWindowLarge.swift */,
 				8C0D1EB627AB38F100F4B885 /* TextPostWindowLarge.swift */,
 				8C0D1EBE27AB39D300F4B885 /* TextPostWindow.swift */,
+				8C3DA17027C9716800727C4F /* CreatePostWindow.swift */,
 			);
 			path = NibWindows;
 			sourceTree = "<group>";
@@ -1167,7 +1141,6 @@
 		8CAC69E326FD29A500E8B04E /* CameraAndGallery */ = {
 			isa = PBXGroup;
 			children = (
-				8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */,
 				8C4A5FF626B1BFCD00ECB8CC /* MaskImageView.swift */,
 				8C92898626CB18F10028DB69 /* CameraAccessView.swift */,
 				8C29879B2693A05A0071E75A /* CircleView.swift */,
@@ -1179,6 +1152,7 @@
 		8CF5A5B626F3E8EA00320033 /* UploadPost */ = {
 			isa = PBXGroup;
 			children = (
+				8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */,
 				8CE18CB127488C1F00BB27BF /* UploadChooseSpotExt.swift */,
 				8CB400C0273C7DD100DFFCEE /* UploadChooseSpotCell.swift */,
 				8C5361C026F3BF0E008888B7 /* UploadOverviewCell.swift */,
@@ -1197,6 +1171,7 @@
 			children = (
 				8CC3653926C5E9A900AC40AB /* UploadImageModel.swift */,
 				8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */,
+				8C88B0E627B46E3900DB4039 /* PostImageModel.swift */,
 			);
 			path = Singletons;
 			sourceTree = "<group>";
@@ -1247,7 +1222,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1DF6E05F22089F4800BA0C36 /* Build configuration list for PBXNativeTarget "SpotUITests" */;
 			buildPhases = (
-				D872BEF8D91A010CA1D76554 /* [CP] Check Pods Manifest.lock */,
 				1DF6E04C22089F4800BA0C36 /* Sources */,
 				1DF6E04D22089F4800BA0C36 /* Frameworks */,
 				1DF6E04E22089F4800BA0C36 /* Resources */,
@@ -1335,6 +1309,7 @@
 				8C2CBAE327643BFC003E68B7 /* UploadPostDown.xib in Resources */,
 				8C346D342797753200B6E640 /* MapPostWindow.xib in Resources */,
 				7A24FE78226F832A0084576C /* map-style.json in Resources */,
+				8C3DA16D27C9707A00727C4F /* CreatePostWindow.xib in Resources */,
 				8C2CBAD32763E251003E68B7 /* UploadWindowDown.xib in Resources */,
 				1DF6E03F22089F4800BA0C36 /* LaunchScreen.storyboard in Resources */,
 				593AC5552440104B00C08237 /* map-style-tutorial.json in Resources */,
@@ -1357,7 +1332,6 @@
 				8C780B1E25BA169900B766BB /* SFCamera-Regular.otf in Resources */,
 				8C271E1C276AAFF6007A545F /* UploadWindowUp.xib in Resources */,
 				8C2CBADB27643A6D003E68B7 /* UploadPostUp.xib in Resources */,
-				59724E37237B6F9E00CCBF35 /* Feed.storyboard in Resources */,
 				3E18C6D1226E55F3000751E6 /* Profile.storyboard in Resources */,
 				8C2CBAF12767FACC003E68B7 /* UploadWindowMiddle.xib in Resources */,
 				1DF6E03A22089F4500BA0C36 /* Main.storyboard in Resources */,
@@ -1373,6 +1347,7 @@
 				8C2CBAE427643BFC003E68B7 /* UploadPostDown.xib in Resources */,
 				8C346D352797753200B6E640 /* MapPostWindow.xib in Resources */,
 				59004E2122CBB1D3004E06EF /* MarkerInfoWindowView.xib in Resources */,
+				8C3DA16E27C9707A00727C4F /* CreatePostWindow.xib in Resources */,
 				8C2CBAD42763E251003E68B7 /* UploadWindowDown.xib in Resources */,
 				59004E2722CBB1E6004E06EF /* Main.storyboard in Resources */,
 				593AC5562440104B00C08237 /* map-style-tutorial.json in Resources */,
@@ -1384,7 +1359,6 @@
 				8C780B2925BA16A000B766BB /* SFCamera-Semibold.otf in Resources */,
 				598616FD23720F490019C935 /* Assets.xcassets in Resources */,
 				8C0D1EBC27AB39BD00F4B885 /* TextPostWindow.xib in Resources */,
-				59724E38237B6F9E00CCBF35 /* Feed.storyboard in Resources */,
 				59004E2922CBB1E9004E06EF /* LaunchScreen.storyboard in Resources */,
 				59A5A3CF253A873E00789B7E /* GoogleService-Info.plist in Resources */,
 				59A5A3D3253A874600789B7E /* Info.plist in Resources */,
@@ -1411,6 +1385,7 @@
 				8C2CBAE527643BFC003E68B7 /* UploadPostDown.xib in Resources */,
 				8C346D362797753200B6E640 /* MapPostWindow.xib in Resources */,
 				59004E2222CBB1D3004E06EF /* MarkerInfoWindowView.xib in Resources */,
+				8C3DA16F27C9707A00727C4F /* CreatePostWindow.xib in Resources */,
 				8C2CBAD52763E251003E68B7 /* UploadWindowDown.xib in Resources */,
 				59004E2822CBB1E7004E06EF /* Main.storyboard in Resources */,
 				593AC5572440104B00C08237 /* map-style-tutorial.json in Resources */,
@@ -1422,7 +1397,6 @@
 				8C780B2A25BA16A000B766BB /* SFCamera-Semibold.otf in Resources */,
 				598616FE23720F4A0019C935 /* Assets.xcassets in Resources */,
 				8C0D1EBD27AB39BD00F4B885 /* TextPostWindow.xib in Resources */,
-				59724E39237B6F9E00CCBF35 /* Feed.storyboard in Resources */,
 				59004E2A22CBB1E9004E06EF /* LaunchScreen.storyboard in Resources */,
 				59A5A3D0253A873E00789B7E /* GoogleService-Info.plist in Resources */,
 				59A5A3D4253A874600789B7E /* Info.plist in Resources */,
@@ -1477,28 +1451,6 @@
 			);
 			outputPaths = (
 				"$(DERIVED_FILE_DIR)/Pods-SpotTests-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		D872BEF8D91A010CA1D76554 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-SpotUITests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1560,20 +1512,18 @@
 				5995F91824085936007BA334 /* GIFPreviewController.swift in Sources */,
 				5916A8B724A5542800118E83 /* ResultSpot.swift in Sources */,
 				599371B0234E468500204F59 /* SearchContactsViewController.swift in Sources */,
+				8C3DA17127C9716800727C4F /* CreatePostWindow.swift in Sources */,
 				59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */,
 				8C34207A261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				8CE18CBE274C4A6A00BB27BF /* UploadAnnotationWindow.swift in Sources */,
 				611FA3082267991000310ED2 /* EditProfileViewController.swift in Sources */,
-				7A37801E22174BD6008B835A /* ProfileViewController.swift in Sources */,
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
-				59BE80F523E0F42C00566A62 /* NearbyViewController.swift in Sources */,
 				8C9C32CC279611E6007813CA /* MapPickerAnnotationView.swift in Sources */,
 				59E0CCFA25ACDCC8006587AF /* CityUser.swift in Sources */,
 				594CE11324B6A6CF0051516C /* MapPost.swift in Sources */,
 				3E6189572213DEAD00A7CFF4 /* EmailLoginController.swift in Sources */,
 				8C2CBAED2767FA97003E68B7 /* UploadWindowMiddle.swift in Sources */,
 				8CE18CB227488C1F00BB27BF /* UploadChooseSpotExt.swift in Sources */,
-				59004DF422C56A4E004E06EF /* ProfileSpotsViewController.swift in Sources */,
 				8C0D1EB727AB38F100F4B885 /* TextPostWindowLarge.swift in Sources */,
 				8C9C32DC279612EE007813CA /* SinglePostAnnotationView.swift in Sources */,
 				59FCF5B224734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
@@ -1582,17 +1532,17 @@
 				593AC549243F898300C08237 /* UsernameController.swift in Sources */,
 				5916A8BB24A566F400118E83 /* ResultUser.swift in Sources */,
 				59FCF5AF24734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
+				8C88B0E727B46E3900DB4039 /* PostImageModel.swift in Sources */,
 				8C5DEC8B26D01862001BAE3A /* NewSpotNameView.swift in Sources */,
 				8CB400C1273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */,
 				8C9C32C2279610D3007813CA /* PostClusterView.swift in Sources */,
+				8C88B0EB27BCA7A900DB4039 /* ProfilePostsViewController.swift in Sources */,
 				59E23549246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				5958A58F248B16460017D56F /* FriendsListController.swift in Sources */,
-				59CF4D97244A74B900855B26 /* ClusterPickerController.swift in Sources */,
 				8C2CBADF27643B05003E68B7 /* UploadPostUp.swift in Sources */,
 				8CF5A5B826F3E91400320033 /* UploadChooseTagView.swift in Sources */,
 				1D649045226D18880000CD8E /* SpotViewController.swift in Sources */,
 				59FECF3624B4F69E00BD0EED /* MapTarget.swift in Sources */,
-				59CF4D932448F70A00855B26 /* MapPickerController.swift in Sources */,
 				8C346D302797600A00B6E640 /* FeedMapExtension.swift in Sources */,
 				598B700D2305E49500613AFD /* FriendRequest.swift in Sources */,
 				8C53FC102731C8D3001F64BB /* UploadImagesCell.swift in Sources */,
@@ -1612,6 +1562,7 @@
 				8CAC69E026FB989000E8B04E /* UploadPrivacyViews.swift in Sources */,
 				598B701123146EED00613AFD /* CustomTabBar.swift in Sources */,
 				8C5361C126F3BF0E008888B7 /* UploadOverviewCell.swift in Sources */,
+				8C88B0F127BCA7A900DB4039 /* ProfileViewController.swift in Sources */,
 				8CAC69D826FB939C00E8B04E /* UploadPrivacyCell.swift in Sources */,
 				599BD2B623C51EC500ECB84A /* PendingFriendRequestsController.swift in Sources */,
 				592CAEFA251418D600202E4F /* UploadPostController.swift in Sources */,
@@ -1619,6 +1570,7 @@
 				8C3BAF58260C413F00349091 /* ConfirmCodeController.swift in Sources */,
 				8C3BAF5F260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
+				8C88B0EE27BCA7A900DB4039 /* ProfileSpotsViewController.swift in Sources */,
 				5992A5AA245B666E009DAA8B /* CircleProgress.swift in Sources */,
 				8C516BA526573E570079B863 /* EditPostView.swift in Sources */,
 				8CB14482277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift in Sources */,
@@ -1656,7 +1608,6 @@
 				8C3420B0261273140017CB2F /* SendInvitesController.swift in Sources */,
 				8C44ADF72682656900C0504B /* SpotVisitorsViewController.swift in Sources */,
 				8C3209D52614DB6500FB32BA /* ManageAccountController.swift in Sources */,
-				59004DF822C56A9D004E06EF /* ProfilePostsViewController.swift in Sources */,
 				8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */,
 				59FCF5C424734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */,
 				59FCF5C124734EAA0012207D /* SpotDraft+CoreDataClass.swift in Sources */,
@@ -1665,15 +1616,13 @@
 				8C9C32E427961B72007813CA /* ActiveFilterView.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				592EADD923316DCA0076FBC5 /* InviteFriendsController.swift in Sources */,
-				595D279123AD6FB700B82AE5 /* PhotoGalleryPicker.swift in Sources */,
 				8C4A5FF726B1BFCD00ECB8CC /* MaskImageView.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				598B700B2305D24400613AFD /* NotificationsViewController.swift in Sources */,
 				5916A8B324A27F8500118E83 /* MapSpot.swift in Sources */,
-				7A37802022174BEA008B835A /* FeedViewController.swift in Sources */,
 				8C9C32D027961251007813CA /* CustomSpotAnnotation.swift in Sources */,
 				5976CE3A252FF45800FAC8F6 /* Friend.swift in Sources */,
-				59826E9F244FA078004B858F /* PhotosContainerController.swift in Sources */,
+				59826E9F244FA078004B858F /* PhotoGalleryController.swift in Sources */,
 				8CFD73EA2757E4FD00CBD162 /* TagCategory.swift in Sources */,
 				59BAF9D82360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */,
 				8C9C32D8279612D9007813CA /* SpotAnnotationView.swift in Sources */,
@@ -1693,6 +1642,7 @@
 				599371B1234E468500204F59 /* SearchContactsViewController.swift in Sources */,
 				598B70122314763200613AFD /* CustomTabBar.swift in Sources */,
 				8C346D392797756D00B6E640 /* MapPostWindow.swift in Sources */,
+				8C3DA17227C9716800727C4F /* CreatePostWindow.swift in Sources */,
 				59A8880822E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8C346D3D279775FE00B6E640 /* StandardPostAnnotationView.swift in Sources */,
 				8C0D1EB827AB38F100F4B885 /* TextPostWindowLarge.swift in Sources */,
@@ -1700,7 +1650,6 @@
 				8C5361C226F3BF0E008888B7 /* UploadOverviewCell.swift in Sources */,
 				5958A590248B16460017D56F /* FriendsListController.swift in Sources */,
 				8CE18CAA27488B8F00BB27BF /* SpotSearchCell.swift in Sources */,
-				59004E1B22CA5CAC004E06EF /* FeedViewController.swift in Sources */,
 				59004E0922CA5C89004E06EF /* EditProfileViewController.swift in Sources */,
 				8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
@@ -1716,19 +1665,17 @@
 				8CE18CB327488C1F00BB27BF /* UploadChooseSpotExt.swift in Sources */,
 				59FCF5B324734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
 				597072FF24292367008A481A /* AVCameraController.swift in Sources */,
+				8C88B0EC27BCA7A900DB4039 /* ProfilePostsViewController.swift in Sources */,
 				8C9C32E527961B72007813CA /* ActiveFilterView.swift in Sources */,
 				8C3209F226168A5900FB32BA /* ReviewPublicController.swift in Sources */,
 				59004E1122CA5C9A004E06EF /* ResetViewController.swift in Sources */,
 				598B700E2305E49500613AFD /* FriendRequest.swift in Sources */,
 				8C3BAF67260CFB7B00349091 /* CountryCode.swift in Sources */,
 				599BD2BC23C652BD00ECB84A /* PostViewController.swift in Sources */,
-				59BE80F623E0F42C00566A62 /* NearbyViewController.swift in Sources */,
 				59004E1522CA5CA1004E06EF /* SignUpViewController.swift in Sources */,
-				59CF4D98244A74B900855B26 /* ClusterPickerController.swift in Sources */,
 				8C44ADF42682654C00C0504B /* SpotPostsViewController.swift in Sources */,
 				59004E0522CA5C78004E06EF /* SpotViewController.swift in Sources */,
 				8C9C32D9279612D9007813CA /* SpotAnnotationView.swift in Sources */,
-				595D279223AD6FB700B82AE5 /* PhotoGalleryPicker.swift in Sources */,
 				8CE18CBF274C4A6A00BB27BF /* UploadAnnotationWindow.swift in Sources */,
 				59056A5423197E4B00C7E753 /* PostNotification.swift in Sources */,
 				8CB14483277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift in Sources */,
@@ -1744,15 +1691,15 @@
 				5992A5AB245B666E009DAA8B /* CircleProgress.swift in Sources */,
 				59E2354A246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				8C3420B1261273140017CB2F /* SendInvitesController.swift in Sources */,
+				8C88B0F227BCA7A900DB4039 /* ProfileViewController.swift in Sources */,
 				8C5DEC8826CED7B5001BAE3A /* NearbyID.swift in Sources */,
 				8C9C32E127961317007813CA /* SinglePostAnnotation.swift in Sources */,
 				8C44ADF82682656900C0504B /* SpotVisitorsViewController.swift in Sources */,
 				59FCF5B024734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C2074CD25CB38440040036B /* City.swift in Sources */,
-				59004E1922CA5CA9004E06EF /* ProfileViewController.swift in Sources */,
 				8C0D1EC427AB3CDC00F4B885 /* TextPostAnnotationView.swift in Sources */,
 				5916A8B424A27F8500118E83 /* MapSpot.swift in Sources */,
-				59CF4D942448F70A00855B26 /* MapPickerController.swift in Sources */,
+				8C88B0EF27BCA7A900DB4039 /* ProfileSpotsViewController.swift in Sources */,
 				8CB400C2273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C53FC112731C8D3001F64BB /* UploadImagesCell.swift in Sources */,
@@ -1773,7 +1720,6 @@
 				59BA812424D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				8CC93B3F279621040059CAD5 /* SinglePostWindow.swift in Sources */,
 				8C342074260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */,
-				59004DF922C56A9D004E06EF /* ProfilePostsViewController.swift in Sources */,
 				597072FB24291993008A481A /* AVSpotCamera.swift in Sources */,
 				59FCF5C224734EAA0012207D /* SpotDraft+CoreDataClass.swift in Sources */,
 				8C5DEC8C26D01862001BAE3A /* NewSpotNameView.swift in Sources */,
@@ -1786,7 +1732,7 @@
 				8CB400BE2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				8CAC69D926FB939C00E8B04E /* UploadPrivacyCell.swift in Sources */,
 				8C0D1EC027AB39D300F4B885 /* TextPostWindow.swift in Sources */,
-				59826EA0244FA078004B858F /* PhotosContainerController.swift in Sources */,
+				59826EA0244FA078004B858F /* PhotoGalleryController.swift in Sources */,
 				8C2CBAE027643B05003E68B7 /* UploadPostUp.swift in Sources */,
 				8C271E25276AE968007A545F /* UploadPostMiddle.swift in Sources */,
 				592EADDA23316DCA0076FBC5 /* InviteFriendsController.swift in Sources */,
@@ -1798,7 +1744,6 @@
 				59004E1322CA5C9D004E06EF /* EmailLoginController.swift in Sources */,
 				8C8304C226E99EDA00EEBCFC /* PostFriendsCell.swift in Sources */,
 				8C9C32C3279610D3007813CA /* PostClusterView.swift in Sources */,
-				59004DF522C56A4E004E06EF /* ProfileSpotsViewController.swift in Sources */,
 				59FECF3724B4F69E00BD0EED /* MapTarget.swift in Sources */,
 				8C988C34267D1AE80047A474 /* SpotNotification.swift in Sources */,
 				8C3BAF60260CF5D000349091 /* CountryPickerController.swift in Sources */,
@@ -1827,6 +1772,7 @@
 				599371B2234E468600204F59 /* SearchContactsViewController.swift in Sources */,
 				598B70132314763200613AFD /* CustomTabBar.swift in Sources */,
 				8C346D3A2797756D00B6E640 /* MapPostWindow.swift in Sources */,
+				8C3DA17327C9716800727C4F /* CreatePostWindow.swift in Sources */,
 				59A8880722E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8C346D3E279775FE00B6E640 /* StandardPostAnnotationView.swift in Sources */,
 				8C0D1EB927AB38F100F4B885 /* TextPostWindowLarge.swift in Sources */,
@@ -1834,7 +1780,6 @@
 				8C5361C326F3BF0E008888B7 /* UploadOverviewCell.swift in Sources */,
 				5958A591248B16460017D56F /* FriendsListController.swift in Sources */,
 				8CE18CAB27488B8F00BB27BF /* SpotSearchCell.swift in Sources */,
-				59004E1C22CA5CAC004E06EF /* FeedViewController.swift in Sources */,
 				59004E0A22CA5C8A004E06EF /* EditProfileViewController.swift in Sources */,
 				8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
@@ -1850,19 +1795,17 @@
 				8CE18CB427488C1F00BB27BF /* UploadChooseSpotExt.swift in Sources */,
 				59FCF5B424734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
 				5970730024292367008A481A /* AVCameraController.swift in Sources */,
+				8C88B0ED27BCA7A900DB4039 /* ProfilePostsViewController.swift in Sources */,
 				8C9C32E627961B72007813CA /* ActiveFilterView.swift in Sources */,
 				8C3209F326168A5900FB32BA /* ReviewPublicController.swift in Sources */,
 				59004E1222CA5C9A004E06EF /* ResetViewController.swift in Sources */,
 				598B700F2305E49500613AFD /* FriendRequest.swift in Sources */,
 				8C3BAF68260CFB7B00349091 /* CountryCode.swift in Sources */,
 				599BD2BD23C652BD00ECB84A /* PostViewController.swift in Sources */,
-				59BE80F723E0F42C00566A62 /* NearbyViewController.swift in Sources */,
 				59004E1622CA5CA1004E06EF /* SignUpViewController.swift in Sources */,
-				59CF4D99244A74B900855B26 /* ClusterPickerController.swift in Sources */,
 				8C44ADF52682654C00C0504B /* SpotPostsViewController.swift in Sources */,
 				59004E0622CA5C79004E06EF /* SpotViewController.swift in Sources */,
 				8C9C32DA279612D9007813CA /* SpotAnnotationView.swift in Sources */,
-				595D279323AD6FB700B82AE5 /* PhotoGalleryPicker.swift in Sources */,
 				8CE18CC0274C4A6A00BB27BF /* UploadAnnotationWindow.swift in Sources */,
 				59056A5523197E4B00C7E753 /* PostNotification.swift in Sources */,
 				8CB14484277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift in Sources */,
@@ -1878,15 +1821,15 @@
 				5992A5AC245B666E009DAA8B /* CircleProgress.swift in Sources */,
 				59E2354B246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				8C3420B2261273140017CB2F /* SendInvitesController.swift in Sources */,
+				8C88B0F327BCA7A900DB4039 /* ProfileViewController.swift in Sources */,
 				8C5DEC8926CED7B5001BAE3A /* NearbyID.swift in Sources */,
 				8C9C32E227961317007813CA /* SinglePostAnnotation.swift in Sources */,
 				8C44ADF92682656900C0504B /* SpotVisitorsViewController.swift in Sources */,
 				59FCF5B124734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C2074CE25CB38440040036B /* City.swift in Sources */,
-				59004E1A22CA5CA9004E06EF /* ProfileViewController.swift in Sources */,
 				8C0D1EC527AB3CDC00F4B885 /* TextPostAnnotationView.swift in Sources */,
 				5916A8B524A27F8500118E83 /* MapSpot.swift in Sources */,
-				59CF4D952448F70A00855B26 /* MapPickerController.swift in Sources */,
+				8C88B0F027BCA7A900DB4039 /* ProfileSpotsViewController.swift in Sources */,
 				8CB400C3273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C53FC122731C8D3001F64BB /* UploadImagesCell.swift in Sources */,
@@ -1907,7 +1850,6 @@
 				59BA812524D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				8CC93B40279621040059CAD5 /* SinglePostWindow.swift in Sources */,
 				8C342075260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */,
-				59004DFA22C56A9D004E06EF /* ProfilePostsViewController.swift in Sources */,
 				597072FC24291993008A481A /* AVSpotCamera.swift in Sources */,
 				59FCF5C324734EAA0012207D /* SpotDraft+CoreDataClass.swift in Sources */,
 				8C5DEC8D26D01862001BAE3A /* NewSpotNameView.swift in Sources */,
@@ -1920,7 +1862,7 @@
 				8CB400BF2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				8CAC69DA26FB939C00E8B04E /* UploadPrivacyCell.swift in Sources */,
 				8C0D1EC127AB39D300F4B885 /* TextPostWindow.swift in Sources */,
-				59826EA1244FA078004B858F /* PhotosContainerController.swift in Sources */,
+				59826EA1244FA078004B858F /* PhotoGalleryController.swift in Sources */,
 				8C2CBAE127643B05003E68B7 /* UploadPostUp.swift in Sources */,
 				8C271E26276AE968007A545F /* UploadPostMiddle.swift in Sources */,
 				592EADDB23316DCA0076FBC5 /* InviteFriendsController.swift in Sources */,
@@ -1932,7 +1874,6 @@
 				59004E1422CA5C9D004E06EF /* EmailLoginController.swift in Sources */,
 				8C8304C326E99EDA00EEBCFC /* PostFriendsCell.swift in Sources */,
 				8C9C32C4279610D3007813CA /* PostClusterView.swift in Sources */,
-				59004DF622C56A4E004E06EF /* ProfileSpotsViewController.swift in Sources */,
 				59FECF3824B4F69E00BD0EED /* MapTarget.swift in Sources */,
 				8C988C35267D1AE80047A474 /* SpotNotification.swift in Sources */,
 				8C3BAF61260CF5D000349091 /* CountryPickerController.swift in Sources */,
@@ -2114,9 +2055,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 71;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 73;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2169,7 +2110,7 @@
 				MARKETING_VERSION = 0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "sp0t distribution profile 2022";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -2184,9 +2125,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 71;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 73;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
@@ -2239,7 +2180,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "sp0t distribution profile 2022";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -2464,7 +2405,6 @@
 		};
 		1DF6E06022089F4800BA0C36 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D7A1FFCB0D535613637A8618 /* Pods-SpotUITests.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CLANG_ENABLE_MODULES = YES;
@@ -2573,7 +2513,6 @@
 		};
 		1DF6E06122089F4800BA0C36 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1C07E183E4BC4BD08E249BFC /* Pods-SpotUITests.release.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CLANG_ENABLE_MODULES = YES;

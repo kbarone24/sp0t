@@ -13,8 +13,8 @@ import FirebaseFirestore
 import FirebaseAuth
 import Mixpanel
 
-class SettingsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
-    
+class SettingsViewController: UIViewController {
+    /*
     unowned var profileVC: ProfileViewController!
     var tableView: UITableView!
     
@@ -476,5 +476,5 @@ class SettingsReviewCell: UITableViewCell {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
+    }*/
 }

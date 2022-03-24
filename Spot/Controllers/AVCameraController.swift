@@ -514,7 +514,7 @@ class AVCameraController: UIViewController {
     
     func openCamRoll() {
         
-        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "PhotosContainer") as? PhotosContainerController {
+        if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(withIdentifier: "PhotoGallery") as? PhotoGalleryController {
             
             vc.spotObject = self.spotObject
             

@@ -555,8 +555,8 @@ extension EditProfileCameraController: UIImagePickerControllerDelegate, RSKImage
     
     func imageCropViewController(_ controller: RSKImageCropViewController, didCropImage croppedImage: UIImage, usingCropRect cropRect: CGRect, rotationAngle: CGFloat) {
         /// pass back image to edit profile
-        editProfileVC.imageView.image = croppedImage
-        editProfileVC.newProfilePic = croppedImage
+      //  editProfileVC.imageView.image = croppedImage
+      // editProfileVC.newProfilePic = croppedImage
         Mixpanel.mainInstance().track(event: "EditProfileCameraCapture")
         editProfileVC.dismiss(animated: true, completion: nil)
     }

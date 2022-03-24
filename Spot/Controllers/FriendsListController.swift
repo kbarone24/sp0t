@@ -78,7 +78,7 @@ class FriendsListController: UIViewController {
         
         if profileVC == nil { return }
         
-        if uid == profileVC.id {
+     /*   if uid == profileVC.id {
             let offsetY: CGFloat = UserDataModel.shared.largeScreen ? 145 : 125
             let addFriendsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 158, y: UIScreen.main.bounds.height - offsetY, width: 138, height: 49))
             addFriendsButton.setImage(UIImage(named: "FriendsListAddFriends"), for: .normal)
@@ -86,7 +86,7 @@ class FriendsListController: UIViewController {
             addFriendsButton.addTarget(self, action: #selector(addFriendsTap(_:)), for: .touchUpInside)
             addFriendsButton.imageView?.contentMode = .scaleAspectFit
             view.addSubview(addFriendsButton)
-        }
+        } */
     }
     
     // get friends from friendIDs for profile (non-active user)
@@ -120,7 +120,7 @@ class FriendsListController: UIViewController {
                         if let i = self.friendsList.firstIndex(where: {$0.id == friend}) {
                             self.friendsList[i] = userInfo
                         }
-                        self.profileVC.userInfo.friendsList = self.friendsList
+                      //  self.profileVC.userInfo.friendsList = self.friendsList
                         
                         friendIndex += 1
                         if friendIndex == self.friendIDs.count {
@@ -155,11 +155,12 @@ class FriendsListController: UIViewController {
     }
     
     @objc func updateFriendsList(_ sender: NSNotification) {
+        /*
         /// update friends list if selected before full friends list loaded on
         if profileVC != nil && uid == profileVC.id {
             friendsList = UserDataModel.shared.friendsList
             self.tableView.reloadData()
-        }
+        } */
     }
     
     @objc func addFriendsTap(_ sender: UIButton) {
@@ -205,8 +206,8 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let selectedUser = self.friendsList[indexPath.row]
-        
+      /*  let selectedUser = self.friendsList[indexPath.row]
+      
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
             
             vc.userInfo = selectedUser
@@ -235,7 +236,7 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
             }
             
             self.dismiss(animated: false, completion: nil)
-        }
+        } */
     }
 }
 

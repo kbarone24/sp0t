@@ -29,7 +29,6 @@ class UploadImageModel {
     var tappedLocation: CLLocation!
     static let shared = UploadImageModel()
     
-    
     init() {
         cameraAccess = AVCaptureDevice.authorizationStatus(for: .video)
         galleryAccess = PHPhotoLibrary.authorizationStatus()
