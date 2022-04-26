@@ -5,7 +5,7 @@
 //  Created by Kenny Barone on 5/20/21.
 //  Copyright © 2021 sp0t, LLC. All rights reserved.
 //
-
+/*
 import Foundation
 import UIKit
 import Firebase
@@ -589,3 +589,4 @@ class VerticallyCenteredTextView: UITextView {
         }
     }
 }
+*/

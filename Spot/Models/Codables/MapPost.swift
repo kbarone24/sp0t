@@ -49,12 +49,15 @@ struct MapPost: Identifiable, Codable {
     var spotPrivacy: String? = ""
     var createdBy: String? = ""
     var inviteList: [String]? = []
-    var friendsList: [String] = [] 
+    var friendsList: [String] = []
+    var seenList: [String]? = []
     var hideFromFeed: Bool? = false
     var gif: Bool? = false
     var isFirst: Bool? = false
+    var seen: Bool = true
     
     var addedUsers: [String]? = []
+ //   var posterGroup: [String]? = []
     var addedUserProfiles: [UserProfile] = []
     var tag: String? = ""
     var posterUsername: String? = ""
@@ -87,5 +90,7 @@ struct MapPost: Identifiable, Codable {
         case addedUsers
         case tag
         case isFirst
+        case seenList
     }
+    
 }

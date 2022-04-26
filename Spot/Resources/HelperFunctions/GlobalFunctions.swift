@@ -402,44 +402,31 @@ extension UIViewController {
         var newPost = post
         newPost.seconds = newPost.timestamp.seconds
         
-        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 40.0
-        let navBarHeight = statusHeight +
-                    (self.navigationController?.navigationBar.frame.height ?? 44.0)
-        let smallScreen = UserDataModel.shared.screenSize == 0
-
-        let superMax: CGFloat = 1.3
-        let maxAspect =  min((newPost.aspectRatios?.max() ?? 0.033) - 0.033, superMax)
+        let superMax: CGFloat = 1.92
+        var maxAspect =  min((newPost.aspectRatios?.max() ?? 0.033) - 0.033, superMax)
+        if maxAspect > 1.1 && maxAspect < 1.7 { maxAspect = 1.7 } /// stretch iPhone vertical
+        if maxAspect > 1.7 { maxAspect = 1.92 }
         let imageHeight = UIScreen.main.bounds.width * maxAspect
         let noImage = imageHeight == 0
 
         newPost.imageHeight = UIScreen.main.bounds.width * maxAspect
         /// 55/90 = bottom spacing for button bar, 55.5 on big screens = topview indent above image
-        let fixedAreas: CGFloat = smallScreen || noImage ? navBarHeight + 55 : navBarHeight + 55.5 + 90
-        let textHeight: CGFloat = UIScreen.main.bounds.height - fixedAreas - imageHeight
-        
-        var maxCaption = textHeight - 22 /// subtract timestamp height and spacing
-        /// min 2 comments showing for small screen, 1 comment for large screen
-        let minComments = smallScreen ? 1 : 2
-        maxCaption -=  CGFloat(min(max(0, post.commentList.count - 1), minComments) * 20)
         
         /// round to nearest line height
-        let captionMultiplier: CGFloat = noImage ? 29 : 18
-        maxCaption = (captionMultiplier * (maxCaption / captionMultiplier)).rounded(.down)
+        let maxCaption: CGFloat = noImage ? 500 : 65
         newPost.captionHeight = self.getCaptionHeight(caption: newPost.caption, noImage: noImage, maxCaption: maxCaption, truncated: true)
         
-        let commentsHeight = textHeight - newPost.captionHeight
-        newPost.commentList = getFeedCommentsHeight(height: commentsHeight, commentsList: newPost.commentList)
-        for comment in newPost.commentList { newPost.commentsHeight += comment.feedHeight }
+     //   newPost.posterGroup = [newPost.posterID]
+      //  newPost.posterGroup!.append(contentsOf: newPost.addedUsers ?? [])
+        newPost.seen = (newPost.seenList ?? [UserDataModel.shared.uid]).contains(where: {$0 == UserDataModel.shared.uid})
         
-        newPost.cellHeight = imageHeight + textHeight + fixedAreas
         return newPost
     }
     
     func getCaptionHeight(caption: String, noImage: Bool, maxCaption: CGFloat, truncated: Bool) -> CGFloat {
-                
-        let fontSize: CGFloat = noImage ? 24 : 14.2
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 16, height: 20))
+        
+        let fontSize: CGFloat = noImage ? 30 : 18
+        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 83, height: 20))
         tempLabel.text = caption
         tempLabel.font = UIFont(name: "SFCompactText-Regular", size: fontSize)
         tempLabel.numberOfLines = 0
@@ -545,6 +532,42 @@ extension UIViewController {
     func locationIsEmpty(location: CLLocation) -> Bool {
         return location.coordinate.longitude == 0.0 && location.coordinate.latitude == 0.0
     }
+    
+    func getTimestamp(postTime: Firebase.Timestamp) -> String {
+        let seconds = postTime.seconds
+        let current = NSDate().timeIntervalSince1970
+        let currentTime = Int64(current)
+        let timeSincePost = currentTime - seconds
+        
+        if timeSincePost < 604800 {
+            // return time since post
+            
+            if (timeSincePost <= 86400) {
+                if (timeSincePost <= 3600) {
+                    if (timeSincePost <= 60) {
+                        return "\(timeSincePost)s ago"
+                    } else {
+                        let minutes = timeSincePost / 60
+                        return "\(minutes)m ago"
+                    }
+                } else {
+                    let hours = timeSincePost / 3600
+                    return "\(hours)h ago"
+                }
+            } else {
+                let days = timeSincePost / 86400
+                return "\(days)d ago"
+            }
+        } else {
+            // return date
+            let timeInterval = TimeInterval(integerLiteral: seconds)
+            let date = Date(timeIntervalSince1970: timeInterval)
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "M/dd/yy"
+            let dateString = dateFormatter.string(from: date)
+            return dateString
+        }
+    }
 }
 
 /// upload post functions
@@ -586,7 +609,8 @@ extension UIViewController {
                           "tag" : post.tag!,
                           "tags" : [post.tag!], /// prepare for switch to multiple tags
                           "posterUsername" : UserDataModel.shared.userInfo.username,
-                          "imageLocations" : post.imageLocations!
+                          "imageLocations" : post.imageLocations!,
+                          "seenList" : []
         ] as [String : Any]
 
         let commentValues = ["addedUsers" : post.addedUsers ?? [],
@@ -748,7 +772,6 @@ extension UIViewController {
                                "searchKeywords": keywords,
                                "tagDictionary": tagDictionary,
                                "posterDictionary": posterDictionary] as [String : Any]
-            
             
             db.collection("spots").document(spot.id!).setData(spotValues, merge: true)
                         
@@ -1177,12 +1200,12 @@ extension UIImageView {
     
     func animateGIF(directionUp: Bool, counter: Int, alive: Bool) {
         
-        if superview == nil || isHidden || animationImages?.isEmpty ?? true { return }
+        if superview == nil || isHidden || animationImages?.isEmpty ?? true { self.stopPostAnimation(); return }
         
         var newDirection = directionUp
         var newCount = counter
         
-        if let postImage = self as? PostImageView { postImage.animationIndex = newCount }
+        if let postImage = self as? PostImageView { postImage.animationIndex = newCount; postImage.activeAnimation = true }
         /// for smooth animations on likes / other table reloads
         
         if directionUp {
@@ -1205,8 +1228,7 @@ extension UIImageView {
         
         UIView.transition(with: self, duration: duration, options: [.allowUserInteraction, .beginFromCurrentState], animations: { [weak self] in
                             guard let self = self else { return }
-                            if self.animationImages?.isEmpty ?? true { return }
-                            if counter >= self.animationImages?.count ?? 0 { return }
+            if self.animationImages?.isEmpty ?? true || counter >= self.animationImages?.count ?? 0 { self.stopPostAnimation(); return }
                             self.image = self.animationImages![counter] },
                           completion: nil)
         
@@ -1215,7 +1237,11 @@ extension UIImageView {
             self.animateGIF(directionUp: newDirection, counter: newCount, alive: alive)
         }
     }
-        
+    
+    func stopPostAnimation() {
+        if let postImage = self as? PostImageView { postImage.animationIndex = 0; postImage.activeAnimation = false }
+    }
+    
     func animate5FrameAlive(directionUp: Bool, counter: Int) {
     
         if superview == nil || isHidden || animationImages?.isEmpty ?? true { return }
@@ -1279,23 +1305,35 @@ extension UIImageView {
     }
     
     func addBottomMask() {
-        let bottomMask = UIView(frame: CGRect(x: 0, y: bounds.height - 140, width: UIScreen.main.bounds.width, height: 140))
+        let bottomMask = UIView(frame: CGRect(x: 0, y: bounds.height - 218, width: UIScreen.main.bounds.width, height: 218))
         bottomMask.backgroundColor = nil
         let layer0 = CAGradientLayer()
         layer0.frame = bottomMask.bounds
         layer0.colors = [
             UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.01).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.06).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.23).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.85).cgColor
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.48).cgColor,
         ]
-        layer0.locations = [0, 0.11, 0.24, 0.43, 0.65, 1]
+        layer0.locations = [0, 1]
         layer0.startPoint = CGPoint(x: 0.5, y: 0)
         layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
         bottomMask.layer.addSublayer(layer0)
         addSubview(bottomMask)
+    }
+    
+    func addTopMask() {
+        let topMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 109))
+        topMask.backgroundColor = nil
+        let layer0 = CAGradientLayer()
+        layer0.frame = topMask.bounds
+        layer0.colors = [
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.69).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
+        ]
+        layer0.locations = [0, 1]
+        layer0.startPoint = CGPoint(x: 0.5, y: 0)
+        layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
+        topMask.layer.addSublayer(layer0)
+        addSubview(topMask)
     }
 }
 
@@ -1490,3 +1528,82 @@ extension UIView {
         }
     }
 }
+
+extension UILabel {
+    
+    func addTrailing(with trailingText: String, moreText: String, moreTextFont: UIFont, moreTextColor: UIColor) {
+        
+        let readMoreText: String = trailingText + moreText
+        
+        if self.visibleTextLength == 0 { return }
+        
+        let lengthForVisibleString: Int = self.visibleTextLength
+        
+        if let myText = self.text {
+                                    
+            let mutableString = NSString(string: myText) /// use mutable string for length for correct length calculations
+            
+            let trimmedString: String? = mutableString.replacingCharacters(in: NSRange(location: lengthForVisibleString, length: mutableString.length - lengthForVisibleString), with: "")
+            let readMoreLength: Int = (readMoreText.count)
+            
+            let safeTrimmedString = NSString(string: trimmedString ?? "")
+            
+            if safeTrimmedString.length <= readMoreLength { return }
+            
+            // "safeTrimmedString.count - readMoreLength" should never be less then the readMoreLength because it'll be a negative value and will crash
+            let trimmedForReadMore: String = (safeTrimmedString as NSString).replacingCharacters(in: NSRange(location: safeTrimmedString.length - readMoreLength, length: readMoreLength), with: "") + trailingText
+                        
+            let answerAttributed = NSMutableAttributedString(string: trimmedForReadMore, attributes: [NSAttributedString.Key.font: self.font as Any])
+            let readMoreAttributed = NSMutableAttributedString(string: moreText, attributes: [NSAttributedString.Key.font: moreTextFont, NSAttributedString.Key.foregroundColor: moreTextColor])
+            answerAttributed.append(readMoreAttributed)
+            self.attributedText = answerAttributed
+        }
+    }
+    
+    var visibleTextLength: Int {
+        
+        let font: UIFont = self.font
+        let mode: NSLineBreakMode = self.lineBreakMode
+        let labelWidth: CGFloat = self.frame.size.width
+        let labelHeight: CGFloat = self.frame.size.height
+        let sizeConstraint = CGSize(width: labelWidth, height: CGFloat.greatestFiniteMagnitude)
+        
+        if let myText = self.text {
+            
+            let attributes: [AnyHashable: Any] = [NSAttributedString.Key.font: font]
+            let attributedText = NSAttributedString(string: myText, attributes: attributes as? [NSAttributedString.Key : Any])
+            let boundingRect: CGRect = attributedText.boundingRect(with: sizeConstraint, options: .usesLineFragmentOrigin, context: nil)
+            
+            if boundingRect.size.height > labelHeight {
+                var index: Int = 0
+                var prev: Int = 0
+                let characterSet = CharacterSet.whitespacesAndNewlines
+                repeat {
+                    prev = index
+                    if mode == NSLineBreakMode.byCharWrapping {
+                        index += 1
+                    } else {
+                        index = (myText as NSString).rangeOfCharacter(from: characterSet, options: [], range: NSRange(location: index + 1, length: myText.count - index - 1)).location
+                    }
+                } while index != NSNotFound && index < myText.count && (myText as NSString).substring(to: index).boundingRect(with: sizeConstraint, options: .usesLineFragmentOrigin, attributes: attributes as? [NSAttributedString.Key : Any], context: nil).size.height <= labelHeight
+                return prev
+            }
+        }
+        
+        if self.text == nil {
+            return 0
+        } else {
+            return self.text!.count
+        }
+    }
+    
+    var maxNumberOfLines: Int {
+        let maxSize = CGSize(width: frame.size.width, height: CGFloat(MAXFLOAT))
+        let text = (self.text ?? "") as NSString
+        let textHeight = text.boundingRect(with: maxSize, options: .usesLineFragmentOrigin, attributes: [.font: font as Any], context: nil).height
+        let lineHeight = font.lineHeight
+        return Int(ceil(textHeight / lineHeight))
+    }
+}
+///https://stackoverflow.com/questions/32309247/add-read-more-to-the-end-of-uilabel
+

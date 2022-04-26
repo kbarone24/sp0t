@@ -317,6 +317,9 @@
 		8C346D3C279775FE00B6E640 /* StandardPostAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C346D3B279775FE00B6E640 /* StandardPostAnnotationView.swift */; };
 		8C346D3D279775FE00B6E640 /* StandardPostAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C346D3B279775FE00B6E640 /* StandardPostAnnotationView.swift */; };
 		8C346D3E279775FE00B6E640 /* StandardPostAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C346D3B279775FE00B6E640 /* StandardPostAnnotationView.swift */; };
+		8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
+		8C373D5D27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
+		8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
 		8C3BAF58260C413F00349091 /* ConfirmCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */; };
 		8C3BAF59260C413F00349091 /* ConfirmCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */; };
 		8C3BAF5A260C413F00349091 /* ConfirmCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */; };
@@ -339,9 +342,6 @@
 		8C44ADF72682656900C0504B /* SpotVisitorsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C44ADF62682656900C0504B /* SpotVisitorsViewController.swift */; };
 		8C44ADF82682656900C0504B /* SpotVisitorsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C44ADF62682656900C0504B /* SpotVisitorsViewController.swift */; };
 		8C44ADF92682656900C0504B /* SpotVisitorsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C44ADF62682656900C0504B /* SpotVisitorsViewController.swift */; };
-		8C4A5FF726B1BFCD00ECB8CC /* MaskImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4A5FF626B1BFCD00ECB8CC /* MaskImageView.swift */; };
-		8C4A5FF826B1BFCD00ECB8CC /* MaskImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4A5FF626B1BFCD00ECB8CC /* MaskImageView.swift */; };
-		8C4A5FF926B1BFCD00ECB8CC /* MaskImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4A5FF626B1BFCD00ECB8CC /* MaskImageView.swift */; };
 		8C516BA526573E570079B863 /* EditPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C516BA426573E570079B863 /* EditPostView.swift */; };
 		8C516BA626573E570079B863 /* EditPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C516BA426573E570079B863 /* EditPostView.swift */; };
 		8C516BA726573E570079B863 /* EditPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C516BA426573E570079B863 /* EditPostView.swift */; };
@@ -466,6 +466,15 @@
 		8CE18CBE274C4A6A00BB27BF /* UploadAnnotationWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE18CBD274C4A6A00BB27BF /* UploadAnnotationWindow.swift */; };
 		8CE18CBF274C4A6A00BB27BF /* UploadAnnotationWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE18CBD274C4A6A00BB27BF /* UploadAnnotationWindow.swift */; };
 		8CE18CC0274C4A6A00BB27BF /* UploadAnnotationWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE18CBD274C4A6A00BB27BF /* UploadAnnotationWindow.swift */; };
+		8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
+		8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
+		8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
+		8CEF3FC4280501780088E0EF /* SF-Compact-Text-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CEF3FC3280501780088E0EF /* SF-Compact-Text-Heavy.otf */; };
+		8CEF3FC5280501780088E0EF /* SF-Compact-Text-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CEF3FC3280501780088E0EF /* SF-Compact-Text-Heavy.otf */; };
+		8CEF3FC6280501780088E0EF /* SF-Compact-Text-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CEF3FC3280501780088E0EF /* SF-Compact-Text-Heavy.otf */; };
+		8CEF3FC82805043B0088E0EF /* SF-Compact-Text-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CEF3FC72805043B0088E0EF /* SF-Compact-Text-Medium.otf */; };
+		8CEF3FC92805043B0088E0EF /* SF-Compact-Text-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CEF3FC72805043B0088E0EF /* SF-Compact-Text-Medium.otf */; };
+		8CEF3FCA2805043B0088E0EF /* SF-Compact-Text-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CEF3FC72805043B0088E0EF /* SF-Compact-Text-Medium.otf */; };
 		8CF5A5B826F3E91400320033 /* UploadChooseTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF5A5B726F3E91400320033 /* UploadChooseTagView.swift */; };
 		8CF5A5B926F3E91400320033 /* UploadChooseTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF5A5B726F3E91400320033 /* UploadChooseTagView.swift */; };
 		8CF5A5BA26F3E91400320033 /* UploadChooseTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF5A5B726F3E91400320033 /* UploadChooseTagView.swift */; };
@@ -607,6 +616,7 @@
 		8C346D332797753200B6E640 /* MapPostWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MapPostWindow.xib; sourceTree = "<group>"; };
 		8C346D372797756D00B6E640 /* MapPostWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostWindow.swift; sourceTree = "<group>"; };
 		8C346D3B279775FE00B6E640 /* StandardPostAnnotationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandardPostAnnotationView.swift; sourceTree = "<group>"; };
+		8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsPostGroup.swift; sourceTree = "<group>"; };
 		8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmCodeController.swift; sourceTree = "<group>"; };
 		8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerController.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
@@ -615,7 +625,6 @@
 		8C3DA17027C9716800727C4F /* CreatePostWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePostWindow.swift; sourceTree = "<group>"; };
 		8C44ADF22682654C00C0504B /* SpotPostsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPostsViewController.swift; sourceTree = "<group>"; };
 		8C44ADF62682656900C0504B /* SpotVisitorsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotVisitorsViewController.swift; sourceTree = "<group>"; };
-		8C4A5FF626B1BFCD00ECB8CC /* MaskImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaskImageView.swift; sourceTree = "<group>"; };
 		8C516BA426573E570079B863 /* EditPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditPostView.swift; sourceTree = "<group>"; };
 		8C5361C026F3BF0E008888B7 /* UploadOverviewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOverviewCell.swift; sourceTree = "<group>"; };
 		8C53FC0F2731C8D3001F64BB /* UploadImagesCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadImagesCell.swift; sourceTree = "<group>"; };
@@ -658,6 +667,9 @@
 		8CE18CAD27488BD400BB27BF /* LocationPickerSpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPickerSpotCell.swift; sourceTree = "<group>"; };
 		8CE18CB127488C1F00BB27BF /* UploadChooseSpotExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadChooseSpotExt.swift; sourceTree = "<group>"; };
 		8CE18CBD274C4A6A00BB27BF /* UploadAnnotationWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadAnnotationWindow.swift; sourceTree = "<group>"; };
+		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
+		8CEF3FC3280501780088E0EF /* SF-Compact-Text-Heavy.otf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SF-Compact-Text-Heavy.otf"; path = "../../../../Library/Fonts/SF-Compact-Text-Heavy.otf"; sourceTree = "<group>"; };
+		8CEF3FC72805043B0088E0EF /* SF-Compact-Text-Medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SF-Compact-Text-Medium.otf"; path = "../../../../Library/Fonts/SF-Compact-Text-Medium.otf"; sourceTree = "<group>"; };
 		8CF5A5B726F3E91400320033 /* UploadChooseTagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadChooseTagView.swift; sourceTree = "<group>"; };
 		8CFD73E92757E4FD00CBD162 /* TagCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagCategory.swift; sourceTree = "<group>"; };
 		994C18FD0D847CBE77336F96 /* Pods-Spot.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.release.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.release.xcconfig"; sourceTree = "<group>"; };
@@ -828,6 +840,8 @@
 		59056A56231DDF0300C7E753 /* fonts */ = {
 			isa = PBXGroup;
 			children = (
+				8CEF3FC72805043B0088E0EF /* SF-Compact-Text-Medium.otf */,
+				8CEF3FC3280501780088E0EF /* SF-Compact-Text-Heavy.otf */,
 				8C9C32B92794ACF7007813CA /* SF-Compact-Text-Regular.otf */,
 				8C9C32B52794ACE5007813CA /* SF-Compact-Text-Semibold.otf */,
 				8C9C32BD2794AD02007813CA /* SF-Compact-Text-Bold.otf */,
@@ -992,6 +1006,7 @@
 				8C988C2E267BFB450047A474 /* GuestbookPreview.swift */,
 				8CC2A54926BC7F99000ADA7A /* ImageObject.swift */,
 				8C5DEC8626CED7B5001BAE3A /* NearbyID.swift */,
+				8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */,
 			);
 			path = HelperObjects;
 			sourceTree = "<group>";
@@ -1011,6 +1026,7 @@
 				8CB14481277B90C3005340BF /* LeftAlignedCollectionViewLayout.swift */,
 				8C9C32E327961B72007813CA /* ActiveFilterView.swift */,
 				8C346D2F2797600A00B6E640 /* FeedMapExtension.swift */,
+				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 			);
 			path = SupplementalViews;
 			sourceTree = "<group>";
@@ -1141,7 +1157,6 @@
 		8CAC69E326FD29A500E8B04E /* CameraAndGallery */ = {
 			isa = PBXGroup;
 			children = (
-				8C4A5FF626B1BFCD00ECB8CC /* MaskImageView.swift */,
 				8C92898626CB18F10028DB69 /* CameraAccessView.swift */,
 				8C29879B2693A05A0071E75A /* CircleView.swift */,
 				597072F924291992008A481A /* AVSpotCamera.swift */,
@@ -1306,6 +1321,7 @@
 			files = (
 				8C9C32B62794ACE5007813CA /* SF-Compact-Text-Semibold.otf in Resources */,
 				8C0D1EAB27A8720000F4B885 /* MapPostWindowLarge.xib in Resources */,
+				8CEF3FC82805043B0088E0EF /* SF-Compact-Text-Medium.otf in Resources */,
 				8C2CBAE327643BFC003E68B7 /* UploadPostDown.xib in Resources */,
 				8C346D342797753200B6E640 /* MapPostWindow.xib in Resources */,
 				7A24FE78226F832A0084576C /* map-style.json in Resources */,
@@ -1323,6 +1339,7 @@
 				8C0D1EBB27AB39BD00F4B885 /* TextPostWindow.xib in Resources */,
 				7A5E078F2233165B00B53B58 /* MarkerInfoWindowView.xib in Resources */,
 				59FECF3224B4F68E00BD0EED /* MapTarget.xib in Resources */,
+				8CEF3FC4280501780088E0EF /* SF-Compact-Text-Heavy.otf in Resources */,
 				59724E3F237B728600CCBF35 /* AddSpot.storyboard in Resources */,
 				59A5A3D5253A87EC00789B7E /* GoogleService-Info.plist in Resources */,
 				8C1D769E261D1FA00056B453 /* LandingScreenVideo.mp4 in Resources */,
@@ -1344,6 +1361,7 @@
 			files = (
 				8C9C32B72794ACE5007813CA /* SF-Compact-Text-Semibold.otf in Resources */,
 				8C0D1EAC27A8720000F4B885 /* MapPostWindowLarge.xib in Resources */,
+				8CEF3FC92805043B0088E0EF /* SF-Compact-Text-Medium.otf in Resources */,
 				8C2CBAE427643BFC003E68B7 /* UploadPostDown.xib in Resources */,
 				8C346D352797753200B6E640 /* MapPostWindow.xib in Resources */,
 				59004E2122CBB1D3004E06EF /* MarkerInfoWindowView.xib in Resources */,
@@ -1361,6 +1379,7 @@
 				8C0D1EBC27AB39BD00F4B885 /* TextPostWindow.xib in Resources */,
 				59004E2922CBB1E9004E06EF /* LaunchScreen.storyboard in Resources */,
 				59A5A3CF253A873E00789B7E /* GoogleService-Info.plist in Resources */,
+				8CEF3FC5280501780088E0EF /* SF-Compact-Text-Heavy.otf in Resources */,
 				59A5A3D3253A874600789B7E /* Info.plist in Resources */,
 				8C1D769F261D1FA10056B453 /* LandingScreenVideo.mp4 in Resources */,
 				5978F07124D0734300582B83 /* SinglePost.xib in Resources */,
@@ -1382,6 +1401,7 @@
 			files = (
 				8C9C32B82794ACE5007813CA /* SF-Compact-Text-Semibold.otf in Resources */,
 				8C0D1EAD27A8720000F4B885 /* MapPostWindowLarge.xib in Resources */,
+				8CEF3FCA2805043B0088E0EF /* SF-Compact-Text-Medium.otf in Resources */,
 				8C2CBAE527643BFC003E68B7 /* UploadPostDown.xib in Resources */,
 				8C346D362797753200B6E640 /* MapPostWindow.xib in Resources */,
 				59004E2222CBB1D3004E06EF /* MarkerInfoWindowView.xib in Resources */,
@@ -1399,6 +1419,7 @@
 				8C0D1EBD27AB39BD00F4B885 /* TextPostWindow.xib in Resources */,
 				59004E2A22CBB1E9004E06EF /* LaunchScreen.storyboard in Resources */,
 				59A5A3D0253A873E00789B7E /* GoogleService-Info.plist in Resources */,
+				8CEF3FC6280501780088E0EF /* SF-Compact-Text-Heavy.otf in Resources */,
 				59A5A3D4253A874600789B7E /* Info.plist in Resources */,
 				8C1D76A0261D1FA10056B453 /* LandingScreenVideo.mp4 in Resources */,
 				5978F07224D0734300582B83 /* SinglePost.xib in Resources */,
@@ -1568,6 +1589,7 @@
 				592CAEFA251418D600202E4F /* UploadPostController.swift in Sources */,
 				8C271E24276AE968007A545F /* UploadPostMiddle.swift in Sources */,
 				8C3BAF58260C413F00349091 /* ConfirmCodeController.swift in Sources */,
+				8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8C3BAF5F260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
 				8C88B0EE27BCA7A900DB4039 /* ProfileSpotsViewController.swift in Sources */,
@@ -1616,7 +1638,7 @@
 				8C9C32E427961B72007813CA /* ActiveFilterView.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				592EADD923316DCA0076FBC5 /* InviteFriendsController.swift in Sources */,
-				8C4A5FF726B1BFCD00ECB8CC /* MaskImageView.swift in Sources */,
+				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				598B700B2305D24400613AFD /* NotificationsViewController.swift in Sources */,
 				5916A8B324A27F8500118E83 /* MapSpot.swift in Sources */,
@@ -1634,7 +1656,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				59F6ABB0234EA73500E18AAF /* Contact.swift in Sources */,
-				8C4A5FF826B1BFCD00ECB8CC /* MaskImageView.swift in Sources */,
 				5995F91924085936007BA334 /* GIFPreviewController.swift in Sources */,
 				593AC542243CE36500C08237 /* GlobalFunctions.swift in Sources */,
 				593AC54E243FAA2B00C08237 /* PhoneController.swift in Sources */,
@@ -1698,6 +1719,7 @@
 				59FCF5B024734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C2074CD25CB38440040036B /* City.swift in Sources */,
 				8C0D1EC427AB3CDC00F4B885 /* TextPostAnnotationView.swift in Sources */,
+				8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				5916A8B424A27F8500118E83 /* MapSpot.swift in Sources */,
 				8C88B0EF27BCA7A900DB4039 /* ProfileSpotsViewController.swift in Sources */,
 				8CB400C2273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */,
@@ -1746,6 +1768,7 @@
 				8C9C32C3279610D3007813CA /* PostClusterView.swift in Sources */,
 				59FECF3724B4F69E00BD0EED /* MapTarget.swift in Sources */,
 				8C988C34267D1AE80047A474 /* SpotNotification.swift in Sources */,
+				8C373D5D27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C3BAF60260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8CC3653B26C5E9A900AC40AB /* UploadImageModel.swift in Sources */,
 				5916A8BC24A566F400118E83 /* ResultUser.swift in Sources */,
@@ -1764,7 +1787,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				59F6ABB1234EA73500E18AAF /* Contact.swift in Sources */,
-				8C4A5FF926B1BFCD00ECB8CC /* MaskImageView.swift in Sources */,
 				5995F91A24085936007BA334 /* GIFPreviewController.swift in Sources */,
 				593AC543243CE36500C08237 /* GlobalFunctions.swift in Sources */,
 				593AC54F243FAA2B00C08237 /* PhoneController.swift in Sources */,
@@ -1828,6 +1850,7 @@
 				59FCF5B124734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C2074CE25CB38440040036B /* City.swift in Sources */,
 				8C0D1EC527AB3CDC00F4B885 /* TextPostAnnotationView.swift in Sources */,
+				8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				5916A8B524A27F8500118E83 /* MapSpot.swift in Sources */,
 				8C88B0F027BCA7A900DB4039 /* ProfileSpotsViewController.swift in Sources */,
 				8CB400C3273C7DD100DFFCEE /* UploadChooseSpotCell.swift in Sources */,
@@ -1876,6 +1899,7 @@
 				8C9C32C4279610D3007813CA /* PostClusterView.swift in Sources */,
 				59FECF3824B4F69E00BD0EED /* MapTarget.swift in Sources */,
 				8C988C35267D1AE80047A474 /* SpotNotification.swift in Sources */,
+				8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C3BAF61260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8CC3653C26C5E9A900AC40AB /* UploadImageModel.swift in Sources */,
 				5916A8BD24A566F400118E83 /* ResultUser.swift in Sources */,
@@ -2055,9 +2079,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 73;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 77;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2110,7 +2134,7 @@
 				MARKETING_VERSION = 0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE_SPECIFIER = "sp0t distribution profile 2022";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -2125,9 +2149,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 73;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 77;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
@@ -2180,7 +2204,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE_SPECIFIER = "sp0t distribution profile 2022";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
