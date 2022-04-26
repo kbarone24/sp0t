@@ -17,6 +17,7 @@ import FirebaseUI
 import FirebaseFirestore
 import FirebaseAuth
 import MapboxMaps
+import FirebaseMessaging
 
 class MapViewController: UIViewController {
     
@@ -54,7 +55,9 @@ class MapViewController: UIViewController {
     var postAnnotation: SinglePostAnnotation!
     
     lazy var postsList: [MapPost] = []
-            
+    lazy var friendsPostsDictionary = [String: MapPost]()
+    lazy var friendsPostsGroup: [FriendsPostGroup] = []
+    
     lazy var tagUsers: [UserProfile] = [] /// users for rows in tagTable
     var tagTable: UITableView! /// tag table that shows after @ throughout app
     var tagParent: TagTableParent! /// active VC where @ was entered
@@ -88,12 +91,10 @@ class MapViewController: UIViewController {
     var friendsListener, nearbyListener, commentListener: ListenerRegistration!
     
     var feedTableContainer: UIView!
-    var postsLabel: UILabel!
-    var feedTableButton: UIButton!
     var feedTableHighlight: UIView!
     var feedTable: UITableView!
-    var feedPan: UIPanGestureRecognizer!
     lazy var loadingIndicator = CustomActivityIndicator()
+    var statusBarMask: UIView!
     
     var originalOffset: CGFloat = 0
     var feedRowOffset: CGFloat = 0
@@ -103,9 +104,7 @@ class MapViewController: UIViewController {
     var pointAnnotations: [PointAnnotation] = []
     var nearbyAnnotations: [PointAnnotation] = []
     var friendAnnotations: [PointAnnotation] = []
-    
-    var exitFriendsButton: UIButton!
-        
+                
     enum refreshStatus {
         case yesRefresh
         case refreshing
@@ -203,20 +202,11 @@ class MapViewController: UIViewController {
                 guard var activeUser = actUser else { return }
                 
                 activeUser.id = userSnap!.documentID
-                let firstLoad = UserDataModel.shared.userInfo.id == ""
                 if userSnap!.documentID != self.uid { return } /// logout + object not being destroyed
                 
                 UserDataModel.shared.userInfo = activeUser
                 self.setUpNavBar()
-                
-                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                self.imageManager.loadImage(with: URL(string: activeUser.imageURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { (image, data, err, cache, download, url) in
-                    
-                    UserDataModel.shared.userInfo.profilePic = image ?? UIImage()
-                    ///post noti for profile in case user has already selected it
-                    if firstLoad {
-                        NotificationCenter.default.post(Notification(name: Notification.Name("InitialUserLoad"))) }
-                }
+                self.getUserProfilePics(firstLoad: UserDataModel.shared.userInfo.id == "")
                 
                 UserDataModel.shared.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
                 for id in self.deletedFriendIDs { UserDataModel.shared.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
@@ -278,6 +268,34 @@ class MapViewController: UIViewController {
         })
     }
     
+    func getUserProfilePics(firstLoad: Bool) {
+        
+        var count = 0
+        
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+        self.imageManager.loadImage(with: URL(string: UserDataModel.shared.userInfo.imageURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { (image, data, err, cache, download, url) in
+            
+            UserDataModel.shared.userInfo.profilePic = image ?? UIImage()
+            ///post noti for profile in case user has already selected it
+            
+            count += 1
+            if count == 2 && firstLoad {
+                NotificationCenter.default.post(Notification(name: Notification.Name("InitialUserLoad"))) }
+        }
+
+        let avatarURL = UserDataModel.shared.userInfo.avatarURL ?? ""
+        if (avatarURL) != "" {
+            self.imageManager.loadImage(with: URL(string: avatarURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { (image, data, err, cache, download, url) in
+                UserDataModel.shared.userInfo.avatarPic = image ?? UIImage()
+
+                count += 1
+                if count == 2 && firstLoad {
+                    NotificationCenter.default.post(Notification(name: Notification.Name("InitialUserLoad"))) }
+            }
+            
+        } else { count += 1 }
+    }
+    
     func addMapView() {
         
         let options = MapInitOptions(resourceOptions: ResourceOptions(accessToken: "pk.eyJ1Ijoic3AwdGtlbm55IiwiYSI6ImNrem9tYzhkODAycmUydW50bXVza2JhZmgifQ.Cl0TokRRaMo8UZDImGqp0A"), mapOptions: MapOptions(), cameraOptions: CameraOptions(), styleURI: StyleURI(rawValue: "mapbox://styles/sp0tkenny/ckzpv54l9004114kdu5kcy8w4"))
@@ -301,8 +319,8 @@ class MapViewController: UIViewController {
         addButton.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
         view.addSubview(addButton)
         
-        let friendsButton = UIButton(frame: CGRect(x: addX - 61, y: addY, width: 61, height: 61))
-        friendsButton.setImage(UIImage(named: "ProfileAddFriends"), for: .normal)
+        let friendsButton = UIButton(frame: CGRect(x: addX - 61, y: addY, width: 45, height: 45))
+        friendsButton.setImage(UIImage(named: "FriendsFeedIcon"), for: .normal)
         friendsButton.addTarget(self, action: #selector(friendsTap(_:)), for: .touchUpInside)
         view.addSubview(friendsButton)
     }
@@ -310,53 +328,70 @@ class MapViewController: UIViewController {
     func addFeedTable() {
         
         if feedTableContainer != nil { feedTableContainer.isHidden = false; return }
-        feedTableContainer = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height * 2/5, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 3/5))
-        feedTableContainer.backgroundColor = .black
-        feedTableContainer.layer.cornerRadius = 10
+        feedTableContainer = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height * 1/8, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 7/8))
+        feedTableContainer.backgroundColor = UIColor(red: 0.976, green: 0.976, blue: 0.976, alpha: 1)
+        feedTableContainer.layer.cornerRadius = 20
         feedTableContainer.isHidden = true
         view.addSubview(feedTableContainer)
         
-        postsLabel = UILabel(frame: CGRect(x: 13, y: 10, width: 115, height: 21))
-        postsLabel.text = "Latest posts"
-        postsLabel.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        postsLabel.font = UIFont(name: "SFCompactText-Bold", size: 18.5)
-        feedTableContainer.addSubview(postsLabel)
+        let friendsIcon = UIImageView(frame: CGRect(x: 13, y: 18, width: 53, height: 53))
+        friendsIcon.image = UIImage(named: "FriendsFeedIcon")
+        feedTableContainer.addSubview(friendsIcon)
+                
+        let friendsLabel = UILabel(frame: CGRect(x: friendsIcon.frame.maxX + 9, y: 27, width: 77, height: 17))
+        friendsLabel.text = "Friends"
+        friendsLabel.textColor = .black
+        friendsLabel.font = UIFont(name: "SFCompactText-Bold", size: 17.5)
+        feedTableContainer.addSubview(friendsLabel)
         
-        feedTableButton = UIButton(frame: CGRect(x: postsLabel.frame.maxX, y: 7, width: 28, height: 28))
+        let detailLabel = UILabel(frame: CGRect(x: friendsIcon.frame.maxX + 9, y: friendsLabel.frame.maxY + 3, width: 200, height: 17))
+        detailLabel.text = "Your friends latest posts"
+        detailLabel.textColor = UIColor(red: 0.742, green: 0.742, blue: 0.742, alpha: 1)
+        detailLabel.font = UIFont(name: "SFCompatText-Semibold", size: 15.5)
+        feedTableContainer.addSubview(detailLabel)
+        
+        let feedTableButton = UIButton(frame: CGRect(x: friendsLabel.frame.maxX, y: 7, width: 28, height: 28))
       //  feedTableButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         feedTableButton.setImage(UIImage(named: "MapFeedMinimize"), for: .normal)
         feedTableButton.addTarget(self, action: #selector(feedButtonTap(_:)), for: .touchUpInside)
-        feedTableContainer.addSubview(feedTableButton)
+      //  feedTableContainer.addSubview(feedTableButton)
         
-        feedTableHighlight = UIView(frame: CGRect(x: 12, y: postsLabel.frame.maxY + 10, width: UIScreen.main.bounds.width - 101, height: 48))
+        let exitFriendsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 81, y: 10, width: 71, height: 71))
+        exitFriendsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        exitFriendsButton.setImage(UIImage(named: "ChooseSpotExit"), for: .normal)
+        exitFriendsButton.addTarget(self, action: #selector(exitFriendsTap(_:)), for: .touchUpInside)
+        feedTableContainer.addSubview(exitFriendsButton)
+        
+        let bottomLine = UIView(frame: CGRect(x: 0, y: 82, width: UIScreen.main.bounds.width, height: 1))
+        bottomLine.backgroundColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1)
+        feedTableContainer.addSubview(bottomLine)
+        
+        feedTableHighlight = UIView(frame: CGRect(x: 12, y: 84, width: UIScreen.main.bounds.width - 101, height: 48))
         feedTableHighlight.backgroundColor =  UIColor(red: 0.18, green: 0.778, blue: 0.817, alpha: 0.15)
         feedTableHighlight.layer.borderWidth = 1.5
         feedTableHighlight.layer.cornerRadius = 12
         feedTableHighlight.layer.borderColor = UIColor(red: 0.096, green: 0.249, blue: 0.258, alpha: 1).cgColor
         feedTableHighlight.isHidden = selectedFeedIndex == -1
-        feedTableContainer.addSubview(feedTableHighlight)
-            
-        exitFriendsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 81, y: 0, width: 71, height: 71))
-        exitFriendsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        exitFriendsButton.setImage(UIImage(named: "ChooseSpotExit"), for: .normal)
-        exitFriendsButton.addTarget(self, action: #selector(exitFriendsTap(_:)), for: .touchUpInside)
-        feedTableContainer.addSubview(exitFriendsButton)
+      //  feedTableContainer.addSubview(feedTableHighlight)
 
-        feedTable = UITableView(frame: CGRect(x: 0, y: postsLabel.frame.maxY + 10, width: UIScreen.main.bounds.width, height: feedTableContainer.frame.height - 41))
+        feedTable = UITableView(frame: CGRect(x: 0, y: 84, width: UIScreen.main.bounds.width, height: feedTableContainer.frame.height - 41))
         feedTable.tag = 0
-        feedTable.backgroundColor = UIColor.clear
+        feedTable.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
         feedTable.separatorStyle = .none
         feedTable.delegate = self
         feedTable.dataSource = self
-        feedTable.isScrollEnabled = false
         feedTable.allowsSelection = true
         feedTable.register(MapFeedCell.self, forCellReuseIdentifier: "FeedCell")
         feedTable.register(MapFeedLoadingCell.self, forCellReuseIdentifier: "FeedLoadingCell")
-        feedTable.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: feedTable.frame.height, right: 0)
+        feedTable.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 200, right: 0)
         feedTableContainer.addSubview(feedTable)
         
-        feedPan = UIPanGestureRecognizer(target: self, action: #selector(feedPan(_:)))
-        feedTable.addGestureRecognizer(feedPan)
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+        statusBarMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: statusHeight + 10))
+        statusBarMask.backgroundColor = .black
+        statusBarMask.alpha = 0.0
+        view.addSubview(statusBarMask)
     }
     
     @objc func addTap(_ sender: UIButton) {
@@ -375,6 +410,7 @@ class MapViewController: UIViewController {
     @objc func friendsTap(_ sender: UIButton) {
         selectedSegmentIndex = 1
         feedTableContainer.isHidden = false
+        navigationController?.navigationBar.isHidden = true
         postAnnotationManager.annotations = friendAnnotations
         getFriendPosts(refresh: !friendAnnotations.isEmpty)
     }
@@ -382,6 +418,7 @@ class MapViewController: UIViewController {
     @objc func exitFriendsTap(_ sender: UIButton) {
         selectedSegmentIndex = 0
         feedTableContainer.isHidden = true
+        navigationController?.navigationBar.isHidden = false
         postAnnotationManager.annotations = nearbyAnnotations
     }
         
@@ -734,7 +771,7 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource, UITable
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch tableView.tag {
-        case 0: return refresh == .noRefresh ? postsList.count : postsList.count + 1
+        case 0: return refresh == .refreshing ? friendsPostsGroup.count + 1 : friendsPostsGroup.count
         case 1:
             var maxRows = 2
             if tagTable.frame.height > 300 {
@@ -753,9 +790,21 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource, UITable
         switch tableView.tag {
             
         case 0:
-            if indexPath.row < postsList.count {
+            if indexPath.row < friendsPostsGroup.count {
+                
                 let cell = tableView.dequeueReusableCell(withIdentifier: "FeedCell", for: indexPath) as! MapFeedCell
-                cell.setUp(post: postsList[indexPath.row], row: indexPath.row, selected: indexPath.row == selectedFeedIndex)
+                let postIDs = friendsPostsGroup[indexPath.row].postIDs
+                
+                var posts: [MapPost] = []
+                for id in postIDs {
+                    posts.append(friendsPostsDictionary[id.0]!)
+                }
+                
+                var newCount = 0
+                for post in posts { if !post.seen { newCount += 1 }}
+                let firstPost = posts.first!
+
+                cell.setUp(post: firstPost, postCount: newCount, row: indexPath.row, selected: indexPath.row == selectedFeedIndex)
                 return cell
                 
             } else {
@@ -774,7 +823,7 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource, UITable
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return tableView.tag == 1 ? 52 : 45
+        return tableView.tag == 1 ? 52 : 69
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -821,107 +870,6 @@ extension MapViewController: UITableViewDelegate, UITableViewDataSource, UITable
         }
     }
 
-        
-    /// panGesture interfering with didSelect touches -> selectFromCell through tapGesture
-    func selectPostAt(index: Int) {
-        index == selectedFeedIndex ? openPosts(row: index, openComments: false) : selectNewPost(index: index, animated: true, dragging: false)
-    }
-    
-    func selectNewPost(index: Int, animated: Bool, dragging: Bool) {
-                
-        let oldIndex = selectedFeedIndex
-        selectedFeedIndex = index
-        feedTableHighlight.isHidden = selectedFeedIndex == -1
-
-        let id = selectedFeedIndex == -1 ? "" : postsList[index].id!
-        if oldIndex != index { selectAnnotation(id: id, oldIndex: oldIndex) }
-        
-        /// reset feed to deselected position
-        if selectedFeedIndex == -1 {
-            DispatchQueue.main.async { self.feedTable.reloadData() }
-            return
-        }
-        
-        /// dragging is true while the user is interacting with the feedTable
-        if !dragging { setSelectedPost(oldIndex: oldIndex) }
-        
-        
-        DispatchQueue.main.async {
-            if animated {
-                UIView.animate(withDuration: 0.25) { self.feedTable.setContentOffset(CGPoint(x: 0, y: 45 * self.selectedFeedIndex), animated: false) }
-            }
-        }
-        
-        checkForFeedReload()
-    }
-    
-    func setSelectedPost(oldIndex: Int) {
-                
-        if let currentCell = feedTable.cellForRow(at: IndexPath(row: selectedFeedIndex, section: 0)) as? MapFeedCell {
-            currentCell.setSelectedValues()
-        }
-        
-        if oldIndex != selectedFeedIndex, let pCell = feedTable.cellForRow(at: IndexPath(row: oldIndex, section: 0)) as? MapFeedCell {
-            pCell.setUnselectedValues()
-        }
-    }
-    
-    func selectAnnotation(id: String, oldIndex: Int) {
-        
-        /*
-        /// remove old annotation to set back to normal size
-        if oldIndex > -1 {
-            let id = postsList[oldIndex].id!
-            if let anno = postAnnotations.first(where: {$0.key == id}) {
-                if selectedFeedIndex == -1 { deselectAnnotationAnimated(anno: anno.value); return } /// animate removal if not selecting another
-                DispatchQueue.main.async { self.UserDataModel.shared.mapView.removeAnnotation(anno.value); self.UserDataModel.shared.mapView.addAnnotation(anno.value) }
-                if selectedFeedIndex == -1 { return }
-            }
-        }
-        
-        if selectedFeedIndex == -1 { return } /// called to deselect annotaiton on
-        
-        guard let post = postsList.first(where: {$0.id == id}) else { return }
-        centerSelectedAnnotation(selectedCoordinate: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong))
-
-        /// scale selected annotation
-        if let anno = postAnnotations.first(where: {$0.key == id}) {
-            if let annoView = UserDataModel.shared.mapView.view(for: anno.value) as? StandardPostAnnotationView {
-                
-                annoView.isSelected = true
-                annoView.transform = CGAffineTransform(scaleX: 50/195, y: 52/161)
-                annoView.updateLargeImage(post: post, animated: true)
-                
-            } else if let annoView = UserDataModel.shared.mapView.view(for: anno.value) as? TextPostAnnotationView {
-                
-                annoView.isSelected = true
-                annoView.transform = CGAffineTransform(scaleX: 46/165, y: 41/102)
-                annoView.updateLargeImage(post: post, animated: true)
-            } 
-        } */
-    }
-    
-    func deselectAnnotationAnimated(anno: CustomPointAnnotation) {
-        /*
-        if let view = UserDataModel.shared.mapView.view(for: anno) as? StandardPostAnnotationView {
-            
-            view.isSelected = false
-
-            /// minimize view first, then change to
-            DispatchQueue.main.async { UIView.animate(withDuration: 0.3, delay: 0.0, options: [.transitionCrossDissolve, .curveLinear]) {
-                guard let post = self.postsList.first(where: {$0.id == anno.postID}) else { return }
-                view.updateSmallImage(post: post)
-            } }
-        } else if let view = UserDataModel.shared.mapView.view(for: anno) as? TextPostAnnotationView {
-            
-            view.isSelected = false
-            DispatchQueue.main.async { UIView.animate(withDuration: 0.3, delay: 0.0, options: [.transitionCrossDissolve, .curveLinear]) {
-                guard let post = self.postsList.first(where: {$0.id == anno.postID}) else { return }
-                view.updateSmallImage(post: post)
-            } }
-        } */
-    }
-    
     func checkForFeedReload() {
         if selectedFeedIndex > postsList.count - 4 && refresh == .yesRefresh {
             refresh = .refreshing

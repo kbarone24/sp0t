@@ -20,8 +20,10 @@ struct UserProfile: Identifiable, Codable {
     var imageURL: String
     var currentLocation: String
     var userBio: String
+    var avatarURL: String? = ""
 
     var profilePic: UIImage = UIImage()
+    var avatarPic: UIImage = UIImage()
     var spotsList: [String] = []
     var spotScore: Int? = 0
     var friendIDs: [String] = []
@@ -51,6 +53,7 @@ struct UserProfile: Identifiable, Codable {
         case sentInvites
         case topFriends
         case tagDictionary
+        case avatarURL
     }
     
     var tagCategories: [String: Any] {

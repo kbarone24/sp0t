@@ -119,6 +119,7 @@ class InviteFriendsController: UIViewController {
     }
     
     @objc func doneTapped(_ sender: UIButton) {
+      
         /*
        if editVC != nil {
             var inviteList = self.selectedFriends.map({($0.id!)})
@@ -150,10 +151,12 @@ class InviteFriendsController: UIViewController {
         
             delegate?.finishPassingSelectedFriends(selected: selectedFriends)
         }
+        */
         
+        delegate?.finishPassingSelectedFriends(selected: selectedFriends)
         Mixpanel.mainInstance().track(event: "InviteFriendsSave", properties: ["friendCount": self.selectedFriends.count])
         self.dismiss(animated: true, completion: nil)
-    } */
+    
     }
 }
 

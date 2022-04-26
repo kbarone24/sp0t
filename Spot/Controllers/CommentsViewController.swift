@@ -19,7 +19,6 @@ class CommentsViewController: UIViewController {
     weak var postVC: PostViewController!
     var post: MapPost!
     var postIndex = 0
-    var captionHeight: CGFloat = 0
     
     var likers: [UserProfile] = []
     var commentList: [MapComment] = []
@@ -33,7 +32,7 @@ class CommentsViewController: UIViewController {
     var listener1: ListenerRegistration!
     
     var footerView: UIView!
-    var profileImage: UIImageView!
+    var profilePic: UIImageView!
     var textView: UITextView!
     var postButton: UIButton!
     
@@ -45,7 +44,7 @@ class CommentsViewController: UIViewController {
     var downloads: [StorageDownloadTask] = []
     var active = true
     
-    let emptyTextString = "Write a comment..."
+    let emptyTextString = "Comment..."
     
     override var inputAccessoryView: UIView {
         if footerView == nil {
@@ -59,7 +58,7 @@ class CommentsViewController: UIViewController {
         
         NotificationCenter.default.addObserver(self, selector: #selector(tagSelect(_:)), name: NSNotification.Name("TagSelect"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentLike(_:)), name: NSNotification.Name("CommentLike"), object: nil)
-        view.backgroundColor = .black
+        view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.98, alpha: 1)
         
         if userInfo == nil { userInfo = UserDataModel.shared.userInfo }
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
@@ -109,14 +108,14 @@ class CommentsViewController: UIViewController {
     func addTable() {
         
         commentsTable = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-        commentsTable.backgroundColor = .black
+        commentsTable.backgroundColor = nil
         commentsTable.separatorStyle = .none
         commentsTable.dataSource = self
         commentsTable.delegate = self
         commentsTable.showsVerticalScrollIndicator = false
         commentsTable.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
         commentsTable.register(CommentCell.self, forCellReuseIdentifier: "CommentCell")
-        commentsTable.register(CommentHeader.self, forHeaderFooterViewReuseIdentifier: "CommentHeader")
+        commentsTable.register(CommentsControl.self, forHeaderFooterViewReuseIdentifier: "CommentsControl")
         commentsTable.register(LikerCell.self, forCellReuseIdentifier: "LikerCell")
         view.addSubview(commentsTable)
     }
@@ -127,19 +126,20 @@ class CommentsViewController: UIViewController {
         
         footerView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 112))
         footerView.autoresizingMask = .flexibleHeight
-        footerView.backgroundColor = UIColor(red: 0.054, green: 0.054, blue: 0.054, alpha: 1)
+        footerView.backgroundColor = nil
         
-        profileImage = UIImageView(frame: CGRect(x: 11, y: 11, width: 42, height: 41))
-        profileImage.image = userInfo.profilePic
-        profileImage.contentMode = .scaleAspectFill
-        profileImage.layer.cornerRadius = 14.5
-        profileImage.clipsToBounds = true
-        footerView.addSubview(profileImage)
+        profilePic = UIImageView(frame: CGRect(x: 11, y: 11, width: 42, height: 41))
+        let image = userInfo.avatarPic == UIImage() ? userInfo.profilePic : userInfo.avatarPic
+        profilePic.image = image
+        profilePic.contentMode = .scaleAspectFill
+        profilePic.layer.cornerRadius = 14.5
+        profilePic.clipsToBounds = true
+        footerView.addSubview(profilePic)
         
-        textView = UITextView(frame: CGRect(x: profileImage.frame.maxX + 10, y: 11, width: UIScreen.main.bounds.width - 77, height: 42))
-        textView.backgroundColor = UIColor(red: 0.086, green: 0.086, blue: 0.086, alpha: 1)
-        textView.font = UIFont(name: "SFCompactText-Regular", size: 15.5)
-        textView.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        textView = UITextView(frame: CGRect(x: profilePic.frame.maxX + 10, y: 11, width: UIScreen.main.bounds.width - 77, height: 42))
+        textView.backgroundColor = UIColor(red: 0.937, green: 0.937, blue: 0.937, alpha: 1)
+        textView.font = UIFont(name: "SFCompactText-Semibold", size: 18)
+        textView.textColor = UIColor(red: 0.462, green: 0.462, blue: 0.462, alpha: 1)
         textView.text = emptyTextString
         textView.alpha = 0.65
         textView.textContainerInset = UIEdgeInsets(top: 11, left: 16, bottom: 11, right: 60)
@@ -147,7 +147,7 @@ class CommentsViewController: UIViewController {
         textView.textContainer.maximumNumberOfLines = 6
         textView.textContainer.lineBreakMode = .byTruncatingHead
         textView.delegate = self
-        textView.layer.cornerRadius = 22
+        textView.layer.cornerRadius = 11
         textView.inputAccessoryView = footerView
         
         postButton = UIButton(frame: CGRect(x: textView.bounds.maxX - 47, y: 2, width: 38, height: 38))
@@ -292,7 +292,7 @@ class CommentsViewController: UIViewController {
             postVC.postsList[index] = setSecondaryPostValues(post: postVC.postsList[index])
         }
         
-        postVC.tableView.reloadData()
+        postVC.postsCollection.reloadData()
         let infoPass = ["commentList": self.commentList, "postID": post.id!] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("PostComment"), object: nil, userInfo: infoPass)
     }
@@ -404,7 +404,6 @@ extension CommentsViewController: UITableViewDelegate, UITableViewDataSource {
             return cell
             
         case 1:
-            print("liker cell")
             let cell = tableView.dequeueReusableCell(withIdentifier: "LikerCell", for: indexPath) as! LikerCell
             cell.setUp(friend: likers[indexPath.row])
             return cell
@@ -444,14 +443,14 @@ extension CommentsViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        if let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "CommentHeader") as? CommentHeader {
+        if let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "CommentsControl") as? CommentsControl {
             header.setUp(post: post, selectedIndex: selectedIndex)
             return header
         } else { return UITableViewHeaderFooterView() }
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return captionHeight + 140
+        return 40
     }
     
     ///https://stackoverflow.com/questions/37942812/turn-some-parts-of-uilabel-to-act-like-a-uibutton
@@ -465,7 +464,6 @@ class CommentCell: UITableViewCell {
     
     var profilePic: UIImageView!
     var username: UILabel!
-    var timestamp: UILabel!
     var commentText: UILabel!
     var likeButton: UIButton!
     var numLikes: UILabel!
@@ -476,20 +474,25 @@ class CommentCell: UITableViewCell {
     func setUp(comment: MapComment, post: MapPost) {
         
         self.selectionStyle = .none
-        self.backgroundColor = .black
+        self.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.98, alpha: 1)
+
+        
         self.comment = comment
         self.post = post
         self.tag = 30
         
         resetCell()
         
-        profilePic = UIImageView(frame: CGRect(x: 8, y: 15, width: 32, height: 31))
+        profilePic = UIImageView(frame: CGRect(x: 8, y: 15, width: 32, height: 32))
         profilePic.contentMode = .scaleAspectFill
-        profilePic.layer.cornerRadius = 11
+        profilePic.layer.cornerRadius = 16
         profilePic.clipsToBounds = true
-        addSubview(profilePic)
+        contentView.addSubview(profilePic)
 
-        let url = comment.userInfo?.imageURL ?? ""
+        let avatar = (comment.userInfo?.avatarURL ?? "") != ""
+        let url = avatar ? comment.userInfo!.avatarURL! : comment.userInfo?.imageURL ?? ""
+        if avatar { profilePic.frame = CGRect(x: 8, y: 8, width: 32.4, height: 42); profilePic.layer.cornerRadius = 0 }
+        
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
             profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
@@ -497,16 +500,10 @@ class CommentCell: UITableViewCell {
 
         username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: 14, width: UIScreen.main.bounds.width - 108, height: 16))
         username.text = comment.userInfo?.username ?? ""
-        username.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        username.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
+        username.textColor = .black
+        username.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
         username.sizeToFit()
-        addSubview(username)
-        
-        timestamp = UILabel(frame: CGRect(x: username.frame.maxX + 5, y: 14.5, width: 100, height: 16))
-        timestamp.text = getTimestamp(postTime: comment.timestamp)
-        timestamp.textColor = UIColor(red: 0.342, green: 0.342, blue: 0.342, alpha: 1)
-        timestamp.font = UIFont(name: "SFCompactText-Semibold", size: 11)
-        addSubview(timestamp)
+        contentView.addSubview(username)
         
         let userButton = UIButton(frame: CGRect(x: 10, y: 0, width: 50 + username.bounds.width, height: 40))
         userButton.backgroundColor = nil
@@ -517,8 +514,8 @@ class CommentCell: UITableViewCell {
         commentText.text = comment.comment
         commentText.lineBreakMode = .byWordWrapping
         commentText.numberOfLines = 0
-        commentText.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        commentText.font = UIFont(name: "SFCompactText-Regular", size: 13.5)
+        commentText.textColor = UIColor(red: 0.629, green: 0.629, blue: 0.629, alpha: 1)
+        commentText.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
         
         if !(comment.taggedUsers?.isEmpty ?? true) {
             let attString = self.getAttString(caption: comment.comment, taggedFriends: comment.taggedUsers!, fontSize: 12.5)
@@ -529,11 +526,11 @@ class CommentCell: UITableViewCell {
              commentText.isUserInteractionEnabled = true
              commentText.addGestureRecognizer(tap)
          }
-        addSubview(commentText)
+        contentView.addSubview(commentText)
         
         let commentButton = UIButton(frame: CGRect(x: commentText.frame.minX, y: commentText.frame.minY, width: commentText.frame.width, height: commentText.frame.height))
         commentButton.addTarget(self, action: #selector(commentTap(_:)), for: .touchUpInside)
-        addSubview(commentButton)
+        contentView.addSubview(commentButton)
         
         let likesEmpty = comment.likers?.isEmpty ?? true
         let liked = comment.likers?.contains(where: {$0 == uid}) ?? false
@@ -545,7 +542,7 @@ class CommentCell: UITableViewCell {
         likeButton.contentHorizontalAlignment = .center
         likeButton.contentVerticalAlignment = .center
         liked ? likeButton.addTarget(self, action: #selector(unlikeTap(_:)), for: .touchUpInside) : likeButton.addTarget(self, action: #selector(likeTap(_:)), for: .touchUpInside)
-        addSubview(likeButton)
+        contentView.addSubview(likeButton)
         
         if !likesEmpty {
             numLikes = UILabel(frame: CGRect(x: likeButton.frame.minX, y: likeButton.frame.maxY - 5, width: likeButton.frame.width, height: 12))
@@ -553,14 +550,13 @@ class CommentCell: UITableViewCell {
             numLikes.textColor = UIColor(red: 0.342, green: 0.342, blue: 0.342, alpha: 1)
             numLikes.font = UIFont(name: "SFCompactText-Semibold", size: 11)
             numLikes.textAlignment = .center
-            addSubview(numLikes)
+            contentView.addSubview(numLikes)
         }
     }
     
     func resetCell() {
         if profilePic != nil { profilePic.image = UIImage() }
         if username != nil { username.text = "" }
-        if timestamp != nil { timestamp.text = "" }
         if commentText != nil { commentText.text = "" }
         if likeButton != nil { likeButton.setImage(UIImage() , for: .normal) }
         if numLikes != nil { numLikes.text = "" }
@@ -668,266 +664,15 @@ class CommentCell: UITableViewCell {
     }
 }
 
-class CommentHeader: UITableViewHeaderFooterView {
-    
-    var profilePic: UIImageView!
-    var username: UILabel!
-    var tagIcon: UIImageView!
-    var spotNameLabel: UILabel!
-    var postOptions: UIButton!
-    var postCaption: UILabel!
-    var timestamp: UILabel!
-    
-    var segView: CommentsControl!
-    
-    var post: MapPost!
-    
-    lazy var tagRect: [(rect: CGRect, username: String)] = []
-    
-    func setUp(post: MapPost, selectedIndex: Int) {
-        
-        let backgroundView = UIView()
-        backgroundView.backgroundColor = .black
-        self.backgroundView = backgroundView
-        isUserInteractionEnabled = true
-        resetView()
-        
-        self.post = post
-                
-        profilePic = UIImageView(frame: CGRect(x: 8, y: 11.5, width: 36, height: 35))
-        profilePic.contentMode = .scaleAspectFill
-        profilePic.layer.cornerRadius = 11
-        profilePic.clipsToBounds = true
-        contentView.addSubview(profilePic)
-
-        let url = post.userInfo?.imageURL ?? ""
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-        }
-
-        username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 6, y: 11.5, width: 200, height: 16))
-        username.text = post.userInfo == nil ? "" : post.userInfo!.username
-        username.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        username.font = UIFont(name: "SFCompactText-Semibold", size: 13.25)
-        username.sizeToFit()
-        contentView.addSubview(username)
-
-        let usernameButton = UIButton(frame: CGRect(x: 0, y: 8, width: username.frame.maxX + 10, height: 45))
-        usernameButton.backgroundColor = nil
-        usernameButton.addTarget(self, action: #selector(userTap(_:)), for: .touchUpInside)
-       // self.addSubview(usernameButton)
-        
-        let tagImage = post.tag ?? "" == "" ? UIImage(named: "FeedSpotIcon") : Tag(name: post.tag!).image
-        
-        tagIcon = UIImageView(frame: CGRect(x: profilePic.frame.maxX + 6, y: username.frame.maxY + 3, width: 17, height: 17))
-        tagIcon.image =  tagImage
-        tagIcon.isUserInteractionEnabled = false
-        contentView.addSubview(tagIcon)
-        
-       // if tagImage == UIImage() { getTagImage(tagName: post.tag!) }
-
-        spotNameLabel = UILabel(frame: CGRect(x: tagIcon.frame.maxX + 4, y: username.frame.maxY + 4, width: UIScreen.main.bounds.width, height: 16))
-        spotNameLabel.text = post.spotName ?? ""
-        spotNameLabel.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        spotNameLabel.isUserInteractionEnabled = false
-        spotNameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.25)
-        spotNameLabel.sizeToFit()
-        contentView.addSubview(spotNameLabel)
-        
-        let spotNameButton = UIButton(frame: CGRect(x: 5, y: 6, width: spotNameLabel.frame.maxX + 5, height: spotNameLabel.frame.height + 5))
-       // spotNameButton.addTarget(self, action: #selector(spotNameTap(_:)), for: .touchUpInside)
-        // addSubview(spotNameButton)
-                
-        postOptions = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 43.45, y: 23, width: 24.45, height: 13.75))
-        postOptions.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        postOptions.setImage(UIImage(named: "PostOptions"), for: .normal)
-        postOptions.addTarget(self, action: #selector(optionsTapped(_:)), for: .touchUpInside)
-        contentView.addSubview(postOptions)
-
-        postCaption = UILabel(frame: CGRect(x: 8, y: profilePic.frame.maxY + 8, width: UIScreen.main.bounds.width - 16, height: post.captionHeight))
-        postCaption.text = post.caption
-        postCaption.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        postCaption.font = UIFont(name: "SFCompactText-Regular", size: 14.7)
-        postCaption.numberOfLines = 0
-        postCaption.lineBreakMode = .byWordWrapping
-        contentView.addSubview(postCaption)
-        
-        if !(post.taggedUsers?.isEmpty ?? true) {
-            let attString = self.getAttString(caption: post.caption, taggedFriends: post.taggedUsers!)
-            postCaption.attributedText = attString.0
-            tagRect = attString.1
-            
-            let tap = UITapGestureRecognizer(target: self, action: #selector(self.tappedLabel(_:)))
-            postCaption.isUserInteractionEnabled = true
-            postCaption.addGestureRecognizer(tap)
-        }
-        
-        timestamp = UILabel(frame: CGRect(x: 8, y: postCaption.frame.maxY + 4, width: 150, height: 15))
-        timestamp.text = getTimestamp(postTime: post.timestamp)
-        timestamp.textColor = UIColor(red: 0.342, green: 0.342, blue: 0.342, alpha: 1)
-        timestamp.font = UIFont(name: "SFCompactText-Semibold", size: 11)
-        contentView.addSubview(timestamp)
-
-        segView = CommentsControl(frame: CGRect(x: 0, y: timestamp.frame.maxY + 25, width: UIScreen.main.bounds.width, height: 35))
-        segView.setUp(post: post, selectedIndex: selectedIndex)
-        contentView.addSubview(segView)
-    }
-    
-    override init(reuseIdentifier: String?) {
-        super.init(reuseIdentifier: reuseIdentifier)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func resetView() {
-        if profilePic != nil { profilePic.image = UIImage() }
-        if username != nil { username.text = "" }
-        if tagIcon != nil { tagIcon.image = UIImage() }
-        if spotNameLabel != nil { spotNameLabel.text = "" }
-        if postOptions != nil { postOptions.setImage(UIImage(), for: .normal) }
-        if postCaption != nil { postCaption.text = "" }
-        if timestamp != nil { timestamp.text = "" }
-        if segView != nil { for sub in segView.subviews {sub.removeFromSuperview()}; segView.removeFromSuperview() }
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
-    }
-    
-    @objc func tappedLabel(_ sender: UIGestureRecognizer) {
-        for r in tagRect {
-            if r.rect.contains(sender.location(in: sender.view)) {
-                // open tag from friends list
-                if let friend = UserDataModel.shared.friendsList.first(where: {$0.username == r.username}) {
-                    openProfile(user: friend)
-                } else {
-                    /// pass blank user object to open func, run get user func on profile load
-                    var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "", userBio: "")
-                    user.id = ""
-                    self.openProfile(user: user)
-                }
-            }
-            
-        }
-    }
-    
-    @objc func optionsTapped(_ sender: UIButton) {
-        guard let commentsVC = viewContainingController() as? CommentsViewController else { print("x"); return }
-        guard let postCell = commentsVC.postVC.tableView.cellForRow(at: IndexPath(row: commentsVC.postIndex, section: 0)) as? PostCell else { print("return"); return }
-        DispatchQueue.main.async {
-            commentsVC.dismiss(animated: false) {
-                postCell.addEditOverview()
-            }
-        }
-    }
-    
-    @objc func exitComments(_ sender: UIButton) {
-        if let commentsVC = self.viewContainingController() as? CommentsViewController { commentsVC.dismiss(animated: true, completion: nil) }
-    }
-    
-    @objc func userTap(_ sender: UIButton) {
-        guard let user = self.post.userInfo else { return }
-        openProfile(user: user)
-    }
-    
-    func openProfile(user: UserProfile) {
-        
-        /// there are 2 openProfile funcs?
-    /*    if let commentsVC = self.viewContainingController() as? CommentsViewController {
-            if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
-                
-                if user.id != "" {
-                    vc.userInfo = user /// already have user info
-                } else {
-                    vc.passedUsername = user.username /// run username query from tapped tag on profile open
-                }
-                
-                vc.id = user.id!
-                vc.commentsSelectedPost = self.post /// open comments on this row on return from profile 
-                vc.postCaptionHeight = commentsVC.captionHeight
-                vc.mapVC = commentsVC.postVC.mapVC
-                
-                commentsVC.postVC.cancelDownloads()
-                if let feedVC = commentsVC.postVC.parent as? FeedViewController { feedVC.hideFeedSeg() }
-                                
-                vc.view.frame = commentsVC.postVC.view.frame
-                commentsVC.postVC.addChild(vc)
-                commentsVC.postVC.view.addSubview(vc.view)
-                vc.didMove(toParent: commentsVC.postVC)
-                
-                commentsVC.dismiss(animated: false, completion: nil)
-            }
-        } */
-    }
-    
-    func getDateTimestamp(postTime: Firebase.Timestamp) -> String {
-
-        let timeInterval = TimeInterval(integerLiteral: postTime.seconds)
-        let date = Date(timeIntervalSince1970: timeInterval)
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy"
-        let dateString = dateFormatter.string(from: date)
-        return dateString
-    }
-
-    func getAttString(caption: String, taggedFriends: [String]) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
-        let attString = NSMutableAttributedString(string: caption)
-        var freshRect: [(rect: CGRect, username: String)] = []
-        
-        var tags: [(username: String, range: NSRange)] = []
-        let words = caption.components(separatedBy: .whitespacesAndNewlines)
-        
-        var index = 0
-        for w in words {
-            let username = String(w.dropFirst())
-            if w.hasPrefix("@") && taggedFriends.contains(where: {$0 == username}) {
-                let tag = (username: String(w.dropFirst()), range: NSMakeRange(index + 1, w.count - 1))
-                if !tags.contains(where: {$0 == tag}) {
-                    tags.append(tag)
-                    let range = NSMakeRange(index, w.count)
-                    attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCompactText-Semibold", size: 12.5) as Any, range: range)
-                }
-            }
-            index = index + w.count + 1
-        }
-        
-        for tag in tags {
-            var rect = (rect: getRect(str: attString, range: tag.range, maxWidth: UIScreen.main.bounds.width - 72), username: tag.username)
-            rect.0 = CGRect(x: rect.0.minX, y: rect.0.minY, width: rect.0.width, height: rect.0.height)
-            if (!freshRect.contains(where: {$0 == rect})) {
-                freshRect.append(rect)
-            }
-        }
-        return ((attString, freshRect))
-    }
-    
-    func getRect(str: NSAttributedString, range: NSRange, maxWidth: CGFloat) -> CGRect {
-        let textStorage = NSTextStorage(attributedString: str)
-        let textContainer = NSTextContainer(size: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
-        let layoutManager = NSLayoutManager()
-        layoutManager.addTextContainer(textContainer)
-        textStorage.addLayoutManager(layoutManager)
-        textContainer.lineFragmentPadding = 5
-        let pointer = UnsafeMutablePointer<NSRange>.allocate(capacity: 1)
-        layoutManager.characterRange(forGlyphRange: range, actualGlyphRange: pointer)
-        return layoutManager.boundingRect(forGlyphRange: pointer.move(), in: textContainer)
-    }
-}
-
-class CommentsControl: UIView {
+class CommentsControl: UITableViewHeaderFooterView {
     
     var selectedIndex = 0
     var buttonBar: UIView!
     var commentSeg: UIButton!
     var likeSeg: UIButton!
-    var bottomLine: UIView!
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    
+    override init(reuseIdentifier: String?) {
+        super.init(reuseIdentifier: reuseIdentifier)
         isUserInteractionEnabled = true
         backgroundColor = nil
     }
@@ -938,28 +683,33 @@ class CommentsControl: UIView {
         self.selectedIndex = selectedIndex
                 
         if commentSeg != nil { commentSeg.setTitle("", for: .normal) }
-        commentSeg = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - segWidth - 10, y: 0, width: segWidth, height: 35))
+        commentSeg = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - segWidth - 10, y: 0, width: segWidth, height: 25))
         commentSeg.titleEdgeInsets = UIEdgeInsets(top: 5, left: 6, bottom: 5, right: 5)
+        
         var commentText = "\(max(post.commentList.count - 1, 0)) comment"
         if post.commentList.count - 1 != 1 { commentText += "s" }
         commentSeg.setTitle(commentText, for: .normal)
-        commentSeg.setTitleColor(UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1), for: .normal)
+        commentSeg.setTitleColor(.black, for: .normal)
         commentSeg.titleLabel?.alpha = selectedIndex == 0 ? 1.0 : 0.6
-        commentSeg.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 15)
+        
+        let font0 = selectedIndex == 0 ? UIFont(name: "SFCompactText-Bold", size: 16) : UIFont(name: "SFCompactText-Semibold", size: 16)
+        commentSeg.titleLabel?.font = font0
         commentSeg.contentHorizontalAlignment = .center
         commentSeg.contentVerticalAlignment = .center
         commentSeg.addTarget(self, action: #selector(commentSegTap(_:)), for: .touchUpInside)
         addSubview(commentSeg)
         
         if likeSeg != nil { likeSeg.setTitle("", for: .normal) }
-        likeSeg = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 + 10, y: 0, width: segWidth, height: 35))
+        likeSeg = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 + 10, y: 0, width: segWidth, height: 25))
         likeSeg.titleEdgeInsets = UIEdgeInsets(top: 5, left: 6, bottom: 5, right: 5)
         var likeText = "\(max(post.likers.count, 0)) like"
         if post.likers.count != 1 { likeText += "s" }
         likeSeg.setTitle(likeText, for: .normal)
-        likeSeg.setTitleColor(UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1), for: .normal)
+        likeSeg.setTitleColor(.black, for: .normal)
         likeSeg.titleLabel?.alpha = selectedIndex == 1 ? 1.0 : 0.6
-        likeSeg.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 15)
+        
+        let font1 = selectedIndex == 1 ? UIFont(name: "SFCompactText-Bold", size: 16) : UIFont(name: "SFCompactText-Semibold", size: 16)
+        likeSeg.titleLabel?.font = font1
         likeSeg.contentHorizontalAlignment = .center
         likeSeg.contentVerticalAlignment = .center
         likeSeg.addTarget(self, action: #selector(likeSegTap(_:)), for: .touchUpInside)
@@ -967,14 +717,9 @@ class CommentsControl: UIView {
 
         let minX = selectedIndex == 0 ? UIScreen.main.bounds.width/2 - segWidth + 5 : UIScreen.main.bounds.width/2 + 25
         if buttonBar != nil { buttonBar.backgroundColor = nil }
-        buttonBar = UIView(frame: CGRect(x: minX, y: 32.5, width: segWidth - 30, height: 2.5))
-        buttonBar.backgroundColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        buttonBar = UIView(frame: CGRect(x: minX, y: 27.5, width: segWidth - 30, height: 3))
+        buttonBar.backgroundColor = .black
         addSubview(buttonBar)
-        
-        if bottomLine != nil { bottomLine.backgroundColor = nil }
-        bottomLine = UIView(frame: CGRect(x: 0, y: buttonBar.frame.maxY + 1, width: UIScreen.main.bounds.width, height: 1))
-        bottomLine.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
-        addSubview(bottomLine)
     }
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -1027,16 +772,20 @@ class LikerCell: UITableViewCell {
     
     func setUp(friend: UserProfile) {
         
-        self.backgroundColor = .black
+        self.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.98, alpha: 1.0)
         
         resetCell()
         
-        profilePic = UIImageView(frame: CGRect(x: 8, y: 13, width: 32, height: 31))
-        profilePic.layer.cornerRadius = 11
+        profilePic = UIImageView(frame: CGRect(x: 8, y: 13, width: 32, height: 32))
+        profilePic.layer.cornerRadius = 16
         profilePic.clipsToBounds = true
+        profilePic.contentMode = .scaleAspectFill
         addSubview(profilePic)
 
-        let url = friend.imageURL
+        let avatar = (friend.avatarURL ?? "") != ""
+        let url = avatar ? friend.avatarURL! : friend.imageURL
+        if avatar { profilePic.frame = CGRect(x: 8, y: 6, width: 32.4, height: 42); profilePic.layer.cornerRadius = 0 }
+        
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
             profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
@@ -1044,8 +793,8 @@ class LikerCell: UITableViewCell {
                         
         username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: 20.5, width: 150, height: 15))
         username.text = friend.username
-        username.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-        username.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
+        username.textColor = .black
+        username.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
         addSubview(username)
     }
     
