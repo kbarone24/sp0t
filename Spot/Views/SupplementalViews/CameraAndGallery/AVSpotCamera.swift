@@ -109,7 +109,7 @@ class AVSpotCamera: NSObject {
             captureSession.startRunning()
         }
         
-        func configureVideoOutput() throws {
+      /*  func configureVideoOutput() throws {
             
             guard let captureSession = captureSession else { throw CameraControllerError.captureSessionIsMissing }
             
@@ -124,7 +124,7 @@ class AVSpotCamera: NSObject {
             videoOutput!.setSampleBufferDelegate(self as AVCaptureVideoDataOutputSampleBufferDelegate, queue: DispatchQueue(label: "sample buffer delegate", attributes: []))
             
             if captureSession.canAddOutput(videoOutput!) {  captureSession.addOutput(videoOutput!)  }
-        }
+        } */
         
         DispatchQueue(label: "prepare").async {
             do {
@@ -132,7 +132,7 @@ class AVSpotCamera: NSObject {
                 try configureCaptureDevices()
                 try configureDeviceInputs()
                 try configurePhotoOutput()
-                try configureVideoOutput()
+           //     try configureVideoOutput()
             }
                 
             catch {
@@ -159,10 +159,12 @@ class AVSpotCamera: NSObject {
         previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
         previewLayer?.connection?.videoOrientation = .portrait
         
-        let cameraHeight = UIScreen.main.bounds.width * 1.5
+        let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
+        let cameraHeight = UIScreen.main.bounds.width * cameraAspect
 
         view.layer.insertSublayer(previewLayer!, at: 0)
         previewLayer?.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: cameraHeight)
+        previewLayer?.cornerRadius = 15
         previewShown = true
     }
     

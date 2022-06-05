@@ -1,50 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="upO-2u-pjc">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19519"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--feed-->
-        <scene sceneID="BEq-hj-FKL">
+        <!--Post View Controller-->
+        <scene sceneID="hvK-x7-hvW">
             <objects>
-                <viewController storyboardIdentifier="Feed" title="feed" id="upO-2u-pjc" customClass="FeedViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="Ncl-q9-DYc">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="813"/>
+                <viewController storyboardIdentifier="Post" id="P8K-Si-g5M" customClass="PostViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="J9t-da-GMS">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="faE-YT-9Xb"/>
+                        <viewLayoutGuide key="safeArea" id="NN6-g6-6ar"/>
                         <color key="backgroundColor" name="SpotBlack"/>
                     </view>
                     <extendedEdge key="edgesForExtendedLayout"/>
-                    <tabBarItem key="tabBarItem" title="" image="HomeInactive" selectedImage="HomeActive" id="El3-xe-gS1"/>
-                    <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="urP-TY-uHO" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="BbY-Sp-3Qj" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="5339" y="2066"/>
+            <point key="canvasLocation" x="-784" y="428"/>
         </scene>
         <!--Comments View Controller-->
-        <scene sceneID="dmg-fp-vs1">
+        <scene sceneID="7hw-RN-zrl">
             <objects>
-                <viewController storyboardIdentifier="Comments" extendedLayoutIncludesOpaqueBars="YES" id="9Cz-Hy-yGi" customClass="CommentsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="Lsz-m7-UrQ">
+                <viewController storyboardIdentifier="Comments" extendedLayoutIncludesOpaqueBars="YES" id="KZU-Pq-qhm" customClass="CommentsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="ehe-9M-aYl">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="Q4l-OL-UZ3"/>
+                        <viewLayoutGuide key="safeArea" id="BI5-CJ-PeC"/>
                         <color key="backgroundColor" name="SpotBlack"/>
                     </view>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="2xE-ML-GW0" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="gP0-H0-FTA" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="5339.130434782609" y="2826.5625"/>
+            <point key="canvasLocation" x="193" y="428"/>
         </scene>
     </scenes>
     <resources>
-        <image name="HomeActive" width="22" height="22"/>
-        <image name="HomeInactive" width="22" height="22"/>
         <namedColor name="SpotBlack">
             <color red="0.070588235294117646" green="0.070588235294117646" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>

@@ -2,14 +2,13 @@
 //  ProfileViewController.swift
 //  Spot
 //
-//  Created by kbarone on 2/15/19.
-//  Copyright © 2019 sp0t, LLC. All rights reserved.
+//  Created by Kenny Barone on 6/4/22.
+//  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
 import Foundation
 import UIKit
 
-class ProfileViewController: UIViewController {
+class ProfileViewController {
     
-
 }

@@ -5,7 +5,7 @@
 //  Created by Kenny Barone on 11/19/21.
 //  Copyright © 2021 sp0t, LLC. All rights reserved.
 //
-
+/*
 import Foundation
 import UIKit
 import MapKit
@@ -264,6 +264,7 @@ extension UploadPostController: UISearchBarDelegate {
                         if let i = self.querySpots.firstIndex(where: {$0.spotName == spotInfo.spotName || ($0.phone == spotInfo.phone ?? "" && spotInfo.phone ?? "" != "") }) {
                             self.querySpots[i] = spotInfo
                             self.querySpots[i].poiCategory = nil
+                            
                         } else {
                             self.querySpots.append(spotInfo)
                         }
@@ -475,6 +476,6 @@ class UploadAnnotationView: MKAnnotationView {
         fatalError("init(coder:) has not been implemented")
     }
 }
-
+*/
 
 

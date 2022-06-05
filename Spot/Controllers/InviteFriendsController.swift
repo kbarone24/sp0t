@@ -5,7 +5,7 @@
 //  Created by kbarone on 9/17/19.
 //  Copyright © 2019 sp0t, LLC. All rights reserved.
 //
-
+/*
 import Foundation
 import UIKit
 import Firebase
@@ -219,7 +219,6 @@ extension InviteFriendsController: UISearchBarDelegate {
     
     @objc func searchCancelTap(_ sender: UIButton) {
         searchBar.resignFirstResponder()
-
     }
 }
 
@@ -431,3 +430,4 @@ class UploadFriendCell: UICollectionViewCell {
         if exitButton != nil { exitButton.setImage(UIImage(), for: .normal)}
     }
 }
+*/

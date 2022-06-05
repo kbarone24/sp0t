@@ -12,7 +12,6 @@ import Mixpanel
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
-    
     var window: UIWindow?
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -32,29 +31,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .selected)
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .highlighted)
         
-        /// search bar text = white
-        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-        
+        /// search bar attributes
+        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor(red: 0.514, green: 0.518, blue: 0.537, alpha: 1), NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any]
         let searchBarAppearance = UISearchBar.appearance()
-        searchBarAppearance.barTintColor = UIColor(named: "SpotBlack")
-        searchBarAppearance.barStyle =  .black
-        
-        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-        
-        let appearance = UITabBar.appearance()
-        appearance.shadowImage = UIImage()
-        
+        searchBarAppearance.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+                
         UIView.appearance().isExclusiveTouch = true
         
-        let navigationBarAppearance = UINavigationBar.appearance()
-        navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor:UIColor.white, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Regular", size: 18)!]
+        let navigationBarAppearance = UINavigationBarAppearance()
+        navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 19)!]
         navigationBarAppearance.backgroundColor = nil
-        navigationBarAppearance.setBackgroundImage(UIImage(), for: .default)
+        navigationBarAppearance.backgroundImage = UIImage()
         navigationBarAppearance.shadowImage = UIImage()
- 
+        
         IQKeyboardManager.shared.enable = true
         IQKeyboardManager.shared.enableAutoToolbar = true
-        IQKeyboardManager.shared.shouldShowToolbarPlaceholder = false
+     //   IQKeyboardManager.shared.shouldShowToolbarPlaceholder = false
         
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33")
@@ -89,10 +81,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+        print("enter foreground")
     }
     
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        print("become active")
     }
     
     func applicationWillTerminate(_ application: UIApplication) {
@@ -109,6 +103,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         })
         return container
     }()
+    
     func saveContext() {
         let context = persistentContainer.viewContext
         if context.hasChanges {

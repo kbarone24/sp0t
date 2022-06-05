@@ -20,7 +20,7 @@ import FirebaseFunctions
 import MapboxMaps
 
 class UploadPostController: UIViewController {
-        
+       /*
     unowned var mapVC: MapViewController!
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
@@ -368,7 +368,7 @@ class UploadPostController: UIViewController {
         nearbyTable.dataSource = self
         nearbyTable.delegate = self
         nearbyTable.tag = 1
-        nearbyTable.register(LocationPickerSpotCell.self, forCellReuseIdentifier: "ChooseSpotCell")
+        nearbyTable.register(ChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpotCell")
         self.searchContainer.addSubview(self.nearbyTable)
         
         /// bottom of nearby table - content inset
@@ -388,7 +388,7 @@ class UploadPostController: UIViewController {
         resultsTable.separatorStyle = .none
         resultsTable.showsVerticalScrollIndicator = false
         resultsTable.isHidden = true
-        resultsTable.register(LocationPickerSpotCell.self, forCellReuseIdentifier: "ChooseSpotCell")
+        resultsTable.register(ChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpotCell")
         resultsTable.tag = 2
         
         searchIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 30))
@@ -676,21 +676,13 @@ class UploadPostController: UIViewController {
         DispatchQueue.main.async {
           
             /// set to title view for smoother transition
+            /*
             self.navigationItem.leftBarButtonItem = UIBarButtonItem()
             self.navigationItem.rightBarButtonItem = UIBarButtonItem()
-            self.navigationItem.titleView = self.mapVC.getTitleView()
+            self.navigationItem.titleView = self.mapVC.getTitleView() */
             
-            UIView.animate(withDuration: 0.15) {
-                self.uploadTable.frame = CGRect(x: self.uploadTable.frame.minX, y: UIScreen.main.bounds.height, width: self.uploadTable.frame.width, height: self.uploadTable.frame.height)
-                UserDataModel.shared.mapView.frame = UIScreen.main.bounds
-                UserDataModel.shared.mapView.annotations.removeAnnotationManager(withId: self.postAnnotationManager.id)
-                UserDataModel.shared.mapView.annotations.removeAnnotationManager(withId: self.spotAnnotationManager.id)
-
-            } completion: { [weak self] _ in
-                guard let self = self else { return }
-                self.mapVC.uploadMapReset()
-                self.navigationController?.popViewController(animated: false)
-            }
+            self.mapVC.uploadMapReset()
+            self.navigationController?.popViewController(animated: false)
         }
         /*
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
@@ -1216,10 +1208,11 @@ class UploadPostController: UIViewController {
             }}))
         present(alert, animated: true, completion: nil)
     }
+        */
 }
-
+/*
 // delegate methods
-extension UploadPostController: GIFPreviewDelegate, NewSpotNameDelegate, InviteFriendsDelegate, ChooseTagDelegate, PrivacyPickerDelegate, ShowOnFeedDelegate {
+extension UploadPostController: ImagePreviewDelegate, NewSpotNameDelegate, InviteFriendsDelegate, ChooseTagDelegate, PrivacyPickerDelegate, ShowOnFeedDelegate {
         
     func finishPassingLocationPicker(spot: MapSpot) {
         
@@ -1700,7 +1693,7 @@ extension UploadPostController: UITableViewDelegate, UITableViewDataSource {
             
         default:
             /// used for both choose spot / results tables
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseSpotCell") as? LocationPickerSpotCell else { return UITableViewCell() }
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseSpotCell") as? ChooseSpotCell else { return UITableViewCell() }
             let spot = tableView.tag == 1 ? UploadImageModel.shared.nearbySpots[indexPath.row] : querySpots[indexPath.row]
             cell.tag = tableView.tag
             cell.setUp(spot: spot)
@@ -1982,3 +1975,4 @@ extension UploadPostController: GestureManagerDelegate, AnnotationInteractionDel
     }
 }
 
+*/

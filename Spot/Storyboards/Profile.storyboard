@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="JJG-83-qOE">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="JJG-83-qOE">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17703"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
@@ -100,21 +100,6 @@
             </objects>
             <point key="canvasLocation" x="5132" y="4033"/>
         </scene>
-        <!--Profile Posts View Controller-->
-        <scene sceneID="oVC-9q-h6r">
-            <objects>
-                <viewController storyboardIdentifier="ProfilePosts" extendedLayoutIncludesOpaqueBars="YES" id="9aJ-lU-dbu" customClass="ProfilePostsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="fnZ-sw-6O8">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="fBp-ur-gkW"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="rn3-my-MVo" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="4249" y="3275"/>
-        </scene>
         <!--Find Friends Controller-->
         <scene sceneID="DxM-5F-hDG">
             <objects>
@@ -162,21 +147,6 @@
             </objects>
             <point key="canvasLocation" x="6865" y="3275"/>
         </scene>
-        <!--Review Public Controller-->
-        <scene sceneID="CTu-fW-KPg">
-            <objects>
-                <viewController storyboardIdentifier="ReviewPublic" interfaceStyle="dark" id="ZtA-hO-BM7" customClass="ReviewPublicController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="L98-qZ-OeB">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="Ehg-WZ-eQX"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="dGB-Km-NvB" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="5258" y="1783"/>
-        </scene>
         <!--Manage Account Controller-->
         <scene sceneID="bk6-W5-sjm">
             <objects>
@@ -192,21 +162,6 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="WEr-aI-SbI" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="6254" y="1783"/>
-        </scene>
-        <!--Profile Spots View Controller-->
-        <scene sceneID="Als-hD-rkG">
-            <objects>
-                <viewController storyboardIdentifier="ProfileSpots" extendedLayoutIncludesOpaqueBars="YES" id="0yF-Re-n86" customClass="ProfileSpotsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="0d7-U2-d4Y">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="jBi-TM-4o9"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="nJ6-su-oVh" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="3322" y="3275"/>
         </scene>
     </scenes>
     <resources>

@@ -204,7 +204,7 @@ class PostViewController: UIViewController {
     func openComments(row: Int) {
         
         if presentedViewController != nil { return }
-        if let commentsVC = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "Comments") as? CommentsViewController {
+        if let commentsVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Comments") as? CommentsViewController {
             
             Mixpanel.mainInstance().track(event: "PostOpenComments")
 

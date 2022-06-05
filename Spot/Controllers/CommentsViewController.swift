@@ -349,6 +349,7 @@ extension CommentsViewController: UITextViewDelegate {
     }
     
     func textViewDidBeginEditing(_ textView: UITextView) {
+        
         resignFirstResponder()
         commentsTable.addGestureRecognizer(panGesture)
         
@@ -360,11 +361,12 @@ extension CommentsViewController: UITextViewDelegate {
     }
     
     func textViewDidEndEditing(_ textView: UITextView) {
+        
         becomeFirstResponder()
         commentsTable.removeGestureRecognizer(panGesture)
                 
-        resizeFooter(type: 1)
-        
+        self.resizeFooter(type: 1)
+
         if textView.text.isEmpty {
             textView.alpha = 0.65
             textView.text = emptyTextString

@@ -5,7 +5,7 @@
 //  Created by Kenny Barone on 9/16/21.
 //  Copyright © 2021 sp0t, LLC. All rights reserved.
 //
-
+/*
 import Foundation
 import UIKit
 import Mixpanel
@@ -40,9 +40,7 @@ class UploadChooseTagView: UIView {
     }
     
     func setUp() {
-        
-        backgroundColor = nil
-        
+                
         filteredTags = UploadImageModel.shared.sortedTags
         
         tagWidth = (UIScreen.main.bounds.width - 84) / 6 - 0.1
@@ -125,10 +123,7 @@ extension UploadChooseTagView: UICollectionViewDelegate, UICollectionViewDataSou
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TagCell", for: indexPath) as? UploadTagCell else { return UICollectionViewCell() }
 
             let row = indexPath.section * itemsInTagSection + indexPath.row
-            cell.setUp(tag: filteredTags[row])
-            
-            let selected = filteredTags[row].name == UploadImageModel.shared.selectedTag
-            cell.setAlphas(alpha: 1.0, selected: selected)
+            cell.setUp(tag: filteredTags[row], selected: false)
             return cell
 
         default: return UICollectionViewCell()
@@ -262,36 +257,4 @@ class TagCategoryCell: UICollectionViewCell {
     }
 }
 
-class UploadTagCell: UICollectionViewCell {
-    
-    var tagImage: UIImageView!
-    var postTag: Tag!
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        layer.borderWidth = 1
-        layer.cornerRadius = 7.5
-        layer.cornerCurve = .continuous
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func setUp(tag: Tag) {
-        
-        postTag = tag
-        
-        if tagImage != nil { tagImage.image = UIImage() }
-        tagImage = UIImageView(frame: CGRect(x: bounds.width/2 - 13.5, y: bounds.height/2 - 13.5, width: 27, height: 27))
-        tagImage.image = tag.image
-        addSubview(tagImage)
-    }
-    
-    func setAlphas(alpha: CGFloat, selected: Bool) {
-        tagImage.alpha = alpha
-        backgroundColor = selected ? UIColor(red: 0.00, green: 0.09, blue: 0.09, alpha: 1.00) : UIColor(red: 0.094, green: 0.094, blue: 0.094, alpha: 1).withAlphaComponent(alpha)
-        layer.borderColor = selected ? UIColor(named: "SpotGreen")!.cgColor : UIColor(red: 0.112, green: 0.112, blue: 0.112, alpha: 1).cgColor
-    }
-}
+*/

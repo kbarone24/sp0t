@@ -51,9 +51,7 @@ class MapViewController: UIViewController {
     var feedLoaded = false
     var userSpotsLoaded = false /// used for sending first spot notification
     var shouldCluster = true /// should cluster is false when nearby (tab index 1) selected and max zoom enabled
-    
-    var postAnnotation: SinglePostAnnotation!
-    
+        
     lazy var postsList: [MapPost] = []
     lazy var friendsPostsDictionary = [String: MapPost]()
     lazy var friendsPostsGroup: [FriendsPostGroup] = []
@@ -70,7 +68,6 @@ class MapViewController: UIViewController {
     lazy var deletedFriendIDs: [String] = []
     
     var notiListener: ListenerRegistration!
-    var postAnnotations = [String: CustomPointAnnotation]()
 
     // feed stuff
     var selectedSegmentIndex = 0
@@ -162,6 +159,20 @@ class MapViewController: UIViewController {
             if !self.feedLoaded { self.loadFeed() }
             self.getNearbyPosts(radius: 0.5)
         }
+        
+        db.collection("spots").document("8B307BAD-ABE2-4914-8AEB-60B54AFD7477").getDocument { snap, err in
+            var timestamps: [Timestamp] = []
+            if let postIDs = snap!.get("postIDs") as? [String] {
+                for id in postIDs {
+                    self.db.collection("posts").document(id).getDocument { post, err in
+                        if let timestamp = post!.get("timestamp") as? Timestamp { timestamps.append(timestamp) }
+                        if timestamps.count == 8 {
+                            snap?.reference.updateData(["postTimestamps" : timestamps])
+                        }
+                    }
+                }
+            }
+        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -173,7 +184,6 @@ class MapViewController: UIViewController {
         
         Mixpanel.mainInstance().track(event: "MapOpen")
         setUpNavBar()
-      //  addFeedAnnotations()
     }
     
     func getAdmins() {
@@ -358,7 +368,7 @@ class MapViewController: UIViewController {
         
         let exitFriendsButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 81, y: 10, width: 71, height: 71))
         exitFriendsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        exitFriendsButton.setImage(UIImage(named: "ChooseSpotExit"), for: .normal)
+        exitFriendsButton.setImage(UIImage(named: "FeedExit"), for: .normal)
         exitFriendsButton.addTarget(self, action: #selector(exitFriendsTap(_:)), for: .touchUpInside)
         feedTableContainer.addSubview(exitFriendsButton)
         
@@ -395,13 +405,18 @@ class MapViewController: UIViewController {
     }
     
     @objc func addTap(_ sender: UIButton) {
-        if navigationController!.viewControllers.contains(where: {$0 is UploadPostController}) { return } /// crash on double stack was happening here
+        if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         
         DispatchQueue.main.async {
-            if let vc = UIStoryboard(name: "AddSpot", bundle: nil).instantiateViewController(identifier: "UploadPost") as? UploadPostController {
-                UserDataModel.shared.mapView.annotations.removeAnnotationManager(withId: self.postAnnotationManager.id)
-                UserDataModel.shared.mapView.removeFromSuperview()
+            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
                 vc.mapVC = self
+                
+                let transition = CATransition()
+                transition.duration = 0.3
+                transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
+                transition.type = CATransitionType.push
+                transition.subtype = CATransitionSubtype.fromTop
+                self.navigationController?.view.layer.add(transition, forKey: kCATransition)
                 self.navigationController?.pushViewController(vc, animated: false)
             }
         }
@@ -445,7 +460,7 @@ class MapViewController: UIViewController {
         navView.addSubview(buttonView)
         
         let searchButton = UIButton(frame: CGRect(x: 0, y: 5, width: 20, height: 20))
-        searchButton.setImage(UIImage(named: "SearchInactive"), for: .normal)
+        searchButton.setImage(UIImage(named: "SearchIcon"), for: .normal)
         buttonView.addSubview(searchButton)
         
         let notiButton = UIButton(frame: CGRect(x: searchButton.frame.maxX + 25, y: 5, width: 20, height: 20))
@@ -456,13 +471,14 @@ class MapViewController: UIViewController {
         let notificationRef = self.db.collection("users").document(self.uid).collection("notifications")
         let query = notificationRef.whereField("seen", isEqualTo: false)
         
+        /// show green bell on notifications when theres an unseen noti
         if notiListener != nil { notiListener.remove() }
         notiListener = query.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
             if err != nil || snap?.metadata.isFromCache ?? false {
                 return
             } else {
                 if snap!.documents.count > 0 {
-                    notiButton.setImage(UIImage(named: "NotificationIconFilled")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    notiButton.setImage(UIImage(named: "NotificationIconActive")?.withRenderingMode(.alwaysOriginal), for: .normal)
                 }
             }
         }
@@ -490,7 +506,7 @@ class MapViewController: UIViewController {
     }
     
     @objc func openNotis(_ sender: UIButton) {
-        if let notificationsVC = storyboard?.instantiateViewController(withIdentifier: "Notifications") as? NotificationsViewController {
+        if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsViewController {
             notificationsVC.mapVC = self
             navigationController?.pushViewController(notificationsVC, animated: true)
         }
@@ -535,14 +551,9 @@ class MapViewController: UIViewController {
     /// custom reset nav bar (patch fix for CATransition)
     func uploadMapReset() {
         DispatchQueue.main.async {
-          ///  if self.customTabBar.selectedIndex != 0 { return }
-            self.view.addSubview(UserDataModel.shared.mapView)
-            self.view.sendSubviewToBack(UserDataModel.shared.mapView)
+
             self.setUpNavBar()
             
-            let options = CameraOptions(center: UserDataModel.shared.currentLocation.coordinate, padding: UserDataModel.shared.mapView.cameraState.padding, anchor: CGPoint(), zoom: 18, bearing: UserDataModel.shared.mapView.cameraState.bearing, pitch: 75)
-            UserDataModel.shared.mapView.camera.ease(to: options, duration: 0.2)
-
             UIView.animate(withDuration: 0.25) { self.navigationController?.navigationBar.alpha = 1.0 }
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
