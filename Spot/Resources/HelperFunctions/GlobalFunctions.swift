@@ -133,8 +133,6 @@ extension UIViewController {
                         
                         if let currentVC = self as? PostViewController {
                             currentVC.mapVC.addTable(text: String(currentWord), parent: tableParent)
-                        } else if let currentVC = self as? UploadPostController {
-                            currentVC.mapVC.addTable(text: String(currentWord), parent: tableParent)
                         }
                         return
                     } else { i += 1; continue }
@@ -144,9 +142,7 @@ extension UIViewController {
         
         if let currentVC = self as? PostViewController {
             currentVC.mapVC.removeTable()
-        } else if let currentVC = self as? UploadPostController {
-            currentVC.mapVC.removeTable()
-        }
+        } 
     }
     
     // run when user taps a username to tag
@@ -402,15 +398,8 @@ extension UIViewController {
         var newPost = post
         newPost.seconds = newPost.timestamp.seconds
         
-        let superMax: CGFloat = 1.92
-        var maxAspect =  min((newPost.aspectRatios?.max() ?? 0.033) - 0.033, superMax)
-        if maxAspect > 1.1 && maxAspect < 1.7 { maxAspect = 1.7 } /// stretch iPhone vertical
-        if maxAspect > 1.7 { maxAspect = 1.92 }
-        let imageHeight = UIScreen.main.bounds.width * maxAspect
-        let noImage = imageHeight == 0
-
-        newPost.imageHeight = UIScreen.main.bounds.width * maxAspect
-        /// 55/90 = bottom spacing for button bar, 55.5 on big screens = topview indent above image
+        newPost.imageHeight = getImageHeight(aspectRatios: newPost.aspectRatios ?? [], maxAspect: 1.92) /// max aspect 1.92 for feed
+        let noImage = newPost.imageHeight == 0
         
         /// round to nearest line height
         let maxCaption: CGFloat = noImage ? 500 : 65
@@ -421,6 +410,16 @@ extension UIViewController {
         newPost.seen = (newPost.seenList ?? [UserDataModel.shared.uid]).contains(where: {$0 == UserDataModel.shared.uid})
         
         return newPost
+    }
+    
+    func getImageHeight(aspectRatios: [CGFloat], maxAspect: CGFloat) -> CGFloat {
+      
+        var imageAspect =  min((aspectRatios.max() ?? 0.033) - 0.033, maxAspect)
+        if imageAspect > 1.1 && imageAspect < 1.7 { imageAspect = 1.7 } /// stretch iPhone vertical
+        if imageAspect > 1.7 { imageAspect = maxAspect }
+        
+        let imageHeight = UIScreen.main.bounds.width * imageAspect
+        return imageHeight
     }
     
     func getCaptionHeight(caption: String, noImage: Bool, maxCaption: CGFloat, truncated: Bool) -> CGFloat {
@@ -573,80 +572,12 @@ extension UIViewController {
 /// upload post functions
 extension UIViewController {
     
-    func uploadPost(post: MapPost) {
-        
-        let interval = Date().timeIntervalSince1970
-        let postTimestamp = Date(timeIntervalSince1970: TimeInterval(interval))
-        
-        let postValues = ["caption" : post.caption,
-                          "posterID": post.posterID,
-                          "likers": [],
-                          "actualTimestamp": post.actualTimestamp as Any,
-                          "timestamp": postTimestamp,
-                          "taggedUsers": post.taggedUsers!,
-                          "taggedUserIDs": post.taggedUserIDs,
-                          "isFirst": post.isFirst!,
-                          "postLat": post.postLat,
-                          "postLong": post.postLong,
-                          "privacyLevel": post.privacyLevel!,
-                          "imageURLs" : post.imageURLs,
-                          "frameIndexes" : post.frameIndexes!,
-                          "aspectRatios" : post.aspectRatios!,
-                          "createdBy": post.createdBy!,
-                          "city" : post.city!,
-                          "inviteList" : post.inviteList!,
-                          "friendsList" : post.friendsList,
-                          "spotName" : post.spotName!,
-                          "spotNames" : [post.spotName!],
-                          "spotID" : post.spotID!,
-                          "spotIDs" : [post.spotID!],
-                          "spotIndexes" : [0], /// preloading DB for multiple sp0t upload
-                          "spotLat": post.spotLat!,
-                          "spotLong": post.spotLong!,
-                          "spotPrivacy" : post.spotPrivacy!,
-                          "hideFromFeed": post.hideFromFeed!,
-                          "addedUsers" : post.addedUsers!,
-                          "tag" : post.tag!,
-                          "tags" : [post.tag!], /// prepare for switch to multiple tags
-                          "posterUsername" : UserDataModel.shared.userInfo.username,
-                          "imageLocations" : post.imageLocations!,
-                          "seenList" : []
-        ] as [String : Any]
-
-        let commentValues = ["addedUsers" : post.addedUsers ?? [],
-                             "comment" : post.caption,
-                             "commenterID" : post.posterID,
-                             "commenterIDList": [],
-                             "commenterUsername" : UserDataModel.shared.userInfo.username,
-                             "imageURL": post.imageURLs.first ?? "",
-                             "likers" : [],
-                             "posterID": post.posterID,
-                             "posterUsername": UserDataModel.shared.userInfo.username,
-                             "timestamp" : postTimestamp,
-                             "taggedUsers": post.taggedUsers!,
-                             "taggedUserIDs" : []] as [String : Any]
-        let commentID = UUID().uuidString
-        
-        var notiPost = post
-        let commentObject = MapComment(id: commentID, comment: post.caption, commenterID: post.posterID, timestamp: Timestamp(date: postTimestamp as Date), userInfo: UserDataModel.shared.userInfo, taggedUsers: post.taggedUsers, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(interval))
-        notiPost.commentList = [commentObject]
-        
-        
-        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
-        
-        let db = Firestore.firestore()
-        db.collection("posts").document(post.id!).setData(postValues)
-        db.collection("posts").document(post.id!).collection("comments").document(commentID).setData(commentValues, merge:true)
-        
-        setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
-    }
-    
     func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
         
         var failed = false
         
         let fullWidth: CGFloat = UIScreen.main.bounds.width - 100
-        if images.isEmpty { completion([], false); return } /// complete immediately for no  image post
+        if images.isEmpty { print("empty"); completion([], false); return } /// complete immediately for no  image post
         
         var URLs: [String] = []
         for _ in images {
@@ -724,8 +655,76 @@ extension UIViewController {
             }
         }
     }
-    
-    func uploadSpot(post: MapPost, spot: MapSpot, postType: UploadPostController.PostType, submitPublic: Bool) {
+
+    func uploadPost(post: MapPost) {
+        
+        let interval = Date().timeIntervalSince1970
+        let postTimestamp = Date(timeIntervalSince1970: TimeInterval(interval))
+        
+        let postValues = ["caption" : post.caption,
+                          "posterID": post.posterID,
+                          "likers": [],
+                          "actualTimestamp": post.actualTimestamp as Any,
+                          "timestamp": postTimestamp,
+                          "taggedUsers": post.taggedUsers!,
+                          "taggedUserIDs": post.taggedUserIDs,
+                          "isFirst": post.isFirst!,
+                          "postLat": post.postLat,
+                          "postLong": post.postLong,
+                          "privacyLevel": post.privacyLevel!,
+                          "imageURLs" : post.imageURLs,
+                          "frameIndexes" : post.frameIndexes!,
+                          "aspectRatios" : post.aspectRatios!,
+                          "createdBy": post.createdBy!,
+                          "city" : post.city!,
+                          "inviteList" : post.inviteList!,
+                          "friendsList" : post.friendsList,
+                          "spotName" : post.spotName!,
+                          "spotNames" : [post.spotName!],
+                          "spotID" : post.spotID!,
+                          "spotIDs" : [post.spotID!],
+                          "spotIndexes" : [0], /// preloading DB for multiple sp0t upload
+                          "spotLat": post.spotLat!,
+                          "spotLong": post.spotLong!,
+                          "spotPrivacy" : post.spotPrivacy!,
+                          "hideFromFeed": post.hideFromFeed!,
+                          "addedUsers" : post.addedUsers!,
+                          "tag" : post.tag!,
+                          "tags" : [post.tag!], /// prepare for switch to multiple tags
+                          "posterUsername" : UserDataModel.shared.userInfo.username,
+                          "imageLocations" : post.imageLocations!,
+                          "seenList" : []
+        ] as [String : Any]
+
+        let commentValues = ["addedUsers" : post.addedUsers ?? [],
+                             "comment" : post.caption,
+                             "commenterID" : post.posterID,
+                             "commenterIDList": [],
+                             "commenterUsername" : UserDataModel.shared.userInfo.username,
+                             "imageURL": post.imageURLs.first ?? "",
+                             "likers" : [],
+                             "posterID": post.posterID,
+                             "posterUsername": UserDataModel.shared.userInfo.username,
+                             "timestamp" : postTimestamp,
+                             "taggedUsers": post.taggedUsers!,
+                             "taggedUserIDs" : []] as [String : Any]
+        let commentID = UUID().uuidString
+        
+        var notiPost = post
+        let commentObject = MapComment(id: commentID, comment: post.caption, commenterID: post.posterID, timestamp: Timestamp(date: postTimestamp as Date), userInfo: UserDataModel.shared.userInfo, taggedUsers: post.taggedUsers, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(interval))
+        notiPost.commentList = [commentObject]
+        
+        
+        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
+        
+        let db = Firestore.firestore()
+        db.collection("posts").document(post.id!).setData(postValues)
+        db.collection("posts").document(post.id!).collection("comments").document(commentID).setData(commentValues, merge:true)
+        
+        setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
+    }
+        
+    func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) {
         
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
         let db: Firestore = Firestore.firestore()
@@ -733,7 +732,7 @@ extension UIViewController {
         let interval = Date().timeIntervalSince1970
         let timestamp = Date(timeIntervalSince1970: TimeInterval(interval))
 
-        switch postType {
+        switch UploadPostModel.shared.postType {
         case .newSpot, .postToPOI:
             
             let lowercaseName = spot.spotName.lowercased()
@@ -817,10 +816,12 @@ extension UIViewController {
         // adjust user values for added users
         for poster in posters {
             
-            if visitorList.contains(where: {$0 == poster}) {
-                db.collection("users").document(poster).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayUnion([post.id!])])
-            } else {
-                db.collection("users").document(poster).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : post.timestamp, "postsList" : [post.id!], "city": post.city!], merge:true)
+            if spotID != "" {
+                if visitorList.contains(where: {$0 == poster}) {
+                    db.collection("users").document(poster).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayUnion([post.id!])])
+                } else {
+                    db.collection("users").document(poster).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : post.timestamp, "postsList" : [post.id!], "city": post.city!], merge:true)
+                }
             }
 
             /// increment addedUsers spotScore by 1
@@ -1405,6 +1406,7 @@ extension UINavigationBar {
     }
     
     func removeBackgroundImage() {
+                
         if #available(iOS 15.0, *) {
             let appearance = UINavigationBarAppearance()
             appearance.configureWithTransparentBackground()
@@ -1489,6 +1491,13 @@ extension UIView {
         maskLayer1.frame = bounds
         maskLayer1.path = maskPath1.cgPath
         layer.mask = maskLayer1
+    }
+    
+    func asImage() -> UIImage {
+        let renderer = UIGraphicsImageRenderer(bounds: bounds)
+        return renderer.image { rendererContext in
+            layer.render(in: rendererContext.cgContext)
+        }
     }
 
     
@@ -1607,3 +1616,21 @@ extension UILabel {
 }
 ///https://stackoverflow.com/questions/32309247/add-read-more-to-the-end-of-uilabel
 
+extension MKPointOfInterestCategory {
+    
+    func toString() -> String {
+        
+        /// convert POI type into readable string
+        var text = rawValue
+        var counter = 13
+        while counter > 0 { text = String(text.dropFirst()); counter -= 1 }
+        
+        /// insert space in POI type if necessary
+        counter = 0
+        var uppercaseIndex = 0
+        for letter in text {if letter.isUppercase && counter != 0 { uppercaseIndex = counter }; counter += 1}
+        if uppercaseIndex != 0 { text.insert(" ", at: text.index(text.startIndex, offsetBy: uppercaseIndex)) }
+
+        return text
+    }
+}

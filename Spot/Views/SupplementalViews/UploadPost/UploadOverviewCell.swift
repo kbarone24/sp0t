@@ -5,7 +5,7 @@
 //  Created by Kenny Barone on 9/16/21.
 //  Copyright © 2021 sp0t, LLC. All rights reserved.
 //
-
+/*
 import Foundation
 import UIKit
 import Photos
@@ -256,3 +256,4 @@ class UploadOverviewCell: UITableViewCell, UITextViewDelegate {
         return updatedText.count <= 500
     }
 }
+*/

@@ -79,9 +79,9 @@ struct MapSpot: Identifiable, Codable {
             
             /// increment for each friend post
             if posterIDs.count <= i { continue }
-            if isFriends(id: posterIDs[i]) { postScore += 5 }
+            if isFriends(id: posterIDs[safe: i] ?? "") { postScore += 5 }
 
-            let timestamp = postTimestamps[i]
+            let timestamp = postTimestamps[safe: i] ?? Timestamp()
             let postTime = Double(timestamp.seconds)
             
             let current = NSDate().timeIntervalSince1970

@@ -106,9 +106,6 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         
         super.viewWillDisappear(false)
         active = false
-        
-       /// mapVC.customTabBar.tabBar.items?[3].image = UIImage(named: "NotificationsInactive")?.withRenderingMode(.alwaysOriginal)
-       /// mapVC.customTabBar.tabBar.items?[3].selectedImage = UIImage(named: "NotificationsActive")?.withRenderingMode(.alwaysOriginal)
     }
     
     func setUpViews() {
@@ -469,7 +466,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
         /// pass friend request updates to pendingRequests controller on update from friend vc
         if sentFromPending {
             if !friendRequestsPending.isEmpty {
-                if let vc = UIStoryboard(name: "TabBar", bundle: nil).instantiateViewController(withIdentifier: "PendingFriends") as? PendingFriendRequestsController {
+                if let vc = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "PendingRequests") as? PendingFriendRequestsController {
                     vc.rawRequests = friendRequestsPending
                     vc.notiVC = self
                     self.present(vc, animated: true)
@@ -1065,7 +1062,7 @@ class PostNotificationCell: UITableViewCell {
     @objc func openPost(_ sender: UITapGestureRecognizer) {
         
         guard let notiVC = viewContainingController() as? NotificationsViewController else { return }
-        if let vc = UIStoryboard(name: "SpotPage", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
+        if let vc = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
             
             notiVC.active = false
             
@@ -1278,7 +1275,7 @@ class FriendRequestHeader: UITableViewHeaderFooterView {
     }
     
     @objc func openRequests(_ sender: UIButton) {
-        if let vc = UIStoryboard(name: "TabBar", bundle: nil).instantiateViewController(withIdentifier: "PendingFriends") as? PendingFriendRequestsController {
+        if let vc = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "PendingRequests") as? PendingFriendRequestsController {
             if let notiVC = self.viewContainingController() as? NotificationsViewController {
                 print("set raw requests")
                 vc.rawRequests = notiVC.friendRequestsPending

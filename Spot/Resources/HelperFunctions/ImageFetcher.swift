@@ -85,7 +85,6 @@ class ImageFetcher {
                     
                         self.isFetching = false
                         self.fetchingIndex = -1
-                        print("completion")
                         DispatchQueue.main.async { completion(animationImages, false) }
                         return
                     })
@@ -154,7 +153,6 @@ class ImageFetcher {
     }
 
     func cancelFetchForAsset(asset: PHAsset) {
-        print("cancel fetch for asset")
         asset.cancelContentEditingInputRequest(contentRequestID)
         
         if context != nil { context.cancel() }

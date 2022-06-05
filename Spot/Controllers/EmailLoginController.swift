@@ -220,8 +220,8 @@ class EmailLoginController: UIViewController {
         self.activityIndicator.stopAnimating()
 
         /// animate to app if user has enabled multifactor
-        let storyboard = UIStoryboard(name: "TabBar", bundle: nil)
-        let vc = storyboard.instantiateViewController(withIdentifier: "MapView") as! MapViewController
+        let storyboard = UIStoryboard(name: "Map", bundle: nil)
+        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapViewController
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
         

@@ -25,6 +25,9 @@ class CameraAccessView: UIView {
     }
     
     func setUp() {
+        
+        resetView()
+        
         cancelButton = UIButton(frame: CGRect(x: 4, y: 17, width: 50, height: 50))
         cancelButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         cancelButton.contentHorizontalAlignment = .fill
@@ -47,7 +50,7 @@ class CameraAccessView: UIView {
         label1.textAlignment = .center
         addSubview(label1)
         
-        let cameraAuthorized = UploadImageModel.shared.cameraAccess == .authorized
+        let cameraAuthorized = UploadPostModel.shared.cameraAccess == .authorized
         cameraAccess = UIButton(frame: CGRect(x: 30, y: label1.frame.maxY + 55, width: UIScreen.main.bounds.width - 60, height: 40))
         cameraAccess.titleEdgeInsets = UIEdgeInsets(top: 10, left: 5, bottom: 10, right: 5)
         cameraAccess.setTitle("Enable camera access", for: .normal)
@@ -59,7 +62,7 @@ class CameraAccessView: UIView {
         addSubview(cameraAccess)
         
 
-        let galleryAuthorized = UploadImageModel.shared.galleryAccess == .authorized
+        let galleryAuthorized = UploadPostModel.shared.galleryAccess == .authorized
         galleryAccess = UIButton(frame: CGRect(x: 30, y: cameraAccess.frame.maxY + 10, width: UIScreen.main.bounds.width - 60, height: 40))
         galleryAccess.titleEdgeInsets = UIEdgeInsets(top: 10, left: 5, bottom: 10, right: 5)
         galleryAccess.setTitle("Enable gallery access", for: .normal)
@@ -69,6 +72,14 @@ class CameraAccessView: UIView {
         galleryAccess.alpha = galleryAuthorized ? 0.3 : 1.0
         if !galleryAuthorized { galleryAccess.addTarget(self, action: #selector(galleryAccessTap(_:)), for: .touchUpInside)}
         addSubview(galleryAccess)
+    }
+    
+    func resetView() {
+        if cancelButton != nil { cancelButton.setImage(UIImage(), for: .normal)}
+        if label0 != nil { label0.text = "" }
+        if label1 != nil { label1.text = "" }
+        if cameraAccess != nil { cameraAccess.setTitle("", for: .normal) }
+        if galleryAccess != nil { galleryAccess.setTitle("", for: .normal)}
     }
     
     required init?(coder: NSCoder) {
@@ -85,12 +96,15 @@ class CameraAccessView: UIView {
     }
     
     func checkForRemove() {
-        
-        if UploadImageModel.shared.allAuths() {
+
+        /// remove mask and return to camera if user has authorized camera + gallery
+        if UploadPostModel.shared.allAuths() {
             guard let camera = viewContainingController() as? AVCameraController else { return }
-            camera.configureCameraController()
-            self.removeFromSuperview()
-            camera.accessMask = nil
+            DispatchQueue.main.async {
+                self.removeFromSuperview()
+                camera.accessMask = nil
+                camera.configureCameraController()
+            }
             
         } else {
             setUp() /// reload view
@@ -121,7 +135,7 @@ class CameraAccessView: UIView {
             camera.present(alert, animated: false, completion: nil)
             
         case .authorized:
-            UploadImageModel.shared.cameraAccess = .authorized
+            UploadPostModel.shared.cameraAccess = .authorized
             checkForRemove()
             
         default: return
@@ -153,7 +167,8 @@ class CameraAccessView: UIView {
             
 
         case .authorized, .limited:
-            UploadImageModel.shared.galleryAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+            UploadPostModel.shared.galleryAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "GalleryAuthorized"), object: nil, userInfo: nil)
             checkForRemove()
             
         default: return
