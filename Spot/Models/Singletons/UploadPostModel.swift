@@ -98,10 +98,6 @@ class UploadPostModel {
                 return
             }
             
-            if placemark.thoroughfare != nil {
-                addressString = addressString + placemark.thoroughfare!
-            }
-
             if placemark.locality != nil {
                 if addressString != "" {
                     addressString = addressString + ", "

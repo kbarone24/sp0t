@@ -134,10 +134,23 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         navigationItem.setLeftBarButton(cancelButton, animated: false)
         self.navigationItem.leftBarButtonItem?.tintColor = nil
         
-        let saveButton = UIBarButtonItem(title: "Next", style: .plain, target: self, action: #selector(nextTap(_:)))
-        saveButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
-        self.navigationItem.setRightBarButton(saveButton, animated: true)
-        self.navigationItem.rightBarButtonItem?.tintColor = nil
+        toggleNextButton()
+    }
+    
+    func toggleNextButton() {
+
+        /// reset nextButton with every select / deselect
+        /// set button to empty if no images selected, set to NEXT if 1 selected
+        let selectedCount = UploadPostModel.shared.selectedObjects.count
+        if selectedCount == 0 {
+            self.navigationItem.setRightBarButton(UIBarButtonItem(), animated: false); return
+            
+        } else if selectedCount == 1 {
+            let nextButton = UIBarButtonItem(title: "Next", style: .plain, target: self, action: #selector(nextTap(_:)))
+            nextButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
+            self.navigationItem.setRightBarButton(nextButton, animated: false)
+            self.navigationItem.rightBarButtonItem?.tintColor = nil
+        }
     }
         
     func refreshTable() {
@@ -360,7 +373,9 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         /// deselect image on circle tap
         Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": false])
         UploadPostModel.shared.selectObject(imageObject: selectedObject, selected: false)
-        DispatchQueue.main.async { self.collectionView.reloadItems(at: paths)
+        DispatchQueue.main.async {
+            self.collectionView.reloadItems(at: paths)
+            self.toggleNextButton()
         }
     }
     
@@ -376,7 +391,10 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
             /// select image immediately
             Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": true])
             UploadPostModel.shared.selectObject(imageObject: selectedObject, selected: true)
-            DispatchQueue.main.async { self.collectionView.reloadItems(at: paths) }
+            DispatchQueue.main.async {
+                self.collectionView.reloadItems(at: paths)
+                self.toggleNextButton()
+            }
             
         } else {
             /// download image and select
@@ -390,6 +408,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
                     DispatchQueue.main.async {
                         if self.cancelOnDismiss { return }
                         self.collectionView.reloadItems(at: paths)
+                        self.toggleNextButton()
                         Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": true])
                     }
                 }
