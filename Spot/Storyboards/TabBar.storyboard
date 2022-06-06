@@ -1,77 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19519"/>
-        <capability name="Named colors" minToolsVersion="9.0"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--Map View Controller-->
-        <scene sceneID="ike-Gc-hwo">
+        <scene sceneID="s0d-6b-0kx">
             <objects>
-                <viewController restorationIdentifier="Map" storyboardIdentifier="MapView" extendedLayoutIncludesOpaqueBars="YES" id="vkr-4K-2jk" customClass="MapViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="vo6-2s-g3b">
+                <viewController storyboardIdentifier="MapVC" id="Y6W-OH-hqX" customClass="MapViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="5EZ-qb-Rvc">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jqm-Bm-Lkd">
-                                <rect key="frame" x="8" y="780" width="30" height="34"/>
-                            </button>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="bDA-FM-KY6"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
-                        <constraints>
-                            <constraint firstItem="bDA-FM-KY6" firstAttribute="bottom" secondItem="jqm-Bm-Lkd" secondAttribute="bottom" constant="48" id="VP5-U2-pwC"/>
-                            <constraint firstItem="jqm-Bm-Lkd" firstAttribute="leading" secondItem="bDA-FM-KY6" secondAttribute="leading" constant="8" id="zQF-QG-fHe"/>
-                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="N1B-1F-8IV" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Ief-a0-LHa" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-657" y="1270"/>
-        </scene>
-        <!--Notifications View Controller-->
-        <scene sceneID="gAa-HN-oQ6">
-            <objects>
-                <viewController storyboardIdentifier="Notifications" id="7Kl-If-3Ti" customClass="NotificationsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="DvD-UC-tZK">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="f8J-60-UwU"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
-                    </view>
-                    <extendedEdge key="edgesForExtendedLayout"/>
-                    <tabBarItem key="tabBarItem" title="" image="NotificationsInactive" selectedImage="NotificationsActive" id="zE0-j8-Bej"/>
-                    <navigationItem key="navigationItem" id="Z5m-8U-Cpx"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="wdV-5d-Dic" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="1507" y="1270"/>
-        </scene>
-        <!--Pending Friend Requests Controller-->
-        <scene sceneID="BXo-Zy-BjG">
-            <objects>
-                <viewController storyboardIdentifier="PendingFriends" id="fLQ-fX-LAu" customClass="PendingFriendRequestsController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="cml-5O-apN">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="gTU-1b-vTI"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="HDp-sR-EMR" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="401" y="1270"/>
+            <point key="canvasLocation" x="-4" y="83"/>
         </scene>
     </scenes>
-    <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
     <resources>
-        <image name="NotificationsActive" width="19.5" height="23"/>
-        <image name="NotificationsInactive" width="20" height="23.5"/>
-        <namedColor name="SpotBlack">
-            <color red="0.070588235294117646" green="0.070588235294117646" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-        </namedColor>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
     </resources>
 </document>

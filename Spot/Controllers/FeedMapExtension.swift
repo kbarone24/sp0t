@@ -878,6 +878,8 @@ class MapFeedCell: UITableViewCell {
         timestampLabel.sizeToFit()
         contentView.addSubview(timestampLabel)
         
+        /// "seen" wasn't tracking well enough -> return to this
+        /*
         if postCount > 0 {
             countLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 45, y: 20, width: 19, height: 19))
             countLabel.text = postCount > 1 ? "\(postCount)" : ""
@@ -887,7 +889,7 @@ class MapFeedCell: UITableViewCell {
             countLabel.layer.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1).cgColor
             countLabel.layer.cornerRadius = 5
             contentView.addSubview(countLabel)
-        }
+        } */
         
         bottomLine = UIView(frame: CGRect(x: 0, y: 68, width: UIScreen.main.bounds.width, height: 1))
         bottomLine.backgroundColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1)

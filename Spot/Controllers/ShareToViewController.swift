@@ -29,6 +29,7 @@ class ShareToViewController: UIViewController {
         addButtons()
         addMapTable()
         addProgressBar()
+        print("ct", UploadPostModel.shared.postObject.postImage.count)
     }
     
     override func viewWillAppear(_ animated: Bool) {

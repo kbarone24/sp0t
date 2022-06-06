@@ -228,6 +228,7 @@ class ConfirmCodeController: UIViewController {
                       "nameKeywords" : nameKeywords,
                       "tagDictionary": [:],
                       "topFriends": [:],
+                      "avatarURL" : "",
             ] as [String : Any]
         
         db.collection("users").document(uid).setData(values, merge: true)
