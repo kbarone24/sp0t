@@ -53,7 +53,7 @@ class ContactsOverviewController: UIViewController {
     }
     
     @objc func searchContactsTap(_ sender: UIButton) {
-        if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "SearchContacts") as? SearchContactsViewController {
+        if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "SearchContacts") as? SearchContactsController {
             vc.sentFromTutorial = true
             navigationController?.pushViewController(vc, animated: true)
         }
@@ -62,7 +62,7 @@ class ContactsOverviewController: UIViewController {
     @objc func skipTap(_ sender: UIButton) {
         
         let storyboard = UIStoryboard(name: "Map", bundle: nil)
-        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapViewController
+        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
         

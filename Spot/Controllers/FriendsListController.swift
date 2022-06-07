@@ -15,7 +15,7 @@ import FirebaseUI
 class FriendsListController: UIViewController {
         
     unowned var profileVC: ProfileViewController!
-    unowned var postVC: PostViewController!
+    unowned var postVC: PostController!
     
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
@@ -344,7 +344,7 @@ class FriendsListHeader: UITableViewHeaderFooterView {
     }
     
     @objc func searchContacts(_ sender: UIButton) {
-        if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "SearchContacts") as? SearchContactsViewController {
+        if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(withIdentifier: "SearchContacts") as? SearchContactsController {
             if let friendsListVC = self.viewContainingController() as? FriendsListController {
                 friendsListVC.present(vc, animated: true)
             }

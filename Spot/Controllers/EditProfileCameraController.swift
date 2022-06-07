@@ -33,7 +33,7 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
     
     var cameraHeight: CGFloat!
     lazy var imagePicker = UIImagePickerController()
-    unowned var editProfileVC: EditProfileViewController!
+    unowned var editProfileVC: EditProfileController!
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)

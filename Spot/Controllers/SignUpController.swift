@@ -11,7 +11,7 @@ import Firebase
 import CoreLocation
 import Mixpanel
 
-class SignUpViewController: UIViewController, UITextFieldDelegate {
+class SignUpController: UIViewController, UITextFieldDelegate {
                 
     var nameField: UITextField!
     var emailField: UITextField!

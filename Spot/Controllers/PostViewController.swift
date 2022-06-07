@@ -1,5 +1,5 @@
 //
-//  PostViewController.swift
+//  PostController.swift
 //  Spot
 //
 //  Created by kbarone on 1/8/20.
@@ -16,7 +16,7 @@ import FirebaseUI
 import Geofirestore
 import FirebaseFunctions
 
-class PostViewController: UIViewController {
+class PostController: UIViewController {
     
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
@@ -26,7 +26,7 @@ class PostViewController: UIViewController {
     
     var postsCollection: UICollectionView!
     var parentVC: parentViewController = .feed
-    unowned var mapVC: MapViewController!
+    unowned var mapVC: MapController!
     
     var selectedPostIndex = 0 /// current row in posts table
     var commentNoti = false /// present commentsVC if opened from notification comment
@@ -204,7 +204,7 @@ class PostViewController: UIViewController {
     func openComments(row: Int) {
         
         if presentedViewController != nil { return }
-        if let commentsVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Comments") as? CommentsViewController {
+        if let commentsVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Comments") as? CommentsController {
             
             Mixpanel.mainInstance().track(event: "PostOpenComments")
 
@@ -212,7 +212,6 @@ class PostViewController: UIViewController {
             commentsVC.commentList = post.commentList
             commentsVC.post = post
             commentsVC.postVC = self
-            commentsVC.userInfo = UserDataModel.shared.userInfo
             commentsVC.postIndex = row
             present(commentsVC, animated: true, completion: nil)
         }
@@ -234,7 +233,7 @@ class PostViewController: UIViewController {
     }
 }
 
-extension PostViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching {
+extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return postsList.count
@@ -335,7 +334,7 @@ extension PostViewController: UICollectionViewDelegate, UICollectionViewDataSour
         self.willMove(toParent: nil)
         view.removeFromSuperview()
         
-        if let mapVC = parent as? MapViewController { mapVC.resetFeed() }
+        if let mapVC = parent as? MapController { mapVC.resetFeed() }
         
         removeFromParent()
         
@@ -346,7 +345,7 @@ extension PostViewController: UICollectionViewDelegate, UICollectionViewDataSour
     func setSeen(post: MapPost) {
         
         db.collection("posts").document(post.id!).updateData(["seenList" : FieldValue.arrayUnion([uid])])
-        guard let mapVC = parent as? MapViewController else { return }
+        guard let mapVC = parent as? MapController else { return }
         if post.seenList == nil { return }
         
         var newPost = post
@@ -598,13 +597,13 @@ class PostCell: UICollectionViewCell {
         
     
     @objc func captionTap(_ sender: UITapGestureRecognizer) {
-        if let postVC = self.viewContainingController() as? PostViewController {
+        if let postVC = self.viewContainingController() as? PostController {
             postVC.openComments(row: globalRow)
         }
     }
     
     @objc func commentsTap(_ sender: UIButton) {
-        if let postVC = self.viewContainingController() as? PostViewController {
+        if let postVC = self.viewContainingController() as? PostController {
             postVC.openComments(row: globalRow)
         }
     }
@@ -623,7 +622,7 @@ class PostCell: UICollectionViewCell {
 
     @objc func nextTap(_ sender: UIButton) {
         
-        guard let postVC = viewContainingController() as? PostViewController else { return }
+        guard let postVC = viewContainingController() as? PostController else { return }
 
         if (post.selectedImageIndex < (post.frameIndexes?.count ?? 0) - 1) && !post.postImage.isEmpty {
             nextImage()
@@ -638,7 +637,7 @@ class PostCell: UICollectionViewCell {
     
     @objc func previousTap(_ sender: UIButton) {
         
-        guard let postVC = viewContainingController() as? PostViewController else { return }
+        guard let postVC = viewContainingController() as? PostController else { return }
 
         if post.selectedImageIndex > 0 {
             previousImage()
@@ -680,7 +679,7 @@ class PostCell: UICollectionViewCell {
             offsetVertical(translation: translation.y)
             
         case .ended, .cancelled:
-            guard let postVC = viewContainingController() as? PostViewController else { return }
+            guard let postVC = viewContainingController() as? PostController else { return }
             postVC.view.frame.minY > 80 && velocity.y > -1 ? exitPosts() : resetFrame()
         default:
             resetFrame()
@@ -689,15 +688,15 @@ class PostCell: UICollectionViewCell {
     
     func commentSwipe(sender: UIPanGestureRecognizer) {
         if sender.state == .ended {
-            guard let postVC = viewContainingController() as? PostViewController else { return }
+            guard let postVC = viewContainingController() as? PostController else { return }
             postVC.openComments(row: globalRow)
         }
     }
     
     func offsetVertical(translation: CGFloat) {
         
-        guard let postVC = viewContainingController() as? PostViewController else { return }
-        guard let mapVC = postVC.parent as? MapViewController else { return }
+        guard let postVC = viewContainingController() as? PostController else { return }
+        guard let mapVC = postVC.parent as? MapController else { return }
         
         let offsetY: CGFloat = translation/2.5
         let alphaMultiplier = (1 - (cellHeight-offsetY)/cellHeight)/2
@@ -716,7 +715,7 @@ class PostCell: UICollectionViewCell {
         let translation = sender.translation(in: self)
         let velocity = sender.velocity(in: self)
 
-        guard let postVC = viewContainingController() as? PostViewController else { return }
+        guard let postVC = viewContainingController() as? PostController else { return }
         guard let collection = superview as? UICollectionView else { return }
         
         switch sender.state {
@@ -763,8 +762,8 @@ class PostCell: UICollectionViewCell {
 
         UIView.animate(withDuration: 0.2, animations: {
             
-            guard let postVC = self.viewContainingController() as? PostViewController else { return }
-            guard let mapVC = postVC.parent as? MapViewController else { return }
+            guard let postVC = self.viewContainingController() as? PostController else { return }
+            guard let mapVC = postVC.parent as? MapController else { return }
 
             postVC.view.frame = CGRect(x: 0, y: UIScreen.main.bounds.height - self.cellHeight, width: UIScreen.main.bounds.width, height: self.cellHeight)
             postVC.view.alpha = 1.0
@@ -783,8 +782,8 @@ class PostCell: UICollectionViewCell {
         
         Mixpanel.mainInstance().track(event: "PostPageRemove")
         
-        guard let postVC = self.viewContainingController() as? PostViewController else { return }
-        guard let mapVC = postVC.parent as? MapViewController else { return }
+        guard let postVC = self.viewContainingController() as? PostController else { return }
+        guard let mapVC = postVC.parent as? MapController else { return }
                 
         UIView.animate(withDuration: 0.2, animations: {
             
@@ -810,7 +809,7 @@ class PostCell: UICollectionViewCell {
         post.selectedImageIndex += index
         setCurrentImage()
         
-        guard let postVC = viewContainingController() as? PostViewController else { return }
+        guard let postVC = viewContainingController() as? PostController else { return }
         postVC.postsList[postVC.selectedPostIndex].selectedImageIndex += index
         postVC.setDotView()
     }
@@ -825,7 +824,7 @@ class PostCell: UICollectionViewCell {
     
     func incrementPost(index: Int) {
         
-        guard let postVC = viewContainingController() as? PostViewController else { return }
+        guard let postVC = viewContainingController() as? PostController else { return }
         postVC.selectedPostIndex += index
         postVC.postsCollection.scrollToItem(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .left, animated: true)
         
@@ -844,7 +843,7 @@ class PostCell: UICollectionViewCell {
     
     func likePost() {
         
-        guard let postVC = viewContainingController() as? PostViewController else { return }
+        guard let postVC = viewContainingController() as? PostController else { return }
         
         post.likers.append(self.uid)
         likeButton.removeTarget(self, action: #selector(likePost(_:)), for: .touchUpInside)
@@ -870,7 +869,7 @@ class PostCell: UICollectionViewCell {
     
     @objc func unlikePost(_ sender: UIButton) {
         
-        guard let postVC = viewContainingController() as? PostViewController else { return }
+        guard let postVC = viewContainingController() as? PostController else { return }
 
         post.likers.removeAll(where: {$0 == self.uid})
         likeButton.removeTarget(self, action: #selector(unlikePost(_:)), for: .touchUpInside)

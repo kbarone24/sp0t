@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 struct CountryCode {
     
     var id: Int

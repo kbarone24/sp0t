@@ -213,7 +213,7 @@ class FindFriendsController: UIViewController {
     }
     
     @objc func presentSearchContacts(_ sender: UITapGestureRecognizer) {
-        if let vc = storyboard?.instantiateViewController(identifier: "SearchContacts") as? SearchContactsViewController {
+        if let vc = storyboard?.instantiateViewController(identifier: "SearchContacts") as? SearchContactsController {
             present(vc, animated: true, completion: nil)
         }
     }

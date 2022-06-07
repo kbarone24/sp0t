@@ -21,7 +21,7 @@ class PendingFriendRequestsController: UIViewController, UITableViewDelegate, UI
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     let acceptNotificationName = Notification.Name("FriendRequestAccept")
     let deleteNotificationName = Notification.Name("FriendRequestReject")
-    unowned var notiVC: NotificationsViewController!
+    unowned var notiVC: NotificationsController!
     
     
     override func viewWillAppear(_ animated: Bool) {
