@@ -1,5 +1,5 @@
 //
-//  MapViewController.swift
+//  MapController.swift
 //  Spot
 //
 //  Created by kbarone on 2/15/19.
@@ -19,7 +19,7 @@ import FirebaseAuth
 import MapboxMaps
 import FirebaseMessaging
 
-class MapViewController: UIViewController {
+class MapController: UIViewController {
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
@@ -69,9 +69,8 @@ class MapViewController: UIViewController {
     
     var notiListener: ListenerRegistration!
 
-    // feed stuff
+    /// nearby feed fetch
     var selectedSegmentIndex = 0
-    var friendPosts: [MapPost] = []
     var nearbyPosts: [MapPost] = []
     var nearbyEnteredCount = 0
     var noAccessCount = 0
@@ -97,6 +96,7 @@ class MapViewController: UIViewController {
     var feedRowOffset: CGFloat = 0
     var selectedFeedIndex = -1
 
+    /// post annotations
     var postAnnotationManager: PointAnnotationManager!
     var pointAnnotations: [PointAnnotation] = []
     var nearbyAnnotations: [PointAnnotation] = []
@@ -160,19 +160,7 @@ class MapViewController: UIViewController {
             self.getNearbyPosts(radius: 0.5)
         }
         
-        db.collection("spots").document("8B307BAD-ABE2-4914-8AEB-60B54AFD7477").getDocument { snap, err in
-            var timestamps: [Timestamp] = []
-            if let postIDs = snap!.get("postIDs") as? [String] {
-                for id in postIDs {
-                    self.db.collection("posts").document(id).getDocument { post, err in
-                        if let timestamp = post!.get("timestamp") as? Timestamp { timestamps.append(timestamp) }
-                        if timestamps.count == 8 {
-                            snap?.reference.updateData(["postTimestamps" : timestamps])
-                        }
-                    }
-                }
-            }
-        }
+        
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -506,7 +494,7 @@ class MapViewController: UIViewController {
     }
     
     @objc func openNotis(_ sender: UIButton) {
-        if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsViewController {
+        if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsController {
             notificationsVC.mapVC = self
             navigationController?.pushViewController(notificationsVC, animated: true)
         }
@@ -658,7 +646,7 @@ class MapViewController: UIViewController {
     
 }
 
-extension MapViewController: CLLocationManagerDelegate {
+extension MapController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         
         if status != .authorizedWhenInUse {
@@ -691,7 +679,7 @@ extension MapViewController: CLLocationManagerDelegate {
     }
 }
 
-extension MapViewController: UIGestureRecognizerDelegate {
+extension MapController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
 
         if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
@@ -702,7 +690,7 @@ extension MapViewController: UIGestureRecognizerDelegate {
 }
 
 //functions for loading nearby spots in nearby view
-extension MapViewController {
+extension MapController {
 
     
     func checkFeedLocations() {
@@ -778,7 +766,7 @@ extension CLLocationCoordinate2D {
 ///https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
 
 
-extension MapViewController: UITableViewDelegate, UITableViewDataSource, UITableViewDataSourcePrefetching {
+extension MapController: UITableViewDelegate, UITableViewDataSource, UITableViewDataSourcePrefetching {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch tableView.tag {

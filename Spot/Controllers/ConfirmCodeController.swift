@@ -249,7 +249,7 @@ class ConfirmCodeController: UIViewController {
     func animateToMap() {
         
         let storyboard = UIStoryboard(name: "Map", bundle: nil)
-        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapViewController
+        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
         

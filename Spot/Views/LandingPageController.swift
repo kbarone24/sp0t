@@ -179,7 +179,7 @@ class LandingPageController: UIViewController {
     }
     
     @objc func createAccountTap(_ sender: UIButton) {
-        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "SignUp") as? SignUpViewController {
+        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "SignUp") as? SignUpController {
             let navController = UINavigationController(rootViewController: vc)
             navController.modalPresentationStyle = .fullScreen
             self.present(navController, animated: false, completion: nil)

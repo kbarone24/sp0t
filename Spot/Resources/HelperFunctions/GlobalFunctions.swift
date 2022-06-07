@@ -108,7 +108,7 @@ extension UIViewController {
         return commentHeight
     }
     
-    func addRemoveTagTable(text: String, cursorPosition: Int, tableParent: MapViewController.TagTableParent) {
+    func addRemoveTagTable(text: String, cursorPosition: Int, tableParent: MapController.TagTableParent) {
     
         let atIndices = text.indices(of: "@")
         var wordIndices = text.indices(of: " ")
@@ -131,7 +131,7 @@ extension UIViewController {
                         let range = start..<end
                         let currentWord = text[range].replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "@", with: "").replacingOccurrences(of: "\n", with: "") ///  remove space and @ from word
                         
-                        if let currentVC = self as? PostViewController {
+                        if let currentVC = self as? PostController {
                             currentVC.mapVC.addTable(text: String(currentWord), parent: tableParent)
                         }
                         return
@@ -140,7 +140,7 @@ extension UIViewController {
             }
         }
         
-        if let currentVC = self as? PostViewController {
+        if let currentVC = self as? PostController {
             currentVC.mapVC.removeTable()
         } 
     }

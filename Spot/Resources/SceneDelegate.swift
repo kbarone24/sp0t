@@ -78,7 +78,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     func animateToMap() {
         let sb = UIStoryboard(name: "Map", bundle: nil)
-        let vc = sb.instantiateViewController(withIdentifier: "MapVC") as! MapViewController
+        let vc = sb.instantiateViewController(withIdentifier: "MapVC") as! MapController
         
         let notificationName = Notification.Name("openPush")
         NotificationCenter.default.post(name: notificationName, object: nil, userInfo: nil)

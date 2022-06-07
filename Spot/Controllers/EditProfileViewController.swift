@@ -1,5 +1,5 @@
 //
-//  EditProfileViewController.swift
+//  EditProfileController.swift
 //  Spot
 //
 //  Created by kbarone on 4/17/19.
@@ -12,7 +12,7 @@ import Photos
 import RSKImageCropper
 import Mixpanel
 
-class EditProfileViewController: UIViewController {
+class EditProfileController: UIViewController {
     /*
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     let db = Firestore.firestore()
@@ -510,7 +510,7 @@ class EditProfileViewController: UIViewController {
     }
 }
 
-extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate, RSKImageCropViewControllerDelegate, RSKImageCropViewControllerDataSource {
+extension EditProfileController: UIImagePickerControllerDelegate, UINavigationControllerDelegate, RSKImageCropViewControllerDelegate, RSKImageCropViewControllerDataSource {
     
     func imageCropViewControllerCustomMaskRect(_ controller: RSKImageCropViewController) -> CGRect {
         
@@ -598,7 +598,7 @@ extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigati
     }
 }
 
-extension EditProfileViewController: UITextFieldDelegate, UITextViewDelegate {
+extension EditProfileController: UITextFieldDelegate, UITextViewDelegate {
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         

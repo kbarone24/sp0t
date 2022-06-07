@@ -15,7 +15,7 @@ import CoreLocation
 import Mixpanel
 
 
-class SearchContactsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class SearchContactsController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     let db: Firestore! = Firestore.firestore()
     var uid : String = Auth.auth().currentUser?.uid ?? "invalid ID"
@@ -86,7 +86,7 @@ class SearchContactsViewController: UIViewController, UITableViewDelegate, UITab
     func animateToMap() {
         
         let storyboard = UIStoryboard(name: "Map", bundle: nil)
-        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapViewController
+        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
         
@@ -568,7 +568,7 @@ class ContactHeader: UITableViewHeaderFooterView {
     }
     
     @objc func exit(_ sender: UIButton) {
-        if let contactsVC = viewContainingController() as? SearchContactsViewController {
+        if let contactsVC = viewContainingController() as? SearchContactsController {
             contactsVC.dismiss(animated: true, completion: nil)
         }
     }

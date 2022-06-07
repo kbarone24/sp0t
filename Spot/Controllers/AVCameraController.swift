@@ -21,7 +21,7 @@ class AVCameraController: UIViewController {
     let db: Firestore! = Firestore.firestore()
 
     var cameraController: AVSpotCamera!
-    unowned var mapVC: MapViewController!
+    unowned var mapVC: MapController!
 
     var spotObject: MapSpot!
     var volumeHandler: JPSVolumeButtonHandler! /// capture image on volume button tap

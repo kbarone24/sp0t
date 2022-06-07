@@ -28,78 +28,6 @@
             </objects>
             <point key="canvasLocation" x="3677" y="2545"/>
         </scene>
-        <!--Friends List Controller-->
-        <scene sceneID="I2R-B4-Tng">
-            <objects>
-                <viewController storyboardIdentifier="FriendsList" id="M48-pG-n3t" customClass="FriendsListController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="7e7-Ok-1wr">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="xbr-up-jsm"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
-                    </view>
-                    <extendedEdge key="edgesForExtendedLayout"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="vKb-og-ybw" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="3019" y="1813"/>
-        </scene>
-        <!--Settings View Controller-->
-        <scene sceneID="SBh-G1-iYC">
-            <objects>
-                <viewController storyboardIdentifier="Settings" extendedLayoutIncludesOpaqueBars="YES" id="BV1-QI-uvd" customClass="SettingsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="hDz-vX-Kdn">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="kso-kd-BYa"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
-                    </view>
-                    <connections>
-                        <segue destination="cvb-71-v1h" kind="presentation" identifier="logoutSegue" modalPresentationStyle="fullScreen" id="iZn-rZ-KuU"/>
-                    </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="M6M-Mi-mMp" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="5258" y="2545"/>
-        </scene>
-        <!--Edit Profile View Controller-->
-        <scene sceneID="uD2-1H-L6Q">
-            <objects>
-                <viewController storyboardIdentifier="EditProfile" extendedLayoutIncludesOpaqueBars="YES" id="2bd-oj-8Ol" customClass="EditProfileViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="HSG-kk-2Ma">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="sbL-og-rzH"/>
-                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="LPc-9N-grI" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="4178" y="1813"/>
-        </scene>
-        <!--Edit Profile Camera Controller-->
-        <scene sceneID="Kvg-Mo-0T0">
-            <objects>
-                <viewController storyboardIdentifier="EditProfileCamera" id="WRj-2x-8Ld" customClass="EditProfileCameraController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="z1e-iO-IL0">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="zXP-yB-8xS"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="SSV-Kp-dve" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="4177" y="1011"/>
-        </scene>
-        <!--EmailLogin-->
-        <scene sceneID="ZNk-tw-SLo">
-            <objects>
-                <viewControllerPlaceholder storyboardName="Main" referencedIdentifier="EmailLogin" id="cvb-71-v1h" sceneMemberID="viewController"/>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="pkI-6u-1HP" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="5132" y="4033"/>
-        </scene>
         <!--Find Friends Controller-->
         <scene sceneID="DxM-5F-hDG">
             <objects>
@@ -115,10 +43,10 @@
             </objects>
             <point key="canvasLocation" x="6286" y="2545"/>
         </scene>
-        <!--Search Contacts View Controller-->
+        <!--Search Contacts Controller-->
         <scene sceneID="Byz-79-6VU">
             <objects>
-                <viewController storyboardIdentifier="SearchContacts" extendedLayoutIncludesOpaqueBars="YES" id="UoV-Yn-Z7D" customClass="SearchContactsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="SearchContacts" extendedLayoutIncludesOpaqueBars="YES" id="UoV-Yn-Z7D" customClass="SearchContactsController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="1HC-av-VG8">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -146,22 +74,6 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="5H1-pC-BBl" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="6865" y="3275"/>
-        </scene>
-        <!--Manage Account Controller-->
-        <scene sceneID="bk6-W5-sjm">
-            <objects>
-                <viewController storyboardIdentifier="ManageAccount" interfaceStyle="dark" id="0bE-Of-q6U" customClass="ManageAccountController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="QCh-OP-x5W">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="EPH-0r-7Rs"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </view>
-                    <extendedEdge key="edgesForExtendedLayout"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="WEr-aI-SbI" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="6254" y="1783"/>
         </scene>
     </scenes>
     <resources>

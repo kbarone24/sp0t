@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 
-class ShareToViewController: UIViewController {
+class ShareToController: UIViewController {
     
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore = Firestore.firestore()

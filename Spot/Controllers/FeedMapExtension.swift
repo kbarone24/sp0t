@@ -14,7 +14,7 @@ import MapboxMaps
 import Firebase
 import Geofirestore
 
-extension MapViewController {
+extension MapController {
     
     func addPostAnnotation(post: MapPost, segment: Int) {
         /// probably need to break out into 2 funcs -> will add every post to map regardless of segment rn
@@ -217,74 +217,6 @@ extension MapViewController {
                  /// segment switch during reload
              } else { if self.friendsRefresh != .noRefresh { self.friendsRefresh = .yesRefresh } }
             }
-
-/*
-            if !friendPosts.contains(where: {$0.id == post.id}) {
-                
-                var scrollToFirstRow = false
-                
-                if !deletedPostIDs.contains(post.id ?? "") && !deletedFriendIDs.contains(post.posterID) {
-
-                    self.addPostAnnotation(post: post, segment: 1)
-                    
-                    let newPost = friendPosts.count > 30 && post.timestamp.seconds > friendPosts.first?.timestamp.seconds ?? 100000000000
-
-                    if !newPost {
-                        friendPosts.append(post)
-                        friendPosts.sort(by: {$0.seconds > $1.seconds})
-                        
-                        
-                    } else {
-                        /// insert at 0 if at the of the feed (usually a new load), insert at post + 1 otherwise
-                        friendPosts.insert(post, at: 0)
-                       /// if postVC != nil { scrollToFirstRow = postVC.selectedPostIndex == 0 }
-                    }
-                    
-                    if selectedSegmentIndex == 1 { postsList = friendPosts }
-                }
-                
-               if post.id == posts.last?.id {
-                if selectedSegmentIndex == 1 {
-                    // reload posts table
-                    DispatchQueue.main.async {
-                        if self.feedTable.numberOfRows(inSection: 0) == 0 { self.checkFeedLocations() }
-                        self.feedTable.reloadData()
-                        self.refresh = .yesRefresh
-                        
-                        /// reload postsVC if added
-                        if let postVC = self.children.first(where: {$0.isKind(of: PostViewController.self)}) as? PostViewController {
-                            postVC.postsList = self.postsList
-                            postVC.tableView.reloadData()
-                        }
-                    }
-                    
-                    /// segment switch during reload
-                } else { if self.friendsRefresh != .noRefresh { self.friendsRefresh = .yesRefresh } }
-               }
-                
-            } else {
-                
-                /// already contains post - active listener found a change, probably a comment or like
-                if let index = self.friendPosts.firstIndex(where: {$0.id == post.id}) {
-
-                    let selected0 = friendPosts[index].selectedImageIndex
-                    friendPosts[index] = post
-                    friendPosts[index].selectedImageIndex = selected0
-                    
-                    if let postVC = children.first as? PostViewController, selectedSegmentIndex == 1 {
-                        
-                        /// account for possiblity of postslist / postvc.postslist not matching up
-                        if let postIndex = postVC.postsList.firstIndex(where: {$0.id == post.id}) {
-                                                        
-                            let selected1 = postVC.postsList[postIndex].selectedImageIndex
-                            postVC.postsList[postIndex] = post
-                            postVC.postsList[postIndex].selectedImageIndex = selected1
-                        
-                            /// table reloaded constantly - really no need for this
-                        }
-                    }
-                }
-            } */
         }
     }
     
@@ -633,7 +565,7 @@ extension MapViewController {
     }
     
     func openPosts(row: Int, openComments: Bool) {
-        if let vc = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
+        if let vc = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController {
                         
             let postIDs = friendsPostsGroup[row].postIDs
             var posts: [MapPost] = []
@@ -656,7 +588,7 @@ extension MapViewController {
             view.addSubview(vc.view)
             vc.didMove(toParent: self)
             
-            let infoPass = ["selectedPost": index, "firstOpen": true, "parentVC": PostViewController.parentViewController.spot] as [String : Any]
+            let infoPass = ["selectedPost": index, "firstOpen": true, "parentVC": PostController.parentViewController.spot] as [String : Any]
             NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: infoPass)
         }
     }
@@ -897,7 +829,7 @@ class MapFeedCell: UITableViewCell {
     }
     
     @objc func tap(_ sender: UITapGestureRecognizer) {
-        guard let mapVC = viewContainingController() as? MapViewController else { return }
+        guard let mapVC = viewContainingController() as? MapController else { return }
         mapVC.selectPostAt(index: row)
     }
     

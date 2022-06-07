@@ -1,5 +1,5 @@
 //
-//  CommentsViewController.swift
+//  CommentsController.swift
 //  Spot
 //
 //  Created by kbarone on 6/25/19.
@@ -13,16 +13,15 @@ import IQKeyboardManagerSwift
 import Mixpanel
 import FirebaseUI
 
-class CommentsViewController: UIViewController {
+class CommentsController: UIViewController {
     
     // var friendsList: [UserProfile] = []
-    weak var postVC: PostViewController!
+    weak var postVC: PostController!
     var post: MapPost!
     var postIndex = 0
     
     var likers: [UserProfile] = []
     var commentList: [MapComment] = []
-    var userInfo: UserProfile!
     
     var selectedIndex = 0 /// tableView cells are comment when 0, like when 1
     var commentsTable: UITableView!
@@ -60,7 +59,6 @@ class CommentsViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentLike(_:)), name: NSNotification.Name("CommentLike"), object: nil)
         view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.98, alpha: 1)
         
-        if userInfo == nil { userInfo = UserDataModel.shared.userInfo }
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         post.captionHeight = getCaptionHeight(caption: post.caption, noImage: false, maxCaption: 0, truncated: false) /// run get captionheight again for 14.7 font caption at full length
         
@@ -129,7 +127,7 @@ class CommentsViewController: UIViewController {
         footerView.backgroundColor = nil
         
         profilePic = UIImageView(frame: CGRect(x: 11, y: 11, width: 42, height: 41))
-        let image = userInfo.avatarPic == UIImage() ? userInfo.profilePic : userInfo.avatarPic
+        let image = UserDataModel.shared.userInfo.avatarPic == UIImage() ? UserDataModel.shared.userInfo.profilePic : UserDataModel.shared.userInfo.avatarPic
         profilePic.image = image
         profilePic.contentMode = .scaleAspectFill
         profilePic.layer.cornerRadius = 14.5
@@ -255,7 +253,7 @@ class CommentsViewController: UIViewController {
         temp.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         temp.sizeToFit()
         
-        let comment = MapComment(id: commentID, comment: commentText, commenterID: self.uid, timestamp: firTimestamp, userInfo: userInfo, taggedUsers: taggedUsernames, commentHeight: temp.frame.height, seconds: Int64(timestamp))
+        let comment = MapComment(id: commentID, comment: commentText, commenterID: self.uid, timestamp: firTimestamp, userInfo: UserDataModel.shared.userInfo, taggedUsers: taggedUsernames, commentHeight: temp.frame.height, seconds: Int64(timestamp))
         commentList.append(comment)
         commentsTable.reloadData()
         updateParent()
@@ -298,7 +296,7 @@ class CommentsViewController: UIViewController {
     }
 }
 
-extension CommentsViewController: UITextViewDelegate {
+extension CommentsController: UITextViewDelegate {
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         let currentText = textView.text ?? ""
         guard let stringRange = Range(range, in: currentText) else { return false }
@@ -388,7 +386,7 @@ extension CommentsViewController: UITextViewDelegate {
 }
 
 
-extension CommentsViewController: UITableViewDelegate, UITableViewDataSource {
+extension CommentsController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return selectedIndex == 0 ? commentList.count - 1 : likers.count
@@ -574,7 +572,7 @@ class CommentCell: UITableViewCell {
         /// @ tapped comment's poster at the end of the active comment text
         let username = "@\(comment.userInfo?.username ?? "") "
         
-        guard let commentsVC = viewContainingController() as? CommentsViewController else { return }
+        guard let commentsVC = viewContainingController() as? CommentsController else { return }
         if !commentsVC.textView.isFirstResponder {
             var text = (commentsVC.textView.text ?? "")
             if text == commentsVC.emptyTextString { text = ""; commentsVC.textView.alpha = 1.0; commentsVC.postButton.isEnabled = true } /// have to enable manually because the textView didn't technically "edit"
@@ -637,7 +635,7 @@ class CommentCell: UITableViewCell {
     }
     
     func openProfile(user: UserProfile) {
-      /*  if let commentsVC = self.viewContainingController() as? CommentsViewController {
+      /*  if let commentsVC = self.viewContainingController() as? CommentsController {
             
             if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
                 
@@ -744,7 +742,7 @@ class CommentsControl: UITableViewHeaderFooterView {
     
     func switchToLikeSeg() {
         
-        guard let commentsVC = viewContainingController() as? CommentsViewController else { return }
+        guard let commentsVC = viewContainingController() as? CommentsController else { return }
         commentsVC.selectedIndex = 1
         commentsVC.commentsTable.reloadData()
         animateSegmentSwitch()
@@ -752,7 +750,7 @@ class CommentsControl: UITableViewHeaderFooterView {
 
     func switchToCommentSeg() {
         
-        guard let commentsVC = viewContainingController() as? CommentsViewController else { return }
+        guard let commentsVC = viewContainingController() as? CommentsController else { return }
         commentsVC.selectedIndex = 0
         commentsVC.commentsTable.reloadData()
         animateSegmentSwitch()

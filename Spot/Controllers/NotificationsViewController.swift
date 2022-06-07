@@ -1,5 +1,5 @@
 //
-//  NotificationsViewController.swift
+//  NotificationsController.swift
 //  Spot
 //
 //  Created by kbarone on 8/15/19.
@@ -14,7 +14,7 @@ import Mixpanel
 import FirebaseUI
 
 
-class NotificationsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class NotificationsController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
     private var activityIndicator: CustomActivityIndicator!
     var tableView: UITableView!
@@ -34,7 +34,7 @@ class NotificationsViewController: UIViewController, UITableViewDataSource, UITa
     var listener1, listener2, listener3, listener4, listener5: ListenerRegistration!
     var endDocument: DocumentSnapshot!
     
-    unowned var mapVC: MapViewController!
+    unowned var mapVC: MapController!
     
     var refresh: refreshStatus = .refreshing
     
@@ -766,7 +766,7 @@ class FriendRequestCell: UITableViewCell {
     @objc func openProfile(_ sender: UIButton) {
         /*
         if let vc = UIStoryboard(name: "Profile", bundle: nil).instantiateViewController(identifier: "Profile") as? ProfileViewController {
-            if let notiVC = self.viewContainingController() as? NotificationsViewController {
+            if let notiVC = self.viewContainingController() as? NotificationsController {
                 
                 notiVC.openProfile(user: self.userInfo!)
                 
@@ -1054,15 +1054,15 @@ class PostNotificationCell: UITableViewCell {
     }
     
     @objc func openProfile(_ sender: UIButton) {
-        if let notiVC = self.viewContainingController() as? NotificationsViewController {
+        if let notiVC = self.viewContainingController() as? NotificationsController {
             notiVC.openProfile(user: self.userInfo!)
         }
     }
     
     @objc func openPost(_ sender: UITapGestureRecognizer) {
         
-        guard let notiVC = viewContainingController() as? NotificationsViewController else { return }
-        if let vc = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostViewController {
+        guard let notiVC = viewContainingController() as? NotificationsController else { return }
+        if let vc = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController {
             
             notiVC.active = false
             
@@ -1085,7 +1085,7 @@ class PostNotificationCell: UITableViewCell {
             vc.didMove(toParent: notiVC)
             
             notiVC.mapVC.postsList = pList
-            let infoPass = ["selectedPost": 0, "firstOpen": true, "parentVC":  PostViewController.parentViewController.notifications] as [String : Any]
+            let infoPass = ["selectedPost": 0, "firstOpen": true, "parentVC":  PostController.parentViewController.notifications] as [String : Any]
             NotificationCenter.default.post(name: Notification.Name("PostOpen"), object: nil, userInfo: infoPass)
         }
     }
@@ -1276,7 +1276,7 @@ class FriendRequestHeader: UITableViewHeaderFooterView {
     
     @objc func openRequests(_ sender: UIButton) {
         if let vc = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "PendingRequests") as? PendingFriendRequestsController {
-            if let notiVC = self.viewContainingController() as? NotificationsViewController {
+            if let notiVC = self.viewContainingController() as? NotificationsController {
                 print("set raw requests")
                 vc.rawRequests = notiVC.friendRequestsPending
                 vc.notiVC = notiVC
