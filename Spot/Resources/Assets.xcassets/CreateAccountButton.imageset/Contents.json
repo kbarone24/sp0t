@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Group 21057.png",
+      "filename" : "CreateAccount1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Group 21057-1.png",
+      "filename" : "CreateAccountButton.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Group 21057-2.png",
+      "filename" : "CreateAccountButton3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
