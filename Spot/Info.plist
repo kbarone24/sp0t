@@ -60,9 +60,6 @@
 		<string>SF-Compact-Text-Bold.otf</string>
 		<string>SF-Compact-Text-Semibold.otf</string>
 		<string>SF-Compact-Text-Regular.otf</string>
-		<string>SFCamera-Semibold.otf</string>
-		<string>SFCamera-Regular.otf</string>
-		<string>Gameplay.ttf</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

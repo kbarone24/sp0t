@@ -5,7 +5,6 @@
 //  Created by kbarone on 2/15/19.
 //   Copyright © 2019 sp0t, LLC. All rights reserved.
 //
-
 import UIKit
 import MapKit
 import Firebase
@@ -256,7 +255,7 @@ class MapController: UIViewController {
                             spotsList.append(doc.documentID)
                             if spotsList.count == spotsSnap?.documents.count {
                                 UserDataModel.shared.userSpots = spotsList
-                                self.userSpotsLoaded = true 
+                                self.userSpotsLoaded = true
                             }
                         }
                         
@@ -371,7 +370,6 @@ class MapController: UIViewController {
         feedTableHighlight.layer.borderColor = UIColor(red: 0.096, green: 0.249, blue: 0.258, alpha: 1).cgColor
         feedTableHighlight.isHidden = selectedFeedIndex == -1
       //  feedTableContainer.addSubview(feedTableHighlight)
-
         feedTable = UITableView(frame: CGRect(x: 0, y: 84, width: UIScreen.main.bounds.width, height: feedTableContainer.frame.height - 41))
         feedTable.tag = 0
         feedTable.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
@@ -408,6 +406,33 @@ class MapController: UIViewController {
                 self.navigationController?.pushViewController(vc, animated: false)
             }
         }
+    }
+    
+    
+    @objc func profileTap(_ sender: Any){
+        
+        let profileViewController = ProfileViewController()
+        let nav = UINavigationController(rootViewController: profileViewController)
+        nav.modalPresentationStyle = .pageSheet
+
+         if #available(iOS 15.0, *) {
+            //creating sheet controller
+            if let sheet = nav.sheetPresentationController {
+                //custom detent
+                let detent1: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test1", constant: 100.0)
+                sheet.detents = [detent1, .medium(), .large()]
+                //other optional vars
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+                sheet.largestUndimmedDetentIdentifier = .medium
+                sheet.preferredCornerRadius = 20
+                sheet.prefersGrabberVisible = true
+
+            }
+        } else {
+            // Fallback on earlier versions -- IOS >15 sheet here
+        }
+
+        self.present(nav, animated: true, completion: nil)
     }
     
     @objc func friendsTap(_ sender: UIButton) {
@@ -449,6 +474,7 @@ class MapController: UIViewController {
         
         let searchButton = UIButton(frame: CGRect(x: 0, y: 5, width: 20, height: 20))
         searchButton.setImage(UIImage(named: "SearchIcon"), for: .normal)
+        searchButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
         buttonView.addSubview(searchButton)
         
         let notiButton = UIButton(frame: CGRect(x: searchButton.frame.maxX + 25, y: 5, width: 20, height: 20))
@@ -478,6 +504,7 @@ class MapController: UIViewController {
             profileButton.layer.borderWidth = 1.8
             profileButton.layer.masksToBounds = true
             profileButton.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.imageURL), for: .normal, completed: nil)
+            profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
             buttonView.addSubview(profileButton)
         }
         
@@ -764,7 +791,6 @@ extension CLLocationCoordinate2D {
 }
 
 ///https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
-
 
 extension MapController: UITableViewDelegate, UITableViewDataSource, UITableViewDataSourcePrefetching {
     
