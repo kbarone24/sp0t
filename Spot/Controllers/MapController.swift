@@ -474,7 +474,7 @@ class MapController: UIViewController {
         
         let searchButton = UIButton(frame: CGRect(x: 0, y: 5, width: 20, height: 20))
         searchButton.setImage(UIImage(named: "SearchIcon"), for: .normal)
-        searchButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
+        //searchButton.addTarget(self, action: #selector((_:)), for: .touchUpInside)
         buttonView.addSubview(searchButton)
         
         let notiButton = UIButton(frame: CGRect(x: searchButton.frame.maxX + 25, y: 5, width: 20, height: 20))
