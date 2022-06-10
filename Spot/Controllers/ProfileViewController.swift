@@ -41,7 +41,7 @@ class ProfileViewController: UIViewController, UIViewControllerTransitioningDele
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        //print("did Appear")
+        print("did Appear")
     }
     
     override func viewWillDisappear(_ animated: Bool){
@@ -50,7 +50,7 @@ class ProfileViewController: UIViewController, UIViewControllerTransitioningDele
     
     override func viewDidDisappear(_ animated: Bool){
         super.viewDidDisappear(animated)
-        //print("did DISappear")
+        print("did DISappear")
     }
     
 
