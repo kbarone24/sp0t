@@ -155,7 +155,7 @@
 		59FCF5C424734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */; };
 		59FCF5C524734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */; };
 		59FCF5C624734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */; };
-		5F9D0CDF2853B53E007969AD /* HalfSheetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F9D0CDE2853B53E007969AD /* HalfSheetViewController.swift */; };
+		5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */; };
 		5FEB5253284FE2C000415A1A /* ImagePreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEB5252284FE2C000415A1A /* ImagePreviewController.swift */; };
 		5FEB5273284FE75800415A1A /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5FEB526E284FE75800415A1A /* SF-Compact-Text-Regular.otf */; };
 		5FEB5274284FE75800415A1A /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5FEB526E284FE75800415A1A /* SF-Compact-Text-Regular.otf */; };
@@ -371,7 +371,7 @@
 		59FCF5AB24734A1C0012207D /* ImageModel+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ImageModel+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		59FCF5BF24734EAA0012207D /* SpotDraft+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpotDraft+CoreDataClass.swift"; sourceTree = SOURCE_ROOT; };
 		59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpotDraft+CoreDataProperties.swift"; sourceTree = SOURCE_ROOT; };
-		5F9D0CDE2853B53E007969AD /* HalfSheetViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HalfSheetViewController.swift; sourceTree = "<group>"; };
+		5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomDrawerViewController.swift; sourceTree = "<group>"; };
 		5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Spot-Bridging-Header.h"; sourceTree = "<group>"; };
 		5FD686D22852527300B88B3B /* UISheetPresentationControllerDetent+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UISheetPresentationControllerDetent+Private.h"; sourceTree = "<group>"; };
 		5FEB5252284FE2C000415A1A /* ImagePreviewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ImagePreviewController.swift; path = ../../../spotsHolder/ImagePreviewController.swift; sourceTree = "<group>"; };
@@ -617,7 +617,7 @@
 				8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */,
 				8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */,
 				8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */,
-				5F9D0CDE2853B53E007969AD /* HalfSheetViewController.swift */,
+				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
 			);
 			name = Main;
 			sourceTree = "<group>";
@@ -1205,7 +1205,7 @@
 				8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C2209FC284EDDAD00E5D165 /* ProfileViewController.swift in Sources */,
-				5F9D0CDF2853B53E007969AD /* HalfSheetViewController.swift in Sources */,
+				5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */,
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C220A01284EDEB200E5D165 /* FriendsListCell.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
