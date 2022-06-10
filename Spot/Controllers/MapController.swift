@@ -411,28 +411,13 @@ class MapController: UIViewController {
     
     @objc func profileTap(_ sender: Any){
         
-        let profileViewController = ProfileViewController()
-        let nav = UINavigationController(rootViewController: profileViewController)
-        nav.modalPresentationStyle = .pageSheet
-
-         if #available(iOS 15.0, *) {
-            //creating sheet controller
-            if let sheet = nav.sheetPresentationController {
-                //custom detent
-                let detent1: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test1", constant: 100.0)
-                sheet.detents = [detent1, .medium(), .large()]
-                //other optional vars
-                sheet.prefersScrollingExpandsWhenScrolledToEdge = false
-                sheet.largestUndimmedDetentIdentifier = .medium
-                sheet.preferredCornerRadius = 20
-                sheet.prefersGrabberVisible = true
-
-            }
+        let profileVC = ProfileViewController()
+        if #available(iOS 15.0, *) {
+            let vc : BottomDrawerViewController = .init(rootViewController : profileVC)
+            self.present(vc, animated: true, completion: nil)
         } else {
-            // Fallback on earlier versions -- IOS >15 sheet here
+            // Fallback on earlier versions
         }
-
-        self.present(nav, animated: true, completion: nil)
     }
     
     @objc func friendsTap(_ sender: UIButton) {
