@@ -26,12 +26,14 @@ class ProfileViewController: UIViewController, UIViewControllerTransitioningDele
         
         //dummy button for adding profileViewController
         let myButton = UIButton(type: .system)
-        myButton.frame = CGRect(x: 20, y: 20, width: 100, height: 50)
+        myButton.frame = CGRect(x: 20, y: 130, width: 100, height: 50)
         myButton.setTitle("AddView", for: .normal)
+        
         
         myButton.addTarget(self, action: #selector(addView(_:)), for: .touchUpInside)
         
         view.addSubview(myButton)
+        
         self.view = view
     }
     
@@ -41,7 +43,7 @@ class ProfileViewController: UIViewController, UIViewControllerTransitioningDele
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        print("did Appear")
+        print("😏", self, "😏")
     }
     
     override func viewWillDisappear(_ animated: Bool){
@@ -50,30 +52,11 @@ class ProfileViewController: UIViewController, UIViewControllerTransitioningDele
     
     override func viewDidDisappear(_ animated: Bool){
         super.viewDidDisappear(animated)
-        print("did DISappear")
+        print("😒", self, "😒")
+        
+        
     }
     
-
-    
-    /*func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
-        
-        let controller = UIPresentationController(presentedViewController: presented, presenting: presenting)
-        
-        if #available(iOS 15.0, *) {
-            let controller: UISheetPresentationController = .init(presentedViewController: presented, presenting: presenting)
-            let detent1: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test1", constant: 100.0)
-            
-            controller.detents = [detent1, .medium(), .large()]
-            controller.prefersScrollingExpandsWhenScrolledToEdge = false
-            controller.largestUndimmedDetentIdentifier = .medium
-            controller.preferredCornerRadius = 20
-            controller.prefersGrabberVisible = true
-            
-            return controller
-        } else {
-            return controller// Fallback on earlier versions
-        }
-    }*/
         
 
 }

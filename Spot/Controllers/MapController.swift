@@ -408,7 +408,7 @@ class MapController: UIViewController {
         }
     }
     
-    
+    private var sheetVC: DrawerView? // Must declare outside to listen to UIEvent
     @objc func profileTap(_ sender: Any){
         
         let profileVC = ProfileViewController()
@@ -416,7 +416,11 @@ class MapController: UIViewController {
             let vc : BottomDrawerViewController = .init(rootViewController : profileVC)
             self.present(vc, animated: true, completion: nil)
         } else {
-            // Fallback on earlier versions
+            
+            if sheetVC == nil {
+                sheetVC = DrawerView(present: UIViewController(), drawerConrnerRadius: 22)
+              }
+              sheetVC?.present()
         }
     }
     
