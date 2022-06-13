@@ -9,33 +9,27 @@
 import UIKit
 
 @available(iOS 15.0, *)
-class BottomDrawerViewController: UINavigationController{
+class BottomDrawerViewController: UINavigationController {
   
     var vc : UIViewController
     
-    override init(rootViewController : UIViewController){
+    override init(rootViewController: UIViewController) {
 
         vc = rootViewController
-        //let nav = UINavigationController(rootViewController: vc)
-        //nav.modalPresentationStyle = .pageSheet
         
         super.init(nibName: nil, bundle: nil)
 
-            //creating sheet controller
         if let sheet = self.sheetPresentationController {
-            //custom detent
             let detent1: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test1", constant: 100.0)
             sheet.detents = [.medium(), detent1, .large()]
-            //other optional vars
             sheet.prefersScrollingExpandsWhenScrolledToEdge = false
             sheet.largestUndimmedDetentIdentifier = .large
             sheet.preferredCornerRadius = 20
             sheet.prefersGrabberVisible = true
-
         }
+        self.modalPresentationStyle = .pageSheet
 
         self.viewControllers = [rootViewController]
-        self.modalPresentationStyle = .pageSheet
     }
     
     required init?(coder: NSCoder) {
@@ -55,7 +49,7 @@ class BottomDrawerViewController: UINavigationController{
         
     }
     
-    override func viewWillAppear(_ animated: Bool){
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
     }
     
@@ -63,43 +57,19 @@ class BottomDrawerViewController: UINavigationController{
         super.viewDidAppear(animated)
     }
     
-    override func viewWillDisappear(_ animated: Bool){
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
     }
     
-    override func viewDidDisappear(_ animated: Bool){
+    override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
     }
     
-    @objc func dismissDrawer(_ sender: UIButton){
+    @objc func dismissDrawer(_ sender: UIButton) {
         navigationController?.popViewController(animated: true)
 
         self.dismiss(animated: true, completion: nil)
     }
     
-
-    
-    /*func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
-        
-        let controller = UIPresentationController(presentedViewController: presented, presenting: presenting)
-        
-        if #available(iOS 15.0, *) {
-            let controller: UISheetPresentationController = .init(presentedViewController: presented, presenting: presenting)
-            let detent1: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test1", constant: 100.0)
-            
-            controller.detents = [detent1, .medium(), .large()]
-            controller.prefersScrollingExpandsWhenScrolledToEdge = false
-            controller.largestUndimmedDetentIdentifier = .medium
-            controller.preferredCornerRadius = 20
-            controller.prefersGrabberVisible = true
-            
-            return controller
-        } else {
-            return controller// Fallback on earlier versions
-        }
-    
-    
-    
-     }*/
 }
     
