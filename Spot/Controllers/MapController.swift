@@ -413,14 +413,13 @@ class MapController: UIViewController {
         
         let profileVC = ProfileViewController()
         if #available(iOS 15.0, *) {
-            let vc : BottomDrawerViewController = .init(rootViewController : profileVC)
+            let vc: BottomDrawerViewController = .init(rootViewController: profileVC)
             self.present(vc, animated: true, completion: nil)
         } else {
-            
             if sheetVC == nil {
                 sheetVC = DrawerView(present: UIViewController(), drawerConrnerRadius: 22)
-              }
-              sheetVC?.present()
+            }
+            sheetVC?.present()
         }
     }
     

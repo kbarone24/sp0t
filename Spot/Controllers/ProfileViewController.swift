@@ -6,10 +6,9 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 
-class ProfileViewController: UIViewController, UIViewControllerTransitioningDelegate {
+class ProfileViewController: UIViewController {
     
     // function for adding profileViewController
     @objc func addView(_ sender: UIButton){
@@ -22,7 +21,6 @@ class ProfileViewController: UIViewController, UIViewControllerTransitioningDele
         
         view.backgroundColor = .white
         modalPresentationStyle = .custom
-        transitioningDelegate = self
         
         //dummy button for adding profileViewController
         let myButton = UIButton(type: .system)
