@@ -156,8 +156,8 @@
 		59FCF5C524734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */; };
 		59FCF5C624734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */; };
 		5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */; };
-		5FDAF23A2857E64A001EDC57 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDAF2392857E649001EDC57 /* DrawerView.swift */; };
 		5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDAF23B2857E65A001EDC57 /* Declarative.swift */; };
+		5FDAF23E2858FD06001EDC57 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDAF23D2858FD06001EDC57 /* DrawerView.swift */; };
 		5FEB5253284FE2C000415A1A /* ImagePreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEB5252284FE2C000415A1A /* ImagePreviewController.swift */; };
 		5FEB5273284FE75800415A1A /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5FEB526E284FE75800415A1A /* SF-Compact-Text-Regular.otf */; };
 		5FEB5274284FE75800415A1A /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5FEB526E284FE75800415A1A /* SF-Compact-Text-Regular.otf */; };
@@ -376,8 +376,8 @@
 		5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomDrawerViewController.swift; sourceTree = "<group>"; };
 		5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Spot-Bridging-Header.h"; sourceTree = "<group>"; };
 		5FD686D22852527300B88B3B /* UISheetPresentationControllerDetent+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UISheetPresentationControllerDetent+Private.h"; sourceTree = "<group>"; };
-		5FDAF2392857E649001EDC57 /* DrawerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawerView.swift; sourceTree = "<group>"; };
 		5FDAF23B2857E65A001EDC57 /* Declarative.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Declarative.swift; sourceTree = "<group>"; };
+		5FDAF23D2858FD06001EDC57 /* DrawerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawerView.swift; sourceTree = "<group>"; };
 		5FEB5252284FE2C000415A1A /* ImagePreviewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ImagePreviewController.swift; path = ../../../spotsHolder/ImagePreviewController.swift; sourceTree = "<group>"; };
 		5FEB5254284FE2F600415A1A /* LandingScreenVideo.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; name = LandingScreenVideo.mp4; path = ../../../spotsHolder/LandingScreenVideo.mp4; sourceTree = "<group>"; };
 		5FEB526E284FE75800415A1A /* SF-Compact-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SF-Compact-Text-Regular.otf"; path = "../spotsHolder/SF-Compact-Text-Regular.otf"; sourceTree = "<group>"; };
@@ -783,7 +783,7 @@
 				59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */,
 				8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */,
 				5FDAF23B2857E65A001EDC57 /* Declarative.swift */,
-				5FDAF2392857E649001EDC57 /* DrawerView.swift */,
+				5FDAF23D2858FD06001EDC57 /* DrawerView.swift */,
 				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
 			);
 			path = HelperFunctions;
@@ -1187,6 +1187,7 @@
 				8C29879C2693A05A0071E75A /* CircleView.swift in Sources */,
 				8CC2A55226BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C0D1EBF27AB39D300F4B885 /* TextPostWindow.swift in Sources */,
+				5FDAF23E2858FD06001EDC57 /* DrawerView.swift in Sources */,
 				593AC545243E56D400C08237 /* LandingPageController.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */,
 				7A37801C22174BB1008B835A /* MapController.swift in Sources */,
@@ -1201,7 +1202,6 @@
 				59FCF5AC24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				8C2074CC25CB38440040036B /* City.swift in Sources */,
-				5FDAF23A2857E64A001EDC57 /* DrawerView.swift in Sources */,
 				597072FA24291993008A481A /* AVSpotCamera.swift in Sources */,
 				59FCF5B824734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				8C3420B0261273140017CB2F /* SendInvitesController.swift in Sources */,

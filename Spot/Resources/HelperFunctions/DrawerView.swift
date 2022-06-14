@@ -39,7 +39,7 @@ class DrawerView: NSObject {
     }
     
     private var rootController = UIViewController()
-    private var parentController: UIViewController = UIApplication.shared.keyWindow?.rootViewController ?? UIViewController()
+    private var parentController: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
     private var status = Status.Close
     
     override init() {
@@ -47,7 +47,7 @@ class DrawerView: NSObject {
     }
     public init(present: UIViewController = UIViewController(), drawerConrnerRadius: CGFloat = 20) {
         super.init()
-        if let parent = UIApplication.shared.keyWindow?.rootViewController as? UINavigationController {
+        if let parent = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController as? UINavigationController {
             if parent.visibleViewController != nil {
                 parentController = parent.visibleViewController!
             }
@@ -78,7 +78,7 @@ class DrawerView: NSObject {
         slideView.addSubview(grabberView)
         grabberView.snp.makeConstraints {
             $0.top.equalToSuperview().offset(10)
-            $0.width.equalTo(60)
+            $0.width.equalTo(50)
             $0.height.equalTo(4)
             $0.centerX.equalToSuperview()
         }
@@ -104,7 +104,7 @@ class DrawerView: NSObject {
                 self.slideView.frame.origin.y =  (self.slideView.frame.minY > self.parentController.view.frame.height * 0.6) ? (self.parentController.view.frame.height - 100):(self.slideView.frame.minY < self.parentController.view.frame.height * 0.28) ? (self.parentController.view.frame.height - self.slideView.frame.height + 100):(0.45 * self.parentController.view.frame.height) // Bottom:Top:Middle
                 self.parentController.view.layoutIfNeeded()
             }) { (success) in
-                self.status = (self.slideView.frame.minY > self.parentController.view.frame.height * 0.6) ? Status.Bottom:(self.slideView.frame.minY < self.parentController.view.frame.height * 0.28) ? Status.Top:Status.Middle
+                self.status = (self.slideView.frame.minY > self.parentController.view.frame.height * 0.6) ? Status.Bottom:(self.slideView.frame.minY < self.parentController.view.frame.height * 0.28) ? Status.Top:Status.Middle // Bottom:Top:Middle
             }
         }
     }
@@ -140,23 +140,6 @@ class DrawerView: NSObject {
             }
         }
     }
-    
-//    public func shownAlready() {
-//        if slideView.frame.origin.y == (self.parentController.view.frame.height - 100) || (self.slideView.frame.minY < self.parentController.view.frame.height * 0.28) {
-//            UIView.animate(withDuration: 0.35) {
-//                self.slideView.frame.origin.y = (0.45 * self.parentController.view.frame.height)
-//            } completion: { success in
-//                self.status = Status.Middle
-//            }
-//        } else {
-//            let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
-//            animation.values = [0, -20, 0]
-//            animation.duration = 0.5
-//            animation.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeOut)
-//            slideView.layer.add(animation, forKey: nil)
-//            status = Status.Middle
-//        }
-//    }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
