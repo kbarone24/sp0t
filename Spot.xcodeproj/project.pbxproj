@@ -770,6 +770,7 @@
 				5992A5A9245B666E009DAA8B /* CircleProgress.swift */,
 				8C320C472735A31B003DE81F /* AddedUsersView.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
+				5FDAF23D2858FD06001EDC57 /* DrawerView.swift */,
 			);
 			path = SupplementalViews;
 			sourceTree = "<group>";
@@ -783,7 +784,6 @@
 				59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */,
 				8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */,
 				5FDAF23B2857E65A001EDC57 /* Declarative.swift */,
-				5FDAF23D2858FD06001EDC57 /* DrawerView.swift */,
 				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
 			);
 			path = HelperFunctions;
