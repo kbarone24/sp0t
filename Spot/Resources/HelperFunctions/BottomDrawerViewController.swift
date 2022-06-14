@@ -67,7 +67,6 @@ class BottomDrawerViewController: UINavigationController {
     
     @objc func dismissDrawer(_ sender: UIButton) {
         navigationController?.popViewController(animated: true)
-
         self.dismiss(animated: true, completion: nil)
     }
     
