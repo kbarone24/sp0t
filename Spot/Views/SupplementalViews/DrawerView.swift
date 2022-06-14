@@ -38,8 +38,8 @@ class DrawerView: NSObject {
         $0.layer.cornerRadius = 2
     }
     
-    private var rootController = UIViewController()
-    private var parentController: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+    private unowned var rootVC = UIViewController()
+    private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
     private var status = Status.Close
     
     override init() {
@@ -49,31 +49,31 @@ class DrawerView: NSObject {
         super.init()
         if let parent = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController as? UINavigationController {
             if parent.visibleViewController != nil {
-                parentController = parent.visibleViewController!
+                parentVC = parent.visibleViewController!
             }
         }
-        self.rootController = present
+        self.rootVC = present
         self.slideView.layer.cornerRadius = drawerConrnerRadius
         viewSetup(cornerRadius: drawerConrnerRadius)
     }
     
     private func viewSetup(cornerRadius: CGFloat) {
-        parentController.view.addSubview(slideView)
+        parentVC.view.addSubview(slideView)
         slideView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.top.greaterThanOrEqualTo(parentController.view.snp.top).offset(0.45 * parentController.view.frame.height)
-            $0.height.equalTo(parentController.view.snp.height)
+            $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).offset(0.45 * parentVC.view.frame.height)
+            $0.height.equalTo(parentVC.view.snp.height)
         }
-        slideView.frame = CGRect(x: 0, y: parentController.view.frame.height - 100, width: parentController.view.frame.width, height: parentController.view.frame.height)
+        slideView.frame = CGRect(x: 0, y: parentVC.view.frame.height - 100, width: parentVC.view.frame.width, height: parentVC.view.frame.height)
         slideView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(self.panPerforming(recognizer:))))
        
-        let myNav = UINavigationController(rootViewController: rootController)
-        parentController.addChild(myNav)
+        let myNav = UINavigationController(rootViewController: rootVC)
+        parentVC.addChild(myNav)
         slideView.addSubview(myNav.view)
         myNav.view.frame = CGRect(origin: .zero, size: slideView.frame.size)
         myNav.view.layer.cornerRadius = cornerRadius
         myNav.view.layer.masksToBounds = true
-        myNav.didMove(toParent: parentController)
+        myNav.didMove(toParent: parentVC)
         
         slideView.addSubview(grabberView)
         grabberView.snp.makeConstraints {
@@ -91,28 +91,44 @@ class DrawerView: NSObject {
         closeButton.addTarget(self, action: #selector(self.closeAction), for: .touchUpInside)
     }
     
+    // Pan gesture
     @objc func panPerforming(recognizer: UIPanGestureRecognizer) {
         let translation = recognizer.translation(in: recognizer.view)
         if recognizer.state == .began || recognizer.state == .changed {
-            if slideView.frame.minY >= parentController.view.frame.height - slideView.frame.height {
+            // When the user is still dragging or start dragging the if statement here will be fall through
+            if slideView.frame.minY >= parentVC.view.frame.height - slideView.frame.height {
                 slideView.frame.origin.y += translation.y
             }
             recognizer.setTranslation(.zero, in: recognizer.view)
         }
         else{
+            // When the user stop dragging than calculate current position and decide where the view should animate to
             UIView.animate(withDuration: 0.35, animations: {
-                self.slideView.frame.origin.y =  (self.slideView.frame.minY > self.parentController.view.frame.height * 0.6) ? (self.parentController.view.frame.height - 100):(self.slideView.frame.minY < self.parentController.view.frame.height * 0.28) ? (self.parentController.view.frame.height - self.slideView.frame.height + 100):(0.45 * self.parentController.view.frame.height) // Bottom:Top:Middle
-                self.parentController.view.layoutIfNeeded()
+                if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 {
+                    self.slideView.frame.origin.y = self.parentVC.view.frame.height - 100 // Bottom
+                } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 {
+                    self.slideView.frame.origin.y = (self.parentVC.view.frame.height - self.slideView.frame.height + 100) // Top
+                } else {
+                    self.slideView.frame.origin.y = (0.45 * self.parentVC.view.frame.height) // Middle
+                }
+                self.parentVC.view.layoutIfNeeded()
             }) { (success) in
-                self.status = (self.slideView.frame.minY > self.parentController.view.frame.height * 0.6) ? Status.Bottom:(self.slideView.frame.minY < self.parentController.view.frame.height * 0.28) ? Status.Top:Status.Middle // Bottom:Top:Middle
+                // Change sheet status here
+                if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 {
+                    self.status = Status.Bottom
+                } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 {
+                    self.status = Status.Top
+                } else {
+                    self.status = Status.Middle
+                }
             }
         }
     }
     
     @objc func closeAction() {
         UIView.animate(withDuration: 0.35, animations: {
-            self.slideView.frame.origin.y = self.parentController.view.frame.height
-            self.parentController.view.layoutIfNeeded()
+            self.slideView.frame.origin.y = self.parentVC.view.frame.height
+            self.parentVC.view.layoutIfNeeded()
         }) { (success) in
             self.status = Status.Close
         }
@@ -122,7 +138,7 @@ class DrawerView: NSObject {
         switch status {
         case .Top, .Bottom:
             UIView.animate(withDuration: 0.35) {
-                self.slideView.frame.origin.y = (0.45 * self.parentController.view.frame.height)
+                self.slideView.frame.origin.y = (0.45 * self.parentVC.view.frame.height)
             } completion: { success in
                 self.status = Status.Middle
             }
@@ -134,7 +150,7 @@ class DrawerView: NSObject {
             slideView.layer.add(animation, forKey: nil)
         case .Close:
             UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut, animations: {
-                self.slideView.frame.origin.y = 0.45 * self.parentController.view.frame.height
+                self.slideView.frame.origin.y = 0.45 * self.parentVC.view.frame.height
             }) { (success) in
                 self.status = Status.Middle
             }

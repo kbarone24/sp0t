@@ -100,6 +100,9 @@ class MapController: UIViewController {
     var pointAnnotations: [PointAnnotation] = []
     var nearbyAnnotations: [PointAnnotation] = []
     var friendAnnotations: [PointAnnotation] = []
+    
+    /// sheet view
+    private weak var sheetVC: DrawerView? // Must declare outside to listen to UIEvent
                 
     enum refreshStatus {
         case yesRefresh
@@ -408,7 +411,6 @@ class MapController: UIViewController {
         }
     }
     
-    private var sheetVC: DrawerView? // Must declare outside to listen to UIEvent
     @objc func profileTap(_ sender: Any){
         
         let profileVC = ProfileViewController()
@@ -462,7 +464,6 @@ class MapController: UIViewController {
         
         let searchButton = UIButton(frame: CGRect(x: 0, y: 5, width: 20, height: 20))
         searchButton.setImage(UIImage(named: "SearchIcon"), for: .normal)
-        //searchButton.addTarget(self, action: #selector((_:)), for: .touchUpInside)
         buttonView.addSubview(searchButton)
         
         let notiButton = UIButton(frame: CGRect(x: searchButton.frame.maxX + 25, y: 5, width: 20, height: 20))
