@@ -1,5 +1,5 @@
 //
-//  HalfSheetViewController.swift
+//  BottomSheetViewController.swift
 //  Spot
 //
 //  Created by Shay Gyawali on 6/10/22.
