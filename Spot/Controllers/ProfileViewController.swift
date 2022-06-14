@@ -22,14 +22,10 @@ class ProfileViewController: UIViewController {
         view.backgroundColor = .white
         modalPresentationStyle = .custom
         
-        //dummy button for adding profileViewController
-        let myButton = UIButton(type: .system)
+        let myButton = UIButton(type: .system)///dummy button for adding profile view
         myButton.frame = CGRect(x: 20, y: 130, width: 100, height: 50)
         myButton.setTitle("AddView", for: .normal)
-        
-        
         myButton.addTarget(self, action: #selector(addView(_:)), for: .touchUpInside)
-        
         view.addSubview(myButton)
         
         self.view = view
@@ -41,7 +37,6 @@ class ProfileViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        print("😏", self, "😏")
     }
     
     override func viewWillDisappear(_ animated: Bool){
@@ -50,9 +45,6 @@ class ProfileViewController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool){
         super.viewDidDisappear(animated)
-        print("😒", self, "😒")
-        
-        
     }
     
         
