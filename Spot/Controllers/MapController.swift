@@ -102,7 +102,7 @@ class MapController: UIViewController {
     var friendAnnotations: [PointAnnotation] = []
     
     /// sheet view
-    private weak var sheetVC: DrawerView? // Must declare outside to listen to UIEvent
+    private var sheetView: DrawerView? // Must declare outside to listen to UIEvent
                 
     enum refreshStatus {
         case yesRefresh
@@ -418,10 +418,10 @@ class MapController: UIViewController {
             let vc: BottomDrawerViewController = .init(rootViewController: profileVC)
             self.present(vc, animated: true, completion: nil)
         } else {
-            if sheetVC == nil {
-                sheetVC = DrawerView(present: UIViewController(), drawerConrnerRadius: 22)
+            if sheetView == nil {
+                sheetView = DrawerView(present: UIViewController(), drawerConrnerRadius: 22)
             }
-            sheetVC?.present()
+            sheetView?.present()
         }
     }
     
