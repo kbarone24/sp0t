@@ -5,7 +5,6 @@
 //  Created by kbarone on 2/15/19.
 //   Copyright © 2019 sp0t, LLC. All rights reserved.
 //
-
 import UIKit
 import MapKit
 import Firebase
@@ -101,6 +100,9 @@ class MapController: UIViewController {
     var pointAnnotations: [PointAnnotation] = []
     var nearbyAnnotations: [PointAnnotation] = []
     var friendAnnotations: [PointAnnotation] = []
+    
+    /// sheet view
+    private weak var sheetVC: DrawerView? // Must declare outside to listen to UIEvent
                 
     enum refreshStatus {
         case yesRefresh
@@ -256,7 +258,7 @@ class MapController: UIViewController {
                             spotsList.append(doc.documentID)
                             if spotsList.count == spotsSnap?.documents.count {
                                 UserDataModel.shared.userSpots = spotsList
-                                self.userSpotsLoaded = true 
+                                self.userSpotsLoaded = true
                             }
                         }
                         
@@ -371,7 +373,6 @@ class MapController: UIViewController {
         feedTableHighlight.layer.borderColor = UIColor(red: 0.096, green: 0.249, blue: 0.258, alpha: 1).cgColor
         feedTableHighlight.isHidden = selectedFeedIndex == -1
       //  feedTableContainer.addSubview(feedTableHighlight)
-
         feedTable = UITableView(frame: CGRect(x: 0, y: 84, width: UIScreen.main.bounds.width, height: feedTableContainer.frame.height - 41))
         feedTable.tag = 0
         feedTable.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
@@ -407,6 +408,20 @@ class MapController: UIViewController {
                 self.navigationController?.view.layer.add(transition, forKey: kCATransition)
                 self.navigationController?.pushViewController(vc, animated: false)
             }
+        }
+    }
+    
+    @objc func profileTap(_ sender: Any){
+        
+        let profileVC = ProfileViewController()
+        if #available(iOS 15.0, *) {
+            let vc: BottomDrawerViewController = .init(rootViewController: profileVC)
+            self.present(vc, animated: true, completion: nil)
+        } else {
+            if sheetVC == nil {
+                sheetVC = DrawerView(present: UIViewController(), drawerConrnerRadius: 22)
+            }
+            sheetVC?.present()
         }
     }
     
@@ -478,6 +493,7 @@ class MapController: UIViewController {
             profileButton.layer.borderWidth = 1.8
             profileButton.layer.masksToBounds = true
             profileButton.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.imageURL), for: .normal, completed: nil)
+            profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
             buttonView.addSubview(profileButton)
         }
         
@@ -764,7 +780,6 @@ extension CLLocationCoordinate2D {
 }
 
 ///https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
-
 
 extension MapController: UITableViewDelegate, UITableViewDataSource, UITableViewDataSourcePrefetching {
     
