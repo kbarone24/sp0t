@@ -22,6 +22,7 @@ use_frameworks!
   pod 'JPSVolumeButtonHandler'
   pod 'Firebase/Functions'
   pod 'MapboxMaps', '10.3.0'
+  pod 'SnapKit'
 
   target 'SpotTests' do
     inherit! :search_paths
