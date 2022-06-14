@@ -29,7 +29,7 @@ class BottomDrawerViewController: UINavigationController {
         }
         self.modalPresentationStyle = .pageSheet
 
-        self.viewControllers = [rootViewController]
+        viewControllers = [rootViewController]
     }
     
     required init?(coder: NSCoder) {
