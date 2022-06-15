@@ -412,7 +412,6 @@ class MapController: UIViewController {
     }
     
     @objc func profileTap(_ sender: Any){
-        
         let profileVC = ProfileViewController()
         if #available(iOS 15.0, *) {
             let vc: BottomDrawerViewController = .init(rootViewController: profileVC)
