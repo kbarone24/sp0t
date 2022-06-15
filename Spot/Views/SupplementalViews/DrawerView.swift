@@ -102,25 +102,51 @@ class DrawerView: NSObject {
             recognizer.setTranslation(.zero, in: recognizer.view)
         }
         else{
-            // When the user stop dragging than calculate current position and decide where the view should animate to
-            UIView.animate(withDuration: 0.35, animations: {
-                if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 {
-                    self.slideView.frame.origin.y = self.parentVC.view.frame.height - 100 // Bottom
-                } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 {
-                    self.slideView.frame.origin.y = (self.parentVC.view.frame.height - self.slideView.frame.height + 100) // Top
-                } else {
-                    self.slideView.frame.origin.y = (0.45 * self.parentVC.view.frame.height) // Middle
+            let sheetPresentVelocity = 0.35 * self.parentVC.view.frame.height / 0.5
+            var duration: CGFloat = 0
+            var yPosition: CGFloat = 0
+            
+            func goTop() {
+                duration = (self.parentVC.view.frame.height - self.slideView.frame.height + 100 - self.slideView.frame.origin.y) / sheetPresentVelocity
+                yPosition = (self.parentVC.view.frame.height - self.slideView.frame.height + 100)
+                self.status = Status.Top
+            }
+            func goMid() {
+                duration = (0.45 * self.parentVC.view.frame.height - self.slideView.frame.origin.y) / sheetPresentVelocity
+                yPosition = (0.45 * self.parentVC.view.frame.height)
+                self.status = Status.Middle
+            }
+            func goBot() {
+                duration = (self.parentVC.view.frame.height - 100 - self.slideView.frame.origin.y) / sheetPresentVelocity
+                yPosition = self.parentVC.view.frame.height - 100
+                self.status = Status.Bottom
+            }
+            
+            // Check the velocity of gesture to determine if it's a swipe or a drag
+            if abs(recognizer.velocity(in: recognizer.view).y) > 1000 {
+                // Swipe up velocity is smaller than 0
+                switch status {
+                case .Top:
+                    recognizer.velocity(in: recognizer.view).y <= 0 ? goTop():goMid()
+                case .Middle:
+                    recognizer.velocity(in: recognizer.view).y <= 0 ? goTop():goBot()
+                case .Bottom:
+                    recognizer.velocity(in: recognizer.view).y <= 0 ? goMid():goBot()
+                case .Close:
+                    return
                 }
+            } else {
+                if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 {
+                    goBot()
+                } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 {
+                    goTop()
+                } else {
+                    goMid()
+                }
+            }
+            UIView.animate(withDuration: duration) {
+                self.slideView.frame.origin.y = yPosition
                 self.parentVC.view.layoutIfNeeded()
-            }) { (success) in
-                // Change sheet status here
-                if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 {
-                    self.status = Status.Bottom
-                } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 {
-                    self.status = Status.Top
-                } else {
-                    self.status = Status.Middle
-                }
             }
         }
     }
