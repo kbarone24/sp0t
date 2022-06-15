@@ -1593,7 +1593,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_OBJC_BRIDGING_HEADER = "/Users/kennybarone/Documents/sp0t/Spot/Resources/HelperFunctions/Spot-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Resources/HelperFunctions/Spot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1663,7 +1663,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_OBJC_BRIDGING_HEADER = "/Users/kennybarone/Documents/sp0t/Spot/Resources/HelperFunctions/Spot-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Resources/HelperFunctions/Spot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
