@@ -419,7 +419,7 @@ class MapController: UIViewController {
             self.present(vc, animated: true, completion: nil)
         } else {
             if sheetView == nil {
-                sheetView = DrawerView(present: UIViewController(), drawerConrnerRadius: 22)
+                sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22)
             }
             sheetView?.present()
         }
