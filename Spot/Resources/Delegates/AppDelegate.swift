@@ -24,6 +24,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         db.settings = settings
         
         /// set navigation bar appearance with gradient
+        UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrowDark")
+        UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage(named: "BackArrowDark")
+        UINavigationBar.appearance().tintColor = .black
+
         
         /// set bar button appearance (remove "back" from back buttos)
         let BarButtonItemAppearance = UIBarButtonItem.appearance()
