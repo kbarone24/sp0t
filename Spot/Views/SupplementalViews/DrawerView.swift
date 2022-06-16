@@ -19,7 +19,7 @@ enum Status {
 class DrawerView: NSObject {
         
     private lazy var slideView = UIView {
-        $0.backgroundColor = .white
+        $0.backgroundColor = .clear
         $0.layer.cornerRadius = 10
         $0.layer.shadowColor = UIColor.black.cgColor
         $0.layer.shadowOffset = CGSize(width: 2, height: 2)
