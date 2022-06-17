@@ -43,6 +43,7 @@ class ProfileViewController: UIViewController, UIViewControllerTransitioningDele
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        self.becomeFirstResponder()
     }
     
     override func viewWillDisappear(_ animated: Bool){

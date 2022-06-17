@@ -20,7 +20,7 @@ class BottomToTopTransition: NSObject {
 
 extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
     func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
-        return 0.2
+        return 0.25
     }
     
     func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
@@ -28,9 +28,9 @@ extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
             if let presentedView = transitionContext.view(forKey: UITransitionContextViewKey.to) {
                 presentedView.frame.origin = CGPoint(x: 0, y: transitionContext.containerView.frame.height)
                 transitionContext.containerView.addSubview(presentedView)
-                UIView.animate(withDuration: 0.2, animations: {
+                UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
                     presentedView.frame.origin = .zero
-                }) { (success) in
+                } completion: { success in
                     transitionContext.completeTransition(success)
                 }
             }
@@ -40,9 +40,9 @@ extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
             if let previousView = transitionContext.view(forKey: transitionModeKey) {
                 let nowView = transitionContext.viewController(forKey: finalViewModeKey)?.view
                 transitionContext.containerView.insertSubview(previousView, belowSubview: nowView ?? UIView())
-                UIView.animate(withDuration: 0.2, animations: {
+                UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {
                     nowView?.frame.origin = CGPoint(x: 0, y: transitionContext.containerView.frame.height)
-                }) { (success) in
+                } completion: { success in
                     nowView?.removeFromSuperview()
                     transitionContext.completeTransition(success)
                 }

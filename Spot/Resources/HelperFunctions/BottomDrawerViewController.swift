@@ -20,10 +20,11 @@ class BottomDrawerViewController: UINavigationController {
         super.init(nibName: nil, bundle: nil)
 
         if let sheet = self.sheetPresentationController {
-            let detent1: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test1", constant: 100.0)
-            sheet.detents = [.medium(), detent1, .large()]
+            let detent1: UISheetPresentationController.Detent = ._detent(withIdentifier: "SmallDetent", constant: 100.0)
+            sheet.detents = [detent1, .medium(), .large()]
             sheet.prefersScrollingExpandsWhenScrolledToEdge = false
             sheet.largestUndimmedDetentIdentifier = .large
+            sheet.selectedDetentIdentifier = .medium
             sheet.preferredCornerRadius = 20
             sheet.prefersGrabberVisible = true
         }
