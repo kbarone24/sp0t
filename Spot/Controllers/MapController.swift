@@ -416,12 +416,13 @@ class MapController: UIViewController {
         let profileVC = ProfileViewController()
         if #available(iOS 15.0, *) {
             let vc: BottomDrawerViewController = .init(rootViewController: profileVC)
+            vc.isModalInPresentation = true
             self.present(vc, animated: true, completion: nil)
         } else {
             if sheetView == nil {
                 sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22)
             }
-            sheetView?.present()
+            sheetView?.present(to: .Middle)
         }
     }
     
