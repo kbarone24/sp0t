@@ -209,9 +209,6 @@
 		8C29879C2693A05A0071E75A /* CircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C29879B2693A05A0071E75A /* CircleView.swift */; };
 		8C29879D2693A05A0071E75A /* CircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C29879B2693A05A0071E75A /* CircleView.swift */; };
 		8C29879E2693A05A0071E75A /* CircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C29879B2693A05A0071E75A /* CircleView.swift */; };
-		8C320C482735A31B003DE81F /* AddedUsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C320C472735A31B003DE81F /* AddedUsersView.swift */; };
-		8C320C492735A31B003DE81F /* AddedUsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C320C472735A31B003DE81F /* AddedUsersView.swift */; };
-		8C320C4A2735A31B003DE81F /* AddedUsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C320C472735A31B003DE81F /* AddedUsersView.swift */; };
 		8C342073260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */; };
 		8C342074260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */; };
 		8C342075260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */; };
@@ -393,7 +390,6 @@
 		8C220A00284EDEB200E5D165 /* FriendsListCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsListCell.swift; sourceTree = "<group>"; };
 		8C2478C428235DD50071CC83 /* ChooseFriendsCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseFriendsCell.swift; sourceTree = "<group>"; };
 		8C29879B2693A05A0071E75A /* CircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleView.swift; sourceTree = "<group>"; };
-		8C320C472735A31B003DE81F /* AddedUsersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddedUsersView.swift; sourceTree = "<group>"; };
 		8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsOverviewController.swift; sourceTree = "<group>"; };
 		8C342079261140FA0017CB2F /* FindFriendsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindFriendsController.swift; sourceTree = "<group>"; };
 		8C3420AF261273140017CB2F /* SendInvitesController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendInvitesController.swift; sourceTree = "<group>"; };
@@ -756,7 +752,6 @@
 				8CAC69E326FD29A500E8B04E /* CameraAndGallery */,
 				59BAF9D72360FBEB00F607B7 /* CustomActivityIndicator.swift */,
 				5992A5A9245B666E009DAA8B /* CircleProgress.swift */,
-				8C320C472735A31B003DE81F /* AddedUsersView.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 				5FDAF23D2858FD06001EDC57 /* DrawerView.swift */,
 			);
@@ -1148,7 +1143,6 @@
 				1DF6E03722089F4500BA0C36 /* SignUpController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				3ED3F1A622147EAE008CC29B /* ResetViewController.swift in Sources */,
-				8C320C482735A31B003DE81F /* AddedUsersView.swift in Sources */,
 				593AC541243CE36400C08237 /* GlobalFunctions.swift in Sources */,
 				59DFA25222C27B4800A59D29 /* CommentsViewController.swift in Sources */,
 				8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */,
@@ -1277,7 +1271,6 @@
 				8C220A02284EDEB200E5D165 /* FriendsListCell.swift in Sources */,
 				8C88D79928242E7500AB15BD /* ChooseSpotCell.swift in Sources */,
 				5916A8BC24A566F400118E83 /* ResultUser.swift in Sources */,
-				8C320C492735A31B003DE81F /* AddedUsersView.swift in Sources */,
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
 				8CCBECA02821CB55005A0689 /* PostInfoExtension.swift in Sources */,
 				593AC54A243F898300C08237 /* UsernameController.swift in Sources */,
@@ -1360,7 +1353,6 @@
 				8C220A03284EDEB200E5D165 /* FriendsListCell.swift in Sources */,
 				8C88D79A28242E7500AB15BD /* ChooseSpotCell.swift in Sources */,
 				5916A8BD24A566F400118E83 /* ResultUser.swift in Sources */,
-				8C320C4A2735A31B003DE81F /* AddedUsersView.swift in Sources */,
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
 				8CCBECA12821CB55005A0689 /* PostInfoExtension.swift in Sources */,
 				593AC54B243F898300C08237 /* UsernameController.swift in Sources */,

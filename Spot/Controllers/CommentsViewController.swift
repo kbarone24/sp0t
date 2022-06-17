@@ -162,21 +162,9 @@ class CommentsController: UIViewController {
         
         var ct = 0
         for id in post.likers {
-            db.collection("users").document(id).getDocument { [weak self] doc, err in
-                
-                guard let self = self else { return }
-                if err != nil { ct += 1; if ct == self.post.likers.count { self.reloadLikers() }; return }
-                
-                do {
-                    let userInfo = try doc!.data(as: UserProfile.self)
-                    guard var info = userInfo else { return }
-                    info.id = doc!.documentID
-                    self.likers.append(info)
-                    
-                    ct += 1
-                    if ct == self.post.likers.count { self.reloadLikers() }
-                    
-                } catch { ct += 1; if ct == self.post.likers.count { self.reloadLikers() }; return }
+            getUserInfo(userID: id) { user in
+                self.likers.append(user)
+                ct += 1; if ct == self.post.likers.count { self.reloadLikers()}
             }
         }
     }

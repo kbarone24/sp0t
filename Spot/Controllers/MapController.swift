@@ -191,6 +191,7 @@ class MapController: UIViewController {
     
     func getFriends() {
         
+        /// can maybe use get function here -> not sure what we're listening for exactly
         userListener = self.db.collection("users").document(self.uid).addSnapshotListener(includeMetadataChanges: true, listener: { (userSnap, err) in
             
             if userSnap?.metadata.isFromCache ?? false { return }
