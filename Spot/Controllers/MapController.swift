@@ -413,16 +413,20 @@ class MapController: UIViewController {
     
     @objc func profileTap(_ sender: Any){
         let profileVC = ProfileViewController()
-        if #available(iOS 15.0, *) {
-            let vc: BottomDrawerViewController = .init(rootViewController: profileVC)
-            vc.isModalInPresentation = true
-            self.present(vc, animated: true, completion: nil)
-        } else {
-            if sheetView == nil {
-                sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22)
-            }
-            sheetView?.present(to: .Middle)
+        if sheetView == nil {
+            sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22)
         }
+        sheetView?.present(to: .Middle)
+//        if #available(iOS 15.0, *) {
+//            let vc: BottomDrawerViewController = .init(rootViewController: profileVC)
+//            vc.isModalInPresentation = true
+//            self.present(vc, animated: true, completion: nil)
+//        } else {
+//            if sheetView == nil {
+//                sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22)
+//            }
+//            sheetView?.present(to: .Middle)
+//        }
     }
     
     @objc func friendsTap(_ sender: UIButton) {
