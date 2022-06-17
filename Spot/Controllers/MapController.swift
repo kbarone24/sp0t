@@ -511,7 +511,6 @@ class MapController: UIViewController {
     
     @objc func openNotis(_ sender: UIButton) {
         if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsController {
-            notificationsVC.mapVC = self
             navigationController?.pushViewController(notificationsVC, animated: true)
         }
     }
