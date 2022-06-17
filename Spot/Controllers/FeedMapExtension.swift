@@ -113,7 +113,7 @@ extension MapController {
             }
         }
     }
-
+    
     func getFriendPosts(refresh: Bool) {
         
         var query = db.collection("posts").order(by: "timestamp", descending: true).whereField("friendsList", arrayContains: self.uid).limit(to: 100)
@@ -134,10 +134,11 @@ extension MapController {
             
           //  if longDocs.count == 0 && self.friendPosts.count == 0 { self.addEmptyState() }
                         
-            var localPosts: [MapPost] = [] /// just the 10 posts for this fetch
+            var localPosts: [MapPost] = [] /// just the 100 posts for this fetch
             var index = 0
             
-            let docs = self.friendsRefresh == .noRefresh ? longDocs : longDocs.dropLast() /// drop last doc to get exactly 10 posts for reload unless under 10 posts fetched
+            let docs = self.friendsRefresh == .noRefresh ? longDocs : longDocs.dropLast() /// drop last doc to get exactly 10 posts for reload unless under 100 posts fetched
+            
 
             for doc in docs {
                 
@@ -224,35 +225,11 @@ extension MapController {
         
         var users: [UserProfile] = []
         if userIDs.isEmpty { completion(users); return }
-        var userCount = 0
         
         for userID in userIDs {
-            
-            if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
+            getUserInfo(userID: userID) { user in
                 users.append(user)
-                userCount += 1
-                if userCount == userIDs.count { completion(users) }
-                
-            } else if userID == uid {
-                users.append(UserDataModel.shared.userInfo)
-                userCount += 1
-                if userCount == userIDs.count { completion(users) }
-                
-            } else {
-                db.collection("users").document(userID).getDocument { (doc, err) in
-                    if err != nil { return }
-
-                    do {
-                        let userInfo = try doc!.data(as: UserProfile.self)
-                        guard var info = userInfo else { userCount += 1; if userCount == userIDs.count { completion(users) }; return }
-
-                        info.id = doc!.documentID
-                        users.append(info)
-                        userCount += 1
-                        if userCount == userIDs.count { completion(users) }
-
-                    } catch { userCount += 1; if userCount == userIDs.count { completion(users); return } }
-                }
+                if users.count == userIDs.count { completion(users); return }
             }
         }
     }
@@ -277,40 +254,16 @@ extension MapController {
                     commentInfo.seconds = commentInfo.timestamp.seconds
                     commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
                     
-                    /// get commenter user info from friends list or from database
-                    var tempFriends = UserDataModel.shared.friendsList
-                    tempFriends.append(UserDataModel.shared.userInfo)
-                    
-                    if let i = tempFriends.firstIndex(where: {$0.id == commentInfo.commenterID}) {
-                        commentInfo.userInfo = tempFriends[i]
+                    self.getUserInfo(userID: commentInfo.commenterID) { user in
+                        commentInfo.userInfo = user
                         if !commentList.contains(where: {$0.id == doc.documentID}) {
                             commentList.append(commentInfo)
                             commentList.sort(by: {$0.seconds < $1.seconds})
                         }
                         
                         if doc == commentSnap!.documents.last { completion(commentList) }
-                        
-                    } else {
-                        
-                        self.db.collection("users").document(commentInfo.commenterID).getDocument { (snap, err) in
-                            
-                            do {
-                                let userProf = try snap?.data(as: UserProfile.self)
-                                guard var userProfile = userProf else { if doc == commentSnap!.documents.last { completion(commentList) }; return }
-                                
-                                userProfile.id = snap!.documentID
-                                commentInfo.userInfo = userProfile
-                                
-                                if !commentList.contains(where: {$0.id == doc.documentID}) {
-                                    commentList.append(commentInfo)
-                                    commentList.sort(by: {$0.seconds < $1.seconds})
-                                }
-                                
-                                if doc == commentSnap!.documents.last { completion(commentList) }
-                                
-                            } catch { if doc == commentSnap!.documents.last { completion(commentList) }; return }
-                        }
                     }
+                    
                 } catch { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
             }
         }
