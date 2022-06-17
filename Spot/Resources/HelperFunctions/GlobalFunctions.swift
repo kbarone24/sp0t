@@ -448,7 +448,8 @@ extension UIViewController {
             
         } else {
 
-            db.collection("users").document(userID).getDocument { (doc, err) in
+            db.collection("users").document(userID).getDocument { [weak self] (doc, err) in
+                guard let self = self else { return }
                 if err != nil { return }
 
                 do {
@@ -461,8 +462,7 @@ extension UIViewController {
             }
         }
     }
-     /*
-
+     
     func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
         
         let db: Firestore! = Firestore.firestore()
@@ -474,27 +474,30 @@ extension UIViewController {
             if commentSnap!.documents.count == 0 { completion(commentList); return }
             guard let self = self else { return }
 
+            var index = 0
             for doc in commentSnap!.documents {
                 do {
-                    let unwrappedInfo = try doc.data(as: MapComment.self)
-                    guard var commentInfo = unwrappedInfo else { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
+                    let commentInf = try doc.data(as: MapComment.self)
+                    guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
                     
                     commentInfo.id = doc.documentID
                     commentInfo.seconds = commentInfo.timestamp.seconds
                     commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
                     
-                    if !commentList.contains(where: {$0.id == doc.documentID}) {
-                        commentList.append(commentInfo)
-                        commentList.sort(by: {$0.seconds < $1.seconds})
+                    self.getUserInfo(userID: commentInfo.commenterID) { user in
+                        commentInfo.userInfo = user
+                        if !commentList.contains(where: {$0.id == doc.documentID}) {
+                            commentList.append(commentInfo)
+                            commentList.sort(by: {$0.seconds < $1.seconds})
+                        }
+                        
+                        index += 1; if index == commentSnap!.documents.count { completion(commentList) }
                     }
-                                        
-                    if doc == commentSnap!.documents.last { completion(commentList) }
                     
-                } catch { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
+                } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
             }
         }
-    }*/
-    
+    }
 }
 
 /// upload post functions

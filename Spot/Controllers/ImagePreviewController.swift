@@ -27,13 +27,16 @@ class ImagePreviewController: UIViewController {
     var previewBackground: UIView! /// tracks where detail view will be added
     var previewButton: UIButton! /// covers entire area where caption tap will open keyboard
     
+    var cancelButton: UIButton!
+    var spotButton, tagButton, friendButton: UIButton!
+    var shareToButton: UIButton!
     var draftsButton: UIButton!
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
     /// detailView
     var postDetailView: UIView!
-    var spotNameView: UIView!
-    var addedUsersView: UIView!
+    var spotNameView: SpotNameView!
+    var addedUsersView: AddedUsersView!
     
     var cancelOnDismiss = false
     var cameraObject: ImageObject!
@@ -140,17 +143,21 @@ class ImagePreviewController: UIViewController {
         let imageAspect = post.imageHeight / UIScreen.main.bounds.width
         let imageY: CGFloat = imageAspect >= cameraAspect ? minY : (minY + maxY - post.imageHeight)/2
         
-        previewView = PostImageView(frame: CGRect(x: 0, y: imageY, width: UIScreen.main.bounds.width, height: post.imageHeight))
-        previewView.contentMode = .scaleAspectFill
-        previewView.clipsToBounds = true
-        previewView.isUserInteractionEnabled = true
-        previewView.layer.cornerRadius = 15
-        previewView.backgroundColor = nil
+        previewView = PostImageView {
+            $0.frame = CGRect(x: 0, y: imageY, width: UIScreen.main.bounds.width, height: post.imageHeight)
+            $0.contentMode = .scaleAspectFill
+            $0.clipsToBounds = true
+            $0.isUserInteractionEnabled = true
+            $0.layer.cornerRadius = 15
+            $0.backgroundColor = nil
+        }
         
-        previewBackground = UIView(frame: previewView.frame)
-        previewBackground.backgroundColor = UIColor(named: "SpotBlack")
-        previewBackground.layer.cornerRadius = 15
-        view.addSubview(previewBackground)
+        previewBackground = UIView {
+            $0.frame = previewView.frame
+            $0.backgroundColor = UIColor(named: "SpotBlack")
+            $0.layer.cornerRadius = 15
+            view.addSubview($0)
+        }
         
         view.addSubview(previewView)
         setCurrentImage()
@@ -168,45 +175,57 @@ class ImagePreviewController: UIViewController {
             addImageMasks(minY: minY, imageY: imageY)
         }
         
-        previewButton = UIButton(frame: previewBackground.frame) /// previewButton receives all events on image area
-        previewButton.addTarget(self, action: #selector(captionTap(_:)), for: .touchUpInside)
-        view.addSubview(previewButton)
-        
+        previewButton = UIButton {
+            $0.frame = previewBackground.frame /// previewButton receives all events on image area
+            $0.addTarget(self, action: #selector(captionTap(_:)), for: .touchUpInside)
+            view.addSubview($0)
+        }
+                
         view.addSubview(buttonView)
                 
         /// add cancel button
-        let cancelButton = UIButton(frame: CGRect(x: 4, y: minY + 37, width: 50, height: 50))
-        cancelButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        cancelButton.contentHorizontalAlignment = .fill
-        cancelButton.contentVerticalAlignment = .fill
-        cancelButton.setImage(UIImage(named: "CancelButton"), for: .normal)
-        cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+        cancelButton = UIButton {
+            $0.frame = CGRect(x: 4, y: minY + 37, width: 50, height: 50)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+            $0.contentHorizontalAlignment = .fill
+            $0.contentVerticalAlignment = .fill
+            $0.setImage(UIImage(named: "CancelButton"), for: .normal)
+            $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+        }
         view.addSubview(cancelButton)
 
-        let spotButton = UIButton(frame: CGRect(x: 0, y: 0, width: 64, height: 64))
-        spotButton.setImage(UIImage(named: "CameraSpotButton"), for: .normal)
-        spotButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        spotButton.addTarget(self, action: #selector(spotTap(_:)), for: .touchUpInside)
-        buttonView.addSubview(spotButton)
+        spotButton = UIButton {
+            $0.frame = CGRect(x: 0, y: 0, width: 64, height: 64)
+            $0.setImage(UIImage(named: "CameraSpotButton"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(spotTap(_:)), for: .touchUpInside)
+            buttonView.addSubview($0)
+        }
                 
-        let friendButton = UIButton(frame: CGRect(x: 0, y: spotButton.frame.maxY + 6, width: 64, height: 64))
-        friendButton.setImage(UIImage(named: "CameraFriendButton"), for: .normal)
-        friendButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        friendButton.addTarget(self, action: #selector(friendTap(_:)), for: .touchUpInside)
-        buttonView.addSubview(friendButton)
+        friendButton = UIButton {
+            $0.frame = CGRect(x: 0, y: spotButton.frame.maxY + 6, width: 64, height: 64)
+            $0.setImage(UIImage(named: "CameraFriendButton"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(friendTap(_:)), for: .touchUpInside)
+            buttonView.addSubview($0)
+        }
         
-        let tagButton = UIButton(frame: CGRect(x: 0, y: friendButton.frame.maxY + 6, width: 64, height: 64))
-        tagButton.setImage(UIImage(named: "CameraTagButton"), for: .normal)
-        tagButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        tagButton.addTarget(self, action: #selector(tagTap(_:)), for: .touchUpInside)
-        buttonView.addSubview(tagButton)
+        tagButton = UIButton {
+            $0.frame = CGRect(x: 0, y: friendButton.frame.maxY + 6, width: 64, height: 64)
+            $0.setImage(UIImage(named: "CameraTagButton"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(tagTap(_:)), for: .touchUpInside)
+            buttonView.addSubview($0)
+        }
                 
         /// add share to and drafts
-        let shareToButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 148, y: maxY + 6, width: 140, height: 54))
-        shareToButton.setImage(UIImage(named: "CameraShareButton"), for: .normal)
-        shareToButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        shareToButton.addTarget(self, action: #selector(shareTap(_:)), for: .touchUpInside)
-        view.addSubview(shareToButton)
+        shareToButton = UIButton {
+            $0.frame = CGRect(x: UIScreen.main.bounds.width - 148, y: maxY + 6, width: 140, height: 54)
+            $0.setImage(UIImage(named: "CameraShareButton"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(shareTap(_:)), for: .touchUpInside)
+            view.addSubview($0)
+        }
         
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         panGesture.isEnabled = false
@@ -259,8 +278,10 @@ class ImagePreviewController: UIViewController {
     func addPostDetail() {
         
         if postDetailView == nil {
-            postDetailView = UIView(frame: CGRect(x: 0, y: previewBackground.bounds.maxY - 65, width: UIScreen.main.bounds.width, height: 65))
-            previewButton.addSubview(postDetailView)
+            postDetailView = UIView {
+                $0.frame = CGRect(x: 0, y: previewBackground.bounds.maxY - 65, width: UIScreen.main.bounds.width, height: 65)
+                previewButton.addSubview($0)
+            }
         }
         
         if !(UploadPostModel.shared.postObject.addedUsers?.isEmpty ?? true) { addAddedUsersView() } /// add added users first to determine available space for spotNameView
@@ -276,83 +297,51 @@ class ImagePreviewController: UIViewController {
     }
     
     func addAddedUsersView() {
-        
-        if addedUsersView != nil { addedUsersView.removeFromSuperview(); addedUsersView = nil }
-        addedUsersView = UIView(frame: CGRect(x: 14, y: 0, width: 63, height: 41))
-        addedUsersView.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.4)
-        addedUsersView.layer.cornerRadius = 16
-        addedUsersView.layer.cornerCurve = .continuous
+        addedUsersView = AddedUsersView(frame: CGRect(x: 14, y: 0, width: 63, height: 41))
         postDetailView.addSubview(addedUsersView)
         
         let usersTap = UITapGestureRecognizer(target: self, action: #selector(addedUsersTap(_:)))
         addedUsersView.addGestureRecognizer(usersTap)
-        
-        let userIcon = UIImageView(frame: CGRect(x: 13, y: 11, width: 20.4, height: 19.35))
-        userIcon.image = UIImage(named: "SingleUserIcon")
-        addedUsersView.addSubview(userIcon)
-        
-        let countLabel = UILabel(frame: CGRect(x: userIcon.frame.maxX + 5, y: userIcon.frame.minY + 2, width: 30, height: 16))
-        countLabel.text = "\(UploadPostModel.shared.postObject.addedUsers!.count)"
-        countLabel.textColor = .white
-        countLabel.font = UIFont(name: "SFCompactText-Bold", size: 17.5)
-        addedUsersView.addSubview(countLabel)
     }
     
     func addSpotNameView() {
-        
         let post = UploadPostModel.shared.postObject!
         
-        if spotNameView != nil { spotNameView.removeFromSuperview(); spotNameView = nil }
-        spotNameView = UIView(frame: CGRect(x: 14, y: 0, width: 300, height: 41))
-        spotNameView.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.4)
-        spotNameView.layer.cornerRadius = 16
-        spotNameView.layer.cornerCurve = .continuous
+        spotNameView = SpotNameView(frame: CGRect(x: 14, y: 0, width: 300, height: 41), tag: post.tag ?? "")
         postDetailView.addSubview(spotNameView)
-        
-        let tagImage = post.tag ?? "" == "" ? UIImage(named: "LocationIcon") : Tag(name: post.tag!).image
-        
-        let tagIcon = UIImageView(frame: CGRect(x: 11.5, y: 9.5, width: 17.6, height: 21.5))
-        tagIcon.image = tagImage
-        spotNameView.addSubview(tagIcon)
-        
-        let nameLabel = UILabel(frame: CGRect(x: tagIcon.frame.maxX + 7, y: tagIcon.frame.minY + 2, width: UIScreen.main.bounds.width, height: 16))
-        nameLabel.text = UploadPostModel.shared.spotObject.spotName
-        nameLabel.textColor = .white
-        nameLabel.font = UIFont(name: "SFCompactText-Bold", size: 17)
-        nameLabel.lineBreakMode = .byTruncatingTail
-        spotNameView.addSubview(nameLabel)
+                
+        let spotTap = UITapGestureRecognizer(target: self, action: #selector(spotNameTap(_:)))
+        spotNameView.addGestureRecognizer(spotTap)
         
         /// make sure long spotName fits + resize view
         var maxWidth = UIScreen.main.bounds.width - 28 - 47.5 /// screen width - margins - rest of space occupying spotNameView
         if addedUsersView != nil { maxWidth -= (14 + addedUsersView.bounds.width) }
         
-        nameLabel.sizeToFit()
-        if nameLabel.bounds.width > maxWidth { nameLabel.frame = CGRect(x: nameLabel.frame.minX, y: nameLabel.frame.minY, width: maxWidth, height: nameLabel.frame.height) }
-        spotNameView.frame = CGRect(x: spotNameView.frame.minX, y: spotNameView.frame.minY, width: nameLabel.bounds.width + 47.5, height: spotNameView.frame.height)
+        spotNameView.nameLabel.sizeToFit()
+        if spotNameView.nameLabel.bounds.width > maxWidth { spotNameView.nameLabel.frame = CGRect(x: spotNameView.nameLabel.frame.minX, y: spotNameView.nameLabel.frame.minY, width: maxWidth, height: spotNameView.nameLabel.frame.height) }
+        spotNameView.frame = CGRect(x: spotNameView.frame.minX, y: spotNameView.frame.minY, width: spotNameView.nameLabel.bounds.width + 47.5, height: spotNameView.frame.height)
         if addedUsersView != nil { addedUsersView.frame = CGRect(x: spotNameView.frame.maxX + 14, y: addedUsersView.frame.minY, width: addedUsersView.frame.width, height: addedUsersView.frame.height) }
-        
-        let spotTap = UITapGestureRecognizer(target: self, action: #selector(spotNameTap(_:)))
-        spotNameView.addGestureRecognizer(spotTap)
+
     }
     
     func addCaption() {
-                
         /// textview frame set on addPostDetail
-        textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 51))
-        textView.delegate = self
-        textView.font = UIFont(name: "SFCompactText-Regular", size: 19)
-        textView.backgroundColor = .clear
-        textView.textColor = .white
-        textView.tintColor = UIColor(named: "SpotGreen")
-        textView.text = ""
-        textView.textContainerInset = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
-        textView.isScrollEnabled = false
-        textView.textContainer.maximumNumberOfLines = 6
-        textView.textContainer.lineBreakMode = .byTruncatingHead
-        textView.isUserInteractionEnabled = false
-       // textView.keyboardDistanceFromTextField = 20
-        view.addSubview(textView)
-        
+        textView = UITextView {
+            $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 51)
+            $0.delegate = self
+            $0.font = UIFont(name: "SFCompactText-Regular", size: 19)
+            $0.backgroundColor = .clear
+            $0.textColor = .white
+            $0.tintColor = UIColor(named: "SpotGreen")
+            $0.text = ""
+            $0.textContainerInset = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
+            $0.isScrollEnabled = false
+            $0.textContainer.maximumNumberOfLines = 6
+            $0.textContainer.lineBreakMode = .byTruncatingHead
+            $0.isUserInteractionEnabled = false
+           // textView.keyboardDistanceFromTextField = 20
+            view.addSubview($0)
+        }
     }
         
     
@@ -560,5 +549,81 @@ extension ImagePreviewController: UITextViewDelegate, UIGestureRecognizerDelegat
             textView.resignFirstResponder()
             panGesture.isEnabled = false
         }
+    }
+}
+
+class AddedUsersView: UIView {
+    
+    var userIcon: UIImageView!
+    var countLabel: UILabel!
+        
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.4)
+        layer.cornerRadius = 16
+        layer.cornerCurve = .continuous
+        
+        /// remove tapGesture if previously added
+        if let tap = gestureRecognizers?.first(where: {$0.isKind(of: UITapGestureRecognizer.self)}) { removeGestureRecognizer(tap) }
+        
+        if userIcon != nil { userIcon.image = UIImage() }
+        userIcon = UIImageView {
+            $0.frame = CGRect(x: 13, y: 11, width: 20.4, height: 19.35)
+            $0.image = UIImage(named: "SingleUserIcon")
+            addSubview($0)
+        }
+        
+        if countLabel != nil { countLabel.text = "" }
+        countLabel = UILabel {
+            $0.frame = CGRect(x: userIcon.frame.maxX + 5, y: userIcon.frame.minY + 2, width: 30, height: 16)
+            $0.text = "\(UploadPostModel.shared.postObject.addedUsers!.count)"
+            $0.textColor = .white
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 17.5)
+            addSubview($0)
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class SpotNameView: UIView {
+    
+    var tagIcon: UIImageView!
+    var nameLabel: UILabel!
+
+    init(frame: CGRect, tag: String) {
+        
+        super.init(frame: frame)
+        
+        backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.4)
+        layer.cornerRadius = 16
+        layer.cornerCurve = .continuous
+            
+        let tagImage = tag == "" ? UIImage(named: "LocationIcon") : Tag(name: tag).image
+        
+        tagIcon = UIImageView {
+            $0.frame = CGRect(x: 11.5, y: 9.5, width: 17.6, height: 21.5)
+            $0.image = tagImage
+            addSubview($0)
+        }
+        
+        nameLabel = UILabel {
+            $0.frame = CGRect(x: tagIcon.frame.maxX + 7, y: tagIcon.frame.minY + 2, width: UIScreen.main.bounds.width, height: 16)
+            $0.text = UploadPostModel.shared.spotObject.spotName
+            $0.textColor = .white
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 17)
+            $0.lineBreakMode = .byTruncatingTail
+            addSubview($0)
+        }
+        
+        /// remove tapGesture if previously added
+        if let tap = gestureRecognizers?.first(where: {$0.isKind(of: UITapGestureRecognizer.self)}) { removeGestureRecognizer(tap) }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }

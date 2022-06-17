@@ -163,7 +163,7 @@ extension MapController {
                     /// check for addedUsers + getComments -> exitCount will == 2 when these async functions are done running (avoid using dispatch due to loop)
                     var exitCount = 0
                     
-                    self.getComments(postID: postInfo.id!) { commentList in
+                    self.addCommentsListener(postID: postInfo.id!) { commentList in
                         postInfo.commentList = commentList
                         postInfo = self.setSecondaryPostValues(post: postInfo)
                         exitCount += 1; if exitCount == 2 { localPosts.append(postInfo); index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts) }}
@@ -235,7 +235,7 @@ extension MapController {
     }
 
     
-    func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
+    func addCommentsListener(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
         
         var commentList: [MapComment] = []
         
@@ -245,10 +245,11 @@ extension MapController {
             if commentSnap!.documents.count == 0 { completion(commentList); return }
             guard let self = self else { return }
 
+            var index = 0
             for doc in commentSnap!.documents {
                 do {
                     let commentInf = try doc.data(as: MapComment.self)
-                    guard var commentInfo = commentInf else { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
+                    guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
                     
                     commentInfo.id = doc.documentID
                     commentInfo.seconds = commentInfo.timestamp.seconds
@@ -261,10 +262,10 @@ extension MapController {
                             commentList.sort(by: {$0.seconds < $1.seconds})
                         }
                         
-                        if doc == commentSnap!.documents.last { completion(commentList) }
+                        index += 1; if index == commentSnap!.documents.count { completion(commentList) }
                     }
                     
-                } catch { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
+                } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
             }
         }
     }
@@ -367,7 +368,7 @@ extension MapController {
             ///  DispatchQueue.main.async { self.postVC.tableView.reloadData() }
         }
         
-        getComments(postID: post.id!) { [weak self] commentList in
+        addCommentsListener(postID: post.id!) { [weak self] commentList in
             guard let self = self else { return }
             self.updateNearbyPostComments(comments: commentList, postID: post.id!)
         }
@@ -401,7 +402,7 @@ extension MapController {
             var post = currentNearbyPosts[i]
             
             var exitCount = 0
-            self.getComments(postID: post.id!) { commentList in
+            self.addCommentsListener(postID: post.id!) { commentList in
                 post.commentList = commentList
                 self.currentNearbyPosts[i].commentList = commentList
                 exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
