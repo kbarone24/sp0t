@@ -43,7 +43,9 @@ struct MapSpot: Identifiable, Codable {
     var distance: CLLocationDistance = CLLocationDistance()
     var friendImage = false
     var selected: Bool? = false
-    var postFetchID = "" 
+    var postFetchID = ""
+    
+    var tagDictionary: [String: Any] = [:]
     
     enum CodingKeys: String, CodingKey {
         case id = "spotID"
@@ -65,6 +67,8 @@ struct MapSpot: Identifiable, Codable {
         case postTimestamps
         case postPrivacies
         case posterUsername
+        case tagDictionary
+        case posterDictionary
     }
     
     /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score

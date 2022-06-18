@@ -448,8 +448,7 @@ extension UIViewController {
             
         } else {
 
-            db.collection("users").document(userID).getDocument { [weak self] (doc, err) in
-                guard let self = self else { return }
+            db.collection("users").document(userID).getDocument { (doc, err) in
                 if err != nil { return }
 
                 do {
@@ -589,72 +588,29 @@ extension UIViewController {
 
     func uploadPost(post: MapPost) {
         
-        let interval = Date().timeIntervalSince1970
-        let postTimestamp = Date(timeIntervalSince1970: TimeInterval(interval))
-        
-        let postValues = ["caption" : post.caption,
-                          "posterID": post.posterID,
-                          "likers": [],
-                          "actualTimestamp": post.actualTimestamp as Any,
-                          "timestamp": postTimestamp,
-                          "taggedUsers": post.taggedUsers!,
-                          "taggedUserIDs": post.taggedUserIDs,
-                          "isFirst": post.isFirst!,
-                          "postLat": post.postLat,
-                          "postLong": post.postLong,
-                          "privacyLevel": post.privacyLevel!,
-                          "imageURLs" : post.imageURLs,
-                          "frameIndexes" : post.frameIndexes!,
-                          "aspectRatios" : post.aspectRatios!,
-                          "createdBy": post.createdBy!,
-                          "city" : post.city!,
-                          "inviteList" : post.inviteList!,
-                          "friendsList" : post.friendsList,
-                          "spotName" : post.spotName!,
-                          "spotNames" : [post.spotName!],
-                          "spotID" : post.spotID!,
-                          "spotIDs" : [post.spotID!],
-                          "spotIndexes" : [0], /// preloading DB for multiple sp0t upload
-                          "spotLat": post.spotLat!,
-                          "spotLong": post.spotLong!,
-                          "spotPrivacy" : post.spotPrivacy!,
-                          "hideFromFeed": post.hideFromFeed!,
-                          "addedUsers" : post.addedUsers!,
-                          "tag" : post.tag!,
-                          "tags" : [post.tag!], /// prepare for switch to multiple tags
-                          "posterUsername" : UserDataModel.shared.userInfo.username,
-                          "imageLocations" : post.imageLocations!,
-                          "seenList" : []
-        ] as [String : Any]
-
-        let commentValues = ["addedUsers" : post.addedUsers ?? [],
-                             "comment" : post.caption,
-                             "commenterID" : post.posterID,
-                             "commenterIDList": [],
-                             "commenterUsername" : UserDataModel.shared.userInfo.username,
-                             "imageURL": post.imageURLs.first ?? "",
-                             "likers" : [],
-                             "posterID": post.posterID,
-                             "posterUsername": UserDataModel.shared.userInfo.username,
-                             "timestamp" : postTimestamp,
-                             "taggedUsers": post.taggedUsers!,
-                             "taggedUserIDs" : []] as [String : Any]
-        let commentID = UUID().uuidString
-        
-        var notiPost = post
-        let commentObject = MapComment(id: commentID, comment: post.caption, commenterID: post.posterID, timestamp: Timestamp(date: postTimestamp as Date), userInfo: UserDataModel.shared.userInfo, taggedUsers: post.taggedUsers, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(interval))
-        notiPost.commentList = [commentObject]
-        
-        
-        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
-        
         let db = Firestore.firestore()
-        db.collection("posts").document(post.id!).setData(postValues)
-        db.collection("posts").document(post.id!).collection("comments").document(commentID).setData(commentValues, merge:true)
+        do {
+            let postRef = try db.collection("posts").addDocument(from: post)
+            do {
+                var commentObject = MapComment(id: "", comment: post.caption, commenterID: post.posterID, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo, taggedUsers: post.taggedUsers, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(post.timestamp.seconds))
+                let commentRef = try postRef.collection("comments").addDocument(from: commentObject)
+                commentObject.id = commentRef.documentID
+                
+                var notiPost = post
+                notiPost.id = postRef.documentID
+                notiPost.commentList = [commentObject]
+                NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
+
+            } catch {
+                print("failed uploading comment")
+            }
+        } catch {
+            print("failed uploading post")
+        }
         
         setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
     }
-        
+            
     func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) {
         
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
@@ -680,6 +636,7 @@ extension UIViewController {
             var posterDictionary: [String: Any] = [:]
             posterDictionary[post.id!] = spotVisitors
             
+            /// too many extreneous variables for spots to set with codable
             let spotValues =  ["city" : post.city ?? "",
                                "spotName" : spot.spotName,
                                "lowercaseName": lowercaseName,

@@ -36,7 +36,7 @@ class ChooseSpotCell: UITableViewCell {
             $0.lineBreakMode = .byTruncatingTail
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
             $0.textColor = .black
-            contentView.addSubview(spotName)
+            contentView.addSubview($0)
         }
         
         var lineX: CGFloat = 20
@@ -137,8 +137,8 @@ class ChooseSpotLoadingCell: UITableViewCell {
         
         activityIndicator = CustomActivityIndicator {
             $0.frame = CGRect(x: 15, y: 10, width: 30, height: 30)
-            activityIndicator.startAnimating()
-            addSubview(activityIndicator)
+            $0.startAnimating()
+            addSubview($0)
         }
     }
 }
