@@ -15,7 +15,8 @@ class ShareToController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore = Firestore.firestore()
     
-    var friendsButton, publicButton, shareButton: UIButton!
+    var friendsButton, shareButton: UIButton!
+    var publicButton: UIButton?
     
     var progressBar: UIView!
     var progressFill: UIView!
@@ -135,21 +136,21 @@ class ShareToController: UIViewController {
         friendsButton.setImage(image, for: .normal)
                 
         shareButton.isEnabled = friendsButton.tag == 1 /// friends always enabled when public is so only need to check if friends selected
-        friendsButton.isEnabled = !(publicButton != nil && publicButton.tag == 1)
+        friendsButton.isEnabled = !(publicButton != nil && publicButton!.tag == 1)
     }
     
     @objc func publicTap(_ sender: UIButton) {
     
-        publicButton.tag = publicButton.tag == 0 ? 1 : 0
+        publicButton!.tag = publicButton!.tag == 0 ? 1 : 0
         setPublicValues()
         setFriendsValues()
     }
     
     func setPublicValues() {
-        let image = publicButton.tag == 0 ? UIImage(named: "PublicMapUnselected") : UIImage(named: "PublicMapSelected")
-        publicButton.setImage(image, for: .normal)
+        let image = publicButton!.tag == 0 ? UIImage(named: "PublicMapUnselected") : UIImage(named: "PublicMapSelected")
+        publicButton!.setImage(image, for: .normal)
 
-        friendsButton.tag = publicButton.tag
+        friendsButton.tag = publicButton!.tag
     }
         
     @objc func shareTap(_ sender: UIButton) {
@@ -175,6 +176,7 @@ class ShareToController: UIViewController {
                 
                 
                 UploadPostModel.shared.postObject.imageURLs = imageURLs
+                UploadPostModel.shared.postObject.timestamp = Firebase.Timestamp(date: Date())
                 let post = UploadPostModel.shared.postObject!
                 self.uploadPost(post: post)
 
@@ -215,7 +217,7 @@ class ShareToController: UIViewController {
         if !postFriends.contains(uid) { postFriends.append(uid) }
         UploadPostModel.shared.postObject.friendsList = postFriends
         UploadPostModel.shared.postObject.isFirst = (UploadPostModel.shared.postType == .newSpot || UploadPostModel.shared.postType == .postToPOI)
-        UploadPostModel.shared.postObject.privacyLevel = publicButton.tag == 1 ? "public" : "friends"
+        UploadPostModel.shared.postObject.privacyLevel = publicButton?.tag ?? 0 == 1 ? "public" : "friends"
     }
     
     func runFailedUpload() {

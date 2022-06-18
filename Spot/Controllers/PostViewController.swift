@@ -590,7 +590,6 @@ class PostCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
-        
         super.prepareForReuse()
         if imageManager != nil { imageManager.cancelAll(); imageManager = nil }
     }
