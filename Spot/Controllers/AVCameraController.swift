@@ -246,7 +246,11 @@ class AVCameraController: UIViewController {
         let spotObject = UploadPostModel.shared.spotObject
         /// use spot coordinate or user's current location for starting location
         let coordinate = spotObject == nil ? UserDataModel.shared.currentLocation.coordinate : CLLocationCoordinate2D(latitude: spotObject!.spotLat, longitude: spotObject!.spotLong)
-        UploadPostModel.shared.postObject = MapPost(id: UUID().uuidString, caption: "", postLat: coordinate.latitude, postLong: coordinate.longitude, posterID: uid, timestamp: Timestamp(date: Date()), actualTimestamp: Timestamp(date: Date()), userInfo: UserDataModel.shared.userInfo, spotID: spotObject == nil ? UUID().uuidString : spotObject!.id, city: "", frameIndexes: [], aspectRatios: [], imageURLs: [], postImage: [], seconds: 0, selectedImageIndex: 0, postScore: 0, commentList: [], likers: [], taggedUsers: [], imageHeight: 0, captionHeight: 0, cellHeight: 0, spotName: spotObject == nil ? "" : spotObject!.spotName, spotLat: spotObject == nil ? 0 : spotObject!.spotLat, spotLong: spotObject == nil ? 0 : spotObject!.spotLong, privacyLevel: spotObject == nil ? "friends" : spotObject!.privacyLevel, spotPrivacy: spotObject == nil ? "" : spotObject!.privacyLevel, createdBy: spotObject == nil ? uid : spotObject!.founderID, inviteList: [], friendsList: [], hideFromFeed: false, gif: false, addedUsers: [], addedUserProfiles: [], tag: "")
+        
+        UploadPostModel.shared.postObject = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: coordinate.latitude, postLong: coordinate.longitude, posterID: uid, timestamp: Timestamp(date: Date()))
+        UploadPostModel.shared.postObject.id = UUID().uuidString
+        UploadPostModel.shared.postObject.privacyLevel = "friends"
+        if spotObject != nil { UploadPostModel.shared.setSpotValues() }
         UploadPostModel.shared.setPostCity() /// set with every location change to avoid async lag on upload
     }
     

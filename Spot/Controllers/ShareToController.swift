@@ -207,16 +207,15 @@ class ShareToController: UIViewController {
             if w.hasPrefix("@") {
                 if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
                     UploadPostModel.shared.postObject.taggedUsers!.append(username)
-                    UploadPostModel.shared.postObject.taggedUserIDs.append(f.id!)
+                    UploadPostModel.shared.postObject.taggedUserIDs!.append(f.id!)
                     taggedProfiles.append(f)
                 }
             }
         }
         
-        var postFriends = UploadPostModel.shared.postObject.hideFromFeed! ? [] : UploadPostModel.shared.postObject.privacyLevel == "invite" ? UploadPostModel.shared.spotObject.inviteList!.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
+        var postFriends =  UploadPostModel.shared.postObject.privacyLevel == "invite" ? UploadPostModel.shared.spotObject.inviteList!.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
         if !postFriends.contains(uid) { postFriends.append(uid) }
         UploadPostModel.shared.postObject.friendsList = postFriends
-        UploadPostModel.shared.postObject.isFirst = (UploadPostModel.shared.postType == .newSpot || UploadPostModel.shared.postType == .postToPOI)
         UploadPostModel.shared.postObject.privacyLevel = publicButton?.tag ?? 0 == 1 ? "public" : "friends"
     }
     

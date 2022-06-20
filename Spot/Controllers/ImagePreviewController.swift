@@ -140,11 +140,11 @@ class ImagePreviewController: UIViewController {
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
         let maxY = minY + cameraHeight
         
-        let imageAspect = post.imageHeight / UIScreen.main.bounds.width
-        let imageY: CGFloat = imageAspect >= cameraAspect ? minY : (minY + maxY - post.imageHeight)/2
+        let imageAspect = post.imageHeight! / UIScreen.main.bounds.width
+        let imageY: CGFloat = imageAspect >= cameraAspect ? minY : (minY + maxY - post.imageHeight!)/2
         
         previewView = PostImageView {
-            $0.frame = CGRect(x: 0, y: imageY, width: UIScreen.main.bounds.width, height: post.imageHeight)
+            $0.frame = CGRect(x: 0, y: imageY, width: UIScreen.main.bounds.width, height: post.imageHeight!)
             $0.contentMode = .scaleAspectFill
             $0.clipsToBounds = true
             $0.isUserInteractionEnabled = true
@@ -241,22 +241,22 @@ class ImagePreviewController: UIViewController {
         let images = post.postImage
         let frameIndexes = post.frameIndexes ?? []
         
-        guard let still = images[safe: frameIndexes[post.selectedImageIndex]] else { return }
+        guard let still = images[safe: frameIndexes[post.selectedImageIndex!]] else { return }
         
         /// scale aspect fit for landscape image, stretch to fill iPhone vertical + image taken from sp0t camera
         let imageAspect = still.size.height / still.size.width
-        previewView.contentMode = (imageAspect + 0.01 < (post.imageHeight / UIScreen.main.bounds.width)) && imageAspect < 1.1  ? .scaleAspectFit : .scaleAspectFill
+        previewView.contentMode = (imageAspect + 0.01 < (post.imageHeight! / UIScreen.main.bounds.width)) && imageAspect < 1.1  ? .scaleAspectFit : .scaleAspectFill
         if previewView.contentMode == .scaleAspectFit { previewView.roundCornersForAspectFit(radius: 15) }
         
         previewView.image = still
         previewView.stillImage = still
         
-        let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: post.selectedImageIndex)
+        let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: post.selectedImageIndex!)
         previewView.animationImages = animationImages
         previewView.animationIndex = 0
 
         if !animationImages.isEmpty && !previewView.activeAnimation {
-            previewView.animateGIF(directionUp: true, counter: previewView.animationIndex, alive: post.gif ?? false)
+            previewView.animateGIF(directionUp: true, counter: previewView.animationIndex)
         }
     }
     

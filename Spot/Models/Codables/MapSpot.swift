@@ -15,60 +15,60 @@ import FirebaseFirestoreSwift
 struct MapSpot: Identifiable, Codable {
     
     @DocumentID var id: String?
-    var spotDescription: String
-    var spotName: String
-    var spotLat: Double
-    var spotLong: Double
-    var founderID: String
-    var privacyLevel: String
-    var postIDs: [String] = []
-    var posterIDs: [String] = []
-    var postTimestamps: [Firebase.Timestamp] = []
-    var postPrivacies: [String] = []
-    var posterUsername: String? = ""
-    var visitorList: [String] = [] 
-    var inviteList: [String]? = []
-    var tags: [String] = []
-    var imageURL: String
-    var spotImage: UIImage = UIImage()
-    var taggedUsers: [String]? = []
+    
     var city: String? = ""
+    var founderID: String
+    var imageURL: String
+    var inviteList: [String]? = []
+    var lowercaseName: String?
     var phone: String? = ""
     var poiCategory: String? ///  poi category is a nil value to check on uploadPost for spot v poi
+    var postIDs: [String] = []
+    var postPrivacies: [String] = []
+    var postTimestamps: [Firebase.Timestamp] = []
+    var posterDictionary: [String: [String]] = [:]
+    var posterIDs: [String] = []
+    var posterUsername: String? = ""
+    var privacyLevel: String
+    var searchKeywords: [String]?
+    var spotDescription: String
+    var spotLat: Double
+    var spotLong: Double
+    var spotName: String
+    var tagDictionary: [String: Int] = [:]
+    var visitorList: [String] = []
     
-    var checkInTime: Int64 = 0
-    var friendVisitors = 0
-    var visiblePosts = 0
-    var spotScore: Double = 0
+    //supplemental values
+    var checkInTime: Int64?
     var distance: CLLocationDistance = CLLocationDistance()
-    var friendImage = false
+    var friendVisitors = 0
     var selected: Bool? = false
-    var postFetchID = ""
-    
-    var tagDictionary: [String: Any] = [:]
+    var spotImage: UIImage = UIImage()
+    var spotScore: Double = 0
     
     enum CodingKeys: String, CodingKey {
         case id = "spotID"
-        case spotDescription = "description"
-        case spotName
-        case founderID = "createdBy"
-        case privacyLevel
-        case visitorList
-        case inviteList
-        case imageURL
-        case taggedUsers
-        case spotLat
-        case spotLong
         case city
+        case founderID = "createdBy"
+        case imageURL
+        case inviteList
+        case lowercaseName
         case phone
         case poiCategory
         case postIDs
-        case posterIDs
-        case postTimestamps
         case postPrivacies
-        case posterUsername
-        case tagDictionary
+        case postTimestamps
         case posterDictionary
+        case posterIDs
+        case posterUsername
+        case privacyLevel
+        case searchKeywords
+        case spotDescription = "description"
+        case spotLat
+        case spotLong
+        case spotName
+        case tagDictionary
+        case visitorList
     }
     
     /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score

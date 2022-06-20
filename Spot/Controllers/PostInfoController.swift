@@ -237,11 +237,11 @@ class PostInfoController: UIViewController {
         if let selectedSpot = spotObjects.first(where: {$0.selected!}) { UploadPostModel.shared.spotObject = selectedSpot } else { UploadPostModel.shared.spotObject = nil }
         setSpotValues()
         
-        UploadPostModel.shared.postObject.addedUserProfiles.removeAll()
+        UploadPostModel.shared.postObject.addedUserProfiles!.removeAll()
         UploadPostModel.shared.postObject.addedUsers!.removeAll()
         
         for friend in friendObjects {
-            if friend.selected && !UploadPostModel.shared.postObject.addedUsers!.contains(friend.id!) { UploadPostModel.shared.postObject.addedUserProfiles.append(friend); UploadPostModel.shared.postObject.addedUsers!.append(friend.id!) }
+            if friend.selected && !UploadPostModel.shared.postObject.addedUsers!.contains(friend.id!) { UploadPostModel.shared.postObject.addedUserProfiles!.append(friend); UploadPostModel.shared.postObject.addedUsers!.append(friend.id!) }
         }
         
         UploadPostModel.shared.postObject.tag = selectedTag

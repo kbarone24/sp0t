@@ -16,11 +16,11 @@ struct MapComment: Identifiable, Codable {
     @DocumentID var id: String?
     var comment: String
     var commenterID: String
+    var taggedUsers: [String]? = []
     var timestamp: Firebase.Timestamp
     var likers: [String]? = []
+    
     var userInfo: UserProfile?
-
-    var taggedUsers: [String]? = []
     var commentHeight: CGFloat = 0
     var feedHeight: CGFloat = 0
     var seconds: Int64 = 0
