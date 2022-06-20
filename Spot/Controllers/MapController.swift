@@ -220,9 +220,10 @@ class MapController: UIViewController {
                 for friend in UserDataModel.shared.friendIDs {
                     
                     if !UserDataModel.shared.friendsList.contains(where: {$0.id == friend}) {
-                        var emptyProfile = UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
+                        var emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
                         emptyProfile.id = friend
                         UserDataModel.shared.friendsList.append(emptyProfile) } /// append empty here so they appear in order
+                    
                     
                     self.db.collection("users").document(friend).getDocument { (friendSnap, err) in
                         
@@ -815,7 +816,7 @@ extension MapController: UITableViewDelegate, UITableViewDataSource, UITableView
                 }
                 
                 var newCount = 0
-                for post in posts { if !post.seen { newCount += 1 }}
+                for post in posts { if !post.seen! { newCount += 1 }}
                 let firstPost = posts.first!
 
                 cell.setUp(post: firstPost, postCount: newCount, row: indexPath.row, selected: indexPath.row == selectedFeedIndex)

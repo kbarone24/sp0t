@@ -77,7 +77,7 @@ extension PostInfoController {
                     /// check for spot duplicate
                     if self.spotObjects.contains(where: {$0.spotName == name || ($0.phone ?? "" == phone && phone != "")}) { index += 1; if index == response.mapItems.count { self.endQuery() }; continue }
                     
-                    var spotInfo = MapSpot(spotDescription: item.pointOfInterestCategory?.toString() ?? "", spotName: name, spotLat: item.placemark.coordinate.latitude, spotLong: item.placemark.coordinate.longitude, founderID: "", privacyLevel: "public", imageURL: "")
+                    var spotInfo = MapSpot(founderID: "", imageURL: "", privacyLevel: "public", spotDescription: item.pointOfInterestCategory?.toString() ?? "", spotLat: item.placemark.coordinate.latitude, spotLong: item.placemark.coordinate.longitude, spotName: name)
                     spotInfo.phone = phone
                     spotInfo.poiCategory = item.pointOfInterestCategory?.toString() ?? ""
                     spotInfo.id = UUID().uuidString
@@ -136,59 +136,42 @@ extension PostInfoController {
     func loadSpotFromDB(key: String?, location: CLLocation?) {
         
         guard let spotKey = key else { accessEscape(); return }
-        guard let coordinate = location?.coordinate else { accessEscape(); return }
-                
+        
         nearbyEnteredCount += 1
-
-        let ref = db.collection("spots").document(spotKey)
-        ref.getDocument { [weak self] (doc, err) in
+        
+        getSpot(spotID: spotKey) { spot, failed in
+            if failed { self.noAccessCount += 1; self.accessEscape(); return }
             
-            guard let self = self else { return }
-            if self.cancelOnDismiss { return }
-            
-            do {
+            var spotInfo = spot
+            if self.hasPOILevelAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? []) {
                 
-                let unwrappedInfo = try doc?.data(as: MapSpot.self)
-                guard var spotInfo = unwrappedInfo else { self.noAccessCount += 1; self.accessEscape(); return }
-                spotInfo.id = ref.documentID
+                let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
+                let spotLocation = CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)
                 
-                spotInfo.spotLat = coordinate.latitude
-                spotInfo.spotLong = coordinate.longitude
-                spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
-                for visitor in spotInfo.visitorList {
-                    if UserDataModel.shared.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
+                spotInfo.distance = spotLocation.distance(from: postLocation)
+                spotInfo.spotScore = spotInfo.getSpotRank(location: postLocation)
+                
+                if spotInfo.privacyLevel != "public" {
+                    spotInfo.spotDescription = spotInfo.posterUsername == "" ? "" : "By \(spotInfo.posterUsername ?? "")"
+                    
+                } else {
+                    spotInfo.spotDescription = spotInfo.poiCategory ?? ""
                 }
                 
-                if self.hasPOILevelAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? []) {
-                    
-                    let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
-                    let spotLocation = CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)
-
-                    spotInfo.distance = spotLocation.distance(from: postLocation)
-                    spotInfo.spotScore = spotInfo.getSpotRank(location: postLocation)
-                                        
-                    if spotInfo.privacyLevel != "public" {
-                        spotInfo.spotDescription = spotInfo.posterUsername == "" ? "" : "By \(spotInfo.posterUsername ?? "")"
-                        
-                    } else {
-                        spotInfo.spotDescription = spotInfo.poiCategory ?? ""
-                    }
-                    
-                    /// replace POI with actual spot object if object already added
-                    /// Use phone number for second degree matching
-                    if let i = self.spotObjects.firstIndex(where: {$0.spotName == spotInfo.spotName || ($0.phone == spotInfo.phone ?? "" && spotInfo.phone ?? "" != "") }) {
-                        spotInfo.selected = self.spotObjects[i].selected
-                        self.spotObjects[i] = spotInfo
-                        self.spotObjects[i].poiCategory = nil
-                        self.noAccessCount += 1; self.accessEscape(); return
-                    }
-                    
-                    self.appendCount += 1
-                    self.spotObjects.append(spotInfo)
-                    self.accessEscape()
-                    
-                } else { self.noAccessCount += 1; self.accessEscape(); return }
-            } catch { self.noAccessCount += 1; self.accessEscape(); return }
+                /// replace POI with actual spot object if object already added
+                /// Use phone number for second degree matching
+                if let i = self.spotObjects.firstIndex(where: {$0.spotName == spotInfo.spotName || ($0.phone == spotInfo.phone ?? "" && spotInfo.phone ?? "" != "") }) {
+                    spotInfo.selected = self.spotObjects[i].selected
+                    self.spotObjects[i] = spotInfo
+                    self.spotObjects[i].poiCategory = nil
+                    self.noAccessCount += 1; self.accessEscape(); return
+                }
+                
+                self.appendCount += 1
+                self.spotObjects.append(spotInfo)
+                self.accessEscape()
+                
+            } else { self.noAccessCount += 1; self.accessEscape(); return }
         }
     }
     
@@ -265,8 +248,7 @@ extension PostInfoController {
                     if self.querySpots.contains(where: {$0.spotName == item.name || ($0.phone ?? "" == item.phoneNumber ?? "" && item.phoneNumber ?? "" != "")}) { index += 1; if index == response.mapItems.count { self.reloadResultsTable(searchText: searchText) }; continue }
                                         
                     let name = item.name!.count > 60 ? String(item.name!.prefix(60)) : item.name!
-                                    
-                    var spotInfo = MapSpot(spotDescription: item.pointOfInterestCategory?.toString() ?? "", spotName: name, spotLat: item.placemark.coordinate.latitude, spotLong: item.placemark.coordinate.longitude, founderID: "", privacyLevel: "public", imageURL: "")
+                    var spotInfo = MapSpot(founderID: "", imageURL: "", privacyLevel: "public", spotDescription: item.pointOfInterestCategory?.toString() ?? "", spotLat: item.placemark.coordinate.latitude, spotLong: item.placemark.coordinate.longitude, spotName: name)
                     
                     spotInfo.phone = item.phoneNumber ?? ""
                     spotInfo.id = UUID().uuidString

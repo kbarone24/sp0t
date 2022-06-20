@@ -241,7 +241,7 @@ class CommentsController: UIViewController {
         temp.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
         temp.sizeToFit()
         
-        let comment = MapComment(id: commentID, comment: commentText, commenterID: self.uid, timestamp: firTimestamp, userInfo: UserDataModel.shared.userInfo, taggedUsers: taggedUsernames, commentHeight: temp.frame.height, seconds: Int64(timestamp))
+        let comment = MapComment(id: commentID, comment: commentText, commenterID: self.uid, taggedUsers: taggedUsernames, timestamp: firTimestamp, userInfo: UserDataModel.shared.userInfo, commentHeight: temp.frame.height, seconds: Int64(timestamp))
         commentList.append(comment)
         commentsTable.reloadData()
         updateParent()
@@ -254,6 +254,7 @@ class CommentsController: UIViewController {
         let commenterIDList = commentList.map({$0.commenterID})
         let taggedUserIDs = selectedUsers.map({$0.id ?? ""})
         
+        /// not using codable here due to extra values that are added for sending comment notification
         let values = ["addedUsers" : post.addedUsers ?? [],
                       "comment" : commentText,
                       "commenterID" : self.uid,
@@ -261,7 +262,7 @@ class CommentsController: UIViewController {
                       "commenterUsername" : UserDataModel.shared.userInfo.username,
                       "imageURL" : post.imageURLs.first ?? "",
                       "posterID": post.posterID,
-                      "posterUsername" : post.userInfo.username,
+                      "posterUsername" : post.userInfo?.username ?? "",
                       "timestamp" : firTimestamp,
                       "taggedUsers" : taggedUsernames,
                       "taggedUserIDs": taggedUserIDs]  as [String : Any]
@@ -614,7 +615,7 @@ class CommentCell: UITableViewCell {
                     openProfile(user: friend)
                 } else {
                     /// pass blank user object to open func, run get user func on profile load
-                    var user = UserProfile(username: r.username, name: "", imageURL: "", currentLocation: "", userBio: "")
+                    var user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: r.username)
                     user.id = ""
                     self.openProfile(user: user)
                 }

@@ -275,7 +275,8 @@ extension UIViewController {
             }
         }
     }
-        
+    
+    // move to backend func
     func updateUserTags(oldUsername: String, newUsername: String) {
         
         let db = Firestore.firestore()
@@ -436,6 +437,31 @@ extension UIViewController {
         }
     }
     
+    func getSpot(spotID: String, completion: @escaping (_ spot: MapSpot, _ failed: Bool) -> Void) {
+        let db: Firestore! = Firestore.firestore()
+        let spotRef = db.collection("spots").document(spotID)
+        
+        spotRef.getDocument { (doc, err) in            
+            do {
+                let unwrappedInfo = try doc?.data(as: MapSpot.self)
+                guard var spotInfo = unwrappedInfo else { completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true); return }
+                
+                spotInfo.id = spotID
+                spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
+                for visitor in spotInfo.visitorList {
+                    if UserDataModel.shared.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
+                }
+                
+                completion(spotInfo, false)
+                return
+                
+            } catch {
+                completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true)
+                return
+            }
+        }
+    }
+    
     func getUserInfo(userID: String, completion: @escaping (_ user: UserProfile) -> Void) {
         
         let db: Firestore! = Firestore.firestore()
@@ -457,7 +483,7 @@ extension UIViewController {
                     info.id = doc!.documentID
                     completion(info)
                     
-                } catch { completion(UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")); return }
+                } catch { completion(UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")); return }
             }
         }
     }
@@ -589,15 +615,19 @@ extension UIViewController {
     func uploadPost(post: MapPost) {
         
         let db = Firestore.firestore()
+        let postRef = db.collection("posts").document(post.id!)
         do {
-            let postRef = try db.collection("posts").addDocument(from: post)
+            try postRef.setData(from: post)
+            self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
+            
+            let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(post.timestamp.seconds))
+            let commentRef = postRef.collection("comments").document(commentObject.id!)
+
             do {
-                var commentObject = MapComment(id: "", comment: post.caption, commenterID: post.posterID, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo, taggedUsers: post.taggedUsers, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(post.timestamp.seconds))
-                let commentRef = try postRef.collection("comments").addDocument(from: commentObject)
-                commentObject.id = commentRef.documentID
+                try commentRef.setData(from: commentObject)
                 
                 var notiPost = post
-                notiPost.id = postRef.documentID
+                notiPost.id = post.id!
                 notiPost.commentList = [commentObject]
                 NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
 
@@ -607,8 +637,6 @@ extension UIViewController {
         } catch {
             print("failed uploading post")
         }
-        
-        setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
     }
             
     func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) {
@@ -1018,7 +1046,7 @@ extension UIScrollView {
 
 extension UIImageView {
     
-    func animateGIF(directionUp: Bool, counter: Int, alive: Bool) {
+    func animateGIF(directionUp: Bool, counter: Int) {
         
         if superview == nil || isHidden || animationImages?.isEmpty ?? true { self.stopPostAnimation(); return }
         
@@ -1044,7 +1072,7 @@ extension UIImageView {
             }
         }
 
-        let duration: TimeInterval = alive ? 0.06 : 0.049
+        let duration: TimeInterval = 0.049
         
         UIView.transition(with: self, duration: duration, options: [.allowUserInteraction, .beginFromCurrentState], animations: { [weak self] in
                             guard let self = self else { return }
@@ -1054,7 +1082,7 @@ extension UIImageView {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.005) { [weak self] in
             guard let self = self else { return }
-            self.animateGIF(directionUp: newDirection, counter: newCount, alive: alive)
+            self.animateGIF(directionUp: newDirection, counter: newCount)
         }
     }
     

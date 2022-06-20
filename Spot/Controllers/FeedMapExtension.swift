@@ -175,6 +175,7 @@ extension MapController {
                     }
 
                 } catch {
+                    print("catch", doc.documentID)
                     index += 1
                     if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts)}
                     continue
@@ -187,11 +188,11 @@ extension MapController {
         friendsPostsDictionary[post.id!] = post
         
         if !friendsPostsGroup.contains(where: {$0.posterID == post.posterID}) {
-            friendsPostsGroup.append(FriendsPostGroup(posterID: post.posterID, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
+            friendsPostsGroup.append(FriendsPostGroup(posterID: post.posterID, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen!)]))
             
         } else if let i = friendsPostsGroup.firstIndex(where: {$0.posterID == post.posterID}) {
             if !friendsPostsGroup[i].postIDs.contains(where: {$0.0 == post.id!}) {
-                friendsPostsGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
+                friendsPostsGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen!))
                 friendsPostsGroup[i].postIDs.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
             }
         }
@@ -410,7 +411,7 @@ extension MapController {
             
             /// get poster user info
             self.getUserInfos(userIDs: [post.posterID]) { userInfos in
-                let user = userInfos.first ?? UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
+                let user = userInfos.first ?? UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
                 post.userInfo = user
                 self.currentNearbyPosts[i].userInfo = user
                 exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
@@ -442,7 +443,7 @@ extension MapController {
         
         let distance = max(CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: CLLocation(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude)), 1)
 
-        let postTime = Float(post.seconds)
+        let postTime = Float(post.seconds!)
         let current = NSDate().timeIntervalSince1970
         let currentTime = Float(current)
         let timeSincePost = currentTime - postTime
@@ -469,7 +470,7 @@ extension MapController {
     
     func loadNearbyPostsToFeed() {
 
-        currentNearbyPosts.sort(by: {$0.postScore > $1.postScore})
+        currentNearbyPosts.sort(by: {$0.postScore! > $1.postScore!})
         
         for post in currentNearbyPosts {
             
@@ -487,7 +488,7 @@ extension MapController {
                         DispatchQueue.main.async {
                                                         
                             for i in 0...self.nearbyPosts.count - 1 { self.nearbyPosts[i].postScore = self.getPostScore(post: self.nearbyPosts[i]) } /// update post scores on location change
-                            self.nearbyPosts.sort(by: {$0.postScore > $1.postScore})
+                            self.nearbyPosts.sort(by: {$0.postScore! > $1.postScore!})
                             self.postsList = self.nearbyPosts
                             
                             if self.nearbyRefresh != .noRefresh { self.nearbyRefresh = .yesRefresh }
@@ -727,7 +728,7 @@ class MapFeedCell: UITableViewCell {
         }
     
         usernameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: 13, width: cellWidth - profilePic.frame.maxX - 18, height: 19))
-        var userString = post.userInfo.username
+        var userString = post.userInfo?.username ?? ""
         /*
         if !post.addedUserProfiles.isEmpty {
             for user in post.addedUserProfiles {
