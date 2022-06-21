@@ -224,7 +224,6 @@ class MapController: UIViewController {
                         emptyProfile.id = friend
                         UserDataModel.shared.friendsList.append(emptyProfile) } /// append empty here so they appear in order
                     
-                    
                     self.db.collection("users").document(friend).getDocument { (friendSnap, err) in
                         
                         do {

@@ -16,7 +16,6 @@ extension PostInfoController {
     
     func runChooseSpotFetch() {
         /// called initially and also after an image is selected
-        print("run fetch")
         spotSearching = true
         DispatchQueue.main.async { self.tableView.reloadData() } /// shows loading indicator 
         
@@ -104,23 +103,13 @@ extension PostInfoController {
         
         let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
         
-        if circleQuery == nil {
-            /// radius between 0.5 and 100.0
-            circleQuery = geoFirestore.query(withCenter: CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong), radius: 0.5)
-            let _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
+        circleQuery = geoFirestore.query(withCenter: postLocation, radius: 0.5)
+        let _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
         
-        } else {
-            /// active listener will account for change
-            circleQuery?.center = postLocation
-            circleQuery?.radius = 0.5
-            return
-        }
-
         let _ = circleQuery?.observeReady { [weak self] in
-
             guard let self = self else { return }
             if self.cancelOnDismiss { return }
-
+            
             self.queryReady = true
             
             /// observe ready is sometimes called after all spots loaded, sometimes before due to async nature. Reload here if no spots entered or load is finished
@@ -132,6 +121,7 @@ extension PostInfoController {
             }
         }
     }
+    
     
     func loadSpotFromDB(key: String?, location: CLLocation?) {
         
@@ -170,23 +160,26 @@ extension PostInfoController {
                 self.appendCount += 1
                 self.spotObjects.append(spotInfo)
                 self.accessEscape()
+                return
                 
             } else { self.noAccessCount += 1; self.accessEscape(); return }
         }
     }
-    
+
     
     func accessEscape() {
         if noAccessCount + appendCount == nearbyEnteredCount && queryReady { endQuery() }
+        return
     }
     
     func endQuery() {
-
         nearbyRefreshCount += 1
         if nearbyRefreshCount < 2 { return } /// avoid refresh on the initial POI fetch for smoother tableView loading
         spotObjects.sort(by: {!$0.selected! && !$1.selected! ? $0.spotScore > $1.spotScore : $0.selected! && !$1.selected!})
         
+        circleQuery?.removeAllObservers()
         circleQuery = nil
+        
         search = nil
         spotSearching = false
         DispatchQueue.main.async { self.tableView.reloadData() }
