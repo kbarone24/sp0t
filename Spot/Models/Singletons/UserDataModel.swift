@@ -34,7 +34,7 @@ class UserDataModel {
     var mapView: MapView!
     
     init() {
-        userInfo = UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
+        userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
         userInfo.id = ""
         currentLocation = CLLocation()
     }
@@ -45,7 +45,7 @@ class UserDataModel {
         friendsList.removeAll()
         
         userInfo = nil
-        userInfo = UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
+        userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
         userInfo.id = ""
         
         userSpots.removeAll()

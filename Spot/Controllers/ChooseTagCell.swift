@@ -11,7 +11,7 @@ import UIKit
 
 class ChooseTagCell: UITableViewCell {
     
-    var chooseTagCollection: UICollectionView  = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
+    var chooseTagCollection: UICollectionView!
     let tagWidth: CGFloat = 46
     let itemsInTagSection = 6
     var interitemSpacing: CGFloat = 0
@@ -39,7 +39,7 @@ class ChooseTagCell: UITableViewCell {
         tagLayout.minimumLineSpacing = 8
         tagLayout.minimumInteritemSpacing = interitemSpacing
         
-        chooseTagCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: bounds.height)
+        chooseTagCollection = UICollectionView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: bounds.height), collectionViewLayout: tagLayout)
         chooseTagCollection.backgroundColor = .white
         chooseTagCollection.delegate = self
         chooseTagCollection.dataSource = self
@@ -89,13 +89,6 @@ extension ChooseTagCell: UICollectionViewDelegate, UICollectionViewDataSource, U
         
         let evenSection = section % 2 == 0
         return UIEdgeInsets(top: 8, left: evenSection ? maxInset : minInset, bottom: 0, right: evenSection ? minInset : maxInset)
-        /*
-        /// for consistent left align if final section
-        let standardInset: CGFloat = UIScreen.main.bounds.width - (CGFloat(itemsInTagSection) * tagWidth + 5 * 8) - minInset
-        let maxInset: CGFloat = UIScreen.main.bounds.width - sectionWidth - minInset
-        /// left align even sections and last section
-        let evenSection = section % 2 == 0
-        return UIEdgeInsets(top: 8, left: evenSection ? standardInset : minInset, bottom: 0, right: evenSection ? minInset : maxInset) */
     }
 }
 
@@ -121,10 +114,12 @@ class UploadTagCell: UICollectionViewCell {
         postTag = tag
         
         if tagImage != nil { tagImage.image = UIImage() }
-        tagImage = UIImageView(frame: CGRect(x: bounds.width/2 - 13.5, y: bounds.height/2 - 13.5, width: 27, height: 27))
-        tagImage.image = tag.image
-        addSubview(tagImage)
-        
+        tagImage = UIImageView {
+            $0.frame = CGRect(x: bounds.width/2 - 13.5, y: bounds.height/2 - 13.5, width: 27, height: 27)
+            $0.image = tag.image
+            addSubview($0)
+        }
+
         backgroundColor = selected ? UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.3) : .white
         layer.borderColor = selected ? UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1.0).cgColor : UIColor.white.cgColor
         

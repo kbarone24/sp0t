@@ -146,11 +146,10 @@ class PostController: UIViewController {
             let gapWidth: CGFloat = CGFloat(frameIndexes.count - 1) * gapSize
             let dotWidth: CGFloat = (dotView.bounds.width - gapWidth) / CGFloat(frameIndexes.count)
             
-            print("index", post.selectedImageIndex)
             var offset: CGFloat = 0
             for i in 0...frameIndexes.count - 1 {
                 let dot = UIView(frame: CGRect(x: offset, y: 0, width: dotWidth, height: 2.5))
-                dot.backgroundColor = i <= post.selectedImageIndex ? UIColor(named: "SpotGreen") : UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
+                dot.backgroundColor = i <= post.selectedImageIndex! ? UIColor(named: "SpotGreen") : UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
                 dot.layer.cornerRadius = 2
                 dot.layer.cornerCurve = .continuous
                 dotView.addSubview(dot)
@@ -438,17 +437,17 @@ class PostCell: UICollectionViewCell {
         let fontSize: CGFloat = noImage ? 30 : 18
         
         let tempHeight = getCaptionHeight(caption: post.caption, fontSize: fontSize)
-        let overflow = tempHeight > post.captionHeight
+        let overflow = tempHeight > post.captionHeight!
 
-        let bigFrameY = userViewMaxY + (spotView.frame.minY - post.captionHeight - userViewMaxY)/2
-        let minY = noImage ? bigFrameY : spotView.frame.minY - 15 - post.captionHeight
+        let bigFrameY = userViewMaxY + (spotView.frame.minY - post.captionHeight! - userViewMaxY)/2
+        let minY = noImage ? bigFrameY : spotView.frame.minY - 15 - post.captionHeight!
         
-        postCaption = UILabel(frame: CGRect(x: 13, y: minY, width: UIScreen.main.bounds.width - 83, height: post.captionHeight + 0.5))
+        postCaption = UILabel(frame: CGRect(x: 13, y: minY, width: UIScreen.main.bounds.width - 83, height: post.captionHeight! + 0.5))
         postCaption.text = post.caption
         postCaption.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
         postCaption.font = UIFont(name: "SFCompactText-Regular", size: fontSize)
         
-        let numberOfLines = overflow ? Int(post.captionHeight/21) : 0
+        let numberOfLines = overflow ? Int(post.captionHeight!/21) : 0
         postCaption.numberOfLines = numberOfLines
         postCaption.lineBreakMode = overflow ? .byClipping : .byWordWrapping
         postCaption.isUserInteractionEnabled = true
@@ -511,8 +510,8 @@ class PostCell: UICollectionViewCell {
                 
         resetImageInfo()
         
-        let imageAspect = post.imageHeight / UIScreen.main.bounds.width
-        let imageY: CGFloat = imageAspect > 1.8 ? 0 : imageAspect > 1.5 ? userViewMaxY : (cellHeight - post.imageHeight)/2
+        let imageAspect = post.imageHeight! / UIScreen.main.bounds.width
+        let imageY: CGFloat = imageAspect > 1.8 ? 0 : imageAspect > 1.5 ? userViewMaxY : (cellHeight - post.imageHeight!)/2
         
         var frameIndexes = post.frameIndexes ?? []
         if post.imageURLs.count == 0 { return }
@@ -522,7 +521,7 @@ class PostCell: UICollectionViewCell {
         if images.isEmpty { return }
         post.postImage = images
 
-        imageView = PostImageView(frame: CGRect(x: 0, y: imageY, width: UIScreen.main.bounds.width, height: post.imageHeight))
+        imageView = PostImageView(frame: CGRect(x: 0, y: imageY, width: UIScreen.main.bounds.width, height: post.imageHeight!))
         imageView.layer.cornerRadius = 15
         imageView.tag = globalRow
         imageView.isUserInteractionEnabled = true
@@ -551,21 +550,21 @@ class PostCell: UICollectionViewCell {
         let images = post.postImage
         let frameIndexes = post.frameIndexes ?? []
         
-        guard let still = images[safe: frameIndexes[post.selectedImageIndex]] else { return }
+        guard let still = images[safe: frameIndexes[post.selectedImageIndex!]] else { return }
         
         let imageAspect = still.size.height / still.size.width
-        imageView.contentMode = (imageAspect + 0.01 < (post.imageHeight / UIScreen.main.bounds.width)) && imageAspect < 1.1  ? .scaleAspectFit : .scaleAspectFill
+        imageView.contentMode = (imageAspect + 0.01 < (post.imageHeight! / UIScreen.main.bounds.width)) && imageAspect < 1.1  ? .scaleAspectFit : .scaleAspectFill
         if imageView.contentMode == .scaleAspectFit { imageView.roundCornersForAspectFit(radius: 15) }
 
         imageView.image = still
         imageView.stillImage = still
 
-        let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: post.selectedImageIndex)
+        let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: post.selectedImageIndex!)
         imageView.animationImages = animationImages
         imageView.animationIndex = 0
                 
         if !animationImages.isEmpty && !imageView.activeAnimation {
-            animationImages.count == 5 && post.frameIndexes!.count == 1 ? imageView.animate5FrameAlive(directionUp: true, counter: imageView.animationIndex) : imageView.animateGIF(directionUp: true, counter: imageView.animationIndex, alive: post.gif ?? false)  /// use old animation for 5 frame alives
+            animationImages.count == 5 && post.frameIndexes!.count == 1 ? imageView.animate5FrameAlive(directionUp: true, counter: imageView.animationIndex) : imageView.animateGIF(directionUp: true, counter: imageView.animationIndex)  /// use old animation for 5 frame alives
         }
     }
     
@@ -590,7 +589,6 @@ class PostCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
-        
         super.prepareForReuse()
         if imageManager != nil { imageManager.cancelAll(); imageManager = nil }
     }
@@ -624,7 +622,7 @@ class PostCell: UICollectionViewCell {
         
         guard let postVC = viewContainingController() as? PostController else { return }
 
-        if (post.selectedImageIndex < (post.frameIndexes?.count ?? 0) - 1) && !post.postImage.isEmpty {
+        if (post.selectedImageIndex! < (post.frameIndexes?.count ?? 0) - 1) && !post.postImage.isEmpty {
             nextImage()
             
         } else if postVC.selectedPostIndex < postVC.postsList.count - 1 {
@@ -639,7 +637,7 @@ class PostCell: UICollectionViewCell {
         
         guard let postVC = viewContainingController() as? PostController else { return }
 
-        if post.selectedImageIndex > 0 {
+        if post.selectedImageIndex! > 0 {
             previousImage()
             
         } else if postVC.selectedPostIndex > 0 {
@@ -806,11 +804,11 @@ class PostCell: UICollectionViewCell {
     }
     
     func incrementImage(index: Int) {
-        post.selectedImageIndex += index
+        post.selectedImageIndex! += index
         setCurrentImage()
         
         guard let postVC = viewContainingController() as? PostController else { return }
-        postVC.postsList[postVC.selectedPostIndex].selectedImageIndex += index
+        postVC.postsList[postVC.selectedPostIndex].selectedImageIndex! += index
         postVC.setDotView()
     }
     
@@ -861,7 +859,7 @@ class PostCell: UICollectionViewCell {
             self.db.collection("posts").document(self.post.id!).updateData(["likers" : FieldValue.arrayUnion([self.uid])])
             
             let functions = Functions.functions()
-            functions.httpsCallable("likePost").call(["likerID": self.uid, "username": UserDataModel.shared.userInfo.username, "postID": self.post.id!, "imageURL": self.post.imageURLs.first ?? "", "spotID": self.post.spotID ?? "", "addedUsers": self.post.addedUsers ?? [], "posterID": self.post.posterID, "posterUsername": self.post.userInfo.username]) { result, error in
+            functions.httpsCallable("likePost").call(["likerID": self.uid, "username": UserDataModel.shared.userInfo.username, "postID": self.post.id!, "imageURL": self.post.imageURLs.first ?? "", "spotID": self.post.spotID ?? "", "addedUsers": self.post.addedUsers ?? [], "posterID": self.post.posterID, "posterUsername": self.post.userInfo?.username ?? ""]) { result, error in
                 print(result?.data as Any, error as Any)
             }
         }
