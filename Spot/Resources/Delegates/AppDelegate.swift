@@ -27,13 +27,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrowDark")
         UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage(named: "BackArrowDark")
         UINavigationBar.appearance().tintColor = .black
+        
+        // Sets the translucent background color
+        //UINavigationBar.appearance().backgroundColor = .clear
+        // Set translucent. (Default value is already true, so this can  be removed if desired.)
+        //UINavigationBar.appearance().isTranslucent = true
 
         
-        /// set bar button appearance (remove "back" from back buttos)
+        /// set bar button appearance (remove "back" from back buttons)
         let BarButtonItemAppearance = UIBarButtonItem.appearance()
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .normal)
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .selected)
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .highlighted)
+        
         
         /// search bar attributes
         UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor(red: 0.514, green: 0.518, blue: 0.537, alpha: 1), NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any]
@@ -45,7 +51,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let navigationBarAppearance = UINavigationBarAppearance()
         navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 19)!]
         navigationBarAppearance.backgroundColor = nil
-        navigationBarAppearance.backgroundImage = UIImage()
+        navigationBarAppearance.backgroundImage = UIImage(named: "BackArrowDark")
         navigationBarAppearance.shadowImage = UIImage()
         
         IQKeyboardManager.shared.enable = true
