@@ -66,7 +66,10 @@ class PostInfoController: UIViewController {
     /// spot search fetch
     var searchRefreshCount = 0
     var spotSearching = false
-    
+        
+    deinit {
+        print("deinit")
+    }
         
     override func viewDidLoad() {
         
@@ -80,7 +83,7 @@ class PostInfoController: UIViewController {
         addPicker()
         runChooseSpotFetch()
     }
-        
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         IQKeyboardManager.shared.enable = true
@@ -89,6 +92,12 @@ class PostInfoController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         IQKeyboardManager.shared.enable = false /// disable for textview sticking to keyboard
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        circleQuery?.removeAllObservers()
+        circleQuery = nil
     }
     
     func addNavButtons() {
