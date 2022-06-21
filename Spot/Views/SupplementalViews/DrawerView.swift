@@ -30,6 +30,7 @@ class DrawerView: NSObject {
         $0.layer.shadowOpacity = 0.8
         $0.translatesAutoresizingMaskIntoConstraints = false
     }
+    private lazy var myNav = UINavigationController()
     private lazy var closeButton = UIButton {
         $0.backgroundColor = .clear
         $0.setImage(UIImage(systemName: "xmark.circle.fill", withConfiguration: UIImage.SymbolConfiguration(textStyle: .largeTitle))?.withTintColor(.tertiarySystemFill, renderingMode: .alwaysOriginal), for: .normal)
@@ -66,11 +67,12 @@ class DrawerView: NSObject {
             }
         }
     }
+    private var closeDo: (() -> Void)? = nil
     
     override init() {
         super.init()
     }
-    public init(present: UIViewController = UIViewController(), drawerConrnerRadius: CGFloat = 20, withDetent: [DrawerViewDetent] = [.Bottom, .Middle, .Top]) {
+    public init(present: UIViewController = UIViewController(), drawerConrnerRadius: CGFloat = 20, withDetent: [DrawerViewDetent] = [.Bottom, .Middle, .Top], closeAction: (() -> Void)? = nil) {
         super.init()
         if let parent = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController as? UINavigationController {
             if parent.visibleViewController != nil {
@@ -81,6 +83,7 @@ class DrawerView: NSObject {
         slideView.layer.cornerRadius = drawerConrnerRadius
         detents = withDetent
         viewSetup(cornerRadius: drawerConrnerRadius)
+        closeDo = closeAction
     }
     
     private func viewSetup(cornerRadius: CGFloat) {
@@ -98,7 +101,7 @@ class DrawerView: NSObject {
         slideView.frame = CGRect(x: 0, y: parentVC.view.frame.height, width: parentVC.view.frame.width, height: parentVC.view.frame.height)
         panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(self.panPerforming(recognizer:)))
         slideView.addGestureRecognizer(panRecognizer!)
-        let myNav = UINavigationController(rootViewController: rootVC)
+        myNav = UINavigationController(rootViewController: rootVC)
         parentVC.addChild(myNav)
         slideView.addSubview(myNav.view)
         myNav.view.frame = CGRect(origin: .zero, size: slideView.frame.size)
@@ -114,7 +117,8 @@ class DrawerView: NSObject {
         }
         slideView.addSubview(closeButton)
         closeButton.snp.makeConstraints {
-            $0.top.trailing.equalToSuperview()
+            $0.trailing.equalToSuperview()
+            $0.top.equalToSuperview().offset(30)
             $0.width.height.equalTo(70)
         }
         closeButton.addTarget(self, action: #selector(self.closeAction), for: .touchUpInside)
@@ -147,8 +151,8 @@ class DrawerView: NSObject {
     private func goTop() {
         topConstraints?.activate()
         let sheetPresentVelocity = 0.35 * self.parentVC.view.frame.height / 0.5
-        duration = abs((self.parentVC.view.frame.height - self.slideView.frame.height + 100 - self.slideView.frame.origin.y) / sheetPresentVelocity)
-        yPosition = (self.parentVC.view.frame.height - self.slideView.frame.height + 100)
+        duration = abs((100 - self.slideView.frame.origin.y) / sheetPresentVelocity)
+        yPosition = 0
         self.status = DrawerViewStatus.Top
     }
     private func goMid() {
@@ -218,6 +222,11 @@ class DrawerView: NSObject {
             self.parentVC.view.layoutIfNeeded()
         }) { (success) in
             self.status = DrawerViewStatus.Close
+            self.slideView.removeFromSuperview()
+            self.myNav.removeFromParent()            
+            if self.closeDo != nil {
+                self.closeDo!()
+            }
         }
     }
     
