@@ -102,7 +102,11 @@ class MapController: UIViewController {
     var friendAnnotations: [PointAnnotation] = []
     
     /// sheet view
-    private var sheetView: DrawerView? // Must declare outside to listen to UIEvent
+    private var sheetView: DrawerView? {
+        didSet {
+            navigationController?.navigationBar.isHidden = sheetView == nil ? false:true
+        }
+    } // Must declare outside to listen to UIEvent
                 
     enum refreshStatus {
         case yesRefresh
@@ -413,9 +417,9 @@ class MapController: UIViewController {
     
     @objc func profileTap(_ sender: Any){
         let profileVC = ProfileViewController()
-        if sheetView == nil {
-            sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, withDetent: [.Bottom, .Middle, .Top])
-        }
+        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, withDetent: [.Middle, .Top], closeAction: {
+            self.sheetView = nil
+        })
         sheetView?.present(to: .Middle)
 //        if #available(iOS 15.0, *) {
 //            let vc: BottomDrawerViewController = .init(rootViewController: profileVC)
