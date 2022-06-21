@@ -15,82 +15,80 @@ import CoreLocation
 struct MapPost: Identifiable, Codable {
     
     @DocumentID var id: String?
+    
+    var addedUsers: [String]? = []
+    var aspectRatios: [CGFloat]? = []
     var caption: String
+    var city: String? = ""
+    var createdBy: String? = ""
+    var frameIndexes: [Int]? = []
+    var friendsList: [String]
+    var imageLocations: [[String: Double]]? = [[:]]
+    var imageURLs: [String]
+    var inviteList: [String]? = []
+    var likers: [String]
+    var mapID: String? = ""
+    var mapName: String? = ""
     var postLat: Double
     var postLong: Double
     var posterID: String
-    var timestamp: Firebase.Timestamp
-    var actualTimestamp: Firebase.Timestamp? 
-    var userInfo: UserProfile!
+    var posterUsername: String? = ""
+    var privacyLevel: String? = "friends"
+    var seenList: [String]? = []
     var spotID: String? = ""
-    var city: String? = ""
-    var frameIndexes: [Int]? = []
-    var aspectRatios: [CGFloat]? = []
-    
-    var imageURLs: [String] = []
-    var postImage: [UIImage] = []
-    var seconds: Int64 = 0
-    var selectedImageIndex = 0
-    var postScore: Double = 0
-    var commentList: [MapComment] = []
-    var likers: [String]
-    var taggedUsers: [String]? = []
-    var taggedUserIDs: [String] = []
-    
-    var imageHeight: CGFloat = 0
-    var captionHeight: CGFloat = 0
-    var cellHeight: CGFloat = 0
-    var commentsHeight: CGFloat = 0
-    
-    var spotName: String? = ""
     var spotLat: Double? = 0.0
     var spotLong: Double? = 0.0
-    var privacyLevel: String? = "friends"
+    var spotName: String? = ""
     var spotPrivacy: String? = ""
-    var createdBy: String? = ""
-    var inviteList: [String]? = []
-    var friendsList: [String] = []
-    var seenList: [String]? = []
-    var hideFromFeed: Bool? = false
-    var gif: Bool? = false
-    var isFirst: Bool? = false
-    var seen: Bool = true
-    
-    var addedUsers: [String]? = []
- //   var posterGroup: [String]? = []
-    var addedUserProfiles: [UserProfile] = []
     var tag: String? = ""
-    var posterUsername: String? = ""
+    var taggedUserIDs: [String]? = []
+    var taggedUsers: [String]? = []
+    var timestamp: Firebase.Timestamp
+
+    // supplemental values
+    var addedUserProfiles: [UserProfile]? = []
+    var userInfo: UserProfile?
+    var commentList: [MapComment] = []
+    var postImage: [UIImage] = []
     
-    var imageLocations: [[String: Any]]? = [[:]]
+    var postScore: Double? = 0
+    var seconds: Int64? = 0
+    var selectedImageIndex: Int? = 0
+    var imageHeight: CGFloat? = 0
+    var captionHeight: CGFloat? = 0
+    var cellHeight: CGFloat? = 0
+    var commentsHeight: CGFloat? = 0
+    
+    var seen: Bool? = true
     
     enum CodingKeys: String, CodingKey {
+        case addedUsers
+        case aspectRatios
         case caption
+        case city
+        case createdBy
+        case frameIndexes
+        case friendsList
+        case imageLocations
+        case imageURLs
+        case inviteList
+        case likers
+        case mapID
+        case mapName
         case postLat
         case postLong
+        case posterID
+        case posterUsername
+        case privacyLevel
+        case seenList
         case spotID
         case spotLat
         case spotLong
-        case posterID
-        case imageURLs
-        case frameIndexes
-        case aspectRatios
-        case timestamp
-        case actualTimestamp
-        case likers
-        case city
-        case taggedUsers
         case spotName
-        case privacyLevel
         case spotPrivacy
-        case createdBy
-        case inviteList
-        case hideFromFeed
-        case gif
-        case addedUsers
         case tag
-        case isFirst
-        case seenList
+        case taggedUserIDs
+        case taggedUsers
+        case timestamp
     }
-    
 }
