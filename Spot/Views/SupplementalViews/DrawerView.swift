@@ -38,12 +38,18 @@ class DrawerView: NSObject {
     private var rootVC = UIViewController()
     private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
     
+    private var panRecognizer: UIPanGestureRecognizer?
     private var status = DrawerViewStatus.Close
     private var duration: CGFloat = 0
     private var yPosition: CGFloat = 0
     private var topConstraints: Constraint? = nil
     private var midConstraints: Constraint? = nil
     private var botConstraints: Constraint? = nil
+    public var canDrag: Bool = true {
+        didSet {
+            toggleDrag(to: canDrag)
+        }
+    }
     
     override init() {
         super.init()
@@ -73,8 +79,8 @@ class DrawerView: NSObject {
         midConstraints?.deactivate()
         botConstraints?.deactivate()
         slideView.frame = CGRect(x: 0, y: parentVC.view.frame.height, width: parentVC.view.frame.width, height: parentVC.view.frame.height)
-        
-        slideView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(self.panPerforming(recognizer:))))
+        panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(self.panPerforming(recognizer:)))
+        slideView.addGestureRecognizer(panRecognizer!)
         let myNav = UINavigationController(rootViewController: rootVC)
         parentVC.addChild(myNav)
         slideView.addSubview(myNav.view)
@@ -140,6 +146,10 @@ class DrawerView: NSObject {
         duration = abs((self.parentVC.view.frame.height - 100 - self.slideView.frame.origin.y) / sheetPresentVelocity)
         yPosition = self.parentVC.view.frame.height - 100
         self.status = DrawerViewStatus.Bottom
+    }
+    
+    private func toggleDrag(to: Bool) {
+        to ? slideView.addGestureRecognizer(panRecognizer!):slideView.removeGestureRecognizer(panRecognizer!)
     }
     
     // Pan gesture
