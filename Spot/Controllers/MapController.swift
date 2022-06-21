@@ -415,7 +415,7 @@ class MapController: UIViewController {
     @objc func profileTap(_ sender: Any){
         let profileVC = ProfileViewController()
         if sheetView == nil {
-            sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22)
+            sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, withDetent: [.Bottom, .Middle, .Top])
         }
         sheetView?.present(to: .Middle)
 //        if #available(iOS 15.0, *) {

@@ -9,11 +9,16 @@
 import UIKit
 import SnapKit
 
-enum DrawerViewStatus {
-    case Top
-    case Middle
-    case Bottom
-    case Close
+enum DrawerViewStatus: Int {
+    case Bottom = 0
+    case Middle = 1
+    case Top = 2
+    case Close = 3
+}
+enum DrawerViewDetent: Int {
+    case Bottom = 0
+    case Middle = 1
+    case Top = 2
 }
 
 class DrawerView: NSObject {
@@ -50,19 +55,31 @@ class DrawerView: NSObject {
             toggleDrag(to: canDrag)
         }
     }
+    private var detents: [DrawerViewDetent] = [.Bottom, .Middle, .Top]
+    private var detentsPointer = 0 {
+        didSet {
+            if detentsPointer > detents.count - 1 {
+                detentsPointer = detents.count
+            }
+            if detentsPointer < 0 {
+                detentsPointer = 0
+            }
+        }
+    }
     
     override init() {
         super.init()
     }
-    public init(present: UIViewController = UIViewController(), drawerConrnerRadius: CGFloat = 20) {
+    public init(present: UIViewController = UIViewController(), drawerConrnerRadius: CGFloat = 20, withDetent: [DrawerViewDetent] = [.Bottom, .Middle, .Top]) {
         super.init()
         if let parent = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController as? UINavigationController {
             if parent.visibleViewController != nil {
                 parentVC = parent.visibleViewController!
             }
         }
-        self.rootVC = present
-        self.slideView.layer.cornerRadius = drawerConrnerRadius
+        rootVC = present
+        slideView.layer.cornerRadius = drawerConrnerRadius
+        detents = withDetent
         viewSetup(cornerRadius: drawerConrnerRadius)
     }
     
@@ -103,17 +120,18 @@ class DrawerView: NSObject {
         closeButton.addTarget(self, action: #selector(self.closeAction), for: .touchUpInside)
     }
     
-    public func present(to: DrawerViewStatus = .Middle) {
+    public func present(to: DrawerViewDetent = .Middle) {
         let currentStatus = status
         switch to {
         case .Top:
             goTop()
-        case .Middle, .Close:
+        case .Middle:
             goMid()
         case .Bottom:
             goBot()
         }
-        if currentStatus != to {
+        detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
+        if currentStatus.rawValue != to.rawValue {
             UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut, animations: {
                 self.slideView.frame.origin.y = self.yPosition
             }, completion: nil)
@@ -166,23 +184,25 @@ class DrawerView: NSObject {
             // Check the velocity of gesture to determine if it's a swipe or a drag
             if abs(recognizer.velocity(in: recognizer.view).y) > 1000 {
                 // Swipe up velocity is smaller than 0
-                switch status {
-                case .Top:
-                    recognizer.velocity(in: recognizer.view).y <= 0 ? goTop():goMid()
-                case .Middle:
-                    recognizer.velocity(in: recognizer.view).y <= 0 ? goTop():goBot()
+                recognizer.velocity(in: recognizer.view).y <= 0 ? (detentsPointer += 1):(detentsPointer -= 1)
+                switch detents[detentsPointer] {
                 case .Bottom:
-                    recognizer.velocity(in: recognizer.view).y <= 0 ? goMid():goBot()
-                case .Close:
-                    return
+                    goBot()
+                case .Middle:
+                    goMid()
+                case .Top:
+                    goTop()
                 }
             } else {
-                if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 {
+                if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 && detents.contains(.Bottom) {
                     goBot()
-                } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 {
+                    detentsPointer = detents.firstIndex(of: .Bottom)!
+                } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 && detents.contains(.Top) {
                     goTop()
-                } else {
+                    detentsPointer = detents.firstIndex(of: .Top)!
+                } else if detents.contains(.Middle) {
                     goMid()
+                    detentsPointer = detents.firstIndex(of: .Middle)!
                 }
             }
             UIView.animate(withDuration: duration) {
