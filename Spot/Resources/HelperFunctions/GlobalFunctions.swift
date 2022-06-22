@@ -523,6 +523,39 @@ extension UIViewController {
             }
         }
     }
+    
+    func getPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
+        
+        let db: Firestore! = Firestore.firestore()
+        let emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp())
+        
+        db.collection("posts").document(postID).getDocument { [weak self] doc, err in
+            guard let self = self else { return }
+            if err != nil { completion(emptyPost); return }
+            
+            do {
+                let unwrappedInfo = try doc?.data(as: MapPost.self)
+                guard var postInfo = unwrappedInfo else { completion(emptyPost); return }
+                
+                postInfo.id = doc!.documentID
+                postInfo = self.setSecondaryPostValues(post: postInfo)
+                
+                var count = 0
+                self.getUserInfo(userID: postInfo.posterID) { user in
+                    postInfo.userInfo = user
+                    count += 1
+                    if count == 2 { completion(postInfo); return }
+                }
+                
+                self.getComments(postID: postID) { comments in
+                    postInfo.commentList = comments
+                    count += 1
+                    if count == 2 { completion(postInfo); return }
+                }
+                
+            } catch { completion(emptyPost); return }
+        }
+    }
 }
 
 /// upload post functions
