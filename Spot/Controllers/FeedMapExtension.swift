@@ -113,7 +113,7 @@ extension MapController {
             }
         }
     }
-
+    
     func getFriendPosts(refresh: Bool) {
         
         var query = db.collection("posts").order(by: "timestamp", descending: true).whereField("friendsList", arrayContains: self.uid).limit(to: 100)
@@ -134,10 +134,11 @@ extension MapController {
             
           //  if longDocs.count == 0 && self.friendPosts.count == 0 { self.addEmptyState() }
                         
-            var localPosts: [MapPost] = [] /// just the 10 posts for this fetch
+            var localPosts: [MapPost] = [] /// just the 100 posts for this fetch
             var index = 0
             
-            let docs = self.friendsRefresh == .noRefresh ? longDocs : longDocs.dropLast() /// drop last doc to get exactly 10 posts for reload unless under 10 posts fetched
+            let docs = self.friendsRefresh == .noRefresh ? longDocs : longDocs.dropLast() /// drop last doc to get exactly 10 posts for reload unless under 100 posts fetched
+            
 
             for doc in docs {
                 
@@ -162,7 +163,7 @@ extension MapController {
                     /// check for addedUsers + getComments -> exitCount will == 2 when these async functions are done running (avoid using dispatch due to loop)
                     var exitCount = 0
                     
-                    self.getComments(postID: postInfo.id!) { commentList in
+                    self.addCommentsListener(postID: postInfo.id!) { commentList in
                         postInfo.commentList = commentList
                         postInfo = self.setSecondaryPostValues(post: postInfo)
                         exitCount += 1; if exitCount == 2 { localPosts.append(postInfo); index += 1; if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts) }}
@@ -174,6 +175,7 @@ extension MapController {
                     }
 
                 } catch {
+                    print("catch", doc.documentID)
                     index += 1
                     if index == docs.count { self.loadFriendPostsToFeed(posts: localPosts)}
                     continue
@@ -186,11 +188,11 @@ extension MapController {
         friendsPostsDictionary[post.id!] = post
         
         if !friendsPostsGroup.contains(where: {$0.posterID == post.posterID}) {
-            friendsPostsGroup.append(FriendsPostGroup(posterID: post.posterID, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
+            friendsPostsGroup.append(FriendsPostGroup(posterID: post.posterID, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen!)]))
             
         } else if let i = friendsPostsGroup.firstIndex(where: {$0.posterID == post.posterID}) {
             if !friendsPostsGroup[i].postIDs.contains(where: {$0.0 == post.id!}) {
-                friendsPostsGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
+                friendsPostsGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen!))
                 friendsPostsGroup[i].postIDs.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
             }
         }
@@ -224,41 +226,17 @@ extension MapController {
         
         var users: [UserProfile] = []
         if userIDs.isEmpty { completion(users); return }
-        var userCount = 0
         
         for userID in userIDs {
-            
-            if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
+            getUserInfo(userID: userID) { user in
                 users.append(user)
-                userCount += 1
-                if userCount == userIDs.count { completion(users) }
-                
-            } else if userID == uid {
-                users.append(UserDataModel.shared.userInfo)
-                userCount += 1
-                if userCount == userIDs.count { completion(users) }
-                
-            } else {
-                db.collection("users").document(userID).getDocument { (doc, err) in
-                    if err != nil { return }
-
-                    do {
-                        let userInfo = try doc!.data(as: UserProfile.self)
-                        guard var info = userInfo else { userCount += 1; if userCount == userIDs.count { completion(users) }; return }
-
-                        info.id = doc!.documentID
-                        users.append(info)
-                        userCount += 1
-                        if userCount == userIDs.count { completion(users) }
-
-                    } catch { userCount += 1; if userCount == userIDs.count { completion(users); return } }
-                }
+                if users.count == userIDs.count { completion(users); return }
             }
         }
     }
 
     
-    func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
+    func addCommentsListener(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
         
         var commentList: [MapComment] = []
         
@@ -268,50 +246,27 @@ extension MapController {
             if commentSnap!.documents.count == 0 { completion(commentList); return }
             guard let self = self else { return }
 
+            var index = 0
             for doc in commentSnap!.documents {
                 do {
                     let commentInf = try doc.data(as: MapComment.self)
-                    guard var commentInfo = commentInf else { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
+                    guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
                     
                     commentInfo.id = doc.documentID
                     commentInfo.seconds = commentInfo.timestamp.seconds
                     commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
                     
-                    /// get commenter user info from friends list or from database
-                    var tempFriends = UserDataModel.shared.friendsList
-                    tempFriends.append(UserDataModel.shared.userInfo)
-                    
-                    if let i = tempFriends.firstIndex(where: {$0.id == commentInfo.commenterID}) {
-                        commentInfo.userInfo = tempFriends[i]
+                    self.getUserInfo(userID: commentInfo.commenterID) { user in
+                        commentInfo.userInfo = user
                         if !commentList.contains(where: {$0.id == doc.documentID}) {
                             commentList.append(commentInfo)
                             commentList.sort(by: {$0.seconds < $1.seconds})
                         }
                         
-                        if doc == commentSnap!.documents.last { completion(commentList) }
-                        
-                    } else {
-                        
-                        self.db.collection("users").document(commentInfo.commenterID).getDocument { (snap, err) in
-                            
-                            do {
-                                let userProf = try snap?.data(as: UserProfile.self)
-                                guard var userProfile = userProf else { if doc == commentSnap!.documents.last { completion(commentList) }; return }
-                                
-                                userProfile.id = snap!.documentID
-                                commentInfo.userInfo = userProfile
-                                
-                                if !commentList.contains(where: {$0.id == doc.documentID}) {
-                                    commentList.append(commentInfo)
-                                    commentList.sort(by: {$0.seconds < $1.seconds})
-                                }
-                                
-                                if doc == commentSnap!.documents.last { completion(commentList) }
-                                
-                            } catch { if doc == commentSnap!.documents.last { completion(commentList) }; return }
-                        }
+                        index += 1; if index == commentSnap!.documents.count { completion(commentList) }
                     }
-                } catch { if doc == commentSnap!.documents.last { completion(commentList) }; continue }
+                    
+                } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
             }
         }
     }
@@ -414,7 +369,7 @@ extension MapController {
             ///  DispatchQueue.main.async { self.postVC.tableView.reloadData() }
         }
         
-        getComments(postID: post.id!) { [weak self] commentList in
+        addCommentsListener(postID: post.id!) { [weak self] commentList in
             guard let self = self else { return }
             self.updateNearbyPostComments(comments: commentList, postID: post.id!)
         }
@@ -448,7 +403,7 @@ extension MapController {
             var post = currentNearbyPosts[i]
             
             var exitCount = 0
-            self.getComments(postID: post.id!) { commentList in
+            self.addCommentsListener(postID: post.id!) { commentList in
                 post.commentList = commentList
                 self.currentNearbyPosts[i].commentList = commentList
                 exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
@@ -456,7 +411,7 @@ extension MapController {
             
             /// get poster user info
             self.getUserInfos(userIDs: [post.posterID]) { userInfos in
-                let user = userInfos.first ?? UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
+                let user = userInfos.first ?? UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
                 post.userInfo = user
                 self.currentNearbyPosts[i].userInfo = user
                 exitCount += 1; if exitCount == 3 { self.nearbyEscape() }
@@ -488,7 +443,7 @@ extension MapController {
         
         let distance = max(CLLocation(latitude: post.postLat, longitude: post.postLong).distance(from: CLLocation(latitude: UserDataModel.shared.currentLocation.coordinate.latitude, longitude: UserDataModel.shared.currentLocation.coordinate.longitude)), 1)
 
-        let postTime = Float(post.seconds)
+        let postTime = Float(post.seconds!)
         let current = NSDate().timeIntervalSince1970
         let currentTime = Float(current)
         let timeSincePost = currentTime - postTime
@@ -515,7 +470,7 @@ extension MapController {
     
     func loadNearbyPostsToFeed() {
 
-        currentNearbyPosts.sort(by: {$0.postScore > $1.postScore})
+        currentNearbyPosts.sort(by: {$0.postScore! > $1.postScore!})
         
         for post in currentNearbyPosts {
             
@@ -533,7 +488,7 @@ extension MapController {
                         DispatchQueue.main.async {
                                                         
                             for i in 0...self.nearbyPosts.count - 1 { self.nearbyPosts[i].postScore = self.getPostScore(post: self.nearbyPosts[i]) } /// update post scores on location change
-                            self.nearbyPosts.sort(by: {$0.postScore > $1.postScore})
+                            self.nearbyPosts.sort(by: {$0.postScore! > $1.postScore!})
                             self.postsList = self.nearbyPosts
                             
                             if self.nearbyRefresh != .noRefresh { self.nearbyRefresh = .yesRefresh }
@@ -773,7 +728,7 @@ class MapFeedCell: UITableViewCell {
         }
     
         usernameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: 13, width: cellWidth - profilePic.frame.maxX - 18, height: 19))
-        var userString = post.userInfo.username
+        var userString = post.userInfo?.username ?? ""
         /*
         if !post.addedUserProfiles.isEmpty {
             for user in post.addedUserProfiles {

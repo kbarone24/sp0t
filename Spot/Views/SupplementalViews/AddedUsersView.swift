@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 import FirebaseUI
-
+/*
 class AddedUsersView: UIView {
     
     func setUp(users: [UserProfile]) {
@@ -49,3 +49,4 @@ class AddedUsersView: UIView {
         }
     }
 }
+ */

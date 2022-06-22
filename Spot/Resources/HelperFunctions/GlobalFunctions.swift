@@ -85,17 +85,6 @@ extension UIViewController {
         return pred.evaluate(with: email)
     }
     
-    func getTopMostViewController() -> UIViewController? {
-        let currentWindow = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        
-        var topMostViewController = currentWindow?.rootViewController
-        
-        while let presentedViewController = topMostViewController?.presentedViewController {
-            topMostViewController = presentedViewController
-        }
-        
-        return topMostViewController
-    }
     
     func getCommentHeight(comment: String) -> CGFloat {
         let temp = UILabel(frame: CGRect(x: 54, y: 0, width: UIScreen.main.bounds.width - 68, height: 18))
@@ -142,7 +131,7 @@ extension UIViewController {
         
         if let currentVC = self as? PostController {
             currentVC.mapVC.removeTable()
-        } 
+        }
     }
     
     // run when user taps a username to tag
@@ -190,46 +179,6 @@ extension UIViewController {
 
         return tagText
     }
-
-    /// get map rank used for clustering on map -> solely a popularity ranking
-    func getMapRank(spot: MapSpot) -> CGFloat {
-        
-        var score: Float = 0
-        for visitor in spot.visitorList {
-            score = score + 1
-            if isFriends(id: visitor) {
-                score = score + 1
-            }
-        }
-        
-        if spot.postIDs.count == 0 { return(CGFloat(score)) }
-        for i in 0 ... spot.postIDs.count - 1 {
-            
-            var postScore: Float = 2
-            
-            /// increment for each friend post
-            if spot.posterIDs.count <= i { return CGFloat(score) }
-            if isFriends(id: spot.posterIDs[i]) { postScore = postScore + 2 }
-
-            let timestamp = spot.postTimestamps[i]
-            let postTime = Float(timestamp.seconds)
-            
-            let current = NSDate().timeIntervalSince1970
-            let currentTime = Float(current)
-            let timeSincePost = currentTime - postTime
-            
-            /// add multiplier for recent posts
-            var factor = min(1 + (1000000 / timeSincePost), 5)
-            let multiplier = pow(1.5, factor)
-            factor = multiplier
-            
-            postScore = postScore * factor
-            score = score + postScore
-        }
-        
-        return CGFloat(score)
-    }
-    
     
     func isFriends(id: String) -> Bool {
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
@@ -262,38 +211,6 @@ extension UIViewController {
         return true
     }
     
-    func hasSpotAccess(spot: MapSpot) -> Bool {
-                
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-
-        if UserDataModel.shared.adminIDs.contains(where: {$0 == spot.founderID}) {
-            if uid != spot.founderID {
-                return false
-            }
-        }
-        
-        if spot.privacyLevel == "friends" {
-            if UserDataModel.shared.friendIDs.contains(where: {$0 == spot.founderID}) || uid == spot.founderID {
-                return true
-            }
-            
-        } else if spot.privacyLevel == "invite" {
-            if spot.inviteList!.contains(where: {$0 == uid}) {
-                return true
-            }
-            
-        } else {
-            for posterID in spot.posterIDs {
-                if UserDataModel.shared.friendIDs.contains(posterID) || UserDataModel.shared.uid == posterID { return true }
-            }
-            for postPrivacy in spot.postPrivacies {
-                if postPrivacy == "public" { return true }
-            }
-        }
-        
-        return false
-    }
-        
     func hasPostAccess(post: MapPost) -> Bool {
         
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
@@ -358,7 +275,8 @@ extension UIViewController {
             }
         }
     }
-        
+    
+    // move to backend func
     func updateUserTags(oldUsername: String, newUsername: String) {
         
         let db = Firestore.firestore()
@@ -434,46 +352,7 @@ extension UIViewController {
         
         return truncated ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
     }
-    
-    func getFeedCommentsHeight(height: CGFloat, commentsList: [MapComment]) -> ([MapComment]) {
         
-        if commentsList.count < 1 { return commentsList }
-
-        var spaceRemaining = height
-        var newComments = commentsList
-
-        for i in 0...commentsList.count - 1 {
-            let height = getFeedCommentHeight(comment: commentsList[i])
-            /// save room for the second comment  if i==0
-            if (i == 0 && height <= spaceRemaining - 20) || (i != 0 && height <= spaceRemaining) {
-                newComments[i].feedHeight = height
-                spaceRemaining -= height
-            } else {
-                newComments[i].feedHeight = 20
-            }
-        }
-
-        return newComments
-    }
-    
-    func getFeedCommentHeight(comment: MapComment) -> CGFloat {
-        
-        let username = UIButton(frame: CGRect(x: 8, y: 1, width: 150, height: 18))
-        username.setTitle(comment.userInfo?.username ?? "", for: .normal)
-        username.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13.25)
-        username.sizeToFit()
-        username.frame = CGRect(x: 3, y: 1, width: username.frame.width + 10, height: 18)
-        
-        let commentLabel = UILabel(frame: CGRect(x: username.frame.maxX, y: 2.5, width: UIScreen.main.bounds.width - username.frame.maxX - 8, height: UIScreen.main.bounds.height))
-        commentLabel.text = comment.comment
-        commentLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
-        commentLabel.lineBreakMode = .byWordWrapping
-        commentLabel.numberOfLines = 0
-        commentLabel.sizeToFit()
-        
-        return commentLabel.frame.height + 5
-    }
-    
     func getNewCaption(oldUsername: String, newUsername: String, caption: String) -> String {
         
         var newCaption = caption
@@ -517,17 +396,7 @@ extension UIViewController {
         
         return newImage
     }
-    
-    func getDateTimestamp(seconds: Int64) -> String {
-
-        let timeInterval = TimeInterval(integerLiteral: seconds)
-        let date = Date(timeIntervalSince1970: timeInterval)
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy"
-        let dateString = dateFormatter.string(from: date)
-        return dateString
-    }
-    
+        
     func locationIsEmpty(location: CLLocation) -> Bool {
         return location.coordinate.longitude == 0.0 && location.coordinate.latitude == 0.0
     }
@@ -565,6 +434,93 @@ extension UIViewController {
             dateFormatter.dateFormat = "M/dd/yy"
             let dateString = dateFormatter.string(from: date)
             return dateString
+        }
+    }
+    
+    func getSpot(spotID: String, completion: @escaping (_ spot: MapSpot, _ failed: Bool) -> Void) {
+        let db: Firestore! = Firestore.firestore()
+        let spotRef = db.collection("spots").document(spotID)
+        
+        spotRef.getDocument { (doc, err) in            
+            do {
+                let unwrappedInfo = try doc?.data(as: MapSpot.self)
+                guard var spotInfo = unwrappedInfo else { completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true); return }
+                
+                spotInfo.id = spotID
+                spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
+                for visitor in spotInfo.visitorList {
+                    if UserDataModel.shared.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
+                }
+                
+                completion(spotInfo, false)
+                return
+                
+            } catch {
+                completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true)
+                return
+            }
+        }
+    }
+    
+    func getUserInfo(userID: String, completion: @escaping (_ user: UserProfile) -> Void) {
+        
+        let db: Firestore! = Firestore.firestore()
+        
+        if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
+            completion(user)
+            
+        } else if userID == UserDataModel.shared.uid {
+            completion(UserDataModel.shared.userInfo)
+            
+        } else {
+
+            db.collection("users").document(userID).getDocument { (doc, err) in
+                if err != nil { return }
+
+                do {
+                    let userInfo = try doc!.data(as: UserProfile.self)
+                    guard var info = userInfo else { return }
+                    info.id = doc!.documentID
+                    completion(info)
+                    
+                } catch { completion(UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")); return }
+            }
+        }
+    }
+     
+    func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
+        
+        let db: Firestore! = Firestore.firestore()
+        var commentList: [MapComment] = []
+        
+        db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, err) in
+            
+            if err != nil { completion(commentList); return }
+            if commentSnap!.documents.count == 0 { completion(commentList); return }
+            guard let self = self else { return }
+
+            var index = 0
+            for doc in commentSnap!.documents {
+                do {
+                    let commentInf = try doc.data(as: MapComment.self)
+                    guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+                    
+                    commentInfo.id = doc.documentID
+                    commentInfo.seconds = commentInfo.timestamp.seconds
+                    commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
+                    
+                    self.getUserInfo(userID: commentInfo.commenterID) { user in
+                        commentInfo.userInfo = user
+                        if !commentList.contains(where: {$0.id == doc.documentID}) {
+                            commentList.append(commentInfo)
+                            commentList.sort(by: {$0.seconds < $1.seconds})
+                        }
+                        
+                        index += 1; if index == commentSnap!.documents.count { completion(commentList) }
+                    }
+                    
+                } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+            }
         }
     }
 }
@@ -658,72 +614,31 @@ extension UIViewController {
 
     func uploadPost(post: MapPost) {
         
-        let interval = Date().timeIntervalSince1970
-        let postTimestamp = Date(timeIntervalSince1970: TimeInterval(interval))
-        
-        let postValues = ["caption" : post.caption,
-                          "posterID": post.posterID,
-                          "likers": [],
-                          "actualTimestamp": post.actualTimestamp as Any,
-                          "timestamp": postTimestamp,
-                          "taggedUsers": post.taggedUsers!,
-                          "taggedUserIDs": post.taggedUserIDs,
-                          "isFirst": post.isFirst!,
-                          "postLat": post.postLat,
-                          "postLong": post.postLong,
-                          "privacyLevel": post.privacyLevel!,
-                          "imageURLs" : post.imageURLs,
-                          "frameIndexes" : post.frameIndexes!,
-                          "aspectRatios" : post.aspectRatios!,
-                          "createdBy": post.createdBy!,
-                          "city" : post.city!,
-                          "inviteList" : post.inviteList!,
-                          "friendsList" : post.friendsList,
-                          "spotName" : post.spotName!,
-                          "spotNames" : [post.spotName!],
-                          "spotID" : post.spotID!,
-                          "spotIDs" : [post.spotID!],
-                          "spotIndexes" : [0], /// preloading DB for multiple sp0t upload
-                          "spotLat": post.spotLat!,
-                          "spotLong": post.spotLong!,
-                          "spotPrivacy" : post.spotPrivacy!,
-                          "hideFromFeed": post.hideFromFeed!,
-                          "addedUsers" : post.addedUsers!,
-                          "tag" : post.tag!,
-                          "tags" : [post.tag!], /// prepare for switch to multiple tags
-                          "posterUsername" : UserDataModel.shared.userInfo.username,
-                          "imageLocations" : post.imageLocations!,
-                          "seenList" : []
-        ] as [String : Any]
-
-        let commentValues = ["addedUsers" : post.addedUsers ?? [],
-                             "comment" : post.caption,
-                             "commenterID" : post.posterID,
-                             "commenterIDList": [],
-                             "commenterUsername" : UserDataModel.shared.userInfo.username,
-                             "imageURL": post.imageURLs.first ?? "",
-                             "likers" : [],
-                             "posterID": post.posterID,
-                             "posterUsername": UserDataModel.shared.userInfo.username,
-                             "timestamp" : postTimestamp,
-                             "taggedUsers": post.taggedUsers!,
-                             "taggedUserIDs" : []] as [String : Any]
-        let commentID = UUID().uuidString
-        
-        var notiPost = post
-        let commentObject = MapComment(id: commentID, comment: post.caption, commenterID: post.posterID, timestamp: Timestamp(date: postTimestamp as Date), userInfo: UserDataModel.shared.userInfo, taggedUsers: post.taggedUsers, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(interval))
-        notiPost.commentList = [commentObject]
-        
-        
-        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
-        
         let db = Firestore.firestore()
-        db.collection("posts").document(post.id!).setData(postValues)
-        db.collection("posts").document(post.id!).collection("comments").document(commentID).setData(commentValues, merge:true)
-        
-        setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
+        let postRef = db.collection("posts").document(post.id!)
+        do {
+            try postRef.setData(from: post)
+            self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
+            
+            let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(post.timestamp.seconds))
+            let commentRef = postRef.collection("comments").document(commentObject.id!)
+
+            do {
+                try commentRef.setData(from: commentObject)
+                
+                var notiPost = post
+                notiPost.id = post.id!
+                notiPost.commentList = [commentObject]
+                NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
+
+            } catch {
+                print("failed uploading comment")
+            }
+        } catch {
+            print("failed uploading post")
+        }
     }
-        
+            
     func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) {
         
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
@@ -749,6 +664,7 @@ extension UIViewController {
             var posterDictionary: [String: Any] = [:]
             posterDictionary[post.id!] = spotVisitors
             
+            /// too many extreneous variables for spots to set with codable
             let spotValues =  ["city" : post.city ?? "",
                                "spotName" : spot.spotName,
                                "lowercaseName": lowercaseName,
@@ -1001,16 +917,6 @@ extension UITableViewCell {
         return layoutManager.boundingRect(forGlyphRange: pointer.move(), in: textContainer)
     }
     
-    func getDateTimestamp(postTime: Firebase.Timestamp) -> String {
-
-        let timeInterval = TimeInterval(integerLiteral: postTime.seconds)
-        let date = Date(timeIntervalSince1970: timeInterval)
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy"
-        let dateString = dateFormatter.string(from: date)
-        return dateString
-    }
-
     func reverseGeocodeFromCoordinate(numberOfFields: Int, location: CLLocation, completion: @escaping (_ address: String) -> Void) {
         var addressString = ""
         
@@ -1064,62 +970,11 @@ extension UITableViewCell {
             }
         }
     }
-    
-    func sendAcceptPublicNotification(spot: MapSpot) {
         
-        let db: Firestore! = Firestore.firestore()
-
-        let timestamp = NSDate().timeIntervalSince1970
-        let myTimeInterval = TimeInterval(timestamp)
-        let time = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
-        
-        let notiID = UUID().uuidString
-        let notificationRef = db.collection("users").document(spot.founderID).collection("notifications")
-        let acceptRef = notificationRef.document(notiID)
-        
-        acceptRef.setData(["seen" : false, "timestamp" : time, "senderID": "T4KMLe3XlQaPBJvtZVArqXQvaNT2", "type": "publicSpotAccepted", "spotID": spot.id!, "postID": spot.postIDs.first!, "imageURL": spot.imageURL] as [String: Any])
-        db.collection("submissions").document(spot.id!).delete()
-        db.collection("spots").document(spot.id!).updateData(["privacyLevel" : "public"])
-        
-        let functions = Functions.functions()
-        functions.httpsCallable("acceptPublicSpot").call(["spotID": spot.id!, "postPrivacies": spot.postPrivacies, "posterIDs": spot.posterIDs, "postIDs": spot.postIDs, "createdBy": spot.founderID]) { result, error in
-            print(result?.data as Any, error as Any)
-        }
-    }
-    
-    func adjustPostPrivacies(postIDs: [String], adjustedIDs: [String]) {
-        
-        let db: Firestore! = Firestore.firestore()
-
-        for id in postIDs {
-            /// update spot privacy for all posts, post privacy for founder posts
-            db.collection("posts").document(id).updateData(["spotPrivacy" : "public"])
-            if adjustedIDs.contains(id) {             db.collection("posts").document(id).updateData(["privacyLevel" : "public"]) }
-        }
-    }
-    
-    func sendRejectPublicNotification(spot: MapSpot) {
-
-        let db: Firestore! = Firestore.firestore()
-
-        let timestamp = NSDate().timeIntervalSince1970
-        let myTimeInterval = TimeInterval(timestamp)
-        let time = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
-        
-        let notiID = UUID().uuidString
-        let notificationRef = db.collection("users").document(spot.founderID).collection("notifications")
-        let acceptRef = notificationRef.document(notiID)
-        
-        acceptRef.setData(["seen" : false, "timestamp" : time, "senderID": "T4KMLe3XlQaPBJvtZVArqXQvaNT2", "type": "publicSpotRejected", "spotID": spot.id!, "postID": spot.postIDs.first!, "imageURL": spot.imageURL] as [String: Any])
-        db.collection("submissions").document(spot.id!).delete()
-    }
 }
 
 extension String {
-/*    func indices(of string: String) -> [Int] {
-        return indices.reduce([]) { $1.utf16Offset(in: self) > ($0.last ?? -1) && self[$1...].hasPrefix(string) ? $0 + [$1.utf16Offset(in: self)] : $0 }
-    }
-    */
+
     func indices(of string: String) -> [Int] {
         var indices = [Int]()
         var searchStartIndex = self.startIndex
@@ -1134,14 +989,6 @@ extension String {
         }
 
         return indices
-    }
-    
-    func ranges(of substring: String, options: CompareOptions = [], locale: Locale? = nil) -> [Range<Index>] {
-        var ranges: [Range<Index>] = []
-        while let range = range(of: substring, options: options, range: (ranges.last?.upperBound ?? self.startIndex)..<self.endIndex, locale: locale) {
-            ranges.append(range)
-        }
-        return ranges
     }
     
     func getKeywordArray() -> [String] {
@@ -1199,7 +1046,7 @@ extension UIScrollView {
 
 extension UIImageView {
     
-    func animateGIF(directionUp: Bool, counter: Int, alive: Bool) {
+    func animateGIF(directionUp: Bool, counter: Int) {
         
         if superview == nil || isHidden || animationImages?.isEmpty ?? true { self.stopPostAnimation(); return }
         
@@ -1225,7 +1072,7 @@ extension UIImageView {
             }
         }
 
-        let duration: TimeInterval = alive ? 0.06 : 0.049
+        let duration: TimeInterval = 0.049
         
         UIView.transition(with: self, duration: duration, options: [.allowUserInteraction, .beginFromCurrentState], animations: { [weak self] in
                             guard let self = self else { return }
@@ -1235,7 +1082,7 @@ extension UIImageView {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.005) { [weak self] in
             guard let self = self else { return }
-            self.animateGIF(directionUp: newDirection, counter: newCount, alive: alive)
+            self.animateGIF(directionUp: newDirection, counter: newCount)
         }
     }
     
@@ -1481,17 +1328,6 @@ class PaddedTextField: UITextField {
 }
 
 extension UIView {
-    
-    ///https://gist.github.com/AJMiller/0def0fd492a09ca22fee095c4526cf68
-    func roundedView() {
-        let maskPath1 = UIBezierPath(roundedRect: bounds,
-            byRoundingCorners: [.topLeft , .topRight],
-            cornerRadii: CGSize(width: 8, height: 8))
-        let maskLayer1 = CAShapeLayer()
-        maskLayer1.frame = bounds
-        maskLayer1.path = maskPath1.cgPath
-        layer.mask = maskLayer1
-    }
     
     func asImage() -> UIImage {
         let renderer = UIGraphicsImageRenderer(bounds: bounds)

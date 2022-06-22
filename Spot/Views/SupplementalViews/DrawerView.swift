@@ -38,7 +38,7 @@ class DrawerView: NSObject {
         $0.layer.cornerRadius = 2
     }
     
-    private unowned var rootVC = UIViewController()
+    private var rootVC = UIViewController()
     private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
     private var status = Status.Close
     
