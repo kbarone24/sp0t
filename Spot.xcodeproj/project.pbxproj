@@ -518,6 +518,7 @@
 				599BD2C423C6539200ECB84A /* Profile */,
 				8C2209F6284D4A9900E5D165 /* Notifications */,
 				599BD2C723C6541C00ECB84A /* SpotPage */,
+				4124E7D7286362D8002543DD /* HelperControllers */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -579,6 +580,14 @@
 				600C7B20AA16C3A36CB4A1BD /* Pods-SpotTests.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		4124E7D7286362D8002543DD /* HelperControllers */ = {
+			isa = PBXGroup;
+			children = (
+				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
+			);
+			path = HelperControllers;
 			sourceTree = "<group>";
 		};
 		59056A56231DDF0300C7E753 /* fonts */ = {
@@ -769,7 +778,6 @@
 				59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */,
 				8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */,
 				5FDAF23B2857E65A001EDC57 /* Declarative.swift */,
-				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
 				412555C3285AEA0200C071A4 /* BottomToTopTransition.swift */,
 			);
 			path = HelperFunctions;
