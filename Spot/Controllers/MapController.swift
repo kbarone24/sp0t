@@ -18,6 +18,26 @@ import FirebaseAuth
 import MapboxMaps
 import FirebaseMessaging
 
+
+
+let notiRef = db.collection("users").document(uid).collection("notifications")
+let friendRequestQuery = notiRef.whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
+friendRequestQuery.getDocuments { [weak self] (snap, err) in
+    // check for error
+    if err != nil  { return }
+    // unwrap weak self
+    guard let self = self else { return }
+    // use a for-in loop to cycle through each document
+    for doc in snap!.documents {
+  // you need to add each notification to the notifications array you created
+  // you probably want to do this after fetching the UserProfile for the notification
+    
+    // you might want to fetch UserProfile using an closure function ->
+    // reference The getUserInfo function in the old NotificationsController as a model
+    }
+}
+
+
 class MapController: UIViewController {
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
