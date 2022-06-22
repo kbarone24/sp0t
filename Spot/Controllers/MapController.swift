@@ -99,9 +99,9 @@ class MapController: UIViewController {
     var circleQuery: GFSCircleQuery?
 
     var endDocument: DocumentSnapshot!
-    var refresh: refreshStatus = .refreshing
-    var friendsRefresh: refreshStatus = .yesRefresh
-    var nearbyRefresh: refreshStatus = .yesRefresh
+    var refresh: RefreshStatus = .activelyRefreshing
+    var friendsRefresh: RefreshStatus = .refreshEnabled
+    var nearbyRefresh: RefreshStatus = .refreshEnabled
     var queryReady = false /// circlequery returned
     var friendsListener, nearbyListener, commentListener: ListenerRegistration!
     
@@ -121,15 +121,13 @@ class MapController: UIViewController {
     var nearbyAnnotations: [PointAnnotation] = []
     var friendAnnotations: [PointAnnotation] = []
     
-    /// sheet view
-    private var sheetView: DrawerView? // Must declare outside to listen to UIEvent
-                
-    enum refreshStatus {
-        case yesRefresh
-        case refreshing
-        case noRefresh
+    /// sheet view: Must declare outside to listen to UIEvent
+    private var sheetView: DrawerView? {
+        didSet {
+            navigationController?.navigationBar.isHidden = sheetView == nil ? false : true
+        }
     }
-
+                
     /// tag table added over top of view to window then result passed to active VC
     enum TagTableParent {
         case comments
@@ -433,17 +431,11 @@ class MapController: UIViewController {
     }
     
     @objc func profileTap(_ sender: Any){
-        
         let profileVC = ProfileViewController()
-        if #available(iOS 15.0, *) {
-            let vc: BottomDrawerViewController = .init(rootViewController: profileVC)
-            self.present(vc, animated: true, completion: nil)
-        } else {
-            if sheetView == nil {
-                sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22)
-            }
-            sheetView?.present()
-        }
+        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, withDetent: [.Middle, .Top], closeAction: {
+            self.sheetView = nil
+        })
+        sheetView?.present(to: .Middle)
     }
     
     @objc func friendsTap(_ sender: UIButton) {
@@ -805,7 +797,7 @@ extension MapController: UITableViewDelegate, UITableViewDataSource, UITableView
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch tableView.tag {
-        case 0: return refresh == .refreshing ? friendsPostsGroup.count + 1 : friendsPostsGroup.count
+        case 0: return refresh == .activelyRefreshing ? friendsPostsGroup.count + 1 : friendsPostsGroup.count
         case 1:
             var maxRows = 2
             if tagTable.frame.height > 300 {
@@ -905,8 +897,8 @@ extension MapController: UITableViewDelegate, UITableViewDataSource, UITableView
     }
 
     func checkForFeedReload() {
-        if selectedFeedIndex > postsList.count - 4 && refresh == .yesRefresh {
-            refresh = .refreshing
+        if selectedFeedIndex > postsList.count - 4 && refresh == .refreshEnabled {
+            refresh = .activelyRefreshing
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else { return }
                 self.getFriendPosts(refresh: false)
