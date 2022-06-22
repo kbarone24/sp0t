@@ -79,9 +79,9 @@ class MapController: UIViewController {
     var circleQuery: GFSCircleQuery?
 
     var endDocument: DocumentSnapshot!
-    var refresh: refreshStatus = .refreshing
-    var friendsRefresh: refreshStatus = .yesRefresh
-    var nearbyRefresh: refreshStatus = .yesRefresh
+    var refresh: RefreshStatus = .activelyRefreshing
+    var friendsRefresh: RefreshStatus = .refreshEnabled
+    var nearbyRefresh: RefreshStatus = .refreshEnabled
     var queryReady = false /// circlequery returned
     var friendsListener, nearbyListener, commentListener: ListenerRegistration!
     
@@ -108,12 +108,6 @@ class MapController: UIViewController {
         }
     }
                 
-    enum refreshStatus {
-        case yesRefresh
-        case refreshing
-        case noRefresh
-    }
-
     /// tag table added over top of view to window then result passed to active VC
     enum TagTableParent {
         case comments
@@ -783,7 +777,7 @@ extension MapController: UITableViewDelegate, UITableViewDataSource, UITableView
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch tableView.tag {
-        case 0: return refresh == .refreshing ? friendsPostsGroup.count + 1 : friendsPostsGroup.count
+        case 0: return refresh == .activelyRefreshing ? friendsPostsGroup.count + 1 : friendsPostsGroup.count
         case 1:
             var maxRows = 2
             if tagTable.frame.height > 300 {
@@ -883,8 +877,8 @@ extension MapController: UITableViewDelegate, UITableViewDataSource, UITableView
     }
 
     func checkForFeedReload() {
-        if selectedFeedIndex > postsList.count - 4 && refresh == .yesRefresh {
-            refresh = .refreshing
+        if selectedFeedIndex > postsList.count - 4 && refresh == .refreshEnabled {
+            refresh = .activelyRefreshing
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else { return }
                 self.getFriendPosts(refresh: false)
