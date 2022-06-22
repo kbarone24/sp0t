@@ -40,6 +40,7 @@ class DrawerView: NSObject {
         $0.backgroundColor = .tertiarySystemFill
         $0.layer.cornerRadius = 2
     }
+    private let transitionAnimation = BottomToTopTransition()
     
     private var rootVC = UIViewController()
     private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
@@ -102,6 +103,7 @@ class DrawerView: NSObject {
         panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(self.panPerforming(recognizer:)))
         slideView.addGestureRecognizer(panRecognizer!)
         myNav = UINavigationController(rootViewController: rootVC)
+        myNav.delegate = self
         parentVC.addChild(myNav)
         slideView.addSubview(myNav.view)
         myNav.view.frame = CGRect(origin: .zero, size: slideView.frame.size)
@@ -244,5 +246,12 @@ class DrawerView: NSObject {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+}
+
+extension DrawerView: UINavigationControllerDelegate {
+    func navigationController(_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        transitionAnimation.transitionMode = operation == .push ? .present : .pop
+        return transitionAnimation
     }
 }
