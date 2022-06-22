@@ -9,11 +9,10 @@
 import Foundation
 import UIKit
 import Firebase
-import CoreLocation
 import Mixpanel
 import FirebaseUI
 
-
+class NotificationsController: UIViewController {
 class NotificationsController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     var notifications: [Notification] = []
@@ -60,5 +59,5 @@ class NotificationsController: UIViewController, UITableViewDelegate, UITableVie
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tableData.count
     }
-}
 
+}

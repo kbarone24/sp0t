@@ -18,6 +18,7 @@ class PostInfoController: UIViewController {
     
     var navView: UIView!
     var mapContainer: UIView!
+    var cancelButton, doneButton: UIButton!
     
     var postInfoSeg: PostInfoSeg!
     var pickerContainer: UIView!
@@ -65,7 +66,10 @@ class PostInfoController: UIViewController {
     /// spot search fetch
     var searchRefreshCount = 0
     var spotSearching = false
-    
+        
+    deinit {
+        print("deinit")
+    }
         
     override func viewDidLoad() {
         
@@ -79,7 +83,7 @@ class PostInfoController: UIViewController {
         addPicker()
         runChooseSpotFetch()
     }
-        
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         IQKeyboardManager.shared.enable = true
@@ -90,78 +94,101 @@ class PostInfoController: UIViewController {
         IQKeyboardManager.shared.enable = false /// disable for textview sticking to keyboard
     }
     
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        circleQuery?.removeAllObservers()
+        circleQuery = nil
+    }
+    
     func addNavButtons() {
         
-        navView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 40))
-        view.addSubview(navView)
+        navView = UIView {
+            $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 40)
+            view.addSubview($0)
+        }
         
-        let cancelButton = UIButton(frame: CGRect(x: 3, y: 6, width: 33, height: 33))
-        cancelButton.setImage(UIImage(named: "PostInfoCancel"), for: .normal)
-        cancelButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
-        cancelButton.imageView?.contentMode = .scaleAspectFill
-        navView.addSubview(cancelButton)
+        cancelButton = UIButton {
+            $0.frame = CGRect(x: 3, y: 6, width: 33, height: 33)
+            $0.setImage(UIImage(named: "PostInfoCancel"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+            $0.imageView?.contentMode = .scaleAspectFill
+            navView.addSubview($0)
+        }
         
-        let doneButton = UIButton(frame: CGRect(x: navView.bounds.width - 63, y: 10, width: 53, height: 30))
-        doneButton.setTitle("Done", for: .normal)
-        doneButton.setTitleColor(.black, for: .normal)
-        doneButton.titleLabel?.font = UIFont(name: "SFCompactText-Heavy", size: 17)
-        doneButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        doneButton.addTarget(self, action: #selector(doneTap(_:)), for: .touchUpInside)
-        navView.addSubview(doneButton)
+        doneButton = UIButton {
+            $0.frame = CGRect(x: navView.bounds.width - 63, y: 10, width: 53, height: 30)
+            $0.setTitle("Done", for: .normal)
+            $0.setTitleColor(.black, for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Heavy", size: 17)
+            $0.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(doneTap(_:)), for: .touchUpInside)
+            navView.addSubview($0)
+        }
     }
     
     func addMap() {
-        mapContainer = UIView(frame: CGRect(x: 0, y: navView.frame.maxY, width: UIScreen.main.bounds.width, height: 170))
-        mapContainer.backgroundColor = .black
-        view.addSubview(mapContainer)
+        mapContainer = UIView {
+            $0.frame = CGRect(x: 0, y: navView.frame.maxY, width: UIScreen.main.bounds.width, height: 170)
+            $0.backgroundColor = .black
+            view.addSubview($0)
+        }
     }
     
     func addPicker() {
                 
-        postInfoSeg = PostInfoSeg(frame: CGRect(x: 0, y: mapContainer.frame.maxY, width: UIScreen.main.bounds.width, height: 50))
-        postInfoSeg.setSelected(index: selectedSegmentIndex)
-        view.addSubview(postInfoSeg)
+        postInfoSeg = PostInfoSeg {
+            $0.frame = CGRect(x: 0, y: mapContainer.frame.maxY, width: UIScreen.main.bounds.width, height: 50)
+            $0.setSelected(index: selectedSegmentIndex)
+            view.addSubview($0)
+        }
         
-        pickerContainer = UIView(frame: CGRect(x: 0, y: postInfoSeg.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - mapContainer.frame.maxY))
-        view.addSubview(pickerContainer)
+        pickerContainer = UIView {
+            $0.frame = CGRect(x: 0, y: postInfoSeg.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - mapContainer.frame.maxY)
+            view.addSubview($0)
+        }
         
-        searchBarContainer = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 50))
-        pickerContainer.addSubview(searchBarContainer)
+        searchBarContainer = UIView {
+            $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 50)
+            pickerContainer.addSubview($0)
+        }
         
-        searchBar = UISearchBar(frame: CGRect(x: 16, y: 6, width: UIScreen.main.bounds.width - 32, height: 36))
-        searchBar.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
-        searchBar.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-        searchBar.searchTextField.leftView?.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
-
-        searchBar.delegate = self
-        searchBar.autocapitalizationType = .none
-        searchBar.autocorrectionType = .no
-        searchBar.placeholder = " Search"
-        searchBar.clipsToBounds = true
-        searchBar.layer.cornerRadius = 3
-        searchBar.keyboardDistanceFromTextField = 250
-        pickerContainer.addSubview(searchBar)
-                
+        searchBar = UISearchBar {
+            $0.frame = CGRect(x: 16, y: 6, width: UIScreen.main.bounds.width - 32, height: 36)
+            $0.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
+            $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
+            $0.delegate = self
+            $0.autocapitalizationType = .none
+            $0.autocorrectionType = .no
+            $0.placeholder = " Search"
+            $0.clipsToBounds = true
+            $0.layer.cornerRadius = 3
+            $0.keyboardDistanceFromTextField = 250
+            pickerContainer.addSubview($0)
+        }
+        
+        tableView = UITableView {
+            $0.frame = CGRect(x: 0, y: searchBarContainer.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - pickerContainer.frame.minY + searchBarContainer.frame.height)
+            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 400, right: 0)
+            $0.backgroundColor = .clear
+            $0.separatorStyle = .none
+            $0.delegate = self
+            $0.dataSource = self
+            $0.allowsSelection = false
+            $0.showsVerticalScrollIndicator = false
+            $0.register(ChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpot")
+            $0.register(ChooseSpotLoadingCell.self, forCellReuseIdentifier: "ChooseSpotLoading")
+            $0.register(ChooseTagCell.self, forCellReuseIdentifier: "ChooseTag")
+            $0.register(ChooseFriendsCell.self, forCellReuseIdentifier: "ChooseFriends")
+            pickerContainer.addSubview($0)
+        }
+        
         searchPan = UIPanGestureRecognizer(target: self, action: #selector(searchPan(_:)))
         searchPan.delegate = self
         searchPan.isEnabled = false
         view.addGestureRecognizer(searchPan)
-        
-        tableView = UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - pickerContainer.frame.minY + searchBarContainer.frame.height))
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 400, right: 0)
-        tableView.backgroundColor = .clear
-        tableView.separatorStyle = .none
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.allowsSelection = false
-        tableView.showsVerticalScrollIndicator = false
-        tableView.register(ChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpot")
-        tableView.register(ChooseSpotLoadingCell.self, forCellReuseIdentifier: "ChooseSpotLoading")
-        tableView.register(ChooseTagCell.self, forCellReuseIdentifier: "ChooseTag")
-        tableView.register(ChooseFriendsCell.self, forCellReuseIdentifier: "ChooseFriends")
-        pickerContainer.addSubview(tableView)
-        
+
         setSelectedSegment(index: selectedSegmentIndex)
     }
     
@@ -219,11 +246,11 @@ class PostInfoController: UIViewController {
         if let selectedSpot = spotObjects.first(where: {$0.selected!}) { UploadPostModel.shared.spotObject = selectedSpot } else { UploadPostModel.shared.spotObject = nil }
         setSpotValues()
         
-        UploadPostModel.shared.postObject.addedUserProfiles.removeAll()
+        UploadPostModel.shared.postObject.addedUserProfiles!.removeAll()
         UploadPostModel.shared.postObject.addedUsers!.removeAll()
         
         for friend in friendObjects {
-            if friend.selected && !UploadPostModel.shared.postObject.addedUsers!.contains(friend.id!) { UploadPostModel.shared.postObject.addedUserProfiles.append(friend); UploadPostModel.shared.postObject.addedUsers!.append(friend.id!) }
+            if friend.selected && !UploadPostModel.shared.postObject.addedUsers!.contains(friend.id!) { UploadPostModel.shared.postObject.addedUserProfiles!.append(friend); UploadPostModel.shared.postObject.addedUsers!.append(friend.id!) }
         }
         
         UploadPostModel.shared.postObject.tag = selectedTag
@@ -239,9 +266,7 @@ class PostInfoController: UIViewController {
     func setSpotValues() {
                 
         let spot = UploadPostModel.shared.spotObject
-        print("founder id", spot?.founderID)
         UploadPostModel.shared.postType = spot == nil ? .none : spot!.founderID == "" ? .postToPOI : .postToSpot
-        print("post type", UploadPostModel.shared.postType)
         
         /// set all spot level info for the upload object, all set to empty if no spot selected
         UploadPostModel.shared.postObject.createdBy = spot?.founderID ?? ""
@@ -423,39 +448,49 @@ class PostInfoSeg: UIView {
         /// end spacing - spacing of each button
         let spacing = (UIScreen.main.bounds.width - (31 + 36) - 80 - 97 - 74)/2
         
-        spotsButton = UIButton(frame: CGRect(x: 31, y: 12.5, width: 80, height: 30))
-        spotsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        spotsButton.addTarget(self, action: #selector(spotsTap(_:)), for: .touchUpInside)
-        spotsButton.contentHorizontalAlignment = .center
-        spotsButton.contentVerticalAlignment = .center
-        addSubview(spotsButton)
+        spotsButton = UIButton {
+            $0.frame = CGRect(x: 31, y: 12.5, width: 80, height: 30)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(spotsTap(_:)), for: .touchUpInside)
+            $0.contentHorizontalAlignment = .center
+            $0.contentVerticalAlignment = .center
+            addSubview($0)
+        }
         
-        friendsButton = UIButton(frame: CGRect(x: spotsButton.frame.maxX + spacing, y: 12.5, width: 97, height: 30))
-        friendsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        friendsButton.addTarget(self, action: #selector(friendsTap(_:)), for: .touchUpInside)
-        friendsButton.contentHorizontalAlignment = .center
-        friendsButton.contentVerticalAlignment = .center
-        addSubview(friendsButton)
+        friendsButton = UIButton {
+            $0.frame = CGRect(x: spotsButton.frame.maxX + spacing, y: 12.5, width: 97, height: 30)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(friendsTap(_:)), for: .touchUpInside)
+            $0.contentHorizontalAlignment = .center
+            $0.contentVerticalAlignment = .center
+            addSubview($0)
+        }
 
-        tagsButton = UIButton(frame: CGRect(x: friendsButton.frame.maxX + spacing, y: 12.5, width: 74, height: 30))
-        let tagsImage = selectedSegmentIndex == 2 ? UIImage(named: "PostInfoTagsSelected") : UIImage(named: "PostInfoTagsUnselected")
-        tagsButton.setImage(tagsImage, for: .normal)
-        tagsButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        tagsButton.addTarget(self, action: #selector(tagsTap(_:)), for: .touchUpInside)
-        tagsButton.contentHorizontalAlignment = .center
-        tagsButton.contentVerticalAlignment = .center
-        addSubview(tagsButton)
+        tagsButton = UIButton {
+            $0.frame = CGRect(x: friendsButton.frame.maxX + spacing, y: 12.5, width: 74, height: 30)
+            let tagsImage = selectedSegmentIndex == 2 ? UIImage(named: "PostInfoTagsSelected") : UIImage(named: "PostInfoTagsUnselected")
+            $0.setImage(tagsImage, for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(tagsTap(_:)), for: .touchUpInside)
+            $0.contentHorizontalAlignment = .center
+            $0.contentVerticalAlignment = .center
+            addSubview($0)
+        }
 
-        let bottomLine = UIView(frame: CGRect(x: 14, y: 48.5, width: UIScreen.main.bounds.width - 28, height: 1))
-        bottomLine.backgroundColor = UIColor(red: 0.902, green: 0.902, blue: 0.902, alpha: 1)
-        bottomLine.layer.cornerRadius = 9
-        addSubview(bottomLine)
+        bottomBar = UIView {
+            $0.frame = CGRect(x: 14, y: 48.5, width: UIScreen.main.bounds.width - 28, height: 1)
+            $0.backgroundColor = UIColor(red: 0.902, green: 0.902, blue: 0.902, alpha: 1)
+            $0.layer.cornerRadius = 9
+            addSubview($0)
+        }
         
         let selectedFrame: CGRect = selectedSegmentIndex == 0 ? spotsButton.frame : selectedSegmentIndex == 1 ? friendsButton.frame : tagsButton.frame
-        bottomBar = UIView(frame: CGRect(x: selectedFrame.minX - (106 - selectedFrame.width)/2, y: selectedFrame.maxY + 4.5, width: 116, height: 2.75))
-        bottomBar.backgroundColor = .black
-        bottomBar.layer.cornerRadius = 1
-        addSubview(bottomBar)
+        bottomBar = UIView {
+            $0.frame = CGRect(x: selectedFrame.minX - (106 - selectedFrame.width)/2, y: selectedFrame.maxY + 4.5, width: 116, height: 2.75)
+            $0.backgroundColor = .black
+            $0.layer.cornerRadius = 1
+            addSubview($0)
+        }
     }
 
     required init?(coder: NSCoder) {

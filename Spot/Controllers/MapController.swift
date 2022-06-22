@@ -191,6 +191,7 @@ class MapController: UIViewController {
     
     func getFriends() {
         
+        /// can maybe use get function here -> not sure what we're listening for exactly
         userListener = self.db.collection("users").document(self.uid).addSnapshotListener(includeMetadataChanges: true, listener: { (userSnap, err) in
             
             if userSnap?.metadata.isFromCache ?? false { return }
@@ -219,7 +220,7 @@ class MapController: UIViewController {
                 for friend in UserDataModel.shared.friendIDs {
                     
                     if !UserDataModel.shared.friendsList.contains(where: {$0.id == friend}) {
-                        var emptyProfile = UserProfile(username: "", name: "", imageURL: "", currentLocation: "", userBio: "")
+                        var emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
                         emptyProfile.id = friend
                         UserDataModel.shared.friendsList.append(emptyProfile) } /// append empty here so they appear in order
                     
@@ -419,7 +420,7 @@ class MapController: UIViewController {
             self.present(vc, animated: true, completion: nil)
         } else {
             if sheetView == nil {
-                sheetView = DrawerView(present: UIViewController(), drawerConrnerRadius: 22)
+                sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22)
             }
             sheetView?.present()
         }
@@ -511,7 +512,6 @@ class MapController: UIViewController {
     
     @objc func openNotis(_ sender: UIButton) {
         if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsController {
-            notificationsVC.mapVC = self
             navigationController?.pushViewController(notificationsVC, animated: true)
         }
     }
@@ -815,7 +815,7 @@ extension MapController: UITableViewDelegate, UITableViewDataSource, UITableView
                 }
                 
                 var newCount = 0
-                for post in posts { if !post.seen { newCount += 1 }}
+                for post in posts { if !post.seen! { newCount += 1 }}
                 let firstPost = posts.first!
 
                 cell.setUp(post: firstPost, postCount: newCount, row: indexPath.row, selected: indexPath.row == selectedFeedIndex)
