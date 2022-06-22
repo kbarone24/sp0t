@@ -126,8 +126,8 @@ extension MapController {
             guard let longDocs = snap?.documents else { return }
             
             if longDocs.count < 100 && !(snap?.metadata.isFromCache ?? false) {
-                self.friendsRefresh = .noRefresh
-                if self.selectedSegmentIndex == 1 { self.refresh = .noRefresh }
+                self.friendsRefresh = .refreshDisabled
+                if self.selectedSegmentIndex == 1 { self.refresh = .refreshDisabled }
             } else {
                 self.endDocument = longDocs.last
             }
@@ -137,7 +137,7 @@ extension MapController {
             var localPosts: [MapPost] = [] /// just the 100 posts for this fetch
             var index = 0
             
-            let docs = self.friendsRefresh == .noRefresh ? longDocs : longDocs.dropLast() /// drop last doc to get exactly 10 posts for reload unless under 100 posts fetched
+            let docs = self.friendsRefresh == .refreshDisabled ? longDocs : longDocs.dropLast() /// drop last doc to get exactly 10 posts for reload unless under 100 posts fetched
             
 
             for doc in docs {
@@ -213,11 +213,11 @@ extension MapController {
                  DispatchQueue.main.async {
 
                      self.feedTable.reloadData()
-                     self.refresh = .yesRefresh
+                     self.refresh = .refreshEnabled
                  }
                  
                  /// segment switch during reload
-             } else { if self.friendsRefresh != .noRefresh { self.friendsRefresh = .yesRefresh } }
+             } else { if self.friendsRefresh != .refreshEnabled { self.friendsRefresh = .refreshEnabled } }
             }
         }
     }
@@ -491,12 +491,12 @@ extension MapController {
                             self.nearbyPosts.sort(by: {$0.postScore! > $1.postScore!})
                             self.postsList = self.nearbyPosts
                             
-                            if self.nearbyRefresh != .noRefresh { self.nearbyRefresh = .yesRefresh }
-                            if self.refresh != .noRefresh { self.refresh = .yesRefresh }
+                            if self.nearbyRefresh != .refreshDisabled { self.nearbyRefresh = .refreshEnabled }
+                            if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }
                         }
                         
                         /// just update refresh index otherwise
-                    } else { if self.nearbyRefresh != .noRefresh { self.nearbyRefresh = .yesRefresh } }
+                    } else { if self.nearbyRefresh != .refreshDisabled { self.nearbyRefresh = .refreshEnabled } }
                 }
                 
             } else {

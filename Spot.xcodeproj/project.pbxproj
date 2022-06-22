@@ -254,6 +254,9 @@
 		8C988C33267D1AE80047A474 /* SpotNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C988C32267D1AE80047A474 /* SpotNotification.swift */; };
 		8C988C34267D1AE80047A474 /* SpotNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C988C32267D1AE80047A474 /* SpotNotification.swift */; };
 		8C988C35267D1AE80047A474 /* SpotNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C988C32267D1AE80047A474 /* SpotNotification.swift */; };
+		8C99B11A2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
+		8C99B11B2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
+		8C99B11C2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
 		8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
 		8CB400BE2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
 		8CB400BF2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
@@ -408,6 +411,7 @@
 		8C88D79728242E7500AB15BD /* ChooseSpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseSpotCell.swift; sourceTree = "<group>"; };
 		8C92898626CB18F10028DB69 /* CameraAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraAccessView.swift; sourceTree = "<group>"; };
 		8C988C32267D1AE80047A474 /* SpotNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotNotification.swift; sourceTree = "<group>"; };
+		8C99B1192863A44E00C98A32 /* RefreshStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshStatus.swift; sourceTree = "<group>"; };
 		8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
 		8CC2A54926BC7F99000ADA7A /* ImageObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObject.swift; sourceTree = "<group>"; };
 		8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFetcher.swift; sourceTree = "<group>"; };
@@ -751,6 +755,7 @@
 		8C298793268FA0A50071E75A /* HelperObjects */ = {
 			isa = PBXGroup;
 			children = (
+				8C99B1192863A44E00C98A32 /* RefreshStatus.swift */,
 				59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */,
 				8C220A00284EDEB200E5D165 /* FriendsListCell.swift */,
 			);
@@ -1126,6 +1131,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C99B11A2863A44E00C98A32 /* RefreshStatus.swift in Sources */,
 				4134867F285930DF0098B27B /* ImagePreviewController.swift in Sources */,
 				5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */,
 				597A626E25A8F9910052C560 /* Tag.swift in Sources */,
@@ -1230,6 +1236,7 @@
 				599BD2B723C51EC500ECB84A /* PendingFriendRequestsController.swift in Sources */,
 				8CCBEC98281DEC3C005A0689 /* PostInfoController.swift in Sources */,
 				8C2478C628235DD50071CC83 /* ChooseFriendsCell.swift in Sources */,
+				8C99B11B2863A44E00C98A32 /* RefreshStatus.swift in Sources */,
 				59FCF5B324734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
 				597072FF24292367008A481A /* AVCameraController.swift in Sources */,
 				59004E1122CA5C9A004E06EF /* ResetViewController.swift in Sources */,
@@ -1312,6 +1319,7 @@
 				599BD2B823C51EC500ECB84A /* PendingFriendRequestsController.swift in Sources */,
 				8CCBEC99281DEC3C005A0689 /* PostInfoController.swift in Sources */,
 				8C2478C728235DD50071CC83 /* ChooseFriendsCell.swift in Sources */,
+				8C99B11C2863A44E00C98A32 /* RefreshStatus.swift in Sources */,
 				59FCF5B424734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
 				5970730024292367008A481A /* AVCameraController.swift in Sources */,
 				59004E1222CA5C9A004E06EF /* ResetViewController.swift in Sources */,
