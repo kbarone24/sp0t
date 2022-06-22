@@ -60,7 +60,7 @@ class DrawerView: NSObject {
     private var detentsPointer = 0 {
         didSet {
             if detentsPointer > detents.count - 1 {
-                detentsPointer = detents.count
+                detentsPointer = detents.count - 1
             }
             if detentsPointer < 0 {
                 detentsPointer = 0
@@ -148,6 +148,7 @@ class DrawerView: NSObject {
         }
     }
     
+    // MARK: Set position functions
     private func goTop() {
         topConstraints?.activate()
         let sheetPresentVelocity = 0.35 * self.parentVC.view.frame.height / 0.5
@@ -174,21 +175,29 @@ class DrawerView: NSObject {
         to ? slideView.addGestureRecognizer(panRecognizer!):slideView.removeGestureRecognizer(panRecognizer!)
     }
     
-    // Pan gesture
+    // MARK: Pan gesture
     @objc func panPerforming(recognizer: UIPanGestureRecognizer) {
         let translation = recognizer.translation(in: recognizer.view)
+        // When the user is still dragging or start dragging the if statement here will be fall through
         if recognizer.state == .began || recognizer.state == .changed {
-            // When the user is still dragging or start dragging the if statement here will be fall through
-            if slideView.frame.minY >= parentVC.view.frame.height - slideView.frame.height {
+            // Add the translation in y to slideView when slideView's minY is larger than 0
+            if slideView.frame.minY >= 0 {
                 slideView.frame.origin.y += translation.y
+            }
+            // Prevent drawer view in top position can still scroll top
+            if status == .Top && translation.y < 0 && slideView.frame.minY <= 0 {
+                slideView.frame.origin.y = 0
             }
             recognizer.setTranslation(.zero, in: recognizer.view)
         }
         else{
             // Check the velocity of gesture to determine if it's a swipe or a drag
             if abs(recognizer.velocity(in: recognizer.view).y) > 1000 {
+                // This is a swipe
                 // Swipe up velocity is smaller than 0
-                recognizer.velocity(in: recognizer.view).y <= 0 ? (detentsPointer += 1):(detentsPointer -= 1)
+                // Determine whether the detentsPointer shuld move forward or back according to the swipe direction
+                recognizer.velocity(in: recognizer.view).y <= 0 ? (detentsPointer += 1) : (detentsPointer -= 1)
+                // Switch available detents set in initial and set animation duration, yPosition and status
                 switch detents[detentsPointer] {
                 case .Bottom:
                     goBottom()
@@ -198,6 +207,8 @@ class DrawerView: NSObject {
                     goTop()
                 }
             } else {
+                // This is a drag
+                // Determine what area the drawer view is in and set animation duration, yPosition, status and detentsPointer to the nearest position
                 if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 && detents.contains(.Bottom) {
                     goBottom()
                     detentsPointer = detents.firstIndex(of: .Bottom)!
@@ -209,6 +220,7 @@ class DrawerView: NSObject {
                     detentsPointer = detents.firstIndex(of: .Middle)!
                 }
             }
+            // Animate the drawer view to the set position
             UIView.animate(withDuration: duration) {
                 self.slideView.frame.origin.y = self.yPosition
                 self.parentVC.view.layoutIfNeeded()
