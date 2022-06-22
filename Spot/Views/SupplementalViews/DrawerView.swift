@@ -132,7 +132,7 @@ class DrawerView: NSObject {
         case .Middle:
             goMid()
         case .Bottom:
-            goBot()
+            goBottom()
         }
         detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
         if currentStatus.rawValue != to.rawValue {
@@ -162,7 +162,7 @@ class DrawerView: NSObject {
         yPosition = (0.45 * self.parentVC.view.frame.height)
         self.status = DrawerViewStatus.Middle
     }
-    private func goBot() {
+    private func goBottom() {
         botConstraints?.activate()
         let sheetPresentVelocity = 0.35 * self.parentVC.view.frame.height / 0.5
         duration = abs((self.parentVC.view.frame.height - 100 - self.slideView.frame.origin.y) / sheetPresentVelocity)
@@ -191,7 +191,7 @@ class DrawerView: NSObject {
                 recognizer.velocity(in: recognizer.view).y <= 0 ? (detentsPointer += 1):(detentsPointer -= 1)
                 switch detents[detentsPointer] {
                 case .Bottom:
-                    goBot()
+                    goBottom()
                 case .Middle:
                     goMid()
                 case .Top:
@@ -199,7 +199,7 @@ class DrawerView: NSObject {
                 }
             } else {
                 if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 && detents.contains(.Bottom) {
-                    goBot()
+                    goBottom()
                     detentsPointer = detents.firstIndex(of: .Bottom)!
                 } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 && detents.contains(.Top) {
                     goTop()
