@@ -162,7 +162,7 @@
 		59FCF5C424734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */; };
 		59FCF5C524734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */; };
 		59FCF5C624734EAA0012207D /* SpotDraft+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */; };
-		5F81C123285CCB750088A5B0 /* NotificationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F81C122285CCB750088A5B0 /* NotificationModel.swift */; };
+		5F81C1272862EFBF0088A5B0 /* UserNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F81C1262862EFBF0088A5B0 /* UserNotification.swift */; };
 		5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */; };
 		5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDAF23B2857E65A001EDC57 /* Declarative.swift */; };
 		5FDAF23E2858FD06001EDC57 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDAF23D2858FD06001EDC57 /* DrawerView.swift */; };
@@ -366,7 +366,7 @@
 		59FCF5AB24734A1C0012207D /* ImageModel+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ImageModel+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		59FCF5BF24734EAA0012207D /* SpotDraft+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpotDraft+CoreDataClass.swift"; sourceTree = SOURCE_ROOT; };
 		59FCF5C024734EAA0012207D /* SpotDraft+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpotDraft+CoreDataProperties.swift"; sourceTree = SOURCE_ROOT; };
-		5F81C122285CCB750088A5B0 /* NotificationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationModel.swift; sourceTree = "<group>"; };
+		5F81C1262862EFBF0088A5B0 /* UserNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserNotification.swift; sourceTree = "<group>"; };
 		5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomDrawerViewController.swift; sourceTree = "<group>"; };
 		5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Spot-Bridging-Header.h"; sourceTree = "<group>"; };
 		5FD686D22852527300B88B3B /* UISheetPresentationControllerDetent+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UISheetPresentationControllerDetent+Private.h"; sourceTree = "<group>"; };
@@ -715,7 +715,7 @@
 				594CE11A24C939040051516C /* MapComment.swift */,
 				59BA812224D9C9CB00FFCDFA /* UserProfile.swift */,
 				8C2074CB25CB38430040036B /* City.swift */,
-				5F81C122285CCB750088A5B0 /* NotificationModel.swift */,
+				5F81C1262862EFBF0088A5B0 /* UserNotification.swift */,
 			);
 			path = Codables;
 			sourceTree = "<group>";
@@ -1138,6 +1138,7 @@
 				8CCBEC97281DEC3C005A0689 /* PostInfoController.swift in Sources */,
 				8C2478C528235DD50071CC83 /* ChooseFriendsCell.swift in Sources */,
 				59FCF5AF24734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
+				5F81C1272862EFBF0088A5B0 /* UserNotification.swift in Sources */,
 				8C88B0E727B46E3900DB4039 /* PostImageModel.swift in Sources */,
 				59E23549246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				8C346D302797600A00B6E640 /* FeedMapExtension.swift in Sources */,
@@ -1146,8 +1147,6 @@
 				1DF6E03722089F4500BA0C36 /* SignUpController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				3ED3F1A622147EAE008CC29B /* ResetViewController.swift in Sources */,
-				5F81C123285CCB750088A5B0 /* NotificationModel.swift in Sources */,
-				8C320C482735A31B003DE81F /* AddedUsersView.swift in Sources */,
 				593AC541243CE36400C08237 /* GlobalFunctions.swift in Sources */,
 				59DFA25222C27B4800A59D29 /* CommentsViewController.swift in Sources */,
 				8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */,
