@@ -35,8 +35,8 @@ extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
                 }
             }
         } else {
-            let transitionModeKey = (transitionMode == .pop) ? UITransitionContextViewKey.to:UITransitionContextViewKey.from
-            let finalViewModeKey = (transitionMode == .pop) ? UITransitionContextViewControllerKey.from:UITransitionContextViewControllerKey.to
+            let transitionModeKey = (transitionMode == .pop) ? UITransitionContextViewKey.to : UITransitionContextViewKey.from
+            let finalViewModeKey = (transitionMode == .pop) ? UITransitionContextViewControllerKey.from : UITransitionContextViewControllerKey.to
             if let previousView = transitionContext.view(forKey: transitionModeKey) {
                 let nowView = transitionContext.viewController(forKey: finalViewModeKey)?.view
                 transitionContext.containerView.insertSubview(previousView, belowSubview: nowView ?? UIView())

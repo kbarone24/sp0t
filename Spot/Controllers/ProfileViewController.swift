@@ -33,7 +33,7 @@ class ProfileViewController: UIViewController, UIViewControllerTransitioningDele
     }
     
     func navigationController(_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-        transitionAnimation.transitionMode = operation == .push ? .present:.pop
+        transitionAnimation.transitionMode = operation == .push ? .present : .pop
         return transitionAnimation
     }
     
