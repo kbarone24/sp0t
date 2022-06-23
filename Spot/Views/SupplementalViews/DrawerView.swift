@@ -231,12 +231,12 @@ class DrawerView: NSObject {
             }
             
             // If swipeDownToDismiss is true check the slideView ending position to determine if need to pop view controller
-            if self.slideView.frame.minY > (detents.contains(.Bottom) ? (self.parentVC.view.frame.height - 100) : (self.parentVC.view.frame.height * 0.6)) && swipeDownToDismiss {
+            if self.slideView.frame.minY > (self.parentVC.view.frame.height * 0.6) && detents.contains(.Bottom) == false && swipeDownToDismiss {
                 myNav.popViewController(animated: true)
             }
             
             // Animate the drawer view to the set position
-            UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
+            UIView.animate(withDuration: 0.7 * abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
                 self.slideView.frame.origin.y = self.yPosition
                 self.parentVC.view.layoutIfNeeded()
             }
