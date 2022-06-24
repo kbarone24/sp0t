@@ -17,16 +17,11 @@ import FirebaseAuth
 import FirebaseMessaging
 import Geofirestore
 
-
-
-
-
-
 class NotificationsController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     var notifications: [UserNotification] = []
     var tableView = UITableView()
-    var tableData = ["Beach", "Clubs", "Chill", "Dance"]
+    var dummyTableData = ["1", "2", "3", "4"]
     
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
@@ -42,67 +37,93 @@ class NotificationsController: UIViewController, UITableViewDelegate, UITableVie
     
 
     func fetchNotifications(){
+
         let group = DispatchGroup()
         
         group.enter()
-    
-        let friendReq = db.collection("users").document(uid).collection("notifications")
-        let friendRequestQuery = friendReq.whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
+        let friendReqRef = db.collection("users").document(uid).collection("notifications")
+        let friendRequestQuery = friendReqRef.whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
         friendRequestQuery.getDocuments{ [weak self] (snap, err) in
-            //check for error (reference video)
-            if err != nil  { return }
             //unwrap weak self
             guard let self = self else { return }
-            
-            for doc in snap!.documents {
+            guard let allDocs = snap?.documents else {return}
+            for doc in allDocs {
+                group.enter()
                 do{
+                    group.enter()
                     let notif = try doc.data(as: UserNotification.self)
                     guard var notification = notif else { return }
                     notification.id = doc.documentID
-                    print("😏")
+                    group.leave()
+                    //get sender info
+                    group.enter()
+                    let sender = notification.senderID
+                    self.getUserInfo(userID: sender) { user in
+                        notification.userInfo = user
+                        group.leave()
+                    }
                     self.notifications.append(notification)
                 } catch {print(error)}
+                group.leave()
             }
-            
             group.leave()
         }
-        
-        
-        group.enter()
-        
-        let notiRef = db.collection("users").document(uid).collection("notifications").limit(to: 15)
-        var query = notiRef.order(by: "timestamp", descending: true)
-        if endDocument != nil && !refresh { query = query.start(atDocument: endDocument)}
-                
-        activityListener = query.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
-            // check for error
-            if err != nil  { return }
-            //unwrape weak self
-            guard let self = self else { return }
-            // check for cached data
-            if snap?.metadata.isFromCache ?? false { return }
-            // use a for-in loop to cycle through each document
-            for doc in snap!.documents {
-          // you need to add each notification to the notifications array you created
-          // you probably want to do this after fetching the UserProfile for the notification
-            // and this notification's PostInfo. You can reference the getMapPost function from old NotificationsController
 
-            // you might want to fetch UserProfile using an closure function ->
-            // reference The getUserInfo function in the old NotificationsController as a model
+        group.enter()
+        let notiRef = db.collection("users").document(uid).collection("notifications").limit(to: 15)
+        var notiQuery = notiRef.order(by: "timestamp", descending: true)
+        //if endDocument != nil && !refresh { notiQuery = notiQuery.start(atDocument: endDocument)}
+        notiQuery.getDocuments{ [weak self] (snap, err) in
+            //unwrap weak self
+            guard let self = self else { return }
+            guard let allDocs = snap?.documents else {return}
+            for doc in allDocs {
+                group.enter()
+                do {
+                    group.enter()
+                    let notif = try doc.data(as: UserNotification.self)
+                    guard var notification = notif else { return }
+                    notification.id = doc.documentID
+                    group.leave()
+                    //getting user info
+                    group.enter()
+                    let sender = notification.senderID
+                    self.getUserInfo(userID: sender) { user in
+                        notification.userInfo = user
+                        group.leave()
+                    }
+                    if(notification.type != "friendRequest"){
+                        group.enter()
+                        let post = notification.postID
+                        self.getPost(postID: post!) { post in
+                            notification.postInfo = post
+                            group.leave()
+                        }
+                        self.notifications.append(notification)
+                    }
+                } catch {print(error) }
+                
+                group.leave()
             }
-            
             group.leave()
         }
         
-        
-        group.notify(queue: DispatchQueue.global()) {
-            print("---------", self.notifications)
+        group.notify(queue: DispatchQueue.main) {
+            for noti in self.notifications {
+                //print notification type for now, will be .reloadData once UI is implemented
+                print(noti.type, "\n")
+            }
         }
+        
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        fetchNotifications()
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            self.fetchNotifications()
+        }
+        
         tableView = UITableView(frame: self.view.bounds, style: UITableView.Style.plain)
         tableView.dataSource = self
         tableView.delegate = self
@@ -121,16 +142,16 @@ class NotificationsController: UIViewController, UITableViewDelegate, UITableVie
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "my", for: indexPath)
-        cell.textLabel?.text = "This is row \(tableData[indexPath.row])"
+        cell.textLabel?.text = "This is row \(dummyTableData[indexPath.row])"
         
         return cell
         
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return tableData.count
+        return dummyTableData.count
     }
     
-
-
 }
+
+

@@ -441,7 +441,7 @@ extension UIViewController {
         let db: Firestore! = Firestore.firestore()
         let spotRef = db.collection("spots").document(spotID)
         
-        spotRef.getDocument { (doc, err) in            
+        spotRef.getDocument { (doc, err) in
             do {
                 let unwrappedInfo = try doc?.data(as: MapSpot.self)
                 guard var spotInfo = unwrappedInfo else { completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true); return }
@@ -1503,3 +1503,4 @@ extension MKPointOfInterestCategory {
         return text
     }
 }
+
