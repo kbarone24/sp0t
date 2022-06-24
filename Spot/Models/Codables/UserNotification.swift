@@ -31,7 +31,15 @@ struct UserNotification: Identifiable, Codable {
         case id
         case seen
         case senderID
-        case timestamp
         case type
+        case timestamp
+        case userInfo
+        case postInfo
+        case commentID
+        case imageURL
+        case originalPoster
+        case postID
+        case senderUsername
+        case status
     }
 }
