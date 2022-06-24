@@ -453,7 +453,7 @@ class MapController: UIViewController {
         signUpLogo.contentMode = .scaleAspectFill
         navView.addSubview(signUpLogo)
         
-        let buttonView = UIView(frame: CGRect(x: navView.bounds.width - 120, y: 0, width: 100, height: 30))
+        let buttonView = UIView(frame: CGRect(x: navView.bounds.width - 120, y: 0, width: 120, height: 30))
         navView.addSubview(buttonView)
         
         let searchButton = UIButton(frame: CGRect(x: 0, y: 5, width: 20, height: 20))
