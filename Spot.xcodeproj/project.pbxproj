@@ -24,6 +24,9 @@
 		413486892859310E0098B27B /* SF-Compact-Text-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */; };
 		4134868A2859310E0098B27B /* SF-Compact-Text-Semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486852859310E0098B27B /* SF-Compact-Text-Semibold.otf */; };
 		4134868B2859310E0098B27B /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */; };
+		41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5D2866285800C522B1 /* R.generated.swift */; };
+		41AC5A6028662B1400C522B1 /* DraftsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5F28662B1400C522B1 /* DraftsViewController.swift */; };
+		41AC5A6428662C3200C522B1 /* InviteFriendsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A6328662C3200C522B1 /* InviteFriendsController.swift */; };
 		59004DFF22C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E0022C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E1122CA5C9A004E06EF /* ResetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED3F1A522147EAE008CC29B /* ResetViewController.swift */; };
@@ -329,6 +332,9 @@
 		413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Heavy.otf"; sourceTree = "<group>"; };
 		413486852859310E0098B27B /* SF-Compact-Text-Semibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Semibold.otf"; sourceTree = "<group>"; };
 		413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Regular.otf"; sourceTree = "<group>"; };
+		41AC5A5D2866285800C522B1 /* R.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = R.generated.swift; sourceTree = "<group>"; };
+		41AC5A5F28662B1400C522B1 /* DraftsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DraftsViewController.swift; path = Spot/DraftsViewController.swift; sourceTree = SOURCE_ROOT; };
+		41AC5A6328662C3200C522B1 /* InviteFriendsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = InviteFriendsController.swift; path = Spot/InviteFriendsController.swift; sourceTree = SOURCE_ROOT; };
 		59056A5223197E4B00C7E753 /* PostNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostNotification.swift; sourceTree = "<group>"; };
 		5916A8B224A27F8500118E83 /* MapSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSpot.swift; sourceTree = "<group>"; };
 		5916A8B624A5542800118E83 /* ResultSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultSpot.swift; sourceTree = "<group>"; };
@@ -491,6 +497,8 @@
 				1DF6E06722089F9400BA0C36 /* Views */,
 				1DF6E06622089F8D00BA0C36 /* Models */,
 				1DF6E06522089F8700BA0C36 /* Controllers */,
+				41AC5A5F28662B1400C522B1 /* DraftsViewController.swift */,
+				41AC5A6328662C3200C522B1 /* InviteFriendsController.swift */,
 			);
 			path = Spot;
 			sourceTree = "<group>";
@@ -557,6 +565,7 @@
 				7A9A551522273F71007469C7 /* Chapel Hill.gpx */,
 				41348680285930FA0098B27B /* LandingScreenVideo.mp4 */,
 				5947712E2326E091008E50B9 /* Assets.xcassets */,
+				41AC5A5D2866285800C522B1 /* R.generated.swift */,
 				59F4701D2368933C00BB79CC /* SceneDelegate.swift */,
 				1DF6E03422089F4500BA0C36 /* AppDelegate.swift */,
 				8C298795268FACE80071E75A /* HelperFunctions */,
@@ -861,6 +870,7 @@
 			buildConfigurationList = 1DF6E05922089F4800BA0C36 /* Build configuration list for PBXNativeTarget "Spot" */;
 			buildPhases = (
 				E67C62FFDE53E58C0D170652 /* [CP] Check Pods Manifest.lock */,
+				41AC5A5C286626A000C522B1 /* Run Script */,
 				1DF6E02D22089F4500BA0C36 /* Sources */,
 				1DF6E02E22089F4500BA0C36 /* Frameworks */,
 				1DF6E02F22089F4500BA0C36 /* Resources */,
@@ -1045,6 +1055,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		41AC5A5C286626A000C522B1 /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				$SRCROOT/Spot/Resources/R.generated.swift,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$PODS_ROOT/R.swift/rswift\" generate \"$SRCROOT/Spot/Resources/R.generated.swift\"\n";
+		};
 		596C132A241AF0E400D2CA29 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1153,6 +1182,7 @@
 				8C2478C528235DD50071CC83 /* ChooseFriendsCell.swift in Sources */,
 				59FCF5AF24734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C88B0E727B46E3900DB4039 /* PostImageModel.swift in Sources */,
+				41AC5A6428662C3200C522B1 /* InviteFriendsController.swift in Sources */,
 				59E23549246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				8C346D302797600A00B6E640 /* FeedMapExtension.swift in Sources */,
 				598B700D2305E49500613AFD /* FriendRequest.swift in Sources */,
@@ -1172,6 +1202,7 @@
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
 				5992A5AA245B666E009DAA8B /* CircleProgress.swift in Sources */,
 				8C342073260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */,
+				41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */,
 				8C29879C2693A05A0071E75A /* CircleView.swift in Sources */,
 				8CC2A55226BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C0D1EBF27AB39D300F4B885 /* TextPostWindow.swift in Sources */,
@@ -1181,6 +1212,7 @@
 				7A37801C22174BB1008B835A /* MapController.swift in Sources */,
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
 				1DF6E03522089F4500BA0C36 /* AppDelegate.swift in Sources */,
+				41AC5A6028662B1400C522B1 /* DraftsViewController.swift in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				597072FE24292367008A481A /* AVCameraController.swift in Sources */,
 				412555C4285AEA0300C071A4 /* BottomToTopTransition.swift in Sources */,
