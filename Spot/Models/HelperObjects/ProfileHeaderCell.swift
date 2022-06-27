@@ -36,6 +36,7 @@ class ProfileHeaderCell: UICollectionViewCell {
         $0.setTitleColor(.lightGray, for: .normal)
         $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: -15, bottom: 0, right: 0)
         $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
+        $0.addTarget(self, action: #selector(locationButtonAction), for: .touchUpInside)
     }
     lazy var friendListButton = UIButton {
         $0.setImage(R.image.friendNotification()?.withRenderingMode(.alwaysTemplate), for: .normal)
@@ -44,6 +45,13 @@ class ProfileHeaderCell: UICollectionViewCell {
         $0.setTitleColor(.lightGray, for: .normal)
         $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: -15, bottom: 0, right: 0)
         $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
+        $0.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
+    }
+    
+    @objc func locationButtonAction() {
+    }
+    
+    @objc func friendListButtonAction() {
     }
     
     override init(frame: CGRect) {
@@ -66,7 +74,7 @@ extension ProfileHeaderCell {
         
         contentView.addSubview(profileImage)
         profileImage.snp.makeConstraints {
-            $0.top.equalToSuperview()//.offset(45)
+            $0.top.equalToSuperview()
             $0.leading.equalToSuperview().offset(28)
             $0.width.height.equalTo(84)
         }
