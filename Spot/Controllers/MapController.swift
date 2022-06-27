@@ -412,10 +412,9 @@ class MapController: UIViewController {
     
     @objc func profileTap(_ sender: Any){
         let profileVC = ProfileViewController()
-        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Middle, .Top], closeAction: {
+        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
-        sheetView?.swipeDownToDismiss = true
         sheetView?.present(to: .Middle)
     }
     

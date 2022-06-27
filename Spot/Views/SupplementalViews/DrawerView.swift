@@ -40,6 +40,9 @@ class DrawerView: NSObject {
         $0.backgroundColor = .tertiarySystemFill
         $0.layer.cornerRadius = 2
     }
+    private lazy var grabBarOnTop = UIView {
+        $0.backgroundColor = .clear
+    }
     private let transitionAnimation = BottomToTopTransition()
     
     private var rootVC = UIViewController()
@@ -115,12 +118,20 @@ class DrawerView: NSObject {
         myNav.view.layer.cornerRadius = cornerRadius
         myNav.view.layer.masksToBounds = true
         myNav.didMove(toParent: parentVC)
+        myNav.navigationBar.setBackgroundImage(UIImage(), for: .default)
+        myNav.navigationBar.shadowImage = UIImage()
+        myNav.navigationBar.isTranslucent = true
         slideView.addSubview(grabberView)
         grabberView.snp.makeConstraints {
             $0.top.equalToSuperview().offset(10)
             $0.width.equalTo(40)
             $0.height.equalTo(4)
             $0.centerX.equalToSuperview()
+        }
+        slideView.addSubview(grabBarOnTop)
+        grabBarOnTop.snp.makeConstraints {
+            $0.top.leading.trailing.equalToSuperview()
+            $0.height.equalTo(50)
         }
         slideView.addSubview(closeButton)
         closeButton.snp.makeConstraints {
