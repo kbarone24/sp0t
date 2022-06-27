@@ -10,48 +10,22 @@ import UIKit
 
 class ProfileHeaderCell: UICollectionViewCell {
     
-    lazy var profileImage = UIImageView {
-        $0.image = R.image.theB0t()
-        $0.backgroundColor = .gray
-        $0.contentMode = .scaleAspectFit
-    }
-    lazy var profileAvatar = UIImageView {
-        $0.image = R.image.pig()
-        $0.contentMode = .scaleAspectFit
-    }
-    lazy var profileName = UILabel {
-        $0.textColor = .black
-        $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-        $0.text = "Profile Name"
-    }
-    lazy var profileAccount = UILabel {
-        $0.textColor = .black
-        $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
-        $0.text = "Profile Account"
-    }
-    lazy var locationButton = UIButton {
-        $0.setImage(R.image.locationIcon()?.withRenderingMode(.alwaysTemplate), for: .normal)
-        $0.tintColor = .gray
-        $0.setTitle("Joseph, OR", for: .normal)
-        $0.setTitleColor(.lightGray, for: .normal)
-        $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: -15, bottom: 0, right: 0)
-        $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
-        $0.addTarget(self, action: #selector(locationButtonAction), for: .touchUpInside)
-    }
-    lazy var friendListButton = UIButton {
-        $0.setImage(R.image.friendNotification()?.withRenderingMode(.alwaysTemplate), for: .normal)
-        $0.tintColor = .gray
-        $0.setTitle("6 friends", for: .normal)
-        $0.setTitleColor(.lightGray, for: .normal)
-        $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: -15, bottom: 0, right: 0)
-        $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
-        $0.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
-    }
+    var profileImage: UIImageView!
+    var profileAvatar: UIImageView!
+    var profileName: UILabel!
+    var profileAccount: UILabel!
+    var locationButton: UIButton!
+    var friendListButton: UIButton!
+    var editButton: UIButton!
     
     @objc func locationButtonAction() {
     }
     
     @objc func friendListButtonAction() {
+    }
+    
+    @objc func editButtonAction() {
+        
     }
     
     override init(frame: CGRect) {
@@ -72,16 +46,25 @@ extension ProfileHeaderCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
         
-        contentView.addSubview(profileImage)
+        profileImage = UIImageView {
+            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.contentMode = .scaleAspectFit
+            $0.layer.masksToBounds = true
+            $0.backgroundColor = .gray
+            contentView.addSubview($0)
+        }
         profileImage.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.leading.equalToSuperview().offset(28)
             $0.width.height.equalTo(84)
         }
-        profileImage.layer.cornerRadius = 42
-        profileImage.layer.masksToBounds = true
-        
-        contentView.addSubview(profileAvatar)
+        profileImage.layer.cornerRadius = 84 / 2
+
+        profileAvatar = UIImageView {
+            $0.image = UserDataModel.shared.userInfo.avatarPic
+            $0.contentMode = .scaleAspectFit
+            contentView.addSubview($0)
+        }
         profileAvatar.snp.makeConstraints {
             $0.leading.equalTo(profileImage).inset(-14)
             $0.bottom.equalTo(profileImage).inset(-8.24)
@@ -89,7 +72,12 @@ extension ProfileHeaderCell {
             $0.width.equalTo(36)
         }
         
-        contentView.addSubview(profileName)
+        profileName = UILabel {
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+            $0.text = UserDataModel.shared.userInfo.name
+            contentView.addSubview($0)
+        }
         profileName.snp.makeConstraints {
             $0.leading.equalTo(profileImage.snp.trailing).offset(15)
             $0.top.equalTo(profileImage).offset(7)
@@ -97,7 +85,12 @@ extension ProfileHeaderCell {
             $0.trailing.equalToSuperview().inset(29)
         }
         
-        contentView.addSubview(profileAccount)
+        profileAccount = UILabel {
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
+            $0.text = UserDataModel.shared.userInfo.username
+            contentView.addSubview($0)
+        }
         profileAccount.snp.makeConstraints {
             $0.leading.equalTo(profileName).offset(2)
             $0.top.equalTo(profileName.snp.bottom).offset(2)
@@ -105,20 +98,52 @@ extension ProfileHeaderCell {
             $0.width.equalTo(113)
         }
         
-        contentView.addSubview(locationButton)
+        locationButton = UIButton {
+            $0.setImage(R.image.locationIcon()?.withRenderingMode(.alwaysTemplate), for: .normal)
+            $0.tintColor = .gray
+            $0.setTitle("\(UserDataModel.shared.userCity)", for: .normal)
+            $0.setTitleColor(.lightGray, for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: -15, bottom: 0, right: 0)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
+            $0.addTarget(self, action: #selector(locationButtonAction), for: .touchUpInside)
+            contentView.addSubview($0)
+        }
         locationButton.snp.makeConstraints {
             $0.leading.equalTo(profileAccount)
             $0.top.equalTo(profileAccount.snp.bottom).offset(1)
             $0.height.equalTo(38)
-            $0.width.equalTo(100)
         }
         
-        contentView.addSubview(friendListButton)
-        friendListButton.snp.makeConstraints {
-            $0.leading.equalTo(locationButton.snp.trailing).inset(5)
-            $0.top.equalTo(locationButton)
-            $0.height.equalTo(38)
-            $0.width.equalTo(100)
+        friendListButton = UIButton {
+            $0.setImage(R.image.friendNotification()?.withRenderingMode(.alwaysTemplate), for: .normal)
+            $0.tintColor = .gray
+            $0.setTitle("\(UserDataModel.shared.userInfo.friendsList.count) friends", for: .normal)
+            $0.setTitleColor(.lightGray, for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: -15, bottom: 0, right: 0)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
+            $0.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
+            contentView.addSubview($0)
         }
+        friendListButton.snp.makeConstraints {
+            $0.leading.equalTo(locationButton.snp.trailing).offset(15)
+            $0.top.equalTo(locationButton)
+            $0.trailing.lessThanOrEqualToSuperview()
+            $0.height.equalTo(38)
+        }
+        
+        editButton = UIButton {
+            $0.setTitle("Edit profile", for: .normal)
+            $0.setTitleColor(.black, for: .normal)
+            $0.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+            $0.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
+            contentView.addSubview($0)
+        }
+        editButton.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(14)
+            $0.height.equalTo(37)
+            $0.top.equalTo(profileImage.snp.bottom).offset(16)
+        }
+        editButton.layer.cornerRadius = 37 / 2
     }
 }

@@ -11,17 +11,7 @@ import SnapKit
 
 class ProfileViewController: UIViewController {
     
-    private lazy var profileCollectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .vertical
-        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        view.delegate = self
-        view.dataSource = self
-        view.backgroundColor = .clear
-        view.register(ProfileHeaderCell.self, forCellWithReuseIdentifier: "ProfileHeaderCell")
-        return view
-    }()
-    
+    private var profileCollectionView: UICollectionView!
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -34,6 +24,17 @@ extension ProfileViewController {
     private func viewSetup() {
         view.backgroundColor = .white
         
+        profileCollectionView = {
+            let layout = UICollectionViewFlowLayout()
+            layout.scrollDirection = .vertical
+            let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+            view.delegate = self
+            view.dataSource = self
+            view.backgroundColor = .clear
+            view.register(ProfileHeaderCell.self, forCellWithReuseIdentifier: "ProfileHeaderCell")
+            view.register(ProfileBodyCell.self, forCellWithReuseIdentifier: "ProfileBodyCell")
+            return view
+        }()
         view.addSubview(profileCollectionView)
         profileCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -44,7 +45,7 @@ extension ProfileViewController {
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 1
+        return 2
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -52,36 +53,37 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if indexPath.section == 0 {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProfileHeaderCell", for: indexPath)
-            return cell
-        } else {
-            let cell = UICollectionViewCell()
-            cell.backgroundColor = .green
-            return cell
-        }
+        return collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : "ProfileBodyCell", for: indexPath)
     }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return indexPath.section == 0 ? CGSize(width: view.frame.width - 30, height: 300) : CGSize(width: (view.frame.width / 2) - 15, height: 100)
-    }
-    
+
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
+        return section == 0 ? UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) : UIEdgeInsets(top: 0, left: 14, bottom: 0, right: 14)
+    }
+        
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let width = (view.frame.width - 40) / 2
+        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: 160) : CGSize(width: width , height: 250)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 0
+        return 18
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
+        let collectionCell = collectionView.cellForItem(at: indexPath)
+        UIView.animate(withDuration: 0.15) {
+            collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        } completion: { (Bool) in
+            UIView.animate(withDuration: 0.15) {
+                collectionCell?.transform = .identity
+            }
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
         let collectionCell = collectionView.cellForItem(at: indexPath)
         UIView.animate(withDuration: 0.15) {
-            collectionCell?.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
+            collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         }
     }
     
