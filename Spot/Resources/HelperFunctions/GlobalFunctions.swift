@@ -564,12 +564,11 @@ extension UIViewController {
 /// upload post functions
 extension UIViewController {
     
-    func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
+    func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, fullWidth: CGFloat, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
         
         var failed = false
         var success = false
         
-        let fullWidth: CGFloat = UIScreen.main.bounds.width - 100
         if images.isEmpty { print("empty"); completion([], false); return } /// complete immediately for no  image post
         
         var URLs: [String] = []
@@ -596,8 +595,8 @@ extension UIViewController {
             }
         }
         
-        var progress = 0.7/Double(images.count)
-
+        var interval = 0.7/Double(images.count)
+        var downloadCount: CGFloat = 0
         
         for image in images {
             
@@ -622,16 +621,17 @@ extension UIViewController {
                     
                     let i = images.lastIndex(where: {$0 == image})
                     URLs[i ?? 0] = urlString
+                    downloadCount += 1
                     
                     DispatchQueue.main.async {
-                        let frameWidth: CGFloat = min(((0.3 + progress) * UIScreen.main.bounds.width - 100), UIScreen.main.bounds.width - 101)
-                        UIView.animate(withDuration: 0.2) {
-                            progressFill.frame = CGRect(x: progressFill.frame.minX, y: progressFill.frame.minY, width: frameWidth, height: progressFill.frame.height)
+                        let progress = downloadCount * interval
+                        let frameWidth: CGFloat = min(((0.3 + progress) * fullWidth), fullWidth)
+                        progressFill.snp.updateConstraints { $0.width.equalTo(frameWidth) }
+                        UIView.animate(withDuration: 0.15) {
+                            self.view.layoutIfNeeded()
                         }
                     }
-                    
-                    progress = progress * Double(index + 1)
-                    
+                                        
                     index += 1
                     
                     if failed { return } /// dont want to return anything after failed upload runs
@@ -657,6 +657,7 @@ extension UIViewController {
             self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
             
             let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(post.timestamp.seconds))
+            
             let commentRef = postRef.collection("comments").document(commentObject.id!)
 
             do {
@@ -750,9 +751,9 @@ extension UIViewController {
         }
     }
     
-    func uploadMap(map: CustomMap, newMap: Bool) {
-        let db: Firestore = Firestore.firestore()
+    func uploadMap(map: CustomMap, newMap: Bool, postImageURL: String) {
         let uid = UserDataModel.shared.uid
+        let db: Firestore = Firestore.firestore()
         let timestamp = Timestamp(date: Date())
         let mapRef = db.collection("maps").document(map.id!)
         var uploadMap = map
@@ -764,14 +765,20 @@ extension UIViewController {
             print("failed uploading map")
         }
         
-        let userRef = db.collection("users").document(uid).collection("mapsList").document(map.id!)
-        var userMap = uploadMap
-        userMap.userTimestamp = timestamp
-        
-        do {
-            try userRef.setData(from: userMap, merge: true)
-        } catch {
-            print("failed uploading user map")
+        /// set mapsList object for each member of this map
+        for member in map.memberIDs {
+            let userRef = db.collection("users").document(member).collection("mapsList").document(map.id!)
+            var userMap = uploadMap
+            /// update user post values for profile 
+            if newMap || member == uid {
+                userMap.userTimestamp = timestamp
+                if postImageURL != "" { userMap.userURL = postImageURL }
+            }
+            do {
+                try userRef.setData(from: userMap, merge: true)
+            } catch {
+                print("failed uploading user map")
+            }
         }
     }
     
@@ -1332,7 +1339,7 @@ extension UINavigationBar {
             setBackgroundImage(UIImage(color: UIColor.black), for: .default)
         }
     }
-    
+        
     func removeBackgroundImage() {
                 
         if #available(iOS 15.0, *) {

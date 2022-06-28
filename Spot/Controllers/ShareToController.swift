@@ -33,6 +33,8 @@ class ShareToController: UIViewController {
     let topBoundary: CGFloat = 120
     let bottomBoundary: CGFloat = 138
     
+    let backgroundColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1)
+    
     override func viewDidLoad() {
         
         super.viewDidLoad()
@@ -47,7 +49,7 @@ class ShareToController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        view.backgroundColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1)
+        view.backgroundColor = backgroundColor
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -73,7 +75,8 @@ class ShareToController: UIViewController {
         navigationController?.navigationBar.tintColor = .black
         navigationController?.navigationBar.barTintColor = .clear
         
-        self.navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "Preview", style: .plain, target: nil, action: nil)
+        let barButtonItem = UIBarButtonItem(image: UIImage(named: "BackArrowDark"), style: .plain, target: self, action: #selector(backTap(_:)))
+        navigationItem.leftBarButtonItem = barButtonItem
     }
     
     func addButtons() {
@@ -113,7 +116,6 @@ class ShareToController: UIViewController {
     
     func addProgressBar() {
         progressBar = UIView {
-            $0.frame = CGRect(x: 50, y: UIScreen.main.bounds.height - 150, width: UIScreen.main.bounds.width - 100, height: 18)
             $0.backgroundColor = UIColor(named: "SpotGreen")?.withAlphaComponent(0.22)
             $0.layer.cornerRadius = 6
             $0.layer.borderWidth = 2
@@ -121,12 +123,22 @@ class ShareToController: UIViewController {
             $0.isHidden = true
             view.addSubview($0)
         }
+        progressBar.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(50)
+            $0.bottom.equalTo(shareButton.snp.top).offset(-20)
+            $0.height.equalTo(18)
+        }
         
         progressFill = UIView {
             $0.frame = CGRect(x: 1, y: 1, width: 0, height: 16)
             $0.backgroundColor = UIColor(named: "SpotGreen")
             $0.layer.cornerRadius = 6
-            view.addSubview($0)
+            progressBar.addSubview($0)
+        }
+        progressFill.snp.makeConstraints {
+            $0.leading.equalToSuperview().offset(1)
+            $0.width.equalTo(0)
+            $0.height.equalTo(16)
         }
     }
     
@@ -183,9 +195,11 @@ class ShareToController: UIViewController {
         let spot = UploadPostModel.shared.spotObject
         let map = UploadPostModel.shared.mapObject
         let newMap = self.newMap != nil
+        progressBar.isHidden = false
         
+        let fullWidth = self.progressBar.bounds.width - 2
         DispatchQueue.global(qos: .userInitiated).async {
-            self.uploadPostImage(post.postImage, postID: post.id!, progressFill: self.progressFill) { [weak self] imageURLs, failed in
+            self.uploadPostImage(post.postImage, postID: post.id!, progressFill: self.progressFill, fullWidth: fullWidth) { [weak self] imageURLs, failed in
                 guard let self = self else { return }
                 
                 if imageURLs.isEmpty && failed {
@@ -208,16 +222,20 @@ class ShareToController: UIViewController {
                 if map != nil {
                     var map = map!
                     if map.imageURL == "" { map.imageURL = imageURLs.first ?? "" }
-                    self.uploadMap(map: map, newMap: newMap)
+                    self.uploadMap(map: map, newMap: newMap, postImageURL: post.imageURLs.first ?? "")
                 }
                 
                 let visitorList = spot?.visitorList ?? []
                 self.setUserValues(poster: uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
                 
-                self.popToMap()
                 UploadPostModel.shared.destroy()
+                
+                /// enable upload animation to finish
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    self.popToMap()
+                }
             }
-        }
+        } 
     }
             
     func runFailedUpload() {
@@ -241,6 +259,10 @@ class ShareToController: UIViewController {
         present(alert, animated: true, completion: nil)
     }
 
+    @objc func backTap(_ sender: UIBarButtonItem) {
+        self.navigationController?.popViewController(animated: true)
+    }
+    
     func popToMap() {
         DispatchQueue.main.async {
             self.navigationController?.popToRootViewController(animated: true)
@@ -259,6 +281,13 @@ extension ShareToController: NewMapDelegate {
         UploadPostModel.shared.mapObject = map
         UploadPostModel.shared.postObject.mapID = map.id!
         UploadPostModel.shared.postObject.mapName = map.mapName
+        DispatchQueue.main.async { self.reloadTable() }
+    }
+    
+    func deselectMap(map: CustomMap) {
+        UploadPostModel.shared.mapObject = nil
+        UploadPostModel.shared.postObject.mapID = ""
+        UploadPostModel.shared.postObject.mapName = ""
         DispatchQueue.main.async { self.reloadTable() }
     }
 }
@@ -292,7 +321,8 @@ extension ShareToController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        selectMap(map: customMaps[indexPath.row])
+        let map = customMaps[indexPath.row]
+        map.id == UploadPostModel.shared.postObject.mapID ? deselectMap(map: map) : selectMap(map: map)
     }
 }
 
