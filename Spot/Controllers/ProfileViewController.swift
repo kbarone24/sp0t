@@ -40,11 +40,22 @@ extension ProfileViewController {
             return view
         }()
         view.addSubview(profileCollectionView)
+
+        // Need a new pan gesture to react when profileCollectionView scroll disables
+        let scrollViewPanGesture = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
+        scrollViewPanGesture.delegate = self
+        profileCollectionView.addGestureRecognizer(scrollViewPanGesture)
         profileCollectionView.isScrollEnabled = false
         profileCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
     }
+    
+//    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+//        if profileCollectionView.contentOffset.y <= lastYContentOffset ?? -50 && containerDrawerView?.status == .Top {
+//            profileCollectionView.isScrollEnabled = true
+//        }
+//    }
 }
 
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -101,13 +112,60 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 }
 
 extension ProfileViewController: UIScrollViewDelegate {
-    
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        <#code#>
+        print("scrollViewDidScroll")
+        // Get the initial Top y position contentOffset
+        if containerDrawerView?.status == .Top && lastYContentOffset == nil {
+            lastYContentOffset = scrollView.contentOffset.y
+        }
+        
+//        scrollView.isScrollEnabled = containerDrawerView?.status == .Top ? true : false
+        
+        if lastYContentOffset != nil {
+            if scrollView.contentOffset.y < lastYContentOffset! {
+                scrollView.isScrollEnabled = false
+            }
+        }
     }
     
-    func scrollViewDidScrollToTop(_ scrollView: UIScrollView) {
-        profileCollectionView.isScrollEnabled = true
-        containerDrawerView?.status == .Top ?
+    func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
+        print("scrollViewWillBeginDecelerating")
+    }
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        print("scrollViewDidEndDecelerating")
+        // When profileCollectionView is scrolled to top and user stops scrolling, set scroll to false, so user can interact with drawerView
+        if scrollView.contentOffset.y <= lastYContentOffset ?? -50 {
+            scrollView.isScrollEnabled = false
+        }
+    }
+
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        print("scrollViewWillBeginDragging")
+    }
+    func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+        print("scrollViewWillEndDragging")
+    }
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        print("scrollViewDidEndDragging")
+    }
+    
+    func scrollViewDidChangeAdjustedContentInset(_ scrollView: UIScrollView) {
+        print("scrollViewDidChangeAdjustedContentInset")
+    }
+}
+
+extension ProfileViewController: UIGestureRecognizerDelegate {
+    @objc func onPan(_ recognizer: UIPanGestureRecognizer) {
+        // Swipe up y translation < 0
+        // Swipe down y translation > 0
+        let yTranslation = recognizer.translation(in: recognizer.view).y
+        // When profileCollectionView is scrolled to top, drawerView is in top position and user swipes up, set scroll to true
+        if profileCollectionView.contentOffset.y <= lastYContentOffset ?? -50 && containerDrawerView?.status == .Top && yTranslation < 0 {
+            profileCollectionView.isScrollEnabled = true
+        }
+    }
+    
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 }
