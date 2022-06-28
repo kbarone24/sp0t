@@ -12,78 +12,195 @@ import FirebaseUI
 
 class ActivityCell: UITableViewCell {
     
-    var username = UILabel()
-    var detail = UILabel()
+    var username: UILabel!
+    var detail: UILabel!
+    var timestamp: UILabel!
     var profilePic: UIImageView!
+    var userAvatar: UIImageView!
+    var postImage: UIImageView!
+    var imageURLs: [String] = []
         
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        addSubview(username)
-        addSubview(detail)
-        
-        configureProfilePic()
-        configureView()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configureProfilePic(){
-        profilePic = UIImageView(frame: CGRect(x: 65, y: 27.5, width: 50, height: 50))
-        profilePic.layer.masksToBounds = false
-        profilePic.layer.cornerRadius = profilePic.frame.height/2
-        profilePic.clipsToBounds = true
-        profilePic.contentMode = UIView.ContentMode.scaleAspectFill
-        profilePic.isHidden = false
-        self.addSubview(profilePic)
-
-    }
-    
-    func configureView(){
-
-        username.numberOfLines = 0
-        username.textColor = .black
-        username.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-        username.translatesAutoresizingMaskIntoConstraints = false
-        username.topAnchor.constraint(equalTo: topAnchor, constant: 15).isActive = true
-        username.leadingAnchor.constraint(equalTo: profilePic.trailingAnchor, constant: 8).isActive = true
-        
-        detail.numberOfLines = 0
-        detail.textColor = .black
-        detail.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
-        detail.translatesAutoresizingMaskIntoConstraints = false
-        detail.topAnchor.constraint(equalTo: username.bottomAnchor).isActive = true
-        detail.leadingAnchor.constraint(equalTo: profilePic.trailingAnchor, constant: 8).isActive = true
-        
-    }
-    
     func set(notification: UserNotification){
-        username.text = notification.senderUsername
         
-        let notiType = notification.type
-        switch notiType {
-        case "like":
-            detail.text = "liked your post"
-        case "comment":
-            detail.text = "commented on your post"
-        default:
-            detail.text = notification.type
+        self.resetCell()
+        
+        profilePic = UIImageView {
+            $0.frame = CGRect(x: 65, y: 27.5, width: 50, height: 50)
+            $0.layer.masksToBounds = false
+            $0.layer.cornerRadius = $0.frame.height/2
+            $0.clipsToBounds = true
+            $0.contentMode = UIView.ContentMode.scaleAspectFill
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            contentView.addSubview($0)
+            let url = notification.userInfo!.imageURL
+            if url != "" {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+                $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) } else {print("profilePic not found")}
         }
         
+        profilePic.snp.makeConstraints{
+            $0.centerY.equalToSuperview()
+            $0.leading.equalToSuperview().offset(16)
+            $0.height.width.equalTo(50)
+        }
         
-        let url = notification.userInfo!.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-            profilePic.translatesAutoresizingMaskIntoConstraints = false
-            profilePic.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
-            profilePic.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16).isActive = true
-            profilePic.heightAnchor.constraint(equalToConstant: 50).isActive = true
-            profilePic.widthAnchor.constraint(equalToConstant: 50).isActive = true
-        } else {print("🙈 NOOOOOOO")}
+        if(notification.userInfo?.avatarURL != ""){
+            
+            
+            userAvatar = UIImageView{
+                $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
+                $0.layer.masksToBounds = false
+                $0.contentMode = UIView.ContentMode.scaleAspectFill
+                $0.isHidden = false
+                var url = notification.userInfo!.avatarURL!
+                if url != "" {
+                    let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+                    $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+                } else {print("🙈 NOOOOOOO")}
+                $0.translatesAutoresizingMaskIntoConstraints = false
+                contentView.addSubview($0)
+            }
+            
+            userAvatar.snp.makeConstraints{
+                $0.leading.equalTo(profilePic.snp.leading).offset(-3)
+                $0.bottom.equalTo(profilePic.snp.bottom).offset(3)
+                $0.height.equalTo(33)
+                $0.width.equalTo(25.14)
+            }
+        }
         
+       username = UILabel{
+            $0.text = notification.senderUsername
+            $0.numberOfLines = 0
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview($0)
+        }
+        
+        username.snp.makeConstraints{
+            $0.top.equalToSuperview().offset(15)
+            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
+        }
+        
+        detail = UILabel {
+            let notiType = notification.type
+            switch notiType {
+            case "like":
+                $0.text = "liked your post"
+            case "comment":
+                $0.text = "commented on your post"
+            case "friendRequest":
+                $0.text = "accepted your friend request!"
+            case "commentTag":
+                $0.text = "mentioned you in a comment"
+            case "commentLike":
+                $0.text = "liked your comment"
+            case "commentComment":
+                var notifText = "commented on "
+                notifText += notification.originalPoster!
+                notifText += "'s post"
+                $0.text = notifText
+            case "commentOnAdd":
+                var notifText = "commented on "
+                notifText += notification.originalPoster!
+                notifText += "'s post"
+                $0.text = notifText
+            case "likeOnAdd":
+                var notifText = "liked "
+                notifText += notification.originalPoster!
+                notifText += "'s post"
+                $0.text = notifText
+            case "mapInvite":
+                $0.text = "invited you to a map!"
+            case "mapPost":
+                var notifText = "posted to "
+                notifText += notification.postInfo!.mapName!
+                $0.text = notifText
+            case "post":
+                var notifText = "posted at "
+                notifText += notification.postInfo!.spotName!
+                $0.text = notifText
+            case "postAdd":
+                $0.text = "added you to a post"
+            case "publicSpotAccepted":
+                $0.text = "Your public submission was approved!"
+            default:
+                $0.text = notification.type
+            }
+            $0.numberOfLines = 0
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview($0)
+        }
+        
+        detail.snp.makeConstraints{
+            $0.top.equalTo(username.snp.bottom)
+            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
+        }
+        
+        timestamp = UILabel{
+            $0.text = notification.timeString
+            $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
+            $0.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview($0)
+        }
+        
+        timestamp.snp.makeConstraints{
+            $0.leading.equalTo(detail.snp.trailing).offset(8)
+            $0.top.equalTo(detail.snp.top)
+        }
+    
+        postImage = UIImageView {
+            $0.frame = CGRect(x: 0, y: 0, width: 44, height: 52)
+            $0.layer.masksToBounds = false
+            $0.layer.cornerRadius = 5
+            $0.clipsToBounds = true
+            $0.contentMode = UIView.ContentMode.scaleAspectFill
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            contentView.addSubview($0)
+            if(notification.postInfo != nil){
+                imageURLs = notification.postInfo!.imageURLs
+            }
+            if(imageURLs.count > 0){
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 88, height: 102), scaleMode: .aspectFill)
+                $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) } else {$0.image = UIImage(named: "FriendsFeedIcon")}
+            }
+            
+        postImage.snp.makeConstraints{
+            $0.trailing.equalToSuperview().offset(-14)
+            $0.centerY.equalToSuperview()
+            $0.width.equalTo(44)
+            $0.height.equalTo(52)
+        }
+        
+    }
+    
+    func resetCell() {
+        if profilePic != nil { profilePic.image = UIImage() }
+        if userAvatar != nil { userAvatar.image = UIImage() }
+        if username != nil {username.text=""}
+        if detail != nil {detail.text = ""}
+        if timestamp != nil {timestamp.text = ""}
+    }
+    
+    override func prepareForReuse() {
+        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
+        if userAvatar != nil { userAvatar.sd_cancelCurrentImageLoad() }
+        // Remove Subviews Or Layers That Were Added Just For This Cell
     }
     
 }

@@ -47,7 +47,6 @@ class DrawerView: NSObject {
     
     private var panRecognizer: UIPanGestureRecognizer?
     private var status = DrawerViewStatus.Close
-    private var duration: CGFloat = 0
     private var yPosition: CGFloat = 0
     private var topConstraints: Constraint? = nil
     private var midConstraints: Constraint? = nil
@@ -57,6 +56,12 @@ class DrawerView: NSObject {
             toggleDrag(to: canDrag)
         }
     }
+    public var showCloseButton: Bool = true {
+        didSet {
+            closeButton.isHidden = !showCloseButton
+        }
+    }
+    public var swipeDownToDismiss: Bool = false
     private var detents: [DrawerViewDetent] = [.Bottom, .Middle, .Top]
     private var detentsPointer = 0 {
         didSet {
@@ -73,7 +78,7 @@ class DrawerView: NSObject {
     override init() {
         super.init()
     }
-    public init(present: UIViewController = UIViewController(), drawerConrnerRadius: CGFloat = 20, withDetent: [DrawerViewDetent] = [.Bottom, .Middle, .Top], closeAction: (() -> Void)? = nil) {
+    public init(present: UIViewController = UIViewController(), drawerConrnerRadius: CGFloat = 20, detentsInAscending: [DrawerViewDetent] = [.Bottom, .Middle, .Top], closeAction: (() -> Void)? = nil) {
         super.init()
         if let parent = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController as? UINavigationController {
             if parent.visibleViewController != nil {
@@ -82,7 +87,7 @@ class DrawerView: NSObject {
         }
         rootVC = present
         slideView.layer.cornerRadius = drawerConrnerRadius
-        detents = withDetent
+        detents = detentsInAscending
         viewSetup(cornerRadius: drawerConrnerRadius)
         closeDo = closeAction
     }
@@ -91,7 +96,7 @@ class DrawerView: NSObject {
         parentVC.view.addSubview(slideView)
         slideView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            topConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).offset(100).constraint
+            topConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).constraint
             midConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).offset(0.45 * parentVC.view.frame.height).constraint
             botConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.bottom).inset(100).constraint
             $0.height.equalTo(parentVC.view.snp.height)
@@ -124,6 +129,7 @@ class DrawerView: NSObject {
             $0.width.height.equalTo(70)
         }
         closeButton.addTarget(self, action: #selector(self.closeAction), for: .touchUpInside)
+        closeButton.isHidden = !showCloseButton
     }
     
     public func present(to: DrawerViewDetent = .Middle) {
@@ -153,22 +159,16 @@ class DrawerView: NSObject {
     // MARK: Set position functions
     private func goTop() {
         topConstraints?.activate()
-        let sheetPresentVelocity = 0.35 * self.parentVC.view.frame.height / 0.5
-        duration = abs((100 - self.slideView.frame.origin.y) / sheetPresentVelocity)
         yPosition = 0
         self.status = DrawerViewStatus.Top
     }
     private func goMid() {
         midConstraints?.activate()
-        let sheetPresentVelocity = 0.35 * self.parentVC.view.frame.height / 0.5
-        duration = abs((0.45 * self.parentVC.view.frame.height - self.slideView.frame.origin.y) / sheetPresentVelocity)
         yPosition = (0.45 * self.parentVC.view.frame.height)
         self.status = DrawerViewStatus.Middle
     }
     private func goBottom() {
         botConstraints?.activate()
-        let sheetPresentVelocity = 0.35 * self.parentVC.view.frame.height / 0.5
-        duration = abs((self.parentVC.view.frame.height - 100 - self.slideView.frame.origin.y) / sheetPresentVelocity)
         yPosition = self.parentVC.view.frame.height - 100
         self.status = DrawerViewStatus.Bottom
     }
@@ -222,8 +222,14 @@ class DrawerView: NSObject {
                     detentsPointer = detents.firstIndex(of: .Middle)!
                 }
             }
+            
+            // If swipeDownToDismiss is true check the slideView ending position to determine if need to pop view controller
+            if self.slideView.frame.minY > (self.parentVC.view.frame.height * 0.6) && detents.contains(.Bottom) == false && swipeDownToDismiss {
+                myNav.popViewController(animated: true)
+            }
+            
             // Animate the drawer view to the set position
-            UIView.animate(withDuration: duration) {
+            UIView.animate(withDuration: 0.7 * abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
                 self.slideView.frame.origin.y = self.yPosition
                 self.parentVC.view.layoutIfNeeded()
             }
@@ -237,7 +243,7 @@ class DrawerView: NSObject {
         }) { (success) in
             self.status = DrawerViewStatus.Close
             self.slideView.removeFromSuperview()
-            self.myNav.removeFromParent()            
+            self.myNav.removeFromParent()
             if self.closeDo != nil {
                 self.closeDo!()
             }

@@ -17,6 +17,7 @@ struct UserNotification: Identifiable, Codable {
     var seen: Bool
     var senderID: String
     var timestamp: Timestamp
+    var timeString: String?
     var type: String
     var userInfo: UserProfile?
     var postInfo: MapPost? /// only for activity notifications
@@ -33,6 +34,7 @@ struct UserNotification: Identifiable, Codable {
         case senderID
         case type
         case timestamp
+        case timeString
         case userInfo
         case postInfo
         case commentID

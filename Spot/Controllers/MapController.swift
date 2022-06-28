@@ -412,9 +412,10 @@ class MapController: UIViewController {
     
     @objc func profileTap(_ sender: Any){
         let profileVC = ProfileViewController()
-        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, withDetent: [.Middle, .Top], closeAction: {
+        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Middle, .Top], closeAction: {
             self.sheetView = nil
         })
+        sheetView?.swipeDownToDismiss = true
         sheetView?.present(to: .Middle)
     }
     
@@ -503,11 +504,13 @@ class MapController: UIViewController {
     }
     
     @objc func openNotis(_ sender: UIButton) {
-        let profileVC = NotificationsController()
-        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, withDetent: [.Top], closeAction: {
+        let notifVC = NotificationsController()
+        sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
         })
+        sheetView?.swipeDownToDismiss = false
         sheetView?.present(to: .Top)
+        sheetView?.showCloseButton = false
     }
     
     func setOpaqueNav() {
