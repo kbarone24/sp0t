@@ -97,7 +97,8 @@ class ImagePreviewController: UIViewController {
         var frameCounter = 0
         var frameIndexes: [Int] = []
         var aspectRatios: [CGFloat] = []
-        
+        var imageLocations: [[String: Double]] = [[:]]
+
         if cameraObject != nil { UploadPostModel.shared.selectedObjects.append(cameraObject) }
         
         /// cycle through selected imageObjects and find individual sets of images / frames
@@ -106,13 +107,16 @@ class ImagePreviewController: UIViewController {
             selectedImages.append(contentsOf: images)
             frameIndexes.append(frameCounter)
             aspectRatios.append(selectedImages[frameCounter].size.height/selectedImages[frameCounter].size.width)
-            
+            let location = locationIsEmpty(location: obj.rawLocation) ? UserDataModel.shared.currentLocation : obj.rawLocation
+            imageLocations.append(["lat" : location!.coordinate.latitude, "long": location!.coordinate.longitude])
+
             frameCounter += images.count
         }
         
         post.frameIndexes = frameIndexes
         post.aspectRatios = aspectRatios
         post.postImage = selectedImages
+        post.imageLocations = imageLocations
         
         let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.9
         post.imageHeight = getImageHeight(aspectRatios: post.aspectRatios ?? [], maxAspect: cameraAspect)
@@ -612,7 +616,7 @@ class SpotNameView: UIView {
         
         nameLabel = UILabel {
             $0.frame = CGRect(x: tagIcon.frame.maxX + 7, y: tagIcon.frame.minY + 2, width: UIScreen.main.bounds.width, height: 16)
-            $0.text = UploadPostModel.shared.spotObject.spotName
+            $0.text = UploadPostModel.shared.spotObject?.spotName ?? ""
             $0.textColor = .white
             $0.font = UIFont(name: "SFCompactText-Bold", size: 17)
             $0.lineBreakMode = .byTruncatingTail

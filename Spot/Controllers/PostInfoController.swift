@@ -66,11 +66,7 @@ class PostInfoController: UIViewController {
     /// spot search fetch
     var searchRefreshCount = 0
     var spotSearching = false
-        
-    deinit {
-        print("deinit")
-    }
-        
+                
     override func viewDidLoad() {
         
         super.viewDidLoad()
@@ -196,24 +192,13 @@ class PostInfoController: UIViewController {
               
         let post = UploadPostModel.shared.postObject!
         
-        // get top friends
-        let sortedFriends = UserDataModel.shared.userInfo.topFriends.sorted(by: {$0.value > $1.value})
-        let topFriends = Array(sortedFriends.map({$0.key}))
-
-        /// match friend objects to id's
-        for friend in topFriends {
-            if var object = UserDataModel.shared.friendsList.first(where: {$0.id == friend}) {
-                object.selected = post.addedUsers!.contains(where: {$0 == object.id})
-                friendObjects.append(object)
-            }
-        }
-        
+        friendObjects = UserDataModel.shared.getTopFriends(selectedList: post.addedUsers!)
         tagObjects = UploadPostModel.shared.sortedTags
         postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
         
         selectedTag = UploadPostModel.shared.postObject.tag ?? ""
         
-        if UploadPostModel.shared.spotObject != nil { spotObjects.append(UploadPostModel.shared.spotObject) }
+        if UploadPostModel.shared.spotObject != nil { spotObjects.append(UploadPostModel.shared.spotObject!) }
     }
     
     func setSelectedSegment(index: Int) {
@@ -399,7 +384,7 @@ extension PostInfoController: UITableViewDelegate, UITableViewDataSource {
             
             if let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseFriends", for: indexPath) as? ChooseFriendsCell {
                 let current = queried ? queryFriends : friendObjects
-                cell.setUp(friend: current[indexPath.row])
+                cell.setUp(friend: current[indexPath.row], allowsSelection: true, editable: true)
                 return cell
             }
                 

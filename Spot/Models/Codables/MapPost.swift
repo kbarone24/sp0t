@@ -48,6 +48,7 @@ struct MapPost: Identifiable, Codable {
     // supplemental values
     var addedUserProfiles: [UserProfile]? = []
     var userInfo: UserProfile?
+    var mapInfo: CustomMap?
     var commentList: [MapComment] = []
     var postImage: [UIImage] = []
     

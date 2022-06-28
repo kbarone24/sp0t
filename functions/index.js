@@ -1,4 +1,3 @@
-
 const admin = require("firebase-admin");
 admin.initializeApp();
 
@@ -19,7 +18,7 @@ functions.https.onCall(async (request) => {
 
   try {
     await db.runTransaction(async (transaction) => {
-      const spotDoc = await transaction.get(spotRef);
+     const spotDoc = await transaction.get(spotRef);
 
       // these 4 are incremented for every post for easy look-ups
 

@@ -441,10 +441,11 @@ extension UIViewController {
         let db: Firestore! = Firestore.firestore()
         let spotRef = db.collection("spots").document(spotID)
         
-        spotRef.getDocument { (doc, err) in            
+        spotRef.getDocument { (doc, err) in
+            let emptySpot = MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: "")
             do {
                 let unwrappedInfo = try doc?.data(as: MapSpot.self)
-                guard var spotInfo = unwrappedInfo else { completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true); return }
+                guard var spotInfo = unwrappedInfo else { completion(emptySpot, true); return }
                 
                 spotInfo.id = spotID
                 spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
@@ -456,7 +457,7 @@ extension UIViewController {
                 return
                 
             } catch {
-                completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true)
+                completion(emptySpot, true)
                 return
             }
         }
@@ -468,22 +469,24 @@ extension UIViewController {
         
         if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
             completion(user)
+            return
             
         } else if userID == UserDataModel.shared.uid {
             completion(UserDataModel.shared.userInfo)
+            return
             
         } else {
-
+            let emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
             db.collection("users").document(userID).getDocument { (doc, err) in
                 if err != nil { return }
 
                 do {
                     let userInfo = try doc!.data(as: UserProfile.self)
-                    guard var info = userInfo else { return }
+                    guard var info = userInfo else { completion(emptyProfile); return }
                     info.id = doc!.documentID
                     completion(info)
-                    
-                } catch { completion(UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")); return }
+                    return
+                } catch { completion(emptyProfile); return }
             }
         }
     }
@@ -564,6 +567,7 @@ extension UIViewController {
     func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
         
         var failed = false
+        var success = false
         
         let fullWidth: CGFloat = UIScreen.main.bounds.width - 100
         if images.isEmpty { print("empty"); completion([], false); return } /// complete immediately for no  image post
@@ -577,7 +581,6 @@ extension UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 18) {
             /// no downloaded URLs means that this post isnt even close to uploading so trigger failed upload earlier to avoid making the user wait
             if progressFill.bounds.width != fullWidth && !URLs.contains(where: {$0 != ""}) && !failed {
-                print("run failed 1")
                 failed = true
                 completion([], true)
                 return
@@ -586,8 +589,7 @@ extension UIViewController {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
             /// run failed upload on second try if it wasnt already run
-            if progressFill.bounds.width != fullWidth && !failed {
-                print("run failed 2")
+            if progressFill.bounds.width != fullWidth && !failed && !success {
                 failed = true
                 completion([], true)
                 return
@@ -636,6 +638,7 @@ extension UIViewController {
 
                     if index == images.count {
                         DispatchQueue.main.async {
+                            success = true
                             completion(URLs, false)
                             return
                         }
@@ -723,9 +726,6 @@ extension UIViewController {
             
             db.collection("spots").document(spot.id!).setData(spotValues, merge: true)
                         
-            /// visitorList empty here since new spot
-            setUserValues(poster: uid, post: post, spotID: spot.id!, visitorList: [])
-                        
             if submitPublic { db.collection("submissions").document(spot.id!).setData(["spotID" : spot.id!])}
             self.setSpotLocations(spotLocation: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), spotID: spot.id!)
             
@@ -739,8 +739,6 @@ extension UIViewController {
             /// increment users spot score by 6
         default:
             
-            setUserValues(poster: uid, post: post, spotID: spot.id!, visitorList: spot.visitorList)
-            
             /// run spot transactions
             var posters = post.addedUsers ?? []
             posters.append(uid)
@@ -752,7 +750,32 @@ extension UIViewController {
         }
     }
     
-    func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String]) {
+    func uploadMap(map: CustomMap, newMap: Bool) {
+        let db: Firestore = Firestore.firestore()
+        let uid = UserDataModel.shared.uid
+        let timestamp = Timestamp(date: Date())
+        let mapRef = db.collection("maps").document(map.id!)
+        var uploadMap = map
+        uploadMap.postTimestamps.append(timestamp)
+        
+        do {
+            try mapRef.setData(from: uploadMap, merge: true)
+        } catch {
+            print("failed uploading map")
+        }
+        
+        let userRef = db.collection("users").document(uid).collection("mapsList").document(map.id!)
+        var userMap = uploadMap
+        userMap.userTimestamp = timestamp
+        
+        do {
+            try userRef.setData(from: userMap, merge: true)
+        } catch {
+            print("failed uploading user map")
+        }
+    }
+    
+    func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String) {
         
         let tag = post.tag ?? ""
         let addedUsers = post.addedUsers ?? []
@@ -769,10 +792,10 @@ extension UIViewController {
                 if visitorList.contains(where: {$0 == poster}) {
                     db.collection("users").document(poster).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayUnion([post.id!])])
                 } else {
-                    db.collection("users").document(poster).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : post.timestamp, "postsList" : [post.id!], "city": post.city!], merge:true)
+                    db.collection("users").document(poster).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : Timestamp(date: Date()), "postsList" : [post.id!], "city": post.city!], merge:true)
                 }
             }
-
+            
             /// increment addedUsers spotScore by 1
             var userValues = ["spotScore" : FieldValue.increment(Int64(3))]
             if tag != "" { userValues["tagDictionary.\(tag)"] = FieldValue.increment(Int64(1)) }
@@ -784,6 +807,31 @@ extension UIViewController {
             
             db.collection("users").document(poster).updateData(userValues)
         }
+    }
+    func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
+        var queriedUsers: [UserProfile] = []
+        let usernameList = userList.map({$0.username})
+        let nameList = userList.map({$0.name})
+        
+        let filteredUsernames = searchText.isEmpty ? usernameList : usernameList.filter({(dataString: String) -> Bool in
+            // If dataItem matches the searchText, return true to include it
+            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
+        })
+        
+        let filteredNames = searchText.isEmpty ? nameList : nameList.filter({(dataString: String) -> Bool in
+            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
+        })
+        
+        for username in filteredUsernames {
+            if let user = userList.first(where: {$0.username == username}) { queriedUsers.append(user) }
+        }
+        
+        for name in filteredNames {
+            if let user = userList.first(where: {$0.name == name}) {
+                if !queriedUsers.contains(where: {$0.id == user.id}) { queriedUsers.append(user) }
+            }
+        }
+        return queriedUsers
     }
 }
 
@@ -1395,7 +1443,9 @@ extension UIView {
                 let days = timeSincePost / 86400
                 return "\(days)d"
             }
-        } else {
+        }
+        
+        else {
             // return date
             let timeInterval = TimeInterval(integerLiteral: seconds)
             let date = Date(timeIntervalSince1970: timeInterval)
