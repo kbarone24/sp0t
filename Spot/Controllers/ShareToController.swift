@@ -9,19 +9,29 @@
 import Foundation
 import UIKit
 import Firebase
+import FirebaseUI
+import SnapKit
 
 class ShareToController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore = Firestore.firestore()
+    
+    var newMap: CustomMap?
     private lazy var customMaps: [CustomMap] = []
     
     private var buttonView: UIView!
-    private var friendsButton, shareButton: UIButton!
-    private var publicButton: UIButton?
+    private var shareButton: UIButton!
     private var tableView: UITableView!
+    private var heightConstraint: Constraint? = nil
     
     private var progressBar: UIView!
     private var progressFill: UIView!
+    
+    /// tableViewConstraint helpers
+    let rowHeight: CGFloat = 63
+    let headerHeight: CGFloat = 54
+    let topBoundary: CGFloat = 120
+    let bottomBoundary: CGFloat = 138
     
     override func viewDidLoad() {
         
@@ -69,58 +79,35 @@ class ShareToController: UIViewController {
     func addButtons() {
         /// work bottom to top laying out views
         shareButton = UIButton {
-            $0.frame = CGRect(x: (UIScreen.main.bounds.width - 240)/2, y: UIScreen.main.bounds.height - 120, width: 240, height: 60)
             $0.setImage(UIImage(named: "ShareButton"), for: .normal)
             $0.addTarget(self, action: #selector(shareTap(_:)), for: .touchUpInside)
-            $0.isEnabled = false
             view.addSubview($0)
         }
-
-        let spotPrivacy = UploadPostModel.shared.spotObject == nil ? "public" : UploadPostModel.shared.spotObject.privacyLevel
-        let buttonCount = spotPrivacy == "public" ? 2 : 1
-        let shortHeight: CGFloat = 77
-        let tallHeight: CGFloat = 152
-        let viewHeight: CGFloat = buttonCount == 2 ? tallHeight : shortHeight
-        
-        buttonView = UIView {
-            $0.frame = CGRect(x: 0, y: shareButton.frame.minY - viewHeight - 46, width: UIScreen.main.bounds.width, height: viewHeight)
-            view.addSubview($0)
-        }
-        
-        if buttonCount == 2 {
-            publicButton = UIButton {
-                $0.frame = CGRect(x: 17, y: 87, width: UIScreen.main.bounds.width - 42, height: 65)
-                $0.backgroundColor = nil
-                $0.setImage(UIImage(named: "PublicMapUnselected"), for: .normal)
-                $0.setImage(UIImage(named: "PublicMapUnselected"), for: .highlighted)
-                $0.addTarget(self, action: #selector(publicTap(_:)), for: .touchUpInside)
-                $0.tag = 0
-                buttonView.addSubview($0)
-            }
-            
-        } else {
-            buttonView.frame = CGRect(x: buttonView.frame.minX, y: buttonView.frame.minY, width: buttonView.frame.width, height: shortHeight)
-        }
-        
-        friendsButton = UIButton {
-            $0.frame = CGRect(x: 17, y: 12, width: UIScreen.main.bounds.width - 42, height: 65)
-            $0.backgroundColor = nil
-            $0.setImage(UIImage(named: "FriendsMapUnselected"), for: .normal)
-            $0.setImage(UIImage(named: "FriendsMapUnselected"), for: .highlighted)
-            $0.addTarget(self, action: #selector(friendsTap(_:)), for: .touchUpInside)
-            $0.tag = 0
-            buttonView.addSubview($0)
+        shareButton.snp.makeConstraints {
+            $0.bottom.equalToSuperview().offset(-48)
+            $0.width.equalTo(240)
+            $0.height.equalTo(60)
+            $0.centerX.equalToSuperview()
         }
     }
     
     func addTableView() {
-        tableView = UITableView {
-            $0.frame = CGRect(x: 0, y: 100, width: UIScreen.main.bounds.width, height: 300)
-            $0.backgroundColor = nil
-            $0.separatorStyle = .none
-            $0.dataSource = self
-            $0.delegate = self
-            $0.showsVerticalScrollIndicator = false
+        tableView = UITableView(frame: .zero, style: .grouped)
+        tableView.backgroundColor = nil
+        tableView.separatorStyle = .none
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.showsVerticalScrollIndicator = false
+        tableView.isScrollEnabled = false
+        tableView.register(CustomMapsHeader.self, forHeaderFooterViewReuseIdentifier: "MapsHeader")
+        tableView.register(CustomMapUploadCell.self, forCellReuseIdentifier: "MapCell")
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tableView)
+        tableView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(shareButton.snp.top).offset(-30)
+            $0.top.greaterThanOrEqualToSuperview().offset(topBoundary)
+            $0.height.equalTo(80) /// just big enough for header to start
         }
     }
     
@@ -145,7 +132,7 @@ class ShareToController: UIViewController {
     
     func getCustomMaps() {
         let db = Firestore.firestore()
-        let query = db.collection("users").document(uid).collection("mapsList").order(by: "timestamp", descending: true)
+        let query = db.collection("maps").whereField("memberIDs", arrayContains: uid)
         
         query.getDocuments { [weak self] snap, err in
             guard let self = self else { return }
@@ -167,37 +154,19 @@ class ShareToController: UIViewController {
     }
     
     func reloadTable() {
-        DispatchQueue.main.async { self.tableView.reloadData() }
+        DispatchQueue.main.async {
+            let headerHeight: CGFloat = self.newMap == nil ? 84 : 30
+            let height = (CGFloat(self.customMaps.count) * 63) + headerHeight
+            let maxHeight = UIScreen.main.bounds.height - self.bottomBoundary - self.topBoundary
+            self.tableView.snp.updateConstraints {
+                $0.height.equalTo(min(height, maxHeight))
+            }
+            self.tableView.isScrollEnabled = height > maxHeight
+            self.tableView.reloadData()
+        }
     }
     
-    
-    @objc func friendsTap(_ sender: UIButton) {
-        friendsButton.tag = friendsButton.tag == 0 ? 1 : 0
-        setFriendsValues()
-    }
-    
-    func setFriendsValues() {
-        let image = friendsButton.tag == 0 ? UIImage(named: "FriendsMapUnselected") : UIImage(named: "FriendsMapSelected")
-        friendsButton.setImage(image, for: .normal)
-                
-        shareButton.isEnabled = friendsButton.tag == 1 /// friends always enabled when public is so only need to check if friends selected
-        friendsButton.isEnabled = !(publicButton != nil && publicButton!.tag == 1)
-    }
-    
-    @objc func publicTap(_ sender: UIButton) {
-    
-        publicButton!.tag = publicButton!.tag == 0 ? 1 : 0
-        setPublicValues()
-        setFriendsValues()
-    }
-    
-    func setPublicValues() {
-        let image = publicButton!.tag == 0 ? UIImage(named: "PublicMapUnselected") : UIImage(named: "PublicMapSelected")
-        publicButton!.setImage(image, for: .normal)
-
-        friendsButton.tag = publicButton!.tag
-    }
-        
+            
     @objc func shareTap(_ sender: UIButton) {
         
         shareButton.isEnabled = false
@@ -206,9 +175,14 @@ class ShareToController: UIViewController {
         /// make sure all post values are set for upload
         /// make sure there is a spot object attached to this post if posting to a spot
         /// need to enable create new spot
-        setPostValues()
+        UploadPostModel.shared.setFinalPostValues()
+        if newMap == nil && UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
 
+        let uid = uid
         let post = UploadPostModel.shared.postObject!
+        let spot = UploadPostModel.shared.spotObject
+        let map = UploadPostModel.shared.mapObject
+        let newMap = self.newMap != nil
         
         DispatchQueue.global(qos: .userInitiated).async {
             self.uploadPostImage(post.postImage, postID: post.id!, progressFill: self.progressFill) { [weak self] imageURLs, failed in
@@ -219,51 +193,33 @@ class ShareToController: UIViewController {
                     return
                 }
                 
-                
                 UploadPostModel.shared.postObject.imageURLs = imageURLs
                 UploadPostModel.shared.postObject.timestamp = Firebase.Timestamp(date: Date())
                 let post = UploadPostModel.shared.postObject!
+                
                 self.uploadPost(post: post)
 
-                if UploadPostModel.shared.spotObject != nil {
-                    let spot = UploadPostModel.shared.spotObject!
-                    UploadPostModel.shared.spotObject.imageURL = imageURLs.first ?? ""
+                if spot != nil {
+                    var spot = spot!
+                    spot.imageURL = imageURLs.first ?? ""
                     self.uploadSpot(post: post, spot: spot, submitPublic: false)
-                    
-                } else {
-                    /// set user values called through upload spot if there's a spot atatched to this post
-                    self.setUserValues(poster: self.uid, post: post, spotID: "", visitorList: [])
                 }
+                
+                if map != nil {
+                    var map = map!
+                    if map.imageURL == "" { map.imageURL = imageURLs.first ?? "" }
+                    self.uploadMap(map: map, newMap: newMap)
+                }
+                
+                let visitorList = spot?.visitorList ?? []
+                self.setUserValues(poster: uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
                 
                 self.popToMap()
                 UploadPostModel.shared.destroy()
             }
         }
     }
-    
-    func setPostValues() {
-        
-        var taggedProfiles: [UserProfile] = []
-
-        let word = UploadPostModel.shared.postObject.caption.split(separator: " ")
-        
-        for w in word {
-            let username = String(w.dropFirst())
-            if w.hasPrefix("@") {
-                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
-                    UploadPostModel.shared.postObject.taggedUsers!.append(username)
-                    UploadPostModel.shared.postObject.taggedUserIDs!.append(f.id!)
-                    taggedProfiles.append(f)
-                }
-            }
-        }
-        
-        var postFriends =  UploadPostModel.shared.postObject.privacyLevel == "invite" ? UploadPostModel.shared.spotObject.inviteList!.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
-        if !postFriends.contains(uid) { postFriends.append(uid) }
-        UploadPostModel.shared.postObject.friendsList = postFriends
-        UploadPostModel.shared.postObject.privacyLevel = publicButton?.tag ?? 0 == 1 ? "public" : "friends"
-    }
-    
+            
     func runFailedUpload() {
         showFailAlert()
         /// save to drafts
@@ -292,13 +248,163 @@ class ShareToController: UIViewController {
     }
 }
 
+extension ShareToController: NewMapDelegate {
+    func finishPassing(map: CustomMap) {
+        newMap = map
+        customMaps.append(map)
+        selectMap(map: map)
+    }
+    
+    func selectMap(map: CustomMap) {
+        UploadPostModel.shared.mapObject = map
+        UploadPostModel.shared.postObject.mapID = map.id!
+        UploadPostModel.shared.postObject.mapName = map.mapName
+        DispatchQueue.main.async { self.reloadTable() }
+    }
+}
+
 extension ShareToController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 0
+        return customMaps.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? CustomMapUploadCell {
+            let map = customMaps[indexPath.row]
+            cell.setUp(map: map, selected: UploadPostModel.shared.postObject.mapID == map.id!)
+            return cell
+        }
         return UITableViewCell()
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return rowHeight
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return newMap == nil ? headerHeight : 0
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        guard let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "MapsHeader") as? CustomMapsHeader else { return UIView() }
+        return header
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        selectMap(map: customMaps[indexPath.row])
+    }
+}
+
+class CustomMapsHeader: UITableViewHeaderFooterView {
+    var newMapButton: UIButton!
+    var plusIcon: UIImageView!
+    var mapLabel: UILabel!
+    
+    override init(reuseIdentifier: String?) {
+        super.init(reuseIdentifier: reuseIdentifier)
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = nil
+        self.backgroundView = backgroundView
+
+        newMapButton = UIButton {
+            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+            $0.addTarget(self, action: #selector(newMapTap(_:)), for: .touchUpInside)
+            $0.layer.cornerRadius = 11
+            addSubview($0)
+        }
+
+        newMapButton.snp.makeConstraints {
+            $0.leading.equalTo(17)
+            $0.top.equalTo(0)
+            $0.width.equalTo(119)
+            $0.height.equalTo(38)
+        }
+        
+        plusIcon = UIImageView {
+            $0.image = UIImage(named: "PlusIcon")
+            newMapButton.addSubview($0)
+        }
+        plusIcon.snp.makeConstraints {
+            $0.leading.top.equalTo(12)
+            $0.width.height.equalTo(15)
+        }
+        
+        mapLabel = UILabel {
+         //   $0.frame = CGRect(x: plusIcon.frame.maxX + 8, y: 10, width: 80, height: 19)
+            $0.text = "New map"
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 15.5)
+            newMapButton.addSubview($0)
+        }
+        mapLabel.snp.makeConstraints {
+            $0.leading.equalTo(plusIcon.snp.trailing).offset(8)
+            $0.top.equalTo(10)
+            $0.width.equalTo(80)
+            $0.height.equalTo(19)
+        }
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    @objc func newMapTap(_ sender: UIButton) {
+        if let shareVC = viewContainingController() as? ShareToController {
+            if let newMapVC = shareVC.storyboard?.instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
+                newMapVC.delegate = shareVC
+                shareVC.present(newMapVC, animated: true)
+            }
+        }
+    }
+}
+
+class CustomMapUploadCell: UITableViewCell {
+    var pillView: UIView!
+    var mapImage: UIImageView!
+    var nameLabel: UILabel!
+    var selectedImage: UIImageView!
+    
+    func setUp(map: CustomMap, selected: Bool) {
+        backgroundColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1)
+        selectionStyle = .none
+        
+        pillView = UIView {
+            $0.frame = CGRect(x: 15, y: 5, width: UIScreen.main.bounds.width - 30, height: 53)
+            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+            $0.layer.cornerRadius = 12
+            contentView.addSubview($0)
+        }
+        
+        mapImage = UIImageView {
+            $0.frame = CGRect(x: 9, y: 9, width: 34, height: 34)
+            $0.layer.cornerRadius = 17
+            $0.clipsToBounds = true
+            $0.contentMode = .scaleAspectFill
+
+            let url = map.imageURL
+            if map.coverImage != UIImage () {
+                $0.image = map.coverImage
+            } else if url != "" {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+                $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            }
+            pillView.addSubview($0)
+        }
+        
+        nameLabel = UILabel {
+            $0.frame = CGRect(x: mapImage.frame.maxX + 8, y: 17, width: pillView.bounds.width - 100, height: 18)
+            $0.text = map.mapName
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 18)
+            pillView.addSubview($0)
+        }
+        
+        let buttonImage = selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
+        selectedImage = UIImageView {
+            $0.frame = CGRect(x: pillView.bounds.width - 43, y: 12, width: 29, height: 29)
+            $0.image = buttonImage
+            pillView.addSubview($0)
+        }
     }
 }

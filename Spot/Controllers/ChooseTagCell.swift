@@ -35,9 +35,10 @@ class ChooseTagCell: UITableViewCell {
         let maxSpacing = ((UIScreen.main.bounds.width - 0.1) - (tagWidth * 6) - 36) / 5
         interitemSpacing = min(maxSpacing, 10)
         
-        let tagLayout = UICollectionViewFlowLayout()
-        tagLayout.minimumLineSpacing = 8
-        tagLayout.minimumInteritemSpacing = interitemSpacing
+        let tagLayout = UICollectionViewFlowLayout {
+            $0.minimumLineSpacing = 8
+            $0.minimumInteritemSpacing = interitemSpacing
+        }
         
         chooseTagCollection = UICollectionView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: bounds.height), collectionViewLayout: tagLayout)
         chooseTagCollection.backgroundColor = .white
