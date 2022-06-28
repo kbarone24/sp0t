@@ -182,20 +182,20 @@ class DrawerView: NSObject {
     }
     
     // MARK: Set position functions
-    private func goTop() {
+    private func goTop() -> (() -> Void)? {
         topConstraints?.activate()
         yPosition = 0
-        self.status = DrawerViewStatus.Top
+        return { self.status = DrawerViewStatus.Top }
     }
-    private func goMid() {
+    private func goMid() -> (() -> Void)? {
         midConstraints?.activate()
         yPosition = (0.45 * self.parentVC.view.frame.height)
-        self.status = DrawerViewStatus.Middle
+        return { self.status = DrawerViewStatus.Middle }
     }
-    private func goBottom() {
+    private func goBottom() -> (() -> Void)? {
         botConstraints?.activate()
         yPosition = self.parentVC.view.frame.height - 100
-        self.status = DrawerViewStatus.Bottom
+        return { self.status = DrawerViewStatus.Bottom }
     }
     
     private func toggleDrag(to: Bool) {
@@ -218,6 +218,8 @@ class DrawerView: NSObject {
             recognizer.setTranslation(.zero, in: recognizer.view)
         }
         else{
+            
+            var completeionFunc: (() -> Void)?
             // Check the velocity of gesture to determine if it's a swipe or a drag
             if abs(recognizer.velocity(in: recognizer.view).y) > 1000 {
                 // This is a swipe
@@ -227,23 +229,23 @@ class DrawerView: NSObject {
                 // Switch available detents set in initial and set animation duration, yPosition and status
                 switch detents[detentsPointer] {
                 case .Bottom:
-                    goBottom()
+                    completeionFunc = goBottom()
                 case .Middle:
-                    goMid()
+                    completeionFunc = goMid()
                 case .Top:
-                    goTop()
+                    completeionFunc = goTop()
                 }
             } else {
                 // This is a drag
                 // Determine what area the drawer view is in and set animation duration, yPosition, status and detentsPointer to the nearest position
                 if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 && detents.contains(.Bottom) {
-                    goBottom()
+                    completeionFunc = goBottom()
                     detentsPointer = detents.firstIndex(of: .Bottom)!
                 } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 && detents.contains(.Top) {
-                    goTop()
+                    completeionFunc = goTop()
                     detentsPointer = detents.firstIndex(of: .Top)!
                 } else if detents.contains(.Middle) {
-                    goMid()
+                    completeionFunc = goMid()
                     detentsPointer = detents.firstIndex(of: .Middle)!
                 }
             }
@@ -257,6 +259,8 @@ class DrawerView: NSObject {
             UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
                 self.slideView.frame.origin.y = self.yPosition
                 self.parentVC.view.layoutIfNeeded()
+            } completion: { success in
+                completeionFunc!()
             }
         }
     }
