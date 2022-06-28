@@ -24,14 +24,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         db.settings = settings
         
         /// set navigation bar appearance with gradient
-        UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrowDark")
-        UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage(named: "BackArrowDark")
-        UINavigationBar.appearance().tintColor = .black
+        //UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrowDark")
+        //UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage(named: "BackArrowDark")
         
         // Sets the translucent background color
-        //UINavigationBar.appearance().backgroundColor = .clear
         // Set translucent. (Default value is already true, so this can  be removed if desired.)
-        //UINavigationBar.appearance().isTranslucent = true
+        UINavigationBar.appearance().isTranslucent = true
+        //UINavigationBar.appearance().edgesForExtendedLayout = UIRectEdge.none
+        
 
         
         /// set bar button appearance (remove "back" from back buttons)
@@ -50,9 +50,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         let navigationBarAppearance = UINavigationBarAppearance()
         navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 19)!]
-        navigationBarAppearance.backgroundColor = nil
-        navigationBarAppearance.backgroundImage = UIImage(named: "BackArrowDark")
-        navigationBarAppearance.shadowImage = UIImage()
+        navigationBarAppearance.backgroundColor = .white
+        //navigationBarAppearance.backgroundImage = UIImage(named: "BackArrowDark")
+        //navigationBarAppearance.shadowImage = UIImage()
         
         IQKeyboardManager.shared.enable = true
         IQKeyboardManager.shared.enableAutoToolbar = true
