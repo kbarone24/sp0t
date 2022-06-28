@@ -425,20 +425,20 @@ PODS:
     - MapboxMobileEvents (= 1.0.7)
     - Turf (~> 2.0)
   - MapboxMobileEvents (1.0.7)
-  - Mixpanel-swift (3.2.6):
-    - Mixpanel-swift/Complete (= 3.2.6)
-  - Mixpanel-swift/Complete (3.2.6)
+  - Mixpanel-swift (3.3.0):
+    - Mixpanel-swift/Complete (= 3.3.0)
+  - Mixpanel-swift/Complete (3.3.0)
   - nanopb (1.30906.0):
     - nanopb/decode (= 1.30906.0)
     - nanopb/encode (= 1.30906.0)
   - nanopb/decode (1.30906.0)
   - nanopb/encode (1.30906.0)
   - PromisesObjC (1.2.12)
-  - Protobuf (3.21.1)
+  - Protobuf (3.21.2)
   - RSKImageCropper (4.0.0)
-  - SDWebImage (5.12.5):
-    - SDWebImage/Core (= 5.12.5)
-  - SDWebImage/Core (5.12.5)
+  - SDWebImage (5.13.0):
+    - SDWebImage/Core (= 5.13.0)
+  - SDWebImage/Core (5.13.0)
   - SnapKit (5.6.0)
   - Turf (2.4.0)
 
@@ -557,12 +557,12 @@ SPEC CHECKSUMS:
   MapboxCoreMaps: 418b6e02464c00d7227e778164f6ca67755ae6a1
   MapboxMaps: fc490ab5b8df6f74a82d35c56bc2ea4d576ad4ee
   MapboxMobileEvents: f7f3e8daeb4b83688ae62a4172dce79169a97233
-  Mixpanel-swift: ce120e0d51dcb0d0bf5a25e1ee232fe89ad1136b
+  Mixpanel-swift: 6ffe368bcfc3b538f540f31372bc798afd90c1ad
   nanopb: 59317e09cf1f1a0af72f12af412d54edf52603fc
   PromisesObjC: 3113f7f76903778cf4a0586bd1ab89329a0b7b97
-  Protobuf: 9e88c1e667d75aa2491d211f26ccddde4e8ad4cf
+  Protobuf: 818c6a87e44193a77f56b87c6a1c106efda7e062
   RSKImageCropper: 90dfe482402fb8a40cabd5fea65186d9102cc425
-  SDWebImage: 0905f1b7760fc8ac4198cae0036600d67478751e
+  SDWebImage: 0327043dbb9533e75f2eff8445b3df0f2ceca6ac
   SnapKit: e01d52ebb8ddbc333eefe2132acf85c8227d9c25
   Turf: 60b93cfdc62758526bc7bf1ef191a829aeb9694d
 

@@ -97,18 +97,18 @@ class ImagePreviewController: UIViewController {
         var frameCounter = 0
         var frameIndexes: [Int] = []
         var aspectRatios: [CGFloat] = []
-        var imageLocations: [[String: Double]] = [[:]]
-
+        var imageLocations: [[String: Double]] = []
         if cameraObject != nil { UploadPostModel.shared.selectedObjects.append(cameraObject) }
         
         /// cycle through selected imageObjects and find individual sets of images / frames
         for obj in UploadPostModel.shared.selectedObjects {
+            let location = locationIsEmpty(location: obj.rawLocation) ? UserDataModel.shared.currentLocation : obj.rawLocation
+            imageLocations.append(["lat" : location!.coordinate.latitude, "long": location!.coordinate.longitude])
+           
             let images = obj.gifMode ? obj.animationImages : [obj.stillImage]
             selectedImages.append(contentsOf: images)
             frameIndexes.append(frameCounter)
             aspectRatios.append(selectedImages[frameCounter].size.height/selectedImages[frameCounter].size.width)
-            let location = locationIsEmpty(location: obj.rawLocation) ? UserDataModel.shared.currentLocation : obj.rawLocation
-            imageLocations.append(["lat" : location!.coordinate.latitude, "long": location!.coordinate.longitude])
 
             frameCounter += images.count
         }
@@ -125,6 +125,7 @@ class ImagePreviewController: UIViewController {
         if !locationIsEmpty(location: imageLocation) {
             post.postLat = imageLocation.coordinate.latitude
             post.postLong = imageLocation.coordinate.longitude
+            UploadPostModel.shared.setPostCity()
         }
         
         UploadPostModel.shared.postObject = post

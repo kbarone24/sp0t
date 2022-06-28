@@ -1,19 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "Group 21609.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "Group 21609-1.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "Group 21609-2.png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "AddCollaborator.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

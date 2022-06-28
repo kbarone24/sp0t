@@ -20,7 +20,6 @@ class NewMapController: UIViewController {
     var delegate: NewMapDelegate?
     
     var exitButton: UIButton!
-    var coverImage: UIImageView!
     var nameField: UITextField!
     var nameBorder: UIView!
     var collaboratorLabel: UILabel!
@@ -80,24 +79,11 @@ class NewMapController: UIViewController {
             $0.height.width.equalTo(35)
         }
         
-        coverImage = UIImageView {
-            $0.image = mapObject.coverImage!
-            $0.layer.cornerRadius = 19
-            $0.contentMode = .scaleAspectFill
-            $0.clipsToBounds = true
-            view.addSubview($0)
-        }
-        coverImage.snp.makeConstraints {
-            $0.top.equalTo(22)
-            $0.height.width.equalTo(114)
-            $0.centerX.equalToSuperview()
-        }
-        
         nameField = UITextField {
             $0.textColor = UIColor.black.withAlphaComponent(0.8)
-            $0.keyboardDistanceFromTextField = 300
+            $0.keyboardDistanceFromTextField = 250
             $0.attributedPlaceholder = NSAttributedString(string: "Map name", attributes: [NSAttributedString.Key.foregroundColor: UIColor.black.withAlphaComponent(0.4)])
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 21)
+            $0.font = UIFont(name: "SFCompactText-Heavy", size: 22)
             $0.textAlignment = .center
             $0.tintColor = UIColor(named: "SpotGreen")
             $0.autocapitalizationType = .sentences
@@ -106,7 +92,7 @@ class NewMapController: UIViewController {
         }
         nameField.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(margin)
-            $0.top.equalTo(coverImage.snp.bottom).offset(8)
+            $0.top.equalTo(70)
             $0.height.equalTo(32)
         }
         
@@ -129,7 +115,7 @@ class NewMapController: UIViewController {
         }
         collaboratorLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(margin)
-            $0.top.equalTo(nameField.snp.bottom).offset(30)
+            $0.top.equalTo(nameField.snp.bottom).offset(40)
             $0.width.equalTo(150)
             $0.height.equalTo(18)
         }
@@ -164,7 +150,7 @@ class NewMapController: UIViewController {
         }
         secretLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(margin)
-            $0.top.equalTo(collaboratorsCollection.snp.bottomMargin).offset(30)
+            $0.top.equalTo(collaboratorsCollection.snp.bottomMargin).offset(35)
             $0.width.equalTo(170)
             $0.height.equalTo(18)
         }
