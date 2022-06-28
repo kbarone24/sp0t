@@ -49,7 +49,20 @@ class DrawerView: NSObject {
     private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
     
     private var panRecognizer: UIPanGestureRecognizer?
-    private var status = DrawerViewStatus.Close
+    public var status = DrawerViewStatus.Close// {
+//        didSet {
+//            switch status {
+//            case .Bottom:
+//                present(to: .Bottom)
+//            case .Middle:
+//                present(to: .Middle)
+//            case .Top:
+//                present(to: .Top)
+//            case .Close:
+//                closeAction()
+//            }
+//        }
+//    }
     private var yPosition: CGFloat = 0
     private var topConstraints: Constraint? = nil
     private var midConstraints: Constraint? = nil
@@ -99,7 +112,7 @@ class DrawerView: NSObject {
         parentVC.view.addSubview(slideView)
         slideView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            topConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).offset(100).constraint
+            topConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).constraint
             midConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).offset(0.45 * parentVC.view.frame.height).constraint
             botConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.bottom).inset(100).constraint
             $0.height.equalTo(parentVC.view.snp.height)
@@ -153,6 +166,7 @@ class DrawerView: NSObject {
         case .Bottom:
             goBottom()
         }
+        print("myNav", myNav)
         detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
         if currentStatus.rawValue != to.rawValue {
             UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut, animations: {

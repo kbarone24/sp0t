@@ -12,9 +12,13 @@ import SnapKit
 class ProfileViewController: UIViewController {
     
     private var profileCollectionView: UICollectionView!
+    
+    private var lastYContentOffset: CGFloat?
+    
+    public var containerDrawerView: DrawerView?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         viewSetup()
     }
 }
@@ -36,6 +40,7 @@ extension ProfileViewController {
             return view
         }()
         view.addSubview(profileCollectionView)
+        profileCollectionView.isScrollEnabled = false
         profileCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -92,5 +97,17 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         UIView.animate(withDuration: 0.15) {
             collectionCell?.transform = .identity
         }
+    }
+}
+
+extension ProfileViewController: UIScrollViewDelegate {
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        <#code#>
+    }
+    
+    func scrollViewDidScrollToTop(_ scrollView: UIScrollView) {
+        profileCollectionView.isScrollEnabled = true
+        containerDrawerView?.status == .Top ?
     }
 }

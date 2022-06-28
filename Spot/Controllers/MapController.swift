@@ -415,6 +415,7 @@ class MapController: UIViewController {
         sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
+        profileVC.containerDrawerView = sheetView
         sheetView?.present(to: .Middle)
     }
     
