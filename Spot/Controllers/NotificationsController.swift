@@ -161,7 +161,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
             
             self.sortAndReload()
-
         }
    
     }
@@ -182,7 +181,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     func sortAndReload() {
         self.notifications = self.notifications.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
         self.pendingFriendRequests = self.pendingFriendRequests.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
-        self.refresh = .refreshEnabled
+        if(self.refresh != .refreshDisabled){ self.refresh = .refreshEnabled }
         self.tableView.reloadData()
         
     }
@@ -267,6 +266,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         //scrollview reloads data when user nears bottom of screen
         print(" ➡️ scrollViewDidScroll")
+        print("HEIGHT: ", scrollView.contentSize.height)
         if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 100)) && refresh == .refreshEnabled {
             print("👻 reached end")
             fetchNotifications(refresh: false)
