@@ -22,7 +22,7 @@ enum DrawerViewDetent: Int {
 }
 
 class DrawerView: NSObject {
-    private lazy var slideView = UIView {
+    public lazy var slideView = UIView {
         $0.backgroundColor = .clear
         $0.layer.cornerRadius = 10
         $0.layer.shadowColor = UIColor.black.cgColor
@@ -65,6 +65,7 @@ class DrawerView: NSObject {
         }
     }
     public var swipeDownToDismiss: Bool = false
+    public var swipeToNextState: Bool = true
     private var detents: [DrawerViewDetent] = [.Bottom, .Middle, .Top]
     private var detentsPointer = 0 {
         didSet {
@@ -222,7 +223,7 @@ class DrawerView: NSObject {
             
             var completeionFunc: (() -> Void)?
             // Check the velocity of gesture to determine if it's a swipe or a drag
-            if abs(recognizer.velocity(in: recognizer.view).y) > 1000 {
+            if swipeToNextState && abs(recognizer.velocity(in: recognizer.view).y) > 1000 {
                 // This is a swipe
                 // Swipe up velocity is smaller than 0
                 // Determine whether the detentsPointer shuld move forward or back according to the swipe direction

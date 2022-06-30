@@ -57,7 +57,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return section == 0 ? 1 : 5
+        return section == 0 ? 1 : 10
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -105,23 +105,31 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        
+        // Disable the bouncing effect when scroll view is scrolled to top
         if lastYContentOffset != nil {
-            if containerDrawerView?.status == .Top {
-                if scrollView.contentOffset.y <= lastYContentOffset! {
-                    scrollView.contentOffset.y = lastYContentOffset!
-                }
+            if containerDrawerView?.status == .Top && scrollView.contentOffset.y <= lastYContentOffset! {
+                scrollView.contentOffset.y = lastYContentOffset!
             }
         }
         
+        // Whenever drawer view is not in top position, scroll to top, disable scroll and set drawer view swipe to next state true
         if containerDrawerView?.status != .Top {
+            profileCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
             profileCollectionView.isScrollEnabled = false
+            containerDrawerView?.swipeToNextState = true
+        }
+    }
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        // When scroll to top this will be called last
+        if scrollView.contentOffset.y == lastYContentOffset ?? -50 && containerDrawerView?.status == .Top {
+            containerDrawerView?.swipeToNextState = true
         }
     }
 }
 
 extension ProfileViewController: UIGestureRecognizerDelegate {
-    @objc func onPan(_ recognizer: UIPanGestureRecognizer) {
+    @objc func onPan(_ recognizer: UIPanGestureRecognizer) {        
         // Swipe up y translation < 0
         // Swipe down y translation > 0
         let yTranslation = recognizer.translation(in: recognizer.view).y
@@ -132,11 +140,17 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
             lastYContentOffset = profileCollectionView.contentOffset.y
         }
         
-        // Enter full screen then enable collection view scrolling
+        // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction
         if containerDrawerView?.status == .Top && profileCollectionView.contentOffset.y <= lastYContentOffset ?? -50 {
             profileCollectionView.isScrollEnabled = true
+            containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
         }
 
+        // Preventing the drawer view to be dragged when it's status is top and user is scrolling down
+        if containerDrawerView?.status == .Top && profileCollectionView.contentOffset.y > lastYContentOffset ?? -50 && yTranslation > 0 && containerDrawerView?.swipeToNextState == false {
+            containerDrawerView?.slideView.frame.origin.y -= yTranslation
+        }
+        
         recognizer.setTranslation(.zero, in: recognizer.view)
     }
     
