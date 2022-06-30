@@ -47,7 +47,7 @@ extension ProfileBodyCell {
         
         mapImage = UIImageView {
             $0.image = R.image.signuplogo()
-            $0.contentMode = .scaleToFill
+            $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.cornerRadius = 14
             contentView.addSubview($0)
@@ -58,7 +58,7 @@ extension ProfileBodyCell {
         }
         
         privateIcon = UIImageView {
-            $0.image = R.image.settingsIcon()
+            $0.image = UIImage(named: "PrivateMap")
             $0.contentMode = .scaleAspectFit
             $0.layer.masksToBounds = true
             mapImage.addSubview($0)
@@ -92,38 +92,40 @@ extension ProfileBodyCell {
         }
         
         friendsIcon = UIImageView {
-            $0.image = UIImage(named: "Friends")
+            $0.image = UIImage(named: "Friends")?.withRenderingMode(.alwaysTemplate)
+            $0.tintColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
             $0.contentMode = .scaleAspectFit
             $0.layer.masksToBounds = true
             contentView.addSubview($0)
         }
         friendsIcon.snp.makeConstraints {
             $0.leading.equalTo(friendsCount.snp.trailing)
-            $0.top.equalTo(friendsCount)
-            $0.trailing.lessThanOrEqualToSuperview()
+            $0.top.equalTo(friendsCount).offset(4)
+            $0.width.equalTo(13.33)
+            $0.height.equalTo(10)
         }
         
         likesCount = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.text = "2 likes"
+            $0.text = " • 2 likes"
             contentView.addSubview($0)
         }
         likesCount.snp.makeConstraints {
             $0.leading.equalTo(friendsIcon.snp.trailing)
-            $0.top.equalTo(friendsIcon)
+            $0.top.equalTo(friendsCount)
             $0.trailing.lessThanOrEqualToSuperview()
         }
         
         postsCount = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.text = "2 posts"
+            $0.text = " • 2 posts"
             contentView.addSubview($0)
         }
         postsCount.snp.makeConstraints {
             $0.leading.equalTo(likesCount.snp.trailing)
-            $0.top.equalTo(likesCount)
+            $0.top.equalTo(friendsCount)
             $0.trailing.lessThanOrEqualToSuperview()
         }
         
