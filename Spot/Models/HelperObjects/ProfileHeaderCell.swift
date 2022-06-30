@@ -61,7 +61,7 @@ extension ProfileHeaderCell {
         profileImage.layer.cornerRadius = 84 / 2
 
         profileAvatar = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.avatarPic
+            $0.image = UserDataModel.shared.userInfo.avatarPic.withHorizontallyFlippedOrientation()
             $0.contentMode = .scaleAspectFit
             contentView.addSubview($0)
         }
@@ -76,6 +76,7 @@ extension ProfileHeaderCell {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.text = UserDataModel.shared.userInfo.name
+            $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
         profileName.snp.makeConstraints {
@@ -89,6 +90,7 @@ extension ProfileHeaderCell {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
             $0.text = UserDataModel.shared.userInfo.username
+            $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
         profileAccount.snp.makeConstraints {
@@ -99,11 +101,11 @@ extension ProfileHeaderCell {
         }
         
         locationButton = UIButton {
-            $0.setImage(R.image.locationIcon()?.withRenderingMode(.alwaysTemplate), for: .normal)
-            $0.tintColor = .gray
+            $0.setImage(UIImage(named: "ProfileLocation"), for: .normal)
             $0.setTitle("\(UserDataModel.shared.userCity)", for: .normal)
-            $0.setTitleColor(.lightGray, for: .normal)
-            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: -15, bottom: 0, right: 0)
+            $0.titleLabel?.adjustsFontSizeToFitWidth = true
+            $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
+            $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
             $0.addTarget(self, action: #selector(locationButtonAction), for: .touchUpInside)
             contentView.addSubview($0)
@@ -115,11 +117,11 @@ extension ProfileHeaderCell {
         }
         
         friendListButton = UIButton {
-            $0.setImage(R.image.friendNotification()?.withRenderingMode(.alwaysTemplate), for: .normal)
-            $0.tintColor = .gray
+            $0.setImage(UIImage(named: "Friends"), for: .normal)
             $0.setTitle("\(UserDataModel.shared.userInfo.friendsList.count) friends", for: .normal)
-            $0.setTitleColor(.lightGray, for: .normal)
-            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: -15, bottom: 0, right: 0)
+            $0.titleLabel?.adjustsFontSizeToFitWidth = true
+            $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
+            $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
             $0.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
             contentView.addSubview($0)
@@ -144,6 +146,6 @@ extension ProfileHeaderCell {
             $0.height.equalTo(37)
             $0.top.equalTo(profileImage.snp.bottom).offset(16)
         }
-        editButton.layer.cornerRadius = 37 / 2
+        editButton.layer.cornerRadius = 25
     }
 }

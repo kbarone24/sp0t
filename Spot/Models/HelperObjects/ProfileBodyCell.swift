@@ -92,8 +92,7 @@ extension ProfileBodyCell {
         }
         
         friendsIcon = UIImageView {
-            $0.image = R.image.friendNotification()?.withRenderingMode(.alwaysTemplate)
-            $0.tintColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
+            $0.image = UIImage(named: "Friends")
             $0.contentMode = .scaleAspectFit
             $0.layer.masksToBounds = true
             contentView.addSubview($0)
