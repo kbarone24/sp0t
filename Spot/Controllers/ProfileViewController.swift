@@ -129,7 +129,7 @@ extension ProfileViewController: UIScrollViewDelegate {
 }
 
 extension ProfileViewController: UIGestureRecognizerDelegate {
-    @objc func onPan(_ recognizer: UIPanGestureRecognizer) {        
+    @objc func onPan(_ recognizer: UIPanGestureRecognizer) {
         // Swipe up y translation < 0
         // Swipe down y translation > 0
         let yTranslation = recognizer.translation(in: recognizer.view).y
@@ -141,13 +141,21 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
         }
         
         // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction
-        if containerDrawerView?.status == .Top && profileCollectionView.contentOffset.y <= lastYContentOffset ?? -50 {
+        if
+            containerDrawerView?.status == .Top &&
+            profileCollectionView.contentOffset.y <= lastYContentOffset ?? -50
+        {
             profileCollectionView.isScrollEnabled = true
             containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
         }
 
         // Preventing the drawer view to be dragged when it's status is top and user is scrolling down
-        if containerDrawerView?.status == .Top && profileCollectionView.contentOffset.y > lastYContentOffset ?? -50 && yTranslation > 0 && containerDrawerView?.swipeToNextState == false {
+        if
+            containerDrawerView?.status == .Top &&
+            profileCollectionView.contentOffset.y > lastYContentOffset ?? -50 &&
+            yTranslation > 0 && containerDrawerView?.swipeToNextState == false &&
+            containerDrawerView!.slideView.frame.origin.y > 0
+        {
             containerDrawerView?.slideView.frame.origin.y -= yTranslation
         }
         
