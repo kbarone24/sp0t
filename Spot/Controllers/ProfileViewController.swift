@@ -12,9 +12,7 @@ import SnapKit
 class ProfileViewController: UIViewController {
     
     private var profileCollectionView: UICollectionView!
-    
     private var lastYContentOffset: CGFloat?
-    
     public var containerDrawerView: DrawerView?
     
     override func viewDidLoad() {
@@ -50,12 +48,6 @@ extension ProfileViewController {
             $0.edges.equalToSuperview()
         }
     }
-    
-//    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        if profileCollectionView.contentOffset.y <= lastYContentOffset ?? -50 && containerDrawerView?.status == .Top {
-//            profileCollectionView.isScrollEnabled = true
-//        }
-//    }
 }
 
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -113,44 +105,18 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        print("scrollViewDidScroll")
-        // Get the initial Top y position contentOffset
-        if containerDrawerView?.status == .Top && lastYContentOffset == nil {
-            lastYContentOffset = scrollView.contentOffset.y
-        }
-        
-//        scrollView.isScrollEnabled = containerDrawerView?.status == .Top ? true : false
         
         if lastYContentOffset != nil {
-            if scrollView.contentOffset.y < lastYContentOffset! {
-                scrollView.isScrollEnabled = false
+            if containerDrawerView?.status == .Top {
+                if scrollView.contentOffset.y <= lastYContentOffset! {
+                    scrollView.contentOffset.y = lastYContentOffset!
+                }
             }
         }
-    }
-    
-    func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
-        print("scrollViewWillBeginDecelerating")
-    }
-    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        print("scrollViewDidEndDecelerating")
-        // When profileCollectionView is scrolled to top and user stops scrolling, set scroll to false, so user can interact with drawerView
-        if scrollView.contentOffset.y <= lastYContentOffset ?? -50 {
-            scrollView.isScrollEnabled = false
+        
+        if containerDrawerView?.status != .Top {
+            profileCollectionView.isScrollEnabled = false
         }
-    }
-
-    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        print("scrollViewWillBeginDragging")
-    }
-    func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
-        print("scrollViewWillEndDragging")
-    }
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        print("scrollViewDidEndDragging")
-    }
-    
-    func scrollViewDidChangeAdjustedContentInset(_ scrollView: UIScrollView) {
-        print("scrollViewDidChangeAdjustedContentInset")
     }
 }
 
@@ -159,10 +125,19 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
         // Swipe up y translation < 0
         // Swipe down y translation > 0
         let yTranslation = recognizer.translation(in: recognizer.view).y
-        // When profileCollectionView is scrolled to top, drawerView is in top position and user swipes up, set scroll to true
-        if profileCollectionView.contentOffset.y <= lastYContentOffset ?? -50 && containerDrawerView?.status == .Top && yTranslation < 0 {
+        
+        
+        // Get the initial Top y position contentOffset
+        if containerDrawerView?.status == .Top && lastYContentOffset == nil {
+            lastYContentOffset = profileCollectionView.contentOffset.y
+        }
+        
+        // Enter full screen then enable collection view scrolling
+        if containerDrawerView?.status == .Top && profileCollectionView.contentOffset.y <= lastYContentOffset ?? -50 {
             profileCollectionView.isScrollEnabled = true
         }
+
+        recognizer.setTranslation(.zero, in: recognizer.view)
     }
     
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {

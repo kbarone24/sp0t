@@ -49,20 +49,7 @@ class DrawerView: NSObject {
     private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
     
     private var panRecognizer: UIPanGestureRecognizer?
-    public var status = DrawerViewStatus.Close// {
-//        didSet {
-//            switch status {
-//            case .Bottom:
-//                present(to: .Bottom)
-//            case .Middle:
-//                present(to: .Middle)
-//            case .Top:
-//                present(to: .Top)
-//            case .Close:
-//                closeAction()
-//            }
-//        }
-//    }
+    public var status = DrawerViewStatus.Close
     private var yPosition: CGFloat = 0
     private var topConstraints: Constraint? = nil
     private var midConstraints: Constraint? = nil
@@ -122,6 +109,7 @@ class DrawerView: NSObject {
         botConstraints?.deactivate()
         slideView.frame = CGRect(x: 0, y: parentVC.view.frame.height, width: parentVC.view.frame.width, height: parentVC.view.frame.height)
         panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(self.panPerforming(recognizer:)))
+        panRecognizer?.delegate = self
         slideView.addGestureRecognizer(panRecognizer!)
         myNav = UINavigationController(rootViewController: rootVC)
         myNav.delegate = self
@@ -158,20 +146,23 @@ class DrawerView: NSObject {
     
     public func present(to: DrawerViewDetent = .Middle) {
         let currentStatus = status
+        var completeionFunc: (() -> Void)?
         switch to {
         case .Top:
-            goTop()
+            completeionFunc = goTop()
         case .Middle:
-            goMid()
+            completeionFunc = goMid()
         case .Bottom:
-            goBottom()
+            completeionFunc = goBottom()
         }
-        print("myNav", myNav)
         detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
+        completeionFunc!()
         if currentStatus.rawValue != to.rawValue {
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut, animations: {
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut) {
                 self.slideView.frame.origin.y = self.yPosition
-            }, completion: nil)
+            } completion: { success in
+                completeionFunc!()
+            }
         } else {
             let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
             animation.values = [0, -20, 0]
@@ -185,17 +176,17 @@ class DrawerView: NSObject {
     private func goTop() -> (() -> Void)? {
         topConstraints?.activate()
         yPosition = 0
-        return { self.status = DrawerViewStatus.Top }
+        return { self.status = .Top }
     }
     private func goMid() -> (() -> Void)? {
         midConstraints?.activate()
-        yPosition = (0.45 * self.parentVC.view.frame.height)
-        return { self.status = DrawerViewStatus.Middle }
+        yPosition = (0.45 * parentVC.view.frame.height)
+        return { self.status = .Middle }
     }
     private func goBottom() -> (() -> Void)? {
         botConstraints?.activate()
-        yPosition = self.parentVC.view.frame.height - 100
-        return { self.status = DrawerViewStatus.Bottom }
+        yPosition = parentVC.view.frame.height - 100
+        return { self.status = .Bottom }
     }
     
     private func toggleDrag(to: Bool) {
@@ -211,6 +202,16 @@ class DrawerView: NSObject {
             if slideView.frame.minY >= 0 {
                 slideView.frame.origin.y += translation.y
             }
+            
+            // Change status according to the position when dragging
+            if slideView.frame.minY == 0 {
+                status = .Top
+            } else if slideView.frame.minY == (0.45 * parentVC.view.frame.height) {
+                status = .Middle
+            } else if slideView.frame.minY == (parentVC.view.frame.height - 100) {
+                status = .Bottom
+            }
+            
             // Prevent drawer view in top position can still scroll top
             if status == .Top && translation.y < 0 && slideView.frame.minY <= 0 {
                 slideView.frame.origin.y = 0
@@ -254,7 +255,7 @@ class DrawerView: NSObject {
             if self.slideView.frame.minY > (detents.contains(.Bottom) ? (self.parentVC.view.frame.height - 100) : (self.parentVC.view.frame.height * 0.6)) && swipeDownToDismiss {
                 myNav.popViewController(animated: true)
             }
-            
+            completeionFunc!()
             // Animate the drawer view to the set position
             UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
                 self.slideView.frame.origin.y = self.yPosition
@@ -288,5 +289,11 @@ extension DrawerView: UINavigationControllerDelegate {
     func navigationController(_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
         transitionAnimation.transitionMode = operation == .push ? .present : .pop
         return transitionAnimation
+    }
+}
+
+extension DrawerView: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 }
