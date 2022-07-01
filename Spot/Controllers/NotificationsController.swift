@@ -17,6 +17,14 @@ import FirebaseAuth
 import FirebaseMessaging
 import Geofirestore
 
+protocol delegateProtocol: AnyObject{
+    func printThis(myInt: Int)
+    func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification]
+    func showProfile()
+    func showPost()
+    func reloadTable()
+}
+
 class NotificationsController: UIViewController, UITableViewDelegate {
     var notifications: [UserNotification] = []
     var pendingFriendRequests: [UserNotification] = []
@@ -35,6 +43,12 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     var customView: UIView!
     
+    private var sheetView: DrawerView? {
+        didSet {
+            navigationController?.navigationBar.isHidden = sheetView == nil ? false : true
+        }
+    }
+    
     func fetchNotifications(refresh: Bool) {
         print("🏃🏽‍♀️ fetching")
         /// fetchGroup is the high-level dispatch for both fetches
@@ -47,6 +61,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         friendRequestQuery.getDocuments { [weak self] (snap, err) in
             guard let self = self else { return }
             guard let allDocs = snap?.documents else { print("leave 6"); fetchGroup.leave(); return }
+            print("📄 ALL DOCS: ", allDocs.count, "friendRequests: ", self.pendingFriendRequests.count)
             if allDocs.count == 0 || allDocs.count == self.pendingFriendRequests.count {
                 fetchGroup.leave();
                 return
@@ -64,7 +79,10 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                     notification.timeString = self.getTimeString(postTime: notification.timestamp)
                     
                     self.getUserInfo(userID: notification.senderID) { user in
+                        print(" 👄 RE-ADDING FRIEND REQUEST DATA")
                         notification.userInfo = user
+                        self.pendingFriendRequests.append(notification)
+                        self.pendingFriendRequests.append(notification)
                         self.pendingFriendRequests.append(notification)
                         friendRequestGroup.leave()
                     }
@@ -174,7 +192,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         }
         
         self.title = "Notifications"
-        
+
         setupView()
     }
     
@@ -203,7 +221,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             image: UIImage(named: "BackArrowDark"),
             style: .plain,
             target: self,
-            action: #selector(leave)
+            action: #selector(self.leaveNotifs(_:))
         )
         
         /*tableView = UITableView{
@@ -224,17 +242,20 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.dataSource = self
         tableView.delegate = self
         tableView.backgroundColor = .white
+        tableView.allowsSelection = true
         tableView.rowHeight = 70
         tableView.register(ActivityCell.self, forCellReuseIdentifier: "ActivityCell")
         tableView.register(FriendRequestCollectionCell.self, forCellReuseIdentifier: "FriendRequestCollectionCell")
-        tableView.separatorStyle = UITableViewCell.SeparatorStyle.none
-        view.addSubview(tableView)
+        tableView.isUserInteractionEnabled = true
+        self.tableView.separatorStyle = UITableViewCell.SeparatorStyle.none
+        view.addSubview(self.tableView)
          
         
     }
-    
-    @objc func leave(_ sender: Any){
-        print("idk yet")
+
+    @objc func leaveNotifs(_ sender: Any){
+        print("HELLOO?", sheetView)
+        //closeAction()
     }
     
     func getTimeString(postTime: Firebase.Timestamp) -> String {
@@ -262,7 +283,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
          
     }
-    
+        
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         //scrollview reloads data when user nears bottom of screen
         print(" ➡️ scrollViewDidScroll")
@@ -273,7 +294,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             refresh = .activelyRefreshing
         }
     }
-
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -283,6 +303,13 @@ class NotificationsController: UIViewController, UITableViewDelegate {
 
 // MARK: - UITableViewDataSource
 extension NotificationsController: UITableViewDataSource {
+    // table view data source methods
+        
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let userinfo = indexPath.row
+        print("BRO WHAT", userinfo, "/n")
+    }
     
     func numberOfSections(in tableView: UITableView) -> Int {
         if(pendingFriendRequests.count == 0 || notifications.count == 0 ){
@@ -360,14 +387,18 @@ extension NotificationsController: UITableViewDataSource {
         if(pendingFriendRequests.count == 0){
             let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as! ActivityCell
             let notif = notifications[indexPath.row]
-            cell.selectionStyle = .none
-            cell.backgroundColor = .white
+            cell.delegate = self
+            cell.selectionStyle = .default
+            if(notifications[indexPath.row].type == "friendRequest" && notifications[indexPath.row].status == "accepted"){
+                cell.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.2)
+            } else { cell.backgroundColor = .white }
             cell.set(notification: notif)
             return cell
         }
         else if (notifications.count == 0){
             let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCollectionCell") as! FriendRequestCollectionCell
             let notifs = pendingFriendRequests
+            cell.notificationDelegate = self
             cell.selectionStyle = .none
             cell.backgroundColor = .white
             cell.setUp(notifs: notifs)
@@ -377,6 +408,7 @@ extension NotificationsController: UITableViewDataSource {
             if(indexPath.section == 0){
                 let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCollectionCell") as! FriendRequestCollectionCell
                 let notifs = pendingFriendRequests
+                cell.notificationDelegate = self
                 cell.selectionStyle = .none
                 cell.backgroundColor = .white
                 cell.setUp(notifs: notifs)
@@ -385,8 +417,11 @@ extension NotificationsController: UITableViewDataSource {
             else{
                 let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as! ActivityCell
                 let notif = notifications[indexPath.row]
-                cell.selectionStyle = .none
-                cell.backgroundColor = .white
+                cell.delegate = self
+                cell.selectionStyle = .default
+                if(notifications[indexPath.row].type == "friendRequest" && notifications[indexPath.row].status == "accepted"){
+                    cell.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.2)
+                } else { cell.backgroundColor = .white }
                 cell.set(notification: notif)
                 return cell
             }
@@ -407,7 +442,6 @@ extension NotificationsController: UITableViewDataSource {
     
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        
         if(pendingFriendRequests.count == 0){
             return "ACTIVITY"
         }
@@ -423,6 +457,44 @@ extension NotificationsController: UITableViewDataSource {
             }
         }
     
-  // table view data source methods
+
     }
+        
 }
+
+// MARK: - delegateProtocol
+extension NotificationsController: delegateProtocol {
+
+    func printThis(myInt: Int){
+        print(myInt)
+    }
+    
+    func showProfile() {
+        let profileVC = ProfileViewController()
+         sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+             self.sheetView = nil
+         })
+         sheetView?.swipeDownToDismiss = true
+         sheetView?.present(to: .Top)
+    }
+    
+    func showPost(){
+        print("show posts using this function")
+    }
+    
+    func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification] {
+        guard let i1 = pendingFriendRequests.firstIndex(where: {$0.id == friendRequest.id}) else {
+            print("friend Request not found");
+            return []}
+        let friendID = pendingFriendRequests[i1].id!
+        pendingFriendRequests.remove(at: i1)
+        return pendingFriendRequests
+    }
+    
+    func reloadTable(){
+        self.tableView.reloadData()
+    }
+    
+    
+}
+
