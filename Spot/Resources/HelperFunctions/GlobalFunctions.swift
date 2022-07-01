@@ -252,6 +252,18 @@ extension UIViewController {
         }
     }
     
+    func setMapLocations(mapLocation: CLLocationCoordinate2D, documentID: String) {
+        let location = CLLocation(latitude: mapLocation.latitude, longitude: mapLocation.longitude)
+        
+        GeoFirestore(collectionRef: Firestore.firestore().collection("mapLocations")).setLocation(location: location, forDocumentWithID: documentID) { (error) in
+            if (error != nil) {
+                print("An error occured: \(String(describing: error))")
+            } else {
+                print("Saved location successfully!")
+            }
+        }
+    }
+    
     func addToCityList(city: String) {
         /// this should be a backend func but didnt feel like doing all the geocoding nonsense
         let db = Firestore.firestore()
@@ -751,11 +763,12 @@ extension UIViewController {
         }
     }
     
-    func uploadMap(map: CustomMap, newMap: Bool, postImageURL: String) {
+    func uploadMap(map: CustomMap, newMap: Bool, post: MapPost) {
         let uid = UserDataModel.shared.uid
         let db: Firestore = Firestore.firestore()
         let timestamp = Timestamp(date: Date())
         let mapRef = db.collection("maps").document(map.id!)
+        let postImageURL = post.imageURLs.first ?? ""
         var uploadMap = map
         uploadMap.postTimestamps.append(timestamp)
         
@@ -780,6 +793,10 @@ extension UIViewController {
                 print("failed uploading user map")
             }
         }
+        
+        let documentID = UUID().uuidString
+        db.collection("mapLocations").document(documentID).setData(["mapID": map.id!, "postID": post.id!])
+        setMapLocations(mapLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), documentID: documentID)
     }
     
     func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String) {

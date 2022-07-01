@@ -102,18 +102,25 @@ class PostInfoController: UIViewController {
             $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 40)
             view.addSubview($0)
         }
+        navView.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(40)
+        }
         
         cancelButton = UIButton {
-            $0.frame = CGRect(x: 3, y: 6, width: 33, height: 33)
             $0.setImage(UIImage(named: "PostInfoCancel"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
             $0.imageView?.contentMode = .scaleAspectFill
             navView.addSubview($0)
         }
+        cancelButton.snp.makeConstraints {
+            $0.leading.equalTo(3)
+            $0.top.equalTo(6)
+            $0.width.height.equalTo(33)
+        }
         
         doneButton = UIButton {
-            $0.frame = CGRect(x: navView.bounds.width - 63, y: 10, width: 53, height: 30)
             $0.setTitle("Done", for: .normal)
             $0.setTitleColor(.black, for: .normal)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Heavy", size: 17)
@@ -121,32 +128,52 @@ class PostInfoController: UIViewController {
             $0.addTarget(self, action: #selector(doneTap(_:)), for: .touchUpInside)
             navView.addSubview($0)
         }
+        doneButton.snp.makeConstraints {
+            $0.trailing.top.equalTo(10)
+            $0.width.equalTo(53)
+            $0.height.equalTo(30)
+        }
     }
     
     func addMap() {
         mapContainer = UIView {
-            $0.frame = CGRect(x: 0, y: navView.frame.maxY, width: UIScreen.main.bounds.width, height: 170)
             $0.backgroundColor = .black
             view.addSubview($0)
+        }
+        mapContainer.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(navView.snp.bottom)
+            $0.height.equalTo(170)
         }
     }
     
     func addPicker() {
                 
         postInfoSeg = PostInfoSeg {
-            $0.frame = CGRect(x: 0, y: mapContainer.frame.maxY, width: UIScreen.main.bounds.width, height: 50)
             $0.setSelected(index: selectedSegmentIndex)
             view.addSubview($0)
         }
+        postInfoSeg.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(mapContainer.snp.bottom)
+            $0.height.equalTo(50)
+        }
         
         pickerContainer = UIView {
-            $0.frame = CGRect(x: 0, y: postInfoSeg.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - mapContainer.frame.maxY)
             view.addSubview($0)
+        }
+        pickerContainer.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.top.equalTo(postInfoSeg.snp.bottom)
+            $0.bottom.equalToSuperview()
         }
         
         searchBarContainer = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 50)
             pickerContainer.addSubview($0)
+        }
+        searchBarContainer.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(50)
         }
         
         searchBar = UISearchBar {
@@ -163,9 +190,14 @@ class PostInfoController: UIViewController {
             $0.keyboardDistanceFromTextField = 250
             pickerContainer.addSubview($0)
         }
+        searchBar.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.top.equalTo(6)
+            $0.height.equalTo(36)
+        }
         
         tableView = UITableView {
-            $0.frame = CGRect(x: 0, y: searchBarContainer.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - pickerContainer.frame.minY + searchBarContainer.frame.height)
+         //   $0.frame = CGRect(x: 0, y: searchBarContainer.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - pickerContainer.frame.minY + searchBarContainer.frame.height)
             $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 400, right: 0)
             $0.backgroundColor = .clear
             $0.separatorStyle = .none
@@ -178,6 +210,11 @@ class PostInfoController: UIViewController {
             $0.register(ChooseTagCell.self, forCellReuseIdentifier: "ChooseTag")
             $0.register(ChooseFriendsCell.self, forCellReuseIdentifier: "ChooseFriends")
             pickerContainer.addSubview($0)
+        }
+        tableView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(searchBarContainer.snp.bottom)
+            $0.bottom.equalToSuperview()
         }
         
         searchPan = UIPanGestureRecognizer(target: self, action: #selector(searchPan(_:)))
@@ -434,44 +471,48 @@ class PostInfoSeg: UIView {
         let spacing = (UIScreen.main.bounds.width - (31 + 36) - 80 - 97 - 74)/2
         
         spotsButton = UIButton {
-            $0.frame = CGRect(x: 31, y: 12.5, width: 80, height: 30)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.addTarget(self, action: #selector(spotsTap(_:)), for: .touchUpInside)
             $0.contentHorizontalAlignment = .center
             $0.contentVerticalAlignment = .center
             addSubview($0)
         }
+        spotsButton.snp.makeConstraints {
+            $0.leading.equalTo(31)
+            $0.top.equalTo(12.5)
+            $0.width.equalTo(80)
+            $0.height.equalTo(30)
+        }
         
         friendsButton = UIButton {
-            $0.frame = CGRect(x: spotsButton.frame.maxX + spacing, y: 12.5, width: 97, height: 30)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.addTarget(self, action: #selector(friendsTap(_:)), for: .touchUpInside)
             $0.contentHorizontalAlignment = .center
             $0.contentVerticalAlignment = .center
             addSubview($0)
         }
-
+        friendsButton.snp.makeConstraints {
+            $0.leading.equalTo(spotsButton.snp.trailing).offset(spacing)
+            $0.top.equalTo(spotsButton.snp.top)
+            $0.height.equalTo(spotsButton.snp.height)
+            $0.width.equalTo(97)
+        }
+        
         tagsButton = UIButton {
-            $0.frame = CGRect(x: friendsButton.frame.maxX + spacing, y: 12.5, width: 74, height: 30)
-            let tagsImage = selectedSegmentIndex == 2 ? UIImage(named: "PostInfoTagsSelected") : UIImage(named: "PostInfoTagsUnselected")
-            $0.setImage(tagsImage, for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.addTarget(self, action: #selector(tagsTap(_:)), for: .touchUpInside)
             $0.contentHorizontalAlignment = .center
             $0.contentVerticalAlignment = .center
             addSubview($0)
         }
-
-        bottomBar = UIView {
-            $0.frame = CGRect(x: 14, y: 48.5, width: UIScreen.main.bounds.width - 28, height: 1)
-            $0.backgroundColor = UIColor(red: 0.902, green: 0.902, blue: 0.902, alpha: 1)
-            $0.layer.cornerRadius = 9
-            addSubview($0)
+        tagsButton.snp.makeConstraints {
+            $0.leading.equalTo(friendsButton.snp.trailing).offset(spacing)
+            $0.top.equalTo(friendsButton.snp.top)
+            $0.height.equalTo(friendsButton.snp.height)
+            $0.width.equalTo(74)
         }
         
-        let selectedFrame: CGRect = selectedSegmentIndex == 0 ? spotsButton.frame : selectedSegmentIndex == 1 ? friendsButton.frame : tagsButton.frame
         bottomBar = UIView {
-            $0.frame = CGRect(x: selectedFrame.minX - (106 - selectedFrame.width)/2, y: selectedFrame.maxY + 4.5, width: 116, height: 2.75)
             $0.backgroundColor = .black
             $0.layer.cornerRadius = 1
             addSubview($0)
@@ -513,10 +554,16 @@ class PostInfoSeg: UIView {
         let tagsImage = selectedSegmentIndex == 2 ? UIImage(named: "PostInfoTagsSelected") : UIImage(named: "PostInfoTagsUnselected")
         tagsButton.setImage(tagsImage, for: .normal)
 
-        let selectedFrame: CGRect = selectedSegmentIndex == 0 ? spotsButton.frame : selectedSegmentIndex == 1 ? friendsButton.frame : tagsButton.frame
+        let selectedButton: UIButton = selectedSegmentIndex == 0 ? spotsButton : selectedSegmentIndex == 1 ? friendsButton : tagsButton
         
+        bottomBar.snp.makeConstraints {
+            $0.leading.equalTo(selectedButton.snp.leading).inset((106 - selectedButton.bounds.width)/2)
+            $0.top.equalTo(spotsButton.snp.bottom).offset(4.5)
+            $0.width.equalTo(116)
+            $0.height.equalTo(1)
+        }
         UIView.animate(withDuration: 0.2) {
-            self.bottomBar.frame = CGRect(x: selectedFrame.minX - (106 - selectedFrame.width)/2, y: selectedFrame.maxY + 4.5, width: 106, height: 2.75)
+            self.layoutIfNeeded()
         }
     }
 }

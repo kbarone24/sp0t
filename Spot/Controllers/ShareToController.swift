@@ -222,7 +222,7 @@ class ShareToController: UIViewController {
                 if map != nil {
                     var map = map!
                     if map.imageURL == "" { map.imageURL = imageURLs.first ?? "" }
-                    self.uploadMap(map: map, newMap: newMap, postImageURL: post.imageURLs.first ?? "")
+                    self.uploadMap(map: map, newMap: newMap, post: post)
                 }
                 
                 let visitorList = spot?.visitorList ?? []
