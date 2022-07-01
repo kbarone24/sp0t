@@ -63,6 +63,7 @@ struct MapPost: Identifiable, Codable {
     var seen: Bool? = true
     
     enum CodingKeys: String, CodingKey {
+        case id
         case addedUsers
         case aspectRatios
         case caption
