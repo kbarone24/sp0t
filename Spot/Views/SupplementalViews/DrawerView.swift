@@ -237,6 +237,7 @@ class DrawerView: NSObject {
     }
     
     @objc func closeAction() {
+        print("CLOSING")
         UIView.animate(withDuration: 0.35, animations: {
             self.slideView.frame.origin.y = self.parentVC.view.frame.height
             self.parentVC.view.layoutIfNeeded()

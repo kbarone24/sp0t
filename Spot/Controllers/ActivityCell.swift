@@ -8,18 +8,28 @@
 
 import Foundation
 import UIKit
+import Firebase
+import Mixpanel
 import FirebaseUI
+import FirebaseFirestore
+import FirebaseFirestoreSwift
+import FirebaseAuth
+import FirebaseMessaging
+import Geofirestore
 
 class ActivityCell: UITableViewCell {
     
+    weak var delegate: delegateProtocol?
     var username: UILabel!
     var detail: UILabel!
     var timestamp: UILabel!
+    var profilePicButton: UIButton!
     var profilePic: UIImageView!
     var userAvatar: UIImageView!
+    var postImageButton: UIButton!
     var postImage: UIImageView!
     var imageURLs: [String] = []
-        
+    
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -29,9 +39,31 @@ class ActivityCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    func printThis(int: Int){
+        delegate?.printThis(myInt: int)
+    }
+    
+    func showProfile(){
+        delegate?.showProfile()
+    }
+    
     func set(notification: UserNotification){
         
+        print("activity CELLLL")
+        
         self.resetCell()
+        
+        let profilePicButton = UIButton()
+        contentView.addSubview(profilePicButton)
+        profilePicButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
+
+        
+        profilePicButton.snp.makeConstraints{
+            $0.centerY.equalToSuperview()
+            $0.leading.equalToSuperview().offset(16)
+            $0.height.width.equalTo(50)
+        }
+        
         
         profilePic = UIImageView {
             $0.frame = CGRect(x: 65, y: 27.5, width: 50, height: 50)
@@ -41,7 +73,7 @@ class ActivityCell: UITableViewCell {
             $0.contentMode = UIView.ContentMode.scaleAspectFill
             $0.isHidden = false
             $0.translatesAutoresizingMaskIntoConstraints = true
-            contentView.addSubview($0)
+            profilePicButton.addSubview($0)
             let url = notification.userInfo!.imageURL
             if url != "" {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
@@ -50,13 +82,12 @@ class ActivityCell: UITableViewCell {
         
         profilePic.snp.makeConstraints{
             $0.centerY.equalToSuperview()
-            $0.leading.equalToSuperview().offset(16)
+            $0.centerX.equalToSuperview()
             $0.height.width.equalTo(50)
         }
-        
+
         if(notification.userInfo?.avatarURL != ""){
-            
-            
+
             userAvatar = UIImageView{
                 $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
                 $0.layer.masksToBounds = false
@@ -81,6 +112,9 @@ class ActivityCell: UITableViewCell {
         
        username = UILabel{
             $0.text = notification.senderUsername
+            $0.isUserInteractionEnabled = true
+            let tap = UITapGestureRecognizer(target: self, action: #selector(self.postTap(_:)))
+            $0.addGestureRecognizer(tap)
             $0.numberOfLines = 0
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
@@ -162,45 +196,111 @@ class ActivityCell: UITableViewCell {
             $0.leading.equalTo(detail.snp.trailing).offset(8)
             $0.top.equalTo(detail.snp.top)
         }
-    
-        postImage = UIImageView {
-            $0.frame = CGRect(x: 0, y: 0, width: 44, height: 52)
-            $0.layer.masksToBounds = false
-            $0.layer.cornerRadius = 5
-            $0.clipsToBounds = true
-            $0.contentMode = UIView.ContentMode.scaleAspectFill
-            $0.isHidden = false
-            $0.translatesAutoresizingMaskIntoConstraints = true
-            contentView.addSubview($0)
-            if(notification.postInfo != nil){
-                imageURLs = notification.postInfo!.imageURLs
-            }
-            if(imageURLs.count > 0){
-                let transformer = SDImageResizingTransformer(size: CGSize(width: 88, height: 102), scaleMode: .aspectFill)
-                $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) } else {$0.image = UIImage(named: "FriendsFeedIcon")}
-            }
-            
-        postImage.snp.makeConstraints{
-            $0.trailing.equalToSuperview().offset(-14)
+        
+        let postImageButton = UIButton()
+        contentView.addSubview(postImageButton)
+        postImageButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
+        
+        postImageButton.snp.makeConstraints{            $0.trailing.equalToSuperview().offset(-14)
             $0.centerY.equalToSuperview()
             $0.width.equalTo(44)
             $0.height.equalTo(52)
         }
+    
+        postImage = UIImageView {
+            $0.frame = CGRect(x: 0, y: 0, width: 44, height: 52)
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = true
+            $0.contentMode = UIView.ContentMode.scaleAspectFill
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            postImageButton.addSubview($0)
+            
+            if(notification.postInfo != nil){
+                imageURLs = notification.postInfo!.imageURLs
+            }
+            if(imageURLs.count > 0){
+                $0.layer.cornerRadius = 5
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 88, height: 102), scaleMode: .aspectFill)
+                $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+                
+            } else {
+                let notiType = notification.type
+                switch notiType {
+                case "friendRequest":
+                    $0.image =  UIImage(named: "AcceptedYourFriendRequest")
+                    $0.layer.cornerRadius = 0
+                case "mapInvite":
+                    $0.image =  UIImage(named: "AddedToMap")
+                default:
+                    $0.image = UIImage(named: "XFriendRequest")
+                }
+            }
+        }
+
+            print("🤢", postImage)
         
+        postImage.snp.makeConstraints{
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview()
+            let notiType = notification.type
+            switch notiType {
+            case "friendRequest":
+                $0.width.equalTo(33)
+                $0.height.equalTo(24)
+            case "mapInvite":
+                $0.width.equalTo(31.3)
+                $0.height.equalTo(30)
+            default:
+                $0.width.equalTo(44)
+                $0.height.equalTo(52)
+            }
+        }
+        
+    }
+        
+    
+    
+    @objc func profileTap(_ sender: Any){
+        print("testing")
+        printThis(int: 10)
+        showProfile()
+       /* let profileVC = ProfileViewController()
+        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Middle, .Top], closeAction: {
+            self.sheetView = nil
+        })
+        sheetView?.swipeDownToDismiss = true
+        sheetView?.present(to: .Middle)*/
+    }
+    
+    @objc func postTap(_ sender: Any){
+        //SHOW POST INSTEAD ONCE YOU CAN
+        print("post Tapped!")
+        showProfile()
     }
     
     func resetCell() {
-        if profilePic != nil { profilePic.image = UIImage() }
-        if userAvatar != nil { userAvatar.image = UIImage() }
+        if profilePic != nil {
+            print("profPicNull")
+            profilePic.image = UIImage() }
+        if postImage != nil {
+            print("postImageNull")
+            postImage.image = UIImage() }
+        if userAvatar != nil {
+            print("userAvaterNull")
+            userAvatar.image = UIImage() }
         if username != nil {username.text=""}
         if detail != nil {detail.text = ""}
         if timestamp != nil {timestamp.text = ""}
+        if imageURLs.count != 0 {imageURLs = []}
     }
     
-    override func prepareForReuse() {
+       override func prepareForReuse() {
         if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
         if userAvatar != nil { userAvatar.sd_cancelCurrentImageLoad() }
         // Remove Subviews Or Layers That Were Added Just For This Cell
     }
     
 }
+    
+

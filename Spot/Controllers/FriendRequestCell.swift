@@ -12,15 +12,22 @@ import FirebaseUI
 
 class FriendRequestCell: UICollectionViewCell {
     
+    var friendRequest: UserNotification!
+    var confirmedView: UIView!
     var profilePic: UIImageView! //imageView
     var userAvatar: UIImageView!
     var senderView: UIView!
-    var cancelButton: UIButton!
+    var closeButton: UIButton!
     var acceptButton: UIButton! //acceptButton
     var aliveToggle: UIButton!
     var senderUsername: UILabel!
     var senderName: UILabel!
     var timestamp: UILabel!
+    
+    var checkMark: UIImageView!
+    var confirmed: UILabel!
+    
+    weak var collectionDelegate: friendRequestCollectionCellDelegate!
     
     
     lazy var activityIndicator = UIActivityIndicatorView()
@@ -38,11 +45,15 @@ class FriendRequestCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
         
-    func setUp(friendRequest: UserNotification) {
+    func setUp(notification: UserNotification) {
+        
         
         self.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         self.layer.cornerRadius = 11.31
+        
         resetCell()
+        
+        self.friendRequest = notification
         
         /*senderView = UIView {
             $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
@@ -54,7 +65,7 @@ class FriendRequestCell: UICollectionViewCell {
             $0.top.equalToSuperview().offset(15)
             $0.height.width.equalTo(71)
         }*/
-        
+            
         profilePic = UIImageView{
             $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
             $0.layer.masksToBounds = false
@@ -128,6 +139,55 @@ class FriendRequestCell: UICollectionViewCell {
             $0.top.equalTo(senderName.snp.bottom).offset(1)
             
         }
+        
+        
+
+        confirmedView = UIView{
+            $0.frame = CGRect(x: 0, y: 0, width: 141, height: 37)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview($0)
+        }
+        
+        confirmedView.snp.makeConstraints{
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(senderUsername.snp.bottom).offset(10)
+            $0.height.equalTo(37)
+            $0.width.equalTo(115)
+        }
+        
+        checkMark = UIImageView{
+            $0.frame = CGRect(x: 0, y: 0, width: 23, height: 23)
+            $0.layer.masksToBounds = true
+            $0.clipsToBounds = true
+            $0.contentMode = UIView.ContentMode.scaleAspectFit
+            $0.isHidden = false
+            $0.image = UIImage(named: "AcceptedTheirFriendRequest")
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            confirmedView.addSubview($0)
+        }
+        
+        confirmed = UILabel{
+            $0.text = "Confirmed"
+            $0.textColor = UIColor(red: 0, green: 0.591, blue: 0.629, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 16)
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            confirmedView.addSubview($0)
+        }
+
+        
+        checkMark.snp.makeConstraints{
+            $0.leading.equalToSuperview()
+            $0.centerY.equalToSuperview()
+            $0.height.equalTo(23)
+            $0.width.equalTo(23)
+        }
+        
+        confirmed.snp.makeConstraints{
+            $0.leading.equalTo(checkMark.snp.trailing).offset(5)
+            $0.centerY.equalToSuperview()
+        }
+        
 
         acceptButton = UIButton{
             $0.frame = CGRect(x: 0, y: 0, width: 141, height: 37)
@@ -142,8 +202,11 @@ class FriendRequestCell: UICollectionViewCell {
             ])
             $0.setAttributedTitle(customButtonTitle, for: .normal)
             $0.translatesAutoresizingMaskIntoConstraints = false
+            $0.addTarget(self, action: #selector(acceptTap(_:)), for: .touchUpInside)
+            $0.isHidden = false
             contentView.addSubview($0)
         }
+        
         acceptButton.snp.makeConstraints{
             $0.centerX.equalToSuperview()
             $0.top.equalTo(senderUsername.snp.bottom).offset(10)
@@ -151,18 +214,18 @@ class FriendRequestCell: UICollectionViewCell {
             $0.width.equalTo(141)
         }
 
-        
-        cancelButton = UIButton {
+        closeButton = UIButton {
             $0.frame = CGRect(x: 0, y: 0, width: 33, height: 33)
-            $0.setImage(UIImage(named: "FeedExit"), for: .normal)
+            $0.setImage(UIImage(named: "XFriendRequest"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
-        cancelButton.snp.makeConstraints{
+        closeButton.snp.makeConstraints{
             $0.leading.equalToSuperview()
             $0.top.equalToSuperview()
+            $0.width.height.equalTo(32)
         }
         
         timestamp = UILabel{
@@ -179,23 +242,35 @@ class FriendRequestCell: UICollectionViewCell {
     }
         
     func resetCell() {
+        if confirmed != nil {confirmed = UILabel()}
+        if checkMark != nil {checkMark.image = UIImage()}
+        if confirmedView != nil {confirmedView = UIView()}
         if profilePic != nil { profilePic.image = UIImage() }
         if userAvatar != nil { userAvatar.image = UIImage() }
-        if cancelButton != nil { cancelButton.setImage(UIImage(), for: .normal) }
+        if closeButton != nil { closeButton.setImage(UIImage(), for: .normal) }
         if acceptButton != nil {acceptButton = UIButton()}
         if senderUsername != nil {senderUsername = UILabel()}
         if senderName != nil {senderName = UILabel()}
         if timestamp != nil {timestamp = UILabel()}
     }
     
+    @objc func cancelTap(_ sender: UIButton) {
+        //handle cancel tap
+        collectionDelegate?.deleteFriendRequest(sender: self)
+        
+    }
+    
+    @objc func acceptTap(_ sender: UIButton){
+        print("Accept button clicked")
+        acceptButton.isHidden = true
+        collectionDelegate?.deleteCell(sender: self)
+
+        //collectionDelegate?.acceptFriend(sender: self)
+    }
+    
     override func prepareForReuse() {
         if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
         if userAvatar != nil { userAvatar.sd_cancelCurrentImageLoad() }
-    }
-    
-    @objc func cancelTap(_ sender: UIButton) {
-        //handle cancel tap
-        print("holder")
     }
     
     func addActivityIndicator() {

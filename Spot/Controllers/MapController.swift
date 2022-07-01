@@ -504,6 +504,11 @@ class MapController: UIViewController {
     }
     
     @objc func openNotis(_ sender: UIButton) {
+        if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsController {
+            notificationsVC.mapVC = self
+            navigationController?.pushViewController(notificationsVC, animated: true)
+        }
+        /*
         let notifVC = NotificationsController()
         sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
@@ -511,6 +516,7 @@ class MapController: UIViewController {
         sheetView?.swipeDownToDismiss = false
         sheetView?.present(to: .Top)
         sheetView?.showCloseButton = false
+         */
     }
     
     func setOpaqueNav() {
