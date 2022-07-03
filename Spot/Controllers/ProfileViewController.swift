@@ -13,6 +13,7 @@ class ProfileViewController: UIViewController {
     
     private var profileCollectionView: UICollectionView!
     private var lastYContentOffset: CGFloat?
+    private var noPostLabel: UILabel!
     public var containerDrawerView: DrawerView?
     
     override func viewDidLoad() {
@@ -47,6 +48,18 @@ extension ProfileViewController {
         profileCollectionView.isScrollEnabled = false
         profileCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
+        }
+        
+        noPostLabel = UILabel {
+            $0.text = "\(UserDataModel.shared.userInfo.name) hasn't posted yet"
+            $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+        noPostLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalToSuperview().offset(243)
         }
     }
 }

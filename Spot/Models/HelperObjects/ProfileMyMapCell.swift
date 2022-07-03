@@ -94,15 +94,16 @@ extension ProfileMyMapCell: UICollectionViewDataSource, UICollectionViewDelegate
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: (collectionView.frame.width - 2) / sqrt(CGFloat(myMapImages.count)) , height: (collectionView.frame.height - 2) / sqrt(CGFloat(myMapImages.count)))
+        let seperateLineWidth = 2 * (sqrt(CGFloat(myMapImages.count)) - 1)
+        return CGSize(width: (collectionView.frame.width - seperateLineWidth) / sqrt(CGFloat(myMapImages.count)) , height: (collectionView.frame.height - seperateLineWidth) / sqrt(CGFloat(myMapImages.count)))
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 1
+        return 0
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 1
+        return 2
     }
 }
 
