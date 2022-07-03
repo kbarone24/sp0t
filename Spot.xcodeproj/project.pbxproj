@@ -24,6 +24,8 @@
 		413486892859310E0098B27B /* SF-Compact-Text-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */; };
 		4134868A2859310E0098B27B /* SF-Compact-Text-Semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486852859310E0098B27B /* SF-Compact-Text-Semibold.otf */; };
 		4134868B2859310E0098B27B /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */; };
+		413ED8D6286F6F4100F76AC1 /* ProfileMyMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */; };
+		413ED8D828720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */; };
 		41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5D2866285800C522B1 /* R.generated.swift */; };
 		41AC5A6028662B1400C522B1 /* DraftsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5F28662B1400C522B1 /* DraftsViewController.swift */; };
 		41AC5A6428662C3200C522B1 /* InviteFriendsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A6328662C3200C522B1 /* InviteFriendsController.swift */; };
@@ -334,6 +336,8 @@
 		413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Heavy.otf"; sourceTree = "<group>"; };
 		413486852859310E0098B27B /* SF-Compact-Text-Semibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Semibold.otf"; sourceTree = "<group>"; };
 		413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Regular.otf"; sourceTree = "<group>"; };
+		413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapCell.swift; sourceTree = "<group>"; };
+		413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapImageCollectionViewCell.swift; sourceTree = "<group>"; };
 		41AC5A5D2866285800C522B1 /* R.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = R.generated.swift; sourceTree = "<group>"; };
 		41AC5A5F28662B1400C522B1 /* DraftsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DraftsViewController.swift; path = Spot/DraftsViewController.swift; sourceTree = SOURCE_ROOT; };
 		41AC5A6328662C3200C522B1 /* InviteFriendsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = InviteFriendsController.swift; path = Spot/InviteFriendsController.swift; sourceTree = SOURCE_ROOT; };
@@ -772,6 +776,8 @@
 				59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */,
 				8C220A00284EDEB200E5D165 /* FriendsListCell.swift */,
 				41C417102869CD2F0038B6E3 /* ProfileHeaderCell.swift */,
+				413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */,
+				413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */,
 				41AC5A652869FA6500C522B1 /* ProfileBodyCell.swift */,
 			);
 			path = HelperObjects;
@@ -1193,6 +1199,7 @@
 				8C346D302797600A00B6E640 /* FeedMapExtension.swift in Sources */,
 				41AC5A662869FA6500C522B1 /* ProfileBodyCell.swift in Sources */,
 				598B700D2305E49500613AFD /* FriendRequest.swift in Sources */,
+				413ED8D828720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift in Sources */,
 				594CE11B24C939040051516C /* MapComment.swift in Sources */,
 				1DF6E03722089F4500BA0C36 /* SignUpController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
@@ -1203,6 +1210,7 @@
 				8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */,
 				59056A5323197E4B00C7E753 /* PostNotification.swift in Sources */,
 				593AC54D243FAA2B00C08237 /* PhoneController.swift in Sources */,
+				413ED8D6286F6F4100F76AC1 /* ProfileMyMapCell.swift in Sources */,
 				599BD2B623C51EC500ECB84A /* PendingFriendRequestsController.swift in Sources */,
 				8C3BAF58260C413F00349091 /* ConfirmCodeController.swift in Sources */,
 				8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */,

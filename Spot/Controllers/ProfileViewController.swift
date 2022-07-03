@@ -34,6 +34,7 @@ extension ProfileViewController {
             view.dataSource = self
             view.backgroundColor = .clear
             view.register(ProfileHeaderCell.self, forCellWithReuseIdentifier: "ProfileHeaderCell")
+            view.register(ProfileMyMapCell.self, forCellWithReuseIdentifier: "ProfileMyMapCell")
             view.register(ProfileBodyCell.self, forCellWithReuseIdentifier: "ProfileBodyCell")
             return view
         }()
@@ -61,7 +62,14 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        return collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : "ProfileBodyCell", for: indexPath)
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
+        if let mapCell = cell as? ProfileMyMapCell {
+            mapCell.myMapImages = [R.image.landingPage0()!, R.image.landingPage1()!, R.image.landingPage2()!, R.image.landingPage3()!, R.image.landingPage4()!, R.image.landingPage0()!, R.image.landingPage1()!, R.image.landingPage2()!, R.image.landingPage3()!, R.image.landingPage4()!]
+            return mapCell
+        } else if let bodyCell = cell as? ProfileBodyCell {
+            
+        }
+        return cell
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
@@ -74,7 +82,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 18
+        return 0
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -111,8 +119,8 @@ extension ProfileViewController: UIScrollViewDelegate {
                 scrollView.contentOffset.y = lastYContentOffset!
             }
         }
-        
-        // Whenever drawer view is not in top position, scroll to top, disable scroll and set drawer view swipe to next state true
+                
+        // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
         if containerDrawerView?.status != .Top {
             profileCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
             profileCollectionView.isScrollEnabled = false
@@ -157,6 +165,11 @@ extension ProfileViewController: UIGestureRecognizerDelegate {
             containerDrawerView!.slideView.frame.origin.y > 0
         {
             containerDrawerView?.slideView.frame.origin.y -= yTranslation
+        }
+        
+        // Preventing the content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
+        if (containerDrawerView?.slideView.frame.minY)! > 0 {
+            profileCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
         }
         
         recognizer.setTranslation(.zero, in: recognizer.view)

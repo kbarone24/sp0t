@@ -24,7 +24,6 @@ class ProfileBodyCell: UICollectionViewCell {
     }
     
     @objc func editButtonAction() {
-        
     }
     
     override init(frame: CGRect) {
