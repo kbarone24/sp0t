@@ -146,6 +146,6 @@ extension ProfileHeaderCell {
             $0.height.equalTo(37)
             $0.top.equalTo(profileImage.snp.bottom).offset(16)
         }
-        editButton.layer.cornerRadius = 25
+        editButton.layer.cornerRadius = 37 / 2
     }
 }

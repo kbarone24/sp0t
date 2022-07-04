@@ -14,6 +14,8 @@ class ProfileViewController: UIViewController {
     private var profileCollectionView: UICollectionView!
     private var lastYContentOffset: CGFloat?
     private var noPostLabel: UILabel!
+    private var barView: UIView!
+    private var titleLabel: UILabel!
     public var containerDrawerView: DrawerView?
     
     override func viewDidLoad() {
@@ -61,6 +63,23 @@ extension ProfileViewController {
             $0.centerX.equalToSuperview()
             $0.top.equalToSuperview().offset(243)
         }
+        
+        barView = UIView {
+            $0.frame = CGRect(x: 0, y: 0, width: (containerDrawerView?.slideView.frame.width)!, height: 91)
+            $0.backgroundColor = .white
+            $0.alpha = 0
+        }
+        titleLabel = UILabel {
+            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+            $0.text = UserDataModel.shared.userInfo.name
+            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            $0.textAlignment = .center
+            $0.numberOfLines = 0
+            $0.sizeToFit()
+            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: (containerDrawerView?.slideView.frame.width)!, height: 18))
+            barView.addSubview($0)
+        }
+        containerDrawerView?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
     }
 }
 
@@ -126,6 +145,20 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        
+        if scrollView.contentOffset.y >= (lastYContentOffset ?? -50) + 160 {
+            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
+                self.barView.alpha = 1
+            }
+        } else {
+            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
+                self.barView.alpha = 0
+            }
+        }
+        
+        
+        
+        
         // Disable the bouncing effect when scroll view is scrolled to top
         if lastYContentOffset != nil {
             if containerDrawerView?.status == .Top && scrollView.contentOffset.y <= lastYContentOffset! {

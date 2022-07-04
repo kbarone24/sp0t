@@ -12,7 +12,7 @@ class ProfileBodyCell: UICollectionViewCell {
     var mapImage: UIImageView!
     var mapName: UILabel!
     var friendsCount: UILabel!
-    var friendsIcon: UIImageView!
+    private var friendsIcon: UIImageView!
     var likesCount: UILabel!
     var postsCount: UILabel!
     var privateIcon: UIImageView!
@@ -36,7 +36,6 @@ class ProfileBodyCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
-        
     }
 }
 
