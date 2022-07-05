@@ -22,6 +22,15 @@ class ProfileViewController: UIViewController {
         super.viewDidLoad()
         viewSetup()
     }
+    
+    private func setNavBar(transparent: Bool) {
+        title = transparent ? "" : UserDataModel.shared.userInfo.name
+        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 20.5)!]
+        navigationController?.navigationBar.setBackgroundImage(transparent ? UIImage() : nil, for: .default)
+        navigationController?.navigationBar.shadowImage = transparent ? UIImage() : nil
+        navigationController?.navigationBar.isTranslucent = true
+        navigationController?.navigationBar.barTintColor = .white
+    }
 }
 
 extension ProfileViewController {
@@ -146,19 +155,9 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         
-        if scrollView.contentOffset.y >= (lastYContentOffset ?? -50) + 160 {
-            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
-                self.barView.alpha = 1
-            }
-        } else {
-            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
-                self.barView.alpha = 0
-            }
-        }
-        
-        
-        
-        
+        // Show navigation bar when user scroll pass the header section
+        setNavBar(transparent: !(scrollView.contentOffset.y >= (lastYContentOffset ?? -50) + 160))
+
         // Disable the bouncing effect when scroll view is scrolled to top
         if lastYContentOffset != nil {
             if containerDrawerView?.status == .Top && scrollView.contentOffset.y <= lastYContentOffset! {
