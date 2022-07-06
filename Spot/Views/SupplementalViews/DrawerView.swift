@@ -33,11 +33,14 @@ class DrawerView: NSObject {
         $0.translatesAutoresizingMaskIntoConstraints = false
     }
     public var status = DrawerViewStatus.Close
-    public var canDrag: Bool = true {
+    // If false remove pangesture
+    public var canInteract: Bool = true {
         didSet {
-            toggleDrag(to: canDrag)
+            toggleDrag(to: canInteract)
         }
     }
+    // If false don't update the slideview frame
+    public var canDrag: Bool = true
     public var showCloseButton: Bool = true {
         didSet {
             closeButton.isHidden = !showCloseButton
@@ -165,6 +168,10 @@ class DrawerView: NSObject {
         if currentStatus.rawValue != to.rawValue {
             UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut) {
                 self.slideView.frame.origin.y = self.yPosition
+            } completion: { success in
+                self.topConstraints?.deactivate()
+                self.midConstraints?.deactivate()
+                self.botConstraints?.deactivate()
             }
         } else {
             let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
@@ -202,7 +209,7 @@ class DrawerView: NSObject {
         // When the user is still dragging or start dragging the if statement here will be fall through
         if recognizer.state == .began || recognizer.state == .changed {
             // Add the translation in y to slideView when slideView's minY is larger than 0
-            if slideView.frame.minY >= 0 {
+            if slideView.frame.minY >= 0 && canDrag {
                 slideView.frame.origin.y += translation.y
             }
             
