@@ -53,7 +53,7 @@ class DrawerView: NSObject {
     private lazy var myNav = UINavigationController()
     private lazy var closeButton = UIButton {
         $0.backgroundColor = .clear
-        $0.setImage(UIImage(systemName: "xmark.circle.fill", withConfiguration: UIImage.SymbolConfiguration(textStyle: .largeTitle))?.withTintColor(.tertiarySystemFill, renderingMode: .alwaysOriginal), for: .normal)
+        $0.setImage(UIImage(named: "X"), for: .normal)
         $0.setTitle("", for: .normal)
     }
     private lazy var grabberView = UIView {
