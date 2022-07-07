@@ -8,6 +8,10 @@
 
 import UIKit
 import SnapKit
+import Firebase
+import Alamofire
+import FirebaseFunctions
+import SDWebImage
 
 class ProfileViewController: UIViewController {
     
@@ -17,11 +21,36 @@ class ProfileViewController: UIViewController {
     private var noPostLabel: UILabel!
     private var barView: UIView!
     private var titleLabel: UILabel!
+    
+    private var maps = [CustomMap]() {
+        didSet {
+            noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
+        }
+    }
+    private var posts = [MapPost]() {
+        didSet {
+            noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
+        }
+    }
+    private var postImages = [UIImage]() {
+        didSet {
+            if postImages.count == posts.count {
+                profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 1)])
+            }
+        }
+    }
+    lazy var imageManager = SDWebImageManager()
+    
     public var containerDrawerView: DrawerView?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
+        
+        DispatchQueue.main.async {
+            self.getMaps()
+            self.getNinePosts()
+        }
     }
 }
 
@@ -82,6 +111,49 @@ extension ProfileViewController {
         }
         containerDrawerView?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
     }
+    
+    private func getNinePosts() {
+        let db = Firestore.firestore()
+        let query = db.collection("posts").whereField("posterID", isEqualTo: UserDataModel.shared.uid).limit(to: 9)
+        query.getDocuments { (snap, err) in
+            if err != nil  { return }
+            self.posts.removeAll()
+            self.postImages.removeAll()
+            for doc in snap!.documents {
+                do {
+                    let unwrappedInfo = try doc.data(as: MapPost.self)
+                    guard let postInfo = unwrappedInfo else { return }
+                    self.posts.append(postInfo)
+                    self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: nil, progress: nil) { [weak self] (image, data, err, cache, download, url) in
+                        guard self != nil else { return }
+                        let image = image ?? UIImage()
+                        self?.postImages.append(image)
+                    }
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func getMaps() {
+        let db = Firestore.firestore()
+        let query = db.collection("users").document(UserDataModel.shared.uid).collection("mapsList").order(by: "userTimestamp", descending: true)
+        query.getDocuments { (snap, err) in
+            if err != nil  { return }
+            self.maps.removeAll()
+            for doc in snap!.documents {
+                do {
+                    let unwrappedInfo = try doc.data(as: CustomMap.self)
+                    guard let mapInfo = unwrappedInfo else { return }
+                    self.maps.append(mapInfo)
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                }
+            }
+            self.profileCollectionView.reloadData()
+        }
+    }
 }
 
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -91,16 +163,18 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return section == 0 ? 1 : 10
+        return section == 0 ? 1 : (maps.count + 1)
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
         if let mapCell = cell as? ProfileMyMapCell {
-            mapCell.myMapImages = [R.image.landingPage0()!, R.image.landingPage1()!, R.image.landingPage2()!, R.image.landingPage3()!, R.image.landingPage4()!, R.image.landingPage0()!, R.image.landingPage1()!, R.image.landingPage2()!, R.image.landingPage3()!, R.image.landingPage4()!]
+            mapCell.myMapImages = postImages
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
-            
+            let profileBodyData = maps[indexPath.row - 1]
+            bodyCell.cellSetup(imageURL: profileBodyData.imageURL, mapName: profileBodyData.mapName, isPrivate: profileBodyData.secret, friendsCount: profileBodyData.memberIDs.count, likesCount: profileBodyData.likers.count, postsCount: profileBodyData.postLocations.count)
+            return bodyCell
         }
         return cell
     }
@@ -119,27 +193,33 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let collectionCell = collectionView.cellForItem(at: indexPath)
-        UIView.animate(withDuration: 0.15) {
-            collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } completion: { (Bool) in
+        if indexPath.section != 0 {
+            let collectionCell = collectionView.cellForItem(at: indexPath)
             UIView.animate(withDuration: 0.15) {
-                collectionCell?.transform = .identity
+                collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+            } completion: { (Bool) in
+                UIView.animate(withDuration: 0.15) {
+                    collectionCell?.transform = .identity
+                }
             }
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
-        let collectionCell = collectionView.cellForItem(at: indexPath)
-        UIView.animate(withDuration: 0.15) {
-            collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        if indexPath.section != 0 {
+            let collectionCell = collectionView.cellForItem(at: indexPath)
+            UIView.animate(withDuration: 0.15) {
+                collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+            }
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, didUnhighlightItemAt indexPath: IndexPath) {
-        let collectionCell = collectionView.cellForItem(at: indexPath)
-        UIView.animate(withDuration: 0.15) {
-            collectionCell?.transform = .identity
+        if indexPath.section != 0 {
+            let collectionCell = collectionView.cellForItem(at: indexPath)
+            UIView.animate(withDuration: 0.15) {
+                collectionCell?.transform = .identity
+            }
         }
     }
 }

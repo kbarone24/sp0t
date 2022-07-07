@@ -30,6 +30,7 @@
 		41AC5A6028662B1400C522B1 /* DraftsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5F28662B1400C522B1 /* DraftsViewController.swift */; };
 		41AC5A6428662C3200C522B1 /* InviteFriendsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A6328662C3200C522B1 /* InviteFriendsController.swift */; };
 		41AC5A662869FA6500C522B1 /* ProfileBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A652869FA6500C522B1 /* ProfileBodyCell.swift */; };
+		41AC5A68287738CA00C522B1 /* CustomMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A67287738CA00C522B1 /* CustomMap.swift */; };
 		41C417112869CD2F0038B6E3 /* ProfileHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C417102869CD2F0038B6E3 /* ProfileHeaderCell.swift */; };
 		59004DFF22C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E0022C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
@@ -342,6 +343,7 @@
 		41AC5A5F28662B1400C522B1 /* DraftsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DraftsViewController.swift; path = Spot/DraftsViewController.swift; sourceTree = SOURCE_ROOT; };
 		41AC5A6328662C3200C522B1 /* InviteFriendsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = InviteFriendsController.swift; path = Spot/InviteFriendsController.swift; sourceTree = SOURCE_ROOT; };
 		41AC5A652869FA6500C522B1 /* ProfileBodyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileBodyCell.swift; sourceTree = "<group>"; };
+		41AC5A67287738CA00C522B1 /* CustomMap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMap.swift; sourceTree = "<group>"; };
 		41C417102869CD2F0038B6E3 /* ProfileHeaderCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileHeaderCell.swift; sourceTree = "<group>"; };
 		59056A5223197E4B00C7E753 /* PostNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostNotification.swift; sourceTree = "<group>"; };
 		5916A8B224A27F8500118E83 /* MapSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSpot.swift; sourceTree = "<group>"; };
@@ -743,6 +745,7 @@
 				5916A8B224A27F8500118E83 /* MapSpot.swift */,
 				594CE11224B6A6CF0051516C /* MapPost.swift */,
 				594CE11A24C939040051516C /* MapComment.swift */,
+				41AC5A67287738CA00C522B1 /* CustomMap.swift */,
 				59BA812224D9C9CB00FFCDFA /* UserProfile.swift */,
 				8C2074CB25CB38430040036B /* City.swift */,
 			);
@@ -1227,6 +1230,7 @@
 				599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */,
 				7A37801C22174BB1008B835A /* MapController.swift in Sources */,
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
+				41AC5A68287738CA00C522B1 /* CustomMap.swift in Sources */,
 				1DF6E03522089F4500BA0C36 /* AppDelegate.swift in Sources */,
 				41AC5A6028662B1400C522B1 /* DraftsViewController.swift in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,

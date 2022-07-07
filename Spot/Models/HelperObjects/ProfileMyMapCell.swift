@@ -18,7 +18,7 @@ class ProfileMyMapCell: UICollectionViewCell {
             } else if myMapImages.count >= 4 {
                 myMapImages = Array(myMapImages[0...3])
             } else {
-                myMapImages = [myMapImages[0]]
+                myMapImages = myMapImages.count == 0 ? [] : [myMapImages[0]]
             }
             mapImageCollectionView.reloadData()
         }

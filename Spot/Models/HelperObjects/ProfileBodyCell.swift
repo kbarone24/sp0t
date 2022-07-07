@@ -37,6 +37,15 @@ class ProfileBodyCell: UICollectionViewCell {
     
     override func prepareForReuse() {
     }
+    
+    public func cellSetup(imageURL: String, mapName: String, isPrivate: Bool, friendsCount: Int, likesCount: Int, postsCount: Int) {
+        mapImage.sd_setImage(with: URL(string: imageURL))
+        self.mapName.text = mapName
+        privateIcon.isHidden = !isPrivate
+        self.friendsCount.text = "\(friendsCount)"
+        self.likesCount.text = likesCount != 0 ? " • \(likesCount) likes" : ""
+        self.postsCount.text = postsCount != 0 ? " • \(postsCount) posts" : ""
+    }
 }
 
 extension ProfileBodyCell {
@@ -126,6 +135,5 @@ extension ProfileBodyCell {
             $0.top.equalTo(friendsCount)
             $0.trailing.lessThanOrEqualToSuperview()
         }
-        
     }
 }

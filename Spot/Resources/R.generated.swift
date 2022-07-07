@@ -349,7 +349,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 185 images.
+  /// This `R.image` struct is generated, and contains static references to 189 images.
   struct image {
     /// Image `ActiveTag`.
     static let activeTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ActiveTag")
@@ -487,6 +487,8 @@ struct R: Rswift.Validatable {
     static let friendsMapSelected = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriendsMapSelected")
     /// Image `FriendsMapUnselected`.
     static let friendsMapUnselected = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriendsMapUnselected")
+    /// Image `Friends`.
+    static let friends = Rswift.ImageResource(bundle: R.hostingBundle, name: "Friends")
     /// Image `FriesTag`.
     static let friesTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriesTag")
     /// Image `GIFCameraButton`.
@@ -611,10 +613,14 @@ struct R: Rswift.Validatable {
     static let postNotification = Rswift.ImageResource(bundle: R.hostingBundle, name: "PostNotification")
     /// Image `PreviewGif`.
     static let previewGif = Rswift.ImageResource(bundle: R.hostingBundle, name: "PreviewGif")
+    /// Image `PrivateMap`.
+    static let privateMap = Rswift.ImageResource(bundle: R.hostingBundle, name: "PrivateMap")
     /// Image `PrivateNotiIcon`.
     static let privateNotiIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "PrivateNotiIcon")
     /// Image `ProfileCityIcon`.
     static let profileCityIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "ProfileCityIcon")
+    /// Image `ProfileLocation`.
+    static let profileLocation = Rswift.ImageResource(bundle: R.hostingBundle, name: "ProfileLocation")
     /// Image `PublicMapSelected`.
     static let publicMapSelected = Rswift.ImageResource(bundle: R.hostingBundle, name: "PublicMapSelected")
     /// Image `PublicMapUnselected`.
@@ -717,6 +723,8 @@ struct R: Rswift.Validatable {
     static let whaleTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "WhaleTag")
     /// Image `WineTag`.
     static let wineTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "WineTag")
+    /// Image `X`.
+    static let x = Rswift.ImageResource(bundle: R.hostingBundle, name: "X")
     /// Image `commentButton`.
     static let commentButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "commentButton")
     /// Image `likeButton`.
@@ -1167,6 +1175,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "FriendNotification", bundle: ..., traitCollection: ...)`
     static func friendNotification(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.friendNotification, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "Friends", bundle: ..., traitCollection: ...)`
+    static func friends(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.friends, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1633,6 +1648,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "PrivateMap", bundle: ..., traitCollection: ...)`
+    static func privateMap(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.privateMap, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "PrivateNotiIcon", bundle: ..., traitCollection: ...)`
     static func privateNotiIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.privateNotiIcon, compatibleWith: traitCollection)
@@ -1643,6 +1665,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "ProfileCityIcon", bundle: ..., traitCollection: ...)`
     static func profileCityIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.profileCityIcon, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "ProfileLocation", bundle: ..., traitCollection: ...)`
+    static func profileLocation(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.profileLocation, compatibleWith: traitCollection)
     }
     #endif
 
@@ -2000,6 +2029,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "WineTag", bundle: ..., traitCollection: ...)`
     static func wineTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.wineTag, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "X", bundle: ..., traitCollection: ...)`
+    static func x(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.x, compatibleWith: traitCollection)
     }
     #endif
 
