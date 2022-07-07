@@ -19,7 +19,7 @@ import Geofirestore
 
 class ActivityCell: UITableViewCell {
     
-    weak var delegate: delegateProtocol?
+    weak var notificationControllerDelegate: notificationDelegateProtocol?
     var username: UILabel!
     var detail: UILabel!
     var timestamp: UILabel!
@@ -38,19 +38,9 @@ class ActivityCell: UITableViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    func printThis(int: Int){
-        delegate?.printThis(myInt: int)
-    }
-    
-    func showProfile(){
-        delegate?.showProfile()
-    }
-    
+        
+    // MARK: setting up views
     func set(notification: UserNotification){
-        
-        print("activity CELLLL")
-        
         self.resetCell()
         
         let profilePicButton = UIButton()
@@ -86,18 +76,17 @@ class ActivityCell: UITableViewCell {
             $0.height.width.equalTo(50)
         }
 
-        if(notification.userInfo?.avatarURL != ""){
-
+        if notification.userInfo?.avatarURL != "" {
             userAvatar = UIImageView{
                 $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
                 $0.layer.masksToBounds = false
                 $0.contentMode = UIView.ContentMode.scaleAspectFill
                 $0.isHidden = false
-                var url = notification.userInfo!.avatarURL!
+                let url = notification.userInfo!.avatarURL!
                 if url != "" {
                     let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
                     $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-                } else {print("🙈 NOOOOOOO")}
+                } else { print("Avatar not found") }
                 $0.translatesAutoresizingMaskIntoConstraints = false
                 contentView.addSubview($0)
             }
@@ -135,7 +124,7 @@ class ActivityCell: UITableViewCell {
             case "comment":
                 $0.text = "commented on your post"
             case "friendRequest":
-                $0.text = "accepted your friend request!"
+                $0.text = "you are now friends!"
             case "commentTag":
                 $0.text = "mentioned you in a comment"
             case "commentLike":
@@ -169,6 +158,10 @@ class ActivityCell: UITableViewCell {
                 $0.text = "added you to a post"
             case "publicSpotAccepted":
                 $0.text = "Your public submission was approved!"
+            case "cityPost":
+                var notifText = "posted in "
+                notifText += notification.postInfo!.spotName!
+                $0.text = notifText
             default:
                 $0.text = notification.type
             }
@@ -201,7 +194,8 @@ class ActivityCell: UITableViewCell {
         contentView.addSubview(postImageButton)
         postImageButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
         
-        postImageButton.snp.makeConstraints{            $0.trailing.equalToSuperview().offset(-14)
+        postImageButton.snp.makeConstraints{
+            $0.trailing.equalToSuperview().offset(-14)
             $0.centerY.equalToSuperview()
             $0.width.equalTo(44)
             $0.height.equalTo(52)
@@ -219,26 +213,22 @@ class ActivityCell: UITableViewCell {
             if(notification.postInfo != nil){
                 imageURLs = notification.postInfo!.imageURLs
             }
-            if(imageURLs.count > 0){
-                $0.layer.cornerRadius = 5
-                let transformer = SDImageResizingTransformer(size: CGSize(width: 88, height: 102), scaleMode: .aspectFill)
-                $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-                
-            } else {
-                let notiType = notification.type
-                switch notiType {
-                case "friendRequest":
-                    $0.image =  UIImage(named: "AcceptedYourFriendRequest")
-                    $0.layer.cornerRadius = 0
-                case "mapInvite":
-                    $0.image =  UIImage(named: "AddedToMap")
-                default:
-                    $0.image = UIImage(named: "XFriendRequest")
+            
+            let notiType = notification.type
+            switch notiType {
+            case "friendRequest":
+                $0.image =  UIImage(named: "AcceptedYourFriendRequest")
+                $0.layer.cornerRadius = 0
+            case "mapInvite":
+                $0.image =  UIImage(named: "AddedToMap")
+            default:
+                if(imageURLs.count > 0){
+                    $0.layer.cornerRadius = 5
+                    let transformer = SDImageResizingTransformer(size: CGSize(width: 88, height: 102), scaleMode: .aspectFill)
+                    $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
                 }
             }
         }
-
-            print("🤢", postImage)
         
         postImage.snp.makeConstraints{
             $0.centerX.equalToSuperview()
@@ -247,10 +237,10 @@ class ActivityCell: UITableViewCell {
             switch notiType {
             case "friendRequest":
                 $0.width.equalTo(33)
-                $0.height.equalTo(24)
+                $0.height.equalTo(27)
             case "mapInvite":
-                $0.width.equalTo(31.3)
-                $0.height.equalTo(30)
+                $0.width.equalTo(45.07)
+                $0.height.equalTo(30.04)
             default:
                 $0.width.equalTo(44)
                 $0.height.equalTo(52)
@@ -259,27 +249,19 @@ class ActivityCell: UITableViewCell {
         
     }
         
-    
-    
     @objc func profileTap(_ sender: Any){
-        print("testing")
-        printThis(int: 10)
-        showProfile()
-       /* let profileVC = ProfileViewController()
-        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Middle, .Top], closeAction: {
-            self.sheetView = nil
-        })
-        sheetView?.swipeDownToDismiss = true
-        sheetView?.present(to: .Middle)*/
+        notificationControllerDelegate?.getProfile()
     }
     
     @objc func postTap(_ sender: Any){
         //SHOW POST INSTEAD ONCE YOU CAN
         print("post Tapped!")
-        showProfile()
+        notificationControllerDelegate?.getProfile()
     }
     
     func resetCell() {
+        ///keeping this here in case not having it causes problems during QA
+        /*
         if profilePic != nil {
             print("profPicNull")
             profilePic.image = UIImage() }
@@ -292,7 +274,15 @@ class ActivityCell: UITableViewCell {
         if username != nil {username.text=""}
         if detail != nil {detail.text = ""}
         if timestamp != nil {timestamp.text = ""}
-        if imageURLs.count != 0 {imageURLs = []}
+        if imageURLs.count != 0 {imageURLs = []}*/
+        
+        
+        if self.contentView.subviews.isEmpty == false {
+            for subview in self.contentView.subviews {
+                subview.removeFromSuperview()
+            }
+        }
+         
     }
     
        override func prepareForReuse() {

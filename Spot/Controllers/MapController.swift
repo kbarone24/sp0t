@@ -107,6 +107,12 @@ class MapController: UIViewController {
             navigationController?.navigationBar.isHidden = sheetView == nil ? false : true
         }
     }
+    
+    private var notifSheetView: DrawerView? {
+        didSet {
+            navigationController?.navigationBar.isHidden = notifSheetView == nil ? false : true
+        }
+    }
                 
     /// tag table added over top of view to window then result passed to active VC
     enum TagTableParent {
@@ -417,6 +423,7 @@ class MapController: UIViewController {
         })
         sheetView?.swipeDownToDismiss = true
         sheetView?.present(to: .Middle)
+        
     }
     
     @objc func friendsTap(_ sender: UIButton) {
@@ -504,19 +511,28 @@ class MapController: UIViewController {
     }
     
     @objc func openNotis(_ sender: UIButton) {
-        if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsController {
+        /*if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsController {
             notificationsVC.mapVC = self
             navigationController?.pushViewController(notificationsVC, animated: true)
-        }
-        /*
+        }*/
+        
         let notifVC = NotificationsController()
-        sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
-            self.sheetView = nil
+        
+
+        
+        notifSheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+            self.notifSheetView = nil
         })
-        sheetView?.swipeDownToDismiss = false
-        sheetView?.present(to: .Top)
-        sheetView?.showCloseButton = false
-         */
+        
+
+        
+        notifSheetView?.swipeDownToDismiss = false
+        notifSheetView?.canInteract = false
+        notifSheetView?.present(to: .Top)
+        notifSheetView?.showCloseButton = false
+        
+        
+        
     }
     
     func setOpaqueNav() {

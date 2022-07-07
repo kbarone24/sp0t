@@ -893,7 +893,7 @@ extension UITableViewCell {
             
     func removeFriendRequest(friendID: String, uid: String) {
         let functions = Functions.functions()
-        functions.httpsCallable("acceptFriendRequest").call(["uid": uid, "friendID": friendID]) { result, error in
+        functions.httpsCallable("removeFriendRequest").call(["uid": uid, "friendID": friendID]) { result, error in
             print(result?.data as Any, error as Any)
         }
     }
