@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import FirebaseUI
+import Mixpanel
 
 class FriendRequestCell: UICollectionViewCell {
     
@@ -28,8 +29,9 @@ class FriendRequestCell: UICollectionViewCell {
     var confirmed: UILabel!
     
     weak var collectionDelegate: friendRequestCollectionCellDelegate!
-    
-    
+    weak var notificationControllerDelegate: notificationDelegateProtocol?
+
+    // variables for activity indicator that will be used later
     lazy var activityIndicator = UIActivityIndicatorView()
     var globalRow = 0
     
@@ -65,6 +67,17 @@ class FriendRequestCell: UICollectionViewCell {
             $0.top.equalToSuperview().offset(15)
             $0.height.width.equalTo(71)
         }*/
+        
+        let profilePicButton = UIButton()
+        contentView.addSubview(profilePicButton)
+        profilePicButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
+
+        
+        profilePicButton.snp.makeConstraints{
+            $0.centerX.equalToSuperview()
+            $0.top.equalToSuperview().offset(15)
+            $0.height.width.equalTo(71)
+        }
             
         profilePic = UIImageView{
             $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
@@ -73,11 +86,12 @@ class FriendRequestCell: UICollectionViewCell {
             $0.clipsToBounds = true
             $0.contentMode = UIView.ContentMode.scaleAspectFill
             $0.isHidden = false
+            profilePicButton.addSubview($0)
             let url = friendRequest.userInfo!.imageURL
             if url != "" {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
                 $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-            } else {print("🙈 NOOOOOOO")}
+            } else {print("profilePic not found")}
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
@@ -89,14 +103,12 @@ class FriendRequestCell: UICollectionViewCell {
         }
         
         if(friendRequest.userInfo?.avatarURL != ""){
-            
-            
             userAvatar = UIImageView{
                 $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
                 $0.layer.masksToBounds = false
                 $0.contentMode = UIView.ContentMode.scaleAspectFill
                 $0.isHidden = false
-                var url = friendRequest.userInfo!.avatarURL!
+                let url = friendRequest.userInfo!.avatarURL!
                 if url != "" {
                     let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
                     $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
@@ -116,6 +128,9 @@ class FriendRequestCell: UICollectionViewCell {
         
         senderName = UILabel{
             $0.text = friendRequest.userInfo?.name
+            $0.isUserInteractionEnabled = true
+            let tap = UITapGestureRecognizer(target: self, action: #selector(self.profileTap(_:)))
+            $0.addGestureRecognizer(tap)
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16.5)
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -129,6 +144,9 @@ class FriendRequestCell: UICollectionViewCell {
     
         senderUsername = UILabel{
             $0.text = friendRequest.senderUsername
+            $0.isUserInteractionEnabled = true
+            let tap = UITapGestureRecognizer(target: self, action: #selector(self.profileTap(_:)))
+            $0.addGestureRecognizer(tap)
             $0.textColor = UIColor(red: 0.675, green: 0.675, blue: 0.675, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -140,8 +158,6 @@ class FriendRequestCell: UICollectionViewCell {
             
         }
         
-        
-
         confirmedView = UIView{
             $0.frame = CGRect(x: 0, y: 0, width: 141, height: 37)
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -242,7 +258,9 @@ class FriendRequestCell: UICollectionViewCell {
     }
         
     func resetCell() {
-        if confirmed != nil {confirmed = UILabel()}
+        ///keeping this here in case not having it causes problems during QA
+        ///
+       /* if confirmed != nil {confirmed = UILabel()}
         if checkMark != nil {checkMark.image = UIImage()}
         if confirmedView != nil {confirmedView = UIView()}
         if profilePic != nil { profilePic.image = UIImage() }
@@ -251,21 +269,30 @@ class FriendRequestCell: UICollectionViewCell {
         if acceptButton != nil {acceptButton = UIButton()}
         if senderUsername != nil {senderUsername = UILabel()}
         if senderName != nil {senderName = UILabel()}
-        if timestamp != nil {timestamp = UILabel()}
+        if timestamp != nil {timestamp = UILabel()}*/
+        
+        if self.contentView.subviews.isEmpty == false {
+            for subview in self.contentView.subviews {
+                subview.removeFromSuperview()
+            }
+        }
+    }
+    
+    @objc func profileTap(_ sender: Any){
+        notificationControllerDelegate?.getProfile()
     }
     
     @objc func cancelTap(_ sender: UIButton) {
         //handle cancel tap
+        Mixpanel.mainInstance().track(event: "NotificationsFriendRequestRemoved")
         collectionDelegate?.deleteFriendRequest(sender: self)
-        
     }
     
     @objc func acceptTap(_ sender: UIButton){
+        Mixpanel.mainInstance().track(event: "NotificationsFriendRequestAccepted")
         print("Accept button clicked")
         acceptButton.isHidden = true
-        collectionDelegate?.deleteCell(sender: self)
-
-        //collectionDelegate?.acceptFriend(sender: self)
+        collectionDelegate?.acceptFriend(sender: self)
     }
     
     override func prepareForReuse() {
@@ -281,14 +308,5 @@ class FriendRequestCell: UICollectionViewCell {
     func removeActivityIndicator() {
         activityIndicator.stopAnimating()
     }
-    
-    /*@objc func cancelTap(_ sender: UIButton) {
-        guard let uploadVC = viewContainingController() as? UploadPostController else { return }
-        var index = -1 /// -1 for image from camera
-        if let i = UploadImageModel.shared.imageObjects.firstIndex(where: {$0.image.id == imageObject.id}) { index = i }
-        uploadVC.deselectImage(index: index, circleTap: true)
-        imageObject = nil
-        imageView = nil
-    }*/
 
 }

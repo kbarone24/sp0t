@@ -11,14 +11,13 @@ import UIKit
 import Firebase
 
 protocol friendRequestCollectionCellDelegate: AnyObject{
-    func deleteCell(sender: AnyObject?)
     func deleteFriendRequest(sender: AnyObject?)
     func acceptFriend(sender: AnyObject?)
 }
 
 class FriendRequestCollectionCell: UITableViewCell {
     
-    weak var notificationDelegate: delegateProtocol?
+    weak var notificationControllerDelegate: notificationDelegateProtocol?
     
     var itemHeight, itemWidth: CGFloat!
 
@@ -44,7 +43,6 @@ class FriendRequestCollectionCell: UITableViewCell {
     }
     
     func setUp(notifs: [UserNotification]) {
-        
         ///hardcode cell height in case its laid out before view fully appears -> hard code body height so mask stays with cell change
         resetCell()
                 
@@ -56,6 +54,7 @@ class FriendRequestCollectionCell: UITableViewCell {
         requestLayout.minimumInteritemSpacing = 8
         requestLayout.sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
         
+        // same as with tableView, it acts up if I set up the view using the other style
         friendRequestCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: itemHeight + 1)
         friendRequestCollection.backgroundColor = nil
         friendRequestCollection.delegate = self
@@ -76,6 +75,7 @@ class FriendRequestCollectionCell: UITableViewCell {
     }
 }
 
+// MARK: delegate and data source protocol
 extension FriendRequestCollectionCell: UICollectionViewDelegate, UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -91,29 +91,8 @@ extension FriendRequestCollectionCell: UICollectionViewDelegate, UICollectionVie
     }
 }
 
+// MARK: friendRequestCollectionCellDelegate
 extension FriendRequestCollectionCell: friendRequestCollectionCellDelegate{
-    
-    func deleteCell(sender: AnyObject?){
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.friendRequestCollection.performBatchUpdates({
-                let cell = sender as! FriendRequestCell
-                let indexPath = self.friendRequestCollection.indexPath(for: cell)
-                var indexPaths: [IndexPath] = []
-                indexPaths.append(indexPath!)
-                self.friendRequests = self.notificationDelegate?.deleteFriendRequest(friendRequest: cell.friendRequest) ?? []
-                self.friendRequestCollection.deleteItems(at: indexPaths)
-                let friendID = cell.friendRequest.userInfo!.id
-                //self.removeFriendRequest(friendID: friendID!, uid: uid)
-            }) { (finished) in
-                print("RELOADING")
-                print("😩", self.friendRequestCollection)
-                self.friendRequestCollection.reloadData()
-                self.notificationDelegate?.reloadTable()
-            }
-            // Change `2.0` to the desired number of seconds.
-           // Code you want to be delayed
-        }
-    }
     
     func deleteFriendRequest(sender: AnyObject?) {
         self.friendRequestCollection.performBatchUpdates({
@@ -121,17 +100,15 @@ extension FriendRequestCollectionCell: friendRequestCollectionCellDelegate{
             let indexPath = friendRequestCollection.indexPath(for: cell)
             var indexPaths: [IndexPath] = []
             indexPaths.append(indexPath!)
-            friendRequests = notificationDelegate?.deleteFriendRequest(friendRequest: cell.friendRequest) ?? []
+            // match current data with that of the main view controller
+            friendRequests = notificationControllerDelegate?.deleteFriendRequest(friendRequest: cell.friendRequest) ?? []
             friendRequestCollection.deleteItems(at: indexPaths)
             let friendID = cell.friendRequest.userInfo!.id
-            //self.removeFriendRequest(friendID: friendID!, uid: uid)
+            self.removeFriendRequest(friendID: friendID!, uid: uid)
         }) { (finished) in
-            print("RELOADING")
-            print("😩", self.friendRequestCollection)
             self.friendRequestCollection.reloadData()
-            self.notificationDelegate?.reloadTable()
+            self.notificationControllerDelegate?.reloadTable()
         }
-        print("deleteting")
     }
     
     func acceptFriend(sender: AnyObject?) {
@@ -139,6 +116,4 @@ extension FriendRequestCollectionCell: friendRequestCollectionCellDelegate{
         let friendID = cell.friendRequest.userInfo!.id
         DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID!) }
     }
-    
-    
 }

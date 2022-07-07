@@ -24,8 +24,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         db.settings = settings
         
         /// set navigation bar appearance with gradient
-        //UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrowDark")
-        //UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage(named: "BackArrowDark")
+        UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrowDark")
+        UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage(named: "BackArrowDark")
         
         // Sets the translucent background color
         // Set translucent. (Default value is already true, so this can  be removed if desired.)
@@ -36,9 +36,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         /// set bar button appearance (remove "back" from back buttons)
         let BarButtonItemAppearance = UIBarButtonItem.appearance()
-        BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .normal)
-        BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .selected)
-        BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.clear], for: .highlighted)
+        BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .normal)
+        BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .selected)
+        BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .highlighted)
         
         
         /// search bar attributes
@@ -49,7 +49,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UIView.appearance().isExclusiveTouch = true
         
         let navigationBarAppearance = UINavigationBarAppearance()
-        navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 19)!]
+        navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 20)!]
         navigationBarAppearance.backgroundColor = .white
         //navigationBarAppearance.backgroundImage = UIImage(named: "BackArrowDark")
         //navigationBarAppearance.shadowImage = UIImage()
