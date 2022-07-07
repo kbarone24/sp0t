@@ -9,7 +9,6 @@
 import UIKit
 import SnapKit
 import Firebase
-import Alamofire
 import FirebaseFunctions
 import SDWebImage
 
