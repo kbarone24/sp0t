@@ -23,12 +23,14 @@ class ImagePreviewController: UIViewController {
     var spotObject: MapSpot!
     var delegate: ImagePreviewDelegate?
                 
-    var previewView: PostImageView!
+    var currentImage: PostImagePreview!
+    var nextImage: PostImagePreview!
+    var previousImage: PostImagePreview!
     var previewBackground: UIView! /// tracks where detail view will be added
     var previewButton: UIButton! /// covers entire area where caption tap will open keyboard
     
     var cancelButton: UIButton!
-    var spotButton, tagButton, friendButton: UIButton!
+    var dotView: UIView!
     var shareToButton: UIButton!
     var draftsButton: UIButton!
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
@@ -136,7 +138,7 @@ class ImagePreviewController: UIViewController {
 
         let post = UploadPostModel.shared.postObject!
         
-        /// camera aspect is also the max aspect for any image
+        /// camera aspect is also the max aspect for any image'
         let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
         let cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
@@ -144,148 +146,127 @@ class ImagePreviewController: UIViewController {
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
         let maxY = minY + cameraHeight
-        
-        let imageAspect = post.imageHeight! / UIScreen.main.bounds.width
-        let imageY: CGFloat = imageAspect >= cameraAspect ? minY : (minY + maxY - post.imageHeight!)/2
-        
-        previewView = PostImageView {
-            $0.frame = CGRect(x: 0, y: imageY, width: UIScreen.main.bounds.width, height: post.imageHeight!)
-            $0.contentMode = .scaleAspectFill
-            $0.clipsToBounds = true
-            $0.isUserInteractionEnabled = true
-            $0.layer.cornerRadius = 15
-            $0.backgroundColor = nil
-        }
-        
+                
         previewBackground = UIView {
-            $0.frame = previewView.frame
             $0.backgroundColor = UIColor(named: "SpotBlack")
             $0.layer.cornerRadius = 15
             view.addSubview($0)
         }
-        
-        view.addSubview(previewView)
-        setCurrentImage()
-        
-        /// add button view
-        let buttonView = UIView(frame: CGRect(x: UIScreen.main.bounds.width - 76, y: minY + 39, width: 64, height: 204))
-        
-        /// stretch background view for landscape image so detail view appears at bottom of screen
-        if imageAspect < 1.1 {
-            /// move preview view beneath edit buttons
-            previewView.frame = CGRect(x: 0, y: buttonView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: previewView.frame.height)
-            previewBackground.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: cameraHeight)
-            
-        } else {
-            addImageMasks(minY: minY, imageY: imageY)
+        previewBackground.snp.makeConstraints {
+            $0.leading.trailing.top.bottom.equalToSuperview()
         }
+                
+        currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex!)
+        view.addSubview(currentImage)
+        currentImage.makeConstraints()
+        currentImage.setCurrentImage()
         
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
+        view.addGestureRecognizer(pan)
+     //   previewBackground.addGestureRecognizer(pan)
+        
+        if post.frameIndexes!.count > 1 {
+            nextImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex! + 1)
+            view.addSubview(nextImage)
+            nextImage.makeConstraints()
+            nextImage.setCurrentImage()
+            
+            previousImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex! - 1)
+            view.addSubview(previousImage)
+            previousImage.makeConstraints()
+            previousImage.setCurrentImage()
+            
+            addDotView()
+        }
+          /*
         previewButton = UIButton {
-            $0.frame = previewBackground.frame /// previewButton receives all events on image area
             $0.addTarget(self, action: #selector(captionTap(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
-                
-        view.addSubview(buttonView)
-                
+        previewButton.snp.makeConstraints {
+            $0.leading.trailing.top.bottom.equalToSuperview()
+        } */
+                                
         /// add cancel button
         cancelButton = UIButton {
-            $0.frame = CGRect(x: 4, y: minY + 37, width: 50, height: 50)
             $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
             $0.contentHorizontalAlignment = .fill
             $0.contentVerticalAlignment = .fill
             $0.setImage(UIImage(named: "CancelButton"), for: .normal)
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+            view.addSubview($0)
         }
-        view.addSubview(cancelButton)
-
-        spotButton = UIButton {
-            $0.frame = CGRect(x: 0, y: 0, width: 64, height: 64)
-            $0.setImage(UIImage(named: "CameraSpotButton"), for: .normal)
-            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            $0.addTarget(self, action: #selector(spotTap(_:)), for: .touchUpInside)
-            buttonView.addSubview($0)
-        }
-                
-        friendButton = UIButton {
-            $0.frame = CGRect(x: 0, y: spotButton.frame.maxY + 6, width: 64, height: 64)
-            $0.setImage(UIImage(named: "CameraFriendButton"), for: .normal)
-            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            $0.addTarget(self, action: #selector(friendTap(_:)), for: .touchUpInside)
-            buttonView.addSubview($0)
-        }
-        
-        tagButton = UIButton {
-            $0.frame = CGRect(x: 0, y: friendButton.frame.maxY + 6, width: 64, height: 64)
-            $0.setImage(UIImage(named: "CameraTagButton"), for: .normal)
-            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            $0.addTarget(self, action: #selector(tagTap(_:)), for: .touchUpInside)
-            buttonView.addSubview($0)
+        cancelButton.snp.makeConstraints {
+            $0.leading.equalTo(4)
+            $0.top.equalTo(minY + 37)
+            $0.width.height.equalTo(50)
         }
                 
         /// add share to and drafts
         shareToButton = UIButton {
-            $0.frame = CGRect(x: UIScreen.main.bounds.width - 148, y: maxY + 6, width: 140, height: 54)
             $0.setImage(UIImage(named: "CameraShareButton"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.addTarget(self, action: #selector(shareTap(_:)), for: .touchUpInside)
             view.addSubview($0)
+        }
+        shareToButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(8)
+            $0.top.equalTo(maxY + 6)
+            $0.width.equalTo(140)
+            $0.height.equalTo(54)
         }
         
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         panGesture.isEnabled = false
         view.addGestureRecognizer(panGesture)
         
-        addCaption()
-        addPostDetail()
+        // addCaption()
+       // addPostDetail()
     }
-    
-    func setCurrentImage() {
         
-        let post = UploadPostModel.shared.postObject!
-        let images = post.postImage
-        let frameIndexes = post.frameIndexes ?? []
-        
-        guard let still = images[safe: frameIndexes[post.selectedImageIndex!]] else { return }
-        
-        /// scale aspect fit for landscape image, stretch to fill iPhone vertical + image taken from sp0t camera
-        let imageAspect = still.size.height / still.size.width
-        previewView.contentMode = (imageAspect + 0.01 < (post.imageHeight! / UIScreen.main.bounds.width)) && imageAspect < 1.1  ? .scaleAspectFit : .scaleAspectFill
-        if previewView.contentMode == .scaleAspectFit { previewView.roundCornersForAspectFit(radius: 15) }
-        
-        previewView.image = still
-        previewView.stillImage = still
-        
-        let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: post.selectedImageIndex!)
-        previewView.animationImages = animationImages
-        previewView.animationIndex = 0
-
-        if !animationImages.isEmpty && !previewView.activeAnimation {
-            previewView.animateGIF(directionUp: true, counter: previewView.animationIndex)
+    func addDotView() {
+        let imageCount = UploadPostModel.shared.postObject.frameIndexes!.count
+        let dotWidth = (14 * imageCount) + (10 * (imageCount - 1))
+        dotView = UIView {
+            $0.backgroundColor = nil
+            view.addSubview($0)
         }
+        dotView.snp.makeConstraints {
+            $0.top.equalTo(previewBackground.snp.top).offset(50)
+            $0.height.equalTo(14)
+            $0.width.equalTo(dotWidth)
+            $0.centerX.equalToSuperview()
+        }
+        addDots()
     }
     
-    func getGifImages(selectedImages: [UIImage], frameIndexes: [Int], imageIndex: Int) -> [UIImage] {
-
-        /// return empty set of images if there's only one image for this frame index (still image), return all images at this frame index if there's more than 1 image
-        guard let selectedFrame = frameIndexes[safe: imageIndex] else { return [] }
-        
-        if frameIndexes.count == 1 {
-            return selectedImages.count > 1 ? selectedImages : []
-        } else if frameIndexes.count - 1 == imageIndex {
-            return selectedImages[selectedFrame] != selectedImages.last ? selectedImages.suffix(selectedImages.count - 1 - selectedFrame) : []
-        } else {
-            let frame1 = frameIndexes[imageIndex + 1]
-            return frame1 - selectedFrame > 1 ? Array(selectedImages[selectedFrame...frame1 - 1]) : []
+    func addDots() {
+        if dotView != nil { for sub in dotView.subviews { sub.removeFromSuperview() } }
+        for i in 0...UploadPostModel.shared.postObject.frameIndexes!.count - 1 {
+            let dot = UIView {
+                $0.backgroundColor = .white
+                $0.alpha = i == UploadPostModel.shared.postObject.selectedImageIndex! ? 1.0 : 0.35
+                $0.layer.cornerRadius = 7
+                dotView.addSubview($0)
+            }
+            let leading = i * 24
+            dot.snp.makeConstraints {
+                $0.leading.equalTo(leading)
+                $0.top.equalToSuperview()
+                $0.width.height.equalTo(14)
+            }
         }
     }
     
     func addPostDetail() {
         
         if postDetailView == nil {
-            postDetailView = UIView {
-                $0.frame = CGRect(x: 0, y: previewBackground.bounds.maxY - 65, width: UIScreen.main.bounds.width, height: 65)
-                previewButton.addSubview($0)
+            postDetailView = UIView()
+            previewButton.addSubview(postDetailView)
+            postDetailView.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview()
+                $0.bottom.equalTo(previewBackground.snp.bottom)
+                $0.height.equalTo(65)
             }
         }
         
@@ -297,8 +278,6 @@ class ImagePreviewController: UIViewController {
         if !(UploadPostModel.shared.postObject.addedUsers?.isEmpty ?? true) || UploadPostModel.shared.spotObject != nil {
             minY -= 55
         }
-        
-        textView.frame = CGRect(x: textView.frame.minX, y: minY, width: textView.frame.width, height: textView.frame.height)
     }
     
     func addAddedUsersView() {
@@ -349,44 +328,90 @@ class ImagePreviewController: UIViewController {
         }
     }
         
-    
-    func addImageMasks(minY: CGFloat, imageY: CGFloat) {
-        /// add top mask if image overlaps with buttons
-        /// end of buttons at minY + 243
-        let maskHeight: CGFloat = (minY + 243) - imageY
-        let topMask = UIView(frame: CGRect(x: 0, y: imageY, width: UIScreen.main.bounds.width, height: maskHeight))
-        
-        let topLayer = CAGradientLayer()
-        topLayer.frame = topMask.bounds
-        topLayer.colors = [
-          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-          UIColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor
-        ]
-        topLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
-        topLayer.endPoint = CGPoint(x: 0.5, y: 0.0)
-        topLayer.locations = [0, 1]
-        
-        topMask.layer.addSublayer(topLayer)
-        view.addSubview(topMask)
-        
-        let bottomMask = UIView(frame: CGRect(x: 0, y: previewBackground.frame.maxY - maskHeight, width: UIScreen.main.bounds.width, height: maskHeight))
-        let bottomLayer = CAGradientLayer()
-        bottomLayer.frame = topMask.bounds
-        bottomLayer.colors = [
-          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-          UIColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor
-        ]
-        bottomLayer.startPoint = CGPoint(x: 0.5, y: 0.0)
-        bottomLayer.endPoint = CGPoint(x: 0.5, y: 1.0)
-        bottomLayer.locations = [0, 1]
-        
-        bottomMask.layer.addSublayer(bottomLayer)
-        view.addSubview(bottomMask)
-    }
-    
     @objc func postInfoUpdate(_ sender: NSNotification) {
         /// passback from PostInfoController
         DispatchQueue.main.async { self.addPostDetail() }
+    }
+    
+    @objc func imageSwipe(_ gesture: UIPanGestureRecognizer) {
+        let direction = gesture.velocity(in: view)
+        let translation = gesture.translation(in: view)
+        let composite = translation.x + direction.x/4
+        let selectedIndex = UploadPostModel.shared.postObject.selectedImageIndex!
+        let imageCount = UploadPostModel.shared.postObject.frameIndexes!.count
+        
+        switch gesture.state {
+        case .changed:
+            currentImage.snp.updateConstraints({$0.leading.trailing.equalToSuperview().offset(translation.x)})
+            nextImage.snp.updateConstraints({$0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width + translation.x)})
+            previousImage.snp.updateConstraints({$0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width + translation.x)})
+            
+        case .ended:
+            print("composite", composite)
+            if (composite < -UIScreen.main.bounds.width/2) && (selectedIndex < imageCount - 1) {
+                animateNext()
+            } else if (composite > UIScreen.main.bounds.width/2) && (selectedIndex > 0) {
+                animatePrevious()
+            } else {
+                resetFrame()
+            }
+            
+        default: return
+        }
+
+    }
+    
+    func animateNext() {
+        currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
+        nextImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
+        UIView.animate(withDuration: 0.2, animations: {
+            self.view.layoutIfNeeded()
+        }) { [weak self] _ in
+            guard let self = self else { return }
+            /// reset image indexe
+            UploadPostModel.shared.postObject!.selectedImageIndex! += 1
+            self.setImages()
+        }
+    }
+    
+    func animatePrevious() {
+        currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width) }
+        previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
+        UIView.animate(withDuration: 0.2, animations: {
+            self.view.layoutIfNeeded()
+        }) { [weak self] _ in
+            guard let self = self else { return }
+            /// reset image indexes
+            UploadPostModel.shared.postObject!.selectedImageIndex! -= 1
+            self.setImages()
+        }
+    }
+    
+    func resetFrame() {
+        currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
+        previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
+        nextImage.snp.updateConstraints {
+            $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width )
+        }
+        UIView.animate(withDuration: 0.2) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    func setImages() {
+        let selectedIndex = UploadPostModel.shared.postObject!.selectedImageIndex!
+        currentImage.index = selectedIndex
+        currentImage.setCurrentImage()
+        currentImage.makeConstraints()
+        
+        previousImage.index = selectedIndex - 1
+        previousImage.setCurrentImage()
+        previousImage.makeConstraints()
+        
+        nextImage.index = selectedIndex + 1
+        nextImage.setCurrentImage()
+        nextImage.makeConstraints()
+        addDots()
     }
     
     @objc func cancelTap(_ sender: UIButton) {
@@ -630,5 +655,138 @@ class SpotNameView: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class PostImagePreview: PostImageView {
+    
+    var index: Int!
+    
+    convenience init(frame: CGRect, index: Int) {
+        self.init(frame: frame)
+        self.index = index
+        
+        contentMode = .scaleAspectFill
+        clipsToBounds = true
+        isUserInteractionEnabled = true
+        layer.cornerRadius = 15
+        backgroundColor = nil
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func makeConstraints() {
+        
+        snp.removeConstraints()
+        
+        let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
+        let cameraHeight = UIScreen.main.bounds.width * cameraAspect
+        
+        let post = UploadPostModel.shared.postObject!
+        let currentAspect = (post.postImage[safe: index]?.size.height ?? 1.0) / (post.postImage[safe: index]?.size.width ?? 1.0)
+        let currentHeight = getImageHeight(aspectRatio: currentAspect, maxAspect: cameraAspect)
+        print("curent height", currentHeight)
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
+        let maxY = minY + cameraHeight
+        
+        let imageY: CGFloat = currentAspect >= cameraAspect ? minY : (minY + maxY - currentHeight)/2
+
+        snp.makeConstraints {
+            $0.height.equalTo(currentHeight)
+            $0.top.equalTo(imageY)
+            if index == post.selectedImageIndex { $0.leading.trailing.equalToSuperview() }
+            else if index < post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
+            else if index > post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width) }
+        }
+        
+        for sub in subviews { sub.removeFromSuperview() } /// remove any old masks
+       // if currentAspect > 1.1 { addImageMasks() }
+    }
+    
+    func setCurrentImage() {
+        let post = UploadPostModel.shared.postObject!
+        let images = post.postImage
+        let frameIndexes = post.frameIndexes ?? []
+        
+        let still = images[safe: frameIndexes[safe: index] ?? -1] ?? UIImage()
+        
+        /// scale aspect fit for landscape image, stretch to fill iPhone vertical + image taken from sp0t camera
+        let imageAspect = still.size.height / still.size.width
+        contentMode = (imageAspect + 0.01 < (post.imageHeight! / UIScreen.main.bounds.width)) && imageAspect < 1.1  ? .scaleAspectFit : .scaleAspectFill
+        if contentMode == .scaleAspectFit { roundCornersForAspectFit(radius: 15) }
+        
+        image = still
+        stillImage = still
+        
+        let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: post.selectedImageIndex!)
+        self.animationImages = animationImages
+        animationIndex = 0
+
+        if !animationImages.isEmpty && !activeAnimation {
+            animateGIF(directionUp: true, counter: animationIndex)
+        }
+    }
+    
+    func getGifImages(selectedImages: [UIImage], frameIndexes: [Int], imageIndex: Int) -> [UIImage] {
+        /// return empty set of images if there's only one image for this frame index (still image), return all images at this frame index if there's more than 1 image
+        guard let selectedFrame = frameIndexes[safe: imageIndex] else { return [] }
+        
+        if frameIndexes.count == 1 {
+            return selectedImages.count > 1 ? selectedImages : []
+        } else if frameIndexes.count - 1 == imageIndex {
+            return selectedImages[selectedFrame] != selectedImages.last ? selectedImages.suffix(selectedImages.count - 1 - selectedFrame) : []
+        } else {
+            let frame1 = frameIndexes[imageIndex + 1]
+            return frame1 - selectedFrame > 1 ? Array(selectedImages[selectedFrame...frame1 - 1]) : []
+        }
+    }
+
+    func addImageMasks() {
+        let topMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 200))
+        
+        let topLayer = CAGradientLayer()
+        topLayer.frame = topMask.bounds
+        topLayer.colors = [
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor
+        ]
+        topLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
+        topLayer.endPoint = CGPoint(x: 0.5, y: 0.0)
+        topLayer.locations = [0, 1]
+        
+        topMask.layer.addSublayer(topLayer)
+        addSubview(topMask)
+        
+        let bottomMask = UIView(frame: CGRect(x: 0, y: bounds.height - 200, width: UIScreen.main.bounds.width, height: 200))
+        let bottomLayer = CAGradientLayer()
+        bottomLayer.frame = topMask.bounds
+        bottomLayer.colors = [
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor
+        ]
+        bottomLayer.startPoint = CGPoint(x: 0.5, y: 0.0)
+        bottomLayer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        bottomLayer.locations = [0, 1]
+        
+        bottomMask.layer.addSublayer(bottomLayer)
+        addSubview(bottomMask)
+    }
+    
+    func getImageHeight(aspectRatio: CGFloat, maxAspect: CGFloat) -> CGFloat {
+      
+        var imageAspect =  min(aspectRatio, maxAspect)
+        if imageAspect > 1.1 && imageAspect < 1.7 { imageAspect = 1.7 } /// stretch iPhone vertical
+        if imageAspect > 1.7 { imageAspect = maxAspect } /// round to max aspect
+        
+        let imageHeight = UIScreen.main.bounds.width * imageAspect
+        return imageHeight
     }
 }
