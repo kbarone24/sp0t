@@ -21,13 +21,13 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     var editSpotMode = false
     
     let collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
-    lazy var layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout.init()
+    var layout: UICollectionViewFlowLayout!
     
     lazy var imageManager = PHCachingImageManager()
     let options = PHImageRequestOptions()
     
     var editSpotCount = 0
-    var baseSize: CGSize!
+    let thumbnailSize = CGSize(width: UIScreen.main.bounds.width/4 - 0.1, height: (UIScreen.main.bounds.width/3 - 0.1))
     var offset: CGFloat = 0
     var maxOffset: CGFloat = (UIScreen.main.bounds.width/4 * 75) /// reload triggered at 300 images
     
@@ -51,36 +51,10 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     override func viewDidLoad() {
         
         super.viewDidLoad()
-        self.view.backgroundColor = UIColor(named: "SpotBlack")
+        view.backgroundColor = UIColor(named: "SpotBlack")
         
         setUpNavBar()
-        
-        collectionView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-        baseSize = CGSize(width: UIScreen.main.bounds.width/4 - 0.1, height: UIScreen.main.bounds.width/4 - 0.1)
-        
-        options.deliveryMode = .highQualityFormat
-        options.isSynchronous = false
-        options.isNetworkAccessAllowed = true
-        
-        view.backgroundColor = UIColor(named: "SpotBlack")
-        collectionView.backgroundColor = UIColor(named: "SpotBlack")
-        collectionView.showsVerticalScrollIndicator = false
-        collectionView.register(GalleryCell.self, forCellWithReuseIdentifier: "galleryCell")
-        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
-        
-        layout.scrollDirection = .vertical
-        layout.minimumLineSpacing = 0.1
-        layout.minimumInteritemSpacing = 0.1
-        layout.estimatedItemSize = baseSize
-        layout.itemSize = baseSize
-        
-        collectionView.isUserInteractionEnabled = true
-        collectionView.delegate = self
-        collectionView.dataSource = self
-        collectionView.allowsSelection = true
-        collectionView.setCollectionViewLayout(layout, animated: false)
-        collectionView.scrollsToTop = false
-        view.addSubview(collectionView)
+        addCollectionView()
                 
         NotificationCenter.default.addObserver(self, selector: #selector(removePreview(_:)), name: NSNotification.Name("PreviewRemove"), object: nil)
         
@@ -119,7 +93,7 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         cancelOnDismiss = true
         removePreviews()
     }
-        
+    
     func setUpNavBar() {
         
         navigationItem.title = "Gallery"
@@ -135,6 +109,36 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         self.navigationItem.leftBarButtonItem?.tintColor = nil
         
         toggleNextButton()
+    }
+    
+    func addCollectionView() {
+        
+        options.deliveryMode = .highQualityFormat
+        options.isSynchronous = false
+        options.isNetworkAccessAllowed = true
+        
+        layout = UICollectionViewFlowLayout {
+            $0.scrollDirection = .vertical
+            $0.minimumLineSpacing = 0.1
+            $0.minimumInteritemSpacing = 0.1
+            $0.estimatedItemSize = thumbnailSize
+        }
+        
+        collectionView.backgroundColor = UIColor(named: "SpotBlack")
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.register(GalleryCell.self, forCellWithReuseIdentifier: "galleryCell")
+        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
+        collectionView.isUserInteractionEnabled = true
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        collectionView.allowsSelection = true
+        collectionView.setCollectionViewLayout(layout, animated: false)
+        collectionView.scrollsToTop = false
+        view.addSubview(collectionView)
+        
+        collectionView.snp.makeConstraints {
+            $0.leading.trailing.top.bottom.equalToSuperview()
+        }
     }
     
     func toggleNextButton() {
@@ -296,17 +300,17 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
             
             var index = 0
             if let trueIndex = UploadPostModel.shared.selectedObjects.lastIndex(where: {$0.id == imageObject.0.id}) { index = trueIndex + 1 }
-            cell.setUp(asset: imageObject.0.asset, row: indexPath.row, index: index, editSpot: false, id: imageObject.0.id, cameraImage: imageObject.0.stillImage)
+            cell.setUp(asset: imageObject.0.asset, row: indexPath.row, index: index, id: imageObject.0.id)
             
             /// set cellImage from here -> processes weren't consistently offloading with deinit
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else { return }
-                cell.requestID = self.imageManager.requestImage(for: imageObject.0.asset, targetSize: self.baseSize, contentMode: .aspectFill, options: self.options) { (result, info) in
-                    DispatchQueue.main.async { if result != nil { cell.image.image = result! } }
+                cell.requestID = self.imageManager.requestImage(for: imageObject.0.asset, targetSize: self.thumbnailSize, contentMode: .aspectFill, options: self.options) { (result, info) in
+                    if info?["PHImageCancelledKey"] != nil { return }
+                    DispatchQueue.main.async { if result != nil { cell.imageView.image = result! } }
                 }
             }
         }
-        
         return cell
     }
     
@@ -333,6 +337,10 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
                 self.addPreviewView(object: UploadPostModel.shared.imageObjects[indexPath.row].image, galleryIndex: indexPath.row)
             }
         }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return thumbnailSize
     }
     
     func downloadImage(index: Int, completion: @escaping (_ stillImage: UIImage) -> Void) {
@@ -367,7 +375,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
     
     func deselect(index: Int) {
         
-        let paths = getSelectedPaths(newRow: index)
+        let paths = getSelectedPaths(newRow: index, select: false)
         guard let selectedObject = UploadPostModel.shared.imageObjects[safe: index]?.image else { return }
     
         /// deselect image on circle tap
@@ -385,7 +393,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         if UploadPostModel.shared.selectedObjects.count > 4 { showMaxImagesAlert(); return }
         if editSpotMode && UploadPostModel.shared.selectedObjects.count > 0 { return }
         
-        let paths = getSelectedPaths(newRow: index)
+        let paths = getSelectedPaths(newRow: index, select: true)
         
         if selectedObject.stillImage != UIImage() {
             /// select image immediately
@@ -428,8 +436,9 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         imageFetcher.cancelFetchForAsset(asset: currentAsset)
     }
     
-    func getSelectedPaths(newRow: Int) -> [IndexPath] {
-        
+    func getSelectedPaths(newRow: Int, select: Bool) -> [IndexPath] {
+        /// reload all visible if going from max / not max selected
+        if (UploadPostModel.shared.selectedObjects.count == 5 && !select) || (UploadPostModel.shared.selectedObjects.count == 4 && select) { return collectionView.indexPathsForVisibleItems }
         var selectedPaths: [IndexPath] = []
         for object in UploadPostModel.shared.selectedObjects {
             if let index = UploadPostModel.shared.imageObjects.firstIndex(where: {$0.image.id == object.id}) {
@@ -471,90 +480,91 @@ extension UIColor {
 
 class GalleryCell: UICollectionViewCell {
     
-    var image: UIImageView!
-    var imageMask: UIView!
-    var circleView: CircleView!
+    var imageView: UIImageView!
     lazy var activityIndicator = UIActivityIndicatorView()
+    var circleView: CircleView!
+    var imageMask: UIView?
     
     var globalRow: Int!
     var asset: PHAsset!
     var id: String!
-    var thumbnailSize: CGSize!
+    lazy var thumbnailSize = CGSize(width: UIScreen.main.bounds.width/4, height: UIScreen.main.bounds.width/3)
     lazy var requestID: Int32 = 1
-    var liveIndicator: UIImageView!
+    var liveIndicator: UIImageView?
     
-    func setUp(asset: PHAsset, row: Int, index: Int, editSpot: Bool, id: String, cameraImage: UIImage) {
-        
-        self.backgroundColor = UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func setUp(asset: PHAsset, row: Int, index: Int, id: String) {
+        backgroundColor = UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1)
         self.asset = asset
         self.globalRow = row
         self.id = id
-        
+
         layer.shouldRasterize = true
         layer.rasterizationScale = UIScreen.main.scale
         layer.borderWidth = 1
         layer.borderColor = UIColor(named: "SpotBlack")?.cgColor
         isOpaque = true
         
-        setThumbnailSize()
         resetCell()
         
-        image = UIImageView(frame: self.bounds)
-        image.image = UIImage(color: UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1), size: thumbnailSize)
-        image.clipsToBounds = true
-        image.contentMode = .scaleAspectFill
-        image.isUserInteractionEnabled = false
-        addSubview(image)
+        imageView = UIImageView {
+            $0.frame = self.bounds
+            $0.image = UIImage(color: UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1), size: thumbnailSize)
+            $0.clipsToBounds = true
+            $0.contentMode = .scaleAspectFill
+            $0.isUserInteractionEnabled = true
+            contentView.addSubview($0)
+        }
+        imageView.snp.makeConstraints {
+            $0.height.width.equalTo(thumbnailSize)
+        }
         
-        activityIndicator = UIActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height))
-        activityIndicator.color = .white
-        activityIndicator.transform = CGAffineTransform(scaleX: 1.7, y: 1.7)
-        activityIndicator.isHidden = true
-        addSubview(activityIndicator)
+        activityIndicator = UIActivityIndicatorView {
+            $0.color = .white
+            $0.transform = CGAffineTransform(scaleX: 1.7, y: 1.7)
+            $0.isHidden = true
+            contentView.addSubview($0)
+        }
+        activityIndicator.snp.makeConstraints {
+            $0.height.width.equalTo(30)
+            $0.centerX.centerY.equalToSuperview()
+        }
         
         /// add mask background for selected images
         if index != 0 { addImageMask() }
         
         /// live indicator shows playbutton over image to indicate live capability on this image
-        if asset.mediaSubtypes.contains(.photoLive) && !editSpot {
-            liveIndicator = UIImageView(frame: CGRect(x: self.bounds.midX - 9, y: self.bounds.midY - 9, width: 18, height: 18))
-            liveIndicator.image = UIImage(named: "PreviewGif")
-            addSubview(liveIndicator)
+        if asset.mediaSubtypes.contains(.photoLive) {
+            liveIndicator = UIImageView {
+                $0.image = UIImage(named: "PreviewGif")
+                contentView.addSubview($0)
+            }
+            liveIndicator!.snp.makeConstraints {
+                $0.width.height.equalTo(18)
+                $0.centerX.centerY.equalToSuperview()
+            }
         }
         
         addCircle(index: index)
-        if cameraImage != UIImage() { image.image = cameraImage; return } /// image from camera, set to image and return
-
     }
     
     private func addImageMask() {
         
-        imageMask = UIView(frame: self.bounds)
-        imageMask.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(0.5)
-        
-        let layer = CAGradientLayer()
-        layer.frame = imageMask.bounds
-        layer.colors = [
-            UIColor(red: 0.098, green: 0.783, blue: 0.701, alpha: 0.13).cgColor,
-            UIColor(red: 0.098, green: 0.784, blue: 0.702, alpha: 0.03).cgColor,
-            UIColor(red: 0.098, green: 0.784, blue: 0.702, alpha: 0.1).cgColor,
-            UIColor(red: 0.098, green: 0.783, blue: 0.701, alpha: 0.33).cgColor
-        ]
-        layer.locations = [0, 0.3, 0.66, 1]
-        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
-        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
-        imageMask.layer.addSublayer(layer)
-        
-        addSubview(imageMask)
+        imageMask = UIView {
+            $0.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(0.5)
+            contentView.addSubview($0)
+        }
+        imageMask!.snp.makeConstraints {
+            $0.height.width.equalTo(thumbnailSize)
+        }
     }
-    
-    private func setThumbnailSize() {
-        let scale = UIScreen.main.bounds.width * 1/4
-        thumbnailSize = CGSize(width: scale, height: scale)
-    }
-    
-    ///https://stackoverflow.com/questions/40226949/ios-phimagemanager-cancelimagerequest-not-working
-    
     
     func addActivityIndicator() {
         bringSubviewToFront(activityIndicator)
@@ -568,8 +578,7 @@ class GalleryCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         activityIndicator.stopAnimating()
-        image.image = UIImage()
-        if imageMask != nil { for layer in imageMask.layer.sublayers ?? [] { layer.removeFromSuperlayer() } }
+        if imageMask != nil { for layer in imageMask!.layer.sublayers ?? [] { layer.removeFromSuperlayer() } }
         if let galleryVC = viewContainingController() as? PhotoGalleryController {
             galleryVC.imageManager.cancelImageRequest(requestID)
         }
@@ -577,9 +586,9 @@ class GalleryCell: UICollectionViewCell {
         
     func resetCell() {
         
-        if image != nil { image.image = UIImage() }
-        if circleView != nil { for sub in circleView.subviews {sub.removeFromSuperview()}; circleView = CircleView() }
-        if liveIndicator != nil { liveIndicator.image = UIImage() }
+        if imageView != nil { imageView.image = UIImage(); imageView.removeFromSuperview() }
+        if circleView != nil { for sub in circleView.subviews {sub.removeFromSuperview()}; circleView = CircleView(); circleView.removeFromSuperview() }
+        if liveIndicator != nil { liveIndicator!.image = UIImage(); liveIndicator!.removeFromSuperview() }
         
         if self.gestureRecognizers != nil {
             for gesture in self.gestureRecognizers! {
@@ -590,13 +599,25 @@ class GalleryCell: UICollectionViewCell {
     
     func addCircle(index: Int) {
         /// show circle with selected image number if selected
-        circleView = CircleView(frame: CGRect(x: bounds.width - 27, y: 6, width: 23, height: 23))
-        circleView.setUp(index: index)
-        addSubview(circleView)
+        circleView = CircleView {
+            $0.setUp(index: index)
+            $0.layer.cornerRadius = 11.5
+            contentView.addSubview($0)
+        }
+        circleView.snp.makeConstraints {
+            $0.trailing.equalTo(imageView.snp.trailing).inset(6)
+            $0.top.equalTo(imageView.snp.top).offset(6)
+            $0.width.height.equalTo(23)
+        }
         
-        let circleButton = UIButton(frame: CGRect(x: bounds.width - 33, y: 0, width: 33, height: 33))
-        circleButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
-        addSubview(circleButton)
+        let circleButton = UIButton {
+            $0.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
+            contentView.addSubview($0)
+        }
+        circleButton.snp.makeConstraints {
+            $0.top.trailing.equalToSuperview()
+            $0.width.height.equalTo(40)
+        }
     }
     
     @objc func circleTap(_ sender: UIButton) {

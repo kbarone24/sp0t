@@ -75,8 +75,9 @@ class AVCameraController: UIViewController {
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        Mixpanel.mainInstance().track(event: "CameraOpen")
         super.viewDidAppear(animated)
+        self.navigationController?.setNavigationBarHidden(true, animated: true)
+        Mixpanel.mainInstance().track(event: "CameraOpen")
     }
 
     override func viewWillDisappear(_ animated: Bool) {
