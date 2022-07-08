@@ -230,7 +230,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         if((pendingFriendRequests.count == 0 && notifications.count < 7) || (pendingFriendRequests.count > 0 && notifications.count < 11)){
             fetchNotifications(refresh: false)
         }
-        self.tableView.reloadData()
+        DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
 
