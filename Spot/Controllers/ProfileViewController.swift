@@ -45,11 +45,16 @@ class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
-        
         DispatchQueue.main.async {
             self.getMaps()
             self.getNinePosts()
         }
+    }
+    
+    @objc func editButtonAction() {
+        let editVC = EditProfileViewController()
+        editVC.modalPresentationStyle = .fullScreen
+        present(editVC, animated: true)
     }
 }
 
@@ -105,7 +110,7 @@ extension ProfileViewController {
             $0.textAlignment = .center
             $0.numberOfLines = 0
             $0.sizeToFit()
-            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: (containerDrawerView?.slideView.frame.width)!, height: 18))
+            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: containerDrawerView!.slideView.frame.width, height: 18))
             barView.addSubview($0)
         }
         containerDrawerView?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
@@ -167,7 +172,9 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
-        if let mapCell = cell as? ProfileMyMapCell {
+        if let headerCell = cell as? ProfileHeaderCell{
+            headerCell.editButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
+        } else if let mapCell = cell as? ProfileMyMapCell {
             mapCell.myMapImages = postImages
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {

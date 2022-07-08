@@ -24,6 +24,7 @@
 		413486892859310E0098B27B /* SF-Compact-Text-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */; };
 		4134868A2859310E0098B27B /* SF-Compact-Text-Semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486852859310E0098B27B /* SF-Compact-Text-Semibold.otf */; };
 		4134868B2859310E0098B27B /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */; };
+		413BA16328785E8B00FD80AF /* EditProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA16228785E8B00FD80AF /* EditProfileViewController.swift */; };
 		413ED8D6286F6F4100F76AC1 /* ProfileMyMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */; };
 		413ED8D828720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */; };
 		41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5D2866285800C522B1 /* R.generated.swift */; };
@@ -337,6 +338,7 @@
 		413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Heavy.otf"; sourceTree = "<group>"; };
 		413486852859310E0098B27B /* SF-Compact-Text-Semibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Semibold.otf"; sourceTree = "<group>"; };
 		413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Regular.otf"; sourceTree = "<group>"; };
+		413BA16228785E8B00FD80AF /* EditProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileViewController.swift; sourceTree = "<group>"; };
 		413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapCell.swift; sourceTree = "<group>"; };
 		413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapImageCollectionViewCell.swift; sourceTree = "<group>"; };
 		41AC5A5D2866285800C522B1 /* R.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = R.generated.swift; sourceTree = "<group>"; };
@@ -654,6 +656,7 @@
 			children = (
 				8C3209E9261631D800FB32BA /* Discovery */,
 				8C2209FB284EDDAD00E5D165 /* ProfileViewController.swift */,
+				413BA16228785E8B00FD80AF /* EditProfileViewController.swift */,
 			);
 			name = Profile;
 			sourceTree = "<group>";
@@ -1183,6 +1186,7 @@
 				5916A8B724A5542800118E83 /* ResultSpot.swift in Sources */,
 				599371B0234E468500204F59 /* SearchContactsController.swift in Sources */,
 				59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */,
+				413BA16328785E8B00FD80AF /* EditProfileViewController.swift in Sources */,
 				8C34207A261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				8C1EAF6F283F18E400474879 /* ShareToController.swift in Sources */,
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
