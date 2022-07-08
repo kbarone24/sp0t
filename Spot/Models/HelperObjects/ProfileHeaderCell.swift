@@ -25,7 +25,13 @@ class ProfileHeaderCell: UICollectionViewCell {
     }
     
     @objc func editButtonAction() {
-        
+        UIView.animate(withDuration: 0.15) {
+            self.editButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        } completion: { (Bool) in
+            UIView.animate(withDuration: 0.15) {
+                self.editButton.transform = .identity
+            }
+        }
     }
     
     override init(frame: CGRect) {

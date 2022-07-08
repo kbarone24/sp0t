@@ -349,7 +349,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 189 images.
+  /// This `R.image` struct is generated, and contains static references to 192 images.
   struct image {
     /// Image `ActiveTag`.
     static let activeTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ActiveTag")
@@ -363,6 +363,8 @@ struct R: Rswift.Validatable {
     static let aliveOn = Rswift.ImageResource(bundle: R.hostingBundle, name: "AliveOn")
     /// Image `ArtTag`.
     static let artTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ArtTag")
+    /// Image `BackArrow-1`.
+    static let backArrow1 = Rswift.ImageResource(bundle: R.hostingBundle, name: "BackArrow-1")
     /// Image `BackArrowDark`.
     static let backArrowDark = Rswift.ImageResource(bundle: R.hostingBundle, name: "BackArrowDark")
     /// Image `BackArrow`.
@@ -461,6 +463,10 @@ struct R: Rswift.Validatable {
     static let drinkTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "DrinkTag")
     /// Image `EatTag`.
     static let eatTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "EatTag")
+    /// Image `EditAvatar`.
+    static let editAvatar = Rswift.ImageResource(bundle: R.hostingBundle, name: "EditAvatar")
+    /// Image `EditProfilePicture`.
+    static let editProfilePicture = Rswift.ImageResource(bundle: R.hostingBundle, name: "EditProfilePicture")
     /// Image `EggTag`.
     static let eggTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "EggTag")
     /// Image `FeedExit`.
@@ -776,6 +782,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "BackArrow", bundle: ..., traitCollection: ...)`
     static func backArrow(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.backArrow, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "BackArrow-1", bundle: ..., traitCollection: ...)`
+    static func backArrow1(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.backArrow1, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1112,6 +1125,20 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "EatTag", bundle: ..., traitCollection: ...)`
     static func eatTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.eatTag, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "EditAvatar", bundle: ..., traitCollection: ...)`
+    static func editAvatar(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.editAvatar, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "EditProfilePicture", bundle: ..., traitCollection: ...)`
+    static func editProfilePicture(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.editProfilePicture, compatibleWith: traitCollection)
     }
     #endif
 
