@@ -76,7 +76,7 @@ class ActivityCell: UITableViewCell {
             $0.height.width.equalTo(50)
         }
 
-        if notification.userInfo?.avatarURL != "" {
+        if (notification.userInfo?.avatarURL ?? "") != "" {
             userAvatar = UIImageView{
                 $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
                 $0.layer.masksToBounds = false
