@@ -102,7 +102,7 @@ class FriendRequestCell: UICollectionViewCell {
             $0.height.width.equalTo(71)
         }
         
-        if(friendRequest.userInfo?.avatarURL != ""){
+        if((friendRequest.userInfo?.avatarURL ?? "") != ""){
             userAvatar = UIImageView{
                 $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
                 $0.layer.masksToBounds = false
