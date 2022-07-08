@@ -129,7 +129,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                     notification.timeString = self.getTimeString(postTime: notification.timestamp)
                     
                     if !notification.seen {
-                        doc.reference.updateData(["seen" : true])
+                      DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
                         notification.seen = true
                     }
                                         
