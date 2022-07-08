@@ -96,7 +96,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.register(ActivityCell.self, forCellReuseIdentifier: "ActivityCell")
         tableView.register(FriendRequestCollectionCell.self, forCellReuseIdentifier: "FriendRequestCollectionCell")
         tableView.isUserInteractionEnabled = true
-        self.tableView.separatorStyle = UITableViewCell.SeparatorStyle.none
+        self.tableView.separatorStyle = .none
         view.addSubview(self.tableView)
     }
     
