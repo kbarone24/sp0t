@@ -84,7 +84,7 @@ class FriendRequestCell: UICollectionViewCell {
             $0.layer.masksToBounds = false
             $0.layer.cornerRadius = $0.frame.height/2
             $0.clipsToBounds = true
-            $0.contentMode = UIView.ContentMode.scaleAspectFill
+            $0.contentMode = .scaleAspectFill
             $0.isHidden = false
             profilePicButton.addSubview($0)
             let url = friendRequest.userInfo!.imageURL
