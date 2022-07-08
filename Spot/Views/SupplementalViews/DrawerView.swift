@@ -110,7 +110,7 @@ class DrawerView: NSObject {
             $0.leading.trailing.equalToSuperview()
             topConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).constraint
             midConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).offset(0.45 * parentVC.view.frame.height).constraint
-            botConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.bottom).inset(100).constraint
+            botConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.bottom).inset(200).constraint
             $0.height.equalTo(parentVC.view.snp.height)
         }
         topConstraints?.deactivate()
@@ -195,7 +195,7 @@ class DrawerView: NSObject {
     }
     private func goBottom() {
         botConstraints?.activate()
-        yPosition = parentVC.view.frame.height - 100
+        yPosition = parentVC.view.frame.height - 200
         status = .Bottom
     }
     
