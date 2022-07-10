@@ -22,8 +22,9 @@ class FriendsListController: UIViewController {
     var readyToDismiss = true
     var queried = true
     
-    var doneButton: UIButton!
+    var doneButton: UIButton?
     var cancelButton: UIButton!
+    var titleLabel: UILabel!
     var tableView: UITableView!
     var searchBar: UISearchBar?
 
@@ -58,29 +59,44 @@ class FriendsListController: UIViewController {
         
         view.backgroundColor = .white
         
-        doneButton = UIButton {
-            $0.setTitle("Done", for: .normal)
-            $0.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 16)
-            $0.addTarget(self, action: #selector(doneTap(_:)), for: .touchUpInside)
-            view.addSubview($0)
-        }
-        doneButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(5)
-            $0.top.equalTo(5)
-            $0.width.equalTo(60)
-            $0.height.equalTo(30)
+        if allowsSelection {
+            doneButton = UIButton {
+                $0.setTitle("Done", for: .normal)
+                $0.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
+                $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 16)
+                $0.addTarget(self, action: #selector(doneTap(_:)), for: .touchUpInside)
+                view.addSubview($0)
+            }
+            doneButton!.snp.makeConstraints {
+                $0.trailing.equalToSuperview().inset(7)
+                $0.top.equalTo(12)
+                $0.width.equalTo(60)
+                $0.height.equalTo(30)
+            }
         }
         
         cancelButton = UIButton {
-            $0.setImage(UIImage(named: "CancelButton"), for: .normal)
+            $0.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
         cancelButton.snp.makeConstraints {
-            $0.leading.top.equalTo(5)
-            $0.width.height.equalTo(35)
+            $0.leading.top.equalTo(7)
+            $0.width.height.equalTo(40)
+        }
+        
+        titleLabel = UILabel {
+            $0.text = allowsSelection ? "Select friends" : "Friends list"
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+            $0.textAlignment = .center
+            view.addSubview($0)
+        }
+        titleLabel.snp.makeConstraints {
+            $0.top.equalTo(15)
+            $0.width.equalTo(200)
+            $0.centerX.equalToSuperview()
         }
         
         tableView = UITableView {
@@ -96,7 +112,7 @@ class FriendsListController: UIViewController {
             view.addSubview($0)
         }
         tableView.snp.makeConstraints {
-            let topConstraint = showsSearchBar ? 100 : 20
+            let topConstraint = showsSearchBar ? 115 : 60
             let inset = showsSearchBar ? 50 : 10
             $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(topConstraint)
@@ -120,7 +136,7 @@ class FriendsListController: UIViewController {
         }
         searchBar!.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(16)
-            $0.top.equalTo(50)
+            $0.top.equalTo(60)
             $0.height.equalTo(36)
         }
         

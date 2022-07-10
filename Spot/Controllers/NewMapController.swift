@@ -68,7 +68,7 @@ class NewMapController: UIViewController {
         let margin: CGFloat = 18
         
         exitButton = UIButton {
-            $0.setImage(UIImage(named: "PostInfoCancel"), for: .normal)
+            $0.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             view.addSubview($0)

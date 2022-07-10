@@ -220,7 +220,7 @@ class ImagePreviewController: UIViewController {
         panGesture.isEnabled = false
         view.addGestureRecognizer(panGesture)
         
-        // addCaption()
+        addCaption()
        // addPostDetail()
     }
         
