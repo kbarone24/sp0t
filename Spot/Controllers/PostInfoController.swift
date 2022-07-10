@@ -108,7 +108,7 @@ class PostInfoController: UIViewController {
         }
         
         cancelButton = UIButton {
-            $0.setImage(UIImage(named: "PostInfoCancel"), for: .normal)
+            $0.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
             $0.imageView?.contentMode = .scaleAspectFill
