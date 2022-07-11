@@ -42,9 +42,13 @@ class ProfileBodyCell: UICollectionViewCell {
         mapImage.sd_setImage(with: URL(string: imageURL))
         self.mapName.text = mapName
         privateIcon.isHidden = !isPrivate
-        self.friendsCount.text = "\(friendsCount)"
-        self.likesCount.text = likesCount != 0 ? " • \(likesCount) likes" : ""
-        self.postsCount.text = postsCount != 0 ? " • \(postsCount) posts" : ""
+        self.friendsCount.text = friendsCount == 1 ? "" : "\(friendsCount)"
+        self.friendsIcon.snp.updateConstraints {
+            $0.width.equalTo(friendsCount == 1 ? 0 : 13.33)
+        }
+        self.friendsIcon.isHidden = friendsCount == 1
+        self.likesCount.text = likesCount != 0 ? (friendsCount == 1 ? "\(likesCount) likes" : " • \(likesCount) likes") : ""
+        self.postsCount.text = postsCount != 0 ? ((friendsCount == 1 && likesCount == 0) ? "\(postsCount) posts" : " • \(postsCount) posts") : ""
     }
 }
 
