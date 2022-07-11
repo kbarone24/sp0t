@@ -539,7 +539,7 @@ extension UIViewController {
                 
                 postInfo.id = doc!.documentID
                 postInfo = self.setSecondaryPostValues(post: postInfo)
-                
+            
                 var count = 0
                 self.getUserInfo(userID: postInfo.posterID) { user in
                     postInfo.userInfo = user
