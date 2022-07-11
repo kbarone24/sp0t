@@ -411,7 +411,7 @@ class MapController: UIViewController {
     }
     
     @objc func profileTap(_ sender: Any){
-        let profileVC = ProfileViewController()
+        let profileVC = ProfileViewController(userProfile: nil)
         sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })

@@ -17,15 +17,6 @@ class ProfileBodyCell: UICollectionViewCell {
     var postsCount: UILabel!
     var privateIcon: UIImageView!
     
-    @objc func locationButtonAction() {
-    }
-    
-    @objc func friendListButtonAction() {
-    }
-    
-    @objc func editButtonAction() {
-    }
-    
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
@@ -36,6 +27,7 @@ class ProfileBodyCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
+        if mapImage.image != nil { mapImage.sd_cancelCurrentImageLoad() }
     }
     
     public func cellSetup(imageURL: String, mapName: String, isPrivate: Bool, friendsCount: Int, likesCount: Int, postsCount: Int) {
