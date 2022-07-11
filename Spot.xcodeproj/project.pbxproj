@@ -25,6 +25,8 @@
 		4134868A2859310E0098B27B /* SF-Compact-Text-Semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486852859310E0098B27B /* SF-Compact-Text-Semibold.otf */; };
 		4134868B2859310E0098B27B /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */; };
 		413BA16328785E8B00FD80AF /* EditProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA16228785E8B00FD80AF /* EditProfileViewController.swift */; };
+		413BA165287C917000FD80AF /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA164287C917000FD80AF /* FriendsListController.swift */; };
+		413BA167287C93BD00FD80AF /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA166287C93BD00FD80AF /* GlobalFunctions.swift */; };
 		413ED8D6286F6F4100F76AC1 /* ProfileMyMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */; };
 		413ED8D828720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */; };
 		41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5D2866285800C522B1 /* R.generated.swift */; };
@@ -63,9 +65,6 @@
 		5916A8BB24A566F400118E83 /* ResultUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5916A8BA24A566F400118E83 /* ResultUser.swift */; };
 		5916A8BC24A566F400118E83 /* ResultUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5916A8BA24A566F400118E83 /* ResultUser.swift */; };
 		5916A8BD24A566F400118E83 /* ResultUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5916A8BA24A566F400118E83 /* ResultUser.swift */; };
-		593AC541243CE36400C08237 /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593AC540243CE36400C08237 /* GlobalFunctions.swift */; };
-		593AC542243CE36500C08237 /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593AC540243CE36400C08237 /* GlobalFunctions.swift */; };
-		593AC543243CE36500C08237 /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593AC540243CE36400C08237 /* GlobalFunctions.swift */; };
 		593AC545243E56D400C08237 /* LandingPageController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593AC544243E56D400C08237 /* LandingPageController.swift */; };
 		593AC546243E56D400C08237 /* LandingPageController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593AC544243E56D400C08237 /* LandingPageController.swift */; };
 		593AC547243E56D400C08237 /* LandingPageController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593AC544243E56D400C08237 /* LandingPageController.swift */; };
@@ -339,6 +338,8 @@
 		413486852859310E0098B27B /* SF-Compact-Text-Semibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Semibold.otf"; sourceTree = "<group>"; };
 		413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Regular.otf"; sourceTree = "<group>"; };
 		413BA16228785E8B00FD80AF /* EditProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileViewController.swift; sourceTree = "<group>"; };
+		413BA164287C917000FD80AF /* FriendsListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FriendsListController.swift; path = Spot/Controllers/FriendsListController.swift; sourceTree = SOURCE_ROOT; };
+		413BA166287C93BD00FD80AF /* GlobalFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GlobalFunctions.swift; path = ../../../../../../Desktop/GlobalFunctions.swift; sourceTree = "<group>"; };
 		413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapCell.swift; sourceTree = "<group>"; };
 		413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapImageCollectionViewCell.swift; sourceTree = "<group>"; };
 		41AC5A5D2866285800C522B1 /* R.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = R.generated.swift; sourceTree = "<group>"; };
@@ -351,7 +352,6 @@
 		5916A8B224A27F8500118E83 /* MapSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSpot.swift; sourceTree = "<group>"; };
 		5916A8B624A5542800118E83 /* ResultSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultSpot.swift; sourceTree = "<group>"; };
 		5916A8BA24A566F400118E83 /* ResultUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultUser.swift; sourceTree = "<group>"; };
-		593AC540243CE36400C08237 /* GlobalFunctions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalFunctions.swift; sourceTree = "<group>"; };
 		593AC544243E56D400C08237 /* LandingPageController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LandingPageController.swift; path = Spot/Views/LandingPageController.swift; sourceTree = SOURCE_ROOT; };
 		593AC548243F898300C08237 /* UsernameController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameController.swift; sourceTree = "<group>"; };
 		593AC54C243FAA2B00C08237 /* PhoneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneController.swift; sourceTree = "<group>"; };
@@ -611,6 +611,7 @@
 			isa = PBXGroup;
 			children = (
 				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
+				413BA164287C917000FD80AF /* FriendsListController.swift */,
 			);
 			path = HelperControllers;
 			sourceTree = "<group>";
@@ -806,7 +807,7 @@
 			children = (
 				5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */,
 				5FD686D22852527300B88B3B /* UISheetPresentationControllerDetent+Private.h */,
-				593AC540243CE36400C08237 /* GlobalFunctions.swift */,
+				413BA166287C93BD00FD80AF /* GlobalFunctions.swift */,
 				59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */,
 				8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */,
 				5FDAF23B2857E65A001EDC57 /* Declarative.swift */,
@@ -1211,11 +1212,11 @@
 				1DF6E03722089F4500BA0C36 /* SignUpController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				3ED3F1A622147EAE008CC29B /* ResetViewController.swift in Sources */,
-				593AC541243CE36400C08237 /* GlobalFunctions.swift in Sources */,
 				41C417112869CD2F0038B6E3 /* ProfileHeaderCell.swift in Sources */,
 				59DFA25222C27B4800A59D29 /* CommentsViewController.swift in Sources */,
 				8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */,
 				59056A5323197E4B00C7E753 /* PostNotification.swift in Sources */,
+				413BA167287C93BD00FD80AF /* GlobalFunctions.swift in Sources */,
 				593AC54D243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				413ED8D6286F6F4100F76AC1 /* ProfileMyMapCell.swift in Sources */,
 				599BD2B623C51EC500ECB84A /* PendingFriendRequestsController.swift in Sources */,
@@ -1245,6 +1246,7 @@
 				8C346D382797756D00B6E640 /* MapPostWindow.swift in Sources */,
 				59FCF5B524734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				59FCF5AC24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
+				413BA165287C917000FD80AF /* FriendsListController.swift in Sources */,
 				8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				8C2074CC25CB38440040036B /* City.swift in Sources */,
 				597072FA24291993008A481A /* AVSpotCamera.swift in Sources */,
@@ -1276,7 +1278,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				59F6ABB0234EA73500E18AAF /* Contact.swift in Sources */,
-				593AC542243CE36500C08237 /* GlobalFunctions.swift in Sources */,
 				593AC54E243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				599371B1234E468500204F59 /* SearchContactsController.swift in Sources */,
 				8C346D392797756D00B6E640 /* MapPostWindow.swift in Sources */,
@@ -1359,7 +1360,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				59F6ABB1234EA73500E18AAF /* Contact.swift in Sources */,
-				593AC543243CE36500C08237 /* GlobalFunctions.swift in Sources */,
 				593AC54F243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				599371B2234E468600204F59 /* SearchContactsController.swift in Sources */,
 				8C346D3A2797756D00B6E640 /* MapPostWindow.swift in Sources */,

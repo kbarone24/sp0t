@@ -21,6 +21,7 @@ class ProfileViewController: UIViewController {
     private var barView: UIView!
     private var titleLabel: UILabel!
     
+    private var userProfile: UserProfile?
     private var maps = [CustomMap]() {
         didSet {
             noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
@@ -38,9 +39,18 @@ class ProfileViewController: UIViewController {
             }
         }
     }
-    lazy var imageManager = SDWebImageManager()
+    private lazy var imageManager = SDWebImageManager()
     
     public var containerDrawerView: DrawerView?
+    
+    init(userProfile: UserProfile? = nil) {
+        self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,9 +62,14 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func editButtonAction() {
-        let editVC = EditProfileViewController()
+        let editVC = EditProfileViewController(userProfile: userProfile)
         editVC.modalPresentationStyle = .fullScreen
         present(editVC, animated: true)
+    }
+    
+    @objc func friendListButtonAction() {
+        let friendListVC = FriendsListController(allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: UserDataModel.shared.friendsList, confirmedIDs: [])
+        present(friendListVC, animated: true)
     }
 }
 
@@ -87,7 +102,7 @@ extension ProfileViewController {
         }
         
         noPostLabel = UILabel {
-            $0.text = "\(UserDataModel.shared.userInfo.name) hasn't posted yet"
+            $0.text = "\(userProfile!.name) hasn't posted yet"
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
             $0.isHidden = true
@@ -105,7 +120,7 @@ extension ProfileViewController {
         }
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.text = UserDataModel.shared.userInfo.name
+            $0.text = userProfile!.name
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
             $0.textAlignment = .center
             $0.numberOfLines = 0
@@ -118,7 +133,7 @@ extension ProfileViewController {
     
     private func getNinePosts() {
         let db = Firestore.firestore()
-        let query = db.collection("posts").whereField("posterID", isEqualTo: UserDataModel.shared.uid).limit(to: 9)
+        let query = db.collection("posts").whereField("posterID", isEqualTo: userProfile!.id!).limit(to: 9)
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             self.posts.removeAll()
@@ -142,7 +157,7 @@ extension ProfileViewController {
     
     private func getMaps() {
         let db = Firestore.firestore()
-        let query = db.collection("users").document(UserDataModel.shared.uid).collection("mapsList").order(by: "userTimestamp", descending: true)
+        let query = db.collection("users").document(userProfile!.id!).collection("mapsList").order(by: "userTimestamp", descending: true)
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             self.maps.removeAll()
@@ -173,7 +188,9 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
         if let headerCell = cell as? ProfileHeaderCell{
+            headerCell.cellSetup(profileURL: userProfile!.imageURL, avatarURL: userProfile!.avatarURL!, name: userProfile!.name, account: userProfile!.username, location: userProfile!.currentLocation, friendsCount: userProfile!.friendIDs.count)
             headerCell.editButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
+            headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
         } else if let mapCell = cell as? ProfileMyMapCell {
             mapCell.myMapImages = postImages
             return mapCell

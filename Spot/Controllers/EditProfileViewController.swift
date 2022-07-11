@@ -27,6 +27,17 @@ class EditProfileViewController: UIViewController {
     private var privateDescription: UILabel!
     private var privateSelection: UISwitch!
     
+    private var userProfile: UserProfile?
+    
+    init(userProfile: UserProfile? = nil) {
+        self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
@@ -80,7 +91,7 @@ extension EditProfileViewController {
         profileImage = UIImageView {
             $0.layer.cornerRadius = 51.5
             $0.layer.masksToBounds = true
-            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.sd_setImage(with: URL(string: userProfile!.imageURL))
             view.addSubview($0)
         }
         profileImage.snp.makeConstraints {
@@ -113,7 +124,7 @@ extension EditProfileViewController {
         }
         
         avatarImage = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.avatarPic.withHorizontallyFlippedOrientation()
+            $0.sd_setImage(with: URL(string: userProfile!.avatarURL!))
             $0.contentMode = .scaleAspectFit
             view.addSubview($0)
         }
@@ -148,11 +159,12 @@ extension EditProfileViewController {
         }
         
         nameTextfield = UITextField {
-            $0.text = UserDataModel.shared.userInfo.name
+            $0.text = userProfile!.name
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
             $0.layer.cornerRadius = 11
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
             view.addSubview($0)
@@ -176,11 +188,12 @@ extension EditProfileViewController {
         }
         
         locationTextfield = UITextField {
-            $0.text = UserDataModel.shared.userCity
+            $0.text = userProfile!.currentLocation
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
             $0.layer.cornerRadius = 11
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
             view.addSubview($0)

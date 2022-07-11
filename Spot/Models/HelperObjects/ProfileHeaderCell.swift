@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SnapKit
 
 class ProfileHeaderCell: UICollectionViewCell {
     
@@ -46,6 +47,21 @@ class ProfileHeaderCell: UICollectionViewCell {
     override func prepareForReuse() {
         
     }
+    
+    public func cellSetup(profileURL: String, avatarURL: String, name: String, account: String, location: String, friendsCount: Int) {
+        profileImage.sd_setImage(with: URL(string: profileURL))
+        profileAvatar.sd_setImage(with: URL(string: avatarURL))
+        profileName.text = name
+        profileAccount.text = account
+        locationButton.setTitle(location, for: .normal)
+        if location == "" {
+            locationButton.setImage(UIImage(), for: .normal)
+            friendListButton.snp.updateConstraints {
+                $0.leading.equalTo(locationButton.snp.trailing)
+            }
+        }
+        friendListButton.setTitle("\(friendsCount)  friends", for: .normal)
+    }
 }
 
 extension ProfileHeaderCell {
@@ -53,7 +69,7 @@ extension ProfileHeaderCell {
         contentView.backgroundColor = .white
         
         profileImage = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.image = UIImage()
             $0.contentMode = .scaleAspectFit
             $0.layer.masksToBounds = true
             $0.backgroundColor = .gray
@@ -67,7 +83,7 @@ extension ProfileHeaderCell {
         profileImage.layer.cornerRadius = 84 / 2
 
         profileAvatar = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.avatarPic.withHorizontallyFlippedOrientation()
+            $0.image = UIImage()
             $0.contentMode = .scaleAspectFit
             contentView.addSubview($0)
         }
@@ -81,7 +97,7 @@ extension ProfileHeaderCell {
         profileName = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.text = UserDataModel.shared.userInfo.name
+            $0.text = ""
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
@@ -95,7 +111,7 @@ extension ProfileHeaderCell {
         profileAccount = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
-            $0.text = UserDataModel.shared.userInfo.username
+            $0.text = ""
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
@@ -108,7 +124,7 @@ extension ProfileHeaderCell {
         
         locationButton = UIButton {
             $0.setImage(UIImage(named: "ProfileLocation"), for: .normal)
-            $0.setTitle("\(UserDataModel.shared.userCity)", for: .normal)
+            $0.setTitle("", for: .normal)
             $0.titleLabel?.adjustsFontSizeToFitWidth = true
             $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
             $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
@@ -124,7 +140,7 @@ extension ProfileHeaderCell {
         
         friendListButton = UIButton {
             $0.setImage(UIImage(named: "Friends"), for: .normal)
-            $0.setTitle("\(UserDataModel.shared.userInfo.friendsList.count) friends", for: .normal)
+            $0.setTitle("", for: .normal)
             $0.titleLabel?.adjustsFontSizeToFitWidth = true
             $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
             $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
