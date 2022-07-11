@@ -176,7 +176,7 @@ extension EditProfileViewController {
         }
         
         locationTextfield = UITextField {
-            $0.text = UserDataModel.shared.userInfo.currentLocation
+            $0.text = UserDataModel.shared.userCity
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
             $0.layer.cornerRadius = 11
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
