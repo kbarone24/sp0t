@@ -14,14 +14,9 @@ import Mixpanel
 import CoreLocation
 import IQKeyboardManagerSwift
 
-protocol ImagePreviewDelegate {
-    func finishPassingFromCamera(images: [UIImage])
-}
-
 class ImagePreviewController: UIViewController {
     
     var spotObject: MapSpot!
-    var delegate: ImagePreviewDelegate?
                 
     var currentImage: PostImagePreview!
     var nextImage: PostImagePreview!
@@ -29,7 +24,7 @@ class ImagePreviewController: UIViewController {
     var previewBackground: UIView! /// tracks where detail view will be added
     var previewButton: UIButton! /// covers entire area where caption tap will open keyboard
     
-    var cancelButton: UIButton!
+    var backButton: UIButton!
     var dotView: UIView!
     var shareToButton: UIButton!
     var draftsButton: UIButton!
@@ -59,7 +54,7 @@ class ImagePreviewController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "CameraPreviewOpen")
         IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
-        NotificationCenter.default.addObserver(self, selector: #selector(postInfoUpdate(_:)), name: NSNotification.Name("PostInfoUpdate"), object: nil)
+   //     NotificationCenter.default.addObserver(self, selector: #selector(postInfoUpdate(_:)), name: NSNotification.Name("PostInfoUpdate"), object: nil)
         /// set up nav bar officially here for smooth transition when stacking
         setUpNavBar()
     }
@@ -160,7 +155,7 @@ class ImagePreviewController: UIViewController {
         view.addSubview(currentImage)
         currentImage.makeConstraints()
         currentImage.setCurrentImage()
-        
+
         let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
         view.addGestureRecognizer(pan)
      //   previewBackground.addGestureRecognizer(pan)
@@ -188,18 +183,19 @@ class ImagePreviewController: UIViewController {
         } */
                                 
         /// add cancel button
-        cancelButton = UIButton {
+        backButton = UIButton {
             $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
             $0.contentHorizontalAlignment = .fill
             $0.contentVerticalAlignment = .fill
-            $0.setImage(UIImage(named: "CancelButton"), for: .normal)
+            $0.setImage(UIImage(named: "BackArrow"), for: .normal)
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
-        cancelButton.snp.makeConstraints {
-            $0.leading.equalTo(4)
-            $0.top.equalTo(minY + 37)
-            $0.width.height.equalTo(50)
+        backButton.snp.makeConstraints {
+            $0.leading.equalTo(5.5)
+            $0.top.equalTo(previewBackground.snp.top).offset(56)
+            $0.width.equalTo(48.6)
+            $0.height.equalTo(38.6)
         }
                 
         /// add share to and drafts
@@ -220,7 +216,7 @@ class ImagePreviewController: UIViewController {
         panGesture.isEnabled = false
         view.addGestureRecognizer(panGesture)
         
-        addCaption()
+         addCaption()
        // addPostDetail()
     }
         
@@ -232,7 +228,7 @@ class ImagePreviewController: UIViewController {
             view.addSubview($0)
         }
         dotView.snp.makeConstraints {
-            $0.top.equalTo(previewBackground.snp.top).offset(50)
+            $0.top.equalTo(previewBackground.snp.top).offset(72)
             $0.height.equalTo(14)
             $0.width.equalTo(dotWidth)
             $0.centerX.equalToSuperview()
@@ -257,7 +253,7 @@ class ImagePreviewController: UIViewController {
             }
         }
     }
-    
+    /*
     func addPostDetail() {
         
         if postDetailView == nil {
@@ -305,9 +301,13 @@ class ImagePreviewController: UIViewController {
         if spotNameView.nameLabel.bounds.width > maxWidth { spotNameView.nameLabel.frame = CGRect(x: spotNameView.nameLabel.frame.minX, y: spotNameView.nameLabel.frame.minY, width: maxWidth, height: spotNameView.nameLabel.frame.height) }
         spotNameView.frame = CGRect(x: spotNameView.frame.minX, y: spotNameView.frame.minY, width: spotNameView.nameLabel.bounds.width + 47.5, height: spotNameView.frame.height)
         if addedUsersView != nil { addedUsersView.frame = CGRect(x: spotNameView.frame.maxX + 14, y: addedUsersView.frame.minY, width: addedUsersView.frame.width, height: addedUsersView.frame.height) }
-
     }
     
+     @objc func postInfoUpdate(_ sender: NSNotification) {
+         /// passback from PostInfoController
+         DispatchQueue.main.async { self.addPostDetail() }
+     }
+*/
     func addCaption() {
         /// textview frame set on addPostDetail
         textView = UITextView {
@@ -328,10 +328,6 @@ class ImagePreviewController: UIViewController {
         }
     }
         
-    @objc func postInfoUpdate(_ sender: NSNotification) {
-        /// passback from PostInfoController
-        DispatchQueue.main.async { self.addPostDetail() }
-    }
     
     @objc func imageSwipe(_ gesture: UIPanGestureRecognizer) {
         let direction = gesture.velocity(in: view)
@@ -347,7 +343,6 @@ class ImagePreviewController: UIViewController {
             previousImage.snp.updateConstraints({$0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width + translation.x)})
             
         case .ended:
-            print("composite", composite)
             if (composite < -UIScreen.main.bounds.width/2) && (selectedIndex < imageCount - 1) {
                 animateNext()
             } else if (composite > UIScreen.main.bounds.width/2) && (selectedIndex > 0) {
@@ -401,16 +396,16 @@ class ImagePreviewController: UIViewController {
     func setImages() {
         let selectedIndex = UploadPostModel.shared.postObject!.selectedImageIndex!
         currentImage.index = selectedIndex
-        currentImage.setCurrentImage()
         currentImage.makeConstraints()
+        currentImage.setCurrentImage()
         
         previousImage.index = selectedIndex - 1
-        previousImage.setCurrentImage()
         previousImage.makeConstraints()
+        previousImage.setCurrentImage()
         
         nextImage.index = selectedIndex + 1
-        nextImage.setCurrentImage()
         nextImage.makeConstraints()
+        nextImage.setCurrentImage()
         addDots()
     }
     
@@ -432,45 +427,24 @@ class ImagePreviewController: UIViewController {
         
         navigationController?.popViewController(animated: false)
     }
-    
-    @objc func tagTap(_ sender: UIButton) {
-        launchPicker(index: 2)
-    }
-    
-    @objc func friendTap(_ sender: UIButton) {
-        launchPicker(index: 1)
-    }
-    
-    @objc func spotTap(_ sender: UIButton) {
-        launchPicker(index: 0)
-    }
-    
-    @objc func spotNameTap(_ sender: UITapGestureRecognizer) {
-        launchPicker(index: 0)
-    }
-    
-    @objc func addedUsersTap(_ sender: UITapGestureRecognizer) {
-        launchPicker(index: 1)
-    }
-    
+        
     @objc func captionTap(_ sender: UIButton) {
         shouldRepositionTextView = true
         textView.becomeFirstResponder()
     }
     
     @objc func shareTap(_ sender: UIButton) {
-        
-        
+        launchPicker()
+        /*
         UploadPostModel.shared.postObject.caption = textView.text ?? ""
         
         if let vc = storyboard?.instantiateViewController(withIdentifier: "ShareTo") as? ShareToController {
             navigationController?.pushViewController(vc, animated: true)
-        }
+        } */
     }
     
-    func launchPicker(index: Int) {
-        if let vc = storyboard?.instantiateViewController(withIdentifier: "PostInfo") as? PostInfoController {
-            vc.selectedSegmentIndex = index
+    func launchPicker() {
+        if let vc = storyboard?.instantiateViewController(withIdentifier: "ChooseSpot") as? ChooseSpotController {
             DispatchQueue.main.async { self.present(vc, animated: true) }
         }
     }
@@ -689,16 +663,16 @@ class PostImagePreview: PostImageView {
         let cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
         let post = UploadPostModel.shared.postObject!
-        let currentAspect = (post.postImage[safe: index]?.size.height ?? 1.0) / (post.postImage[safe: index]?.size.width ?? 1.0)
+        let currentImage = post.postImage[safe: post.frameIndexes?[safe: index] ?? -1] ?? UIImage(color: .black, size: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width))!
+        let currentAspect = (currentImage.size.height) / (currentImage.size.width)
         let currentHeight = getImageHeight(aspectRatio: currentAspect, maxAspect: cameraAspect)
-        print("curent height", currentHeight)
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
         let maxY = minY + cameraHeight
         
-        let imageY: CGFloat = currentAspect >= cameraAspect ? minY : (minY + maxY - currentHeight)/2
-
+        let imageY: CGFloat = currentAspect + 0.02 >= cameraAspect ? minY : (minY + maxY - currentHeight)/2 + 15
+        
         snp.makeConstraints {
             $0.height.equalTo(currentHeight)
             $0.top.equalTo(imageY)
@@ -716,13 +690,7 @@ class PostImagePreview: PostImageView {
         let images = post.postImage
         let frameIndexes = post.frameIndexes ?? []
         
-        let still = images[safe: frameIndexes[safe: index] ?? -1] ?? UIImage()
-        
-        /// scale aspect fit for landscape image, stretch to fill iPhone vertical + image taken from sp0t camera
-        let imageAspect = still.size.height / still.size.width
-        contentMode = (imageAspect + 0.01 < (post.imageHeight! / UIScreen.main.bounds.width)) && imageAspect < 1.1  ? .scaleAspectFit : .scaleAspectFill
-        if contentMode == .scaleAspectFit { roundCornersForAspectFit(radius: 15) }
-        
+        let still = images[safe: frameIndexes[safe: index] ?? -1] ?? UIImage.init(color: UIColor(named: "SpotBlack")!, size: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width))!
         image = still
         stillImage = still
         
@@ -783,8 +751,8 @@ class PostImagePreview: PostImageView {
     func getImageHeight(aspectRatio: CGFloat, maxAspect: CGFloat) -> CGFloat {
       
         var imageAspect =  min(aspectRatio, maxAspect)
-        if imageAspect > 1.1 && imageAspect < 1.7 { imageAspect = 1.7 } /// stretch iPhone vertical
-        if imageAspect > 1.7 { imageAspect = maxAspect } /// round to max aspect
+        if imageAspect > 1.1 && imageAspect < 1.6 { imageAspect = 1.6 } /// stretch iPhone vertical
+        if imageAspect > 1.6 { imageAspect = maxAspect } /// round to max aspect
         
         let imageHeight = UIScreen.main.bounds.width * imageAspect
         return imageHeight

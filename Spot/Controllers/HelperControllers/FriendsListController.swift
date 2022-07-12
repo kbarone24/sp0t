@@ -29,15 +29,17 @@ class FriendsListController: UIViewController {
     var searchBar: UISearchBar?
 
     var confirmedIDs: [String] /// users who cannot be unselected
+    var friendIDs: [String]
     var friendsList: [UserProfile]
     var queriedFriends: [UserProfile] = []
     
     var searchPan: UIPanGestureRecognizer?
     var delegate: FriendsListDelegate?
     
-    init(allowsSelection: Bool, showsSearchBar: Bool, friendsList: [UserProfile], confirmedIDs: [String]) {
+    init(allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String]) {
         self.allowsSelection = allowsSelection
         self.showsSearchBar = showsSearchBar
+        self.friendIDs = friendIDs
         self.friendsList = friendsList
         self.queriedFriends = friendsList
         self.confirmedIDs = confirmedIDs
@@ -52,6 +54,11 @@ class FriendsListController: UIViewController {
         super.viewDidLoad()
         if showsSearchBar { addSearchBar() }
         addTableView()
+        if friendsList.isEmpty {
+            DispatchQueue.global(qos: .userInitiated).async {
+                self.getFriends()
+            }
+        }
         presentationController?.delegate = self
     }
     
@@ -144,6 +151,30 @@ class FriendsListController: UIViewController {
         searchPan!.delegate = self
         searchPan!.isEnabled = false
         view.addGestureRecognizer(searchPan!)
+    }
+    
+    func getFriends() {
+        let db: Firestore = Firestore.firestore()
+        let dispatch = DispatchGroup()
+        for id in friendIDs {
+            dispatch.enter()
+            db.collection("users").document(id).getDocument { [weak self] snap, err in
+                do {
+                    guard let self = self else { return }
+                    let unwrappedInfo = try snap?.data(as: UserProfile.self)
+                    guard let userInfo = unwrappedInfo else { dispatch.leave(); return }
+                    self.friendsList.append(userInfo)
+                    dispatch.leave()
+                } catch {
+                    dispatch.leave()
+                }
+            }
+        }
+        
+        dispatch.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            self.tableView.reloadData()
+        }
     }
     
     @objc func doneTap(_ sender: UIButton) {

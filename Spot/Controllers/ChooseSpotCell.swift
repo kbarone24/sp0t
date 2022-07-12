@@ -103,8 +103,8 @@ class ChooseSpotCell: UITableViewCell {
     }
     
     @objc func tap(_ sender: UITapGestureRecognizer) {
-        guard let infoVC = viewContainingController() as? PostInfoController else { return }
-        infoVC.selectSpot(id: spotID)
+     /*   guard let infoVC = viewContainingController() as? PostInfoController else { return }
+        infoVC.selectSpot(id: spotID) */
     }
         
     func resetCell() {

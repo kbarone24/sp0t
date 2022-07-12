@@ -36,7 +36,7 @@ class CircleView: UIView {
 
         if index > 0 {
             
-            backgroundColor = UIColor(red: 0.18, green: 0.776, blue: 0.816, alpha: 1)
+            backgroundColor = UIColor(named: "SpotGreen")
             
             number.text = String(index)
             number.textColor = .black

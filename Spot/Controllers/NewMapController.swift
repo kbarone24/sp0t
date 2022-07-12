@@ -276,7 +276,7 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let friendsList = UserDataModel.shared.getTopFriends(selectedList: mapObject.memberIDs)
-        let vc = FriendsListController(allowsSelection: true, showsSearchBar: true, friendsList: friendsList, confirmedIDs: UploadPostModel.shared.postObject.addedUsers!)
+        let vc = FriendsListController(allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.friendIDs, friendsList: friendsList, confirmedIDs: UploadPostModel.shared.postObject.addedUsers!)
         vc.delegate = self
         present(vc, animated: true)
     }

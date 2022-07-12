@@ -52,25 +52,11 @@
                         <viewLayoutGuide key="safeArea" id="sq2-ZJ-UGO"/>
                         <color key="backgroundColor" name="SpotBlack"/>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="0Sg-xb-dvn" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-2726" y="1124"/>
-        </scene>
-        <!--Post Info Controller-->
-        <scene sceneID="FHL-ah-dvH">
-            <objects>
-                <viewController storyboardIdentifier="PostInfo" id="toO-3f-kIo" customClass="PostInfoController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="G3Z-Ei-Gxk">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="bcn-Is-9Qa"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="DHP-eK-IsG" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-1675" y="-463"/>
         </scene>
         <!--Drafts View Controller-->
         <scene sceneID="WZ8-Ef-YVv">
@@ -87,6 +73,22 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="kFh-Ti-U4s" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-2726" y="-463"/>
+        </scene>
+        <!--Choose Spot Controller-->
+        <scene sceneID="gpd-7f-6Oy">
+            <objects>
+                <viewController storyboardIdentifier="ChooseSpot" id="jnQ-N9-T5k" customClass="ChooseSpotController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="bez-XO-16P">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="doe-vA-hsT"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="BbN-jX-Pyq" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1675" y="-463"/>
         </scene>
         <!--Image Preview Controller-->
         <scene sceneID="KYm-sD-diA">

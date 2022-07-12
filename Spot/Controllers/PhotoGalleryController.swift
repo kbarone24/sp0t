@@ -95,7 +95,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     }
     
     func setUpNavBar() {
-        
         navigationItem.title = "Gallery"
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.tintColor = .white
@@ -103,16 +102,12 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         navigationController?.navigationBar.removeShadow()
         navigationController?.navigationBar.addGradientBackground(alpha: 1.0)
                 
-        let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(cancelTap(_:)))
-        cancelButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Regular", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(red: 0.7, green: 0.7, blue: 0.7, alpha: 1.9)], for: .normal)
+        let cancelButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(cancelTap(_:)))
         navigationItem.setLeftBarButton(cancelButton, animated: false)
         self.navigationItem.leftBarButtonItem?.tintColor = nil
-        
-        toggleNextButton()
     }
     
     func addCollectionView() {
-        
         options.deliveryMode = .highQualityFormat
         options.isSynchronous = false
         options.isNetworkAccessAllowed = true
@@ -122,12 +117,14 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
             $0.minimumLineSpacing = 0.1
             $0.minimumInteritemSpacing = 0.1
             $0.estimatedItemSize = thumbnailSize
+            $0.sectionFootersPinToVisibleBounds = true
         }
         
         collectionView.backgroundColor = UIColor(named: "SpotBlack")
         collectionView.showsVerticalScrollIndicator = false
         collectionView.register(GalleryCell.self, forCellWithReuseIdentifier: "galleryCell")
-        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
+        collectionView.register(SelectedImagesFooter.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: "selectedFooter")
+        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: -50, right: 0)
         collectionView.isUserInteractionEnabled = true
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -140,23 +137,7 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
             $0.leading.trailing.top.bottom.equalToSuperview()
         }
     }
-    
-    func toggleNextButton() {
-
-        /// reset nextButton with every select / deselect
-        /// set button to empty if no images selected, set to NEXT if 1 selected
-        let selectedCount = UploadPostModel.shared.selectedObjects.count
-        if selectedCount == 0 {
-            self.navigationItem.setRightBarButton(UIBarButtonItem(), animated: false); return
             
-        } else if selectedCount == 1 {
-            let nextButton = UIBarButtonItem(title: "Next", style: .plain, target: self, action: #selector(nextTap(_:)))
-            nextButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
-            self.navigationItem.setRightBarButton(nextButton, animated: false)
-            self.navigationItem.rightBarButtonItem?.tintColor = nil
-        }
-    }
-        
     func refreshTable() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -207,7 +188,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     }
 
     func showMaxImagesAlert() {
-        
         let errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 200, width: UIScreen.main.bounds.width, height: 32))
         let errorLabel = UILabel(frame: CGRect(x: 23, y: 6, width: UIScreen.main.bounds.width - 46, height: 18))
         
@@ -343,6 +323,17 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         return thumbnailSize
     }
     
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
+        return UploadPostModel.shared.selectedObjects.count == 0 ? CGSize(width: UIScreen.main.bounds.width, height: 120) : CGSize(width: UIScreen.main.bounds.width, height: 220)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        if let footer = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "selectedFooter", for: indexPath) as? SelectedImagesFooter {
+            return footer
+        }
+        return UICollectionReusableView()
+    }
+    
     func downloadImage(index: Int, completion: @escaping (_ stillImage: UIImage) -> Void) {
         
         if let cell = collectionView.cellForItem(at: IndexPath(item: index, section: 0)) as? GalleryCell {
@@ -373,6 +364,12 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         }
     }
     
+    func deselectFromFooter(id: String) {
+        if let index = UploadPostModel.shared.imageObjects.firstIndex(where: {$0.image.id == id}) {
+            deselect(index: index)
+        }
+    }
+    
     func deselect(index: Int) {
         
         let paths = getSelectedPaths(newRow: index, select: false)
@@ -381,28 +378,23 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         /// deselect image on circle tap
         Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": false])
         UploadPostModel.shared.selectObject(imageObject: selectedObject, selected: false)
-        DispatchQueue.main.async {
-            self.collectionView.reloadItems(at: paths)
-            self.toggleNextButton()
-        }
+        reloadItems(paths: paths)
     }
     
     func select(index: Int) {
         
         guard let selectedObject = UploadPostModel.shared.imageObjects[safe: index]?.image else { return }
-        if UploadPostModel.shared.selectedObjects.count > 4 { showMaxImagesAlert(); return }
+        if UploadPostModel.shared.selectedObjects.count > 4 { return }
         if editSpotMode && UploadPostModel.shared.selectedObjects.count > 0 { return }
         
         let paths = getSelectedPaths(newRow: index, select: true)
+        
         
         if selectedObject.stillImage != UIImage() {
             /// select image immediately
             Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": true])
             UploadPostModel.shared.selectObject(imageObject: selectedObject, selected: true)
-            DispatchQueue.main.async {
-                self.collectionView.reloadItems(at: paths)
-                self.toggleNextButton()
-            }
+            reloadItems(paths: paths)
             
         } else {
             /// download image and select
@@ -413,13 +405,19 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
                 if UploadPostModel.shared.selectedObjects.count < 5 {
                     
                     UploadPostModel.shared.selectObject(imageObject: UploadPostModel.shared.imageObjects[index].image, selected: true)
-                    DispatchQueue.main.async {
-                        if self.cancelOnDismiss { return }
-                        self.collectionView.reloadItems(at: paths)
-                        self.toggleNextButton()
+                    if self.cancelOnDismiss { return }
+                    self.reloadItems(paths: paths)
                         Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": true])
-                    }
                 }
+            }
+        }
+    }
+    
+    func reloadItems(paths: [IndexPath]) {
+        DispatchQueue.main.async {
+            self.collectionView.reloadItems(at: paths)
+            if let footer = self.collectionView.visibleSupplementaryViews(ofKind: UICollectionView.elementKindSectionFooter).first as? SelectedImagesFooter {
+                footer.setUp()
             }
         }
     }
