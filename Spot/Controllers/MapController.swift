@@ -160,7 +160,6 @@ class MapController: UIViewController {
             self.getNearbyPosts(radius: 0.5)
         }
         
-        
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -541,7 +540,6 @@ class MapController: UIViewController {
         feedLoaded = true
         
         /// full friendObjects loaded
-        NotificationCenter.default.post(Notification(name: Notification.Name("InitialFriendsLoad")))
         NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
     }
     
