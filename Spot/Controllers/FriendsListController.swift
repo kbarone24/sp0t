@@ -20,7 +20,7 @@ class FriendsListController: UIViewController {
     let allowsSelection: Bool
     let showsSearchBar: Bool
     var readyToDismiss = true
-    var queried = true
+    var queried = false
     
     var doneButton: UIButton?
     var cancelButton: UIButton!
@@ -36,7 +36,10 @@ class FriendsListController: UIViewController {
     var searchPan: UIPanGestureRecognizer?
     var delegate: FriendsListDelegate?
     
-    init(allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String]) {
+    var previousVC: UIViewController?
+    
+    init(fromVC: UIViewController, allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String]) {
+        previousVC = fromVC
         self.allowsSelection = allowsSelection
         self.showsSearchBar = showsSearchBar
         self.friendIDs = friendIDs
@@ -156,13 +159,15 @@ class FriendsListController: UIViewController {
     func getFriends() {
         let db: Firestore = Firestore.firestore()
         let dispatch = DispatchGroup()
+        
         for id in friendIDs {
             dispatch.enter()
             db.collection("users").document(id).getDocument { [weak self] snap, err in
                 do {
                     guard let self = self else { return }
                     let unwrappedInfo = try snap?.data(as: UserProfile.self)
-                    guard let userInfo = unwrappedInfo else { dispatch.leave(); return }
+                    guard var userInfo = unwrappedInfo else { dispatch.leave(); return }
+                    userInfo.id = id
                     self.friendsList.append(userInfo)
                     dispatch.leave()
                 } catch {
@@ -267,11 +272,10 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let profileVC = ProfileViewController(userProfile: friendsList[indexPath.row])
-        let sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
-        })
-        profileVC.containerDrawerView = sheetView
-        sheetView.present(to: .Top)
+        dismiss(animated: true) {
+            let profileVC = ProfileViewController(userProfile: self.friendsList[indexPath.row])
+            self.previousVC?.navigationController!.pushViewController(profileVC, animated: true)
+        }
         
         let id = queried ? queriedFriends[indexPath.row].id! : friendsList[indexPath.row].id!
         if confirmedIDs.contains(id) { return } /// cannot unselect confirmed ID

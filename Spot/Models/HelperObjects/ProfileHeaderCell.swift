@@ -9,6 +9,13 @@
 import UIKit
 import SnapKit
 
+enum ProfileRelation {
+    case myself
+    case friend
+    case pending
+    case stranger
+}
+
 class ProfileHeaderCell: UICollectionViewCell {
     
     var profileImage: UIImageView!
@@ -18,22 +25,7 @@ class ProfileHeaderCell: UICollectionViewCell {
     var locationButton: UIButton!
     var friendListButton: UIButton!
     var editButton: UIButton!
-    
-    @objc func locationButtonAction() {
-    }
-    
-    @objc func friendListButtonAction() {
-    }
-    
-    @objc func editButtonAction() {
-        UIView.animate(withDuration: 0.15) {
-            self.editButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } completion: { (Bool) in
-            UIView.animate(withDuration: 0.15) {
-                self.editButton.transform = .identity
-            }
-        }
-    }
+    private var profileID: String = ""
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -48,7 +40,8 @@ class ProfileHeaderCell: UICollectionViewCell {
         
     }
     
-    public func cellSetup(profileURL: String, avatarURL: String, name: String, account: String, location: String, friendsCount: Int) {
+    public func cellSetup(profileID: String, profileURL: String, avatarURL: String, name: String, account: String, location: String, friendsCount: Int, relation: ProfileRelation) {
+        self.profileID = profileID
         profileImage.sd_setImage(with: URL(string: profileURL))
         profileAvatar.sd_setImage(with: URL(string: avatarURL))
         profileName.text = name
@@ -61,6 +54,34 @@ class ProfileHeaderCell: UICollectionViewCell {
             }
         }
         friendListButton.setTitle("\(friendsCount)  friends", for: .normal)
+        switch relation {
+        case .myself:
+            editButton.setTitle("Edit profile", for: .normal)
+            editButton.setTitleColor(.black, for: .normal)
+            editButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            editButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
+        case .friend:
+            editButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
+            editButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
+            editButton.setTitle("Friends", for: .normal)
+            editButton.setTitleColor(.black, for: .normal)
+            editButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            editButton.addTarget(self, action: #selector(friendsAction), for: .touchUpInside)
+        case .pending:
+            editButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
+            editButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
+            editButton.setTitle("Pending", for: .normal)
+            editButton.setTitleColor(.black, for: .normal)
+            editButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            editButton.addTarget(self, action: #selector(friendsPendingAction), for: .touchUpInside)
+        case .stranger:
+            editButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
+            editButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
+            editButton.setTitle("Add friend", for: .normal)
+            editButton.setTitleColor(.black, for: .normal)
+            editButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            editButton.addTarget(self, action: #selector(addFriendAction), for: .touchUpInside)
+        }
     }
 }
 
@@ -160,7 +181,6 @@ extension ProfileHeaderCell {
             $0.setTitleColor(.black, for: .normal)
             $0.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-            $0.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
             contentView.addSubview($0)
         }
         editButton.snp.makeConstraints {
@@ -169,5 +189,38 @@ extension ProfileHeaderCell {
             $0.top.equalTo(profileImage.snp.bottom).offset(16)
         }
         editButton.layer.cornerRadius = 37 / 2
+    }
+    
+    @objc func locationButtonAction() {
+    }
+    
+    @objc func friendListButtonAction() {
+    }
+    
+    @objc func editButtonAction() {
+        UIView.animate(withDuration: 0.15) {
+            self.editButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        } completion: { (Bool) in
+            UIView.animate(withDuration: 0.15) {
+                self.editButton.transform = .identity
+            }
+        }
+    }
+    
+    @objc func friendsAction() {
+        
+    }
+    
+    @objc func friendsPendingAction() {
+        
+    }
+    
+    @objc func addFriendAction() {
+        addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: profileID)
+        editButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
+        editButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
+        editButton.setTitle("Pending", for: .normal)
+        editButton.setTitleColor(.black, for: .normal)
+        editButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
     }
 }
