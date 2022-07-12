@@ -26,7 +26,7 @@
 		4134868B2859310E0098B27B /* SF-Compact-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */; };
 		413BA16328785E8B00FD80AF /* EditProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA16228785E8B00FD80AF /* EditProfileViewController.swift */; };
 		413BA165287C917000FD80AF /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA164287C917000FD80AF /* FriendsListController.swift */; };
-		413BA167287C93BD00FD80AF /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA166287C93BD00FD80AF /* GlobalFunctions.swift */; };
+		413BA169287E2F2D00FD80AF /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA168287E2F2D00FD80AF /* GlobalFunctions.swift */; };
 		413ED8D6286F6F4100F76AC1 /* ProfileMyMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */; };
 		413ED8D828720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */; };
 		41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5D2866285800C522B1 /* R.generated.swift */; };
@@ -339,7 +339,7 @@
 		413486862859310E0098B27B /* SF-Compact-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Regular.otf"; sourceTree = "<group>"; };
 		413BA16228785E8B00FD80AF /* EditProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileViewController.swift; sourceTree = "<group>"; };
 		413BA164287C917000FD80AF /* FriendsListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FriendsListController.swift; path = Spot/Controllers/FriendsListController.swift; sourceTree = SOURCE_ROOT; };
-		413BA166287C93BD00FD80AF /* GlobalFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GlobalFunctions.swift; path = ../../../../../../Desktop/GlobalFunctions.swift; sourceTree = "<group>"; };
+		413BA168287E2F2D00FD80AF /* GlobalFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlobalFunctions.swift; sourceTree = "<group>"; };
 		413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapCell.swift; sourceTree = "<group>"; };
 		413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapImageCollectionViewCell.swift; sourceTree = "<group>"; };
 		41AC5A5D2866285800C522B1 /* R.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = R.generated.swift; sourceTree = "<group>"; };
@@ -807,11 +807,11 @@
 			children = (
 				5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */,
 				5FD686D22852527300B88B3B /* UISheetPresentationControllerDetent+Private.h */,
-				413BA166287C93BD00FD80AF /* GlobalFunctions.swift */,
 				59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */,
 				8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */,
 				5FDAF23B2857E65A001EDC57 /* Declarative.swift */,
 				412555C3285AEA0200C071A4 /* BottomToTopTransition.swift */,
+				413BA168287E2F2D00FD80AF /* GlobalFunctions.swift */,
 			);
 			path = HelperFunctions;
 			sourceTree = "<group>";
@@ -1216,7 +1216,6 @@
 				59DFA25222C27B4800A59D29 /* CommentsViewController.swift in Sources */,
 				8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */,
 				59056A5323197E4B00C7E753 /* PostNotification.swift in Sources */,
-				413BA167287C93BD00FD80AF /* GlobalFunctions.swift in Sources */,
 				593AC54D243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				413ED8D6286F6F4100F76AC1 /* ProfileMyMapCell.swift in Sources */,
 				599BD2B623C51EC500ECB84A /* PendingFriendRequestsController.swift in Sources */,
@@ -1231,6 +1230,7 @@
 				8CC2A55226BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C0D1EBF27AB39D300F4B885 /* TextPostWindow.swift in Sources */,
 				5FDAF23E2858FD06001EDC57 /* DrawerView.swift in Sources */,
+				413BA169287E2F2D00FD80AF /* GlobalFunctions.swift in Sources */,
 				593AC545243E56D400C08237 /* LandingPageController.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */,
 				7A37801C22174BB1008B835A /* MapController.swift in Sources */,
