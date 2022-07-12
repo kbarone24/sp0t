@@ -416,7 +416,7 @@ class MapController: UIViewController {
             self.sheetView = nil
         })
         profileVC.containerDrawerView = sheetView
-        sheetView?.present(to: .Middle)
+        sheetView?.present(to: .Top)
     }
     
     @objc func friendsTap(_ sender: UIButton) {

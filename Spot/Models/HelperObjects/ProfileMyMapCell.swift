@@ -36,6 +36,11 @@ class ProfileMyMapCell: UICollectionViewCell {
     override func prepareForReuse() {
         
     }
+    
+    public func cellSetup(userAccount: String, myMapsImage: [UIImage]) {
+        mapName.text = "@\(userAccount)'s map"
+        self.myMapImages = myMapsImage
+    }
 }
 
 extension ProfileMyMapCell {
@@ -64,7 +69,7 @@ extension ProfileMyMapCell {
         mapName = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-            $0.text = "\(UserDataModel.shared.userInfo.name)'s posts"
+            $0.text = "@\(UserDataModel.shared.userInfo.username)'s map"
             contentView.addSubview($0)
         }
         mapName.snp.makeConstraints {

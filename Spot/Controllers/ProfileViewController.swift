@@ -40,11 +40,27 @@ class ProfileViewController: UIViewController {
         }
     }
     private lazy var imageManager = SDWebImageManager()
+    private var relation: ProfileRelation = .myself
     
     public var containerDrawerView: DrawerView?
     
     init(userProfile: UserProfile? = nil) {
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
+        
+        if self.userProfile?.id == UserDataModel.shared.userInfo.id {
+            relation = .myself
+        } else if UserDataModel.shared.friendsList.contains(where: { user in
+            user.id == userProfile?.id
+        }) {
+            relation = .friend
+        } else if UserDataModel.shared.userInfo.pendingFriendRequests.contains(where: { user in
+            user == userProfile?.id
+        }) {
+            relation = .pending
+        } else {
+            relation = .stranger
+        }
+        
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -62,13 +78,13 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func editButtonAction() {
-        let editVC = EditProfileViewController(userProfile: userProfile)
+        let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.modalPresentationStyle = .fullScreen
         present(editVC, animated: true)
     }
     
     @objc func friendListButtonAction() {
-        let friendListVC = FriendsListController(allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: UserDataModel.shared.friendsList, confirmedIDs: [])
+        let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [])
         present(friendListVC, animated: true)
     }
 }
@@ -114,7 +130,7 @@ extension ProfileViewController {
         }
         
         barView = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: (containerDrawerView?.slideView.frame.width)!, height: 91)
+            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
             $0.backgroundColor = .white
             $0.alpha = 0
         }
@@ -125,7 +141,7 @@ extension ProfileViewController {
             $0.textAlignment = .center
             $0.numberOfLines = 0
             $0.sizeToFit()
-            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: containerDrawerView!.slideView.frame.width, height: 18))
+            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: view.frame.width, height: 18))
             barView.addSubview($0)
         }
         containerDrawerView?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
@@ -188,11 +204,14 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
         if let headerCell = cell as? ProfileHeaderCell{
-            headerCell.cellSetup(profileURL: userProfile!.imageURL, avatarURL: userProfile!.avatarURL!, name: userProfile!.name, account: userProfile!.username, location: userProfile!.currentLocation, friendsCount: userProfile!.friendIDs.count)
-            headerCell.editButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
+            headerCell.cellSetup(profileID: userProfile!.id!, profileURL: userProfile!.imageURL, avatarURL: userProfile!.avatarURL ?? "", name: userProfile!.name, account: userProfile!.username, location: userProfile!.currentLocation, friendsCount: userProfile!.friendIDs.count, relation: relation)
+            if relation == .myself {
+                headerCell.editButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
+            }
             headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
+            return headerCell
         } else if let mapCell = cell as? ProfileMyMapCell {
-            mapCell.myMapImages = postImages
+            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
             let profileBodyData = maps[indexPath.row - 1]

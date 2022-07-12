@@ -22,7 +22,6 @@ class EditProfileViewController: UIViewController {
     private var locationLabel: UILabel!
     private var locationTextfield: UITextField!
     
-    
     private var privateLabel: UILabel!
     private var privateDescription: UILabel!
     private var privateSelection: UISwitch!

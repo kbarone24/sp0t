@@ -349,10 +349,12 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 192 images.
+  /// This `R.image` struct is generated, and contains static references to 195 images.
   struct image {
     /// Image `ActiveTag`.
     static let activeTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ActiveTag")
+    /// Image `AddFriendIcon`.
+    static let addFriendIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "AddFriendIcon")
     /// Image `AddToSpotButton`.
     static let addToSpotButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "AddToSpotButton")
     /// Image `AlienTag`.
@@ -487,12 +489,16 @@ struct R: Rswift.Validatable {
     static let friendNotification = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriendNotification")
     /// Image `FriendsFeedIcon`.
     static let friendsFeedIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriendsFeedIcon")
+    /// Image `FriendsIcon`.
+    static let friendsIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriendsIcon")
     /// Image `FriendsListAddFriends`.
     static let friendsListAddFriends = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriendsListAddFriends")
     /// Image `FriendsMapSelected`.
     static let friendsMapSelected = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriendsMapSelected")
     /// Image `FriendsMapUnselected`.
     static let friendsMapUnselected = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriendsMapUnselected")
+    /// Image `FriendsPendingIcon`.
+    static let friendsPendingIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "FriendsPendingIcon")
     /// Image `Friends`.
     static let friends = Rswift.ImageResource(bundle: R.hostingBundle, name: "Friends")
     /// Image `FriesTag`.
@@ -740,6 +746,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "ActiveTag", bundle: ..., traitCollection: ...)`
     static func activeTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.activeTag, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "AddFriendIcon", bundle: ..., traitCollection: ...)`
+    static func addFriendIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.addFriendIcon, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1220,6 +1233,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "FriendsIcon", bundle: ..., traitCollection: ...)`
+    static func friendsIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.friendsIcon, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "FriendsListAddFriends", bundle: ..., traitCollection: ...)`
     static func friendsListAddFriends(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.friendsListAddFriends, compatibleWith: traitCollection)
@@ -1237,6 +1257,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "FriendsMapUnselected", bundle: ..., traitCollection: ...)`
     static func friendsMapUnselected(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.friendsMapUnselected, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "FriendsPendingIcon", bundle: ..., traitCollection: ...)`
+    static func friendsPendingIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.friendsPendingIcon, compatibleWith: traitCollection)
     }
     #endif
 
