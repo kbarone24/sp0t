@@ -807,6 +807,34 @@ extension UIViewController {
             "topFriends.\(friendID)" : FieldValue.delete()
         ])
     }
+
+    
+    func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
+        var queriedUsers: [UserProfile] = []
+        let usernameList = userList.map({$0.username})
+        let nameList = userList.map({$0.name})
+         
+        let filteredUsernames = searchText.isEmpty ? usernameList : usernameList.filter({(dataString: String) -> Bool in
+          // If dataItem matches the searchText, return true to include it
+          return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
+        })
+         
+        let filteredNames = searchText.isEmpty ? nameList : nameList.filter({(dataString: String) -> Bool in
+          return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
+        })
+         
+        for username in filteredUsernames {
+          if let user = userList.first(where: {$0.username == username}) { queriedUsers.append(user) }
+        }
+         
+        for name in filteredNames {
+          if let user = userList.first(where: {$0.name == name}) {
+            if !queriedUsers.contains(where: {$0.id == user.id}) { queriedUsers.append(user) }
+          }
+        }
+        return queriedUsers
+      }
+
 }
 
 extension MapView {
@@ -1045,6 +1073,29 @@ extension UITableViewCell {
         
 }
 
+extension UICollectionViewCell {
+    func addFriend(senderProfile: UserProfile, receiverID: String) {
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let db: Firestore = Firestore.firestore()
+        let notiID = UUID().uuidString
+        let ref = db.collection("users").document(receiverID).collection("notifications").document(notiID)
+        
+        let time = Date()
+        
+        let values = ["senderID" : uid,
+                      "type" : "friendRequest",
+                      "senderUsername" : UserDataModel.shared.userInfo.username,
+                      "timestamp" : time,
+                      "status" : "pending",
+                      "seen" : false
+                      
+        ] as [String : Any]
+        ref.setData(values)
+        
+        db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
+    }
+}
+
 extension String {
 
     func indices(of string: String) -> [Int] {
@@ -1097,6 +1148,58 @@ extension String {
         var newNumber = components(separatedBy: CharacterSet.decimalDigits.inverted).joined() /// remove dashes and spaces
         newNumber = String(newNumber.suffix(10)) /// match based on last 10 digits to eliminate country codes and formatting
         return newNumber
+    }
+}
+
+extension UIColor{
+    /** An easy way to get the color by providing the hexstring */
+    public convenience init(hexString: String) {
+        let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int = UInt32()
+        Scanner(string: hex).scanHexInt32(&int)
+        let a, r, g, b: UInt32
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: CGFloat(a) / 255)
+    }
+    /** Return UIColor lighter */
+    public func lighter(by percentage: CGFloat = 50.0) -> UIColor? {
+        return self.adjust(by: abs(percentage) )
+    }
+    /** Return UIColor darker */
+    public func darker(by percentage: CGFloat = 50.0) -> UIColor? {
+        return self.adjust(by: -1 * abs(percentage) )
+    }
+    
+    public func adjust(by percentage: CGFloat = 50.0) -> UIColor? {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            return UIColor(red: min(red + percentage/100, 1.0),
+                           green: min(green + percentage/100, 1.0),
+                           blue: min(blue + percentage/100, 1.0),
+                           alpha: alpha)
+        } else {
+            return nil
+        }
+    }
+    
+    /** Return contrast UIColor */
+    public func contrast() -> UIColor? {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            return UIColor(red: 1 - red, green: 1 - green, blue: 1 - blue, alpha: alpha)
+        }
+        else {
+            return nil
+        }
     }
 }
 
@@ -1379,6 +1482,19 @@ extension UITextView {
             cursorPosition = text.distance(from: text.startIndex, to: indexPosition)
         }
         return cursorPosition
+    }
+}
+
+extension UITextField {
+    func setLeftPaddingPoints(_ amount:CGFloat){
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: amount, height: self.frame.size.height))
+        self.leftView = paddingView
+        self.leftViewMode = .always
+    }
+    func setRightPaddingPoints(_ amount:CGFloat) {
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: amount, height: self.frame.size.height))
+        self.rightView = paddingView
+        self.rightViewMode = .always
     }
 }
 
