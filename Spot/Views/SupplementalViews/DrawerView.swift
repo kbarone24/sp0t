@@ -48,7 +48,7 @@ class DrawerView: NSObject {
     }
     public var swipeDownToDismiss: Bool = false
     public var swipeToNextState: Bool = true
-
+    
     // MARK: Private variable
     private lazy var myNav = UINavigationController()
     private lazy var closeButton = UIButton {
@@ -69,7 +69,6 @@ class DrawerView: NSObject {
     private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
     
     private var panRecognizer: UIPanGestureRecognizer?
-    private var status = DrawerViewStatus.Close
     private var yPosition: CGFloat = 0
     private var topConstraints: Constraint? = nil
     private var midConstraints: Constraint? = nil
@@ -266,7 +265,6 @@ class DrawerView: NSObject {
             }
             // Animate the drawer view to the set position
             UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
-
                 self.slideView.frame.origin.y = self.yPosition
                 self.parentVC.view.layoutIfNeeded()
             }
@@ -275,7 +273,6 @@ class DrawerView: NSObject {
     
     // MARK: Close
     @objc func closeAction() {
-        print("CLOSING HEHEHEHE")
         UIView.animate(withDuration: 0.35, animations: {
             self.slideView.frame.origin.y = self.parentVC.view.frame.height
             self.parentVC.view.layoutIfNeeded()

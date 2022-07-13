@@ -16,6 +16,21 @@ class ProfileViewController: UIViewController {
         navigationController?.pushViewController(newVC, animated: true)
     }
     
+    var userProfile : UserProfile?
+    
+    init(userProfile: UserProfile? = nil) {
+            self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
+            
+            /*rest of init*/
+            
+            super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+        
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(red: .random(in: 0...1), green: .random(in: 0...1), blue: .random(in: 0...1), alpha: 1.0)

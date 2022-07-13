@@ -29,6 +29,11 @@ class ActivityCell: UITableViewCell {
     var postImageButton: UIButton!
     var postImage: UIImageView!
     var imageURLs: [String] = []
+    var notification: UserNotification!
+    var detailOriginalWidth: CGFloat!
+    var detailOriginalHeight: CGFloat!
+    
+
     
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
@@ -43,6 +48,14 @@ class ActivityCell: UITableViewCell {
     func set(notification: UserNotification){
         self.resetCell()
         
+        self.notification = notification
+        
+        if (notification.type == "friendRequest" && notification.status == "accepted" && notification.seen == false) ||  notification.type == "mapInvite" && notification.seen == false{
+            self.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.2)
+        } else { self.backgroundColor = .white }
+        
+        self.selectionStyle = .none
+        
         let profilePicButton = UIButton()
         contentView.addSubview(profilePicButton)
         profilePicButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
@@ -56,9 +69,8 @@ class ActivityCell: UITableViewCell {
         
         
         profilePic = UIImageView {
-            $0.frame = CGRect(x: 65, y: 27.5, width: 50, height: 50)
             $0.layer.masksToBounds = false
-            $0.layer.cornerRadius = $0.frame.height/2
+            $0.layer.cornerRadius = 25
             $0.clipsToBounds = true
             $0.contentMode = UIView.ContentMode.scaleAspectFill
             $0.isHidden = false
@@ -98,22 +110,75 @@ class ActivityCell: UITableViewCell {
             }
         }
         
-       username = UILabel{
-            $0.text = notification.senderUsername
-            $0.isUserInteractionEnabled = true
-            let tap = UITapGestureRecognizer(target: self, action: #selector(self.postTap(_:)))
-            $0.addGestureRecognizer(tap)
-            $0.numberOfLines = 0
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
+        let postImageButton = UIButton()
+        contentView.addSubview(postImageButton)
+        postImageButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
+        
+        postImageButton.snp.makeConstraints{
+            $0.trailing.equalToSuperview().offset(-14)
+            $0.centerY.equalToSuperview()
+            $0.width.equalTo(44)
+            $0.height.equalTo(52)
+        }
+    
+        postImage = UIImageView {
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = true
+            $0.contentMode = UIView.ContentMode.scaleAspectFill
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            postImageButton.addSubview($0)
+            
+            if(notification.postInfo != nil){
+                imageURLs = notification.postInfo!.imageURLs
+            }
+            
+            let notiType = notification.type
+            switch notiType {
+            case "friendRequest":
+                $0.image =  UIImage(named: "AcceptedYourFriendRequest")
+                $0.layer.cornerRadius = 0
+            case "mapInvite":
+                $0.image =  UIImage(named: "AddedToMap")
+            default:
+                if(imageURLs.count > 0){
+                    $0.layer.cornerRadius = 5
+                    let transformer = SDImageResizingTransformer(size: CGSize(width: 88, height: 102), scaleMode: .aspectFill)
+                    $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+                }
+            }
+            
         }
         
-        username.snp.makeConstraints{
-            $0.top.equalToSuperview().offset(15)
-            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
+        postImage.snp.makeConstraints{
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview()
+            let notiType = notification.type
+            switch notiType {
+            case "friendRequest":
+                $0.width.equalTo(33)
+                $0.height.equalTo(27)
+            case "mapInvite":
+                $0.width.equalTo(45.07)
+                $0.height.equalTo(30.04)
+            default:
+                $0.width.equalTo(44)
+                $0.height.equalTo(52)
+            }
         }
+        
+        username = UILabel{
+             $0.text = notification.senderUsername
+             $0.isUserInteractionEnabled = true
+             let tap = UITapGestureRecognizer(target: self, action: #selector(self.postTap(_:)))
+             $0.addGestureRecognizer(tap)
+             $0.numberOfLines = 0
+             $0.textColor = .black
+             $0.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+             $0.translatesAutoresizingMaskIntoConstraints = false
+             contentView.addSubview($0)
+         }
+                
         
         detail = UILabel {
             let notiType = notification.type
@@ -164,17 +229,32 @@ class ActivityCell: UITableViewCell {
             default:
                 $0.text = notification.type
             }
-            $0.numberOfLines = 0
+            $0.numberOfLines = 2
+            $0.lineBreakMode = NSLineBreakMode.byWordWrapping
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
             $0.translatesAutoresizingMaskIntoConstraints = false
+            detailOriginalWidth = $0.intrinsicContentSize.width
+            $0.preferredMaxLayoutWidth = 224
             contentView.addSubview($0)
         }
         
+        detailOriginalHeight = detail.intrinsicContentSize.height
+
+        
+        username.snp.makeConstraints{
+            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
+            $0.centerY.equalToSuperview().offset((-1*detailOriginalHeight)/2)
+        }
+        
+        
+                 
         detail.snp.makeConstraints{
             $0.top.equalTo(username.snp.bottom)
-            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
+            $0.leading.equalTo(profilePic.snp.trailing).offset(7)
+            $0.width.lessThanOrEqualTo(224.0)
         }
+        
         
         timestamp = UILabel{
             $0.text = notification.timeString
@@ -184,98 +264,31 @@ class ActivityCell: UITableViewCell {
             contentView.addSubview($0)
         }
         
+        
         timestamp.snp.makeConstraints{
-            $0.leading.equalTo(detail.snp.trailing).offset(8)
-            $0.top.equalTo(detail.snp.top)
+            $0.bottom.equalTo(detail.snp.bottom)
+            var timeLeading = detail.intrinsicContentSize.width
+            if(timeLeading < detailOriginalWidth){
+                timeLeading = detailOriginalWidth - detail.intrinsicContentSize.width
+            }
+            $0.leading.equalTo(detail.snp.leading).offset(timeLeading + 8)
         }
         
-        let postImageButton = UIButton()
-        contentView.addSubview(postImageButton)
-        postImageButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
+
         
-        postImageButton.snp.makeConstraints{
-            $0.trailing.equalToSuperview().offset(-14)
-            $0.centerY.equalToSuperview()
-            $0.width.equalTo(44)
-            $0.height.equalTo(52)
-        }
-    
-        postImage = UIImageView {
-            $0.frame = CGRect(x: 0, y: 0, width: 44, height: 52)
-            $0.layer.masksToBounds = false
-            $0.clipsToBounds = true
-            $0.contentMode = UIView.ContentMode.scaleAspectFill
-            $0.isHidden = false
-            $0.translatesAutoresizingMaskIntoConstraints = true
-            postImageButton.addSubview($0)
-            
-            if(notification.postInfo != nil){
-                imageURLs = notification.postInfo!.imageURLs
-            }
-            
-            let notiType = notification.type
-            switch notiType {
-            case "friendRequest":
-                $0.image =  UIImage(named: "AcceptedYourFriendRequest")
-                $0.layer.cornerRadius = 0
-            case "mapInvite":
-                $0.image =  UIImage(named: "AddedToMap")
-            default:
-                if(imageURLs.count > 0){
-                    $0.layer.cornerRadius = 5
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 88, height: 102), scaleMode: .aspectFill)
-                    $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-                }
-            }
-        }
-        
-        postImage.snp.makeConstraints{
-            $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview()
-            let notiType = notification.type
-            switch notiType {
-            case "friendRequest":
-                $0.width.equalTo(33)
-                $0.height.equalTo(27)
-            case "mapInvite":
-                $0.width.equalTo(45.07)
-                $0.height.equalTo(30.04)
-            default:
-                $0.width.equalTo(44)
-                $0.height.equalTo(52)
-            }
-        }
         
     }
         
     @objc func profileTap(_ sender: Any){
-        notificationControllerDelegate?.getProfile()
+        notificationControllerDelegate?.getProfile(userProfile: notification.userInfo!)
     }
     
     @objc func postTap(_ sender: Any){
         //SHOW POST INSTEAD ONCE YOU CAN
-        print("post Tapped!")
-        notificationControllerDelegate?.getProfile()
+        notificationControllerDelegate?.getProfile(userProfile: notification.userInfo!)
     }
     
     func resetCell() {
-        ///keeping this here in case not having it causes problems during QA
-        /*
-        if profilePic != nil {
-            print("profPicNull")
-            profilePic.image = UIImage() }
-        if postImage != nil {
-            print("postImageNull")
-            postImage.image = UIImage() }
-        if userAvatar != nil {
-            print("userAvaterNull")
-            userAvatar.image = UIImage() }
-        if username != nil {username.text=""}
-        if detail != nil {detail.text = ""}
-        if timestamp != nil {timestamp.text = ""}
-        if imageURLs.count != 0 {imageURLs = []}*/
-        
-        
         if self.contentView.subviews.isEmpty == false {
             for subview in self.contentView.subviews {
                 subview.removeFromSuperview()

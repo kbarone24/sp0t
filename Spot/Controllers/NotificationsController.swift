@@ -20,12 +20,15 @@ import Geofirestore
 protocol notificationDelegateProtocol: AnyObject{
     func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification]
     //the following functions will include necessary parameters when ready
-    func getProfile()
+    func getProfile(userProfile: UserProfile)
     func showPost()
+    func removeFriendd(friendID: String)
     func reloadTable()
 }
 
 class NotificationsController: UIViewController, UITableViewDelegate {
+    var activityIndicator: CustomActivityIndicator!
+    
     var notifications: [UserNotification] = []
     var pendingFriendRequests: [UserNotification] = []
     
@@ -36,6 +39,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     var endDocument: DocumentSnapshot!
     
     var refresh: RefreshStatus = .activelyRefreshing
+    var contentDrawer: DrawerView?
     
     //used if displaying profile as its own drawer view
     private var sheetView: DrawerView? {
@@ -62,6 +66,8 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         
         super.viewDidLoad()
         
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
+        
         setupView()
         
         self.title = "Notifications"
@@ -87,7 +93,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     func setupView(){
         //for some reason setting up the view like it says in the guidelines was causing issues
-        tableView = UITableView(frame: self.view.bounds, style: .grouped)
+        tableView = UITableView(frame: (self.view.bounds), style: .grouped)
         tableView.dataSource = self
         tableView.delegate = self
         tableView.backgroundColor = .white
@@ -95,9 +101,13 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.rowHeight = 70
         tableView.register(ActivityCell.self, forCellReuseIdentifier: "ActivityCell")
         tableView.register(FriendRequestCollectionCell.self, forCellReuseIdentifier: "FriendRequestCollectionCell")
+        tableView.register(MapFeedLoadingCell.self, forCellReuseIdentifier: "FeedLoadingCell")
         tableView.isUserInteractionEnabled = true
         self.tableView.separatorStyle = .none
+        tableView.translatesAutoresizingMaskIntoConstraints = true
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         view.addSubview(self.tableView)
+        
     }
     
     // MARK: Notification fetch
@@ -111,7 +121,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         fetchGroup.enter()
         friendRequestQuery.getDocuments { [weak self] (snap, err) in
             guard let self = self else { return }
-            guard let allDocs = snap?.documents else { print("leave 6"); fetchGroup.leave(); return }
+            guard let allDocs = snap?.documents else {fetchGroup.leave(); return }
             // checking if all pending friend requests have been queried
             if allDocs.count == 0 || allDocs.count == self.pendingFriendRequests.count {
                 fetchGroup.leave();
@@ -124,16 +134,17 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                 friendRequestGroup.enter()
                 do {
                     let notif = try doc.data(as: UserNotification.self)
-                    guard var notification = notif else { print("leave 3"); friendRequestGroup.leave(); continue }
+                    guard var notification = notif else { friendRequestGroup.leave(); continue }
                     notification.id = doc.documentID
                     notification.timeString = self.getTimeString(postTime: notification.timestamp)
-                    
+                                        
                     if !notification.seen {
                       DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
-                        notification.seen = true
                     }
-                                        
-                    self.getUserInfo(userID: notification.senderID) { user in
+                                 
+
+                    self.getUserInfo(userID: notification.senderID) { [weak self] (user) in
+                        guard let self = self else { return }
                         notification.userInfo = user
                         self.pendingFriendRequests.append(notification)
                         friendRequestGroup.leave()
@@ -150,22 +161,28 @@ class NotificationsController: UIViewController, UITableViewDelegate {
 
         let notiRef = db.collection("users").document(uid).collection("notifications").limit(to: 15)
         var notiQuery = notiRef.order(by: "timestamp", descending: true)
-        if endDocument != nil && !refresh { notiQuery = notiQuery.start(atDocument: endDocument)}
+        
+        if endDocument != nil && !refresh {
+            notiQuery = notiQuery.start(atDocument: endDocument)
+        }
+        
         fetchGroup.enter()
         notiQuery.getDocuments{ [weak self] (snap, err) in
             guard let self = self else { return }
             guard let allDocs = snap?.documents else { return }
-            
-            if allDocs.count == 0 {
+                        
+            if allDocs.count == 0{
                 fetchGroup.leave(); return }
             
             if(allDocs.count < 15){
                 self.refresh = .refreshDisabled
-            } else {
-                self.endDocument = allDocs.last
             }
+           
+            self.endDocument = allDocs.last
+                
             
             let docs = self.refresh == .refreshDisabled ? allDocs : allDocs.dropLast()
+            
             
             let notiGroup = DispatchGroup()
             for doc in docs {
@@ -177,8 +194,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                     notification.timeString = self.getTimeString(postTime: notification.timestamp)
                     
                     if !notification.seen {
-                        doc.reference.updateData(["seen" : true])
-                        notification.seen = true
+                      DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
                     }
                     
                     if notification.status == "pending" {
@@ -202,7 +218,8 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                         }
                     }
             
-                    userGroup.notify(queue: .main) {
+                    userGroup.notify(queue: .main) { [weak self] in
+                        guard let self = self else { return }
                         self.notifications.append(notification)
                         notiGroup.leave()
                     }
@@ -213,11 +230,8 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
         }
                 
-        fetchGroup.notify(queue: DispatchQueue.main) {
-            for noti in self.notifications {
-                //to test if notifs were added--will be removed later
-                print(noti.type, "\n")
-            }
+        fetchGroup.notify(queue: DispatchQueue.main) { [weak self] in
+            guard let self = self else { return }
             self.sortAndReload()
         }
     }
@@ -225,18 +239,30 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     func sortAndReload() {
         self.notifications = self.notifications.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
         self.pendingFriendRequests = self.pendingFriendRequests.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
-        if(self.refresh != .refreshDisabled){ self.refresh = .refreshEnabled }
         //so notfications aren't empty if the user is pendingFriendRequest heavy
-        if((pendingFriendRequests.count == 0 && notifications.count < 7) || (pendingFriendRequests.count > 0 && notifications.count < 11)){
+        ///REVISIT THISSS
+        if((pendingFriendRequests.count == 0 && notifications.count < 11) || (pendingFriendRequests.count > 0 && notifications.count < 7)) && refresh == .refreshEnabled{
             fetchNotifications(refresh: false)
         }
+        if(self.refresh != .refreshDisabled){ self.refresh = .refreshEnabled }
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
 
     @objc func leaveNotifs(_ sender: Any){
         ///NOT WORKING 😥
-        navigationController?.popViewController(animated: true)
+        contentDrawer?.closeAction()
+    }
+    
+    @objc func notifyFriendsLoad(_ notification: NSNotification){
+        if(notifications.count != 0){
+            for i in 0...notifications.count-1{
+                self.getUserInfo(userID: self.notifications[i].senderID) { [weak self] (user) in
+                guard let self = self else { return }
+                self.notifications[i].userInfo = user
+                }
+            }
+        }
     }
     
     ///modified copy from global functions
@@ -267,7 +293,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         //tries to query more data when the user is about 5 cells from hitting the end
         if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 350)) && refresh == .refreshEnabled {
-            print("👻 reached end")
             fetchNotifications(refresh: false)
             refresh = .activelyRefreshing
         }
@@ -285,7 +310,7 @@ extension NotificationsController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let userinfo = indexPath.row
-        //insert code to display post
+        //insert code to display post by using indexPath
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -295,6 +320,9 @@ extension NotificationsController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if refresh == .activelyRefreshing{
+            return notifications.count + 1
+        }
         if pendingFriendRequests.count == 0 {
             return notifications.count
         } else if notifications.count == 0{
@@ -342,24 +370,21 @@ extension NotificationsController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if indexPath.row >= notifications.count{
+            let cell = tableView.dequeueReusableCell(withIdentifier: "FeedLoadingCell", for: indexPath) as! MapFeedLoadingCell
+            cell.setUp()
+            return cell
+        }
         if pendingFriendRequests.count == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as! ActivityCell
             let notif = notifications[indexPath.row]
-            cell.notificationControllerDelegate = self
-            cell.selectionStyle = .default
-            if notif.type == "friendRequest" && notif.status == "accepted" && notif.seen == false {
-                cell.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.2)
-            } else if notif.type == "mapInvite" && notif.seen == false {
-                cell.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.2)
-            } else { cell.backgroundColor = .white }
+            cell.notificationControllerDelegate = self            
             cell.set(notification: notif)
             return cell
         } else if notifications.count == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCollectionCell") as! FriendRequestCollectionCell
             let notifs = pendingFriendRequests
             cell.notificationControllerDelegate = self
-            cell.selectionStyle = .none
-            cell.backgroundColor = .white
             cell.setUp(notifs: notifs)
             return cell
         } else{
@@ -367,18 +392,13 @@ extension NotificationsController: UITableViewDataSource {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCollectionCell") as! FriendRequestCollectionCell
                 let notifs = pendingFriendRequests
                 cell.notificationControllerDelegate = self
-                cell.selectionStyle = .none
-                cell.backgroundColor = .white
+
                 cell.setUp(notifs: notifs)
                 return cell
             } else{
                 let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as! ActivityCell
                 let notif = notifications[indexPath.row]
                 cell.notificationControllerDelegate = self
-                cell.selectionStyle = .default
-                if notif.type == "friendRequest" && notif.status == "accepted" && notif.seen == false {
-                    cell.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.2)
-                } else { cell.backgroundColor = .white }
                 cell.set(notification: notif)
                 return cell
             }
@@ -413,13 +433,17 @@ extension NotificationsController: UITableViewDataSource {
 // MARK: - notificationDelegateProtocol
 extension NotificationsController: notificationDelegateProtocol {
 
-    func getProfile() {
-        let profileVC = ProfileViewController()
+    func getProfile(userProfile: UserProfile) {
+        let profileVC = ProfileViewController(userProfile: userProfile)
         navigationController?.pushViewController(profileVC, animated: true)
     }
     
     func showPost(){
         print("show posts using this function")
+    }
+    
+    func removeFriendd(friendID: String){
+        self.removeFriend(friendID: friendID)
     }
     
     func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification] {
@@ -434,4 +458,6 @@ extension NotificationsController: notificationDelegateProtocol {
         self.tableView.reloadData()
     }
 }
+
+
 
