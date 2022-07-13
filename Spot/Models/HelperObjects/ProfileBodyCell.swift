@@ -74,7 +74,7 @@ extension ProfileBodyCell {
         mapName = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-            $0.text = "Map Name"
+            $0.text = ""
             contentView.addSubview($0)
         }
         mapName.snp.makeConstraints {
@@ -85,7 +85,7 @@ extension ProfileBodyCell {
         friendsCount = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.text = "3"
+            $0.text = ""
             contentView.addSubview($0)
         }
         friendsCount.snp.makeConstraints {
@@ -102,8 +102,8 @@ extension ProfileBodyCell {
             contentView.addSubview($0)
         }
         friendsIcon.snp.makeConstraints {
-            $0.leading.equalTo(friendsCount.snp.trailing)
-            $0.top.equalTo(friendsCount).offset(4)
+            $0.leading.equalTo(friendsCount.snp.trailing).offset(3)
+            $0.top.equalTo(friendsCount).offset(3)
             $0.width.equalTo(13.33)
             $0.height.equalTo(10)
         }
@@ -111,7 +111,7 @@ extension ProfileBodyCell {
         likesCount = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.text = " • 2 likes"
+            $0.text = ""
             contentView.addSubview($0)
         }
         likesCount.snp.makeConstraints {
@@ -123,7 +123,7 @@ extension ProfileBodyCell {
         postsCount = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.text = " • 2 posts"
+            $0.text = ""
             contentView.addSubview($0)
         }
         postsCount.snp.makeConstraints {

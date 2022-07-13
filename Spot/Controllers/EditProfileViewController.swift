@@ -123,9 +123,11 @@ extension EditProfileViewController {
         }
         
         avatarImage = UIImageView {
-            $0.sd_setImage(with: URL(string: userProfile!.avatarURL!))
             $0.contentMode = .scaleAspectFit
             view.addSubview($0)
+        }
+        avatarImage.sd_setImage(with: URL(string: userProfile!.avatarURL!)) { image, Error, cache, url  in
+            self.avatarImage.image = image?.withHorizontallyFlippedOrientation()
         }
         avatarImage.snp.makeConstraints {
             $0.top.equalTo(avatarLabel.snp.bottom).offset(2)
