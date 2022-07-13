@@ -279,7 +279,7 @@ class DrawerView: NSObject {
         }) { (success) in
             self.status = DrawerViewStatus.Close
             self.slideView.removeFromSuperview()
-            self.myNav.removeFromParent()            
+            self.myNav.removeFromParent()
             if self.closeDo != nil {
                 self.closeDo!()
             }

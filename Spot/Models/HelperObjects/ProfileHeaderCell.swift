@@ -43,7 +43,9 @@ class ProfileHeaderCell: UICollectionViewCell {
     public func cellSetup(profileID: String, profileURL: String, avatarURL: String, name: String, account: String, location: String, friendsCount: Int, relation: ProfileRelation) {
         self.profileID = profileID
         profileImage.sd_setImage(with: URL(string: profileURL))
-        profileAvatar.sd_setImage(with: URL(string: avatarURL))
+        profileAvatar.sd_setImage(with: URL(string: avatarURL)) { image, Error, cache, url  in
+            self.profileAvatar.image = image?.withHorizontallyFlippedOrientation()
+        }
         profileName.text = name
         profileAccount.text = account
         locationButton.setTitle(location, for: .normal)
@@ -53,7 +55,7 @@ class ProfileHeaderCell: UICollectionViewCell {
                 $0.leading.equalTo(locationButton.snp.trailing)
             }
         }
-        friendListButton.setTitle("\(friendsCount)  friends", for: .normal)
+        friendListButton.setTitle("\(friendsCount) friends", for: .normal)
         switch relation {
         case .myself:
             editButton.setTitle("Edit profile", for: .normal)

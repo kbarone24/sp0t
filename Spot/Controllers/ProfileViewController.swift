@@ -44,6 +44,10 @@ class ProfileViewController: UIViewController {
     
     public var containerDrawerView: DrawerView?
     
+    deinit {
+        print("ProfileViewController(\(self) deinit")
+    }
+    
     init(userProfile: UserProfile? = nil) {
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
         
@@ -211,7 +215,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
             return headerCell
         } else if let mapCell = cell as? ProfileMyMapCell {
-            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages)
+//            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
             let profileBodyData = maps[indexPath.row - 1]
