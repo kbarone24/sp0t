@@ -807,6 +807,7 @@ extension UIViewController {
             "topFriends.\(friendID)" : FieldValue.delete()
         ])
     }
+
     
     func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
         var queriedUsers: [UserProfile] = []
@@ -833,6 +834,7 @@ extension UIViewController {
         }
         return queriedUsers
       }
+
 }
 
 extension MapView {
