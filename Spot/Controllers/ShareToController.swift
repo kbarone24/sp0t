@@ -11,24 +11,27 @@ import UIKit
 import Firebase
 
 class ShareToController: UIViewController {
-    
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore = Firestore.firestore()
+    private lazy var customMaps: [CustomMap] = []
     
-    var friendsButton, shareButton: UIButton!
-    var publicButton: UIButton?
+    private var buttonView: UIView!
+    private var friendsButton, shareButton: UIButton!
+    private var publicButton: UIButton?
+    private var tableView: UITableView!
     
-    var progressBar: UIView!
-    var progressFill: UIView!
+    private var progressBar: UIView!
+    private var progressFill: UIView!
     
     override func viewDidLoad() {
         
         super.viewDidLoad()
             
         addButtons()
-        addMapTable()
+        addTableView()
         addProgressBar()
-        print("ct", UploadPostModel.shared.postObject.postImage.count)
+        
+        DispatchQueue.global(qos: .userInitiated).async { self.getCustomMaps() }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -75,10 +78,14 @@ class ShareToController: UIViewController {
 
         let spotPrivacy = UploadPostModel.shared.spotObject == nil ? "public" : UploadPostModel.shared.spotObject.privacyLevel
         let buttonCount = spotPrivacy == "public" ? 2 : 1
-        let viewHeight: CGFloat = buttonCount == 2 ? 152 : 77
+        let shortHeight: CGFloat = 77
+        let tallHeight: CGFloat = 152
+        let viewHeight: CGFloat = buttonCount == 2 ? tallHeight : shortHeight
         
-        let buttonView = UIView(frame: CGRect(x: 0, y: shareButton.frame.minY - viewHeight - 46, width: UIScreen.main.bounds.width, height: viewHeight))
-        view.addSubview(buttonView)
+        buttonView = UIView {
+            $0.frame = CGRect(x: 0, y: shareButton.frame.minY - viewHeight - 46, width: UIScreen.main.bounds.width, height: viewHeight)
+            view.addSubview($0)
+        }
         
         if buttonCount == 2 {
             publicButton = UIButton {
@@ -90,6 +97,9 @@ class ShareToController: UIViewController {
                 $0.tag = 0
                 buttonView.addSubview($0)
             }
+            
+        } else {
+            buttonView.frame = CGRect(x: buttonView.frame.minX, y: buttonView.frame.minY, width: buttonView.frame.width, height: shortHeight)
         }
         
         friendsButton = UIButton {
@@ -103,8 +113,15 @@ class ShareToController: UIViewController {
         }
     }
     
-    func addMapTable() {
-        
+    func addTableView() {
+        tableView = UITableView {
+            $0.frame = CGRect(x: 0, y: 100, width: UIScreen.main.bounds.width, height: 300)
+            $0.backgroundColor = nil
+            $0.separatorStyle = .none
+            $0.dataSource = self
+            $0.delegate = self
+            $0.showsVerticalScrollIndicator = false
+        }
     }
     
     func addProgressBar() {
@@ -125,6 +142,34 @@ class ShareToController: UIViewController {
             view.addSubview($0)
         }
     }
+    
+    func getCustomMaps() {
+        let db = Firestore.firestore()
+        let query = db.collection("users").document(uid).collection("mapsList").order(by: "timestamp", descending: true)
+        
+        query.getDocuments { [weak self] snap, err in
+            guard let self = self else { return }
+            guard let docs = snap?.documents else { return }
+            
+            var index = 0
+            for doc in docs {
+                do {
+                    let unwrappedInfo = try doc.data(as: CustomMap.self)
+                    guard let mapInfo = unwrappedInfo else { index += 1; if index == docs.count { self.reloadTable() }; return }
+                    index += 1
+                    self.customMaps.append(mapInfo)
+                    if index == docs.count { self.reloadTable(); return }
+                } catch {
+                    index += 1; if index == docs.count { self.reloadTable(); return }
+                }
+            }
+        }
+    }
+    
+    func reloadTable() {
+        DispatchQueue.main.async { self.tableView.reloadData() }
+    }
+    
     
     @objc func friendsTap(_ sender: UIButton) {
         friendsButton.tag = friendsButton.tag == 0 ? 1 : 0
@@ -247,3 +292,13 @@ class ShareToController: UIViewController {
     }
 }
 
+extension ShareToController: UITableViewDelegate, UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 0
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        return UITableViewCell()
+    }
+}
