@@ -349,14 +349,20 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 195 images.
+  /// This `R.image` struct is generated, and contains static references to 201 images.
   struct image {
+    /// Image `AcceptedTheirFriendRequest`.
+    static let acceptedTheirFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedTheirFriendRequest")
+    /// Image `AcceptedYourFriendRequest`.
+    static let acceptedYourFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedYourFriendRequest")
     /// Image `ActiveTag`.
     static let activeTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ActiveTag")
     /// Image `AddFriendIcon`.
     static let addFriendIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "AddFriendIcon")
     /// Image `AddToSpotButton`.
     static let addToSpotButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "AddToSpotButton")
+    /// Image `AddedToMap`.
+    static let addedToMap = Rswift.ImageResource(bundle: R.hostingBundle, name: "AddedToMap")
     /// Image `AlienTag`.
     static let alienTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "AlienTag")
     /// Image `AliveOff`.
@@ -547,8 +553,12 @@ struct R: Rswift.Validatable {
     static let likeButtonFilled = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikeButtonFilled")
     /// Image `LikeNotification`.
     static let likeNotification = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikeNotification")
+    /// Image `LikedYourMap`.
+    static let likedYourMap = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikedYourMap")
     /// Image `LiquorTag`.
     static let liquorTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "LiquorTag")
+    /// Image `LoadingIndicator`.
+    static let loadingIndicator = Rswift.ImageResource(bundle: R.hostingBundle, name: "LoadingIndicator")
     /// Image `LocationIcon`.
     static let locationIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "LocationIcon")
     /// Image `LogTag`.
@@ -735,12 +745,28 @@ struct R: Rswift.Validatable {
     static let whaleTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "WhaleTag")
     /// Image `WineTag`.
     static let wineTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "WineTag")
+    /// Image `XFriendRequest`.
+    static let xFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "XFriendRequest")
     /// Image `X`.
     static let x = Rswift.ImageResource(bundle: R.hostingBundle, name: "X")
     /// Image `commentButton`.
     static let commentButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "commentButton")
     /// Image `likeButton`.
     static let likeButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "likeButton")
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "AcceptedTheirFriendRequest", bundle: ..., traitCollection: ...)`
+    static func acceptedTheirFriendRequest(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.acceptedTheirFriendRequest, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "AcceptedYourFriendRequest", bundle: ..., traitCollection: ...)`
+    static func acceptedYourFriendRequest(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.acceptedYourFriendRequest, compatibleWith: traitCollection)
+    }
+    #endif
 
     #if os(iOS) || os(tvOS)
     /// `UIImage(named: "ActiveTag", bundle: ..., traitCollection: ...)`
@@ -760,6 +786,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "AddToSpotButton", bundle: ..., traitCollection: ...)`
     static func addToSpotButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.addToSpotButton, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "AddedToMap", bundle: ..., traitCollection: ...)`
+    static func addedToMap(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.addedToMap, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1429,9 +1462,23 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LikedYourMap", bundle: ..., traitCollection: ...)`
+    static func likedYourMap(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.likedYourMap, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "LiquorTag", bundle: ..., traitCollection: ...)`
     static func liquorTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.liquorTag, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LoadingIndicator", bundle: ..., traitCollection: ...)`
+    static func loadingIndicator(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.loadingIndicator, compatibleWith: traitCollection)
     }
     #endif
 
@@ -2090,6 +2137,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "X", bundle: ..., traitCollection: ...)`
     static func x(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.x, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "XFriendRequest", bundle: ..., traitCollection: ...)`
+    static func xFriendRequest(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.xFriendRequest, compatibleWith: traitCollection)
     }
     #endif
 
