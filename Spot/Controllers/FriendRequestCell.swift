@@ -25,11 +25,10 @@ class FriendRequestCell: UICollectionViewCell {
     var senderName: UILabel!
     var timestamp: UILabel!
     
-    var checkMark: UIImageView!
-    var confirmed: UILabel!
-    
+    var confirmButton: UIButton!
+        
     weak var collectionDelegate: friendRequestCollectionCellDelegate!
-    weak var notificationControllerDelegate: notificationDelegateProtocol?
+    weak var notificationControllerDelegate: notificationDelegateProtocol!
 
     // variables for activity indicator that will be used later
     lazy var activityIndicator = UIActivityIndicatorView()
@@ -51,7 +50,7 @@ class FriendRequestCell: UICollectionViewCell {
         
         
         self.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-        self.layer.cornerRadius = 11.31
+        self.layer.cornerRadius = 14
         
         resetCell()
         
@@ -75,14 +74,13 @@ class FriendRequestCell: UICollectionViewCell {
         
         profilePicButton.snp.makeConstraints{
             $0.centerX.equalToSuperview()
-            $0.top.equalToSuperview().offset(15)
-            $0.height.width.equalTo(71)
+            $0.top.equalToSuperview().offset(24)
+            $0.height.width.equalTo(self.frame.width/2)
         }
             
         profilePic = UIImageView{
-            $0.frame = CGRect(x: 65, y: 27.5, width: 71, height: 71)
             $0.layer.masksToBounds = false
-            $0.layer.cornerRadius = $0.frame.height/2
+            $0.layer.cornerRadius = self.frame.width/4
             $0.clipsToBounds = true
             $0.contentMode = .scaleAspectFill
             $0.isHidden = false
@@ -93,25 +91,24 @@ class FriendRequestCell: UICollectionViewCell {
                 $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
             } else {print("profilePic not found")}
             $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
         }
         
         profilePic.snp.makeConstraints{
             $0.centerX.equalToSuperview()
-            $0.top.equalToSuperview().offset(15)
-            $0.height.width.equalTo(71)
+            $0.top.equalToSuperview()
+            $0.height.width.equalTo(self.frame.width/2)
         }
         
-        if((friendRequest.userInfo?.avatarURL ?? "") != ""){
+        if (notification.userInfo?.avatarURL ?? "") != "" {
             userAvatar = UIImageView{
                 $0.layer.masksToBounds = false
                 $0.contentMode = UIView.ContentMode.scaleAspectFill
                 $0.isHidden = false
-                let url = friendRequest.userInfo!.avatarURL!
+                let url = notification.userInfo!.avatarURL!
                 if url != "" {
                     let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
                     $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-                } else {print("🙈 NOOOOOOO")}
+                } else { print("Avatar not found") }
                 $0.translatesAutoresizingMaskIntoConstraints = false
                 contentView.addSubview($0)
             }
@@ -119,8 +116,8 @@ class FriendRequestCell: UICollectionViewCell {
             userAvatar.snp.makeConstraints{
                 $0.leading.equalTo(profilePic.snp.leading).offset(-3)
                 $0.bottom.equalTo(profilePic.snp.bottom).offset(3)
-                $0.height.equalTo(39)
-                $0.width.equalTo(30)
+                $0.width.equalTo(self.frame.width*0.12)
+                $0.height.equalTo((self.frame.width*0.12)*1.7)
             }
         }
         
@@ -131,18 +128,18 @@ class FriendRequestCell: UICollectionViewCell {
             let tap = UITapGestureRecognizer(target: self, action: #selector(self.profileTap(_:)))
             $0.addGestureRecognizer(tap)
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16.5)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
         senderName.snp.makeConstraints{
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(profilePic.snp.bottom).offset(10)
+            $0.top.equalTo(profilePic.snp.bottom).offset(12)
         }
 
     
         senderUsername = UILabel{
-            $0.text = friendRequest.senderUsername
+            $0.text = friendRequest.userInfo?.username
             $0.isUserInteractionEnabled = true
             let tap = UITapGestureRecognizer(target: self, action: #selector(self.profileTap(_:)))
             $0.addGestureRecognizer(tap)
@@ -153,63 +150,48 @@ class FriendRequestCell: UICollectionViewCell {
         }
         senderUsername.snp.makeConstraints{
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(senderName.snp.bottom).offset(1)
+            $0.top.equalTo(senderName.snp.bottom)
             
         }
         
-        confirmedView = UIView{
-            $0.frame = CGRect(x: 0, y: 0, width: 141, height: 37)
+        confirmButton = UIButton{
+            $0.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 1)
+            $0.layer.cornerRadius = 14
+            $0.layer.borderWidth = 1
+            $0.layer.borderColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1).cgColor
+            $0.setImage(UIImage(named: "FriendsIcon"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
+
+            let customButtonTitle = NSMutableAttributedString(string: "Confirmed", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                //NSAttributedString.Key.backgroundColor: UIColor.red,
+                NSAttributedString.Key.foregroundColor: UIColor.black
+            ])
+            $0.setAttributedTitle(customButtonTitle, for: .normal)
             $0.translatesAutoresizingMaskIntoConstraints = false
+            $0.isHidden = false
             contentView.addSubview($0)
         }
         
-        confirmedView.snp.makeConstraints{
+        
+        confirmButton.snp.makeConstraints{
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(senderUsername.snp.bottom).offset(10)
-            $0.height.equalTo(37)
-            $0.width.equalTo(115)
-        }
-        
-        checkMark = UIImageView{
-            $0.frame = CGRect(x: 0, y: 0, width: 23, height: 23)
-            $0.layer.masksToBounds = true
-            $0.clipsToBounds = true
-            $0.contentMode = UIView.ContentMode.scaleAspectFit
-            $0.isHidden = false
-            $0.image = UIImage(named: "AcceptedTheirFriendRequest")
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            confirmedView.addSubview($0)
-        }
-        
-        confirmed = UILabel{
-            $0.text = "Confirmed"
-            $0.textColor = UIColor(red: 0, green: 0.591, blue: 0.629, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 16)
-            $0.isHidden = false
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            confirmedView.addSubview($0)
-        }
-
-        
-        checkMark.snp.makeConstraints{
-            $0.leading.equalToSuperview()
-            $0.centerY.equalToSuperview()
-            $0.height.equalTo(23)
-            $0.width.equalTo(23)
-        }
-        
-        confirmed.snp.makeConstraints{
-            $0.leading.equalTo(checkMark.snp.trailing).offset(5)
-            $0.centerY.equalToSuperview()
+            $0.top.equalTo(senderUsername.snp.bottom).offset(11)
+            $0.leading.equalToSuperview().offset(10)
+            $0.trailing.equalToSuperview().offset(-10)
+            $0.height.equalTo(self.frame.height*0.18)
+            $0.bottom.equalToSuperview().offset(-11)
         }
         
 
         acceptButton = UIButton{
-            $0.frame = CGRect(x: 0, y: 0, width: 141, height: 37)
             $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-            $0.layer.cornerRadius = 11.31
+            $0.layer.cornerRadius = 14
             $0.layer.borderWidth = 1
             $0.layer.borderColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1).cgColor
+            $0.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
+
             let customButtonTitle = NSMutableAttributedString(string: "Accept", attributes: [
                 NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
                 //NSAttributedString.Key.backgroundColor: UIColor.red,
@@ -219,15 +201,20 @@ class FriendRequestCell: UICollectionViewCell {
             $0.translatesAutoresizingMaskIntoConstraints = false
             $0.addTarget(self, action: #selector(acceptTap(_:)), for: .touchUpInside)
             $0.isHidden = false
+            //$0.addSubview(addFriendIcon)
             contentView.addSubview($0)
         }
         
+        
         acceptButton.snp.makeConstraints{
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(senderUsername.snp.bottom).offset(10)
-            $0.height.equalTo(37)
-            $0.width.equalTo(141)
+            $0.top.equalTo(senderUsername.snp.bottom).offset(11)
+            $0.leading.equalToSuperview().offset(10)
+            $0.trailing.equalToSuperview().offset(-10)
+            $0.height.lessThanOrEqualTo(self.frame.height*0.18)
+            $0.bottom.equalToSuperview().offset(-11)
         }
+        
 
         closeButton = UIButton {
             $0.frame = CGRect(x: 0, y: 0, width: 33, height: 33)
@@ -251,8 +238,8 @@ class FriendRequestCell: UICollectionViewCell {
             contentView.addSubview($0)
         }
         timestamp.snp.makeConstraints{
-            $0.trailing.equalToSuperview().offset(-5)
-            $0.top.equalToSuperview().offset(5)
+            $0.trailing.equalToSuperview().offset(-8)
+            $0.top.equalToSuperview().offset(10)
         }
     }
         
@@ -278,7 +265,7 @@ class FriendRequestCell: UICollectionViewCell {
     }
     
     @objc func profileTap(_ sender: Any){
-        notificationControllerDelegate?.getProfile()
+        collectionDelegate?.getProfile(userProfile: friendRequest.userInfo!)
     }
     
     @objc func cancelTap(_ sender: UIButton) {
@@ -289,7 +276,6 @@ class FriendRequestCell: UICollectionViewCell {
     
     @objc func acceptTap(_ sender: UIButton){
         Mixpanel.mainInstance().track(event: "NotificationsFriendRequestAccepted")
-        print("Accept button clicked")
         acceptButton.isHidden = true
         collectionDelegate?.acceptFriend(sender: self)
     }

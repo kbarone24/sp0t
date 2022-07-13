@@ -108,11 +108,6 @@ class MapController: UIViewController {
         }
     }
     
-    private var notifSheetView: DrawerView? {
-        didSet {
-            navigationController?.navigationBar.isHidden = notifSheetView == nil ? false : true
-        }
-    }
                 
     /// tag table added over top of view to window then result passed to active VC
     enum TagTableParent {
@@ -518,19 +513,16 @@ class MapController: UIViewController {
         
         let notifVC = NotificationsController()
         
-
-        
-        notifSheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
-            self.notifSheetView = nil
+        sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+            self.sheetView = nil
         })
         
-
+        sheetView?.swipeDownToDismiss = false
+        sheetView?.canInteract = false
+        sheetView?.present(to: .Top)
+        sheetView?.showCloseButton = false
         
-        notifSheetView?.swipeDownToDismiss = false
-        notifSheetView?.canInteract = false
-        notifSheetView?.present(to: .Top)
-        notifSheetView?.showCloseButton = false
-        
+        notifVC.contentDrawer = sheetView
         
         
     }

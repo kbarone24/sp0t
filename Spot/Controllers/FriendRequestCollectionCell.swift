@@ -12,6 +12,7 @@ import Firebase
 
 protocol friendRequestCollectionCellDelegate: AnyObject{
     func deleteFriendRequest(sender: AnyObject?)
+    func getProfile(userProfile: UserProfile)
     func acceptFriend(sender: AnyObject?)
 }
 
@@ -29,9 +30,10 @@ class FriendRequestCollectionCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        itemWidth = UIScreen.main.bounds.width / 2.5
-        itemHeight = itemWidth * 1.25
-        self.backgroundColor = .systemYellow
+        ///re-implement this if we want it to scale dynamically:
+        itemWidth = UIScreen.main.bounds.width / 1.89
+        itemHeight = itemWidth * 1.2
+        self.backgroundColor = .white
     }
     
     required init?(coder: NSCoder) {
@@ -46,6 +48,9 @@ class FriendRequestCollectionCell: UITableViewCell {
         ///hardcode cell height in case its laid out before view fully appears -> hard code body height so mask stays with cell change
         resetCell()
                 
+        self.backgroundColor = .white
+        self.selectionStyle = .none
+        
         friendRequests = notifs
         
         let requestLayout = UICollectionViewFlowLayout()
@@ -104,16 +109,22 @@ extension FriendRequestCollectionCell: friendRequestCollectionCellDelegate{
             friendRequests = notificationControllerDelegate?.deleteFriendRequest(friendRequest: cell.friendRequest) ?? []
             friendRequestCollection.deleteItems(at: indexPaths)
             let friendID = cell.friendRequest.userInfo!.id
-            self.removeFriendRequest(friendID: friendID!, uid: uid)
+            let notifID = cell.friendRequest.id
+            self.removeFriendRequest(friendID: friendID!, notificationID: notifID!)
         }) { (finished) in
             self.friendRequestCollection.reloadData()
             self.notificationControllerDelegate?.reloadTable()
         }
     }
     
+    func getProfile(userProfile: UserProfile){
+        notificationControllerDelegate?.getProfile(userProfile: userProfile)
+    }
+    
     func acceptFriend(sender: AnyObject?) {
         let cell = sender as! FriendRequestCell
         let friendID = cell.friendRequest.userInfo!.id
-        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID!) }
+        let notifID = cell.friendRequest.id
+        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID!, notificationID: notifID!)}
     }
 }

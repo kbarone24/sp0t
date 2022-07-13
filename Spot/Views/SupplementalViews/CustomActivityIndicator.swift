@@ -16,7 +16,7 @@ class CustomActivityIndicator: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         imageView.frame = frame
-        imageView.image = UIImage(named: "GreenLoadingIcon")
+        imageView.image = UIImage(named: "LoadingIndicator")
         imageView.contentMode = .scaleAspectFit
         imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         addSubview(imageView)
