@@ -435,6 +435,9 @@ PODS:
   - nanopb/encode (1.30906.0)
   - PromisesObjC (1.2.12)
   - Protobuf (3.21.1)
+  - R.swift (6.1.0):
+    - R.swift.Library (~> 5.3.0)
+  - R.swift.Library (5.3.0)
   - RSKImageCropper (4.0.0)
   - SDWebImage (5.12.5):
     - SDWebImage/Core (= 5.12.5)
@@ -460,6 +463,7 @@ DEPENDENCIES:
   - JPSVolumeButtonHandler
   - MapboxMaps (= 10.3.0)
   - Mixpanel-swift
+  - R.swift
   - RSKImageCropper
   - SnapKit
 
@@ -505,6 +509,8 @@ SPEC REPOS:
     - nanopb
     - PromisesObjC
     - Protobuf
+    - R.swift
+    - R.swift.Library
     - RSKImageCropper
     - SDWebImage
     - SnapKit
@@ -561,11 +567,13 @@ SPEC CHECKSUMS:
   nanopb: 59317e09cf1f1a0af72f12af412d54edf52603fc
   PromisesObjC: 3113f7f76903778cf4a0586bd1ab89329a0b7b97
   Protobuf: 9e88c1e667d75aa2491d211f26ccddde4e8ad4cf
+  R.swift: ec98ff71c4ab2f6fd01dd077e5afd15e63a4834c
+  R.swift.Library: 0fc583cb55a99e28901299cc451614cad1161962
   RSKImageCropper: 90dfe482402fb8a40cabd5fea65186d9102cc425
   SDWebImage: 0905f1b7760fc8ac4198cae0036600d67478751e
   SnapKit: e01d52ebb8ddbc333eefe2132acf85c8227d9c25
   Turf: 60b93cfdc62758526bc7bf1ef191a829aeb9694d
 
-PODFILE CHECKSUM: d9daf839ae12d0e2cd260c878ac21ffe27e0840a
+PODFILE CHECKSUM: 6227e6d209b967f772643e0184f6cffd9ef72b52
 
 COCOAPODS: 1.11.3

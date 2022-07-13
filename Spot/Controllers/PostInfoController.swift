@@ -398,8 +398,8 @@ extension PostInfoController: UITableViewDelegate, UITableViewDataSource {
         case 1:
             
             if let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseFriends", for: indexPath) as? ChooseFriendsCell {
-                let current = queried ? queryFriends : friendObjects
-                cell.setUp(friend: current[indexPath.row])
+                let current = queried ? queryFriends : friendObjects                
+                cell.setUp(friend: current[indexPath.row], allowsSelection: true, editable: true)
                 return cell
             }
                 

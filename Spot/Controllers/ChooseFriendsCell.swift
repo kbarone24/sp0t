@@ -19,9 +19,11 @@ class ChooseFriendsCell: UITableViewCell {
     
     var userID = ""
     
-    func setUp(friend: UserProfile) {
+    func setUp(friend: UserProfile, allowsSelection: Bool, editable: Bool) {
         
         backgroundColor = .white
+        contentView.alpha = 1.0
+        selectionStyle = .none
         userID = friend.id!
         
         resetCell()
@@ -51,13 +53,15 @@ class ChooseFriendsCell: UITableViewCell {
             contentView.addSubview($0)
         }
         
-        selectedBubble = UIView {
-            $0.frame = CGRect(x: UIScreen.main.bounds.width - 49, y: 17, width: 24, height: 24)
-            $0.backgroundColor = friend.selected ? UIColor(named: "SpotGreen") : UIColor(red: 0.975, green: 0.975, blue: 0.975, alpha: 1)
-            $0.layer.borderColor = UIColor(red: 0.863, green: 0.863, blue: 0.863, alpha: 1).cgColor
-            $0.layer.borderWidth = 2
-            $0.layer.cornerRadius = 12.5
-            contentView.addSubview($0)
+        if allowsSelection {
+            selectedBubble = UIView {
+                $0.frame = CGRect(x: UIScreen.main.bounds.width - 49, y: 17, width: 24, height: 24)
+                $0.backgroundColor = friend.selected ? UIColor(named: "SpotGreen") : UIColor(red: 0.975, green: 0.975, blue: 0.975, alpha: 1)
+                $0.layer.borderColor = UIColor(red: 0.863, green: 0.863, blue: 0.863, alpha: 1).cgColor
+                $0.layer.borderWidth = 2
+                $0.layer.cornerRadius = 12.5
+                contentView.addSubview($0)
+            }
         }
         
         bottomLine = UIView {
@@ -66,8 +70,14 @@ class ChooseFriendsCell: UITableViewCell {
             contentView.addSubview($0)
         }
         
-        let tap = UITapGestureRecognizer(target: self, action: #selector(tap(_:)))
-        contentView.addGestureRecognizer(tap)
+        if viewContainingController() is PostInfoController {
+            let tap = UITapGestureRecognizer(target: self, action: #selector(tap(_:)))
+            contentView.addGestureRecognizer(tap)
+        }
+        
+        if !editable {
+            contentView.alpha = 0.5
+        }
     }
     
     @objc func tap(_ sender: UITapGestureRecognizer) {
