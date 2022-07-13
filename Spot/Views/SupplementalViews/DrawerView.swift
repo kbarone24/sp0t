@@ -22,7 +22,9 @@ enum DrawerViewDetent: Int {
 }
 
 class DrawerView: NSObject {
-    private lazy var slideView = UIView {
+    
+    // MARK: Public variable
+    public lazy var slideView = UIView {
         $0.backgroundColor = .clear
         $0.layer.cornerRadius = 10
         $0.layer.shadowColor = UIColor.black.cgColor
@@ -30,15 +32,36 @@ class DrawerView: NSObject {
         $0.layer.shadowOpacity = 0.8
         $0.translatesAutoresizingMaskIntoConstraints = false
     }
+    public var status = DrawerViewStatus.Close
+    // If false remove pangesture
+    public var canInteract: Bool = true {
+        didSet {
+            toggleDrag(to: canInteract)
+        }
+    }
+    // If false don't update the slideview frame
+    public var canDrag: Bool = true
+    public var showCloseButton: Bool = true {
+        didSet {
+            closeButton.isHidden = !showCloseButton
+        }
+    }
+    public var swipeDownToDismiss: Bool = false
+    public var swipeToNextState: Bool = true
+    
+    // MARK: Private variable
     private lazy var myNav = UINavigationController()
     private lazy var closeButton = UIButton {
         $0.backgroundColor = .clear
-        $0.setImage(UIImage(systemName: "xmark.circle.fill", withConfiguration: UIImage.SymbolConfiguration(textStyle: .largeTitle))?.withTintColor(.tertiarySystemFill, renderingMode: .alwaysOriginal), for: .normal)
+        $0.setImage(UIImage(named: "X"), for: .normal)
         $0.setTitle("", for: .normal)
     }
     private lazy var grabberView = UIView {
         $0.backgroundColor = .tertiarySystemFill
         $0.layer.cornerRadius = 2
+    }
+    private lazy var grabBarOnTop = UIView {
+        $0.backgroundColor = .clear
     }
     private let transitionAnimation = BottomToTopTransition()
     
@@ -46,22 +69,10 @@ class DrawerView: NSObject {
     private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
     
     private var panRecognizer: UIPanGestureRecognizer?
-    private var status = DrawerViewStatus.Close
     private var yPosition: CGFloat = 0
     private var topConstraints: Constraint? = nil
     private var midConstraints: Constraint? = nil
     private var botConstraints: Constraint? = nil
-    public var canDrag: Bool = true {
-        didSet {
-            toggleDrag(to: canDrag)
-        }
-    }
-    public var showCloseButton: Bool = true {
-        didSet {
-            closeButton.isHidden = !showCloseButton
-        }
-    }
-    public var swipeDownToDismiss: Bool = false
     private var detents: [DrawerViewDetent] = [.Bottom, .Middle, .Top]
     private var detentsPointer = 0 {
         didSet {
@@ -92,11 +103,12 @@ class DrawerView: NSObject {
         closeDo = closeAction
     }
     
+    // MARK: View setup
     private func viewSetup(cornerRadius: CGFloat) {
         parentVC.view.addSubview(slideView)
         slideView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            topConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).offset(100).constraint
+            topConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).constraint
             midConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.top).offset(0.45 * parentVC.view.frame.height).constraint
             botConstraints = $0.top.greaterThanOrEqualTo(parentVC.view.snp.bottom).inset(100).constraint
             $0.height.equalTo(parentVC.view.snp.height)
@@ -106,6 +118,7 @@ class DrawerView: NSObject {
         botConstraints?.deactivate()
         slideView.frame = CGRect(x: 0, y: parentVC.view.frame.height, width: parentVC.view.frame.width, height: parentVC.view.frame.height)
         panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(self.panPerforming(recognizer:)))
+        panRecognizer?.delegate = self
         slideView.addGestureRecognizer(panRecognizer!)
         myNav = UINavigationController(rootViewController: rootVC)
         myNav.delegate = self
@@ -115,12 +128,20 @@ class DrawerView: NSObject {
         myNav.view.layer.cornerRadius = cornerRadius
         myNav.view.layer.masksToBounds = true
         myNav.didMove(toParent: parentVC)
+        myNav.navigationBar.setBackgroundImage(UIImage(), for: .default)
+        myNav.navigationBar.shadowImage = UIImage()
+        myNav.navigationBar.isTranslucent = true
         slideView.addSubview(grabberView)
         grabberView.snp.makeConstraints {
             $0.top.equalToSuperview().offset(10)
             $0.width.equalTo(40)
             $0.height.equalTo(4)
             $0.centerX.equalToSuperview()
+        }
+        slideView.addSubview(grabBarOnTop)
+        grabBarOnTop.snp.makeConstraints {
+            $0.top.leading.trailing.equalToSuperview()
+            $0.height.equalTo(50)
         }
         slideView.addSubview(closeButton)
         closeButton.snp.makeConstraints {
@@ -132,6 +153,7 @@ class DrawerView: NSObject {
         closeButton.isHidden = !showCloseButton
     }
     
+    // MARK: Present
     public func present(to: DrawerViewDetent = .Middle) {
         let currentStatus = status
         switch to {
@@ -144,9 +166,13 @@ class DrawerView: NSObject {
         }
         detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
         if currentStatus.rawValue != to.rawValue {
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut, animations: {
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut) {
                 self.slideView.frame.origin.y = self.yPosition
-            }, completion: nil)
+            } completion: { success in
+                self.topConstraints?.deactivate()
+                self.midConstraints?.deactivate()
+                self.botConstraints?.deactivate()
+            }
         } else {
             let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
             animation.values = [0, -20, 0]
@@ -160,17 +186,17 @@ class DrawerView: NSObject {
     private func goTop() {
         topConstraints?.activate()
         yPosition = 0
-        self.status = DrawerViewStatus.Top
+        status = .Top
     }
     private func goMid() {
         midConstraints?.activate()
-        yPosition = (0.45 * self.parentVC.view.frame.height)
-        self.status = DrawerViewStatus.Middle
+        yPosition = (0.45 * parentVC.view.frame.height)
+        status = .Middle
     }
     private func goBottom() {
         botConstraints?.activate()
-        yPosition = self.parentVC.view.frame.height - 100
-        self.status = DrawerViewStatus.Bottom
+        yPosition = parentVC.view.frame.height - 100
+        status = .Bottom
     }
     
     private func toggleDrag(to: Bool) {
@@ -183,9 +209,19 @@ class DrawerView: NSObject {
         // When the user is still dragging or start dragging the if statement here will be fall through
         if recognizer.state == .began || recognizer.state == .changed {
             // Add the translation in y to slideView when slideView's minY is larger than 0
-            if slideView.frame.minY >= 0 {
+            if slideView.frame.minY >= 0 && canDrag {
                 slideView.frame.origin.y += translation.y
             }
+            
+            // Change status according to the position when dragging
+            if slideView.frame.minY == 0 {
+                status = .Top
+            } else if slideView.frame.minY == (0.45 * parentVC.view.frame.height) {
+                status = .Middle
+            } else if slideView.frame.minY == (parentVC.view.frame.height - 100) {
+                status = .Bottom
+            }
+            
             // Prevent drawer view in top position can still scroll top
             if status == .Top && translation.y < 0 && slideView.frame.minY <= 0 {
                 slideView.frame.origin.y = 0
@@ -194,7 +230,7 @@ class DrawerView: NSObject {
         }
         else{
             // Check the velocity of gesture to determine if it's a swipe or a drag
-            if abs(recognizer.velocity(in: recognizer.view).y) > 1000 {
+            if swipeToNextState && abs(recognizer.velocity(in: recognizer.view).y) > 1000 {
                 // This is a swipe
                 // Swipe up velocity is smaller than 0
                 // Determine whether the detentsPointer shuld move forward or back according to the swipe direction
@@ -224,18 +260,18 @@ class DrawerView: NSObject {
             }
             
             // If swipeDownToDismiss is true check the slideView ending position to determine if need to pop view controller
-            if self.slideView.frame.minY > (self.parentVC.view.frame.height * 0.6) && detents.contains(.Bottom) == false && swipeDownToDismiss {
+            if self.slideView.frame.minY > (detents.contains(.Bottom) ? (self.parentVC.view.frame.height - 100) : (self.parentVC.view.frame.height * 0.6)) && swipeDownToDismiss {
                 myNav.popViewController(animated: true)
             }
-            
             // Animate the drawer view to the set position
-            UIView.animate(withDuration: 0.7 * abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
+            UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
                 self.slideView.frame.origin.y = self.yPosition
                 self.parentVC.view.layoutIfNeeded()
             }
         }
     }
     
+    // MARK: Close
     @objc func closeAction() {
         UIView.animate(withDuration: 0.35, animations: {
             self.slideView.frame.origin.y = self.parentVC.view.frame.height
@@ -243,7 +279,7 @@ class DrawerView: NSObject {
         }) { (success) in
             self.status = DrawerViewStatus.Close
             self.slideView.removeFromSuperview()
-            self.myNav.removeFromParent()            
+            self.myNav.removeFromParent()
             if self.closeDo != nil {
                 self.closeDo!()
             }
@@ -259,5 +295,12 @@ extension DrawerView: UINavigationControllerDelegate {
     func navigationController(_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
         transitionAnimation.transitionMode = operation == .push ? .present : .pop
         return transitionAnimation
+    }
+}
+
+extension DrawerView: UIGestureRecognizerDelegate {
+    // This will let gesture recognizer to be recognized even in the back of view hierarchy
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 }

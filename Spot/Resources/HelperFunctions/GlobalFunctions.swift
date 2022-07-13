@@ -441,7 +441,7 @@ extension UIViewController {
         let db: Firestore! = Firestore.firestore()
         let spotRef = db.collection("spots").document(spotID)
         
-        spotRef.getDocument { (doc, err) in            
+        spotRef.getDocument { (doc, err) in
             do {
                 let unwrappedInfo = try doc?.data(as: MapSpot.self)
                 guard var spotInfo = unwrappedInfo else { completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true); return }
@@ -539,7 +539,7 @@ extension UIViewController {
                 
                 postInfo.id = doc!.documentID
                 postInfo = self.setSecondaryPostValues(post: postInfo)
-            
+                
                 var count = 0
                 self.getUserInfo(userID: postInfo.posterID) { user in
                     postInfo.userInfo = user
@@ -785,6 +785,28 @@ extension UIViewController {
             db.collection("users").document(poster).updateData(userValues)
         }
     }
+    
+    func removeFriend(friendID: String) {
+        print("remove friend")
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let functions = Functions.functions()
+        
+        removeFriendFromFriendsList(userID: uid, friendID: friendID)
+        removeFriendFromFriendsList(userID: friendID, friendID: uid)
+
+        functions.httpsCallable("removeFriend").call(["userID": uid, "friendID": friendID]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
+    }
+    
+    func removeFriendFromFriendsList(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
+        
+        db.collection("users").document(userID).updateData([
+            "friendsList" : FieldValue.arrayRemove([friendID]),
+            "topFriends.\(friendID)" : FieldValue.delete()
+        ])
+    }
 }
 
 extension MapView {
@@ -862,7 +884,6 @@ extension CLLocationDistance {
 extension UITableViewCell {
     
     func addFriend(senderProfile: UserProfile, receiverID: String) {
-        
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let db: Firestore = Firestore.firestore()
         let notiID = UUID().uuidString
@@ -883,21 +904,39 @@ extension UITableViewCell {
         db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
     }
     
-    func acceptFriendRequest(friendID: String) {
+    func acceptFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let functions = Functions.functions()
+        
+        db.collection("users").document(uid).collection("notifications").document(notificationID).updateData(["status" : "accepted"])
+        
+        addFriendToFriendsList(userID: uid, friendID: friendID)
+        addFriendToFriendsList(userID: friendID, friendID: uid)
+        
         functions.httpsCallable("acceptFriendRequest").call(["userID": uid, "friendID": friendID, "username": UserDataModel.shared.userInfo.username]) { result, error in
             print(result?.data as Any, error as Any)
         }
     }
-            
-    func removeFriendRequest(friendID: String, uid: String) {
-        let functions = Functions.functions()
-        functions.httpsCallable("acceptFriendRequest").call(["uid": uid, "friendID": friendID]) { result, error in
-            print(result?.data as Any, error as Any)
-        }
-    }
+    
+    func addFriendToFriendsList(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
         
+        db.collection("users").document(userID).updateData([
+            "friendsList" : FieldValue.arrayUnion([friendID]),
+            "pendingFriendRequests" : FieldValue.arrayRemove([friendID]),
+            "topFriends.\(friendID)" : 0
+        ])
+    }
+            
+    func removeFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+        db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
+        db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
+    }
+    
     func getAttString(caption: String, taggedFriends: [String], fontSize: CGFloat) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
         
         let attString = NSMutableAttributedString(string: caption)
@@ -1503,3 +1542,4 @@ extension MKPointOfInterestCategory {
         return text
     }
 }
+
