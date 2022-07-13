@@ -163,7 +163,8 @@ extension ProfileViewController {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { return }
                     self.posts.append(postInfo)
-                    self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: nil, progress: nil) { [weak self] (image, data, err, cache, download, url) in
+                    let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+                    self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
                         guard self != nil else { return }
                         let image = image ?? UIImage()
                         self?.postImages.append(image)
@@ -215,7 +216,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
             return headerCell
         } else if let mapCell = cell as? ProfileMyMapCell {
-//            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages)
+            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
             let profileBodyData = maps[indexPath.row - 1]
