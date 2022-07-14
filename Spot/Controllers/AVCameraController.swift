@@ -292,7 +292,6 @@ class AVCameraController: UIViewController {
         UploadPostModel.shared.postObject = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: coordinate.latitude, postLong: coordinate.longitude, posterID: uid, timestamp: Timestamp(date: Date()))
         UploadPostModel.shared.postObject.id = UUID().uuidString
         UploadPostModel.shared.postObject.privacyLevel = "friends"
-        if spotObject != nil { UploadPostModel.shared.setSpotValues() }
         UploadPostModel.shared.setPostCity() /// set with every location change to avoid async lag on upload
     }
     

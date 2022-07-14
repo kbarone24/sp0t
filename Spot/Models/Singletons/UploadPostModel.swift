@@ -60,14 +60,16 @@ class UploadPostModel {
         }
     }
     
-    func setSpotValues() {
-        let spot = spotObject!
-        postObject.createdBy = spot.founderID
-        postObject.privacyLevel = spot.privacyLevel
-        postObject.spotLat = spot.spotLat
-        postObject.spotLong = spot.spotLong
-        postObject.spotName = spot.spotName
-        postObject.spotPrivacy = spot.privacyLevel
+    func setSpotValues(spot: MapSpot?) {
+        spotObject = spot
+        if spot != nil { spotObject!.selected = true }
+        postType = spot == nil ? .none : spot!.founderID == "" ? .postToPOI : .postToSpot
+        
+        postObject.createdBy = spot?.founderID ?? ""
+        postObject.spotLat = spot?.spotLat ?? 0.0
+        postObject.spotLong = spot?.spotLong ?? 0.0
+        postObject.spotName = spot?.spotName ?? ""
+        postObject.spotPrivacy = spot?.privacyLevel ?? ""
     }
     
     func resortSpots(coordinate: CLLocationCoordinate2D) {

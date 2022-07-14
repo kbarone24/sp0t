@@ -13,6 +13,7 @@ import Firebase
 import Mixpanel
 import CoreLocation
 import IQKeyboardManagerSwift
+import SnapKit
 
 class ImagePreviewController: UIViewController {
     
@@ -22,17 +23,16 @@ class ImagePreviewController: UIViewController {
     var nextImage: PostImagePreview!
     var previousImage: PostImagePreview!
     var previewBackground: UIView! /// tracks where detail view will be added
-    var previewButton: UIButton! /// covers entire area where caption tap will open keyboard
     
     var backButton: UIButton!
     var dotView: UIView!
-    var shareToButton: UIButton!
+    var chooseMapButton: ChooseMapButton!
     var draftsButton: UIButton!
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
     /// detailView
-    var postDetailView: UIView!
-    var spotNameView: SpotNameView!
+    var postDetailView: PostDetailView!
+    var spotNameButton: SpotNameButton!
     var addedUsersView: AddedUsersView!
     
     var cancelOnDismiss = false
@@ -41,7 +41,9 @@ class ImagePreviewController: UIViewController {
     var panGesture: UIPanGestureRecognizer! /// swipe down to close keyboard
     
     var textView: UITextView!
+    let textViewPlaceholder = "What's up..."
     var shouldRepositionTextView = false /// keyboardWillShow firing late -> this variable tells keyboardWillChange whether to reposition
+    var snapBottomConstraintToImage = false
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -54,8 +56,6 @@ class ImagePreviewController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "CameraPreviewOpen")
         IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
-   //     NotificationCenter.default.addObserver(self, selector: #selector(postInfoUpdate(_:)), name: NSNotification.Name("PostInfoUpdate"), object: nil)
-        /// set up nav bar officially here for smooth transition when stacking
         setUpNavBar()
     }
     
@@ -72,9 +72,10 @@ class ImagePreviewController: UIViewController {
         
         setPostInfo()
         addPreviewView()
-        
+        addPostDetail()
+
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChange(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
     }
     
     func setUpNavBar() {
@@ -156,10 +157,6 @@ class ImagePreviewController: UIViewController {
         currentImage.makeConstraints()
         currentImage.setCurrentImage()
 
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
-        view.addGestureRecognizer(pan)
-     //   previewBackground.addGestureRecognizer(pan)
-        
         if post.frameIndexes!.count > 1 {
             nextImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex! + 1)
             view.addSubview(nextImage)
@@ -171,16 +168,10 @@ class ImagePreviewController: UIViewController {
             previousImage.makeConstraints()
             previousImage.setCurrentImage()
             
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
+            view.addGestureRecognizer(pan)
             addDotView()
         }
-          /*
-        previewButton = UIButton {
-            $0.addTarget(self, action: #selector(captionTap(_:)), for: .touchUpInside)
-            view.addSubview($0)
-        }
-        previewButton.snp.makeConstraints {
-            $0.leading.trailing.top.bottom.equalToSuperview()
-        } */
                                 
         /// add cancel button
         backButton = UIButton {
@@ -188,36 +179,34 @@ class ImagePreviewController: UIViewController {
             $0.contentHorizontalAlignment = .fill
             $0.contentVerticalAlignment = .fill
             $0.setImage(UIImage(named: "BackArrow"), for: .normal)
-            $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+            $0.addTarget(self, action: #selector(backTap(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
         backButton.snp.makeConstraints {
             $0.leading.equalTo(5.5)
-            $0.top.equalTo(previewBackground.snp.top).offset(56)
+            $0.top.equalTo(previewBackground.snp.top).offset(55)
             $0.width.equalTo(48.6)
             $0.height.equalTo(38.6)
         }
                 
         /// add share to and drafts
-        shareToButton = UIButton {
-            $0.setImage(UIImage(named: "CameraShareButton"), for: .normal)
-            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            $0.addTarget(self, action: #selector(shareTap(_:)), for: .touchUpInside)
+        chooseMapButton = ChooseMapButton {
+            $0.addTarget(self, action: #selector(chooseMapTap(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
-        shareToButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(8)
+        chooseMapButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(12)
             $0.top.equalTo(maxY + 6)
-            $0.width.equalTo(140)
-            $0.height.equalTo(54)
+            $0.width.equalTo(162)
+            $0.height.equalTo(40)
         }
         
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         panGesture.isEnabled = false
         view.addGestureRecognizer(panGesture)
         
-         addCaption()
-       // addPostDetail()
+        let tap = UITapGestureRecognizer(target: self, action: #selector(captionTap(_:)))
+        view.addGestureRecognizer(tap)
     }
         
     func addDotView() {
@@ -253,82 +242,57 @@ class ImagePreviewController: UIViewController {
             }
         }
     }
-    /*
+
     func addPostDetail() {
-        
-        if postDetailView == nil {
-            postDetailView = UIView()
-            previewButton.addSubview(postDetailView)
-            postDetailView.snp.makeConstraints {
-                $0.leading.trailing.equalToSuperview()
-                $0.bottom.equalTo(previewBackground.snp.bottom)
-                $0.height.equalTo(65)
+        let firstImageAspect = (UploadPostModel.shared.postObject.postImage.first ?? UIImage()).size.height / (UploadPostModel.shared.postObject.postImage.first ?? UIImage()).size.width
+        postDetailView = PostDetailView {
+            view.addSubview($0)
+        }
+        postDetailView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(300)
+            if firstImageAspect > 1.1 {
+                snapBottomConstraintToImage = true
+                $0.bottom.equalTo(currentImage.snp.bottom)
+            } else {
+                $0.bottom.equalTo(chooseMapButton.snp.top).offset(-25)
             }
         }
         
-        if !(UploadPostModel.shared.postObject.addedUsers?.isEmpty ?? true) { addAddedUsersView() } /// add added users first to determine available space for spotNameView
-        if UploadPostModel.shared.spotObject != nil { addSpotNameView() }
-        
-        /// move caption up if added users or spot buttons are present
-        var minY: CGFloat = previewBackground.frame.maxY - 75
-        if !(UploadPostModel.shared.postObject.addedUsers?.isEmpty ?? true) || UploadPostModel.shared.spotObject != nil {
-            minY -= 55
-        }
-    }
-    
-    func addAddedUsersView() {
-        addedUsersView = AddedUsersView(frame: CGRect(x: 14, y: 0, width: 63, height: 41))
-        postDetailView.addSubview(addedUsersView)
-        
-        let usersTap = UITapGestureRecognizer(target: self, action: #selector(addedUsersTap(_:)))
-        addedUsersView.addGestureRecognizer(usersTap)
-    }
-    
-    func addSpotNameView() {
-        let post = UploadPostModel.shared.postObject!
-        
-        spotNameView = SpotNameView(frame: CGRect(x: 14, y: 0, width: 300, height: 41), tag: post.tag ?? "")
-        postDetailView.addSubview(spotNameView)
-                
-        let spotTap = UITapGestureRecognizer(target: self, action: #selector(spotNameTap(_:)))
-        spotNameView.addGestureRecognizer(spotTap)
-        
-        /// make sure long spotName fits + resize view
-        var maxWidth = UIScreen.main.bounds.width - 28 - 47.5 /// screen width - margins - rest of space occupying spotNameView
-        if addedUsersView != nil { maxWidth -= (14 + addedUsersView.bounds.width) }
-        
-        spotNameView.nameLabel.sizeToFit()
-        if spotNameView.nameLabel.bounds.width > maxWidth { spotNameView.nameLabel.frame = CGRect(x: spotNameView.nameLabel.frame.minX, y: spotNameView.nameLabel.frame.minY, width: maxWidth, height: spotNameView.nameLabel.frame.height) }
-        spotNameView.frame = CGRect(x: spotNameView.frame.minX, y: spotNameView.frame.minY, width: spotNameView.nameLabel.bounds.width + 47.5, height: spotNameView.frame.height)
-        if addedUsersView != nil { addedUsersView.frame = CGRect(x: spotNameView.frame.maxX + 14, y: addedUsersView.frame.minY, width: addedUsersView.frame.width, height: addedUsersView.frame.height) }
-    }
-    
-     @objc func postInfoUpdate(_ sender: NSNotification) {
-         /// passback from PostInfoController
-         DispatchQueue.main.async { self.addPostDetail() }
-     }
-*/
-    func addCaption() {
-        /// textview frame set on addPostDetail
         textView = UITextView {
-            $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 51)
             $0.delegate = self
             $0.font = UIFont(name: "SFCompactText-Regular", size: 19)
             $0.backgroundColor = .clear
             $0.textColor = .white
+            $0.alpha = 0.6
             $0.tintColor = UIColor(named: "SpotGreen")
-            $0.text = ""
-            $0.textContainerInset = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
+            $0.text = textViewPlaceholder
+            $0.returnKeyType = .done
+            $0.textContainerInset = UIEdgeInsets(top: 14, left: 19, bottom: 14, right: 19)
             $0.isScrollEnabled = false
             $0.textContainer.maximumNumberOfLines = 6
             $0.textContainer.lineBreakMode = .byTruncatingHead
             $0.isUserInteractionEnabled = false
-           // textView.keyboardDistanceFromTextField = 20
-            view.addSubview($0)
+            postDetailView.addSubview($0)
+        }
+        textView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.height.lessThanOrEqualToSuperview().inset(36)
+            $0.bottom.equalToSuperview()
+        }
+        
+        spotNameButton = SpotNameButton(frame: .zero)
+        spotNameButton.addTarget(self, action: #selector(spotTap(_:)), for: .touchUpInside)
+        spotNameButton.translatesAutoresizingMaskIntoConstraints = false
+        postDetailView.addSubview(spotNameButton)
+        spotNameButton.snp.makeConstraints {
+            $0.leading.equalTo(16)
+            $0.bottom.equalTo(textView.snp.top)
+            $0.height.equalTo(36)
+            $0.trailing.lessThanOrEqualToSuperview().inset(16)
         }
     }
         
-    
     @objc func imageSwipe(_ gesture: UIPanGestureRecognizer) {
         let direction = gesture.velocity(in: view)
         let translation = gesture.translation(in: view)
@@ -409,99 +373,100 @@ class ImagePreviewController: UIViewController {
         addDots()
     }
     
-    @objc func cancelTap(_ sender: UIButton) {
+    @objc func backTap(_ sender: UIButton) {
         if cameraObject != nil { UploadPostModel.shared.selectedObjects.removeAll(where: {$0.fromCamera})} /// remove old captured image
         
         let controllers = navigationController?.viewControllers
-        if let camera = controllers?[safe: (controllers?.count ?? 0) - 2] as? AVCameraController {
-            
-            /// reset detail view
-            UploadPostModel.shared.selectedTag = ""
-            
+        if let camera = controllers?[safe: (controllers?.count ?? 0) - 3] as? AVCameraController {
             /// set spotObject to nil if we're not posting directly to the spot from the spot page
-            if camera.spotObject == nil { UploadPostModel.shared.spotObject = nil }
-
+            if camera.spotObject == nil { UploadPostModel.shared.setSpotValues(spot: nil) }
             /// reset postObject
             camera.setUpPost()
         }
         
         navigationController?.popViewController(animated: false)
     }
+    
+    @objc func spotTap(_ sender: UIButton) {
+        textView.resignFirstResponder()
+        launchPicker()
+    }
         
-    @objc func captionTap(_ sender: UIButton) {
+    @objc func captionTap(_ sender: UITapGestureRecognizer) {
         shouldRepositionTextView = true
         textView.becomeFirstResponder()
     }
     
-    @objc func shareTap(_ sender: UIButton) {
-        launchPicker()
-        /*
+    @objc func chooseMapTap(_ sender: UIButton) {
         UploadPostModel.shared.postObject.caption = textView.text ?? ""
         
         if let vc = storyboard?.instantiateViewController(withIdentifier: "ShareTo") as? ShareToController {
             navigationController?.pushViewController(vc, animated: true)
-        } */
+        }
     }
     
     func launchPicker() {
         if let vc = storyboard?.instantiateViewController(withIdentifier: "ChooseSpot") as? ChooseSpotController {
+            vc.delegate = self
             DispatchQueue.main.async { self.present(vc, animated: true) }
         }
     }
     
-    @objc func keyboardWillHide(_ notification: NSNotification) {
-        shouldRepositionTextView = false
-    }
-    
-    @objc func keyboardWillChange(_ notification: NSNotification) {
-        
+    @objc func keyboardWillShow(_ notification: NSNotification) {
         if !shouldRepositionTextView { return }
-        
-        let userInfo = notification.userInfo!
-        
-        let animationDuration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as! Double
-        let keyboardEndFrame = (userInfo[UIResponder.keyboardFrameEndUserInfoKey] as! NSValue).cgRectValue
-        let keyboardY = keyboardEndFrame.minY - textView.bounds.height
-        
-        /// reposition caption -> adjust if spot or user buttons present
-        var textViewY: CGFloat = previewBackground.frame.maxY - 24 - textView.bounds.height
-        if !(UploadPostModel.shared.postObject.addedUsers?.isEmpty ?? true) || UploadPostModel.shared.spotObject != nil {
-            textViewY -= 55
-        }
-        
-        let minY = min(keyboardY, textViewY)
-        
-        DispatchQueue.main.async {
-            UIView.animate(withDuration: animationDuration) { () -> Void in
-                self.textView.frame = CGRect(x: self.textView.frame.minX, y: minY, width: self.textView.frame.width, height: self.textView.frame.height)
+        postDetailView.bottomMask.alpha = 0.0
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.postDetailView.bottomMask.alpha = 1.0
+            self.postDetailView.snp.removeConstraints()
+            self.postDetailView.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview()
+                $0.bottom.equalToSuperview().offset(-keyboardFrame.height)
+                $0.height.equalTo(300)
             }
         }
+    }
+
+    @objc func keyboardWillHide(_ notification: NSNotification) {
+        shouldRepositionTextView = false
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.postDetailView.snp.removeConstraints()
+            self.postDetailView.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview()
+                $0.height.equalTo(300)
+                if self.snapBottomConstraintToImage { $0.bottom.equalTo(self.currentImage.snp.bottom) } else { $0.bottom.equalTo(self.chooseMapButton.snp.top).offset(-25) }
+            }
+        }
+    }
+}
+
+extension ImagePreviewController: ChooseSpotDelegate {
+    func finishPassing(spot: MapSpot) {
+        UploadPostModel.shared.setSpotValues(spot: spot)
+        spotNameButton.spotName = spot.spotName
+    }
+    func cancelSpotSelection() {
+        UploadPostModel.shared.setSpotValues(spot: nil)
+        spotNameButton.spotName = nil
     }
 }
 
 extension ImagePreviewController: UITextViewDelegate, UIGestureRecognizerDelegate {
     
     func textViewDidBeginEditing(_ textView: UITextView) {
-        
         panGesture.isEnabled = true
-        previewButton.isEnabled = false
-        
-        textView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        if textView.text == textViewPlaceholder { textView.text = ""; textView.alpha = 1.0 }
+        textView.isUserInteractionEnabled = true
     }
     
     func textViewDidEndEditing(_ textView: UITextView) {
         panGesture.isEnabled = false
-        
-        /// hacky fix to make caption not jump up on resize
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            guard let self = self else { return }
-            self.previewButton.isEnabled = true
-        }
-        
-        textView.backgroundColor = .clear
+        if textView.text == "" { textView.text = textViewPlaceholder; textView.alpha = 0.6 }
+        textView.isUserInteractionEnabled = false
     }
     
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        /// return on done button tap
+        if text == "\n" { textView.endEditing(true); return false }
         
         let maxLines: CGFloat = 6
         let maxHeight: CGFloat = textView.font!.lineHeight * maxLines + 30 /// lineheight * # lines  + textContainer insets
@@ -514,6 +479,8 @@ extension ImagePreviewController: UITextViewDelegate, UIGestureRecognizerDelegat
         return val
     }
     
+    
+    /*
     func textViewDidChange(_ textView: UITextView) {
         
         let maxLines: CGFloat = 6
@@ -528,7 +495,7 @@ extension ImagePreviewController: UITextViewDelegate, UIGestureRecognizerDelegat
         ///add tag table if @ used
         let cursor = textView.getCursorPosition()
      //   addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursor, tableParent: .comments)
-    }
+    } */
     
     func getCaptionHeight(text: String) -> CGFloat {
                 
@@ -593,34 +560,67 @@ class AddedUsersView: UIView {
     }
 }
 
-class SpotNameView: UIView {
-    
-    var tagIcon: UIImageView!
+class SpotNameButton: UIButton {
+    var spotIcon: UIImageView!
     var nameLabel: UILabel!
+    var cancelButton: UIButton!
+    
+    var spotName: String? {
+        didSet {
+            nameLabel.text = spotName ?? "Add spot"
+            if spotName != nil {
+                cancelButton.isHidden = false
+                cancelButton.snp.updateConstraints { $0.height.width.equalTo(32) }
+            //    nameLabel.snp.updateConstraints { $0.tra }
+            } else {
+                cancelButton.isHidden = true
+                cancelButton.snp.updateConstraints { $0.height.width.equalTo(5) }
+            }
+        }
+    }
 
-    init(frame: CGRect, tag: String) {
+    override init(frame: CGRect) {
         
         super.init(frame: frame)
-        
-        backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.4)
-        layer.cornerRadius = 16
+        backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        layer.cornerRadius = 12
         layer.cornerCurve = .continuous
-            
-        let tagImage = tag == "" ? UIImage(named: "LocationIcon") : Tag(name: tag).image
-        
-        tagIcon = UIImageView {
-            $0.frame = CGRect(x: 11.5, y: 9.5, width: 17.6, height: 21.5)
-            $0.image = tagImage
+        spotIcon = UIImageView {
+            $0.image = UIImage(named: "AddSpotIcon")
             addSubview($0)
+        }
+        spotIcon.snp.makeConstraints {
+            $0.leading.equalTo(8)
+            $0.height.equalTo(21)
+            $0.width.equalTo(17.6)
+            $0.centerY.equalToSuperview()
+        }
+        
+        cancelButton = UIButton {
+            $0.setImage(UIImage(named: "FeedExit"), for: .normal)
+            $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.isHidden = true
+            addSubview($0)
+        }
+        cancelButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(6)
+            $0.height.width.equalTo(5)
+            $0.centerY.equalToSuperview()
         }
         
         nameLabel = UILabel {
-            $0.frame = CGRect(x: tagIcon.frame.maxX + 7, y: tagIcon.frame.minY + 2, width: UIScreen.main.bounds.width, height: 16)
-            $0.text = UploadPostModel.shared.spotObject?.spotName ?? ""
+            $0.text = UploadPostModel.shared.spotObject?.spotName ?? "Add spot"
             $0.textColor = .white
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 17)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 15)
             $0.lineBreakMode = .byTruncatingTail
+            $0.sizeToFit()
             addSubview($0)
+        }
+        nameLabel.snp.makeConstraints {
+            $0.leading.equalTo(spotIcon.snp.trailing).offset(6.5)
+            $0.trailing.equalTo(cancelButton.snp.leading)
+            $0.centerY.equalToSuperview()
         }
         
         /// remove tapGesture if previously added
@@ -629,6 +629,12 @@ class SpotNameView: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    @objc func cancelTap(_ sender: UIButton) {
+        if let previewVC = viewContainingController() as? ImagePreviewController {
+            previewVC.cancelSpotSelection()
+        }
     }
 }
 
@@ -682,7 +688,7 @@ class PostImagePreview: PostImageView {
         }
         
         for sub in subviews { sub.removeFromSuperview() } /// remove any old masks
-       // if currentAspect > 1.1 { addImageMasks() }
+        if currentAspect > 1.6 { addTop() }
     }
     
     func setCurrentImage() {
@@ -716,36 +722,26 @@ class PostImagePreview: PostImageView {
             return frame1 - selectedFrame > 1 ? Array(selectedImages[selectedFrame...frame1 - 1]) : []
         }
     }
-
-    func addImageMasks() {
-        let topMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 200))
-        
-        let topLayer = CAGradientLayer()
-        topLayer.frame = topMask.bounds
-        topLayer.colors = [
-          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-          UIColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor
-        ]
-        topLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
-        topLayer.endPoint = CGPoint(x: 0.5, y: 0.0)
-        topLayer.locations = [0, 1]
-        
-        topMask.layer.addSublayer(topLayer)
-        addSubview(topMask)
-        
-        let bottomMask = UIView(frame: CGRect(x: 0, y: bounds.height - 200, width: UIScreen.main.bounds.width, height: 200))
-        let bottomLayer = CAGradientLayer()
-        bottomLayer.frame = topMask.bounds
-        bottomLayer.colors = [
-          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-          UIColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor
-        ]
-        bottomLayer.startPoint = CGPoint(x: 0.5, y: 0.0)
-        bottomLayer.endPoint = CGPoint(x: 0.5, y: 1.0)
-        bottomLayer.locations = [0, 1]
-        
-        bottomMask.layer.addSublayer(bottomLayer)
-        addSubview(bottomMask)
+    
+    func addTop() {
+        let topMask = UIView {
+            addSubview($0)
+        }
+        topMask.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(100)
+        }
+        let _ = CAGradientLayer {
+            $0.frame = topMask.bounds
+            $0.colors = [
+              UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+              UIColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor
+            ]
+            $0.startPoint = CGPoint(x: 0.5, y: 1.0)
+            $0.endPoint = CGPoint(x: 0.5, y: 0.0)
+            $0.locations = [0, 1]
+            topMask.layer.addSublayer($0)
+        }
     }
     
     func getImageHeight(aspectRatio: CGFloat, maxAspect: CGFloat) -> CGFloat {
@@ -756,5 +752,67 @@ class PostImagePreview: PostImageView {
         
         let imageHeight = UIScreen.main.bounds.width * imageAspect
         return imageHeight
+    }
+}
+
+class PostDetailView: UIView {
+    var bottomMask: UIView!
+    override func layoutSubviews() {
+        if bottomMask != nil { return }
+        bottomMask = UIView {
+            insertSubview($0, at: 0)
+        }
+        bottomMask.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+        let _ = CAGradientLayer {
+            $0.frame = bounds
+            $0.colors = [
+              UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+              UIColor(red: 0, green: 0, blue: 0, alpha: 0.07).cgColor,
+              UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.45).cgColor
+            ]
+            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
+            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
+            $0.locations = [0, 0.35, 1]
+            bottomMask.layer.addSublayer($0)
+        }
+    }
+}
+
+class ChooseMapButton: UIButton {
+    var chooseLabel: UILabel!
+    var nextArrow: UIImageView!
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        layer.cornerRadius = 9
+        backgroundColor = UIColor(named: "SpotGreen")
+        
+        chooseLabel = UILabel {
+            $0.text = "Choose a map"
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 15)
+            addSubview($0)
+        }
+        chooseLabel.snp.makeConstraints {
+            $0.leading.equalTo(18)
+            $0.centerY.equalToSuperview()
+        }
+        
+        nextArrow = UIImageView {
+            $0.image = UIImage(named: "NextArrow")
+            addSubview($0)
+        }
+        nextArrow.snp.makeConstraints {
+            $0.leading.equalTo(chooseLabel.snp.trailing).offset(8)
+            $0.height.equalTo(15.3)
+            $0.width.equalTo(16.8)
+            $0.centerY.equalToSuperview().offset(1)
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }

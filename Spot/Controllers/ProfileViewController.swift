@@ -9,7 +9,7 @@
 import UIKit
 
 class ProfileViewController: UIViewController {
-        
+            
     // function for adding profileViewController
     @objc func addView(_ sender: UIButton){
         let newVC = ProfileViewController()
