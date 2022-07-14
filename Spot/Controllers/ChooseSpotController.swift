@@ -12,6 +12,10 @@ import Firebase
 import Geofirestore
 import MapKit
 
+protocol ChooseSpotDelegate {
+    func finishPassing(spot: MapSpot)
+}
+
 class ChooseSpotController: UIViewController {
     var searchBarContainer: UIView!
     var searchBar: UISearchBar!
@@ -42,6 +46,7 @@ class ChooseSpotController: UIViewController {
     var appendCount = 0
     
     var postLocation: CLLocation!
+    var delegate: ChooseSpotDelegate?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -73,6 +78,7 @@ class ChooseSpotController: UIViewController {
             $0.placeholder = " Search"
             $0.clipsToBounds = true
             $0.layer.cornerRadius = 3
+            $0.returnKeyType = .done
             $0.keyboardDistanceFromTextField = 250
             searchBarContainer.addSubview($0)
         }
@@ -88,7 +94,6 @@ class ChooseSpotController: UIViewController {
             $0.separatorStyle = .none
             $0.delegate = self
             $0.dataSource = self
-            $0.allowsSelection = false
             $0.showsVerticalScrollIndicator = false
             $0.register(ChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpot")
             $0.register(ChooseSpotLoadingCell.self, forCellReuseIdentifier: "ChooseSpotLoading")
@@ -102,16 +107,27 @@ class ChooseSpotController: UIViewController {
     }
     
     func setInitialValues() {
-        postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)        
+        postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)      
         if UploadPostModel.shared.spotObject != nil { spotObjects.append(UploadPostModel.shared.spotObject!) }
     }
 }
 
 extension ChooseSpotController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
+    }
+    
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         queried = searchText != ""
         searchTextGlobal = searchText
-        runSpotSearch(searchText: searchText)
+        emptySpotQueries()
+        DispatchQueue.main.async { self.tableView.reloadData() }
+        
+        if queried {
+            runSpotSearch(searchText: searchText)
+        } else {
+            NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(runSpotQuery), object: nil)
+        }
     }
     
     func runChooseSpotFetch() {
@@ -288,14 +304,9 @@ extension ChooseSpotController: UISearchBarDelegate {
     // search funcs
     
     func runSpotSearch(searchText: String) {
-        
-        emptySpotQueries()
-        spotSearching = true
-        DispatchQueue.main.async { self.tableView.reloadData() }
-                
         /// cancel search requests after user stops typing for 0.65/sec
         NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(runSpotQuery), object: nil)
-        self.perform(#selector(runSpotQuery), with: nil, afterDelay: 0.65)
+        self.perform(#selector(runSpotQuery), with: nil, afterDelay: 0.4)
     }
     
     @objc func runSpotQuery() {
@@ -311,6 +322,7 @@ extension ChooseSpotController: UISearchBarDelegate {
     }
     
     func emptySpotQueries() {
+        spotSearching = false
         searchRefreshCount = 0
         querySpots.removeAll()
     }
@@ -462,7 +474,9 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        /// finishpassing
-        print("select")
+        let current = queried ? querySpots : spotObjects
+        let spot = current[indexPath.row]
+        delegate?.finishPassing(spot: spot)
+        DispatchQueue.main.async { self.dismiss(animated: true) }
     }
 }
