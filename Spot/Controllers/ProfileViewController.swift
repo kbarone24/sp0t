@@ -14,9 +14,13 @@ import SDWebImage
 
 class ProfileViewController: UIViewController {
     
-    private var profileCollectionView: UICollectionView!
+    // If start from middle position and need to be draggable
+    private var fromMiddleDrag: Bool = false
     private var topYContentOffset: CGFloat?
     private var middleYContentOffset: CGFloat?
+    
+    
+    private var profileCollectionView: UICollectionView!
     private var noPostLabel: UILabel!
     private var barView: UIView!
     private var titleLabel: UILabel!
@@ -97,6 +101,7 @@ extension ProfileViewController {
     
     private func viewSetup() {
         view.backgroundColor = .white
+        navigationItem.setHidesBackButton(true, animated: true)
         
         profileCollectionView = {
             let layout = UICollectionViewFlowLayout()
@@ -112,11 +117,15 @@ extension ProfileViewController {
         }()
         view.addSubview(profileCollectionView)
 
-        // Need a new pan gesture to react when profileCollectionView scroll disables
-        let scrollViewPanGesture = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
-        scrollViewPanGesture.delegate = self
-        profileCollectionView.addGestureRecognizer(scrollViewPanGesture)
-        profileCollectionView.isScrollEnabled = false
+        // Setups for if need to drag and start position is middle
+        if fromMiddleDrag {
+            // Need a new pan gesture to react when profileCollectionView scroll disables
+            let scrollViewPanGesture = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
+            scrollViewPanGesture.delegate = self
+            profileCollectionView.addGestureRecognizer(scrollViewPanGesture)
+            profileCollectionView.isScrollEnabled = false
+        }
+        
         profileCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -137,6 +146,7 @@ extension ProfileViewController {
             $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
             $0.backgroundColor = .white
             $0.alpha = 0
+            view.addSubview($0)
         }
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
@@ -148,7 +158,6 @@ extension ProfileViewController {
             $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: view.frame.width, height: 18))
             barView.addSubview($0)
         }
-        containerDrawerView?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
     }
     
     private func getNinePosts() {
@@ -158,12 +167,23 @@ extension ProfileViewController {
             if err != nil  { return }
             self.posts.removeAll()
             self.postImages.removeAll()
+            
+            // Set transform size
+            var size = CGSize(width: 150, height: 150)
+            if snap!.documents.count >= 9 {
+                size = CGSize(width: 100, height: 100)
+            } else if snap!.documents.count >= 4 {
+                size = CGSize(width: 150, height: 150)
+            } else {
+                size = CGSize(width: 200, height: 200)
+            }
+            
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { return }
                     self.posts.append(postInfo)
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+                    let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
                     self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
                         guard self != nil else { return }
                         let image = image ?? UIImage()
@@ -273,39 +293,47 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        
         // Show navigation bar when user scroll pass the header section
         if topYContentOffset != nil {
             UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
                 self.barView.alpha = scrollView.contentOffset.y >= self.topYContentOffset! + 160 ? 1 : 0
             }
+        } else {
+            topYContentOffset = scrollView.contentOffset.y
         }
 
-        // Disable the bouncing effect when scroll view is scrolled to top
-        if topYContentOffset != nil {
-            if
-                containerDrawerView?.status == .Top &&
-                scrollView.contentOffset.y <= topYContentOffset!
-            {
-                scrollView.contentOffset.y = topYContentOffset!
+        if fromMiddleDrag {
+            // Disable the bouncing effect when scroll view is scrolled to top
+            if topYContentOffset != nil {
+                if
+                    containerDrawerView?.status == .Top &&
+                    scrollView.contentOffset.y <= topYContentOffset!
+                {
+                    scrollView.contentOffset.y = topYContentOffset!
+                }
             }
-        }
-        
-        // Get middle y content offset
-        if middleYContentOffset == nil {
-            middleYContentOffset = scrollView.contentOffset.y
-        }
-        
-        // Set scroll view content offset when in transition
-        if middleYContentOffset != nil && topYContentOffset != nil && scrollView.contentOffset.y <= middleYContentOffset! && containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset! {
-            scrollView.contentOffset.y = middleYContentOffset!
-        }
-        
-        // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
-        if containerDrawerView?.status != .Top {
-            profileCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
-            profileCollectionView.isScrollEnabled = false
-            containerDrawerView?.swipeToNextState = true
+            
+            // Get middle y content offset
+            if middleYContentOffset == nil {
+                middleYContentOffset = scrollView.contentOffset.y
+            }
+            
+            // Set scroll view content offset when in transition
+            if
+                middleYContentOffset != nil &&
+                topYContentOffset != nil &&
+                scrollView.contentOffset.y <= middleYContentOffset! &&
+                containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
+            {
+                scrollView.contentOffset.y = middleYContentOffset!
+            }
+            
+            // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
+            if containerDrawerView?.status != .Top {
+                profileCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
+                profileCollectionView.isScrollEnabled = false
+                containerDrawerView?.swipeToNextState = true
+            }
         }
     }
 }
