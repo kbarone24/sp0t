@@ -1094,6 +1094,39 @@ extension UICollectionViewCell {
         
         db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
     }
+    
+    func acceptFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let functions = Functions.functions()
+        
+        db.collection("users").document(uid).collection("notifications").document(notificationID).updateData(["status" : "accepted"])
+        
+        addFriendToFriendsList(userID: uid, friendID: friendID)
+        addFriendToFriendsList(userID: friendID, friendID: uid)
+        
+        functions.httpsCallable("acceptFriendRequest").call(["userID": uid, "friendID": friendID, "username": UserDataModel.shared.userInfo.username]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
+    }
+    
+    func addFriendToFriendsList(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
+        
+        db.collection("users").document(userID).updateData([
+            "friendsList" : FieldValue.arrayUnion([friendID]),
+            "pendingFriendRequests" : FieldValue.arrayRemove([friendID]),
+            "topFriends.\(friendID)" : 0
+        ])
+    }
+    
+    func removeFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+        db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
+        db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
+    }
 }
 
 extension String {

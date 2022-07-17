@@ -10,8 +10,8 @@ import UIKit
 
 class ProfileMyMapCell: UICollectionViewCell {
     private var mapImageCollectionView: UICollectionView!
-    var mapName: UILabel!
-    var myMapImages: [UIImage] = [] {
+    private var mapName: UILabel!
+    private var myMapImages: [UIImage] = [] {
         didSet {
             if myMapImages.count >= 9 {
                 myMapImages = Array(myMapImages[0...8])
