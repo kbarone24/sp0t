@@ -19,12 +19,12 @@ class ProfileViewController: UIViewController {
     private var topYContentOffset: CGFloat?
     private var middleYContentOffset: CGFloat?
     
-    
     private var profileCollectionView: UICollectionView!
     private var noPostLabel: UILabel!
     private var barView: UIView!
     private var titleLabel: UILabel!
     
+    // MARK: Fetched datas
     private var userProfile: UserProfile?
     private var maps = [CustomMap]() {
         didSet {
@@ -43,9 +43,14 @@ class ProfileViewController: UIViewController {
             }
         }
     }
-    private lazy var imageManager = SDWebImageManager()
     private var relation: ProfileRelation = .myself
+    private var pendingFriendRequestNotiID: String? {
+        didSet {
+            profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
+        }
+    }
     
+    private lazy var imageManager = SDWebImageManager()
     public var containerDrawerView: DrawerView?
     
     deinit {
@@ -53,6 +58,7 @@ class ProfileViewController: UIViewController {
     }
     
     init(userProfile: UserProfile? = nil) {
+        super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
         
         if self.userProfile?.id == UserDataModel.shared.userInfo.id {
@@ -65,11 +71,13 @@ class ProfileViewController: UIViewController {
             user == userProfile?.id
         }) {
             relation = .pending
+        } else if self.userProfile!.pendingFriendRequests.contains(where: { user in
+            user == UserDataModel.shared.userInfo.id
+        }) {
+            relation = .received
         } else {
             relation = .stranger
         }
-        
-        super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -82,6 +90,9 @@ class ProfileViewController: UIViewController {
         DispatchQueue.main.async {
             self.getMaps()
             self.getNinePosts()
+            
+            // Need to think a better way so that we won't need to query everytime entering someone's profile
+            self.getNotis()
         }
     }
     
@@ -143,11 +154,15 @@ extension ProfileViewController {
         }
         
         barView = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
             $0.backgroundColor = .white
             $0.alpha = 0
             view.addSubview($0)
         }
+        barView.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(91)
+        }
+        
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.text = userProfile!.name
@@ -155,8 +170,11 @@ extension ProfileViewController {
             $0.textAlignment = .center
             $0.numberOfLines = 0
             $0.sizeToFit()
-            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: view.frame.width, height: 18))
             barView.addSubview($0)
+        }
+        titleLabel.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(55)
+            $0.centerX.equalToSuperview()
         }
     }
     
@@ -214,6 +232,26 @@ extension ProfileViewController {
             self.profileCollectionView.reloadData()
         }
     }
+    
+    private func getNotis() {
+        let db = Firestore.firestore()
+        let query = db.collection("users").document(UserDataModel.shared.userInfo.id!).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
+        query.getDocuments { (snap, err) in
+            if err != nil  { return }
+            for doc in snap!.documents {
+                do {
+                    let unwrappedInfo = try doc.data(as: UserNotification.self)
+                    guard let notification = unwrappedInfo else { return }
+                    if notification.senderID == self.userProfile!.id {
+                        self.pendingFriendRequestNotiID = notification.id
+                        break
+                    }
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                }
+            }
+        }
+    }
 }
 
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -229,9 +267,9 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
         if let headerCell = cell as? ProfileHeaderCell{
-            headerCell.cellSetup(profileID: userProfile!.id!, profileURL: userProfile!.imageURL, avatarURL: userProfile!.avatarURL ?? "", name: userProfile!.name, account: userProfile!.username, location: userProfile!.currentLocation, friendsCount: userProfile!.friendIDs.count, relation: relation)
+            headerCell.cellSetup(profileID: userProfile!.id!, profileURL: userProfile!.imageURL, avatarURL: userProfile!.avatarURL ?? "", name: userProfile!.name, account: userProfile!.username, location: userProfile!.currentLocation, friendsCount: userProfile!.friendIDs.count, relation: relation, pendingFriendNotiID: pendingFriendRequestNotiID)
             if relation == .myself {
-                headerCell.editButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
+                headerCell.actionButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
             }
             headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
             return headerCell

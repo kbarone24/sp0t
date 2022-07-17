@@ -9,13 +9,12 @@
 import UIKit
 
 class ProfileBodyCell: UICollectionViewCell {
-    var mapImage: UIImageView!
-    var mapName: UILabel!
-    var friendsCount: UILabel!
+    private var mapImage: UIImageView!
+    private var mapName: UILabel!
+    private var friendsCount: UILabel!
     private var friendsIcon: UIImageView!
-    var likesCount: UILabel!
-    var postsCount: UILabel!
-    var privateIcon: UIImageView!
+    private var likesCount: UILabel!
+    private var postsCount: UILabel!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -32,8 +31,22 @@ class ProfileBodyCell: UICollectionViewCell {
     
     public func cellSetup(imageURL: String, mapName: String, isPrivate: Bool, friendsCount: Int, likesCount: Int, postsCount: Int) {
         mapImage.sd_setImage(with: URL(string: imageURL))
-        self.mapName.text = mapName
-        privateIcon.isHidden = !isPrivate
+        if isPrivate {
+            let imageAttachment = NSTextAttachment()
+            imageAttachment.image = UIImage(named:"SecretMap")
+            // Set bound to reposition
+            imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
+            // Create string with attachment
+            let attachmentString = NSAttributedString(attachment: imageAttachment)
+            // Initialize mutable string
+            let completeText = NSMutableAttributedString(string: "")
+            // Add image to mutable string
+            completeText.append(attachmentString)
+            completeText.append(NSAttributedString(string: " \(mapName)"))
+            self.mapName.attributedText = completeText
+        } else {
+            self.mapName.text = mapName
+        }
         self.friendsCount.text = friendsCount == 1 ? "" : "\(friendsCount)"
         self.friendsIcon.snp.updateConstraints {
             $0.width.equalTo(friendsCount == 1 ? 0 : 13.33)
@@ -58,17 +71,6 @@ extension ProfileBodyCell {
         mapImage.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
             $0.height.equalTo(contentView.frame.width).multipliedBy(182/195)
-        }
-        
-        privateIcon = UIImageView {
-            $0.image = UIImage(named: "PrivateMap")
-            $0.contentMode = .scaleAspectFit
-            $0.layer.masksToBounds = true
-            mapImage.addSubview($0)
-        }
-        privateIcon.snp.makeConstraints {
-            $0.center.equalToSuperview()
-            $0.height.width.equalTo(42)
         }
         
         mapName = UILabel {
