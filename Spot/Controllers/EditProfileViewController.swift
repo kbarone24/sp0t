@@ -12,6 +12,7 @@ class EditProfileViewController: UIViewController {
     
     private var editLabel: UILabel!
     private var backButton: UIButton!
+    private var doneButton: UIButton!
     private var profileImage: UIImageView!
     private var profilePicSelectionButton: UIButton!
     private var avatarLabel: UILabel!
@@ -21,6 +22,7 @@ class EditProfileViewController: UIViewController {
     private var nameTextfield: UITextField!
     private var locationLabel: UILabel!
     private var locationTextfield: UITextField!
+    private var logoutButton: UIButton!
     
     private var privateLabel: UILabel!
     private var privateDescription: UILabel!
@@ -54,9 +56,19 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func profilePicSelectionAction() {
+        
     }
     
     @objc func avatarEditAction() {
+        
+    }
+    
+    @objc func saveAction() {
+        
+    }
+    
+    @objc func logoutAction() {
+        
     }
 }
 
@@ -77,14 +89,31 @@ extension EditProfileViewController {
         }
         
         backButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
-            $0.setTitle("", for: .normal)
+            $0.setTitle("Cancel", for: .normal)
+            $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Medium", size: 14)
             $0.addTarget(self, action: #selector(dismissAction), for: .touchUpInside)
             view.addSubview($0)
         }
         backButton.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(22)
             $0.top.equalTo(editLabel)
+        }
+        
+        doneButton = UIButton {
+            $0.setTitle("Done", for: .normal)
+            $0.setTitleColor(.black, for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+            $0.contentEdgeInsets = UIEdgeInsets(top: 9, left: 18, bottom: 9, right: 18)
+            $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            $0.clipsToBounds = true
+            $0.layer.cornerRadius = 37 / 2
+            $0.addTarget(self, action: #selector(saveAction), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        doneButton.snp.makeConstraints {
+            $0.centerY.equalTo(editLabel)
+            $0.trailing.equalToSuperview().inset(20)
         }
         
         profileImage = UIImageView {
@@ -204,6 +233,18 @@ extension EditProfileViewController {
             $0.leading.equalToSuperview().offset(14)
             $0.trailing.equalToSuperview().inset(63)
             $0.height.equalTo(36)
+        }
+        
+        logoutButton = UIButton {
+            $0.setTitle("Log out", for: .normal)
+            $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 17.5)
+            $0.addTarget(self, action: #selector(logoutAction), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        logoutButton.snp.makeConstraints {
+            $0.bottom.equalToSuperview().inset(73)
+            $0.centerX.equalToSuperview()
         }
     }
 }
