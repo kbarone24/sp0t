@@ -92,7 +92,7 @@ extension ProfileBodyCell {
         }
         friendsCount.snp.makeConstraints {
             $0.leading.equalTo(mapImage)
-            $0.top.equalTo(mapName.snp.bottom).offset(2)
+            $0.top.equalTo(mapName.snp.bottom).offset(1)
             $0.trailing.lessThanOrEqualToSuperview()
         }
         

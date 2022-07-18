@@ -26,7 +26,7 @@ class ProfileHeaderCell: UICollectionViewCell {
     private var locationButton: UIButton!
     public var friendListButton: UIButton!
     public var actionButton: UIButton!
-    private var profileID: String = ""
+    private var profile: UserProfile!
     private var relation: ProfileRelation!
     private var pendingFriendNotiID: String?
     
@@ -43,22 +43,22 @@ class ProfileHeaderCell: UICollectionViewCell {
         
     }
     
-    public func cellSetup(profileID: String, profileURL: String, avatarURL: String, name: String, account: String, location: String, friendsCount: Int, relation: ProfileRelation, pendingFriendNotiID: String?) {
-        self.profileID = profileID
-        profileImage.sd_setImage(with: URL(string: profileURL))
-        profileAvatar.sd_setImage(with: URL(string: avatarURL)) { image, Error, cache, url  in
+    public func cellSetup(userProfile: UserProfile, relation: ProfileRelation, pendingFriendNotiID: String?) {
+        self.profile = userProfile
+        profileImage.sd_setImage(with: URL(string: userProfile.imageURL))
+        profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? "")) { image, Error, cache, url  in
             self.profileAvatar.image = image?.withHorizontallyFlippedOrientation()
         }
-        profileName.text = name
-        profileAccount.text = account
-        locationButton.setTitle(location, for: .normal)
-        if location == "" {
+        profileName.text = userProfile.name
+        profileAccount.text = userProfile.username
+        locationButton.setTitle(userProfile.currentLocation, for: .normal)
+        if userProfile.currentLocation == "" {
             locationButton.setImage(UIImage(), for: .normal)
             friendListButton.snp.updateConstraints {
                 $0.leading.equalTo(locationButton.snp.trailing)
             }
         }
-        friendListButton.setTitle("\(friendsCount) friends", for: .normal)
+        friendListButton.setTitle("\(userProfile.friendIDs.count) friends", for: .normal)
         self.relation = relation
         self.pendingFriendNotiID = pendingFriendNotiID
         switch relation {
@@ -205,7 +205,19 @@ extension ProfileHeaderCell {
             print("Friend")
         case .pending, .received:
             if pendingFriendNotiID != nil {
-                relation == .pending ? removeFriendRequest(friendID: profileID, notificationID: pendingFriendNotiID!) : acceptFriendRequest(friendID: profileID, notificationID: pendingFriendNotiID!)
+                if relation == .pending {
+                    let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
+                    let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
+                        self.removeFriendRequest(friendID: self.profile.id!, notificationID: self.pendingFriendNotiID!)
+                    }
+                    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+                    alert.addAction(cancelAction)
+                    alert.addAction(removeAction)
+                    let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+                    containerVC.present(alert, animated: true)
+                } else {
+                    acceptFriendRequest(friendID: profile.id!, notificationID: pendingFriendNotiID!)
+                }
                 actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
                 actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
                 actionButton.setTitle("Friends", for: .normal)
@@ -213,7 +225,7 @@ extension ProfileHeaderCell {
                 actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
             }
         case .stranger:
-            addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: profileID)
+            addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: profile.id!)
             actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Pending", for: .normal)
