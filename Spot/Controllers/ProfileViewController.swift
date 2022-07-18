@@ -96,6 +96,10 @@ class ProfileViewController: UIViewController {
         }
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
+    }
+    
     @objc func editButtonAction() {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.modalPresentationStyle = .fullScreen
@@ -267,14 +271,14 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
         if let headerCell = cell as? ProfileHeaderCell{
-            headerCell.cellSetup(profileID: userProfile!.id!, profileURL: userProfile!.imageURL, avatarURL: userProfile!.avatarURL ?? "", name: userProfile!.name, account: userProfile!.username, location: userProfile!.currentLocation, friendsCount: userProfile!.friendIDs.count, relation: relation, pendingFriendNotiID: pendingFriendRequestNotiID)
+            headerCell.cellSetup(userProfile: userProfile!, relation: relation, pendingFriendNotiID: pendingFriendRequestNotiID)
             if relation == .myself {
                 headerCell.actionButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
             }
             headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
             return headerCell
         } else if let mapCell = cell as? ProfileMyMapCell {
-            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages)
+            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages, relation: relation)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
             let profileBodyData = maps[indexPath.row - 1]
@@ -337,7 +341,9 @@ extension ProfileViewController: UIScrollViewDelegate {
                 self.barView.alpha = scrollView.contentOffset.y >= self.topYContentOffset! + 160 ? 1 : 0
             }
         } else {
-            topYContentOffset = scrollView.contentOffset.y
+            if fromMiddleDrag == false {
+                topYContentOffset = scrollView.contentOffset.y
+            }
         }
 
         if fromMiddleDrag {
