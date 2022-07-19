@@ -94,7 +94,6 @@ extension ProfileHeaderCell {
             $0.image = UIImage()
             $0.contentMode = .scaleAspectFit
             $0.layer.masksToBounds = true
-            $0.backgroundColor = .gray
             contentView.addSubview($0)
         }
         profileImage.snp.makeConstraints {

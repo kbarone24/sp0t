@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import Firebase
+import FirebaseFunctions
 
 class EditProfileViewController: UIViewController {
     
@@ -28,7 +30,12 @@ class EditProfileViewController: UIViewController {
     private var privateDescription: UILabel!
     private var privateSelection: UISwitch!
     
+    private var nameChanged: Bool = false
+    private var locationChanged: Bool = false
+    private var profileChanged: Bool = false
+    
     private var userProfile: UserProfile?
+    private let db = Firestore.firestore()
     
     init(userProfile: UserProfile? = nil) {
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
@@ -56,7 +63,29 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func profilePicSelectionAction() {
-        
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        let takePicAction = UIAlertAction(title: "Take picture", style: .default) { takePic in
+            let picker = UIImagePickerController()
+            picker.allowsEditing = true
+            picker.delegate = self
+            picker.sourceType = .camera
+            self.present(picker, animated: true)
+        }
+        takePicAction.titleTextColor = .black
+        let choosePicAction = UIAlertAction(title: "Choose from gallery", style: .default) { choosePic in
+            let picker = UIImagePickerController()
+            picker.allowsEditing = true
+            picker.delegate = self
+            picker.sourceType = .photoLibrary
+            self.present(picker, animated: true)
+        }
+        choosePicAction.titleTextColor = .black
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        cancelAction.titleTextColor = .black
+        alertController.addAction(takePicAction)
+        alertController.addAction(choosePicAction)
+        alertController.addAction(cancelAction)
+        present(alertController, animated: true)
     }
     
     @objc func avatarEditAction() {
@@ -65,11 +94,78 @@ class EditProfileViewController: UIViewController {
     
     @objc func saveAction() {
         
+        let userRef = db.collection("users").document(userProfile!.id!)
+        do {
+            if nameChanged {
+                userProfile?.name = nameTextfield.text!
+            }
+            if locationChanged {
+                userProfile?.currentLocation = locationTextfield.text!
+            }
+            if profileChanged {
+                updateProfileImage()
+            }
+            try userRef.setData(from: userProfile, merge: true)
+        } catch {
+            //handle error
+        }
+        dismiss(animated: true)
+    }
+    
+    func updateProfileImage(){
+        let imageId = UUID().uuidString
+        let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageId)")
+        let image = profileImage.image
+        guard var imageData = image!.jpegData(compressionQuality: 0.5) else {return}
+        
+        if imageData.count > 1000000 {
+            imageData = image!.jpegData(compressionQuality: 0.3)!
+        }
+        
+        var urlStr: String = ""
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        
+        storageRef.putData(imageData, metadata: metadata){metadata, error in
+            
+            if error == nil, metadata != nil {
+                //get download url
+                storageRef.downloadURL(completion: { [weak self] url, error in
+                    if let error = error{
+                        print("\(error.localizedDescription)")
+                    }
+                    
+                    urlStr = (url?.absoluteString)!
+                    guard let self = self else { return }
+                    
+                    let values = ["imageURL": urlStr]
+                    self.db.collection("users").document(self.userProfile!.id!).setData(values, merge: true)
+                    
+//                    self.profileVC.userInfo.imageURL = urlStr
+//                    self.profileVC.userInfo.profilePic = self.newProfilePic ?? UIImage()
+//                    self.profileVC.reloadProfile()
+//                    self.saveButton.isEnabled = true
+//                    self.dismiss(animated: true, completion: nil)
+                    return
+                })
+            } else { print("handle error")}
+        }
     }
     
     @objc func logoutAction() {
         
     }
+    
+    @objc func textFieldDidChange(_ textField: UITextField) {
+        if textField == nameTextfield {
+            nameChanged = true
+        }
+        
+        if textField == locationTextfield {
+            locationChanged = true
+        }
+    }
+    
 }
 
 extension EditProfileViewController {
@@ -197,6 +293,7 @@ extension EditProfileViewController {
             $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
+            $0.addTarget(self, action: #selector(EditProfileViewController.textFieldDidChange(_:)), for: .editingChanged)
             view.addSubview($0)
         }
         nameTextfield.snp.makeConstraints {
@@ -226,6 +323,7 @@ extension EditProfileViewController {
             $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
+            $0.addTarget(self, action: #selector(EditProfileViewController.textFieldDidChange(_:)), for: .editingChanged)
             view.addSubview($0)
         }
         locationTextfield.snp.makeConstraints {
@@ -246,5 +344,18 @@ extension EditProfileViewController {
             $0.bottom.equalToSuperview().inset(73)
             $0.centerX.equalToSuperview()
         }
+    }
+}
+
+extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        guard let image = info[.editedImage] as? UIImage else { return }
+        profileImage.image = image
+        profileChanged = true
+        dismiss(animated: true)
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true)
     }
 }
