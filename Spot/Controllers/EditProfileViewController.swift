@@ -26,14 +26,11 @@ class EditProfileViewController: UIViewController {
     private var locationTextfield: UITextField!
     private var logoutButton: UIButton!
     
-    private var privateLabel: UILabel!
-    private var privateDescription: UILabel!
-    private var privateSelection: UISwitch!
-    
     private var nameChanged: Bool = false
     private var locationChanged: Bool = false
     private var profileChanged: Bool = false
     
+    public var profileVC: ProfileViewController?
     private var userProfile: UserProfile?
     private let db = Firestore.firestore()
     
@@ -93,7 +90,6 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func saveAction() {
-        
         let userRef = db.collection("users").document(userProfile!.id!)
         do {
             if nameChanged {
@@ -102,14 +98,12 @@ class EditProfileViewController: UIViewController {
             if locationChanged {
                 userProfile?.currentLocation = locationTextfield.text!
             }
-            if profileChanged {
-                updateProfileImage()
-            }
             try userRef.setData(from: userProfile, merge: true)
+
+            profileChanged ? updateProfileImage() : self.dismiss(animated: true)
         } catch {
             //handle error
         }
-        dismiss(animated: true)
     }
     
     func updateProfileImage(){
@@ -140,12 +134,9 @@ class EditProfileViewController: UIViewController {
                     
                     let values = ["imageURL": urlStr]
                     self.db.collection("users").document(self.userProfile!.id!).setData(values, merge: true)
-                    
-//                    self.profileVC.userInfo.imageURL = urlStr
-//                    self.profileVC.userInfo.profilePic = self.newProfilePic ?? UIImage()
-//                    self.profileVC.reloadProfile()
-//                    self.saveButton.isEnabled = true
-//                    self.dismiss(animated: true, completion: nil)
+                    self.dismiss(animated: true) {
+                        self.profileVC?.userProfile = UserDataModel.shared.userInfo
+                    }
                     return
                 })
             } else { print("handle error")}
@@ -153,7 +144,11 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func logoutAction() {
-        
+        self.dismiss(animated: false, completion: {
+            self.profileVC?.containerDrawerView?.closeAction()
+            UserDataModel.shared.destroy()
+            self.present(LandingPageController(), animated: true)
+        })
     }
     
     @objc func textFieldDidChange(_ textField: UITextField) {
