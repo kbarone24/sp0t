@@ -92,7 +92,7 @@ extension ProfileHeaderCell {
         
         profileImage = UIImageView {
             $0.image = UIImage()
-            $0.contentMode = .scaleAspectFit
+            $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             contentView.addSubview($0)
         }

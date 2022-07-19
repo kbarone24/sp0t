@@ -25,7 +25,11 @@ class ProfileViewController: UIViewController {
     private var titleLabel: UILabel!
     
     // MARK: Fetched datas
-    private var userProfile: UserProfile?
+    public var userProfile: UserProfile? {
+        didSet {
+            profileCollectionView.reloadData()
+        }
+    }
     private var maps = [CustomMap]() {
         didSet {
             noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
@@ -102,6 +106,7 @@ class ProfileViewController: UIViewController {
     
     @objc func editButtonAction() {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
+        editVC.profileVC = self
         editVC.modalPresentationStyle = .fullScreen
         present(editVC, animated: true)
     }
