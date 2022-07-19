@@ -417,7 +417,7 @@ class MapController: UIViewController {
             self.sheetView = nil
         })
         sheetView?.present(to: .Middle)
-        sheetView?.canInteract = true
+        sheetView?.canInteract = false
         sheetView?.showCloseButton = false
         profileVC.containerDrawerView = sheetView
         /*let backButton = UIButton {
