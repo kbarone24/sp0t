@@ -149,8 +149,8 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func logoutAction() {
-        let alert = UIAlertController(title: "Are you sure you want to logout?", message: "", preferredStyle: .alert)
-        let logoutAction = UIAlertAction(title: "Logout", style: .default) { action in
+        let alert = UIAlertController(title: "Are you sure you want to log out?", message: "", preferredStyle: .alert)
+        let logoutAction = UIAlertAction(title: "Log out", style: .default) { action in
             Mixpanel.mainInstance().track(event: "Logout")
             self.dismiss(animated: false, completion: {
                 self.profileVC?.containerDrawerView?.closeAction()
