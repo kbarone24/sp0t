@@ -23,6 +23,7 @@ use_frameworks!
   pod 'Firebase/Functions'
   pod 'MapboxMaps', '10.3.0'
   pod 'SnapKit'
+  pod 'R.swift'
 
   target 'SpotTests' do
     inherit! :search_paths

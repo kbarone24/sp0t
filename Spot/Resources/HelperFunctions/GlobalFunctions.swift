@@ -502,7 +502,7 @@ extension UIViewController {
                 
                 postInfo.id = doc!.documentID
                 postInfo = self.setSecondaryPostValues(post: postInfo)
-            
+                
                 var count = 0
                 self.getUserInfo(userID: postInfo.posterID) { user in
                     postInfo.userInfo = user
@@ -816,6 +816,30 @@ extension UIViewController {
             db.collection("users").document(poster).updateData(userValues)
         }
     }
+    
+    func removeFriend(friendID: String) {
+        print("remove friend")
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let functions = Functions.functions()
+        
+        removeFriendFromFriendsList(userID: uid, friendID: friendID)
+        removeFriendFromFriendsList(userID: friendID, friendID: uid)
+
+        functions.httpsCallable("removeFriend").call(["userID": uid, "friendID": friendID]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
+    }
+    
+    func removeFriendFromFriendsList(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
+        
+        db.collection("users").document(userID).updateData([
+            "friendsList" : FieldValue.arrayRemove([friendID]),
+            "topFriends.\(friendID)" : FieldValue.delete()
+        ])
+    }
+
+    
     func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
         var queriedUsers: [UserProfile] = []
         let usernameList = userList.map({$0.username})
@@ -945,7 +969,6 @@ extension CLLocationDistance {
 extension UITableViewCell {
     
     func addFriend(senderProfile: UserProfile, receiverID: String) {
-        
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let db: Firestore = Firestore.firestore()
         let notiID = UUID().uuidString
@@ -966,21 +989,39 @@ extension UITableViewCell {
         db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
     }
     
-    func acceptFriendRequest(friendID: String) {
+    func acceptFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let functions = Functions.functions()
+        
+        db.collection("users").document(uid).collection("notifications").document(notificationID).updateData(["status" : "accepted"])
+        
+        addFriendToFriendsList(userID: uid, friendID: friendID)
+        addFriendToFriendsList(userID: friendID, friendID: uid)
+        
         functions.httpsCallable("acceptFriendRequest").call(["userID": uid, "friendID": friendID, "username": UserDataModel.shared.userInfo.username]) { result, error in
             print(result?.data as Any, error as Any)
         }
     }
-            
-    func removeFriendRequest(friendID: String, uid: String) {
-        let functions = Functions.functions()
-        functions.httpsCallable("acceptFriendRequest").call(["uid": uid, "friendID": friendID]) { result, error in
-            print(result?.data as Any, error as Any)
-        }
-    }
+    
+    func addFriendToFriendsList(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
         
+        db.collection("users").document(userID).updateData([
+            "friendsList" : FieldValue.arrayUnion([friendID]),
+            "pendingFriendRequests" : FieldValue.arrayRemove([friendID]),
+            "topFriends.\(friendID)" : 0
+        ])
+    }
+            
+    func removeFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+        db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
+        db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
+    }
+    
     func getAttString(caption: String, taggedFriends: [String], fontSize: CGFloat) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
         
         let attString = NSMutableAttributedString(string: caption)
@@ -1089,6 +1130,62 @@ extension UITableViewCell {
         
 }
 
+extension UICollectionViewCell {
+    func addFriend(senderProfile: UserProfile, receiverID: String) {
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let db: Firestore = Firestore.firestore()
+        let notiID = UUID().uuidString
+        let ref = db.collection("users").document(receiverID).collection("notifications").document(notiID)
+        
+        let time = Date()
+        
+        let values = ["senderID" : uid,
+                      "type" : "friendRequest",
+                      "senderUsername" : UserDataModel.shared.userInfo.username,
+                      "timestamp" : time,
+                      "status" : "pending",
+                      "seen" : false
+                      
+        ] as [String : Any]
+        ref.setData(values)
+        
+        db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
+    }
+    
+    func acceptFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let functions = Functions.functions()
+        
+        db.collection("users").document(uid).collection("notifications").document(notificationID).updateData(["status" : "accepted"])
+        
+        addFriendToFriendsList(userID: uid, friendID: friendID)
+        addFriendToFriendsList(userID: friendID, friendID: uid)
+        
+        functions.httpsCallable("acceptFriendRequest").call(["userID": uid, "friendID": friendID, "username": UserDataModel.shared.userInfo.username]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
+    }
+    
+    func addFriendToFriendsList(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
+        
+        db.collection("users").document(userID).updateData([
+            "friendsList" : FieldValue.arrayUnion([friendID]),
+            "pendingFriendRequests" : FieldValue.arrayRemove([friendID]),
+            "topFriends.\(friendID)" : 0
+        ])
+    }
+    
+    func removeFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+        db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
+        db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
+    }
+}
+
 extension String {
 
     func indices(of string: String) -> [Int] {
@@ -1148,6 +1245,58 @@ extension String {
         while newString.last?.isWhitespace ?? false { newString = String(newString.dropLast(1))}
         while newString.first?.isWhitespace ?? false { newString = String(newString.dropFirst(1))}
         return newString
+    }
+}
+
+extension UIColor{
+    /** An easy way to get the color by providing the hexstring */
+    public convenience init(hexString: String) {
+        let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int = UInt32()
+        Scanner(string: hex).scanHexInt32(&int)
+        let a, r, g, b: UInt32
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: CGFloat(a) / 255)
+    }
+    /** Return UIColor lighter */
+    public func lighter(by percentage: CGFloat = 50.0) -> UIColor? {
+        return self.adjust(by: abs(percentage) )
+    }
+    /** Return UIColor darker */
+    public func darker(by percentage: CGFloat = 50.0) -> UIColor? {
+        return self.adjust(by: -1 * abs(percentage) )
+    }
+    
+    public func adjust(by percentage: CGFloat = 50.0) -> UIColor? {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            return UIColor(red: min(red + percentage/100, 1.0),
+                           green: min(green + percentage/100, 1.0),
+                           blue: min(blue + percentage/100, 1.0),
+                           alpha: alpha)
+        } else {
+            return nil
+        }
+    }
+    
+    /** Return contrast UIColor */
+    public func contrast() -> UIColor? {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            return UIColor(red: 1 - red, green: 1 - green, blue: 1 - blue, alpha: alpha)
+        }
+        else {
+            return nil
+        }
     }
 }
 
@@ -1494,6 +1643,29 @@ extension UITextView {
     }
 }
 
+extension UITextField {
+    func setLeftPaddingPoints(_ amount:CGFloat){
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: amount, height: self.frame.size.height))
+        self.leftView = paddingView
+        self.leftViewMode = .always
+    }
+    func setRightPaddingPoints(_ amount:CGFloat) {
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: amount, height: self.frame.size.height))
+        self.rightView = paddingView
+        self.rightViewMode = .always
+    }
+}
+
+extension UIAlertAction {
+    public var titleTextColor: UIColor? {
+        get {
+            return self.value(forKey: "titleTextColor") as? UIColor
+        } set {
+            self.setValue(newValue, forKey: "titleTextColor")
+        }
+    }
+}
+
 class PaddedTextField: UITextField {
     
     let padding = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 5)
@@ -1656,3 +1828,4 @@ extension MKPointOfInterestCategory {
         return text
     }
 }
+

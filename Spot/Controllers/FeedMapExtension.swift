@@ -810,7 +810,7 @@ class MapFeedCell: UITableViewCell {
 
 class MapFeedLoadingCell: UITableViewCell {
     
-    var activityIndicator: CustomActivityIndicator!
+    var activityIndicator: CustomActivityIndicator = CustomActivityIndicator(frame: CGRect.zero)
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -825,8 +825,11 @@ class MapFeedLoadingCell: UITableViewCell {
     
         if activityIndicator != nil { activityIndicator.removeFromSuperview() }
         
-        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 30, y: 10, width: 30, height: 30))
+        activityIndicator.frame = CGRect(x: (self.frame.width/2)-5, y: 35, width: 30, height: 30)
         activityIndicator.startAnimating()
-        self.addSubview(activityIndicator)
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = true
+        contentView.addSubview(activityIndicator)
+        activityIndicator.centerXAnchor.constraint(equalTo: contentView.centerXAnchor).isActive = true
+        activityIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
     }
 }
