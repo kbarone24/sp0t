@@ -38,6 +38,23 @@ class UserDataModel {
         userInfo.id = ""
         currentLocation = CLLocation()
     }
+    
+    func getTopFriends(selectedList: [String]) -> [UserProfile] {
+        // get top friends
+        let sortedFriends = userInfo.topFriends.sorted(by: {$0.value > $1.value})
+        let topFriends = Array(sortedFriends.map({$0.key}))
+        var friendObjects: [UserProfile] = []
+        
+        /// match friend objects to id's
+        for friend in topFriends {
+            if var object = UserDataModel.shared.friendsList.first(where: {$0.id == friend}) {
+                /// match any friends from selected friends for this use of top friends
+                object.selected = selectedList.contains(where: {$0 == object.id})
+                friendObjects.append(object)
+            }
+        }
+        return friendObjects
+    }
         
     func destroy() {
         adminIDs.removeAll()

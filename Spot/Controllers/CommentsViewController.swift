@@ -191,8 +191,8 @@ class CommentsController: UIViewController {
 
         let cursorPosition = textView.getCursorPosition()
         let text = textView.text ?? ""
-        let tagText = addTaggedUserTo(text: text, username: username, cursorPosition: cursorPosition)
-        textView.text = tagText
+     //   let tagText = addTaggedUserTo(text: text, username: username, cursorPosition: cursorPosition)
+      //  textView.text = tagText
     }
 
     @objc func postComment(_ sender: UIButton) {
@@ -303,7 +303,7 @@ extension CommentsController: UITextViewDelegate {
         
         ///add tag table if @ used
         let cursor = textView.getCursorPosition()
-        postVC.addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursor, tableParent: .comments)
+      //  postVC.addRemoveTagTable(text: textView.text ?? "", cursorPosition: cursor, tableParent: .comments)
     }
     
     func resizeFooter(type: Int) {

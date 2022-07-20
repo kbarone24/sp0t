@@ -9,16 +9,17 @@
 import Foundation
 import UIKit
 import Photos
+import Mixpanel
 
 class UploadPostModel {
     
     var assetsFull: PHFetchResult<PHAsset>!
     var selectedObjects: [ImageObject] = []
     var imageObjects: [(image: ImageObject, selected: Bool)] = []
-    var scrollObjects: [ImageObject] = []
     
     var postObject: MapPost!
-    var spotObject: MapSpot!
+    var spotObject: MapSpot?
+    var mapObject: CustomMap?
     
     var postType: PostType = .none
     
@@ -49,7 +50,7 @@ class UploadPostModel {
     }
     
     func selectObject(imageObject: ImageObject, selected: Bool) {
-        
+        Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": selected])
         if let i = imageObjects.firstIndex(where: {$0.image.id == imageObject.id}) {
             imageObjects[i].selected = selected
             if !selected { imageObjects[i].image.animationImages.removeAll(); imageObjects[i].image.gifMode = false }
@@ -60,20 +61,23 @@ class UploadPostModel {
         }
     }
     
-    func setSpotValues() {
-        postObject.createdBy = spotObject.founderID
-        postObject.privacyLevel = spotObject.privacyLevel
-        postObject.spotLat = spotObject.spotLat
-        postObject.spotLong = spotObject.spotLong
-        postObject.spotName = spotObject.spotName
-        postObject.spotPrivacy = spotObject.privacyLevel
+    func setSpotValues(spot: MapSpot?) {
+        spotObject = spot
+        if spot != nil { spotObject!.selected = true }
+        postType = spot == nil ? .none : spot!.founderID == "" ? .postToPOI : .postToSpot
+        
+        postObject.createdBy = spot?.founderID ?? ""
+        postObject.spotLat = spot?.spotLat ?? 0.0
+        postObject.spotLong = spot?.spotLong ?? 0.0
+        postObject.spotName = spot?.spotName ?? ""
+        postObject.spotPrivacy = spot?.privacyLevel ?? ""
     }
     
     func resortSpots(coordinate: CLLocationCoordinate2D) {
         
         for i in 0...nearbySpots.count - 1 {
             
-            let spot = UploadPostModel.shared.nearbySpots[i]
+            let spot = nearbySpots[i]
             let spotLocation = CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)
             let postLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
@@ -90,6 +94,24 @@ class UploadPostModel {
             guard let self = self else { return }
             self.postObject.city = city
         }
+    }
+    
+    func setTaggedUsers() {
+        var selectedUsers: [UserProfile] = []
+        let words = postObject.caption.components(separatedBy: .whitespacesAndNewlines)
+        
+        for w in words {
+            let username = String(w.dropFirst())
+            if w.hasPrefix("@") {
+                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
+                    selectedUsers.append(f)
+                }
+            }
+        }
+        let usernames = selectedUsers.map({$0.username})
+        postObject.taggedUsers = usernames
+        postObject.addedUsers = usernames
+        postObject.taggedUserIDs = selectedUsers.map({$0.id!})
     }
     
     func reverseGeocodeFromCoordinate(completion: @escaping (_ address: String) -> Void) {
@@ -137,7 +159,45 @@ class UploadPostModel {
             }
         }
     }
+    
+    func setFinalPostValues() {
+        var taggedProfiles: [UserProfile] = []
 
+        let word = UploadPostModel.shared.postObject.caption.split(separator: " ")
+        
+        for w in word {
+            let username = String(w.dropFirst())
+            if w.hasPrefix("@") {
+                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
+                    UploadPostModel.shared.postObject.taggedUsers!.append(username)
+                    UploadPostModel.shared.postObject.taggedUserIDs!.append(f.id!)
+                    taggedProfiles.append(f)
+                }
+            }
+        }
+        
+        var postFriends = postObject.privacyLevel == "invite" ? spotObject!.inviteList!.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
+        let uid = UserDataModel.shared.uid
+        if !postFriends.contains(uid) { postFriends.append(uid) }
+        postObject.friendsList = postFriends
+        postObject.privacyLevel = spotObject != nil && spotObject?.privacyLevel == "friends" ? "friends" : "public"
+    }
+
+    func setFinalMapValues() {
+        mapObject!.postIDs.append(postObject.id!)
+        if spotObject != nil && !mapObject!.spotIDs.contains(spotObject!.id!) { mapObject!.spotIDs.append(spotObject!.id!) }
+        mapObject!.postLocations.append(["lat": postObject.postLat, "long": postObject.postLong])
+        
+        let uid = UserDataModel.shared.uid
+        var posters = [uid]
+        if !(postObject.addedUsers?.isEmpty ?? true) { posters.append(contentsOf: postObject.addedUsers!) }
+        mapObject!.posterDictionary[postObject.id!] = posters
+        mapObject!.posterIDs.append(uid)
+        mapObject!.posterUsernames.append(UserDataModel.shared.userInfo.username)
+        for poster in posters {
+            if !mapObject!.memberIDs.contains(poster) { mapObject!.memberIDs.append(poster) }
+        }
+    }
 
     let tags = {
             /// Activity
@@ -259,13 +319,12 @@ class UploadPostModel {
     }
     
     func allAuths() -> Bool {
-        return UploadPostModel.shared.cameraAccess == .authorized &&  (UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited)
+        return cameraAccess == .authorized &&  (galleryAccess == .authorized || galleryAccess == .limited)
     }
     
     func destroy() {
         selectedObjects.removeAll()
         imageObjects.removeAll()
-        scrollObjects.removeAll()
         nearbySpots.removeAll()
         friendObjects.removeAll()
         selectedTag = ""
@@ -274,5 +333,6 @@ class UploadPostModel {
         
         postObject = nil
         spotObject = nil
+        mapObject = nil
     }
 }

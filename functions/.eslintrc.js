@@ -1,10 +1,7 @@
 module.exports = {
   root: true,
-  env: {
-    es6: true
-  },
-  "parserOptions": {
-    "ecmaVersion": 6,
+  parserOptions: {
+    "ecmaVersion": "latest",
     "sourceType": "module",
 },
   extends: [
@@ -12,6 +9,8 @@ module.exports = {
     "google",
   ],
   rules: {
-    quotes: ["error", "double"],
+    "quotes": ["error", "double"],
+    "max-len": "off",
+    "semi": ["error", "never"],
   },
 };

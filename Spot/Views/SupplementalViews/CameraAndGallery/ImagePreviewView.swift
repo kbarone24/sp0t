@@ -29,7 +29,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     var zooming = false
     var originalCenter: CGPoint!
     
-    unowned var imagesCollection, galleryCollection: UICollectionView!
+    unowned var galleryCollection: UICollectionView!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -48,13 +48,13 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
         self.selectedIndex = selectedIndex
         self.galleryIndex = galleryIndex
         self.imageObjects = imageObjects
-
+        
         imageCloseTap = UITapGestureRecognizer(target: self, action: #selector(closeImageTap(_:)))
         imageCloseTap.delegate = self
         addGestureRecognizer(imageCloseTap)
         
         let currentObject = imageObjects[selectedIndex]
-
+        
         maskImage = ImagePreview(frame: originalFrame)
         maskImage.image = currentObject.stillImage
         addSubview(maskImage)
@@ -87,9 +87,10 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
             let finalRect = CGRect(x: 0, y: maskY, width: UIScreen.main.bounds.width, height: maskHeight)
             self.maskImage.frame = finalRect
             if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.frame = CGRect(x: 7, y: finalRect.height - 54, width: 74, height: 46) }
-            if self.maskImage.circleView != nil { self.maskImage.circleView.frame = CGRect(x: finalRect.maxX - 52, y: finalRect.height - 53, width: 40, height: 40); self.maskImage.circleView.number.frame = CGRect(x: 0, y: self.maskImage.circleView.bounds.height/2 - 15/2, width: self.maskImage.circleView.bounds.width, height: 15) }
+            if self.maskImage.circleView != nil { self.maskImage.circleView.frame = CGRect(x: finalRect.maxX - 52, y: finalRect.height - 53, width: 40, height: 40) }
             if self.maskImage.selectButton != nil { self.maskImage.selectButton.frame = CGRect(x: finalRect.maxX - 150, y: finalRect.height - 54, width: 98, height: 43) }
-
+            if self.maskImage.imageMask != nil { self.maskImage.imageMask.frame = CGRect(x: 0, y: finalRect.height * 2/3, width: finalRect.width, height: finalRect.height/3) }
+            
         } completion: { [weak self] _ in
             guard let self = self else { return }
             self.maskImage.setUp(imageObject: imageObjects[selectedIndex])
@@ -99,14 +100,14 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     func setImageBounds(first: Bool, selectedIndex: Int) {
         
         self.selectedIndex = selectedIndex
-
+        
         if !first {
             let selectedObject = imageObjects[selectedIndex]
             
             let maskAspect = min(selectedObject.stillImage.size.height/selectedObject.stillImage.size.width, 1.5)
             let maskHeight = maskAspect * UIScreen.main.bounds.width
             let maskY = 20 + (UIScreen.main.bounds.height - maskHeight - 40)/2
-
+            
             maskImage.frame = CGRect(x: 0, y: maskY, width: UIScreen.main.bounds.width, height: maskHeight)
             maskImage.setUp(imageObject: selectedObject)
         }
@@ -117,7 +118,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
             let pAspect = selectedIndex > 0 ? min(imageObjects[selectedIndex - 1].stillImage.size.height/imageObjects[selectedIndex - 1].stillImage.size.width, 1.5) : 1.5
             let pHeight = pAspect * UIScreen.main.bounds.width
             let py = 20 + (UIScreen.main.bounds.height - pHeight - 40)/2
-
+            
             maskImagePrevious.frame = CGRect(x: -UIScreen.main.bounds.width, y: py, width: UIScreen.main.bounds.width, height: pHeight)
             maskImagePrevious.image = UIImage()
             
@@ -128,7 +129,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
             let nAspect = selectedIndex < imageObjects.count - 1 ? min(imageObjects[selectedIndex + 1].stillImage.size.height/imageObjects[selectedIndex + 1].stillImage.size.width, 1.5) : 1.5
             let nHeight = nAspect * UIScreen.main.bounds.width
             let ny = 20 + (UIScreen.main.bounds.height - nHeight - 40)/2
-
+            
             maskImageNext.frame = CGRect(x: UIScreen.main.bounds.width, y: ny, width: UIScreen.main.bounds.width, height: nHeight)
             maskImageNext.image = UIImage()
             if selectedIndex < imageObjects.count - 1 {
@@ -209,7 +210,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                     }
                 }
             }
-
+            
         default:
             return
         }
@@ -218,7 +219,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     
     // set animationIndex to maintain animation state on image swipe
     func setAnimationIndex(newIndex: Int) {
-         imageObjects[newIndex].animationIndex = newIndex > selectedIndex ? maskImageNext.animationIndex : maskImagePrevious.animationIndex
+        imageObjects[newIndex].animationIndex = newIndex > selectedIndex ? maskImageNext.animationIndex : maskImagePrevious.animationIndex
         imageObjects[newIndex].directionUp = newIndex > selectedIndex ? maskImageNext.directionUp : maskImagePrevious.directionUp
     }
     
@@ -237,43 +238,28 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
         DispatchQueue.main.async {
             
             self.maskImage.frame = CGRect(x: 0, y: maskY, width: UIScreen.main.bounds.width, height: maskHeight)
-            var endFrame = self.originalFrame ?? CGRect()
-            var imageRemoved = false
+            let endFrame = self.originalFrame ?? CGRect()
             
-            if self.imagesCollection != nil {
-                /// animate to center of screen if selected
-                if self.maskImage.circleIndex > 0 { endFrame = CGRect(x: (UIScreen.main.bounds.width - endFrame.width)/2, y: (UIScreen.main.bounds.height/2 - endFrame.height)/2, width: endFrame.width, height: endFrame.height); imageRemoved = true }
-            }
-            
-            self.maskImage.galleryCircle.alpha = 0.0
-            self.maskImage.galleryCircle.isHidden = false
             if self.maskImage.circleView != nil { self.maskImage.circleView.isHidden = true }
             if self.maskImage.selectButton != nil { self.maskImage.selectButton.isHidden = true }
             if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.isHidden = true }
             
             /// main animation
             UIView.animate(withDuration: 0.25) {
-                
                 self.maskImage.frame = endFrame
-                
-                /// set alive toggle to its height in the cell + adjust borders to fit original views
-                if self.imagesCollection != nil {
-                    self.maskImage.layer.cornerRadius = 8
-                    self.maskImage.layer.cornerCurve = .continuous
-                    
-                } else {
-                    self.maskImage.galleryCircle.alpha = 1.0
-                    self.maskImage.galleryCircle.frame = CGRect(x: endFrame.width - 27, y: 6, width: 23, height: 23)
-                    self.maskImage.layer.borderColor = UIColor(named: "SpotBlack")!.cgColor
-                    self.maskImage.layer.borderWidth = 1
-                }
+                self.maskImage.galleryCircle.alpha = 1.0
+                self.maskImage.galleryCircle.frame = CGRect(x: endFrame.width - 29, y: 6, width: 23, height: 23)
+                self.maskImage.liveIndicator.alpha = 1.0
+                self.maskImage.liveIndicator.frame = CGRect(x: endFrame.width/2 - 9, y: endFrame.height/2 - 9, width: 18, height: 18)
+                self.maskImage.galleryMask.alpha = 1.0
+                self.maskImage.layer.borderColor = UIColor(named: "SpotBlack")!.cgColor
+                self.maskImage.layer.borderWidth = 1
             }
             
             /// background animation -> fade is only necessary for upload overview
             let duration: CGFloat = 0.26
             UIView.animate(withDuration: duration) {
                 self.backgroundColor = UIColor(named: "SpotBlack")!.withAlphaComponent(0.0)
-                if imageRemoved { self.alpha = 0.0 }
                 
             } completion: { [weak self] complete in
                 guard let self = self else { return }
@@ -297,22 +283,27 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     var contentView: UIView!
     var aliveToggle: UIButton!
     var circleView: CircleView!
-    var imageMask: UIView!
+    var imageMask: GradientView!
     
     var selectButton: UIButton!
     var zooming = false
     var originalCenter: CGPoint!
     
-    var cancelButton: UIButton!
+    var galleryMask: UIView!
     var galleryCircle: CircleView!
+    var liveIndicator: UIImageView!
     
-    var imageObject: ImageObject!
     lazy var activityIndicator = UIActivityIndicatorView()
     lazy var imageFetcher = ImageFetcher()
     
-    var circleIndex = 0
+    var selected = false
     var animationIndex = 0
     var directionUp = true
+    var imageObject: ImageObject! {
+        didSet {
+            selected = UploadPostModel.shared.selectedObjects.contains(where: {$0.id == imageObject.id})
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -331,13 +322,12 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     }
     
     func setUp(imageObject: ImageObject) {
-        
+                
         self.imageObject = imageObject
         if !imageObject.gifMode { image = imageObject.stillImage }
         contentMode = .scaleAspectFill
         
         if aliveToggle != nil { aliveToggle.setImage(UIImage(), for: .normal)}
-        if imageMask != nil { imageMask.removeFromSuperview() }
         activityIndicator.removeFromSuperview()
         
         let animating = !(animationImages?.isEmpty ?? true)
@@ -348,15 +338,19 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         if imageObject.gifMode && !animating {
             self.animatePreviewGif()
         }
-        
+                        
         contentView = UIView(frame: CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height))
         contentView.backgroundColor = nil
-        addSubview(contentView)
+
+        if imageMask == nil {
+            imageMask = GradientView(frame: CGRect(x: 0, y: bounds.height * 2/3, width: bounds.width, height: bounds.height * 1/3))
+            addSubview(imageMask)
+        }
         
-        guard let previewView = superview as? ImagePreviewView else { return }
+        addSubview(contentView)
 
         /// scale button as frame expands
-        let galleryAnimation = contentView.bounds.width < 150 && previewView.galleryCollection != nil
+        let galleryAnimation = contentView.bounds.width < 150
         if self.imageObject.asset.mediaSubtypes.contains(.photoLive) {
             
             if aliveToggle != nil { aliveToggle.setImage(UIImage(), for: .normal)}
@@ -377,26 +371,28 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             activityIndicator.transform = CGAffineTransform(scaleX: 2.5, y: 2.5)
             contentView.addSubview(activityIndicator)
         }
-                
-        var index = 0
-        if let i = UploadPostModel.shared.selectedObjects.firstIndex(where: {$0.id == imageObject.id}) { index = i + 1; circleIndex = i + 1 }
         
-        if selectButton != nil { selectButton.setImage(UIImage(), for: .normal) }
+        let selected = UploadPostModel.shared.selectedObjects.contains(where: {$0.id == imageObject.id})
+        
+        if selectButton != nil { selectButton.setTitle("", for: .normal) }
         let selectFrame = galleryAnimation ? CGRect(x: contentView.frame.width - 50, y: contentView.frame.height - 18, width: 39.5, height: 15) : CGRect(x: contentView.frame.maxX - 150, y: contentView.frame.height - 54, width: 98, height: 43)
         selectButton = UIButton(frame: selectFrame)
-        let image = circleIndex > 0 ? UIImage(named: "SelectedButton") : UIImage(named: "SelectButton")
-        selectButton.setImage(image, for: .normal)
-        selectButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        let title = selected ? "Selected" : "Select"
+        selectButton.setTitle(title, for: .normal)
+        selectButton.setTitleColor(.white, for: .normal)
+        selectButton.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 18)
         selectButton.addTarget(self, action: #selector(circleTap(_:)), for: .touchUpInside)
+        selectButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 8)
         selectButton.contentHorizontalAlignment = .right
         selectButton.contentVerticalAlignment = .center
+        selectButton.alpha = UploadPostModel.shared.selectedObjects.count == 5 && !selected ? 0.3 : 1.0
         contentView.addSubview(selectButton)
         
         if circleView != nil { circleView.removeFromSuperview() }
         let circleFrame = galleryAnimation ? CGRect(x: contentView.frame.maxX - 17, y: contentView.frame.height - 17, width: 15, height: 15) : CGRect(x: contentView.frame.maxX - 52, y: contentView.frame.height - 53, width: 40, height: 40)
         circleView = CircleView(frame: circleFrame)
-        circleView.setUp(index: index)
-        circleView.layer.cornerRadius = 16
+        circleView.selected = selected
+        circleView.layer.cornerRadius = 20
         contentView.addSubview(circleView)
         
         let circleButton = UIButton(frame: CGRect(x: bounds.width - 52, y: contentView.frame.height - 56, width: 46, height: 46))
@@ -404,9 +400,22 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         contentView.addSubview(circleButton)
         
         /// for animation back to gallery
+        galleryMask = UIView(frame: self.bounds)
+        galleryMask.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(0.5)
+        galleryMask.isHidden = !selected
+        galleryMask.alpha = 0.0
+        contentView.addSubview(galleryMask)
+        
+        liveIndicator = UIImageView(frame: CGRect(x: bounds.width/2 - 9, y: bounds.height/2 - 9, width: 18, height: 18))
+        liveIndicator.image = UIImage(named: "PreviewGif")
+        liveIndicator.isHidden = !(imageObject.asset.mediaSubtypes.contains(.photoLive))
+        liveIndicator.alpha = 0.0
+        contentView.addSubview(liveIndicator)
+        
         galleryCircle = CircleView(frame: CGRect(x: contentView.frame.width - 27, y: 6, width: 23, height: 23))
-        galleryCircle.setUp(index: index)
-        galleryCircle.isHidden = true
+        galleryCircle.selected = selected
+        galleryCircle.layer.cornerRadius = 11.5
+        galleryCircle.alpha = 0.0
         contentView.addSubview(galleryCircle)
     }
     
@@ -418,7 +427,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     func removeActivityIndicator() {
         activityIndicator.stopAnimating()
     }
-
+        
     @objc func toggleAlive(_ sender: UIButton) {
         
         
@@ -429,10 +438,10 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             aliveToggle.isEnabled = false
             activityIndicator.startAnimating()
             imageFetcher.fetchingIndex = 0
-
+            
             /// download alive if available and not yet downloaded
             imageFetcher.fetchLivePhoto(currentAsset: imageObject.asset, animationImages: imageObject.animationImages) { [weak self] animationImages, failed in
-
+                
                 guard let self = self else { return }
                 if animationImages.isEmpty { return }
                 
@@ -440,7 +449,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
                 self.aliveToggle.isEnabled = true
                 self.aliveToggle.setImage(UIImage(named: "AliveOn"), for: .normal)
                 self.imageObject.gifMode = true
-
+                
                 self.imageObject.animationImages = animationImages
                 
                 /// animate with gif images
@@ -449,9 +458,9 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
                 self.updateParent()
                 ///fetch image is async so need to make sure another image wasn't appended while this one was being fetched
             }
-
+            
         } else {
-
+            
             aliveToggle.setImage(UIImage(named: "AliveOff"), for: .normal)
             imageObject.gifMode = false
             
@@ -470,24 +479,25 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     }
     
     @objc func circleTap(_ sender: UIButton) {
-        
-        let selected = circleIndex == 0
-        let image = selected ? UIImage(named: "SelectedButton") : UIImage(named: "SelectButton")
-        selectButton.setImage(image, for: .normal)
+         
+        if !selected && UploadPostModel.shared.selectedObjects.count == 5 { return } /// 5 images max
+        selected = !selected
+        let title = selected ? "Selected" : "Select"
+        selectButton.setTitle(title, for: .normal)
         
         Mixpanel.mainInstance().track(event: "ImagePreviewSelectImage", properties: ["selected": selected])
         
         guard let previewView = superview as? ImagePreviewView else { return }
-        
         // defer to gallery/cluster select methods
-        
-      if let gallery = previewView.galleryCollection.viewContainingController() as? PhotoGalleryController {
+        if let gallery = previewView.galleryCollection.viewContainingController() as? PhotoGalleryController {
             selected ? gallery.select(index: previewView.galleryIndex) : gallery.deselect(index: previewView.galleryIndex)
-            circleIndex = selected ? UploadPostModel.shared.selectedObjects.count : 0
         }
         
-        for sub in circleView.subviews { sub.removeFromSuperview() }
-        circleView.setUp(index: circleIndex)
+        circleView.selected = selected
+        
+        /// animation methods
+        galleryMask.isHidden = !selected
+        galleryCircle.selected = selected
     }
     
     func updateParent() {
@@ -495,7 +505,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         guard let previewView = superview as? ImagePreviewView else { return }
         previewView.imageObjects[previewView.selectedIndex].animationImages = imageObject.animationImages
         previewView.imageObjects[previewView.selectedIndex].gifMode = imageObject.gifMode
-                
+        
         /// update in gallery / cluster
         if let i = UploadPostModel.shared.imageObjects.firstIndex(where: {$0.image.id == imageObject.id}) {
             UploadPostModel.shared.imageObjects[i].image.animationImages = imageObject.animationImages
@@ -584,14 +594,14 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return gestureRecognizer.view?.tag == 85 && otherGestureRecognizer.view?.tag == 85 /// only user for postImage zoom / swipe
     }
-            
+    
     /// custom animateGif func for maintaining animationIndex
     func animatePreviewGif() {
-
+        
         if superview == nil || isHidden || animationImages?.isEmpty ?? true { return }
         
         UIView.transition(with: self, duration: 0.06, options: [.allowUserInteraction, .beginFromCurrentState], animations: { [weak self] in
-                            guard let self = self else { return }
+            guard let self = self else { return }
             if self.animationImages?.isEmpty ?? true { return }
             if self.animationIndex >= self.animationImages?.count ?? 0 { return }
             self.image = self.animationImages![self.animationIndex] },
@@ -618,10 +628,41 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
                     newCount -= 1
                 }
             }
-
+            
             self.animationIndex = newCount
             self.directionUp = newDirection
             self.animatePreviewGif()
         }
+    }
+}
+
+class GradientView: UIView {
+  override class var layerClass : AnyClass {
+    return CAGradientLayer.self
+  }
+
+  var gradientLayer: CAGradientLayer {
+    // it is safe to force cast here
+    // since we told UIView to use this exact type
+    return self.layer as! CAGradientLayer
+  }
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    // setup your gradient
+      
+      gradientLayer.frame = bounds
+      gradientLayer.colors = [
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0.48).cgColor,
+      ]
+      gradientLayer.locations = [0, 1]
+      gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
+      gradientLayer.endPoint = CGPoint(x: 0.5, y: 1.0)
+      gradientLayer.masksToBounds = true
+  }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
