@@ -9,8 +9,10 @@
 import UIKit
 import SnapKit
 import Firebase
-import FirebaseFunctions
+import Mixpanel
 import SDWebImage
+import FirebaseFunctions
+
 
 class ProfileViewController: UIViewController {
     
@@ -112,6 +114,7 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func friendListButtonAction() {
+        Mixpanel.mainInstance().track(event: "FriendListButtonAction")
         let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [])
         present(friendListVC, animated: true)
     }
@@ -308,6 +311,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section != 0 {
+            Mixpanel.mainInstance().track(event: "ProfileMapSelect")
             let collectionCell = collectionView.cellForItem(at: indexPath)
             UIView.animate(withDuration: 0.15) {
                 collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
