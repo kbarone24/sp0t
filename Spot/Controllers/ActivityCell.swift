@@ -79,7 +79,7 @@ class ActivityCell: UITableViewCell {
             let url = notification.userInfo!.imageURL
             if url != "" {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) } else {print("profilePic not found")}
+                $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer]) } else {print("profilePic not found")}
         }
         
         profilePic.snp.makeConstraints{
@@ -96,7 +96,7 @@ class ActivityCell: UITableViewCell {
                 let url = notification.userInfo!.avatarURL!
                 if url != "" {
                     let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                    $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+                    $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
                 } else { print("Avatar not found") }
                 $0.translatesAutoresizingMaskIntoConstraints = false
                 contentView.addSubview($0)
@@ -144,7 +144,7 @@ class ActivityCell: UITableViewCell {
                 if(imageURLs.count > 0){
                     $0.layer.cornerRadius = 5
                     let transformer = SDImageResizingTransformer(size: CGSize(width: 88, height: 102), scaleMode: .aspectFill)
-                    $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+                    $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
                 }
             }
             

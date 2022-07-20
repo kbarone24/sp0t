@@ -522,7 +522,7 @@ class CustomMapUploadCell: UITableViewCell {
                 $0.image = map.coverImage
             } else if url != "" {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+                $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
             }
             pillView.addSubview($0)
         }
