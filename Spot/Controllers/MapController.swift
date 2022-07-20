@@ -107,6 +107,7 @@ class MapController: UIViewController {
             navigationController?.navigationBar.isHidden = sheetView == nil ? false : true
         }
     }
+    
                 
     /// tag table added over top of view to window then result passed to active VC
     enum TagTableParent {
@@ -409,12 +410,23 @@ class MapController: UIViewController {
     }
     
     @objc func profileTap(_ sender: Any){
-        let profileVC = ProfileViewController()
-        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Middle, .Top], closeAction: {
+        let profileVC = ProfileViewController(userProfile: nil)
+        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
-        sheetView?.swipeDownToDismiss = true
-        sheetView?.present(to: .Middle)
+        sheetView?.canInteract = false
+        sheetView?.showCloseButton = false
+        profileVC.containerDrawerView = sheetView
+        let backButton = UIButton {
+            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
+            $0.addTarget(sheetView, action: #selector(sheetView?.closeAction), for: .touchUpInside)
+            sheetView!.slideView.addSubview($0)
+        }
+        backButton.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(55)
+            $0.leading.equalToSuperview().offset(22)
+        }
+        sheetView?.present(to: .Top)
     }
     
     @objc func friendsTap(_ sender: UIButton) {
@@ -451,7 +463,7 @@ class MapController: UIViewController {
         signUpLogo.contentMode = .scaleAspectFill
         navView.addSubview(signUpLogo)
         
-        let buttonView = UIView(frame: CGRect(x: navView.bounds.width - 120, y: 0, width: 100, height: 30))
+        let buttonView = UIView(frame: CGRect(x: navView.bounds.width - 120, y: 0, width: 120, height: 30))
         navView.addSubview(buttonView)
         
         let searchButton = UIButton(frame: CGRect(x: 0, y: 5, width: 20, height: 20))
@@ -502,9 +514,25 @@ class MapController: UIViewController {
     }
     
     @objc func openNotis(_ sender: UIButton) {
-        if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsController {
+        /*if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsController {
+            notificationsVC.mapVC = self
             navigationController?.pushViewController(notificationsVC, animated: true)
-        }
+        }*/
+        
+        let notifVC = NotificationsController()
+        
+        sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+            self.sheetView = nil
+        })
+        
+        sheetView?.swipeDownToDismiss = false
+        sheetView?.canInteract = false
+        sheetView?.present(to: .Top)
+        sheetView?.showCloseButton = false
+        
+        notifVC.contentDrawer = sheetView
+        
+        
     }
     
     func setOpaqueNav() {

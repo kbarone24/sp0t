@@ -26,7 +26,6 @@ struct ResultSpot: Identifiable, Codable {
     var inviteList: [String]? = []
     var spotImage: UIImage = UIImage()
     
-    
     ///for add new
     enum CodingKeys: String, CodingKey {
         case id
