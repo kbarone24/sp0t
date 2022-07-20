@@ -11,15 +11,17 @@ import UIKit
 import Firebase
 import Geofirestore
 import MapKit
+import Mixpanel
 
 protocol ChooseSpotDelegate {
-    func finishPassing(spot: MapSpot)
+    func finishPassing(spot: MapSpot?)
 }
 
 class ChooseSpotController: UIViewController {
     var searchBarContainer: UIView!
     var searchBar: UISearchBar!
     var tableView: UITableView!
+    var createSpotButton: CreateSpotButton!
     
     lazy var spotObjects: [MapSpot] = []
     lazy var querySpots: [MapSpot] = []
@@ -53,6 +55,11 @@ class ChooseSpotController: UIViewController {
         setUpView()
         setInitialValues()
         runChooseSpotFetch()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "ChooseSpotOpen")
     }
     
     func setUpView() {
@@ -104,11 +111,30 @@ class ChooseSpotController: UIViewController {
             $0.top.equalTo(searchBarContainer.snp.bottom)
             $0.bottom.equalToSuperview()
         }
+        
+        createSpotButton = CreateSpotButton {
+            $0.addTarget(self, action: #selector(createSpotTap(_:)), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        createSpotButton.snp.makeConstraints {
+            $0.bottom.equalToSuperview().inset(60)
+            $0.height.equalTo(54)
+            $0.width.equalTo(180)
+            $0.centerX.equalToSuperview()
+        }
     }
     
     func setInitialValues() {
         postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)      
         if UploadPostModel.shared.spotObject != nil { spotObjects.append(UploadPostModel.shared.spotObject!) }
+    }
+    
+    @objc func createSpotTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "ChooseSpotCreateTap")
+        DispatchQueue.main.async {
+            self.delegate?.finishPassing(spot: nil)
+            self.dismiss(animated: true)
+        }
     }
 }
 
@@ -474,9 +500,51 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        Mixpanel.mainInstance().track(event: "ChooseSpotSelect")
         let current = queried ? querySpots : spotObjects
         let spot = current[indexPath.row]
-        delegate?.finishPassing(spot: spot)
-        DispatchQueue.main.async { self.dismiss(animated: true) }
+        DispatchQueue.main.async {
+            self.delegate?.finishPassing(spot: spot)
+            self.dismiss(animated: true)
+        }
     }
 }
+
+class CreateSpotButton: UIButton {
+    var createLabel: UILabel!
+    var spotIcon: UIImageView!
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        layer.cornerRadius = 18
+        backgroundColor = UIColor(named: "SpotGreen")
+        
+        createLabel = UILabel {
+            $0.text = "Create spot"
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16.5)
+            addSubview($0)
+        }
+        createLabel.snp.makeConstraints {
+            $0.leading.equalTo(22)
+            $0.centerY.equalToSuperview()
+        }
+        
+        spotIcon = UIImageView {
+            $0.image = UIImage(named: "NewSpotIcon")
+            addSubview($0)
+        }
+        spotIcon.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(20)
+            $0.height.equalTo(25.5)
+            $0.width.equalTo(35)
+            $0.centerY.equalToSuperview().offset(-1)
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+

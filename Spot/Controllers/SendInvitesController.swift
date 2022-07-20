@@ -465,7 +465,6 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
 
         /// upadte database
             self.db.collection("users").document(uid).updateData(["sentInvites": FieldValue.arrayUnion([formattedNumber])])
-            
             DispatchQueue.main.async { self.tableView.reloadData(); self.resultsTable.reloadData() }
             
         default:

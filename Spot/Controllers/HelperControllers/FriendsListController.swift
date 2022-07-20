@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 import FirebaseUI
+import Mixpanel
 
 protocol FriendsListDelegate {
     func finishPassing(selectedUsers: [UserProfile])
@@ -60,6 +61,11 @@ class FriendsListController: UIViewController {
             }
         }
         presentationController?.delegate = self
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "FriendsListOpen")
     }
     
     func addTableView() {
@@ -270,6 +276,7 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
         let id = queried ? queriedFriends[indexPath.row].id! : friendsList[indexPath.row].id!
         if confirmedIDs.contains(id) { return } /// cannot unselect confirmed ID
         
+        Mixpanel.mainInstance().track(event: "FriendsListSelectFriend")
         if queried { if let i = queriedFriends.firstIndex(where: {$0.id == id}) { queriedFriends[i].selected = !queriedFriends[i].selected } }
         if let i = friendsList.firstIndex(where: {$0.id == id}) { friendsList[i].selected = !friendsList[i].selected }
         DispatchQueue.main.async { self.tableView.reloadData() }

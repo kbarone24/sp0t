@@ -52,8 +52,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         
         super.viewDidLoad()
         view.backgroundColor = UIColor(named: "SpotBlack")
-        
-        setUpNavBar()
         addCollectionView()
                 
         NotificationCenter.default.addObserver(self, selector: #selector(removePreview(_:)), name: NSNotification.Name("PreviewRemove"), object: nil)
@@ -65,13 +63,12 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
             PHPhotoLibrary.shared().register(self) /// eventually probably want to do this after
             showLimitedAlert()
         }
-
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         cancelOnDismiss = false
-        self.navigationController?.setNavigationBarHidden(false, animated: false)
+        setUpNavBar()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -97,10 +94,9 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     func setUpNavBar() {
         navigationItem.title = "Gallery"
         navigationController?.setNavigationBarHidden(false, animated: true)
+        navigationController?.navigationBar.addBlackBackground()
         navigationController?.navigationBar.tintColor = .white
         navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.removeShadow()
-        navigationController?.navigationBar.addGradientBackground(alpha: 1.0)
                 
         let cancelButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(cancelTap(_:)))
         navigationItem.setLeftBarButton(cancelButton, animated: false)
@@ -276,11 +272,9 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "galleryCell", for: indexPath) as! GalleryCell
         
-        if let imageObject = UploadPostModel.shared.imageObjects[safe: indexPath.row] {
-            
-            var index = 0
-            if let trueIndex = UploadPostModel.shared.selectedObjects.lastIndex(where: {$0.id == imageObject.0.id}) { index = trueIndex + 1 }
-            cell.setUp(asset: imageObject.0.asset, row: indexPath.row, index: index, id: imageObject.0.id)
+        if let imageObject = UploadPostModel.shared.imageObjects[safe: indexPath.row] {        
+            let selected = UploadPostModel.shared.selectedObjects.contains(where: {$0.id == imageObject.0.id})
+            cell.setUp(asset: imageObject.0.asset, row: indexPath.row, selected: selected, id: imageObject.0.id)
             
             /// set cellImage from here -> processes weren't consistently offloading with deinit
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -376,7 +370,6 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         guard let selectedObject = UploadPostModel.shared.imageObjects[safe: index]?.image else { return }
     
         /// deselect image on circle tap
-        Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": false])
         UploadPostModel.shared.selectObject(imageObject: selectedObject, selected: false)
         reloadItems(paths: paths)
     }
@@ -392,7 +385,6 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         
         if selectedObject.stillImage != UIImage() {
             /// select image immediately
-            Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": true])
             UploadPostModel.shared.selectObject(imageObject: selectedObject, selected: true)
             reloadItems(paths: paths)
             
@@ -407,7 +399,6 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
                     UploadPostModel.shared.selectObject(imageObject: UploadPostModel.shared.imageObjects[index].image, selected: true)
                     if self.cancelOnDismiss { return }
                     self.reloadItems(paths: paths)
-                        Mixpanel.mainInstance().track(event: "GalleryCircleTap", properties: ["selected": true])
                 }
             }
         }
@@ -498,7 +489,7 @@ class GalleryCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setUp(asset: PHAsset, row: Int, index: Int, id: String) {
+    func setUp(asset: PHAsset, row: Int, selected: Bool, id: String) {
         backgroundColor = UIColor(red: 0.12, green: 0.12, blue: 0.12, alpha: 1)
         self.asset = asset
         self.globalRow = row
@@ -536,7 +527,7 @@ class GalleryCell: UICollectionViewCell {
         }
         
         /// add mask background for selected images
-        if index != 0 { addImageMask() }
+        if selected { addImageMask() }
         
         /// live indicator shows playbutton over image to indicate live capability on this image
         if asset.mediaSubtypes.contains(.photoLive) {
@@ -549,8 +540,7 @@ class GalleryCell: UICollectionViewCell {
                 $0.centerX.centerY.equalToSuperview()
             }
         }
-        
-        addCircle(index: index)
+        addCircle(selected: selected)
     }
     
     private func addImageMask() {
@@ -595,10 +585,9 @@ class GalleryCell: UICollectionViewCell {
         }
     }
     
-    func addCircle(index: Int) {
-        /// show circle with selected image number if selected
+    func addCircle(selected: Bool) {
         circleView = CircleView {
-            $0.setUp(index: index)
+            $0.selected = selected
             $0.layer.cornerRadius = 11.5
             contentView.addSubview($0)
         }

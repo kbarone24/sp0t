@@ -16,13 +16,13 @@ import Mixpanel
 import JPSVolumeButtonHandler
 
 class AVCameraController: UIViewController {
-        
+    
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     let db: Firestore! = Firestore.firestore()
-
+    
     var cameraController: AVSpotCamera!
     unowned var mapVC: MapController!
-
+    
     var spotObject: MapSpot!
     var volumeHandler: JPSVolumeButtonHandler! /// capture image on volume button tap
     
@@ -33,9 +33,9 @@ class AVCameraController: UIViewController {
     var cancelButton: UIButton!
     var cameraRotateButton: UIButton!
     var cameraMask: UIView!
-            
+    
     lazy var animationImages: [UIImage] = []
-        
+    
     var lastZoomFactor: CGFloat = 1.0 /// use with pinch-to-zoom
     var initialBrightness: CGFloat = 0.0 /// use with front-facing flash
     
@@ -49,12 +49,14 @@ class AVCameraController: UIViewController {
     var cancelOnDismiss = false
     
     var accessMask: CameraAccessView!
-        
+    var postDraft: PostDraft?
+    var failedPostView: FailedPostView?
+    
     override func viewWillAppear(_ animated: Bool) {
         
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(true, animated: true)
-                
+        
         ///set up camera view if not already loaded
         if self.cameraController == nil {
             cameraController = AVSpotCamera()
@@ -76,10 +78,9 @@ class AVCameraController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        self.navigationController?.setNavigationBarHidden(true, animated: true)
         Mixpanel.mainInstance().track(event: "CameraOpen")
     }
-
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
     }
@@ -90,35 +91,38 @@ class AVCameraController: UIViewController {
         cameraController.previewLayer?.connection?.isEnabled = false
         cameraController.captureSession?.stopRunning()
         disableButtons() /// disable for deinit
-        
+     
         /// show nav bar when returning to map
         if isMovingFromParent {
+            UploadPostModel.shared.destroy()
             self.navigationController?.setNavigationBarHidden(false, animated: false)
         }
     }
     
     deinit {
+        print("camera deinit")
         volumeHandler.stop()
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.AVCaptureDeviceSubjectAreaDidChange, object: nil)
     }
-        
+    
     override func viewDidLoad() {
-                
+        
         addCameraView() /// add main camera
         setUpPost() /// set up main mapPost object
         fetchAssets() /// fetch gallery assets
+        getFailedUploads()
     }
     
     func addCameraView() {
         
         view.backgroundColor = UIColor(named: "SpotBlack")
-                
+        
         let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
-                
+        
         /// start camera area below notch on iPhone X+
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
         let cameraY: CGFloat = minY == 2 ? minY + cameraHeight - 30 : minY + cameraHeight - 108
@@ -135,7 +139,7 @@ class AVCameraController: UIViewController {
             $0.top.equalToSuperview().offset(minY)
             $0.height.equalTo(cameraHeight)
         }
-
+        
         cancelButton = UIButton {
             $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
             $0.contentHorizontalAlignment = .fill
@@ -149,7 +153,7 @@ class AVCameraController: UIViewController {
             $0.top.equalToSuperview().offset(37)
             $0.width.height.equalTo(50)
         }
-                
+        
         tapIndicator = UIImageView {
             $0.image = UIImage(named: "TapFocusIndicator")
             $0.alpha = 0.0
@@ -168,10 +172,10 @@ class AVCameraController: UIViewController {
         frontFlashView.snp.makeConstraints {
             $0.top.leading.trailing.bottom.equalToSuperview()
         }
-                
+        
         volumeHandler = JPSVolumeButtonHandler(up: {self.capture()}, downBlock: {self.capture()})
         volumeHandler.start(true)
-                                                
+        
         cameraButton = UIButton {
             $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
             $0.setImage(UIImage(named: "CameraButton"), for: .normal)
@@ -184,7 +188,7 @@ class AVCameraController: UIViewController {
             $0.width.height.equalTo(104)
             $0.centerX.equalToSuperview()
         }
-                
+        
         galleryButton = UIButton {
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.setImage(UIImage(named: "PhotoGalleryButton"), for: .normal)
@@ -301,12 +305,11 @@ class AVCameraController: UIViewController {
     }
     
     func fetchAssets() {
-        
         if UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited {
             fetchFullAssets()
         }
     }
-        
+    
     func fetchFullAssets() {
         
         /// fetch all assets for showing when user opens photo gallery
@@ -325,7 +328,7 @@ class AVCameraController: UIViewController {
             
             guard let self = self else { return }
             if self.cancelOnDismiss { stop.pointee = true } /// cancel on dismiss = true when view is popped
-
+            
             var location = CLLocation()
             if let l = object.location { location = l }
             
@@ -428,7 +431,7 @@ class AVCameraController: UIViewController {
             }
             
             let resizedImage = self.ResizeImage(with: image, scaledToFill:  CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
-                        
+            
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
                 
                 let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: resizedImage, animationImages: [], animationIndex: 0, directionUp: true, gifMode: self.gifMode, creationDate: Date(), fromCamera: true)
@@ -443,7 +446,7 @@ class AVCameraController: UIViewController {
         }
         
     }
-
+    
     @objc func cancelTap(_ sender: UIButton) {
         cancelTap()
     }
@@ -452,7 +455,7 @@ class AVCameraController: UIViewController {
         
         /// show view controller sliding down as transtition
         DispatchQueue.main.async {
-          
+            
             /// set to title view for smoother transition
             self.navigationItem.leftBarButtonItem = UIBarButtonItem()
             self.navigationItem.rightBarButtonItem = UIBarButtonItem()
@@ -471,10 +474,10 @@ class AVCameraController: UIViewController {
             }
         }
     }
-        
+    
     // set up camera preview on screen if we have user permission
     func configureCameraController() {
-
+        
         cameraController.prepare(position: .rear) { [weak self] (error) in
             guard let self = self else { return }
             try? self.cameraController.displayPreview(on: self.cameraView)
@@ -505,7 +508,7 @@ class AVCameraController: UIViewController {
         }
         device.unlockForConfiguration()
     }
-        
+    
     @objc func openGallery(_ sender: UIButton) {
         self.openGallery()
     }
@@ -532,7 +535,7 @@ class AVCameraController: UIViewController {
             UploadPostModel.shared.imageObjects[i].selected = false
         }
     }
-        
+    
     @objc func pinch(_ pinch: UIPinchGestureRecognizer) {
         
         /// pinch to adjust zoomLevel
