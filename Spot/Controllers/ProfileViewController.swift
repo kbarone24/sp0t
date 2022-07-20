@@ -9,19 +9,29 @@
 import UIKit
 import SnapKit
 import Firebase
-import FirebaseFunctions
+import Mixpanel
 import SDWebImage
+import FirebaseFunctions
+
 
 class ProfileViewController: UIViewController {
     
-    private var profileCollectionView: UICollectionView!
+    // If start from middle position and need to be draggable
+    private var fromMiddleDrag: Bool = false
     private var topYContentOffset: CGFloat?
     private var middleYContentOffset: CGFloat?
+    
+    private var profileCollectionView: UICollectionView!
     private var noPostLabel: UILabel!
     private var barView: UIView!
     private var titleLabel: UILabel!
     
-    private var userProfile: UserProfile?
+    // MARK: Fetched datas
+    public var userProfile: UserProfile? {
+        didSet {
+            profileCollectionView.reloadData()
+        }
+    }
     private var maps = [CustomMap]() {
         didSet {
             noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
@@ -39,9 +49,14 @@ class ProfileViewController: UIViewController {
             }
         }
     }
-    private lazy var imageManager = SDWebImageManager()
     private var relation: ProfileRelation = .myself
+    private var pendingFriendRequestNotiID: String? {
+        didSet {
+            profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
+        }
+    }
     
+    private lazy var imageManager = SDWebImageManager()
     public var containerDrawerView: DrawerView?
     
     deinit {
@@ -49,6 +64,7 @@ class ProfileViewController: UIViewController {
     }
     
     init(userProfile: UserProfile? = nil) {
+        super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
         
         if self.userProfile?.id == UserDataModel.shared.userInfo.id {
@@ -61,11 +77,13 @@ class ProfileViewController: UIViewController {
             user == userProfile?.id
         }) {
             relation = .pending
+        } else if self.userProfile!.pendingFriendRequests.contains(where: { user in
+            user == UserDataModel.shared.userInfo.id
+        }) {
+            relation = .received
         } else {
             relation = .stranger
         }
-        
-        super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -78,16 +96,25 @@ class ProfileViewController: UIViewController {
         DispatchQueue.main.async {
             self.getMaps()
             self.getNinePosts()
+            
+            // Need to think a better way so that we won't need to query everytime entering someone's profile
+            self.getNotis()
         }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
     }
     
     @objc func editButtonAction() {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
+        editVC.profileVC = self
         editVC.modalPresentationStyle = .fullScreen
         present(editVC, animated: true)
     }
     
     @objc func friendListButtonAction() {
+        Mixpanel.mainInstance().track(event: "FriendListButtonAction")
         let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [])
         present(friendListVC, animated: true)
     }
@@ -97,6 +124,7 @@ extension ProfileViewController {
     
     private func viewSetup() {
         view.backgroundColor = .white
+        navigationItem.setHidesBackButton(true, animated: true)
         
         profileCollectionView = {
             let layout = UICollectionViewFlowLayout()
@@ -112,11 +140,15 @@ extension ProfileViewController {
         }()
         view.addSubview(profileCollectionView)
 
-        // Need a new pan gesture to react when profileCollectionView scroll disables
-        let scrollViewPanGesture = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
-        scrollViewPanGesture.delegate = self
-        profileCollectionView.addGestureRecognizer(scrollViewPanGesture)
-        profileCollectionView.isScrollEnabled = false
+        // Setups for if need to drag and start position is middle
+        if fromMiddleDrag {
+            // Need a new pan gesture to react when profileCollectionView scroll disables
+            let scrollViewPanGesture = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
+            scrollViewPanGesture.delegate = self
+            profileCollectionView.addGestureRecognizer(scrollViewPanGesture)
+            profileCollectionView.isScrollEnabled = false
+        }
+        
         profileCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -134,10 +166,15 @@ extension ProfileViewController {
         }
         
         barView = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
             $0.backgroundColor = .white
             $0.alpha = 0
+            view.addSubview($0)
         }
+        barView.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(91)
+        }
+        
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.text = userProfile!.name
@@ -145,10 +182,12 @@ extension ProfileViewController {
             $0.textAlignment = .center
             $0.numberOfLines = 0
             $0.sizeToFit()
-            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: view.frame.width, height: 18))
             barView.addSubview($0)
         }
-        containerDrawerView?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
+        titleLabel.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(55)
+            $0.centerX.equalToSuperview()
+        }
     }
     
     private func getNinePosts() {
@@ -158,12 +197,23 @@ extension ProfileViewController {
             if err != nil  { return }
             self.posts.removeAll()
             self.postImages.removeAll()
+            
+            // Set transform size
+            var size = CGSize(width: 150, height: 150)
+            if snap!.documents.count >= 9 {
+                size = CGSize(width: 100, height: 100)
+            } else if snap!.documents.count >= 4 {
+                size = CGSize(width: 150, height: 150)
+            } else {
+                size = CGSize(width: 200, height: 200)
+            }
+            
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { return }
                     self.posts.append(postInfo)
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+                    let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
                     self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
                         guard self != nil else { return }
                         let image = image ?? UIImage()
@@ -194,6 +244,26 @@ extension ProfileViewController {
             self.profileCollectionView.reloadData()
         }
     }
+    
+    private func getNotis() {
+        let db = Firestore.firestore()
+        let query = db.collection("users").document(UserDataModel.shared.userInfo.id!).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
+        query.getDocuments { (snap, err) in
+            if err != nil  { return }
+            for doc in snap!.documents {
+                do {
+                    let unwrappedInfo = try doc.data(as: UserNotification.self)
+                    guard let notification = unwrappedInfo else { return }
+                    if notification.senderID == self.userProfile!.id {
+                        self.pendingFriendRequestNotiID = notification.id
+                        break
+                    }
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                }
+            }
+        }
+    }
 }
 
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -209,14 +279,14 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
         if let headerCell = cell as? ProfileHeaderCell{
-            headerCell.cellSetup(profileID: userProfile!.id!, profileURL: userProfile!.imageURL, avatarURL: userProfile!.avatarURL ?? "", name: userProfile!.name, account: userProfile!.username, location: userProfile!.currentLocation, friendsCount: userProfile!.friendIDs.count, relation: relation)
+            headerCell.cellSetup(userProfile: userProfile!, relation: relation, pendingFriendNotiID: pendingFriendRequestNotiID)
             if relation == .myself {
-                headerCell.editButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
+                headerCell.actionButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
             }
             headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
             return headerCell
         } else if let mapCell = cell as? ProfileMyMapCell {
-            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages)
+            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages, relation: relation)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
             let profileBodyData = maps[indexPath.row - 1]
@@ -241,6 +311,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section != 0 {
+            Mixpanel.mainInstance().track(event: "ProfileMapSelect")
             let collectionCell = collectionView.cellForItem(at: indexPath)
             UIView.animate(withDuration: 0.15) {
                 collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
@@ -273,39 +344,49 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        
         // Show navigation bar when user scroll pass the header section
         if topYContentOffset != nil {
             UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
                 self.barView.alpha = scrollView.contentOffset.y >= self.topYContentOffset! + 160 ? 1 : 0
             }
-        }
-
-        // Disable the bouncing effect when scroll view is scrolled to top
-        if topYContentOffset != nil {
-            if
-                containerDrawerView?.status == .Top &&
-                scrollView.contentOffset.y <= topYContentOffset!
-            {
-                scrollView.contentOffset.y = topYContentOffset!
+        } else {
+            if fromMiddleDrag == false {
+                topYContentOffset = scrollView.contentOffset.y
             }
         }
-        
-        // Get middle y content offset
-        if middleYContentOffset == nil {
-            middleYContentOffset = scrollView.contentOffset.y
-        }
-        
-        // Set scroll view content offset when in transition
-        if middleYContentOffset != nil && topYContentOffset != nil && scrollView.contentOffset.y <= middleYContentOffset! && containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset! {
-            scrollView.contentOffset.y = middleYContentOffset!
-        }
-        
-        // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
-        if containerDrawerView?.status != .Top {
-            profileCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
-            profileCollectionView.isScrollEnabled = false
-            containerDrawerView?.swipeToNextState = true
+
+        if fromMiddleDrag {
+            // Disable the bouncing effect when scroll view is scrolled to top
+            if topYContentOffset != nil {
+                if
+                    containerDrawerView?.status == .Top &&
+                    scrollView.contentOffset.y <= topYContentOffset!
+                {
+                    scrollView.contentOffset.y = topYContentOffset!
+                }
+            }
+            
+            // Get middle y content offset
+            if middleYContentOffset == nil {
+                middleYContentOffset = scrollView.contentOffset.y
+            }
+            
+            // Set scroll view content offset when in transition
+            if
+                middleYContentOffset != nil &&
+                topYContentOffset != nil &&
+                scrollView.contentOffset.y <= middleYContentOffset! &&
+                containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
+            {
+                scrollView.contentOffset.y = middleYContentOffset!
+            }
+            
+            // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
+            if containerDrawerView?.status != .Top {
+                profileCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
+                profileCollectionView.isScrollEnabled = false
+                containerDrawerView?.swipeToNextState = true
+            }
         }
     }
 }

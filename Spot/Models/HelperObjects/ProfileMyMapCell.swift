@@ -10,8 +10,10 @@ import UIKit
 
 class ProfileMyMapCell: UICollectionViewCell {
     private var mapImageCollectionView: UICollectionView!
-    var mapName: UILabel!
-    var myMapImages: [UIImage] = [] {
+    private var mapPrivateBlurView: UIVisualEffectView!
+    private var mapPrivateIcon: UIImageView!
+    private var mapName: UILabel!
+    private var myMapImages: [UIImage] = [] {
         didSet {
             if myMapImages.count >= 9 {
                 myMapImages = Array(myMapImages[0...8])
@@ -37,9 +39,11 @@ class ProfileMyMapCell: UICollectionViewCell {
         
     }
     
-    public func cellSetup(userAccount: String, myMapsImage: [UIImage]) {
+    public func cellSetup(userAccount: String, myMapsImage: [UIImage], relation: ProfileRelation) {
         mapName.text = "@\(userAccount)'s map"
         self.myMapImages = myMapsImage
+        mapPrivateBlurView.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
+        mapPrivateIcon.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
     }
 }
 
@@ -64,6 +68,24 @@ extension ProfileMyMapCell {
         mapImageCollectionView.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
             $0.height.equalTo(contentView.frame.width).multipliedBy(182/195)
+        }
+        
+        mapPrivateBlurView = {
+            let blurEffect = UIBlurEffect(style: .systemUltraThinMaterialLight)
+            let blurEffectView = UIVisualEffectView(effect: blurEffect)
+            blurEffectView.clipsToBounds = true
+            blurEffectView.frame = CGRect(x: 0, y: 0, width: contentView.frame.width, height: contentView.frame.width * 182/195)
+            blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            return blurEffectView
+        }()
+        mapImageCollectionView.addSubview(mapPrivateBlurView)
+        
+        mapPrivateIcon = UIImageView {
+            $0.image = UIImage(named: "UsersMapNotFriends")
+            mapImageCollectionView.addSubview($0)
+        }
+        mapPrivateIcon.snp.makeConstraints {
+            $0.center.equalToSuperview()
         }
         
         mapName = UILabel {
