@@ -349,7 +349,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 201 images.
+  /// This `R.image` struct is generated, and contains static references to 203 images.
   struct image {
     /// Image `AcceptedTheirFriendRequest`.
     static let acceptedTheirFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedTheirFriendRequest")
@@ -665,6 +665,8 @@ struct R: Rswift.Validatable {
     static let searchContactsIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "SearchContactsIcon")
     /// Image `SearchIcon`.
     static let searchIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "SearchIcon")
+    /// Image `SecretMap`.
+    static let secretMap = Rswift.ImageResource(bundle: R.hostingBundle, name: "SecretMap")
     /// Image `SelectButton`.
     static let selectButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "SelectButton")
     /// Image `SelectedButton`.
@@ -737,6 +739,8 @@ struct R: Rswift.Validatable {
     static let usernameAvailable = Rswift.ImageResource(bundle: R.hostingBundle, name: "UsernameAvailable")
     /// Image `UsernameTaken`.
     static let usernameTaken = Rswift.ImageResource(bundle: R.hostingBundle, name: "UsernameTaken")
+    /// Image `UsersMapNotFriends`.
+    static let usersMapNotFriends = Rswift.ImageResource(bundle: R.hostingBundle, name: "UsersMapNotFriends")
     /// Image `ViewTag`.
     static let viewTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ViewTag")
     /// Image `WeirdTag`.
@@ -1854,6 +1858,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "SecretMap", bundle: ..., traitCollection: ...)`
+    static func secretMap(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.secretMap, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "SelectButton", bundle: ..., traitCollection: ...)`
     static func selectButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.selectButton, compatibleWith: traitCollection)
@@ -2102,6 +2113,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "UsernameTaken", bundle: ..., traitCollection: ...)`
     static func usernameTaken(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.usernameTaken, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "UsersMapNotFriends", bundle: ..., traitCollection: ...)`
+    static func usersMapNotFriends(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.usersMapNotFriends, compatibleWith: traitCollection)
     }
     #endif
 
