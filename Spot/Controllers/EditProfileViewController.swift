@@ -149,12 +149,19 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func logoutAction() {
-        Mixpanel.mainInstance().track(event: "Logout")
-        self.dismiss(animated: false, completion: {
-            self.profileVC?.containerDrawerView?.closeAction()
-            UserDataModel.shared.destroy()
-            self.present(LandingPageController(), animated: true)
-        })
+        let alert = UIAlertController(title: "Are you sure you want to logout?", message: "", preferredStyle: .alert)
+        let logoutAction = UIAlertAction(title: "Logout", style: .default) { action in
+            Mixpanel.mainInstance().track(event: "Logout")
+            self.dismiss(animated: false, completion: {
+                self.profileVC?.containerDrawerView?.closeAction()
+                UserDataModel.shared.destroy()
+                self.present(LandingPageController(), animated: true)
+            })
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        alert.addAction(cancelAction)
+        alert.addAction(logoutAction)
+        present(alert, animated: true)
     }
     
     @objc func textFieldDidChange(_ textField: UITextField) {
