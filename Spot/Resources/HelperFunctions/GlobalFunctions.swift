@@ -15,6 +15,7 @@ import Geofirestore
 import MapKit
 import FirebaseFunctions
 import MapboxMaps
+import CoreData
 
 extension UIViewController {
     //reverse geocode should a string based on lat/long input and amount of detail that it wants to return
@@ -97,7 +98,7 @@ extension UIViewController {
         return commentHeight
     }
     
-    func addRemoveTagTable(text: String, cursorPosition: Int, tableParent: MapController.TagTableParent) {
+    func getTagUserString(text: String, cursorPosition: Int) -> (text: String, containsAt: Bool) {
     
         let atIndices = text.indices(of: "@")
         var wordIndices = text.indices(of: " ")
@@ -119,65 +120,12 @@ extension UIViewController {
                         let end = text.index(text.startIndex, offsetBy: cursorPosition)
                         let range = start..<end
                         let currentWord = text[range].replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "@", with: "").replacingOccurrences(of: "\n", with: "") ///  remove space and @ from word
-                        
-                        if let currentVC = self as? PostController {
-                            currentVC.mapVC.addTable(text: String(currentWord), parent: tableParent)
-                        }
-                        return
+                        return (currentWord, true)
                     } else { i += 1; continue }
                 }
             }
         }
-        
-        if let currentVC = self as? PostController {
-            currentVC.mapVC.removeTable()
-        }
-    }
-    
-    // run when user taps a username to tag
-    func addTaggedUserTo(text: String, username: String, cursorPosition: Int) -> String {
-        
-        var tagText = text
-        
-        var wordIndices = text.indices(of: " ")
-        wordIndices.append(contentsOf: text.indices(of: "\n")) /// add new lines
-        if !wordIndices.contains(0) { wordIndices.insert(0, at: 0) } /// first word not included
-        wordIndices.sort(by: {$0 < $1})
-        
-        var currentWordIndex = 0; var nextWordIndex = 0; var i = 0
-        /// get current word
-        for index in wordIndices {
-            if index < cursorPosition {
-                if i == wordIndices.count - 1 { currentWordIndex = index; nextWordIndex = text.count }
-                else if cursorPosition <= wordIndices[i + 1] { currentWordIndex = index; nextWordIndex = wordIndices[i + 1] }
-                i += 1
-            }
-        }
-        
-        let suffix = text.suffix(text.count - currentWordIndex) /// get end of string to figure out where @ is
-        
-        /// from index represents the text for this string after the @
-        guard let atIndex = String(suffix).indices(of: "@").first else { return "" }
-        let start = currentWordIndex + atIndex + 1
-        let fromIndex = text.index(text.startIndex, offsetBy: start)
-        
-        /// word length = number of characters typed of the username so far
-        let wordLength = nextWordIndex - currentWordIndex - 2
-        /// remove any characters after the @
-
-        /// patch fix for emojis not working at the end of strings -> start from end of string and work backwards
-        if nextWordIndex == tagText.count {
-            while tagText.last != "@" { tagText.removeLast() }
-            tagText.append(contentsOf: username)
-            
-        } else {
-            /// standard removal process with string.index -> string.index is fucked up if using emojis bc it uses utf16 characters so this might fail if you try to insert in the middle of a string with an emoji coming before it in that string but this is an edge case
-            if wordLength > 0 {for _ in 0...wordLength - 1 { tagText.remove(at: fromIndex) } }
-            /// insert username after @
-            tagText.insert(contentsOf: username, at: fromIndex) //// append username
-        }
-
-        return tagText
+        return ("", false)
     }
     
     func isFriends(id: String) -> Bool {
@@ -642,7 +590,7 @@ extension UIViewController {
             }
         }
         
-        var interval = 0.7/Double(images.count)
+        let interval = 0.7/Double(images.count)
         var downloadCount: CGFloat = 0
         
         for image in images {
@@ -673,6 +621,7 @@ extension UIViewController {
                     DispatchQueue.main.async {
                         let progress = downloadCount * interval
                         let frameWidth: CGFloat = min(((0.3 + progress) * fullWidth), fullWidth)
+                        print("frame width", frameWidth)
                         progressFill.snp.updateConstraints { $0.width.equalTo(frameWidth) }
                         UIView.animate(withDuration: 0.15) {
                             self.view.layoutIfNeeded()
@@ -891,6 +840,33 @@ extension UIViewController {
             }
         }
         return queriedUsers
+    }
+    
+    func deletePostDraft(timestampID: Int64) {
+        
+        guard let appDelegate =
+                UIApplication.shared.delegate as? AppDelegate else {
+            return
+        }
+        let managedContext =
+        appDelegate.persistentContainer.viewContext
+        let fetchRequest =
+        NSFetchRequest<PostDraft>(entityName: "PostDraft")
+        fetchRequest.predicate = NSPredicate(format: "timestamp == %d", timestampID)
+        do {
+            let drafts = try managedContext.fetch(fetchRequest)
+            for draft in drafts {
+                managedContext.delete(draft)
+            }
+            do {
+                try managedContext.save()
+            } catch let error as NSError {
+                print("could not save. \(error)")
+            }
+        }
+        catch let error as NSError {
+            print("could not fetch. \(error)")
+        }
     }
 }
 
@@ -1166,6 +1142,13 @@ extension String {
         newNumber = String(newNumber.suffix(10)) /// match based on last 10 digits to eliminate country codes and formatting
         return newNumber
     }
+    
+    func spacesTrimmed() -> String {
+        var newString = self
+        while newString.last?.isWhitespace ?? false { newString = String(newString.dropLast(1))}
+        while newString.first?.isWhitespace ?? false { newString = String(newString.dropFirst(1))}
+        return newString
+    }
 }
 
 extension UIScrollView {
@@ -1384,14 +1367,30 @@ extension UINavigationBar {
         if #available(iOS 15.0, *) {
             let appearance = UINavigationBarAppearance()
             appearance.configureWithTransparentBackground()
-            appearance.backgroundImage = UIImage(color: UIColor.black)
+            appearance.backgroundColor = .black
+            appearance.titleTextAttributes[.foregroundColor] = UIColor.white
+            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)!
             standardAppearance = appearance
             scrollEdgeAppearance = appearance
         } else {
             setBackgroundImage(UIImage(color: UIColor.black), for: .default)
         }
     }
-        
+    
+    func addWhiteBackground() {
+        if #available(iOS 15.0, *) {
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithTransparentBackground()
+            appearance.backgroundColor = .white
+            appearance.titleTextAttributes[.foregroundColor] = UIColor.black
+            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)!
+            standardAppearance = appearance
+            scrollEdgeAppearance = appearance
+        } else {
+            setBackgroundImage(UIImage(color: UIColor.white), for: .default)
+        }
+    }
+    
     func removeBackgroundImage() {
                 
         if #available(iOS 15.0, *) {
@@ -1447,6 +1446,51 @@ extension UITextView {
             cursorPosition = text.distance(from: text.startIndex, to: indexPosition)
         }
         return cursorPosition
+    }
+    
+    // run when user taps a username to tag
+    func addUsernameAtCursor(username: String) {
+        var tagText = text ?? ""
+        let cursorPosition = getCursorPosition()
+        
+        var wordIndices = text.indices(of: " ")
+        wordIndices.append(contentsOf: text.indices(of: "\n")) /// add new lines
+        if !wordIndices.contains(0) { wordIndices.insert(0, at: 0) } /// first word not included
+        wordIndices.sort(by: {$0 < $1})
+        
+        var currentWordIndex = 0; var nextWordIndex = 0; var i = 0
+        /// get current word
+        for index in wordIndices {
+            if index < cursorPosition {
+                if i == wordIndices.count - 1 { currentWordIndex = index; nextWordIndex = text.count }
+                else if cursorPosition <= wordIndices[i + 1] { currentWordIndex = index; nextWordIndex = wordIndices[i + 1] }
+                i += 1
+            }
+        }
+        
+        let suffix = text.suffix(text.count - currentWordIndex) /// get end of string to figure out where @ is
+        
+        /// from index represents the text for this string after the @
+        guard let atIndex = String(suffix).indices(of: "@").first else { return }
+        let start = currentWordIndex + atIndex + 1
+        let fromIndex = text.index(text.startIndex, offsetBy: start)
+        
+        /// word length = number of characters typed of the username so far
+        let wordLength = nextWordIndex - currentWordIndex - 2
+        /// remove any characters after the @
+
+        /// patch fix for emojis not working at the end of strings -> start from end of string and work backwards
+        if nextWordIndex == tagText.count {
+            while tagText.last != "@" { tagText.removeLast() }
+            tagText.append(contentsOf: username)
+            
+        } else {
+            /// standard removal process with string.index -> string.index is fucked up if using emojis bc it uses utf16 characters so this might fail if you try to insert in the middle of a string with an emoji coming before it in that string but this is an edge case
+            if wordLength > 0 {for _ in 0...wordLength - 1 { tagText.remove(at: fromIndex) } }
+            /// insert username after @
+            tagText.insert(contentsOf: username, at: fromIndex) //// append username
+        }
+        text = tagText
     }
 }
 

@@ -87,7 +87,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
             let finalRect = CGRect(x: 0, y: maskY, width: UIScreen.main.bounds.width, height: maskHeight)
             self.maskImage.frame = finalRect
             if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.frame = CGRect(x: 7, y: finalRect.height - 54, width: 74, height: 46) }
-            if self.maskImage.circleView != nil { self.maskImage.circleView.frame = CGRect(x: finalRect.maxX - 52, y: finalRect.height - 53, width: 40, height: 40); self.maskImage.circleView.number.frame = CGRect(x: 0, y: self.maskImage.circleView.bounds.height/2 - 15/2, width: self.maskImage.circleView.bounds.width, height: 15) }
+            if self.maskImage.circleView != nil { self.maskImage.circleView.frame = CGRect(x: finalRect.maxX - 52, y: finalRect.height - 53, width: 40, height: 40) }
             if self.maskImage.selectButton != nil { self.maskImage.selectButton.frame = CGRect(x: finalRect.maxX - 150, y: finalRect.height - 54, width: 98, height: 43) }
             if self.maskImage.imageMask != nil { self.maskImage.imageMask.frame = CGRect(x: 0, y: finalRect.height * 2/3, width: finalRect.width, height: finalRect.height/3) }
             
@@ -293,13 +293,17 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     var galleryCircle: CircleView!
     var liveIndicator: UIImageView!
     
-    var imageObject: ImageObject!
     lazy var activityIndicator = UIActivityIndicatorView()
     lazy var imageFetcher = ImageFetcher()
     
-    var circleIndex = 0
+    var selected = false
     var animationIndex = 0
     var directionUp = true
+    var imageObject: ImageObject! {
+        didSet {
+            selected = UploadPostModel.shared.selectedObjects.contains(where: {$0.id == imageObject.id})
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -368,13 +372,12 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
             contentView.addSubview(activityIndicator)
         }
         
-        var index = 0
-        if let i = UploadPostModel.shared.selectedObjects.firstIndex(where: {$0.id == imageObject.id}) { index = i + 1; circleIndex = i + 1 }
+        let selected = UploadPostModel.shared.selectedObjects.contains(where: {$0.id == imageObject.id})
         
         if selectButton != nil { selectButton.setTitle("", for: .normal) }
         let selectFrame = galleryAnimation ? CGRect(x: contentView.frame.width - 50, y: contentView.frame.height - 18, width: 39.5, height: 15) : CGRect(x: contentView.frame.maxX - 150, y: contentView.frame.height - 54, width: 98, height: 43)
         selectButton = UIButton(frame: selectFrame)
-        let title = circleIndex > 0 ? "Selected" : "Select"
+        let title = selected ? "Selected" : "Select"
         selectButton.setTitle(title, for: .normal)
         selectButton.setTitleColor(.white, for: .normal)
         selectButton.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 18)
@@ -382,13 +385,13 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         selectButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 8)
         selectButton.contentHorizontalAlignment = .right
         selectButton.contentVerticalAlignment = .center
-        selectButton.alpha = UploadPostModel.shared.selectedObjects.count > 4 ? 0.3 : 1.0
+        selectButton.alpha = UploadPostModel.shared.selectedObjects.count == 5 && !selected ? 0.3 : 1.0
         contentView.addSubview(selectButton)
         
         if circleView != nil { circleView.removeFromSuperview() }
         let circleFrame = galleryAnimation ? CGRect(x: contentView.frame.maxX - 17, y: contentView.frame.height - 17, width: 15, height: 15) : CGRect(x: contentView.frame.maxX - 52, y: contentView.frame.height - 53, width: 40, height: 40)
         circleView = CircleView(frame: circleFrame)
-        circleView.setUp(index: index)
+        circleView.selected = selected
         circleView.layer.cornerRadius = 20
         contentView.addSubview(circleView)
         
@@ -399,7 +402,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         /// for animation back to gallery
         galleryMask = UIView(frame: self.bounds)
         galleryMask.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(0.5)
-        galleryMask.isHidden = index == 0
+        galleryMask.isHidden = !selected
         galleryMask.alpha = 0.0
         contentView.addSubview(galleryMask)
         
@@ -410,7 +413,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         contentView.addSubview(liveIndicator)
         
         galleryCircle = CircleView(frame: CGRect(x: contentView.frame.width - 27, y: 6, width: 23, height: 23))
-        galleryCircle.setUp(index: index)
+        galleryCircle.selected = selected
         galleryCircle.layer.cornerRadius = 11.5
         galleryCircle.alpha = 0.0
         contentView.addSubview(galleryCircle)
@@ -477,28 +480,24 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
     
     @objc func circleTap(_ sender: UIButton) {
          
-        let selected = circleIndex == 0
-        if selected && UploadPostModel.shared.selectedObjects.count == 5 { return } /// 5 images max
+        if !selected && UploadPostModel.shared.selectedObjects.count == 5 { return } /// 5 images max
+        selected = !selected
         let title = selected ? "Selected" : "Select"
         selectButton.setTitle(title, for: .normal)
         
         Mixpanel.mainInstance().track(event: "ImagePreviewSelectImage", properties: ["selected": selected])
         
         guard let previewView = superview as? ImagePreviewView else { return }
-        
         // defer to gallery/cluster select methods
-        
         if let gallery = previewView.galleryCollection.viewContainingController() as? PhotoGalleryController {
             selected ? gallery.select(index: previewView.galleryIndex) : gallery.deselect(index: previewView.galleryIndex)
-            circleIndex = selected ? UploadPostModel.shared.selectedObjects.count : 0
         }
         
-        for sub in circleView.subviews { sub.removeFromSuperview() }
-        circleView.setUp(index: circleIndex)
+        circleView.selected = selected
         
         /// animation methods
         galleryMask.isHidden = !selected
-        galleryCircle.setUp(index: circleIndex)
+        galleryCircle.selected = selected
     }
     
     func updateParent() {

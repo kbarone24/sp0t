@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import Photos
+import Mixpanel
 
 class UploadPostModel {
     
@@ -49,7 +50,7 @@ class UploadPostModel {
     }
     
     func selectObject(imageObject: ImageObject, selected: Bool) {
-        
+        Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": selected])
         if let i = imageObjects.firstIndex(where: {$0.image.id == imageObject.id}) {
             imageObjects[i].selected = selected
             if !selected { imageObjects[i].image.animationImages.removeAll(); imageObjects[i].image.gifMode = false }
@@ -93,6 +94,24 @@ class UploadPostModel {
             guard let self = self else { return }
             self.postObject.city = city
         }
+    }
+    
+    func setTaggedUsers() {
+        var selectedUsers: [UserProfile] = []
+        let words = postObject.caption.components(separatedBy: .whitespacesAndNewlines)
+        
+        for w in words {
+            let username = String(w.dropFirst())
+            if w.hasPrefix("@") {
+                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
+                    selectedUsers.append(f)
+                }
+            }
+        }
+        let usernames = selectedUsers.map({$0.username})
+        postObject.taggedUsers = usernames
+        postObject.addedUsers = usernames
+        postObject.taggedUserIDs = selectedUsers.map({$0.id!})
     }
     
     func reverseGeocodeFromCoordinate(completion: @escaping (_ address: String) -> Void) {
