@@ -64,11 +64,15 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     override func viewDidLoad() {
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
         
+        print("CALLED HERE")
+        
         super.viewDidLoad()
         
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         
         setupView()
+        
         
         self.title = "Notifications"
         navigationItem.backButtonTitle = ""
@@ -90,6 +94,10 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             target: self,
             action: #selector(self.leaveNotifs(_:))
         )
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        print("hhhhhh")
     }
     
     
@@ -277,6 +285,26 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         }
     }
     
+    @objc func notifyFriendRequestAccept(_ notification: NSNotification){
+        print("notified")
+        if(pendingFriendRequests.count != 0){
+            for i in 0...pendingFriendRequests.count-1{
+                print("going into loop")
+                if let noti = notification.userInfo?["notiID"] as? String {
+                    print("--", pendingFriendRequests[i].id)
+                    print("---", noti)
+                    if(pendingFriendRequests[i].id == noti){
+                        print("HEWWO")
+                    var newNotif = pendingFriendRequests.remove(at: i)
+                        newNotif.status = "accepted"
+                        notifications.append(newNotif)
+                    }
+                }
+            }
+        }
+        self.sortAndReload()
+    }
+    
     ///modified copy from global functions
     func getTimeString(postTime: Firebase.Timestamp) -> String {
         let seconds = postTime.seconds
@@ -385,6 +413,8 @@ extension NotificationsController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
+        print("tableViewCalled")
         
         let amtFriendReq = pendingFriendRequests.isEmpty ? 0 : 1
         if indexPath.row >= notifications.count + amtFriendReq{

@@ -112,7 +112,7 @@ class ActivityCell: UITableViewCell {
         
         let postImageButton = UIButton()
         contentView.addSubview(postImageButton)
-        postImageButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
+        postImageButton.addTarget(self, action: #selector(postTap(_:)), for: .touchUpInside)
         
         postImageButton.snp.makeConstraints{
             $0.trailing.equalToSuperview().offset(-14)
@@ -285,7 +285,8 @@ class ActivityCell: UITableViewCell {
     
     @objc func postTap(_ sender: Any){
         //SHOW POST INSTEAD ONCE YOU CAN
-        notificationControllerDelegate?.getProfile(userProfile: notification.userInfo!)
+        print("UHHHHHHHH????")
+        notificationControllerDelegate?.deleteFriend(friendID: notification.userInfo!.id!)
     }
     
     func resetCell() {
