@@ -8,6 +8,7 @@
 
 import UIKit
 import SnapKit
+import Mixpanel
 
 enum ProfileRelation {
     case myself
@@ -193,18 +194,16 @@ extension ProfileHeaderCell {
     @objc func actionButtonAction() {
         switch relation {
         case .myself:
-            UIView.animate(withDuration: 0.15) {
-                self.actionButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-            } completion: { (Bool) in
-                UIView.animate(withDuration: 0.15) {
-                    self.actionButton.transform = .identity
-                }
-            }
+            // Action is set in ProfileViewController
+            Mixpanel.mainInstance().track(event: "EditButtonAction")
         case .friend:
-            print("Friend")
+            // No Action
+            Mixpanel.mainInstance().track(event: "ProfileFriendButton")
+            return
         case .pending, .received:
             if pendingFriendNotiID != nil {
                 if relation == .pending {
+                    Mixpanel.mainInstance().track(event: "ProfilePendingButton")
                     let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
                     let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
                         self.removeFriendRequest(friendID: self.profile.id!, notificationID: self.pendingFriendNotiID!)
@@ -215,6 +214,7 @@ extension ProfileHeaderCell {
                     let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
                     containerVC.present(alert, animated: true)
                 } else {
+                    Mixpanel.mainInstance().track(event: "ProfileAcceptButton")
                     acceptFriendRequest(friendID: profile.id!, notificationID: pendingFriendNotiID!)
                 }
                 actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
@@ -224,6 +224,7 @@ extension ProfileHeaderCell {
                 actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
             }
         case .stranger:
+            Mixpanel.mainInstance().track(event: "ProfileAddFriendButton")
             addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: profile.id!)
             actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
@@ -233,8 +234,16 @@ extension ProfileHeaderCell {
         case .none:
             return
         }
+        UIView.animate(withDuration: 0.15) {
+            self.actionButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        } completion: { (Bool) in
+            UIView.animate(withDuration: 0.15) {
+                self.actionButton.transform = .identity
+            }
+        }
     }
     
     @objc func locationButtonAction() {
+        Mixpanel.mainInstance().track(event: "LocationButtonAction")
     }
 }

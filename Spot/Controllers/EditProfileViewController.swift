@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Mixpanel
 import Firebase
 import FirebaseFunctions
 
@@ -60,8 +61,10 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func profilePicSelectionAction() {
+        Mixpanel.mainInstance().track(event: "ProfilePicSelection")
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         let takePicAction = UIAlertAction(title: "Take picture", style: .default) { takePic in
+            Mixpanel.mainInstance().track(event: "ProfilePicSelectCamera")
             let picker = UIImagePickerController()
             picker.allowsEditing = true
             picker.delegate = self
@@ -70,6 +73,7 @@ class EditProfileViewController: UIViewController {
         }
         takePicAction.titleTextColor = .black
         let choosePicAction = UIAlertAction(title: "Choose from gallery", style: .default) { choosePic in
+            Mixpanel.mainInstance().track(event: "ProfilePicSelectGallery")
             let picker = UIImagePickerController()
             picker.allowsEditing = true
             picker.delegate = self
@@ -86,10 +90,11 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func avatarEditAction() {
-        
+        Mixpanel.mainInstance().track(event: "AvatarSelect")
     }
     
     @objc func saveAction() {
+        Mixpanel.mainInstance().track(event: "EditProfileSave")
         let userRef = db.collection("users").document(userProfile!.id!)
         do {
             if nameChanged {
@@ -144,6 +149,7 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func logoutAction() {
+        Mixpanel.mainInstance().track(event: "Logout")
         self.dismiss(animated: false, completion: {
             self.profileVC?.containerDrawerView?.closeAction()
             UserDataModel.shared.destroy()
