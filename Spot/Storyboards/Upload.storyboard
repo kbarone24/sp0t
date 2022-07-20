@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="aVO-qC-Pik">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
@@ -11,16 +12,16 @@
         <!--Invite Friends Controller-->
         <scene sceneID="pb3-Hr-iSF">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="lfx-5W-fsk" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <viewController storyboardIdentifier="InviteFriends" id="avE-oH-rjk" customClass="InviteFriendsController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="IgK-r2-VwG">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="9cb-j8-M4Q"/>
                         <color key="backgroundColor" name="SpotBlack"/>
                     </view>
                     <extendedEdge key="edgesForExtendedLayout"/>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="lfx-5W-fsk" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="2435" y="1193"/>
         </scene>
@@ -29,7 +30,7 @@
             <objects>
                 <viewController storyboardIdentifier="AVCameraController" extendedLayoutIncludesOpaqueBars="YES" hidesBottomBarWhenPushed="YES" id="aVO-qC-Pik" customClass="AVCameraController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="U5b-7z-zk2">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="Lfb-E1-zm7"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
@@ -46,7 +47,7 @@
             <objects>
                 <viewController storyboardIdentifier="PhotoGallery" id="uGm-Qn-dbA" customClass="PhotoGalleryController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="blE-5x-GzP">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="sq2-ZJ-UGO"/>
                         <color key="backgroundColor" name="SpotBlack"/>
@@ -60,16 +61,16 @@
         <!--Drafts View Controller-->
         <scene sceneID="WZ8-Ef-YVv">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="kFh-Ti-U4s" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
                 <viewController storyboardIdentifier="Drafts" automaticallyAdjustsScrollViewInsets="NO" id="NC7-bk-Gcm" customClass="DraftsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="ah1-3m-XZl">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="FEq-9I-OZr"/>
                         <color key="backgroundColor" name="SpotBlack"/>
                     </view>
                     <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="kFh-Ti-U4s" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-2726" y="-463"/>
         </scene>
@@ -78,7 +79,7 @@
             <objects>
                 <viewController storyboardIdentifier="ChooseSpot" id="jnQ-N9-T5k" customClass="ChooseSpotController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="bez-XO-16P">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="doe-vA-hsT"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
@@ -94,7 +95,7 @@
             <objects>
                 <viewController storyboardIdentifier="ImagePreview" extendedLayoutIncludesOpaqueBars="YES" id="jaA-Bx-D2z" customClass="ImagePreviewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="YqA-LV-ZJa">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="taH-3B-1fh"/>
                         <color key="backgroundColor" name="SpotBlack"/>
@@ -110,7 +111,7 @@
             <objects>
                 <viewController storyboardIdentifier="ShareTo" interfaceStyle="light" id="u0Y-6X-q9u" customClass="ChooseMapController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="9jj-ue-awx">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="lOn-1p-JYQ"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
@@ -126,7 +127,7 @@
             <objects>
                 <viewController storyboardIdentifier="NewMap" id="XNH-rP-rnG" customClass="NewMapController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="eoP-ht-ntF">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="j27-zL-GPx"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>

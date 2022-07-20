@@ -484,7 +484,7 @@ class CommentCell: UITableViewCell {
         
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
 
         username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: 14, width: UIScreen.main.bounds.width - 108, height: 16))
@@ -777,7 +777,7 @@ class LikerCell: UITableViewCell {
         
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
                         
         username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: 20.5, width: 150, height: 15))

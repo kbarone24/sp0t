@@ -721,7 +721,7 @@ class SuggestedFriendCell: UITableViewCell {
         let url = user.imageURL
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
 
         nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 11, y: 13.5, width: 200, height: 15))
@@ -853,7 +853,7 @@ class SuggestedFriendSearchCell: UITableViewCell {
         let url = user.imageURL
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
 
         nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: 16, width: 200, height: 15))
