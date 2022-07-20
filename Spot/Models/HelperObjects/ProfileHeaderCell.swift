@@ -206,6 +206,10 @@ extension ProfileHeaderCell {
         case .pending, .received:
             if pendingFriendNotiID != nil {
                 relation == .pending ? removeFriendRequest(friendID: profileID, notificationID: pendingFriendNotiID!) : acceptFriendRequest(friendID: profileID, notificationID: pendingFriendNotiID!)
+                
+                let notiID:[String: String?] = ["notiID": pendingFriendNotiID]
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: notiID)
+
                 actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
                 actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
                 actionButton.setTitle("Friends", for: .normal)
