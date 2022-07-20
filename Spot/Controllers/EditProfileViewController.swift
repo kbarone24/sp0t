@@ -111,43 +111,6 @@ class EditProfileViewController: UIViewController {
         }
     }
     
-    func updateProfileImage(){
-        let imageId = UUID().uuidString
-        let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageId)")
-        let image = profileImage.image
-        guard var imageData = image!.jpegData(compressionQuality: 0.5) else {return}
-        
-        if imageData.count > 1000000 {
-            imageData = image!.jpegData(compressionQuality: 0.3)!
-        }
-        
-        var urlStr: String = ""
-        let metadata = StorageMetadata()
-        metadata.contentType = "image/jpeg"
-        
-        storageRef.putData(imageData, metadata: metadata){metadata, error in
-            
-            if error == nil, metadata != nil {
-                //get download url
-                storageRef.downloadURL(completion: { [weak self] url, error in
-                    if let error = error{
-                        print("\(error.localizedDescription)")
-                    }
-                    
-                    urlStr = (url?.absoluteString)!
-                    guard let self = self else { return }
-                    
-                    let values = ["imageURL": urlStr]
-                    self.db.collection("users").document(self.userProfile!.id!).setData(values, merge: true)
-                    self.dismiss(animated: true) {
-                        self.profileVC?.userProfile = UserDataModel.shared.userInfo
-                    }
-                    return
-                })
-            } else { print("handle error")}
-        }
-    }
-    
     @objc func logoutAction() {
         let alert = UIAlertController(title: "Are you sure you want to log out?", message: "", preferredStyle: .alert)
         let logoutAction = UIAlertAction(title: "Log out", style: .default) { action in
@@ -351,6 +314,43 @@ extension EditProfileViewController {
         logoutButton.snp.makeConstraints {
             $0.bottom.equalToSuperview().inset(73)
             $0.centerX.equalToSuperview()
+        }
+    }
+    
+    private func updateProfileImage(){
+        let imageId = UUID().uuidString
+        let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageId)")
+        let image = profileImage.image
+        guard var imageData = image!.jpegData(compressionQuality: 0.5) else {return}
+        
+        if imageData.count > 1000000 {
+            imageData = image!.jpegData(compressionQuality: 0.3)!
+        }
+        
+        var urlStr: String = ""
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        
+        storageRef.putData(imageData, metadata: metadata){metadata, error in
+            
+            if error == nil, metadata != nil {
+                //get download url
+                storageRef.downloadURL(completion: { [weak self] url, error in
+                    if let error = error{
+                        print("\(error.localizedDescription)")
+                    }
+                    
+                    urlStr = (url?.absoluteString)!
+                    guard let self = self else { return }
+                    
+                    let values = ["imageURL": urlStr]
+                    self.db.collection("users").document(self.userProfile!.id!).setData(values, merge: true)
+                    self.dismiss(animated: true) {
+                        self.profileVC?.userProfile = UserDataModel.shared.userInfo
+                    }
+                    return
+                })
+            } else { print("handle error")}
         }
     }
 }
