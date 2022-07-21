@@ -7,11 +7,15 @@
 //
 
 import UIKit
+import Mixpanel
+import Firebase
+import FirebaseFunctions
 
 class EditProfileViewController: UIViewController {
     
     private var editLabel: UILabel!
     private var backButton: UIButton!
+    private var doneButton: UIButton!
     private var profileImage: UIImageView!
     private var profilePicSelectionButton: UIButton!
     private var avatarLabel: UILabel!
@@ -21,12 +25,15 @@ class EditProfileViewController: UIViewController {
     private var nameTextfield: UITextField!
     private var locationLabel: UILabel!
     private var locationTextfield: UITextField!
+    private var logoutButton: UIButton!
     
-    private var privateLabel: UILabel!
-    private var privateDescription: UILabel!
-    private var privateSelection: UISwitch!
+    private var nameChanged: Bool = false
+    private var locationChanged: Bool = false
+    private var profileChanged: Bool = false
     
+    public var profileVC: ProfileViewController?
     private var userProfile: UserProfile?
+    private let db = Firestore.firestore()
     
     init(userProfile: UserProfile? = nil) {
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
@@ -54,10 +61,82 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func profilePicSelectionAction() {
+        Mixpanel.mainInstance().track(event: "ProfilePicSelection")
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        let takePicAction = UIAlertAction(title: "Take picture", style: .default) { takePic in
+            Mixpanel.mainInstance().track(event: "ProfilePicSelectCamera")
+            let picker = UIImagePickerController()
+            picker.allowsEditing = true
+            picker.delegate = self
+            picker.sourceType = .camera
+            self.present(picker, animated: true)
+        }
+        takePicAction.titleTextColor = .black
+        let choosePicAction = UIAlertAction(title: "Choose from gallery", style: .default) { choosePic in
+            Mixpanel.mainInstance().track(event: "ProfilePicSelectGallery")
+            let picker = UIImagePickerController()
+            picker.allowsEditing = true
+            picker.delegate = self
+            picker.sourceType = .photoLibrary
+            self.present(picker, animated: true)
+        }
+        choosePicAction.titleTextColor = .black
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        cancelAction.titleTextColor = .black
+        alertController.addAction(takePicAction)
+        alertController.addAction(choosePicAction)
+        alertController.addAction(cancelAction)
+        present(alertController, animated: true)
     }
     
     @objc func avatarEditAction() {
+        Mixpanel.mainInstance().track(event: "AvatarSelect")
     }
+    
+    @objc func saveAction() {
+        Mixpanel.mainInstance().track(event: "EditProfileSave")
+        let userRef = db.collection("users").document(userProfile!.id!)
+        do {
+            if nameChanged {
+                userProfile?.name = nameTextfield.text!
+            }
+            if locationChanged {
+                userProfile?.currentLocation = locationTextfield.text!
+            }
+            try userRef.setData(from: userProfile, merge: true)
+
+            profileChanged ? updateProfileImage() : self.dismiss(animated: true)
+        } catch {
+            //handle error
+        }
+    }
+    
+    @objc func logoutAction() {
+        let alert = UIAlertController(title: "Are you sure you want to log out?", message: "", preferredStyle: .alert)
+        let logoutAction = UIAlertAction(title: "Log out", style: .default) { action in
+            Mixpanel.mainInstance().track(event: "Logout")
+            self.dismiss(animated: false, completion: {
+                self.profileVC?.containerDrawerView?.closeAction()
+                UserDataModel.shared.destroy()
+                self.present(LandingPageController(), animated: true)
+            })
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        alert.addAction(cancelAction)
+        alert.addAction(logoutAction)
+        present(alert, animated: true)
+    }
+    
+    @objc func textFieldDidChange(_ textField: UITextField) {
+        if textField == nameTextfield {
+            nameChanged = true
+        }
+        
+        if textField == locationTextfield {
+            locationChanged = true
+        }
+    }
+    
 }
 
 extension EditProfileViewController {
@@ -77,14 +156,31 @@ extension EditProfileViewController {
         }
         
         backButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
-            $0.setTitle("", for: .normal)
+            $0.setTitle("Cancel", for: .normal)
+            $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Medium", size: 14)
             $0.addTarget(self, action: #selector(dismissAction), for: .touchUpInside)
             view.addSubview($0)
         }
         backButton.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(22)
             $0.top.equalTo(editLabel)
+        }
+        
+        doneButton = UIButton {
+            $0.setTitle("Done", for: .normal)
+            $0.setTitleColor(.black, for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+            $0.contentEdgeInsets = UIEdgeInsets(top: 9, left: 18, bottom: 9, right: 18)
+            $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            $0.clipsToBounds = true
+            $0.layer.cornerRadius = 37 / 2
+            $0.addTarget(self, action: #selector(saveAction), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        doneButton.snp.makeConstraints {
+            $0.centerY.equalTo(editLabel)
+            $0.trailing.equalToSuperview().inset(20)
         }
         
         profileImage = UIImageView {
@@ -168,6 +264,7 @@ extension EditProfileViewController {
             $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
+            $0.addTarget(self, action: #selector(EditProfileViewController.textFieldDidChange(_:)), for: .editingChanged)
             view.addSubview($0)
         }
         nameTextfield.snp.makeConstraints {
@@ -197,6 +294,7 @@ extension EditProfileViewController {
             $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
+            $0.addTarget(self, action: #selector(EditProfileViewController.textFieldDidChange(_:)), for: .editingChanged)
             view.addSubview($0)
         }
         locationTextfield.snp.makeConstraints {
@@ -205,5 +303,67 @@ extension EditProfileViewController {
             $0.trailing.equalToSuperview().inset(63)
             $0.height.equalTo(36)
         }
+        
+        logoutButton = UIButton {
+            $0.setTitle("Log out", for: .normal)
+            $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 17.5)
+            $0.addTarget(self, action: #selector(logoutAction), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        logoutButton.snp.makeConstraints {
+            $0.bottom.equalToSuperview().inset(73)
+            $0.centerX.equalToSuperview()
+        }
+    }
+    
+    private func updateProfileImage(){
+        let imageId = UUID().uuidString
+        let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageId)")
+        let image = profileImage.image
+        guard var imageData = image!.jpegData(compressionQuality: 0.5) else {return}
+        
+        if imageData.count > 1000000 {
+            imageData = image!.jpegData(compressionQuality: 0.3)!
+        }
+        
+        var urlStr: String = ""
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        
+        storageRef.putData(imageData, metadata: metadata){metadata, error in
+            
+            if error == nil, metadata != nil {
+                //get download url
+                storageRef.downloadURL(completion: { [weak self] url, error in
+                    if let error = error{
+                        print("\(error.localizedDescription)")
+                    }
+                    
+                    urlStr = (url?.absoluteString)!
+                    guard let self = self else { return }
+                    
+                    let values = ["imageURL": urlStr]
+                    self.db.collection("users").document(self.userProfile!.id!).setData(values, merge: true)
+                    self.dismiss(animated: true) {
+                        self.profileVC?.userProfile = UserDataModel.shared.userInfo
+                    }
+                    return
+                })
+            } else { print("handle error")}
+        }
+    }
+}
+
+extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        guard let image = info[.editedImage] as? UIImage else { return }
+        profileImage.image = image
+        profileChanged = true
+        dismiss(animated: true)
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true)
     }
 }

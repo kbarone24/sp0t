@@ -42,6 +42,7 @@ struct UserProfile: Identifiable, Codable {
     
     
     enum CodingKeys: String, CodingKey {
+        case id
         case avatarURL
         case currentLocation
         case friendIDs = "friendsList"

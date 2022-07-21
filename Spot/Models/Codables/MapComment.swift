@@ -26,6 +26,7 @@ struct MapComment: Identifiable, Codable {
     var seconds: Int64 = 0
     
     enum CodingKeys: String, CodingKey {
+        case id
         case comment
         case commenterID
         case likers

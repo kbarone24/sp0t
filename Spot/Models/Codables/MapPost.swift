@@ -23,6 +23,7 @@ struct MapPost: Identifiable, Codable {
     var createdBy: String? = ""
     var frameIndexes: [Int]? = []
     var friendsList: [String]
+    var hideFromFeed: Bool? = false
     var imageLocations: [[String: Double]]? = [[:]]
     var imageURLs: [String]
     var inviteList: [String]? = []
@@ -48,6 +49,7 @@ struct MapPost: Identifiable, Codable {
     // supplemental values
     var addedUserProfiles: [UserProfile]? = []
     var userInfo: UserProfile?
+    var mapInfo: CustomMap?
     var commentList: [MapComment] = []
     var postImage: [UIImage] = []
     
@@ -62,6 +64,7 @@ struct MapPost: Identifiable, Codable {
     var seen: Bool? = true
     
     enum CodingKeys: String, CodingKey {
+        case id
         case addedUsers
         case aspectRatios
         case caption
@@ -69,6 +72,7 @@ struct MapPost: Identifiable, Codable {
         case createdBy
         case frameIndexes
         case friendsList
+        case hideFromFeed
         case imageLocations
         case imageURLs
         case inviteList
@@ -86,7 +90,6 @@ struct MapPost: Identifiable, Codable {
         case spotLong
         case spotName
         case spotPrivacy
-        case tag
         case taggedUserIDs
         case taggedUsers
         case timestamp

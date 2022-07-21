@@ -16,26 +16,26 @@ import Mixpanel
 import JPSVolumeButtonHandler
 
 class AVCameraController: UIViewController {
-        
+    
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     let db: Firestore! = Firestore.firestore()
-
+    
     var cameraController: AVSpotCamera!
     unowned var mapVC: MapController!
-
+    
     var spotObject: MapSpot!
     var volumeHandler: JPSVolumeButtonHandler! /// capture image on volume button tap
     
-    var cameraView: UIView!
+    lazy var cameraView = UIView()
     var cameraButton: UIButton!
     var galleryButton: UIButton!
     var flashButton: UIButton!
     var cancelButton: UIButton!
     var cameraRotateButton: UIButton!
     var cameraMask: UIView!
-            
+    
     lazy var animationImages: [UIImage] = []
-        
+    
     var lastZoomFactor: CGFloat = 1.0 /// use with pinch-to-zoom
     var initialBrightness: CGFloat = 0.0 /// use with front-facing flash
     
@@ -49,12 +49,14 @@ class AVCameraController: UIViewController {
     var cancelOnDismiss = false
     
     var accessMask: CameraAccessView!
-        
+    var postDraft: PostDraft?
+    var failedPostView: FailedPostView?
+    
     override func viewWillAppear(_ animated: Bool) {
         
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(true, animated: true)
-                
+        
         ///set up camera view if not already loaded
         if self.cameraController == nil {
             cameraController = AVSpotCamera()
@@ -75,10 +77,10 @@ class AVCameraController: UIViewController {
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        Mixpanel.mainInstance().track(event: "CameraOpen")
         super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "CameraOpen")
     }
-
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
     }
@@ -89,50 +91,56 @@ class AVCameraController: UIViewController {
         cameraController.previewLayer?.connection?.isEnabled = false
         cameraController.captureSession?.stopRunning()
         disableButtons() /// disable for deinit
-        
+     
         /// show nav bar when returning to map
         if isMovingFromParent {
+            UploadPostModel.shared.destroy()
             self.navigationController?.setNavigationBarHidden(false, animated: false)
         }
     }
     
     deinit {
+        print("camera deinit")
         volumeHandler.stop()
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.AVCaptureDeviceSubjectAreaDidChange, object: nil)
     }
-        
+    
     override func viewDidLoad() {
-                
+        
         addCameraView() /// add main camera
         setUpPost() /// set up main mapPost object
         fetchAssets() /// fetch gallery assets
+        getFailedUploads()
     }
     
     func addCameraView() {
         
-        view.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
         view.backgroundColor = UIColor(named: "SpotBlack")
-                
+        
         let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
-                
+        
         /// start camera area below notch on iPhone X+
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
         let cameraY: CGFloat = minY == 2 ? minY + cameraHeight - 30 : minY + cameraHeight - 108
         let galleryY: CGFloat = minY == 2 ? cameraY : minY + cameraHeight + 13
         
         cameraView = UIView {
-            $0.frame = CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: cameraHeight)
             $0.layer.cornerRadius = 15
             $0.backgroundColor = .black
             view.addSubview($0)
         }
-
+        
+        cameraView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalToSuperview().offset(minY)
+            $0.height.equalTo(cameraHeight)
+        }
+        
         cancelButton = UIButton {
-            $0.frame = CGRect(x: 4, y: 37, width: 50, height: 50)
             $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
             $0.contentHorizontalAlignment = .fill
             $0.contentVerticalAlignment = .fill
@@ -140,35 +148,48 @@ class AVCameraController: UIViewController {
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
             cameraView.addSubview($0)
         }
-                
+        cancelButton.snp.makeConstraints {
+            $0.leading.equalToSuperview().offset(4)
+            $0.top.equalToSuperview().offset(37)
+            $0.width.height.equalTo(50)
+        }
+        
         tapIndicator = UIImageView {
-            $0.frame = CGRect(x: 0, y: 0, width: 50, height: 50)
             $0.image = UIImage(named: "TapFocusIndicator")
-            $0.isHidden = true
+            $0.alpha = 0.0
             cameraView.addSubview($0)
+        }
+        tapIndicator.snp.makeConstraints {
+            $0.top.leading.equalToSuperview()
+            $0.height.width.equalTo(50)
         }
         
         frontFlashView = UIView {
-            $0.frame = view.frame
             $0.backgroundColor = .white
             $0.isHidden = true
             cameraView.addSubview($0)
         }
-                
+        frontFlashView.snp.makeConstraints {
+            $0.top.leading.trailing.bottom.equalToSuperview()
+        }
+        
         volumeHandler = JPSVolumeButtonHandler(up: {self.capture()}, downBlock: {self.capture()})
         volumeHandler.start(true)
-                                                
+        
         cameraButton = UIButton {
-            $0.frame = CGRect(x: UIScreen.main.bounds.width/2 - 52, y: cameraY, width: 104, height: 104)
             $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
             $0.setImage(UIImage(named: "CameraButton"), for: .normal)
             $0.addTarget(self, action: #selector(captureImage(_:)), for: .touchUpInside)
             $0.imageView?.contentMode = .scaleAspectFill
+            view.addSubview($0)
         }
-        view.addSubview(cameraButton)
-                
+        cameraButton.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(cameraY)
+            $0.width.height.equalTo(104)
+            $0.centerX.equalToSuperview()
+        }
+        
         galleryButton = UIButton {
-            $0.frame = CGRect(x: 37, y: galleryY, width: 34, height: 29)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.setImage(UIImage(named: "PhotoGalleryButton"), for: .normal)
             $0.imageView?.contentMode = .scaleAspectFill
@@ -177,20 +198,30 @@ class AVCameraController: UIViewController {
             $0.layer.masksToBounds = true
             $0.clipsToBounds = true
             $0.addTarget(self, action: #selector(openGallery(_:)), for: .touchUpInside)
+            view.addSubview($0)
         }
-        view.addSubview(galleryButton)
+        galleryButton.snp.makeConstraints {
+            $0.leading.equalToSuperview().offset(37)
+            $0.top.equalTo(galleryY)
+            $0.width.equalTo(34)
+            $0.height.equalTo(29)
+        }
         
         let galleryText = UILabel {
-            $0.frame = CGRect(x: galleryButton.frame.minX - 10, y: galleryButton.frame.maxY + 1, width: 54, height: 18)
             $0.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 11)
             $0.textAlignment = .center
             $0.text = "GALLERY"
+            view.addSubview($0)
         }
-        view.addSubview(galleryText)
+        galleryText.snp.makeConstraints {
+            $0.leading.equalTo(galleryButton.snp.leading).offset(-10)
+            $0.top.equalTo(galleryButton.snp.bottom).offset(1)
+            $0.width.equalTo(54)
+            $0.height.equalTo(18)
+        }
         
         flashButton = UIButton {
-            $0.frame = CGRect(x: UIScreen.main.bounds.width - 50, y: 49, width: 38.28, height: 38.28)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.contentHorizontalAlignment = .fill
             $0.contentVerticalAlignment = .fill
@@ -198,16 +229,26 @@ class AVCameraController: UIViewController {
             $0.addTarget(self, action: #selector(switchFlash(_:)), for: .touchUpInside)
             cameraView.addSubview($0)
         }
+        flashButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(12)
+            $0.top.equalToSuperview().offset(49)
+            $0.width.height.equalTo(38.28)
+        }
         
         cameraRotateButton = UIButton {
-            $0.frame = CGRect(x: UIScreen.main.bounds.width - 50, y: flashButton.frame.maxY + 20, width: 33.62, height: 37.82)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.contentHorizontalAlignment = .fill
             $0.contentVerticalAlignment = .fill
             $0.setImage(UIImage(named: "CameraRotateAlt"), for: .normal)
             $0.addTarget(self, action: #selector(cameraRotateTap(_:)), for: .touchUpInside)
+            cameraView.addSubview($0)
         }
-        cameraView.addSubview(cameraRotateButton)
+        cameraRotateButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(12)
+            $0.top.equalTo(flashButton.snp.bottom).offset(20)
+            $0.width.equalTo(33.62)
+            $0.height.equalTo(37.82)
+        }
         
         let zoom = UIPinchGestureRecognizer(target: self, action: #selector(pinch(_:)))
         cameraView.addGestureRecognizer(zoom)
@@ -234,11 +275,16 @@ class AVCameraController: UIViewController {
     }
     
     func addAccessMask() {
-        /// 
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 82 : 2
-        accessMask = CameraAccessView(frame: CGRect(x: 0, y: minY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - minY))
-        accessMask.setUp()
-        view.addSubview(accessMask)
+        accessMask = CameraAccessView {
+            $0.setUp()
+            view.addSubview($0)
+        }
+        accessMask.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalToSuperview().offset(minY)
+            $0.height.equalToSuperview().inset(minY/2)
+        }
     }
     
     func setUpPost() {
@@ -250,7 +296,6 @@ class AVCameraController: UIViewController {
         UploadPostModel.shared.postObject = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: coordinate.latitude, postLong: coordinate.longitude, posterID: uid, timestamp: Timestamp(date: Date()))
         UploadPostModel.shared.postObject.id = UUID().uuidString
         UploadPostModel.shared.postObject.privacyLevel = "friends"
-        if spotObject != nil { UploadPostModel.shared.setSpotValues() }
         UploadPostModel.shared.setPostCity() /// set with every location change to avoid async lag on upload
     }
     
@@ -260,12 +305,11 @@ class AVCameraController: UIViewController {
     }
     
     func fetchAssets() {
-        
         if UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited {
             fetchFullAssets()
         }
     }
-        
+    
     func fetchFullAssets() {
         
         /// fetch all assets for showing when user opens photo gallery
@@ -284,7 +328,7 @@ class AVCameraController: UIViewController {
             
             guard let self = self else { return }
             if self.cancelOnDismiss { stop.pointee = true } /// cancel on dismiss = true when view is popped
-
+            
             var location = CLLocation()
             if let l = object.location { location = l }
             
@@ -387,7 +431,7 @@ class AVCameraController: UIViewController {
             }
             
             let resizedImage = self.ResizeImage(with: image, scaledToFill:  CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
-                        
+            
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
                 
                 let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: resizedImage, animationImages: [], animationIndex: 0, directionUp: true, gifMode: self.gifMode, creationDate: Date(), fromCamera: true)
@@ -402,7 +446,7 @@ class AVCameraController: UIViewController {
         }
         
     }
-
+    
     @objc func cancelTap(_ sender: UIButton) {
         cancelTap()
     }
@@ -411,7 +455,7 @@ class AVCameraController: UIViewController {
         
         /// show view controller sliding down as transtition
         DispatchQueue.main.async {
-          
+            
             /// set to title view for smoother transition
             self.navigationItem.leftBarButtonItem = UIBarButtonItem()
             self.navigationItem.rightBarButtonItem = UIBarButtonItem()
@@ -430,14 +474,14 @@ class AVCameraController: UIViewController {
             }
         }
     }
-        
+    
     // set up camera preview on screen if we have user permission
     func configureCameraController() {
-
+        
         cameraController.prepare(position: .rear) { [weak self] (error) in
             guard let self = self else { return }
             try? self.cameraController.displayPreview(on: self.cameraView)
-           // self.setAutoExposure()
+            self.setAutoExposure()
         }
     }
     
@@ -464,7 +508,7 @@ class AVCameraController: UIViewController {
         }
         device.unlockForConfiguration()
     }
-        
+    
     @objc func openGallery(_ sender: UIButton) {
         self.openGallery()
     }
@@ -491,7 +535,7 @@ class AVCameraController: UIViewController {
             UploadPostModel.shared.imageObjects[i].selected = false
         }
     }
-        
+    
     @objc func pinch(_ pinch: UIPinchGestureRecognizer) {
         
         /// pinch to adjust zoomLevel
@@ -550,12 +594,16 @@ class AVCameraController: UIViewController {
         let maxY: CGFloat = minY + cameraHeight
         
         if position.y < maxY && position.y > minY {
-            tapIndicator.frame = CGRect(x: position.x - 25, y: position.y - 25, width: 50, height: 50)
-            tapIndicator.isHidden = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                UIView.animate(withDuration: 0.6, animations: { [weak self] in
+            tapIndicator.snp.updateConstraints {
+                print("position", position)
+                $0.top.equalTo(position.y - 25)
+                $0.leading.equalTo(position.x - 25)
+            }
+            tapIndicator.alpha = 1.0
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                UIView.animate(withDuration: 0.3, animations: { [weak self] in
                     guard let self = self else { return }
-                    self.tapIndicator.isHidden = true
+                    self.tapIndicator.alpha = 0.0
                 })
             }
             

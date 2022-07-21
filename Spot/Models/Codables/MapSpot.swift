@@ -47,7 +47,7 @@ struct MapSpot: Identifiable, Codable {
     var spotScore: Double = 0
     
     enum CodingKeys: String, CodingKey {
-        case id = "spotID"
+        case id
         case city
         case founderID = "createdBy"
         case imageURL

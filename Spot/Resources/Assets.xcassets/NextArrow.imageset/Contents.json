@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "ChooseAMapIcon.svg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

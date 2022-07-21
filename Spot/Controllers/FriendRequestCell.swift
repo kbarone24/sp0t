@@ -88,7 +88,7 @@ class FriendRequestCell: UICollectionViewCell {
             let url = friendRequest.userInfo!.imageURL
             if url != "" {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+                $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
             } else {print("profilePic not found")}
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
@@ -107,7 +107,7 @@ class FriendRequestCell: UICollectionViewCell {
                 let url = notification.userInfo!.avatarURL!
                 if url != "" {
                     let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                    $0.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+                    $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
                 } else { print("Avatar not found") }
                 $0.translatesAutoresizingMaskIntoConstraints = false
                 contentView.addSubview($0)
