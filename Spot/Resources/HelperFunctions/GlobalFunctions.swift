@@ -15,6 +15,7 @@ import Geofirestore
 import MapKit
 import FirebaseFunctions
 import MapboxMaps
+import CoreData
 
 extension UIViewController {
     //reverse geocode should a string based on lat/long input and amount of detail that it wants to return
@@ -97,7 +98,7 @@ extension UIViewController {
         return commentHeight
     }
     
-    func addRemoveTagTable(text: String, cursorPosition: Int, tableParent: MapController.TagTableParent) {
+    func getTagUserString(text: String, cursorPosition: Int) -> (text: String, containsAt: Bool) {
     
         let atIndices = text.indices(of: "@")
         var wordIndices = text.indices(of: " ")
@@ -119,65 +120,12 @@ extension UIViewController {
                         let end = text.index(text.startIndex, offsetBy: cursorPosition)
                         let range = start..<end
                         let currentWord = text[range].replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "@", with: "").replacingOccurrences(of: "\n", with: "") ///  remove space and @ from word
-                        
-                        if let currentVC = self as? PostController {
-                            currentVC.mapVC.addTable(text: String(currentWord), parent: tableParent)
-                        }
-                        return
+                        return (currentWord, true)
                     } else { i += 1; continue }
                 }
             }
         }
-        
-        if let currentVC = self as? PostController {
-            currentVC.mapVC.removeTable()
-        }
-    }
-    
-    // run when user taps a username to tag
-    func addTaggedUserTo(text: String, username: String, cursorPosition: Int) -> String {
-        
-        var tagText = text
-        
-        var wordIndices = text.indices(of: " ")
-        wordIndices.append(contentsOf: text.indices(of: "\n")) /// add new lines
-        if !wordIndices.contains(0) { wordIndices.insert(0, at: 0) } /// first word not included
-        wordIndices.sort(by: {$0 < $1})
-        
-        var currentWordIndex = 0; var nextWordIndex = 0; var i = 0
-        /// get current word
-        for index in wordIndices {
-            if index < cursorPosition {
-                if i == wordIndices.count - 1 { currentWordIndex = index; nextWordIndex = text.count }
-                else if cursorPosition <= wordIndices[i + 1] { currentWordIndex = index; nextWordIndex = wordIndices[i + 1] }
-                i += 1
-            }
-        }
-        
-        let suffix = text.suffix(text.count - currentWordIndex) /// get end of string to figure out where @ is
-        
-        /// from index represents the text for this string after the @
-        guard let atIndex = String(suffix).indices(of: "@").first else { return "" }
-        let start = currentWordIndex + atIndex + 1
-        let fromIndex = text.index(text.startIndex, offsetBy: start)
-        
-        /// word length = number of characters typed of the username so far
-        let wordLength = nextWordIndex - currentWordIndex - 2
-        /// remove any characters after the @
-
-        /// patch fix for emojis not working at the end of strings -> start from end of string and work backwards
-        if nextWordIndex == tagText.count {
-            while tagText.last != "@" { tagText.removeLast() }
-            tagText.append(contentsOf: username)
-            
-        } else {
-            /// standard removal process with string.index -> string.index is fucked up if using emojis bc it uses utf16 characters so this might fail if you try to insert in the middle of a string with an emoji coming before it in that string but this is an edge case
-            if wordLength > 0 {for _ in 0...wordLength - 1 { tagText.remove(at: fromIndex) } }
-            /// insert username after @
-            tagText.insert(contentsOf: username, at: fromIndex) //// append username
-        }
-
-        return tagText
+        return ("", false)
     }
     
     func isFriends(id: String) -> Bool {
@@ -244,6 +192,18 @@ extension UIViewController {
         let location = CLLocation(latitude: spotLocation.latitude, longitude: spotLocation.longitude)
         
         GeoFirestore(collectionRef: Firestore.firestore().collection("spots")).setLocation(location: location, forDocumentWithID: spotID) { (error) in
+            if (error != nil) {
+                print("An error occured: \(String(describing: error))")
+            } else {
+                print("Saved location successfully!")
+            }
+        }
+    }
+    
+    func setMapLocations(mapLocation: CLLocationCoordinate2D, documentID: String) {
+        let location = CLLocation(latitude: mapLocation.latitude, longitude: mapLocation.longitude)
+        
+        GeoFirestore(collectionRef: Firestore.firestore().collection("mapLocations")).setLocation(location: location, forDocumentWithID: documentID) { (error) in
             if (error != nil) {
                 print("An error occured: \(String(describing: error))")
             } else {
@@ -442,9 +402,10 @@ extension UIViewController {
         let spotRef = db.collection("spots").document(spotID)
         
         spotRef.getDocument { (doc, err) in
+            let emptySpot = MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: "")
             do {
                 let unwrappedInfo = try doc?.data(as: MapSpot.self)
-                guard var spotInfo = unwrappedInfo else { completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true); return }
+                guard var spotInfo = unwrappedInfo else { completion(emptySpot, true); return }
                 
                 spotInfo.id = spotID
                 spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
@@ -456,7 +417,7 @@ extension UIViewController {
                 return
                 
             } catch {
-                completion(MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: ""), true)
+                completion(emptySpot, true)
                 return
             }
         }
@@ -468,22 +429,24 @@ extension UIViewController {
         
         if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
             completion(user)
+            return
             
         } else if userID == UserDataModel.shared.uid {
             completion(UserDataModel.shared.userInfo)
+            return
             
         } else {
-
+            let emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
             db.collection("users").document(userID).getDocument { (doc, err) in
                 if err != nil { return }
 
                 do {
                     let userInfo = try doc!.data(as: UserProfile.self)
-                    guard var info = userInfo else { return }
+                    guard var info = userInfo else { completion(emptyProfile); return }
                     info.id = doc!.documentID
                     completion(info)
-                    
-                } catch { completion(UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")); return }
+                    return
+                } catch { completion(emptyProfile); return }
             }
         }
     }
@@ -556,16 +519,51 @@ extension UIViewController {
             } catch { completion(emptyPost); return }
         }
     }
+    
+    func animateWithKeyboard(
+        notification: NSNotification,
+        animations: ((_ keyboardFrame: CGRect) -> Void)?
+    ) {
+        // Extract the duration of the keyboard animation
+        let durationKey = UIResponder.keyboardAnimationDurationUserInfoKey
+        let duration = notification.userInfo![durationKey] as! Double
+        
+        // Extract the final frame of the keyboard
+        let frameKey = UIResponder.keyboardFrameEndUserInfoKey
+        let keyboardFrameValue = notification.userInfo![frameKey] as! NSValue
+        
+        // Extract the curve of the iOS keyboard animation
+        let curveKey = UIResponder.keyboardAnimationCurveUserInfoKey
+        let curveValue = notification.userInfo![curveKey] as! Int
+        let curve = UIView.AnimationCurve(rawValue: curveValue)!
+
+        // Create a property animator to manage the animation
+        let animator = UIViewPropertyAnimator(
+            duration: duration,
+            curve: curve
+        ) {
+            // Perform the necessary animation layout updates
+            animations?(keyboardFrameValue.cgRectValue)
+            
+            // Required to trigger NSLayoutConstraint changes
+            // to animate
+            self.view?.layoutIfNeeded()
+        }
+        
+        // Start the animation
+        animator.startAnimation()
+    }
 }
+// https://www.advancedswift.com/animate-with-ios-keyboard-swift/
 
 /// upload post functions
 extension UIViewController {
     
-    func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
+    func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, fullWidth: CGFloat, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
         
         var failed = false
+        var success = false
         
-        let fullWidth: CGFloat = UIScreen.main.bounds.width - 100
         if images.isEmpty { print("empty"); completion([], false); return } /// complete immediately for no  image post
         
         var URLs: [String] = []
@@ -577,7 +575,6 @@ extension UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 18) {
             /// no downloaded URLs means that this post isnt even close to uploading so trigger failed upload earlier to avoid making the user wait
             if progressFill.bounds.width != fullWidth && !URLs.contains(where: {$0 != ""}) && !failed {
-                print("run failed 1")
                 failed = true
                 completion([], true)
                 return
@@ -586,16 +583,15 @@ extension UIViewController {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
             /// run failed upload on second try if it wasnt already run
-            if progressFill.bounds.width != fullWidth && !failed {
-                print("run failed 2")
+            if progressFill.bounds.width != fullWidth && !failed && !success {
                 failed = true
                 completion([], true)
                 return
             }
         }
         
-        var progress = 0.7/Double(images.count)
-
+        let interval = 0.7/Double(images.count)
+        var downloadCount: CGFloat = 0
         
         for image in images {
             
@@ -620,22 +616,25 @@ extension UIViewController {
                     
                     let i = images.lastIndex(where: {$0 == image})
                     URLs[i ?? 0] = urlString
+                    downloadCount += 1
                     
                     DispatchQueue.main.async {
-                        let frameWidth: CGFloat = min(((0.3 + progress) * UIScreen.main.bounds.width - 100), UIScreen.main.bounds.width - 101)
-                        UIView.animate(withDuration: 0.2) {
-                            progressFill.frame = CGRect(x: progressFill.frame.minX, y: progressFill.frame.minY, width: frameWidth, height: progressFill.frame.height)
+                        let progress = downloadCount * interval
+                        let frameWidth: CGFloat = min(((0.3 + progress) * fullWidth), fullWidth)
+                        print("frame width", frameWidth)
+                        progressFill.snp.updateConstraints { $0.width.equalTo(frameWidth) }
+                        UIView.animate(withDuration: 0.15) {
+                            self.view.layoutIfNeeded()
                         }
                     }
-                    
-                    progress = progress * Double(index + 1)
-                    
+                                        
                     index += 1
                     
                     if failed { return } /// dont want to return anything after failed upload runs
 
                     if index == images.count {
                         DispatchQueue.main.async {
+                            success = true
                             completion(URLs, false)
                             return
                         }
@@ -654,6 +653,7 @@ extension UIViewController {
             self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
             
             let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(post.timestamp.seconds))
+            
             let commentRef = postRef.collection("comments").document(commentObject.id!)
 
             do {
@@ -723,9 +723,6 @@ extension UIViewController {
             
             db.collection("spots").document(spot.id!).setData(spotValues, merge: true)
                         
-            /// visitorList empty here since new spot
-            setUserValues(poster: uid, post: post, spotID: spot.id!, visitorList: [])
-                        
             if submitPublic { db.collection("submissions").document(spot.id!).setData(["spotID" : spot.id!])}
             self.setSpotLocations(spotLocation: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), spotID: spot.id!)
             
@@ -739,8 +736,6 @@ extension UIViewController {
             /// increment users spot score by 6
         default:
             
-            setUserValues(poster: uid, post: post, spotID: spot.id!, visitorList: spot.visitorList)
-            
             /// run spot transactions
             var posters = post.addedUsers ?? []
             posters.append(uid)
@@ -752,7 +747,43 @@ extension UIViewController {
         }
     }
     
-    func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String]) {
+    func uploadMap(map: CustomMap, newMap: Bool, post: MapPost) {
+        let uid = UserDataModel.shared.uid
+        let db: Firestore = Firestore.firestore()
+        let timestamp = Timestamp(date: Date())
+        let mapRef = db.collection("maps").document(map.id!)
+        let postImageURL = post.imageURLs.first ?? ""
+        var uploadMap = map
+        uploadMap.postTimestamps.append(timestamp)
+        
+        do {
+            try mapRef.setData(from: uploadMap, merge: true)
+        } catch {
+            print("failed uploading map")
+        }
+        
+        /// set mapsList object for each member of this map
+        for member in map.memberIDs {
+            let userRef = db.collection("users").document(member).collection("mapsList").document(map.id!)
+            var userMap = uploadMap
+            /// update user post values for profile 
+            if newMap || member == uid {
+                userMap.userTimestamp = timestamp
+                if postImageURL != "" { userMap.userURL = postImageURL }
+            }
+            do {
+                try userRef.setData(from: userMap, merge: true)
+            } catch {
+                print("failed uploading user map")
+            }
+        }
+        
+        let documentID = UUID().uuidString
+        db.collection("mapLocations").document(documentID).setData(["mapID": map.id!, "postID": post.id!])
+        setMapLocations(mapLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), documentID: documentID)
+    }
+    
+    func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String) {
         
         let tag = post.tag ?? ""
         let addedUsers = post.addedUsers ?? []
@@ -769,10 +800,10 @@ extension UIViewController {
                 if visitorList.contains(where: {$0 == poster}) {
                     db.collection("users").document(poster).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayUnion([post.id!])])
                 } else {
-                    db.collection("users").document(poster).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : post.timestamp, "postsList" : [post.id!], "city": post.city!], merge:true)
+                    db.collection("users").document(poster).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : Timestamp(date: Date()), "postsList" : [post.id!], "city": post.city!], merge:true)
                 }
             }
-
+            
             /// increment addedUsers spotScore by 1
             var userValues = ["spotScore" : FieldValue.increment(Int64(3))]
             if tag != "" { userValues["tagDictionary.\(tag)"] = FieldValue.increment(Int64(1)) }
@@ -813,28 +844,54 @@ extension UIViewController {
         var queriedUsers: [UserProfile] = []
         let usernameList = userList.map({$0.username})
         let nameList = userList.map({$0.name})
-         
+        
         let filteredUsernames = searchText.isEmpty ? usernameList : usernameList.filter({(dataString: String) -> Bool in
-          // If dataItem matches the searchText, return true to include it
-          return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
+            // If dataItem matches the searchText, return true to include it
+            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
         })
-         
+        
         let filteredNames = searchText.isEmpty ? nameList : nameList.filter({(dataString: String) -> Bool in
-          return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
+            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
         })
-         
+        
         for username in filteredUsernames {
-          if let user = userList.first(where: {$0.username == username}) { queriedUsers.append(user) }
+            if let user = userList.first(where: {$0.username == username}) { queriedUsers.append(user) }
         }
-         
+        
         for name in filteredNames {
-          if let user = userList.first(where: {$0.name == name}) {
-            if !queriedUsers.contains(where: {$0.id == user.id}) { queriedUsers.append(user) }
-          }
+            if let user = userList.first(where: {$0.name == name}) {
+                if !queriedUsers.contains(where: {$0.id == user.id}) { queriedUsers.append(user) }
+            }
         }
         return queriedUsers
-      }
-
+    }
+    
+    func deletePostDraft(timestampID: Int64) {
+        
+        guard let appDelegate =
+                UIApplication.shared.delegate as? AppDelegate else {
+            return
+        }
+        let managedContext =
+        appDelegate.persistentContainer.viewContext
+        let fetchRequest =
+        NSFetchRequest<PostDraft>(entityName: "PostDraft")
+        fetchRequest.predicate = NSPredicate(format: "timestamp == %d", timestampID)
+        do {
+            let drafts = try managedContext.fetch(fetchRequest)
+            for draft in drafts {
+                managedContext.delete(draft)
+            }
+            do {
+                try managedContext.save()
+            } catch let error as NSError {
+                print("could not save. \(error)")
+            }
+        }
+        catch let error as NSError {
+            print("could not fetch. \(error)")
+        }
+    }
 }
 
 extension MapView {
@@ -1182,6 +1239,13 @@ extension String {
         newNumber = String(newNumber.suffix(10)) /// match based on last 10 digits to eliminate country codes and formatting
         return newNumber
     }
+    
+    func spacesTrimmed() -> String {
+        var newString = self
+        while newString.last?.isWhitespace ?? false { newString = String(newString.dropLast(1))}
+        while newString.first?.isWhitespace ?? false { newString = String(newString.dropFirst(1))}
+        return newString
+    }
 }
 
 extension UIColor{
@@ -1452,11 +1516,27 @@ extension UINavigationBar {
         if #available(iOS 15.0, *) {
             let appearance = UINavigationBarAppearance()
             appearance.configureWithTransparentBackground()
-            appearance.backgroundImage = UIImage(color: UIColor.black)
+            appearance.backgroundColor = .black
+            appearance.titleTextAttributes[.foregroundColor] = UIColor.white
+            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)!
             standardAppearance = appearance
             scrollEdgeAppearance = appearance
         } else {
             setBackgroundImage(UIImage(color: UIColor.black), for: .default)
+        }
+    }
+    
+    func addWhiteBackground() {
+        if #available(iOS 15.0, *) {
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithTransparentBackground()
+            appearance.backgroundColor = .white
+            appearance.titleTextAttributes[.foregroundColor] = UIColor.black
+            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)!
+            standardAppearance = appearance
+            scrollEdgeAppearance = appearance
+        } else {
+            setBackgroundImage(UIImage(color: UIColor.white), for: .default)
         }
     }
     
@@ -1516,6 +1596,51 @@ extension UITextView {
         }
         return cursorPosition
     }
+    
+    // run when user taps a username to tag
+    func addUsernameAtCursor(username: String) {
+        var tagText = text ?? ""
+        let cursorPosition = getCursorPosition()
+        
+        var wordIndices = text.indices(of: " ")
+        wordIndices.append(contentsOf: text.indices(of: "\n")) /// add new lines
+        if !wordIndices.contains(0) { wordIndices.insert(0, at: 0) } /// first word not included
+        wordIndices.sort(by: {$0 < $1})
+        
+        var currentWordIndex = 0; var nextWordIndex = 0; var i = 0
+        /// get current word
+        for index in wordIndices {
+            if index < cursorPosition {
+                if i == wordIndices.count - 1 { currentWordIndex = index; nextWordIndex = text.count }
+                else if cursorPosition <= wordIndices[i + 1] { currentWordIndex = index; nextWordIndex = wordIndices[i + 1] }
+                i += 1
+            }
+        }
+        
+        let suffix = text.suffix(text.count - currentWordIndex) /// get end of string to figure out where @ is
+        
+        /// from index represents the text for this string after the @
+        guard let atIndex = String(suffix).indices(of: "@").first else { return }
+        let start = currentWordIndex + atIndex + 1
+        let fromIndex = text.index(text.startIndex, offsetBy: start)
+        
+        /// word length = number of characters typed of the username so far
+        let wordLength = nextWordIndex - currentWordIndex - 2
+        /// remove any characters after the @
+
+        /// patch fix for emojis not working at the end of strings -> start from end of string and work backwards
+        if nextWordIndex == tagText.count {
+            while tagText.last != "@" { tagText.removeLast() }
+            tagText.append(contentsOf: username)
+            
+        } else {
+            /// standard removal process with string.index -> string.index is fucked up if using emojis bc it uses utf16 characters so this might fail if you try to insert in the middle of a string with an emoji coming before it in that string but this is an edge case
+            if wordLength > 0 {for _ in 0...wordLength - 1 { tagText.remove(at: fromIndex) } }
+            /// insert username after @
+            tagText.insert(contentsOf: username, at: fromIndex) //// append username
+        }
+        text = tagText
+    }
 }
 
 extension UITextField {
@@ -1528,6 +1653,16 @@ extension UITextField {
         let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: amount, height: self.frame.size.height))
         self.rightView = paddingView
         self.rightViewMode = .always
+    }
+}
+
+extension UIAlertAction {
+    public var titleTextColor: UIColor? {
+        get {
+            return self.value(forKey: "titleTextColor") as? UIColor
+        } set {
+            self.setValue(newValue, forKey: "titleTextColor")
+        }
     }
 }
 
@@ -1583,7 +1718,9 @@ extension UIView {
                 let days = timeSincePost / 86400
                 return "\(days)d"
             }
-        } else {
+        }
+        
+        else {
             // return date
             let timeInterval = TimeInterval(integerLiteral: seconds)
             let date = Date(timeIntervalSince1970: timeInterval)

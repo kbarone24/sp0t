@@ -28,7 +28,7 @@ struct ResultSpot: Identifiable, Codable {
     
     ///for add new
     enum CodingKeys: String, CodingKey {
-        case id = "spotID"
+        case id
         case spotName
         case founderID = "createdBy"
         case privacyLevel

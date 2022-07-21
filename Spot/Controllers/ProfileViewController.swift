@@ -9,8 +9,10 @@
 import UIKit
 import SnapKit
 import Firebase
-import FirebaseFunctions
+import Mixpanel
 import SDWebImage
+import FirebaseFunctions
+
 
 class ProfileViewController: UIViewController {
     
@@ -27,7 +29,11 @@ class ProfileViewController: UIViewController {
     private var titleLabel: UILabel!
     
     // MARK: Fetched datas
-    private var userProfile: UserProfile?
+    public var userProfile: UserProfile? {
+        didSet {
+            profileCollectionView.reloadData()
+        }
+    }
     private var maps = [CustomMap]() {
         didSet {
             noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
@@ -98,25 +104,26 @@ class ProfileViewController: UIViewController {
         }
     }
     
-    override func viewDidAppear(_ animation: Bool){
+    override func viewWillAppear(_ animated: Bool) {
+        profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
         navigationController!.navigationBar.isTranslucent = false
+
     }
-    
 
     @objc func editButtonAction() {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
+        editVC.profileVC = self
         editVC.modalPresentationStyle = .fullScreen
         present(editVC, animated: true)
     }
     
     @objc func friendListButtonAction() {
+        Mixpanel.mainInstance().track(event: "FriendListButtonAction")
         let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [])
         present(friendListVC, animated: true)
     }
     
     @objc func leaveProfile(_ sender: Any){
-        ///NOT WORKING 😥
-        print("uhhhh")
         containerDrawerView?.closeAction()
     }
     
@@ -313,14 +320,14 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
         if let headerCell = cell as? ProfileHeaderCell{
-            headerCell.cellSetup(profileID: userProfile!.id!, profileURL: userProfile!.imageURL, avatarURL: userProfile!.avatarURL ?? "", name: userProfile!.name, account: userProfile!.username, location: userProfile!.currentLocation, friendsCount: userProfile!.friendIDs.count, relation: relation, pendingFriendNotiID: pendingFriendRequestNotiID)
+            headerCell.cellSetup(userProfile: userProfile!, relation: relation, pendingFriendNotiID: pendingFriendRequestNotiID)
             if relation == .myself {
                 headerCell.actionButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
             }
             headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
             return headerCell
         } else if let mapCell = cell as? ProfileMyMapCell {
-            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages)
+            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages, relation: relation)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
             let profileBodyData = maps[indexPath.row - 1]
@@ -345,6 +352,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section != 0 {
+            Mixpanel.mainInstance().track(event: "ProfileMapSelect")
             let collectionCell = collectionView.cellForItem(at: indexPath)
             UIView.animate(withDuration: 0.15) {
                 collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
@@ -377,17 +385,15 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        print("scrolled")
         // Show navigation bar when user scroll pass the header section
         if topYContentOffset != nil {
-            print(scrollView.contentOffset.y)
             if scrollView.contentOffset.y > 1 {
-                print("uh hii")
                 self.title = userProfile?.name
             } else { self.title = ""}
         } else {
-            print("scrolled 3")
-            topYContentOffset = scrollView.contentOffset.y
+            if fromMiddleDrag == false {
+                topYContentOffset = scrollView.contentOffset.y
+            }
         }
 
         if fromMiddleDrag {
@@ -397,7 +403,6 @@ extension ProfileViewController: UIScrollViewDelegate {
                     containerDrawerView?.status == .Top &&
                     scrollView.contentOffset.y <= topYContentOffset!
                 {
-                    print("scrolled 4")
                     scrollView.contentOffset.y = topYContentOffset!
                 }
             }

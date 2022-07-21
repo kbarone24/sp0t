@@ -24,6 +24,7 @@ struct City: Identifiable, Codable {
     var score: Double = 0 
     
     enum CodingKeys: String, CodingKey {
+        case id
         case cityName
     }
 }

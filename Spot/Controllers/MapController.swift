@@ -158,9 +158,8 @@ class MapController: UIViewController {
                 
         feedGroup.notify(queue: DispatchQueue.global()) {
             if !self.feedLoaded { self.loadFeed() }
-            self.getNearbyPosts(radius: 0.5)
+        //    self.getNearbyPosts(radius: 0.5)
         }
-        
         
     }
     
@@ -205,7 +204,6 @@ class MapController: UIViewController {
                 if userSnap!.documentID != self.uid { return } /// logout + object not being destroyed
                 
                 UserDataModel.shared.userInfo = activeUser
-                self.setUpNavBar()
                 self.getUserProfilePics(firstLoad: UserDataModel.shared.userInfo.id == "")
                 
                 UserDataModel.shared.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
@@ -569,7 +567,6 @@ class MapController: UIViewController {
         feedLoaded = true
         
         /// full friendObjects loaded
-        NotificationCenter.default.post(Notification(name: Notification.Name("InitialFriendsLoad")))
         NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
     }
     

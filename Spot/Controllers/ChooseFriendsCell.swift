@@ -42,7 +42,7 @@ class ChooseFriendsCell: UITableViewCell {
         
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
         
         username = UILabel {
@@ -69,22 +69,12 @@ class ChooseFriendsCell: UITableViewCell {
             $0.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
             contentView.addSubview($0)
         }
-        
-        if viewContainingController() is PostInfoController {
-            let tap = UITapGestureRecognizer(target: self, action: #selector(tap(_:)))
-            contentView.addGestureRecognizer(tap)
-        }
-        
+                
         if !editable {
             contentView.alpha = 0.5
         }
     }
-    
-    @objc func tap(_ sender: UITapGestureRecognizer) {
-        guard let infoVC = viewContainingController() as? PostInfoController else { return }
-        infoVC.selectFriend(id: userID)
-    }
-    
+        
     func resetCell() {
         if profilePic != nil { profilePic.image = UIImage() }
         if username != nil { username.text = "" }
