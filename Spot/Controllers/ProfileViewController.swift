@@ -106,7 +106,6 @@ class ProfileViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
-        navigationController!.navigationBar.isTranslucent = false
 
     }
 
@@ -387,9 +386,12 @@ extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         // Show navigation bar when user scroll pass the header section
         if topYContentOffset != nil {
-            if scrollView.contentOffset.y > 1 {
-                self.title = userProfile?.name
-            } else { self.title = ""}
+            if scrollView.contentOffset.y > -91.0 {
+                navigationController?.navigationBar.isTranslucent = false
+                if(scrollView.contentOffset.y > 0){
+                    self.title = userProfile?.name
+                } else { self.title = ""}
+            }
         } else {
             if fromMiddleDrag == false {
                 topYContentOffset = scrollView.contentOffset.y
