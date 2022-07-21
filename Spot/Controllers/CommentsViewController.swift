@@ -90,7 +90,6 @@ class CommentsController: UIViewController {
         super.viewWillDisappear(animated)
         active = false
         for download in downloads { download.cancel() }
-        if postVC != nil && postVC.mapVC != nil { postVC.mapVC.removeTable() }
         
         IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("TagSelect"), object: nil)
@@ -208,7 +207,6 @@ class CommentsController: UIViewController {
         if spaceCheck == "" { return }
         
         Mixpanel.mainInstance().track(event: "CommentsPost")
-        postVC.mapVC.removeTable()
         
         let timestamp = NSDate().timeIntervalSince1970
         let date = Date()
