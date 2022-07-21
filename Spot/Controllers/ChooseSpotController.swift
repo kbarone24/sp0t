@@ -57,6 +57,7 @@ class ChooseSpotController: UIViewController {
         runChooseSpotFetch()
     }
     
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ChooseSpotOpen")
