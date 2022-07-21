@@ -414,6 +414,7 @@ class MapController: UIViewController {
         sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
+        sheetView?.present(to: .Top)
         sheetView?.canInteract = false
         sheetView?.showCloseButton = false
         profileVC.containerDrawerView = sheetView
@@ -426,7 +427,6 @@ class MapController: UIViewController {
             $0.top.equalToSuperview().offset(55)
             $0.leading.equalToSuperview().offset(22)
         }*/
-        sheetView?.present(to: .Top)
     }
     
     @objc func friendsTap(_ sender: UIButton) {
