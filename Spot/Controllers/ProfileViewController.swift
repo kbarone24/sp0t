@@ -16,6 +16,8 @@ import FirebaseFunctions
 
 class ProfileViewController: UIViewController {
     
+    public var showNav: Bool!
+    
     // If start from middle position and need to be draggable
     private var fromMiddleDrag: Bool = false
     private var topYContentOffset: CGFloat?
@@ -104,8 +106,10 @@ class ProfileViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
+        navigationController!.navigationBar.isTranslucent = false
+
     }
-    
+
     @objc func editButtonAction() {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.profileVC = self
@@ -118,13 +122,50 @@ class ProfileViewController: UIViewController {
         let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [])
         present(friendListVC, animated: true)
     }
+    
+    @objc func leaveProfile(_ sender: Any){
+        containerDrawerView?.closeAction()
+    }
+    
+    @objc func leaveSelf(_ sender: Any){
+        navigationController!.popViewController(animated: true)
+    }
 }
 
 extension ProfileViewController {
     
     private func viewSetup() {
         view.backgroundColor = .white
-        navigationItem.setHidesBackButton(true, animated: true)
+
+        self.title = ""
+        navigationItem.backButtonTitle = ""
+
+        navigationController!.navigationBar.barTintColor = UIColor.white
+        navigationController!.navigationBar.isTranslucent = true
+        navigationController!.navigationBar.barStyle = .black
+        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.view.backgroundColor = .white
+        
+        navigationController!.navigationBar.titleTextAttributes = [
+                .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
+                .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
+        ]
+        
+        if (containerDrawerView != nil){
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                image: UIImage(named: "BackArrow-1"),
+                style: .plain,
+                target: self,
+                action: #selector(self.leaveProfile(_:))
+            )
+        } else {navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(named: "BackArrow-1"),
+            style: .plain,
+            target: self,
+            action: #selector(self.leaveSelf(_:))
+        )}
+        
+        //self.navigationItem.setHidesBackButton(false, animated: true)
         
         profileCollectionView = {
             let layout = UICollectionViewFlowLayout()
@@ -346,9 +387,9 @@ extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         // Show navigation bar when user scroll pass the header section
         if topYContentOffset != nil {
-            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
-                self.barView.alpha = scrollView.contentOffset.y >= self.topYContentOffset! + 160 ? 1 : 0
-            }
+            if scrollView.contentOffset.y > 1 {
+                self.title = userProfile?.name
+            } else { self.title = ""}
         } else {
             if fromMiddleDrag == false {
                 topYContentOffset = scrollView.contentOffset.y

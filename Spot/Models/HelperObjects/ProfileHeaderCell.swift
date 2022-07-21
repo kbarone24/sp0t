@@ -202,6 +202,7 @@ extension ProfileHeaderCell {
             return
         case .pending, .received:
             if pendingFriendNotiID != nil {
+
                 if relation == .pending {
                     Mixpanel.mainInstance().track(event: "ProfilePendingButton")
                     let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
@@ -216,7 +217,10 @@ extension ProfileHeaderCell {
                 } else {
                     Mixpanel.mainInstance().track(event: "ProfileAcceptButton")
                     acceptFriendRequest(friendID: profile.id!, notificationID: pendingFriendNotiID!)
+                    let notiID:[String: String?] = ["notiID": pendingFriendNotiID]
+                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: notiID)
                 }
+                
                 actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
                 actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
                 actionButton.setTitle("Friends", for: .normal)

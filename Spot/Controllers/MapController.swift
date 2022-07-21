@@ -417,7 +417,7 @@ class MapController: UIViewController {
         sheetView?.canInteract = false
         sheetView?.showCloseButton = false
         profileVC.containerDrawerView = sheetView
-        let backButton = UIButton {
+        /*let backButton = UIButton {
             $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
             $0.addTarget(sheetView, action: #selector(sheetView?.closeAction), for: .touchUpInside)
             sheetView!.slideView.addSubview($0)
@@ -425,7 +425,7 @@ class MapController: UIViewController {
         backButton.snp.makeConstraints {
             $0.top.equalToSuperview().offset(55)
             $0.leading.equalToSuperview().offset(22)
-        }
+        }*/
         sheetView?.present(to: .Top)
     }
     

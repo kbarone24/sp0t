@@ -5,7 +5,6 @@
 //  Created by kbarone on 8/15/19.
 //  Copyright © 2019 sp0t, LLC. All rights reserved.
 //
-
 import Foundation
 import UIKit
 import Firebase
@@ -22,7 +21,7 @@ protocol notificationDelegateProtocol: AnyObject{
     //the following functions will include necessary parameters when ready
     func getProfile(userProfile: UserProfile)
     func showPost()
-    func removeFriendd(friendID: String)
+    func deleteFriend(friendID: String)
     func reloadTable()
 }
 
@@ -58,19 +57,25 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             guard let self = self else { return }
             self.fetchNotifications(refresh: false)
         }
+        print("being called")
     }
     
     
     override func viewDidLoad() {
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
         
+        print("CALLED HERE")
+        
         super.viewDidLoad()
         
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         
         setupView()
         
+        
         self.title = "Notifications"
+        navigationItem.backButtonTitle = ""
 
         navigationController!.navigationBar.barTintColor = UIColor.white
         navigationController!.navigationBar.isTranslucent = false
@@ -79,17 +84,22 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         navigationController?.view.backgroundColor = .white
 
         navigationController!.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-            .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
+                .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
+                .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
         ]
-        
+               
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-             image: UIImage(named: "BackArrowDark"),
-             style: .plain,
-             target: self,
-             action: #selector(self.leaveNotifs(_:))
-         )
+            image: UIImage(named: "BackArrow-1"),
+            style: .plain,
+            target: self,
+            action: #selector(self.leaveNotifs(_:))
+        )
     }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        print("hhhhhh")
+    }
+    
     
     func setupView(){
         //for some reason setting up the view like it says in the guidelines was causing issues
@@ -107,6 +117,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.translatesAutoresizingMaskIntoConstraints = true
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         view.addSubview(self.tableView)
+        
+        let barView = UIView {
+            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
+            $0.backgroundColor = .white
+            $0.alpha = 0
+        }
+        
+        contentDrawer?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
         
     }
     
@@ -155,6 +173,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
             /// leave friend request group once all friend requests are appended
             friendRequestGroup.notify(queue: .main) {
+                print("leaving friend request query")
                 fetchGroup.leave()
             }
         }
@@ -232,6 +251,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                 
         fetchGroup.notify(queue: DispatchQueue.main) { [weak self] in
             guard let self = self else { return }
+            print("made it to end of query")
             self.sortAndReload()
         }
     }
@@ -263,6 +283,26 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                 }
             }
         }
+    }
+    
+    @objc func notifyFriendRequestAccept(_ notification: NSNotification){
+        print("notified")
+        if(pendingFriendRequests.count != 0){
+            for i in 0...pendingFriendRequests.count-1{
+                print("going into loop")
+                if let noti = notification.userInfo?["notiID"] as? String {
+                    print("--", pendingFriendRequests[i].id)
+                    print("---", noti)
+                    if(pendingFriendRequests[i].id == noti){
+                        print("HEWWO")
+                    var newNotif = pendingFriendRequests.remove(at: i)
+                        newNotif.status = "accepted"
+                        notifications.append(newNotif)
+                    }
+                }
+            }
+        }
+        self.sortAndReload()
     }
     
     ///modified copy from global functions
@@ -316,7 +356,10 @@ extension NotificationsController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
         if pendingFriendRequests.count == 0 || notifications.count == 0 {
             return 1
-        } else { return 2 }
+        } else {
+            if(refresh == .activelyRefreshing){ return 1 }
+            else {return 2}
+        }
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -370,7 +413,11 @@ extension NotificationsController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.row >= notifications.count{
+        
+        print("tableViewCalled")
+        
+        let amtFriendReq = pendingFriendRequests.isEmpty ? 0 : 1
+        if indexPath.row >= notifications.count + amtFriendReq{
             let cell = tableView.dequeueReusableCell(withIdentifier: "FeedLoadingCell", for: indexPath) as! MapFeedLoadingCell
             cell.setUp()
             return cell
@@ -378,7 +425,7 @@ extension NotificationsController: UITableViewDataSource {
         if pendingFriendRequests.count == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as! ActivityCell
             let notif = notifications[indexPath.row]
-            cell.notificationControllerDelegate = self            
+            cell.notificationControllerDelegate = self
             cell.set(notification: notif)
             return cell
         } else if notifications.count == 0 {
@@ -435,14 +482,15 @@ extension NotificationsController: notificationDelegateProtocol {
 
     func getProfile(userProfile: UserProfile) {
         let profileVC = ProfileViewController(userProfile: userProfile)
-        navigationController?.pushViewController(profileVC, animated: true)
+        navigationController!.pushViewController(profileVC, animated: true)
+        profileVC.navigationController!.navigationBar.isTranslucent = true
     }
     
     func showPost(){
         print("show posts using this function")
     }
     
-    func removeFriendd(friendID: String){
+    func deleteFriend(friendID: String){
         self.removeFriend(friendID: friendID)
     }
     
@@ -458,6 +506,4 @@ extension NotificationsController: notificationDelegateProtocol {
         self.tableView.reloadData()
     }
 }
-
-
 
