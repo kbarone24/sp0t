@@ -34,7 +34,7 @@ class NewMapController: UIViewController {
     
     let uid: String = UserDataModel.shared.uid
     var mapObject: CustomMap!
-        
+  
     override func viewDidLoad() {
         super.viewDidLoad()
         addMapObject()
@@ -114,9 +114,8 @@ class NewMapController: UIViewController {
             view.addSubview($0)
         }
         collaboratorLabel.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(margin)
+            $0.leading.equalTo(margin)
             $0.top.equalTo(nameField.snp.bottom).offset(40)
-            $0.width.equalTo(150)
             $0.height.equalTo(18)
         }
         
@@ -149,9 +148,8 @@ class NewMapController: UIViewController {
             view.addSubview($0)
         }
         secretLabel.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(margin)
+            $0.leading.equalTo(margin)
             $0.top.equalTo(collaboratorsCollection.snp.bottomMargin).offset(35)
-            $0.width.equalTo(170)
             $0.height.equalTo(18)
         }
         
@@ -162,9 +160,8 @@ class NewMapController: UIViewController {
             view.addSubview($0)
         }
         secretSublabel.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(margin)
+            $0.leading.equalTo(margin)
             $0.top.equalTo(secretLabel.snp.bottom).offset(2)
-            $0.width.equalTo(270)
             $0.height.equalTo(18)
         }
         
