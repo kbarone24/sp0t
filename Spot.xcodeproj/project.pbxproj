@@ -164,6 +164,7 @@
 		5F119A1C2869F44900D75CE8 /* ActivityCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F119A1B2869F44900D75CE8 /* ActivityCell.swift */; };
 		5F119A1F2869F46600D75CE8 /* FriendRequestCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F119A1D2869F46500D75CE8 /* FriendRequestCell.swift */; };
 		5F119A202869F46600D75CE8 /* FriendRequestCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F119A1E2869F46600D75CE8 /* FriendRequestCollectionCell.swift */; };
+		5F497B3E2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F497B3D2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift */; };
 		5F81C1272862EFBF0088A5B0 /* UserNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F81C1262862EFBF0088A5B0 /* UserNotification.swift */; };
 		5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */; };
 		5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDAF23B2857E65A001EDC57 /* Declarative.swift */; };
@@ -253,9 +254,6 @@
 		8C8DBB762888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB752888BE7400B31BFD /* SelectedImagesFooter.swift */; };
 		8C8DBB772888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB752888BE7400B31BFD /* SelectedImagesFooter.swift */; };
 		8C8DBB782888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB752888BE7400B31BFD /* SelectedImagesFooter.swift */; };
-		8C8DBB7A2888BE8000B31BFD /* CameraFailedUploadsExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB792888BE8000B31BFD /* CameraFailedUploadsExt.swift */; };
-		8C8DBB7B2888BE8000B31BFD /* CameraFailedUploadsExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB792888BE8000B31BFD /* CameraFailedUploadsExt.swift */; };
-		8C8DBB7C2888BE8000B31BFD /* CameraFailedUploadsExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB792888BE8000B31BFD /* CameraFailedUploadsExt.swift */; };
 		8C8DBB7E2888BE8A00B31BFD /* ChooseMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB7D2888BE8A00B31BFD /* ChooseMapController.swift */; };
 		8C8DBB7F2888BE8A00B31BFD /* ChooseMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB7D2888BE8A00B31BFD /* ChooseMapController.swift */; };
 		8C8DBB802888BE8A00B31BFD /* ChooseMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB7D2888BE8A00B31BFD /* ChooseMapController.swift */; };
@@ -405,6 +403,7 @@
 		5F119A1B2869F44900D75CE8 /* ActivityCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityCell.swift; sourceTree = "<group>"; };
 		5F119A1D2869F46500D75CE8 /* FriendRequestCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendRequestCell.swift; sourceTree = "<group>"; };
 		5F119A1E2869F46600D75CE8 /* FriendRequestCollectionCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendRequestCollectionCell.swift; sourceTree = "<group>"; };
+		5F497B3D2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraFailedUploadsExt.swift; sourceTree = "<group>"; };
 		5F81C1262862EFBF0088A5B0 /* UserNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserNotification.swift; sourceTree = "<group>"; };
 		5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomDrawerViewController.swift; sourceTree = "<group>"; };
 		5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Spot-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -446,7 +445,6 @@
 		8C88D79728242E7500AB15BD /* ChooseSpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseSpotCell.swift; sourceTree = "<group>"; };
 		8C8DBB712888BE5C00B31BFD /* ChooseSpotController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseSpotController.swift; sourceTree = "<group>"; };
 		8C8DBB752888BE7400B31BFD /* SelectedImagesFooter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectedImagesFooter.swift; sourceTree = "<group>"; };
-		8C8DBB792888BE8000B31BFD /* CameraFailedUploadsExt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CameraFailedUploadsExt.swift; path = ../../../../Documents/GitHub/sp0tbeta/Spot/Controllers/CameraFailedUploadsExt.swift; sourceTree = "<group>"; };
 		8C8DBB7D2888BE8A00B31BFD /* ChooseMapController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseMapController.swift; sourceTree = "<group>"; };
 		8C8DBB812888BE9300B31BFD /* NewMapController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NewMapController.swift; sourceTree = "<group>"; };
 		8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TagFriendsView.swift; sourceTree = "<group>"; };
@@ -702,7 +700,7 @@
 			isa = PBXGroup;
 			children = (
 				597072FD24292367008A481A /* AVCameraController.swift */,
-				8C8DBB792888BE8000B31BFD /* CameraFailedUploadsExt.swift */,
+				5F497B3D2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift */,
 				59826E9E244FA078004B858F /* PhotoGalleryController.swift */,
 				8C8DBB752888BE7400B31BFD /* SelectedImagesFooter.swift */,
 				4134867E285930DF0098B27B /* ImagePreviewController.swift */,
@@ -1247,6 +1245,7 @@
 				594CE11B24C939040051516C /* MapComment.swift in Sources */,
 				1DF6E03722089F4500BA0C36 /* SignUpController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
+				5F497B3E2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift in Sources */,
 				3ED3F1A622147EAE008CC29B /* ResetViewController.swift in Sources */,
 				41C417112869CD2F0038B6E3 /* ProfileHeaderCell.swift in Sources */,
 				59DFA25222C27B4800A59D29 /* CommentsViewController.swift in Sources */,
@@ -1296,7 +1295,6 @@
 				8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */,
 				8C2209F8284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
-				8C8DBB7A2888BE8000B31BFD /* CameraFailedUploadsExt.swift in Sources */,
 				5F119A202869F46600D75CE8 /* FriendRequestCollectionCell.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C99B11E2863F42100C98A32 /* CustomMap.swift in Sources */,
@@ -1351,7 +1349,6 @@
 				8CC2A55326BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				593AC546243E56D400C08237 /* LandingPageController.swift in Sources */,
-				8C8DBB7B2888BE8000B31BFD /* CameraFailedUploadsExt.swift in Sources */,
 				8C99B11F2863F42100C98A32 /* CustomMap.swift in Sources */,
 				8C346D312797600A00B6E640 /* FeedMapExtension.swift in Sources */,
 				5992A5AB245B666E009DAA8B /* CircleProgress.swift in Sources */,
@@ -1438,7 +1435,6 @@
 				8CC2A55426BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				593AC547243E56D400C08237 /* LandingPageController.swift in Sources */,
-				8C8DBB7C2888BE8000B31BFD /* CameraFailedUploadsExt.swift in Sources */,
 				8C99B1202863F42100C98A32 /* CustomMap.swift in Sources */,
 				8C346D322797600A00B6E640 /* FeedMapExtension.swift in Sources */,
 				5992A5AC245B666E009DAA8B /* CircleProgress.swift in Sources */,
