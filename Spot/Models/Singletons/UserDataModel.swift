@@ -31,7 +31,6 @@ class UserDataModel {
     var smallScreen = UIScreen.main.bounds.height < 800
     
     var currentLocation: CLLocation!
-    var mapView: MapView!
     
     init() {
         userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
