@@ -286,15 +286,10 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     }
     
     @objc func notifyFriendRequestAccept(_ notification: NSNotification){
-        print("notified")
         if(pendingFriendRequests.count != 0){
             for i in 0...pendingFriendRequests.count-1{
-                print("going into loop")
                 if let noti = notification.userInfo?["notiID"] as? String {
-                    print("--", pendingFriendRequests[i].id)
-                    print("---", noti)
                     if(pendingFriendRequests[i].id == noti){
-                        print("HEWWO")
                     var newNotif = pendingFriendRequests.remove(at: i)
                         newNotif.status = "accepted"
                         notifications.append(newNotif)
@@ -412,10 +407,7 @@ extension NotificationsController: UITableViewDataSource {
         return 32
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        print("tableViewCalled")
-        
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {        
         let amtFriendReq = pendingFriendRequests.isEmpty ? 0 : 1
         if indexPath.row >= notifications.count + amtFriendReq{
             let cell = tableView.dequeueReusableCell(withIdentifier: "FeedLoadingCell", for: indexPath) as! MapFeedLoadingCell
