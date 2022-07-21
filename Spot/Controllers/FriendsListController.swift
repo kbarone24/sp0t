@@ -37,11 +37,7 @@ class FriendsListController: UIViewController {
     var delegate: FriendsListDelegate?
     
     var previousVC: UIViewController?
-    
-    deinit {
-        print("deinit")
-    }
-    
+        
     init(fromVC: UIViewController, allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String]) {
         previousVC = fromVC
         self.allowsSelection = allowsSelection

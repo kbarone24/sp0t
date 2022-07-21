@@ -95,13 +95,12 @@ class AVCameraController: UIViewController {
         /// show nav bar when returning to map
         if isMovingFromParent {
             UploadPostModel.shared.destroy()
+            volumeHandler = nil
             self.navigationController?.setNavigationBarHidden(false, animated: false)
         }
     }
     
     deinit {
-        print("camera deinit")
-        volumeHandler.stop()
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.AVCaptureDeviceSubjectAreaDidChange, object: nil)
     }
     
