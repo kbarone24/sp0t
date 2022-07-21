@@ -285,8 +285,7 @@ class ActivityCell: UITableViewCell {
     
     @objc func postTap(_ sender: Any){
         //SHOW POST INSTEAD ONCE YOU CAN
-        print("UHHHHHHHH????")
-        notificationControllerDelegate?.deleteFriend(friendID: notification.userInfo!.id!)
+        print("post tapped")
     }
     
     func resetCell() {
