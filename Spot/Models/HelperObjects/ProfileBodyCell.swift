@@ -33,14 +33,10 @@ class ProfileBodyCell: UICollectionViewCell {
         mapImage.sd_setImage(with: URL(string: imageURL))
         if isPrivate {
             let imageAttachment = NSTextAttachment()
-            imageAttachment.image = UIImage(named:"SecretMap")
-            // Set bound to reposition
+            imageAttachment.image = UIImage(named: "SecretMap")
             imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
-            // Create string with attachment
             let attachmentString = NSAttributedString(attachment: imageAttachment)
-            // Initialize mutable string
             let completeText = NSMutableAttributedString(string: "")
-            // Add image to mutable string
             completeText.append(attachmentString)
             completeText.append(NSAttributedString(string: " \(mapName)"))
             self.mapName.attributedText = completeText

@@ -1,8 +1,8 @@
 //
-//  ProfileHeaderCell.swift
+//  CustomMapHeaderCell.swift
 //  Spot
 //
-//  Created by Arnold on 6/27/22.
+//  Created by Arnold on 7/24/22.
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
@@ -11,23 +11,19 @@ import SnapKit
 import Firebase
 import Mixpanel
 
-enum ProfileRelation {
-    case myself
-    case friend
-    case pending
-    case stranger
-    case received
-}
-
-class ProfileHeaderCell: UICollectionViewCell {
+class CustomMapHeaderCell: UICollectionViewCell {
     
-    private var profileImage: UIImageView!
-    private var profileAvatar: UIImageView!
-    private var profileName: UILabel!
-    private var profileAccount: UILabel!
-    private var locationButton: UIButton!
-    public var friendListButton: UIButton!
+    private var mapCoverImage: UIImageView!
+    private var mapName: UILabel!
+    private var mapCreaterProfileImage1: UIImageView!
+    private var mapCreaterProfileImage2: UIImageView!
+    private var mapCreaterProfileImage3: UIImageView!
+    private var mapCreaterProfileImage4: UIImageView!
+    private var mapCreaterCount: UILabel!
+    private var mapInfo: UILabel!
     public var actionButton: UIButton!
+    private var mapBio: UILabel!
+    
     private var profile: UserProfile!
     private var relation: ProfileRelation!
     private var pendingFriendNotiID: String?
@@ -47,20 +43,6 @@ class ProfileHeaderCell: UICollectionViewCell {
     
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
         self.profile = userProfile
-        profileImage.sd_setImage(with: URL(string: userProfile.imageURL))
-        profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? "")) { image, Error, cache, url  in
-            self.profileAvatar.image = image?.withHorizontallyFlippedOrientation()
-        }
-        profileName.text = userProfile.name
-        profileAccount.text = userProfile.username
-        locationButton.setTitle(userProfile.currentLocation, for: .normal)
-        if userProfile.currentLocation == "" {
-            locationButton.setImage(UIImage(), for: .normal)
-            friendListButton.snp.updateConstraints {
-                $0.leading.equalTo(locationButton.snp.trailing)
-            }
-        }
-        friendListButton.setTitle("\(userProfile.friendIDs.count) friends", for: .normal)
         self.relation = relation
         switch relation {
         case .myself:
@@ -87,97 +69,133 @@ class ProfileHeaderCell: UICollectionViewCell {
     }
 }
 
-extension ProfileHeaderCell {
+extension CustomMapHeaderCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
         
-        profileImage = UIImageView {
-            $0.image = UIImage()
+        mapCoverImage = UIImageView {
+            $0.image = UserDataModel.shared.userInfo.profilePic
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             contentView.addSubview($0)
         }
-        profileImage.snp.makeConstraints {
+        mapCoverImage.snp.makeConstraints {
             $0.top.equalToSuperview()
-            $0.leading.equalToSuperview().offset(28)
+            $0.leading.equalToSuperview().offset(15)
             $0.width.height.equalTo(84)
         }
-        profileImage.layer.cornerRadius = 84 / 2
-
-        profileAvatar = UIImageView {
-            $0.image = UIImage()
-            $0.contentMode = .scaleAspectFit
-            contentView.addSubview($0)
-        }
-        profileAvatar.snp.makeConstraints {
-            $0.leading.equalTo(profileImage).inset(-14)
-            $0.bottom.equalTo(profileImage).inset(-8.24)
-            $0.height.equalTo(47.25)
-            $0.width.equalTo(36)
-        }
+        mapCoverImage.layer.cornerRadius = 19
         
-        profileName = UILabel {
+        mapName = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.text = ""
+            let imageAttachment = NSTextAttachment()
+            imageAttachment.image = UIImage(named: "SecretMap")
+            imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
+            let attachmentString = NSAttributedString(attachment: imageAttachment)
+            let completeText = NSMutableAttributedString(string: "")
+            completeText.append(attachmentString)
+            completeText.append(NSAttributedString(string: " "))
+            completeText.append(NSAttributedString(string: "Arnold"))
+            $0.attributedText = completeText
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
-        profileName.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).offset(15)
-            $0.top.equalTo(profileImage).offset(7)
+        mapName.snp.makeConstraints {
+            $0.leading.equalTo(mapCoverImage.snp.trailing).offset(12)
+            $0.top.equalTo(mapCoverImage).offset(4)
             $0.height.equalTo(23)
-            $0.trailing.equalToSuperview().inset(29)
+            $0.trailing.equalToSuperview().inset(14)
         }
         
-        profileAccount = UILabel {
+        mapCreaterProfileImage1 = UIImageView {
+            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.contentMode = .scaleAspectFill
+            $0.layer.masksToBounds = true
+            $0.layer.borderWidth = 1.5
+            $0.layer.borderColor = UIColor.white.cgColor
+            contentView.addSubview($0)
+        }
+        mapCreaterProfileImage1.snp.makeConstraints {
+            $0.top.equalTo(mapName.snp.bottom).offset(7)
+            $0.leading.equalTo(mapName)
+            $0.width.height.equalTo(22)
+        }
+        mapCreaterProfileImage1.layer.cornerRadius = 11
+        
+        mapCreaterProfileImage2 = UIImageView {
+            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.contentMode = .scaleAspectFill
+            $0.layer.masksToBounds = true
+            $0.layer.borderWidth = 1.5
+            $0.layer.borderColor = UIColor.white.cgColor
+            contentView.insertSubview($0, belowSubview: mapCreaterProfileImage1)
+        }
+        mapCreaterProfileImage2.snp.makeConstraints {
+            $0.top.equalTo(mapCreaterProfileImage1)
+            $0.leading.equalTo(mapCreaterProfileImage1).offset(15)
+            $0.width.height.equalTo(22)
+        }
+        mapCreaterProfileImage2.layer.cornerRadius = 11
+        
+        mapCreaterProfileImage3 = UIImageView {
+            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.contentMode = .scaleAspectFill
+            $0.layer.masksToBounds = true
+            $0.layer.borderWidth = 1.5
+            $0.layer.borderColor = UIColor.white.cgColor
+            contentView.insertSubview($0, belowSubview: mapCreaterProfileImage2)
+        }
+        mapCreaterProfileImage3.snp.makeConstraints {
+            $0.top.equalTo(mapCreaterProfileImage1)
+            $0.leading.equalTo(mapCreaterProfileImage2).offset(15)
+            $0.width.height.equalTo(22)
+        }
+        mapCreaterProfileImage3.layer.cornerRadius = 11
+        
+        mapCreaterProfileImage4 = UIImageView {
+            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.contentMode = .scaleAspectFill
+            $0.layer.masksToBounds = true
+            $0.layer.borderWidth = 1.5
+            $0.layer.borderColor = UIColor.white.cgColor
+            contentView.insertSubview($0, belowSubview: mapCreaterProfileImage3)
+        }
+        mapCreaterProfileImage4.snp.makeConstraints {
+            $0.top.equalTo(mapCreaterProfileImage1)
+            $0.leading.equalTo(mapCreaterProfileImage3).offset(15)
+            $0.width.height.equalTo(22)
+        }
+        mapCreaterProfileImage4.layer.cornerRadius = 11
+        
+        mapCreaterCount = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
-            $0.text = ""
+            $0.text = "arnold"
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
-        profileAccount.snp.makeConstraints {
-            $0.leading.equalTo(profileName).offset(2)
-            $0.top.equalTo(profileName.snp.bottom).offset(2)
-            $0.height.equalTo(19)
-            $0.width.equalTo(113)
+        mapCreaterCount.snp.makeConstraints {
+            $0.leading.equalTo(mapCreaterProfileImage4.snp.trailing).offset(4)
+            $0.centerY.equalTo(mapCreaterProfileImage1)
+            $0.trailing.lessThanOrEqualToSuperview().inset(14)
         }
         
-        locationButton = UIButton {
-            $0.setImage(UIImage(named: "ProfileLocation"), for: .normal)
-            $0.setTitle("", for: .normal)
-            $0.titleLabel?.adjustsFontSizeToFitWidth = true
-            $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
-            $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
-            $0.addTarget(self, action: #selector(locationButtonAction), for: .touchUpInside)
+        mapInfo = UILabel {
+            $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
+            $0.text = "Arnold"
+            $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
-        locationButton.snp.makeConstraints {
-            $0.leading.equalTo(profileAccount)
-            $0.top.equalTo(profileAccount.snp.bottom).offset(1)
-            $0.height.equalTo(38)
+        mapInfo.snp.makeConstraints {
+            $0.leading.equalTo(mapName)
+            $0.top.equalTo(mapCreaterProfileImage1.snp.bottom).offset(8)
+            $0.trailing.lessThanOrEqualToSuperview().inset(14)
         }
-        
-        friendListButton = UIButton {
-            $0.setImage(UIImage(named: "Friends"), for: .normal)
-            $0.setTitle("", for: .normal)
-            $0.titleLabel?.adjustsFontSizeToFitWidth = true
-            $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
-            $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
-            contentView.addSubview($0)
-        }
-        friendListButton.snp.makeConstraints {
-            $0.leading.equalTo(locationButton.snp.trailing).offset(15)
-            $0.top.equalTo(locationButton)
-            $0.trailing.lessThanOrEqualToSuperview()
-            $0.height.equalTo(38)
-        }
-        
+
         actionButton = UIButton {
-            $0.setTitle("Edit profile", for: .normal)
+            $0.setTitle("Edit map", for: .normal)
             $0.setTitleColor(.black, for: .normal)
             $0.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
@@ -186,9 +204,21 @@ extension ProfileHeaderCell {
         actionButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(14)
             $0.height.equalTo(37)
-            $0.top.equalTo(profileImage.snp.bottom).offset(16)
+            $0.top.equalTo(mapCoverImage.snp.bottom).offset(15)
         }
         actionButton.layer.cornerRadius = 37 / 2
+        
+        mapBio = UILabel {
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
+            $0.text = "Arnold"
+            $0.adjustsFontSizeToFitWidth = true
+            contentView.addSubview($0)
+        }
+        mapBio.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(15)
+            $0.top.equalTo(actionButton.snp.bottom).offset(16)
+        }
     }
     
     @objc func actionButtonAction() {
