@@ -25,8 +25,6 @@ class ProfileViewController: UIViewController {
     
     private var profileCollectionView: UICollectionView!
     private var noPostLabel: UILabel!
-    private var barView: UIView!
-    private var titleLabel: UILabel!
     
     // MARK: Fetched datas
     public var userProfile: UserProfile? {
@@ -65,10 +63,12 @@ class ProfileViewController: UIViewController {
         print("ProfileViewController(\(self) deinit")
     }
     
-    init(userProfile: UserProfile? = nil) {
+    init(userProfile: UserProfile? = nil, presentedDrawerView: DrawerView? = nil) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
-        
+        if presentedDrawerView != nil {
+            self.containerDrawerView = presentedDrawerView
+        }
         if self.userProfile?.id == UserDataModel.shared.userInfo.id {
             relation = .myself
         } else if UserDataModel.shared.friendsList.contains(where: { user in
@@ -98,9 +98,6 @@ class ProfileViewController: UIViewController {
         DispatchQueue.main.async {
             self.getMaps()
             self.getNinePosts()
-            
-            // Need to think a better way so that we won't need to query everytime entering someone's profile
-            self.getNotis()
         }
     }
     
@@ -121,14 +118,6 @@ class ProfileViewController: UIViewController {
         let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [])
         present(friendListVC, animated: true)
     }
-    
-    @objc func leaveProfile(_ sender: Any){
-        containerDrawerView?.closeAction()
-    }
-    
-    @objc func leaveSelf(_ sender: Any){
-        navigationController!.popViewController(animated: true)
-    }
 }
 
 extension ProfileViewController {
@@ -146,26 +135,17 @@ extension ProfileViewController {
         navigationController?.view.backgroundColor = .white
         
         navigationController!.navigationBar.titleTextAttributes = [
-                .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-                .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
+            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
+            .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
         ]
         
-        if (containerDrawerView != nil){
-            navigationItem.leftBarButtonItem = UIBarButtonItem(
-                image: UIImage(named: "BackArrow-1"),
-                style: .plain,
-                target: self,
-                action: #selector(self.leaveProfile(_:))
-            )
-        } else {navigationItem.leftBarButtonItem = UIBarButtonItem(
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(named: "BackArrow-1"),
             style: .plain,
-            target: self,
-            action: #selector(self.leaveSelf(_:))
-        )}
-        
-        //self.navigationItem.setHidesBackButton(false, animated: true)
-        
+            target: containerDrawerView,
+            action: #selector(containerDrawerView?.closeAction)
+        )
+                
         profileCollectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .vertical
@@ -203,30 +183,6 @@ extension ProfileViewController {
         noPostLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalToSuperview().offset(243)
-        }
-        
-        barView = UIView {
-            $0.backgroundColor = .white
-            $0.alpha = 0
-            view.addSubview($0)
-        }
-        barView.snp.makeConstraints {
-            $0.leading.trailing.top.equalToSuperview()
-            $0.height.equalTo(91)
-        }
-        
-        titleLabel = UILabel {
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.text = userProfile!.name
-            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            $0.textAlignment = .center
-            $0.numberOfLines = 0
-            $0.sizeToFit()
-            barView.addSubview($0)
-        }
-        titleLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(55)
-            $0.centerX.equalToSuperview()
         }
     }
     
@@ -284,26 +240,6 @@ extension ProfileViewController {
             self.profileCollectionView.reloadData()
         }
     }
-    
-    private func getNotis() {
-        let db = Firestore.firestore()
-        let query = db.collection("users").document(UserDataModel.shared.userInfo.id!).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
-        query.getDocuments { (snap, err) in
-            if err != nil  { return }
-            for doc in snap!.documents {
-                do {
-                    let unwrappedInfo = try doc.data(as: UserNotification.self)
-                    guard let notification = unwrappedInfo else { return }
-                    if notification.senderID == self.userProfile!.id {
-                        self.pendingFriendRequestNotiID = notification.id
-                        break
-                    }
-                } catch let parseError {
-                    print("JSON Error \(parseError.localizedDescription)")
-                }
-            }
-        }
-    }
 }
 
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -318,8 +254,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
-        if let headerCell = cell as? ProfileHeaderCell{
-            headerCell.cellSetup(userProfile: userProfile!, relation: relation, pendingFriendNotiID: pendingFriendRequestNotiID)
+        if let headerCell = cell as? ProfileHeaderCell {
+            headerCell.cellSetup(userProfile: userProfile!, relation: relation)
             if relation == .myself {
                 headerCell.actionButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
             }
@@ -360,6 +296,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
                     collectionCell?.transform = .identity
                 }
             }
+            let customMapVC = CustomMapController(userProfile: userProfile, presentedDrawerView: containerDrawerView)
+            navigationController?.pushViewController(customMapVC, animated: true)
         }
     }
     

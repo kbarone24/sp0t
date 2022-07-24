@@ -27,8 +27,11 @@
 		413BA16328785E8B00FD80AF /* EditProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA16228785E8B00FD80AF /* EditProfileViewController.swift */; };
 		413BA165287C917000FD80AF /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA164287C917000FD80AF /* FriendsListController.swift */; };
 		413BA169287E2F2D00FD80AF /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA168287E2F2D00FD80AF /* GlobalFunctions.swift */; };
+		413BA16D288A764F00FD80AF /* CustomMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413BA16C288A764F00FD80AF /* CustomMapController.swift */; };
 		413ED8D6286F6F4100F76AC1 /* ProfileMyMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */; };
 		413ED8D828720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */; };
+		414BB49C288D314F00660AED /* CustomMapHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414BB49B288D314F00660AED /* CustomMapHeaderCell.swift */; };
+		414BB49E288D316000660AED /* CustomMapBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414BB49D288D316000660AED /* CustomMapBodyCell.swift */; };
 		41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5D2866285800C522B1 /* R.generated.swift */; };
 		41AC5A662869FA6500C522B1 /* ProfileBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A652869FA6500C522B1 /* ProfileBodyCell.swift */; };
 		41AC5A68287738CA00C522B1 /* CustomMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A67287738CA00C522B1 /* CustomMap.swift */; };
@@ -356,8 +359,11 @@
 		413BA16228785E8B00FD80AF /* EditProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileViewController.swift; sourceTree = "<group>"; };
 		413BA164287C917000FD80AF /* FriendsListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FriendsListController.swift; path = Spot/Controllers/FriendsListController.swift; sourceTree = SOURCE_ROOT; };
 		413BA168287E2F2D00FD80AF /* GlobalFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlobalFunctions.swift; sourceTree = "<group>"; };
+		413BA16C288A764F00FD80AF /* CustomMapController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapController.swift; sourceTree = "<group>"; };
 		413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapCell.swift; sourceTree = "<group>"; };
 		413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMyMapImageCollectionViewCell.swift; sourceTree = "<group>"; };
+		414BB49B288D314F00660AED /* CustomMapHeaderCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapHeaderCell.swift; sourceTree = "<group>"; };
+		414BB49D288D316000660AED /* CustomMapBodyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapBodyCell.swift; sourceTree = "<group>"; };
 		41AC5A5D2866285800C522B1 /* R.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = R.generated.swift; sourceTree = "<group>"; };
 		41AC5A652869FA6500C522B1 /* ProfileBodyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileBodyCell.swift; sourceTree = "<group>"; };
 		41AC5A67287738CA00C522B1 /* CustomMap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMap.swift; sourceTree = "<group>"; };
@@ -672,6 +678,7 @@
 			isa = PBXGroup;
 			children = (
 				7A37801B22174BB1008B835A /* MapController.swift */,
+				413BA16C288A764F00FD80AF /* CustomMapController.swift */,
 			);
 			name = Map;
 			sourceTree = "<group>";
@@ -817,6 +824,8 @@
 				413ED8D5286F6F4100F76AC1 /* ProfileMyMapCell.swift */,
 				413ED8D728720F7E00F76AC1 /* ProfileMyMapImageCollectionViewCell.swift */,
 				41AC5A652869FA6500C522B1 /* ProfileBodyCell.swift */,
+				414BB49B288D314F00660AED /* CustomMapHeaderCell.swift */,
+				414BB49D288D316000660AED /* CustomMapBodyCell.swift */,
 			);
 			path = HelperObjects;
 			sourceTree = "<group>";
@@ -1260,9 +1269,11 @@
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
 				5992A5AA245B666E009DAA8B /* CircleProgress.swift in Sources */,
 				8C342073260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */,
+				413BA16D288A764F00FD80AF /* CustomMapController.swift in Sources */,
 				41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */,
 				8C29879C2693A05A0071E75A /* CircleView.swift in Sources */,
 				5F119A1F2869F46600D75CE8 /* FriendRequestCell.swift in Sources */,
+				414BB49E288D316000660AED /* CustomMapBodyCell.swift in Sources */,
 				8CC2A55226BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
 				8C0D1EBF27AB39D300F4B885 /* TextPostWindow.swift in Sources */,
 				5FDAF23E2858FD06001EDC57 /* DrawerView.swift in Sources */,
@@ -1294,6 +1305,7 @@
 				8C3420B0261273140017CB2F /* SendInvitesController.swift in Sources */,
 				8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */,
 				8C2209F8284D4B9300E5D165 /* ContactFriend.swift in Sources */,
+				414BB49C288D314F00660AED /* CustomMapHeaderCell.swift in Sources */,
 				8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				5F119A202869F46600D75CE8 /* FriendRequestCollectionCell.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,

@@ -16,6 +16,7 @@ import FirebaseFirestoreSwift
 import FirebaseAuth
 import FirebaseMessaging
 import Geofirestore
+import MapboxMaps
 
 class ActivityCell: UITableViewCell {
     
@@ -93,15 +94,16 @@ class ActivityCell: UITableViewCell {
                 $0.layer.masksToBounds = false
                 $0.contentMode = UIView.ContentMode.scaleAspectFill
                 $0.isHidden = false
-                let url = notification.userInfo!.avatarURL!
-                if url != "" {
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                    $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-                } else { print("Avatar not found") }
                 $0.translatesAutoresizingMaskIntoConstraints = false
                 contentView.addSubview($0)
             }
-            
+            let url = notification.userInfo!.avatarURL!
+            if url != "" {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+                userAvatar.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { image, Error, cache, url in
+                    self.userAvatar.image = image?.withHorizontallyFlippedOrientation()
+                }
+            } else { print("Avatar not found") }
             userAvatar.snp.makeConstraints{
                 $0.leading.equalTo(profilePic.snp.leading).offset(-3)
                 $0.bottom.equalTo(profilePic.snp.bottom).offset(3)

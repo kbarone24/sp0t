@@ -102,9 +102,10 @@ class EditProfileViewController: UIViewController {
             }
             if locationChanged {
                 userProfile?.currentLocation = locationTextfield.text!
-            }  
-            try userRef.setData(from: userProfile, merge: true)
-
+            }
+            if nameChanged || locationChanged {
+                try userRef.setData(from: userProfile, merge: true)
+            }
             profileChanged ? updateProfileImage() : self.dismiss(animated: true)
         } catch {
             //handle error
