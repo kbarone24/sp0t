@@ -179,7 +179,25 @@ class ActivityCell: UITableViewCell {
              contentView.addSubview($0)
          }
                 
+        timestamp = UILabel{
+            $0.text = notification.timeString
+            $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
+            $0.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview($0)
+        }
         
+        //timestamp constraints set later because they rely on detail constraints
+        
+        var detailWidth = 0.0
+
+        if(timestamp.intrinsicContentSize.width < 20){
+            detailWidth = 195 + 30
+        } else if (timestamp.intrinsicContentSize.width < 30){
+            detailWidth = 195 + 20
+        } else { detailWidth = 195 }
+        
+
         detail = UILabel {
             let notiType = notification.type
             switch notiType {
@@ -235,12 +253,11 @@ class ActivityCell: UITableViewCell {
             $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
             $0.translatesAutoresizingMaskIntoConstraints = false
             detailOriginalWidth = $0.intrinsicContentSize.width
-            $0.preferredMaxLayoutWidth = 224
+            $0.preferredMaxLayoutWidth = detailWidth
             contentView.addSubview($0)
         }
         
         detailOriginalHeight = detail.intrinsicContentSize.height
-
         
         username.snp.makeConstraints{
             $0.leading.equalTo(profilePic.snp.trailing).offset(8)
@@ -252,16 +269,7 @@ class ActivityCell: UITableViewCell {
         detail.snp.makeConstraints{
             $0.top.equalTo(username.snp.bottom)
             $0.leading.equalTo(profilePic.snp.trailing).offset(7)
-            $0.width.lessThanOrEqualTo(224.0)
-        }
-        
-        
-        timestamp = UILabel{
-            $0.text = notification.timeString
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
-            $0.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
+            $0.width.lessThanOrEqualTo(detailWidth)
         }
         
         
@@ -271,7 +279,7 @@ class ActivityCell: UITableViewCell {
             if(timeLeading < detailOriginalWidth){
                 timeLeading = detailOriginalWidth - detail.intrinsicContentSize.width
             }
-            $0.leading.equalTo(detail.snp.leading).offset(timeLeading + 8)
+            $0.leading.equalTo(detail.snp.leading).offset(timeLeading + 6)
         }
         
 
