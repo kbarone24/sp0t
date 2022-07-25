@@ -12,6 +12,7 @@ class CustomMapBodyCell: UICollectionViewCell {
     
     private var postImage: UIImageView!
     private var postLocation: UILabel!
+    private var postData: MapPost!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -23,9 +24,27 @@ class CustomMapBodyCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
+        if postImage != nil { postImage.sd_cancelCurrentImageLoad() }
     }
     
-    public func cellSetup(imageURL: String, mapName: String, isPrivate: Bool, friendsCount: Int, likesCount: Int, postsCount: Int) {
+    public func cellSetup(userProfile: UserProfile, postID: String?) {
+        guard postID != nil else { return }
+        DispatchQueue.main.async {
+            self.getPost(postID: postID!) { mapPost in
+                self.postImage.sd_setImage(with: URL(string: mapPost.imageURLs[0]))
+                if mapPost.spotName != "" {
+                    let imageAttachment = NSTextAttachment()
+                    imageAttachment.image = UIImage(named: "Vector")
+                    imageAttachment.bounds = CGRect(x: 0, y: -2.5, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
+                    let attachmentString = NSAttributedString(attachment: imageAttachment)
+                    let completeText = NSMutableAttributedString(string: "")
+                    completeText.append(attachmentString)
+                    completeText.append(NSAttributedString(string: " "))
+                    completeText.append(NSAttributedString(string: mapPost.spotName!))
+                    self.postLocation.attributedText = completeText
+                }
+            }
+        }
     }
 }
 
@@ -34,7 +53,7 @@ extension CustomMapBodyCell {
         contentView.backgroundColor = .white
         
         postImage = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.cornerRadius = 2
@@ -48,15 +67,6 @@ extension CustomMapBodyCell {
             $0.textColor = UIColor(red: 1, green: 1, blue: 1, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
             $0.alpha = 0.96
-            let imageAttachment = NSTextAttachment()
-            imageAttachment.image = UIImage(named: "Vector")
-            imageAttachment.bounds = CGRect(x: 0, y: -2.5, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
-            let attachmentString = NSAttributedString(attachment: imageAttachment)
-            let completeText = NSMutableAttributedString(string: "")
-            completeText.append(attachmentString)
-            completeText.append(NSAttributedString(string: " "))
-            completeText.append(NSAttributedString(string: "Arnold"))
-            $0.attributedText = completeText
             contentView.addSubview($0)
         }
         postLocation.snp.makeConstraints {

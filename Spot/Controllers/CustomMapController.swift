@@ -90,7 +90,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return section == 0 ? 1 : 10
+        return section == 0 ? 1 : mapData?.postIDs.count ?? 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -99,6 +99,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
             headerCell.cellSetup(userProfile: userProfile!, mapData: mapData)
             return headerCell
         } else if let bodyCell = cell as? CustomMapBodyCell {
+            bodyCell.cellSetup(userProfile: userProfile!, postID: mapData?.postIDs[indexPath.row])
             return bodyCell
         }
         return cell
@@ -146,5 +147,14 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
                 collectionCell?.transform = .identity
             }
         }
+    }
+}
+
+extension CustomMapController: UIScrollViewDelegate {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if(scrollView.contentOffset.y > 0){
+            navigationController?.navigationBar.isTranslucent = false
+            self.title = mapData?.mapName
+        } else { self.title = ""}
     }
 }

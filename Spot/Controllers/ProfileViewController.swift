@@ -303,6 +303,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             } else if let _ = cell as? ProfileBodyCell {
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[indexPath.row - 1], presentedDrawerView: containerDrawerView)
                 navigationController?.pushViewController(customMapVC, animated: true)
+                customMapVC.navigationController!.navigationBar.isTranslucent = true
             }
         }
     }
