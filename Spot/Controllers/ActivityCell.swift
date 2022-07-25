@@ -192,10 +192,10 @@ class ActivityCell: UITableViewCell {
         var detailWidth = 0.0
 
         if(timestamp.intrinsicContentSize.width < 20){
-            detailWidth = 195 + 30
+            detailWidth = 215 + 20
         } else if (timestamp.intrinsicContentSize.width < 30){
-            detailWidth = 195 + 20
-        } else { detailWidth = 195 }
+            detailWidth = 215 + 10
+        } else { detailWidth = 215 }
         
 
         detail = UILabel {
