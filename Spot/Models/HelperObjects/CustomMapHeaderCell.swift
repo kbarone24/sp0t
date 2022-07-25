@@ -24,9 +24,8 @@ class CustomMapHeaderCell: UICollectionViewCell {
     public var actionButton: UIButton!
     private var mapBio: UILabel!
     
-    private var profile: UserProfile!
-    private var relation: ProfileRelation!
-    private var pendingFriendNotiID: String?
+    private var mapData: CustomMap!
+    private var memberList: [UserProfile] = []
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -41,31 +40,44 @@ class CustomMapHeaderCell: UICollectionViewCell {
         
     }
     
-    public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
-        self.profile = userProfile
-        self.relation = relation
-        switch relation {
-        case .myself:
-            actionButton.setTitle("Edit profile", for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-        case .friend:
-            actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
-            actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
-            actionButton.setTitle("Friends", for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-        case .pending:
-            actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
-            actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
-            actionButton.setTitle("Pending", for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-        case .stranger, .received:
-            actionButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
-            actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
-            actionButton.setTitle(relation == .stranger ? "Add friend" : "Accept friend request", for: .normal)
+    public func cellSetup(userProfile: UserProfile, mapData: CustomMap?) {
+        guard mapData != nil else { return }
+        self.mapData = mapData
+        mapCoverImage.sd_setImage(with: URL(string: mapData!.imageURL))
+        
+        if mapData!.secret {
+            let imageAttachment = NSTextAttachment()
+            imageAttachment.image = UIImage(named: "SecretMap")
+            imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
+            let attachmentString = NSAttributedString(attachment: imageAttachment)
+            let completeText = NSMutableAttributedString(string: "")
+            completeText.append(attachmentString)
+            completeText.append(NSAttributedString(string: " "))
+            completeText.append(NSAttributedString(string: mapData!.mapName))
+            mapName.attributedText = completeText
+        } else {
+            mapName.text = mapData!.mapName
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getMemberAndSetView()
+        }
+        
+        mapInfo.text = mapData!.likers.count == 0 ? "\(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts" : "\(mapData!.likers.count) followers • \(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
+        
+        if mapData!.memberIDs.contains(userProfile.id!) == false && mapData!.likers.contains(userProfile.id!) == false {
+            actionButton.setTitle("Follow map", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+        } else if mapData!.likers.contains(userProfile.id!) {
+            actionButton.setTitle("Following", for: .normal)
+        } else if mapData!.memberIDs.contains(userProfile.id!) {
+            actionButton.setTitle("Edit map", for: .normal)
         }
         actionButton.addTarget(self, action: #selector(actionButtonAction), for: .touchUpInside)
-        actionButton.setTitleColor(.black, for: .normal)
+
+        if mapData!.mapDescription != nil {
+            mapBio.text = mapData!.mapDescription
+        }
     }
 }
 
@@ -89,15 +101,6 @@ extension CustomMapHeaderCell {
         mapName = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            let imageAttachment = NSTextAttachment()
-            imageAttachment.image = UIImage(named: "SecretMap")
-            imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
-            let attachmentString = NSAttributedString(attachment: imageAttachment)
-            let completeText = NSMutableAttributedString(string: "")
-            completeText.append(attachmentString)
-            completeText.append(NSAttributedString(string: " "))
-            completeText.append(NSAttributedString(string: "Arnold"))
-            $0.attributedText = completeText
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
@@ -109,7 +112,7 @@ extension CustomMapHeaderCell {
         }
         
         mapCreaterProfileImage1 = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.borderWidth = 1.5
@@ -124,7 +127,7 @@ extension CustomMapHeaderCell {
         mapCreaterProfileImage1.layer.cornerRadius = 11
         
         mapCreaterProfileImage2 = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.borderWidth = 1.5
@@ -139,7 +142,7 @@ extension CustomMapHeaderCell {
         mapCreaterProfileImage2.layer.cornerRadius = 11
         
         mapCreaterProfileImage3 = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.borderWidth = 1.5
@@ -154,7 +157,7 @@ extension CustomMapHeaderCell {
         mapCreaterProfileImage3.layer.cornerRadius = 11
         
         mapCreaterProfileImage4 = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.profilePic
+            $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.borderWidth = 1.5
@@ -171,7 +174,7 @@ extension CustomMapHeaderCell {
         mapCreaterCount = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
-            $0.text = "arnold"
+            $0.text = ""
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
@@ -184,7 +187,7 @@ extension CustomMapHeaderCell {
         mapInfo = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
-            $0.text = "Arnold"
+            $0.text = ""
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
@@ -211,7 +214,7 @@ extension CustomMapHeaderCell {
         mapBio = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
-            $0.text = "Arnold"
+            $0.text = ""
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
@@ -221,82 +224,80 @@ extension CustomMapHeaderCell {
         }
     }
     
-    @objc func actionButtonAction() {
-        switch relation {
-        case .myself:
-            // Action is set in ProfileViewController
-            Mixpanel.mainInstance().track(event: "EditButtonAction")
-        case .friend:
-            // No Action
-            Mixpanel.mainInstance().track(event: "ProfileFriendButton")
-            return
-        case .pending, .received:
-            if pendingFriendNotiID != nil {
-
-                if relation == .pending {
-                    Mixpanel.mainInstance().track(event: "ProfilePendingButton")
-                    let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
-                    let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
-                        self.removeFriendRequest(friendID: self.profile.id!, notificationID: self.pendingFriendNotiID!)
-                    }
-                    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-                    alert.addAction(cancelAction)
-                    alert.addAction(removeAction)
-                    let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
-                    containerVC.present(alert, animated: true)
-                } else {
-                    Mixpanel.mainInstance().track(event: "ProfileAcceptButton")
-                    getNotiIDAndAcceptFriendRequest()
+    private func getMemberAndSetView() {
+        let db: Firestore = Firestore.firestore()
+        let dispatch = DispatchGroup()
+        memberList.removeAll()
+        for id in mapData.memberIDs {
+            dispatch.enter()
+            db.collection("users").document(id).getDocument { [weak self] snap, err in
+                do {
+                    guard let self = self else { return }
+                    let unwrappedInfo = try snap?.data(as: UserProfile.self)
+                    guard var userInfo = unwrappedInfo else { dispatch.leave(); return }
+                    userInfo.id = id
+                    self.memberList.append(userInfo)
+                    dispatch.leave()
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                    dispatch.leave()
                 }
-                actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
-                actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
-                actionButton.setTitle("Friends", for: .normal)
-                actionButton.setTitleColor(.black, for: .normal)
-                actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
             }
-        case .stranger:
-            Mixpanel.mainInstance().track(event: "ProfileAddFriendButton")
-            addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: profile.id!)
-            actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
-            actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
-            actionButton.setTitle("Pending", for: .normal)
-            actionButton.setTitleColor(.black, for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-        case .none:
-            return
         }
+        dispatch.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            var mapFounderProfile: UserProfile!
+            for index in 0..<self.memberList.count {
+                if self.memberList[index].id == self.mapData.founderID {
+                    mapFounderProfile = self.memberList[index]
+                    self.memberList.remove(at: index)
+                    break
+                }
+            }
+            
+            self.mapCreaterCount.text = "\(mapFounderProfile.username) + \(self.mapData.memberIDs.count - 1)"
+            self.mapCreaterProfileImage1.sd_setImage(with: URL(string: mapFounderProfile.imageURL))
+            switch self.mapData.memberIDs.count {
+            case 1:
+                self.mapCreaterCount.text = "\(mapFounderProfile.username)"
+                self.mapCreaterProfileImage4.snp.updateConstraints {
+                    $0.leading.equalTo(self.mapCreaterProfileImage1)
+                }
+                self.mapCreaterProfileImage3.snp.updateConstraints {
+                    $0.leading.equalTo(self.mapCreaterProfileImage1)
+                }
+                self.mapCreaterProfileImage2.snp.updateConstraints {
+                    $0.leading.equalTo(self.mapCreaterProfileImage1)
+                }
+            case 2:
+                self.mapCreaterProfileImage2.sd_setImage(with: URL(string: self.memberList[0].imageURL))
+                self.mapCreaterProfileImage4.snp.updateConstraints {
+                    $0.leading.equalTo(self.mapCreaterProfileImage1)
+                }
+                self.mapCreaterProfileImage3.snp.updateConstraints {
+                    $0.leading.equalTo(self.mapCreaterProfileImage1)
+                }
+            case 3:
+                self.mapCreaterProfileImage2.sd_setImage(with: URL(string: self.memberList[0].imageURL))
+                self.mapCreaterProfileImage3.sd_setImage(with: URL(string: self.memberList[1].imageURL))
+                self.mapCreaterProfileImage4.snp.updateConstraints {
+                    $0.leading.equalTo(self.mapCreaterProfileImage1)
+                }
+            default:
+                self.mapCreaterProfileImage2.sd_setImage(with: URL(string: self.memberList[0].imageURL))
+                self.mapCreaterProfileImage3.sd_setImage(with: URL(string: self.memberList[1].imageURL))
+                self.mapCreaterProfileImage4.sd_setImage(with: URL(string: self.memberList[2].imageURL))
+                return
+            }
+        }
+    }
+    
+    @objc func actionButtonAction() {
         UIView.animate(withDuration: 0.15) {
             self.actionButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         } completion: { (Bool) in
             UIView.animate(withDuration: 0.15) {
                 self.actionButton.transform = .identity
-            }
-        }
-    }
-    
-    @objc func locationButtonAction() {
-        Mixpanel.mainInstance().track(event: "LocationButtonAction")
-    }
-    
-    private func getNotiIDAndAcceptFriendRequest() {
-        let db = Firestore.firestore()
-        let query = db.collection("users").document(UserDataModel.shared.userInfo.id!).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
-        query.getDocuments { (snap, err) in
-            if err != nil  { return }
-            for doc in snap!.documents {
-                do {
-                    let unwrappedInfo = try doc.data(as: UserNotification.self)
-                    guard let notification = unwrappedInfo else { return }
-                    if notification.senderID == self.profile!.id {
-                        self.pendingFriendNotiID = notification.id
-                        self.acceptFriendRequest(friendID: self.profile.id!, notificationID: self.pendingFriendNotiID!)
-                        let notiID:[String: String?] = ["notiID": self.pendingFriendNotiID]
-                        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: notiID as [AnyHashable : Any])
-                        break
-                    }
-                } catch let parseError {
-                    print("JSON Error \(parseError.localizedDescription)")
-                }
             }
         }
     }

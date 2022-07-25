@@ -30,6 +30,7 @@ struct CustomMap: Identifiable, Codable {
     var spotIDs: [String]
     var userTimestamp: Timestamp? /// != nil when fetched from user's profile
     var userURL: String? /// != nil when fetched from user's profile
+    var mapDescription: String?
     
     var memberProfiles: [UserProfile]? = []
     var coverImage: UIImage? = UIImage()
@@ -51,5 +52,6 @@ struct CustomMap: Identifiable, Codable {
         case spotIDs
         case userTimestamp
         case userURL
+        case mapDescription
     }
 }

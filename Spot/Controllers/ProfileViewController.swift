@@ -296,8 +296,14 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
                     collectionCell?.transform = .identity
                 }
             }
-            let customMapVC = CustomMapController(userProfile: userProfile, presentedDrawerView: containerDrawerView)
-            navigationController?.pushViewController(customMapVC, animated: true)
+            
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
+            if let _ = cell as? ProfileMyMapCell {
+                print("mapCell selected")
+            } else if let _ = cell as? ProfileBodyCell {
+                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[indexPath.row - 1], presentedDrawerView: containerDrawerView)
+                navigationController?.pushViewController(customMapVC, animated: true)
+            }
         }
     }
     
