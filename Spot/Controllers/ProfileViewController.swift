@@ -118,6 +118,10 @@ class ProfileViewController: UIViewController {
         let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [])
         present(friendListVC, animated: true)
     }
+    
+    @objc func popVC() {
+        navigationController?.popViewController(animated: true)
+    }
 }
 
 extension ProfileViewController {
@@ -142,8 +146,8 @@ extension ProfileViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(named: "BackArrow-1"),
             style: .plain,
-            target: containerDrawerView,
-            action: #selector(containerDrawerView?.closeAction)
+            target: containerDrawerView == nil ? self : containerDrawerView,
+            action: containerDrawerView == nil ? #selector(popVC) : #selector(containerDrawerView?.closeAction)
         )
                 
         profileCollectionView = {
