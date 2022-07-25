@@ -15,10 +15,18 @@ class CustomMapController: UIViewController {
     
     private var customMapCollectionView: UICollectionView!
     
+    private var userProfile: UserProfile?
+    private var mapData: CustomMap? {
+        didSet {
+            customMapCollectionView.reloadData()
+        }
+    }
     private var containerDrawerView: DrawerView?
 
-    init(userProfile: UserProfile? = nil, presentedDrawerView: DrawerView? = nil) {
+    init(userProfile: UserProfile? = nil, mapData: CustomMap, presentedDrawerView: DrawerView? = nil) {
         super.init(nibName: nil, bundle: nil)
+        self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
+        self.mapData = mapData
         self.containerDrawerView = presentedDrawerView
     }
 
@@ -88,6 +96,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "CustomMapHeaderCell" : "CustomMapBodyCell", for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
+            headerCell.cellSetup(userProfile: userProfile!, mapData: mapData)
             return headerCell
         } else if let bodyCell = cell as? CustomMapBodyCell {
             return bodyCell
@@ -95,12 +104,8 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         return cell
     }
 
-//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-//        return UIEdgeInsets(top: 0.5, left: 0.5, bottom: 0.5, right: 0.5)
-//    }
-
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: 180) : CGSize(width: view.frame.width/2 - 0.5, height: (view.frame.width/2 - 0.5) * 267 / 194.5)
+        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: mapData?.mapDescription != nil ? 180 : 155) : CGSize(width: view.frame.width/2 - 0.5, height: (view.frame.width/2 - 0.5) * 267 / 194.5)
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
