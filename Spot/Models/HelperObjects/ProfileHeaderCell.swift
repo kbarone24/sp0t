@@ -48,9 +48,7 @@ class ProfileHeaderCell: UICollectionViewCell {
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
         self.profile = userProfile
         profileImage.sd_setImage(with: URL(string: userProfile.imageURL))
-        profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? "")) { image, Error, cache, url  in
-            self.profileAvatar.image = image?.withHorizontallyFlippedOrientation()
-        }
+        profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""))
         profileName.text = userProfile.name
         profileAccount.text = userProfile.username
         locationButton.setTitle(userProfile.currentLocation, for: .normal)

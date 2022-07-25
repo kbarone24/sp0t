@@ -1184,6 +1184,156 @@ extension UICollectionViewCell {
         db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
         db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
     }
+    
+    func getPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
+        
+        let db: Firestore! = Firestore.firestore()
+        let emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp())
+        
+        db.collection("posts").document(postID).getDocument { [weak self] doc, err in
+            guard let self = self else { return }
+            if err != nil { completion(emptyPost); return }
+            
+            do {
+                let unwrappedInfo = try doc?.data(as: MapPost.self)
+                guard var postInfo = unwrappedInfo else { completion(emptyPost); return }
+                
+                postInfo.id = doc!.documentID
+                postInfo = self.setSecondaryPostValues(post: postInfo)
+                
+                var count = 0
+                self.getUserInfo(userID: postInfo.posterID) { user in
+                    postInfo.userInfo = user
+                    count += 1
+                    if count == 2 { completion(postInfo); return }
+                }
+                
+                self.getComments(postID: postID) { comments in
+                    postInfo.commentList = comments
+                    count += 1
+                    if count == 2 { completion(postInfo); return }
+                }
+                
+            } catch { completion(emptyPost); return }
+        }
+    }
+    
+    func setSecondaryPostValues(post: MapPost) -> MapPost {
+        
+        var newPost = post
+        newPost.seconds = newPost.timestamp.seconds
+        
+        newPost.imageHeight = getImageHeight(aspectRatios: newPost.aspectRatios ?? [], maxAspect: 1.92) /// max aspect 1.92 for feed
+        let noImage = newPost.imageHeight == 0
+        
+        /// round to nearest line height
+        let maxCaption: CGFloat = noImage ? 500 : 65
+        newPost.captionHeight = self.getCaptionHeight(caption: newPost.caption, noImage: noImage, maxCaption: maxCaption, truncated: true)
+        
+     //   newPost.posterGroup = [newPost.posterID]
+      //  newPost.posterGroup!.append(contentsOf: newPost.addedUsers ?? [])
+        newPost.seen = (newPost.seenList ?? [UserDataModel.shared.uid]).contains(where: {$0 == UserDataModel.shared.uid})
+        
+        return newPost
+    }
+    
+    func getUserInfo(userID: String, completion: @escaping (_ user: UserProfile) -> Void) {
+        
+        let db: Firestore! = Firestore.firestore()
+        
+        if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
+            completion(user)
+            return
+            
+        } else if userID == UserDataModel.shared.uid {
+            completion(UserDataModel.shared.userInfo)
+            return
+            
+        } else {
+            let emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
+            db.collection("users").document(userID).getDocument { (doc, err) in
+                if err != nil { return }
+
+                do {
+                    let userInfo = try doc!.data(as: UserProfile.self)
+                    guard var info = userInfo else { completion(emptyProfile); return }
+                    info.id = doc!.documentID
+                    completion(info)
+                    return
+                } catch { completion(emptyProfile); return }
+            }
+        }
+    }
+     
+    func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
+        
+        let db: Firestore! = Firestore.firestore()
+        var commentList: [MapComment] = []
+        
+        db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, err) in
+            
+            if err != nil { completion(commentList); return }
+            if commentSnap!.documents.count == 0 { completion(commentList); return }
+            guard let self = self else { return }
+
+            var index = 0
+            for doc in commentSnap!.documents {
+                do {
+                    let commentInf = try doc.data(as: MapComment.self)
+                    guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+                    
+                    commentInfo.id = doc.documentID
+                    commentInfo.seconds = commentInfo.timestamp.seconds
+                    commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
+                    
+                    self.getUserInfo(userID: commentInfo.commenterID) { user in
+                        commentInfo.userInfo = user
+                        if !commentList.contains(where: {$0.id == doc.documentID}) {
+                            commentList.append(commentInfo)
+                            commentList.sort(by: {$0.seconds < $1.seconds})
+                        }
+                        
+                        index += 1; if index == commentSnap!.documents.count { completion(commentList) }
+                    }
+                    
+                } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+            }
+        }
+    }
+    
+    func getCommentHeight(comment: String) -> CGFloat {
+        let temp = UILabel(frame: CGRect(x: 54, y: 0, width: UIScreen.main.bounds.width - 68, height: 18))
+        temp.text = comment
+        temp.font = UIFont(name: "SFCompactText-Regular", size: 13.5)
+        temp.numberOfLines = 0
+        temp.lineBreakMode = .byWordWrapping
+        temp.sizeToFit()
+        let commentHeight: CGFloat = temp.bounds.height < 16 ? 16 : temp.bounds.height
+        return commentHeight
+    }
+    
+    func getImageHeight(aspectRatios: [CGFloat], maxAspect: CGFloat) -> CGFloat {
+      
+        var imageAspect =  min((aspectRatios.max() ?? 0.033) - 0.033, maxAspect)
+        if imageAspect > 1.1 && imageAspect < 1.7 { imageAspect = 1.7 } /// stretch iPhone vertical
+        if imageAspect > 1.7 { imageAspect = maxAspect }
+        
+        let imageHeight = UIScreen.main.bounds.width * imageAspect
+        return imageHeight
+    }
+    
+    func getCaptionHeight(caption: String, noImage: Bool, maxCaption: CGFloat, truncated: Bool) -> CGFloat {
+        
+        let fontSize: CGFloat = noImage ? 30 : 18
+        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 83, height: 20))
+        tempLabel.text = caption
+        tempLabel.font = UIFont(name: "SFCompactText-Regular", size: fontSize)
+        tempLabel.numberOfLines = 0
+        tempLabel.lineBreakMode = .byWordWrapping
+        tempLabel.sizeToFit()
+        
+        return truncated ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
+    }
 }
 
 extension String {

@@ -37,7 +37,6 @@ class CustomMapHeaderCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
-        
     }
     
     public func cellSetup(userProfile: UserProfile, mapData: CustomMap?) {
@@ -63,7 +62,15 @@ class CustomMapHeaderCell: UICollectionViewCell {
             self.getMemberAndSetView()
         }
         
-        mapInfo.text = mapData!.likers.count == 0 ? "\(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts" : "\(mapData!.likers.count) followers • \(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
+        if mapData!.likers.count == 0 && mapData!.spotIDs.count == 0 {
+            mapInfo.text = "\(mapData!.postIDs.count) posts"
+        } else if mapData!.likers.count == 0 {
+            mapInfo.text = "\(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
+        } else if mapData!.spotIDs.count == 0 {
+            mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.postIDs.count) posts"
+        } else {
+            mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
+        }
         
         if mapData!.memberIDs.contains(userProfile.id!) == false && mapData!.likers.contains(userProfile.id!) == false {
             actionButton.setTitle("Follow map", for: .normal)
@@ -73,6 +80,7 @@ class CustomMapHeaderCell: UICollectionViewCell {
         } else if mapData!.memberIDs.contains(userProfile.id!) {
             actionButton.setTitle("Edit map", for: .normal)
         }
+        
         actionButton.addTarget(self, action: #selector(actionButtonAction), for: .touchUpInside)
 
         if mapData!.mapDescription != nil {
@@ -84,7 +92,7 @@ class CustomMapHeaderCell: UICollectionViewCell {
 extension CustomMapHeaderCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
-        
+
         mapCoverImage = UIImageView {
             $0.image = UserDataModel.shared.userInfo.profilePic
             $0.contentMode = .scaleAspectFill
@@ -260,28 +268,25 @@ extension CustomMapHeaderCell {
             switch self.mapData.memberIDs.count {
             case 1:
                 self.mapCreaterCount.text = "\(mapFounderProfile.username)"
-                self.mapCreaterProfileImage4.snp.updateConstraints {
-                    $0.leading.equalTo(self.mapCreaterProfileImage1)
-                }
-                self.mapCreaterProfileImage3.snp.updateConstraints {
-                    $0.leading.equalTo(self.mapCreaterProfileImage1)
-                }
-                self.mapCreaterProfileImage2.snp.updateConstraints {
-                    $0.leading.equalTo(self.mapCreaterProfileImage1)
+                self.mapCreaterProfileImage4.removeFromSuperview()
+                self.mapCreaterProfileImage3.removeFromSuperview()
+                self.mapCreaterProfileImage2.removeFromSuperview()
+                self.mapCreaterCount.snp.makeConstraints {
+                    $0.leading.equalTo(self.mapCreaterProfileImage1.snp.trailing).offset(4)
                 }
             case 2:
                 self.mapCreaterProfileImage2.sd_setImage(with: URL(string: self.memberList[0].imageURL))
-                self.mapCreaterProfileImage4.snp.updateConstraints {
-                    $0.leading.equalTo(self.mapCreaterProfileImage1)
-                }
-                self.mapCreaterProfileImage3.snp.updateConstraints {
-                    $0.leading.equalTo(self.mapCreaterProfileImage1)
+                self.mapCreaterProfileImage4.removeFromSuperview()
+                self.mapCreaterProfileImage3.removeFromSuperview()
+                self.mapCreaterCount.snp.makeConstraints {
+                    $0.leading.equalTo(self.mapCreaterProfileImage2.snp.trailing).offset(4)
                 }
             case 3:
                 self.mapCreaterProfileImage2.sd_setImage(with: URL(string: self.memberList[0].imageURL))
                 self.mapCreaterProfileImage3.sd_setImage(with: URL(string: self.memberList[1].imageURL))
-                self.mapCreaterProfileImage4.snp.updateConstraints {
-                    $0.leading.equalTo(self.mapCreaterProfileImage1)
+                self.mapCreaterProfileImage4.removeFromSuperview()
+                self.mapCreaterCount.snp.makeConstraints {
+                    $0.leading.equalTo(self.mapCreaterProfileImage3.snp.trailing).offset(4)
                 }
             default:
                 self.mapCreaterProfileImage2.sd_setImage(with: URL(string: self.memberList[0].imageURL))

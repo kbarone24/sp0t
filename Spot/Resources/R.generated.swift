@@ -349,7 +349,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 215 images.
+  /// This `R.image` struct is generated, and contains static references to 216 images.
   struct image {
     /// Image `AcceptedTheirFriendRequest`.
     static let acceptedTheirFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedTheirFriendRequest")
@@ -765,6 +765,8 @@ struct R: Rswift.Validatable {
     static let usernameTaken = Rswift.ImageResource(bundle: R.hostingBundle, name: "UsernameTaken")
     /// Image `UsersMapNotFriends`.
     static let usersMapNotFriends = Rswift.ImageResource(bundle: R.hostingBundle, name: "UsersMapNotFriends")
+    /// Image `Vector`.
+    static let vector = Rswift.ImageResource(bundle: R.hostingBundle, name: "Vector")
     /// Image `ViewTag`.
     static let viewTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ViewTag")
     /// Image `WeirdTag`.
@@ -2228,6 +2230,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "UsersMapNotFriends", bundle: ..., traitCollection: ...)`
     static func usersMapNotFriends(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.usersMapNotFriends, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "Vector", bundle: ..., traitCollection: ...)`
+    static func vector(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.vector, compatibleWith: traitCollection)
     }
     #endif
 
