@@ -29,11 +29,15 @@ class ChooseFriendsCell: UITableViewCell {
         resetCell()
         
         profilePic = UIImageView {
-            $0.frame = CGRect(x: 15, y: 8, width: 42, height: 42)
-            $0.contentMode = .scaleAspectFill
+            $0.contentMode = .scaleAspectFit
             $0.layer.cornerRadius = 21
             $0.clipsToBounds = true
             contentView.addSubview($0)
+        }
+        profilePic.snp.makeConstraints {
+            $0.leading.equalTo(15)
+            $0.top.equalTo(8)
+            $0.width.height.equalTo(42)
         }
             
         let avatar = (friend.avatarURL ?? "") != ""
@@ -41,16 +45,20 @@ class ChooseFriendsCell: UITableViewCell {
         if avatar { profilePic.frame = CGRect(x: 19, y: 10, width: 35, height: 44.5); profilePic.layer.cornerRadius = 0 }
         
         if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFill)
             profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
         
         username = UILabel {
-            $0.frame = CGRect(x: profilePic.frame.maxX + 8, y: 21, width: UIScreen.main.bounds.width - profilePic.frame.maxX - 60, height: 19)
             $0.text = friend.username
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
             contentView.addSubview($0)
+        }
+        username.snp.makeConstraints {
+            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
+            $0.top.equalTo(21)
+            $0.trailing.equalToSuperview().inset(60)
         }
         
         if allowsSelection {
@@ -62,12 +70,20 @@ class ChooseFriendsCell: UITableViewCell {
                 $0.layer.cornerRadius = 12.5
                 contentView.addSubview($0)
             }
+            selectedBubble.snp.makeConstraints {
+                $0.trailing.equalToSuperview().inset(25)
+                $0.width.height.equalTo(24)
+                $0.centerY.equalToSuperview()
+            }
         }
         
         bottomLine = UIView {
-            $0.frame = CGRect(x: 0, y: 62, width: UIScreen.main.bounds.width, height: 1)
             $0.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
             contentView.addSubview($0)
+        }
+        bottomLine.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(1)
         }
                 
         if !editable {

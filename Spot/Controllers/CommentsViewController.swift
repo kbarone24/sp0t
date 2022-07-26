@@ -90,7 +90,6 @@ class CommentsController: UIViewController {
         super.viewWillDisappear(animated)
         active = false
         for download in downloads { download.cancel() }
-        if postVC != nil && postVC.mapVC != nil { postVC.mapVC.removeTable() }
         
         IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("TagSelect"), object: nil)
@@ -208,9 +207,8 @@ class CommentsController: UIViewController {
         if spaceCheck == "" { return }
         
         Mixpanel.mainInstance().track(event: "CommentsPost")
-        postVC.mapVC.removeTable()
         
-        let timestamp = NSDate().timeIntervalSince1970
+        let timestamp = Date().timeIntervalSince1970
         let date = Date()
         let firTimestamp = Firebase.Timestamp(date: date)
         
@@ -269,6 +267,7 @@ class CommentsController: UIViewController {
                 
         DispatchQueue.global(qos: .userInitiated).async {
             self.db.collection("posts").document(self.post.id!).collection("comments").document(commentID).setData(values, merge: true)
+            self.db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(1))])
         }
     }
     
@@ -416,6 +415,7 @@ extension CommentsController: UITableViewDelegate, UITableViewDataSource {
             
             let postsRef = self.db.collection("posts").document(postID).collection("comments").document(commentID)
                     postsRef.delete()
+            self.db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(-1))])
                 
             commentList.remove(at: indexPath.row + 1)
             

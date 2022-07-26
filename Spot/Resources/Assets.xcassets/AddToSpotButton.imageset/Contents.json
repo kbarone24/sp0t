@@ -1,19 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "spotaddto1x(1).png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "spotaddto2x(1).png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "spotaddto3x(1).png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "CreateButton.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

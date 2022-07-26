@@ -27,6 +27,7 @@ class PostController: UIViewController {
     var postsCollection: UICollectionView!
     var parentVC: parentViewController = .feed
     unowned var mapVC: MapController!
+    var statusBarMask: UIView!
     
     var selectedPostIndex = 0 /// current row in posts table
     var commentNoti = false /// present commentsVC if opened from notification comment
@@ -126,6 +127,13 @@ class PostController: UIViewController {
         timestamp.textColor = UIColor.white.withAlphaComponent(0.8)
         timestamp.font = UIFont(name: "SFCompactText-Medium", size: 12)
         userView.addSubview(timestamp)
+        
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+        statusBarMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: statusHeight + 10))
+        statusBarMask.backgroundColor = .black
+        statusBarMask.alpha = 0.0
+        view.addSubview(statusBarMask)
     }
     
     func setTimestamp() {
@@ -188,7 +196,7 @@ class PostController: UIViewController {
       //  mapVC.setOpaqueNav()
 
         if parentVC == .feed {
-            mapVC.setOpaqueNav()
+            navigationController?.navigationBar.addWhiteBackground()
             mapVC.navigationItem.titleView = nil
             mapVC.navigationItem.title = "Friend Posts"
         }
@@ -333,7 +341,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
         self.willMove(toParent: nil)
         view.removeFromSuperview()
         
-        if let mapVC = parent as? MapController { mapVC.resetFeed() }
+    //    if let mapVC = parent as? MapController { mapVC.resetFeed() }
         
         removeFromParent()
         
@@ -705,7 +713,7 @@ class PostCell: UICollectionViewCell {
         postVC.view.frame = CGRect(x: 0, y: max(originalY + offsetY, originalY), width: UIScreen.main.bounds.width, height: cellHeight)
         postVC.view.alpha = alpha
         postVC.postsCollection.alpha = alpha
-        mapVC.statusBarMask.alpha = maskAlpha
+        postVC.statusBarMask.alpha = maskAlpha
     }
     
     func nextSwipe(sender: UIPanGestureRecognizer) {
@@ -766,7 +774,7 @@ class PostCell: UICollectionViewCell {
             postVC.view.frame = CGRect(x: 0, y: UIScreen.main.bounds.height - self.cellHeight, width: UIScreen.main.bounds.width, height: self.cellHeight)
             postVC.view.alpha = 1.0
             postVC.postsCollection.alpha = 1.0
-            mapVC.statusBarMask.alpha = 1.0
+            postVC.statusBarMask.alpha = 1.0
             
             postVC.postsCollection.contentOffset.x = self.originalOffset /// reset horizontal swipe
             
@@ -788,7 +796,7 @@ class PostCell: UICollectionViewCell {
             postVC.view.frame = CGRect(x: 0, y: UIScreen.main.bounds.height, width: UIScreen.main.bounds.width, height: self.cellHeight)
             postVC.view.alpha = 0.0
             postVC.postsCollection.alpha = 0.0
-            mapVC.statusBarMask.alpha = 0.0
+            postVC.statusBarMask.alpha = 0.0
                         
         }, completion: { _ in
             postVC.exitPosts()

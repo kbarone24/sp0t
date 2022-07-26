@@ -21,6 +21,7 @@ struct MapPost: Identifiable, Codable {
     var caption: String
     var city: String? = ""
     var createdBy: String? = ""
+    var commentCount: Int? = 0
     var frameIndexes: [Int]? = []
     var friendsList: [String]
     var hideFromFeed: Bool? = false
@@ -69,6 +70,7 @@ struct MapPost: Identifiable, Codable {
         case aspectRatios
         case caption
         case city
+        case commentCount
         case createdBy
         case frameIndexes
         case friendsList
