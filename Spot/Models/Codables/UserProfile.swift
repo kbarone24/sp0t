@@ -35,6 +35,7 @@ struct UserProfile: Identifiable, Codable {
     var profilePic: UIImage = UIImage()
     var avatarPic: UIImage = UIImage()
     
+    var mapsList: [CustomMap] = []
     var spotsList: [String] = []
     var friendsList: [UserProfile] = []
     var mutualFriends: Int = 0
