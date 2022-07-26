@@ -33,6 +33,7 @@ struct CustomMap: Identifiable, Codable {
     
     var memberProfiles: [UserProfile]? = []
     var coverImage: UIImage? = UIImage()
+    var selected = false
     
     enum CodingKeys: String, CodingKey {
         case id

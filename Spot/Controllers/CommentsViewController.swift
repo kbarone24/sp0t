@@ -208,7 +208,7 @@ class CommentsController: UIViewController {
         
         Mixpanel.mainInstance().track(event: "CommentsPost")
         
-        let timestamp = NSDate().timeIntervalSince1970
+        let timestamp = Date().timeIntervalSince1970
         let date = Date()
         let firTimestamp = Firebase.Timestamp(date: date)
         
@@ -267,6 +267,7 @@ class CommentsController: UIViewController {
                 
         DispatchQueue.global(qos: .userInitiated).async {
             self.db.collection("posts").document(self.post.id!).collection("comments").document(commentID).setData(values, merge: true)
+            self.db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(1))])
         }
     }
     
@@ -414,6 +415,7 @@ extension CommentsController: UITableViewDelegate, UITableViewDataSource {
             
             let postsRef = self.db.collection("posts").document(postID).collection("comments").document(commentID)
                     postsRef.delete()
+            self.db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(-1))])
                 
             commentList.remove(at: indexPath.row + 1)
             

@@ -20,16 +20,25 @@ import FirebaseMessaging
 
 class MapController: UIViewController {
     
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .darkContent
+    }
+    
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     
+    var titleView: MapTitleView!
     var mapView: MapView!
     var bottomMapMask: UIView!
+    var mapsCollection: UICollectionView!
+    var selectedItemIndex = 0
     
     let locationManager = CLLocationManager()
     lazy var imageManager = SDWebImageManager()
     var userListener: ListenerRegistration!
-    let friendsListGroup = DispatchGroup()
+    
+    let homeFetchGroup = DispatchGroup()
+    let mapPostsGroup = DispatchGroup()
             
     var firstTimeGettingLocation = true
     var friendsLoaded = false
@@ -47,12 +56,8 @@ class MapController: UIViewController {
     
     var notiListener: ListenerRegistration!
 
-    var endDocument: DocumentSnapshot!
     var refresh: RefreshStatus = .activelyRefreshing
     var friendsRefresh: RefreshStatus = .refreshEnabled
-    var nearbyRefresh: RefreshStatus = .refreshEnabled
-    var queryReady = false /// circlequery returned
-    var friendsListener, nearbyListener, commentListener: ListenerRegistration!
         
     /// post annotations
     var postAnnotationManager: PointAnnotationManager!
@@ -64,87 +69,109 @@ class MapController: UIViewController {
             navigationController?.navigationBar.isHidden = sheetView == nil ? false : true
         }
     }
-                    
-    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge {
-        return UIRectEdge.bottom
-    }
       
     override func viewDidLoad() {
         addMapView()
+        addMapsCollection()
         checkLocationAuth()
-        getFriends()
         getAdmins() /// get admin users to exclude from analytics
         addNotifications()
+        runMapFetches()
         
         locationManager.delegate = self
     }
+    
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        Mixpanel.mainInstance().track(event: "MapOpen")
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         setUpNavBar()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "MapOpen")
+    }
+    
+    
     func addNotifications() {
-        friendsListGroup.notify(queue: DispatchQueue.global()) {
-            NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
-        }
-        
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
       //  NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
     }
     
     func addMapView() {
         let options = MapInitOptions(resourceOptions: ResourceOptions(accessToken: "pk.eyJ1Ijoic3AwdGtlbm55IiwiYSI6ImNrem9tYzhkODAycmUydW50bXVza2JhZmgifQ.Cl0TokRRaMo8UZDImGqp0A"), mapOptions: MapOptions(), cameraOptions: CameraOptions(), styleURI: StyleURI(rawValue: "mapbox://styles/sp0tkenny/ckzpv54l9004114kdu5kcy8w4"))
-        mapView = MapView(frame: UIScreen.main.bounds, mapInitOptions: options)
+        mapView = MapView(frame: .zero, mapInitOptions: options)
         mapView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         mapView.ornaments.options.compass.visibility = .hidden
         mapView.ornaments.options.scaleBar.visibility = .hidden
         mapView.location.options.puckType = .puck2D()
         view.addSubview(mapView)
+        mapView.snp.makeConstraints {
+            $0.leading.top.trailing.equalToSuperview()
+            $0.bottom.equalToSuperview().offset(65)
+        }
                 
         addPostAnnotationManager()
         
-        let addY = UserDataModel.shared.largeScreen ? UIScreen.main.bounds.height - 130 : UIScreen.main.bounds.height - 94
-        let addX = UIScreen.main.bounds.width/2 - 30.5
-        let addButton = UIButton(frame: CGRect(x: addX, y: addY, width: 61, height: 61))
-        addButton.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
-        addButton.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
-        view.addSubview(addButton)
+        let addButton = UIButton {
+            $0.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
+            $0.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
+            mapView.addSubview($0)
+        }
+        addButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(20)
+            $0.bottom.equalToSuperview().inset(110) /// offset 65 px for portion of map below fold
+            $0.height.width.equalTo(73)
+        }
     }
     
+    func addMapsCollection() {
+        let spacing: CGFloat = 9 + 5 * 3
+        let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.6
+        let layout = UICollectionViewFlowLayout {
+            $0.itemSize = CGSize(width: itemWidth, height: itemWidth * 0.95)
+            $0.minimumInteritemSpacing = 5
+            $0.scrollDirection = .horizontal
+        }
+        mapsCollection = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        mapsCollection.backgroundColor = .white
+        mapsCollection.showsHorizontalScrollIndicator = false
+        mapsCollection.register(TagFriendCell.self, forCellWithReuseIdentifier: "TagFriendCell")
+        mapsCollection.contentInset = UIEdgeInsets(top: 5, left: 9, bottom: 0, right: 9)
+        mapsCollection.delegate = self
+        mapsCollection.dataSource = self
+        mapsCollection.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell") 
+        view.addSubview(mapsCollection)
+        mapsCollection.snp.makeConstraints {
+            $0.top.leading.trailing.equalToSuperview()
+            $0.height.equalTo(115)
+        }
+    }
     
     func setUpNavBar() {
+        navigationController?.setNavigationBarHidden(false, animated: false)
         navigationItem.leftBarButtonItem = nil
         navigationItem.rightBarButtonItem = nil
         
         navigationController?.navigationBar.addWhiteBackground()
         navigationItem.titleView = getTitleView()
+        if let mapNav = navigationController as? MapNavigationController {
+            mapNav.requiredStatusBarStyle = .darkContent
+        }
     }
     
     func getTitleView() -> UIView {
-        let navView = UIView(frame: CGRect(x: 20, y: 0, width: UIScreen.main.bounds.width - 40, height: 35))
+        if titleView != nil { return titleView }
         
-        let signUpLogo = UIImageView(frame: CGRect(x: 10, y: -5, width: 35, height: 35))
-        signUpLogo.image = UIImage(named: "Signuplogo")
-        signUpLogo.contentMode = .scaleAspectFill
-        navView.addSubview(signUpLogo)
-        
-        let buttonView = UIView(frame: CGRect(x: navView.bounds.width - 120, y: 0, width: 120, height: 30))
-        navView.addSubview(buttonView)
-        
-        let searchButton = UIButton(frame: CGRect(x: 0, y: 5, width: 20, height: 20))
-        searchButton.setImage(UIImage(named: "SearchIcon"), for: .normal)
-        buttonView.addSubview(searchButton)
-        
-        let notiButton = UIButton(frame: CGRect(x: searchButton.frame.maxX + 25, y: 5, width: 20, height: 20))
-        notiButton.setImage(UIImage(named: "NotificationsInactive"), for: .normal)
-        notiButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
-        buttonView.addSubview(notiButton)
+        titleView = MapTitleView {
+            $0.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
+            $0.notiButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
+
+        }
         
         let notificationRef = self.db.collection("users").document(self.uid).collection("notifications")
         let query = notificationRef.whereField("seen", isEqualTo: false)
@@ -156,23 +183,12 @@ class MapController: UIViewController {
                 return
             } else {
                 if snap!.documents.count > 0 {
-                    notiButton.setImage(UIImage(named: "NotificationIconActive")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    self.titleView.notiButton.pendingCount = snap!.documents.count
                 }
             }
         }
-
-        if UserDataModel.shared.userInfo != nil {
-            let profileButton = UIButton(frame: CGRect(x: notiButton.frame.maxX + 25, y: 1.5, width: 27.5, height: 27.5))
-            profileButton.layer.cornerRadius = profileButton.bounds.width/2
-            profileButton.layer.borderColor = UIColor.white.cgColor
-            profileButton.layer.borderWidth = 1.8
-            profileButton.layer.masksToBounds = true
-            profileButton.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.imageURL), for: .normal, completed: nil)
-            profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
-            buttonView.addSubview(profileButton)
-        }
-        
-        return navView
+                
+        return titleView
     }
 
     
@@ -205,10 +221,6 @@ class MapController: UIViewController {
         profileVC.containerDrawerView = sheetView
     }
             
-    @objc func notifyFriendsLoad(_ notification: NSNotification) {
-        friendsLoaded = true
-    }
-
     @objc func openNotis(_ sender: UIButton) {
         let notifVC = NotificationsController()
         
@@ -417,29 +429,6 @@ extension CLLocationCoordinate2D {
 }
 ///https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
 
-
-// extension to allow touches underneath UINavigationBar
-extension UINavigationBar {
-    open override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        guard nestedInteractiveViews(in: self, contain: point) else { return false }
-        return super.point(inside: point, with: event)
-    }
-    
-    private func nestedInteractiveViews(in view: UIView, contain point: CGPoint) -> Bool {
-        if view.isPotentiallyInteractive, view.bounds.contains(convert(point, to: view)) {
-            return true
-        }
-        
-        for subview in view.subviews {
-            if nestedInteractiveViews(in: subview, contain: point) {
-                return true
-            }
-        }
-        
-        return false
-    }
-}
-
 private extension UIView {
     var isPotentiallyInteractive: Bool {
         guard isUserInteractionEnabled else { return false }
@@ -494,114 +483,129 @@ extension MKCoordinateRegion {
     }
 }
 
-// database fetches
-extension MapController {
-    func getAdmins() {
-        
-        self.db.collection("users").whereField("admin", isEqualTo: true).getDocuments { (snap, err) in
-            if err != nil { return }
-            for admin in snap!.documents { UserDataModel.shared.adminIDs.append(admin.documentID) }
+class MapNavigationController: UINavigationController {
+    public var requiredStatusBarStyle: UIStatusBarStyle = .darkContent {
+        didSet {
+            setNeedsStatusBarAppearanceUpdate()
         }
-        
-        ///opt kenny/ellie/tyler/b0t/hog/hog0 out of tracking
-        if uid == "djEkPdL5GQUyJamNXiMbtjrsUYM2" || uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" || uid == "QgwnBsP9mlSudEuONsAsyVqvWEZ2" || uid == "X6CB24zc4iZFE8maYGvlxBp1mhb2" {
-            Mixpanel.mainInstance().optOutTracking()
+    }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        requiredStatusBarStyle
+    }
+}
+
+class NotificationsButton: UIButton {
+    var bellView: UIImageView!
+    var bubbleIcon: UIView!
+    var countLabel: UILabel!
+    
+    lazy var pendingCount: Int = 0 {
+        didSet {
+            countLabel.text = String(pendingCount)
+            bubbleIcon.isHidden = pendingCount == 0
         }
     }
     
-    func getFriends() {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         
-        friendsListGroup.enter()
-        friendsListGroup.enter()
-
-        /// can maybe use get function here -> not sure what we're listening for exactly
-        userListener = self.db.collection("users").document(self.uid).addSnapshotListener(includeMetadataChanges: true, listener: { (userSnap, err) in
-            
-            if userSnap?.metadata.isFromCache ?? false { return }
-            if err != nil { return }
-            
-            do {
-                ///get current user info
-                let actUser = try userSnap?.data(as: UserProfile.self)
-                guard var activeUser = actUser else { return }
-                
-                activeUser.id = userSnap!.documentID
-                if userSnap!.documentID != self.uid { return } /// logout + object not being destroyed
-                
-                UserDataModel.shared.userInfo = activeUser
-                self.getUserProfilePics(firstLoad: UserDataModel.shared.userInfo.id == "")
-                
-                UserDataModel.shared.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
-                for id in self.deletedFriendIDs { UserDataModel.shared.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
-                
-                var spotsList: [String] = []
-                
-                /// get full friend objects for whole friends list
-                var count = 0
-                                
-                for friend in UserDataModel.shared.friendIDs {
-                    
-                    if !UserDataModel.shared.friendsList.contains(where: {$0.id == friend}) {
-                        var emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
-                        emptyProfile.id = friend
-                        UserDataModel.shared.friendsList.append(emptyProfile) } /// append empty here so they appear in order
-                    
-                    self.db.collection("users").document(friend).getDocument { (friendSnap, err) in
-                        
-                        do {
-                            let friendInfo = try friendSnap?.data(as: UserProfile.self)
-                            guard var info = friendInfo else { UserDataModel.shared.friendIDs.removeAll(where: {$0 == friend})
-                                if count == UserDataModel.shared.friendIDs.count && !self.friendsLoaded { self.friendsListGroup.leave() }; return }
-                            
-                            info.id = friendSnap!.documentID
-
-                            if let i = UserDataModel.shared.friendsList.firstIndex(where: {$0.id == friend}) {
-                                UserDataModel.shared.friendsList[i] = info
-                            }
-                            
-                            count += 1
-                            
-                            /// load feed and notify nearbyVC that friends are done loading
-                            if count == UserDataModel.shared.friendIDs.count && !self.friendsLoaded { self.friendsListGroup.leave() }
-                        } catch {
-                            /// remove broken friend object
-                            UserDataModel.shared.friendIDs.removeAll(where: {$0 == friend})
-                            UserDataModel.shared.friendsList.removeAll(where: {$0.id == friend})
-                            
-                            if count == UserDataModel.shared.friendIDs.count && !self.friendsLoaded { self.friendsListGroup.leave() }
-                            return
-                        }
-                    }
-                }
-            } catch {  return }
-        })
+        bellView = UIImageView {
+            $0.image = UIImage(named: "NotificationsNavIcon")
+            addSubview($0)
+        }
+        bellView.snp.makeConstraints {
+            $0.leading.bottom.equalToSuperview()
+            $0.width.equalTo(26.5)
+            $0.height.equalTo(29)
+        }
+        
+        bubbleIcon = UIView {
+            $0.backgroundColor = UIColor(red: 1, green: 0.4, blue: 0.544, alpha: 1)
+            $0.layer.cornerRadius = 16/2
+            $0.isHidden = true
+            addSubview($0)
+        }
+        bubbleIcon.snp.makeConstraints {
+            $0.trailing.top.equalToSuperview()
+            $0.height.width.equalTo(16)
+        }
+        
+        countLabel = UILabel {
+            $0.text = ""
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Heavy", size: 11.5)
+            $0.textAlignment = .center
+            bubbleIcon.addSubview($0)
+        }
+        countLabel.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
     }
     
-    func getUserProfilePics(firstLoad: Bool) {
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class MapTitleView: UIView {
+    var signUpLogo: UIImageView!
+    var profileButton: UIButton!
+    var notiButton: NotificationsButton!
+    var searchButton: UIButton!
+    
+    override var intrinsicContentSize: CGSize {
+        return UIView.layoutFittingExpandedSize
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        /* signUpLogo = UIImageView {
+            $0.image = UIImage(named: "Signuplogo")
+          //  addSubview($0)
+        }
+        signUpLogo.snp.makeConstraints {
+            $0.leading.equalTo(10)
+            $0.top.equalTo(5)
+            $0.height.width.equalTo(35)
+        }
+        */
+        profileButton = UIButton {
+            $0.setImage(UIImage(named: "ProfileNavIcon"), for: .normal)
+            addSubview($0)
+        }
+        profileButton.snp.makeConstraints {
+            $0.trailing.equalTo(-30)
+            $0.top.equalTo(5)
+            $0.width.equalTo(23.5)
+            $0.height.equalTo(29)
+        }
         
-        var count = 0
-        
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-        self.imageManager.loadImage(with: URL(string: UserDataModel.shared.userInfo.imageURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { (image, data, err, cache, download, url) in
-            
-            UserDataModel.shared.userInfo.profilePic = image ?? UIImage()
-            ///post noti for profile in case user has already selected it
-            
-            count += 1
-            if count == 2 && firstLoad {
-                NotificationCenter.default.post(Notification(name: Notification.Name("InitialUserLoad"))) }
+        notiButton = NotificationsButton {
+            addSubview($0)
+        }
+        notiButton.snp.makeConstraints {
+            $0.trailing.equalTo(profileButton.snp.leading).offset(-30)
+            $0.top.equalTo(0)
+            $0.height.equalTo(35)
+            $0.width.equalTo(30)
         }
 
-        let avatarURL = UserDataModel.shared.userInfo.avatarURL ?? ""
-        if (avatarURL) != "" {
-            self.imageManager.loadImage(with: URL(string: avatarURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { (image, data, err, cache, download, url) in
-                UserDataModel.shared.userInfo.avatarPic = image ?? UIImage()
-
-                count += 1
-                if count == 2 && firstLoad {
-                    NotificationCenter.default.post(Notification(name: Notification.Name("InitialUserLoad"))) }
-            }
-            
-        } else { count += 1 }
+        searchButton = UIButton {
+            $0.setImage(UIImage(named: "SearchNavIcon"), for: .normal)
+            addSubview($0)
+        }
+        searchButton.snp.makeConstraints {
+            $0.trailing.equalTo(notiButton.snp.leading).offset(-30)
+            $0.top.equalTo(5)
+            $0.height.width.equalTo(29)
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
