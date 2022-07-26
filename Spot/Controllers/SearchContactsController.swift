@@ -153,9 +153,9 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         
         let notiID = UUID().uuidString
         let ref = db.collection("users").document(self.contacts[row].id).collection("notifications").document(notiID)
-        let timestamp = NSDate().timeIntervalSince1970
+        let timestamp = Date().timeIntervalSince1970
         let myTimeInterval = TimeInterval(timestamp)
-        let time = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
+        let time = Date(timeIntervalSince1970: TimeInterval(myTimeInterval))
                 
         self.contacts[row].pending = true
         
