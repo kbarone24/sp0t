@@ -20,7 +20,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     let db: Firestore! = Firestore.firestore()
     var uid : String = Auth.auth().currentUser?.uid ?? "invalid ID"
     
-    lazy var contacts: [Contact] = []
+    lazy var contacts: [UserProfile] = []
     lazy var numbers: [String] = []
     lazy var friendsList: [String] = []
     
@@ -36,10 +36,28 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         super.viewDidLoad()
         Mixpanel.mainInstance().track(event: "SearchContactsOpen")
         
-        view.backgroundColor = UIColor(named: "SpotBlack")
+        view.backgroundColor = .white
+        
+        self.title = "Add Contacts"
+        navigationItem.backButtonTitle = ""
+
+        navigationController!.navigationBar.barTintColor = UIColor.white
+        navigationController!.navigationBar.isTranslucent = false
+        navigationController!.navigationBar.barStyle = .black
+        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.view.backgroundColor = .white
+
+        navigationController!.navigationBar.titleTextAttributes = [
+                .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
+                .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
+        ]
+        
+        let cancelButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(cancelTap(_:)))
+        navigationItem.setLeftBarButton(cancelButton, animated: false)
+        self.navigationItem.leftBarButtonItem?.tintColor = nil
         
         tableView = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-        tableView.backgroundColor = UIColor(named: "SpotBlack")
+        tableView.backgroundColor = .white
         tableView.separatorStyle = .none
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
         tableView.delegate = self
@@ -47,22 +65,6 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         tableView.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
         view.addSubview(tableView)
         
-        if sentFromTutorial {
-            
-            navigationItem.title = "Search contacts"
-            navigationController?.navigationBar.backIndicatorImage = UIImage()
-            navigationController?.navigationBar.backIndicatorTransitionMaskImage = UIImage()
-
-            let doneButton = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(doneTap(_:)))
-            doneButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any, NSAttributedString.Key.foregroundColor: UIColor(named: "SpotGreen") as Any], for: .normal)
-            navigationItem.setRightBarButton(doneButton, animated: true)
-            self.navigationItem.rightBarButtonItem?.tintColor = nil
-
-        } else {
-            /// popover view if presented from inside the main app
-            tableView.register(ContactHeader.self, forHeaderFooterViewReuseIdentifier: "ContactHeader")
-        }
-
         checkAuth()
     }
     
@@ -99,12 +101,14 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         keyWindow?.rootViewController = navController
     }
     
+    
+    
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return sentFromTutorial ? 0 : 50
+        return 0
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 56
+        return 70
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -125,19 +129,18 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {        
         let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell", for: indexPath) as! ContactCell
         
-        cell.backgroundColor = UIColor(named: "SpotBlack")
+        cell.backgroundColor = .black
         
         if self.contacts.isEmpty {
             return cell
         }
         
-        cell.setUpAll()
-        cell.setUpContact(contact: self.contacts[indexPath.row])
+        cell.set(contact: self.contacts[indexPath.row], inviteContact: nil, friend: self.contacts[indexPath.row].friend! ? .friends : .pending, invited: .none)
         
-        if !self.contacts[indexPath.row].friend && !self.contacts[indexPath.row].pending {
+        /*if !self.contacts[indexPath.row].friend! && !self.contacts[indexPath.row].pending! {
             cell.friendLabel.tag = indexPath.row
             cell.friendLabel.addTarget(self, action: #selector(self.addFriend(_:)), for: UIControl.Event.touchUpInside)
-        }
+        }*/
         
         return cell
     }
@@ -146,13 +149,17 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         super.viewWillDisappear(false)
     }
     
+    @objc func cancelTap(_ sender: UIButton){
+        navigationController!.popViewController(animated: true)
+    }
+    
     @objc func addFriend(_ sender: UIButton) {
         
         Mixpanel.mainInstance().track(event: "SearchContactsAddFriend")
         let row = sender.tag
         
         let notiID = UUID().uuidString
-        let ref = db.collection("users").document(self.contacts[row].id).collection("notifications").document(notiID)
+        let ref = db.collection("users").document(self.contacts[row].id!).collection("notifications").document(notiID)
         let timestamp = NSDate().timeIntervalSince1970
         let myTimeInterval = TimeInterval(timestamp)
         let time = NSDate(timeIntervalSince1970: TimeInterval(myTimeInterval))
@@ -306,7 +313,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     func getContactInfo() {
         
         // loop through all users in DB to see if users contact phone numbers contains phone number from DB
-        var localContacts: [Contact] = []
+        var localContacts: [UserProfile] = []
         
         DispatchQueue.global().async {
             
@@ -321,20 +328,22 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
                     do {
                         
                         let info = try document.data(as: UserProfile.self)
-                        guard let userInfo = info else {
+                        guard var userInfo = info else {
                             index += 1; if index == snap!.documents.count && self.contacts.isEmpty { self.setUpEmptyState() }; continue
                         }
                         
-                        let id = document.documentID
-                        if id == self.uid { index += 1; if index == snap!.documents.count && self.contacts.isEmpty { self.setUpEmptyState() }; continue }
+                        userInfo.id = document.documentID
+                        if userInfo.id == self.uid { index += 1; if index == snap!.documents.count && self.contacts.isEmpty { self.setUpEmptyState() }; continue }
                         
                         var number = userInfo.phone ?? ""
                         number = number.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
                         number = String(number.suffix(10))
+                        userInfo.phone = number
                         
                         if self.numbers.contains(number) {
                             
                             let id = document.documentID
+                            userInfo.id = id
                             
                             let notiRef = self.db.collection("users").document(id).collection("notifications")
                             let friendRequestQuery = notiRef.whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending").whereField("senderID", isEqualTo: self.uid)
@@ -344,9 +353,10 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
                                 
                                 guard let self = self else { return }
                                 
-                                let friend = self.friendsList.contains(id)
-                                let pending = !friend && fSnap?.documents.count ?? 0 > 0
-                                localContacts.append(Contact(id: id, username: userInfo.username, name: userInfo.name, profilePicURL: userInfo.imageURL, number: number, friend: friend, pending: pending))
+                                userInfo.friend = self.friendsList.contains(id)
+                                userInfo.pending = !userInfo.friend! && fSnap?.documents.count ?? 0 > 0
+                                                                
+                                localContacts.append(userInfo)
                                 
                                 index += 1; if index == snap!.documents.count {
                                     self.addContactsToTable(contacts: localContacts)
@@ -365,7 +375,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         }
     }
     
-    func addContactsToTable(contacts: [Contact]) {
+    func addContactsToTable(contacts: [UserProfile]) {
         
         for contact in contacts {
         
@@ -375,7 +385,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
                 DispatchQueue.main.async {
                     
                     self.contacts = self.contacts.sorted(by: {$1.username > $0.username})
-                    self.contacts = self.contacts.sorted(by: { $1.friend && !$0.friend})
+                    self.contacts = self.contacts.sorted(by: { $1.friend! && $0.friend!})
                     self.dataFetched = true
                     
                     if self.activityIndicatorView.isAnimating() {self.activityIndicatorView.stopAnimating()}
@@ -416,13 +426,16 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     }
     
     @objc func inviteFriendsTap(_ sender: UIButton) {
-        if let vc = storyboard?.instantiateViewController(identifier: "SendInvites") as? SendInvitesController {
+        let sendInvitesVC = SendInvitesController()
+        navigationController!.pushViewController(sendInvitesVC, animated: true)
+        /*if let vc = storyboard?.instantiateViewController(identifier: "SendInvites") as? SendInvitesController {
             present(vc, animated: true, completion: nil)
-        }
+        }*/
+        
     }
 }
 
-class ContactCell: UITableViewCell {
+/*class ContactCell: UITableViewCell {
     
     var name: UILabel!
     var username: UILabel!
@@ -459,7 +472,7 @@ class ContactCell: UITableViewCell {
         self.addSubview(bottomLine)
     }
     
-    func setUpContact(contact: Contact) {
+    func setUpContact(contact: UserProfile) {
         
         friendLabel = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 130, y: 7, width: 120, height: 42))
         friendLabel.setTitleColor(UIColor.white, for: UIControl.State.normal)
@@ -473,12 +486,12 @@ class ContactCell: UITableViewCell {
         name.text = contact.name
         name.sizeToFit()
         
-        if contact.friend {
+        if contact.friend! {
             name.alpha = 0.6
             username.alpha = 0.6
             friendLabel.setImage(UIImage(named: "ContactsFriends"), for: UIControl.State.normal)
             friendLabel.isUserInteractionEnabled = false
-        } else if contact.pending {
+        } else if contact.pending! {
             name.alpha = 0.6
             username.alpha = 0.6
             friendLabel.setImage(UIImage(named: "ContactsPending"), for: UIControl.State.normal)
@@ -488,7 +501,7 @@ class ContactCell: UITableViewCell {
             friendLabel.isUserInteractionEnabled = true
         }
         
-        let url = contact.profilePicURL
+        let url = contact.imageURL
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
             profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
@@ -523,7 +536,7 @@ class ContactCell: UITableViewCell {
         if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
         self.isUserInteractionEnabled = false
     }
-}
+}*/
 
 class ContactHeader: UITableViewHeaderFooterView {
     
@@ -534,7 +547,7 @@ class ContactHeader: UITableViewHeaderFooterView {
     func setUp() {
         
         let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor(named: "SpotBlack")
+        backgroundView.backgroundColor = .white
         self.backgroundView = backgroundView
         
         resetView()

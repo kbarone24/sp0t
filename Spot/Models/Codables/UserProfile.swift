@@ -40,6 +40,10 @@ struct UserProfile: Identifiable, Codable {
     var mutualFriends: Int = 0
     var selected: Bool = false
     
+    var pending: Bool?
+    var friend: Bool?
+
+    
     
     enum CodingKeys: String, CodingKey {
         case id

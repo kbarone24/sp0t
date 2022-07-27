@@ -37,8 +37,8 @@ class FindFriendsController: UIViewController {
     lazy var searchRefreshCount = 0
     lazy var searchTextGlobal = ""
 
-    var sendInvitesView: SendInvitesView!
-    var searchContactsView: SearchContactsView!
+    var sendInvitesView: UIView!
+    var searchContactsView: UIView!
     var suggestedIndicator: CustomActivityIndicator!
     var suggestedTable: UITableView!
 
@@ -46,9 +46,29 @@ class FindFriendsController: UIViewController {
     override func viewDidLoad() {
         
         super.viewDidLoad()
-        view.backgroundColor = UIColor(named: "SpotBlack")
+        view.backgroundColor = .white
+        
+        self.title = "Find Friends"
+        navigationItem.backButtonTitle = ""
 
-        setUpTitleView()
+        navigationController!.navigationBar.barTintColor = UIColor.white
+        navigationController!.navigationBar.isTranslucent = false
+        navigationController!.navigationBar.barStyle = .black
+        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.view.backgroundColor = .white
+
+        navigationController!.navigationBar.titleTextAttributes = [
+                .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
+                .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
+        ]
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(named: "BackArrow-1"),
+            style: .plain,
+            target: self,
+            action: #selector(self.exit(_:))
+        )
+
         loadSearchBar()
         loadOutletViews()
         loadSuggestedTable()
@@ -75,115 +95,277 @@ class FindFriendsController: UIViewController {
         
         Mixpanel.mainInstance().track(event: "FindFriendsOpen")
     }
-    
-    func setUpTitleView() {
-
-        // nav bar-like titleview
-        titleView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 50))
-        titleView.backgroundColor = nil
-        view.addSubview(titleView)
         
-        let titleLabel = UILabel(frame: CGRect(x: 100, y: 15, width: UIScreen.main.bounds.width - 200, height: 16))
-        titleLabel.text = "Add friends"
-        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 16)
-        titleLabel.textColor = .white
-        titleLabel.textAlignment = .center
-        titleView.addSubview(titleLabel)
-        
-        let backButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 40, y: 7, width: 35, height: 35))
-        backButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        backButton.setImage(UIImage(named: "CancelButton"), for: .normal)
-        backButton.addTarget(self, action: #selector(exit(_:)), for: .touchUpInside)
-        titleView.addSubview(backButton)
-    }
-    
     func loadSearchBar() {
         
-        searchBarContainer = UIView(frame: CGRect(x: 0, y: titleView.frame.maxY + 5, width: UIScreen.main.bounds.width, height: 60))
-        searchBarContainer.backgroundColor = nil
-        view.addSubview(searchBarContainer)
+        searchBarContainer = UIView {
+            $0.backgroundColor = nil
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
         
-        searchBar = UISearchBar(frame: CGRect(x: 14, y: 11, width: UIScreen.main.bounds.width - 28, height: 36))
-        searchBar.searchBarStyle = .default
-        searchBar.tintColor = .white
-        searchBar.barTintColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
-        searchBar.searchTextField.backgroundColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
-        searchBar.delegate = self
-        searchBar.autocapitalizationType = .none
-        searchBar.autocorrectionType = .no
-        searchBar.placeholder = "Search for users"
-        searchBar.searchTextField.font = UIFont(name: "SFCompactText-Regular", size: 13)
-        searchBar.clipsToBounds = true
-        searchBar.layer.masksToBounds = true
-        searchBar.searchTextField.layer.masksToBounds = true
-        searchBar.searchTextField.clipsToBounds = true
-        searchBar.layer.cornerRadius = 8
-        searchBar.searchTextField.layer.cornerRadius = 8
+        searchBarContainer.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalToSuperview().offset(20)
+            $0.width.equalToSuperview()
+            $0.height.equalTo(50)
+        }
         
-        searchBarContainer.addSubview(searchBar)
+        searchBar = UISearchBar {
+            //$0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 32, height: 36)
+            $0.searchBarStyle = .default
+            $0.tintColor = .white
+            $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+            $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+            $0.delegate = self
+            $0.autocapitalizationType = .none
+            $0.autocorrectionType = .no
+            $0.placeholder = "Search users"
+            $0.searchTextField.font = UIFont(name: "SFCompactText-Medium", size: 15)
+            $0.clipsToBounds = true
+            $0.layer.masksToBounds = true
+            $0.searchTextField.layer.masksToBounds = true
+            $0.searchTextField.clipsToBounds = true
+            $0.layer.cornerRadius = 3
+            $0.searchTextField.layer.cornerRadius = 3
+            $0.backgroundImage = UIImage()
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            searchBarContainer.addSubview($0)
+        }
         
-        cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 60, y: 13, width: 50, height: 30))
-        cancelButton.setTitle("Cancel", for: .normal)
-        cancelButton.setTitleColor(UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
-        cancelButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
-        cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
-        cancelButton.isHidden = true
-        searchBarContainer.addSubview(cancelButton)
+    
+        searchBar.snp.makeConstraints{
+            $0.leading.equalToSuperview().offset(16)
+            $0.trailing.equalToSuperview().offset(-16)
+            $0.top.equalToSuperview()
+            $0.height.equalTo(36)
+        }
         
-        resultsTable = UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 300))
-        resultsTable.dataSource = self
-        resultsTable.delegate = self
-        resultsTable.isScrollEnabled = false
-        resultsTable.backgroundColor = UIColor(named: "SpotBlack")
-        resultsTable.separatorStyle = .none
-        resultsTable.allowsSelection = false
-        resultsTable.isHidden = true
-        resultsTable.register(SuggestedFriendSearchCell.self, forCellReuseIdentifier: "SuggestedSearch")
-        resultsTable.tag = 1
+        cancelButton = UIButton{
+            $0.setTitle("Cancel", for: .normal)
+            $0.setTitleColor(UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
+            $0.titleLabel?.textAlignment = .center
+            //$0.titleEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
+            $0.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
+            $0.isHidden = true
+            searchBarContainer.addSubview($0)
+        }
+        
+        cancelButton.snp.makeConstraints{
+            $0.trailing.equalToSuperview().offset(-16)
+            $0.centerY.equalToSuperview()
+        }
+        
+        
+        resultsTable = UITableView {
+            $0.dataSource = self
+            $0.delegate = self
+            $0.isScrollEnabled = false
+            $0.backgroundColor = .white
+            $0.separatorStyle = .none
+            $0.allowsSelection = false
+            $0.isHidden = true
+            $0.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
+            $0.tag = 1
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
+        
+        resultsTable.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(searchBarContainer.snp.bottom)
+            $0.width.equalToSuperview()
+            $0.height.equalTo(UIScreen.main.bounds.height - searchBarContainer.frame.maxY)
+        }
+        
+        
+        //UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 300))
 
         searchIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 30))
         searchIndicator.isHidden = true
         resultsTable.addSubview(searchIndicator)
         
-        view.addSubview(resultsTable)
+        //view.addSubview(resultsTable)
     }
     
     func loadOutletViews() {
         
         /// set up outlet views to search contacts + send invites
-        mainView = UIView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - searchBarContainer.frame.maxY))
-        mainView.backgroundColor = nil
-        view.addSubview(mainView)
+        mainView = UIView{
+            $0.backgroundColor = nil
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
         
-        sendInvitesView = SendInvitesView(frame: CGRect(x: 0, y: 5, width: UIScreen.main.bounds.width, height: 76))
-        sendInvitesView.setUp(invites: 8 - UserDataModel.shared.userInfo.sentInvites.count)
-        sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
+        mainView.snp.makeConstraints{
+            $0.top.equalTo(searchBarContainer.snp.bottom).offset(10)
+            $0.width.equalToSuperview()
+            //idk about height
+        }
+        
+        sendInvitesView = UIView{
+            $0.backgroundColor = .white
+            $0.isUserInteractionEnabled = true
+            $0.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
+            mainView.addSubview($0)
+        }
+        
+        sendInvitesView.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(60)
+            $0.top.equalToSuperview()
+        }
+        
+        searchContactsView = UIView{
+            $0.backgroundColor = .white
+            $0.isUserInteractionEnabled = true
+            $0.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSearchContacts(_:))))
+            mainView.addSubview($0)
+        }
+        
+        searchContactsView.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(60)
+            $0.top.equalTo(sendInvitesView.snp.bottom).offset(20)
+        }
+        
+        let inviteFriendsIcon = UIImageView {
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = false
+            $0.contentMode = UIView.ContentMode.left
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            $0.image =  UIImage(named: "InviteFriends")
+            $0.layer.cornerRadius = 0
+            sendInvitesView.addSubview($0)
+        }
+        
+        inviteFriendsIcon.snp.makeConstraints{
+            $0.width.height.equalTo(56)
+            $0.centerY.equalToSuperview()
+            $0.leading.equalToSuperview().offset(16)
+        }
+        
+        let searchContactsIcon = UIImageView {
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = false
+            $0.contentMode = UIView.ContentMode.left
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            $0.image =  UIImage(named: "SearchContacts")
+            $0.layer.cornerRadius = 0
+            searchContactsView.addSubview($0)
+        }
+        
+        searchContactsIcon.snp.makeConstraints{
+            $0.width.height.equalTo(56)
+            $0.centerY.equalToSuperview()
+            $0.leading.equalToSuperview().offset(16)
+        }
+        
+        let carot = UIImageView {
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = false
+            $0.contentMode = UIView.ContentMode.right
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            $0.image =  UIImage(named: "Carot")
+            $0.layer.cornerRadius = 0
+            sendInvitesView.addSubview($0)
+        }
+        
+        carot.snp.makeConstraints{
+            $0.width.equalTo(12.73)
+            $0.height.equalTo(19.8)
+            $0.centerY.equalToSuperview()
+            $0.trailing.equalToSuperview().offset(-20)
+        }
+        
+        let carot2 = UIImageView {
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = false
+            $0.contentMode = UIView.ContentMode.right
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            $0.image =  UIImage(named: "Carot")
+            $0.layer.cornerRadius = 0
+            searchContactsView.addSubview($0)
+        }
+        
+        carot2.snp.makeConstraints{
+            $0.width.equalTo(12.73)
+            $0.height.equalTo(19.8)
+            $0.centerY.equalToSuperview()
+            $0.trailing.equalToSuperview().offset(-20)
+        }
+        
+        let inviteFriendsText = UILabel{
+             $0.text = "Invite Friends"
+             $0.numberOfLines = 0
+             $0.textColor = .black
+             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+             $0.translatesAutoresizingMaskIntoConstraints = false
+             sendInvitesView.addSubview($0)
+         }
+        
+        let searchContactsText = UILabel{
+             $0.text = "Search contacts"
+             $0.numberOfLines = 0
+             $0.textColor = .black
+             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+             $0.translatesAutoresizingMaskIntoConstraints = false
+             searchContactsView.addSubview($0)
+         }
+        
+        inviteFriendsText.snp.makeConstraints{
+            $0.centerY.equalToSuperview()
+            $0.leading.equalTo(inviteFriendsIcon.snp.trailing).offset(10)
+        }
+        
+        searchContactsText.snp.makeConstraints{
+            $0.centerY.equalToSuperview()
+            $0.leading.equalTo(searchContactsIcon.snp.trailing).offset(10)
+        }
+        
+        //sendInvitesView = SendInvitesView(frame: CGRect(x: 0, y: 5, width: UIScreen.main.bounds.width, height: 76))
+        //sendInvitesView.setUp(invites: 8 - UserDataModel.shared.userInfo.sentInvites.count)
+        /*sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
         mainView.addSubview(sendInvitesView)
         
         searchContactsView = SearchContactsView(frame: CGRect(x: 0, y: sendInvitesView.frame.maxY, width: UIScreen.main.bounds.width, height: 76))
         searchContactsView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSearchContacts(_:))))
-        mainView.addSubview(searchContactsView)
+        mainView.addSubview(searchContactsView)*/
     }
     
     func loadSuggestedTable() {
     
-        suggestedTable = UITableView(frame: CGRect(x: 0, y: searchContactsView.frame.maxY + 15, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - searchContactsView.frame.maxY - 15))
-        suggestedTable.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 200, right: 0)
-        suggestedTable.backgroundColor = UIColor(named: "SpotBlack")
-        suggestedTable.tag = 0
-        suggestedTable.separatorStyle = .none
-        suggestedTable.allowsSelection = false
-        suggestedTable.delegate = self
-        suggestedTable.dataSource = self
-        suggestedTable.isScrollEnabled = UIScreen.main.bounds.height < 650
-        suggestedTable.register(SuggestedFriendCell.self, forCellReuseIdentifier: "SuggestedFriend")
-        suggestedTable.register(SuggestedFriendsHeader.self, forHeaderFooterViewReuseIdentifier: "SuggestedHeader")
-        mainView.addSubview(suggestedTable)
-        
+        suggestedTable = UITableView {
+            $0.frame = CGRect(x: 0, y: searchContactsView.frame.maxY + 15, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - searchContactsView.frame.maxY - 15)
+            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 200, right: 0)
+            $0.backgroundColor = .white
+            $0.tag = 0
+            $0.separatorStyle = .none
+            $0.allowsSelection = false
+            $0.delegate = self
+            $0.dataSource = self
+            $0.isScrollEnabled = UIScreen.main.bounds.height < 650
+            $0.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
+            $0.register(SuggestedFriendsHeader.self, forHeaderFooterViewReuseIdentifier: "SuggestedHeader")
+            mainView.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
+              
         suggestedIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 30))
         suggestedIndicator.isHidden = true
         suggestedTable.addSubview(suggestedIndicator)
+        
+        suggestedTable.snp.makeConstraints{
+            $0.top.equalTo(searchContactsView.snp.bottom)
+            $0.bottom.equalToSuperview()
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(UIScreen.main.bounds.height - searchBarContainer.frame.maxY - 120-15)
+        }
     }
     
     @objc func notifyRequestSent(_ sender: NSNotification) {
@@ -199,7 +381,7 @@ class FindFriendsController: UIViewController {
     }
     
     @objc func notifyInviteSent(_ sender: NSNotification) {
-        sendInvitesView.setUp(invites: 8 - UserDataModel.shared.userInfo.sentInvites.count)
+        //sendInvitesView.setUp(invites: 8 - UserDataModel.shared.userInfo.sentInvites.count)
     }
     
     @objc func presentSendInvites(_ sender: UITapGestureRecognizer) {
@@ -207,20 +389,25 @@ class FindFriendsController: UIViewController {
         let adminID = uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
         if UserDataModel.shared.userInfo.sentInvites.count > 7 && !adminID { return }
         
-        if let vc = storyboard?.instantiateViewController(identifier: "SendInvites") as? SendInvitesController {
+        let sendInvitesVC = SendInvitesController()
+        navigationController!.pushViewController(sendInvitesVC, animated: true)
+        
+        /*if let vc = storyboard?.instantiateViewController(identifier: "SendInvites") as? SendInvitesController {
             present(vc, animated: true, completion: nil)
-        }
+        }*/
     }
     
     @objc func presentSearchContacts(_ sender: UITapGestureRecognizer) {
-        if let vc = storyboard?.instantiateViewController(identifier: "SearchContacts") as? SearchContactsController {
+        let searchContactsVC = SearchContactsController()
+        navigationController!.pushViewController(searchContactsVC, animated: true)
+        /*if let vc = storyboard?.instantiateViewController(identifier: "SearchContacts") as? SearchContactsController {
             present(vc, animated: true, completion: nil)
-        }
+        }*/
     }
 
     
     @objc func exit(_ sender: UIButton) {
-        dismiss(animated: true, completion: nil)
+        self.navigationController!.popViewController(animated: true)
     }
     
     @objc func searchCancelTap(_ sender: UIButton) {
@@ -396,17 +583,13 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "SuggestedFriend") as? SuggestedFriendCell {
-            let user = suggestedUsers[indexPath.row]
-            cell.setUp(user: user.0, status: user.1)
+        let dataSource = tableView.tag == 0 ? suggestedUsers : queryUsers
+        if let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell") as? ContactCell {
+            let user = dataSource[indexPath.row]
+            cell.set(contact: user.0, inviteContact: nil, friend:  user.1, invited: .none)
             return cell
             
-        } else if let cell = tableView.dequeueReusableCell(withIdentifier: "SuggestedSearch") as? SuggestedFriendSearchCell {
-            let user = queryUsers[indexPath.row]
-            cell.setUp(user: user.0, status: user.1)
-            return cell
-            
-        } else { return UITableViewCell() }
+        }  else { return UITableViewCell() }
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -416,7 +599,7 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return tableView.tag == 0 ? 76 : 60
+        return 70
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
@@ -429,8 +612,18 @@ extension FindFriendsController: UISearchBarDelegate {
     
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
         
+        print(" ✍🏽 did begin editing")
+        
+
         UIView.animate(withDuration: 0.1) {
-            self.searchBar.frame = CGRect(x: self.searchBar.frame.minX, y: self.searchBar.frame.minY, width: UIScreen.main.bounds.width - 93, height: self.searchBar.frame.height)
+            print("animaTING")
+            searchBar.snp.remakeConstraints{
+                $0.leading.equalToSuperview().offset(16)
+                $0.trailing.equalToSuperview().offset(-60)
+                $0.top.equalToSuperview()
+                $0.height.equalTo(36)
+            }
+            self.view.layoutIfNeeded()
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
@@ -444,13 +637,21 @@ extension FindFriendsController: UISearchBarDelegate {
     
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
         
-        self.searchBar.text = ""
-        emptyQueries()
+        
+        print("didEndEditing")
         
         UIView.animate(withDuration: 0.1) {
             self.cancelButton.isHidden = true
-            self.searchBar.frame = CGRect(x: self.searchBar.frame.minX, y: self.searchBar.frame.minY, width: UIScreen.main.bounds.width - 28, height: self.searchBar.frame.height)
+            print("animating")
+            searchBar.snp.updateConstraints{
+                $0.trailing.equalToSuperview().offset(-16)
+            }
+            self.view.layoutIfNeeded()
         }
+        
+        self.searchBar.text = ""
+        
+        emptyQueries()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self else { return }
@@ -654,26 +855,45 @@ class SuggestedFriendsHeader: UITableViewHeaderFooterView {
         super.init(reuseIdentifier: reuseIdentifier)
         
         let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor(named: "SpotBlack")
+        backgroundView.backgroundColor = .white
         self.backgroundView = backgroundView
 
         if label != nil { label.text = "" }
-        label = UILabel(frame: CGRect(x: 14, y: 3, width: 125, height: 20))
-        label.text = "Suggested friends"
-        label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Regular", size: 13)
-        addSubview(label)
+        
+        
+        label = UILabel {
+        $0.text = "Suggested friends"
+        $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        addSubview($0)
+        }
+        
+        label.snp.makeConstraints{
+            $0.leading.equalToSuperview().offset(14)
+            $0.centerY.equalToSuperview()
+        }
         
         if refreshButton != nil { refreshButton.setTitle("", for: .normal) }
-        refreshButton = UIButton(frame: CGRect(x: label.frame.maxX, y: 0, width: 60, height: 26))
-        refreshButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        refreshButton.setTitle("REFRESH", for: .normal)
-        refreshButton.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        refreshButton.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 10.5)
-        refreshButton.contentVerticalAlignment = .center
-        refreshButton.contentHorizontalAlignment = .center
-        refreshButton.addTarget(self, action: #selector(refreshTap(_:)), for: .touchUpInside)
-        addSubview(refreshButton)
+        
+        refreshButton = UIButton{
+            $0.setImage(UIImage(named: "RefreshIcon"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 2)
+            $0.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.setTitle("Refresh", for: .normal)
+            $0.setTitleColor(UIColor(red: 0, green: 0, blue: 0, alpha: 1), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14)
+            $0.contentVerticalAlignment = .center
+            $0.contentHorizontalAlignment = .center
+            $0.addTarget(self, action: #selector(refreshTap(_:)), for: .touchUpInside)
+            addSubview($0)
+        }
+        
+        refreshButton.snp.makeConstraints{
+            $0.trailing.equalToSuperview().offset(-20)
+            $0.centerY.equalToSuperview()
+            $0.width.equalTo(80)
+            $0.height.equalTo(30)
+        }
     }
     
     @objc func refreshTap(_ sender: UIButton) {
@@ -721,7 +941,7 @@ class SuggestedFriendCell: UITableViewCell {
         let url = user.imageURL
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
         }
 
         nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 11, y: 13.5, width: 200, height: 15))
@@ -853,7 +1073,7 @@ class SuggestedFriendSearchCell: UITableViewCell {
         let url = user.imageURL
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
         }
 
         nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: 16, width: 200, height: 15))
