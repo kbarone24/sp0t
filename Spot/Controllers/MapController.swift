@@ -468,6 +468,7 @@ class MapController: UIViewController {
         
         let searchButton = UIButton(frame: CGRect(x: 0, y: 5, width: 20, height: 20))
         searchButton.setImage(UIImage(named: "SearchIcon"), for: .normal)
+        searchButton.addTarget(self, action: #selector(openFindFriends(_:)), for: .touchUpInside)
         buttonView.addSubview(searchButton)
         
         let notiButton = UIButton(frame: CGRect(x: searchButton.frame.maxX + 25, y: 5, width: 20, height: 20))
@@ -513,13 +514,14 @@ class MapController: UIViewController {
         navigationItem.titleView = getTitleView()
     }
     
+    @objc func openFindFriends(_ sender: UIButton) {
+        let findFriendsVC = FindFriendsController()
+        navigationController!.pushViewController(findFriendsVC, animated: true)
+    }
+    
     @objc func openNotis(_ sender: UIButton) {
-        /*if let notificationsVC = UIStoryboard(name: "Notifications", bundle: nil).instantiateViewController(withIdentifier: "NotificationsVC") as? NotificationsController {
-            notificationsVC.mapVC = self
-            navigationController?.pushViewController(notificationsVC, animated: true)
-        }*/
         
-        let notifVC = NotificationsController()
+       let notifVC = NotificationsController()
         
         sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
