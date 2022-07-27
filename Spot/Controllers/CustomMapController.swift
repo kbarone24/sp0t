@@ -13,7 +13,14 @@ import Firebase
 
 class CustomMapController: UIViewController {
     
+    private var topYContentOffset: CGFloat?
+    private var middleYContentOffset: CGFloat?
+    
     private var customMapCollectionView: UICollectionView!
+    private var floatBackButton: UIButton!
+    private var barView: UIView!
+    private var titleLabel: UILabel!
+    private var barBackButton: UIButton!
     
     private var userProfile: UserProfile?
     private var mapData: CustomMap? {
@@ -22,20 +29,30 @@ class CustomMapController: UIViewController {
         }
     }
     private var containerDrawerView: DrawerView?
+    private var mapController: UIViewController?
 
     init(userProfile: UserProfile? = nil, mapData: CustomMap, presentedDrawerView: DrawerView? = nil) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
         self.mapData = mapData
         self.containerDrawerView = presentedDrawerView
+        containerDrawerView?.canInteract = true
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
+    deinit {
+        floatBackButton.removeFromSuperview()
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+        if let mapVC = window as? UINavigationController {
+            mapController = mapVC.viewControllers[0]
+        }
         viewSetup()
         // Do any additional setup after loading the view.
     }
@@ -45,26 +62,11 @@ extension CustomMapController {
     private func viewSetup() {
         view.backgroundColor = .white
 
-        self.title = ""
-        navigationItem.backButtonTitle = ""
-
-        navigationController!.navigationBar.barTintColor = UIColor.white
-        navigationController!.navigationBar.isTranslucent = true
-        navigationController!.navigationBar.barStyle = .black
-        navigationController!.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
         
-        navigationController!.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-            .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
-        ]
         
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow-1"),
-            style: .plain,
-            target: containerDrawerView,
-            action: #selector(containerDrawerView?.closeAction)
-        )
+        navigationItem.setHidesBackButton(true, animated: true)
+        
+        
         
         customMapCollectionView = {
             let layout = UICollectionViewFlowLayout()
@@ -81,6 +83,56 @@ extension CustomMapController {
         customMapCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
+        // Need a new pan gesture to react when profileCollectionView scroll disables
+        let scrollViewPanGesture = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
+        scrollViewPanGesture.delegate = self
+        customMapCollectionView.addGestureRecognizer(scrollViewPanGesture)
+        customMapCollectionView.isScrollEnabled = false
+        
+        floatBackButton = UIButton {
+            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
+            $0.backgroundColor = .white
+            $0.setTitle("", for: .normal)
+            $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
+            $0.layer.cornerRadius = 19
+            mapController?.view.insertSubview($0, belowSubview: containerDrawerView!.slideView)
+        }
+        floatBackButton.snp.makeConstraints {
+            $0.leading.equalToSuperview().offset(15)
+            $0.top.equalToSuperview().offset(49)
+            $0.height.width.equalTo(38)
+        }
+        
+        barView = UIView {
+            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
+            $0.backgroundColor = .clear
+        }
+        titleLabel = UILabel {
+            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+            $0.text = ""
+            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            $0.textAlignment = .center
+            $0.numberOfLines = 0
+            $0.sizeToFit()
+            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: view.frame.width, height: 18))
+            barView.addSubview($0)
+        }
+        barBackButton = UIButton {
+            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
+            $0.setTitle("", for: .normal)
+            $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
+            $0.isHidden = true
+            barView.addSubview($0)
+        }
+        barBackButton.snp.makeConstraints {
+            $0.leading.equalToSuperview().offset(22)
+            $0.centerY.equalTo(titleLabel)
+        }
+        containerDrawerView?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
+    }
+    
+    @objc func backButtonAction() {
+        navigationController?.popViewController(animated: true)
     }
 }
 
@@ -152,9 +204,125 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
 extension CustomMapController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if(scrollView.contentOffset.y > 0){
-            navigationController?.navigationBar.isTranslucent = false
-            self.title = mapData?.mapName
-        } else { self.title = ""}
+        
+        if topYContentOffset != nil && containerDrawerView?.status == .Top {
+            // Disable the bouncing effect when scroll view is scrolled to top
+            if scrollView.contentOffset.y <= topYContentOffset! {
+                print("Disable the bouncing effect when scroll view is scrolled to top")
+                scrollView.contentOffset.y = topYContentOffset!
+                containerDrawerView?.canDrag = true
+                containerDrawerView?.swipeToNextState = true
+            }
+            
+            // Show navigation bar
+            if scrollView.contentOffset.y > topYContentOffset! {
+                print("Show navigation bar")
+                containerDrawerView?.canDrag = false
+                containerDrawerView?.swipeToNextState = false
+                barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
+                titleLabel.text = scrollView.contentOffset.y > 0 ? mapData?.mapName : ""
+            }
+        }
+                
+        // Get top y content offset
+        if topYContentOffset == nil && containerDrawerView?.status == .Top {//3
+            print("Get top y content offset")
+            topYContentOffset = scrollView.contentOffset.y
+            barBackButton.isHidden = false
+        }
+        
+        // Get middle y content offset
+        if middleYContentOffset == nil {
+            print("Get middle y content offset")
+            middleYContentOffset = scrollView.contentOffset.y
+        }
+        
+        // Fixed the content offset to middleYContentOffset when user pull down from Top
+        if
+            topYContentOffset == nil &&
+            containerDrawerView?.status == .Top &&
+            scrollView.isScrollEnabled == true
+        {
+            if scrollView.contentOffset.y <= middleYContentOffset! {
+                print("Fixed the content offset to middleYContentOffset when user pull down from Top")
+                scrollView.contentOffset.y = middleYContentOffset!
+            }
+        }
+        
+        // Set scroll view content offset when in transition
+        if
+            middleYContentOffset != nil &&
+            topYContentOffset != nil &&
+            scrollView.contentOffset.y <= middleYContentOffset! &&
+            containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
+        {
+            print("Set scroll view content offset when in transition")
+            scrollView.contentOffset.y = middleYContentOffset!
+        }
+        
+        // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
+        if containerDrawerView?.status != .Top {//2
+            print("Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state")
+            customMapCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
+            customMapCollectionView.isScrollEnabled = false
+            containerDrawerView?.swipeToNextState = true
+            topYContentOffset = nil
+        }
+    }
+}
+
+extension CustomMapController: UIGestureRecognizerDelegate {
+    @objc func onPan(_ recognizer: UIPanGestureRecognizer) {
+        // Swipe up y translation < 0
+        // Swipe down y translation > 0
+        let yTranslation = recognizer.translation(in: recognizer.view).y
+        
+        // Get the initial Top y position contentOffset
+        if containerDrawerView?.status == .Top && topYContentOffset == nil {
+            print("Get the initial Top y position contentOffset")
+            topYContentOffset = customMapCollectionView.contentOffset.y
+        }
+        
+        // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction
+        if
+            topYContentOffset != nil &&
+            containerDrawerView?.status == .Top &&
+            customMapCollectionView.contentOffset.y <= topYContentOffset!
+        {
+            print("Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction")
+            customMapCollectionView.isScrollEnabled = true
+            containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
+        }
+
+        // Preventing the drawer view to be dragged when it's status is top and user is scrolling down
+        if
+            containerDrawerView?.status == .Top &&
+            customMapCollectionView.contentOffset.y > topYContentOffset ?? -91 &&
+            yTranslation > 0 &&
+            containerDrawerView?.swipeToNextState == false
+        {
+            print("Preventing the drawer view to be dragged when it's status is top and user is scrolling down")
+            containerDrawerView?.canDrag = false
+            containerDrawerView?.slideView.frame.origin.y = 0
+        }
+        
+        // Reset drawer view varaiables when the drawer view is on top and user swipes down
+        if customMapCollectionView.contentOffset.y <= topYContentOffset ?? -91 && yTranslation >= 0 {
+            containerDrawerView?.canDrag = true
+            containerDrawerView?.swipeToNextState = true
+            print("Reset drawer view varaiables when the drawer view is on top and user swipes down")
+        }
+        
+        if containerDrawerView!.slideView.frame.minY > 0 {
+//            topYContentOffset = nil
+            barBackButton.isHidden = true
+        }
+        
+        // Need to prevent content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
+        recognizer.setTranslation(.zero, in: recognizer.view)
+    }
+    
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 }

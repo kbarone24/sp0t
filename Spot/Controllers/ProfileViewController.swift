@@ -15,9 +15,7 @@ import FirebaseFunctions
 
 
 class ProfileViewController: UIViewController {
-    
-    public var showNav: Bool!
-    
+        
     // If start from middle position and need to be draggable
     private var fromMiddleDrag: Bool = false
     private var topYContentOffset: CGFloat?
@@ -103,7 +101,8 @@ class ProfileViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
-
+        containerDrawerView?.present(to: .Top)
+        containerDrawerView?.canInteract = false
     }
 
     @objc func editButtonAction() {
@@ -305,6 +304,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             if let _ = cell as? ProfileMyMapCell {
                 print("mapCell selected")
             } else if let _ = cell as? ProfileBodyCell {
+                containerDrawerView?.present(to: .Middle)
+                
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[indexPath.row - 1], presentedDrawerView: containerDrawerView)
                 navigationController?.pushViewController(customMapVC, animated: true)
                 customMapVC.navigationController!.navigationBar.isTranslucent = true
