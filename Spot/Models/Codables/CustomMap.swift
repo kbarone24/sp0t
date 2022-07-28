@@ -18,6 +18,7 @@ struct CustomMap: Identifiable, Codable {
     var founderID: String
     var imageURL: String
     var likers: [String]
+    var mapBio: String?
     var mapName: String
     var memberIDs: [String]
     var posterDictionary: [String: [String]] = [:]
@@ -28,12 +29,16 @@ struct CustomMap: Identifiable, Codable {
     var postTimestamps: [Firebase.Timestamp] = []
     var secret: Bool
     var spotIDs: [String]
+    var spotNames: [String] = []
     var userTimestamp: Timestamp? /// != nil when fetched from user's profile
     var userURL: String? /// != nil when fetched from user's profile
     
+    var selected = false
     var memberProfiles: [UserProfile]? = []
     var coverImage: UIImage? = UIImage()
-    var selected = false
+    
+    var postsDictionary = [String: MapPost]()
+    var postGroup: [MapPostGroup] = []
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -50,7 +55,13 @@ struct CustomMap: Identifiable, Codable {
         case postTimestamps
         case secret
         case spotIDs
+        case spotNames
         case userTimestamp
         case userURL
     }
+}
+
+struct MapPostGroup {
+    var spotID: String?
+    var postIDs: [(id: String, timestamp: Timestamp, seen: Bool)]
 }

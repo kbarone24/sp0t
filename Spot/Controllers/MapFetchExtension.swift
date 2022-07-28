@@ -20,18 +20,33 @@ extension MapController {
         }
     }
     
+    @objc func notifyUserLoad(_ notification: NSNotification) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getMaps()
+        }
+    }
+    
     @objc func notifyFriendsLoad(_ notification: NSNotification) {
         friendsLoaded = true
-                
+        
         homeFetchGroup.enter()
-        homeFetchGroup.enter()
-        getFriendPosts()
-        getMaps()
-        getUnseenPosts()
+        DispatchQueue.global(qos: .userInitiated).async { self.getRecentPosts(map: nil) }
         
         homeFetchGroup.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
-            self.feedLoaded = true
+            if !self.feedLoaded {
+                self.feedLoaded = true
+                self.attachNewPostListener()
+            }
+            self.reloadMapsCollection()
+        }
+    }
+    
+    func reloadMapsCollection() {
+        /// sort first by maps that have an unseen post, then by most recent post timestamp
+        UserDataModel.shared.userInfo.mapsList.sort(by: {$0.postsDictionary.contains(where: {!$0.value.seen}) && $1.postsDictionary.contains(where: {!$0.value.seen}) ? $0.postTimestamps.last!.seconds > $1.postTimestamps.last!.seconds : $0.postsDictionary.contains(where: {!$0.value.seen}) && !$1.postsDictionary.contains(where: {!$0.value.seen})})
+
+        DispatchQueue.main.async {
             self.mapsCollection.reloadData()
             self.mapsCollection.selectItem(at: IndexPath(item: 0, section: 0), animated: false, scrollPosition: .left)
         }
@@ -71,19 +86,22 @@ extension MapController {
                 
                 UserDataModel.shared.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
                 for id in self.deletedFriendIDs { UserDataModel.shared.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
-                                
+                NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
+
                 let friendsListGroup = DispatchGroup()
-                
+                friendsListGroup.enter()
+                var leftDummy = false /// enter friends list group immediately due to group leaving before loop executes
                 friendsListGroup.notify(queue: .global()) {
                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
                 }
 
                 for friend in UserDataModel.shared.friendIDs {
-                    friendsListGroup.enter()
+                    DispatchQueue.main.async { friendsListGroup.enter() }
                     self.db.collection("users").document(friend).getDocument { (friendSnap, err) in
+                        if !leftDummy { friendsListGroup.leave(); leftDummy = true }
                         do {
                             let friendInfo = try friendSnap?.data(as: UserProfile.self)
-                            guard var info = friendInfo else { UserDataModel.shared.friendIDs.removeAll(where: {$0 == friend}); friendsListGroup.leave(); return }
+                            guard var info = friendInfo else { UserDataModel.shared.friendIDs.removeAll(where: {$0 == friend}); if !self.friendsLoaded { friendsListGroup.leave() }; return }
 
                             info.id = friendSnap!.documentID
                             if !UserDataModel.shared.friendsList.contains(where: {$0.id == friend}) {
@@ -99,7 +117,6 @@ extension MapController {
                         }
                     }
                 }
-                friendsListGroup.leave() /// initial user leave
             } catch {  return }
         })
     }
@@ -130,100 +147,60 @@ extension MapController {
     }
 
 
-    func getFriendPosts() {
-        
-        let postsGroup = DispatchGroup()
-        postsGroup.enter()
-        postsGroup.enter()
-        postsGroup.notify(queue: .main) { [weak self] in
-            guard let self = self else { return }
-            /// sort friends posts
-            print("frineds posts leave")
-            self.homeFetchGroup.leave()
-        }
-        
-        /// fetch all posts in last 24 hours
-        let todaySeconds = Date().timeIntervalSince1970
+    func getRecentPosts(map: CustomMap?) {
+        /// fetch all posts in last 7 days
+        let seconds = Date().timeIntervalSince1970 - 86400 * 7
         let yesterdaySeconds = Date().timeIntervalSince1970 - 86400
-        let yesterdayTimestamp = Timestamp(seconds: Int64(yesterdaySeconds), nanoseconds: 0)
-        let recentQuery = db.collection("posts").whereField("timestamp", isGreaterThanOrEqualTo: yesterdayTimestamp)
+        let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
+        var recentQuery = db.collection("posts").whereField("timestamp", isGreaterThanOrEqualTo: timestamp)
+        if map != nil { recentQuery = recentQuery.whereField("mapID", isEqualTo: map!.id!) }
         
         recentQuery.getDocuments { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
             if snap.metadata.isFromCache { return }
-            if snap.documents.count == 0 { postsGroup.leave(); return }
-            
+            if snap.documents.count == 0 { self.homeFetchGroup.leave(); return }
+
             let recentGroup = DispatchGroup()
             for doc in snap.documents {
                 do {
                     let postIn = try doc.data(as: MapPost.self)
                     /// if !contains, run query, else update with new values + update comments
                     guard let postInfo = postIn else { continue }
-                    if self.friendsPostsDictionary[postInfo.id!] != nil { self.updatePost(post: postInfo); continue } /// update post on active listener change
+                    if self.postsContains(postID: postInfo.id!, mapID: map?.id ?? "") { self.updatePost(post: postInfo, map: map); continue }
+                    /// check seenList if older than 24 hours
+                    if postInfo.timestamp.seconds < Int64(yesterdaySeconds) && postInfo.seenList!.contains(self.uid) { continue }
+                    
                     recentGroup.enter()
-                    self.setPostDetails(post: postInfo) { post in
-                        if post.id ?? "" != "" { self.addPostToDictionary(post: post) }
+                    self.setPostDetails(post: postInfo) { [weak self] post in
+                        guard let self = self else { return }
+                        if post.id ?? "" != "" { self.addPostToDictionary(post: post, map: map) }
                         recentGroup.leave()
                     }
                     continue
                     
                 } catch {
+                    print("catch")
                     continue
                 }
             }
             recentGroup.notify(queue: .global()) {
-                postsGroup.leave()
-            }
-        }
-        
-        /// fetch unseen posts between 1 - 7 day old
-        let lowerBound = todaySeconds - 86400 * 7
-        let weekAgoTimestamp = Timestamp(seconds: Int64(lowerBound), nanoseconds: 0)
-        let oldQuery = db.collection("posts").whereField("seen", isEqualTo: false).whereField("timestamp", isLessThanOrEqualTo: yesterdayTimestamp).whereField("timestamp", isGreaterThanOrEqualTo: weekAgoTimestamp)
-        oldQuery.getDocuments { [weak self] snap, err in
-            guard let self = self else { return }
-            guard let snap = snap else { return }
-            if snap.documents.count == 0 { postsGroup.leave(); return }
-            
-            let oldGroup = DispatchGroup()
-            for doc in snap.documents {
-                do {
-                    let postIn = try doc.data(as: MapPost.self)
-                    guard let postInfo = postIn else { continue }
-                    if self.friendsPostsDictionary[postInfo.id!] != nil { self.updatePost(post: postInfo); continue } /// update post on active listener change
-                    oldGroup.enter()
-                    self.setPostDetails(post: postInfo) { post in
-                        if post.id ?? "" != "" {
-                            self.addPostToDictionary(post: post)
-                        }
-                        oldGroup.leave()
-                    }
-                } catch {
-                    continue
-                }
-            }
-            oldGroup.notify(queue: .global()) {
-                postsGroup.leave()
+                self.homeFetchGroup.leave()
             }
         }
     }
     
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
         var postInfo = post
-        if let user = UserDataModel.shared.friendsList.first(where: {$0.id == postInfo.posterID}) {
-            postInfo.userInfo = user
-        } else if postInfo.posterID == self.uid {
-            postInfo.userInfo = UserDataModel.shared.userInfo
-        } else {
-            /// need to update this func for map post (not all users will be friends) 
-            /// friend not in users friendslist, might have removed them as a friend
-            completion(MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp()))
-            return
-        }
         
         /// detail group tracks comments and added users fetches
         let detailGroup = DispatchGroup()
+        detailGroup.enter()
+        getUserInfo(userID: postInfo.posterID) { user in
+            postInfo.userInfo = user
+            detailGroup.leave()
+        }
+        
         detailGroup.enter()
         self.getComments(postID: postInfo.id!) { comments in
             postInfo.commentList = comments
@@ -250,39 +227,72 @@ extension MapController {
         }
     }
     
-    func addPostToDictionary(post: MapPost) {
-        friendsPostsDictionary[post.id!] = post
-        
-        if !friendsPostsGroup.contains(where: {$0.posterID == post.posterID}) {
-            friendsPostsGroup.append(FriendsPostGroup(posterID: post.posterID, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen!)]))
-            
-        } else if let i = friendsPostsGroup.firstIndex(where: {$0.posterID == post.posterID}) {
-            if !friendsPostsGroup[i].postIDs.contains(where: {$0.0 == post.id!}) {
-                friendsPostsGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen!))
-                friendsPostsGroup[i].postIDs.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
+    func postsContains(postID: String, mapID: String) -> Bool {
+        if mapID == "" {
+            return self.friendsPostsDictionary[postID] != nil
+        } else {
+            if let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == mapID}) {
+                return map.postsDictionary[postID] != nil
+            }
+        }
+        return false
+    }
+    
+    func addPostToDictionary(post: MapPost, map: CustomMap?) {
+        if map == nil {
+            friendsPostsDictionary[post.id!] = post
+            /// add to group containing all of this posterIDs posts
+            if !friendsPostsGroup.contains(where: {$0.posterID == post.posterID}) {
+                friendsPostsGroup.append(FriendsPostGroup(posterID: post.posterID, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
+                
+            } else if let i = friendsPostsGroup.firstIndex(where: {$0.posterID == post.posterID}) {
+                if !friendsPostsGroup[i].postIDs.contains(where: {$0.0 == post.id!}) {
+                    friendsPostsGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
+                    friendsPostsGroup[i].postIDs.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
+                }
+            }
+        } else {
+            /// map posts are sorted by spot rather than user
+            if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map!.id!}) {
+                UserDataModel.shared.userInfo.mapsList[i].postsDictionary[post.id!] = post
+                if post.spotID == "" || !map!.postGroup.contains(where: {$0.spotID == post.spotID!}) {
+                    UserDataModel.shared.userInfo.mapsList[i].postGroup.append(MapPostGroup(spotID: post.spotID!, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
+                } else if let i = map!.postGroup.firstIndex(where: {$0.spotID == post.id}) {
+                    UserDataModel.shared.userInfo.mapsList[i].postGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
+                    UserDataModel.shared.userInfo.mapsList[i].postGroup[i].postIDs.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
+                }
             }
         }
     }
-    
-    func updatePost(post: MapPost) {
+
+    func updatePost(post: MapPost, map: CustomMap?) {
         var post = post
-        let oldPost = friendsPostsDictionary[post.id!]
+        let oldPost = map == nil ? friendsPostsDictionary[post.id!] : map!.postsDictionary[post.id!]
         if (post.likers.count != oldPost!.likers.count) || (post.commentCount != oldPost!.commentCount) {
             post.likers = oldPost!.likers
             if post.commentCount != oldPost!.commentCount {
                 getComments(postID: post.id!) { [weak self] comments in
                     guard let self = self else { return }
                     post.commentList = comments
-                    self.friendsPostsDictionary[post.id!] = post
+                    self.updatePostDictionary(post: post, mapID: map?.id ?? "")
                 }
             } else {
-                self.friendsPostsDictionary[post.id!] = post
+                updatePostDictionary(post: post, mapID: map?.id ?? "")
+            }
+        }
+    }
+    
+    func updatePostDictionary(post: MapPost, mapID: String) {
+        if mapID == "" {
+            self.friendsPostsDictionary[post.id!] = post
+        } else {
+            if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == post.id!}) {
+                UserDataModel.shared.userInfo.mapsList[i].postsDictionary[post.id!] = post
             }
         }
     }
     
     func getMaps() {
-        /// just check for new posts?
         db.collection("users").document(uid).collection("mapsList").getDocuments { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
@@ -292,9 +302,8 @@ extension MapController {
                     let mapIn = try doc.data(as: CustomMap.self)
                     guard let mapInfo = mapIn else { if last { self.homeFetchGroup.leave() }; continue }
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
-                    if last {
-                        self.homeFetchGroup.leave()
-                    }
+                    self.homeFetchGroup.enter()
+                    self.getRecentPosts(map: mapInfo)
                 } catch {
                     continue
                 }
@@ -302,29 +311,41 @@ extension MapController {
         }
     }
     
-    func getMapPosts(map: CustomMap) {
-        db.collection("posts").whereField("mapID", isEqualTo: map.id!).getDocuments { [weak self] snap, err in
+    func attachNewPostListener() {
+        newPostListener = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 1).addSnapshotListener { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
-            
-            let postGroup = DispatchGroup()
-            for doc in snap.documents {
+            if let doc = snap.documents.first {
                 do {
                     let postIn = try doc.data(as: MapPost.self)
-                    guard let postInfo = postIn else { continue }
-                    postGroup.enter()
-                    self.setPostDetails(post: postInfo) { post in
-                        /// append map info
+                    guard let postInfo = postIn else { return }
+                    if postInfo.mapID != "" {
+                        /// check map dictionary for add
+                        if let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID}) {
+                            if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID!) {
+                                self.setPostDetails(post: postInfo) { [weak self] post in
+                                    guard let self = self else { return }
+                                    self.addPostToDictionary(post: postInfo, map: map)
+                                    self.reloadMapsCollection()
+                                }
+                            }
+                        }
                     }
-                    continue
+                
+                    if postInfo.friendsList.contains(self.uid) {
+                        if !self.postsContains(postID: postInfo.id!, mapID: "") {
+                            self.setPostDetails(post: postInfo) { [weak self] post in
+                                guard let self = self else { return }
+                                self.addPostToDictionary(post: postInfo, map: nil)
+                                self.reloadMapsCollection()
+                            }
+                        }
+                    }
+
                 } catch {
-                    continue
+                    return
                 }
             }
         }
-    }
-    
-    func getUnseenPosts() {
-        
     }
 }
