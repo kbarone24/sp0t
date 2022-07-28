@@ -226,7 +226,6 @@ class ConfirmCodeController: UIViewController {
                       "pendingFriendRequests" : [],
                       "usernameKeywords": usernameKeywords,
                       "nameKeywords" : nameKeywords,
-                      "tagDictionary": [:],
                       "topFriends": [:],
                       "avatarURL" : "",
             ] as [String : Any]
