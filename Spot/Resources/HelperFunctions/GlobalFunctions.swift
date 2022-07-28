@@ -363,7 +363,7 @@ extension UIViewController {
     
     func getTimestamp(postTime: Firebase.Timestamp) -> String {
         let seconds = postTime.seconds
-        let current = NSDate().timeIntervalSince1970
+        let current = Date().timeIntervalSince1970
         let currentTime = Int64(current)
         let timeSincePost = currentTime - seconds
         
@@ -1524,6 +1524,7 @@ extension UINavigationBar {
     }
     
     func addWhiteBackground() {
+        
         if #available(iOS 15.0, *) {
             let appearance = UINavigationBarAppearance()
             appearance.configureWithTransparentBackground()
@@ -1692,7 +1693,7 @@ extension UIView {
     
     func getTimestamp(postTime: Firebase.Timestamp) -> String {
         let seconds = postTime.seconds
-        let current = NSDate().timeIntervalSince1970
+        let current = Date().timeIntervalSince1970
         let currentTime = Int64(current)
         let timeSincePost = currentTime - seconds
         
@@ -1826,3 +1827,10 @@ extension MKPointOfInterestCategory {
     }
 }
 
+public extension Array where Element: Hashable {
+    func uniqued() -> [Element] {
+        var seen = Set<Element>()
+        return filter{ seen.insert($0).inserted }
+    }
+}
+/// https://stackoverflow.com/questions/25738817/removing-duplicate-elements-from-an-array-in-swift

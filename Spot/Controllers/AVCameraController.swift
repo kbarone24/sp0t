@@ -17,6 +17,10 @@ import JPSVolumeButtonHandler
 
 class AVCameraController: UIViewController {
     
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+    
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     let db: Firestore! = Firestore.firestore()
     
@@ -513,11 +517,7 @@ class AVCameraController: UIViewController {
     }
     
     func openGallery() {
-        
         if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "PhotoGallery") as? PhotoGalleryController {
-            
-            vc.spotObject = self.spotObject
-            
             DispatchQueue.main.async {
                 self.navigationController?.pushViewController(vc, animated: true)
             }

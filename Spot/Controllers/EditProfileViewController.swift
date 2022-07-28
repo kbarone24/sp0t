@@ -115,12 +115,26 @@ class EditProfileViewController: UIViewController {
         let alert = UIAlertController(title: "Are you sure you want to log out?", message: "", preferredStyle: .alert)
         let logoutAction = UIAlertAction(title: "Log out", style: .default) { action in
             Mixpanel.mainInstance().track(event: "Logout")
-            self.dismiss(animated: false, completion: {
-                self.profileVC?.containerDrawerView?.closeAction()
-                UserDataModel.shared.destroy()
-                self.present(LandingPageController(), animated: true)
-            })
+            do {
+                try Auth.auth().signOut()
+                self.dismiss(animated: false, completion: {
+                    self.profileVC?.containerDrawerView?.closeAction()
+                    UserDataModel.shared.destroy()
+                    if let landingPage = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
+                        let keyWindow = UIApplication.shared.connectedScenes
+                            .filter({$0.activationState == .foregroundActive})
+                            .map({$0 as? UIWindowScene})
+                            .compactMap({$0})
+                            .first?.windows
+                            .filter({$0.isKeyWindow}).first
+                        keyWindow?.rootViewController = landingPage
+                    }
+                })
+            } catch let signOutError as NSError {
+                print ("Error signing out: %@", signOutError)
+            }
         }
+        
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
         alert.addAction(cancelAction)
         alert.addAction(logoutAction)
@@ -228,8 +242,8 @@ extension EditProfileViewController {
         avatarImage.snp.makeConstraints {
             $0.top.equalTo(avatarLabel.snp.bottom).offset(2)
             $0.leading.equalToSuperview().offset(16)
-            $0.width.equalTo(43)
-            $0.height.equalTo(56.5)
+            $0.width.equalTo(26)
+            $0.height.equalTo(37.5)
         }
         
         avatarEditButton = UIButton {

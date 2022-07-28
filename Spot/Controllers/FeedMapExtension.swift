@@ -15,7 +15,7 @@ import Firebase
 import Geofirestore
 
 extension MapController {
-    
+    /*
     func addPostAnnotation(post: MapPost, segment: Int) {
         /// probably need to break out into 2 funcs -> will add every post to map regardless of segment rn
         let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
@@ -642,7 +642,7 @@ extension MapController {
     func addTempGradient() {
         
         let tempView = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height * 3/4, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 1/4))
-        UserDataModel.shared.mapView.addSubview(tempView)
+        mapView.addSubview(tempView)
         
         let layer1 = CAGradientLayer()
         layer1.colors = [
@@ -679,7 +679,7 @@ extension MapController {
             ]
             layer1.locations = [0, 0.05, 0.1, 0.25, 0.3]
         }
-    }
+    } */
 }
 
 class MapFeedCell: UITableViewCell {
@@ -784,8 +784,8 @@ class MapFeedCell: UITableViewCell {
     }
     
     @objc func tap(_ sender: UITapGestureRecognizer) {
-        guard let mapVC = viewContainingController() as? MapController else { return }
-        mapVC.selectPostAt(index: row)
+      /*  guard let mapVC = viewContainingController() as? MapController else { return }
+        mapVC.selectPostAt(index: row) */
     }
     
     
