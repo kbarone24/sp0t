@@ -85,6 +85,7 @@ class SendInvitesController: UIViewController {
             $0.tintColor = .white
             $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
             $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
             $0.delegate = self
             $0.autocapitalizationType = .none
             $0.autocorrectionType = .no
@@ -100,8 +101,6 @@ class SendInvitesController: UIViewController {
             $0.translatesAutoresizingMaskIntoConstraints = false
             searchBarContainer.addSubview($0)
         }
-        
-    
         searchBar.snp.makeConstraints{
             $0.leading.equalToSuperview().offset(16)
             $0.trailing.equalToSuperview().offset(-16)
@@ -111,7 +110,7 @@ class SendInvitesController: UIViewController {
         
         cancelButton = UIButton{
             $0.setTitle("Cancel", for: .normal)
-            $0.setTitleColor(UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00), for: .normal)
+            $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
             $0.titleLabel?.textAlignment = .center
             $0.titleEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
@@ -258,7 +257,6 @@ class SendInvitesController: UIViewController {
         
         /// get users sent invites in correct format
         for invite in UserDataModel.shared.userInfo.sentInvites {
-            print("formatted", invite.formatNumber())
             sentInvites.append(invite.formatNumber())
         }
         
@@ -378,7 +376,6 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        print("number of rows", queryContacts.count)
         if tableView.tag == 1 { return min(queryContacts.count, 10) }
         
         let head = sectionTitles[section]
@@ -391,7 +388,6 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
         
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell") as? ContactCell else { return UITableViewCell() }
         
-        print("tag", tableView.tag)
         if tableView.tag == 1 { let contact = queryContacts[indexPath.row]; cell.set(contact: nil, inviteContact: contact.0, friend: .none, invited: contact.1); return cell }
         
         let head = sectionTitles[indexPath.section]
@@ -522,7 +518,6 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
             let formattedNumber = pendingNumber.formatNumber()
         /// update header
             UserDataModel.shared.userInfo.sentInvites.append(formattedNumber)
-            //titleView.setUp(count: 8 - UserDataModel.shared.userInfo.sentInvites.count)
             
         /// update local sentInvites
             sentInvites.append(formattedNumber)

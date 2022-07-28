@@ -22,7 +22,6 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     
     lazy var contacts: [UserProfile] = []
     lazy var numbers: [String] = []
-    lazy var friendsList: [String] = []
     
     var dataFetched = false
     var sentFromTutorial = false
@@ -59,20 +58,19 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         navigationItem.setLeftBarButton(cancelButton, animated: false)
         self.navigationItem.leftBarButtonItem?.tintColor = nil
         
-        tableView = UITableView {
-            $0.dataSource = self
-            $0.delegate = self
-            $0.isScrollEnabled = true
-            $0.backgroundColor = .white
-            $0.separatorStyle = .none
-            $0.allowsSelection = false
-            $0.isHidden = false
-            $0.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
-            $0.register(ContactHeader.self, forHeaderFooterViewReuseIdentifier: "ContactHeader")
-            $0.tag = 0
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview($0)
-        }
+        tableView = UITableView(frame: .zero, style: .grouped)
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.isScrollEnabled = true
+        tableView.backgroundColor = .white
+        tableView.separatorStyle = .none
+        tableView.allowsSelection = false
+        tableView.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
+        tableView.register(ContactHeader.self, forHeaderFooterViewReuseIdentifier: "ContactHeader")
+        tableView.contentInset = UIEdgeInsets(top: 10, left: 0, bottom: 100, right: 0)
+        tableView.tag = 0
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tableView)
         
         tableView.snp.makeConstraints{
             $0.leading.trailing.equalToSuperview()
@@ -102,10 +100,6 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     }
     
     @objc func presentSendInvites(_ sender: UITapGestureRecognizer) {
-        
-        let adminID = uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
-        if UserDataModel.shared.userInfo.sentInvites.count > 7 && !adminID { return }
-        
         let sendInvitesVC = SendInvitesController()
         navigationController!.pushViewController(sendInvitesVC, animated: true)
     }
@@ -129,7 +123,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 20
+        return dataFetched ? 20 : 0
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -137,11 +131,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if (dataFetched) {
-            return contacts.count
-        } else {
-            return 0
-        }
+        return dataFetched ? contacts.count : 0
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -278,14 +268,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         }
         
         if message == "" {
-            
-            db.collection("users").document(self.uid).getDocument { [weak self] (userSnap, err) in
-                guard let self = self else { return }
-                if let friends = userSnap!.get("friendsList") as? [String] {
-                    self.friendsList = friends
-                    self.getContactInfo()
-                }
-            }
+            getContactInfo()
             
         } else {
             let alert  = UIAlertController(title: "Error", message: "There was an issue accessing your contacts.", preferredStyle: .alert)
@@ -339,9 +322,8 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
                                 
                                 guard let self = self else { return }
                                 
-                                userInfo.friend = self.friendsList.contains(id)
-                                userInfo.pending = !userInfo.friend! && fSnap?.documents.count ?? 0 > 0
-                                                                
+                                userInfo.friend = UserDataModel.shared.friendIDs.contains(id)
+                                userInfo.pending = !userInfo.friend! && ((fSnap?.documents.count ?? 0) > 0 || UserDataModel.shared.userInfo.pendingFriendRequests.contains(id))
                                 localContacts.append(userInfo)
                                 
                                 index += 1; if index == snap!.documents.count {
@@ -362,16 +344,15 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     }
     
     func addContactsToTable(contacts: [UserProfile]) {
-        
         for contact in contacts {
         
             self.contacts.append(contact)
             
             if self.contacts.count == contacts.count {
                 DispatchQueue.main.async {
-                    
-                    self.contacts = self.contacts.sorted(by: {$1.username > $0.username})
-                    self.contacts = self.contacts.sorted(by: { $1.friend! && $0.friend!})
+                    self.contacts.sort(by: {$1.username > $0.username})
+                    self.contacts.sort(by: {!$0.pending! && $1.pending!})
+                    self.contacts.sort(by: {!$0.friend! && $1.friend!})
                     self.dataFetched = true
                     
                     if self.activityIndicatorView.isAnimating() {self.activityIndicatorView.stopAnimating()}

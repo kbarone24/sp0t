@@ -563,6 +563,7 @@
 				599BD2C323C6534600ECB84A /* Map */,
 				599BD2C523C653DC00ECB84A /* Feed */,
 				599BD2C623C653F900ECB84A /* Upload */,
+				8C3209E9261631D800FB32BA /* Discovery */,
 				599BD2C423C6539200ECB84A /* Profile */,
 				8C2209F6284D4A9900E5D165 /* Notifications */,
 				599BD2C723C6541C00ECB84A /* SpotPage */,
@@ -681,7 +682,6 @@
 		599BD2C423C6539200ECB84A /* Profile */ = {
 			isa = PBXGroup;
 			children = (
-				8C3209E9261631D800FB32BA /* Discovery */,
 				8C2209FB284EDDAD00E5D165 /* ProfileViewController.swift */,
 				413BA16228785E8B00FD80AF /* EditProfileViewController.swift */,
 			);
