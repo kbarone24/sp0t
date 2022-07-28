@@ -246,6 +246,7 @@ class ActivityCell: UITableViewCell {
             default:
                 $0.text = notification.type
             }
+
             $0.numberOfLines = 2
             $0.lineBreakMode = NSLineBreakMode.byWordWrapping
             $0.textColor = .black
@@ -281,9 +282,6 @@ class ActivityCell: UITableViewCell {
             $0.leading.equalTo(detail.snp.leading).offset(timeLeading + 6)
         }
         
-
-        
-        
     }
         
     @objc func profileTap(_ sender: Any){
@@ -293,6 +291,7 @@ class ActivityCell: UITableViewCell {
     @objc func postTap(_ sender: Any){
         //SHOW POST INSTEAD ONCE YOU CAN
         print("post tapped")
+        notificationControllerDelegate?.deleteFriend(friendID: (notification.userInfo?.id!)!)
     }
     
     func resetCell() {
