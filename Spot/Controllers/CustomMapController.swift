@@ -45,6 +45,8 @@ class CustomMapController: UIViewController {
     
     deinit {
         floatBackButton.removeFromSuperview()
+        NotificationCenter.default.removeObserver(self)
+        barView.removeFromSuperview()
     }
     
     override func viewDidLoad() {
@@ -54,19 +56,17 @@ class CustomMapController: UIViewController {
             mapController = mapVC.viewControllers[0]
         }
         viewSetup()
-        // Do any additional setup after loading the view.
     }
 }
 
 extension CustomMapController {
     private func viewSetup() {
+        NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
+        
         view.backgroundColor = .white
-
-        
-        
         navigationItem.setHidesBackButton(true, animated: true)
-        
-        
         
         customMapCollectionView = {
             let layout = UICollectionViewFlowLayout()
@@ -128,10 +128,22 @@ extension CustomMapController {
             $0.leading.equalToSuperview().offset(22)
             $0.centerY.equalTo(titleLabel)
         }
-        containerDrawerView?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
+        containerDrawerView?.slideView.addSubview(barView)
+    }
+    
+    @objc func DrawerViewToTopCompletion() {
+        barBackButton.isHidden = false
+        customMapCollectionView.isScrollEnabled = true
+    }
+    @objc func DrawerViewToMiddleCompletion() {
+        barBackButton.isHidden = true
+    }
+    @objc func DrawerViewToBottomCompletion() {
+        barBackButton.isHidden = true
     }
     
     @objc func backButtonAction() {
+        barBackButton.isHidden = true
         navigationController?.popViewController(animated: true)
     }
 }
@@ -208,7 +220,6 @@ extension CustomMapController: UIScrollViewDelegate {
         if topYContentOffset != nil && containerDrawerView?.status == .Top {
             // Disable the bouncing effect when scroll view is scrolled to top
             if scrollView.contentOffset.y <= topYContentOffset! {
-                print("Disable the bouncing effect when scroll view is scrolled to top")
                 scrollView.contentOffset.y = topYContentOffset!
                 containerDrawerView?.canDrag = false
                 containerDrawerView?.swipeToNextState = false
@@ -219,31 +230,11 @@ extension CustomMapController: UIScrollViewDelegate {
                 titleLabel.text = scrollView.contentOffset.y > 0 ? mapData?.mapName : ""
             }
         }
-                
-        // Get top y content offset
-//        if topYContentOffset == nil && containerDrawerView?.status == .Top {//3
-//            print("Get top y content offset")
-//            topYContentOffset = scrollView.contentOffset.y
-//            barBackButton.isHidden = false
-//        }
         
         // Get middle y content offset
         if middleYContentOffset == nil {
-            print("Get middle y content offset")
             middleYContentOffset = scrollView.contentOffset.y
         }
-        
-        // Fixed the content offset to middleYContentOffset when user pull down from Top
-//        if
-//            topYContentOffset == nil &&
-//            containerDrawerView?.status == .Top &&
-//            scrollView.isScrollEnabled == true
-//        {
-//            if scrollView.contentOffset.y <= middleYContentOffset! {
-//                print("Fixed the content offset to middleYContentOffset when user pull down from Top")
-//                scrollView.contentOffset.y = middleYContentOffset!
-//            }
-//        }
         
         // Set scroll view content offset when in transition
         if
@@ -252,17 +243,14 @@ extension CustomMapController: UIScrollViewDelegate {
             scrollView.contentOffset.y <= middleYContentOffset! &&
             containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
         {
-            print("Set scroll view content offset when in transition")
             scrollView.contentOffset.y = middleYContentOffset!
         }
         
         // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
         if containerDrawerView?.status != .Top {
-            print("Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state")
             customMapCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
             customMapCollectionView.isScrollEnabled = false
             containerDrawerView?.swipeToNextState = true
-//            topYContentOffset = nil
         }
     }
 }
@@ -275,7 +263,6 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         
         // Get the initial Top y position contentOffset
         if containerDrawerView?.status == .Top && topYContentOffset == nil {
-            print("Get the initial Top y position contentOffset")
             topYContentOffset = customMapCollectionView.contentOffset.y
         }
         
@@ -285,8 +272,6 @@ extension CustomMapController: UIGestureRecognizerDelegate {
             containerDrawerView?.status == .Top &&
             customMapCollectionView.contentOffset.y <= topYContentOffset!
         {
-            print("Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction")
-            customMapCollectionView.isScrollEnabled = true
             containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
         }
 
@@ -297,23 +282,15 @@ extension CustomMapController: UIGestureRecognizerDelegate {
             yTranslation > 0 &&
             containerDrawerView?.swipeToNextState == false
         {
-            print("Preventing the drawer view to be dragged when it's status is top and user is scrolling down")
             containerDrawerView?.canDrag = false
             containerDrawerView?.slideView.frame.origin.y = 0
         }
         
         // Reset drawer view varaiables when the drawer view is on top and user swipes down
-        if customMapCollectionView.contentOffset.y <= topYContentOffset ?? -91 && yTranslation >= 0 {
+        if customMapCollectionView.contentOffset.y <= topYContentOffset ?? -91 && yTranslation > 0 {
             containerDrawerView?.canDrag = true
-//            containerDrawerView?.swipeToNextState = true
             barBackButton.isHidden = true
-            print("Reset drawer view varaiables when the drawer view is on top and user swipes down")
         }
-        
-//        if containerDrawerView!.slideView.frame.minY > 0 {
-////            topYContentOffset = nil
-//            barBackButton.isHidden = true
-//        }
         
         // Need to prevent content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
         recognizer.setTranslation(.zero, in: recognizer.view)
