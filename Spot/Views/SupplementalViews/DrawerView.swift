@@ -84,6 +84,7 @@ class DrawerView: NSObject {
             }
         }
     }
+    private var animationCompleteNotificationName = "DrawerViewToTopComplete"
     private var closeDo: (() -> Void)? = nil
     
     override init() {
@@ -168,10 +169,12 @@ class DrawerView: NSObject {
         if currentStatus.rawValue != to.rawValue {
             UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut) {
                 self.slideView.frame.origin.y = self.yPosition
+                self.parentVC.view.layoutIfNeeded()
             } completion: { success in
                 self.topConstraints?.deactivate()
                 self.midConstraints?.deactivate()
                 self.botConstraints?.deactivate()
+                NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
             }
         } else {
             let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
@@ -187,16 +190,19 @@ class DrawerView: NSObject {
         topConstraints?.activate()
         yPosition = 0
         status = .Top
+        animationCompleteNotificationName = "DrawerViewToTopComplete"
     }
     private func goMid() {
         midConstraints?.activate()
         yPosition = (0.45 * parentVC.view.frame.height)
         status = .Middle
+        animationCompleteNotificationName = "DrawerViewToMiddleComplete"
     }
     private func goBottom() {
         botConstraints?.activate()
         yPosition = parentVC.view.frame.height - 200
         status = .Bottom
+        animationCompleteNotificationName = "DrawerViewToBottomComplete"
     }
     
     private func toggleDrag(to: Bool) {
@@ -267,6 +273,11 @@ class DrawerView: NSObject {
             UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
                 self.slideView.frame.origin.y = self.yPosition
                 self.parentVC.view.layoutIfNeeded()
+            } completion: { success in
+                self.topConstraints?.deactivate()
+                self.midConstraints?.deactivate()
+                self.botConstraints?.deactivate()
+                NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
             }
         }
     }

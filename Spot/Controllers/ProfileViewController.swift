@@ -101,7 +101,9 @@ class ProfileViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
-        containerDrawerView?.present(to: .Top)
+        if containerDrawerView?.status != .Top {
+            containerDrawerView?.present(to: .Top)
+        }
         containerDrawerView?.canInteract = false
     }
 
@@ -119,7 +121,11 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func popVC() {
-        navigationController?.popViewController(animated: true)
+        if navigationController?.viewControllers.count == 1 {
+            containerDrawerView?.closeAction()
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
     }
 }
 
@@ -145,8 +151,8 @@ extension ProfileViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(named: "BackArrow-1"),
             style: .plain,
-            target: containerDrawerView == nil ? self : containerDrawerView,
-            action: containerDrawerView == nil ? #selector(popVC) : #selector(containerDrawerView?.closeAction)
+            target: self,
+            action: #selector(popVC)
         )
                 
         profileCollectionView = {
@@ -305,7 +311,6 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
                 print("mapCell selected")
             } else if let _ = cell as? ProfileBodyCell {
                 containerDrawerView?.present(to: .Middle)
-                
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[indexPath.row - 1], presentedDrawerView: containerDrawerView)
                 navigationController?.pushViewController(customMapVC, animated: true)
                 customMapVC.navigationController!.navigationBar.isTranslucent = true
