@@ -203,33 +203,29 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 }
 
 extension CustomMapController: UIScrollViewDelegate {
+    
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        
         if topYContentOffset != nil && containerDrawerView?.status == .Top {
             // Disable the bouncing effect when scroll view is scrolled to top
             if scrollView.contentOffset.y <= topYContentOffset! {
                 print("Disable the bouncing effect when scroll view is scrolled to top")
                 scrollView.contentOffset.y = topYContentOffset!
-                containerDrawerView?.canDrag = true
-                containerDrawerView?.swipeToNextState = true
-            }
-            
-            // Show navigation bar
-            if scrollView.contentOffset.y > topYContentOffset! {
-                print("Show navigation bar")
                 containerDrawerView?.canDrag = false
                 containerDrawerView?.swipeToNextState = false
+            }
+            // Show navigation bar
+            if scrollView.contentOffset.y > topYContentOffset! {
                 barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
                 titleLabel.text = scrollView.contentOffset.y > 0 ? mapData?.mapName : ""
             }
         }
                 
         // Get top y content offset
-        if topYContentOffset == nil && containerDrawerView?.status == .Top {//3
-            print("Get top y content offset")
-            topYContentOffset = scrollView.contentOffset.y
-            barBackButton.isHidden = false
-        }
+//        if topYContentOffset == nil && containerDrawerView?.status == .Top {//3
+//            print("Get top y content offset")
+//            topYContentOffset = scrollView.contentOffset.y
+//            barBackButton.isHidden = false
+//        }
         
         // Get middle y content offset
         if middleYContentOffset == nil {
@@ -238,16 +234,16 @@ extension CustomMapController: UIScrollViewDelegate {
         }
         
         // Fixed the content offset to middleYContentOffset when user pull down from Top
-        if
-            topYContentOffset == nil &&
-            containerDrawerView?.status == .Top &&
-            scrollView.isScrollEnabled == true
-        {
-            if scrollView.contentOffset.y <= middleYContentOffset! {
-                print("Fixed the content offset to middleYContentOffset when user pull down from Top")
-                scrollView.contentOffset.y = middleYContentOffset!
-            }
-        }
+//        if
+//            topYContentOffset == nil &&
+//            containerDrawerView?.status == .Top &&
+//            scrollView.isScrollEnabled == true
+//        {
+//            if scrollView.contentOffset.y <= middleYContentOffset! {
+//                print("Fixed the content offset to middleYContentOffset when user pull down from Top")
+//                scrollView.contentOffset.y = middleYContentOffset!
+//            }
+//        }
         
         // Set scroll view content offset when in transition
         if
@@ -261,12 +257,12 @@ extension CustomMapController: UIScrollViewDelegate {
         }
         
         // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
-        if containerDrawerView?.status != .Top {//2
+        if containerDrawerView?.status != .Top {
             print("Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state")
             customMapCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
             customMapCollectionView.isScrollEnabled = false
             containerDrawerView?.swipeToNextState = true
-            topYContentOffset = nil
+//            topYContentOffset = nil
         }
     }
 }
@@ -309,14 +305,15 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         // Reset drawer view varaiables when the drawer view is on top and user swipes down
         if customMapCollectionView.contentOffset.y <= topYContentOffset ?? -91 && yTranslation >= 0 {
             containerDrawerView?.canDrag = true
-            containerDrawerView?.swipeToNextState = true
+//            containerDrawerView?.swipeToNextState = true
+            barBackButton.isHidden = true
             print("Reset drawer view varaiables when the drawer view is on top and user swipes down")
         }
         
-        if containerDrawerView!.slideView.frame.minY > 0 {
-//            topYContentOffset = nil
-            barBackButton.isHidden = true
-        }
+//        if containerDrawerView!.slideView.frame.minY > 0 {
+////            topYContentOffset = nil
+//            barBackButton.isHidden = true
+//        }
         
         // Need to prevent content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
         recognizer.setTranslation(.zero, in: recognizer.view)

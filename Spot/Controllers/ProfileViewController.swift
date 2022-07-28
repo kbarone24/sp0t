@@ -114,7 +114,7 @@ class ProfileViewController: UIViewController {
     
     @objc func friendListButtonAction() {
         Mixpanel.mainInstance().track(event: "FriendListButtonAction")
-        let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [])
+        let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [], presentedWithDrawerView: containerDrawerView!)
         present(friendListVC, animated: true)
     }
     
