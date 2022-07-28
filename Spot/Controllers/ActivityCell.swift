@@ -5,7 +5,6 @@
 //  Created by Shay Gyawali on 6/26/22.
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
-
 import Foundation
 import UIKit
 import Firebase
@@ -95,7 +94,7 @@ class ActivityCell: UITableViewCell {
                 $0.isHidden = false
                 let url = notification.userInfo!.avatarURL!
                 if url != "" {
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+                    let transformer = SDImageResizingTransformer(size: CGSize(width: 50.24, height: 66), scaleMode: .aspectFit)
                     $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
                 } else { print("Avatar not found") }
                 $0.translatesAutoresizingMaskIntoConstraints = false
@@ -247,6 +246,7 @@ class ActivityCell: UITableViewCell {
             default:
                 $0.text = notification.type
             }
+
             $0.numberOfLines = 2
             $0.lineBreakMode = NSLineBreakMode.byWordWrapping
             $0.textColor = .black
@@ -282,9 +282,6 @@ class ActivityCell: UITableViewCell {
             $0.leading.equalTo(detail.snp.leading).offset(timeLeading + 6)
         }
         
-
-        
-        
     }
         
     @objc func profileTap(_ sender: Any){
@@ -294,6 +291,7 @@ class ActivityCell: UITableViewCell {
     @objc func postTap(_ sender: Any){
         //SHOW POST INSTEAD ONCE YOU CAN
         print("post tapped")
+        notificationControllerDelegate?.deleteFriend(friendID: (notification.userInfo?.id!)!)
     }
     
     func resetCell() {
@@ -312,5 +310,3 @@ class ActivityCell: UITableViewCell {
     }
     
 }
-    
-

@@ -39,95 +39,145 @@ class SendInvitesController: UIViewController {
     var resultsTable: UITableView!
     
     var tableView: UITableView!
-    var titleView: SendInvitesTitleView!
     var loadingIndicator: CustomActivityIndicator!
-    
-    var errorBox: UIView!
-    var errorText: UILabel!
         
     override func viewDidLoad() {
         
         super.viewDidLoad()
         
-        view.backgroundColor = UIColor(named: "SpotBlack")
-                
-        titleView = SendInvitesTitleView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 60))
-        titleView.setUp(count: 8 - UserDataModel.shared.userInfo.sentInvites.count)
-        view.addSubview(titleView)
         
-        searchBarContainer = UIView(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 40))
-        searchBarContainer.backgroundColor = nil
-        view.addSubview(searchBarContainer)
+        view.backgroundColor = .white
         
-        searchBar = UISearchBar(frame: CGRect(x: 14, y: 3, width: UIScreen.main.bounds.width - 28, height: 36))
-        searchBar.searchBarStyle = .default
-        searchBar.barTintColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
-        searchBar.tintColor = .white
-        searchBar.searchTextField.backgroundColor = UIColor(red: 0.133, green: 0.133, blue: 0.137, alpha: 1)
-        searchBar.delegate = self
-        searchBar.autocapitalizationType = .none
-        searchBar.autocorrectionType = .no
-        searchBar.showsCancelButton = false
-        searchBar.searchTextField.font = UIFont(name: "SFCompactText-Regular", size: 13)
-        searchBar.clipsToBounds = true
-        searchBar.layer.masksToBounds = true
-        searchBar.searchTextField.layer.masksToBounds = true
-        searchBar.searchTextField.clipsToBounds = true
-        searchBar.layer.cornerRadius = 8
-        searchBar.searchTextField.layer.cornerRadius = 8
-        searchBar.placeholder = "Search contacts"
-        searchBarContainer.addSubview(searchBar)
-        
-        cancelButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 65, y: 5.5, width: 50, height: 30))
-        cancelButton.setTitle("Cancel", for: .normal)
-        cancelButton.setTitleColor(UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1), for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
-        cancelButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 0)
-        cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
-        cancelButton.isHidden = true
-        searchBarContainer.addSubview(cancelButton)
+        self.title = "Invite Friends"
+        navigationItem.backButtonTitle = ""
 
-        tableView = UITableView(frame: CGRect(x: 0, y: 120, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-        tableView.backgroundColor = UIColor(named: "SpotBlack")
-        tableView.separatorStyle = .none
-        tableView.tag = 0
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.allowsSelection = false
-        tableView.register(SendInviteCell.self, forCellReuseIdentifier: "SendInvite")
-        view.addSubview(tableView)
+        navigationController!.navigationBar.barTintColor = UIColor.white
+        navigationController!.navigationBar.isTranslucent = false
+        navigationController!.navigationBar.barStyle = .black
+        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.view.backgroundColor = .white
+
+        navigationController!.navigationBar.titleTextAttributes = [
+                .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
+                .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
+        ]
         
-        resultsTable = UITableView(frame: CGRect(x: 0, y: 115, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-        resultsTable.backgroundColor = UIColor(named: "SpotBlack")
-        resultsTable.separatorStyle = .none
-        resultsTable.tag = 1
-        resultsTable.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 200, right: 0)
-        resultsTable.delegate = self
-        resultsTable.dataSource = self
-        resultsTable.keyboardDismissMode = .onDrag
-        resultsTable.allowsSelection = false
-        resultsTable.isHidden = true
-        resultsTable.register(SendInviteCell.self, forCellReuseIdentifier: "SendInvite")
-        view.addSubview(resultsTable)
+        let backButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(cancelTap(_:)))
+        navigationItem.setLeftBarButton(backButton, animated: false)
+        self.navigationItem.leftBarButtonItem?.tintColor = nil
+                
+        
+        searchBarContainer = UIView {
+            $0.backgroundColor = nil
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
+        
+        searchBarContainer.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalToSuperview().offset(20)
+            $0.width.equalToSuperview()
+            $0.height.equalTo(50)
+        }
+        
+        searchBar = UISearchBar {
+            $0.searchBarStyle = .default
+            $0.tintColor = .white
+            $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+            $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.delegate = self
+            $0.autocapitalizationType = .none
+            $0.autocorrectionType = .no
+            $0.placeholder = "Search users"
+            $0.searchTextField.font = UIFont(name: "SFCompactText-Medium", size: 15)
+            $0.clipsToBounds = true
+            $0.layer.masksToBounds = true
+            $0.searchTextField.layer.masksToBounds = true
+            $0.searchTextField.clipsToBounds = true
+            $0.layer.cornerRadius = 3
+            $0.searchTextField.layer.cornerRadius = 3
+            $0.backgroundImage = UIImage()
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            searchBarContainer.addSubview($0)
+        }
+        searchBar.snp.makeConstraints{
+            $0.leading.equalToSuperview().offset(16)
+            $0.trailing.equalToSuperview().offset(-16)
+            $0.top.equalToSuperview()
+            $0.height.equalTo(36)
+        }
+        
+        cancelButton = UIButton{
+            $0.setTitle("Cancel", for: .normal)
+            $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
+            $0.titleLabel?.textAlignment = .center
+            $0.titleEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
+            $0.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
+            $0.isHidden = true
+            searchBarContainer.addSubview($0)
+        }
+        
+        cancelButton.snp.makeConstraints{
+            $0.trailing.equalToSuperview().offset(-16)
+        }
+        
+        
+        tableView = UITableView {
+            $0.dataSource = self
+            $0.delegate = self
+            $0.isScrollEnabled = true
+            $0.backgroundColor = .white
+            $0.separatorStyle = .none
+            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
+            $0.allowsSelection = false
+            $0.isHidden = false
+            $0.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
+            $0.tag = 0
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
+        
+        tableView.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(searchBarContainer.snp.bottom)
+            $0.width.equalToSuperview()
+            $0.height.equalTo(UIScreen.main.bounds.height - searchBarContainer.frame.maxY)
+        }
+        
+        resultsTable = UITableView {
+            $0.dataSource = self
+            $0.delegate = self
+            $0.isScrollEnabled = false
+            $0.backgroundColor = .white
+            $0.separatorStyle = .none
+            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
+            $0.allowsSelection = false
+            $0.isHidden = true
+            $0.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
+            $0.keyboardDismissMode = .onDrag
+
+            $0.tag = 1
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
+        
+        resultsTable.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(searchBarContainer.snp.bottom)
+            $0.width.equalToSuperview()
+            $0.height.equalTo(UIScreen.main.bounds.height - searchBarContainer.frame.maxY)
+        }
+        
         
         loadingIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 90, width: UIScreen.main.bounds.width, height: 30))
         loadingIndicator.isHidden = true
         view.addSubview(loadingIndicator)
         
-        errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 100, width: UIScreen.main.bounds.width, height: 32))
-        errorBox.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
-        errorBox.isHidden = true
-        view.addSubview(errorBox)
-        
-        errorText = UILabel(frame: CGRect(x: 0, y: 6, width: UIScreen.main.bounds.width, height: 18))
-        errorText.lineBreakMode = .byWordWrapping
-        errorText.numberOfLines = 0
-        errorText.textColor = UIColor.white
-        errorText.textAlignment = .center
-        errorText.text = "You're all out of invites!"
-        errorText.font = UIFont(name: "SFCompactText-Regular", size: 14)!
-        errorBox.addSubview(errorText)
+        loadingIndicator.snp.makeConstraints{
+            $0.top.equalTo(tableView.snp.bottom).offset(20)
+        }
 
         checkAuth()
     }
@@ -144,6 +194,10 @@ class SendInvitesController: UIViewController {
             DispatchQueue.main.async { self.tableView.reloadData() }
         }
 
+    }
+    
+    @objc func cancelTap(_ sender: UIButton){
+        navigationController!.popViewController(animated: true)
     }
     
     func checkAuth() {
@@ -203,7 +257,6 @@ class SendInvitesController: UIViewController {
         
         /// get users sent invites in correct format
         for invite in UserDataModel.shared.userInfo.sentInvites {
-            print("formatted", invite.formatNumber())
             sentInvites.append(invite.formatNumber())
         }
         
@@ -323,7 +376,6 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        print("number of rows", queryContacts.count)
         if tableView.tag == 1 { return min(queryContacts.count, 10) }
         
         let head = sectionTitles[section]
@@ -334,23 +386,22 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "SendInvite") as? SendInviteCell else { return UITableViewCell() }
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell") as? ContactCell else { return UITableViewCell() }
         
-        print("tag", tableView.tag)
-        if tableView.tag == 1 { let contact = queryContacts[indexPath.row]; cell.setUp(contact: contact.0, status: contact.1); return cell }
+        if tableView.tag == 1 { let contact = queryContacts[indexPath.row]; cell.set(contact: nil, inviteContact: contact.0, friend: .none, invited: contact.1); return cell }
         
         let head = sectionTitles[indexPath.section]
         /// get first contact starting with this section letter and count from there
         let firstIndex = contacts.firstIndex(where: {$0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head})!
         let contact = contacts[firstIndex + indexPath.row]
-        cell.setUp(contact: contact.0, status: contact.1)
+        cell.set(contact: nil, inviteContact: contact.0, friend: .none, invited: contact.1)
         return cell
     }
     
     func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
         /// set header text color 
-        (view as! UITableViewHeaderFooterView).contentView.backgroundColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1.0)
-        (view as! UITableViewHeaderFooterView).textLabel?.textColor = UIColor.white
+        (view as! UITableViewHeaderFooterView).contentView.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+        (view as! UITableViewHeaderFooterView).textLabel?.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
     }
         
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
@@ -358,7 +409,7 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 61
+        return 70
     }
 }
 
@@ -375,15 +426,28 @@ extension SendInvitesController: UISearchBarDelegate {
         resultsTable.isHidden = false
         
         UIView.animate(withDuration: 0.1) {
-            self.searchBar.frame = CGRect(x: self.searchBar.frame.minX, y: self.searchBar.frame.minY, width: UIScreen.main.bounds.width - 85, height: self.searchBar.frame.height)
             self.cancelButton.alpha = 1.0
             self.resultsTable.alpha = 1.0
+            searchBar.snp.remakeConstraints{
+                $0.leading.equalToSuperview().offset(16)
+                $0.trailing.equalToSuperview().offset(-60)
+                $0.top.equalToSuperview()
+                $0.height.equalTo(36)
+            }
+            self.view.layoutIfNeeded()
         }
     }
         
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
         /// dismiss here if user swiped down to exit with empty search bar
         if searchBar.text == "" { dismissKeyboard() }
+        UIView.animate(withDuration: 0.1) {
+            self.cancelButton.isHidden = true
+            searchBar.snp.updateConstraints{
+                $0.trailing.equalToSuperview().offset(-16)
+            }
+            self.view.layoutIfNeeded()
+        }
     }
     
     func dismissKeyboard() {
@@ -454,7 +518,6 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
             let formattedNumber = pendingNumber.formatNumber()
         /// update header
             UserDataModel.shared.userInfo.sentInvites.append(formattedNumber)
-            titleView.setUp(count: 8 - UserDataModel.shared.userInfo.sentInvites.count)
             
         /// update local sentInvites
             sentInvites.append(formattedNumber)
@@ -476,13 +539,7 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
     }
 
     func sendInvite(number: String) {
-        
-        let adminID = uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
-        if UserDataModel.shared.userInfo.sentInvites.count == 8 && !adminID {
-            errorBox.isHidden = false
-            return
-        }
-        
+                
         if (MFMessageComposeViewController.canSendText()) {
             
             let controller = MFMessageComposeViewController()
@@ -497,119 +554,3 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
         }
     }
 }
-
-class SendInvitesTitleView: UIView {
-    
-    var titleLabel: UILabel!
-    var subtitleLabel: UILabel!
-    var backButton: UIButton!
-    
-    func setUp(count: Int) {
-            
-        backgroundColor = nil
-        
-        if titleLabel != nil { titleLabel.text = "" }
-        titleLabel = UILabel(frame: CGRect(x: 100, y: 15, width: UIScreen.main.bounds.width - 200, height: 16))
-        titleLabel.text = "Send invites"
-        titleLabel.font = UIFont(name: "SFCompactText-Regular", size: 16)
-        titleLabel.textColor = .white
-        titleLabel.textAlignment = .center
-        addSubview(titleLabel)
-        
-        if subtitleLabel != nil { subtitleLabel.text = "" }
-        subtitleLabel = UILabel(frame: CGRect(x: 100, y: titleLabel.frame.maxY + 1, width: UIScreen.main.bounds.width - 200, height: 16))
-        subtitleLabel.text = "\(count) remaining"
-        subtitleLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
-        subtitleLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        subtitleLabel.textAlignment = .center
-        addSubview(subtitleLabel)
-        
-        if backButton != nil { backButton.setImage(UIImage(), for: .normal) }
-        backButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 40, y: 7, width: 35, height: 35))
-        backButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        backButton.setImage(UIImage(named: "CancelButton"), for: .normal)
-        backButton.addTarget(self, action: #selector(exit(_:)), for: .touchUpInside)
-        addSubview(backButton)
-    }
-    
-    @objc func exit(_ sender: UIButton) {
-        if let vc = viewContainingController() as? SendInvitesController {
-            vc.dismiss(animated: true, completion: nil)
-        }
-    }
-}
-
-class SendInviteCell: UITableViewCell {
-    
-    var number: String = ""
-    
-    var profilePic: UIImageView!
-    var nameLabel: UILabel!
-    var numberLabel: UILabel!
-    var inviteButton: UIButton!
-    
-    func setUp(contact: CNContact, status: InviteStatus) {
-        
-        self.contentView.isUserInteractionEnabled = false
-        
-        backgroundColor = UIColor(named: "SpotBlack")
-        selectionStyle = .none
-        let rawNumber = contact.phoneNumbers.first?.value
-        number = rawNumber?.stringValue ?? ""
-        
-        if profilePic != nil { profilePic.image = UIImage() }
-        profilePic = UIImageView(frame: CGRect(x: 14, y: 8.5, width: 44, height: 44))
-        profilePic.layer.cornerRadius = profilePic.bounds.width/2
-        profilePic.clipsToBounds = true
-        profilePic.contentMode = .scaleAspectFill
-        profilePic.image = UIImage(data: contact.imageData ?? Data()) ?? UIImage(named: "BlankContact")
-        addSubview(profilePic)
-        
-        let contactName = contact.givenName + " " + contact.familyName
-
-        
-        if nameLabel != nil { nameLabel.text = "" }
-        nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: 14.5, width: UIScreen.main.bounds.width - 186, height: 15))
-        nameLabel.textAlignment = .left
-        nameLabel.lineBreakMode = .byTruncatingTail
-        nameLabel.text = contactName
-        nameLabel.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-        addSubview(nameLabel)
-        
-        if numberLabel != nil { numberLabel.text = "" }
-        numberLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: nameLabel.frame.maxY + 1, width: 150, height: 15))
-        numberLabel.text = number
-        numberLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        numberLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
-        addSubview(numberLabel)
-        
-        if inviteButton != nil { inviteButton.setImage(UIImage(), for: .normal) }
-        inviteButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 125, y: 8, width: 104, height: 42))
-        inviteButton.imageEdgeInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
-        inviteButton.imageView?.contentMode = .scaleAspectFit
-        
-        switch status {
-        
-        case .invited:
-            inviteButton.setImage(UIImage(named: "InvitedContact"), for: .normal)
-            
-        case .joined:
-            inviteButton.setImage(UIImage(named: "JoinedContact"), for: .normal)
-            
-        default:
-            inviteButton.setImage(UIImage(named: "InviteContactButton"), for: .normal)
-            inviteButton.addTarget(self, action: #selector(inviteFriend(_:)), for: .touchUpInside)
-        }
-
-        addSubview(inviteButton)
-    }
-    
-    @objc func inviteFriend(_ sender: UIButton) {
-        if let vc = viewContainingController() as? SendInvitesController {
-            vc.sendInvite(number: number)
-        }
-    }
-}
-
-
