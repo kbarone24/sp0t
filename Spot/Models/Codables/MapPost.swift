@@ -62,7 +62,9 @@ struct MapPost: Identifiable, Codable {
     var cellHeight: CGFloat? = 0
     var commentsHeight: CGFloat? = 0
     
-    var seen: Bool? = true
+    var seen: Bool {
+        return seenList!.contains(UserDataModel.shared.uid)
+    }
     
     enum CodingKeys: String, CodingKey {
         case id

@@ -282,11 +282,7 @@ extension UIViewController {
         /// round to nearest line height
         let maxCaption: CGFloat = noImage ? 500 : 65
         newPost.captionHeight = self.getCaptionHeight(caption: newPost.caption, noImage: noImage, maxCaption: maxCaption, truncated: true)
-        
-     //   newPost.posterGroup = [newPost.posterID]
-      //  newPost.posterGroup!.append(contentsOf: newPost.addedUsers ?? [])
-        newPost.seen = (newPost.seenList ?? [UserDataModel.shared.uid]).contains(where: {$0 == UserDataModel.shared.uid})
-        
+                
         return newPost
     }
     
@@ -1527,7 +1523,6 @@ extension UINavigationBar {
     }
     
     func addWhiteBackground() {
-        
         if #available(iOS 15.0, *) {
             let appearance = UINavigationBarAppearance()
             appearance.configureWithTransparentBackground()

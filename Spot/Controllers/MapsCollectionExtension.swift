@@ -17,9 +17,10 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapCell", for: indexPath) as? MapHomeCell {
             let map = UserDataModel.shared.userInfo.mapsList[safe: indexPath.row - 1]
-            var avatarURLs = map == nil ? friendsPostsDictionary.values.map({$0.userInfo?.avatarURL ?? ""}).prefix(7) : []
-            if avatarURLs.isEmpty { avatarURLs.append(UserDataModel.shared.userInfo.avatarURL ?? "") }
-            cell.setUp(map: map, avatarURLs: Array(avatarURLs))
+            var avatarURLs = map == nil ? friendsPostsDictionary.values.map({$0.userInfo?.avatarURL ?? ""}).uniqued().prefix(7) : []
+            if !avatarURLs.contains(UserDataModel.shared.userInfo.avatarURL ?? "") { avatarURLs.append(UserDataModel.shared.userInfo.avatarURL ?? "") }
+            let postsList = map == nil ? friendsPostsDictionary.map({$0.value}) : map!.postsDictionary.map({$0.value})
+            cell.setUp(map: map, avatarURLs: Array(avatarURLs), postsList: postsList)
             return cell
         }
         return UICollectionViewCell()
@@ -33,8 +34,8 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource {
 }
 
 class MapHomeCell: UICollectionViewCell {
+    lazy var contentArea = UIView()
     var newIndicator: UIView!
-    var contentArea: UIView!
     var mapCoverImage: UIImageView!
     var friendsCoverImage: ImageAvatarView!
     var lockIcon: UIImageView!
@@ -47,10 +48,37 @@ class MapHomeCell: UICollectionViewCell {
         }
     }
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-                
-        if contentArea != nil { contentArea.removeFromSuperview() }
+    func setUp(map: CustomMap?, avatarURLs: [String]?, postsList: [MapPost]) {
+        setUpView()
+        if map != nil {
+            mapCoverImage.isHidden = false
+            mapCoverImage.sd_setImage(with: URL(string: map!.imageURL))
+            let textString = NSMutableAttributedString(string: map?.mapName ?? "").shrinkLineHeight()
+            nameLabel.attributedText = textString
+            nameLabel.sizeToFit()
+            if map!.secret { lockIcon.isHidden = false }
+        } else {
+            friendsCoverImage.isHidden = false
+            friendsCoverImage.setUp(avatarURLs: avatarURLs!)
+            let textString = NSMutableAttributedString(string: "Friends").shrinkLineHeight()
+            nameLabel.attributedText = textString
+        }
+        
+        if postsList.contains(where: {!$0.seenList!.contains(UserDataModel.shared.uid)}) {
+            newIndicator.isHidden = false
+        }
+        
+        /// add image bottom corner radius
+        let maskPath = UIBezierPath(roundedRect: mapCoverImage.bounds,
+                                    byRoundingCorners: [.topLeft, .topRight],
+                                    cornerRadii: CGSize(width: 9.0, height: 0.0))
+        let maskLayer = CAShapeLayer()
+        maskLayer.path = maskPath.cgPath
+        if map != nil { mapCoverImage.layer.mask = maskLayer } else { friendsCoverImage.layer.mask = maskLayer }
+    }
+    
+    func setUpView() {
+        contentArea.removeFromSuperview()
         contentArea = UIView {
             $0.backgroundColor = isSelected ? UIColor(red: 0.843, green: 0.992, blue: 1, alpha: 1) : UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
             $0.layer.borderWidth = 2.5
@@ -129,35 +157,6 @@ class MapHomeCell: UICollectionViewCell {
         }
         
         layoutIfNeeded()
-        /// add image bottom corner radius
-        let maskPath = UIBezierPath(roundedRect: mapCoverImage.bounds,
-                                    byRoundingCorners: [.topLeft, .topRight],
-                                    cornerRadii: CGSize(width: 9.0, height: 0.0))
-        let maskLayer = CAShapeLayer()
-        maskLayer.path = maskPath.cgPath
-        mapCoverImage.layer.mask = maskLayer
-        friendsCoverImage.layer.mask = maskLayer
-
-    }
-    
-    func setUp(map: CustomMap?, avatarURLs: [String]) {
-        if map != nil {
-            mapCoverImage.isHidden = false
-            mapCoverImage.sd_setImage(with: URL(string: map!.imageURL))
-            let textString = NSMutableAttributedString(string: map?.mapName ?? "").shrinkLineHeight()
-            nameLabel.attributedText = textString
-            nameLabel.sizeToFit()
-            if map!.secret { lockIcon.isHidden = false }
-        } else {
-            friendsCoverImage.isHidden = false
-            friendsCoverImage.setUp(avatarURLs: avatarURLs)
-            let textString = NSMutableAttributedString(string: "Friends").shrinkLineHeight()
-            nameLabel.attributedText = textString
-        }
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
     
     override func prepareForReuse() {

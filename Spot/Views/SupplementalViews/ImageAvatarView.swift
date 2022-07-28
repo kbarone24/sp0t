@@ -12,7 +12,7 @@ import Firebase
 import FirebaseUI
 
 class ImageAvatarView: UIImageView {
-    var imageManager: SDWebImageManager!
+    lazy var imageManager = SDWebImageManager()
         
     func setUp(avatarURLs: [String]) {
         let transformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
@@ -25,7 +25,6 @@ class ImageAvatarView: UIImageView {
                     $0.contentMode = .scaleAspectFill
                     self.addSubview($0)
                 }
-                print(i, "offset", offset)
                 imageView.tag = i
                 imageView.snp.makeConstraints {
                     $0.width.equalTo(26)

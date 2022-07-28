@@ -35,7 +35,7 @@ class MapController: UIViewController {
     
     let locationManager = CLLocationManager()
     lazy var imageManager = SDWebImageManager()
-    var userListener: ListenerRegistration!
+    var userListener, newPostListener: ListenerRegistration!
     
     let homeFetchGroup = DispatchGroup()
     let mapPostsGroup = DispatchGroup()
@@ -99,6 +99,7 @@ class MapController: UIViewController {
     
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
       //  NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
     }
     
