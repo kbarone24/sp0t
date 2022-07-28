@@ -103,6 +103,7 @@ class ProfileViewController: UIViewController {
         profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
         if containerDrawerView?.status != .Top {
             containerDrawerView?.present(to: .Top)
+            navigationController?.setNavigationBarHidden(false, animated: true)
         }
         containerDrawerView?.canInteract = false
     }

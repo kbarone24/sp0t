@@ -144,6 +144,7 @@ extension CustomMapController {
     
     @objc func backButtonAction() {
         barBackButton.isHidden = true
+        navigationController?.setNavigationBarHidden(true, animated: true)
         navigationController?.popViewController(animated: true)
     }
 }
