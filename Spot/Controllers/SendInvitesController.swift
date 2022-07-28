@@ -40,13 +40,11 @@ class SendInvitesController: UIViewController {
     
     var tableView: UITableView!
     var loadingIndicator: CustomActivityIndicator!
-    
-    var errorBox: UIView!
-    var errorText: UILabel!
         
     override func viewDidLoad() {
         
         super.viewDidLoad()
+        
         
         view.backgroundColor = .white
         
@@ -83,7 +81,6 @@ class SendInvitesController: UIViewController {
         }
         
         searchBar = UISearchBar {
-            //$0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 32, height: 36)
             $0.searchBarStyle = .default
             $0.tintColor = .white
             $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
@@ -131,9 +128,10 @@ class SendInvitesController: UIViewController {
         tableView = UITableView {
             $0.dataSource = self
             $0.delegate = self
-            $0.isScrollEnabled = false
+            $0.isScrollEnabled = true
             $0.backgroundColor = .white
             $0.separatorStyle = .none
+            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
             $0.allowsSelection = false
             $0.isHidden = false
             $0.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
@@ -155,7 +153,7 @@ class SendInvitesController: UIViewController {
             $0.isScrollEnabled = false
             $0.backgroundColor = .white
             $0.separatorStyle = .none
-            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 200, right: 0)
+            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 150, right: 0)
             $0.allowsSelection = false
             $0.isHidden = true
             $0.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
@@ -178,19 +176,9 @@ class SendInvitesController: UIViewController {
         loadingIndicator.isHidden = true
         view.addSubview(loadingIndicator)
         
-        errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 100, width: UIScreen.main.bounds.width, height: 32))
-        errorBox.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
-        errorBox.isHidden = true
-        view.addSubview(errorBox)
-        
-        errorText = UILabel(frame: CGRect(x: 0, y: 6, width: UIScreen.main.bounds.width, height: 18))
-        errorText.lineBreakMode = .byWordWrapping
-        errorText.numberOfLines = 0
-        errorText.textColor = UIColor.white
-        errorText.textAlignment = .center
-        errorText.text = "You're all out of invites!"
-        errorText.font = UIFont(name: "SFCompactText-Regular", size: 14)!
-        errorBox.addSubview(errorText)
+        loadingIndicator.snp.makeConstraints{
+            $0.top.equalTo(tableView.snp.bottom).offset(20)
+        }
 
         checkAuth()
     }
@@ -425,7 +413,7 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 61
+        return 70
     }
 }
 
@@ -458,6 +446,7 @@ extension SendInvitesController: UISearchBarDelegate {
         /// dismiss here if user swiped down to exit with empty search bar
         if searchBar.text == "" { dismissKeyboard() }
         UIView.animate(withDuration: 0.1) {
+            self.cancelButton.isHidden = true
             searchBar.snp.updateConstraints{
                 $0.trailing.equalToSuperview().offset(-16)
             }
@@ -555,13 +544,7 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
     }
 
     func sendInvite(number: String) {
-        
-        let adminID = uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
-        if UserDataModel.shared.userInfo.sentInvites.count == 8 && !adminID {
-            errorBox.isHidden = false
-            return
-        }
-        
+                
         if (MFMessageComposeViewController.canSendText()) {
             
             let controller = MFMessageComposeViewController()
@@ -576,79 +559,3 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
         }
     }
 }
-
-
-class SendInviteCell: UITableViewCell {
-    
-    var number: String = ""
-    
-    var profilePic: UIImageView!
-    var nameLabel: UILabel!
-    var numberLabel: UILabel!
-    var inviteButton: UIButton!
-    
-    func setUp(contact: CNContact, status: InviteStatus) {
-        
-        self.contentView.isUserInteractionEnabled = false
-        
-        backgroundColor = UIColor(named: "SpotBlack")
-        selectionStyle = .none
-        let rawNumber = contact.phoneNumbers.first?.value
-        number = rawNumber?.stringValue ?? ""
-        
-        if profilePic != nil { profilePic.image = UIImage() }
-        profilePic = UIImageView(frame: CGRect(x: 14, y: 8.5, width: 44, height: 44))
-        profilePic.layer.cornerRadius = profilePic.bounds.width/2
-        profilePic.clipsToBounds = true
-        profilePic.contentMode = .scaleAspectFill
-        profilePic.image = UIImage(data: contact.imageData ?? Data()) ?? UIImage(named: "BlankContact")
-        addSubview(profilePic)
-        
-        let contactName = contact.givenName + " " + contact.familyName
-
-        
-        if nameLabel != nil { nameLabel.text = "" }
-        nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: 14.5, width: UIScreen.main.bounds.width - 186, height: 15))
-        nameLabel.textAlignment = .left
-        nameLabel.lineBreakMode = .byTruncatingTail
-        nameLabel.text = contactName
-        nameLabel.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-        addSubview(nameLabel)
-        
-        if numberLabel != nil { numberLabel.text = "" }
-        numberLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: nameLabel.frame.maxY + 1, width: 150, height: 15))
-        numberLabel.text = number
-        numberLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-        numberLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
-        addSubview(numberLabel)
-        
-        if inviteButton != nil { inviteButton.setImage(UIImage(), for: .normal) }
-        inviteButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 125, y: 8, width: 104, height: 42))
-        inviteButton.imageEdgeInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
-        inviteButton.imageView?.contentMode = .scaleAspectFit
-        
-        switch status {
-        
-        case .invited:
-            inviteButton.setImage(UIImage(named: "InvitedContact"), for: .normal)
-            
-        case .joined:
-            inviteButton.setImage(UIImage(named: "JoinedContact"), for: .normal)
-            
-        default:
-            inviteButton.setImage(UIImage(named: "InviteContactButton"), for: .normal)
-            inviteButton.addTarget(self, action: #selector(inviteFriend(_:)), for: .touchUpInside)
-        }
-
-        addSubview(inviteButton)
-    }
-    
-    @objc func inviteFriend(_ sender: UIButton) {
-        if let vc = viewContainingController() as? SendInvitesController {
-            vc.sendInvite(number: number)
-        }
-    }
-}
-
-

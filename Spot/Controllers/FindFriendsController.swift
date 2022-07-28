@@ -37,8 +37,8 @@ class FindFriendsController: UIViewController {
     lazy var searchRefreshCount = 0
     lazy var searchTextGlobal = ""
 
-    var sendInvitesView: UIView!
-    var searchContactsView: UIView!
+    var sendInvitesView: SendInvitesView!
+    var searchContactsView: SearchContactsView!
     var suggestedIndicator: CustomActivityIndicator!
     var suggestedTable: UITableView!
 
@@ -56,6 +56,8 @@ class FindFriendsController: UIViewController {
         navigationController!.navigationBar.barStyle = .black
         navigationController!.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
+        navigationController?.navigationBar.addWhiteBackground()
+
 
         navigationController!.navigationBar.titleTextAttributes = [
                 .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
@@ -112,7 +114,6 @@ class FindFriendsController: UIViewController {
         }
         
         searchBar = UISearchBar {
-            //$0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 32, height: 36)
             $0.searchBarStyle = .default
             $0.tintColor = .white
             $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
@@ -126,8 +127,8 @@ class FindFriendsController: UIViewController {
             $0.layer.masksToBounds = true
             $0.searchTextField.layer.masksToBounds = true
             $0.searchTextField.clipsToBounds = true
-            $0.layer.cornerRadius = 3
-            $0.searchTextField.layer.cornerRadius = 3
+            $0.layer.cornerRadius = 2
+            $0.searchTextField.layer.cornerRadius = 2
             $0.backgroundImage = UIImage()
             $0.translatesAutoresizingMaskIntoConstraints = false
             searchBarContainer.addSubview($0)
@@ -146,7 +147,7 @@ class FindFriendsController: UIViewController {
             $0.setTitleColor(UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00), for: .normal)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
             $0.titleLabel?.textAlignment = .center
-            //$0.titleEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
+            $0.titleEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
             $0.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
             $0.isHidden = true
             searchBarContainer.addSubview($0)
@@ -154,7 +155,6 @@ class FindFriendsController: UIViewController {
         
         cancelButton.snp.makeConstraints{
             $0.trailing.equalToSuperview().offset(-16)
-            $0.centerY.equalToSuperview()
         }
         
         
@@ -178,15 +178,11 @@ class FindFriendsController: UIViewController {
             $0.width.equalToSuperview()
             $0.height.equalTo(UIScreen.main.bounds.height - searchBarContainer.frame.maxY)
         }
-        
-        
-        //UITableView(frame: CGRect(x: 0, y: searchBarContainer.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 300))
 
         searchIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 30))
         searchIndicator.isHidden = true
         resultsTable.addSubview(searchIndicator)
         
-        //view.addSubview(resultsTable)
     }
     
     func loadOutletViews() {
@@ -204,12 +200,10 @@ class FindFriendsController: UIViewController {
             //idk about height
         }
         
-        sendInvitesView = UIView{
-            $0.backgroundColor = .white
-            $0.isUserInteractionEnabled = true
-            $0.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
-            mainView.addSubview($0)
-        }
+        sendInvitesView = SendInvitesView()
+        sendInvitesView.setUp()
+        sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
+        mainView.addSubview(sendInvitesView)
         
         sendInvitesView.snp.makeConstraints{
             $0.leading.trailing.equalToSuperview()
@@ -217,12 +211,11 @@ class FindFriendsController: UIViewController {
             $0.top.equalToSuperview()
         }
         
-        searchContactsView = UIView{
-            $0.backgroundColor = .white
-            $0.isUserInteractionEnabled = true
-            $0.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSearchContacts(_:))))
-            mainView.addSubview($0)
-        }
+        searchContactsView = SearchContactsView()
+        searchContactsView.setUp()
+        searchContactsView.isUserInteractionEnabled = true
+        searchContactsView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSearchContacts(_:))))
+        mainView.addSubview(searchContactsView)
         
         searchContactsView.snp.makeConstraints{
             $0.leading.trailing.equalToSuperview()
@@ -230,112 +223,6 @@ class FindFriendsController: UIViewController {
             $0.top.equalTo(sendInvitesView.snp.bottom).offset(20)
         }
         
-        let inviteFriendsIcon = UIImageView {
-            $0.layer.masksToBounds = false
-            $0.clipsToBounds = false
-            $0.contentMode = UIView.ContentMode.left
-            $0.isHidden = false
-            $0.translatesAutoresizingMaskIntoConstraints = true
-            $0.image =  UIImage(named: "InviteFriends")
-            $0.layer.cornerRadius = 0
-            sendInvitesView.addSubview($0)
-        }
-        
-        inviteFriendsIcon.snp.makeConstraints{
-            $0.width.height.equalTo(56)
-            $0.centerY.equalToSuperview()
-            $0.leading.equalToSuperview().offset(16)
-        }
-        
-        let searchContactsIcon = UIImageView {
-            $0.layer.masksToBounds = false
-            $0.clipsToBounds = false
-            $0.contentMode = UIView.ContentMode.left
-            $0.isHidden = false
-            $0.translatesAutoresizingMaskIntoConstraints = true
-            $0.image =  UIImage(named: "SearchContacts")
-            $0.layer.cornerRadius = 0
-            searchContactsView.addSubview($0)
-        }
-        
-        searchContactsIcon.snp.makeConstraints{
-            $0.width.height.equalTo(56)
-            $0.centerY.equalToSuperview()
-            $0.leading.equalToSuperview().offset(16)
-        }
-        
-        let carot = UIImageView {
-            $0.layer.masksToBounds = false
-            $0.clipsToBounds = false
-            $0.contentMode = UIView.ContentMode.right
-            $0.isHidden = false
-            $0.translatesAutoresizingMaskIntoConstraints = true
-            $0.image =  UIImage(named: "Carot")
-            $0.layer.cornerRadius = 0
-            sendInvitesView.addSubview($0)
-        }
-        
-        carot.snp.makeConstraints{
-            $0.width.equalTo(12.73)
-            $0.height.equalTo(19.8)
-            $0.centerY.equalToSuperview()
-            $0.trailing.equalToSuperview().offset(-20)
-        }
-        
-        let carot2 = UIImageView {
-            $0.layer.masksToBounds = false
-            $0.clipsToBounds = false
-            $0.contentMode = UIView.ContentMode.right
-            $0.isHidden = false
-            $0.translatesAutoresizingMaskIntoConstraints = true
-            $0.image =  UIImage(named: "Carot")
-            $0.layer.cornerRadius = 0
-            searchContactsView.addSubview($0)
-        }
-        
-        carot2.snp.makeConstraints{
-            $0.width.equalTo(12.73)
-            $0.height.equalTo(19.8)
-            $0.centerY.equalToSuperview()
-            $0.trailing.equalToSuperview().offset(-20)
-        }
-        
-        let inviteFriendsText = UILabel{
-             $0.text = "Invite Friends"
-             $0.numberOfLines = 0
-             $0.textColor = .black
-             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-             $0.translatesAutoresizingMaskIntoConstraints = false
-             sendInvitesView.addSubview($0)
-         }
-        
-        let searchContactsText = UILabel{
-             $0.text = "Search contacts"
-             $0.numberOfLines = 0
-             $0.textColor = .black
-             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-             $0.translatesAutoresizingMaskIntoConstraints = false
-             searchContactsView.addSubview($0)
-         }
-        
-        inviteFriendsText.snp.makeConstraints{
-            $0.centerY.equalToSuperview()
-            $0.leading.equalTo(inviteFriendsIcon.snp.trailing).offset(10)
-        }
-        
-        searchContactsText.snp.makeConstraints{
-            $0.centerY.equalToSuperview()
-            $0.leading.equalTo(searchContactsIcon.snp.trailing).offset(10)
-        }
-        
-        //sendInvitesView = SendInvitesView(frame: CGRect(x: 0, y: 5, width: UIScreen.main.bounds.width, height: 76))
-        //sendInvitesView.setUp(invites: 8 - UserDataModel.shared.userInfo.sentInvites.count)
-        /*sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
-        mainView.addSubview(sendInvitesView)
-        
-        searchContactsView = SearchContactsView(frame: CGRect(x: 0, y: sendInvitesView.frame.maxY, width: UIScreen.main.bounds.width, height: 76))
-        searchContactsView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSearchContacts(_:))))
-        mainView.addSubview(searchContactsView)*/
     }
     
     func loadSuggestedTable() {
@@ -356,7 +243,7 @@ class FindFriendsController: UIViewController {
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
               
-        suggestedIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 30))
+        suggestedIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 40, width: UIScreen.main.bounds.width, height: 30))
         suggestedIndicator.isHidden = true
         suggestedTable.addSubview(suggestedIndicator)
         
@@ -391,18 +278,11 @@ class FindFriendsController: UIViewController {
         
         let sendInvitesVC = SendInvitesController()
         navigationController!.pushViewController(sendInvitesVC, animated: true)
-        
-        /*if let vc = storyboard?.instantiateViewController(identifier: "SendInvites") as? SendInvitesController {
-            present(vc, animated: true, completion: nil)
-        }*/
     }
     
     @objc func presentSearchContacts(_ sender: UITapGestureRecognizer) {
         let searchContactsVC = SearchContactsController()
         navigationController!.pushViewController(searchContactsVC, animated: true)
-        /*if let vc = storyboard?.instantiateViewController(identifier: "SearchContacts") as? SearchContactsController {
-            present(vc, animated: true, completion: nil)
-        }*/
     }
 
     
@@ -612,11 +492,7 @@ extension FindFriendsController: UISearchBarDelegate {
     
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
         
-        print(" ✍🏽 did begin editing")
-        
-
         UIView.animate(withDuration: 0.1) {
-            print("animaTING")
             searchBar.snp.remakeConstraints{
                 $0.leading.equalToSuperview().offset(16)
                 $0.trailing.equalToSuperview().offset(-60)
@@ -637,12 +513,8 @@ extension FindFriendsController: UISearchBarDelegate {
     
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
         
-        
-        print("didEndEditing")
-        
         UIView.animate(withDuration: 0.1) {
             self.cancelButton.isHidden = true
-            print("animating")
             searchBar.snp.updateConstraints{
                 $0.trailing.equalToSuperview().offset(-16)
             }
@@ -776,38 +648,70 @@ extension FindFriendsController: UISearchBarDelegate {
 
 class SendInvitesView: UIView {
     
-    var sendImage: UIImageView!
-    var sendLabel: UILabel!
-    var invitesLabel: UILabel!
+    var inviteFriendsIcon: UIImageView!
+    var carot: UIImageView!
+    var inviteFriendsText: UILabel!
     
-    func setUp(invites: Int) {
+    func setUp() {
         
-        if sendImage != nil { sendImage.image = UIImage() }
-        sendImage = UIImageView(frame: CGRect(x: 14, y: 12, width: 56, height: 56))
-        sendImage.image = UIImage(named: "SendInvitesIcon")
-        addSubview(sendImage)
+        self.backgroundColor = .white
         
-        if sendLabel != nil { sendLabel.text = "" }
-        sendLabel = UILabel(frame: CGRect(x: sendImage.frame.maxX + 12, y: 24, width: 100, height: 14))
-        sendLabel.text = "Send Invites"
-        sendLabel.textColor = invites == 0 ? UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1) : UIColor.white
-        sendLabel.font = UIFont(name: "SFCompactText-Semibold", size: 15)
-        addSubview(sendLabel)
+        inviteFriendsIcon = UIImageView {
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = false
+            $0.contentMode = UIView.ContentMode.left
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            $0.image =  UIImage(named: "InviteFriends")
+            $0.layer.cornerRadius = 0
+            self.addSubview($0)
+        }
         
-        if invitesLabel != nil { invitesLabel.text = "" }
-        invitesLabel = UILabel(frame: CGRect(x: sendImage.frame.maxX + 12, y: sendLabel.frame.maxY + 2, width: 140, height: 16))
-        let contactsString = invites == 1 ? "\(invites) invite" : "\(invites) invites"
-        invitesLabel.text = contactsString + " remaining"
-        invitesLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        invitesLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
-        addSubview(invitesLabel)
+        inviteFriendsIcon.snp.makeConstraints{
+            $0.width.height.equalTo(56)
+            $0.centerY.equalToSuperview()
+            $0.leading.equalToSuperview().offset(16)
+        }
+        
+        carot = UIImageView {
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = false
+            $0.contentMode = UIView.ContentMode.right
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            $0.image =  UIImage(named: "Carot")
+            $0.layer.cornerRadius = 0
+            self.addSubview($0)
+        }
+        
+        carot.snp.makeConstraints{
+            $0.width.equalTo(12.73)
+            $0.height.equalTo(19.8)
+            $0.centerY.equalToSuperview()
+            $0.trailing.equalToSuperview().offset(-20)
+        }
+        
+        inviteFriendsText = UILabel{
+             $0.text = "Invite Friends"
+             $0.numberOfLines = 0
+             $0.textColor = .black
+             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+             $0.translatesAutoresizingMaskIntoConstraints = false
+             self.addSubview($0)
+         }
+        
+        inviteFriendsText.snp.makeConstraints{
+            $0.centerY.equalToSuperview()
+            $0.leading.equalTo(inviteFriendsIcon.snp.trailing).offset(10)
+        }
+
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = nil
     }
-    
+        
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -815,29 +719,69 @@ class SendInvitesView: UIView {
 
 class SearchContactsView: UIView {
     
-    override init(frame: CGRect) {
+    var searchContactsIcon: UIImageView!
+    var carot: UIImageView!
+    var searchContactsText: UILabel!
+    
+    func setUp(){
         
+        self.backgroundColor = .white
+        
+        searchContactsIcon = UIImageView {
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = false
+            $0.contentMode = UIView.ContentMode.left
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            $0.image =  UIImage(named: "SearchContacts")
+            $0.layer.cornerRadius = 0
+            self.addSubview($0)
+        }
+        
+        searchContactsIcon.snp.makeConstraints{
+            $0.width.height.equalTo(56)
+            $0.centerY.equalToSuperview()
+            $0.leading.equalToSuperview().offset(16)
+        }
+        
+        
+        carot = UIImageView {
+            $0.layer.masksToBounds = false
+            $0.clipsToBounds = false
+            $0.contentMode = UIView.ContentMode.right
+            $0.isHidden = false
+            $0.translatesAutoresizingMaskIntoConstraints = true
+            $0.image =  UIImage(named: "Carot")
+            $0.layer.cornerRadius = 0
+            self.addSubview($0)
+        }
+        
+        carot.snp.makeConstraints{
+            $0.width.equalTo(12.73)
+            $0.height.equalTo(19.8)
+            $0.centerY.equalToSuperview()
+            $0.trailing.equalToSuperview().offset(-20)
+        }
+        
+        
+        searchContactsText = UILabel{
+             $0.text = "Search contacts"
+             $0.numberOfLines = 0
+             $0.textColor = .black
+             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+             $0.translatesAutoresizingMaskIntoConstraints = false
+             self.addSubview($0)
+         }
+                
+        searchContactsText.snp.makeConstraints{
+            $0.centerY.equalToSuperview()
+            $0.leading.equalTo(searchContactsIcon.snp.trailing).offset(10)
+        }
+    }
+    
+    override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = nil
-        
-        let contactsImage = UIImageView(frame: CGRect(x: 14, y: 12, width: 56, height: 56))
-        contactsImage.image = UIImage(named: "SearchContactsIcon")
-        addSubview(contactsImage)
-        
-        let searchLabel = UILabel(frame: CGRect(x: contactsImage.frame.maxX + 12, y: 24, width: 150, height: 14))
-        searchLabel.text = "Search contacts"
-        searchLabel.textColor = UIColor.white
-        searchLabel.font = UIFont(name: "SFCompactText-Semibold", size: 15)
-        addSubview(searchLabel)
-        
-        let contactsLabel = UILabel(frame: CGRect(x: contactsImage.frame.maxX + 12, y: searchLabel.frame.maxY + 2, width: UIScreen.main.bounds.width - (contactsImage.frame.maxX + 12), height: 16))
-        contactsLabel.text = "See which of your friends are already on sp0t"
-        contactsLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        contactsLabel.font = UIFont(name: "SFCompactText-Regular", size: 13)
-        contactsLabel.clipsToBounds = false
-        contactsLabel.numberOfLines = 0
-        contactsLabel.lineBreakMode = .byWordWrapping
-        addSubview(contactsLabel)
     }
     
     required init?(coder: NSCoder) {
@@ -877,7 +821,7 @@ class SuggestedFriendsHeader: UITableViewHeaderFooterView {
         
         refreshButton = UIButton{
             $0.setImage(UIImage(named: "RefreshIcon"), for: .normal)
-            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 2)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 4)
             $0.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.setTitle("Refresh", for: .normal)
             $0.setTitleColor(UIColor(red: 0, green: 0, blue: 0, alpha: 1), for: .normal)
@@ -909,234 +853,3 @@ class SuggestedFriendsHeader: UITableViewHeaderFooterView {
     }
 }
 
-class SuggestedFriendCell: UITableViewCell {
-    
-    var userID = ""
-    
-    var profilePic: UIImageView!
-    var nameLabel: UILabel!
-    var usernameLabel: UILabel!
-    var mutualsLabel: UILabel!
-    var separatorView: UIView!
-    var spotsLabel: UILabel!
-    var addFriendButton: UIButton!
-    var bottomLine: UIView!
-    
-    func setUp(user: UserProfile, status: FriendStatus) {
-        
-        backgroundColor = UIColor(named: "SpotBlack")
-        selectionStyle = .none
-        contentView.isUserInteractionEnabled = false
-        
-        resetView()
-        userID = user.id!
-        
-        profilePic = UIImageView(frame: CGRect(x: 14, y: 12, width: 52, height: 52))
-        profilePic.layer.masksToBounds = false
-        profilePic.layer.cornerRadius = profilePic.frame.height/2
-        profilePic.clipsToBounds = true
-        profilePic.contentMode = UIView.ContentMode.scaleAspectFill
-        self.addSubview(profilePic)
-        
-        let url = user.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-        }
-
-        nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 11, y: 13.5, width: 200, height: 15))
-        nameLabel.text = user.name
-        nameLabel.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-        nameLabel.sizeToFit()
-        nameLabel.textAlignment = .left
-        
-        addSubview(nameLabel)
-        
-        usernameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 11, y: nameLabel.frame.maxY + 1, width: 200, height: 16))
-        usernameLabel.text = "@" + user.username
-        usernameLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        usernameLabel.font = UIFont(name: "SFCompactText-Regular", size: 12)
-        usernameLabel.sizeToFit()
-        addSubview(usernameLabel)
-        
-        if user.mutualFriends > 0 {
-            mutualsLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 11, y: usernameLabel.frame.maxY + 3, width: 60, height: 14.5))
-            var mutualsText = "\(user.mutualFriends)"
-            mutualsText += user.mutualFriends == 1 ? " mutual friend" : " mutual friends"
-            mutualsLabel.text = mutualsText
-            mutualsLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-            mutualsLabel.font = UIFont(name: "SFCompactText-Regular", size: 12)
-            mutualsLabel.sizeToFit()
-            addSubview(mutualsLabel)
-            
-            if user.spotsList.count > 1 {
-                separatorView = UIView(frame: CGRect(x: mutualsLabel.frame.maxX + 9, y: mutualsLabel.frame.midY - 0.7, width: 5, height: 2))
-                separatorView.backgroundColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-                separatorView.layer.cornerRadius = 0.5
-                addSubview(separatorView)
-            }
-        }
-
-        if user.spotsList.count > 1 {
-            let minX = user.mutualFriends > 0 ? separatorView.frame.maxX + 11 : profilePic.frame.maxX + 11
-            spotsLabel = UILabel(frame: CGRect(x: minX, y: usernameLabel.frame.maxY + 3, width: 60, height: 14.5))
-            var spotsText = "\(user.spotsList.count)"
-            spotsText += user.spotsList.count == 1 ? " spot" : " spots"
-            spotsLabel.text = spotsText
-            spotsLabel.textColor = UIColor(red: 0.706, green: 0.706, blue: 0.706, alpha: 1)
-            spotsLabel.font = UIFont(name: "SFCompactText-Regular", size: 12)
-            addSubview(spotsLabel)
-        }
-
-        addFriendButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 112, y: 17, width: 104, height: 42))
-        addFriendButton.imageEdgeInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
-        addFriendButton.imageView?.contentMode = .scaleAspectFit
-        
-        switch status {
-        case .friends:
-            addFriendButton.setImage(UIImage(named: "ContactsFriends"), for: UIControl.State.normal)
-        case .pending:
-            addFriendButton.setImage(UIImage(named: "ContactsPending"), for: UIControl.State.normal)
-        default:
-            addFriendButton.setImage(UIImage(named: "ContactsAddFriend"), for: .normal)
-            addFriendButton.addTarget(self, action: #selector(addFriendTap(_:)), for: .touchUpInside)
-        }
-        
-        addSubview(addFriendButton)
-        
-        bottomLine = UIView(frame: CGRect(x: 0, y: 75, width: UIScreen.main.bounds.width, height: 1))
-        bottomLine.backgroundColor = UIColor(red: 0.125, green: 0.125, blue: 0.125, alpha: 1)
-        addSubview(bottomLine)
-    }
-    
-    func resetView() {
-        if profilePic != nil { profilePic.image = UIImage() }
-        if nameLabel != nil { nameLabel.text = "" }
-        if usernameLabel != nil { usernameLabel.text = "" }
-        if mutualsLabel != nil { mutualsLabel.text = "" }
-        if separatorView != nil { separatorView.backgroundColor = nil }
-        if spotsLabel != nil { spotsLabel.text = "" }
-        if addFriendButton != nil { addFriendButton.setImage(UIImage(), for: .normal) }
-        if bottomLine != nil { bottomLine.backgroundColor = nil }
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
-    }
-    
-    @objc func addFriendTap(_ sender: UIButton) {
-
-        if let vc = viewContainingController() as? FindFriendsController {
-            
-            Mixpanel.mainInstance().track(event: "FindFriendsAddFriend")
-
-            /// add friend from DB
-            DispatchQueue.global(qos: .utility).async { self.addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: self.userID) }
-            
-            /// adjust UX with new pending
-            if let i = vc.suggestedUsers.firstIndex(where: {$0.0.id == userID}) {
-                vc.suggestedUsers[i].1 = .pending
-                UserDataModel.shared.userInfo.pendingFriendRequests.append(userID)
-                DispatchQueue.main.async { vc.suggestedTable.reloadData() }
-            }
-        }
-    }
-}
-
-class SuggestedFriendSearchCell: UITableViewCell {
-    
-    var userID: String = ""
-    
-    var profilePic: UIImageView!
-    var nameLabel: UILabel!
-    var usernameLabel: UILabel!
-    var addFriendButton: UIButton!
-
-    func setUp(user: UserProfile, status: FriendStatus) {
-        
-        backgroundColor = UIColor(named: "SpotBlack")
-        selectionStyle = .none
-        contentView.isUserInteractionEnabled = false
-        
-        userID = user.id!
-        resetView()
-
-        profilePic = UIImageView(frame: CGRect(x: 14, y: 10, width: 44, height: 44))
-        profilePic.layer.masksToBounds = false
-        profilePic.layer.cornerRadius = profilePic.frame.height/2
-        profilePic.clipsToBounds = true
-        profilePic.contentMode = UIView.ContentMode.scaleAspectFill
-        self.addSubview(profilePic)
-        
-        let url = user.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-        }
-
-        nameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: 16, width: 200, height: 15))
-        nameLabel.text = user.name
-        nameLabel.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        nameLabel.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-        nameLabel.sizeToFit()
-        nameLabel.textAlignment = .left
-        
-        addSubview(nameLabel)
-        
-        usernameLabel = UILabel(frame: CGRect(x: profilePic.frame.maxX + 9, y: nameLabel.frame.maxY + 1, width: 200, height: 16))
-        usernameLabel.text = "@" + user.username
-        usernameLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        usernameLabel.font = UIFont(name: "SFCompactText-Regular", size: 12.5)
-        usernameLabel.sizeToFit()
-        addSubview(usernameLabel)
-        
-        addFriendButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 112, y: 8, width: 104, height: 42))
-        addFriendButton.imageEdgeInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
-        addFriendButton.imageView?.contentMode = .scaleAspectFit
-        
-        switch status {
-        case .friends:
-            addFriendButton.setImage(UIImage(named: "ContactsFriends"), for: UIControl.State.normal)
-        case .pending:
-            addFriendButton.setImage(UIImage(named: "ContactsPending"), for: UIControl.State.normal)
-        default:
-            addFriendButton.setImage(UIImage(named: "ContactsAddFriend"), for: .normal)
-            addFriendButton.addTarget(self, action: #selector(addFriendTap(_:)), for: .touchUpInside)
-        }
-
-        addSubview(addFriendButton)
-    }
-    
-    func resetView() {
-        if profilePic != nil { profilePic.image = UIImage() }
-        if nameLabel != nil { nameLabel.text = "" }
-        if usernameLabel != nil { usernameLabel.text = "" }
-        if addFriendButton != nil { addFriendButton.setImage(UIImage(), for: .normal) }
-    }
-    
-    @objc func addFriendTap(_ sender: UIButton) {
-        
-        if let vc = viewContainingController() as? FindFriendsController {
-            
-            Mixpanel.mainInstance().track(event: "FindFriendsSearchAddFriend")
-
-        /// send friend request from DB
-            DispatchQueue.global(qos: .utility).async { self.addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: self.userID) }
-            
-            /// update local data
-            if let i = vc.queryUsers.firstIndex(where: {$0.0.id == userID}) {
-                vc.queryUsers[i].1 = .pending
-                UserDataModel.shared.userInfo.pendingFriendRequests.append(userID)
-                DispatchQueue.main.async { vc.resultsTable.reloadData() }
-                
-                if let i = vc.suggestedUsers.firstIndex(where: {$0.0.id == userID}) {
-                    vc.suggestedUsers[i].1 = .pending
-                    DispatchQueue.main.async { vc.suggestedTable.reloadData() }
-                }
-            }
-        }
-    }
-
-}
