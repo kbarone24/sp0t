@@ -78,8 +78,6 @@ class FindFriendsController: UIViewController {
         DispatchQueue.global(qos: .userInitiated).async { self.getSuggestedFriends() }
         
         NotificationCenter.default.addObserver(self, selector: #selector(notifyRequestSent(_:)), name: NSNotification.Name("FriendRequest"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyInviteSent(_:)), name: NSNotification.Name("SentInvite"), object: nil)
-        
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -110,7 +108,7 @@ class FindFriendsController: UIViewController {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalToSuperview().offset(20)
             $0.width.equalToSuperview()
-            $0.height.equalTo(50)
+            $0.height.equalTo(36)
         }
         
         searchBar = UISearchBar {
@@ -118,6 +116,7 @@ class FindFriendsController: UIViewController {
             $0.tintColor = .white
             $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
             $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
             $0.delegate = self
             $0.autocapitalizationType = .none
             $0.autocorrectionType = .no
@@ -133,18 +132,15 @@ class FindFriendsController: UIViewController {
             $0.translatesAutoresizingMaskIntoConstraints = false
             searchBarContainer.addSubview($0)
         }
-        
-    
         searchBar.snp.makeConstraints{
             $0.leading.equalToSuperview().offset(16)
             $0.trailing.equalToSuperview().offset(-16)
-            $0.top.equalToSuperview()
-            $0.height.equalTo(36)
+            $0.top.bottom.equalToSuperview()
         }
         
         cancelButton = UIButton{
             $0.setTitle("Cancel", for: .normal)
-            $0.setTitleColor(UIColor(red: 0.71, green: 0.71, blue: 0.71, alpha: 1.00), for: .normal)
+            $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 14)
             $0.titleLabel?.textAlignment = .center
             $0.titleEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
@@ -155,6 +151,7 @@ class FindFriendsController: UIViewController {
         
         cancelButton.snp.makeConstraints{
             $0.trailing.equalToSuperview().offset(-16)
+            $0.centerY.equalTo(searchBar.snp.centerY)
         }
         
         
@@ -195,7 +192,7 @@ class FindFriendsController: UIViewController {
         }
         
         mainView.snp.makeConstraints{
-            $0.top.equalTo(searchBarContainer.snp.bottom).offset(10)
+            $0.top.equalTo(searchBarContainer.snp.bottom).offset(20)
             $0.width.equalToSuperview()
             //idk about height
         }
@@ -266,11 +263,7 @@ class FindFriendsController: UIViewController {
             UserDataModel.shared.userInfo.pendingFriendRequests.append(receiverID)
         }
     }
-    
-    @objc func notifyInviteSent(_ sender: NSNotification) {
-        //sendInvitesView.setUp(invites: 8 - UserDataModel.shared.userInfo.sentInvites.count)
-    }
-    
+        
     @objc func presentSendInvites(_ sender: UITapGestureRecognizer) {
         
         let adminID = uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
@@ -407,26 +400,14 @@ class FindFriendsController: UIViewController {
                 do {
                     let userIn = try snap?.data(as: UserProfile.self)
                     guard var userInfo = userIn else { index += 1; if index == topMutuals.count { self.finishSuggestedLoad()}; return }
-                  
-                    userInfo.id = user.id
                     userInfo.mutualFriends = user.count
-                    
                     /// get spotsList to sort top mutuals by
-                    self.db.collection("users").document(user.id).collection("spotsList").getDocuments { [weak self] (listSnap, err) in
+                    
+                    self.db.collection("posts").whereField("posterID", isEqualTo: user.id).getDocuments { [weak self] (listSnap, err) in
                         guard let self = self else { return }
-                        
-                        if err != nil || listSnap?.documents.count == 0 {
-                            self.suggestedUsers.append((userInfo, .none))
-                            index += 1; if index == topMutuals.count { self.finishSuggestedLoad()} ; return
-                        }
-                        
-                        for doc in listSnap!.documents {
-                            userInfo.spotsList.append(doc.documentID)
-                            if doc == listSnap?.documents.last {
-                                self.suggestedUsers.append((userInfo, .none))
-                                index += 1; if index == topMutuals.count { self.finishSuggestedLoad()}; return
-                            }
-                        }
+                        userInfo.postCount = listSnap?.documents.count ?? 0
+                        self.suggestedUsers.append((userInfo, .none))
+                        index += 1; if index == topMutuals.count { self.finishSuggestedLoad()} ; return
                     }
                     
                 } catch {
@@ -439,8 +420,8 @@ class FindFriendsController: UIViewController {
     
     func finishSuggestedLoad() {
         /// sort by combined spots x mutual friends
-        suggestedUsers.sort(by: {$0.0.spotsList.count + $0.0.mutualFriends > $1.0.spotsList.count + $1.0.mutualFriends})
-        if suggestedUsers.count > 20 { suggestedUsers.removeAll(where: {$0.0.spotsList.count < 5})} /// if initial user load, only show users with 3 or more spots
+        suggestedUsers.sort(by: {$0.0.postCount/3 + $0.0.mutualFriends > $1.0.postCount/3 + $1.0.mutualFriends})
+        if suggestedUsers.count > 20 { suggestedUsers.removeAll(where: {$0.0.postCount < 5})} /// if initial user load, only show users with 3 or more spots
         
         DispatchQueue.main.async {
             self.suggestedIndicator.stopAnimating()

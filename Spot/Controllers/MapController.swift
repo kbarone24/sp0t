@@ -437,7 +437,7 @@ class MapController: UIViewController {
         getFriendPosts(refresh: !friendAnnotations.isEmpty)
     }
     
-    @objc func exitFriendsTap(_ sender: UIButton) {
+    @objc func exitFriendsTap(_ sender: UIButton) { 
         selectedSegmentIndex = 0
         feedTableContainer.isHidden = true
         navigationController?.navigationBar.isHidden = false
