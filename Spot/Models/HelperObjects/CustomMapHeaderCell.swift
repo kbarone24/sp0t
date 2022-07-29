@@ -72,13 +72,15 @@ class CustomMapHeaderCell: UICollectionViewCell {
             mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
         }
         
-        if mapData!.memberIDs.contains(userProfile.id!) == false && mapData!.likers.contains(userProfile.id!) == false {
+        if mapData!.memberIDs.contains(UserDataModel.shared.userInfo.id!) == false && mapData!.likers.contains(UserDataModel.shared.userInfo.id!) == false {
             actionButton.setTitle("Follow map", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-        } else if mapData!.likers.contains(userProfile.id!) {
+        } else if mapData!.likers.contains(UserDataModel.shared.userInfo.id!) {
             actionButton.setTitle("Following", for: .normal)
-        } else if mapData!.memberIDs.contains(userProfile.id!) {
+            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+        } else if mapData!.memberIDs.contains(UserDataModel.shared.userInfo.id!) {
             actionButton.setTitle("Edit map", for: .normal)
+            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         }
         
         actionButton.addTarget(self, action: #selector(actionButtonAction), for: .touchUpInside)
@@ -206,9 +208,9 @@ extension CustomMapHeaderCell {
         }
 
         actionButton = UIButton {
-            $0.setTitle("Edit map", for: .normal)
+            $0.setTitle("Follow map", for: .normal)
             $0.setTitleColor(.black, for: .normal)
-            $0.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
             contentView.addSubview($0)
         }
@@ -304,6 +306,38 @@ extension CustomMapHeaderCell {
             UIView.animate(withDuration: 0.15) {
                 self.actionButton.transform = .identity
             }
+        }
+        
+        switch actionButton.titleLabel?.text {
+        case "Follow map":
+            mapData.likers.append(UserDataModel.shared.userInfo.id!)
+            let db = Firestore.firestore()
+            db.collection("maps").document(mapData.id!).setData(["likers": mapData.likers], merge: true)
+            self.actionButton.setTitle("Following", for: .normal)
+            self.actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+        case "Following":
+            let alert = UIAlertController(title: "Are you sure you want to unfollow?", message: "", preferredStyle: .alert)
+            let logoutAction = UIAlertAction(title: "Unfollow", style: .default) { action in
+                let db = Firestore.firestore()
+                guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.userInfo.id!) else {
+                    return
+                }
+                self.mapData.likers.remove(at: userIndex)
+                db.collection("maps").document(self.mapData.id!).setData(["likers": self.mapData.likers], merge: true)
+                self.actionButton.setTitle("Follow map", for: .normal)
+                self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            }
+            let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+            alert.addAction(logoutAction)
+            alert.addAction(cancelAction)
+            let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+            containerVC.present(alert, animated: true)
+        case "Edit map":
+            let editVC = EditMapController()
+            let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+            containerVC.present(editVC, animated: true)
+        default:
+            return
         }
     }
 }

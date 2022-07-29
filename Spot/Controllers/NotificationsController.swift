@@ -84,9 +84,13 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(named: "BackArrow-1"),
             style: .plain,
-            target: contentDrawer,
-            action: #selector(contentDrawer?.closeAction)
+            target: self,
+            action: #selector(leaveNotifs)
         )
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.navigationBar.isTranslucent = false
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -276,6 +280,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
         }
         self.sortAndReload()
+    }
+    
+    @objc func leaveNotifs() {
+        if navigationController?.viewControllers.count == 1 {
+            contentDrawer?.closeAction()
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
     }
     
     ///modified copy from global functions
