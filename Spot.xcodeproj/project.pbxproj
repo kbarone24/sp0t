@@ -36,6 +36,7 @@
 		41AC5A662869FA6500C522B1 /* ProfileBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A652869FA6500C522B1 /* ProfileBodyCell.swift */; };
 		41AC5A68287738CA00C522B1 /* CustomMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A67287738CA00C522B1 /* CustomMap.swift */; };
 		41C417112869CD2F0038B6E3 /* ProfileHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C417102869CD2F0038B6E3 /* ProfileHeaderCell.swift */; };
+		41EA047F289428590050B791 /* EditMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41EA047E289428590050B791 /* EditMapController.swift */; };
 		59004DFF22C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E0022C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E1122CA5C9A004E06EF /* ResetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED3F1A522147EAE008CC29B /* ResetViewController.swift */; };
@@ -368,6 +369,7 @@
 		41AC5A652869FA6500C522B1 /* ProfileBodyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileBodyCell.swift; sourceTree = "<group>"; };
 		41AC5A67287738CA00C522B1 /* CustomMap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMap.swift; sourceTree = "<group>"; };
 		41C417102869CD2F0038B6E3 /* ProfileHeaderCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileHeaderCell.swift; sourceTree = "<group>"; };
+		41EA047E289428590050B791 /* EditMapController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditMapController.swift; sourceTree = "<group>"; };
 		59056A5223197E4B00C7E753 /* PostNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostNotification.swift; sourceTree = "<group>"; };
 		5916A8B224A27F8500118E83 /* MapSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSpot.swift; sourceTree = "<group>"; };
 		5916A8B624A5542800118E83 /* ResultSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultSpot.swift; sourceTree = "<group>"; };
@@ -679,6 +681,7 @@
 			children = (
 				7A37801B22174BB1008B835A /* MapController.swift */,
 				413BA16C288A764F00FD80AF /* CustomMapController.swift */,
+				41EA047E289428590050B791 /* EditMapController.swift */,
 			);
 			name = Map;
 			sourceTree = "<group>";
@@ -1305,6 +1308,7 @@
 				8C3420B0261273140017CB2F /* SendInvitesController.swift in Sources */,
 				8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */,
 				8C2209F8284D4B9300E5D165 /* ContactFriend.swift in Sources */,
+				41EA047F289428590050B791 /* EditMapController.swift in Sources */,
 				414BB49C288D314F00660AED /* CustomMapHeaderCell.swift in Sources */,
 				8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				5F119A202869F46600D75CE8 /* FriendRequestCollectionCell.swift in Sources */,
