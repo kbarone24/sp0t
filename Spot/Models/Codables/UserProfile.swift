@@ -39,6 +39,7 @@ struct UserProfile: Identifiable, Codable {
     var friendsList: [UserProfile] = []
     var mutualFriends: Int = 0
     var selected: Bool = false
+    var mapsList: [CustomMap] = []
     
     
     enum CodingKeys: String, CodingKey {

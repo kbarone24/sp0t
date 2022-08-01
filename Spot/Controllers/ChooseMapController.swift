@@ -1,5 +1,5 @@
 //
-//  ShareToViewController.swift
+//  ChooseMapController.swift
 //  Spot
 //
 //  Created by Kenny Barone on 5/25/22.
@@ -42,8 +42,8 @@ class ChooseMapController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        setUpNavBar()
         view.backgroundColor = .white
+        setUpNavBar()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -64,6 +64,10 @@ class ChooseMapController: UIViewController {
         
         let barButtonItem = UIBarButtonItem(image: UIImage(named: "BackArrowDark"), style: .plain, target: self, action: #selector(backTap(_:)))
         navigationItem.leftBarButtonItem = barButtonItem
+        
+//        if let mapNav = navigationController as? MapNavigationController {
+//            mapNav.requiredStatusBarStyle = .darkContent
+//        }
     }
     
     func addButtons() {
@@ -160,7 +164,7 @@ class ChooseMapController: UIViewController {
     }
     
     func reloadTable() {
-        customMaps.sort(by: {$0.userTimestamp?.seconds ?? 0 > $1.userTimestamp?.seconds ?? 0})
+        customMaps.sort(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
         DispatchQueue.main.async {
             self.tableView.reloadData()
         }
@@ -220,6 +224,7 @@ class ChooseMapController: UIViewController {
                 if map != nil {
                     var map = map!
                     if map.imageURL == "" { map.imageURL = imageURLs.first ?? "" }
+                    map.postImageURLs.append(imageURLs.first ?? "")
                     self.uploadMap(map: map, newMap: newMap, post: post)
                 }
                 
@@ -232,7 +237,7 @@ class ChooseMapController: UIViewController {
                     self.popToMap()
                 }
             }
-        } 
+        }
     }
             
     func runFailedUpload() {
@@ -579,13 +584,14 @@ class MyMapButton: UIButton {
         layer.borderColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1).cgColor
         
         avatarImage = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.avatarPic.withHorizontallyFlippedOrientation()
+            $0.image = UserDataModel.shared.userInfo.avatarPic
+            $0.contentMode = .scaleAspectFill
             addSubview($0)
         }
         avatarImage.snp.makeConstraints {
             $0.leading.equalTo(7)
-            $0.width.equalTo(38)
-            $0.height.equalTo(50)
+            $0.width.equalTo(26)
+            $0.height.equalTo(37.5)
             $0.centerY.equalToSuperview()
         }
         
@@ -673,3 +679,4 @@ class PostButton: UIButton {
 class FailedUploadView {
     
 }
+

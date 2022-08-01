@@ -62,15 +62,7 @@ class CustomMapHeaderCell: UICollectionViewCell {
             self.getMemberAndSetView()
         }
         
-        if mapData!.likers.count == 0 && mapData!.spotIDs.count == 0 {
-            mapInfo.text = "\(mapData!.postIDs.count) posts"
-        } else if mapData!.likers.count == 0 {
-            mapInfo.text = "\(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
-        } else if mapData!.spotIDs.count == 0 {
-            mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.postIDs.count) posts"
-        } else {
-            mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
-        }
+        setMapInfo()
         
         if mapData!.memberIDs.contains(UserDataModel.shared.userInfo.id!) == false && mapData!.likers.contains(UserDataModel.shared.userInfo.id!) == false {
             actionButton.setTitle("Follow map", for: .normal)
@@ -299,6 +291,18 @@ extension CustomMapHeaderCell {
         }
     }
     
+    private func setMapInfo() {
+        if mapData!.likers.count == 0 && mapData!.spotIDs.count == 0 {
+            mapInfo.text = "\(mapData!.postIDs.count) posts"
+        } else if mapData!.likers.count == 0 {
+            mapInfo.text = "\(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
+        } else if mapData!.spotIDs.count == 0 {
+            mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.postIDs.count) posts"
+        } else {
+            mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
+        }
+    }
+    
     @objc func actionButtonAction() {
         UIView.animate(withDuration: 0.15) {
             self.actionButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
@@ -311,6 +315,9 @@ extension CustomMapHeaderCell {
         switch actionButton.titleLabel?.text {
         case "Follow map":
             mapData.likers.append(UserDataModel.shared.userInfo.id!)
+            setMapInfo()
+            let mapLikers = ["mapLikers": mapData.likers]
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: mapLikers)
             let db = Firestore.firestore()
             db.collection("maps").document(mapData.id!).setData(["likers": mapData.likers], merge: true)
             self.actionButton.setTitle("Following", for: .normal)
@@ -319,11 +326,12 @@ extension CustomMapHeaderCell {
             let alert = UIAlertController(title: "Are you sure you want to unfollow?", message: "", preferredStyle: .alert)
             let logoutAction = UIAlertAction(title: "Unfollow", style: .default) { action in
                 let db = Firestore.firestore()
-                guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.userInfo.id!) else {
-                    return
-                }
+                guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.userInfo.id!) else { return }
                 self.mapData.likers.remove(at: userIndex)
                 db.collection("maps").document(self.mapData.id!).setData(["likers": self.mapData.likers], merge: true)
+                self.setMapInfo()
+                let mapLikers = ["mapLikers": self.mapData.likers]
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: mapLikers)
                 self.actionButton.setTitle("Follow map", for: .normal)
                 self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             }
