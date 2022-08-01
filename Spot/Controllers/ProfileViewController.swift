@@ -27,7 +27,7 @@ class ProfileViewController: UIViewController {
     // MARK: Fetched datas
     public var userProfile: UserProfile? {
         didSet {
-            profileCollectionView.reloadData()
+            DispatchQueue.main.async { self.profileCollectionView.reloadData() }
         }
     }
     private var maps = [CustomMap]() {
@@ -53,6 +53,7 @@ class ProfileViewController: UIViewController {
             profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
         }
     }
+    private var mapSelectedIndex: Int?
     
     private lazy var imageManager = SDWebImageManager()
     public var containerDrawerView: DrawerView?
@@ -93,20 +94,29 @@ class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
-        DispatchQueue.main.async {
+        DispatchQueue.global(qos: .userInitiated).async {
             self.getMaps()
             self.getNinePosts()
         }
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
+        profileCollectionView.reloadData()
         if containerDrawerView?.status != .Top {
             containerDrawerView?.present(to: .Top)
             navigationController?.setNavigationBarHidden(true, animated: true)
             navigationController?.setNavigationBarHidden(false, animated: true)
         }
         containerDrawerView?.canInteract = false
+    }
+    
+    @objc func mapLikersChanged(_ notification: NSNotification) {
+        if let likers = notification.userInfo?["mapLikers"] as? [String] {
+            guard mapSelectedIndex != nil else { return }
+            maps[mapSelectedIndex!].likers = likers
+            mapSelectedIndex = nil
+        }
     }
 
     @objc func editButtonAction() {
@@ -234,8 +244,14 @@ extension ProfileViewController {
     }
     
     private func getMaps() {
+//        if relation == .myself {
+//            maps = UserDataModel.shared.userInfo.mapsList
+//            sortAndReloadMaps()
+//            return
+//        }
+        
         let db = Firestore.firestore()
-        let query = db.collection("users").document(userProfile!.id!).collection("mapsList").order(by: "userTimestamp", descending: true)
+        let query = db.collection("maps").whereField("memberIDs", arrayContains: userProfile!.id!)
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             self.maps.removeAll()
@@ -248,8 +264,13 @@ extension ProfileViewController {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
             }
-            self.profileCollectionView.reloadData()
+            self.sortAndReloadMaps()
         }
+    }
+    
+    private func sortAndReloadMaps() {
+        maps.sort(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
+        DispatchQueue.main.async { self.profileCollectionView.reloadData() }
     }
 }
 
@@ -276,8 +297,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages, relation: relation)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
-            let profileBodyData = maps[indexPath.row - 1]
-            bodyCell.cellSetup(imageURL: profileBodyData.imageURL, mapName: profileBodyData.mapName, isPrivate: profileBodyData.secret, friendsCount: profileBodyData.memberIDs.count, likesCount: profileBodyData.likers.count, postsCount: profileBodyData.postLocations.count)
+            bodyCell.cellSetup(mapData: maps[indexPath.row - 1])
             return bodyCell
         }
         return cell
@@ -312,8 +332,10 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             if let _ = cell as? ProfileMyMapCell {
                 print("mapCell selected")
             } else if let _ = cell as? ProfileBodyCell {
+                mapSelectedIndex = indexPath.row - 1
+                NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
                 containerDrawerView?.present(to: .Middle)
-                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[indexPath.row - 1], presentedDrawerView: containerDrawerView)
+                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], presentedDrawerView: containerDrawerView)
                 navigationController?.pushViewController(customMapVC, animated: true)
                 customMapVC.navigationController!.navigationBar.isTranslucent = true
             }

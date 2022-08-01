@@ -12,7 +12,6 @@
         <!--Invite Friends Controller-->
         <scene sceneID="pb3-Hr-iSF">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="lfx-5W-fsk" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <viewController storyboardIdentifier="InviteFriends" id="avE-oH-rjk" customClass="InviteFriendsController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="IgK-r2-VwG">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
@@ -22,6 +21,7 @@
                     </view>
                     <extendedEdge key="edgesForExtendedLayout"/>
                 </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="lfx-5W-fsk" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="2435" y="1193"/>
         </scene>
@@ -61,7 +61,6 @@
         <!--Drafts View Controller-->
         <scene sceneID="WZ8-Ef-YVv">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="kFh-Ti-U4s" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
                 <viewController storyboardIdentifier="Drafts" automaticallyAdjustsScrollViewInsets="NO" id="NC7-bk-Gcm" customClass="DraftsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="ah1-3m-XZl">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
@@ -71,6 +70,7 @@
                     </view>
                     <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
                 </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="kFh-Ti-U4s" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-2726" y="-463"/>
         </scene>
@@ -109,7 +109,7 @@
         <!--Choose Map Controller-->
         <scene sceneID="hzv-mT-psC">
             <objects>
-                <viewController storyboardIdentifier="ShareTo" interfaceStyle="light" id="u0Y-6X-q9u" customClass="ChooseMapController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ShareTo" interfaceStyle="light" id="u0Y-6X-q9u" customClass="ChooseMapController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="9jj-ue-awx">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
