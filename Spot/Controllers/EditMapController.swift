@@ -256,7 +256,7 @@ extension EditMapController {
         
         privateButton = UIButton {
             $0.setTitle("", for: .normal)
-            $0.setImage(UIImage(named: "PrivateMapOff"), for: .normal)
+            $0.setImage(UIImage(named: mapData?.secret == false ? "PrivateMapOff" : "PrivateMapOn"), for: .normal)
             $0.addTarget(self, action: #selector(privateMapSwitchAction), for: .touchUpInside)
             view.addSubview($0)
         }
