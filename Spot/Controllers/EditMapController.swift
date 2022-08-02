@@ -228,6 +228,7 @@ extension EditMapController {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .horizontal
             let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+            view.contentInset.left = 16
             view.delegate = self
             view.dataSource = self
             view.backgroundColor = .white
@@ -238,8 +239,7 @@ extension EditMapController {
         view.addSubview(memberCollectionView)
         memberCollectionView.snp.makeConstraints {
             $0.top.equalTo(memberLabel.snp.bottom).offset(12)
-            $0.leading.equalToSuperview().inset(16)
-            $0.trailing.equalToSuperview()
+            $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(85)
         }
 
