@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "PrivateMapOn.svg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

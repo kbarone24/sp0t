@@ -32,6 +32,7 @@
 		414BB49C288D314F00660AED /* CustomMapHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414BB49B288D314F00660AED /* CustomMapHeaderCell.swift */; };
 		414BB49E288D316000660AED /* CustomMapBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414BB49D288D316000660AED /* CustomMapBodyCell.swift */; };
 		414CD27A28975D64001F1776 /* ChooseMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414CD27928975D64001F1776 /* ChooseMapController.swift */; };
+		414CD27C2899ABDB001F1776 /* MapMemberCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414CD27B2899ABDB001F1776 /* MapMemberCell.swift */; };
 		416AE77B2896F1280037B8AF /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE77A2896F1280037B8AF /* ProfileViewController.swift */; };
 		416AE77D2896F2F60037B8AF /* CustomMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE77C2896F2F60037B8AF /* CustomMap.swift */; };
 		416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE7802896F35F0037B8AF /* GlobalFunctions.swift */; };
@@ -358,6 +359,7 @@
 		414BB49B288D314F00660AED /* CustomMapHeaderCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapHeaderCell.swift; sourceTree = "<group>"; };
 		414BB49D288D316000660AED /* CustomMapBodyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapBodyCell.swift; sourceTree = "<group>"; };
 		414CD27928975D64001F1776 /* ChooseMapController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseMapController.swift; sourceTree = "<group>"; };
+		414CD27B2899ABDB001F1776 /* MapMemberCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapMemberCell.swift; sourceTree = "<group>"; };
 		416AE77A2896F1280037B8AF /* ProfileViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
 		416AE77C2896F2F60037B8AF /* CustomMap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMap.swift; sourceTree = "<group>"; };
 		416AE7802896F35F0037B8AF /* GlobalFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlobalFunctions.swift; sourceTree = "<group>"; };
@@ -820,6 +822,7 @@
 				41AC5A652869FA6500C522B1 /* ProfileBodyCell.swift */,
 				414BB49B288D314F00660AED /* CustomMapHeaderCell.swift */,
 				414BB49D288D316000660AED /* CustomMapBodyCell.swift */,
+				414CD27B2899ABDB001F1776 /* MapMemberCell.swift */,
 			);
 			path = HelperObjects;
 			sourceTree = "<group>";
@@ -1283,6 +1286,7 @@
 				412555C4285AEA0300C071A4 /* BottomToTopTransition.swift in Sources */,
 				7A5E07912233174600B53B58 /* MarkerInfoWindow.swift in Sources */,
 				8CC3653A26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
+				414CD27C2899ABDB001F1776 /* MapMemberCell.swift in Sources */,
 				8C8DBB722888BE5C00B31BFD /* ChooseSpotController.swift in Sources */,
 				5F119A1A2869F3FF00D75CE8 /* NotificationsController.swift in Sources */,
 				8C346D382797756D00B6E640 /* MapPostWindow.swift in Sources */,
