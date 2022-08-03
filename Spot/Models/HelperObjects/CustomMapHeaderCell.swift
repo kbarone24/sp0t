@@ -340,10 +340,6 @@ extension CustomMapHeaderCell {
             alert.addAction(cancelAction)
             let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
             containerVC.present(alert, animated: true)
-        case "Edit map":
-            let editVC = EditMapController(mapData: mapData)
-            let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
-            containerVC.present(editVC, animated: true)
         default:
             return
         }

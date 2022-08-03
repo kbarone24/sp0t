@@ -23,12 +23,13 @@ class CustomMapController: UIViewController {
     private var barBackButton: UIButton!
     
     private var userProfile: UserProfile?
-    private var mapData: CustomMap? {
+    public var mapData: CustomMap? {
         didSet {
             customMapCollectionView.reloadData()
         }
     }
     private var containerDrawerView: DrawerView?
+    public var profileVC: ProfileViewController?
     private var mapController: UIViewController?
 
     init(userProfile: UserProfile? = nil, mapData: CustomMap, presentedDrawerView: DrawerView? = nil) {
@@ -144,7 +145,15 @@ extension CustomMapController {
     
     @objc func backButtonAction() {
         barBackButton.isHidden = true
+        profileVC?.maps[profileVC!.mapSelectedIndex!] = mapData!
         navigationController?.popViewController(animated: true)
+    }
+    
+    @objc func editMapAction() {
+        let editVC = EditMapController(mapData: mapData!)
+        editVC.customMapVC = self
+        editVC.modalPresentationStyle = .fullScreen
+        present(editVC, animated: true)
     }
 }
 
@@ -161,6 +170,9 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "CustomMapHeaderCell" : "CustomMapBodyCell", for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
             headerCell.cellSetup(userProfile: userProfile!, mapData: mapData)
+            if mapData!.memberIDs.contains(UserDataModel.shared.userInfo.id!) {
+                headerCell.actionButton.addTarget(self, action: #selector(editMapAction), for: .touchUpInside)
+            }
             return headerCell
         } else if let bodyCell = cell as? CustomMapBodyCell {
             bodyCell.cellSetup(userProfile: userProfile!, postID: mapData?.postIDs[indexPath.row])
