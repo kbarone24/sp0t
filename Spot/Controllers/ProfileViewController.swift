@@ -30,7 +30,7 @@ class ProfileViewController: UIViewController {
             DispatchQueue.main.async { self.profileCollectionView.reloadData() }
         }
     }
-    private var maps = [CustomMap]() {
+    public var maps = [CustomMap]() {
         didSet {
             noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
         }
@@ -53,7 +53,7 @@ class ProfileViewController: UIViewController {
             profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
         }
     }
-    private var mapSelectedIndex: Int?
+    public var mapSelectedIndex: Int?
     
     private lazy var imageManager = SDWebImageManager()
     public var containerDrawerView: DrawerView?
@@ -336,6 +336,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
                 NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
                 containerDrawerView?.present(to: .Middle)
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], presentedDrawerView: containerDrawerView)
+                customMapVC.profileVC = self
                 navigationController?.pushViewController(customMapVC, animated: true)
                 customMapVC.navigationController!.navigationBar.isTranslucent = true
             }

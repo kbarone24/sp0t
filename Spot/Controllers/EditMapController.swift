@@ -30,9 +30,8 @@ class EditMapController: UIViewController {
     private var mapCoverChanged = false
     private var memberList: [UserProfile] = []
     
-    
-    public var profileVC: ProfileViewController?
     private let db = Firestore.firestore()
+    public var customMapVC: CustomMapController?
     
     init(mapData: CustomMap) {
         self.mapData = mapData
@@ -99,7 +98,14 @@ class EditMapController: UIViewController {
             mapData?.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
             mapData?.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
             try userRef.setData(from: mapData, merge: true)
-            mapCoverChanged ? updateMapCover() : self.dismiss(animated: true)
+            
+            if mapCoverChanged {
+                customMapVC?.mapData = mapData
+                dismiss(animated: true)
+            } else {
+                updateMapCover()
+            }
+
         } catch {
             //handle error
         }
@@ -188,7 +194,6 @@ extension EditMapController {
             $0.layer.borderWidth = 1
             $0.layer.borderColor = UIColor(red: 0.929, green: 0.929, blue: 0.929, alpha: 1).cgColor
             $0.textAlignment = .center
-            $0.addTarget(self, action: #selector(EditProfileViewController.textFieldDidChange(_:)), for: .editingChanged)
             view.addSubview($0)
         }
         mapNameTextField.snp.makeConstraints {
@@ -304,9 +309,9 @@ extension EditMapController {
                     guard let self = self else { return }
                     let values = ["imageURL": urlStr]
                     self.db.collection("maps").document(self.mapData!.id!).setData(values, merge: true)
-                    self.dismiss(animated: true) {
-                        // Pass back data
-                    }
+                    self.mapData?.imageURL = urlStr
+                    self.customMapVC?.mapData = self.mapData
+                    self.dismiss(animated: true)
                     return
                 })
             } else { print("handle error")}
