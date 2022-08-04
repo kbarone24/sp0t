@@ -14,7 +14,6 @@ import Firebase
 import Geofirestore
 import MapKit
 import FirebaseFunctions
-import MapboxMaps
 import CoreData
 
 extension UIViewController {
@@ -617,7 +616,6 @@ extension UIViewController {
                     DispatchQueue.main.async {
                         let progress = downloadCount * interval
                         let frameWidth: CGFloat = min(((0.3 + progress) * fullWidth), fullWidth)
-                        print("frame width", frameWidth)
                         progressFill.snp.updateConstraints { $0.width.equalTo(frameWidth) }
                         UIView.animate(withDuration: 0.15) {
                             self.view.layoutIfNeeded()
@@ -744,11 +742,9 @@ extension UIViewController {
     }
     
     func uploadMap(map: CustomMap, newMap: Bool, post: MapPost) {
-        let uid = UserDataModel.shared.uid
         let db: Firestore = Firestore.firestore()
         let timestamp = Timestamp(date: Date())
         let mapRef = db.collection("maps").document(map.id!)
-        let postImageURL = post.imageURLs.first ?? ""
         var uploadMap = map
         uploadMap.postTimestamps.append(timestamp)
         
@@ -757,23 +753,7 @@ extension UIViewController {
         } catch {
             print("failed uploading map")
         }
-        
-        /// set mapsList object for each member of this map
-        for member in map.memberIDs {
-            let userRef = db.collection("users").document(member).collection("mapsList").document(map.id!)
-            var userMap = uploadMap
-            /// update user post values for profile 
-            if newMap || member == uid {
-                userMap.userTimestamp = timestamp
-                if postImageURL != "" { userMap.userURL = postImageURL }
-            }
-            do {
-                try userRef.setData(from: userMap, merge: true)
-            } catch {
-                print("failed uploading user map")
-            }
-        }
-        
+                
         let documentID = UUID().uuidString
         db.collection("mapLocations").document(documentID).setData(["mapID": map.id!, "postID": post.id!])
         setMapLocations(mapLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), documentID: documentID)
@@ -790,16 +770,7 @@ extension UIViewController {
         let db: Firestore = Firestore.firestore()
         
         // adjust user values for added users
-        for poster in posters {
-            
-            if spotID != "" {
-                if visitorList.contains(where: {$0 == poster}) {
-                    db.collection("users").document(poster).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayUnion([post.id!])])
-                } else {
-                    db.collection("users").document(poster).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : Timestamp(date: Date()), "postsList" : [post.id!], "city": post.city!], merge:true)
-                }
-            }
-            
+        for poster in posters {            
             /// increment addedUsers spotScore by 1
             var userValues = ["spotScore" : FieldValue.increment(Int64(3))]
             if tag != "" { userValues["tagDictionary.\(tag)"] = FieldValue.increment(Int64(1)) }
@@ -887,13 +858,6 @@ extension UIViewController {
         catch let error as NSError {
             print("could not fetch. \(error)")
         }
-    }
-}
-
-extension MapView {
-    func spotInBounds(spotCoordinates: CLLocationCoordinate2D) -> Bool {
-        let boundingBox = mapboxMap.coordinateBounds(for: bounds)
-        return boundingBox.containsLatitude(forLatitude: spotCoordinates.latitude) && boundingBox.containsLongitude(forLongitude: spotCoordinates.longitude)
     }
 }
 
@@ -1802,6 +1766,31 @@ extension UILabel {
         let textHeight = text.boundingRect(with: maxSize, options: .usesLineFragmentOrigin, attributes: [.font: font as Any], context: nil).height
         let lineHeight = font.lineHeight
         return Int(ceil(textHeight / lineHeight))
+    }
+    
+    
+    func toTimeString(timestamp: Firebase.Timestamp) {
+        let seconds = timestamp.seconds
+        let current = NSDate().timeIntervalSince1970
+        let currentTime = Int64(current)
+        let timeSincePost = currentTime - seconds
+        
+        if (timeSincePost <= 86400) {
+            if (timeSincePost <= 3600) {
+                if (timeSincePost <= 60) {
+                    text = "\(timeSincePost)s"
+                } else {
+                    let minutes = timeSincePost / 60
+                    text = "\(minutes)m"
+                }
+            } else {
+                let hours = timeSincePost / 3600
+                text = "\(hours)h"
+            }
+        } else {
+            let days = timeSincePost / 86400
+            text = "\(days)d"
+        }
     }
 }
 ///https://stackoverflow.com/questions/32309247/add-read-more-to-the-end-of-uilabel

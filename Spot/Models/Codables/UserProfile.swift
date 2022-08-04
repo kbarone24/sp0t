@@ -59,4 +59,14 @@ struct UserProfile: Identifiable, Codable {
         case userBio
         case username
     }
+    
+    mutating func sortMaps() {
+        /// sort first by maps that have an unseen post, then by most recent post timestamp
+        mapsList = mapsList.sorted(by: { m1, m2 in
+            guard m1.hasNewPost == m2.hasNewPost else {
+                return m1.hasNewPost && !m2.hasNewPost
+            }
+            return m1.postTimestamps.last!.seconds > m2.postTimestamps.last!.seconds
+        })
+    }
 }

@@ -11,7 +11,6 @@ use_frameworks!
   pod 'Firebase/Analytics'
   pod 'RSKImageCropper'
   pod 'IQKeyboardManagerSwift'
-  pod 'GoogleAnalytics'
   pod 'Firebase/Messaging'
   pod 'Geofirestore', :git => 'https://github.com/imperiumlabs/GeoFirestore-iOS.git'
   pod 'Firebase/Performance'
@@ -21,7 +20,6 @@ use_frameworks!
   pod 'FirebaseUI/Storage'
   pod 'JPSVolumeButtonHandler'
   pod 'Firebase/Functions'
-  pod 'MapboxMaps', '10.3.0'
   pod 'SnapKit'
   pod 'R.swift'
 

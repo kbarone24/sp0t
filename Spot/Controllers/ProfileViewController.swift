@@ -31,7 +31,7 @@ class ProfileViewController: UIViewController {
     // MARK: Fetched datas
     public var userProfile: UserProfile? {
         didSet {
-            profileCollectionView.reloadData()
+            DispatchQueue.main.async { self.profileCollectionView.reloadData() }
         }
     }
     private var maps = [CustomMap]() {
@@ -95,7 +95,7 @@ class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
-        DispatchQueue.main.async {
+        DispatchQueue.global(qos: .userInitiated).async {
             self.getMaps()
             self.getNinePosts()
             
@@ -268,8 +268,14 @@ extension ProfileViewController {
     }
     
     private func getMaps() {
+        if relation == .myself {
+            maps = UserDataModel.shared.userInfo.mapsList
+            sortAndReloadMaps()
+            return
+        }
+        
         let db = Firestore.firestore()
-        let query = db.collection("users").document(userProfile!.id!).collection("mapsList").order(by: "userTimestamp", descending: true)
+        let query = db.collection("maps").whereField("memberIDs", arrayContains: UserDataModel.shared.uid)
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             self.maps.removeAll()
@@ -277,13 +283,20 @@ extension ProfileViewController {
                 do {
                     let unwrappedInfo = try doc.data(as: CustomMap.self)
                     guard let mapInfo = unwrappedInfo else { return }
+                    /// friend doesn't have access to secret map
+                    if mapInfo.secret && !mapInfo.memberIDs.contains(UserDataModel.shared.uid) { continue }
                     self.maps.append(mapInfo)
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
             }
-            self.profileCollectionView.reloadData()
+            self.sortAndReloadMaps()
         }
+    }
+    
+    private func sortAndReloadMaps() {
+        maps.sort(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
+        DispatchQueue.main.async { self.profileCollectionView.reloadData() }
     }
     
     private func getNotis() {
@@ -331,7 +344,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
             let profileBodyData = maps[indexPath.row - 1]
-            bodyCell.cellSetup(imageURL: profileBodyData.imageURL, mapName: profileBodyData.mapName, isPrivate: profileBodyData.secret, friendsCount: profileBodyData.memberIDs.count, likesCount: profileBodyData.likers.count, postsCount: profileBodyData.postLocations.count)
+            bodyCell.cellSetup(imageURL: profileBodyData.userURL, mapName: profileBodyData.mapName, isPrivate: profileBodyData.secret, friendsCount: profileBodyData.memberIDs.count, likesCount: profileBodyData.likers.count, postsCount: profileBodyData.postLocations.count)
             return bodyCell
         }
         return cell

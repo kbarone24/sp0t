@@ -10,6 +10,7 @@ import UIKit
 import Mixpanel
 import Firebase
 import FirebaseFunctions
+import FirebaseUI
 
 class EditProfileViewController: UIViewController {
     
@@ -200,7 +201,8 @@ extension EditProfileViewController {
         profileImage = UIImageView {
             $0.layer.cornerRadius = 51.5
             $0.layer.masksToBounds = true
-            $0.sd_setImage(with: URL(string: userProfile!.imageURL))
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFit)
+            $0.sd_setImage(with: URL(string: userProfile!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
             view.addSubview($0)
         }
         profileImage.snp.makeConstraints {
@@ -234,10 +236,9 @@ extension EditProfileViewController {
         
         avatarImage = UIImageView {
             $0.contentMode = .scaleAspectFit
+            let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+            $0.sd_setImage(with: URL(string: userProfile!.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
             view.addSubview($0)
-        }
-        avatarImage.sd_setImage(with: URL(string: userProfile!.avatarURL!)) { image, Error, cache, url  in
-            self.avatarImage.image = image?.withHorizontallyFlippedOrientation()
         }
         avatarImage.snp.makeConstraints {
             $0.top.equalTo(avatarLabel.snp.bottom).offset(2)

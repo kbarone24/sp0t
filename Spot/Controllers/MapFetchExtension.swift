@@ -11,44 +11,48 @@ import UIKit
 import Firebase
 import Mixpanel
 import FirebaseUI
+import MapKit
 
 extension MapController {
     
     func runMapFetches() {
+        startTime = Timestamp(date: Date()).seconds
         DispatchQueue.global(qos: .userInitiated).async {
-            self.getFriends()
+            self.getActiveUser()
         }
     }
     
     @objc func notifyUserLoad(_ notification: NSNotification) {
+        if feedLoaded { return }
+        
         DispatchQueue.global(qos: .userInitiated).async {
+            print("get maps", Timestamp(date: Date()).seconds - self.startTime)
             self.getMaps()
-        }
-    }
-    
-    @objc func notifyFriendsLoad(_ notification: NSNotification) {
-        friendsLoaded = true
-        
-        homeFetchGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async { self.getRecentPosts(map: nil) }
-        
-        homeFetchGroup.notify(queue: .main) { [weak self] in
-            guard let self = self else { return }
-            if !self.feedLoaded {
-                self.feedLoaded = true
-                self.attachNewPostListener()
+            self.homeFetchGroup.enter()
+            self.getRecentPosts(map: nil)
+            
+            /// home fetch group once here and once for maps posts
+            self.homeFetchGroup.notify(queue: .main) { [weak self] in
+                guard let self = self else { return }
+                print("home fetch", Timestamp(date: Date()).seconds - self.startTime)
+                if !self.feedLoaded {
+                    self.feedLoaded = true
+                    self.attachNewPostListener()
+                }
+                self.newPostsButton.isHidden = false
+                self.reloadMapsCollection()
             }
-            self.reloadMapsCollection()
         }
     }
     
     func reloadMapsCollection() {
-        /// sort first by maps that have an unseen post, then by most recent post timestamp
-        UserDataModel.shared.userInfo.mapsList.sort(by: {$0.postsDictionary.contains(where: {!$0.value.seen}) && $1.postsDictionary.contains(where: {!$0.value.seen}) ? $0.postTimestamps.last!.seconds > $1.postTimestamps.last!.seconds : $0.postsDictionary.contains(where: {!$0.value.seen}) && !$1.postsDictionary.contains(where: {!$0.value.seen})})
-
+        UserDataModel.shared.userInfo.sortMaps()
+        
         DispatchQueue.main.async {
             self.mapsCollection.reloadData()
             self.mapsCollection.selectItem(at: IndexPath(item: 0, section: 0), animated: false, scrollPosition: .left)
+            self.centerMapOnPosts(animated: true)
+            self.setNewPostsButtonCount()
         }
     }
     
@@ -65,7 +69,7 @@ extension MapController {
         }
     }
     
-    func getFriends() {
+    func getActiveUser() {
         
         userListener = self.db.collection("users").document(self.uid).addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] (userSnap, err) in
             
@@ -88,31 +92,18 @@ extension MapController {
                 for id in self.deletedFriendIDs { UserDataModel.shared.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
                 NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
 
-                let friendsListGroup = DispatchGroup()
-                friendsListGroup.enter()
-                var leftDummy = false /// enter friends list group immediately due to group leaving before loop executes
-                friendsListGroup.notify(queue: .global()) {
-                    NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
-                }
-
                 for friend in UserDataModel.shared.friendIDs {
-                    DispatchQueue.main.async { friendsListGroup.enter() }
                     self.db.collection("users").document(friend).getDocument { (friendSnap, err) in
-                        if !leftDummy { friendsListGroup.leave(); leftDummy = true }
                         do {
                             let friendInfo = try friendSnap?.data(as: UserProfile.self)
-                            guard var info = friendInfo else { UserDataModel.shared.friendIDs.removeAll(where: {$0 == friend}); if !self.friendsLoaded { friendsListGroup.leave() }; return }
-
-                            info.id = friendSnap!.documentID
+                            guard let info = friendInfo else { UserDataModel.shared.friendIDs.removeAll(where: {$0 == friend}); return }
                             if !UserDataModel.shared.friendsList.contains(where: {$0.id == friend}) {
                                 UserDataModel.shared.friendsList.append(info)
                             }
-                            if !self.friendsLoaded { friendsListGroup.leave() }
                             
                         } catch {
                             /// remove broken friend object
                             UserDataModel.shared.friendIDs.removeAll(where: {$0 == friend})
-                            if !self.friendsLoaded { friendsListGroup.leave() }
                             return
                         }
                     }
@@ -130,7 +121,6 @@ extension MapController {
         
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
         self.imageManager.loadImage(with: URL(string: UserDataModel.shared.userInfo.imageURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { (image, data, err, cache, download, url) in
-            
             UserDataModel.shared.userInfo.profilePic = image ?? UIImage()
             userGroup.leave()
         }
@@ -149,8 +139,8 @@ extension MapController {
 
     func getRecentPosts(map: CustomMap?) {
         /// fetch all posts in last 7 days
-        let seconds = Date().timeIntervalSince1970 - 86400 * 7
-        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400
+        let seconds = Date().timeIntervalSince1970 - 86400 * 50
+        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400 * 40
         let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
         var recentQuery = db.collection("posts").whereField("timestamp", isGreaterThanOrEqualTo: timestamp)
         if map != nil { recentQuery = recentQuery.whereField("mapID", isEqualTo: map!.id!) }
@@ -174,13 +164,17 @@ extension MapController {
                     recentGroup.enter()
                     self.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
-                        if post.id ?? "" != "" { self.addPostToDictionary(post: post, map: map) }
+                        if post.id ?? "" != "" {
+                            DispatchQueue.main.async {
+                                self.addPostToDictionary(post: post, map: map)
+                            }
+                            
+                        }
                         recentGroup.leave()
                     }
                     continue
                     
                 } catch {
-                    print("catch")
                     continue
                 }
             }
@@ -189,7 +183,7 @@ extension MapController {
             }
         }
     }
-    
+
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
         var postInfo = post
         
@@ -239,27 +233,29 @@ extension MapController {
     }
     
     func addPostToDictionary(post: MapPost, map: CustomMap?) {
+        postsList.append(post)
+        if selectedItemIndex == 0 { addPostAnnotation(post: post) } /// 0 always selected on initial fetch
+        
         if map == nil {
-            friendsPostsDictionary[post.id!] = post
-            /// add to group containing all of this posterIDs posts
-            if !friendsPostsGroup.contains(where: {$0.posterID == post.posterID}) {
-                friendsPostsGroup.append(FriendsPostGroup(posterID: post.posterID, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
-                
-            } else if let i = friendsPostsGroup.firstIndex(where: {$0.posterID == post.posterID}) {
-                if !friendsPostsGroup[i].postIDs.contains(where: {$0.0 == post.id!}) {
-                    friendsPostsGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
-                    friendsPostsGroup[i].postIDs.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
-                }
-            }
+            friendsPostsDictionary.updateValue(post, forKey: post.id!)
+            
         } else {
             /// map posts are sorted by spot rather than user
             if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map!.id!}) {
-                UserDataModel.shared.userInfo.mapsList[i].postsDictionary[post.id!] = post
-                if post.spotID == "" || !map!.postGroup.contains(where: {$0.spotID == post.spotID!}) {
-                    UserDataModel.shared.userInfo.mapsList[i].postGroup.append(MapPostGroup(spotID: post.spotID!, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
-                } else if let i = map!.postGroup.firstIndex(where: {$0.spotID == post.id}) {
+                UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id!)
+             //   UserDataModel.shared.userInfo.mapsList[i].postsDictionary[post.id!] = post
+                if post.spotID ?? "" == "" {
+                    /// attach by postID
+                    let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
+                    UserDataModel.shared.userInfo.mapsList[i].postGroup.append(MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
+
+                } else if !map!.postGroup.contains(where: {$0.id == post.spotID!}) {
+                    let coordinate = CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!)
+                    UserDataModel.shared.userInfo.mapsList[i].postGroup.append(MapPostGroup(id: post.spotID!, coordinate: coordinate, spotName: post.spotName!, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
+                    
+                } else if let i = map!.postGroup.firstIndex(where: {$0.id == post.spotID}) {
                     UserDataModel.shared.userInfo.mapsList[i].postGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
-                    UserDataModel.shared.userInfo.mapsList[i].postGroup[i].postIDs.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
+                    UserDataModel.shared.userInfo.mapsList[i].postGroup[i].sortPostIDs()
                 }
             }
         }
@@ -293,14 +289,22 @@ extension MapController {
     }
     
     func getMaps() {
-        db.collection("users").document(uid).collection("mapsList").getDocuments { [weak self] snap, err in
+        db.collection("maps").whereField("memberIDs", arrayContains: uid).getDocuments { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
             for doc in snap.documents {
                 let last = doc == snap.documents.last
                 do {
                     let mapIn = try doc.data(as: CustomMap.self)
-                    guard let mapInfo = mapIn else { if last { self.homeFetchGroup.leave() }; continue }
+                    guard var mapInfo = mapIn else { if last { self.homeFetchGroup.leave() }; continue }
+                    /// append spots to show on map even if there's no post attached
+                    if !mapInfo.spotIDs.isEmpty {
+                        for i in 0...mapInfo.spotIDs.count - 1 {
+                            let coordinate = CLLocationCoordinate2D(latitude: mapInfo.spotLocations[safe: i]?["lat"] ?? 0.0, longitude: mapInfo.spotLocations[safe: i]?["long"] ?? 0.0)
+                            mapInfo.postGroup.append(MapPostGroup(id: mapInfo.spotIDs[i], coordinate: coordinate, spotName: mapInfo.spotNames[safe: i] ?? "", postIDs: []))
+                        }
+                    }
+                    
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
                     self.homeFetchGroup.enter()
                     self.getRecentPosts(map: mapInfo)
@@ -311,8 +315,10 @@ extension MapController {
         }
     }
     
+    
     func attachNewPostListener() {
-        newPostListener = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 1).addSnapshotListener { [weak self] snap, err in
+        /// listen for new posts entering
+      /*  newPostListener = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 1).addSnapshotListener { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
             if let doc = snap.documents.first {
@@ -346,6 +352,39 @@ extension MapController {
                     return
                 }
             }
-        }
+        } */
+    }
+    
+    func sortPosts(_ posts: [MapPost]) -> [MapPost] {
+        posts.sorted(by: { p1, p2 in
+            guard p1.seen == p2.seen else {
+                return !p1.seen && p2.seen
+            }
+            
+            return p1.timestamp.seconds > p2.timestamp.seconds
+        })
+    }
+    
+    func sortPostGroup(_ group: [MapPostGroup]) -> [MapPostGroup] {
+        /// MapPostGroup postIDs will already be sorted
+        group.sorted(by: { g1, g2 in
+            guard (g1.postIDs.first?.seen ?? true) == (g2.postIDs.first?.seen ?? true) else {
+                return !(g1.postIDs.first?.seen ?? true) && (g2.postIDs.first?.seen ?? true)
+            }
+            return g1.postIDs.first?.timestamp.seconds ?? 0 > g2.postIDs.first?.timestamp.seconds ?? 0
+        })
+    }
+    
+    func setNewPostsButtonCount() {
+        let map = getSelectedMap()
+        newPostsButton.unseenPosts = map == nil ? friendsPostsDictionary.filter{!$0.value.seen}.count : map!.postsDictionary.filter{!$0.value.seen}.count
+        //35°54'47.2"N 79°03'20.9"W
+    }
+    
+    func userInChapelHill() -> Bool {
+        let chapelHillLocation = CLLocation(latitude: 35.9132, longitude: -79.0558)
+        let distance = UserDataModel.shared.currentLocation.distance(from: chapelHillLocation)
+        /// include users within 10km of downtown CH
+        return distance/1000 < 10
     }
 }

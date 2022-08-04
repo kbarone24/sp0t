@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import FirebaseUI
 
 class ProfileBodyCell: UICollectionViewCell {
     private var mapImage: UIImageView!
@@ -30,7 +31,9 @@ class ProfileBodyCell: UICollectionViewCell {
     }
     
     public func cellSetup(imageURL: String, mapName: String, isPrivate: Bool, friendsCount: Int, likesCount: Int, postsCount: Int) {
-        mapImage.sd_setImage(with: URL(string: imageURL))
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 250, height: 250), scaleMode: .aspectFill)
+        mapImage.sd_setImage(with: URL(string: imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+
         if isPrivate {
             let imageAttachment = NSTextAttachment()
             imageAttachment.image = UIImage(named:"SecretMap")

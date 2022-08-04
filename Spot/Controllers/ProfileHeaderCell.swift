@@ -9,6 +9,7 @@
 import UIKit
 import SnapKit
 import Mixpanel
+import FirebaseUI
 
 enum ProfileRelation {
     case myself
@@ -46,10 +47,13 @@ class ProfileHeaderCell: UICollectionViewCell {
     
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation, pendingFriendNotiID: String?) {
         self.profile = userProfile
-        profileImage.sd_setImage(with: URL(string: userProfile.imageURL))
-        profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? "")) { image, Error, cache, url  in
-            self.profileAvatar.image = image?.withHorizontallyFlippedOrientation()
-        }
+        
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFit)
+        profileImage.sd_setImage(with: URL(string: userProfile.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+
+        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+        profileImage.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+
         profileName.text = userProfile.name
         profileAccount.text = userProfile.username
         locationButton.setTitle(userProfile.currentLocation, for: .normal)
