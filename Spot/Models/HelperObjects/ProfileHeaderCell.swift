@@ -202,6 +202,7 @@ extension ProfileHeaderCell {
             if relation == .pending {
                 Mixpanel.mainInstance().track(event: "ProfilePendingButton")
                 let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
+                alert.overrideUserInterfaceStyle = .light
                 let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
                     self.getNotiIDAndRemoveFriendRequest()
                     self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)

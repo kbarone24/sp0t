@@ -324,6 +324,7 @@ extension CustomMapHeaderCell {
             self.actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         case "Following":
             let alert = UIAlertController(title: "Are you sure you want to unfollow?", message: "", preferredStyle: .alert)
+            alert.overrideUserInterfaceStyle = .light
             let logoutAction = UIAlertAction(title: "Unfollow", style: .default) { action in
                 let db = Firestore.firestore()
                 guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.userInfo.id!) else { return }

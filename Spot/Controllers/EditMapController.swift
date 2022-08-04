@@ -65,6 +65,7 @@ class EditMapController: UIViewController {
     @objc func mapImageSelectionAction() {
         Mixpanel.mainInstance().track(event: "MapImageSelection")
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alertController.overrideUserInterfaceStyle = .light
         let takePicAction = UIAlertAction(title: "Take picture", style: .default) { takePic in
             Mixpanel.mainInstance().track(event: "MapImageSelectCamera")
             let picker = UIImagePickerController()
@@ -210,7 +211,8 @@ extension EditMapController {
             $0.delegate = self
             $0.textAlignment = .center
             $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
-            $0.textColor = mapData!.mapDescription == "" ? UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1) : .black
+            $0.backgroundColor = .white
+            $0.textColor = mapData!.mapDescription == "" ? UIColor(red: 165/255, green: 165/255, blue: 165/255, alpha: 1) : UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
             $0.textContainer.maximumNumberOfLines = 2
             $0.textContainer.lineBreakMode = .byTruncatingTail
             view.addSubview($0)
@@ -358,14 +360,14 @@ extension EditMapController: UITextViewDelegate {
         Mixpanel.mainInstance().track(event: "EditMapBio")
         if textView.text == "Add a map bio..." {
             textView.text = ""
-            textView.textColor = .black
+            textView.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
         }
     }
     
     func textViewDidEndEditing(_ textView: UITextView) {
         if textView.text == "" {
             textView.text = "Add a map bio..."
-            textView.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
+            textView.textColor = UIColor(red: 165/255, green: 165/255, blue: 165/255, alpha: 1)
         }
     }
 }

@@ -64,6 +64,7 @@ class EditProfileViewController: UIViewController {
     @objc func profilePicSelectionAction() {
         Mixpanel.mainInstance().track(event: "ProfilePicSelection")
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alertController.overrideUserInterfaceStyle = .light
         let takePicAction = UIAlertAction(title: "Take picture", style: .default) { takePic in
             Mixpanel.mainInstance().track(event: "ProfilePicSelectCamera")
             let picker = UIImagePickerController()
