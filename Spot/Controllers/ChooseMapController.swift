@@ -143,25 +143,7 @@ class ChooseMapController: UIViewController {
     }
     
     func getCustomMaps() {
-        let db = Firestore.firestore()
-        db.collection("users").document(uid).collection("mapsList").getDocuments { [weak self] snap, err in
-            guard let self = self else { return }
-            guard let docs = snap?.documents else { return }
-            
-            var index = 0
-            for doc in docs {
-                do {
-                    let unwrappedInfo = try doc.data(as: CustomMap.self)
-                    guard let mapInfo = unwrappedInfo else { index += 1; if index == docs.count { self.reloadTable() }; return }
-                    index += 1
-                    self.customMaps.append(mapInfo)
-
-                    if index == docs.count { self.reloadTable(); return }
-                } catch {
-                    index += 1; if index == docs.count { self.reloadTable(); return }
-                }
-            }
-        }
+        customMaps = UserDataModel.shared.userInfo.mapsList.sorted(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
     }
     
     func reloadTable() {

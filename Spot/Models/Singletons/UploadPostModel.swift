@@ -26,9 +26,6 @@ class UploadPostModel {
     var nearbySpots: [MapSpot] = []
     var friendObjects: [UserProfile] = []
     
-    var selectedTag = ""
-    var sortedTags: [Tag] = []
-    
     var cameraAccess: AVAuthorizationStatus = .notDetermined
     var galleryAccess: PHAuthorizationStatus = .notDetermined
     
@@ -46,7 +43,6 @@ class UploadPostModel {
         cameraAccess = AVCaptureDevice.authorizationStatus(for: .video)
         galleryAccess = PHPhotoLibrary.authorizationStatus()
         tappedLocation = CLLocation()
-        sortedTags = tags().shuffled()
     }
     
     func selectObject(imageObject: ImageObject, selected: Bool) {
@@ -67,6 +63,7 @@ class UploadPostModel {
         postType = spot == nil ? .none : spot!.founderID == "" ? .postToPOI : .postToSpot
         
         postObject.createdBy = spot?.founderID ?? ""
+        postObject.spotID = spot?.id ?? ""
         postObject.spotLat = spot?.spotLat ?? 0.0
         postObject.spotLong = spot?.spotLong ?? 0.0
         postObject.spotName = spot?.spotName ?? ""
@@ -185,9 +182,16 @@ class UploadPostModel {
 
     func setFinalMapValues() {
         mapObject!.postIDs.append(postObject.id!)
-        if spotObject != nil && !mapObject!.spotIDs.contains(spotObject!.id!) { mapObject!.spotIDs.append(spotObject!.id!) }
         mapObject!.postLocations.append(["lat": postObject.postLat, "long": postObject.postLong])
-        
+        if spotObject != nil {
+            if !mapObject!.spotIDs.contains(spotObject!.id!) {
+                mapObject!.spotIDs.append(spotObject!.id!)
+                mapObject!.spotNames.append(spotObject!.spotName)
+                mapObject!.spotLocations.append(["lat": spotObject!.spotLat, "long": spotObject!.spotLong])
+
+            }
+        }
+
         let uid = UserDataModel.shared.uid
         var posters = [uid]
         if !(postObject.addedUsers?.isEmpty ?? true) { posters.append(contentsOf: postObject.addedUsers!) }
@@ -199,125 +203,6 @@ class UploadPostModel {
         }
     }
 
-    let tags = {
-            /// Activity
-           [Tag(name: "Music"),
-            Tag(name: "Art"),
-            Tag(name: "Active"),
-            Tag(name: "Boat"),
-            Tag(name: "Fish"),
-            Tag(name: "Surf"),
-
-            Tag(name: "Boogie"),
-            Tag(name: "History"),
-            Tag(name: "Bike"),
-            Tag(name: "Skate"),
-            Tag(name: "Basketball"),
-            Tag(name: "Golf"),
-
-            Tag(name: "Cards"),
-            Tag(name: "Shop"),
-            Tag(name: "Camp"),
-            Tag(name: "View"),
-            Tag(name: "Tennis"),
-            Tag(name: "Swim"),
-
-            Tag(name: "Carnival"),
-            Tag(name: "Garden"),
-            Tag(name: "Books"),
-            Tag(name: "Ski"),
-            Tag(name: "Billiards"),
-            Tag(name: "Race"),
-            
-            /// Eat & Drink
-            Tag(name: "Cocktail"),
-            Tag(name: "Drink"),
-            Tag(name: "Coffee"),
-            Tag(name: "Donut"),
-            Tag(name: "Cream"),
-            Tag(name: "Cake"),
-
-            Tag(name: "Liquor"),
-            Tag(name: "Wine"),
-            Tag(name: "Tea"),
-            Tag(name: "Eat"),
-            Tag(name: "Pizza"),
-            Tag(name: "Taco"),
-
-            Tag(name: "Bread"),
-            Tag(name: "Cook"),
-            Tag(name: "Egg"),
-            Tag(name: "Fries"),
-            Tag(name: "Burger"),
-            Tag(name: "Glizzy"),
-
-            Tag(name: "Carrot"),
-            Tag(name: "Honey"),
-            Tag(name: "Meat"),
-            Tag(name: "Salad"),
-            Tag(name: "Strawberry"),
-            Tag(name: "Sushi"),
-            
-            /// Life
-            Tag(name: "Alien"),
-            Tag(name: "Castle"),
-            Tag(name: "Suitcase"),
-            Tag(name: "Train"),
-            Tag(name: "Plane"),
-            Tag(name: "Car"),
-
-            Tag(name: "Weird"),
-            Tag(name: "Home"),
-            Tag(name: "Skyscraper"),
-            Tag(name: "Bodega"),
-            Tag(name: "Toilet"),
-            Tag(name: "Gas"),
-            
-            Tag(name: "Cig"),
-            Tag(name: "Smoke"),
-            Tag(name: "Pills"),
-            Tag(name: "Money"),
-            Tag(name: "Chill"),
-            Tag(name: "Siren"),
-            
-            Tag(name: "NSFW"),
-            Tag(name: "Casino"),
-            Tag(name: "Heels"),
-            Tag(name: "Pirate"),
-            Tag(name: "Danger"),
-            Tag(name: "Reaper"),
-
-            /// nature
-            Tag(name: "Flower"),
-            Tag(name: "Log"),
-            Tag(name: "Park"),
-            Tag(name: "Dog"),
-            Tag(name: "Cat"),
-            Tag(name: "Cow"),
-            
-            Tag(name: "Umbrella"),
-            Tag(name: "Leaf"),
-            Tag(name: "Nature"),
-            Tag(name: "Bug"),
-            Tag(name: "Bird"),
-            Tag(name: "Bear"),
-
-            Tag(name: "Rainbow"),
-            Tag(name: "Moon"),
-            Tag(name: "Snow"),
-            Tag(name: "Monkey"),
-            Tag(name: "Snake"),
-            Tag(name: "Whale"),
-            
-            Tag(name: "Cactus"),
-            Tag(name: "Mountain"),
-            Tag(name: "Sunset"),
-            Tag(name: "Tropical"),
-            Tag(name: "Star"),
-            Tag(name: "Cityset")
-        ]
-    }
-    
     func allAuths() -> Bool {
         return cameraAccess == .authorized &&  (galleryAccess == .authorized || galleryAccess == .limited)
     }
@@ -327,7 +212,6 @@ class UploadPostModel {
         imageObjects.removeAll()
         nearbySpots.removeAll()
         friendObjects.removeAll()
-        selectedTag = ""
         assetsFull = nil
         tappedLocation = CLLocation()
         

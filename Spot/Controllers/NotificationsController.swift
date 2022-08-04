@@ -62,7 +62,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         super.viewDidLoad()
         
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         
         setupView()
         
@@ -108,7 +107,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.rowHeight = 70
         tableView.register(ActivityCell.self, forCellReuseIdentifier: "ActivityCell")
         tableView.register(FriendRequestCollectionCell.self, forCellReuseIdentifier: "FriendRequestCollectionCell")
-        tableView.register(MapFeedLoadingCell.self, forCellReuseIdentifier: "FeedLoadingCell")
+        tableView.register(ActivityIndicatorCell.self, forCellReuseIdentifier: "IndicatorCell")
         tableView.isUserInteractionEnabled = true
         self.tableView.separatorStyle = .none
         tableView.translatesAutoresizingMaskIntoConstraints = true
@@ -142,7 +141,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                     let notif = try doc.data(as: UserNotification.self)
                     guard var notification = notif else { friendRequestGroup.leave(); continue }
                     notification.id = doc.documentID
-                    notification.timeString = self.getTimeString(postTime: notification.timestamp)
                                         
                     if !notification.seen {
                       DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
@@ -198,7 +196,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                     let notif = try doc.data(as: UserNotification.self)
                     guard var notification = notif else { notiGroup.leave(); continue }
                     notification.id = doc.documentID
-                    notification.timeString = self.getTimeString(postTime: notification.timestamp)
                     
                     if !notification.seen {
                       DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
@@ -399,8 +396,8 @@ extension NotificationsController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {        
         let amtFriendReq = pendingFriendRequests.isEmpty ? 0 : 1
-        if indexPath.row >= notifications.count + amtFriendReq{
-            let cell = tableView.dequeueReusableCell(withIdentifier: "FeedLoadingCell", for: indexPath) as! MapFeedLoadingCell
+        if indexPath.row >= notifications.count + amtFriendReq {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "IndicatorCell", for: indexPath) as! ActivityIndicatorCell
             cell.setUp()
             return cell
         }
@@ -489,3 +486,26 @@ extension NotificationsController: notificationDelegateProtocol {
     }
 }
 
+class ActivityIndicatorCell: UITableViewCell {
+    
+    lazy var activityIndicator: CustomActivityIndicator = CustomActivityIndicator(frame: CGRect.zero)
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        backgroundColor = .clear
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func setUp() {
+        activityIndicator.removeFromSuperview()
+        activityIndicator.frame = CGRect(x: (self.frame.width/2)-5, y: 35, width: 30, height: 30)
+        activityIndicator.startAnimating()
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = true
+        contentView.addSubview(activityIndicator)
+        activityIndicator.centerXAnchor.constraint(equalTo: contentView.centerXAnchor).isActive = true
+        activityIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
+    }
+}

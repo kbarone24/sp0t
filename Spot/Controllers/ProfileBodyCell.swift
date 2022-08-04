@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import FirebaseUI
 
 class ProfileBodyCell: UICollectionViewCell {
     private var mapImage: UIImageView!

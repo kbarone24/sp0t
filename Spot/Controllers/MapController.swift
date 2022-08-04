@@ -15,7 +15,6 @@ import Mixpanel
 import FirebaseUI
 import FirebaseFirestore
 import FirebaseAuth
-import MapboxMaps
 import FirebaseMessaging
 
 class MapController: UIViewController {
@@ -27,27 +26,28 @@ class MapController: UIViewController {
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     
+    var mapView: MKMapView!
     var titleView: MapTitleView!
-    var mapView: MapView!
     var bottomMapMask: UIView!
+    
+    var newPostsButton: NewPostsButton!
     var mapsCollection: UICollectionView!
     var selectedItemIndex = 0
     
     let locationManager = CLLocationManager()
     lazy var imageManager = SDWebImageManager()
-    var userListener: ListenerRegistration!
+    var userListener, newPostListener: ListenerRegistration!
     
     let homeFetchGroup = DispatchGroup()
     let mapPostsGroup = DispatchGroup()
-            
+    
     var firstTimeGettingLocation = true
-    var friendsLoaded = false
     var feedLoaded = false
     var shouldCluster = true /// should cluster is false when nearby (tab index 1) selected and max zoom enabled
-        
-    lazy var postsList: [MapPost] = []
+    
     lazy var friendsPostsDictionary = [String: MapPost]()
-    lazy var friendsPostsGroup: [FriendsPostGroup] = []
+    lazy var postsList: [MapPost] = []
+    lazy var postAnnotations = [String: PostAnnotation]()
     
     /// use to avoid deleted documents entering from cache
     lazy var deletedSpotIDs: [String] = []
@@ -55,13 +55,11 @@ class MapController: UIViewController {
     lazy var deletedFriendIDs: [String] = []
     
     var notiListener: ListenerRegistration!
-
+    
     var refresh: RefreshStatus = .activelyRefreshing
     var friendsRefresh: RefreshStatus = .refreshEnabled
-        
-    /// post annotations
-    var postAnnotationManager: PointAnnotationManager!
-    var pointAnnotations: [PointAnnotation] = []
+    
+    var startTime: Int64!
     
     /// sheet view: Must declare outside to listen to UIEvent
     private var sheetView: DrawerView? {
@@ -69,10 +67,9 @@ class MapController: UIViewController {
             navigationController?.navigationBar.isHidden = sheetView == nil ? false : true
         }
     }
-      
+    
     override func viewDidLoad() {
-        addMapView()
-        addMapsCollection()
+        setUpViews()
         checkLocationAuth()
         getAdmins() /// get admin users to exclude from analytics
         addNotifications()
@@ -98,24 +95,35 @@ class MapController: UIViewController {
     
     
     func addNotifications() {
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
-      //  NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
+        //  NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+    }
+    
+    func setUpViews() {
+        addMapsCollection()
+        addMapView()
+        addNewPostsButton()
     }
     
     func addMapView() {
-        let options = MapInitOptions(resourceOptions: ResourceOptions(accessToken: "pk.eyJ1Ijoic3AwdGtlbm55IiwiYSI6ImNrem9tYzhkODAycmUydW50bXVza2JhZmgifQ.Cl0TokRRaMo8UZDImGqp0A"), mapOptions: MapOptions(), cameraOptions: CameraOptions(), styleURI: StyleURI(rawValue: "mapbox://styles/sp0tkenny/ckzpv54l9004114kdu5kcy8w4"))
-        mapView = MapView(frame: .zero, mapInitOptions: options)
-        mapView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        mapView.ornaments.options.compass.visibility = .hidden
-        mapView.ornaments.options.scaleBar.visibility = .hidden
-        mapView.location.options.puckType = .puck2D()
+        mapView = MKMapView()
+        mapView.delegate = self
+        mapView.mapType = .mutedStandard
+        mapView.overrideUserInterfaceStyle = .light
+        mapView.pointOfInterestFilter = .excludingAll
+        mapView.showsCompass = false
+        mapView.showsTraffic = false
+        mapView.register(FriendPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "FriendsPost")
+        mapView.register(SpotPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotPost")
+        mapView.register(SpotNameAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotName")
+        
         view.addSubview(mapView)
+        
         mapView.snp.makeConstraints {
-            $0.leading.top.trailing.equalToSuperview()
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(mapsCollection.snp.bottom)
             $0.bottom.equalToSuperview().offset(65)
         }
-                
-        addPostAnnotationManager()
         
         let addButton = UIButton {
             $0.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
@@ -130,25 +138,34 @@ class MapController: UIViewController {
     }
     
     func addMapsCollection() {
-        let spacing: CGFloat = 9 + 5 * 3
-        let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.6
         let layout = UICollectionViewFlowLayout {
-            $0.itemSize = CGSize(width: itemWidth, height: itemWidth * 0.95)
+         //   $0.itemSize = CGSize(width: itemWidth, height: itemWidth * 0.95)
             $0.minimumInteritemSpacing = 5
             $0.scrollDirection = .horizontal
         }
         mapsCollection = UICollectionView(frame: .zero, collectionViewLayout: layout)
         mapsCollection.backgroundColor = .white
         mapsCollection.showsHorizontalScrollIndicator = false
-        mapsCollection.register(TagFriendCell.self, forCellWithReuseIdentifier: "TagFriendCell")
         mapsCollection.contentInset = UIEdgeInsets(top: 5, left: 9, bottom: 0, right: 9)
         mapsCollection.delegate = self
         mapsCollection.dataSource = self
-        mapsCollection.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell") 
+        mapsCollection.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell")
+        mapsCollection.register(MapLoadingCell.self, forCellWithReuseIdentifier: "MapLoadingCell")
         view.addSubview(mapsCollection)
         mapsCollection.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
             $0.height.equalTo(115)
+        }
+    }
+    
+    func addNewPostsButton() {
+        newPostsButton = NewPostsButton {
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+        newPostsButton.snp.makeConstraints {
+            $0.top.equalTo(mapsCollection.snp.bottom).offset(5)
+            $0.centerX.equalToSuperview()
         }
     }
     
@@ -170,7 +187,7 @@ class MapController: UIViewController {
         titleView = MapTitleView {
             $0.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
             $0.notiButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
-
+            
         }
         
         let notificationRef = self.db.collection("users").document(self.uid).collection("notifications")
@@ -187,10 +204,10 @@ class MapController: UIViewController {
                 }
             }
         }
-                
+        
         return titleView
     }
-
+    
     
     
     @objc func addTap(_ sender: UIButton) {
@@ -221,25 +238,6 @@ class MapController: UIViewController {
         profileVC.containerDrawerView = sheetView
     }
     
-    @objc func friendsTap(_ sender: UIButton) {
-        selectedSegmentIndex = 1
-        feedTableContainer.isHidden = false
-        navigationController?.navigationBar.isHidden = true
-        postAnnotationManager.annotations = friendAnnotations
-        getFriendPosts(refresh: !friendAnnotations.isEmpty)
-    }
-    
-    @objc func exitFriendsTap(_ sender: UIButton) {
-        selectedSegmentIndex = 0
-        feedTableContainer.isHidden = true
-        navigationController?.navigationBar.isHidden = false
-        postAnnotationManager.annotations = nearbyAnnotations
-    }
-        
-    @objc func notifyFriendsLoad(_ notification: NSNotification) {
-        friendsLoaded = true
-    }
-            
     @objc func openNotis(_ sender: UIButton) {
         let notifVC = NotificationsController()
         
@@ -264,7 +262,7 @@ class MapController: UIViewController {
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                 guard let self = self else { return }
-                self.addPostAnnotationManager()
+                // self.addPostAnnotationManager()
             }
         }
     }
@@ -292,32 +290,22 @@ extension MapController: CLLocationManagerDelegate {
         if (firstTimeGettingLocation) {
             
             /// set current location to show while feed loads
-            let options = CameraOptions(center: location.coordinate, padding: mapView.cameraState.padding, anchor: CGPoint(), zoom: 18, bearing: mapView.cameraState.bearing, pitch: 75)
-            mapView.mapboxMap.setCamera(to: options)
-            
+            mapView.setRegion(MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 400000, longitudinalMeters: 400000), animated: false)
             firstTimeGettingLocation = false
-            
+            print("distance from ch", userInChapelHill())
             NotificationCenter.default.post(name: Notification.Name("UpdateLocation"), object: nil)
         }
     }
     
-    func addPostAnnotationManager() {
-        postAnnotationManager = mapView.annotations.makePointAnnotationManager()
-        postAnnotationManager.iconAllowOverlap = false
-        postAnnotationManager.iconIgnorePlacement = false
-        postAnnotationManager.iconOptional = true
-        postAnnotationManager.annotations = pointAnnotations
-    }
-    
     func checkLocationAuth() {
-
-        switch locationManager.authorizationStatus {
         
+        switch locationManager.authorizationStatus {
+            
         case .notDetermined:
             locationManager.requestWhenInUseAuthorization()
             break
             
-        //prompt user to open their settings if they havent allowed location services
+            //prompt user to open their settings if they havent allowed location services
         case .restricted, .denied:
             presentLocationAlert()
             break
@@ -335,12 +323,12 @@ extension MapController: CLLocationManagerDelegate {
         let alert = UIAlertController(title: "Spot needs your location to find spots near you", message: nil, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
             switch action.style{
-            
+                
             case .default:
                 Mixpanel.mainInstance().track(event: "LocationServicesSettingsOpen")
                 UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:]) { (allowed) in
                 }
-
+                
             case .cancel:
                 print("cancel")
             case .destructive:
@@ -366,139 +354,11 @@ extension MapController: CLLocationManagerDelegate {
 
 extension MapController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-
+        
         if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
             return false
         }
         return true
-    }
-}
-
-//functions for loading nearby spots in nearby view
-extension MapController {
-
-    
-    func checkFeedLocations() {
-        /// zoom out map on spot page select to show all annotations in view
-        /// need to set a max distance here
-        /*
-        var farthestDistance: CLLocationDistance = 0
-        
-        for post in postsList {
-            
-            let postLocation = CLLocation(latitude: post.postLat, longitude: post.postLong)
-            let postDistance = postLocation.distance(from: UserDataModel.shared.currentLocation)
-            if postDistance < 1500000 && postDistance > farthestDistance { farthestDistance = postDistance }
-            
-            if post.id == postsList.last?.id ?? "" {
-                /// max distance = 160 in all directions
-                
-                var region = MKCoordinateRegion(center: UserDataModel.shared.currentLocation.coordinate, latitudinalMeters: farthestDistance * 2.5, longitudinalMeters: farthestDistance * 2.5)
-                
-                /// adjust if invalid region
-                if region.span.latitudeDelta > 50 { region.span.latitudeDelta = 50 }
-                if region.span.longitudeDelta > 50 { region.span.longitudeDelta = 50 }
-                
-                let offset: CGFloat = UserDataModel.shared.largeScreen ? 100 : 130
-                self.offsetCenterCoordinate(selectedCoordinate: UserDataModel.shared.currentLocation.coordinate, offset: offset, animated: true, region: region)
-            }
-        }
-        
-        closeFeedDrawer()
-        */
-    }
-}
-
-
-// supplementary methods for offsetCenterCoordinate
-extension CLLocationCoordinate2D {
-    var location: CLLocation {
-        return CLLocation(latitude: latitude, longitude: longitude)
-    }
-    
-    private func radians(from degrees: CLLocationDegrees) -> Double {
-        return degrees * .pi / 180.0
-    }
-    
-    private func degrees(from radians: Double) -> CLLocationDegrees {
-        return radians * 180.0 / .pi
-    }
-    
-    func adjust(by distance: CLLocationDistance, at bearing: CLLocationDegrees) -> CLLocationCoordinate2D {
-       
-        let distanceRadians = distance / 6_371.0   // 6,371 = Earth's radius in km
-        let bearingRadians = radians(from: bearing)
-        let fromLatRadians = radians(from: latitude)
-        let fromLonRadians = radians(from: longitude)
-        
-        let toLatRadians = asin( sin(fromLatRadians) * cos(distanceRadians)
-            + cos(fromLatRadians) * sin(distanceRadians) * cos(bearingRadians) )
-        
-        var toLonRadians = fromLonRadians + atan2(sin(bearingRadians)
-            * sin(distanceRadians) * cos(fromLatRadians), cos(distanceRadians)
-                - sin(fromLatRadians) * sin(toLatRadians))
-        
-        // adjust toLonRadians to be in the range -180 to +180...
-        toLonRadians = fmod((toLonRadians + 3.0 * .pi), (2.0 * .pi)) - .pi
-        
-        let result = CLLocationCoordinate2D(latitude: degrees(from: toLatRadians), longitude: degrees(from: toLonRadians))
-        
-        return result
-    }
-}
-///https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
-
-private extension UIView {
-    var isPotentiallyInteractive: Bool {
-        guard isUserInteractionEnabled else { return false }
-        return (isControl || doesContainGestureRecognizer)
-    }
-    
-    var isControl: Bool {
-        return self is UIControl
-    }
-    
-    var doesContainGestureRecognizer: Bool {
-        return !(gestureRecognizers?.isEmpty ?? true)
-    }
-}
-
-// Supposed to exclude invalid geoQuery regions. Not sure how well it works
-extension MKCoordinateRegion {
-    var IsValid: Bool {
-        get {
-            let latitudeCenter = self.center.latitude
-            let latitudeNorth = self.center.latitude + self.span.latitudeDelta/2
-            let latitudeSouth = self.center.latitude - self.span.latitudeDelta/2
-            
-            let longitudeCenter = self.center.longitude
-            let longitudeWest = self.center.longitude - self.span.longitudeDelta/2
-            let longitudeEast = self.center.longitude + self.span.longitudeDelta/2
-            
-            let topLeft = CLLocationCoordinate2D(latitude: latitudeNorth, longitude: longitudeWest)
-            let topCenter = CLLocationCoordinate2D(latitude: latitudeNorth, longitude: longitudeCenter)
-            let topRight = CLLocationCoordinate2D(latitude: latitudeNorth, longitude: longitudeEast)
-            
-            let centerLeft = CLLocationCoordinate2D(latitude: latitudeCenter, longitude: longitudeWest)
-            let centerCenter = CLLocationCoordinate2D(latitude: latitudeCenter, longitude: longitudeCenter)
-            let centerRight = CLLocationCoordinate2D(latitude: latitudeCenter, longitude: longitudeEast)
-            
-            let bottomLeft = CLLocationCoordinate2D(latitude: latitudeSouth, longitude: longitudeWest)
-            let bottomCenter = CLLocationCoordinate2D(latitude: latitudeSouth, longitude: longitudeCenter)
-            let bottomRight = CLLocationCoordinate2D(latitude: latitudeSouth, longitude: longitudeEast)
-            
-            return  CLLocationCoordinate2DIsValid(topLeft) &&
-                CLLocationCoordinate2DIsValid(topCenter) &&
-                CLLocationCoordinate2DIsValid(topRight) &&
-                CLLocationCoordinate2DIsValid(centerLeft) &&
-                CLLocationCoordinate2DIsValid(centerCenter) &&
-                CLLocationCoordinate2DIsValid(centerRight) &&
-                CLLocationCoordinate2DIsValid(bottomLeft) &&
-                CLLocationCoordinate2DIsValid(bottomCenter) &&
-                CLLocationCoordinate2DIsValid(bottomRight) ?
-                    true :
-            false
-        }
     }
 }
 
@@ -511,7 +371,7 @@ class MapNavigationController: UINavigationController {
     override func viewDidLoad() {
         super.viewDidLoad()
     }
-
+    
     override var preferredStatusBarStyle: UIStatusBarStyle {
         requiredStatusBarStyle
     }
@@ -571,7 +431,6 @@ class NotificationsButton: UIButton {
 }
 
 class MapTitleView: UIView {
-    var signUpLogo: UIImageView!
     var profileButton: UIButton!
     var notiButton: NotificationsButton!
     var searchButton: UIButton!
@@ -582,16 +441,7 @@ class MapTitleView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        /* signUpLogo = UIImageView {
-            $0.image = UIImage(named: "Signuplogo")
-          //  addSubview($0)
-        }
-        signUpLogo.snp.makeConstraints {
-            $0.leading.equalTo(10)
-            $0.top.equalTo(5)
-            $0.height.width.equalTo(35)
-        }
-        */
+        
         profileButton = UIButton {
             $0.setImage(UIImage(named: "ProfileNavIcon"), for: .normal)
             addSubview($0)
@@ -612,7 +462,7 @@ class MapTitleView: UIView {
             $0.height.equalTo(35)
             $0.width.equalTo(30)
         }
-
+        
         searchButton = UIButton {
             $0.setImage(UIImage(named: "SearchNavIcon"), for: .normal)
             addSubview($0)
@@ -621,6 +471,82 @@ class MapTitleView: UIView {
             $0.trailing.equalTo(notiButton.snp.leading).offset(-30)
             $0.top.equalTo(5)
             $0.height.width.equalTo(29)
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class NewPostsButton: UIButton {
+    var contentArea: UIView!
+    var textLabel: UILabel!
+    var dotIndicator: UIView!
+    var carat: UIImageView!
+    
+    var unseenPosts: Int = 0 {
+        didSet {
+            if unseenPosts > 0 {
+                let text = unseenPosts > 1 ? "\(unseenPosts) new posts" : "\(unseenPosts) new post"
+                textLabel.text = text
+                textLabel.snp.updateConstraints({$0.trailing.equalToSuperview().inset(22)})
+                dotIndicator.isHidden = false
+                carat.isHidden = true
+            } else {
+                textLabel.text = "See all posts"
+                textLabel.snp.updateConstraints({$0.trailing.equalToSuperview().inset(18)})
+                dotIndicator.isHidden = true
+                carat.isHidden = false
+            }
+        }
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        translatesAutoresizingMaskIntoConstraints = false
+        
+        contentArea = UIView {
+            $0.backgroundColor = UIColor.white.withAlphaComponent(0.95)
+            $0.layer.cornerRadius = 12
+            addSubview($0)
+        }
+        contentArea.snp.makeConstraints({$0.leading.trailing.top.bottom.equalToSuperview().inset(5)})
+        
+        textLabel = UILabel {
+            $0.textColor = UIColor(red: 0.663, green: 0.663, blue: 0.663, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
+            $0.clipsToBounds = true
+            contentArea.addSubview($0)
+        }
+        textLabel.snp.makeConstraints {
+            $0.leading.equalTo(9)
+            $0.top.bottom.equalToSuperview().inset(4)
+            $0.trailing.equalToSuperview().inset(22)
+        }
+        
+        dotIndicator = UIView {
+            $0.backgroundColor = UIColor(named: "SpotGreen")
+            $0.layer.cornerRadius = 11/2
+            $0.isHidden = true
+            contentArea.addSubview($0)
+        }
+        dotIndicator.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(7)
+            $0.width.height.equalTo(11)
+            $0.centerY.equalToSuperview()
+        }
+        
+        carat = UIImageView {
+            $0.image = UIImage(named: "SideCarat")
+            $0.isHidden = true
+            contentArea.addSubview($0)
+        }
+        carat.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(7)
+            $0.width.equalTo(7.5)
+            $0.height.equalTo(12)
+            $0.centerY.equalToSuperview()
         }
     }
     

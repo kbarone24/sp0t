@@ -244,14 +244,14 @@ extension ProfileViewController {
     }
     
     private func getMaps() {
-//        if relation == .myself {
-//            maps = UserDataModel.shared.userInfo.mapsList
-//            sortAndReloadMaps()
-//            return
-//        }
+        if relation == .myself {
+            maps = UserDataModel.shared.userInfo.mapsList
+            sortAndReloadMaps()
+            return
+        }
         
         let db = Firestore.firestore()
-        let query = db.collection("maps").whereField("memberIDs", arrayContains: userProfile!.id!)
+        let query = db.collection("maps").whereField("memberIDs", arrayContains: UserDataModel.shared.uid)
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             self.maps.removeAll()
@@ -259,6 +259,8 @@ extension ProfileViewController {
                 do {
                     let unwrappedInfo = try doc.data(as: CustomMap.self)
                     guard let mapInfo = unwrappedInfo else { return }
+                    /// friend doesn't have access to secret map
+                    if mapInfo.secret && !mapInfo.memberIDs.contains(UserDataModel.shared.uid) { continue }
                     self.maps.append(mapInfo)
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")

@@ -231,7 +231,7 @@ class FriendRequestCell: UICollectionViewCell {
         }
         
         timestamp = UILabel{
-            $0.text = friendRequest.timeString
+            $0.toTimeString(timestamp: notification.timestamp)
             $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
             $0.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -244,19 +244,6 @@ class FriendRequestCell: UICollectionViewCell {
     }
         
     func resetCell() {
-        ///keeping this here in case not having it causes problems during QA
-        ///
-       /* if confirmed != nil {confirmed = UILabel()}
-        if checkMark != nil {checkMark.image = UIImage()}
-        if confirmedView != nil {confirmedView = UIView()}
-        if profilePic != nil { profilePic.image = UIImage() }
-        if userAvatar != nil { userAvatar.image = UIImage() }
-        if closeButton != nil { closeButton.setImage(UIImage(), for: .normal) }
-        if acceptButton != nil {acceptButton = UIButton()}
-        if senderUsername != nil {senderUsername = UILabel()}
-        if senderName != nil {senderName = UILabel()}
-        if timestamp != nil {timestamp = UILabel()}*/
-        
         if self.contentView.subviews.isEmpty == false {
             for subview in self.contentView.subviews {
                 subview.removeFromSuperview()

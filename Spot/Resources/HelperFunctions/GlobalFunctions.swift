@@ -767,16 +767,7 @@ extension UIViewController {
         let db: Firestore = Firestore.firestore()
         
         // adjust user values for added users
-        for poster in posters {
-            
-            if spotID != "" {
-                if visitorList.contains(where: {$0 == poster}) {
-                    db.collection("users").document(poster).collection("spotsList").document(spotID).updateData(["postsList" : FieldValue.arrayUnion([post.id!])])
-                } else {
-                    db.collection("users").document(poster).collection("spotsList").document(spotID).setData(["spotID" : spotID, "checkInTime" : Timestamp(date: Date()), "postsList" : [post.id!], "city": post.city!], merge:true)
-                }
-            }
-            
+        for poster in posters {            
             /// increment addedUsers spotScore by 1
             var userValues = ["spotScore" : FieldValue.increment(Int64(3))]
             if tag != "" { userValues["tagDictionary.\(tag)"] = FieldValue.increment(Int64(1)) }
@@ -1643,7 +1634,6 @@ extension UINavigationBar {
     }
     
     func addWhiteBackground() {
-        
         if #available(iOS 15.0, *) {
             let appearance = UINavigationBarAppearance()
             appearance.configureWithTransparentBackground()

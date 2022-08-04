@@ -354,7 +354,6 @@ PODS:
     - FirebaseCore
     - FirebaseFirestore
     - GeoFire
-  - GoogleAnalytics (3.20.0)
   - GoogleAppMeasurement (6.9.0):
     - GoogleUtilities/AppDelegateSwizzler (~> 6.7)
     - GoogleUtilities/MethodSwizzler (~> 6.7)
@@ -416,15 +415,6 @@ PODS:
   - IQKeyboardManagerSwift (6.5.10)
   - JPSVolumeButtonHandler (1.0.5)
   - leveldb-library (1.22.1)
-  - MapboxCommon (21.1.0)
-  - MapboxCoreMaps (10.3.2):
-    - MapboxCommon (~> 21.1)
-  - MapboxMaps (10.3.0):
-    - MapboxCommon (= 21.1.0)
-    - MapboxCoreMaps (= 10.3.2)
-    - MapboxMobileEvents (= 1.0.7)
-    - Turf (~> 2.0)
-  - MapboxMobileEvents (1.0.7)
   - Mixpanel-swift (3.5.1):
     - Mixpanel-swift/Complete (= 3.5.1)
   - Mixpanel-swift/Complete (3.5.1)
@@ -443,7 +433,6 @@ PODS:
     - SDWebImage/Core (= 5.13.2)
   - SDWebImage/Core (5.13.2)
   - SnapKit (5.6.0)
-  - Turf (2.4.0)
 
 DEPENDENCIES:
   - Firebase/Analytics
@@ -458,10 +447,8 @@ DEPENDENCIES:
   - FirebaseFirestoreSwift
   - FirebaseUI/Storage
   - Geofirestore (from `https://github.com/imperiumlabs/GeoFirestore-iOS.git`)
-  - GoogleAnalytics
   - IQKeyboardManagerSwift
   - JPSVolumeButtonHandler
-  - MapboxMaps (= 10.3.0)
   - Mixpanel-swift
   - R.swift
   - RSKImageCropper
@@ -490,7 +477,6 @@ SPEC REPOS:
     - FirebaseStorage
     - FirebaseUI
     - GeoFire
-    - GoogleAnalytics
     - GoogleAppMeasurement
     - GoogleDataTransport
     - GoogleToolboxForMac
@@ -501,10 +487,6 @@ SPEC REPOS:
     - IQKeyboardManagerSwift
     - JPSVolumeButtonHandler
     - leveldb-library
-    - MapboxCommon
-    - MapboxCoreMaps
-    - MapboxMaps
-    - MapboxMobileEvents
     - Mixpanel-swift
     - nanopb
     - PromisesObjC
@@ -514,7 +496,6 @@ SPEC REPOS:
     - RSKImageCropper
     - SDWebImage
     - SnapKit
-    - Turf
 
 EXTERNAL SOURCES:
   Geofirestore:
@@ -548,7 +529,6 @@ SPEC CHECKSUMS:
   FirebaseUI: 59db3d833773f985550897d54ceb811ba37fb9a5
   GeoFire: 8372fdf980b5ef1df6767dba7ff79288fad34612
   Geofirestore: 46c079cf1ceeb03e77e7b2e4a3e65530527b6f95
-  GoogleAnalytics: 01e4c5a04544a3608f93e970ce0817836897c5a5
   GoogleAppMeasurement: a6a3a066369828db64eda428cb2856dc1cdc7c4e
   GoogleDataTransport: f56af7caa4ed338dc8e138a5d7c5973e66440833
   GoogleToolboxForMac: 8bef7c7c5cf7291c687cf5354f39f9db6399ad34
@@ -559,10 +539,6 @@ SPEC CHECKSUMS:
   IQKeyboardManagerSwift: 52962c76ab33532f15ad9f3ff4e5715eda5335bb
   JPSVolumeButtonHandler: 53110330c9168ed325def93eabff39f0fe3e8082
   leveldb-library: 50c7b45cbd7bf543c81a468fe557a16ae3db8729
-  MapboxCommon: 019dac381fcb3aab115b5d488593261c810253ad
-  MapboxCoreMaps: 418b6e02464c00d7227e778164f6ca67755ae6a1
-  MapboxMaps: fc490ab5b8df6f74a82d35c56bc2ea4d576ad4ee
-  MapboxMobileEvents: f7f3e8daeb4b83688ae62a4172dce79169a97233
   Mixpanel-swift: 89d88f4d3dd1b4b3b69bd05060756eb1248b76f0
   nanopb: 59317e09cf1f1a0af72f12af412d54edf52603fc
   PromisesObjC: 3113f7f76903778cf4a0586bd1ab89329a0b7b97
@@ -572,8 +548,7 @@ SPEC CHECKSUMS:
   RSKImageCropper: 90dfe482402fb8a40cabd5fea65186d9102cc425
   SDWebImage: 72f86271a6f3139cc7e4a89220946489d4b9a866
   SnapKit: e01d52ebb8ddbc333eefe2132acf85c8227d9c25
-  Turf: 60b93cfdc62758526bc7bf1ef191a829aeb9694d
 
-PODFILE CHECKSUM: 6227e6d209b967f772643e0184f6cffd9ef72b52
+PODFILE CHECKSUM: 2e22917cfe48371bc305fd8f2656cddd4cc0070c
 
 COCOAPODS: 1.11.3

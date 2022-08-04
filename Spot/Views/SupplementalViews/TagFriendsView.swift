@@ -107,10 +107,12 @@ class TagFriendCell: UICollectionViewCell {
     var avatarImage: UIImageView!
     
     func setUp(user: UserProfile) {
-        profileImage.sd_setImage(with: URL(string: user.imageURL))
-        avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? "")) { image, Error, cache, url  in
-            self.avatarImage.image = image?.withHorizontallyFlippedOrientation()
-        }
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+        profileImage.sd_setImage(with: URL(string: user.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        
+        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+        profileImage.sd_setImage(with: URL(string: user.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+
         username.text = user.username
     }
     
