@@ -32,7 +32,7 @@ class EditMapController: UIViewController {
     private var memberList: [UserProfile] = []
     
     private let db = Firestore.firestore()
-    public var customMapVC: CustomMapController?
+    public unowned var customMapVC: CustomMapController?
     
     init(mapData: CustomMap) {
         self.mapData = mapData
