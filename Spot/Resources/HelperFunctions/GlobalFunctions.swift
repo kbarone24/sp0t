@@ -1189,7 +1189,6 @@ extension UICollectionViewCell {
         
      //   newPost.posterGroup = [newPost.posterID]
       //  newPost.posterGroup!.append(contentsOf: newPost.addedUsers ?? [])
-        newPost.seen = (newPost.seenList ?? [UserDataModel.shared.uid]).contains(where: {$0 == UserDataModel.shared.uid})
         
         return newPost
     }
