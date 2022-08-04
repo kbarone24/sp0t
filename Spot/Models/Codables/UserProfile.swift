@@ -25,8 +25,7 @@ struct UserProfile: Identifiable, Codable {
     var phone: String? = ""
     var sentInvites: [String] = []
     var spotScore: Int? = 0
-    var tagDictionary: [String: Int] = [:]
-    var topFriends: [String: Int] = [:]
+    var topFriends: [String: Int]? = [:]
     var tutorialList: [Bool] = []
     var userBio: String
     var username: String
@@ -35,12 +34,15 @@ struct UserProfile: Identifiable, Codable {
     var profilePic: UIImage = UIImage()
     var avatarPic: UIImage = UIImage()
     
-    var spotsList: [String] = []
     var friendsList: [UserProfile] = []
+    var postCount: Int = 0
     var mutualFriends: Int = 0
     var selected: Bool = false
     var mapsList: [CustomMap] = []
     
+    var pending: Bool?
+    var friend: Bool?
+
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -53,7 +55,6 @@ struct UserProfile: Identifiable, Codable {
         case phone
         case sentInvites
         case spotScore
-        case tagDictionary
         case topFriends
         case tutorialList
         case userBio

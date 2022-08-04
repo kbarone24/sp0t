@@ -88,7 +88,7 @@ struct MapSpot: Identifiable, Codable {
             let timestamp = postTimestamps[safe: i] ?? Timestamp()
             let postTime = Double(timestamp.seconds)
             
-            let current = NSDate().timeIntervalSince1970
+            let current = Date().timeIntervalSince1970
             let currentTime = Double(current)
             let timeSincePost = currentTime - postTime
             

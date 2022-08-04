@@ -28,7 +28,7 @@
         <!--Camera Controller-->
         <scene sceneID="Oii-Rd-xIs">
             <objects>
-                <viewController storyboardIdentifier="AVCameraController" extendedLayoutIncludesOpaqueBars="YES" hidesBottomBarWhenPushed="YES" id="aVO-qC-Pik" customClass="AVCameraController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="AVCameraController" extendedLayoutIncludesOpaqueBars="YES" hidesBottomBarWhenPushed="YES" interfaceStyle="dark" id="aVO-qC-Pik" customClass="AVCameraController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="U5b-7z-zk2">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -36,7 +36,6 @@
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="" image="CameraLaunchButton" selectedImage="CameraLaunchButton" id="hRb-kl-OZu"/>
-                    <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="IWg-9X-u83" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -45,14 +44,14 @@
         <!--Photo Gallery Controller-->
         <scene sceneID="5SA-zU-lMr">
             <objects>
-                <viewController storyboardIdentifier="PhotoGallery" id="uGm-Qn-dbA" customClass="PhotoGalleryController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="PhotoGallery" interfaceStyle="dark" id="uGm-Qn-dbA" customClass="PhotoGalleryController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="blE-5x-GzP">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="sq2-ZJ-UGO"/>
                         <color key="backgroundColor" name="SpotBlack"/>
                     </view>
-                    <extendedEdge key="edgesForExtendedLayout"/>
+                    <extendedEdge key="edgesForExtendedLayout" top="YES"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="0Sg-xb-dvn" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -77,7 +76,7 @@
         <!--Choose Spot Controller-->
         <scene sceneID="gpd-7f-6Oy">
             <objects>
-                <viewController storyboardIdentifier="ChooseSpot" id="jnQ-N9-T5k" customClass="ChooseSpotController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ChooseSpot" interfaceStyle="light" id="jnQ-N9-T5k" customClass="ChooseSpotController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="bez-XO-16P">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -93,7 +92,7 @@
         <!--Image Preview Controller-->
         <scene sceneID="KYm-sD-diA">
             <objects>
-                <viewController storyboardIdentifier="ImagePreview" extendedLayoutIncludesOpaqueBars="YES" id="jaA-Bx-D2z" customClass="ImagePreviewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ImagePreview" extendedLayoutIncludesOpaqueBars="YES" interfaceStyle="dark" id="jaA-Bx-D2z" customClass="ImagePreviewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="YqA-LV-ZJa">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -125,7 +124,7 @@
         <!--New Map Controller-->
         <scene sceneID="VE9-Lz-7IJ">
             <objects>
-                <viewController storyboardIdentifier="NewMap" id="XNH-rP-rnG" customClass="NewMapController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="NewMap" interfaceStyle="light" id="XNH-rP-rnG" customClass="NewMapController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="eoP-ht-ntF">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

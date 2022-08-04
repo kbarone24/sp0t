@@ -46,7 +46,7 @@
 	<key>NSContactsUsageDescription</key>
 	<string>Import your contacts to find friends</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>sp0t uses your location to find Spots near you</string>
+	<string>Allow sp0t to access your location </string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Allow sp0t to access your microphone</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -94,7 +94,7 @@
 		<string>armv7</string>
 	</array>
 	<key>UIStatusBarStyle</key>
-	<string>UIStatusBarStyleLightContent</string>
+	<string>UIStatusBarStyleDarkContent</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -106,5 +106,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
 </dict>
 </plist>

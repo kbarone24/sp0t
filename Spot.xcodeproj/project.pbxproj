@@ -171,6 +171,7 @@
 		5F119A1C2869F44900D75CE8 /* ActivityCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F119A1B2869F44900D75CE8 /* ActivityCell.swift */; };
 		5F119A1F2869F46600D75CE8 /* FriendRequestCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F119A1D2869F46500D75CE8 /* FriendRequestCell.swift */; };
 		5F119A202869F46600D75CE8 /* FriendRequestCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F119A1E2869F46600D75CE8 /* FriendRequestCollectionCell.swift */; };
+		5F2B5A7D288EE5830006DDA6 /* ContactCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2B5A7C288EE5830006DDA6 /* ContactCell.swift */; };
 		5F497B3E2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F497B3D2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift */; };
 		5F81C1272862EFBF0088A5B0 /* UserNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F81C1262862EFBF0088A5B0 /* UserNotification.swift */; };
 		5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */; };
@@ -245,6 +246,9 @@
 		8C3BAF67260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF68260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF6D260D229100349091 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C3BAF6C260D229100349091 /* MapKit.framework */; };
+		8C5AF2EA288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
+		8C5AF2EB288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
+		8C5AF2EC288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
 		8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
@@ -300,6 +304,12 @@
 		8CCBECA328231589005A0689 /* ChooseTagCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCBECA228231589005A0689 /* ChooseTagCell.swift */; };
 		8CCBECA428231589005A0689 /* ChooseTagCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCBECA228231589005A0689 /* ChooseTagCell.swift */; };
 		8CCBECA528231589005A0689 /* ChooseTagCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCBECA228231589005A0689 /* ChooseTagCell.swift */; };
+		8CCE3411288A2D4400331240 /* MapsCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3410288A2D4400331240 /* MapsCollectionExtension.swift */; };
+		8CCE3412288A2D4400331240 /* MapsCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3410288A2D4400331240 /* MapsCollectionExtension.swift */; };
+		8CCE3413288A2D4400331240 /* MapsCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3410288A2D4400331240 /* MapsCollectionExtension.swift */; };
+		8CCE3415288B115000331240 /* MapFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3414288B115000331240 /* MapFetchExtension.swift */; };
+		8CCE3416288B115000331240 /* MapFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3414288B115000331240 /* MapFetchExtension.swift */; };
+		8CCE3417288B115000331240 /* MapFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3414288B115000331240 /* MapFetchExtension.swift */; };
 		8CDFEF46284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF47284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF48284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
@@ -408,6 +418,7 @@
 		5F119A1B2869F44900D75CE8 /* ActivityCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityCell.swift; sourceTree = "<group>"; };
 		5F119A1D2869F46500D75CE8 /* FriendRequestCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendRequestCell.swift; sourceTree = "<group>"; };
 		5F119A1E2869F46600D75CE8 /* FriendRequestCollectionCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendRequestCollectionCell.swift; sourceTree = "<group>"; };
+		5F2B5A7C288EE5830006DDA6 /* ContactCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactCell.swift; sourceTree = "<group>"; };
 		5F497B3D2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraFailedUploadsExt.swift; sourceTree = "<group>"; };
 		5F81C1262862EFBF0088A5B0 /* UserNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserNotification.swift; sourceTree = "<group>"; };
 		5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomDrawerViewController.swift; sourceTree = "<group>"; };
@@ -444,6 +455,7 @@
 		8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerController.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
 		8C3BAF6C260D229100349091 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAvatarView.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C88B0E627B46E3900DB4039 /* PostImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageModel.swift; sourceTree = "<group>"; };
 		8C88D79728242E7500AB15BD /* ChooseSpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseSpotCell.swift; sourceTree = "<group>"; };
@@ -463,6 +475,8 @@
 		8CCBEC96281DEC3C005A0689 /* PostInfoController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostInfoController.swift; sourceTree = "<group>"; };
 		8CCBEC9E2821CB55005A0689 /* PostInfoExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostInfoExtension.swift; sourceTree = "<group>"; };
 		8CCBECA228231589005A0689 /* ChooseTagCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseTagCell.swift; sourceTree = "<group>"; };
+		8CCE3410288A2D4400331240 /* MapsCollectionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapsCollectionExtension.swift; sourceTree = "<group>"; };
+		8CCE3414288B115000331240 /* MapFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFetchExtension.swift; sourceTree = "<group>"; };
 		8CDFEF45284D3B570038A9B8 /* Map.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Map.storyboard; sourceTree = "<group>"; };
 		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
 		8CFD73E92757E4FD00CBD162 /* TagCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagCategory.swift; sourceTree = "<group>"; };
@@ -563,6 +577,7 @@
 				599BD2C323C6534600ECB84A /* Map */,
 				599BD2C523C653DC00ECB84A /* Feed */,
 				599BD2C623C653F900ECB84A /* Upload */,
+				8C3209E9261631D800FB32BA /* Discovery */,
 				599BD2C423C6539200ECB84A /* Profile */,
 				8C2209F6284D4A9900E5D165 /* Notifications */,
 				599BD2C723C6541C00ECB84A /* SpotPage */,
@@ -836,6 +851,7 @@
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 				5FDAF23D2858FD06001EDC57 /* DrawerView.swift */,
 				8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */,
+				8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */,
 			);
 			path = SupplementalViews;
 			sourceTree = "<group>";
@@ -884,6 +900,7 @@
 				8C342079261140FA0017CB2F /* FindFriendsController.swift */,
 				599371AF234E468500204F59 /* SearchContactsController.swift */,
 				8C3420AF261273140017CB2F /* SendInvitesController.swift */,
+				5F2B5A7C288EE5830006DDA6 /* ContactCell.swift */,
 			);
 			name = Discovery;
 			sourceTree = "<group>";
@@ -1232,6 +1249,7 @@
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */,
 				8CCBECA328231589005A0689 /* ChooseTagCell.swift in Sources */,
+				8CCE3415288B115000331240 /* MapFetchExtension.swift in Sources */,
 				594CE11324B6A6CF0051516C /* MapPost.swift in Sources */,
 				3E6189572213DEAD00A7CFF4 /* EmailLoginController.swift in Sources */,
 				59FCF5B224734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
@@ -1257,6 +1275,7 @@
 				59DFA25222C27B4800A59D29 /* CommentsViewController.swift in Sources */,
 				8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */,
 				59056A5323197E4B00C7E753 /* PostNotification.swift in Sources */,
+				5F2B5A7D288EE5830006DDA6 /* ContactCell.swift in Sources */,
 				593AC54D243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				413ED8D6286F6F4100F76AC1 /* ProfileMyMapCell.swift in Sources */,
 				599BD2B623C51EC500ECB84A /* PendingFriendRequestsController.swift in Sources */,
@@ -1314,6 +1333,7 @@
 				8C220A01284EDEB200E5D165 /* FriendsListCell.swift in Sources */,
 				5F119A1C2869F44900D75CE8 /* ActivityCell.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
+				8C5AF2EA288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
 				8C88D79828242E7500AB15BD /* ChooseSpotCell.swift in Sources */,
 				5916A8B324A27F8500118E83 /* MapSpot.swift in Sources */,
 				8CCBEC9F2821CB55005A0689 /* PostInfoExtension.swift in Sources */,
@@ -1336,6 +1356,7 @@
 				8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */,
 				8C8DBB772888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
+				8CCE3412288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
 				59DFA25522C285CF00A59D29 /* CommentsViewController.swift in Sources */,
 				59FCF5B624734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				59FCF5BC24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
@@ -1367,6 +1388,7 @@
 				59FCF5B024734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C2074CD25CB38440040036B /* City.swift in Sources */,
 				8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */,
+				8CCE3416288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B424A27F8500118E83 /* MapSpot.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF59260C413F00349091 /* ConfirmCodeController.swift in Sources */,
@@ -1392,6 +1414,7 @@
 				8C2209F9284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				8C988C34267D1AE80047A474 /* SpotNotification.swift in Sources */,
 				8C373D5D27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
+				8C5AF2EB288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
 				8C3BAF60260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8CC3653B26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				8C220A02284EDEB200E5D165 /* FriendsListCell.swift in Sources */,
@@ -1419,6 +1442,7 @@
 				8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */,
 				8C8DBB782888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
+				8CCE3413288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
 				59DFA25622C285D000A59D29 /* CommentsViewController.swift in Sources */,
 				59FCF5B724734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				59FCF5BD24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
@@ -1450,6 +1474,7 @@
 				59FCF5B124734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C2074CE25CB38440040036B /* City.swift in Sources */,
 				8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */,
+				8CCE3417288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B524A27F8500118E83 /* MapSpot.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF5A260C413F00349091 /* ConfirmCodeController.swift in Sources */,
@@ -1475,6 +1500,7 @@
 				8C2209FA284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				8C988C35267D1AE80047A474 /* SpotNotification.swift in Sources */,
 				8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
+				8C5AF2EC288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
 				8C3BAF61260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8CC3653C26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				8C220A03284EDEB200E5D165 /* FriendsListCell.swift in Sources */,
@@ -1659,7 +1685,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 78;
+				CURRENT_PROJECT_VERSION = 84;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1729,7 +1755,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 78;
+				CURRENT_PROJECT_VERSION = 84;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;

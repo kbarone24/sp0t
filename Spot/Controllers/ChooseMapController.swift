@@ -65,9 +65,10 @@ class ChooseMapController: UIViewController {
         let barButtonItem = UIBarButtonItem(image: UIImage(named: "BackArrowDark"), style: .plain, target: self, action: #selector(backTap(_:)))
         navigationItem.leftBarButtonItem = barButtonItem
         
-//        if let mapNav = navigationController as? MapNavigationController {
-//            mapNav.requiredStatusBarStyle = .darkContent
-//        }
+        if let mapNav = navigationController as? MapNavigationController {
+            mapNav.requiredStatusBarStyle = .darkContent
+        }
+
     }
     
     func addButtons() {
