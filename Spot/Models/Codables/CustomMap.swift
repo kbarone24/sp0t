@@ -97,8 +97,3 @@ struct MapPostGroup {
         })
     }
 }
-
-struct MapPostGroup {
-    var spotID: String?
-    var postIDs: [(id: String, timestamp: Timestamp, seen: Bool)]
-}
