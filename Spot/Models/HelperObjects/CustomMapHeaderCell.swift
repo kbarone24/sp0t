@@ -314,6 +314,7 @@ extension CustomMapHeaderCell {
         
         switch actionButton.titleLabel?.text {
         case "Follow map":
+            Mixpanel.mainInstance().track(event: "CustomMapFollowMap")
             mapData.likers.append(UserDataModel.shared.userInfo.id!)
             setMapInfo()
             let mapLikers = ["mapLikers": mapData.likers]
@@ -325,7 +326,8 @@ extension CustomMapHeaderCell {
         case "Following":
             let alert = UIAlertController(title: "Are you sure you want to unfollow?", message: "", preferredStyle: .alert)
             alert.overrideUserInterfaceStyle = .light
-            let logoutAction = UIAlertAction(title: "Unfollow", style: .default) { action in
+            let unfollowAction = UIAlertAction(title: "Unfollow", style: .default) { action in
+                Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
                 let db = Firestore.firestore()
                 guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.userInfo.id!) else { return }
                 self.mapData.likers.remove(at: userIndex)
@@ -337,7 +339,7 @@ extension CustomMapHeaderCell {
                 self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             }
             let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-            alert.addAction(logoutAction)
+            alert.addAction(unfollowAction)
             alert.addAction(cancelAction)
             let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
             containerVC.present(alert, animated: true)

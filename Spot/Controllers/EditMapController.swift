@@ -52,6 +52,7 @@ class EditMapController: UIViewController {
     }
     
     @objc func dismissAction() {
+        Mixpanel.mainInstance().track(event: "EditMapCancel")
         UIView.animate(withDuration: 0.15) {
             self.backButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         } completion: { (Bool) in
@@ -63,11 +64,9 @@ class EditMapController: UIViewController {
     }
     
     @objc func mapImageSelectionAction() {
-        Mixpanel.mainInstance().track(event: "MapImageSelection")
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alertController.overrideUserInterfaceStyle = .light
         let takePicAction = UIAlertAction(title: "Take picture", style: .default) { takePic in
-            Mixpanel.mainInstance().track(event: "MapImageSelectCamera")
             let picker = UIImagePickerController()
             picker.allowsEditing = true
             picker.delegate = self
@@ -76,7 +75,6 @@ class EditMapController: UIViewController {
         }
         takePicAction.titleTextColor = .black
         let choosePicAction = UIAlertAction(title: "Choose from gallery", style: .default) { choosePic in
-            Mixpanel.mainInstance().track(event: "MapImageSelectGallery")
             let picker = UIImagePickerController()
             picker.allowsEditing = true
             picker.delegate = self
@@ -93,7 +91,7 @@ class EditMapController: UIViewController {
     }
     
     @objc func saveAction() {
-        Mixpanel.mainInstance().track(event: "EditProfileSave")
+        Mixpanel.mainInstance().track(event: "EditMapSave")
         activityIndicator.startAnimating()
         let userRef = db.collection("maps").document(mapData!.id!)
         do {
@@ -357,7 +355,6 @@ extension EditMapController {
 
 extension EditMapController: UITextViewDelegate {
     func textViewDidBeginEditing(_ textView: UITextView) {
-        Mixpanel.mainInstance().track(event: "EditMapBio")
         if textView.text == "Add a map bio..." {
             textView.text = ""
             textView.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
@@ -439,6 +436,7 @@ extension EditMapController: UICollectionViewDelegate, UICollectionViewDataSourc
 
 extension EditMapController: FriendsListDelegate {
     func finishPassing(selectedUsers: [UserProfile]) {
+        Mixpanel.mainInstance().track(event: "EditMapInviteFriends")
         mapData?.memberIDs.append(contentsOf: selectedUsers.map({$0.id!}))
         memberList.append(contentsOf: selectedUsers)
         memberLabel.text = "MEMBERS (\(mapData!.memberIDs.count))"
@@ -449,6 +447,7 @@ extension EditMapController: FriendsListDelegate {
 extension EditMapController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         guard let image = info[.editedImage] as? UIImage else { return }
+        Mixpanel.mainInstance().track(event: "EditMapEditCoverImage")
         mapCoverImage.image = image
         mapCoverChanged = true
         dismiss(animated: true)
