@@ -107,7 +107,7 @@ class UploadPostModel {
         }
         let usernames = selectedUsers.map({$0.username})
         postObject.taggedUsers = usernames
-        postObject.addedUsers = usernames
+        postObject.addedUsers = selectedUsers.map({$0.id!})
         postObject.taggedUserIDs = selectedUsers.map({$0.id!})
     }
     

@@ -52,7 +52,6 @@ class ImagePreviewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        cancelOnDismiss = false
         /// set hidden for smooth transition
         self.navigationController?.setNavigationBarHidden(true, animated: true)
     }
@@ -60,14 +59,14 @@ class ImagePreviewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ImagePreviewOpen")
-        IQKeyboardManager.shared.enableAutoToolbar = false
-        IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
+        enableKeyboardMethods()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        cancelOnDismiss = true
         IQKeyboardManager.shared.enable = true
+        cancelOnDismiss = true
+        disableKeyboardMethods()
     }
 
     override func viewDidLoad() {
@@ -78,9 +77,19 @@ class ImagePreviewController: UIViewController {
         setPostInfo()
         addPreviewView()
         addPostDetail()
-
+    }
+    
+    func enableKeyboardMethods() {
+        IQKeyboardManager.shared.enableAutoToolbar = false
+        IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+    
+    func disableKeyboardMethods() {
+        IQKeyboardManager.shared.enable = true
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }
         
     func setPostInfo() {
@@ -440,13 +449,16 @@ class ImagePreviewController: UIViewController {
     }
     
     func launchPicker() {
+        cancelOnDismiss = true
         if let vc = storyboard?.instantiateViewController(withIdentifier: "ChooseSpot") as? ChooseSpotController {
             vc.delegate = self
+            vc.previewVC = self
             DispatchQueue.main.async { self.present(vc, animated: true) }
         }
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {
+        if cancelOnDismiss { return }
         if !textView.isFirstResponder { addNewSpotView(notification: notification) }
         if !shouldRepositionTextView { return }
         /// new spot name view editing when textview not first responder
@@ -464,6 +476,7 @@ class ImagePreviewController: UIViewController {
 
     @objc func keyboardWillHide(_ notification: NSNotification) {
         /// new spot name view editing when textview not first responder
+        if cancelOnDismiss { return }
         if !textView.isFirstResponder { removeNewSpotView() }
         shouldRepositionTextView = false
         animateWithKeyboard(notification: notification) { keyboardFrame in
@@ -611,6 +624,7 @@ extension ImagePreviewController: UITextViewDelegate {
     }
     
     func addTagTable(tagString: String) {
+        print("add tag table")
         if tagFriendsView == nil {
             tagFriendsView = TagFriendsView()
             tagFriendsView!.delegate = self
@@ -629,7 +643,6 @@ extension ImagePreviewController: UITextViewDelegate {
     }
     
     func getCaptionHeight(text: String) -> CGFloat {
-                
         let temp = UITextView(frame: textView.frame)
         temp.text = text
         temp.font = UIFont(name: "SFCompactText-Regular", size: 19)
@@ -877,6 +890,7 @@ class PostImagePreview: PostImageView {
 class PostDetailView: UIView {
     var bottomMask: UIView!
     override func layoutSubviews() {
+        super.layoutSubviews()
         if bottomMask != nil { return }
         bottomMask = UIView {
             insertSubview($0, at: 0)

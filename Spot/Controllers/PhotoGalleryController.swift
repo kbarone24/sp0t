@@ -405,8 +405,9 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         DispatchQueue.main.async {
             self.collectionView.reloadItems(at: paths)
             if let footer = self.collectionView.visibleSupplementaryViews(ofKind: UICollectionView.elementKindSectionFooter).first as? SelectedImagesFooter {
+                print("set up")
                 footer.setUp()
-            }
+            } 
         }
     }
     

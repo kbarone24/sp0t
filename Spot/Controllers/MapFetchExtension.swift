@@ -85,7 +85,7 @@ extension MapController {
                 activeUser.id = userSnap!.documentID
                 if userSnap!.documentID != self.uid { return } /// logout + object not being destroyed
                 
-                UserDataModel.shared.userInfo = activeUser
+                if UserDataModel.shared.userInfo.id == "" { UserDataModel.shared.userInfo = activeUser } else { self.updateUserInfo(user: activeUser) }
                 if UserDataModel.shared.userInfo.profilePic == UIImage() { self.getUserProfilePics() }
                 
                 UserDataModel.shared.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
@@ -110,6 +110,19 @@ extension MapController {
                 }
             } catch {  return }
         })
+    }
+    
+    func updateUserInfo(user: UserProfile) {
+        // update user info fields to avoid overwriting map values
+        print("update user info")
+        UserDataModel.shared.userInfo.avatarURL = user.avatarURL
+        UserDataModel.shared.userInfo.currentLocation = user.currentLocation
+        UserDataModel.shared.userInfo.imageURL = user.imageURL
+        UserDataModel.shared.userInfo.name = user.name
+        UserDataModel.shared.userInfo.pendingFriendRequests = user.pendingFriendRequests
+        UserDataModel.shared.userInfo.spotScore = user.spotScore
+        UserDataModel.shared.userInfo.topFriends = user.topFriends
+        UserDataModel.shared.userInfo.username = user.username
     }
     
     func getUserProfilePics() {
@@ -318,7 +331,7 @@ extension MapController {
     
     func attachNewPostListener() {
         /// listen for new posts entering
-      /*  newPostListener = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 1).addSnapshotListener { [weak self] snap, err in
+        newPostListener = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 1).addSnapshotListener { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
             if let doc = snap.documents.first {
@@ -331,7 +344,7 @@ extension MapController {
                             if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID!) {
                                 self.setPostDetails(post: postInfo) { [weak self] post in
                                     guard let self = self else { return }
-                                    self.addPostToDictionary(post: postInfo, map: map)
+                                    self.addPostToDictionary(post: post, map: map)
                                     self.reloadMapsCollection()
                                 }
                             }
@@ -342,7 +355,7 @@ extension MapController {
                         if !self.postsContains(postID: postInfo.id!, mapID: "") {
                             self.setPostDetails(post: postInfo) { [weak self] post in
                                 guard let self = self else { return }
-                                self.addPostToDictionary(post: postInfo, map: nil)
+                                self.addPostToDictionary(post: post, map: nil)
                                 self.reloadMapsCollection()
                             }
                         }
@@ -352,7 +365,7 @@ extension MapController {
                     return
                 }
             }
-        } */
+        }
     }
     
     func sortPosts(_ posts: [MapPost]) -> [MapPost] {
@@ -378,7 +391,6 @@ extension MapController {
     func setNewPostsButtonCount() {
         let map = getSelectedMap()
         newPostsButton.unseenPosts = map == nil ? friendsPostsDictionary.filter{!$0.value.seen}.count : map!.postsDictionary.filter{!$0.value.seen}.count
-        //35°54'47.2"N 79°03'20.9"W
     }
     
     func userInChapelHill() -> Bool {
