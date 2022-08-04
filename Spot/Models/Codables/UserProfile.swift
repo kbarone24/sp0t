@@ -38,6 +38,7 @@ struct UserProfile: Identifiable, Codable {
     var postCount: Int = 0
     var mutualFriends: Int = 0
     var selected: Bool = false
+    var mapsList: [CustomMap] = []
     
     var pending: Bool?
     var friend: Bool?

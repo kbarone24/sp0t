@@ -1,5 +1,5 @@
 //
-//  ShareToViewController.swift
+//  ChooseMapController.swift
 //  Spot
 //
 //  Created by Kenny Barone on 5/25/22.
@@ -68,6 +68,7 @@ class ChooseMapController: UIViewController {
         if let mapNav = navigationController as? MapNavigationController {
             mapNav.requiredStatusBarStyle = .darkContent
         }
+
     }
     
     func addButtons() {
@@ -219,7 +220,7 @@ class ChooseMapController: UIViewController {
                     self.popToMap()
                 }
             }
-        } 
+        }
     }
             
     func runFailedUpload() {
@@ -661,3 +662,4 @@ class PostButton: UIButton {
 class FailedUploadView {
     
 }
+

@@ -130,7 +130,7 @@ extension AVCameraController {
                     
                     let newMap = post.mapID ?? "" != "" && map.id ?? "" == ""
                     if newMap {
-                        map = CustomMap(id: post.mapID!, founderID: self.uid, imageURL: imageURLs.first!, likers: [], mapName: post.mapName ?? "", memberIDs: [self.uid], posterDictionary: [post.id! : [self.uid]], posterIDs: [self.uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postLocations: [["lat" : post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [post.spotID ?? ""], memberProfiles: [UserDataModel.shared.userInfo], coverImage: uploadImages.first!)
+                        map = CustomMap(id: post.mapID!, founderID: self.uid, imageURL: imageURLs.first!, likers: [], mapName: post.mapName ?? "", memberIDs: [self.uid], posterDictionary: [post.id! : [self.uid]], posterIDs: [self.uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: post.imageURLs, postLocations: [["lat" : post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [post.spotID ?? ""], memberProfiles: [UserDataModel.shared.userInfo], coverImage: uploadImages.first!)
                   
                     } else if map.id ?? "" != "" {
                         /// set final map values
@@ -185,7 +185,7 @@ extension AVCameraController {
     }
     
     func getMap(mapID: String, completion: @escaping (_ map: CustomMap, _ failed: Bool) -> Void) {
-        let emptyMap = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], secret: false, spotIDs: [])
+        let emptyMap = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         if mapID == "" { completion(emptyMap, false); return }
         
         let db: Firestore! = Firestore.firestore()
