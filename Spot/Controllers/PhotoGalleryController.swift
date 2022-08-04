@@ -12,7 +12,6 @@ import CoreLocation
 import Photos
 import PhotosUI
 import MapKit
-import MapboxMaps
 import Mixpanel
 
 class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {

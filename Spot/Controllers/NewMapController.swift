@@ -58,7 +58,7 @@ class NewMapController: UIViewController {
     
     func addMapObject() {
         let post = UploadPostModel.shared.postObject!
-        mapObject = CustomMap(id: UUID().uuidString, founderID: uid, imageURL: "", likers: [], mapName: "", memberIDs: [uid], posterDictionary: [post.id! : [uid]], posterIDs: [uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: post.imageURLs, postLocations: [["lat": post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: UploadPostModel.shared.postObject.postImage.first ?? UIImage(named: "BlankImage"))
+        mapObject = CustomMap(id: UUID().uuidString, founderID: uid, imageURL: "", likers: [], mapName: "", memberIDs: [uid], posterDictionary: [post.id! : [uid]], posterIDs: [uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: [], postLocations: [["lat": post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: UploadPostModel.shared.postObject.postImage.first ?? UIImage(named: "BlankImage"))
         if !(post.addedUsers?.isEmpty ?? true) { mapObject.memberIDs.append(contentsOf: post.addedUsers!); mapObject.memberProfiles!.append(contentsOf: post.addedUserProfiles!); mapObject.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!) }
     }
     

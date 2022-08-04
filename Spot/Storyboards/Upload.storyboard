@@ -9,22 +9,6 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--Invite Friends Controller-->
-        <scene sceneID="pb3-Hr-iSF">
-            <objects>
-                <viewController storyboardIdentifier="InviteFriends" id="avE-oH-rjk" customClass="InviteFriendsController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="IgK-r2-VwG">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="9cb-j8-M4Q"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
-                    </view>
-                    <extendedEdge key="edgesForExtendedLayout"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="lfx-5W-fsk" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="2435" y="1193"/>
-        </scene>
         <!--Camera Controller-->
         <scene sceneID="Oii-Rd-xIs">
             <objects>
@@ -56,22 +40,6 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="0Sg-xb-dvn" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-2726" y="1124"/>
-        </scene>
-        <!--Drafts View Controller-->
-        <scene sceneID="WZ8-Ef-YVv">
-            <objects>
-                <viewController storyboardIdentifier="Drafts" automaticallyAdjustsScrollViewInsets="NO" id="NC7-bk-Gcm" customClass="DraftsViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="ah1-3m-XZl">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="FEq-9I-OZr"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
-                    </view>
-                    <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="kFh-Ti-U4s" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-2726" y="-463"/>
         </scene>
         <!--Choose Spot Controller-->
         <scene sceneID="gpd-7f-6Oy">

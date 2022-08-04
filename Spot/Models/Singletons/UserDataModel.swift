@@ -10,7 +10,6 @@ import Foundation
 import UIKit
 import CoreLocation
 import Firebase
-import MapboxMaps
 
 /// keep main user data in a singleton to avoid having to pass mapVC too much. Serves the function of the primary global variable
 class UserDataModel {
