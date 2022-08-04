@@ -58,6 +58,10 @@ class CustomMapController: UIViewController {
         }
         viewSetup()
     }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        Mixpanel.mainInstance().track(event: "CustomMapOpen")
+    }
 }
 
 extension CustomMapController {
@@ -133,13 +137,16 @@ extension CustomMapController {
     }
     
     @objc func DrawerViewToTopCompletion() {
+        Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")
         barBackButton.isHidden = false
         customMapCollectionView.isScrollEnabled = true
     }
     @objc func DrawerViewToMiddleCompletion() {
+        Mixpanel.mainInstance().track(event: "CustomMapDrawerHalf")
         barBackButton.isHidden = true
     }
     @objc func DrawerViewToBottomCompletion() {
+        Mixpanel.mainInstance().track(event: "CustomMapDrawerClose")
         barBackButton.isHidden = true
     }
     
@@ -196,7 +203,6 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section != 0 {
-            Mixpanel.mainInstance().track(event: "CustomMapSelect")
             let collectionCell = collectionView.cellForItem(at: indexPath)
             UIView.animate(withDuration: 0.15) {
                 collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
