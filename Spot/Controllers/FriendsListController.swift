@@ -275,9 +275,12 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let profileVC = ProfileViewController(userProfile: self.friendsList[indexPath.row], presentedDrawerView: drawerView)
-        self.previousVC?.navigationController!.pushViewController(profileVC, animated: true)
+        if self.previousVC?.navigationController != nil {
+            let profileVC = ProfileViewController(userProfile: self.friendsList[indexPath.row], presentedDrawerView: drawerView)
+            self.previousVC?.navigationController!.pushViewController(profileVC, animated: true)
             dismiss(animated: true)
+        }
+        
         
         let id = queried ? queriedFriends[indexPath.row].id! : friendsList[indexPath.row].id!
         if confirmedIDs.contains(id) { return } /// cannot unselect confirmed ID
