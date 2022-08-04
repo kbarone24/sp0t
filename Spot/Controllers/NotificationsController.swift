@@ -39,13 +39,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     var refresh: RefreshStatus = .activelyRefreshing
     var contentDrawer: DrawerView?
-    
-    //used if displaying profile as its own drawer view
-    private var sheetView: DrawerView? {
-        didSet {
-            navigationController?.navigationBar.isHidden = sheetView == nil ? false : true
-        }
-    }
         
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -92,8 +85,12 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             image: UIImage(named: "BackArrow-1"),
             style: .plain,
             target: self,
-            action: #selector(self.leaveNotifs(_:))
+            action: #selector(leaveNotifs)
         )
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.navigationBar.isTranslucent = false
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -117,15 +114,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.translatesAutoresizingMaskIntoConstraints = true
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         view.addSubview(self.tableView)
-        
-        let barView = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
-            $0.backgroundColor = .white
-            $0.alpha = 0
-        }
-        
-        contentDrawer?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
-        
     }
     
     // MARK: Notification fetch
@@ -268,12 +256,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
-
-    @objc func leaveNotifs(_ sender: Any){
-        ///NOT WORKING 😥
-        contentDrawer?.closeAction()
-    }
-    
     @objc func notifyFriendsLoad(_ notification: NSNotification){
         if(notifications.count != 0){
             for i in 0...notifications.count-1{
@@ -298,6 +280,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
         }
         self.sortAndReload()
+    }
+    
+    @objc func leaveNotifs() {
+        if navigationController?.viewControllers.count == 1 {
+            contentDrawer?.closeAction()
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
     }
     
     ///modified copy from global functions
@@ -473,7 +463,7 @@ extension NotificationsController: UITableViewDataSource {
 extension NotificationsController: notificationDelegateProtocol {
 
     func getProfile(userProfile: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: userProfile)
+        let profileVC = ProfileViewController(userProfile: userProfile, presentedDrawerView: contentDrawer)
         navigationController!.pushViewController(profileVC, animated: true)
         profileVC.navigationController!.navigationBar.isTranslucent = true
     }

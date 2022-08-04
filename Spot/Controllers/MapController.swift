@@ -220,6 +220,25 @@ class MapController: UIViewController {
         sheetView?.showCloseButton = false
         profileVC.containerDrawerView = sheetView
     }
+    
+    @objc func friendsTap(_ sender: UIButton) {
+        selectedSegmentIndex = 1
+        feedTableContainer.isHidden = false
+        navigationController?.navigationBar.isHidden = true
+        postAnnotationManager.annotations = friendAnnotations
+        getFriendPosts(refresh: !friendAnnotations.isEmpty)
+    }
+    
+    @objc func exitFriendsTap(_ sender: UIButton) {
+        selectedSegmentIndex = 0
+        feedTableContainer.isHidden = true
+        navigationController?.navigationBar.isHidden = false
+        postAnnotationManager.annotations = nearbyAnnotations
+    }
+        
+    @objc func notifyFriendsLoad(_ notification: NSNotification) {
+        friendsLoaded = true
+    }
             
     @objc func openNotis(_ sender: UIButton) {
         let notifVC = NotificationsController()

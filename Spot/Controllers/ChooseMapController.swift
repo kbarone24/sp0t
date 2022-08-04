@@ -1,5 +1,5 @@
 //
-//  ShareToViewController.swift
+//  ChooseMapController.swift
 //  Spot
 //
 //  Created by Kenny Barone on 5/25/22.
@@ -68,6 +68,7 @@ class ChooseMapController: UIViewController {
         if let mapNav = navigationController as? MapNavigationController {
             mapNav.requiredStatusBarStyle = .darkContent
         }
+
     }
     
     func addButtons() {
@@ -164,7 +165,7 @@ class ChooseMapController: UIViewController {
     }
     
     func reloadTable() {
-        customMaps.sort(by: {$0.userTimestamp?.seconds ?? 0 > $1.userTimestamp?.seconds ?? 0})
+        customMaps.sort(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
         DispatchQueue.main.async {
             self.tableView.reloadData()
         }
@@ -224,6 +225,7 @@ class ChooseMapController: UIViewController {
                 if map != nil {
                     var map = map!
                     if map.imageURL == "" { map.imageURL = imageURLs.first ?? "" }
+                    map.postImageURLs.append(imageURLs.first ?? "")
                     self.uploadMap(map: map, newMap: newMap, post: post)
                 }
                 
@@ -236,7 +238,7 @@ class ChooseMapController: UIViewController {
                     self.popToMap()
                 }
             }
-        } 
+        }
     }
             
     func runFailedUpload() {
@@ -678,3 +680,4 @@ class PostButton: UIButton {
 class FailedUploadView {
     
 }
+

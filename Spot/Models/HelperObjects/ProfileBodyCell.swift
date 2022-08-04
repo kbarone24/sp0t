@@ -29,31 +29,27 @@ class ProfileBodyCell: UICollectionViewCell {
         if mapImage != nil { mapImage.sd_cancelCurrentImageLoad() }
     }
     
-    public func cellSetup(imageURL: String, mapName: String, isPrivate: Bool, friendsCount: Int, likesCount: Int, postsCount: Int) {
-        mapImage.sd_setImage(with: URL(string: imageURL))
-        if isPrivate {
+    public func cellSetup(mapData: CustomMap) {
+        mapImage.sd_setImage(with: URL(string: mapData.imageURL))
+        if mapData.secret {
             let imageAttachment = NSTextAttachment()
-            imageAttachment.image = UIImage(named:"SecretMap")
-            // Set bound to reposition
+            imageAttachment.image = UIImage(named: "SecretMap")
             imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
-            // Create string with attachment
             let attachmentString = NSAttributedString(attachment: imageAttachment)
-            // Initialize mutable string
             let completeText = NSMutableAttributedString(string: "")
-            // Add image to mutable string
             completeText.append(attachmentString)
-            completeText.append(NSAttributedString(string: " \(mapName)"))
+            completeText.append(NSAttributedString(string: " \(mapData.mapName)"))
             self.mapName.attributedText = completeText
         } else {
-            self.mapName.text = mapName
+            self.mapName.text = mapData.mapName
         }
-        self.friendsCount.text = friendsCount == 1 ? "" : "\(friendsCount)"
+        self.friendsCount.text = mapData.memberIDs.count == 1 ? "" : "\(mapData.memberIDs.count)"
         self.friendsIcon.snp.updateConstraints {
-            $0.width.equalTo(friendsCount == 1 ? 0 : 13.33)
+            $0.width.equalTo(mapData.memberIDs.count == 1 ? 0 : 13.33)
         }
-        self.friendsIcon.isHidden = friendsCount == 1
-        self.likesCount.text = likesCount != 0 ? (friendsCount == 1 ? "\(likesCount) likes" : " • \(likesCount) likes") : ""
-        self.postsCount.text = postsCount != 0 ? ((friendsCount == 1 && likesCount == 0) ? "\(postsCount) posts" : " • \(postsCount) posts") : ""
+        self.friendsIcon.isHidden = mapData.memberIDs.count == 1
+        self.likesCount.text = mapData.likers.count != 0 ? (mapData.memberIDs.count == 1 ? "\(mapData.likers.count) likes" : " • \(mapData.likers.count) likes") : ""
+        self.postsCount.text = mapData.postLocations.count != 0 ? ((mapData.memberIDs.count == 1 && mapData.likers.count == 0) ? "\(mapData.postLocations.count) posts" : " • \(mapData.postLocations.count) posts") : ""
     }
 }
 
