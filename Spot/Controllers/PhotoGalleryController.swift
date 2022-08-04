@@ -16,10 +16,7 @@ import MapboxMaps
 import Mixpanel
 
 class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
-        
-    var spotObject: MapSpot!
-    var editSpotMode = false
-    
+            
     let collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewFlowLayout.init())
     var layout: UICollectionViewFlowLayout!
     
@@ -55,7 +52,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         addCollectionView()
                 
         NotificationCenter.default.addObserver(self, selector: #selector(removePreview(_:)), name: NSNotification.Name("PreviewRemove"), object: nil)
-        
         if !UploadPostModel.shared.imageObjects.isEmpty { refreshTable() } /// eventually need exemption handling for reloading once != 0
         
         /// check for limited gallery access
@@ -101,6 +97,10 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         let cancelButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(cancelTap(_:)))
         navigationItem.setLeftBarButton(cancelButton, animated: false)
         self.navigationItem.leftBarButtonItem?.tintColor = nil
+        
+        if let mapNav = navigationController as? MapNavigationController {
+            mapNav.requiredStatusBarStyle = .lightContent
+        }
     }
     
     func addCollectionView() {
@@ -378,10 +378,8 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         
         guard let selectedObject = UploadPostModel.shared.imageObjects[safe: index]?.image else { return }
         if UploadPostModel.shared.selectedObjects.count > 4 { return }
-        if editSpotMode && UploadPostModel.shared.selectedObjects.count > 0 { return }
         
         let paths = getSelectedPaths(newRow: index, select: true)
-        
         
         if selectedObject.stillImage != UIImage() {
             /// select image immediately

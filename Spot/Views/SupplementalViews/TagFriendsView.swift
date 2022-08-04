@@ -138,8 +138,8 @@ class TagFriendCell: UICollectionViewCell {
         avatarImage.snp.makeConstraints {
             $0.leading.equalTo(profileImage).inset(-10)
             $0.bottom.equalTo(profileImage).inset(-2)
-            $0.height.equalTo(38)
-            $0.width.equalTo(34.5)
+            $0.height.equalTo(37.5)
+            $0.width.equalTo(26)
         }
         
         username = UILabel {

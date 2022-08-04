@@ -31,7 +31,6 @@ class UserDataModel {
     var smallScreen = UIScreen.main.bounds.height < 800
     
     var currentLocation: CLLocation!
-    var mapView: MapView!
     
     init() {
         userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
@@ -41,7 +40,11 @@ class UserDataModel {
     
     func getTopFriends(selectedList: [String]) -> [UserProfile] {
         // get top friends
-        let sortedFriends = userInfo.topFriends.sorted(by: {$0.value > $1.value})
+        if (userInfo.topFriends?.isEmpty ?? true) {
+            return UserDataModel.shared.friendsList
+        }
+        
+        let sortedFriends = userInfo.topFriends!.sorted(by: {$0.value > $1.value})
         let topFriends = Array(sortedFriends.map({$0.key}))
         var friendObjects: [UserProfile] = []
         

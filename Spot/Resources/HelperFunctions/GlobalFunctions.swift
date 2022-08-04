@@ -680,10 +680,7 @@ extension UIViewController {
             let lowercaseName = spot.spotName.lowercased()
             let keywords = lowercaseName.getKeywordArray()
             
-            var tagDictionary: [String: Any] = [:]
-            if post.tag ?? "" != "" {
-                tagDictionary.updateValue(1, forKey: post.tag!)
-            }
+            let tagDictionary: [String: Any] = [:]
             
             var spotVisitors = [uid]
             spotVisitors.append(contentsOf: post.addedUsers ?? [])
@@ -1646,6 +1643,7 @@ extension UINavigationBar {
     }
     
     func addWhiteBackground() {
+        
         if #available(iOS 15.0, *) {
             let appearance = UINavigationBarAppearance()
             appearance.configureWithTransparentBackground()
