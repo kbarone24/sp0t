@@ -13,6 +13,7 @@ import FirebaseUI
 class ChooseFriendsCell: UITableViewCell {
     
     var profilePic: UIImageView!
+    var username: UILabel!
     var selectedBubble: UIView!
     var bottomLine: UIView!
     
