@@ -14,7 +14,7 @@ import FirebaseUI
 import MapKit
 
 extension MapController {
-    
+
     func runMapFetches() {
         startTime = Timestamp(date: Date()).seconds
         DispatchQueue.global(qos: .userInitiated).async {

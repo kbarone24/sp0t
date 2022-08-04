@@ -15,7 +15,6 @@ import FirebaseFirestoreSwift
 import FirebaseAuth
 import FirebaseMessaging
 import Geofirestore
-import MapboxMaps
 
 class ActivityCell: UITableViewCell {
     
@@ -32,9 +31,7 @@ class ActivityCell: UITableViewCell {
     var notification: UserNotification!
     var detailOriginalWidth: CGFloat!
     var detailOriginalHeight: CGFloat!
-    
-
-    
+        
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -179,7 +176,7 @@ class ActivityCell: UITableViewCell {
          }
                 
         timestamp = UILabel{
-            $0.text = notification.timeString
+            $0.toTimeString(timestamp: notification.timestamp)
             $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
             $0.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)
             $0.translatesAutoresizingMaskIntoConstraints = false
