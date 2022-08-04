@@ -15,6 +15,7 @@ import FirebaseFirestoreSwift
 import FirebaseAuth
 import FirebaseMessaging
 import Geofirestore
+import MapboxMaps
 
 class ActivityCell: UITableViewCell {
     
@@ -100,7 +101,6 @@ class ActivityCell: UITableViewCell {
                 $0.translatesAutoresizingMaskIntoConstraints = false
                 contentView.addSubview($0)
             }
-            
             userAvatar.snp.makeConstraints{
                 $0.leading.equalTo(profilePic.snp.leading).offset(-3)
                 $0.bottom.equalTo(profilePic.snp.bottom).offset(3)
