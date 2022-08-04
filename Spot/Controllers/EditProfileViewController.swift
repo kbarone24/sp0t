@@ -26,6 +26,7 @@ class EditProfileViewController: UIViewController {
     private var locationLabel: UILabel!
     private var locationTextfield: UITextField!
     private var logoutButton: UIButton!
+    private var activityIndicator: CustomActivityIndicator!
     
     private var nameChanged: Bool = false
     private var locationChanged: Bool = false
@@ -95,6 +96,7 @@ class EditProfileViewController: UIViewController {
     
     @objc func saveAction() {
         Mixpanel.mainInstance().track(event: "EditProfileSave")
+        self.activityIndicator.startAnimating()
         let userRef = db.collection("users").document(userProfile!.id!)
         do {
             if nameChanged {
@@ -106,7 +108,14 @@ class EditProfileViewController: UIViewController {
             if nameChanged || locationChanged {
                 try userRef.setData(from: userProfile, merge: true)
             }
-            profileChanged ? updateProfileImage() : self.dismiss(animated: true)
+            
+            if profileChanged {
+                updateProfileImage()
+            } else {
+                self.activityIndicator.stopAnimating()
+                self.dismiss(animated: true)
+            }
+            
         } catch {
             //handle error
         }
@@ -314,6 +323,10 @@ extension EditProfileViewController {
             $0.bottom.equalToSuperview().inset(73)
             $0.centerX.equalToSuperview()
         }
+        
+        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 165, width: UIScreen.main.bounds.width, height: 30))
+        activityIndicator.isHidden = true
+        view.addSubview(activityIndicator)
     }
     
     private func updateProfileImage(){
@@ -344,6 +357,7 @@ extension EditProfileViewController {
                     
                     let values = ["imageURL": urlStr]
                     self.db.collection("users").document(self.userProfile!.id!).setData(values, merge: true)
+                    self.activityIndicator.stopAnimating()
                     self.dismiss(animated: true) {
                         self.profileVC?.userProfile = UserDataModel.shared.userInfo
                     }
