@@ -347,6 +347,7 @@ extension EditMapController {
 
 extension EditMapController: UITextViewDelegate {
     func textViewDidBeginEditing(_ textView: UITextView) {
+        Mixpanel.mainInstance().track(event: "EditMapBio")
         if textView.text == "Add a map bio..." {
             textView.text = ""
             textView.textColor = .black

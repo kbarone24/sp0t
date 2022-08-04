@@ -150,6 +150,7 @@ extension CustomMapController {
     }
     
     @objc func editMapAction() {
+        Mixpanel.mainInstance().track(event: "EnterEditMapController")
         let editVC = EditMapController(mapData: mapData!)
         editVC.customMapVC = self
         editVC.modalPresentationStyle = .fullScreen
