@@ -25,6 +25,7 @@ class EditMapController: UIViewController {
     private var privateLabel: UILabel!
     private var privateDescriptionLabel: UILabel!
     private var privateButton: UIButton!
+    private var activityIndicator: CustomActivityIndicator!
     
     private var mapData: CustomMap?
     private var mapCoverChanged = false
@@ -92,6 +93,7 @@ class EditMapController: UIViewController {
     
     @objc func saveAction() {
         Mixpanel.mainInstance().track(event: "EditProfileSave")
+        activityIndicator.startAnimating()
         let userRef = db.collection("maps").document(mapData!.id!)
         do {
             mapData?.mapName = mapNameTextField.text!
@@ -99,11 +101,12 @@ class EditMapController: UIViewController {
             mapData?.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
             try userRef.setData(from: mapData, merge: true)
             
-            if mapCoverChanged {
-                customMapVC?.mapData = mapData
-                dismiss(animated: true)
-            } else {
+            if mapCoverChanged == false {
                 updateMapCover()
+            } else {
+                customMapVC?.mapData = mapData
+                activityIndicator.stopAnimating()
+                dismiss(animated: true)
             }
 
         } catch {
@@ -281,6 +284,10 @@ extension EditMapController {
             $0.leading.equalTo(privateLabel)
             $0.trailing.equalTo(privateButton.snp.leading).offset(-14)
         }
+        
+        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 165, width: UIScreen.main.bounds.width, height: 30))
+        activityIndicator.isHidden = true
+        view.addSubview(activityIndicator)
     }
     
     private func updateMapCover(){
@@ -311,6 +318,7 @@ extension EditMapController {
                     self.db.collection("maps").document(self.mapData!.id!).setData(values, merge: true)
                     self.mapData?.imageURL = urlStr
                     self.customMapVC?.mapData = self.mapData
+                    self.activityIndicator.stopAnimating()
                     self.dismiss(animated: true)
                     return
                 })
