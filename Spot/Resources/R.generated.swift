@@ -349,7 +349,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 215 images.
+  /// This `R.image` struct is generated, and contains static references to 219 images.
   struct image {
     /// Image `AcceptedTheirFriendRequest`.
     static let acceptedTheirFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedTheirFriendRequest")
@@ -535,6 +535,8 @@ struct R: Rswift.Validatable {
     static let heelsTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "HeelsTag")
     /// Image `HistoryTag`.
     static let historyTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "HistoryTag")
+    /// Image `HomeLockIcon`.
+    static let homeLockIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "HomeLockIcon")
     /// Image `HomeTag`.
     static let homeTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "HomeTag")
     /// Image `HoneyTag`.
@@ -603,14 +605,14 @@ struct R: Rswift.Validatable {
     static let nsfwTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "NSFWTag")
     /// Image `NatureTag`.
     static let natureTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "NatureTag")
+    /// Image `NewPostBackground`.
+    static let newPostBackground = Rswift.ImageResource(bundle: R.hostingBundle, name: "NewPostBackground")
     /// Image `NewSpotIcon`.
     static let newSpotIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "NewSpotIcon")
     /// Image `NextArrow`.
     static let nextArrow = Rswift.ImageResource(bundle: R.hostingBundle, name: "NextArrow")
-    /// Image `NotificationIconActive`.
-    static let notificationIconActive = Rswift.ImageResource(bundle: R.hostingBundle, name: "NotificationIconActive")
-    /// Image `NotificationsInactive`.
-    static let notificationsInactive = Rswift.ImageResource(bundle: R.hostingBundle, name: "NotificationsInactive")
+    /// Image `NotificationsNavIcon`.
+    static let notificationsNavIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "NotificationsNavIcon")
     /// Image `OnboardB0t`.
     static let onboardB0t = Rswift.ImageResource(bundle: R.hostingBundle, name: "OnboardB0t")
     /// Image `OnboardNextButton`.
@@ -663,6 +665,8 @@ struct R: Rswift.Validatable {
     static let profileCityIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "ProfileCityIcon")
     /// Image `ProfileLocation`.
     static let profileLocation = Rswift.ImageResource(bundle: R.hostingBundle, name: "ProfileLocation")
+    /// Image `ProfileNavIcon`.
+    static let profileNavIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "ProfileNavIcon")
     /// Image `PublicMapSelected`.
     static let publicMapSelected = Rswift.ImageResource(bundle: R.hostingBundle, name: "PublicMapSelected")
     /// Image `PublicMapUnselected`.
@@ -683,10 +687,12 @@ struct R: Rswift.Validatable {
     static let saladTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "SaladTag")
     /// Image `SearchContactsIcon`.
     static let searchContactsIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "SearchContactsIcon")
-    /// Image `SearchIcon`.
-    static let searchIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "SearchIcon")
+    /// Image `SearchNavIcon`.
+    static let searchNavIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "SearchNavIcon")
     /// Image `SecretMap`.
     static let secretMap = Rswift.ImageResource(bundle: R.hostingBundle, name: "SecretMap")
+    /// Image `SeenPostBackground`.
+    static let seenPostBackground = Rswift.ImageResource(bundle: R.hostingBundle, name: "SeenPostBackground")
     /// Image `SelectButton`.
     static let selectButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "SelectButton")
     /// Image `SelectedButton`.
@@ -703,6 +709,8 @@ struct R: Rswift.Validatable {
     static let shareButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "ShareButton")
     /// Image `ShopTag`.
     static let shopTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ShopTag")
+    /// Image `SideCarat`.
+    static let sideCarat = Rswift.ImageResource(bundle: R.hostingBundle, name: "SideCarat")
     /// Image `Signuplogo`.
     static let signuplogo = Rswift.ImageResource(bundle: R.hostingBundle, name: "Signuplogo")
     /// Image `SingleUserIcon`.
@@ -1427,6 +1435,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "HomeLockIcon", bundle: ..., traitCollection: ...)`
+    static func homeLockIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.homeLockIcon, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "HomeTag", bundle: ..., traitCollection: ...)`
     static func homeTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.homeTag, compatibleWith: traitCollection)
@@ -1665,6 +1680,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "NewPostBackground", bundle: ..., traitCollection: ...)`
+    static func newPostBackground(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.newPostBackground, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "NewSpotIcon", bundle: ..., traitCollection: ...)`
     static func newSpotIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.newSpotIcon, compatibleWith: traitCollection)
@@ -1679,16 +1701,9 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "NotificationIconActive", bundle: ..., traitCollection: ...)`
-    static func notificationIconActive(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.notificationIconActive, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "NotificationsInactive", bundle: ..., traitCollection: ...)`
-    static func notificationsInactive(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.notificationsInactive, compatibleWith: traitCollection)
+    /// `UIImage(named: "NotificationsNavIcon", bundle: ..., traitCollection: ...)`
+    static func notificationsNavIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.notificationsNavIcon, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1875,6 +1890,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "ProfileNavIcon", bundle: ..., traitCollection: ...)`
+    static func profileNavIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.profileNavIcon, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "PublicMapSelected", bundle: ..., traitCollection: ...)`
     static func publicMapSelected(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.publicMapSelected, compatibleWith: traitCollection)
@@ -1945,9 +1967,9 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "SearchIcon", bundle: ..., traitCollection: ...)`
-    static func searchIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.searchIcon, compatibleWith: traitCollection)
+    /// `UIImage(named: "SearchNavIcon", bundle: ..., traitCollection: ...)`
+    static func searchNavIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.searchNavIcon, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1955,6 +1977,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "SecretMap", bundle: ..., traitCollection: ...)`
     static func secretMap(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.secretMap, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "SeenPostBackground", bundle: ..., traitCollection: ...)`
+    static func seenPostBackground(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.seenPostBackground, compatibleWith: traitCollection)
     }
     #endif
 
@@ -2011,6 +2040,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "ShopTag", bundle: ..., traitCollection: ...)`
     static func shopTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.shopTag, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "SideCarat", bundle: ..., traitCollection: ...)`
+    static func sideCarat(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.sideCarat, compatibleWith: traitCollection)
     }
     #endif
 
@@ -2323,47 +2359,47 @@ struct R: Rswift.Validatable {
 
   /// This `R.nib` struct is generated, and contains static references to 3 nibs.
   struct nib {
-    /// Nib `MapPostWindow`.
-    static let mapPostWindow = _R.nib._MapPostWindow()
-    /// Nib `MarkerInfoWindowView`.
-    static let markerInfoWindowView = _R.nib._MarkerInfoWindowView()
-    /// Nib `TextPostWindow`.
-    static let textPostWindow = _R.nib._TextPostWindow()
+    /// Nib `FriendPostView`.
+    static let friendPostView = _R.nib._FriendPostView()
+    /// Nib `SpotNameView`.
+    static let spotNameView = _R.nib._SpotNameView()
+    /// Nib `SpotPostView`.
+    static let spotPostView = _R.nib._SpotPostView()
 
     #if os(iOS) || os(tvOS)
-    /// `UINib(name: "MapPostWindow", in: bundle)`
-    @available(*, deprecated, message: "Use UINib(resource: R.nib.mapPostWindow) instead")
-    static func mapPostWindow(_: Void = ()) -> UIKit.UINib {
-      return UIKit.UINib(resource: R.nib.mapPostWindow)
+    /// `UINib(name: "FriendPostView", in: bundle)`
+    @available(*, deprecated, message: "Use UINib(resource: R.nib.friendPostView) instead")
+    static func friendPostView(_: Void = ()) -> UIKit.UINib {
+      return UIKit.UINib(resource: R.nib.friendPostView)
     }
     #endif
 
     #if os(iOS) || os(tvOS)
-    /// `UINib(name: "MarkerInfoWindowView", in: bundle)`
-    @available(*, deprecated, message: "Use UINib(resource: R.nib.markerInfoWindowView) instead")
-    static func markerInfoWindowView(_: Void = ()) -> UIKit.UINib {
-      return UIKit.UINib(resource: R.nib.markerInfoWindowView)
+    /// `UINib(name: "SpotNameView", in: bundle)`
+    @available(*, deprecated, message: "Use UINib(resource: R.nib.spotNameView) instead")
+    static func spotNameView(_: Void = ()) -> UIKit.UINib {
+      return UIKit.UINib(resource: R.nib.spotNameView)
     }
     #endif
 
     #if os(iOS) || os(tvOS)
-    /// `UINib(name: "TextPostWindow", in: bundle)`
-    @available(*, deprecated, message: "Use UINib(resource: R.nib.textPostWindow) instead")
-    static func textPostWindow(_: Void = ()) -> UIKit.UINib {
-      return UIKit.UINib(resource: R.nib.textPostWindow)
+    /// `UINib(name: "SpotPostView", in: bundle)`
+    @available(*, deprecated, message: "Use UINib(resource: R.nib.spotPostView) instead")
+    static func spotPostView(_: Void = ()) -> UIKit.UINib {
+      return UIKit.UINib(resource: R.nib.spotPostView)
     }
     #endif
 
-    static func mapPostWindow(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> MapPostWindow? {
-      return R.nib.mapPostWindow.instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? MapPostWindow
+    static func friendPostView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> FriendPostView? {
+      return R.nib.friendPostView.instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? FriendPostView
     }
 
-    static func markerInfoWindowView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> MarkerInfoWindow? {
-      return R.nib.markerInfoWindowView.instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? MarkerInfoWindow
+    static func spotNameView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> SpotNameView? {
+      return R.nib.spotNameView.instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? SpotNameView
     }
 
-    static func textPostWindow(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> TextPostWindow? {
-      return R.nib.textPostWindow.instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? TextPostWindow
+    static func spotPostView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> SpotPostView? {
+      return R.nib.spotPostView.instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? SpotPostView
     }
 
     fileprivate init() {}
@@ -2385,67 +2421,40 @@ struct R: Rswift.Validatable {
 struct _R: Rswift.Validatable {
   static func validate() throws {
     #if os(iOS) || os(tvOS)
-    try nib.validate()
-    #endif
-    #if os(iOS) || os(tvOS)
     try storyboard.validate()
     #endif
   }
 
   #if os(iOS) || os(tvOS)
-  struct nib: Rswift.Validatable {
-    static func validate() throws {
-      try _MapPostWindow.validate()
-      try _MarkerInfoWindowView.validate()
-      try _TextPostWindow.validate()
-    }
-
-    struct _MapPostWindow: Rswift.NibResourceType, Rswift.Validatable {
+  struct nib {
+    struct _FriendPostView: Rswift.NibResourceType {
       let bundle = R.hostingBundle
-      let name = "MapPostWindow"
+      let name = "FriendPostView"
 
-      func firstView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> MapPostWindow? {
-        return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? MapPostWindow
-      }
-
-      static func validate() throws {
-        if UIKit.UIImage(named: "MapPostSmall", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'MapPostSmall' is used in nib 'MapPostWindow', but couldn't be loaded.") }
-        if #available(iOS 11.0, tvOS 11.0, *) {
-        }
+      func firstView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> FriendPostView? {
+        return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? FriendPostView
       }
 
       fileprivate init() {}
     }
 
-    struct _MarkerInfoWindowView: Rswift.NibResourceType, Rswift.Validatable {
+    struct _SpotNameView: Rswift.NibResourceType {
       let bundle = R.hostingBundle
-      let name = "MarkerInfoWindowView"
+      let name = "SpotNameView"
 
-      func firstView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> MarkerInfoWindow? {
-        return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? MarkerInfoWindow
-      }
-
-      static func validate() throws {
-        if UIKit.UIImage(named: "InfoWindowBackground", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'InfoWindowBackground' is used in nib 'MarkerInfoWindowView', but couldn't be loaded.") }
-        if #available(iOS 11.0, tvOS 11.0, *) {
-        }
+      func firstView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> SpotNameView? {
+        return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? SpotNameView
       }
 
       fileprivate init() {}
     }
 
-    struct _TextPostWindow: Rswift.NibResourceType, Rswift.Validatable {
+    struct _SpotPostView: Rswift.NibResourceType {
       let bundle = R.hostingBundle
-      let name = "TextPostWindow"
+      let name = "SpotPostView"
 
-      func firstView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> TextPostWindow? {
-        return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? TextPostWindow
-      }
-
-      static func validate() throws {
-        if UIKit.UIImage(named: "TextPostSmall", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'TextPostSmall' is used in nib 'TextPostWindow', but couldn't be loaded.") }
-        if #available(iOS 11.0, tvOS 11.0, *) {
-        }
+      func firstView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> SpotPostView? {
+        return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? SpotPostView
       }
 
       fileprivate init() {}
@@ -2686,9 +2695,7 @@ struct _R: Rswift.Validatable {
       let avCameraController = StoryboardViewControllerResource<AVCameraController>(identifier: "AVCameraController")
       let bundle = R.hostingBundle
       let chooseSpot = StoryboardViewControllerResource<ChooseSpotController>(identifier: "ChooseSpot")
-      let drafts = StoryboardViewControllerResource<DraftsViewController>(identifier: "Drafts")
       let imagePreview = StoryboardViewControllerResource<ImagePreviewController>(identifier: "ImagePreview")
-      let inviteFriends = StoryboardViewControllerResource<InviteFriendsController>(identifier: "InviteFriends")
       let name = "Upload"
       let newMap = StoryboardViewControllerResource<NewMapController>(identifier: "NewMap")
       let photoGallery = StoryboardViewControllerResource<PhotoGalleryController>(identifier: "PhotoGallery")
@@ -2702,16 +2709,8 @@ struct _R: Rswift.Validatable {
         return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: chooseSpot)
       }
 
-      func drafts(_: Void = ()) -> DraftsViewController? {
-        return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: drafts)
-      }
-
       func imagePreview(_: Void = ()) -> ImagePreviewController? {
         return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: imagePreview)
-      }
-
-      func inviteFriends(_: Void = ()) -> InviteFriendsController? {
-        return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: inviteFriends)
       }
 
       func newMap(_: Void = ()) -> NewMapController? {
@@ -2733,9 +2732,7 @@ struct _R: Rswift.Validatable {
         }
         if _R.storyboard.upload().avCameraController() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'avCameraController' could not be loaded from storyboard 'Upload' as 'AVCameraController'.") }
         if _R.storyboard.upload().chooseSpot() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'chooseSpot' could not be loaded from storyboard 'Upload' as 'ChooseSpotController'.") }
-        if _R.storyboard.upload().drafts() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'drafts' could not be loaded from storyboard 'Upload' as 'DraftsViewController'.") }
         if _R.storyboard.upload().imagePreview() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'imagePreview' could not be loaded from storyboard 'Upload' as 'ImagePreviewController'.") }
-        if _R.storyboard.upload().inviteFriends() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'inviteFriends' could not be loaded from storyboard 'Upload' as 'InviteFriendsController'.") }
         if _R.storyboard.upload().newMap() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'newMap' could not be loaded from storyboard 'Upload' as 'NewMapController'.") }
         if _R.storyboard.upload().photoGallery() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'photoGallery' could not be loaded from storyboard 'Upload' as 'PhotoGalleryController'.") }
         if _R.storyboard.upload().shareTo() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'shareTo' could not be loaded from storyboard 'Upload' as 'ChooseMapController'.") }
