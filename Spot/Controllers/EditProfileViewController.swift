@@ -10,7 +10,6 @@ import UIKit
 import Mixpanel
 import Firebase
 import FirebaseFunctions
-import FirebaseUI
 
 class EditProfileViewController: UIViewController {
     
@@ -27,6 +26,7 @@ class EditProfileViewController: UIViewController {
     private var locationLabel: UILabel!
     private var locationTextfield: UITextField!
     private var logoutButton: UIButton!
+    private var activityIndicator: CustomActivityIndicator!
     
     private var nameChanged: Bool = false
     private var locationChanged: Bool = false
@@ -64,6 +64,7 @@ class EditProfileViewController: UIViewController {
     @objc func profilePicSelectionAction() {
         Mixpanel.mainInstance().track(event: "ProfilePicSelection")
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alertController.overrideUserInterfaceStyle = .light
         let takePicAction = UIAlertAction(title: "Take picture", style: .default) { takePic in
             Mixpanel.mainInstance().track(event: "ProfilePicSelectCamera")
             let picker = UIImagePickerController()
@@ -96,6 +97,7 @@ class EditProfileViewController: UIViewController {
     
     @objc func saveAction() {
         Mixpanel.mainInstance().track(event: "EditProfileSave")
+        self.activityIndicator.startAnimating()
         let userRef = db.collection("users").document(userProfile!.id!)
         do {
             if nameChanged {
@@ -104,9 +106,17 @@ class EditProfileViewController: UIViewController {
             if locationChanged {
                 userProfile?.currentLocation = locationTextfield.text!
             }
-            try userRef.setData(from: userProfile, merge: true)
-
-            profileChanged ? updateProfileImage() : self.dismiss(animated: true)
+            if nameChanged || locationChanged {
+                try userRef.setData(from: userProfile, merge: true)
+            }
+            
+            if profileChanged {
+                updateProfileImage()
+            } else {
+                self.activityIndicator.stopAnimating()
+                self.dismiss(animated: true)
+            }
+            
         } catch {
             //handle error
         }
@@ -201,8 +211,7 @@ extension EditProfileViewController {
         profileImage = UIImageView {
             $0.layer.cornerRadius = 51.5
             $0.layer.masksToBounds = true
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFit)
-            $0.sd_setImage(with: URL(string: userProfile!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            $0.sd_setImage(with: URL(string: userProfile!.imageURL))
             view.addSubview($0)
         }
         profileImage.snp.makeConstraints {
@@ -236,10 +245,9 @@ extension EditProfileViewController {
         
         avatarImage = UIImageView {
             $0.contentMode = .scaleAspectFit
-            let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
-            $0.sd_setImage(with: URL(string: userProfile!.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
             view.addSubview($0)
         }
+        avatarImage.sd_setImage(with: URL(string: userProfile!.avatarURL!))
         avatarImage.snp.makeConstraints {
             $0.top.equalTo(avatarLabel.snp.bottom).offset(2)
             $0.leading.equalToSuperview().offset(16)
@@ -330,6 +338,10 @@ extension EditProfileViewController {
             $0.bottom.equalToSuperview().inset(73)
             $0.centerX.equalToSuperview()
         }
+        
+        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 165, width: UIScreen.main.bounds.width, height: 30))
+        activityIndicator.isHidden = true
+        view.addSubview(activityIndicator)
     }
     
     private func updateProfileImage(){
@@ -360,6 +372,7 @@ extension EditProfileViewController {
                     
                     let values = ["imageURL": urlStr]
                     self.db.collection("users").document(self.userProfile!.id!).setData(values, merge: true)
+                    self.activityIndicator.stopAnimating()
                     self.dismiss(animated: true) {
                         self.profileVC?.userProfile = UserDataModel.shared.userInfo
                     }

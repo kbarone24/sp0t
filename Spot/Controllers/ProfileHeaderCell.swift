@@ -8,6 +8,7 @@
 
 import UIKit
 import SnapKit
+import Firebase
 import Mixpanel
 import FirebaseUI
 
@@ -45,7 +46,7 @@ class ProfileHeaderCell: UICollectionViewCell {
         
     }
     
-    public func cellSetup(userProfile: UserProfile, relation: ProfileRelation, pendingFriendNotiID: String?) {
+    public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
         self.profile = userProfile
         
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFit)
@@ -65,7 +66,6 @@ class ProfileHeaderCell: UICollectionViewCell {
         }
         friendListButton.setTitle("\(userProfile.friendIDs.count) friends", for: .normal)
         self.relation = relation
-        self.pendingFriendNotiID = pendingFriendNotiID
         switch relation {
         case .myself:
             actionButton.setTitle("Edit profile", for: .normal)
@@ -205,32 +205,30 @@ extension ProfileHeaderCell {
             Mixpanel.mainInstance().track(event: "ProfileFriendButton")
             return
         case .pending, .received:
-            if pendingFriendNotiID != nil {
-
-                if relation == .pending {
-                    Mixpanel.mainInstance().track(event: "ProfilePendingButton")
-                    let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
-                    let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
-                        self.removeFriendRequest(friendID: self.profile.id!, notificationID: self.pendingFriendNotiID!)
-                    }
-                    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-                    alert.addAction(cancelAction)
-                    alert.addAction(removeAction)
-                    let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
-                    containerVC.present(alert, animated: true)
-                } else {
-                    Mixpanel.mainInstance().track(event: "ProfileAcceptButton")
-                    acceptFriendRequest(friendID: profile.id!, notificationID: pendingFriendNotiID!)
-                    let notiID:[String: String?] = ["notiID": pendingFriendNotiID]
-                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: notiID)
+            if relation == .pending {
+                Mixpanel.mainInstance().track(event: "ProfilePendingButton")
+                let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
+                alert.overrideUserInterfaceStyle = .light
+                let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
+                    self.getNotiIDAndRemoveFriendRequest()
+                    self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+                    self.actionButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
+                    self.actionButton.setTitle("Add friend", for: .normal)
                 }
-                
-                actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
-                actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
-                actionButton.setTitle("Friends", for: .normal)
-                actionButton.setTitleColor(.black, for: .normal)
+                let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+                alert.addAction(cancelAction)
+                alert.addAction(removeAction)
+                let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+                containerVC.present(alert, animated: true)
+            } else {
+                Mixpanel.mainInstance().track(event: "ProfileAcceptButton")
+                getNotiIDAndAcceptFriendRequest()
                 actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+                actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
+                actionButton.setTitle("Friends", for: .normal)
             }
+            actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
+            actionButton.setTitleColor(.black, for: .normal)
         case .stranger:
             Mixpanel.mainInstance().track(event: "ProfileAddFriendButton")
             addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: profile.id!)
@@ -253,5 +251,49 @@ extension ProfileHeaderCell {
     
     @objc func locationButtonAction() {
         Mixpanel.mainInstance().track(event: "LocationButtonAction")
+    }
+    
+    private func getNotiIDAndAcceptFriendRequest() {
+        let db = Firestore.firestore()
+        let query = db.collection("users").document(UserDataModel.shared.userInfo.id!).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
+        query.getDocuments { (snap, err) in
+            if err != nil  { return }
+            for doc in snap!.documents {
+                do {
+                    let unwrappedInfo = try doc.data(as: UserNotification.self)
+                    guard let notification = unwrappedInfo else { return }
+                    if notification.senderID == self.profile!.id {
+                        self.pendingFriendNotiID = notification.id
+                        self.acceptFriendRequest(friendID: self.profile.id!, notificationID: self.pendingFriendNotiID!)
+                        let notiID:[String: String?] = ["notiID": self.pendingFriendNotiID]
+                        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: notiID as [AnyHashable : Any])
+                        break
+                    }
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func getNotiIDAndRemoveFriendRequest() {
+        let db = Firestore.firestore()
+        let query = db.collection("users").document(UserDataModel.shared.userInfo.id!).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
+        query.getDocuments { (snap, err) in
+            if err != nil  { return }
+            for doc in snap!.documents {
+                do {
+                    let unwrappedInfo = try doc.data(as: UserNotification.self)
+                    guard let notification = unwrappedInfo else { return }
+                    if notification.senderID == self.profile!.id {
+                        self.pendingFriendNotiID = notification.id
+                        self.removeFriendRequest(friendID: self.profile.id!, notificationID: self.pendingFriendNotiID!)
+                        break
+                    }
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                }
+            }
+        }
     }
 }

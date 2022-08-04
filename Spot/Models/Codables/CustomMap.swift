@@ -31,8 +31,9 @@ struct CustomMap: Identifiable, Codable {
     var postTimestamps: [Firebase.Timestamp] = []
     var secret: Bool
     var spotIDs: [String]
-    var spotLocations: [[String: Double]] = [[:]]
     var spotNames: [String] = []
+    var spotLocations: [[String: Double]] = [[:]]
+    var mapDescription: String?
     
     var selected = false
     var memberProfiles: [UserProfile]? = []
@@ -95,4 +96,9 @@ struct MapPostGroup {
             return p1.timestamp.seconds > p2.timestamp.seconds
         })
     }
+}
+
+struct MapPostGroup {
+    var spotID: String?
+    var postIDs: [(id: String, timestamp: Timestamp, seen: Bool)]
 }
