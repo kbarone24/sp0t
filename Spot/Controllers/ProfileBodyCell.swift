@@ -30,11 +30,9 @@ class ProfileBodyCell: UICollectionViewCell {
         if mapImage != nil { mapImage.sd_cancelCurrentImageLoad() }
     }
     
-    public func cellSetup(imageURL: String, mapName: String, isPrivate: Bool, friendsCount: Int, likesCount: Int, postsCount: Int) {
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 250, height: 250), scaleMode: .aspectFill)
-        mapImage.sd_setImage(with: URL(string: imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-
-        if isPrivate {
+    public func cellSetup(mapData: CustomMap) {
+        mapImage.sd_setImage(with: URL(string: mapData.imageURL))
+        if mapData.secret {
             let imageAttachment = NSTextAttachment()
             imageAttachment.image = UIImage(named: "SecretMap")
             imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
