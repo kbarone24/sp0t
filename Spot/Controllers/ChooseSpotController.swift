@@ -49,6 +49,7 @@ class ChooseSpotController: UIViewController {
     
     var postLocation: CLLocation!
     var delegate: ChooseSpotDelegate?
+    unowned var previewVC: ImagePreviewController?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -505,8 +506,12 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
         let current = queried ? querySpots : spotObjects
         let spot = current[indexPath.row]
         DispatchQueue.main.async {
+            self.searchBar.resignFirstResponder()
             self.delegate?.finishPassing(spot: spot)
-            self.dismiss(animated: true)
+            self.dismiss(animated: true) {
+                print("cancel false")
+                self.previewVC?.cancelOnDismiss = false
+            }
         }
     }
 }

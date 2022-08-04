@@ -50,7 +50,6 @@ class ProfileMyMapCell: UICollectionViewCell {
 extension ProfileMyMapCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
-
         mapImageCollectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .vertical
