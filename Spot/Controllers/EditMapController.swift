@@ -21,7 +21,7 @@ class EditMapController: UIViewController {
     private var memberLabel: UILabel!
     private var locationTextfield: UITextField!
     private var mapDescription: UITextView!
-    private var memberCollectionView: UICollectionView!
+    private var mapMemberCollectionView: UICollectionView!
     private var privateLabel: UILabel!
     private var privateDescriptionLabel: UILabel!
     private var privateButton: UIButton!
@@ -229,7 +229,7 @@ extension EditMapController {
             $0.leading.equalToSuperview().inset(16)
         }
         
-        memberCollectionView = {
+        mapMemberCollectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .horizontal
             let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -241,8 +241,8 @@ extension EditMapController {
             view.register(MapMemberCell.self, forCellWithReuseIdentifier: "MapMemberCell")
             return view
         }()
-        view.addSubview(memberCollectionView)
-        memberCollectionView.snp.makeConstraints {
+        view.addSubview(mapMemberCollectionView)
+        mapMemberCollectionView.snp.makeConstraints {
             $0.top.equalTo(memberLabel.snp.bottom).offset(12)
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(85)
@@ -255,7 +255,7 @@ extension EditMapController {
             view.addSubview($0)
         }
         privateLabel.snp.makeConstraints {
-            $0.top.equalTo(memberCollectionView.snp.bottom).offset(33)
+            $0.top.equalTo(mapMemberCollectionView.snp.bottom).offset(33)
             $0.leading.equalTo(memberLabel)
         }
         
@@ -340,7 +340,7 @@ extension EditMapController {
         }
         dispatch.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
-            self.memberCollectionView.reloadData()
+            self.mapMemberCollectionView.reloadData()
         }
     }
 }
@@ -382,10 +382,19 @@ extension EditMapController: UICollectionViewDelegate, UICollectionViewDataSourc
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let friendsList = UserDataModel.shared.getTopFriends(selectedList: mapData!.memberIDs)
-        let vc = FriendsListController(fromVC: self, allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.friendIDs, friendsList: friendsList, confirmedIDs: UploadPostModel.shared.postObject.addedUsers!)
-//        vc.delegate = self
-        present(vc, animated: true)
+        guard indexPath.row == 0 else { return }
+        let collectionCell = collectionView.cellForItem(at: indexPath)
+        UIView.animate(withDuration: 0.15) {
+            collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        } completion: { success in
+            let friendsList = UserDataModel.shared.getTopFriends(selectedList: self.mapData!.memberIDs)
+            let vc = FriendsListController(fromVC: self, allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.friendIDs, friendsList: friendsList, confirmedIDs: self.mapData!.memberIDs)
+            vc.delegate = self
+            self.present(vc, animated: true)
+            UIView.animate(withDuration: 0.15) {
+                collectionCell?.transform = .identity
+            }
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -401,21 +410,28 @@ extension EditMapController: UICollectionViewDelegate, UICollectionViewDataSourc
     }
 
     func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
-        if indexPath.section != 0 {
-            let collectionCell = collectionView.cellForItem(at: indexPath)
-            UIView.animate(withDuration: 0.15) {
-                collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-            }
+        guard indexPath.row == 0 else { return }
+        let collectionCell = collectionView.cellForItem(at: indexPath)
+        UIView.animate(withDuration: 0.15) {
+            collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, didUnhighlightItemAt indexPath: IndexPath) {
-        if indexPath.section != 0 {
-            let collectionCell = collectionView.cellForItem(at: indexPath)
-            UIView.animate(withDuration: 0.15) {
-                collectionCell?.transform = .identity
-            }
+        guard indexPath.row == 0 else { return }
+        let collectionCell = collectionView.cellForItem(at: indexPath)
+        UIView.animate(withDuration: 0.15) {
+            collectionCell?.transform = .identity
         }
+    }
+}
+
+extension EditMapController: FriendsListDelegate {
+    func finishPassing(selectedUsers: [UserProfile]) {
+        mapData?.memberIDs.append(contentsOf: selectedUsers.map({$0.id!}))
+        memberList.append(contentsOf: selectedUsers)
+        memberLabel.text = "MEMBERS (\(mapData!.memberIDs.count))"
+        DispatchQueue.main.async { self.mapMemberCollectionView.reloadData() }
     }
 }
 
