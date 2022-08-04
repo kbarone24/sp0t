@@ -5,7 +5,6 @@
 //  Created by Shay Gyawali on 6/26/22.
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
-
 import Foundation
 import UIKit
 import Firebase
@@ -95,7 +94,7 @@ class ActivityCell: UITableViewCell {
                 $0.isHidden = false
                 let url = notification.userInfo!.avatarURL!
                 if url != "" {
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+                    let transformer = SDImageResizingTransformer(size: CGSize(width: 50.24, height: 66), scaleMode: .aspectFit)
                     $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
                 } else { print("Avatar not found") }
                 $0.translatesAutoresizingMaskIntoConstraints = false
@@ -179,7 +178,25 @@ class ActivityCell: UITableViewCell {
              contentView.addSubview($0)
          }
                 
+        timestamp = UILabel{
+            $0.text = notification.timeString
+            $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
+            $0.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview($0)
+        }
         
+        //timestamp constraints set later because they rely on detail constraints
+        
+        var detailWidth = 0.0
+
+        if(timestamp.intrinsicContentSize.width < 20){
+            detailWidth = 215 + 20
+        } else if (timestamp.intrinsicContentSize.width < 30){
+            detailWidth = 215 + 10
+        } else { detailWidth = 215 }
+        
+
         detail = UILabel {
             let notiType = notification.type
             switch notiType {
@@ -229,18 +246,18 @@ class ActivityCell: UITableViewCell {
             default:
                 $0.text = notification.type
             }
+
             $0.numberOfLines = 2
             $0.lineBreakMode = NSLineBreakMode.byWordWrapping
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
             $0.translatesAutoresizingMaskIntoConstraints = false
             detailOriginalWidth = $0.intrinsicContentSize.width
-            $0.preferredMaxLayoutWidth = 224
+            $0.preferredMaxLayoutWidth = detailWidth
             contentView.addSubview($0)
         }
         
         detailOriginalHeight = detail.intrinsicContentSize.height
-
         
         username.snp.makeConstraints{
             $0.leading.equalTo(profilePic.snp.trailing).offset(8)
@@ -252,16 +269,7 @@ class ActivityCell: UITableViewCell {
         detail.snp.makeConstraints{
             $0.top.equalTo(username.snp.bottom)
             $0.leading.equalTo(profilePic.snp.trailing).offset(7)
-            $0.width.lessThanOrEqualTo(224.0)
-        }
-        
-        
-        timestamp = UILabel{
-            $0.toTimeString(timestamp: notification.timestamp)
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
-            $0.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
+            $0.width.lessThanOrEqualTo(detailWidth)
         }
         
         
@@ -271,11 +279,8 @@ class ActivityCell: UITableViewCell {
             if(timeLeading < detailOriginalWidth){
                 timeLeading = detailOriginalWidth - detail.intrinsicContentSize.width
             }
-            $0.leading.equalTo(detail.snp.leading).offset(timeLeading + 8)
+            $0.leading.equalTo(detail.snp.leading).offset(timeLeading + 6)
         }
-        
-
-        
         
     }
         
@@ -286,6 +291,7 @@ class ActivityCell: UITableViewCell {
     @objc func postTap(_ sender: Any){
         //SHOW POST INSTEAD ONCE YOU CAN
         print("post tapped")
+        notificationControllerDelegate?.deleteFriend(friendID: (notification.userInfo?.id!)!)
     }
     
     func resetCell() {
@@ -304,5 +310,3 @@ class ActivityCell: UITableViewCell {
     }
     
 }
-    
-
