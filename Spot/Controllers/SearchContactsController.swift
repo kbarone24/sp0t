@@ -322,7 +322,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
                                 
                                 guard let self = self else { return }
                                 
-                                userInfo.friend = UserDataModel.shared.friendIDs.contains(id)
+                                userInfo.friend = UserDataModel.shared.userInfo.friendIDs.contains(id)
                                 userInfo.pending = !userInfo.friend! && ((fSnap?.documents.count ?? 0) > 0 || UserDataModel.shared.userInfo.pendingFriendRequests.contains(id))
                                 localContacts.append(userInfo)
                                 

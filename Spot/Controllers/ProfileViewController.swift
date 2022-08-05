@@ -70,7 +70,7 @@ class ProfileViewController: UIViewController {
         }
         if self.userProfile?.id == UserDataModel.shared.userInfo.id {
             relation = .myself
-        } else if UserDataModel.shared.friendsList.contains(where: { user in
+        } else if UserDataModel.shared.userInfo.friendsList.contains(where: { user in
             user.id == userProfile?.id
         }) {
             relation = .friend
@@ -209,7 +209,7 @@ extension ProfileViewController {
     
     private func getNinePosts() {
         let db = Firestore.firestore()
-        let query = db.collection("posts").whereField("posterID", isEqualTo: userProfile!.id!).limit(to: 9)
+        let query = db.collection("posts").whereField("posterID", isEqualTo: userProfile!.id!).order(by: "timestamp", descending: true).limit(to: 9)
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             self.posts.removeAll()
@@ -251,7 +251,7 @@ extension ProfileViewController {
         }
         
         let db = Firestore.firestore()
-        let query = db.collection("maps").whereField("memberIDs", arrayContains: UserDataModel.shared.uid)
+        let query = db.collection("maps").whereField("memberIDs", arrayContains: userProfile?.id ?? "")
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             self.maps.removeAll()

@@ -428,7 +428,7 @@ extension ChooseSpotController: UISearchBarDelegate {
                         spotInfo.distance = self.postLocation.distance(from: CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong))
 
                         for visitor in spotInfo.visitorList {
-                            if UserDataModel.shared.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
+                            if UserDataModel.shared.userInfo.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
                         }
 
 

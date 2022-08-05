@@ -54,7 +54,7 @@ class TagFriendsView: UIView {
     func runQuery() {
         queryUsers.removeAll()
 
-        var adjustedFriends = UserDataModel.shared.getTopFriends(selectedList: [])
+        var adjustedFriends = UserDataModel.shared.userInfo.friendsList
         adjustedFriends.removeAll(where: {$0.id == "T4KMLe3XlQaPBJvtZVArqXQvaNT2"}) /// remove bot
         let usernameList = adjustedFriends.map({$0.username})
         let nameList = adjustedFriends.map({$0.name})
