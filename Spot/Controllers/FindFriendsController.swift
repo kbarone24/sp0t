@@ -295,27 +295,27 @@ class FindFriendsController: UIViewController {
         
         var x = 0 /// outer friends list counter
                 
-        for friend in UserDataModel.shared.friendsList {
+        for friend in UserDataModel.shared.userInfo.friendsList {
             
             var y = 0 /// inner friendslist counter
-            if UserDataModel.shared.adminIDs.contains(friend.id!) { x += 1; if x == UserDataModel.shared.friendsList.count { runMutualSort(mutuals: mutuals) }; continue }
+            if UserDataModel.shared.adminIDs.contains(friend.id!) { x += 1; if x == UserDataModel.shared.userInfo.friendsList.count { runMutualSort(mutuals: mutuals) }; continue }
             
             for id in friend.friendIDs {
                 
                 /// only add non-friends + people we haven't sent a request to yet
-                if !UserDataModel.shared.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) && id != uid {
+                if !UserDataModel.shared.userInfo.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) && id != uid {
                     
                     
                     if let i = mutuals.firstIndex(where: {$0.id == id}) {
                         /// increment mutuals index if already added to mutuals
                         mutuals[i].count += 1
-                        y += 1; if y == friend.friendIDs.count { x += 1; if x == UserDataModel.shared.friendsList.count { runMutualSort(mutuals: mutuals) }}
+                        y += 1; if y == friend.friendIDs.count { x += 1; if x == UserDataModel.shared.userInfo.friendsList.count { runMutualSort(mutuals: mutuals) }}
                     } else {
                         /// add new mutual to mutuals
                         mutuals.append((id: id, count: 1))
-                        y += 1; if y == friend.friendIDs.count { x += 1; if x == UserDataModel.shared.friendsList.count { runMutualSort(mutuals: mutuals) }}
+                        y += 1; if y == friend.friendIDs.count { x += 1; if x == UserDataModel.shared.userInfo.friendsList.count { runMutualSort(mutuals: mutuals) }}
                     }
-                } else { y += 1; if y == friend.friendIDs.count { x += 1; if x == UserDataModel.shared.friendsList.count { runMutualSort(mutuals: mutuals) }} }
+                } else { y += 1; if y == friend.friendIDs.count { x += 1; if x == UserDataModel.shared.userInfo.friendsList.count { runMutualSort(mutuals: mutuals) }} }
             }
         }
     }
@@ -352,7 +352,7 @@ class FindFriendsController: UIViewController {
                 if let friendsList = snap?.get("friendsList") as? [String] {
                     
                     for id in friendsList {
-                        if !UserDataModel.shared.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) {
+                        if !UserDataModel.shared.userInfo.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) {
                             
                             if let i = secondaryMutuals.firstIndex(where: {$0.id == id}) {
                                 secondaryMutuals[i].secondaryCount += 1
@@ -447,7 +447,7 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
         let dataSource = tableView.tag == 0 ? suggestedUsers : queryUsers
         if let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell") as? ContactCell {
             let user = dataSource[indexPath.row]
-            cell.set(contact: user.0, inviteContact: nil, friend:  user.1, invited: .none)
+            cell.set(contact: user.0, inviteContact: nil, friend: user.1, invited: .none)
             return cell
             
         }  else { return UITableViewCell() }
@@ -563,7 +563,7 @@ extension FindFriendsController: UISearchBarDelegate {
                     /// add any user who matches here except for active user
                     if !self.queryUsers.contains(where: {$0.0.id == info.id}) && info.id != self.uid {
                         if !self.queryValid(searchText: searchText) { return }
-                        let status: FriendStatus = UserDataModel.shared.friendIDs.contains(info.id!) ? .friends : UserDataModel.shared.userInfo.pendingFriendRequests.contains(info.id!) ? .pending : .none
+                        let status: FriendStatus = UserDataModel.shared.userInfo.friendIDs.contains(info.id!) ? .friends : UserDataModel.shared.userInfo.pendingFriendRequests.contains(info.id!) ? .pending : .none
                         self.queryUsers.append((info, status))
                     }
 
@@ -597,7 +597,7 @@ extension FindFriendsController: UISearchBarDelegate {
                     /// add any user who matches here except for active user
                     if !self.queryUsers.contains(where: {$0.0.id == info.id}) && info.id != self.uid {
                         if !self.queryValid(searchText: searchText) { return }
-                        let status: FriendStatus = UserDataModel.shared.friendIDs.contains(info.id!) ? .friends : UserDataModel.shared.userInfo.pendingFriendRequests.contains(info.id!) ? .pending : .none
+                        let status: FriendStatus = UserDataModel.shared.userInfo.friendIDs.contains(info.id!) ? .friends : UserDataModel.shared.userInfo.pendingFriendRequests.contains(info.id!) ? .pending : .none
                         self.queryUsers.append((info, status))
                     }
                     

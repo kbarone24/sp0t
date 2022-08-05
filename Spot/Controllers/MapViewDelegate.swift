@@ -94,7 +94,7 @@ extension MapController: MKMapViewDelegate {
         }
         /// sort post groups for display and get first post
         selectedPostGroup = sortPostGroup(selectedPostGroup)
-        let firstPostGroup = selectedPostGroup.first!
+        guard let firstPostGroup = selectedPostGroup.first else { return MKAnnotationView() }
         let postID = firstPostGroup.postIDs.isEmpty ? nil : firstPostGroup.postIDs.first!.id
         let post = postID == nil ? nil : selectedMap?.postsDictionary[postID!] /// need to sort
         
@@ -145,9 +145,13 @@ extension MapController: MKMapViewDelegate {
         DispatchQueue.main.async { self.mapView.addAnnotation(spotAnnotation) }
     }
     
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        
+    }
+    
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         /// remove clustering if zoomed in to ground level
-        if mapView.region.span.longitudeDelta < 0.002 {
+        if mapView.region.span.longitudeDelta < 0.0017 {
             if shouldCluster {
                 shouldCluster = false
                 let annotations = self.mapView.annotations

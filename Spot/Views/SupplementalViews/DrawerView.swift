@@ -285,16 +285,14 @@ class DrawerView: NSObject {
     // MARK: Close
     @objc func closeAction() {
         if myNav.viewControllers.count == 1 {
-            UIView.animate(withDuration: 0.35, animations: {
+            UIView.animate(withDuration: 0.3, animations: {
                 self.slideView.frame.origin.y = self.parentVC.view.frame.height
                 self.parentVC.view.layoutIfNeeded()
             }) { (success) in
+                if self.closeDo != nil { self.closeDo!() }
                 self.status = DrawerViewStatus.Close
                 self.slideView.removeFromSuperview()
                 self.myNav.removeFromParent()
-                if self.closeDo != nil {
-                    self.closeDo!()
-                }
             }
         } else {
             myNav.popViewController(animated: true)

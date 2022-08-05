@@ -117,8 +117,8 @@ class AVCameraController: UIViewController {
     }
     
     func addCameraView() {
-        
         view.backgroundColor = UIColor(named: "SpotBlack")
+        view.isUserInteractionEnabled = false
         
         let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
@@ -484,6 +484,7 @@ class AVCameraController: UIViewController {
         cameraController.prepare(position: .rear) { [weak self] (error) in
             guard let self = self else { return }
             try? self.cameraController.displayPreview(on: self.cameraView)
+            self.view.isUserInteractionEnabled = true
             self.setAutoExposure()
         }
     }
@@ -582,6 +583,7 @@ class AVCameraController: UIViewController {
     
     func setFocus(position: CGPoint) {
         
+        
         if AVCaptureDevice.authorizationStatus(for: .video) != .authorized { return }
         
         let bounds = UIScreen.main.bounds
@@ -594,7 +596,6 @@ class AVCameraController: UIViewController {
         
         if position.y < maxY && position.y > minY {
             tapIndicator.snp.updateConstraints {
-                print("position", position)
                 $0.top.equalTo(position.y - 25)
                 $0.leading.equalTo(position.x - 25)
             }

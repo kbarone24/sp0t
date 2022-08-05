@@ -129,7 +129,7 @@ extension UIViewController {
     
     func isFriends(id: String) -> Bool {
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        if id == uid || (UserDataModel.shared.friendIDs.contains(where: {$0 == id}) && !(UserDataModel.shared.adminIDs.contains(id))) { return true }
+        if id == uid || (UserDataModel.shared.userInfo.friendIDs.contains(where: {$0 == id}) && !(UserDataModel.shared.adminIDs.contains(id))) { return true }
         return false
     }
     
@@ -144,7 +144,7 @@ extension UIViewController {
         }
         
         if privacyLevel == "friends" {
-            if !UserDataModel.shared.friendIDs.contains(where: {$0 == creatorID}){
+            if !UserDataModel.shared.userInfo.friendIDs.contains(where: {$0 == creatorID}){
                 if uid != creatorID {
                     return false
                 }
@@ -165,7 +165,7 @@ extension UIViewController {
         if UserDataModel.shared.adminIDs.contains(where: {$0 == post.posterID}) { return false }
         
         if post.privacyLevel == "friends" {
-            if !UserDataModel.shared.friendIDs.contains(post.posterID) { return false }
+            if !UserDataModel.shared.userInfo.friendIDs.contains(post.posterID) { return false }
         } else if post.privacyLevel == "invite" {
             if !(post.inviteList?.contains(uid) ?? false) { return false }
         }
@@ -405,7 +405,7 @@ extension UIViewController {
                 spotInfo.id = spotID
                 spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
                 for visitor in spotInfo.visitorList {
-                    if UserDataModel.shared.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
+                    if UserDataModel.shared.userInfo.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
                 }
                 
                 completion(spotInfo, false)
@@ -422,7 +422,7 @@ extension UIViewController {
         
         let db: Firestore! = Firestore.firestore()
         
-        if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
+        if let user = UserDataModel.shared.userInfo.friendsList.first(where: {$0.id == userID}) {
             completion(user)
             return
             
@@ -1110,12 +1110,9 @@ extension UICollectionViewCell {
     }
     
     func acceptFriendRequest(friendID: String, notificationID: String) {
-        let db: Firestore = Firestore.firestore()
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let functions = Functions.functions()
-        
-        db.collection("users").document(uid).collection("notifications").document(notificationID).updateData(["status" : "accepted"])
-        
+                
         addFriendToFriendsList(userID: uid, friendID: friendID)
         addFriendToFriendsList(userID: friendID, friendID: uid)
         
@@ -1133,6 +1130,24 @@ extension UICollectionViewCell {
             "topFriends.\(friendID)" : 0
         ])
     }
+    
+    func sendFriendRequestNotis(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+        let timestamp = Timestamp(date: Date())
+        db.collection("users").document(uid).collection("notifications").document(notificationID).updateData(["status" : "accepted", "timestamp": timestamp])
+        
+        db.collection("users").document(friendID).collection("notifications").document(UUID().uuidString).setData([
+            "status": "accepted",
+            "timestamp": timestamp,
+            "senderID": uid,
+            "senderUsername": UserDataModel.shared.userInfo.username,
+            "type": "friendRequest",
+            "seen": false
+        ])
+    }
+    
     
     func removeFriendRequest(friendID: String, notificationID: String) {
         let db: Firestore = Firestore.firestore()
@@ -1197,7 +1212,7 @@ extension UICollectionViewCell {
         
         let db: Firestore! = Firestore.firestore()
         
-        if let user = UserDataModel.shared.friendsList.first(where: {$0.id == userID}) {
+        if let user = UserDataModel.shared.userInfo.friendsList.first(where: {$0.id == userID}) {
             completion(user)
             return
             
