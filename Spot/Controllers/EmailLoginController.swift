@@ -173,7 +173,7 @@ class EmailLoginController: UIViewController {
         let verified = defaults.object(forKey: "verifiedPhone") as? Bool ?? false
         
         if verified {
-            animateToMap()
+            openAvi()
             
         } else {
             
@@ -187,7 +187,7 @@ class EmailLoginController: UIViewController {
                     print("verified", verified)
                     if verified {
                         defaults.set(true, forKey: "verifiedPhone")
-                        self.animateToMap()
+                        self.openAvi()
                     } else {
                         self.sendUserToPhoneAuth()
                     }
@@ -212,6 +212,11 @@ class EmailLoginController: UIViewController {
             vc.codeType = .multifactor
             self.navigationController?.pushViewController(vc, animated: true)
         }
+    }
+    
+    func openAvi(){
+        let aviVC = AvatarSelectionController()
+        navigationController!.pushViewController(aviVC, animated: true)
     }
     
     func animateToMap() {

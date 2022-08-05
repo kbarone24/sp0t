@@ -225,13 +225,15 @@ class PhoneController: UIViewController {
         let db = Firestore.firestore()
         
         if verified {
+            print("🙇🏽‍♀️ 1")
             self.validatePhoneNumber(phoneNumber: phoneNumber, rawNumber: "")
-            
         } else {
+            print("🙇🏽‍♀️ 2")
+
             db.collection("users").whereField("phone", isEqualTo: phoneNumber).getDocuments { (snap, err) in
                 if let doc = snap?.documents.first {
                     /// if user is verified but its not already saved to defaults (app could've been deleted), save it to defaults
-                    let verified = doc.get("verfiedPhone") as? Bool ?? false
+                    let verified = doc.get("verifiedPhone") as? Bool ?? false
                     if verified {
                         defaults.set(true, forKey: "verifiedPhone")
                         self.validatePhoneNumber(phoneNumber: phoneNumber, rawNumber: "")

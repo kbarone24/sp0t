@@ -18,7 +18,6 @@
 		3ED3F1A622147EAE008CC29B /* ResetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED3F1A522147EAE008CC29B /* ResetViewController.swift */; };
 		412555C4285AEA0300C071A4 /* BottomToTopTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 412555C3285AEA0200C071A4 /* BottomToTopTransition.swift */; };
 		4134867F285930DF0098B27B /* ImagePreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4134867E285930DF0098B27B /* ImagePreviewController.swift */; };
-		41348681285930FA0098B27B /* LandingScreenVideo.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 41348680285930FA0098B27B /* LandingScreenVideo.mp4 */; };
 		413486872859310E0098B27B /* SF-Compact-Text-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486822859310E0098B27B /* SF-Compact-Text-Medium.otf */; };
 		413486882859310E0098B27B /* SF-Compact-Text-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486832859310E0098B27B /* SF-Compact-Text-Bold.otf */; };
 		413486892859310E0098B27B /* SF-Compact-Text-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */; };
@@ -170,6 +169,8 @@
 		5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */; };
 		5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDAF23B2857E65A001EDC57 /* Declarative.swift */; };
 		5FDAF23E2858FD06001EDC57 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDAF23D2858FD06001EDC57 /* DrawerView.swift */; };
+		5FE22FE82898716D0025C351 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE22FE72898716C0025C351 /* AvatarSelectionController.swift */; };
+		5FE22FEB289A3CDF0025C351 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE22FEA289A3CDF0025C351 /* AvatarURLs.swift */; };
 		7A37801C22174BB1008B835A /* MapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801B22174BB1008B835A /* MapController.swift */; };
 		7A5E078F2233165B00B53B58 /* MarkerInfoWindowView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A5E078E2233165B00B53B58 /* MarkerInfoWindowView.xib */; };
 		7A5E07912233174600B53B58 /* MarkerInfoWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5E07902233174600B53B58 /* MarkerInfoWindow.swift */; };
@@ -357,7 +358,6 @@
 		3ED3F1A522147EAE008CC29B /* ResetViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetViewController.swift; sourceTree = "<group>"; };
 		412555C3285AEA0200C071A4 /* BottomToTopTransition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomToTopTransition.swift; sourceTree = "<group>"; };
 		4134867E285930DF0098B27B /* ImagePreviewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImagePreviewController.swift; sourceTree = "<group>"; };
-		41348680285930FA0098B27B /* LandingScreenVideo.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = LandingScreenVideo.mp4; sourceTree = "<group>"; };
 		413486822859310E0098B27B /* SF-Compact-Text-Medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Medium.otf"; sourceTree = "<group>"; };
 		413486832859310E0098B27B /* SF-Compact-Text-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Bold.otf"; sourceTree = "<group>"; };
 		413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Heavy.otf"; sourceTree = "<group>"; };
@@ -421,6 +421,9 @@
 		5FD686D22852527300B88B3B /* UISheetPresentationControllerDetent+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UISheetPresentationControllerDetent+Private.h"; sourceTree = "<group>"; };
 		5FDAF23B2857E65A001EDC57 /* Declarative.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Declarative.swift; sourceTree = "<group>"; };
 		5FDAF23D2858FD06001EDC57 /* DrawerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawerView.swift; sourceTree = "<group>"; };
+		5FE22FE72898716C0025C351 /* AvatarSelectionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarSelectionController.swift; sourceTree = "<group>"; };
+		5FE22FE9289A2A710025C351 /* SF-Compact-Rounded-Black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Rounded-Black.otf"; sourceTree = "<group>"; };
+		5FE22FEA289A3CDF0025C351 /* AvatarURLs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarURLs.swift; sourceTree = "<group>"; };
 		600C7B20AA16C3A36CB4A1BD /* Pods-SpotTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SpotTests.release.xcconfig"; path = "Target Support Files/Pods-SpotTests/Pods-SpotTests.release.xcconfig"; sourceTree = "<group>"; };
 		70FE6EF09984CC560FD9D79C /* Pods_SpotTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SpotTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A37801B22174BB1008B835A /* MapController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MapController.swift; path = Spot/Controllers/MapController.swift; sourceTree = SOURCE_ROOT; };
@@ -612,7 +615,6 @@
 			isa = PBXGroup;
 			children = (
 				7A9A551522273F71007469C7 /* Chapel Hill.gpx */,
-				41348680285930FA0098B27B /* LandingScreenVideo.mp4 */,
 				5947712E2326E091008E50B9 /* Assets.xcassets */,
 				41AC5A5D2866285800C522B1 /* R.generated.swift */,
 				59F4701D2368933C00BB79CC /* SceneDelegate.swift */,
@@ -658,6 +660,7 @@
 		59056A56231DDF0300C7E753 /* fonts */ = {
 			isa = PBXGroup;
 			children = (
+				5FE22FE9289A2A710025C351 /* SF-Compact-Rounded-Black.otf */,
 				413486832859310E0098B27B /* SF-Compact-Text-Bold.otf */,
 				413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */,
 				413486822859310E0098B27B /* SF-Compact-Text-Medium.otf */,
@@ -679,6 +682,8 @@
 				8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */,
 				8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */,
 				8C342072260FBC0F0017CB2F /* ContactsOverviewController.swift */,
+				5FE22FE72898716C0025C351 /* AvatarSelectionController.swift */,
+				5FE22FEA289A3CDF0025C351 /* AvatarURLs.swift */,
 			);
 			name = Main;
 			sourceTree = "<group>";
@@ -1061,7 +1066,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				8C346D342797753200B6E640 /* MapPostWindow.xib in Resources */,
-				41348681285930FA0098B27B /* LandingScreenVideo.mp4 in Resources */,
 				413486872859310E0098B27B /* SF-Compact-Text-Medium.otf in Resources */,
 				1DF6E03F22089F4800BA0C36 /* LaunchScreen.storyboard in Resources */,
 				4134868B2859310E0098B27B /* SF-Compact-Text-Regular.otf in Resources */,
@@ -1267,6 +1271,7 @@
 				5F497B3E2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift in Sources */,
 				3ED3F1A622147EAE008CC29B /* ResetViewController.swift in Sources */,
 				41C417112869CD2F0038B6E3 /* ProfileHeaderCell.swift in Sources */,
+				5FE22FEB289A3CDF0025C351 /* AvatarURLs.swift in Sources */,
 				59DFA25222C27B4800A59D29 /* CommentsViewController.swift in Sources */,
 				8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */,
 				59056A5323197E4B00C7E753 /* PostNotification.swift in Sources */,
@@ -1312,6 +1317,7 @@
 				597072FA24291993008A481A /* AVSpotCamera.swift in Sources */,
 				59FCF5B824734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				8C3420B0261273140017CB2F /* SendInvitesController.swift in Sources */,
+				5FE22FE82898716D0025C351 /* AvatarSelectionController.swift in Sources */,
 				8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */,
 				8C2209F8284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
