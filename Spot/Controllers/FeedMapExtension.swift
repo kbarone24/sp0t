@@ -148,7 +148,7 @@ extension MapController {
                     
                     postInfo.id = doc.documentID
 
-                    if let user = UserDataModel.shared.friendsList.first(where: {$0.id == postInfo.posterID}) {
+                    if let user = UserDataModel.shared.userInfo.friendsList.first(where: {$0.id == postInfo.posterID}) {
                     postInfo.userInfo = user
                     
                 } else if postInfo.posterID == self.uid {
@@ -452,16 +452,16 @@ extension MapController {
         scoreMultiplier = Double(pow(factor, 3)) * 10
 
         /// content bonuses
-        if UserDataModel.shared.friendIDs.contains(post.posterID) { scoreMultiplier += 50 }
+        if UserDataModel.shared.userInfo.friendIDs.contains(post.posterID) { scoreMultiplier += 50 }
         
         for like in post.likers {
             scoreMultiplier += 20
-            if UserDataModel.shared.friendIDs.contains(like) { scoreMultiplier += 5 }
+            if UserDataModel.shared.userInfo.friendIDs.contains(like) { scoreMultiplier += 5 }
         }
         
         for comment in post.commentList {
             scoreMultiplier += 10
-            if UserDataModel.shared.friendIDs.contains(comment.commenterID) { scoreMultiplier += 2.5 }
+            if UserDataModel.shared.userInfo.friendIDs.contains(comment.commenterID) { scoreMultiplier += 2.5 }
         }
         
         return scoreMultiplier/distance

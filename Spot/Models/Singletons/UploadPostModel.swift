@@ -100,7 +100,7 @@ class UploadPostModel {
         for w in words {
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
-                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
+                if let f = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == username}) {
                     selectedUsers.append(f)
                 }
             }
@@ -165,7 +165,7 @@ class UploadPostModel {
         for w in word {
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
-                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
+                if let f = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == username}) {
                     UploadPostModel.shared.postObject.taggedUsers!.append(username)
                     UploadPostModel.shared.postObject.taggedUserIDs!.append(f.id!)
                     taggedProfiles.append(f)
@@ -173,7 +173,7 @@ class UploadPostModel {
             }
         }
         
-        var postFriends = postObject.privacyLevel == "invite" ? spotObject!.inviteList!.filter(UserDataModel.shared.friendIDs.contains) : UserDataModel.shared.friendIDs
+        var postFriends = postObject.privacyLevel == "invite" ? spotObject!.inviteList!.filter(UserDataModel.shared.userInfo.friendIDs.contains) : UserDataModel.shared.userInfo.friendIDs
         let uid = UserDataModel.shared.uid
         if !postFriends.contains(uid) { postFriends.append(uid) }
         postObject.friendsList = postFriends

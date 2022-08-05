@@ -264,7 +264,7 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "FriendsCell", for: indexPath) as? ChooseFriendsCell {
             let friend = queried ? queriedFriends[indexPath.row] : friendsList[indexPath.row]
             let editable = !confirmedIDs.contains(friend.id!)
-            cell.setUp(friend: friend, allowsSelection: allowsSelection, editable: editable)
+            cell.setUp(user: friend, allowsSelection: allowsSelection, editable: editable)
             return cell
         }
         return UITableViewCell()
@@ -293,51 +293,60 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
 
 class ChooseFriendsCell: UITableViewCell {
     
-    var profilePic: UIImageView!
+    var userID = ""
+
+    var profileImage: UIImageView!
+    var avatarImage: UIImageView!
     var username: UILabel!
     var selectedBubble: UIView!
     var bottomLine: UIView!
-    
-    var userID = ""
-    
-    func setUp(friend: UserProfile, allowsSelection: Bool, editable: Bool) {
+        
+    func setUp(user: UserProfile, allowsSelection: Bool, editable: Bool) {
         
         backgroundColor = .white
         contentView.alpha = 1.0
         selectionStyle = .none
-        userID = friend.id!
+        userID = user.id!
         
         resetCell()
         
-        profilePic = UIImageView {
+        profileImage = UIImageView {
             $0.contentMode = .scaleAspectFit
             $0.layer.cornerRadius = 21
             $0.clipsToBounds = true
             contentView.addSubview($0)
         }
-        profilePic.snp.makeConstraints {
+        profileImage.snp.makeConstraints {
             $0.leading.equalTo(15)
             $0.top.equalTo(8)
             $0.width.height.equalTo(42)
         }
-            
-        let avatar = (friend.avatarURL ?? "") != ""
-        let url = avatar ? friend.avatarURL! : friend.imageURL
-        if avatar { profilePic.frame = CGRect(x: 19, y: 10, width: 35, height: 44.5); profilePic.layer.cornerRadius = 0 }
         
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        avatarImage = UIImageView {
+            $0.contentMode = .scaleAspectFill
+            contentView.addSubview($0)
+        }
+        avatarImage.snp.makeConstraints {
+            $0.leading.equalTo(profileImage).inset(-10)
+            $0.bottom.equalTo(profileImage).inset(-2)
+            $0.height.equalTo(25)
+            $0.width.equalTo(17.33)
         }
         
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+        profileImage.sd_setImage(with: URL(string: user.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        
+        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+        avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+
         username = UILabel {
-            $0.text = friend.username
+            $0.text = user.username
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
             contentView.addSubview($0)
         }
         username.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
+            $0.leading.equalTo(profileImage.snp.trailing).offset(8)
             $0.top.equalTo(21)
             $0.trailing.equalToSuperview().inset(60)
         }
@@ -345,7 +354,7 @@ class ChooseFriendsCell: UITableViewCell {
         if allowsSelection {
             selectedBubble = UIView {
                 $0.frame = CGRect(x: UIScreen.main.bounds.width - 49, y: 17, width: 24, height: 24)
-                $0.backgroundColor = friend.selected ? UIColor(named: "SpotGreen") : UIColor(red: 0.975, green: 0.975, blue: 0.975, alpha: 1)
+                $0.backgroundColor = user.selected ? UIColor(named: "SpotGreen") : UIColor(red: 0.975, green: 0.975, blue: 0.975, alpha: 1)
                 $0.layer.borderColor = UIColor(red: 0.863, green: 0.863, blue: 0.863, alpha: 1).cgColor
                 $0.layer.borderWidth = 2
                 $0.layer.cornerRadius = 12.5
@@ -373,7 +382,8 @@ class ChooseFriendsCell: UITableViewCell {
     }
         
     func resetCell() {
-        if profilePic != nil { profilePic.image = UIImage() }
+        if profileImage != nil { profileImage.image = UIImage(); profileImage.removeFromSuperview() }
+        if avatarImage != nil { avatarImage.image = UIImage(); avatarImage.removeFromSuperview() }
         if username != nil { username.text = "" }
         if selectedBubble != nil { selectedBubble.backgroundColor = nil; selectedBubble.layer.borderColor = nil }
         if bottomLine != nil { bottomLine.backgroundColor = nil }
@@ -381,7 +391,8 @@ class ChooseFriendsCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        if profilePic != nil { profilePic.removeFromSuperview(); profilePic.sd_cancelCurrentImageLoad() }
+        if profileImage != nil { profileImage.sd_cancelCurrentImageLoad() }
+        if avatarImage != nil { avatarImage.sd_cancelCurrentImageLoad() }
     }
 }
 
