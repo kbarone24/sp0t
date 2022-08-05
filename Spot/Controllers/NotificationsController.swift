@@ -53,6 +53,9 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         print("being called")
     }
     
+    deinit {
+        print("deini")
+    }
     
     override func viewDidLoad() {
         Mixpanel.mainInstance().track(event: "NotificationsOpen")

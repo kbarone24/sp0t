@@ -70,4 +70,36 @@ struct UserProfile: Identifiable, Codable {
             return m1.postTimestamps.last!.seconds > m2.postTimestamps.last!.seconds
         })
     }
+    
+    mutating func sortFriends() {
+        /// sort friends based on user's top friends
+        if topFriends?.isEmpty ?? true { return }
+        
+        let sortedFriends = topFriends!.sorted(by: {$0.value > $1.value})
+        self.friendIDs = sortedFriends.map({$0.key})
+        
+        let topFriends = Array(sortedFriends.map({$0.key}))
+        var friendObjects: [UserProfile] = []
+        
+        for friend in topFriends {
+            if let object = friendsList.first(where: {$0.id == friend}) {
+                friendObjects.append(object)
+            }
+        }
+        /// add any friend not in top friends
+        for friend in friendsList {
+            if !friendObjects.contains(where: {$0.id == friend.id}) { friendObjects.append(friend) }
+        }
+        friendsList = friendObjects
+    }
+    
+    func getSelectedFriends(memberIDs: [String]) -> [UserProfile] {
+        var selectedFriends = friendsList
+        for member in memberIDs {
+            if let i = friendsList.firstIndex(where: {$0.id == member}) {
+                selectedFriends[i].selected = true
+            }
+        }
+        return selectedFriends
+    }
 }

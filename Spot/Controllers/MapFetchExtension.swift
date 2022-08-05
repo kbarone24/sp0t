@@ -88,22 +88,26 @@ extension MapController {
                 if UserDataModel.shared.userInfo.id == "" { UserDataModel.shared.userInfo = activeUser } else { self.updateUserInfo(user: activeUser) }
                 if UserDataModel.shared.userInfo.profilePic == UIImage() { self.getUserProfilePics() }
                 
-                UserDataModel.shared.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
-                for id in self.deletedFriendIDs { UserDataModel.shared.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
+                UserDataModel.shared.userInfo.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
+                for id in self.deletedFriendIDs { UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
                 NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
 
-                for friend in UserDataModel.shared.friendIDs {
+                for friend in UserDataModel.shared.userInfo.friendIDs {
                     self.db.collection("users").document(friend).getDocument { (friendSnap, err) in
                         do {
                             let friendInfo = try friendSnap?.data(as: UserProfile.self)
-                            guard let info = friendInfo else { UserDataModel.shared.friendIDs.removeAll(where: {$0 == friend}); return }
-                            if !UserDataModel.shared.friendsList.contains(where: {$0.id == friend}) {
-                                UserDataModel.shared.friendsList.append(info)
+                            guard let info = friendInfo else { UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == friend}); return }
+                            if !UserDataModel.shared.userInfo.friendsList.contains(where: {$0.id == friend}) {
+                                UserDataModel.shared.userInfo.friendsList.append(info)
+                                if UserDataModel.shared.userInfo.friendsList.count == UserDataModel.shared.userInfo.friendIDs.count {
+                                    print("sort friends")
+                                    UserDataModel.shared.userInfo.sortFriends() /// sort for top friends
+                                }
                             }
                             
                         } catch {
                             /// remove broken friend object
-                            UserDataModel.shared.friendIDs.removeAll(where: {$0 == friend})
+                            UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == friend})
                             return
                         }
                     }

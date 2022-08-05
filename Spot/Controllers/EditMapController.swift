@@ -395,8 +395,8 @@ extension EditMapController: UICollectionViewDelegate, UICollectionViewDataSourc
         UIView.animate(withDuration: 0.15) {
             collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         } completion: { success in
-            let friendsList = UserDataModel.shared.getTopFriends(selectedList: self.mapData!.memberIDs)
-            let vc = FriendsListController(fromVC: self, allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.friendIDs, friendsList: friendsList, confirmedIDs: self.mapData!.memberIDs)
+            let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: self.mapData!.memberIDs)
+            let vc = FriendsListController(fromVC: self, allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.userInfo.friendIDs, friendsList: friendsList, confirmedIDs: self.mapData!.memberIDs)
             vc.delegate = self
             self.present(vc, animated: true)
             UIView.animate(withDuration: 0.15) {

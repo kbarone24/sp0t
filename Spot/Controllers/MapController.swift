@@ -64,7 +64,11 @@ class MapController: UIViewController {
     /// sheet view: Must declare outside to listen to UIEvent
     private var sheetView: DrawerView? {
         didSet {
-            navigationController?.navigationBar.isHidden = sheetView == nil ? false : true
+            print("sheet view nil", sheetView == nil)
+            let hidden = sheetView != nil
+            navigationController?.setNavigationBarHidden(hidden, animated: false)
+            toggleHomeAppearance(hidden: hidden)
+            animateHomeAlphas()
         }
     }
     
@@ -74,6 +78,7 @@ class MapController: UIViewController {
         getAdmins() /// get admin users to exclude from analytics
         addNotifications()
         runMapFetches()
+        setUpNavBar()
         
         locationManager.delegate = self
     }
@@ -85,7 +90,6 @@ class MapController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        setUpNavBar()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -100,8 +104,8 @@ class MapController: UIViewController {
     }
     
     func setUpViews() {
-        addMapsCollection()
         addMapView()
+        addMapsCollection()
         addNewPostsButton()
     }
     
@@ -118,13 +122,8 @@ class MapController: UIViewController {
         mapView.register(SpotNameAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotName")
         
         view.addSubview(mapView)
-        
-        mapView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(mapsCollection.snp.bottom)
-            $0.bottom.equalToSuperview().offset(65)
-        }
-        
+        makeMapHomeConstraints()
+                
         let addButton = UIButton {
             $0.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
             $0.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
@@ -137,9 +136,16 @@ class MapController: UIViewController {
         }
     }
     
+    func makeMapHomeConstraints() {
+        mapView.snp.makeConstraints {
+            $0.top.leading.trailing.equalToSuperview()
+         //   $0.top.equalTo(mapsCollection.snp.bottom)
+            $0.bottom.equalToSuperview().offset(65)
+        }
+    }
+    
     func addMapsCollection() {
         let layout = UICollectionViewFlowLayout {
-         //   $0.itemSize = CGSize(width: itemWidth, height: itemWidth * 0.95)
             $0.minimumInteritemSpacing = 5
             $0.scrollDirection = .horizontal
         }
@@ -171,7 +177,8 @@ class MapController: UIViewController {
     }
     
     func setUpNavBar() {
-        navigationController?.setNavigationBarHidden(false, animated: false)
+        view.backgroundColor = .white
+        navigationController?.setNavigationBarHidden(false, animated: true)
         navigationItem.leftBarButtonItem = nil
         navigationItem.rightBarButtonItem = nil
         
@@ -181,7 +188,7 @@ class MapController: UIViewController {
             mapNav.requiredStatusBarStyle = .darkContent
         }
     }
-    
+        
     func getTitleView() -> UIView {
         if titleView != nil { return titleView }
         
@@ -202,6 +209,8 @@ class MapController: UIViewController {
             } else {
                 if snap!.documents.count > 0 {
                     self.titleView.notiButton.pendingCount = snap!.documents.count
+                } else {
+                    self.titleView.notiButton.pendingCount = 0
                 }
             }
         }
@@ -254,17 +263,27 @@ class MapController: UIViewController {
         notifVC.contentDrawer = sheetView
     }
     
+    func toggleHomeAppearance(hidden: Bool) {
+        mapsCollection.isHidden = hidden
+        newPostsButton.isHidden = hidden
+    }
+    
+    func animateHomeAlphas() {
+        navigationController?.navigationBar.alpha = 0.0
+        mapsCollection.alpha = 0.0
+        newPostsButton.alpha = 0.0
+        
+        UIView.animate(withDuration: 0.15) {
+            self.navigationController?.navigationBar.alpha = 1
+            self.mapsCollection.alpha = 1
+            self.newPostsButton.alpha = 1
+        }
+    }
     
     /// custom reset nav bar (patch fix for CATransition)
     func uploadMapReset() {
         DispatchQueue.main.async {
             self.setUpNavBar()
-            UIView.animate(withDuration: 0.25) { self.navigationController?.navigationBar.alpha = 1.0 }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                guard let self = self else { return }
-                // self.addPostAnnotationManager()
-            }
         }
     }
 }

@@ -107,7 +107,7 @@ struct MapSpot: Identifiable, Codable {
 
     func isFriends(id: String) -> Bool {
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        if id == uid || (UserDataModel.shared.friendIDs.contains(where: {$0 == id}) && !(UserDataModel.shared.adminIDs.contains(id))) { return true }
+        if id == uid || (UserDataModel.shared.userInfo.friendIDs.contains(where: {$0 == id}) && !(UserDataModel.shared.adminIDs.contains(id))) { return true }
         return false
     }
 }
