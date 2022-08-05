@@ -153,7 +153,8 @@ class MapController: UIViewController {
         mapsCollection.register(MapLoadingCell.self, forCellWithReuseIdentifier: "MapLoadingCell")
         view.addSubview(mapsCollection)
         mapsCollection.snp.makeConstraints {
-            $0.top.leading.trailing.equalToSuperview()
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.topMargin)
+            $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(115)
         }
     }
