@@ -103,9 +103,7 @@ extension MapController: MKMapViewDelegate {
     
     func centerMapOnPosts(animated: Bool) {
         /// zoom out map to show all annotations in view
-        let map = getSelectedMap()
-        let coordinates = map == nil ? friendsPostsDictionary.map({$0.value}).sorted(by: {$0.timestamp.seconds > $1.timestamp.seconds}).map({CLLocationCoordinate2D(latitude: $0.postLat, longitude: $0.postLong)}) : map!.postGroup.map{$0.coordinate}
-        
+        let coordinates = getSortedCoordinates()
         var region = MKCoordinateRegion(coordinates: coordinates)
         if region.span.latitudeDelta == region.maxSpan || region.span.longitudeDelta == region.maxSpan {
             region.center = coordinates.first!
@@ -146,7 +144,19 @@ extension MapController: MKMapViewDelegate {
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        
+        print("select")
+        if let view = view as? SpotPostAnnotationView {
+            let map = getSelectedMap()
+            let post = map?.postsDictionary[view.id]
+            openPost(posts: [post!])
+            
+        } else if let view = view as? FriendPostAnnotationView {
+            let post = friendsPostsDictionary[view.id]
+            openPost(posts: [post!])
+            
+        } else if let view = view as? SpotNameView {
+            print("open spot page")
+        }
     }
     
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
