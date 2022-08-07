@@ -15,6 +15,7 @@ import Mixpanel
 import FirebaseUI
 import Geofirestore
 import FirebaseFunctions
+import SnapKit
 
 class PostController: UIViewController {
     
@@ -25,38 +26,28 @@ class PostController: UIViewController {
     var spotObject: MapSpot!
     
     var postsCollection: UICollectionView!
-    var parentVC: parentViewController = .feed
-    unowned var mapVC: MapController!
     var statusBarMask: UIView!
     
     var selectedPostIndex = 0 /// current row in posts table
     var commentNoti = false /// present commentsVC if opened from notification comment
     
     var dotView: UIView!
-    var userView: UIView!
     var timestamp: UILabel!
-                    
-    enum parentViewController {
-        case feed
-        case spot
-        case profile
-        case notifications
-    }
-    
+                        
     deinit {
         print("deinit")
     }
   
     override func viewDidAppear(_ animated: Bool) {
-        
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
-        setUpTable()
+        DispatchQueue.main.async {  self.postsCollection.reloadItems(at: [IndexPath(item: self.selectedPostIndex, section: 0)]) }
     }
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setUpView()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -77,26 +68,30 @@ class PostController: UIViewController {
     }
     
     
-    func setUpTable() {
+    func setUpView() {
         
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.itemSize = CGSize(width: UIScreen.main.bounds.width, height: view.bounds.height)
-
-        postsCollection = UICollectionView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: view.bounds.height), collectionViewLayout: layout)
-        postsCollection.layer.cornerRadius = 10
-        postsCollection.tag = 16
-        postsCollection.backgroundColor = .black
-        postsCollection.dataSource = self
-        postsCollection.delegate = self
-        postsCollection.prefetchDataSource = self
-        postsCollection.isScrollEnabled = false
-        postsCollection.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-        postsCollection.register(PostCell.self, forCellWithReuseIdentifier: "PostCell")
+        postsCollection = {
+            let layout = UICollectionViewFlowLayout()
+            layout.scrollDirection = .horizontal
+            layout.itemSize = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+            
+            let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+            view.tag = 16
+            view.backgroundColor = .black
+            view.dataSource = self
+            view.delegate = self
+            view.prefetchDataSource = self
+            view.isScrollEnabled = false
+            view.layer.cornerRadius = 10
+            view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+            view.register(PostCell.self, forCellWithReuseIdentifier: "PostCell")
+            return view
+        }()
         view.addSubview(postsCollection)
-        
-        DispatchQueue.main.async {  self.postsCollection.reloadData() }
-                
+        postsCollection.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+                        
         addPullLineAndNotifications()
         
         if commentNoti {
@@ -106,34 +101,11 @@ class PostController: UIViewController {
 
         setUpNavBar()
         
+        /*
         dotView = UIView(frame: CGRect(x: 12, y: 5, width: UIScreen.main.bounds.width - 24, height: 2.5))
         dotView.backgroundColor = nil
         view.addSubview(dotView)
-        setDotView()
-        
-        userView = UIView(frame: CGRect(x: 0, y: 13, width: UIScreen.main.bounds.width, height: 45))
-        view.addSubview(userView)
-        
-        let post = postsList[selectedPostIndex]
-        
-        let username = UILabel(frame: CGRect(x: 13, y: 0, width: 200, height: 19))
-        username.text = post.userInfo == nil ? "" : post.userInfo!.username
-        username.textColor = .white
-        username.font = UIFont(name: "SFCompactText-Bold", size: 16)
-        userView.addSubview(username)
-        
-        timestamp = UILabel(frame: CGRect(x: 13, y: username.frame.maxY + 3, width: 150, height: 15))
-        timestamp.text = getTimestamp(postTime: post.timestamp)
-        timestamp.textColor = UIColor.white.withAlphaComponent(0.8)
-        timestamp.font = UIFont(name: "SFCompactText-Medium", size: 12)
-        userView.addSubview(timestamp)
-        
-        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
-        statusBarMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: statusHeight + 10))
-        statusBarMask.backgroundColor = .black
-        statusBarMask.alpha = 0.0
-        view.addSubview(statusBarMask)
+        setDotView() */
     }
     
     func setTimestamp() {
@@ -168,8 +140,6 @@ class PostController: UIViewController {
     }
         
     func addPullLineAndNotifications() {
-        /// broken out into its own function so it can be called on transition from tutorial to regular view
-        
         NotificationCenter.default.addObserver(self, selector: #selector(notifyIndexChange(_:)), name: NSNotification.Name("PostIndexChange"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostLike(_:)), name: NSNotification.Name("PostLike"), object: nil)
     }
@@ -190,22 +160,15 @@ class PostController: UIViewController {
     
     func setUpNavBar() {
         
+        /*
         mapVC.navigationItem.leftBarButtonItem = nil
         mapVC.navigationItem.rightBarButtonItem = nil
-        
-      //  mapVC.setOpaqueNav()
-
-        if parentVC == .feed {
-            navigationController?.navigationBar.addWhiteBackground()
-            mapVC.navigationItem.titleView = nil
-            mapVC.navigationItem.title = "Friend Posts"
-        }
-        
+                
         /// add exit button over top of feed for profile and spot page
         let backButton = UIBarButtonItem(image: UIImage(named: "CircleBackButton")?.withRenderingMode(.alwaysOriginal), style: .plain, target: self, action: #selector(exitPosts(_:)))
         backButton.imageInsets = UIEdgeInsets(top: 0, left: -2, bottom: 0, right: 0)
         mapVC.navigationItem.leftBarButtonItem = backButton
-        mapVC.navigationItem.rightBarButtonItem = nil
+        mapVC.navigationItem.rightBarButtonItem = nil */
     }
     
     func openComments(row: Int) {
@@ -248,6 +211,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
 
+        print("display")
         let updateCellImage: ([UIImage]?) -> () = { [weak self] (images) in
             
             guard let self = self else { return }
@@ -265,11 +229,11 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
         guard let post = postsList[safe: indexPath.row] else { return }
         
         /// Try to find an existing data loader
+        print("id", post.id)
         if let dataLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
             
             /// Has the data already been loaded?
             if dataLoader.images.count == post.imageURLs.count {
-                
                 guard let cell = cell as? PostCell else { return }
                 cell.finishImageSetUp(images: dataLoader.images)
               //  loadingOperations.removeValue(forKey: post.id ?? "")
@@ -290,6 +254,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
             dataLoader.loadingCompleteHandler = updateCellImage
             PostImageModel.shared.loadingQueue.addOperation(dataLoader)
             PostImageModel.shared.loadingOperations[post.id ?? ""] = dataLoader
+            print("add loading op")
         }
 
     }
@@ -300,7 +265,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
         
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PostCell", for: indexPath) as? PostCell else { return UICollectionViewCell() }
         let post = postsList[indexPath.row]
-        cell.setUp(post: post, row: indexPath.row, cellHeight: view.bounds.height)
+        cell.setUp(post: post, row: indexPath.row)
         if indexPath.row == selectedPostIndex { setSeen(post: post) }
         return cell
     }
@@ -351,6 +316,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
     
     func setSeen(post: MapPost) {
         
+        /*
         db.collection("posts").document(post.id!).updateData(["seenList" : FieldValue.arrayUnion([uid])])
         guard let mapVC = parent as? MapController else { return }
         if post.seenList == nil { return }
@@ -359,156 +325,332 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
         if !newPost.seenList!.contains(uid) {
             newPost.seenList!.append(uid)
             mapVC.friendsPostsDictionary[post.id!] = post
-        }
+        } */
     }
 }
 
 class PostCell: UICollectionViewCell {
     
+    lazy var imageManager = SDWebImageManager()
+    var globalRow = 0 /// row in table
     var post: MapPost!
-    var selectedSpotID: String!
-            
-    var spotView: UIView!
-    var username: UILabel!
-    var usernameDetail: UIView!
-    
-    var spotNameBanner: UIView!
-    var spotIcon: UIImageView!
-    var spotNameLabel: UILabel!
-    var cityLabel: UILabel!
-
-    var timestamp: UILabel!
-    var postCaption: UILabel!
-    
-    var likeButton, commentButton: UIButton!
-    var numLikes, numComments: UILabel!
-    var buttonView: UIView!
-    
-    var imageView: PostImageView!
     
     var vcid: String!
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore! = Firestore.firestore()
-        
-    let cellWidth: CGFloat = UIScreen.main.bounds.width
-    var cellHeight: CGFloat = 0
-    var userViewMaxY: CGFloat = 0
+
+    var imageView: PostImageView!
     
-    var imageManager: SDWebImageManager!
-    var globalRow = 0 /// row in table
+    var detailView: UIView!
+    var mapIcon: UIImageView!
+    var mapName: UILabel!
+    var separatorLine: UIView!
+    var spotIcon: UIImageView!
+    var spotLabel: UILabel!
+    var cityLabel: UILabel!
+
+    var buttonView: UIView!
+    var likeButton, commentButton: UIButton!
+    var numLikes, numComments: UILabel!
     
+    var captionLabel: UILabel!
+    
+    var userView: UIView!
+    var profileImage: UIImageView!
+    var usernameLabel: UILabel!
+    var timestampLabel: UILabel!
+                
     var nextButton, previousButton: UIButton!
     var swipe: UIPanGestureRecognizer!
     
     var offScreen = false /// off screen to avoid double interactions with first cell being pulled down
     var offCell = false
+    var imageFetched = false
     var originalOffset: CGFloat = 0
     
-    func setUp(post: MapPost, row: Int, cellHeight: CGFloat) {
+    let cellHeight = UIScreen.main.bounds.height
+    let cellWidth = UIScreen.main.bounds.width
+    
+    func setUp(post: MapPost, row: Int) {
+        self.post = post
+        self.tag = 16
+        globalRow = row
+        imageFetched = false
         
         resetTextInfo()
         self.backgroundColor = nil
-
-        imageManager = SDWebImageManager()
         
-        self.cellHeight = cellHeight
-        self.userViewMaxY = UIScreen.main.bounds.height - cellHeight + 13
-        
-        self.post = post
-        self.selectedSpotID = post.spotID
-        self.tag = 16
-        globalRow = row
-        
-        spotView = UIView(frame: CGRect(x: 0, y: cellHeight - 118, width: UIScreen.main.bounds.width, height: 43))
-        contentView.addSubview(spotView)
-        
-        spotIcon = UIImageView(frame: CGRect(x: 13, y: 0, width: 18, height: 18))
-        spotIcon.image = UIImage(named: "FeedSpotIcon")
-        spotView.addSubview(spotIcon)
-        
-        spotNameLabel = UILabel(frame: CGRect(x: spotIcon.frame.maxX + 6, y: 1, width: UIScreen.main.bounds.width - 72 - spotIcon.frame.maxX, height: 16))
-        spotNameLabel.text = post.spotName ?? ""
-        spotNameLabel.textColor = .white
-        spotNameLabel.isUserInteractionEnabled = false
-        spotNameLabel.font = UIFont(name: "SFCompactText-Bold", size: 16)
-        spotView.addSubview(spotNameLabel)
-
-        cityLabel = UILabel(frame: CGRect(x: 13, y: spotIcon.frame.maxY + 8, width: UIScreen.main.bounds.width - 30, height: 18))
-        cityLabel.text = post.city ?? ""
-        cityLabel.textColor = UIColor.white.withAlphaComponent(0.8)
-        cityLabel.isUserInteractionEnabled = false
-        cityLabel.font = UIFont(name: "SFCompactText-Medium", size: 15)
-        spotView.addSubview(cityLabel)
-        
-        /// font 14.7 = 18 pt line exactly
-        let noImage = post.imageURLs.isEmpty
-        let fontSize: CGFloat = noImage ? 30 : 18
-        
-        let tempHeight = getCaptionHeight(caption: post.caption, fontSize: fontSize)
-        let overflow = tempHeight > post.captionHeight!
-
-        let bigFrameY = userViewMaxY + (spotView.frame.minY - post.captionHeight! - userViewMaxY)/2
-        let minY = noImage ? bigFrameY : spotView.frame.minY - 15 - post.captionHeight!
-        
-        postCaption = UILabel(frame: CGRect(x: 13, y: minY, width: UIScreen.main.bounds.width - 83, height: post.captionHeight! + 0.5))
-        postCaption.text = post.caption
-        postCaption.textColor = UIColor(red: 0.946, green: 0.946, blue: 0.946, alpha: 1)
-        postCaption.font = UIFont(name: "SFCompactText-Regular", size: fontSize)
-        
-        let numberOfLines = overflow ? Int(post.captionHeight!/21) : 0
-        postCaption.numberOfLines = numberOfLines
-        postCaption.lineBreakMode = overflow ? .byClipping : .byWordWrapping
-        postCaption.isUserInteractionEnabled = true
-        
-        postCaption.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(captionTap(_:))))
-        
-        if overflow {
-            postCaption.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Semibold", size: fontSize)!, moreTextColor: .white)
-            addSubview(self.postCaption)
-        } else { contentView.addSubview(postCaption) }
-        
-                
-        buttonView = UIView(frame: CGRect(x: UIScreen.main.bounds.width - 62, y: cellHeight - 198, width: 43, height: 134))
-        addSubview(buttonView)
+        addImageView()
+        addButtonView()
+        addDetailView()
+        addCaption()
+        addUserView()
+        addTapButtons()
+    }
+    
+    func addImageView() {
+        imageView = PostImageView {
+            $0.layer.cornerRadius = 15
+            $0.tag = globalRow
+            $0.isUserInteractionEnabled = true
+            contentView.addSubview($0)
+        }
+        imageView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(post.imageHeight!)
+            $0.centerY.equalToSuperview().offset(-10)
+        }
+    }
+    
+    func addButtonView() {
+        buttonView = UIView {
+            contentView.addSubview($0)
+        }
+        buttonView.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(15)
+            $0.bottom.equalToSuperview().inset(87)
+            $0.width.equalTo(36)
+        }
         
         let liked = post.likers.contains(uid)
         let likeImage = liked ? UIImage(named: "LikeButtonFilled") : UIImage(named: "LikeButton")
         
-        likeButton = UIButton(frame: CGRect(x: 0, y: 0, width: 42.2, height: 38.8))
-        liked ? likeButton.addTarget(self, action: #selector(unlikePost(_:)), for: .touchUpInside) : likeButton.addTarget(self, action: #selector(likePost(_:)), for: .touchUpInside)
-        likeButton.setImage(likeImage, for: .normal)
-        likeButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        buttonView.addSubview(likeButton)
+        numComments = UILabel {
+            $0.text = String(max(post.commentList.count - 1, 0))
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 12)
+            $0.textColor = .white
+            buttonView.addSubview($0)
+        }
+        numComments.snp.makeConstraints {
+            $0.bottom.equalToSuperview()
+            $0.centerX.equalToSuperview()
+        }
         
-        numLikes = UILabel(frame: CGRect(x: 0, y: likeButton.frame.maxY + 3, width: 43, height: 15))
-        numLikes.text = String(post.likers.count)
-        numLikes.font = UIFont(name: "SFCompactText-Heavy", size: 12.5)
-        numLikes.textColor = .white
-        numLikes.textAlignment = .center
-        buttonView.addSubview(numLikes)
+        commentButton = UIButton {
+            $0.setImage(UIImage(named: "CommentButton"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(commentsTap(_:)), for: .touchUpInside)
+            buttonView.addSubview($0)
+        }
+        commentButton.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(numComments.snp.top).offset(-4)
+            $0.height.equalTo(36)
+        }
+        
+        numLikes = UILabel {
+            $0.text = String(post.likers.count)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 12)
+            $0.textColor = .white
+            buttonView.addSubview($0)
+        }
+        numLikes.snp.makeConstraints {
+            $0.bottom.equalTo(commentButton.snp.top).offset(-23)
+            $0.centerX.equalToSuperview()
+        }
+        
+        likeButton = UIButton {
+            liked ? $0.addTarget(self, action: #selector(unlikePost(_:)), for: .touchUpInside) : $0.addTarget(self, action: #selector(likePost(_:)), for: .touchUpInside)
+            $0.setImage(likeImage, for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            buttonView.addSubview($0)
+        }
+        likeButton.snp.makeConstraints {
+            $0.bottom.equalTo(numLikes.snp.top).offset(-4)
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(32)
+        }
+        
+    }
+    
+    func addDetailView() {
+        detailView = UIView {
+            contentView.addSubview($0)
+        }
+        detailView.snp.makeConstraints {
+            $0.leading.equalToSuperview()
+            $0.trailing.equalTo(buttonView.snp.leading).offset(-15)
+            $0.bottom.equalTo(buttonView.snp.bottom)
+            $0.height.equalTo(15.55)
+        }
+        
+        if post.mapID ?? "" != "" {
+            mapIcon = UIImageView {
+                $0.image = UIImage(named: "FeedMapIcon")
+                detailView.addSubview($0)
+            }
+            mapIcon.snp.makeConstraints {
+                $0.leading.equalTo(13)
+                $0.bottom.equalToSuperview()
+                $0.width.equalTo(15.2)
+                $0.height.equalTo(15)
+            }
 
-        commentButton = UIButton(frame: CGRect(x: 0, y: numLikes.frame.maxY + 15, width: 43.2, height: 41.9))
-        commentButton.setImage(UIImage(named: "CommentButton"), for: .normal)
-        commentButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        commentButton.addTarget(self, action: #selector(commentsTap(_:)), for: .touchUpInside)
-        buttonView.addSubview(commentButton)
+            mapName = UILabel {
+                $0.text = post.mapName ?? ""
+                $0.textColor = .white
+                $0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
+                detailView.addSubview($0)
+            }
+            mapName.snp.makeConstraints {
+                $0.leading.equalTo(mapIcon.snp.trailing).offset(5)
+                $0.bottom.equalToSuperview()
+            }
+            
+            if post.spotID ?? "" != "" {
+                separatorLine = UIView {
+                    $0.backgroundColor = UIColor.white.withAlphaComponent(0.4)
+                    $0.layer.cornerRadius = 5
+                    detailView.addSubview($0)
+                }
+                separatorLine.snp.makeConstraints {
+                    $0.leading.equalTo(mapName.snp.trailing).offset(8)
+                    $0.bottom.equalToSuperview()
+                    $0.width.equalTo(2)
+                    $0.height.equalTo(14)
+                }
+            }
+        }
         
-        numComments = UILabel(frame: CGRect(x: 0, y: commentButton.frame.maxY + 1, width: 43, height: 15))
-        let commentCount = max(post.commentList.count - 1, 0)
-        numComments.text = String(commentCount)
-        numComments.font = UIFont(name: "SFCompactText-Heavy", size: 12.5)
-        numComments.textColor = .white
-        numComments.textAlignment = .center
-        buttonView.addSubview(numComments)
+        if post.spotID ?? "" != "" {
+            spotIcon = UIImageView {
+                $0.image = UIImage(named: "FeedSpotIcon")
+                detailView.addSubview($0)
+            }
+            spotIcon.snp.makeConstraints {
+                $0.bottom.equalToSuperview()
+                $0.width.equalTo(12.8)
+                $0.height.equalTo(15.55)
+                if post.mapID ?? "" == "" {
+                    $0.leading.equalTo(13)
+                } else {
+                    $0.leading.equalTo(separatorLine.snp.trailing).offset(8)
+                }
+            }
+            
+            spotLabel = UILabel {
+                $0.text = post.spotName ?? ""
+                $0.textColor = .white
+                $0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
+                detailView.addSubview($0)
+            }
+            spotLabel.snp.makeConstraints {
+                $0.leading.equalTo(spotIcon.snp.trailing).offset(5)
+                $0.bottom.equalToSuperview()
+            }
+            
+            if post.mapID ?? "" != "" {
+                cityLabel = UILabel {
+                    $0.text = post.city ?? ""
+                    $0.textColor = UIColor.white.withAlphaComponent(0.6)
+                    $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
+                    detailView.addSubview($0)
+                }
+                cityLabel.snp.makeConstraints {
+                    $0.leading.equalTo(spotLabel.snp.trailing).offset(4)
+                    $0.bottom.equalToSuperview()
+                }
+            }
+        }
+    }
+    
+    func addCaption() {
+        /// font 14.7 = 18 pt line exactly
+        let tempHeight = getCaptionHeight(caption: post.caption, fontSize: 14.5)
+        let overflow = tempHeight > post.captionHeight!
         
-        let buttonHeight = buttonView.frame.minY - userViewMaxY - 20
-        nextButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 100, y: userViewMaxY + 10, width: 100, height: buttonHeight))
-        nextButton.addTarget(self, action: #selector(nextTap(_:)), for: .touchUpInside)
-        contentView.addSubview(nextButton)
+        captionLabel = UILabel {
+            $0.text = post.caption
+            $0.textColor = .white
+            $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
+            $0.numberOfLines = overflow ? 3 : 0
+            $0.lineBreakMode = overflow ? .byClipping : .byWordWrapping
+            $0.isUserInteractionEnabled = true
+            $0.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(captionTap(_:))))
+            if overflow {
+                $0.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Semibold", size: 14.5)!, moreTextColor: .white)
+            }
+            contentView.addSubview($0)
+        }
+        captionLabel.snp.makeConstraints {
+            $0.leading.equalTo(13)
+            $0.trailing.equalTo(buttonView.snp.leading).offset(-15)
+            if post.spotID ?? "" != "" || post.mapID ?? "" != "" {
+                $0.bottom.equalTo(detailView.snp.top).offset(-16)
+            } else {
+                $0.bottom.equalToSuperview()
+            }
+        }
+    }
+    
+    func addUserView() {
+        userView = UIView {
+            contentView.addSubview($0)
+        }
+        userView.snp.makeConstraints {
+            $0.leading.equalToSuperview()
+            $0.trailing.equalTo(buttonView.snp.leading).offset(-15)
+            $0.bottom.equalTo(captionLabel.snp.top).offset(-7)
+            $0.height.equalTo(25)
+        }
         
-        previousButton = UIButton(frame: CGRect(x: 0, y: userViewMaxY + 10, width: 100, height: buttonHeight))
-        previousButton.addTarget(self, action: #selector(previousTap(_:)), for: .touchUpInside)
-        contentView.addSubview(previousButton)
+        profileImage = UIImageView {
+            $0.contentMode = .scaleAspectFill
+            $0.layer.masksToBounds = true
+            $0.backgroundColor = .gray
+            $0.layer.cornerRadius = 25/2
+            userView.addSubview($0)
+        }
+        profileImage.snp.makeConstraints {
+            $0.leading.equalTo(12)
+            $0.width.height.equalTo(25)
+        }
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+        profileImage.sd_setImage(with: URL(string: post.userInfo?.imageURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+
+        usernameLabel = UILabel {
+            $0.text = post.userInfo?.username ?? ""
+            $0.textColor = .white
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
+            userView.addSubview($0)
+        }
+        usernameLabel.snp.makeConstraints {
+            $0.leading.equalTo(profileImage.snp.trailing).offset(6)
+            $0.centerY.equalToSuperview()
+        }
+        
+        timestampLabel = UILabel {
+            $0.text = getTimestamp(postTime: post.timestamp)
+            $0.textColor = UIColor.white.withAlphaComponent(0.6)
+            $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
+            userView.addSubview($0)
+        }
+        timestampLabel.snp.makeConstraints {
+            $0.leading.equalTo(usernameLabel.snp.trailing).offset(4)
+            $0.centerY.equalToSuperview()
+        }
+    }
+    
+    func addTapButtons() {
+        nextButton = UIButton {
+            $0.addTarget(self, action: #selector(nextTap(_:)), for: .touchUpInside)
+            contentView.addSubview($0)
+        }
+        nextButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview()
+            $0.top.equalTo(50)
+        }
+        
+        previousButton = UIButton {
+            $0.addTarget(self, action: #selector(previousTap(_:)), for: .touchUpInside)
+            contentView.addSubview($0)
+        }
+        previousButton.snp.makeConstraints {
+            $0.leading.equalToSuperview()
+            $0.top.equalTo(50)
+            $0.bottom.equalTo(buttonView.snp.top)
+            $0.width.equalTo(60)
+        }
         
         swipe = UIPanGestureRecognizer(target: self, action: #selector(swipe(_:)))
         contentView.addGestureRecognizer(swipe)
@@ -519,7 +661,7 @@ class PostCell: UICollectionViewCell {
         resetImageInfo()
         
         let imageAspect = post.imageHeight! / UIScreen.main.bounds.width
-        let imageY: CGFloat = imageAspect > 1.8 ? 0 : imageAspect > 1.5 ? userViewMaxY : (cellHeight - post.imageHeight!)/2
+    //    let imageY: CGFloat = imageAspect > 1.8 ? 0 : imageAspect > 1.5 ? userViewMaxY : (cellHeight - post.imageHeight!)/2
         
         var frameIndexes = post.frameIndexes ?? []
         if post.imageURLs.count == 0 { return }
@@ -529,41 +671,22 @@ class PostCell: UICollectionViewCell {
         if images.isEmpty { return }
         post.postImage = images
 
-        imageView = PostImageView(frame: CGRect(x: 0, y: imageY, width: UIScreen.main.bounds.width, height: post.imageHeight!))
-        imageView.layer.cornerRadius = 15
-        imageView.tag = globalRow
-        imageView.isUserInteractionEnabled = true
-
+        /*
         let tap = UITapGestureRecognizer(target: self, action: #selector(doubleTap(_:)))
         tap.numberOfTapsRequired = 2
-        imageView.addGestureRecognizer(tap)
+        imageView.addGestureRecognizer(tap) */
         
-        contentView.addSubview(imageView)
-
         setCurrentImage()
         
-        if imageAspect > 1.5 { imageView.addBottomMask() }
-        if imageAspect > 1.7 { imageView.addTopMask() }
-            
-        /// bring subviews and tap areas above masks
-        if postCaption != nil { contentView.bringSubviewToFront(postCaption) }
-        if buttonView != nil { contentView.bringSubviewToFront(buttonView) }
-        if spotView != nil { contentView.bringSubviewToFront(spotView) }
-        if previousButton != nil { contentView.bringSubviewToFront(previousButton) }
-        if nextButton != nil { contentView.bringSubviewToFront(nextButton) }
+     //   if imageAspect > 1.5 { imageView.addBottomMask() }
     }
     
     func setCurrentImage() {
-        
+        imageFetched = true
         let images = post.postImage
         let frameIndexes = post.frameIndexes ?? []
         
         guard let still = images[safe: frameIndexes[post.selectedImageIndex!]] else { return }
-        
-        let imageAspect = still.size.height / still.size.width
-        imageView.contentMode = (imageAspect + 0.01 < (post.imageHeight! / UIScreen.main.bounds.width)) && imageAspect < 1.1  ? .scaleAspectFit : .scaleAspectFill
-        if imageView.contentMode == .scaleAspectFit { imageView.roundCornersForAspectFit(radius: 15) }
-
         imageView.image = still
         imageView.stillImage = still
 
@@ -577,17 +700,20 @@ class PostCell: UICollectionViewCell {
     }
     
     func resetTextInfo() {
-        /// reset for fields that are set before image fetch
-        if spotNameLabel != nil { spotNameLabel.text = "" }
-        if cityLabel != nil { cityLabel.text = "" }
-        if username != nil { username.text = "" }
-        if timestamp != nil { timestamp.text = "" }
-        if postCaption != nil { postCaption.text = "" }
-        if commentButton != nil { commentButton.setImage(UIImage(), for: .normal) }
-        if numComments != nil { numComments.text = "" }
-        if likeButton != nil { likeButton.setImage(UIImage(), for: .normal) }
-        if numLikes != nil { numLikes.text = "" }
-        if buttonView != nil { for sub in buttonView.subviews { sub.removeFromSuperview() }}
+        if mapIcon != nil { mapIcon.removeFromSuperview() }
+        if mapName != nil { mapName.text = ""; mapName.removeFromSuperview() }
+        if separatorLine != nil { separatorLine.removeFromSuperview() }
+        if spotIcon != nil { spotIcon.removeFromSuperview() }
+        if spotLabel != nil { spotLabel.text = ""; spotLabel.removeFromSuperview() }
+        if cityLabel != nil { cityLabel.text = ""; cityLabel.removeFromSuperview() }
+        if likeButton != nil { likeButton.removeFromSuperview() }
+        if commentButton != nil { commentButton.removeFromSuperview() }
+        if numLikes != nil { numLikes.text = ""; numLikes.removeFromSuperview() }
+        if numComments != nil { numComments.text = ""; numComments.removeFromSuperview() }
+        if captionLabel != nil { captionLabel.text = ""; captionLabel.removeFromSuperview() }
+        if profileImage != nil { profileImage.image = UIImage(); profileImage.removeFromSuperview(); profileImage.sd_cancelCurrentImageLoad() }
+        if usernameLabel != nil { usernameLabel.text = ""; usernameLabel.removeFromSuperview() }
+        if timestampLabel != nil { timestampLabel.text = ""; timestampLabel.removeFromSuperview() }
         if imageView != nil { imageView.image = UIImage(); imageView.animationImages?.removeAll(); imageView.animationIndex = 0; imageView.removeFromSuperview() }
     }
     
@@ -598,7 +724,7 @@ class PostCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        if imageManager != nil { imageManager.cancelAll(); imageManager = nil }
+        imageManager.cancelAll()
     }
         
     
@@ -616,9 +742,9 @@ class PostCell: UICollectionViewCell {
         
     func getCaptionHeight(caption: String, fontSize: CGFloat) -> CGFloat {
                 
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 83, height: cellHeight))
+        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 80, height: UIScreen.main.bounds.height))
         tempLabel.text = caption
-        tempLabel.font = UIFont(name: "SFCompactText-Regular", size: fontSize)
+        tempLabel.font = UIFont(name: "SFCompactText-Medium", size: fontSize)
         tempLabel.numberOfLines = 0
         tempLabel.lineBreakMode = .byWordWrapping
         tempLabel.sizeToFit()
@@ -629,8 +755,7 @@ class PostCell: UICollectionViewCell {
     @objc func nextTap(_ sender: UIButton) {
         
         guard let postVC = viewContainingController() as? PostController else { return }
-
-        if (post.selectedImageIndex! < (post.frameIndexes?.count ?? 0) - 1) && !post.postImage.isEmpty {
+        if (post.selectedImageIndex! < (post.frameIndexes?.count ?? 0) - 1) && imageFetched {
             nextImage()
             
         } else if postVC.selectedPostIndex < postVC.postsList.count - 1 {
@@ -769,7 +894,6 @@ class PostCell: UICollectionViewCell {
         UIView.animate(withDuration: 0.2, animations: {
             
             guard let postVC = self.viewContainingController() as? PostController else { return }
-            guard let mapVC = postVC.parent as? MapController else { return }
 
             postVC.view.frame = CGRect(x: 0, y: UIScreen.main.bounds.height - self.cellHeight, width: UIScreen.main.bounds.width, height: self.cellHeight)
             postVC.view.alpha = 1.0
@@ -789,7 +913,6 @@ class PostCell: UICollectionViewCell {
         Mixpanel.mainInstance().track(event: "PostPageRemove")
         
         guard let postVC = self.viewContainingController() as? PostController else { return }
-        guard let mapVC = postVC.parent as? MapController else { return }
                 
         UIView.animate(withDuration: 0.2, animations: {
             

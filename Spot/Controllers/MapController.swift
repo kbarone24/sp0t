@@ -263,6 +263,18 @@ class MapController: UIViewController {
         notifVC.contentDrawer = sheetView
     }
     
+    func openPost(posts: [MapPost]) {
+        guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
+        postVC.postsList = posts
+        sheetView = DrawerView(present: postVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+            self.sheetView = nil
+        })
+        sheetView?.present(to: .Top)
+        sheetView?.canInteract = false
+        sheetView?.showCloseButton = true
+        sheetView?.swipeDownToDismiss = true
+    }
+    
     func toggleHomeAppearance(hidden: Bool) {
         mapsCollection.isHidden = hidden
         newPostsButton.isHidden = hidden
