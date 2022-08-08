@@ -250,6 +250,7 @@ extension MapController {
     }
     
     func addPostToDictionary(post: MapPost, map: CustomMap?) {
+        let post = setSecondaryPostValues(post: post)
         postsList.append(post)
         if selectedItemIndex == 0 { addPostAnnotation(post: post) } /// 0 always selected on initial fetch
         
@@ -390,6 +391,20 @@ extension MapController {
             }
             return g1.postIDs.first?.timestamp.seconds ?? 0 > g2.postIDs.first?.timestamp.seconds ?? 0
         })
+    }
+    
+    func getSortedCoordinates() -> [CLLocationCoordinate2D] {
+        let map = getSelectedMap()
+        
+        if map == nil {
+            var posts = friendsPostsDictionary.map({$0.value})
+            if posts.contains(where: {!$0.seen}) { posts = posts.filter({!$0.seen}) }
+            return posts.map({CLLocationCoordinate2D(latitude: $0.postLat, longitude: $0.postLong)})
+        } else {
+            var group = map!.postGroup
+            if group.contains(where: {$0.postIDs.contains(where: {!$0.seen})}) { group = group.filter({$0.postIDs.contains(where: {!$0.seen})})}
+            return group.map({$0.coordinate})
+        }
     }
     
     func setNewPostsButtonCount() {

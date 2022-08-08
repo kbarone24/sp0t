@@ -877,7 +877,7 @@ class PostImagePreview: PostImageView {
     }
     
     func getImageHeight(aspectRatio: CGFloat, maxAspect: CGFloat) -> CGFloat {
-      
+        
         var imageAspect =  min(aspectRatio, maxAspect)
         if imageAspect > 1.1 && imageAspect < 1.6 { imageAspect = 1.6 } /// stretch iPhone vertical
         if imageAspect > 1.6 { imageAspect = maxAspect } /// round to max aspect

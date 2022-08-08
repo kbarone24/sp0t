@@ -269,45 +269,9 @@ extension UIViewController {
             }
         }
     }
-    
-    func setSecondaryPostValues(post: MapPost) -> MapPost {
-        
-        var newPost = post
-        newPost.seconds = newPost.timestamp.seconds
-        
-        newPost.imageHeight = getImageHeight(aspectRatios: newPost.aspectRatios ?? [], maxAspect: 1.92) /// max aspect 1.92 for feed
-        let noImage = newPost.imageHeight == 0
-        
-        /// round to nearest line height
-        let maxCaption: CGFloat = noImage ? 500 : 65
-        newPost.captionHeight = self.getCaptionHeight(caption: newPost.caption, noImage: noImage, maxCaption: maxCaption, truncated: true)
-                
-        return newPost
-    }
-    
-    func getImageHeight(aspectRatios: [CGFloat], maxAspect: CGFloat) -> CGFloat {
-      
-        var imageAspect =  min((aspectRatios.max() ?? 0.033) - 0.033, maxAspect)
-        if imageAspect > 1.1 && imageAspect < 1.7 { imageAspect = 1.7 } /// stretch iPhone vertical
-        if imageAspect > 1.7 { imageAspect = maxAspect }
-        
-        let imageHeight = UIScreen.main.bounds.width * imageAspect
-        return imageHeight
-    }
-    
-    func getCaptionHeight(caption: String, noImage: Bool, maxCaption: CGFloat, truncated: Bool) -> CGFloat {
-        
-        let fontSize: CGFloat = noImage ? 30 : 18
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 83, height: 20))
-        tempLabel.text = caption
-        tempLabel.font = UIFont(name: "SFCompactText-Regular", size: fontSize)
-        tempLabel.numberOfLines = 0
-        tempLabel.lineBreakMode = .byWordWrapping
-        tempLabel.sizeToFit()
-        
-        return truncated ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
-    }
-        
+            
+    /*
+    */
     func getNewCaption(oldUsername: String, newUsername: String, caption: String) -> String {
         
         var newCaption = caption
@@ -1189,25 +1153,7 @@ extension UICollectionViewCell {
             } catch { completion(emptyPost); return }
         }
     }
-    
-    func setSecondaryPostValues(post: MapPost) -> MapPost {
         
-        var newPost = post
-        newPost.seconds = newPost.timestamp.seconds
-        
-        newPost.imageHeight = getImageHeight(aspectRatios: newPost.aspectRatios ?? [], maxAspect: 1.92) /// max aspect 1.92 for feed
-        let noImage = newPost.imageHeight == 0
-        
-        /// round to nearest line height
-        let maxCaption: CGFloat = noImage ? 500 : 65
-        newPost.captionHeight = self.getCaptionHeight(caption: newPost.caption, noImage: noImage, maxCaption: maxCaption, truncated: true)
-        
-     //   newPost.posterGroup = [newPost.posterID]
-      //  newPost.posterGroup!.append(contentsOf: newPost.addedUsers ?? [])
-        
-        return newPost
-    }
-    
     func getUserInfo(userID: String, completion: @escaping (_ user: UserProfile) -> Void) {
         
         let db: Firestore! = Firestore.firestore()
@@ -1282,28 +1228,37 @@ extension UICollectionViewCell {
         let commentHeight: CGFloat = temp.bounds.height < 16 ? 16 : temp.bounds.height
         return commentHeight
     }
+}
+
+extension NSObject {
+    func getCaptionHeight(caption: String, fontSize: CGFloat, maxCaption: CGFloat) -> CGFloat {
+        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 80, height: UIScreen.main.bounds.height))
+        tempLabel.text = caption
+        tempLabel.font = UIFont(name: "SFCompactText-Medium", size: fontSize)
+        tempLabel.numberOfLines = 0
+        tempLabel.lineBreakMode = .byWordWrapping
+        tempLabel.sizeToFit()
+
+        return maxCaption != 0 ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
+    }
     
     func getImageHeight(aspectRatios: [CGFloat], maxAspect: CGFloat) -> CGFloat {
-      
         var imageAspect =  min((aspectRatios.max() ?? 0.033) - 0.033, maxAspect)
-        if imageAspect > 1.1 && imageAspect < 1.7 { imageAspect = 1.7 } /// stretch iPhone vertical
-        if imageAspect > 1.7 { imageAspect = maxAspect }
+        if imageAspect > 1.1 && imageAspect < 1.6 { imageAspect = 1.6 } /// stretch iPhone vertical
+        if imageAspect > 1.6 { imageAspect = maxAspect } /// round to max aspect
         
         let imageHeight = UIScreen.main.bounds.width * imageAspect
         return imageHeight
     }
     
-    func getCaptionHeight(caption: String, noImage: Bool, maxCaption: CGFloat, truncated: Bool) -> CGFloat {
+    func setSecondaryPostValues(post: MapPost) -> MapPost {
+        var newPost = post
+        newPost.seconds = newPost.timestamp.seconds
+        newPost.imageHeight = getImageHeight(aspectRatios: newPost.aspectRatios ?? [], maxAspect: 1.92) /// max aspect 1.92 for feed
+        /// round to nearest line height
+        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 65)
         
-        let fontSize: CGFloat = noImage ? 30 : 18
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 83, height: 20))
-        tempLabel.text = caption
-        tempLabel.font = UIFont(name: "SFCompactText-Regular", size: fontSize)
-        tempLabel.numberOfLines = 0
-        tempLabel.lineBreakMode = .byWordWrapping
-        tempLabel.sizeToFit()
-        
-        return truncated ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
+        return newPost
     }
 }
 
@@ -1857,8 +1812,8 @@ extension UILabel {
     
     func addTrailing(with trailingText: String, moreText: String, moreTextFont: UIFont, moreTextColor: UIColor) {
         
+        print("visible length", self.visibleTextLength)
         let readMoreText: String = trailingText + moreText
-        
         if self.visibleTextLength == 0 { return }
         
         let lengthForVisibleString: Int = self.visibleTextLength
@@ -1867,15 +1822,17 @@ extension UILabel {
                                     
             let mutableString = NSString(string: myText) /// use mutable string for length for correct length calculations
             
+            print("mutable", mutableString)
             let trimmedString: String? = mutableString.replacingCharacters(in: NSRange(location: lengthForVisibleString, length: mutableString.length - lengthForVisibleString), with: "")
             let readMoreLength: Int = (readMoreText.count)
             
             let safeTrimmedString = NSString(string: trimmedString ?? "")
-            
+            print("safe trimmed", safeTrimmedString)
             if safeTrimmedString.length <= readMoreLength { return }
             
             // "safeTrimmedString.count - readMoreLength" should never be less then the readMoreLength because it'll be a negative value and will crash
             let trimmedForReadMore: String = (safeTrimmedString as NSString).replacingCharacters(in: NSRange(location: safeTrimmedString.length - readMoreLength, length: readMoreLength), with: "") + trailingText
+            print("trimmed for read more", trimmedForReadMore)
                         
             let answerAttributed = NSMutableAttributedString(string: trimmedForReadMore, attributes: [NSAttributedString.Key.font: self.font as Any])
             let readMoreAttributed = NSMutableAttributedString(string: moreText, attributes: [NSAttributedString.Key.font: moreTextFont, NSAttributedString.Key.foregroundColor: moreTextColor])
