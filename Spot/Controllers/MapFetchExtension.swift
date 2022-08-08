@@ -250,6 +250,7 @@ extension MapController {
     }
     
     func addPostToDictionary(post: MapPost, map: CustomMap?) {
+        let post = setSecondaryPostValues(post: post)
         postsList.append(post)
         if selectedItemIndex == 0 { addPostAnnotation(post: post) } /// 0 always selected on initial fetch
         

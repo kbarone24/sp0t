@@ -60,7 +60,6 @@ class CommentsController: UIViewController {
         view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.98, alpha: 1)
         
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
-        post.captionHeight = getCaptionHeight(caption: post.caption, noImage: false, maxCaption: 0, truncated: false) /// run get captionheight again for 14.7 font caption at full length
         
         addTable()
         DispatchQueue.global().async { self.getLikers() }

@@ -13,20 +13,27 @@ import FirebaseUI
 
 class SpotPostAnnotationView: MKAnnotationView {
     var id = ""
+    var postIDs: [String] = []
+    
     lazy var imageManager = SDWebImageManager()
+    unowned var mapView: MKMapView?
 
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         collisionMode = .circle
         canShowCallout = false
         centerOffset = CGPoint(x: 0, y: -20)
+        addTap()
     }
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func updateImage(post: MapPost?, spotName: String, id: String) {
+    func updateImage(posts: [MapPost], spotName: String, id: String) {
         self.id = id
+        postIDs = posts.map({$0.id!})
+        let post = posts.first
+        
         let nibView = loadNib(post: post, spotName: spotName)
         self.image = nibView.asImage()
 
@@ -65,6 +72,31 @@ class SpotPostAnnotationView: MKAnnotationView {
         
         infoWindow.resizeView()
         return infoWindow
+    }
+    
+    func addTap() {
+        /// prevent map lag on selection
+        let tap = UITapGestureRecognizer()
+        tap.delaysTouchesBegan = false
+        tap.delaysTouchesEnded = false
+        tap.numberOfTapsRequired = 1
+        tap.delegate = self
+        addGestureRecognizer(tap)
+    }
+}
+
+extension SpotPostAnnotationView: UIGestureRecognizerDelegate {
+
+    func toggleZoom() {
+        mapView?.isZoomEnabled = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.mapView?.isZoomEnabled = true
+        }
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        toggleZoom()
+        return false
     }
 }
 

@@ -64,7 +64,6 @@ class MapController: UIViewController {
     /// sheet view: Must declare outside to listen to UIEvent
     private var sheetView: DrawerView? {
         didSet {
-            print("sheet view nil", sheetView == nil)
             let hidden = sheetView != nil
             navigationController?.setNavigationBarHidden(hidden, animated: false)
             toggleHomeAppearance(hidden: hidden)
@@ -110,20 +109,21 @@ class MapController: UIViewController {
     }
     
     func addMapView() {
-        mapView = MKMapView()
-        mapView.delegate = self
-        mapView.mapType = .mutedStandard
-        mapView.overrideUserInterfaceStyle = .light
-        mapView.pointOfInterestFilter = .excludingAll
-        mapView.showsCompass = false
-        mapView.showsTraffic = false
-        mapView.register(FriendPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "FriendsPost")
-        mapView.register(SpotPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotPost")
-        mapView.register(SpotNameAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotName")
-        
-        view.addSubview(mapView)
+        mapView = MKMapView {
+            $0.delegate = self
+            $0.mapType = .mutedStandard
+            $0.overrideUserInterfaceStyle = .light
+            $0.pointOfInterestFilter = .excludingAll
+            $0.showsCompass = false
+            $0.showsTraffic = false
+            $0.tag = 13
+            $0.register(FriendPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "FriendsPost")
+            $0.register(SpotPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotPost")
+            $0.register(SpotNameAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotName")
+            view.addSubview($0)
+        }
         makeMapHomeConstraints()
-                
+                        
         let addButton = UIButton {
             $0.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
             $0.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
@@ -386,7 +386,6 @@ extension MapController: CLLocationManagerDelegate {
 
 extension MapController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        
         if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
             return false
         }
