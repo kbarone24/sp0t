@@ -205,7 +205,7 @@ extension EditMapController {
         }
         
         mapDescription = UITextView {
-            $0.text = mapData!.mapDescription == "" ? "Add a map bio..." : mapData!.mapDescription
+            $0.text = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? "Add a map bio..." : mapData!.mapDescription
             $0.delegate = self
             $0.textAlignment = .center
             $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
