@@ -26,13 +26,11 @@ class PostController: UIViewController {
     var spotObject: MapSpot!
     
     var postsCollection: UICollectionView!
-    var statusBarMask: UIView!
     
     var selectedPostIndex = 0 /// current row in posts table
     var commentNoti = false /// present commentsVC if opened from notification comment
     
     var dotView: UIView!
-    var timestamp: UILabel!
                         
     deinit {
         print("deinit")
@@ -41,7 +39,6 @@ class PostController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
-        DispatchQueue.main.async {  self.postsCollection.reloadItems(at: [IndexPath(item: self.selectedPostIndex, section: 0)]) }
     }
     
     
@@ -73,7 +70,6 @@ class PostController: UIViewController {
         postsCollection = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .horizontal
-            layout.itemSize = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
             
             let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
             view.tag = 16
@@ -83,7 +79,6 @@ class PostController: UIViewController {
             view.prefetchDataSource = self
             view.isScrollEnabled = false
             view.layer.cornerRadius = 10
-            view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
             view.register(PostCell.self, forCellWithReuseIdentifier: "PostCell")
             return view
         }()
@@ -108,13 +103,9 @@ class PostController: UIViewController {
         setDotView() */
     }
     
-    func setTimestamp() {
-        let post = postsList[selectedPostIndex]
-        timestamp.text = getTimestamp(postTime: post.timestamp)
-    }
-    
     func setDotView() {
         
+        /*
         if dotView != nil { for sub in dotView.subviews { sub.removeFromSuperview() }}
         
         let post = postsList[selectedPostIndex]
@@ -136,7 +127,7 @@ class PostController: UIViewController {
                 
                 offset += dotWidth + gapSize
             }
-        }
+        } */
     }
         
     func addPullLineAndNotifications() {
@@ -203,17 +194,26 @@ class PostController: UIViewController {
     }
 }
 
-extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching {
+extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching, UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return postsList.count
     }
     
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        /// adjusted inset will always = 0 unless extending scroll view edges beneath inset again
+        let adjustedInset = collectionView.adjustedContentInset.top + collectionView.adjustedContentInset.bottom
+        return CGSize(width: collectionView.bounds.width, height: collectionView.bounds.height - adjustedInset)
+    }
+            
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        return UIEdgeInsets.zero
+    }
+              
+    
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
 
-        print("display")
         let updateCellImage: ([UIImage]?) -> () = { [weak self] (images) in
-            
             guard let self = self else { return }
             guard let post = self.postsList[safe: indexPath.row] else { return }
             guard let cell = cell as? PostCell else { return } /// declare cell within closure in case cancelled
@@ -229,7 +229,6 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
         guard let post = postsList[safe: indexPath.row] else { return }
         
         /// Try to find an existing data loader
-        print("id", post.id)
         if let dataLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
             
             /// Has the data already been loaded?
@@ -254,9 +253,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
             dataLoader.loadingCompleteHandler = updateCellImage
             PostImageModel.shared.loadingQueue.addOperation(dataLoader)
             PostImageModel.shared.loadingOperations[post.id ?? ""] = dataLoader
-            print("add loading op")
         }
-
     }
     ///https://medium.com/monstar-lab-bangladesh-engineering/tableview-prefetching-datasource-3de593530c4a
     
@@ -366,11 +363,18 @@ class PostCell: UICollectionViewCell {
     var offScreen = false /// off screen to avoid double interactions with first cell being pulled down
     var offCell = false
     var imageFetched = false
+    var overflow = false
     var originalOffset: CGFloat = 0
     
     let cellHeight = UIScreen.main.bounds.height
     let cellWidth = UIScreen.main.bounds.width
-    
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        contentView.layoutIfNeeded()
+        addMoreIfNeeded()
+    }
+        
     func setUp(post: MapPost, row: Int) {
         self.post = post
         self.tag = 16
@@ -395,10 +399,10 @@ class PostCell: UICollectionViewCell {
             $0.isUserInteractionEnabled = true
             contentView.addSubview($0)
         }
-        imageView.snp.makeConstraints {
+         imageView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(post.imageHeight!)
-            $0.centerY.equalToSuperview().offset(-10)
+            $0.centerY.equalToSuperview()
         }
     }
     
@@ -409,7 +413,8 @@ class PostCell: UICollectionViewCell {
         buttonView.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(15)
             $0.bottom.equalToSuperview().inset(87)
-            $0.width.equalTo(36)
+            $0.width.equalTo(41.4)
+            $0.height.equalTo(127)
         }
         
         let liked = post.likers.contains(uid)
@@ -434,8 +439,8 @@ class PostCell: UICollectionViewCell {
         }
         commentButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalTo(numComments.snp.top).offset(-4)
-            $0.height.equalTo(36)
+            $0.bottom.equalTo(numComments.snp.top).offset(-2)
+            $0.height.equalTo(41.4)
         }
         
         numLikes = UILabel {
@@ -445,7 +450,7 @@ class PostCell: UICollectionViewCell {
             buttonView.addSubview($0)
         }
         numLikes.snp.makeConstraints {
-            $0.bottom.equalTo(commentButton.snp.top).offset(-23)
+            $0.bottom.equalTo(commentButton.snp.top).offset(-20)
             $0.centerX.equalToSuperview()
         }
         
@@ -456,22 +461,23 @@ class PostCell: UICollectionViewCell {
             buttonView.addSubview($0)
         }
         likeButton.snp.makeConstraints {
-            $0.bottom.equalTo(numLikes.snp.top).offset(-4)
+            $0.bottom.equalTo(numLikes.snp.top).offset(-2)
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(32)
+            $0.height.equalTo(36.8)
         }
         
     }
     
     func addDetailView() {
         detailView = UIView {
+            $0.clipsToBounds = true
             contentView.addSubview($0)
         }
         detailView.snp.makeConstraints {
             $0.leading.equalToSuperview()
             $0.trailing.equalTo(buttonView.snp.leading).offset(-15)
             $0.bottom.equalTo(buttonView.snp.bottom)
-            $0.height.equalTo(15.55)
+            $0.height.equalTo(16.55)
         }
         
         if post.mapID ?? "" != "" {
@@ -481,7 +487,7 @@ class PostCell: UICollectionViewCell {
             }
             mapIcon.snp.makeConstraints {
                 $0.leading.equalTo(13)
-                $0.bottom.equalToSuperview()
+                $0.bottom.equalToSuperview().inset(1)
                 $0.width.equalTo(15.2)
                 $0.height.equalTo(15)
             }
@@ -494,13 +500,24 @@ class PostCell: UICollectionViewCell {
             }
             mapName.snp.makeConstraints {
                 $0.leading.equalTo(mapIcon.snp.trailing).offset(5)
+                $0.trailing.lessThanOrEqualToSuperview()
                 $0.bottom.equalToSuperview()
+            }
+            
+            let mapButton = UIButton {
+                $0.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
+                detailView.addSubview($0)
+            }
+            mapButton.snp.makeConstraints {
+                $0.leading.equalTo(mapIcon.snp.leading)
+                $0.trailing.equalTo(mapName.snp.trailing)
+                $0.height.equalToSuperview()
             }
             
             if post.spotID ?? "" != "" {
                 separatorLine = UIView {
                     $0.backgroundColor = UIColor.white.withAlphaComponent(0.4)
-                    $0.layer.cornerRadius = 5
+                    $0.layer.cornerRadius = 1
                     detailView.addSubview($0)
                 }
                 separatorLine.snp.makeConstraints {
@@ -518,7 +535,7 @@ class PostCell: UICollectionViewCell {
                 detailView.addSubview($0)
             }
             spotIcon.snp.makeConstraints {
-                $0.bottom.equalToSuperview()
+                $0.bottom.equalToSuperview().inset(1)
                 $0.width.equalTo(12.8)
                 $0.height.equalTo(15.55)
                 if post.mapID ?? "" == "" {
@@ -536,10 +553,21 @@ class PostCell: UICollectionViewCell {
             }
             spotLabel.snp.makeConstraints {
                 $0.leading.equalTo(spotIcon.snp.trailing).offset(5)
+                $0.trailing.lessThanOrEqualToSuperview()
                 $0.bottom.equalToSuperview()
             }
             
-            if post.mapID ?? "" != "" {
+            let spotButton = UIButton {
+                $0.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
+                detailView.addSubview($0)
+            }
+            spotButton.snp.updateConstraints {
+                $0.leading.equalTo(spotIcon.snp.leading)
+                $0.trailing.equalTo(spotLabel.snp.trailing)
+                $0.height.equalToSuperview()
+            }
+            
+            if post.mapID ?? "" == "" {
                 cityLabel = UILabel {
                     $0.text = post.city ?? ""
                     $0.textColor = UIColor.white.withAlphaComponent(0.6)
@@ -548,6 +576,7 @@ class PostCell: UICollectionViewCell {
                 }
                 cityLabel.snp.makeConstraints {
                     $0.leading.equalTo(spotLabel.snp.trailing).offset(4)
+                    $0.trailing.lessThanOrEqualToSuperview()
                     $0.bottom.equalToSuperview()
                 }
             }
@@ -556,8 +585,8 @@ class PostCell: UICollectionViewCell {
     
     func addCaption() {
         /// font 14.7 = 18 pt line exactly
-        let tempHeight = getCaptionHeight(caption: post.caption, fontSize: 14.5)
-        let overflow = tempHeight > post.captionHeight!
+        let tempHeight = getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 0)
+        overflow = tempHeight > post.captionHeight!
         
         captionLabel = UILabel {
             $0.text = post.caption
@@ -567,19 +596,24 @@ class PostCell: UICollectionViewCell {
             $0.lineBreakMode = overflow ? .byClipping : .byWordWrapping
             $0.isUserInteractionEnabled = true
             $0.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(captionTap(_:))))
-            if overflow {
-                $0.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Semibold", size: 14.5)!, moreTextColor: .white)
-            }
             contentView.addSubview($0)
         }
         captionLabel.snp.makeConstraints {
             $0.leading.equalTo(13)
             $0.trailing.equalTo(buttonView.snp.leading).offset(-15)
+            $0.height.equalTo(post.captionHeight!)
+            
             if post.spotID ?? "" != "" || post.mapID ?? "" != "" {
                 $0.bottom.equalTo(detailView.snp.top).offset(-16)
             } else {
-                $0.bottom.equalToSuperview()
+                $0.bottom.equalTo(buttonView.snp.bottom)
             }
+        }
+    }
+    
+    func addMoreIfNeeded() {
+        if overflow {
+            captionLabel.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Semibold", size: 14.5)!, moreTextColor: .white)
         }
     }
     
@@ -639,6 +673,8 @@ class PostCell: UICollectionViewCell {
         nextButton.snp.makeConstraints {
             $0.trailing.equalToSuperview()
             $0.top.equalTo(50)
+            $0.bottom.equalTo(buttonView.snp.top)
+            $0.width.equalTo(100)
         }
         
         previousButton = UIButton {
@@ -649,15 +685,14 @@ class PostCell: UICollectionViewCell {
             $0.leading.equalToSuperview()
             $0.top.equalTo(50)
             $0.bottom.equalTo(buttonView.snp.top)
-            $0.width.equalTo(60)
+            $0.width.equalTo(100)
         }
         
         swipe = UIPanGestureRecognizer(target: self, action: #selector(swipe(_:)))
-        contentView.addGestureRecognizer(swipe)
+       // contentView.addGestureRecognizer(swipe)
     }
     
     func finishImageSetUp(images: [UIImage]) {
-                
         resetImageInfo()
         
         let imageAspect = post.imageHeight! / UIScreen.main.bounds.width
@@ -678,7 +713,7 @@ class PostCell: UICollectionViewCell {
         
         setCurrentImage()
         
-     //   if imageAspect > 1.5 { imageView.addBottomMask() }
+        if imageAspect > 1.3 { imageView.addBottomMask() }
     }
     
     func setCurrentImage() {
@@ -693,10 +728,20 @@ class PostCell: UICollectionViewCell {
         let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: post.selectedImageIndex!)
         imageView.animationImages = animationImages
         imageView.animationIndex = 0
-                
+                        
         if !animationImages.isEmpty && !imageView.activeAnimation {
             animationImages.count == 5 && post.frameIndexes!.count == 1 ? imageView.animate5FrameAlive(directionUp: true, counter: imageView.animationIndex) : imageView.animateGIF(directionUp: true, counter: imageView.animationIndex)  /// use old animation for 5 frame alives
         }
+    }
+    
+    @objc func spotTap() {
+        if let postVC = viewContainingController() as? PostController {
+            print("add spot page from here")
+        }
+    }
+    
+    @objc func mapTap() {
+        print("map tap")
     }
     
     func resetTextInfo() {
@@ -719,7 +764,7 @@ class PostCell: UICollectionViewCell {
     
     func resetImageInfo() {
         /// reset for fields that are set after image fetch (right now just called on cell init)
-        if imageView != nil { imageView.image = UIImage(); imageView.animationImages?.removeAll(); imageView.animationIndex = 0; imageView.removeFromSuperview() }
+        if imageView != nil { imageView.image = UIImage(); imageView.animationImages?.removeAll(); imageView.animationIndex = 0 }
     }
     
     override func prepareForReuse() {
@@ -729,7 +774,15 @@ class PostCell: UICollectionViewCell {
         
     
     @objc func captionTap(_ sender: UITapGestureRecognizer) {
-        if let postVC = self.viewContainingController() as? PostController {
+        if overflow {
+            let newHeight = getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 0)
+            captionLabel.text = post.caption
+            captionLabel.numberOfLines = 0
+            captionLabel.lineBreakMode = .byWordWrapping
+            captionLabel.snp.updateConstraints { $0.height.equalTo(newHeight) }
+            overflow = false
+            
+        } else if let postVC = self.viewContainingController() as? PostController {
             postVC.openComments(row: globalRow)
         }
     }
@@ -740,18 +793,6 @@ class PostCell: UICollectionViewCell {
         }
     }
         
-    func getCaptionHeight(caption: String, fontSize: CGFloat) -> CGFloat {
-                
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 80, height: UIScreen.main.bounds.height))
-        tempLabel.text = caption
-        tempLabel.font = UIFont(name: "SFCompactText-Medium", size: fontSize)
-        tempLabel.numberOfLines = 0
-        tempLabel.lineBreakMode = .byWordWrapping
-        tempLabel.sizeToFit()
-        
-        return tempLabel.frame.height
-    }
-
     @objc func nextTap(_ sender: UIButton) {
         
         guard let postVC = viewContainingController() as? PostController else { return }
@@ -762,7 +803,7 @@ class PostCell: UICollectionViewCell {
             nextPost()
             
         } else {
-            exitPosts()
+         //   exitPosts()
         }
     }
     
@@ -777,7 +818,7 @@ class PostCell: UICollectionViewCell {
             previousPost()
         
         } else {
-            exitPosts()
+         //   exitPosts()
         }
     }
     
@@ -838,7 +879,6 @@ class PostCell: UICollectionViewCell {
         postVC.view.frame = CGRect(x: 0, y: max(originalY + offsetY, originalY), width: UIScreen.main.bounds.width, height: cellHeight)
         postVC.view.alpha = alpha
         postVC.postsCollection.alpha = alpha
-        postVC.statusBarMask.alpha = maskAlpha
     }
     
     func nextSwipe(sender: UIPanGestureRecognizer) {
@@ -898,7 +938,6 @@ class PostCell: UICollectionViewCell {
             postVC.view.frame = CGRect(x: 0, y: UIScreen.main.bounds.height - self.cellHeight, width: UIScreen.main.bounds.width, height: self.cellHeight)
             postVC.view.alpha = 1.0
             postVC.postsCollection.alpha = 1.0
-            postVC.statusBarMask.alpha = 1.0
             
             postVC.postsCollection.contentOffset.x = self.originalOffset /// reset horizontal swipe
             
@@ -919,7 +958,6 @@ class PostCell: UICollectionViewCell {
             postVC.view.frame = CGRect(x: 0, y: UIScreen.main.bounds.height, width: UIScreen.main.bounds.width, height: self.cellHeight)
             postVC.view.alpha = 0.0
             postVC.postsCollection.alpha = 0.0
-            postVC.statusBarMask.alpha = 0.0
                         
         }, completion: { _ in
             postVC.exitPosts()
@@ -935,6 +973,7 @@ class PostCell: UICollectionViewCell {
     }
     
     func incrementImage(index: Int) {
+        print("increment image")
         post.selectedImageIndex! += index
         setCurrentImage()
         
@@ -956,8 +995,6 @@ class PostCell: UICollectionViewCell {
         guard let postVC = viewContainingController() as? PostController else { return }
         postVC.selectedPostIndex += index
         postVC.postsCollection.scrollToItem(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .left, animated: true)
-        
-        postVC.setTimestamp()
         postVC.setDotView()
     }
         

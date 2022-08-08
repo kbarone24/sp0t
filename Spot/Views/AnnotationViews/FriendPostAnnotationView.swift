@@ -13,12 +13,16 @@ import FirebaseUI
 
 class FriendPostAnnotationView: MKAnnotationView {
     var id = ""
+    var postIDs: [String] = []
+    
     lazy var imageManager = SDWebImageManager()
+    unowned var mapView: MKMapView?
     
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         collisionMode = .circle
         canShowCallout = false
+        addTap()
     }
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -40,6 +44,7 @@ class FriendPostAnnotationView: MKAnnotationView {
         
         let nibView = loadNib(post: post, cluster: cluster, moreText: moreText)
         id = post.id!
+        postIDs = posts.map{$0.id ?? ""}
         
         // load images
         guard let url = URL(string: post.imageURLs.first ?? "") else { image = nibView.asImage(); return }
@@ -98,6 +103,31 @@ class FriendPostAnnotationView: MKAnnotationView {
         }
         
         return infoWindow
+    }
+    
+    func addTap() {
+        /// prevent map lag on selection
+        let tap = UITapGestureRecognizer()
+        tap.delaysTouchesBegan = false
+        tap.delaysTouchesEnded = false
+        tap.numberOfTapsRequired = 1
+        tap.delegate = self
+        addGestureRecognizer(tap)
+    }
+}
+
+extension FriendPostAnnotationView: UIGestureRecognizerDelegate {
+
+    func toggleZoom() {
+        mapView?.isZoomEnabled = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.mapView?.isZoomEnabled = true
+        }
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        toggleZoom()
+        return false
     }
 }
 

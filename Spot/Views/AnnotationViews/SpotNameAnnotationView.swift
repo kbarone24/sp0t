@@ -12,6 +12,7 @@ import MapKit
 
 class SpotNameAnnotationView: MKAnnotationView {
     var id = ""
+    unowned var mapView: MKMapView?
     
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
@@ -35,5 +36,30 @@ class SpotNameAnnotationView: MKAnnotationView {
         infoWindow.resizeView()
 
         image = infoWindow.asImage()
+    }
+    
+    func addTap() {
+        /// prevent map lag on selection
+        let tap = UITapGestureRecognizer()
+        tap.delaysTouchesBegan = false
+        tap.delaysTouchesEnded = false
+        tap.numberOfTapsRequired = 1
+        tap.delegate = self
+        addGestureRecognizer(tap)
+    }
+}
+
+extension SpotNameAnnotationView: UIGestureRecognizerDelegate {
+
+    func toggleZoom() {
+        mapView?.isZoomEnabled = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.mapView?.isZoomEnabled = true
+        }
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        toggleZoom()
+        return false
     }
 }
