@@ -77,6 +77,8 @@ class MapController: UIViewController {
         getAdmins() /// get admin users to exclude from analytics
         addNotifications()
         runMapFetches()
+        print("🌺: ", UserDataModel.shared.userInfo.friendsList.count, "🤢: ", UserDataModel.shared.userInfo)
+        addAdditionalOnboarding()
         
         locationManager.delegate = self
     }
@@ -93,7 +95,29 @@ class MapController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        print("🌺🌺🌺🌺🌺🌺🌺🌺🌺🌺🌺🌺🌺🌺🌺🌺", UserDataModel.shared.userInfo.avatarURL)
+        checkNeedFriends()
         Mixpanel.mainInstance().track(event: "MapOpen")
+    }
+    
+    func addAdditionalOnboarding(){
+        /*let docRef = self.db.collection("users").document(self.uid)
+
+        docRef.getDocument { (document, error) in
+            if let document = document, document.exists {
+                var aviURL = document.get("avatarURL")
+                if(aviURL == ""){
+                    let avc = AvatarSelectionController(sentFrom: "map")
+                    self.navigationController!.pushViewController(avc, animated: true)
+                } else if (friends < 5){
+                    print("not enough friends 🙁")
+                }
+                
+                //print("Document data: \(dataDescription)")
+            } else {
+                print("Document does not exist")
+            }
+        }*/
     }
     
     
@@ -189,6 +213,13 @@ class MapController: UIViewController {
         }
                 
         return titleView
+    }
+    
+    func checkNeedFriends(){
+        print("friends count ", UserDataModel.shared.userInfo.friendsList.count)
+        if UserDataModel.shared.userInfo.friendsList.count < 5 {
+            //add view
+        }
     }
 
     
@@ -608,4 +639,70 @@ class MapTitleView: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+}
+
+class AddFriendsView: UIView {
+    var note: UILabel!
+    var profileButton: UIButton!
+    var notiButton: NotificationsButton!
+    var searchButton: UIButton!
+    
+    override var intrinsicContentSize: CGSize {
+        return UIView.layoutFittingExpandedSize
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        /* signUpLogo = UIImageView {
+            $0.image = UIImage(named: "Signuplogo")
+          //  addSubview($0)
+        }
+        signUpLogo.snp.makeConstraints {
+            $0.leading.equalTo(10)
+            $0.top.equalTo(5)
+            $0.height.width.equalTo(35)
+        }
+        */
+        
+        self.layer.cornerRadius = 17
+        self.backgroundColor = .white
+        
+        note = UILabel {
+            $0.text = "Add friends to your map"
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            addSubview($0)
+        }
+        
+        note.snp.makeConstraints{
+            $0.top.equalToSuperview().offset(11)
+            $0.centerX.equalToSuperview()
+        }
+        
+        notiButton = NotificationsButton {
+            addSubview($0)
+        }
+        notiButton.snp.makeConstraints {
+            $0.trailing.equalTo(profileButton.snp.leading).offset(-30)
+            $0.top.equalTo(0)
+            $0.height.equalTo(35)
+            $0.width.equalTo(30)
+        }
+
+        searchButton = UIButton {
+            $0.setImage(UIImage(named: "SearchNavIcon"), for: .normal)
+            addSubview($0)
+        }
+        searchButton.snp.makeConstraints {
+            $0.trailing.equalTo(notiButton.snp.leading).offset(-30)
+            $0.top.equalTo(5)
+            $0.height.width.equalTo(29)
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
 }
