@@ -11,7 +11,7 @@ import UIKit
 import MapKit
 
 class AvatarURLs {
-    
+        
     var bear = ("Bear",  "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F000000animals%2FBear.png?alt=media&token=8d804927-bdb9-455d-8196-b83c78d02bd3")
     
     var bunny = ("Bunny", "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F000000animals%2FBunny.png?alt=media&token=e5b20141-d590-4e9c-8102-572b679258b7")
@@ -35,5 +35,58 @@ class AvatarURLs {
     var pig = ("Pig",  "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F000000animals%2FPig.png?alt=media&token=9fc7ea55-7e75-48a8-88c3-d0c36d16630c")
     
     var tiger = ("Tiger", "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F000000animals%2FTiger.png?alt=media&token=a3768c6b-89e2-4837-8818-7363b2a5a724")
+    
+    func getURL(name: String) -> String {
+        
+        if name == "Bear" {
+            return bear.1
+        }
+        
+        else if name == "Bunny" {
+            return bunny.1
+        }
+        
+        else if name == "Cow" {
+            return cow.1
+        }
+        
+        else if name == "Deer" {
+            return deer.1
+        }
+        
+        else if name == "Dog" {
+            return dog.1
+        }
+        
+        else if name == "Elephant" {
+            return elephant.1
+        }
+        
+        else if name == "Giraffe" {
+            return giraffe.1
+        }
+        
+        else if name == "Lion" {
+            return lion.1
+        }
+        
+        else if name == "Monkey" {
+            return monkey.1
+        }
+        
+        else if name == "Panda" {
+            return panda.1
+        }
+        
+        else if name == "Pig" {
+            return pig.1
+        }
+        
+        else if name == "Tiger" {
+            return tiger.1
+        }
+        
+        return "no avatarURL found"
+    }
     
 }

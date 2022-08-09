@@ -18,16 +18,16 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             
             self.window = UIWindow(windowScene: windowScene)
             
-           // if Auth.auth().currentUser != nil {
-                //checkForPhoneAuth()
+            if Auth.auth().currentUser != nil {
+                checkForPhoneAuth()
                 
-            //} else {
+            } else {
                 let sb = UIStoryboard(name: "Main", bundle: nil)
                 let vc = sb.instantiateViewController(withIdentifier: "LandingPage") as! LandingPageController
                 
-                self.window!.rootViewController = AvatarSelectionController()
+                self.window!.rootViewController = vc
                 self.window!.makeKeyAndVisible()
-            //}
+            }
         }
     }
     

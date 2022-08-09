@@ -31,9 +31,21 @@ class AvatarSelectionController: UIViewController {
     
     var centerAvi = CGPoint(x: 0.0, y: 0.0)
     
-    /*required init?(coder: NSCoder) {
+    var from: String!
+
+    init(sentFrom: String){
+        super.init(nibName: nil, bundle: nil)
+        from = sentFrom
+        print("SENT FROM : ", from)
+        print("URL 🔗 2: ", UserDataModel.shared.userInfo.avatarURL)
+        if(from == "map"){
+            navigationItem.hidesBackButton = true
+        }
+    }
+    
+    required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }*/
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -121,13 +133,21 @@ class AvatarSelectionController: UIViewController {
         let selectButton = UIButton {
             $0.layer.cornerRadius = 15
             $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-            let customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
-                NSAttributedString.Key.foregroundColor: UIColor.black
-            ])
+            var customButtonTitle = NSMutableAttributedString()
+            if(from == "create"){
+                customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.foregroundColor: UIColor.black
+                ])
+            } else {
+                customButtonTitle = NSMutableAttributedString(string: "Select", attributes: [
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.foregroundColor: UIColor.black
+                ])
+            }
             $0.setAttributedTitle(customButtonTitle, for: .normal)
             $0.setImage(nil, for: .normal)
-            //$0.addTarget(self, action: #selector(createAccountTap(_:)), for: .touchUpInside)
+            $0.addTarget(self, action: #selector(selectedTap(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
         
@@ -183,8 +203,10 @@ class AvatarSelectionController: UIViewController {
 
         if let indexPath2 = collectionView.indexPathForItem(at: center) {
             print(" 📍CENTER CELL: ", indexPath2)
-            self.centerCell = (self.collectionView.cellForItem(at: indexPath2) as! AvatarCell)
-            transformToLarge()
+            if(self.centerCell != (self.collectionView.cellForItem(at: indexPath2) as! AvatarCell)){
+                self.centerCell = (self.collectionView.cellForItem(at: indexPath2) as! AvatarCell)
+                transformToLarge()
+            }
             print(" 🐈 CENTER CELL: ", centerCell.avatar!)
         }
         //print("IN from ScrollView")
@@ -206,7 +228,7 @@ class AvatarSelectionController: UIViewController {
             self.collectionView.isUserInteractionEnabled = true
         }
        
-      // let generator = UIImpactFeedbackGenerator(style: .light)
+       //let generator = UIImpactFeedbackGenerator(style: .light)
        //generator.impactOccurred()
     }
     
@@ -218,6 +240,35 @@ class AvatarSelectionController: UIViewController {
             
             
         }
+    }
+    
+    @objc func selectedTap(_ sender: UIButton){
+        let avatarURL = AvatarURLs().getURL(name: centerCell.avatar!)
+        
+        UserDataModel.shared.userInfo.avatarURL = avatarURL
+        UserDataModel.shared.userInfo.avatarPic = UIImage(named: centerCell.avatar!)!
+        let db = Firestore.firestore()
+        db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
+        
+        print("URL 🔗 2: ", UserDataModel.shared.userInfo.avatarURL)
+        
+        if(from == "map"){
+            self.navigationController!.popViewController(animated: true)
+        } else {
+            let storyboard = UIStoryboard(name: "Map", bundle: nil)
+             let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
+             let navController = UINavigationController(rootViewController: vc)
+             navController.modalPresentationStyle = .fullScreen
+             
+             let keyWindow = UIApplication.shared.connectedScenes
+                 .filter({$0.activationState == .foregroundActive})
+                 .map({$0 as? UIWindowScene})
+                 .compactMap({$0})
+                 .first?.windows
+                 .filter({$0.isKeyWindow}).first
+             keyWindow?.rootViewController = navController
+        }
+        
     }
 }
 

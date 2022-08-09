@@ -34,7 +34,16 @@ extension MapController {
             self.feedLoaded = true
             self.mapsCollection.reloadData()
             self.mapsCollection.selectItem(at: IndexPath(item: 0, section: 0), animated: false, scrollPosition: .left)
+            
+            print(UserDataModel.shared.userInfo.avatarURL)
+            
+            if(UserDataModel.shared.userInfo.avatarURL == ""){
+                print("emptee")
+                let avc = AvatarSelectionController(sentFrom: "map")
+                self.navigationController?.pushViewController(avc, animated: true)
+            }
         }
+        
     }
     
     func getAdmins() {
@@ -67,6 +76,7 @@ extension MapController {
                 if userSnap!.documentID != self.uid { return } /// logout + object not being destroyed
                 
                 UserDataModel.shared.userInfo = activeUser
+                print("🦷🦷", UserDataModel.shared.userInfo.avatarURL)
                 if UserDataModel.shared.userInfo.profilePic == UIImage() { self.getUserProfilePics() }
                 
                 UserDataModel.shared.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
@@ -287,15 +297,23 @@ extension MapController {
             guard let self = self else { return }
             guard let snap = snap else { return }
             for doc in snap.documents {
+                print("entering docs fetch")
                 let last = doc == snap.documents.last
                 do {
                     let mapIn = try doc.data(as: CustomMap.self)
-                    guard let mapInfo = mapIn else { if last { self.homeFetchGroup.leave() }; continue }
+                    print("MAP ID: ", mapIn?.id)
+                    guard let mapInfo = mapIn else { if last {
+                        print("-------------")
+                        print("MAP ID 2 : ", mapIn?.id)
+                        self.homeFetchGroup.leave() }; continue }
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
                     if last {
+                        print("MAP ID 3: ", mapIn?.id)
+                        print("-------------")
                         self.homeFetchGroup.leave()
                     }
                 } catch {
+                    print("caught")
                     continue
                 }
             }
