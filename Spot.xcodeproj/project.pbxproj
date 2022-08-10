@@ -31,6 +31,7 @@
 		414BB49E288D316000660AED /* CustomMapBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414BB49D288D316000660AED /* CustomMapBodyCell.swift */; };
 		414CD27A28975D64001F1776 /* ChooseMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414CD27928975D64001F1776 /* ChooseMapController.swift */; };
 		414CD27C2899ABDB001F1776 /* MapMemberCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414CD27B2899ABDB001F1776 /* MapMemberCell.swift */; };
+		414CD283289EB383001F1776 /* ProfileBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414CD282289EB383001F1776 /* ProfileBodyCell.swift */; };
 		416AE77B2896F1280037B8AF /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE77A2896F1280037B8AF /* ProfileViewController.swift */; };
 		416AE77D2896F2F60037B8AF /* CustomMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE77C2896F2F60037B8AF /* CustomMap.swift */; };
 		416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE7802896F35F0037B8AF /* GlobalFunctions.swift */; };
@@ -243,8 +244,6 @@
 		8C1E48CD289C55090093030D /* MapFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E48CA289C55090093030D /* MapFetchExtension.swift */; };
 		8C1E48CF289C57650093030D /* ProfileHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E48CE289C57650093030D /* ProfileHeaderCell.swift */; };
 		8C1E48D3289C58470093030D /* ProfileMyMapImageCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E48D2289C58470093030D /* ProfileMyMapImageCollectionViewCell.swift */; };
-		8C1E48D7289C59D80093030D /* ProfileBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E48D6289C59D80093030D /* ProfileBodyCell.swift */; };
-		8C1E48DA289D79980093030D /* ProfileBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E48D9289D79980093030D /* ProfileBodyCell.swift */; };
 		8C1EAF77284BCF2700474879 /* Feed.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8C1EAF76284BCF2700474879 /* Feed.storyboard */; };
 		8C1EAF78284BCF2700474879 /* Feed.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8C1EAF76284BCF2700474879 /* Feed.storyboard */; };
 		8C1EAF79284BCF2700474879 /* Feed.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8C1EAF76284BCF2700474879 /* Feed.storyboard */; };
@@ -388,6 +387,7 @@
 		414BB49D288D316000660AED /* CustomMapBodyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapBodyCell.swift; sourceTree = "<group>"; };
 		414CD27928975D64001F1776 /* ChooseMapController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseMapController.swift; sourceTree = "<group>"; };
 		414CD27B2899ABDB001F1776 /* MapMemberCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapMemberCell.swift; sourceTree = "<group>"; };
+		414CD282289EB383001F1776 /* ProfileBodyCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileBodyCell.swift; sourceTree = "<group>"; };
 		416AE77A2896F1280037B8AF /* ProfileViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
 		416AE77C2896F2F60037B8AF /* CustomMap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMap.swift; sourceTree = "<group>"; };
 		416AE7802896F35F0037B8AF /* GlobalFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlobalFunctions.swift; sourceTree = "<group>"; };
@@ -472,8 +472,6 @@
 		8C1E48CA289C55090093030D /* MapFetchExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapFetchExtension.swift; sourceTree = "<group>"; };
 		8C1E48CE289C57650093030D /* ProfileHeaderCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProfileHeaderCell.swift; path = Spot/Controllers/ProfileHeaderCell.swift; sourceTree = SOURCE_ROOT; };
 		8C1E48D2289C58470093030D /* ProfileMyMapImageCollectionViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProfileMyMapImageCollectionViewCell.swift; path = Spot/Controllers/ProfileMyMapImageCollectionViewCell.swift; sourceTree = SOURCE_ROOT; };
-		8C1E48D6289C59D80093030D /* ProfileBodyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ProfileBodyCell.swift; path = ../../../../Documents/GitHub/sp0tbeta/Spot/Controllers/ProfileBodyCell.swift; sourceTree = "<group>"; };
-		8C1E48D9289D79980093030D /* ProfileBodyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ProfileBodyCell.swift; path = ../../../../Documents/GitHub/sp0tbeta/Spot/Controllers/ProfileBodyCell.swift; sourceTree = "<group>"; };
 		8C1EAF76284BCF2700474879 /* Feed.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Feed.storyboard; sourceTree = "<group>"; };
 		8C1EAF82284BD08F00474879 /* Notifications.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Notifications.storyboard; sourceTree = "<group>"; };
 		8C2074CB25CB38430040036B /* City.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = City.swift; sourceTree = "<group>"; };
@@ -728,13 +726,12 @@
 		599BD2C423C6539200ECB84A /* Profile */ = {
 			isa = PBXGroup;
 			children = (
-				8C1E48D9289D79980093030D /* ProfileBodyCell.swift */,
 				416AE77A2896F1280037B8AF /* ProfileViewController.swift */,
 				413BA16228785E8B00FD80AF /* EditProfileViewController.swift */,
 				8C1E48CE289C57650093030D /* ProfileHeaderCell.swift */,
 				8C1E4861289C54240093030D /* ProfileMyMapCell.swift */,
 				8C1E48D2289C58470093030D /* ProfileMyMapImageCollectionViewCell.swift */,
-				8C1E48D6289C59D80093030D /* ProfileBodyCell.swift */,
+				414CD282289EB383001F1776 /* ProfileBodyCell.swift */,
 			);
 			name = Profile;
 			sourceTree = "<group>";
@@ -1323,7 +1320,6 @@
 				3E6189572213DEAD00A7CFF4 /* EmailLoginController.swift in Sources */,
 				59FCF5B224734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
 				593AC549243F898300C08237 /* UsernameController.swift in Sources */,
-				8C1E48D7289C59D80093030D /* ProfileBodyCell.swift in Sources */,
 				5916A8BB24A566F400118E83 /* ResultUser.swift in Sources */,
 				59FCF5AF24734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				5F81C1272862EFBF0088A5B0 /* UserNotification.swift in Sources */,
@@ -1381,7 +1377,6 @@
 				413BA165287C917000FD80AF /* FriendsListController.swift in Sources */,
 				8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				8C2074CC25CB38440040036B /* City.swift in Sources */,
-				8C1E48DA289D79980093030D /* ProfileBodyCell.swift in Sources */,
 				8C1E48BE289C54CB0093030D /* CreatePostWindow.swift in Sources */,
 				597072FA24291993008A481A /* AVSpotCamera.swift in Sources */,
 				8C1E4897289C54CB0093030D /* SpotNameView.swift in Sources */,
@@ -1394,6 +1389,7 @@
 				8C2209F8284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				41EA047F289428590050B791 /* EditMapController.swift in Sources */,
 				414BB49C288D314F00660AED /* CustomMapHeaderCell.swift in Sources */,
+				414CD283289EB383001F1776 /* ProfileBodyCell.swift in Sources */,
 				8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				416AE77D2896F2F60037B8AF /* CustomMap.swift in Sources */,
 				5F119A202869F46600D75CE8 /* FriendRequestCollectionCell.swift in Sources */,

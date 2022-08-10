@@ -10,6 +10,7 @@ import UIKit
 import SnapKit
 import Mixpanel
 import Firebase
+import SDWebImage
 
 class CustomMapController: UIViewController {
     
@@ -25,12 +26,32 @@ class CustomMapController: UIViewController {
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
-            if customMapCollectionView != nil { customMapCollectionView.reloadData() }
+            guard customMapCollectionView != nil else { return }
+            customMapCollectionView.reloadData()
         }
     }
-    private unowned var containerDrawerView: DrawerView?
-    public unowned var profileVC: ProfileViewController?
-    private unowned var mapController: UIViewController?
+    private var firstMaxFourMapMemberList: [UserProfile] = []
+    private var firstMaxFourMapMemberProfilePic: [String: UIImage] = [:] {
+        didSet {
+            if firstMaxFourMapMemberProfilePic.count == (mapData!.memberIDs.count < 4 ? mapData!.memberIDs.count : 4) {
+                for i in 0..<firstMaxFourMapMemberList.count {
+                    firstMaxFourMapMemberList[i].profilePic = firstMaxFourMapMemberProfilePic[firstMaxFourMapMemberList[i].imageURL] ?? UIImage()
+                }
+                customMapCollectionView.reloadSections(IndexSet(integer: 0))
+            }
+        }
+    }
+    private var postDatas: [String: MapPost] = [:] {
+        didSet {
+            guard customMapCollectionView != nil else { return }
+            customMapCollectionView.reloadData()
+        }
+    }
+    
+    private var containerDrawerView: DrawerView?
+    public var profileVC: ProfileViewController?
+    private var mapController: UIViewController?
+    private lazy var imageManager = SDWebImageManager()
 
     init(userProfile: UserProfile? = nil, mapData: CustomMap, presentedDrawerView: DrawerView? = nil) {
         super.init(nibName: nil, bundle: nil)
@@ -45,6 +66,7 @@ class CustomMapController: UIViewController {
     }
     
     deinit {
+        print("CustomMapController(\(self) deinit")
         floatBackButton.removeFromSuperview()
         NotificationCenter.default.removeObserver(self)
         barView.removeFromSuperview()
@@ -52,6 +74,12 @@ class CustomMapController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getMapCover()
+            self.getMapMember()
+        }
+        
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
         if let mapVC = window as? UINavigationController {
             mapController = mapVC.viewControllers[0]
@@ -75,6 +103,7 @@ extension CustomMapController {
     }
     
     private func viewSetup() {
+        NotificationCenter.default.addObserver(self, selector: #selector(FetchedMapPost(_:)), name: NSNotification.Name("FetchedMapPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
@@ -145,6 +174,63 @@ extension CustomMapController {
         containerDrawerView?.slideView.addSubview(barView)
     }
     
+    private func getMapCover() {
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
+        self.imageManager.loadImage(with: URL(string: mapData!.imageURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
+            guard self != nil else { return }
+            let image = image ?? UIImage()
+            self?.mapData?.coverImage = image
+            self?.customMapCollectionView.reloadSections(IndexSet(integer: 0))
+        }
+    }
+    
+    private func getMapMember() {
+        let db: Firestore = Firestore.firestore()
+        let dispatch = DispatchGroup()
+        firstMaxFourMapMemberList.removeAll()
+        
+        // Move the map founder to first element
+        if let founderIndex = mapData?.memberIDs.firstIndex(of: mapData!.founderID) {
+            mapData?.memberIDs.remove(at: founderIndex)
+        }
+        let founderID = mapData!.founderID
+        mapData?.memberIDs.insert(founderID, at: 0)
+        
+        // Get the first four map member
+        for index in 0...(mapData!.memberIDs.count < 4 ? (mapData!.memberIDs.count - 1) : 3) {
+            dispatch.enter()
+            db.collection("users").document(mapData!.memberIDs[index]).getDocument { [weak self] snap, err in
+                do {
+                    guard let self = self else { return }
+                    let unwrappedInfo = try snap?.data(as: UserProfile.self)
+                    guard var userInfo = unwrappedInfo else { dispatch.leave(); return }
+                    userInfo.id = self.mapData!.memberIDs[index]
+                    self.firstMaxFourMapMemberList.insert(userInfo, at: 0)
+                    let transformer = SDImageResizingTransformer(size: CGSize(width: 70, height: 70), scaleMode: .aspectFill)
+                    self.imageManager.loadImage(with: URL(string: userInfo.imageURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
+                        guard self != nil else { dispatch.leave(); return }
+                        let image = image ?? UIImage()
+                        self?.firstMaxFourMapMemberProfilePic[userInfo.imageURL] = image
+                        dispatch.leave()
+                    }
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                    dispatch.leave()
+                }
+            }
+        }
+        dispatch.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            self.customMapCollectionView.reloadSections(IndexSet(integer: 0))
+        }
+    }
+    
+    @objc func FetchedMapPost(_ notification: NSNotification) {
+        if let userInfo = notification.userInfo?["mapPost"] as? MapPost {
+            postDatas[userInfo.id!] = userInfo
+        }
+    }
+    
     @objc func DrawerViewToTopCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")
         barBackButton.isHidden = false
@@ -186,13 +272,14 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "CustomMapHeaderCell" : "CustomMapBodyCell", for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
-            headerCell.cellSetup(userProfile: userProfile!, mapData: mapData)
+            headerCell.cellSetup(userProfile: userProfile!, mapData: mapData, fourMapMemberProfile: firstMaxFourMapMemberList)
             if mapData!.memberIDs.contains(UserDataModel.shared.userInfo.id!) {
                 headerCell.actionButton.addTarget(self, action: #selector(editMapAction), for: .touchUpInside)
             }
             return headerCell
         } else if let bodyCell = cell as? CustomMapBodyCell {
-            bodyCell.cellSetup(userProfile: userProfile!, postID: mapData?.postIDs[indexPath.row])
+            bodyCell.cellSetup(postID: mapData!.postIDs[indexPath.row], postData: postDatas[mapData!.postIDs[indexPath.row]])
+//            bodyCell.delegate = self
             return bodyCell
         }
         return cell
@@ -239,6 +326,12 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
                 collectionCell?.transform = .identity
             }
         }
+    }
+}
+
+extension CustomMapController: CustomMapBodyCellDelegate {
+    func finishFetching(mapPostID: String, fetchedMapPost: MapPost) {
+        postDatas[mapPostID] = fetchedMapPost
     }
 }
 
