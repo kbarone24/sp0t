@@ -267,9 +267,9 @@ class ImagePreviewController: UIViewController {
         
         textView = UITextView {
             $0.delegate = self
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 19)
             $0.backgroundColor = nil
             $0.textColor = .white
+            $0.font = UIFont(name: "SFCompactText-Regular", size: 19)
             $0.alpha = 0.6
             $0.tintColor = UIColor(named: "SpotGreen")
             $0.text = textViewPlaceholder
@@ -624,12 +624,13 @@ extension ImagePreviewController: UITextViewDelegate {
     }
     
     func addTagTable(tagString: String) {
-        print("add tag table")
         if tagFriendsView == nil {
-            tagFriendsView = TagFriendsView()
-            tagFriendsView!.delegate = self
-            tagFriendsView!.searchText = tagString
-            postDetailView.addSubview(tagFriendsView!)
+            tagFriendsView = TagFriendsView {
+                $0.delegate = self
+                $0.textColor = .white
+                $0.searchText = tagString
+                postDetailView.addSubview($0)
+            }
             tagFriendsView!.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
                 $0.height.equalTo(90)
