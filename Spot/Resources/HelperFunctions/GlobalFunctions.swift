@@ -17,60 +17,6 @@ import FirebaseFunctions
 import CoreData
 
 extension UIViewController {
-    //reverse geocode should a string based on lat/long input and amount of detail that it wants to return
-    func reverseGeocodeFromCoordinate(numberOfFields: Int, location: CLLocation, completion: @escaping (_ address: String) -> Void) {
-        var addressString = ""
-        
-        let locale = Locale(identifier: "en")
-        CLGeocoder().reverseGeocodeLocation(location, preferredLocale: locale) {  placemarks, error in // 6
-            
-            guard let placemark = placemarks?.first else {
-                print("placemark broke")
-                return
-            }
-            
-            if numberOfFields > 3 {
-                if placemark.subThoroughfare != nil {
-                    addressString = addressString + placemark.subThoroughfare! + " "
-                }
-            }
-            
-            if numberOfFields > 2 {
-                if placemark.thoroughfare != nil {
-                    addressString = addressString + placemark.thoroughfare!
-                }
-            }
-            
-            if numberOfFields > 1 && placemark.locality != nil {
-                if addressString != "" {
-                    addressString = addressString + ", "
-                }
-                addressString = addressString + placemark.locality!
-            }
-            
-            if placemark.country != nil {
-                if placemark.country! == "United States" {
-                    if placemark.administrativeArea != nil {
-                        if addressString != "" {
-                            addressString = addressString + ", "
-                        }
-                        addressString = addressString + placemark.administrativeArea!
-                        completion(addressString)
-                    } else {
-                        completion(addressString)
-                    }
-                } else {
-                    if addressString != "" {
-                        addressString = addressString + ", "
-                    }
-                    addressString = addressString + placemark.country!
-                    completion(addressString)
-                }
-            } else {
-                completion(addressString)
-            }
-        }
-    }
     
     func isValidUsername(username: String) -> Bool {
         let regEx = "^[a-zA-Z0-9_.]*$"
@@ -83,18 +29,6 @@ extension UIViewController {
         let regEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
         let pred = NSPredicate(format:"SELF MATCHES %@", regEx)
         return pred.evaluate(with: email)
-    }
-    
-    
-    func getCommentHeight(comment: String) -> CGFloat {
-        let temp = UILabel(frame: CGRect(x: 54, y: 0, width: UIScreen.main.bounds.width - 68, height: 18))
-        temp.text = comment
-        temp.font = UIFont(name: "SFCompactText-Regular", size: 13.5)
-        temp.numberOfLines = 0
-        temp.lineBreakMode = .byWordWrapping
-        temp.sizeToFit()
-        let commentHeight: CGFloat = temp.bounds.height < 16 ? 16 : temp.bounds.height
-        return commentHeight
     }
     
     func getTagUserString(text: String, cursorPosition: Int) -> (text: String, containsAt: Bool) {
@@ -319,166 +253,7 @@ extension UIViewController {
     func locationIsEmpty(location: CLLocation) -> Bool {
         return location.coordinate.longitude == 0.0 && location.coordinate.latitude == 0.0
     }
-    
-    func getTimestamp(postTime: Firebase.Timestamp) -> String {
-        let seconds = postTime.seconds
-        let current = Date().timeIntervalSince1970
-        let currentTime = Int64(current)
-        let timeSincePost = currentTime - seconds
-        
-        if timeSincePost < 604800 {
-            // return time since post
-            
-            if (timeSincePost <= 86400) {
-                if (timeSincePost <= 3600) {
-                    if (timeSincePost <= 60) {
-                        return "\(timeSincePost)s ago"
-                    } else {
-                        let minutes = timeSincePost / 60
-                        return "\(minutes)m ago"
-                    }
-                } else {
-                    let hours = timeSincePost / 3600
-                    return "\(hours)h ago"
-                }
-            } else {
-                let days = timeSincePost / 86400
-                return "\(days)d ago"
-            }
-        } else {
-            // return date
-            let timeInterval = TimeInterval(integerLiteral: seconds)
-            let date = Date(timeIntervalSince1970: timeInterval)
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "M/dd/yy"
-            let dateString = dateFormatter.string(from: date)
-            return dateString
-        }
-    }
-    
-    func getSpot(spotID: String, completion: @escaping (_ spot: MapSpot, _ failed: Bool) -> Void) {
-        let db: Firestore! = Firestore.firestore()
-        let spotRef = db.collection("spots").document(spotID)
-        
-        spotRef.getDocument { (doc, err) in
-            let emptySpot = MapSpot(founderID: "", imageURL: "", privacyLevel: "", spotDescription: "", spotLat: 0, spotLong: 0, spotName: "")
-            do {
-                let unwrappedInfo = try doc?.data(as: MapSpot.self)
-                guard var spotInfo = unwrappedInfo else { completion(emptySpot, true); return }
-                
-                spotInfo.id = spotID
-                spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
-                for visitor in spotInfo.visitorList {
-                    if UserDataModel.shared.userInfo.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
-                }
-                
-                completion(spotInfo, false)
-                return
-                
-            } catch {
-                completion(emptySpot, true)
-                return
-            }
-        }
-    }
-    
-    func getUserInfo(userID: String, completion: @escaping (_ user: UserProfile) -> Void) {
-        
-        let db: Firestore! = Firestore.firestore()
-        
-        if let user = UserDataModel.shared.userInfo.friendsList.first(where: {$0.id == userID}) {
-            completion(user)
-            return
-            
-        } else if userID == UserDataModel.shared.uid {
-            completion(UserDataModel.shared.userInfo)
-            return
-            
-        } else {
-            let emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
-            db.collection("users").document(userID).getDocument { (doc, err) in
-                if err != nil { return }
 
-                do {
-                    let userInfo = try doc!.data(as: UserProfile.self)
-                    guard var info = userInfo else { completion(emptyProfile); return }
-                    info.id = doc!.documentID
-                    completion(info)
-                    return
-                } catch { completion(emptyProfile); return }
-            }
-        }
-    }
-     
-    func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
-        
-        let db: Firestore! = Firestore.firestore()
-        var commentList: [MapComment] = []
-        
-        db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, err) in
-            
-            if err != nil { completion(commentList); return }
-            if commentSnap!.documents.count == 0 { completion(commentList); return }
-            guard let self = self else { return }
-
-            var index = 0
-            for doc in commentSnap!.documents {
-                do {
-                    let commentInf = try doc.data(as: MapComment.self)
-                    guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
-                    
-                    commentInfo.id = doc.documentID
-                    commentInfo.seconds = commentInfo.timestamp.seconds
-                    commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
-                    
-                    self.getUserInfo(userID: commentInfo.commenterID) { user in
-                        commentInfo.userInfo = user
-                        if !commentList.contains(where: {$0.id == doc.documentID}) {
-                            commentList.append(commentInfo)
-                            commentList.sort(by: {$0.seconds < $1.seconds})
-                        }
-                        
-                        index += 1; if index == commentSnap!.documents.count { completion(commentList) }
-                    }
-                    
-                } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
-            }
-        }
-    }
-    
-    func getPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
-        
-        let db: Firestore! = Firestore.firestore()
-        let emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp())
-        
-        db.collection("posts").document(postID).getDocument { [weak self] doc, err in
-            guard let self = self else { return }
-            if err != nil { completion(emptyPost); return }
-            
-            do {
-                let unwrappedInfo = try doc?.data(as: MapPost.self)
-                guard var postInfo = unwrappedInfo else { completion(emptyPost); return }
-                
-                postInfo.id = doc!.documentID
-                postInfo = self.setSecondaryPostValues(post: postInfo)
-                
-                var count = 0
-                self.getUserInfo(userID: postInfo.posterID) { user in
-                    postInfo.userInfo = user
-                    count += 1
-                    if count == 2 { completion(postInfo); return }
-                }
-                
-                self.getComments(postID: postID) { comments in
-                    postInfo.commentList = comments
-                    count += 1
-                    if count == 2 { completion(postInfo); return }
-                }
-                
-            } catch { completion(emptyPost); return }
-        }
-    }
-    
     func animateWithKeyboard(
         notification: NSNotification,
         animations: ((_ keyboardFrame: CGRect) -> Void)?
@@ -610,7 +385,7 @@ extension UIViewController {
             try postRef.setData(from: post)
             self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
             
-            let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo, commentHeight: self.getCommentHeight(comment: post.caption), seconds: Int64(post.timestamp.seconds))
+            let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo)
             
             let commentRef = postRef.collection("comments").document(commentObject.id!)
 
@@ -887,238 +662,81 @@ extension CLLocationDistance {
     }
 }
 
-extension UITableViewCell {
+extension NSObject {
     
-    func addFriend(senderProfile: UserProfile, receiverID: String) {
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        let db: Firestore = Firestore.firestore()
-        let notiID = UUID().uuidString
-        let ref = db.collection("users").document(receiverID).collection("notifications").document(notiID)
-        
-        let time = Date()
-        
-        let values = ["senderID" : uid,
-                      "type" : "friendRequest",
-                      "senderUsername" : UserDataModel.shared.userInfo.username,
-                      "timestamp" : time,
-                      "status" : "pending",
-                      "seen" : false
-                      
-        ] as [String : Any]
-        ref.setData(values)
-        
-        db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
-    }
-    
-    func acceptFriendRequest(friendID: String, notificationID: String) {
-        let db: Firestore = Firestore.firestore()
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        let functions = Functions.functions()
-        
-        db.collection("users").document(uid).collection("notifications").document(notificationID).updateData(["status" : "accepted"])
-        
-        addFriendToFriendsList(userID: uid, friendID: friendID)
-        addFriendToFriendsList(userID: friendID, friendID: uid)
-        
-        functions.httpsCallable("acceptFriendRequest").call(["userID": uid, "friendID": friendID, "username": UserDataModel.shared.userInfo.username]) { result, error in
-            print(result?.data as Any, error as Any)
+    func getTaggedUsers(text: String) -> [UserProfile] {
+        var selectedUsers: [UserProfile] = []
+        let words = text.components(separatedBy: .whitespacesAndNewlines)
+        for w in words {
+            let username = String(w.dropFirst())
+            if w.hasPrefix("@") {
+                if let f = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == username}) {
+                    selectedUsers.append(f)
+                }
+            }
         }
+        return selectedUsers
     }
     
-    func addFriendToFriendsList(userID: String, friendID: String) {
-        let db: Firestore = Firestore.firestore()
-        
-        db.collection("users").document(userID).updateData([
-            "friendsList" : FieldValue.arrayUnion([friendID]),
-            "pendingFriendRequests" : FieldValue.arrayRemove([friendID]),
-            "topFriends.\(friendID)" : 0
-        ])
-    }
-            
-    func removeFriendRequest(friendID: String, notificationID: String) {
-        let db: Firestore = Firestore.firestore()
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+    func getCaptionHeight(caption: String, fontSize: CGFloat, maxCaption: CGFloat) -> CGFloat {
+        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 80, height: UIScreen.main.bounds.height))
+        tempLabel.text = caption
+        tempLabel.font = UIFont(name: "SFCompactText-Medium", size: fontSize)
+        tempLabel.numberOfLines = 0
+        tempLabel.lineBreakMode = .byWordWrapping
+        tempLabel.sizeToFit()
 
-        db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
-        db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
+        return maxCaption != 0 ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
     }
     
-    func getAttString(caption: String, taggedFriends: [String], fontSize: CGFloat) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
+    func getImageHeight(aspectRatios: [CGFloat], maxAspect: CGFloat) -> CGFloat {
+        var imageAspect =  min((aspectRatios.max() ?? 0.033) - 0.033, maxAspect)
+        if imageAspect > 1.1 && imageAspect < 1.6 { imageAspect = 1.6 } /// stretch iPhone vertical
+        if imageAspect > 1.6 { imageAspect = maxAspect } /// round to max aspect
         
-        let attString = NSMutableAttributedString(string: caption)
-        var freshRect: [(rect: CGRect, username: String)] = []
-        var tags: [(username: String, range: NSRange)] = []
+        let imageHeight = UIScreen.main.bounds.width * imageAspect
+        return imageHeight
+    }
+    
+    func setSecondaryPostValues(post: MapPost) -> MapPost {
+        var newPost = post
+        newPost.imageHeight = getImageHeight(aspectRatios: newPost.aspectRatios ?? [], maxAspect: 1.92) /// max aspect 1.92 for feed
+        /// round to nearest line height
+        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 65)
         
-        let words = caption.components(separatedBy: .whitespacesAndNewlines)
-                
-        for word in words {
+        return newPost
+    }
+    
+    func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
+        
+        let db: Firestore! = Firestore.firestore()
+        var commentList: [MapComment] = []
+        
+        db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, err) in
             
-            let username = String(word.dropFirst())
-            if word.hasPrefix("@") && taggedFriends.contains(where: {$0 == username}) {
-                
-                /// get first index of this word
-                let atIndexes = caption.indices(of: String(word))
-                let currentIndex = atIndexes[0]
-                
-                /// make tag rect out of the username + @
-                let tag = (username: String(word.dropFirst()), range: NSMakeRange(currentIndex, word.count))
+            if err != nil { completion(commentList); return }
+            if commentSnap!.documents.count == 0 { completion(commentList); return }
+            guard let self = self else { return }
 
-                if !tags.contains(where: {$0 == tag}) {
-                    tags.append(tag)
-                    let range = NSMakeRange(currentIndex, word.count)
-                    /// bolded range out of username + @
-                    attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCompactText-Semibold", size: fontSize) as Any, range: range)
-                }
-            }
-        }
-        
-        for tag in tags {
-            var rect = (rect: getRect(str: attString, range: tag.range, maxWidth: UIScreen.main.bounds.width - 72), username: tag.username)
-            rect.0 = CGRect(x: rect.0.minX, y: rect.0.minY, width: rect.0.width, height: rect.0.height)
-            
-            if (!freshRect.contains(where: {$0 == rect})) {
-                freshRect.append(rect)
-            }
-        }
-        return ((attString, freshRect))
-    }
-    
-    func getRect(str: NSAttributedString, range: NSRange, maxWidth: CGFloat) -> CGRect {
-        let textStorage = NSTextStorage(attributedString: str)
-        let textContainer = NSTextContainer(size: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
-        let layoutManager = NSLayoutManager()
-        layoutManager.addTextContainer(textContainer)
-        textStorage.addLayoutManager(layoutManager)
-        textContainer.lineFragmentPadding = 5
-        let pointer = UnsafeMutablePointer<NSRange>.allocate(capacity: 1)
-        layoutManager.characterRange(forGlyphRange: range, actualGlyphRange: pointer)
-        return layoutManager.boundingRect(forGlyphRange: pointer.move(), in: textContainer)
-    }
-    
-    func reverseGeocodeFromCoordinate(numberOfFields: Int, location: CLLocation, completion: @escaping (_ address: String) -> Void) {
-        var addressString = ""
-        
-        let locale = Locale(identifier: "en")
-        CLGeocoder().reverseGeocodeLocation(location, preferredLocale: locale) { [weak self] placemarks, error in // 6
-            
-            if self == nil { completion(""); return }
-            
-            guard let placemark = placemarks?.first else {
-                print("placemark broke")
-                return
-            }
-            
-            if numberOfFields > 3 {
-                if placemark.subThoroughfare != nil {
-                    addressString = addressString + placemark.subThoroughfare! + " "
-                }
-            }
-            if numberOfFields > 2 {
-                if placemark.thoroughfare != nil {
-                    addressString = addressString + placemark.thoroughfare!
-                }
-            }
-            if placemark.locality != nil {
-                if addressString != "" {
-                    addressString = addressString + ", "
-                }
-                addressString = addressString + placemark.locality!
-            }
-            
-            if placemark.country != nil {
-                if placemark.country! == "United States" {
-                    if placemark.administrativeArea != nil {
-                        if addressString != "" {
-                            addressString = addressString + ", "
+            var index = 0
+            for doc in commentSnap!.documents {
+                do {
+                    let commentInf = try doc.data(as: MapComment.self)
+                    guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+                                        
+                    self.getUserInfo(userID: commentInfo.commenterID) { user in
+                        commentInfo.userInfo = user
+                        if !commentList.contains(where: {$0.id == doc.documentID}) {
+                            commentList.append(commentInfo)
+                            commentList.sort(by: {$0.seconds < $1.seconds})
                         }
-                        addressString = addressString + placemark.administrativeArea!
-                        completion(addressString)
-                    } else {
-                        completion(addressString)
+                        
+                        index += 1; if index == commentSnap!.documents.count { completion(commentList) }
                     }
-                } else {
-                    if addressString != "" {
-                        addressString = addressString + ", "
-                    }
-                    addressString = addressString + placemark.country!
-                    completion(addressString)
-                }
-            } else {
-                completion(addressString)
+                    
+                } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
             }
         }
-    }
-        
-}
-
-extension UICollectionViewCell {
-    func addFriend(senderProfile: UserProfile, receiverID: String) {
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        let db: Firestore = Firestore.firestore()
-        let notiID = UUID().uuidString
-        let ref = db.collection("users").document(receiverID).collection("notifications").document(notiID)
-        
-        let time = Date()
-        
-        let values = ["senderID" : uid,
-                      "type" : "friendRequest",
-                      "senderUsername" : UserDataModel.shared.userInfo.username,
-                      "timestamp" : time,
-                      "status" : "pending",
-                      "seen" : false
-                      
-        ] as [String : Any]
-        ref.setData(values)
-        
-        db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
-    }
-    
-    func acceptFriendRequest(friendID: String, notificationID: String) {
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        let functions = Functions.functions()
-                
-        addFriendToFriendsList(userID: uid, friendID: friendID)
-        addFriendToFriendsList(userID: friendID, friendID: uid)
-        
-        functions.httpsCallable("acceptFriendRequest").call(["userID": uid, "friendID": friendID, "username": UserDataModel.shared.userInfo.username]) { result, error in
-            print(result?.data as Any, error as Any)
-        }
-    }
-    
-    func addFriendToFriendsList(userID: String, friendID: String) {
-        let db: Firestore = Firestore.firestore()
-        
-        db.collection("users").document(userID).updateData([
-            "friendsList" : FieldValue.arrayUnion([friendID]),
-            "pendingFriendRequests" : FieldValue.arrayRemove([friendID]),
-            "topFriends.\(friendID)" : 0
-        ])
-    }
-    
-    func sendFriendRequestNotis(friendID: String, notificationID: String) {
-        let db: Firestore = Firestore.firestore()
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-
-        let timestamp = Timestamp(date: Date())
-        db.collection("users").document(uid).collection("notifications").document(notificationID).updateData(["status" : "accepted", "timestamp": timestamp])
-        
-        db.collection("users").document(friendID).collection("notifications").document(UUID().uuidString).setData([
-            "status": "accepted",
-            "timestamp": timestamp,
-            "senderID": uid,
-            "senderUsername": UserDataModel.shared.userInfo.username,
-            "type": "friendRequest",
-            "seen": false
-        ])
-    }
-    
-    
-    func removeFriendRequest(friendID: String, notificationID: String) {
-        let db: Firestore = Firestore.firestore()
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-
-        db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
-        db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
     }
     
     func getPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
@@ -1153,7 +771,7 @@ extension UICollectionViewCell {
             } catch { completion(emptyPost); return }
         }
     }
-        
+
     func getUserInfo(userID: String, completion: @escaping (_ user: UserProfile) -> Void) {
         
         let db: Firestore! = Firestore.firestore()
@@ -1170,7 +788,6 @@ extension UICollectionViewCell {
             let emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
             db.collection("users").document(userID).getDocument { (doc, err) in
                 if err != nil { return }
-
                 do {
                     let userInfo = try doc!.data(as: UserProfile.self)
                     guard var info = userInfo else { completion(emptyProfile); return }
@@ -1181,84 +798,186 @@ extension UICollectionViewCell {
             }
         }
     }
-     
-    func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
-        
+    
+    func getUserFromUsername(username: String, completion: @escaping (_ user: UserProfile?) -> Void) {
         let db: Firestore! = Firestore.firestore()
-        var commentList: [MapComment] = []
-        
-        db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, err) in
-            
-            if err != nil { completion(commentList); return }
-            if commentSnap!.documents.count == 0 { completion(commentList); return }
-            guard let self = self else { return }
-
-            var index = 0
-            for doc in commentSnap!.documents {
+        if let user = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == username}) {
+            completion(user)
+            return
+        } else {
+            db.collection("users").whereField("username", isEqualTo: username).getDocuments { snap, err in
+                guard let doc = snap?.documents.first else { completion(nil); return }
                 do {
-                    let commentInf = try doc.data(as: MapComment.self)
-                    guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
-                    
-                    commentInfo.id = doc.documentID
-                    commentInfo.seconds = commentInfo.timestamp.seconds
-                    commentInfo.commentHeight = self.getCommentHeight(comment: commentInfo.comment)
-                    
-                    self.getUserInfo(userID: commentInfo.commenterID) { user in
-                        commentInfo.userInfo = user
-                        if !commentList.contains(where: {$0.id == doc.documentID}) {
-                            commentList.append(commentInfo)
-                            commentList.sort(by: {$0.seconds < $1.seconds})
-                        }
-                        
-                        index += 1; if index == commentSnap!.documents.count { completion(commentList) }
-                    }
-                    
-                } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+                    let unwrappedInfo = try doc.data(as: UserProfile.self)
+                    guard let userInfo = unwrappedInfo else { completion(nil); return }
+                    completion(userInfo)
+                    return
+                } catch {
+                    completion(nil)
+                    return
+                }
             }
         }
     }
     
-    func getCommentHeight(comment: String) -> CGFloat {
-        let temp = UILabel(frame: CGRect(x: 54, y: 0, width: UIScreen.main.bounds.width - 68, height: 18))
-        temp.text = comment
-        temp.font = UIFont(name: "SFCompactText-Regular", size: 13.5)
-        temp.numberOfLines = 0
-        temp.lineBreakMode = .byWordWrapping
-        temp.sizeToFit()
-        let commentHeight: CGFloat = temp.bounds.height < 16 ? 16 : temp.bounds.height
-        return commentHeight
-    }
-}
-
-extension NSObject {
-    func getCaptionHeight(caption: String, fontSize: CGFloat, maxCaption: CGFloat) -> CGFloat {
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 80, height: UIScreen.main.bounds.height))
-        tempLabel.text = caption
-        tempLabel.font = UIFont(name: "SFCompactText-Medium", size: fontSize)
-        tempLabel.numberOfLines = 0
-        tempLabel.lineBreakMode = .byWordWrapping
-        tempLabel.sizeToFit()
-
-        return maxCaption != 0 ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
+    func getSpot(spotID: String, completion: @escaping (_ spot: MapSpot?) -> Void) {
+        let db: Firestore! = Firestore.firestore()
+        let spotRef = db.collection("spots").document(spotID)
+        
+        spotRef.getDocument { (doc, err) in
+            do {
+                let unwrappedInfo = try doc?.data(as: MapSpot.self)
+                guard var spotInfo = unwrappedInfo else { completion(nil); return }
+                
+                spotInfo.id = spotID
+                spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
+                for visitor in spotInfo.visitorList {
+                    if UserDataModel.shared.userInfo.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
+                }
+                
+                completion(spotInfo)
+                return
+                
+            } catch {
+                completion(nil)
+                return
+            }
+        }
     }
     
-    func getImageHeight(aspectRatios: [CGFloat], maxAspect: CGFloat) -> CGFloat {
-        var imageAspect =  min((aspectRatios.max() ?? 0.033) - 0.033, maxAspect)
-        if imageAspect > 1.1 && imageAspect < 1.6 { imageAspect = 1.6 } /// stretch iPhone vertical
-        if imageAspect > 1.6 { imageAspect = maxAspect } /// round to max aspect
+    func getMap(mapID: String, completion: @escaping (_ map: CustomMap?) -> Void) {
+        let db: Firestore! = Firestore.firestore()
+        let mapRef = db.collection("maps").document(mapID)
+        mapRef.getDocument { (doc, err) in
+            do {
+                let unwrappedInfo = try doc?.data(as: CustomMap.self)
+                guard let mapInfo = unwrappedInfo else { completion(nil); return }
+                completion(mapInfo)
+                return
+            } catch {
+                completion(nil)
+                return
+            }
+        }
+    }
+
+    func addFriend(senderProfile: UserProfile, receiverID: String) {
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let db: Firestore = Firestore.firestore()
+        let notiID = UUID().uuidString
+        let ref = db.collection("users").document(receiverID).collection("notifications").document(notiID)
         
-        let imageHeight = UIScreen.main.bounds.width * imageAspect
-        return imageHeight
+        let time = Date()
+        
+        let values = ["senderID" : uid,
+                      "type" : "friendRequest",
+                      "senderUsername" : UserDataModel.shared.userInfo.username,
+                      "timestamp" : time,
+                      "status" : "pending",
+                      "seen" : false
+                      
+        ] as [String : Any]
+        ref.setData(values)
+        
+        db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
+    }
+
+    func acceptFriendRequest(friendID: String, notificationID: String) {
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        let functions = Functions.functions()
+                
+        addFriendToFriendsList(userID: uid, friendID: friendID)
+        addFriendToFriendsList(userID: friendID, friendID: uid)
+        sendFriendRequestNotis(friendID: friendID, notificationID: notificationID)
+        
+        functions.httpsCallable("acceptFriendRequest").call(["userID": uid, "friendID": friendID, "username": UserDataModel.shared.userInfo.username]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
     }
     
-    func setSecondaryPostValues(post: MapPost) -> MapPost {
-        var newPost = post
-        newPost.seconds = newPost.timestamp.seconds
-        newPost.imageHeight = getImageHeight(aspectRatios: newPost.aspectRatios ?? [], maxAspect: 1.92) /// max aspect 1.92 for feed
-        /// round to nearest line height
-        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 65)
+    func removeFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+        db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
+        db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
+    }
+    
+    func addFriendToFriendsList(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
         
-        return newPost
+        db.collection("users").document(userID).updateData([
+            "friendsList" : FieldValue.arrayUnion([friendID]),
+            "pendingFriendRequests" : FieldValue.arrayRemove([friendID]),
+            "topFriends.\(friendID)" : 0
+        ])
+    }
+    
+    func sendFriendRequestNotis(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+        let timestamp = Timestamp(date: Date())
+        db.collection("users").document(uid).collection("notifications").document(notificationID).updateData(["status" : "accepted", "timestamp": timestamp])
+        
+        db.collection("users").document(friendID).collection("notifications").document(UUID().uuidString).setData([
+            "status": "accepted",
+            "timestamp": timestamp,
+            "senderID": uid,
+            "senderUsername": UserDataModel.shared.userInfo.username,
+            "type": "friendRequest",
+            "seen": false
+        ])
+    }
+
+    func getAttString(caption: String, taggedFriends: [String], font: UIFont, maxWidth: CGFloat) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
+        let attString = NSMutableAttributedString(string: caption)
+        attString.addAttribute(NSAttributedString.Key.font, value: font, range: NSRange(0...attString.length - 1))
+        
+        var freshRect: [(rect: CGRect, username: String)] = []
+        var tags: [(username: String, range: NSRange)] = []
+        
+        let words = caption.components(separatedBy: .whitespacesAndNewlines)
+        for word in words {
+            let username = String(word.dropFirst())
+            if word.hasPrefix("@") && taggedFriends.contains(where: {$0 == username}) {
+                /// get first index of this word
+                let atIndexes = caption.indices(of: String(word))
+                let currentIndex = atIndexes[0]
+                /// make tag rect out of the username + @
+                let tag = (username: String(word.dropFirst()), range: NSMakeRange(currentIndex, word.count))
+                if !tags.contains(where: {$0 == tag}) {
+                    tags.append(tag)
+                    let range = NSMakeRange(currentIndex, word.count)
+                    /// bolded range out of username + @
+                    attString.addAttribute(NSAttributedString.Key.font, value: UIFont(name: "SFCompactText-Semibold", size: font.pointSize) as Any, range: range)
+                }
+            }
+        }
+        
+        for tag in tags {
+            var rect = (rect: getRect(str: attString, range: tag.range, maxWidth: maxWidth ), username: tag.username)
+            rect.0 = CGRect(x: rect.0.minX, y: rect.0.minY, width: rect.0.width, height: rect.0.height)
+            
+            if (!freshRect.contains(where: {$0 == rect})) {
+                freshRect.append(rect)
+            }
+        }
+        return ((attString, freshRect))
+    }
+    
+    func getRect(str: NSAttributedString, range: NSRange, maxWidth: CGFloat) -> CGRect {
+        let textStorage = NSTextStorage(attributedString: str)
+        let textContainer = NSTextContainer(size: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
+        let layoutManager = NSLayoutManager()
+        layoutManager.addTextContainer(textContainer)
+        textStorage.addLayoutManager(layoutManager)
+        textContainer.lineFragmentPadding = 10
+        let pointer = UnsafeMutablePointer<NSRange>.allocate(capacity: 1)
+        layoutManager.characterRange(forGlyphRange: range, actualGlyphRange: pointer)
+        var rect = layoutManager.boundingRect(forGlyphRange: pointer.move(), in: textContainer)
+        rect = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height)
+        return rect
     }
 }
 
@@ -1812,7 +1531,6 @@ extension UILabel {
     
     func addTrailing(with trailingText: String, moreText: String, moreTextFont: UIFont, moreTextColor: UIColor) {
         
-        print("visible length", self.visibleTextLength)
         let readMoreText: String = trailingText + moreText
         if self.visibleTextLength == 0 { return }
         
@@ -1822,17 +1540,13 @@ extension UILabel {
                                     
             let mutableString = NSString(string: myText) /// use mutable string for length for correct length calculations
             
-            print("mutable", mutableString)
             let trimmedString: String? = mutableString.replacingCharacters(in: NSRange(location: lengthForVisibleString, length: mutableString.length - lengthForVisibleString), with: "")
             let readMoreLength: Int = (readMoreText.count)
-            
             let safeTrimmedString = NSString(string: trimmedString ?? "")
-            print("safe trimmed", safeTrimmedString)
             if safeTrimmedString.length <= readMoreLength { return }
             
             // "safeTrimmedString.count - readMoreLength" should never be less then the readMoreLength because it'll be a negative value and will crash
             let trimmedForReadMore: String = (safeTrimmedString as NSString).replacingCharacters(in: NSRange(location: safeTrimmedString.length - readMoreLength, length: readMoreLength), with: "") + trailingText
-            print("trimmed for read more", trimmedForReadMore)
                         
             let answerAttributed = NSMutableAttributedString(string: trimmedForReadMore, attributes: [NSAttributedString.Key.font: self.font as Any])
             let readMoreAttributed = NSMutableAttributedString(string: moreText, attributes: [NSAttributedString.Key.font: moreTextFont, NSAttributedString.Key.foregroundColor: moreTextColor])

@@ -21,9 +21,10 @@ struct MapComment: Identifiable, Codable {
     var likers: [String]? = []
     
     var userInfo: UserProfile?
-    var commentHeight: CGFloat = 0
     var feedHeight: CGFloat = 0
-    var seconds: Int64 = 0
+    var seconds: Int64 {
+        return timestamp.seconds
+    }
     
     enum CodingKeys: String, CodingKey {
         case id

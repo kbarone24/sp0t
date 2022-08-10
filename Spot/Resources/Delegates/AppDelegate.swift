@@ -54,6 +54,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         //navigationBarAppearance.backgroundImage = UIImage(named: "BackArrowDark")
         //navigationBarAppearance.shadowImage = UIImage()
         
+        
+        if #available(iOS 15.0, *) {
+            UITableView.appearance().sectionHeaderTopPadding = 0.0
+        }
+        
         IQKeyboardManager.shared.enable = true
         IQKeyboardManager.shared.enableAutoToolbar = true
      //   IQKeyboardManager.shared.shouldShowToolbarPlaceholder = false

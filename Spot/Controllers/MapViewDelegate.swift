@@ -14,7 +14,6 @@ import MapKit
 extension MapController: MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        
         if let anno = annotation as? PostAnnotation {
             return getPostAnnotation(anno: anno)
             
@@ -40,7 +39,7 @@ extension MapController: MKMapViewDelegate {
         annotationView.mapView = mapView
         annotationView.clusteringIdentifier = shouldCluster ? MKMapViewDefaultClusterAnnotationViewReuseIdentifier : nil
 
-        guard let postInfo = self.postsList.first(where: {$0.id == anno.postID}) else { return FriendPostAnnotationView() }
+        guard let postInfo = friendsPostsDictionary[anno.postID] else { return FriendPostAnnotationView() }
         annotationView.updateImage(posts: [postInfo])
         return annotationView
     }
@@ -80,7 +79,7 @@ extension MapController: MKMapViewDelegate {
         
         var posts: [MapPost] = []
         for memberAnno in anno.memberAnnotations {
-            if let member = memberAnno as? PostAnnotation, let post = postsList.first(where: {$0.id == member.postID}) {
+            if let member = memberAnno as? PostAnnotation, let post = friendsPostsDictionary[member.postID] {
                 posts.append(post)
             }
         }

@@ -46,7 +46,6 @@ class MapController: UIViewController {
     var shouldCluster = true /// should cluster is false when nearby (tab index 1) selected and max zoom enabled
     
     lazy var friendsPostsDictionary = [String: MapPost]()
-    lazy var postsList: [MapPost] = []
     lazy var postAnnotations = [String: PostAnnotation]()
     
     /// use to avoid deleted documents entering from cache
@@ -99,6 +98,10 @@ class MapController: UIViewController {
     
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostOpen(_:)), name: NSNotification.Name(("PostOpen")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChange(_:)), name: NSNotification.Name(("PostChange")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
+
         //  NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
     }
     
@@ -245,7 +248,6 @@ class MapController: UIViewController {
         sheetView?.present(to: .Top)
         sheetView?.canInteract = false
         sheetView?.showCloseButton = false
-        profileVC.containerDrawerView = sheetView
     }
     
     @objc func openNotis(_ sender: UIButton) {
@@ -258,7 +260,6 @@ class MapController: UIViewController {
         sheetView?.swipeDownToDismiss = false
         sheetView?.canInteract = false
         sheetView?.present(to: .Top)
-        sheetView?.showCloseButton = false
         
         notifVC.contentDrawer = sheetView
     }
@@ -269,9 +270,10 @@ class MapController: UIViewController {
         sheetView = DrawerView(present: postVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
         })
+        postVC.containerDrawerView = sheetView
+        
         sheetView?.present(to: .Top)
-        sheetView?.canInteract = false
-        sheetView?.showCloseButton = true
+        sheetView?.canInteract = true
         sheetView?.swipeDownToDismiss = true
     }
     

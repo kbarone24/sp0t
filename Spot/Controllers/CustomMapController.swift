@@ -25,12 +25,12 @@ class CustomMapController: UIViewController {
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
-            customMapCollectionView.reloadData()
+            if customMapCollectionView != nil { customMapCollectionView.reloadData() }
         }
     }
-    private var containerDrawerView: DrawerView?
-    public var profileVC: ProfileViewController?
-    private var mapController: UIViewController?
+    private unowned var containerDrawerView: DrawerView?
+    public unowned var profileVC: ProfileViewController?
+    private unowned var mapController: UIViewController?
 
     init(userProfile: UserProfile? = nil, mapData: CustomMap, presentedDrawerView: DrawerView? = nil) {
         super.init(nibName: nil, bundle: nil)
@@ -56,7 +56,8 @@ class CustomMapController: UIViewController {
         if let mapVC = window as? UINavigationController {
             mapController = mapVC.viewControllers[0]
         }
-        viewSetup()
+
+        mapData?.founderID ?? "" == "" ? getMapInfo() : viewSetup()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -65,6 +66,14 @@ class CustomMapController: UIViewController {
 }
 
 extension CustomMapController {
+    private func getMapInfo() {
+        getMap(mapID: mapData?.id ?? "") { [weak self] map in
+            guard let self = self else { return }
+            self.mapData = map
+            self.viewSetup()
+        }
+    }
+    
     private func viewSetup() {
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
