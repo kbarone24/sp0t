@@ -736,7 +736,9 @@ class PostCell: UICollectionViewCell {
     
     @objc func spotTap() {
         if let postVC = viewContainingController() as? PostController {
-            print("add spot page from here")
+            let spotVC = SpotPageController()
+            spotVC.modalPresentationStyle = .fullScreen
+            postVC.present(spotVC, animated: true)
         }
     }
     

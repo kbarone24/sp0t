@@ -349,7 +349,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 227 images.
+  /// This `R.image` struct is generated, and contains static references to 228 images.
   struct image {
     /// Image `AcceptedTheirFriendRequest`.
     static let acceptedTheirFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedTheirFriendRequest")
@@ -493,6 +493,8 @@ struct R: Rswift.Validatable {
     static let eggTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "EggTag")
     /// Image `FeedExit`.
     static let feedExit = Rswift.ImageResource(bundle: R.hostingBundle, name: "FeedExit")
+    /// Image `FeedMapIcon`.
+    static let feedMapIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "FeedMapIcon")
     /// Image `FeedSpotIcon`.
     static let feedSpotIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "FeedSpotIcon")
     /// Image `FishTag`.
@@ -1300,6 +1302,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "FeedExit", bundle: ..., traitCollection: ...)`
     static func feedExit(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.feedExit, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "FeedMapIcon", bundle: ..., traitCollection: ...)`
+    static func feedMapIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.feedMapIcon, compatibleWith: traitCollection)
     }
     #endif
 
