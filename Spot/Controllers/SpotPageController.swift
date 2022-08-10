@@ -15,6 +15,7 @@ import SDWebImage
 class SpotPageController: UIViewController {
 
     private var spotPageCollectionView: UICollectionView!
+    private var addSpotButton: UIButton!
     private var barView: UIView!
     private var titleLabel: UILabel!
     private var barBackButton: UIButton!
@@ -59,6 +60,22 @@ extension SpotPageController {
         view.addSubview(spotPageCollectionView)
         spotPageCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
+        }
+        
+        addSpotButton = UIButton {
+            $0.layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.25).cgColor
+            $0.layer.shadowOpacity = 1
+            $0.layer.shadowRadius = 8
+            $0.layer.shadowOffset = CGSize(width: 0, height: 0.5)
+            $0.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
+            $0.setTitle("", for: .normal)
+            $0.addTarget(self, action: #selector(addSpotAction), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        addSpotButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(24)
+            $0.bottom.equalToSuperview().inset(35)
+            $0.width.height.equalTo(73)
         }
         
         barView = UIView {
@@ -118,6 +135,10 @@ extension SpotPageController {
             $0.layer.cornerRadius = 8
             $0.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
         }
+    }
+    
+    @objc func addSpotAction() {
+        
     }
     
     @objc func backButtonAction() {
