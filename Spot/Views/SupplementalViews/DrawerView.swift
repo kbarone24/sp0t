@@ -41,7 +41,7 @@ class DrawerView: NSObject {
     }
     // If false don't update the slideview frame
     public var canDrag: Bool = true
-    public var showCloseButton: Bool = true {
+    public var showCloseButton: Bool = false {
         didSet {
             closeButton.isHidden = !showCloseButton
         }
@@ -150,7 +150,7 @@ class DrawerView: NSObject {
             $0.top.equalToSuperview().offset(30)
             $0.width.height.equalTo(70)
         }
-        closeButton.addTarget(self, action: #selector(self.closeAction), for: .touchUpInside)
+        closeButton.addTarget(self, action: #selector(self.closeAction(_:)), for: .touchUpInside)
         closeButton.isHidden = !showCloseButton
     }
     
@@ -212,6 +212,7 @@ class DrawerView: NSObject {
     // MARK: Pan gesture
     @objc func panPerforming(recognizer: UIPanGestureRecognizer) {
         let translation = recognizer.translation(in: recognizer.view)
+        let velocity = recognizer.velocity(in: recognizer.view)
         // When the user is still dragging or start dragging the if statement here will be fall through
         if recognizer.state == .began || recognizer.state == .changed {
             // Add the translation in y to slideView when slideView's minY is larger than 0
@@ -234,9 +235,9 @@ class DrawerView: NSObject {
             }
             recognizer.setTranslation(.zero, in: recognizer.view)
         }
-        else{
+        else {
             // Check the velocity of gesture to determine if it's a swipe or a drag
-            if swipeToNextState && abs(recognizer.velocity(in: recognizer.view).y) > 1000 {
+            if swipeToNextState && abs(velocity.y) > 1000 {
                 // This is a swipe
                 // Swipe up velocity is smaller than 0
                 // Determine whether the detentsPointer shuld move forward or back according to the swipe direction
@@ -264,11 +265,17 @@ class DrawerView: NSObject {
                     detentsPointer = detents.firstIndex(of: .Middle)!
                 }
             }
-            
-            // If swipeDownToDismiss is true check the slideView ending position to determine if need to pop view controller
+            /* If swipeDownToDismiss is true check the slideView ending position to determine if need to pop view controller
             if self.slideView.frame.minY > (detents.contains(.Bottom) ? (self.parentVC.view.frame.height - 100) : (self.parentVC.view.frame.height * 0.6)) && swipeDownToDismiss {
                 myNav.popViewController(animated: true)
+            } */
+            /// swipe to dismiss from full-screen-only view
+            let topOffset = slideView.frame.origin.y
+            if self.swipeDownToDismiss && detents[0] == .Top && (topOffset * 5 + velocity.y) > 1000 {
+                closeAction()
+                return
             }
+                
             // Animate the drawer view to the set position
             UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
                 self.slideView.frame.origin.y = self.yPosition
@@ -283,9 +290,15 @@ class DrawerView: NSObject {
     }
     
     // MARK: Close
-    @objc func closeAction() {
+    @objc func closeAction(_ sender: UIButton) {
+        closeAction()
+    }
+    
+    func closeAction() {
+        /// animation duration as a proportion of drawer's current position (0.3 is default duration)
+        let animationDuration = ((slideView.frame.height - slideView.frame.origin.y) * 0.3) / parentVC.view.bounds.height
         if myNav.viewControllers.count == 1 {
-            UIView.animate(withDuration: 0.3, animations: {
+            UIView.animate(withDuration: animationDuration, animations: {
                 self.slideView.frame.origin.y = self.parentVC.view.frame.height
                 self.parentVC.view.layoutIfNeeded()
             }) { (success) in

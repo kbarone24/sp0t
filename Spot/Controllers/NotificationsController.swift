@@ -239,7 +239,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                 
         fetchGroup.notify(queue: DispatchQueue.main) { [weak self] in
             guard let self = self else { return }
-            print("made it to end of query")
             self.sortAndReload()
         }
     }
@@ -333,9 +332,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
 extension NotificationsController: UITableViewDataSource {
         
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let userinfo = indexPath.row
-        //insert code to display post by using indexPath
+        if tableView.cellForRow(at: indexPath) is ActivityCell {
+            if let post = notifications[indexPath.row].postInfo {
+                let comment = notifications[indexPath.row].type.contains("comment")
+                openPost(post: post, commentNoti: comment)
+            } else if let user = notifications[indexPath.row].userInfo {
+                openProfile(user: user)
+            }
+        }
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -356,7 +360,7 @@ extension NotificationsController: UITableViewDataSource {
         } else if notifications.count == 0{
             return 1
         } else{
-            if(section == 0){
+            if (section == 0) {
                 return 1
             } else {
                 return notifications.count
@@ -463,9 +467,7 @@ extension NotificationsController: UITableViewDataSource {
 extension NotificationsController: notificationDelegateProtocol {
 
     func getProfile(userProfile: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: userProfile, presentedDrawerView: contentDrawer)
-        navigationController!.pushViewController(profileVC, animated: true)
-        profileVC.navigationController!.navigationBar.isTranslucent = true
+        openProfile(user: userProfile)
     }
     
     func showPost(){
@@ -489,6 +491,21 @@ extension NotificationsController: notificationDelegateProtocol {
     }
 }
 
+extension NotificationsController {
+    func openProfile(user: UserProfile) {
+        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: contentDrawer)
+        DispatchQueue.main.async { self.navigationController!.pushViewController(profileVC, animated: true) }
+    }
+    
+    func openPost(post: MapPost, commentNoti: Bool) {
+        guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
+        postVC.postsList = [post]
+        postVC.containerDrawerView = contentDrawer
+        postVC.openComments = commentNoti
+        DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
+    }
+}
+
 class ActivityIndicatorCell: UITableViewCell {
     
     lazy var activityIndicator: CustomActivityIndicator = CustomActivityIndicator(frame: CGRect.zero)
@@ -504,11 +521,12 @@ class ActivityIndicatorCell: UITableViewCell {
     
     func setUp() {
         activityIndicator.removeFromSuperview()
-        activityIndicator.frame = CGRect(x: (self.frame.width/2)-5, y: 35, width: 30, height: 30)
+        activityIndicator.frame = CGRect(x: ((UIScreen.main.bounds.width - 30)/2), y: 35, width: 30, height: 30)
         activityIndicator.startAnimating()
         activityIndicator.translatesAutoresizingMaskIntoConstraints = true
         contentView.addSubview(activityIndicator)
-        activityIndicator.centerXAnchor.constraint(equalTo: contentView.centerXAnchor).isActive = true
-        activityIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
+ //       activityIndicator.centerXAnchor.constraint(equalTo: contentView.centerXAnchor).isActive = true
+ //       activityIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
+
     }
 }

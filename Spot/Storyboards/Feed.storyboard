@@ -27,13 +27,14 @@
         <!--Comments Controller-->
         <scene sceneID="7hw-RN-zrl">
             <objects>
-                <viewController storyboardIdentifier="Comments" extendedLayoutIncludesOpaqueBars="YES" id="KZU-Pq-qhm" customClass="CommentsController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="Comments" automaticallyAdjustsScrollViewInsets="NO" id="KZU-Pq-qhm" customClass="CommentsController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="ehe-9M-aYl">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="BI5-CJ-PeC"/>
                         <color key="backgroundColor" name="SpotBlack"/>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="gP0-H0-FTA" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>

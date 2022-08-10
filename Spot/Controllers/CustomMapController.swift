@@ -84,7 +84,8 @@ class CustomMapController: UIViewController {
         if let mapVC = window as? UINavigationController {
             mapController = mapVC.viewControllers[0]
         }
-        viewSetup()
+
+        mapData?.founderID ?? "" == "" ? getMapInfo() : viewSetup()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -93,6 +94,14 @@ class CustomMapController: UIViewController {
 }
 
 extension CustomMapController {
+    private func getMapInfo() {
+        getMap(mapID: mapData?.id ?? "") { [weak self] map in
+            guard let self = self else { return }
+            self.mapData = map
+            self.viewSetup()
+        }
+    }
+    
     private func viewSetup() {
         NotificationCenter.default.addObserver(self, selector: #selector(FetchedMapPost(_:)), name: NSNotification.Name("FetchedMapPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
