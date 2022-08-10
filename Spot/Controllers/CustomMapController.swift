@@ -48,9 +48,9 @@ class CustomMapController: UIViewController {
         }
     }
     
-    private var containerDrawerView: DrawerView?
-    public var profileVC: ProfileViewController?
-    private var mapController: UIViewController?
+    private unowned var containerDrawerView: DrawerView?
+    public unowned var profileVC: ProfileViewController?
+    private unowned var mapController: UIViewController?
     private lazy var imageManager = SDWebImageManager()
 
     init(userProfile: UserProfile? = nil, mapData: CustomMap, presentedDrawerView: DrawerView? = nil) {

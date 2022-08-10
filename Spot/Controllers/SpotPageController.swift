@@ -22,8 +22,20 @@ class SpotPageController: UIViewController {
     private var mapPostLabel: UILabel!
     private var communityPostLabel: UILabel!
     
-    init() {
+    private var spotName: String!
+    private var spotID: String!
+    private var spot: MapSpot? {
+        didSet {
+            spotPageCollectionView.reloadSections(IndexSet(integer: 0))
+        }
+    }
+    private var mapPost: [MapPost] = []
+    private var communityPost: [MapPost] = []
+    
+    init(mapPost: MapPost) {
         super.init(nibName: nil, bundle: nil)
+        self.spotName = mapPost.spotName
+        self.spotID = mapPost.spotID
     }
 
     required init?(coder: NSCoder) {
@@ -38,6 +50,9 @@ class SpotPageController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
+        DispatchQueue.main.async {
+            self.fetchSpot()
+        }
     }
 }
 
@@ -107,7 +122,7 @@ extension SpotPageController {
         mapPostLabel = UILabel {
             let frontPadding = "    "
             let bottomPadding = "   "
-            $0.text = frontPadding + "mapPostLabel" + bottomPadding
+            $0.text = frontPadding + "" + bottomPadding
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
             $0.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
@@ -137,6 +152,20 @@ extension SpotPageController {
         }
     }
     
+    private func fetchSpot() {
+        let db: Firestore = Firestore.firestore()
+        db.collection("spots").document(spotID).getDocument { [weak self] snap, err in
+            do {
+                guard let self = self else { return }
+                let unwrappedInfo = try snap?.data(as: MapSpot.self)
+                guard let userInfo = unwrappedInfo else { return }
+                self.spot = userInfo
+            } catch let parseError {
+                print("JSON Error \(parseError.localizedDescription)")
+            }
+        }
+    }
+    
     @objc func addSpotAction() {
         
     }
@@ -153,33 +182,53 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return section == 0 ? 1 : 3
+        switch section {
+        case 0:
+            return 1
+        case 1:
+            return mapPost.count
+        case 2:
+            return communityPost.count
+        default:
+            return 0
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "SpotPageHeaderCell" : "SpotPageBodyCell", for: indexPath)
         if let headerCell = cell as? SpotPageHeaderCell {
+            headerCell.cellSetup(spotName: spotName, spot: spot)
             return headerCell
         } else if let bodyCell = cell as? SpotPageBodyCell {
-            if indexPath == IndexPath(row: 0, section: 1) && view.subviews.contains(mapPostLabel) == false  {
+            if indexPath == IndexPath(row: 0, section: 1) && view.subviews.contains(mapPostLabel) == false {
                 collectionView.addSubview(mapPostLabel)
                 mapPostLabel.snp.makeConstraints {
                     $0.leading.equalToSuperview()
                     $0.top.equalToSuperview().offset(cell.frame.minY - 15.5)
                     $0.height.equalTo(31)
                 }
-                
             }
-            if indexPath == IndexPath(row: 0, section: 2) && view.subviews.contains(communityPostLabel) == false {
-                collectionView.addSubview(communityPostLabel)
-                communityPostLabel.snp.makeConstraints {
-                    $0.leading.equalToSuperview()
-                    $0.top.equalToSuperview().offset(cell.frame.minY - 15.5)
-                    $0.height.equalTo(31)
+            
+            if communityPost.count != 0 {
+                if indexPath == IndexPath(row: 0, section: 2) && view.subviews.contains(communityPostLabel) == false {
+                    collectionView.addSubview(communityPostLabel)
+                    communityPostLabel.snp.makeConstraints {
+                        $0.leading.equalToSuperview()
+                        $0.top.equalToSuperview().offset(cell.frame.minY - 15.5)
+                        $0.height.equalTo(31)
+                    }
                 }
-                
+            } else {
+                if indexPath == IndexPath(row: mapPost.count - 1, section: 1) && view.subviews.contains(communityPostLabel) == false {
+                    collectionView.addSubview(communityPostLabel)
+                    communityPostLabel.snp.makeConstraints {
+                        $0.leading.equalToSuperview()
+                        $0.top.equalToSuperview().offset(cell.frame.maxY - 15.5)
+                        $0.height.equalTo(31)
+                    }
+                }
             }
-
+            
             return bodyCell
         }
         return cell
@@ -237,7 +286,7 @@ extension SpotPageController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if scrollView.contentOffset.y > -91 {
             barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
-            titleLabel.text = scrollView.contentOffset.y > 0 ? "" : ""
+            titleLabel.text = scrollView.contentOffset.y > 0 ? self.spotName : ""
         }
     }
 }
