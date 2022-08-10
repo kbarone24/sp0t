@@ -94,9 +94,16 @@ class UploadPostModel {
     }
     
     func setTaggedUsers() {
+        let taggedUsers = getTaggedUsers(text: postObject.caption)
+        let usernames = taggedUsers.map({$0.username})
+        postObject.taggedUsers = usernames
+        postObject.addedUsers = taggedUsers.map({$0.id!})
+        postObject.taggedUserIDs = taggedUsers.map({$0.id!})
+    }
+    
+    func getTaggedUsers(text: String) -> [UserProfile] {
         var selectedUsers: [UserProfile] = []
-        let words = postObject.caption.components(separatedBy: .whitespacesAndNewlines)
-        
+        let words = text.components(separatedBy: .whitespacesAndNewlines)
         for w in words {
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
@@ -105,10 +112,7 @@ class UploadPostModel {
                 }
             }
         }
-        let usernames = selectedUsers.map({$0.username})
-        postObject.taggedUsers = usernames
-        postObject.addedUsers = selectedUsers.map({$0.id!})
-        postObject.taggedUserIDs = selectedUsers.map({$0.id!})
+        return selectedUsers
     }
     
     func reverseGeocodeFromCoordinate(completion: @escaping (_ address: String) -> Void) {
@@ -158,21 +162,6 @@ class UploadPostModel {
     }
     
     func setFinalPostValues() {
-        var taggedProfiles: [UserProfile] = []
-
-        let word = UploadPostModel.shared.postObject.caption.split(separator: " ")
-        
-        for w in word {
-            let username = String(w.dropFirst())
-            if w.hasPrefix("@") {
-                if let f = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == username}) {
-                    UploadPostModel.shared.postObject.taggedUsers!.append(username)
-                    UploadPostModel.shared.postObject.taggedUserIDs!.append(f.id!)
-                    taggedProfiles.append(f)
-                }
-            }
-        }
-        
         var postFriends = postObject.privacyLevel == "invite" ? spotObject!.inviteList!.filter(UserDataModel.shared.userInfo.friendIDs.contains) : UserDataModel.shared.userInfo.friendIDs
         let uid = UserDataModel.shared.uid
         if !postFriends.contains(uid) { postFriends.append(uid) }

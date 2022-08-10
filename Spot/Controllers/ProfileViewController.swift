@@ -27,7 +27,7 @@ class ProfileViewController: UIViewController {
     // MARK: Fetched datas
     public var userProfile: UserProfile? {
         didSet {
-            DispatchQueue.main.async { self.profileCollectionView.reloadData() }
+            if profileCollectionView != nil { DispatchQueue.main.async { self.profileCollectionView.reloadData() } }
         }
     }
     public var maps = [CustomMap]() {
@@ -56,7 +56,7 @@ class ProfileViewController: UIViewController {
     public var mapSelectedIndex: Int?
     
     private lazy var imageManager = SDWebImageManager()
-    public var containerDrawerView: DrawerView?
+    public unowned var containerDrawerView: DrawerView?
     
     deinit {
         print("ProfileViewController(\(self) deinit")
@@ -68,23 +68,6 @@ class ProfileViewController: UIViewController {
         if presentedDrawerView != nil {
             self.containerDrawerView = presentedDrawerView
         }
-        if self.userProfile?.id == UserDataModel.shared.userInfo.id {
-            relation = .myself
-        } else if UserDataModel.shared.userInfo.friendsList.contains(where: { user in
-            user.id == userProfile?.id
-        }) {
-            relation = .friend
-        } else if UserDataModel.shared.userInfo.pendingFriendRequests.contains(where: { user in
-            user == userProfile?.id
-        }) {
-            relation = .pending
-        } else if self.userProfile!.pendingFriendRequests.contains(where: { user in
-            user == UserDataModel.shared.userInfo.id
-        }) {
-            relation = .received
-        } else {
-            relation = .stranger
-        }
     }
     
     required init?(coder: NSCoder) {
@@ -93,11 +76,10 @@ class ProfileViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        if userProfile!.id ?? "" == "" { getUserInfo(); return }
+        getUserRelation()
         viewSetup()
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getMaps()
-            self.getNinePosts()
-        }
+        runFetches()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -142,6 +124,43 @@ class ProfileViewController: UIViewController {
 }
 
 extension ProfileViewController {
+    private func getUserInfo() {
+        /// username passed through for tagged user not in friends list
+        getUserFromUsername(username: userProfile!.username) { [weak self] user in
+            guard let self = self else { return }
+            self.userProfile = user
+            self.getUserRelation()
+            self.viewSetup()
+            self.runFetches()
+        }
+    }
+    
+    private func getUserRelation() {
+        if self.userProfile?.id == UserDataModel.shared.userInfo.id {
+            relation = .myself
+        } else if UserDataModel.shared.userInfo.friendsList.contains(where: { user in
+            user.id == userProfile?.id
+        }) {
+            relation = .friend
+        } else if UserDataModel.shared.userInfo.pendingFriendRequests.contains(where: { user in
+            user == userProfile?.id
+        }) {
+            relation = .pending
+        } else if self.userProfile!.pendingFriendRequests.contains(where: { user in
+            user == UserDataModel.shared.userInfo.id
+        }) {
+            relation = .received
+        } else {
+            relation = .stranger
+        }
+    }
+    
+    private func runFetches() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getMaps()
+            self.getNinePosts()
+        }
+    }
     
     private func viewSetup() {
         view.backgroundColor = .white
@@ -335,7 +354,6 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
                 print("mapCell selected")
             } else if let _ = cell as? ProfileBodyCell {
                 mapSelectedIndex = indexPath.row - 1
-                NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
                 containerDrawerView?.present(to: .Middle)
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], presentedDrawerView: containerDrawerView)
                 customMapVC.profileVC = self

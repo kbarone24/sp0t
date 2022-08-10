@@ -17,78 +17,65 @@ import FirebaseMessaging
 import Geofirestore
 
 class ActivityCell: UITableViewCell {
-    
     weak var notificationControllerDelegate: notificationDelegateProtocol?
+    
     var username: UILabel!
     var detail: UILabel!
     var timestamp: UILabel!
-    var profilePicButton: UIButton!
     var profilePic: UIImageView!
     var userAvatar: UIImageView!
-    var postImageButton: UIButton!
     var postImage: UIImageView!
     var imageURLs: [String] = []
+    
     var notification: UserNotification!
     var detailOriginalWidth: CGFloat!
     var detailOriginalHeight: CGFloat!
-        
+    
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        self.selectionStyle = .none
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-        
+    
     // MARK: setting up views
     func set(notification: UserNotification){
         self.resetCell()
-        
         self.notification = notification
         
         if (notification.type == "friendRequest" && notification.status == "accepted" && notification.seen == false) ||  notification.type == "mapInvite" && notification.seen == false{
             self.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.2)
         } else { self.backgroundColor = .white }
         
-        self.selectionStyle = .none
-        
-        let profilePicButton = UIButton()
-        contentView.addSubview(profilePicButton)
-        profilePicButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
-
-        
-        profilePicButton.snp.makeConstraints{
-            $0.centerY.equalToSuperview()
-            $0.leading.equalToSuperview().offset(16)
-            $0.height.width.equalTo(50)
-        }
-        
-        
         profilePic = UIImageView {
             $0.layer.masksToBounds = false
             $0.layer.cornerRadius = 25
             $0.clipsToBounds = true
-            $0.contentMode = UIView.ContentMode.scaleAspectFill
+            $0.contentMode = .scaleAspectFill
             $0.isHidden = false
             $0.translatesAutoresizingMaskIntoConstraints = true
-            profilePicButton.addSubview($0)
+            $0.isUserInteractionEnabled = true
+            let tap = UITapGestureRecognizer(target: self, action: #selector(profileTap))
+            $0.addGestureRecognizer(tap)
+            contentView.addSubview($0)
             let url = notification.userInfo!.imageURL
             if url != "" {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
                 $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer]) } else {print("profilePic not found")}
         }
-        
         profilePic.snp.makeConstraints{
             $0.centerY.equalToSuperview()
-            $0.centerX.equalToSuperview()
+            $0.leading.equalToSuperview().offset(16)
             $0.height.width.equalTo(50)
         }
-
+        
         if (notification.userInfo?.avatarURL ?? "") != "" {
             userAvatar = UIImageView{
                 $0.layer.masksToBounds = false
-                $0.contentMode = UIView.ContentMode.scaleAspectFill
+                $0.contentMode = .scaleAspectFill
                 $0.isHidden = false
                 let url = notification.userInfo!.avatarURL!
                 if url != "" {
@@ -106,24 +93,13 @@ class ActivityCell: UITableViewCell {
             }
         }
         
-        let postImageButton = UIButton()
-        contentView.addSubview(postImageButton)
-        postImageButton.addTarget(self, action: #selector(postTap(_:)), for: .touchUpInside)
-        
-        postImageButton.snp.makeConstraints{
-            $0.trailing.equalToSuperview().offset(-14)
-            $0.centerY.equalToSuperview()
-            $0.width.equalTo(44)
-            $0.height.equalTo(52)
-        }
-    
         postImage = UIImageView {
             $0.layer.masksToBounds = false
             $0.clipsToBounds = true
-            $0.contentMode = UIView.ContentMode.scaleAspectFill
+            $0.contentMode = .scaleAspectFill
             $0.isHidden = false
             $0.translatesAutoresizingMaskIntoConstraints = true
-            postImageButton.addSubview($0)
+            contentView.addSubview($0)
             
             if(notification.postInfo != nil){
                 imageURLs = notification.postInfo!.imageURLs
@@ -147,34 +123,36 @@ class ActivityCell: UITableViewCell {
         }
         
         postImage.snp.makeConstraints{
-            $0.centerX.equalToSuperview()
             $0.centerY.equalToSuperview()
             let notiType = notification.type
             switch notiType {
             case "friendRequest":
                 $0.width.equalTo(33)
                 $0.height.equalTo(27)
+                $0.trailing.equalToSuperview().offset(-22)
             case "mapInvite":
                 $0.width.equalTo(45.07)
                 $0.height.equalTo(30.04)
+                $0.trailing.equalToSuperview().offset(-13.5)
             default:
                 $0.width.equalTo(44)
                 $0.height.equalTo(52)
+                $0.trailing.equalToSuperview().offset(-14)
             }
         }
         
         username = UILabel{
-             $0.text = notification.senderUsername
-             $0.isUserInteractionEnabled = true
-             let tap = UITapGestureRecognizer(target: self, action: #selector(self.postTap(_:)))
-             $0.addGestureRecognizer(tap)
-             $0.numberOfLines = 0
-             $0.textColor = .black
-             $0.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-             $0.translatesAutoresizingMaskIntoConstraints = false
-             contentView.addSubview($0)
-         }
-                
+            $0.text = notification.senderUsername
+            $0.isUserInteractionEnabled = true
+            $0.numberOfLines = 0
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            let tap = UITapGestureRecognizer(target: self, action: #selector(profileTap))
+            $0.addGestureRecognizer(tap)
+            contentView.addSubview($0)
+        }
+        
         timestamp = UILabel{
             $0.toTimeString(timestamp: notification.timestamp)
             $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
@@ -186,14 +164,14 @@ class ActivityCell: UITableViewCell {
         //timestamp constraints set later because they rely on detail constraints
         
         var detailWidth = 0.0
-
+        
         if(timestamp.intrinsicContentSize.width < 20){
             detailWidth = 215 + 20
         } else if (timestamp.intrinsicContentSize.width < 30){
             detailWidth = 215 + 10
         } else { detailWidth = 215 }
         
-
+        
         detail = UILabel {
             let notiType = notification.type
             switch notiType {
@@ -243,7 +221,7 @@ class ActivityCell: UITableViewCell {
             default:
                 $0.text = notification.type
             }
-
+            
             $0.numberOfLines = 2
             $0.lineBreakMode = NSLineBreakMode.byWordWrapping
             $0.textColor = .black
@@ -262,13 +240,12 @@ class ActivityCell: UITableViewCell {
         }
         
         
-                 
+        
         detail.snp.makeConstraints{
             $0.top.equalTo(username.snp.bottom)
             $0.leading.equalTo(profilePic.snp.trailing).offset(7)
             $0.width.lessThanOrEqualTo(detailWidth)
         }
-        
         
         timestamp.snp.makeConstraints{
             $0.bottom.equalTo(detail.snp.bottom)
@@ -280,15 +257,9 @@ class ActivityCell: UITableViewCell {
         }
         
     }
-        
-    @objc func profileTap(_ sender: Any){
-        notificationControllerDelegate?.getProfile(userProfile: notification.userInfo!)
-    }
     
-    @objc func postTap(_ sender: Any){
-        //SHOW POST INSTEAD ONCE YOU CAN
-        print("post tapped")
-        notificationControllerDelegate?.deleteFriend(friendID: (notification.userInfo?.id!)!)
+    @objc func profileTap() {
+        notificationControllerDelegate?.getProfile(userProfile: notification.userInfo!)
     }
     
     func resetCell() {
@@ -297,10 +268,10 @@ class ActivityCell: UITableViewCell {
                 subview.removeFromSuperview()
             }
         }
-         
+        
     }
     
-       override func prepareForReuse() {
+    override func prepareForReuse() {
         if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
         if userAvatar != nil { userAvatar.sd_cancelCurrentImageLoad() }
         // Remove Subviews Or Layers That Were Added Just For This Cell

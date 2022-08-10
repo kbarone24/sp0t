@@ -55,7 +55,6 @@ struct MapPost: Identifiable, Codable {
     var postImage: [UIImage] = []
     
     var postScore: Double? = 0
-    var seconds: Int64? = 0
     var selectedImageIndex: Int? = 0
     var imageHeight: CGFloat? = 0
     var captionHeight: CGFloat? = 0
@@ -64,6 +63,9 @@ struct MapPost: Identifiable, Codable {
     
     var seen: Bool {
         return seenList!.contains(UserDataModel.shared.uid)
+    }
+    var seconds: Int64 {
+        return timestamp.seconds
     }
     
     enum CodingKeys: String, CodingKey {
