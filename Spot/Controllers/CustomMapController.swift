@@ -1,16 +1,10 @@
-//
-//  CustomMapController.swift
-//  Spot
-//
-//  Created by Arnold on 7/22/22.
-//  Copyright © 2022 sp0t, LLC. All rights reserved.
-//
 
 import UIKit
 import SnapKit
 import Mixpanel
 import Firebase
 import SDWebImage
+import Contacts
 
 class CustomMapController: UIViewController {
     
@@ -26,8 +20,7 @@ class CustomMapController: UIViewController {
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
-            guard customMapCollectionView != nil else { return }
-            customMapCollectionView.reloadData()
+            if customMapCollectionView != nil { DispatchQueue.main.async {self.customMapCollectionView.reloadData()}}
         }
     }
     private var firstMaxFourMapMemberList: [UserProfile] = []
@@ -43,14 +36,13 @@ class CustomMapController: UIViewController {
     }
     private var postDatas: [String: MapPost] = [:] {
         didSet {
-            guard customMapCollectionView != nil else { return }
-            customMapCollectionView.reloadData()
+            if customMapCollectionView != nil { DispatchQueue.main.async {self.customMapCollectionView.reloadData()}}
         }
     }
     
-    private var containerDrawerView: DrawerView?
-    public var profileVC: ProfileViewController?
-    private var mapController: UIViewController?
+    private unowned var containerDrawerView: DrawerView?
+    public unowned var profileVC: ProfileViewController?
+    private unowned var mapController: UIViewController?
     private lazy var imageManager = SDWebImageManager()
 
     init(userProfile: UserProfile? = nil, mapData: CustomMap, presentedDrawerView: DrawerView? = nil) {
@@ -58,7 +50,6 @@ class CustomMapController: UIViewController {
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
         self.mapData = mapData
         self.containerDrawerView = presentedDrawerView
-        containerDrawerView?.canInteract = true
     }
 
     required init?(coder: NSCoder) {
@@ -74,18 +65,23 @@ class CustomMapController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getMapCover()
-            self.getMapMember()
-        }
-        
+                
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
         if let mapVC = window as? UINavigationController {
             mapController = mapVC.viewControllers[0]
         }
-
-        mapData?.founderID ?? "" == "" ? getMapInfo() : viewSetup()
+        
+        if mapData?.founderID ?? "" == "" {
+            getMapInfo()
+        } else {
+            runInitialSetup()
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setUpNavBar()
+        configureDrawerView()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -98,8 +94,27 @@ extension CustomMapController {
         getMap(mapID: mapData?.id ?? "") { [weak self] map in
             guard let self = self else { return }
             self.mapData = map
-            self.viewSetup()
+            self.runInitialSetup()
         }
+    }
+    
+    private func runInitialSetup() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getMapCover()
+            self.getMapMember()
+        }
+        DispatchQueue.main.async { self.viewSetup() }
+    }
+    
+    private func setUpNavBar() {
+        navigationController!.setNavigationBarHidden(false, animated: true)
+        navigationController!.navigationBar.isTranslucent = true
+    }
+    
+    private func configureDrawerView() {
+        containerDrawerView?.canInteract = true
+        containerDrawerView?.swipeDownToDismiss = false
+        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Middle) }
     }
     
     private func viewSetup() {
@@ -298,18 +313,15 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if indexPath.section != 0 {
-            let collectionCell = collectionView.cellForItem(at: indexPath)
-            UIView.animate(withDuration: 0.15) {
-                collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-            } completion: { (Bool) in
-                UIView.animate(withDuration: 0.15) {
-                    collectionCell?.transform = .identity
-                }
-            }
+        if indexPath.section == 0 { return }
+        if let postData = postDatas[mapData!.postIDs[indexPath.row]] {
+            guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
+            postVC.postsList = [postData]
+            postVC.containerDrawerView = containerDrawerView
+            DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
         }
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
         if indexPath.section != 0 {
             let collectionCell = collectionView.cellForItem(at: indexPath)

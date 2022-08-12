@@ -120,7 +120,7 @@ class AVCameraController: UIViewController {
         view.backgroundColor = UIColor(named: "SpotBlack")
         view.isUserInteractionEnabled = false
         
-        let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
+        let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first

@@ -28,26 +28,38 @@ class PostController: UIViewController {
     var postsCollection: UICollectionView!
     unowned var containerDrawerView: DrawerView?
     
-    var selectedPostIndex = 0 /// current row in posts table
     var openComments = false
-    
+    var selectedPostIndex = 0 {
+        didSet {
+            let post = postsList[selectedPostIndex]
+            DispatchQueue.global().async {
+                self.setSeen(post: self.postsList[self.selectedPostIndex])
+                self.checkForUpdates(postID: post.id!, index: self.selectedPostIndex)
+            }
+        }
+    }
+
     var dotView: UIView!
                         
     deinit {
-        print("deinit")
+        print("deinit post")
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setUpNavBar()
+        configureDrawerView()
     }
   
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
-        setUpNavBar()
         
         if openComments {
             openComments(row: selectedPostIndex, animated: true)
             openComments = false
         }
     }
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,6 +70,7 @@ class PostController: UIViewController {
         super.viewDidDisappear(animated)
         cancelDownloads()
     }
+    
     
     func cancelDownloads() {
         
@@ -72,7 +85,13 @@ class PostController: UIViewController {
     }
     
     func setUpNavBar() {
-        // navigationController?.setNavigationBarHidden(true, animated: false)
+         navigationController?.setNavigationBarHidden(true, animated: true)
+    }
+    
+    func configureDrawerView() {
+        containerDrawerView?.swipeDownToDismiss = true
+        containerDrawerView?.canInteract = true
+        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
     }
     
     func setUpView() {
@@ -97,44 +116,11 @@ class PostController: UIViewController {
             $0.edges.equalToSuperview()
         }
                         
-        addPullLineAndNotifications()
-        
-        
-        /*
-        dotView = UIView(frame: CGRect(x: 12, y: 5, width: UIScreen.main.bounds.width - 24, height: 2.5))
-        dotView.backgroundColor = nil
-        view.addSubview(dotView)
-        setDotView() */
+        addNotifications()
+        selectedPostIndex = 0
     }
     
-    func setDotView() {
-        
-        /*
-        if dotView != nil { for sub in dotView.subviews { sub.removeFromSuperview() }}
-        
-        let post = postsList[selectedPostIndex]
-        let frameIndexes = post.frameIndexes ?? []
-        
-        if frameIndexes.count > 1 {
-            
-            let gapSize: CGFloat = 4
-            let gapWidth: CGFloat = CGFloat(frameIndexes.count - 1) * gapSize
-            let dotWidth: CGFloat = (dotView.bounds.width - gapWidth) / CGFloat(frameIndexes.count)
-            
-            var offset: CGFloat = 0
-            for i in 0...frameIndexes.count - 1 {
-                let dot = UIView(frame: CGRect(x: offset, y: 0, width: dotWidth, height: 2.5))
-                dot.backgroundColor = i <= post.selectedImageIndex! ? UIColor(named: "SpotGreen") : UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
-                dot.layer.cornerRadius = 2
-                dot.layer.cornerCurve = .continuous
-                dotView.addSubview(dot)
-                
-                offset += dotWidth + gapSize
-            }
-        } */
-    }
-        
-    func addPullLineAndNotifications() {
+    func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostLike(_:)), name: NSNotification.Name("PostLike"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
     }
@@ -184,7 +170,6 @@ class PostController: UIViewController {
         map.id = mapID
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, presentedDrawerView: containerDrawerView)
         navigationController?.pushViewController(customMapVC, animated: true)
-        customMapVC.navigationController!.navigationBar.isTranslucent = true
     }
             
     @objc func exitPosts(_ sender: UIBarButtonItem) {
@@ -257,11 +242,9 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
     
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PostCell", for: indexPath) as? PostCell else { return UICollectionViewCell() }
         let post = postsList[indexPath.row]
         cell.setUp(post: post, row: indexPath.row)
-        if indexPath.row == selectedPostIndex { setSeen(post: post) }
         return cell
     }
     
@@ -306,6 +289,25 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
         db.collection("posts").document(post.id!).updateData(["seenList" : FieldValue.arrayUnion([uid])])
         NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["postID" : post.id as Any]))
     }
+    
+    func checkForUpdates(postID: String, index: Int) {
+        getPost(postID: postID) { [weak self] post in
+            guard let self = self else { return }
+            var newPost = post
+            newPost.commentList = post.commentList
+            newPost.commentCount = post.commentCount
+            newPost.likers = post.likers
+            self.updateCollectionInfo(post: newPost, index: index)
+        }
+    }
+    
+    func updateCollectionInfo(post: MapPost, index: Int) {
+        self.postsList[index] = post
+        if index != selectedPostIndex { return }
+        if let cell = postsCollection.cellForItem(at: IndexPath(item: index, section: 0)) as? PostCell {
+            DispatchQueue.main.async { cell.updatePost(post: post) }
+        }
+    }
 }
 
 class PostCell: UICollectionViewCell {
@@ -313,7 +315,7 @@ class PostCell: UICollectionViewCell {
     lazy var imageManager = SDWebImageManager()
     var globalRow = 0 /// row in table
     var post: MapPost!
-    
+
     var vcid: String!
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore! = Firestore.firestore()
@@ -353,7 +355,10 @@ class PostCell: UICollectionViewCell {
     
     let cellHeight = UIScreen.main.bounds.height
     let cellWidth = UIScreen.main.bounds.width
-
+    var bottomInset: CGFloat {
+        return (UIScreen.main.bounds.height - (UserDataModel.shared.maxAspect * UIScreen.main.bounds.width))/2 + 10
+    }
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         contentView.layoutIfNeeded()
@@ -363,11 +368,11 @@ class PostCell: UICollectionViewCell {
     func setUp(post: MapPost, row: Int) {
         self.post = post
         self.tag = 16
+        self.backgroundColor = nil
+
         globalRow = row
         imageFetched = false
-        
         resetTextInfo()
-        self.backgroundColor = nil
         
         addImageView()
         addButtonView()
@@ -377,17 +382,18 @@ class PostCell: UICollectionViewCell {
         addTapButtons()
     }
     
+    func updatePost(post: MapPost) {
+        /// update on new likers/comments fetch
+        self.post.commentList = post.commentList
+        self.post.likers = post.likers
+        numComments.text = String(max(post.commentList.count - 1, 0))
+        numLikes.text = String(post.likers.count)
+    }
+    
     func addImageView() {
         imageView = PostImageView {
-            $0.layer.cornerRadius = 15
-            $0.tag = globalRow
-            $0.isUserInteractionEnabled = true
+            $0.layer.cornerRadius = 19
             contentView.addSubview($0)
-        }
-         imageView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(post.imageHeight!)
-            $0.centerY.equalToSuperview()
         }
     }
     
@@ -397,7 +403,7 @@ class PostCell: UICollectionViewCell {
         }
         buttonView.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(15)
-            $0.bottom.equalToSuperview().inset(87)
+            $0.bottom.equalToSuperview().inset(bottomInset)
             $0.width.equalTo(41.4)
             $0.height.equalTo(127)
         }
@@ -424,7 +430,7 @@ class PostCell: UICollectionViewCell {
         }
         commentButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalTo(numComments.snp.top).offset(-2)
+            $0.bottom.equalTo(numComments.snp.top).offset(-1)
             $0.height.equalTo(41.4)
         }
         
@@ -446,7 +452,7 @@ class PostCell: UICollectionViewCell {
             buttonView.addSubview($0)
         }
         likeButton.snp.makeConstraints {
-            $0.bottom.equalTo(numLikes.snp.top).offset(-2)
+            $0.bottom.equalTo(numLikes.snp.top).offset(-1)
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(36.8)
         }
@@ -606,6 +612,8 @@ class PostCell: UICollectionViewCell {
         overflow = tempHeight > post.captionHeight!
         
         captionLabel = UILabel {
+            let attString = NSAttributedString(string: post.caption)
+            $0.attributedText = attString
             $0.textColor = .white
             $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
             $0.numberOfLines = overflow ? 3 : 0
@@ -720,9 +728,6 @@ class PostCell: UICollectionViewCell {
     func finishImageSetUp(images: [UIImage]) {
         resetImageInfo()
         
-        let imageAspect = post.imageHeight! / UIScreen.main.bounds.width
-    //    let imageY: CGFloat = imageAspect > 1.8 ? 0 : imageAspect > 1.5 ? userViewMaxY : (cellHeight - post.imageHeight!)/2
-        
         var frameIndexes = post.frameIndexes ?? []
         if post.imageURLs.count == 0 { return }
         if frameIndexes.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i)} }
@@ -731,10 +736,8 @@ class PostCell: UICollectionViewCell {
         if images.isEmpty { return }
         post.postImage = images
         
-        setCurrentImage()
         addDotView()
-        
-        if imageAspect > 1.3 { imageView.addBottomMask() }
+        setCurrentImage()
     }
     
     func setCurrentImage() {
@@ -745,11 +748,30 @@ class PostCell: UICollectionViewCell {
         guard let still = images[safe: frameIndexes[post.selectedImageIndex!]] else { return }
         imageView.image = still
         imageView.stillImage = still
+        contentView.sendSubviewToBack(imageView)
 
         let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: post.selectedImageIndex!)
         imageView.animationImages = animationImages
         imageView.animationIndex = 0
-                        
+        
+        let rawAspect = min(still.size.height/still.size.width, UserDataModel.shared.maxAspect)
+        let currentAspect = getRoundedAspectRatio(aspect: rawAspect)
+        let currentHeight = currentAspect * UIScreen.main.bounds.width
+        imageView.currentAspect = currentAspect
+
+        imageView.snp.removeConstraints()
+        imageView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(currentHeight)
+            if currentAspect > 1.45 {
+                $0.bottom.equalTo(dotView.snp.bottom).offset(5)
+            } else if currentAspect > 1.1 {
+                $0.bottom.equalTo(buttonView.snp.top).offset(22)
+            } else {
+                $0.centerY.equalToSuperview()
+            }
+        }
+
         if !animationImages.isEmpty && !imageView.activeAnimation {
             animationImages.count == 5 && post.frameIndexes!.count == 1 ? imageView.animate5FrameAlive(directionUp: true, counter: imageView.animationIndex) : imageView.animateGIF(directionUp: true, counter: imageView.animationIndex)  /// use old animation for 5 frame alives
         }
@@ -780,8 +802,7 @@ class PostCell: UICollectionViewCell {
             return frame1 - selectedFrame > 1 ? Array(selectedImages[selectedFrame...frame1 - 1]) : []
         }
     }
-    
-    
+        
     func resetTextInfo() {
         if mapIcon != nil { mapIcon.removeFromSuperview() }
         if mapName != nil { mapName.text = ""; mapName.removeFromSuperview() }
@@ -797,6 +818,7 @@ class PostCell: UICollectionViewCell {
         if profileImage != nil { profileImage.image = UIImage(); profileImage.removeFromSuperview(); profileImage.sd_cancelCurrentImageLoad() }
         if usernameLabel != nil { usernameLabel.text = ""; usernameLabel.removeFromSuperview() }
         if timestampLabel != nil { timestampLabel.text = ""; timestampLabel.removeFromSuperview() }
+        if imageView != nil { for sub in imageView.subviews { sub.removeFromSuperview() }}
         if imageView != nil { imageView.image = UIImage(); imageView.animationImages?.removeAll(); imageView.animationIndex = 0; imageView.removeFromSuperview() }
         if dotView != nil { for sub in dotView.subviews {sub.removeFromSuperview()}}
     }
@@ -942,11 +964,9 @@ extension PostCell {
     }
     
     func incrementPost(index: Int) {
-        
         guard let postVC = viewContainingController() as? PostController else { return }
         postVC.selectedPostIndex += index
         postVC.postsCollection.scrollToItem(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .left, animated: true)
-        postVC.setDotView()
     }
         
     @objc func doubleTap(_ sender: UITapGestureRecognizer) {
@@ -959,49 +979,30 @@ extension PostCell {
     }
     
     func likePost() {
-        
-        guard let postVC = viewContainingController() as? PostController else { return }
-        
         post.likers.append(self.uid)
         likeButton.removeTarget(self, action: #selector(likePost(_:)), for: .touchUpInside)
         likeButton.addTarget(self, action: #selector(unlikePost(_:)), for: .touchUpInside)
-        
-        let likeImage =  UIImage(named: "LikeButtonFilled")
-        likeButton.setImage(likeImage, for: .normal)
-        
         layoutLikesAndComments()
         
+        guard let postVC = viewContainingController() as? PostController else { return }
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": postVC.selectedPostIndex as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("PostLike"), object: nil, userInfo: infoPass)
-        DispatchQueue.global().async {
-            if self.post.id == "" { return }
-            self.db.collection("posts").document(self.post.id!).updateData(["likers" : FieldValue.arrayUnion([self.uid])])
-            
-            let functions = Functions.functions()
-            functions.httpsCallable("likePost").call(["likerID": self.uid, "username": UserDataModel.shared.userInfo.username, "postID": self.post.id!, "imageURL": self.post.imageURLs.first ?? "", "spotID": self.post.spotID ?? "", "addedUsers": self.post.addedUsers ?? [], "posterID": self.post.posterID, "posterUsername": self.post.userInfo?.username ?? ""]) { result, error in
-                print(result?.data as Any, error as Any)
-            }
-        }
+        
+        DispatchQueue.global().async { self.likePostDB(post: self.post) }
     }
     
     @objc func unlikePost(_ sender: UIButton) {
-        
-        guard let postVC = viewContainingController() as? PostController else { return }
-
         post.likers.removeAll(where: {$0 == self.uid})
         likeButton.removeTarget(self, action: #selector(unlikePost(_:)), for: .touchUpInside)
         likeButton.addTarget(self, action: #selector(likePost(_:)), for: .touchUpInside)
-        
-        let likeImage = UIImage(named: "LikeButton")
-        likeButton.setImage(likeImage, for: .normal)
-                
+        layoutLikesAndComments()
         //update main data source -- send notification to map, update comments
+        guard let postVC = viewContainingController() as? PostController else { return }
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": postVC.selectedPostIndex as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("PostLike"), object: nil, userInfo: infoPass)
         
-        if post.id == "" { return }
         let updatePost = post! /// local object
-        
+        /// run unlike function from functions
         DispatchQueue.global().async {
             self.db.collection("posts").document(updatePost.id!).updateData(["likers" : FieldValue.arrayRemove([self.uid])])
             let functions = Functions.functions()
@@ -1010,10 +1011,29 @@ extension PostCell {
             }
         }
     }
-
 }
 
 /// database methods
 extension PostCell {
-    
+    func likePostDB(post: MapPost) {
+        db.collection("posts").document(post.id!).updateData(["likers" : FieldValue.arrayUnion([self.uid])])
+        if post.posterID == uid { return }
+        
+        var likeNotiValues: [String: Any] = [
+            "imageURL": post.imageURLs.first ?? "",
+            "originalPoster": post.userInfo?.username ?? "",
+            "postID": post.id ?? "",
+            "seen": false,
+            "senderID": self.uid,
+            "senderUsername": UserDataModel.shared.userInfo.username,
+            "spotID": post.spotID ?? "",
+            "timestamp": Timestamp(date: Date()),
+            "type": "like"
+        ] as [String: Any]
+        db.collection("users").document(post.posterID).collection("notifications").addDocument(data: likeNotiValues)
+        likeNotiValues["type"] = "likeOnAdd"
+        for user in post.taggedUserIDs ?? [] {
+            db.collection("users").document(user).collection("notifications").addDocument(data: likeNotiValues)
+        }
+    }
 }
