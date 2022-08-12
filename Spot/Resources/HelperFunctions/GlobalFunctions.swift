@@ -395,6 +395,7 @@ extension UIViewController {
                 var notiPost = post
                 notiPost.id = post.id!
                 notiPost.commentList = [commentObject]
+                notiPost = setSecondaryPostValues(post: notiPost)
                 NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
 
             } catch {
@@ -678,6 +679,13 @@ extension NSObject {
         return selectedUsers
     }
     
+    func setSecondaryPostValues(post: MapPost) -> MapPost {
+        var newPost = post
+        /// round to nearest line height
+        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 65)
+        return newPost
+    }
+    
     func getCaptionHeight(caption: String, fontSize: CGFloat, maxCaption: CGFloat) -> CGFloat {
         let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 80, height: UIScreen.main.bounds.height))
         tempLabel.text = caption
@@ -691,20 +699,23 @@ extension NSObject {
     
     func getImageHeight(aspectRatios: [CGFloat], maxAspect: CGFloat) -> CGFloat {
         var imageAspect =  min((aspectRatios.max() ?? 0.033) - 0.033, maxAspect)
-        if imageAspect > 1.1 && imageAspect < 1.6 { imageAspect = 1.6 } /// stretch iPhone vertical
-        if imageAspect > 1.6 { imageAspect = maxAspect } /// round to max aspect
-        
+        imageAspect = getRoundedAspectRatio(aspect: imageAspect)
         let imageHeight = UIScreen.main.bounds.width * imageAspect
         return imageHeight
     }
     
-    func setSecondaryPostValues(post: MapPost) -> MapPost {
-        var newPost = post
-        newPost.imageHeight = getImageHeight(aspectRatios: newPost.aspectRatios ?? [], maxAspect: 1.92) /// max aspect 1.92 for feed
-        /// round to nearest line height
-        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 65)
-        
-        return newPost
+    func getImageHeight(aspectRatio: CGFloat, maxAspect: CGFloat) -> CGFloat {
+        var imageAspect =  min(aspectRatio, maxAspect)
+        imageAspect = getRoundedAspectRatio(aspect: imageAspect)
+        let imageHeight = UIScreen.main.bounds.width * imageAspect
+        return imageHeight
+    }
+    
+    func getRoundedAspectRatio(aspect: CGFloat) -> CGFloat {
+        var imageAspect = aspect
+        if imageAspect > 1.1 && imageAspect < 1.45 { imageAspect = 1.45 } /// stretch iPhone vertical
+        if imageAspect > 1.45 { imageAspect = UserDataModel.shared.maxAspect } /// round to max aspect
+        return imageAspect
     }
     
     func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
@@ -740,7 +751,6 @@ extension NSObject {
     }
     
     func getPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
-        
         let db: Firestore! = Firestore.firestore()
         let emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp())
         
@@ -751,9 +761,6 @@ extension NSObject {
             do {
                 let unwrappedInfo = try doc?.data(as: MapPost.self)
                 guard var postInfo = unwrappedInfo else { completion(emptyPost); return }
-                
-                postInfo.id = doc!.documentID
-                postInfo = self.setSecondaryPostValues(post: postInfo)
                 
                 var count = 0
                 self.getUserInfo(userID: postInfo.posterID) { user in
@@ -1217,38 +1224,6 @@ extension UIImageView {
             mask.path = path.cgPath
             layer.mask = mask
         }
-    }
-    
-    func addBottomMask() {
-        let bottomMask = UIView(frame: CGRect(x: 0, y: bounds.height - 218, width: UIScreen.main.bounds.width, height: 218))
-        bottomMask.backgroundColor = nil
-        let layer0 = CAGradientLayer()
-        layer0.frame = bottomMask.bounds
-        layer0.colors = [
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.48).cgColor,
-        ]
-        layer0.locations = [0, 1]
-        layer0.startPoint = CGPoint(x: 0.5, y: 0)
-        layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
-        bottomMask.layer.addSublayer(layer0)
-        addSubview(bottomMask)
-    }
-    
-    func addTopMask() {
-        let topMask = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 109))
-        topMask.backgroundColor = nil
-        let layer0 = CAGradientLayer()
-        layer0.frame = topMask.bounds
-        layer0.colors = [
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.69).cgColor,
-            UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
-        ]
-        layer0.locations = [0, 1]
-        layer0.startPoint = CGPoint(x: 0.5, y: 0)
-        layer0.endPoint = CGPoint(x: 0.5, y: 1.0)
-        topMask.layer.addSublayer(layer0)
-        addSubview(topMask)
     }
 }
 

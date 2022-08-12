@@ -159,7 +159,7 @@ class AVSpotCamera: NSObject {
         previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
         previewLayer?.connection?.videoOrientation = .portrait
         
-        let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
+        let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
         let cameraHeight = UIScreen.main.bounds.width * cameraAspect
 
         view.layer.insertSublayer(previewLayer!, at: 0)

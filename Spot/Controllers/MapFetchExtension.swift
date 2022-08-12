@@ -153,11 +153,12 @@ extension MapController {
 
     func getRecentPosts(map: CustomMap?) {
         /// fetch all posts in last 7 days
-        let seconds = Date().timeIntervalSince1970 - 86400 * 50
-        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400 * 40
+        let seconds = Date().timeIntervalSince1970 - 86400 * 60
+        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400 * 50
         let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
         var recentQuery = db.collection("posts").whereField("timestamp", isGreaterThanOrEqualTo: timestamp)
-        if map != nil { recentQuery = recentQuery.whereField("mapID", isEqualTo: map!.id!) }
+        ///query by mapID or friendsList for friends posts
+        recentQuery = map != nil ? recentQuery.whereField("mapID", isEqualTo: map!.id!) : recentQuery.whereField("friendsList", arrayContains: uid)
         
         recentQuery.getDocuments { [weak self] snap, err in
             guard let self = self else { return }
@@ -248,7 +249,7 @@ extension MapController {
     
     func addPostToDictionary(post: MapPost, map: CustomMap?) {
         let post = setSecondaryPostValues(post: post)
-        if selectedItemIndex == 0 { addPostAnnotation(post: post) } /// 0 always selected on initial fetch
+        if selectedItemIndex == 0 && map == nil { addPostAnnotation(post: post) } /// 0 always selected on initial fetch
         
         if map == nil {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
@@ -414,20 +415,31 @@ extension MapController {
     @objc func notifyPostOpen(_ notification: NSNotification) {
         guard let postID = notification.userInfo?.first?.value as? String else { return }
         /// check every map for post and update if necessary
+        /// check coordinate to refresh annotation on the map
+        var coordinate: CLLocationCoordinate2D?
         if var post = friendsPostsDictionary[postID] {
             if !post.seenList!.contains(uid) { post.seenList?.append(uid) }
             friendsPostsDictionary[postID] = post
+            coordinate = post.coordinate
         }
         
-        for i in 0...UserDataModel.shared.userInfo.mapsList.count - 1 {
-            UserDataModel.shared.userInfo.mapsList[i].updateSeen(postID: postID)
+        if !UserDataModel.shared.userInfo.mapsList.isEmpty {
+            for i in 0...UserDataModel.shared.userInfo.mapsList.count - 1 {
+                UserDataModel.shared.userInfo.mapsList[i].updateSeen(postID: postID)
+                if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
+                    coordinate = UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]?.coordinate
+                }
+            }
         }
         
         DispatchQueue.main.async {
             self.reloadMapsCollection(reload: true)
-            let annotations = self.mapView.annotations
-            self.mapView.removeAnnotations(annotations)
-            self.mapView.addAnnotations(annotations)
+            if coordinate != nil {
+                if let annotation = self.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: coordinate!)}) {
+                    self.mapView.removeAnnotation(annotation)
+                    self.mapView.addAnnotation(annotation)
+                }
+            }
         }
     }
     
