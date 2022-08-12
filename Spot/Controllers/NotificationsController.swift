@@ -38,7 +38,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     var endDocument: DocumentSnapshot!
     
     var refresh: RefreshStatus = .activelyRefreshing
-    var contentDrawer: DrawerView?
+    var containerDrawerView: DrawerView?
         
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -50,25 +50,35 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             guard let self = self else { return }
             self.fetchNotifications(refresh: false)
         }
-        print("being called")
     }
     
     deinit {
-        print("deini")
+        print("notifications deinit")
     }
     
     override func viewDidLoad() {
-        Mixpanel.mainInstance().track(event: "NotificationsOpen")
-        
-        print("CALLED HERE")
-        
         super.viewDidLoad()
-        
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
-        
         setupView()
-        
-        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.navigationBar.isTranslucent = false
+        configureDrawerView()
+        setUpNavBar()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        Mixpanel.mainInstance().track(event: "NotificationsOpen")
+    }
+    
+    func configureDrawerView() {
+        containerDrawerView?.canInteract = false
+        containerDrawerView?.swipeDownToDismiss = false
+        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+    }
+    
+    func setUpNavBar() {
         self.title = "Notifications"
         navigationItem.backButtonTitle = ""
 
@@ -89,14 +99,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             target: self,
             action: #selector(leaveNotifs)
         )
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        navigationController?.navigationBar.isTranslucent = false
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        print("hhhhhh")
     }
     
     
@@ -162,7 +164,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
             /// leave friend request group once all friend requests are appended
             friendRequestGroup.notify(queue: .main) {
-                print("leaving friend request query")
                 fetchGroup.leave()
             }
         }
@@ -283,7 +284,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     @objc func leaveNotifs() {
         if navigationController?.viewControllers.count == 1 {
-            contentDrawer?.closeAction()
+            containerDrawerView?.closeAction()
         } else {
             navigationController?.popViewController(animated: true)
         }
@@ -470,7 +471,7 @@ extension NotificationsController: notificationDelegateProtocol {
         openProfile(user: userProfile)
     }
     
-    func showPost(){
+    func showPost() {
         print("show posts using this function")
     }
     
@@ -493,14 +494,14 @@ extension NotificationsController: notificationDelegateProtocol {
 
 extension NotificationsController {
     func openProfile(user: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: contentDrawer)
+        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
         DispatchQueue.main.async { self.navigationController!.pushViewController(profileVC, animated: true) }
     }
     
     func openPost(post: MapPost, commentNoti: Bool) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = [post]
-        postVC.containerDrawerView = contentDrawer
+        postVC.containerDrawerView = containerDrawerView
         postVC.openComments = commentNoti
         DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
     }
@@ -525,8 +526,5 @@ class ActivityIndicatorCell: UITableViewCell {
         activityIndicator.startAnimating()
         activityIndicator.translatesAutoresizingMaskIntoConstraints = true
         contentView.addSubview(activityIndicator)
- //       activityIndicator.centerXAnchor.constraint(equalTo: contentView.centerXAnchor).isActive = true
- //       activityIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
-
     }
 }

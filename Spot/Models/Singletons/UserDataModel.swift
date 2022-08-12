@@ -24,7 +24,10 @@ class UserDataModel {
     
     var screenSize = UIScreen.main.bounds.height < 800 ? 0 : UIScreen.main.bounds.width > 400 ? 2 : 1 /// 0 = iphone8-, 1 = iphoneX + with 375 width, 2 = iPhoneX+ with 414 width
     var largeScreen = UIScreen.main.bounds.width > 800
-    var smallScreen = UIScreen.main.bounds.height < 800
+    
+    var maxAspect: CGFloat {
+        return screenSize == 0 ? 1.7 : screenSize == 1 ? 1.78 : 1.85
+    }
     
     var currentLocation: CLLocation!
     

@@ -156,6 +156,7 @@ class DrawerView: NSObject {
     
     // MARK: Present
     public func present(to: DrawerViewDetent = .Middle) {
+        print("present")
         let currentStatus = status
         switch to {
         case .Top:
@@ -236,6 +237,13 @@ class DrawerView: NSObject {
             recognizer.setTranslation(.zero, in: recognizer.view)
         }
         else {
+            /// swipe to dismiss from full-screen-only view
+            let topOffset = slideView.frame.origin.y
+            if self.swipeDownToDismiss && (topOffset * 5 + velocity.y) > 1000 {
+                closeAction()
+                return
+            }
+
             // Check the velocity of gesture to determine if it's a swipe or a drag
             if swipeToNextState && abs(velocity.y) > 1000 {
                 // This is a swipe
@@ -269,13 +277,7 @@ class DrawerView: NSObject {
             if self.slideView.frame.minY > (detents.contains(.Bottom) ? (self.parentVC.view.frame.height - 100) : (self.parentVC.view.frame.height * 0.6)) && swipeDownToDismiss {
                 myNav.popViewController(animated: true)
             } */
-            /// swipe to dismiss from full-screen-only view
-            let topOffset = slideView.frame.origin.y
-            if self.swipeDownToDismiss && detents[0] == .Top && (topOffset * 5 + velocity.y) > 1000 {
-                closeAction()
-                return
-            }
-                
+                    
             // Animate the drawer view to the set position
             UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
                 self.slideView.frame.origin.y = self.yPosition

@@ -67,6 +67,9 @@ struct MapPost: Identifiable, Codable {
     var seconds: Int64 {
         return timestamp.seconds
     }
+    var coordinate: CLLocationCoordinate2D {
+        return CLLocationCoordinate2D(latitude: postLat, longitude: postLong)
+    }
     
     enum CodingKeys: String, CodingKey {
         case id

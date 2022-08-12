@@ -65,9 +65,7 @@ class ProfileViewController: UIViewController {
     init(userProfile: UserProfile? = nil, presentedDrawerView: DrawerView? = nil) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
-        if presentedDrawerView != nil {
-            self.containerDrawerView = presentedDrawerView
-        }
+        containerDrawerView = presentedDrawerView
     }
     
     required init?(coder: NSCoder) {
@@ -82,15 +80,16 @@ class ProfileViewController: UIViewController {
         runFetches()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "ProfileOpen")
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
-        profileCollectionView.reloadData()
-        if containerDrawerView?.status != .Top {
-            containerDrawerView?.present(to: .Top)
-            navigationController?.setNavigationBarHidden(true, animated: true)
-            navigationController?.setNavigationBarHidden(false, animated: true)
-        }
-        containerDrawerView?.canInteract = false
+        navigationController?.setNavigationBarHidden(false, animated: true)
+        setUpNavBar()
+        configureDrawerView()
     }
     
     @objc func mapLikersChanged(_ notification: NSNotification) {
@@ -124,6 +123,34 @@ class ProfileViewController: UIViewController {
 }
 
 extension ProfileViewController {
+    
+    private func setUpNavBar() {
+        navigationController!.setNavigationBarHidden(false, animated: true)
+        navigationController!.navigationBar.barTintColor = UIColor.white
+        navigationController!.navigationBar.isTranslucent = true
+        navigationController!.navigationBar.barStyle = .black
+        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController!.view.backgroundColor = .white
+        
+        navigationController!.navigationBar.titleTextAttributes = [
+            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
+            .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
+        ]
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(named: "BackArrow-1"),
+            style: .plain,
+            target: self,
+            action: #selector(popVC)
+        )
+    }
+    
+    private func configureDrawerView() {
+        containerDrawerView?.canInteract = false
+        containerDrawerView?.swipeDownToDismiss = false
+        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+    }
+        
     private func getUserInfo() {
         /// username passed through for tagged user not in friends list
         getUserFromUsername(username: userProfile!.username) { [weak self] user in
@@ -167,25 +194,7 @@ extension ProfileViewController {
 
         self.title = ""
         navigationItem.backButtonTitle = ""
-
-        navigationController!.navigationBar.barTintColor = UIColor.white
-        navigationController!.navigationBar.isTranslucent = true
-        navigationController!.navigationBar.barStyle = .black
-        navigationController!.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
-        
-        navigationController!.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-            .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
-        ]
-        
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow-1"),
-            style: .plain,
-            target: self,
-            action: #selector(popVC)
-        )
-                
+                        
         profileCollectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .vertical
@@ -354,11 +363,9 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
                 print("mapCell selected")
             } else if let _ = cell as? ProfileBodyCell {
                 mapSelectedIndex = indexPath.row - 1
-                containerDrawerView?.present(to: .Middle)
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], presentedDrawerView: containerDrawerView)
                 customMapVC.profileVC = self
                 navigationController?.pushViewController(customMapVC, animated: true)
-                customMapVC.navigationController!.navigationBar.isTranslucent = true
             }
         }
     }
