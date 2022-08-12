@@ -94,8 +94,7 @@ class MapController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "MapOpen")
     }
-    
-    
+        
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostOpen(_:)), name: NSNotification.Name(("PostOpen")), object: nil)
@@ -245,9 +244,8 @@ class MapController: UIViewController {
         sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
+        profileVC.containerDrawerView = sheetView
         sheetView?.present(to: .Top)
-        sheetView?.canInteract = false
-        sheetView?.showCloseButton = false
     }
     
     @objc func openNotis(_ sender: UIButton) {
@@ -256,12 +254,8 @@ class MapController: UIViewController {
         sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
         })
-        
-        sheetView?.swipeDownToDismiss = false
-        sheetView?.canInteract = false
+        notifVC.containerDrawerView = sheetView
         sheetView?.present(to: .Top)
-        
-        notifVC.contentDrawer = sheetView
     }
     
     func openPost(posts: [MapPost]) {
@@ -271,10 +265,7 @@ class MapController: UIViewController {
             self.sheetView = nil
         })
         postVC.containerDrawerView = sheetView
-        
         sheetView?.present(to: .Top)
-        sheetView?.canInteract = true
-        sheetView?.swipeDownToDismiss = true
     }
     
     func toggleHomeAppearance(hidden: Bool) {

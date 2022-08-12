@@ -122,7 +122,7 @@ extension CustomMapBodyCell {
                         self?.cellSetup(postID: self!.postID, postData: self?.postData)
                     }
                     
-//                    self?.delegate?.finishFetching(mapPostID: ID, fetchedMapPost: mapPostWithImage)
+                    self?.delegate?.finishFetching(mapPostID: ID, fetchedMapPost: mapPostWithImage)
                 }
             }
         }

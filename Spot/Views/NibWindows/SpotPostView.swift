@@ -12,8 +12,10 @@ import UIKit
 class SpotPostView: UIView {
     @IBOutlet weak var backgroundImage: UIImageView!
     @IBOutlet weak var postImage: UIImageView!
+    @IBOutlet weak var imageMask: UIView!
     @IBOutlet weak var spotLabel: UILabel!
-
+    @IBOutlet weak var replayIcon: UIImageView!
+    
     class func instanceFromNib() -> UIView {
         return UINib(nibName: "SpotPostView", bundle: nil).instantiate(withOwner: self, options: nil).first as! UIView
     }
@@ -25,6 +27,8 @@ class SpotPostView: UIView {
         
         backgroundImage.frame = CGRect(x: (bounds.width - backgroundImage.bounds.width)/2, y: backgroundImage.frame.minY, width: backgroundImage.bounds.width, height: backgroundImage.bounds.height)
         postImage.frame = CGRect(x: (bounds.width - postImage.bounds.width)/2, y: postImage.frame.minY, width: postImage.bounds.width, height: postImage.bounds.height)
+        imageMask.frame = postImage.frame
+        replayIcon.frame = CGRect(x: postImage.frame.minX + 15.5, y: postImage.frame.minY + 13, width: 27.7, height: 31)
         
         let spotY = backgroundImage.isHidden ? 0 : spotLabel.frame.minY
         spotLabel.frame = CGRect(x: (bounds.width - spotLabel.bounds.width)/2, y: spotY, width: spotLabel.bounds.width, height: spotLabel.bounds.height)
