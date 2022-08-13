@@ -34,8 +34,8 @@ class SpotPageBodyCell: UICollectionViewCell {
         }
     }
     
-    public func cellSetup() {
-        
+    public func cellSetup(mapPost: MapPost) {
+        postImage.sd_setImage(with: URL(string: mapPost.imageURLs[0]))
     }
 }
 
@@ -53,30 +53,6 @@ extension SpotPageBodyCell {
         }
         postImage.snp.makeConstraints {
             $0.edges.equalToSuperview()
-        }
-    }
-    
-    private func fetchPostData(ID: String) {
-        DispatchQueue.main.async {
-            self.fetching = true
-            self.getPost(postID: ID) { mapPost in
-                self.imageManager.loadImage(with: URL(string: mapPost.imageURLs[0]), options: .highPriority, context: nil, progress: nil) { [weak self] (image, data, err, cache, download, url) in
-                    self?.fetching = false
-                    guard self != nil else { return }
-                    let image = image ?? UIImage()
-                    self?.postImage.image = image
-                    var mapPostWithImage = mapPost
-                    mapPostWithImage.postImage.append(image)
-                    let userInfo = ["mapPost": mapPostWithImage]
-                    NotificationCenter.default.post(name: NSNotification.Name("FetchedMapPost"), object: nil, userInfo: userInfo)
-                    
-                    if self!.postID != mapPostWithImage.id {
-                        self?.postImage.image = UIImage()
-//                        self?.cellSetup(postID: self!.postID, postData: self?.postData)
-                    }
-                    
-                }
-            }
         }
     }
 }

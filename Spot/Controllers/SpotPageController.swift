@@ -21,7 +21,10 @@ class SpotPageController: UIViewController {
     private var barBackButton: UIButton!
     private var mapPostLabel: UILabel!
     private var communityPostLabel: UILabel!
+    private lazy var imageManager = SDWebImageManager()
     
+    private var mapID: String?
+    private var mapName: String?
     private var spotName: String!
     private var spotID: String!
     private var spot: MapSpot? {
@@ -29,11 +32,19 @@ class SpotPageController: UIViewController {
             spotPageCollectionView.reloadSections(IndexSet(integer: 0))
         }
     }
-    private var mapPost: [MapPost] = []
+        
+    private var endDocument: DocumentSnapshot?
+    private var fetchRelatedPostComplete = false
+    private var fetchCommunityPostComplete = false
+    private var fetching: RefreshStatus = .refreshEnabled
+    private var relatedPost: [MapPost] = []
     private var communityPost: [MapPost] = []
+    
     
     init(mapPost: MapPost) {
         super.init(nibName: nil, bundle: nil)
+        self.mapID = mapPost.mapID
+        self.mapName = mapPost.mapName
         self.spotName = mapPost.spotName
         self.spotID = mapPost.spotID
     }
@@ -52,6 +63,7 @@ class SpotPageController: UIViewController {
         viewSetup()
         DispatchQueue.main.async {
             self.fetchSpot()
+            self.fetchRelatedPost()
         }
     }
 }
@@ -120,9 +132,7 @@ extension SpotPageController {
         }
         
         mapPostLabel = UILabel {
-            let frontPadding = "    "
-            let bottomPadding = "   "
-            $0.text = frontPadding + "" + bottomPadding
+            $0.text = ""
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
             $0.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
@@ -166,6 +176,86 @@ extension SpotPageController {
         }
     }
     
+    private func fetchRelatedPost() {
+        guard fetching == .refreshEnabled else { return }
+        let db: Firestore = Firestore.firestore()
+        let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
+        let conditionedQuery = (mapID == nil || mapID == "") ? baseQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid) : baseQuery.whereField("mapID", isEqualTo: mapID!)
+        var finalQuery = conditionedQuery.limit(to: 12).order(by: "timestamp", descending: true)
+        if endDocument != nil {
+            finalQuery = finalQuery.start(atDocument: endDocument!)
+        }
+        fetching = .activelyRefreshing
+        finalQuery.getDocuments { (snap, err) in
+            guard err == nil else { self.fetching = .refreshEnabled; return }
+            for doc in snap!.documents {
+                do {
+                    let unwrappedInfo = try doc.data(as: MapPost.self)
+                    guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
+                    self.relatedPost.append(postInfo)
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                }
+            }
+            if snap!.documents.count < 12 {
+                self.endDocument = nil
+                self.fetchRelatedPostComplete = true
+                self.fetching = .refreshDisabled
+                self.fetchCommunityPost(12 - snap!.documents.count)
+                print("Related post fetch completed")
+            } else {
+                self.endDocument = snap?.documents.last
+                self.fetching = .refreshEnabled
+            }
+            self.spotPageCollectionView.reloadSections(IndexSet(integer: 1))
+        }
+    }
+    
+    private func fetchCommunityPost(_ number: Int = 12) {
+        guard fetching != .activelyRefreshing else { return }
+        let db: Firestore = Firestore.firestore()
+        var mustFilter = false
+        var baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
+        if (mapID == nil || mapID == "") == false {
+            baseQuery = baseQuery.whereField("mapID", isNotEqualTo: mapID!)
+        } else {
+            mustFilter = true
+        }
+        var finalQuery = baseQuery.limit(to: number).order(by: "timestamp", descending: true)
+        if endDocument != nil {
+            finalQuery = finalQuery.start(atDocument: endDocument!)
+        }
+        fetching = .activelyRefreshing
+        finalQuery.getDocuments { (snap, err) in
+            guard err == nil else { self.fetching = .refreshEnabled; return }
+            for doc in snap!.documents {
+                do {
+                    let unwrappedInfo = try doc.data(as: MapPost.self)
+                    guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
+                    if mustFilter {
+                        if self.relatedPost.contains(where: { mapPost in
+                            mapPost.id == postInfo.id
+                        }) == false {
+                            self.communityPost.append(postInfo)
+                        }
+                    } else {
+                        self.communityPost.append(postInfo)
+                    }
+
+                } catch let parseError {
+                    print("JSON Error \(parseError.localizedDescription)")
+                }
+            }
+            self.endDocument = snap!.documents.count < 12 ? nil : snap?.documents.last
+            if snap!.documents.count < 12 {
+                self.fetchCommunityPostComplete = true
+                print("Community post fetch completed")
+            }
+            self.fetching = .refreshEnabled
+            self.spotPageCollectionView.reloadSections(IndexSet(integer: 2))
+        }
+    }
+    
     @objc func addSpotAction() {
         
     }
@@ -186,7 +276,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
         case 0:
             return 1
         case 1:
-            return mapPost.count
+            return relatedPost.count
         case 2:
             return communityPost.count
         default:
@@ -200,15 +290,20 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             headerCell.cellSetup(spotName: spotName, spot: spot)
             return headerCell
         } else if let bodyCell = cell as? SpotPageBodyCell {
+            
+            // Setup map post label
             if indexPath == IndexPath(row: 0, section: 1) && view.subviews.contains(mapPostLabel) == false {
                 collectionView.addSubview(mapPostLabel)
+                let frontPadding = "    "
+                let bottomPadding = "   "
+                mapPostLabel.text = frontPadding + ((mapName == nil || mapName == "") ? "Friends posts" : "\(mapName!)") + bottomPadding
                 mapPostLabel.snp.makeConstraints {
                     $0.leading.equalToSuperview()
                     $0.top.equalToSuperview().offset(cell.frame.minY - 15.5)
                     $0.height.equalTo(31)
                 }
             }
-            
+            // Setup community post label
             if communityPost.count != 0 {
                 if indexPath == IndexPath(row: 0, section: 2) && view.subviews.contains(communityPostLabel) == false {
                     collectionView.addSubview(communityPostLabel)
@@ -219,7 +314,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                     }
                 }
             } else {
-                if indexPath == IndexPath(row: mapPost.count - 1, section: 1) && view.subviews.contains(communityPostLabel) == false {
+                if indexPath == IndexPath(row: relatedPost.count - 1, section: 1) && view.subviews.contains(communityPostLabel) == false {
                     collectionView.addSubview(communityPostLabel)
                     communityPostLabel.snp.makeConstraints {
                         $0.leading.equalToSuperview()
@@ -229,6 +324,8 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                 }
             }
             
+            bodyCell.cellSetup(mapPost: indexPath.section == 1 ? relatedPost[indexPath.row] : communityPost[indexPath.row])
+                        
             return bodyCell
         }
         return cell
@@ -287,6 +384,10 @@ extension SpotPageController: UIScrollViewDelegate {
         if scrollView.contentOffset.y > -91 {
             barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
             titleLabel.text = scrollView.contentOffset.y > 0 ? self.spotName : ""
+        }
+        
+        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 350)) && fetching == .refreshEnabled && fetchCommunityPostComplete == false {
+            fetchRelatedPostComplete ? fetchCommunityPost() : fetchRelatedPost()
         }
     }
 }
