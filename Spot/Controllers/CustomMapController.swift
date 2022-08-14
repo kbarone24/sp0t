@@ -34,11 +34,14 @@ class CustomMapController: UIViewController {
             }
         }
     }
+    
+    
     private var postDatas: [String: MapPost] = [:] {
         didSet {
             if customMapCollectionView != nil { DispatchQueue.main.async {self.customMapCollectionView.reloadData()}}
         }
     }
+    
     
     private unowned var containerDrawerView: DrawerView?
     public unowned var profileVC: ProfileViewController?
@@ -248,7 +251,12 @@ extension CustomMapController {
     
     @objc func DrawerViewToTopCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")
-        barBackButton.isHidden = false
+        
+        UIView.transition(with: self.barBackButton, duration: 0.1,
+                          options: .transitionCrossDissolve,
+                          animations: {
+            self.barBackButton.isHidden = false
+        })
         customMapCollectionView.isScrollEnabled = true
     }
     @objc func DrawerViewToMiddleCompletion() {
@@ -263,7 +271,10 @@ extension CustomMapController {
     @objc func backButtonAction() {
         barBackButton.isHidden = true
         profileVC?.maps[profileVC!.mapSelectedIndex!] = mapData!
-        navigationController?.popViewController(animated: true)
+        self.containerDrawerView?.present(to: .Top)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Change `2.0` to the desired number of seconds.
+            self.navigationController?.popViewController(animated: true)
+        }
     }
     
     @objc func editMapAction() {
