@@ -251,7 +251,7 @@ class MapController: UIViewController {
     @objc func openNotis(_ sender: UIButton) {
         let notifVC = NotificationsController()
         
-        sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+        sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         notifVC.containerDrawerView = sheetView
