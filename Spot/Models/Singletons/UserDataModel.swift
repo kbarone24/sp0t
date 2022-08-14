@@ -10,7 +10,6 @@ import Foundation
 import UIKit
 import CoreLocation
 import Firebase
-import MapboxMaps
 
 /// keep main user data in a singleton to avoid having to pass mapVC too much. Serves the function of the primary global variable
 class UserDataModel {
@@ -18,11 +17,8 @@ class UserDataModel {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     static let shared = UserDataModel()
     
-    var adminIDs: [String] = []
-    var friendIDs: [String] = []
-    var friendsList: [UserProfile] = []
-
     var userInfo: UserProfile!
+    var adminIDs: [String] = []
     var userSpots: [String] = []
     var userCity: String = ""
     
@@ -37,37 +33,13 @@ class UserDataModel {
         userInfo.id = ""
         currentLocation = CLLocation()
     }
-    
-    func getTopFriends(selectedList: [String]) -> [UserProfile] {
-        // get top friends
-        if (userInfo.topFriends?.isEmpty ?? true) {
-            return UserDataModel.shared.friendsList
-        }
-        
-        let sortedFriends = userInfo.topFriends!.sorted(by: {$0.value > $1.value})
-        let topFriends = Array(sortedFriends.map({$0.key}))
-        var friendObjects: [UserProfile] = []
-        
-        /// match friend objects to id's
-        for friend in topFriends {
-            if var object = UserDataModel.shared.friendsList.first(where: {$0.id == friend}) {
-                /// match any friends from selected friends for this use of top friends
-                object.selected = selectedList.contains(where: {$0 == object.id})
-                friendObjects.append(object)
-            }
-        }
-        return friendObjects
-    }
-        
+            
     func destroy() {
-        adminIDs.removeAll()
-        friendIDs.removeAll()
-        friendsList.removeAll()
-        
         userInfo = nil
         userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
         userInfo.id = ""
         
+        adminIDs.removeAll()
         userSpots.removeAll()
         userCity = ""
     }

@@ -58,7 +58,7 @@ class NewMapController: UIViewController {
     
     func addMapObject() {
         let post = UploadPostModel.shared.postObject!
-        mapObject = CustomMap(id: UUID().uuidString, founderID: uid, imageURL: "", likers: [], mapName: "", memberIDs: [uid], posterDictionary: [post.id! : [uid]], posterIDs: [uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postLocations: [["lat": post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: UploadPostModel.shared.postObject.postImage.first ?? UIImage(named: "BlankImage"))
+        mapObject = CustomMap(id: UUID().uuidString, founderID: uid, imageURL: "", likers: [], mapName: "", memberIDs: [uid], posterDictionary: [post.id! : [uid]], posterIDs: [uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: [], postLocations: [["lat": post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: UploadPostModel.shared.postObject.postImage.first ?? UIImage(named: "BlankImage"))
         if !(post.addedUsers?.isEmpty ?? true) { mapObject.memberIDs.append(contentsOf: post.addedUsers!); mapObject.memberProfiles!.append(contentsOf: post.addedUserProfiles!); mapObject.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!) }
     }
     
@@ -272,8 +272,8 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let friendsList = UserDataModel.shared.getTopFriends(selectedList: mapObject.memberIDs)
-        let vc = FriendsListController(fromVC: self, allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.friendIDs, friendsList: friendsList, confirmedIDs: UploadPostModel.shared.postObject.addedUsers!)
+        let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: mapObject.memberIDs)
+        let vc = FriendsListController(fromVC: self, allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.userInfo.friendIDs, friendsList: friendsList, confirmedIDs: UploadPostModel.shared.postObject.addedUsers!)
         vc.delegate = self
         present(vc, animated: true)
     }

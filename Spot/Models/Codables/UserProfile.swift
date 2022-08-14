@@ -34,13 +34,12 @@ struct UserProfile: Identifiable, Codable {
     var profilePic: UIImage = UIImage()
     var avatarPic: UIImage = UIImage()
     
-    
-    var mapsList: [CustomMap] = []
     var spotsList: [String] = []
     var friendsList: [UserProfile] = []
     var postCount: Int = 0
     var mutualFriends: Int = 0
     var selected: Bool = false
+    var mapsList: [CustomMap] = []
     
     var pending: Bool?
     var friend: Bool?
@@ -61,5 +60,47 @@ struct UserProfile: Identifiable, Codable {
         case tutorialList
         case userBio
         case username
+    }
+    
+    mutating func sortMaps() {
+        /// sort first by maps that have an unseen post, then by most recent post timestamp
+        mapsList = mapsList.sorted(by: { m1, m2 in
+            guard m1.hasNewPost == m2.hasNewPost else {
+                return m1.hasNewPost && !m2.hasNewPost
+            }
+            return m1.postTimestamps.last!.seconds > m2.postTimestamps.last!.seconds
+        })
+    }
+    
+    mutating func sortFriends() {
+        /// sort friends based on user's top friends
+        if topFriends?.isEmpty ?? true { return }
+        
+        let sortedFriends = topFriends!.sorted(by: {$0.value > $1.value})
+        self.friendIDs = sortedFriends.map({$0.key})
+        
+        let topFriends = Array(sortedFriends.map({$0.key}))
+        var friendObjects: [UserProfile] = []
+        
+        for friend in topFriends {
+            if let object = friendsList.first(where: {$0.id == friend}) {
+                friendObjects.append(object)
+            }
+        }
+        /// add any friend not in top friends
+        for friend in friendsList {
+            if !friendObjects.contains(where: {$0.id == friend.id}) { friendObjects.append(friend) }
+        }
+        friendsList = friendObjects
+    }
+    
+    func getSelectedFriends(memberIDs: [String]) -> [UserProfile] {
+        var selectedFriends = friendsList
+        for member in memberIDs {
+            if let i = friendsList.firstIndex(where: {$0.id == member}) {
+                selectedFriends[i].selected = true
+            }
+        }
+        return selectedFriends
     }
 }

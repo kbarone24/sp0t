@@ -176,7 +176,7 @@ class SendInvitesController: UIViewController {
         view.addSubview(loadingIndicator)
         
         loadingIndicator.snp.makeConstraints{
-            $0.top.equalTo(tableView.snp.bottom).offset(20)
+            $0.top.equalTo(tableView.snp.bottom).offset(50)
         }
 
         checkAuth()

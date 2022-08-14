@@ -230,7 +230,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     func getContacts() {
        
         DispatchQueue.main.async {
-            self.activityIndicatorView = CustomActivityIndicator(frame: CGRect(x: 0, y: UIScreen.main.bounds.minX + 40, width: UIScreen.main.bounds.width, height: 30))
+            self.activityIndicatorView = CustomActivityIndicator(frame: CGRect(x: 0, y: UIScreen.main.bounds.minY + 40, width: UIScreen.main.bounds.width, height: 30))
             self.activityIndicatorView.isHidden = true
             self.tableView.addSubview(self.activityIndicatorView)
         }
@@ -322,7 +322,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
                                 
                                 guard let self = self else { return }
                                 
-                                userInfo.friend = UserDataModel.shared.friendIDs.contains(id)
+                                userInfo.friend = UserDataModel.shared.userInfo.friendIDs.contains(id)
                                 userInfo.pending = !userInfo.friend! && ((fSnap?.documents.count ?? 0) > 0 || UserDataModel.shared.userInfo.pendingFriendRequests.contains(id))
                                 localContacts.append(userInfo)
                                 

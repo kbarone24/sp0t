@@ -173,7 +173,7 @@ class EmailLoginController: UIViewController {
         let verified = defaults.object(forKey: "verifiedPhone") as? Bool ?? false
         
         if verified {
-            openAvi()
+            animateToMap()
             
         } else {
             
@@ -184,17 +184,15 @@ class EmailLoginController: UIViewController {
                 if let doc = snap?.documents.first {
                     /// if user is verified but its not already saved to defaults, save it to defaults and send them to the map
                     let verified = doc.get("verifiedPhone") as? Bool ?? false
-                    print("verified", verified)
                     if verified {
                         defaults.set(true, forKey: "verifiedPhone")
-                        self.openAvi()
+                        self.animateToMap()
                     } else {
                         self.sendUserToPhoneAuth()
                     }
                     
                 } else {
                     /// this should never happen but user got signed in and their email in Firestore does not match the user in Auth. Here we update their email with the current one
-                    
                     if verifiedEmail != "" { db.collection("users").document(Auth.auth().currentUser!.uid).updateData(["email" : verified])}
                     self.sendUserToPhoneAuth()
                 }
@@ -215,7 +213,7 @@ class EmailLoginController: UIViewController {
     }
     
     func openAvi(){
-        let aviVC = AvatarSelectionController()
+        let aviVC = AvatarSelectionController(sentFrom: "create")
         navigationController!.pushViewController(aviVC, animated: true)
     }
     

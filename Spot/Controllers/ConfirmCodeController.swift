@@ -126,7 +126,8 @@ class ConfirmCodeController: UIViewController {
                     self.animateToMap()
                     return
                 } else if self.codeType == .newAccount {
-                    let avi = AvatarSelectionController()
+                    print("yo?")
+                    let avi = AvatarSelectionController(sentFrom: "create")
                     self.navigationController!.pushViewController(avi, animated: true)
                 }
                 
@@ -252,7 +253,7 @@ class ConfirmCodeController: UIViewController {
     
     func animateToMap() {
         
-       /*let storyboard = UIStoryboard(name: "Map", bundle: nil)
+       let storyboard = UIStoryboard(name: "Map", bundle: nil)
         let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
@@ -263,10 +264,10 @@ class ConfirmCodeController: UIViewController {
             .compactMap({$0})
             .first?.windows
             .filter({$0.isKeyWindow}).first
-        keyWindow?.rootViewController = navController*/
+        keyWindow?.rootViewController = navController
         
-       let avi = AvatarSelectionController(sentFrom: "create")
-       navigationController!.pushViewController(avi, animated: true)
+       //let avi = AvatarSelectionController(sentFrom: "create")
+       //navigationController!.pushViewController(avi, animated: true)
     }
     
     func presentSearchOverview() {
