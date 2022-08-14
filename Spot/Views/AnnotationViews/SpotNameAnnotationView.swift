@@ -17,6 +17,7 @@ class SpotNameAnnotationView: MKAnnotationView {
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         collisionMode = .rectangle
+        centerOffset = CGPoint(x: 0, y: 10)
     }
     
     required init?(coder aDecoder: NSCoder) {

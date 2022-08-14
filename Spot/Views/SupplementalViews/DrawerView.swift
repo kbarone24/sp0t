@@ -156,7 +156,6 @@ class DrawerView: NSObject {
     
     // MARK: Present
     public func present(to: DrawerViewDetent = .Middle) {
-        print("present")
         let currentStatus = status
         switch to {
         case .Top:

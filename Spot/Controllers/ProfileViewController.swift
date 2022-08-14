@@ -304,6 +304,14 @@ extension ProfileViewController {
     }
 }
 
+extension ProfileViewController: CustomMapDelegate {
+    func finishPassing(updatedMap: CustomMap?) {
+        if updatedMap != nil, let i = maps.firstIndex(where: {$0.id == updatedMap!.id!}) {
+            maps[i] = updatedMap!
+        }
+    }
+}
+
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -360,11 +368,13 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
             if let _ = cell as? ProfileMyMapCell {
-                print("mapCell selected")
+                let customMapVC = CustomMapController(userProfile: userProfile, mapData: nil, postsList: posts, presentedDrawerView: containerDrawerView, mapType: .myMap)
+                customMapVC.delegate = self
+                navigationController?.pushViewController(customMapVC, animated: true)
             } else if let _ = cell as? ProfileBodyCell {
                 mapSelectedIndex = indexPath.row - 1
-                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], presentedDrawerView: containerDrawerView)
-                customMapVC.profileVC = self
+                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
+                customMapVC.delegate = self
                 navigationController?.pushViewController(customMapVC, animated: true)
             }
         }
