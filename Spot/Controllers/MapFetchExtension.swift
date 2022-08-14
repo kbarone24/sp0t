@@ -163,7 +163,6 @@ extension MapController {
         recentQuery.getDocuments { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
-            if snap.metadata.isFromCache { return }
             if snap.documents.count == 0 { self.homeFetchGroup.leave(); return }
 
             let recentGroup = DispatchGroup()
@@ -173,6 +172,7 @@ extension MapController {
                     /// if !contains, run query, else update with new values + update comments
                     guard let postInfo = postIn else { continue }
                     if self.postsContains(postID: postInfo.id!, mapID: map?.id ?? "") { self.updatePost(post: postInfo, map: map); continue }
+                    if map == nil && !UserDataModel.shared.userInfo.friendsContains(id: postInfo.posterID) { continue }
                     /// check seenList if older than 24 hours
                     if postInfo.timestamp.seconds < Int64(yesterdaySeconds) && postInfo.seenList!.contains(self.uid) { continue }
                     
@@ -196,43 +196,6 @@ extension MapController {
             recentGroup.notify(queue: .global()) {
                 self.homeFetchGroup.leave()
             }
-        }
-    }
-
-    func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
-        var postInfo = post
-        
-        /// detail group tracks comments and added users fetches
-        let detailGroup = DispatchGroup()
-        detailGroup.enter()
-        getUserInfo(userID: postInfo.posterID) { user in
-            postInfo.userInfo = user
-            detailGroup.leave()
-        }
-        
-        detailGroup.enter()
-        self.getComments(postID: postInfo.id!) { comments in
-            postInfo.commentList = comments
-            detailGroup.leave()
-        }
-        
-        detailGroup.enter()
-        /// taggedUserGroup tracks tagged user fetch
-        let taggedUserGroup = DispatchGroup()
-        for userID in postInfo.taggedUserIDs ?? [] {
-            taggedUserGroup.enter()
-            self.getUserInfo(userID: userID) { user in
-                postInfo.addedUserProfiles!.append(user)
-                taggedUserGroup.leave()
-            }
-        }
-        
-        taggedUserGroup.notify(queue: .global()) {
-            detailGroup.leave()
-        }
-        detailGroup.notify(queue: .global()) {
-            completion(postInfo)
-            return
         }
     }
     
@@ -388,14 +351,15 @@ extension MapController {
     
     func getSortedCoordinates() -> [CLLocationCoordinate2D] {
         let map = getSelectedMap()
-        
         if map == nil {
             var posts = friendsPostsDictionary.map({$0.value})
             if posts.contains(where: {!$0.seen}) { posts = posts.filter({!$0.seen}) }
+            posts = sortPosts(posts)
             return posts.map({CLLocationCoordinate2D(latitude: $0.postLat, longitude: $0.postLong)})
         } else {
             var group = map!.postGroup
             if group.contains(where: {$0.postIDs.contains(where: {!$0.seen})}) { group = group.filter({$0.postIDs.contains(where: {!$0.seen})})}
+            group = sortPostGroup(group)
             return group.map({$0.coordinate})
         }
     }

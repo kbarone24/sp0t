@@ -165,10 +165,9 @@ class PostController: UIViewController {
     }
     
     func openMap(mapID: String) {
-        containerDrawerView?.present(to: .Middle)
         var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         map.id = mapID
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, presentedDrawerView: containerDrawerView)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
         navigationController?.pushViewController(customMapVC, animated: true)
     }
             
