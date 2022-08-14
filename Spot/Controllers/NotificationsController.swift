@@ -63,13 +63,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        navigationController?.navigationBar.isTranslucent = false
         configureDrawerView()
-        setUpNavBar()
     }
     
     override func viewDidAppear(_ animated: Bool) {
+        //navigationController?.navigationBar.isTranslucent = false
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
+        setUpNavBar()
+
     }
     
     func configureDrawerView() {
@@ -99,12 +100,13 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             target: self,
             action: #selector(leaveNotifs)
         )
+        
     }
     
     
     func setupView(){
         //for some reason setting up the view like it says in the guidelines was causing issues
-        tableView = UITableView(frame: (self.view.bounds), style: .grouped)
+        //tableView = UITableView(frame: (self.view.bounds), style: .grouped)
         tableView.dataSource = self
         tableView.delegate = self
         tableView.backgroundColor = .white
@@ -118,7 +120,15 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.translatesAutoresizingMaskIntoConstraints = true
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         view.addSubview(self.tableView)
+        
+        tableView.snp.makeConstraints{
+            $0.top.equalToSuperview()
+            $0.bottom.equalToSuperview()
+            $0.leading.trailing.equalToSuperview()
+        }
+        
     }
+    
     
     // MARK: Notification fetch
     func fetchNotifications(refresh: Bool) {

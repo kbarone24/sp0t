@@ -279,9 +279,13 @@ extension CustomMapController {
     }
         
     @objc func DrawerViewToTopCompletion() {
-        Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")
+        Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")        
+        UIView.transition(with: self.barBackButton, duration: 0.1,
+                          options: .transitionCrossDissolve,
+                          animations: {
+            self.barBackButton.isHidden = false
+        })
         barView.isUserInteractionEnabled = true
-        barBackButton.isHidden = false
         customMapCollectionView.isScrollEnabled = true
     }
     @objc func DrawerViewToMiddleCompletion() {
@@ -295,13 +299,15 @@ extension CustomMapController {
     
     @objc func backButtonAction() {
         barBackButton.isHidden = true
-        delegate?.finishPassing(updatedMap: mapData)
-
-        if navigationController?.viewControllers.count == 1 {
-            containerDrawerView?.closeAction()
-        } else {
-            navigationController?.popViewController(animated: true)
+        self.containerDrawerView?.present(to: .Top)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Change `2.0` to the desired number of seconds.
+          if navigationController?.viewControllers.count == 1 {
+              containerDrawerView?.closeAction()
+          } else {
+              navigationController?.popViewController(animated: true)
+          }
         }
+        delegate?.finishPassing(updatedMap: mapData)
     }
     
     @objc func editMapAction() {

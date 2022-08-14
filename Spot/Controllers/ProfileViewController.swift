@@ -88,8 +88,8 @@ class ProfileViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
         navigationController?.setNavigationBarHidden(false, animated: true)
-        setUpNavBar()
         configureDrawerView()
+        setUpNavBar()
     }
     
     @objc func mapLikersChanged(_ notification: NSNotification) {

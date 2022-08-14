@@ -156,6 +156,8 @@ class DrawerView: NSObject {
     
     // MARK: Present
     public func present(to: DrawerViewDetent = .Middle) {
+        print("present-")
+
         let currentStatus = status
         switch to {
         case .Top:
@@ -187,6 +189,7 @@ class DrawerView: NSObject {
     
     // MARK: Set position functions
     private func goTop() {
+        print("going top")
         topConstraints?.activate()
         yPosition = 0
         status = .Top
