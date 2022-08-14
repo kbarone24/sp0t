@@ -806,6 +806,43 @@ extension NSObject {
         }
     }
     
+    func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
+        var postInfo = post
+        
+        /// detail group tracks comments and added users fetches
+        let detailGroup = DispatchGroup()
+        detailGroup.enter()
+        getUserInfo(userID: postInfo.posterID) { user in
+            postInfo.userInfo = user
+            detailGroup.leave()
+        }
+        
+        detailGroup.enter()
+        self.getComments(postID: postInfo.id!) { comments in
+            postInfo.commentList = comments
+            detailGroup.leave()
+        }
+        
+        detailGroup.enter()
+        /// taggedUserGroup tracks tagged user fetch
+        let taggedUserGroup = DispatchGroup()
+        for userID in postInfo.taggedUserIDs ?? [] {
+            taggedUserGroup.enter()
+            self.getUserInfo(userID: userID) { user in
+                postInfo.addedUserProfiles!.append(user)
+                taggedUserGroup.leave()
+            }
+        }
+        
+        taggedUserGroup.notify(queue: .global()) {
+            detailGroup.leave()
+        }
+        detailGroup.notify(queue: .global()) {
+            completion(postInfo)
+            return
+        }
+    }
+    
     func getUserFromUsername(username: String, completion: @escaping (_ user: UserProfile?) -> Void) {
         let db: Firestore! = Firestore.firestore()
         if let user = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == username}) {

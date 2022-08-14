@@ -190,18 +190,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             guard let self = self else { return }
             guard let allDocs = snap?.documents else { return }
                         
-            if allDocs.count == 0{
+            if allDocs.count == 0 {
                 fetchGroup.leave(); return }
-            
-            if(allDocs.count < 15){
+            if (allDocs.count < 15) {
                 self.refresh = .refreshDisabled
             }
            
             self.endDocument = allDocs.last
-                
-            
             let docs = self.refresh == .refreshDisabled ? allDocs : allDocs.dropLast()
-            
             
             let notiGroup = DispatchGroup()
             for doc in docs {
@@ -262,7 +258,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         if((pendingFriendRequests.count == 0 && notifications.count < 11) || (pendingFriendRequests.count > 0 && notifications.count < 7)) && refresh == .refreshEnabled{
             fetchNotifications(refresh: false)
         }
-        if(self.refresh != .refreshDisabled){ self.refresh = .refreshEnabled }
+        if (self.refresh != .refreshDisabled) { self.refresh = .refreshEnabled }
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
