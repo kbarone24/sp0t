@@ -268,6 +268,19 @@ class MapController: UIViewController {
         sheetView?.present(to: .Top)
     }
     
+    func openSelectedMap() {
+        let map = getSelectedMap()
+        let unsortedPosts = map == nil ? friendsPostsDictionary.map{$0.value} : map!.postsDictionary.map{$0.value}
+        let posts = sortPosts(unsortedPosts)
+        let mapType: MapType = map == nil ? .friendsMap : .customMap
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: posts, presentedDrawerView: nil, mapType: mapType)
+        sheetView = DrawerView(present: customMapVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+            self.sheetView = nil
+        })
+        customMapVC.containerDrawerView = sheetView
+        sheetView?.present(to: .Middle)
+    }
+    
     func toggleHomeAppearance(hidden: Bool) {
         mapsCollection.isHidden = hidden
         newPostsButton.isHidden = hidden
@@ -306,18 +319,12 @@ extension MapController: CLLocationManagerDelegate {
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        
         guard let location = locations.last else { return }
-        
         UserDataModel.shared.currentLocation = location
-        
-        // might want to do this every time locations update
         if (firstTimeGettingLocation) {
-            
             /// set current location to show while feed loads
             mapView.setRegion(MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 400000, longitudinalMeters: 400000), animated: false)
             firstTimeGettingLocation = false
-            print("distance from ch", userInChapelHill())
             NotificationCenter.default.post(name: Notification.Name("UpdateLocation"), object: nil)
         }
     }
@@ -506,7 +513,7 @@ class MapTitleView: UIView {
 class NewPostsButton: UIButton {
     var contentArea: UIView!
     var textLabel: UILabel!
-    var dotIndicator: UIView!
+    var newPostsIndicator: UIImageView!
     var carat: UIImageView!
     
     var unseenPosts: Int = 0 {
@@ -514,13 +521,13 @@ class NewPostsButton: UIButton {
             if unseenPosts > 0 {
                 let text = unseenPosts > 1 ? "\(unseenPosts) new posts" : "\(unseenPosts) new post"
                 textLabel.text = text
-                textLabel.snp.updateConstraints({$0.trailing.equalToSuperview().inset(22)})
-                dotIndicator.isHidden = false
+                textLabel.snp.updateConstraints({$0.trailing.equalToSuperview().inset(38)})
+                newPostsIndicator.isHidden = false
                 carat.isHidden = true
             } else {
                 textLabel.text = "See all posts"
-                textLabel.snp.updateConstraints({$0.trailing.equalToSuperview().inset(18)})
-                dotIndicator.isHidden = true
+                textLabel.snp.updateConstraints({$0.trailing.equalToSuperview().inset(32)})
+                newPostsIndicator.isHidden = true
                 carat.isHidden = false
             }
         }
@@ -530,34 +537,37 @@ class NewPostsButton: UIButton {
         super.init(frame: frame)
         translatesAutoresizingMaskIntoConstraints = false
         
+        let tap = UITapGestureRecognizer(target: self, action: #selector(tap))
+        addGestureRecognizer(tap)
+        
         contentArea = UIView {
             $0.backgroundColor = UIColor.white.withAlphaComponent(0.95)
-            $0.layer.cornerRadius = 12
+            $0.layer.cornerRadius = 18
             addSubview($0)
         }
         contentArea.snp.makeConstraints({$0.leading.trailing.top.bottom.equalToSuperview().inset(5)})
         
         textLabel = UILabel {
             $0.textColor = UIColor(red: 0.663, green: 0.663, blue: 0.663, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
             $0.clipsToBounds = true
             contentArea.addSubview($0)
         }
         textLabel.snp.makeConstraints {
-            $0.leading.equalTo(9)
-            $0.top.bottom.equalToSuperview().inset(4)
-            $0.trailing.equalToSuperview().inset(22)
+            $0.leading.equalTo(14)
+            $0.top.equalTo(12)
+            $0.bottom.equalToSuperview().inset(11)
+            $0.trailing.equalToSuperview().inset(32)
         }
         
-        dotIndicator = UIView {
-            $0.backgroundColor = UIColor(named: "SpotGreen")
-            $0.layer.cornerRadius = 11/2
+        newPostsIndicator = UIImageView {
+            $0.image = UIImage(named: "NewPostsIcon")
             $0.isHidden = true
             contentArea.addSubview($0)
         }
-        dotIndicator.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(7)
-            $0.width.height.equalTo(11)
+        newPostsIndicator.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(10)
+            $0.width.height.equalTo(23)
             $0.centerY.equalToSuperview()
         }
         
@@ -567,10 +577,19 @@ class NewPostsButton: UIButton {
             contentArea.addSubview($0)
         }
         carat.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(7)
-            $0.width.equalTo(7.5)
-            $0.height.equalTo(12)
+            $0.trailing.equalToSuperview().inset(15)
+            $0.width.equalTo(8.9)
+            $0.height.equalTo(15)
             $0.centerY.equalToSuperview()
+        }
+    }
+    
+    @objc func tap() {
+        guard let mapVC = viewContainingController() as? MapController else { return }
+        if unseenPosts > 0 {
+            mapVC.animateToMostRecentPost()
+        } else {
+            mapVC.openSelectedMap()
         }
     }
     
