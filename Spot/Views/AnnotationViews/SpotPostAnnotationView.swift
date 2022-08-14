@@ -57,7 +57,6 @@ class SpotPostAnnotationView: MKAnnotationView {
         infoWindow.imageMask.layer.cornerRadius = 57/2
         infoWindow.imageMask.isHidden = !post.seen
         infoWindow.replayIcon.isHidden = !post.seen
-        infoWindow.alpha = post.seen ? 0.65 : 1.0
         
         if spotName != "" {
             /// bordered text
@@ -73,6 +72,7 @@ class SpotPostAnnotationView: MKAnnotationView {
         } else {
             /// no spot attached to this post
             infoWindow.spotLabel.isHidden = true
+            infoWindow.spotIcon.isHidden = true
         }
         
         infoWindow.resizeView()
