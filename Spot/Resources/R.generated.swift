@@ -349,7 +349,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 245 images.
+  /// This `R.image` struct is generated, and contains static references to 235 images.
   struct image {
     /// Image `AcceptedTheirFriendRequest`.
     static let acceptedTheirFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedTheirFriendRequest")
@@ -375,6 +375,8 @@ struct R: Rswift.Validatable {
     static let aliveOff = Rswift.ImageResource(bundle: R.hostingBundle, name: "AliveOff")
     /// Image `AliveOn`.
     static let aliveOn = Rswift.ImageResource(bundle: R.hostingBundle, name: "AliveOn")
+    /// Image `AnnotationSpotTarget`.
+    static let annotationSpotTarget = Rswift.ImageResource(bundle: R.hostingBundle, name: "AnnotationSpotTarget")
     /// Image `ArtTag`.
     static let artTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ArtTag")
     /// Image `BackArrow-1`.
@@ -385,8 +387,6 @@ struct R: Rswift.Validatable {
     static let backArrow = Rswift.ImageResource(bundle: R.hostingBundle, name: "BackArrow")
     /// Image `BasketballTag`.
     static let basketballTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "BasketballTag")
-    /// Image `Bear 2`.
-    static let bear2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Bear 2")
     /// Image `BearTag`.
     static let bearTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "BearTag")
     /// Image `BikeTag`.
@@ -409,8 +409,6 @@ struct R: Rswift.Validatable {
     static let breadTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "BreadTag")
     /// Image `BugTag`.
     static let bugTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "BugTag")
-    /// Image `Bunny 2`.
-    static let bunny2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Bunny 2")
     /// Image `BurgerTag`.
     static let burgerTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "BurgerTag")
     /// Image `CactusTag`.
@@ -465,6 +463,8 @@ struct R: Rswift.Validatable {
     static let cocktailTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "CocktailTag")
     /// Image `CoffeeTag`.
     static let coffeeTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "CoffeeTag")
+    /// Image `CommentButton`.
+    static let commentButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "CommentButton")
     /// Image `CommentLikeButtonFilled`.
     static let commentLikeButtonFilled = Rswift.ImageResource(bundle: R.hostingBundle, name: "CommentLikeButtonFilled")
     /// Image `CommentLikeButton`.
@@ -477,8 +477,6 @@ struct R: Rswift.Validatable {
     static let commentSegLikeIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "CommentSegLikeIcon")
     /// Image `CookTag`.
     static let cookTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "CookTag")
-    /// Image `Cow 2`.
-    static let cow2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Cow 2")
     /// Image `CowTag`.
     static let cowTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "CowTag")
     /// Image `CreamTag`.
@@ -489,10 +487,6 @@ struct R: Rswift.Validatable {
     static let createMapButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "CreateMapButton")
     /// Image `DangerTag`.
     static let dangerTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "DangerTag")
-    /// Image `Deer 2`.
-    static let deer2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Deer 2")
-    /// Image `Dog 2`.
-    static let dog2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Dog 2")
     /// Image `DogTag`.
     static let dogTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "DogTag")
     /// Image `DonutTag`.
@@ -509,8 +503,6 @@ struct R: Rswift.Validatable {
     static let editProfilePicture = Rswift.ImageResource(bundle: R.hostingBundle, name: "EditProfilePicture")
     /// Image `EggTag`.
     static let eggTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "EggTag")
-    /// Image `Elephant 2`.
-    static let elephant2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Elephant 2")
     /// Image `FeedExit`.
     static let feedExit = Rswift.ImageResource(bundle: R.hostingBundle, name: "FeedExit")
     /// Image `FeedMapIcon`.
@@ -551,8 +543,6 @@ struct R: Rswift.Validatable {
     static let gardenTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "GardenTag")
     /// Image `GasTag`.
     static let gasTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "GasTag")
-    /// Image `Giraffe 2`.
-    static let giraffe2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Giraffe 2")
     /// Image `GlizzyTag`.
     static let glizzyTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "GlizzyTag")
     /// Image `GolfTag`.
@@ -593,12 +583,12 @@ struct R: Rswift.Validatable {
     static let leafTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "LeafTag")
     /// Image `LikeButtonFilled`.
     static let likeButtonFilled = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikeButtonFilled")
+    /// Image `LikeButton`.
+    static let likeButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikeButton")
     /// Image `LikeNotification`.
     static let likeNotification = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikeNotification")
     /// Image `LikedYourMap`.
     static let likedYourMap = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikedYourMap")
-    /// Image `Lion 2`.
-    static let lion2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Lion 2")
     /// Image `LiquorTag`.
     static let liquorTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "LiquorTag")
     /// Image `LoadingIndicator`.
@@ -623,8 +613,6 @@ struct R: Rswift.Validatable {
     static let meatTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "MeatTag")
     /// Image `MoneyTag`.
     static let moneyTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "MoneyTag")
-    /// Image `Monkey-2 2`.
-    static let monkey22 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Monkey-2 2")
     /// Image `MonkeyTag`.
     static let monkeyTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "MonkeyTag")
     /// Image `Monkey`.
@@ -641,6 +629,8 @@ struct R: Rswift.Validatable {
     static let natureTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "NatureTag")
     /// Image `NewPostBackground`.
     static let newPostBackground = Rswift.ImageResource(bundle: R.hostingBundle, name: "NewPostBackground")
+    /// Image `NewPostsIcon`.
+    static let newPostsIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "NewPostsIcon")
     /// Image `NewSpotIcon`.
     static let newSpotIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "NewSpotIcon")
     /// Image `NextArrow`.
@@ -653,8 +643,6 @@ struct R: Rswift.Validatable {
     static let onboardNextButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "OnboardNextButton")
     /// Image `OnboardSearchContactsButton`.
     static let onboardSearchContactsButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "OnboardSearchContactsButton")
-    /// Image `Panda 2`.
-    static let panda2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Panda 2")
     /// Image `ParkTag`.
     static let parkTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ParkTag")
     /// Image `PhotoGalleryButton`.
@@ -799,8 +787,6 @@ struct R: Rswift.Validatable {
     static let tennisTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "TennisTag")
     /// Image `TheB0t`.
     static let theB0t = Rswift.ImageResource(bundle: R.hostingBundle, name: "TheB0t")
-    /// Image `Tiger 2`.
-    static let tiger2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Tiger 2")
     /// Image `ToggleOff`.
     static let toggleOff = Rswift.ImageResource(bundle: R.hostingBundle, name: "ToggleOff")
     /// Image `ToggleOn`.
@@ -835,12 +821,6 @@ struct R: Rswift.Validatable {
     static let xFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "XFriendRequest")
     /// Image `X`.
     static let x = Rswift.ImageResource(bundle: R.hostingBundle, name: "X")
-    /// Image `commentButton`.
-    static let commentButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "commentButton")
-    /// Image `likeButton`.
-    static let likeButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "likeButton")
-    /// Image `sp0tLogo 2`.
-    static let sp0tLogo2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "sp0tLogo 2")
 
     #if os(iOS) || os(tvOS)
     /// `UIImage(named: "AcceptedTheirFriendRequest", bundle: ..., traitCollection: ...)`
@@ -927,6 +907,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "AnnotationSpotTarget", bundle: ..., traitCollection: ...)`
+    static func annotationSpotTarget(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.annotationSpotTarget, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "ArtTag", bundle: ..., traitCollection: ...)`
     static func artTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.artTag, compatibleWith: traitCollection)
@@ -958,13 +945,6 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "BasketballTag", bundle: ..., traitCollection: ...)`
     static func basketballTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.basketballTag, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Bear 2", bundle: ..., traitCollection: ...)`
-    static func bear2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.bear2, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1042,13 +1022,6 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "BugTag", bundle: ..., traitCollection: ...)`
     static func bugTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.bugTag, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Bunny 2", bundle: ..., traitCollection: ...)`
-    static func bunny2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.bunny2, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1242,6 +1215,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "CommentButton", bundle: ..., traitCollection: ...)`
+    static func commentButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.commentButton, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "CommentLikeButton", bundle: ..., traitCollection: ...)`
     static func commentLikeButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.commentLikeButton, compatibleWith: traitCollection)
@@ -1284,13 +1264,6 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Cow 2", bundle: ..., traitCollection: ...)`
-    static func cow2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.cow2, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "CowTag", bundle: ..., traitCollection: ...)`
     static func cowTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.cowTag, compatibleWith: traitCollection)
@@ -1322,20 +1295,6 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "DangerTag", bundle: ..., traitCollection: ...)`
     static func dangerTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.dangerTag, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Deer 2", bundle: ..., traitCollection: ...)`
-    static func deer2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.deer2, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Dog 2", bundle: ..., traitCollection: ...)`
-    static func dog2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.dog2, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1392,13 +1351,6 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "EggTag", bundle: ..., traitCollection: ...)`
     static func eggTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.eggTag, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Elephant 2", bundle: ..., traitCollection: ...)`
-    static func elephant2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.elephant2, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1543,13 +1495,6 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Giraffe 2", bundle: ..., traitCollection: ...)`
-    static func giraffe2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.giraffe2, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "GlizzyTag", bundle: ..., traitCollection: ...)`
     static func glizzyTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.glizzyTag, compatibleWith: traitCollection)
@@ -1683,6 +1628,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LikeButton", bundle: ..., traitCollection: ...)`
+    static func likeButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.likeButton, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "LikeButtonFilled", bundle: ..., traitCollection: ...)`
     static func likeButtonFilled(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.likeButtonFilled, compatibleWith: traitCollection)
@@ -1700,13 +1652,6 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "LikedYourMap", bundle: ..., traitCollection: ...)`
     static func likedYourMap(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.likedYourMap, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Lion 2", bundle: ..., traitCollection: ...)`
-    static func lion2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.lion2, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1802,13 +1747,6 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Monkey-2 2", bundle: ..., traitCollection: ...)`
-    static func monkey22(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.monkey22, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "MonkeyTag", bundle: ..., traitCollection: ...)`
     static func monkeyTag(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.monkeyTag, compatibleWith: traitCollection)
@@ -1858,6 +1796,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "NewPostsIcon", bundle: ..., traitCollection: ...)`
+    static func newPostsIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.newPostsIcon, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "NewSpotIcon", bundle: ..., traitCollection: ...)`
     static func newSpotIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.newSpotIcon, compatibleWith: traitCollection)
@@ -1896,13 +1841,6 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "OnboardSearchContactsButton", bundle: ..., traitCollection: ...)`
     static func onboardSearchContactsButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.onboardSearchContactsButton, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Panda 2", bundle: ..., traitCollection: ...)`
-    static func panda2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.panda2, compatibleWith: traitCollection)
     }
     #endif
 
@@ -2411,13 +2349,6 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "Tiger 2", bundle: ..., traitCollection: ...)`
-    static func tiger2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.tiger2, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "ToggleOff", bundle: ..., traitCollection: ...)`
     static func toggleOff(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.toggleOff, compatibleWith: traitCollection)
@@ -2536,27 +2467,6 @@ struct R: Rswift.Validatable {
     }
     #endif
 
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "commentButton", bundle: ..., traitCollection: ...)`
-    static func commentButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.commentButton, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "likeButton", bundle: ..., traitCollection: ...)`
-    static func likeButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.likeButton, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "sp0tLogo 2", bundle: ..., traitCollection: ...)`
-    static func sp0tLogo2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.sp0tLogo2, compatibleWith: traitCollection)
-    }
-    #endif
-
     fileprivate init() {}
   }
 
@@ -2666,6 +2576,7 @@ struct _R: Rswift.Validatable {
   struct nib: Rswift.Validatable {
     static func validate() throws {
       try _FriendPostView.validate()
+      try _SpotNameView.validate()
       try _SpotPostView.validate()
     }
 
@@ -2686,12 +2597,18 @@ struct _R: Rswift.Validatable {
       fileprivate init() {}
     }
 
-    struct _SpotNameView: Rswift.NibResourceType {
+    struct _SpotNameView: Rswift.NibResourceType, Rswift.Validatable {
       let bundle = R.hostingBundle
       let name = "SpotNameView"
 
       func firstView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> SpotNameView? {
         return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? SpotNameView
+      }
+
+      static func validate() throws {
+        if UIKit.UIImage(named: "AnnotationSpotTarget", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'AnnotationSpotTarget' is used in nib 'SpotNameView', but couldn't be loaded.") }
+        if #available(iOS 11.0, tvOS 11.0, *) {
+        }
       }
 
       fileprivate init() {}
@@ -2706,6 +2623,7 @@ struct _R: Rswift.Validatable {
       }
 
       static func validate() throws {
+        if UIKit.UIImage(named: "AnnotationSpotTarget", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'AnnotationSpotTarget' is used in nib 'SpotPostView', but couldn't be loaded.") }
         if UIKit.UIImage(named: "ReplayIcon", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'ReplayIcon' is used in nib 'SpotPostView', but couldn't be loaded.") }
         if #available(iOS 11.0, tvOS 11.0, *) {
         }

@@ -25,7 +25,7 @@ class CustomMapController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var endDocument: DocumentSnapshot!
     var refresh: RefreshStatus = .activelyRefreshing
-
+    
     private var customMapCollectionView: UICollectionView!
     private var floatBackButton: UIButton!
     private var barView: UIView!
@@ -50,9 +50,9 @@ class CustomMapController: UIViewController {
     public var delegate: CustomMapDelegate?
     private unowned var mapController: UIViewController?
     private lazy var imageManager = SDWebImageManager()
-
+    
     private var mapType: MapType!
-
+    
     init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], presentedDrawerView: DrawerView?, mapType: MapType) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile
@@ -61,7 +61,7 @@ class CustomMapController: UIViewController {
         self.containerDrawerView = presentedDrawerView
         self.mapType = mapType
     }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -212,7 +212,7 @@ extension CustomMapController {
         }
         containerDrawerView?.slideView.addSubview(barView)
     }
-        
+    
     private func getMapMember() {
         let dispatch = DispatchGroup()
         var memberList: [UserProfile] = []
@@ -244,7 +244,7 @@ extension CustomMapController {
         default: return
         }
         if endDocument != nil { query = query.start(atDocument: endDocument) }
-
+        
         query.getDocuments { [weak self] snap, err in
             if err != nil { print("err", err)}
             guard let self = self else { return }
@@ -277,9 +277,9 @@ extension CustomMapController {
             }
         }
     }
-        
+    
     @objc func DrawerViewToTopCompletion() {
-        Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")        
+        Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")
         UIView.transition(with: self.barBackButton, duration: 0.1,
                           options: .transitionCrossDissolve,
                           animations: {
@@ -299,13 +299,12 @@ extension CustomMapController {
     
     @objc func backButtonAction() {
         barBackButton.isHidden = true
-        self.containerDrawerView?.present(to: .Top)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Change `2.0` to the desired number of seconds.
-          if navigationController?.viewControllers.count == 1 {
-              containerDrawerView?.closeAction()
-          } else {
-              navigationController?.popViewController(animated: true)
-          }
+            if self.navigationController?.viewControllers.count == 1 {
+                self.containerDrawerView?.closeAction()
+            } else {
+                self.navigationController?.popViewController(animated: true)
+            }
         }
         delegate?.finishPassing(updatedMap: mapData)
     }
@@ -343,11 +342,11 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         }
         return cell
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return indexPath.section == 0 && mapType == .customMap ? CGSize(width: view.frame.width, height: mapData?.mapDescription != nil ? 180 : 155) : CGSize(width: view.frame.width/2 - 0.5, height: (view.frame.width/2 - 0.5) * 267 / 194.5)
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 1
     }
@@ -355,7 +354,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         return 1
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 0 { return }
         let postData = postsList[indexPath.row]
@@ -365,7 +364,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
         
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
         if indexPath.section != 0 {
             let collectionCell = collectionView.cellForItem(at: indexPath)
@@ -393,7 +392,7 @@ extension CustomMapController: UIScrollViewDelegate {
             self.getPosts()
             refresh = .activelyRefreshing
         }
-
+        
         if topYContentOffset != nil && containerDrawerView?.status == .Top {
             // Disable the bouncing effect when scroll view is scrolled to top
             if scrollView.contentOffset.y <= topYContentOffset! {
@@ -416,16 +415,16 @@ extension CustomMapController: UIScrollViewDelegate {
         // Set scroll view content offset when in transition
         if
             middleYContentOffset != nil &&
-            topYContentOffset != nil &&
-            scrollView.contentOffset.y <= middleYContentOffset! &&
-            containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
+                topYContentOffset != nil &&
+                scrollView.contentOffset.y <= middleYContentOffset! &&
+                containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
         {
             scrollView.contentOffset.y = middleYContentOffset!
         }
         
         // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
         if containerDrawerView?.status != .Top {
-          //  customMapCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
+            //  customMapCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
             customMapCollectionView.isScrollEnabled = false
             containerDrawerView?.swipeToNextState = true
         }
@@ -446,18 +445,18 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction
         if
             topYContentOffset != nil &&
-            containerDrawerView?.status == .Top &&
-            customMapCollectionView.contentOffset.y <= topYContentOffset!
+                containerDrawerView?.status == .Top &&
+                customMapCollectionView.contentOffset.y <= topYContentOffset!
         {
             containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
         }
-
+        
         // Preventing the drawer view to be dragged when it's status is top and user is scrolling down
         if
             containerDrawerView?.status == .Top &&
-            customMapCollectionView.contentOffset.y > topYContentOffset ?? -91 &&
-            yTranslation > 0 &&
-            containerDrawerView?.swipeToNextState == false
+                customMapCollectionView.contentOffset.y > topYContentOffset ?? -91 &&
+                yTranslation > 0 &&
+                containerDrawerView?.swipeToNextState == false
         {
             containerDrawerView?.canDrag = false
             containerDrawerView?.slideView.frame.origin.y = 0
