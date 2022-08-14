@@ -39,13 +39,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     var refresh: RefreshStatus = .activelyRefreshing
     var contentDrawer: DrawerView?
-    
-    //used if displaying profile as its own drawer view
-    private var sheetView: DrawerView? {
-        didSet {
-            navigationController?.navigationBar.isHidden = sheetView == nil ? false : true
-        }
-    }
         
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -57,19 +50,18 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             guard let self = self else { return }
             self.fetchNotifications(refresh: false)
         }
-        print("being called")
     }
     
+    deinit {
+        print("deinit")
+    }
     
     override func viewDidLoad() {
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
-        
-        print("CALLED HERE")
-        
+            
         super.viewDidLoad()
         
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad(_:)), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         
         setupView()
         
@@ -92,12 +84,16 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             image: UIImage(named: "BackArrow-1"),
             style: .plain,
             target: self,
-            action: #selector(self.leaveNotifs(_:))
+            action: #selector(leaveNotifs)
         )
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.navigationBar.isTranslucent = false
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
-        print("hhhhhh")
+        print("view appeared")
     }
     
     
@@ -111,21 +107,12 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.rowHeight = 70
         tableView.register(ActivityCell.self, forCellReuseIdentifier: "ActivityCell")
         tableView.register(FriendRequestCollectionCell.self, forCellReuseIdentifier: "FriendRequestCollectionCell")
-        tableView.register(MapFeedLoadingCell.self, forCellReuseIdentifier: "FeedLoadingCell")
+        tableView.register(ActivityIndicatorCell.self, forCellReuseIdentifier: "IndicatorCell")
         tableView.isUserInteractionEnabled = true
         self.tableView.separatorStyle = .none
         tableView.translatesAutoresizingMaskIntoConstraints = true
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         view.addSubview(self.tableView)
-        
-        let barView = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
-            $0.backgroundColor = .white
-            $0.alpha = 0
-        }
-        
-        contentDrawer?.slideView.insertSubview(barView, aboveSubview: (navigationController?.view)!)
-        
     }
     
     // MARK: Notification fetch
@@ -154,7 +141,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                     let notif = try doc.data(as: UserNotification.self)
                     guard var notification = notif else { friendRequestGroup.leave(); continue }
                     notification.id = doc.documentID
-                    notification.timeString = self.getTimeString(postTime: notification.timestamp)
                                         
                     if !notification.seen {
                       DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
@@ -210,7 +196,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                     let notif = try doc.data(as: UserNotification.self)
                     guard var notification = notif else { notiGroup.leave(); continue }
                     notification.id = doc.documentID
-                    notification.timeString = self.getTimeString(postTime: notification.timestamp)
                     
                     if !notification.seen {
                       DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
@@ -268,12 +253,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
-
-    @objc func leaveNotifs(_ sender: Any){
-        ///NOT WORKING 😥
-        contentDrawer?.closeAction()
-    }
-    
     @objc func notifyFriendsLoad(_ notification: NSNotification){
         if(notifications.count != 0){
             for i in 0...notifications.count-1{
@@ -298,6 +277,15 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
         }
         self.sortAndReload()
+    }
+    
+    @objc func leaveNotifs() {
+        if navigationController?.viewControllers.count == 1 {
+            print("leaving 1")
+            contentDrawer?.closeAction()
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
     }
     
     ///modified copy from global functions
@@ -409,8 +397,8 @@ extension NotificationsController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {        
         let amtFriendReq = pendingFriendRequests.isEmpty ? 0 : 1
-        if indexPath.row >= notifications.count + amtFriendReq{
-            let cell = tableView.dequeueReusableCell(withIdentifier: "FeedLoadingCell", for: indexPath) as! MapFeedLoadingCell
+        if indexPath.row >= notifications.count + amtFriendReq {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "IndicatorCell", for: indexPath) as! ActivityIndicatorCell
             cell.setUp()
             return cell
         }
@@ -473,7 +461,7 @@ extension NotificationsController: UITableViewDataSource {
 extension NotificationsController: notificationDelegateProtocol {
 
     func getProfile(userProfile: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: userProfile)
+        let profileVC = ProfileViewController(userProfile: userProfile, presentedDrawerView: contentDrawer)
         navigationController!.pushViewController(profileVC, animated: true)
         profileVC.navigationController!.navigationBar.isTranslucent = true
     }
@@ -499,3 +487,26 @@ extension NotificationsController: notificationDelegateProtocol {
     }
 }
 
+class ActivityIndicatorCell: UITableViewCell {
+    
+    lazy var activityIndicator: CustomActivityIndicator = CustomActivityIndicator(frame: CGRect.zero)
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        backgroundColor = .clear
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func setUp() {
+        activityIndicator.removeFromSuperview()
+        activityIndicator.frame = CGRect(x: (self.frame.width/2)-5, y: 35, width: 30, height: 30)
+        activityIndicator.startAnimating()
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = true
+        contentView.addSubview(activityIndicator)
+        activityIndicator.centerXAnchor.constraint(equalTo: contentView.centerXAnchor).isActive = true
+        activityIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
+    }
+}

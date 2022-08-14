@@ -18,6 +18,12 @@ class SelectedImagesFooter: UICollectionReusableView {
     var detailLabel: UILabel!
     var nextButton: UIButton!
     
+    var imageCount = 0 {
+        didSet {
+            detailLabel.text = imageCount > 1 ? "Drag and drop to reorder" : "Select up to 5 photos"
+        }
+    }
+    
     override func layoutSubviews() {
         super.layoutSubviews()
     }
@@ -80,6 +86,7 @@ class SelectedImagesFooter: UICollectionReusableView {
             nextButton.isEnabled = imageSelected
             return
         } else if detailView != nil {
+            imageCount = UploadPostModel.shared.selectedObjects.count
             return
         }
         
@@ -93,9 +100,7 @@ class SelectedImagesFooter: UICollectionReusableView {
             $0.height.equalTo(100)
         }
         
-        let imageCount = UploadPostModel.shared.selectedObjects.count
         detailLabel = UILabel {
-            $0.text = imageCount > 1 ? "Drag and drop to reorder" : "Select up to 5 photos"
             $0.textColor = UIColor(red: 0.575, green: 0.575, blue: 0.575, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Medium", size: 14)
             detailView.addSubview($0)
@@ -105,7 +110,8 @@ class SelectedImagesFooter: UICollectionReusableView {
             $0.top.equalTo(7)
             $0.height.equalTo(18)
         }
-        
+        imageCount = UploadPostModel.shared.selectedObjects.count
+
         nextButton = NextButton {
             $0.isEnabled = imageSelected
             $0.addTarget(self, action: #selector(nextTap(_:)), for: .touchUpInside)

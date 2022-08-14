@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 import FirebaseFirestoreSwift
+import MapKit
 
 struct CustomMap: Identifiable, Codable {
     
@@ -18,22 +19,46 @@ struct CustomMap: Identifiable, Codable {
     var founderID: String
     var imageURL: String
     var likers: [String]
+    var mapBio: String?
     var mapName: String
     var memberIDs: [String]
     var posterDictionary: [String: [String]] = [:]
     var posterIDs: [String]
     var posterUsernames: [String]
     var postIDs: [String]
+    var postImageURLs: [String]
     var postLocations: [[String: Double]] = [[:]]
     var postTimestamps: [Firebase.Timestamp] = []
     var secret: Bool
     var spotIDs: [String]
-    var userTimestamp: Timestamp? /// != nil when fetched from user's profile
-    var userURL: String? /// != nil when fetched from user's profile
+    var spotNames: [String] = []
+    var spotLocations: [[String: Double]] = [[:]]
+    var mapDescription: String?
     
+    var selected = false
     var memberProfiles: [UserProfile]? = []
     var coverImage: UIImage? = UIImage()
-    var selected = false
+
+    var postsDictionary = [String: MapPost]()
+    var postGroup: [MapPostGroup] = []
+    
+    var userTimestamp: Timestamp {
+        if let lastUserPostIndex = posterIDs.lastIndex(where: {$0 == UserDataModel.shared.uid}) {
+            return postTimestamps[safe: lastUserPostIndex] ?? postTimestamps.first!
+        }
+        return postTimestamps.first!
+    }
+    
+    var userURL: String {
+        if let lastUserPostIndex = posterIDs.lastIndex(where: {$0 == UserDataModel.shared.uid}) {
+            return postImageURLs[safe: lastUserPostIndex] ?? postImageURLs.first!
+        }
+        return postImageURLs.first!
+    }
+    
+    var hasNewPost: Bool {
+        return postsDictionary.contains(where: { !$0.value.seen} )
+    }
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -46,11 +71,29 @@ struct CustomMap: Identifiable, Codable {
         case posterIDs
         case posterUsernames
         case postIDs
+        case postImageURLs
         case postLocations
         case postTimestamps
         case secret
         case spotIDs
-        case userTimestamp
-        case userURL
+        case spotNames
+        case spotLocations
+    }
+}
+
+struct MapPostGroup {
+    var id: String /// can be post or spotID
+    var coordinate: CLLocationCoordinate2D
+    var spotName: String
+    var postIDs: [(id: String, timestamp: Timestamp, seen: Bool)]
+    
+    mutating func sortPostIDs() {
+        postIDs = postIDs.sorted(by: { p1, p2 in
+            guard p1.seen == p2.seen else {
+                return p1.seen && !p2.seen
+            }
+            
+            return p1.timestamp.seconds > p2.timestamp.seconds
+        })
     }
 }

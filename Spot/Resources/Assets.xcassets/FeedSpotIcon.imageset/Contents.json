@@ -1,19 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "sp0t1x.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "sp0t2x.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "sp0t3x.png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "Spot.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

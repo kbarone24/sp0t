@@ -60,7 +60,6 @@ class CommentsController: UIViewController {
         view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.98, alpha: 1)
         
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
-        post.captionHeight = getCaptionHeight(caption: post.caption, noImage: false, maxCaption: 0, truncated: false) /// run get captionheight again for 14.7 font caption at full length
         
         addTable()
         DispatchQueue.global().async { self.getLikers() }
@@ -224,7 +223,7 @@ class CommentsController: UIViewController {
         for w in words {
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
-                if let f = UserDataModel.shared.friendsList.first(where: {$0.username == username}) {
+                if let f = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == username}) {
                     selectedUsers.append(f)
                 }
             }
@@ -393,7 +392,7 @@ extension CommentsController: UITableViewDelegate, UITableViewDataSource {
             
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "LikerCell", for: indexPath) as! LikerCell
-            cell.setUp(friend: likers[indexPath.row])
+            cell.setUp(user: likers[indexPath.row])
             return cell
             
         default: return UITableViewCell()
@@ -611,7 +610,7 @@ class CommentCell: UITableViewCell {
         for r in tagRect {
             if r.rect.contains(sender.location(in: sender.view)) {
                 /// open tag from friends list
-                if let friend = UserDataModel.shared.friendsList.first(where: {$0.username == r.username}) {
+                if let friend = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == r.username}) {
                     openProfile(user: friend)
                 } else {
                     /// pass blank user object to open func, run get user func on profile load
@@ -759,7 +758,7 @@ class LikerCell: UITableViewCell {
     var profilePic: UIImageView!
     var username: UILabel!
     
-    func setUp(friend: UserProfile) {
+    func setUp(user: UserProfile) {
         
         self.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.98, alpha: 1.0)
         
@@ -771,8 +770,8 @@ class LikerCell: UITableViewCell {
         profilePic.contentMode = .scaleAspectFill
         addSubview(profilePic)
 
-        let avatar = (friend.avatarURL ?? "") != ""
-        let url = avatar ? friend.avatarURL! : friend.imageURL
+        let avatar = (user.avatarURL ?? "") != ""
+        let url = avatar ? user.avatarURL! : user.imageURL
         if avatar { profilePic.frame = CGRect(x: 8, y: 6, width: 32.4, height: 42); profilePic.layer.cornerRadius = 0 }
         
         if url != "" {
@@ -781,7 +780,7 @@ class LikerCell: UITableViewCell {
         }
                         
         username = UILabel(frame: CGRect(x: profilePic.frame.maxX + 8, y: 20.5, width: 150, height: 15))
-        username.text = friend.username
+        username.text = user.username
         username.textColor = .black
         username.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
         addSubview(username)

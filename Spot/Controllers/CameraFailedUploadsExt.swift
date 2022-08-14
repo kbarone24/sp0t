@@ -96,7 +96,7 @@ extension AVCameraController {
         let actualTimestamp = Timestamp(seconds: postDraft.timestamp, nanoseconds: 0)
         var aspectRatios: [CGFloat] = []
         for ratio in postDraft.aspectRatios ?? [] { aspectRatios.append(CGFloat(ratio)) }
-        var post = MapPost(id: UUID().uuidString, addedUsers: postDraft.addedUsers, aspectRatios: aspectRatios, caption: postDraft.caption ?? "", city: postDraft.city, createdBy: postDraft.createdBy, frameIndexes: postDraft.frameIndexes, friendsList: postDraft.friendsList ?? [], hideFromFeed: postDraft.hideFromFeed, imageLocations: [], imageURLs: [], inviteList: postDraft.inviteList ?? [], likers: [], mapID: postDraft.mapID ?? "", mapName: postDraft.mapName ?? "", postLat: postDraft.postLat, postLong: postDraft.postLong, posterID: uid, posterUsername: UserDataModel.shared.userInfo.username, privacyLevel: postDraft.privacyLevel ?? "", seenList: [uid], spotID: postDraft.spotID ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, spotName: postDraft.spotName, spotPrivacy: postDraft.spotPrivacy, tag: "", taggedUserIDs: postDraft.taggedUserIDs ?? [], taggedUsers: postDraft.taggedUsers ?? [], timestamp: actualTimestamp, addedUserProfiles: [], userInfo: UserDataModel.shared.userInfo, mapInfo: nil, commentList: [], postImage: uploadImages, postScore: 0, seconds: 0, selectedImageIndex: 0, imageHeight: 0, captionHeight: 0, cellHeight: 0, commentsHeight: 0, seen: true)
+        var post = MapPost(id: UUID().uuidString, addedUsers: postDraft.addedUsers, aspectRatios: aspectRatios, caption: postDraft.caption ?? "", city: postDraft.city, createdBy: postDraft.createdBy, frameIndexes: postDraft.frameIndexes, friendsList: postDraft.friendsList ?? [], hideFromFeed: postDraft.hideFromFeed, imageLocations: [], imageURLs: [], inviteList: postDraft.inviteList ?? [], likers: [], mapID: postDraft.mapID ?? "", mapName: postDraft.mapName ?? "", postLat: postDraft.postLat, postLong: postDraft.postLong, posterID: uid, posterUsername: UserDataModel.shared.userInfo.username, privacyLevel: postDraft.privacyLevel ?? "", seenList: [uid], spotID: postDraft.spotID ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, spotName: postDraft.spotName, spotPrivacy: postDraft.spotPrivacy, tag: "", taggedUserIDs: postDraft.taggedUserIDs ?? [], taggedUsers: postDraft.taggedUsers ?? [], timestamp: actualTimestamp, addedUserProfiles: [], userInfo: UserDataModel.shared.userInfo, mapInfo: nil, commentList: [], postImage: uploadImages, postScore: 0, seconds: 0, selectedImageIndex: 0, imageHeight: 0, captionHeight: 0, cellHeight: 0, commentsHeight: 0)
         
         /// set spot values
         var spot = MapSpot(founderID: postDraft.createdBy ?? "", imageURL: "", privacyLevel: postDraft.spotPrivacy ?? "", spotDescription: postDraft.caption ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, spotName: postDraft.spotName)
@@ -130,7 +130,7 @@ extension AVCameraController {
                     
                     let newMap = post.mapID ?? "" != "" && map.id ?? "" == ""
                     if newMap {
-                        map = CustomMap(id: post.mapID!, founderID: self.uid, imageURL: imageURLs.first!, likers: [], mapName: post.mapName ?? "", memberIDs: [self.uid], posterDictionary: [post.id! : [self.uid]], posterIDs: [self.uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postLocations: [["lat" : post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [post.spotID ?? ""], memberProfiles: [UserDataModel.shared.userInfo], coverImage: uploadImages.first!)
+                        map = CustomMap(id: post.mapID!, founderID: self.uid, imageURL: imageURLs.first!, likers: [], mapName: post.mapName ?? "", memberIDs: [self.uid], posterDictionary: [post.id! : [self.uid]], posterIDs: [self.uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: post.imageURLs, postLocations: [["lat" : post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [post.spotID ?? ""], memberProfiles: [UserDataModel.shared.userInfo], coverImage: uploadImages.first!)
                   
                     } else if map.id ?? "" != "" {
                         /// set final map values
@@ -185,7 +185,7 @@ extension AVCameraController {
     }
     
     func getMap(mapID: String, completion: @escaping (_ map: CustomMap, _ failed: Bool) -> Void) {
-        let emptyMap = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], secret: false, spotIDs: [])
+        let emptyMap = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         if mapID == "" { completion(emptyMap, false); return }
         
         let db: Firestore! = Firestore.firestore()

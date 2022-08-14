@@ -12,7 +12,6 @@ import CoreLocation
 import Photos
 import PhotosUI
 import MapKit
-import MapboxMaps
 import Mixpanel
 
 class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
@@ -407,7 +406,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
             self.collectionView.reloadItems(at: paths)
             if let footer = self.collectionView.visibleSupplementaryViews(ofKind: UICollectionView.elementKindSectionFooter).first as? SelectedImagesFooter {
                 footer.setUp()
-            }
+            } 
         }
     }
     

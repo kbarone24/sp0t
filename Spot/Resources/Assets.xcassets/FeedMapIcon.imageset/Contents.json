@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "FeedMap.svg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

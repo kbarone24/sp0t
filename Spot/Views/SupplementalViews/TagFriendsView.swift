@@ -54,7 +54,7 @@ class TagFriendsView: UIView {
     func runQuery() {
         queryUsers.removeAll()
 
-        var adjustedFriends = UserDataModel.shared.getTopFriends(selectedList: [])
+        var adjustedFriends = UserDataModel.shared.userInfo.friendsList
         adjustedFriends.removeAll(where: {$0.id == "T4KMLe3XlQaPBJvtZVArqXQvaNT2"}) /// remove bot
         let usernameList = adjustedFriends.map({$0.username})
         let nameList = adjustedFriends.map({$0.name})
@@ -107,10 +107,12 @@ class TagFriendCell: UICollectionViewCell {
     var avatarImage: UIImageView!
     
     func setUp(user: UserProfile) {
-        profileImage.sd_setImage(with: URL(string: user.imageURL))
-        avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? "")) { image, Error, cache, url  in
-            self.avatarImage.image = image?.withHorizontallyFlippedOrientation()
-        }
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+        profileImage.sd_setImage(with: URL(string: user.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        
+        let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+        avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
+
         username.text = user.username
     }
     
