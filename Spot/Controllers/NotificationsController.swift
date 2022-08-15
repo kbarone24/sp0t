@@ -38,7 +38,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     var endDocument: DocumentSnapshot!
     
     var refresh: RefreshStatus = .activelyRefreshing
-    var contentDrawer: DrawerView?
+    var containerDrawerView: DrawerView?
         
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -50,25 +50,36 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             guard let self = self else { return }
             self.fetchNotifications(refresh: false)
         }
-        print("being called")
     }
     
     deinit {
-        print("deini")
+        print("notifications deinit")
     }
     
     override func viewDidLoad() {
-        Mixpanel.mainInstance().track(event: "NotificationsOpen")
-        
-        print("CALLED HERE")
-        
         super.viewDidLoad()
-        
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
-        
         setupView()
-        
-        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        configureDrawerView()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        //navigationController?.navigationBar.isTranslucent = false
+        Mixpanel.mainInstance().track(event: "NotificationsOpen")
+        setUpNavBar()
+
+    }
+    
+    func configureDrawerView() {
+        containerDrawerView?.canInteract = false
+        containerDrawerView?.swipeDownToDismiss = false
+        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+    }
+    
+    func setUpNavBar() {
         self.title = "Notifications"
         navigationItem.backButtonTitle = ""
 
@@ -89,20 +100,13 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             target: self,
             action: #selector(leaveNotifs)
         )
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        navigationController?.navigationBar.isTranslucent = false
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        print("hhhhhh")
+        
     }
     
     
     func setupView(){
         //for some reason setting up the view like it says in the guidelines was causing issues
-        tableView = UITableView(frame: (self.view.bounds), style: .grouped)
+        //tableView = UITableView(frame: (self.view.bounds), style: .grouped)
         tableView.dataSource = self
         tableView.delegate = self
         tableView.backgroundColor = .white
@@ -116,7 +120,15 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.translatesAutoresizingMaskIntoConstraints = true
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         view.addSubview(self.tableView)
+        
+        tableView.snp.makeConstraints{
+            $0.top.equalToSuperview()
+            $0.bottom.equalToSuperview()
+            $0.leading.trailing.equalToSuperview()
+        }
+        
     }
+    
     
     // MARK: Notification fetch
     func fetchNotifications(refresh: Bool) {
@@ -162,7 +174,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
             /// leave friend request group once all friend requests are appended
             friendRequestGroup.notify(queue: .main) {
-                print("leaving friend request query")
                 fetchGroup.leave()
             }
         }
@@ -179,18 +190,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             guard let self = self else { return }
             guard let allDocs = snap?.documents else { return }
                         
-            if allDocs.count == 0{
+            if allDocs.count == 0 {
                 fetchGroup.leave(); return }
-            
-            if(allDocs.count < 15){
+            if (allDocs.count < 15) {
                 self.refresh = .refreshDisabled
             }
            
             self.endDocument = allDocs.last
-                
-            
             let docs = self.refresh == .refreshDisabled ? allDocs : allDocs.dropLast()
-            
             
             let notiGroup = DispatchGroup()
             for doc in docs {
@@ -239,7 +246,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                 
         fetchGroup.notify(queue: DispatchQueue.main) { [weak self] in
             guard let self = self else { return }
-            print("made it to end of query")
             self.sortAndReload()
         }
     }
@@ -252,7 +258,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         if((pendingFriendRequests.count == 0 && notifications.count < 11) || (pendingFriendRequests.count > 0 && notifications.count < 7)) && refresh == .refreshEnabled{
             fetchNotifications(refresh: false)
         }
-        if(self.refresh != .refreshDisabled){ self.refresh = .refreshEnabled }
+        if (self.refresh != .refreshDisabled) { self.refresh = .refreshEnabled }
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
     
@@ -284,7 +290,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     @objc func leaveNotifs() {
         if navigationController?.viewControllers.count == 1 {
-            contentDrawer?.closeAction()
+            containerDrawerView?.closeAction()
         } else {
             navigationController?.popViewController(animated: true)
         }
@@ -333,9 +339,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
 extension NotificationsController: UITableViewDataSource {
         
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let userinfo = indexPath.row
-        //insert code to display post by using indexPath
+        if tableView.cellForRow(at: indexPath) is ActivityCell {
+            if let post = notifications[indexPath.row].postInfo {
+                let comment = notifications[indexPath.row].type.contains("comment")
+                openPost(post: post, commentNoti: comment)
+            } else if let user = notifications[indexPath.row].userInfo {
+                openProfile(user: user)
+            }
+        }
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -356,7 +367,7 @@ extension NotificationsController: UITableViewDataSource {
         } else if notifications.count == 0{
             return 1
         } else{
-            if(section == 0){
+            if (section == 0) {
                 return 1
             } else {
                 return notifications.count
@@ -463,12 +474,10 @@ extension NotificationsController: UITableViewDataSource {
 extension NotificationsController: notificationDelegateProtocol {
 
     func getProfile(userProfile: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: userProfile, presentedDrawerView: contentDrawer)
-        navigationController!.pushViewController(profileVC, animated: true)
-        profileVC.navigationController!.navigationBar.isTranslucent = true
+        openProfile(user: userProfile)
     }
     
-    func showPost(){
+    func showPost() {
         print("show posts using this function")
     }
     
@@ -489,6 +498,21 @@ extension NotificationsController: notificationDelegateProtocol {
     }
 }
 
+extension NotificationsController {
+    func openProfile(user: UserProfile) {
+        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
+        DispatchQueue.main.async { self.navigationController!.pushViewController(profileVC, animated: true) }
+    }
+    
+    func openPost(post: MapPost, commentNoti: Bool) {
+        guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
+        postVC.postsList = [post]
+        postVC.containerDrawerView = containerDrawerView
+        postVC.openComments = commentNoti
+        DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
+    }
+}
+
 class ActivityIndicatorCell: UITableViewCell {
     
     lazy var activityIndicator: CustomActivityIndicator = CustomActivityIndicator(frame: CGRect.zero)
@@ -504,11 +528,9 @@ class ActivityIndicatorCell: UITableViewCell {
     
     func setUp() {
         activityIndicator.removeFromSuperview()
-        activityIndicator.frame = CGRect(x: (self.frame.width/2)-5, y: 35, width: 30, height: 30)
+        activityIndicator.frame = CGRect(x: ((UIScreen.main.bounds.width - 30)/2), y: 35, width: 30, height: 30)
         activityIndicator.startAnimating()
         activityIndicator.translatesAutoresizingMaskIntoConstraints = true
         contentView.addSubview(activityIndicator)
-        activityIndicator.centerXAnchor.constraint(equalTo: contentView.centerXAnchor).isActive = true
-        activityIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
     }
 }

@@ -79,6 +79,19 @@ struct CustomMap: Identifiable, Codable {
         case spotNames
         case spotLocations
     }
+    
+    mutating func updateSeen(postID: String) {
+        guard var post = postsDictionary[postID] else { return }
+        let uid = UserDataModel.shared.uid
+        if !post.seenList!.contains(uid) { post.seenList?.append(uid) }
+        postsDictionary[postID] = post
+        if let i = postGroup.firstIndex(where: {$0.postIDs.contains(where: {$0.id == postID})}) {
+            if let j = postGroup[i].postIDs.firstIndex(where: {$0.id == postID}) {
+                postGroup[i].postIDs[j].seen = true
+                postGroup[i].sortPostIDs()
+            }
+        }
+    }
 }
 
 struct MapPostGroup {

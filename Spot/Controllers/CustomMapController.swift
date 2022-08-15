@@ -1,21 +1,30 @@
-//
-//  CustomMapController.swift
-//  Spot
-//
-//  Created by Arnold on 7/22/22.
-//  Copyright © 2022 sp0t, LLC. All rights reserved.
-//
 
 import UIKit
 import SnapKit
 import Mixpanel
 import Firebase
 import SDWebImage
+import Contacts
+
+enum MapType {
+    case myMap
+    case friendsMap
+    case customMap
+}
+
+protocol CustomMapDelegate {
+    func finishPassing(updatedMap: CustomMap?)
+}
+
 
 class CustomMapController: UIViewController {
-    
     private var topYContentOffset: CGFloat?
     private var middleYContentOffset: CGFloat?
+    
+    let db: Firestore! = Firestore.firestore()
+    let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
+    var endDocument: DocumentSnapshot!
+    var refresh: RefreshStatus = .activelyRefreshing
     
     private var customMapCollectionView: UICollectionView!
     private var floatBackButton: UIButton!
@@ -26,25 +35,15 @@ class CustomMapController: UIViewController {
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
-            guard customMapCollectionView != nil else { return }
-            customMapCollectionView.reloadData()
+            if customMapCollectionView != nil { DispatchQueue.main.async {self.customMapCollectionView.reloadData()}}
         }
     }
     private var firstMaxFourMapMemberList: [UserProfile] = []
-    private var firstMaxFourMapMemberProfilePic: [String: UIImage] = [:] {
+    private lazy var postsList: [MapPost] = []
+    
+    public unowned var containerDrawerView: DrawerView? {
         didSet {
-            if firstMaxFourMapMemberProfilePic.count == (mapData!.memberIDs.count < 4 ? mapData!.memberIDs.count : 4) {
-                for i in 0..<firstMaxFourMapMemberList.count {
-                    firstMaxFourMapMemberList[i].profilePic = firstMaxFourMapMemberProfilePic[firstMaxFourMapMemberList[i].imageURL] ?? UIImage()
-                }
-                customMapCollectionView.reloadSections(IndexSet(integer: 0))
-            }
-        }
-    }
-    private var postDatas: [String: MapPost] = [:] {
-        didSet {
-            guard customMapCollectionView != nil else { return }
-            customMapCollectionView.reloadData()
+            configureDrawerView()
         }
     }
     
@@ -52,15 +51,18 @@ class CustomMapController: UIViewController {
     public unowned var profileVC: ProfileViewController?
     private unowned var mapController: UIViewController?
     private lazy var imageManager = SDWebImageManager()
-
-    init(userProfile: UserProfile? = nil, mapData: CustomMap, presentedDrawerView: DrawerView? = nil) {
+    
+    private var mapType: MapType!
+    
+    init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], presentedDrawerView: DrawerView?, mapType: MapType) {
         super.init(nibName: nil, bundle: nil)
-        self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
+        self.userProfile = userProfile
         self.mapData = mapData
+        self.postsList = postsList
         self.containerDrawerView = presentedDrawerView
-        containerDrawerView?.canInteract = true
+        self.mapType = mapType
     }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -74,17 +76,32 @@ class CustomMapController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getMapCover()
-            self.getMapMember()
-        }
-        
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
         if let mapVC = window as? UINavigationController {
             mapController = mapVC.viewControllers[0]
         }
-        viewSetup()
+        
+        switch mapType {
+        case .customMap:
+            getMapInfo()
+        case .friendsMap:
+            print("friends map")
+            viewSetup()
+            getPosts()
+            /// run post fetch
+        case .myMap:
+            print("my map")
+            viewSetup()
+            getPosts()
+            /// run post fetch
+        default: return
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setUpNavBar()
+        configureDrawerView()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -93,8 +110,40 @@ class CustomMapController: UIViewController {
 }
 
 extension CustomMapController {
+    private func getMapInfo() {
+        /// map passed through
+        if mapData?.founderID ?? "" != "" {
+            runMapSetup()
+            return
+        }
+        getMap(mapID: mapData?.id ?? "") { [weak self] map in
+            guard let self = self else { return }
+            self.mapData = map
+            self.runMapSetup()
+        }
+    }
+    
+    private func runMapSetup() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getMapMember()
+            self.getPosts()
+        }
+        DispatchQueue.main.async { self.viewSetup() }
+    }
+    
+    private func setUpNavBar() {
+        navigationController!.setNavigationBarHidden(false, animated: true)
+        navigationController!.navigationBar.isTranslucent = true
+    }
+    
+    private func configureDrawerView() {
+        if containerDrawerView == nil { return }
+        containerDrawerView?.canInteract = true
+        containerDrawerView?.swipeDownToDismiss = false
+        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Middle) }
+    }
+    
     private func viewSetup() {
-        NotificationCenter.default.addObserver(self, selector: #selector(FetchedMapPost(_:)), name: NSNotification.Name("FetchedMapPost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
@@ -139,7 +188,7 @@ extension CustomMapController {
         
         barView = UIView {
             $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
-            $0.backgroundColor = .clear
+            $0.isUserInteractionEnabled = false
         }
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
@@ -165,66 +214,79 @@ extension CustomMapController {
         containerDrawerView?.slideView.addSubview(barView)
     }
     
-    private func getMapCover() {
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
-        self.imageManager.loadImage(with: URL(string: mapData!.imageURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
-            guard self != nil else { return }
-            let image = image ?? UIImage()
-            self?.mapData?.coverImage = image
-            self?.customMapCollectionView.reloadSections(IndexSet(integer: 0))
-        }
-    }
-    
     private func getMapMember() {
-        let db: Firestore = Firestore.firestore()
         let dispatch = DispatchGroup()
-        firstMaxFourMapMemberList.removeAll()
-        
-        // Move the map founder to first element
-        if let founderIndex = mapData?.memberIDs.firstIndex(of: mapData!.founderID) {
-            mapData?.memberIDs.remove(at: founderIndex)
-        }
-        let founderID = mapData!.founderID
-        mapData?.memberIDs.insert(founderID, at: 0)
-        
+        var memberList: [UserProfile] = []
         // Get the first four map member
         for index in 0...(mapData!.memberIDs.count < 4 ? (mapData!.memberIDs.count - 1) : 3) {
             dispatch.enter()
-            db.collection("users").document(mapData!.memberIDs[index]).getDocument { [weak self] snap, err in
-                do {
-                    guard let self = self else { return }
-                    let unwrappedInfo = try snap?.data(as: UserProfile.self)
-                    guard var userInfo = unwrappedInfo else { dispatch.leave(); return }
-                    userInfo.id = self.mapData!.memberIDs[index]
-                    self.firstMaxFourMapMemberList.insert(userInfo, at: 0)
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 70, height: 70), scaleMode: .aspectFill)
-                    self.imageManager.loadImage(with: URL(string: userInfo.imageURL), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
-                        guard self != nil else { dispatch.leave(); return }
-                        let image = image ?? UIImage()
-                        self?.firstMaxFourMapMemberProfilePic[userInfo.imageURL] = image
-                        dispatch.leave()
-                    }
-                } catch let parseError {
-                    print("JSON Error \(parseError.localizedDescription)")
-                    dispatch.leave()
-                }
+            getUserInfo(userID: mapData!.memberIDs[index]) { user in
+                memberList.insert(user, at: 0)
+                dispatch.leave()
             }
         }
         dispatch.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
+            self.firstMaxFourMapMemberList = memberList
+            self.firstMaxFourMapMemberList.sort(by: {$0.id == self.mapData!.founderID && $1.id != self.mapData!.founderID})
             self.customMapCollectionView.reloadSections(IndexSet(integer: 0))
         }
     }
     
-    @objc func FetchedMapPost(_ notification: NSNotification) {
-        if let userInfo = notification.userInfo?["mapPost"] as? MapPost {
-            postDatas[userInfo.id!] = userInfo
+    private func getPosts() {
+        var query = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 21)
+        switch mapType {
+        case .customMap:
+            query = query.whereField("mapID", isEqualTo: mapData!.id!)
+        case .myMap:
+            query = query.whereField("posterID", isEqualTo: userProfile!.id!)
+        case .friendsMap:
+            query = query.whereField("friendsList", arrayContains: uid)
+        default: return
+        }
+        if endDocument != nil { query = query.start(atDocument: endDocument) }
+        
+        query.getDocuments { [weak self] snap, err in
+            if err != nil { print("err", err)}
+            guard let self = self else { return }
+            guard let allDocs = snap?.documents else { return }
+            if allDocs.count < 21 { self.refresh = .refreshDisabled }
+            self.endDocument = allDocs.last
+            
+            let docs = self.refresh == .refreshDisabled ? allDocs : allDocs.dropLast()
+            let postGroup = DispatchGroup()
+            for doc in docs {
+                do {
+                    let unwrappedInfo = try doc.data(as: MapPost.self)
+                    guard let postInfo = unwrappedInfo else { return }
+                    if self.postsList.contains(where: {$0.id == postInfo.id}) { continue }
+                    postGroup.enter()
+                    self.setPostDetails(post: postInfo) { [weak self] post in
+                        guard let self = self else { return }
+                        if post.id ?? "" != "" { self.postsList.append(post) }
+                        postGroup.leave()
+                    }
+                    
+                } catch {
+                    continue
+                }
+            }
+            postGroup.notify(queue: .main) {
+                self.postsList.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
+                self.customMapCollectionView.reloadData()
+                if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }
+            }
         }
     }
     
     @objc func DrawerViewToTopCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")
-        barBackButton.isHidden = false
+        UIView.transition(with: self.barBackButton, duration: 0.1,
+                          options: .transitionCrossDissolve,
+                          animations: {
+            self.barBackButton.isHidden = false
+        })
+        barView.isUserInteractionEnabled = true
         customMapCollectionView.isScrollEnabled = true
     }
     @objc func DrawerViewToMiddleCompletion() {
@@ -238,8 +300,14 @@ extension CustomMapController {
     
     @objc func backButtonAction() {
         barBackButton.isHidden = true
-        profileVC?.maps[profileVC!.mapSelectedIndex!] = mapData!
-        navigationController?.popViewController(animated: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Change `2.0` to the desired number of seconds.
+            if self.navigationController?.viewControllers.count == 1 {
+                self.containerDrawerView?.closeAction()
+            } else {
+                self.navigationController?.popViewController(animated: true)
+            }
+        }
+        delegate?.finishPassing(updatedMap: mapData)
     }
     
     @objc func editMapAction() {
@@ -253,33 +321,33 @@ extension CustomMapController {
 
 extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 2
+        return mapType == .customMap ? 2 : 1
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return section == 0 ? 1 : mapData?.postIDs.count ?? 0
+        return section == 0 && mapType == .customMap ? 1 : postsList.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "CustomMapHeaderCell" : "CustomMapBodyCell", for: indexPath)
+        let identifier = indexPath.section == 0 && mapType == .customMap ? "CustomMapHeaderCell" : "CustomMapBodyCell"
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
-            headerCell.cellSetup(userProfile: userProfile!, mapData: mapData, fourMapMemberProfile: firstMaxFourMapMemberList)
+            headerCell.cellSetup(mapData: mapData, fourMapMemberProfile: firstMaxFourMapMemberList)
             if mapData!.memberIDs.contains(UserDataModel.shared.userInfo.id!) {
                 headerCell.actionButton.addTarget(self, action: #selector(editMapAction), for: .touchUpInside)
             }
             return headerCell
         } else if let bodyCell = cell as? CustomMapBodyCell {
-            bodyCell.cellSetup(postID: mapData!.postIDs[indexPath.row], postData: postDatas[mapData!.postIDs[indexPath.row]])
-//            bodyCell.delegate = self
+            bodyCell.cellSetup(postData: postsList[indexPath.row])
             return bodyCell
         }
         return cell
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: mapData?.mapDescription != nil ? 180 : 155) : CGSize(width: view.frame.width/2 - 0.5, height: (view.frame.width/2 - 0.5) * 267 / 194.5)
+        return indexPath.section == 0 && mapType == .customMap ? CGSize(width: view.frame.width, height: mapData?.mapDescription != nil ? 180 : 155) : CGSize(width: view.frame.width/2 - 0.5, height: (view.frame.width/2 - 0.5) * 267 / 194.5)
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 1
     }
@@ -287,18 +355,15 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         return 1
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if indexPath.section != 0 {
-            let collectionCell = collectionView.cellForItem(at: indexPath)
-            UIView.animate(withDuration: 0.15) {
-                collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-            } completion: { (Bool) in
-                UIView.animate(withDuration: 0.15) {
-                    collectionCell?.transform = .identity
-                }
-            }
-        }
+        if indexPath.section == 0 { return }
+        let postData = postsList[indexPath.row]
+        guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
+        postVC.postsList = [postData]
+        postVC.containerDrawerView = containerDrawerView
+        DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
+        
     }
     
     func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
@@ -320,15 +385,15 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
 }
 
-extension CustomMapController: CustomMapBodyCellDelegate {
-    func finishFetching(mapPostID: String, fetchedMapPost: MapPost) {
-        postDatas[mapPostID] = fetchedMapPost
-    }
-}
-
 extension CustomMapController: UIScrollViewDelegate {
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let itemHeight = UIScreen.main.bounds.width * 1.373
+        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 3)) && refresh == .refreshEnabled {
+            self.getPosts()
+            refresh = .activelyRefreshing
+        }
+        
         if topYContentOffset != nil && containerDrawerView?.status == .Top {
             // Disable the bouncing effect when scroll view is scrolled to top
             if scrollView.contentOffset.y <= topYContentOffset! {
@@ -351,16 +416,16 @@ extension CustomMapController: UIScrollViewDelegate {
         // Set scroll view content offset when in transition
         if
             middleYContentOffset != nil &&
-            topYContentOffset != nil &&
-            scrollView.contentOffset.y <= middleYContentOffset! &&
-            containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
+                topYContentOffset != nil &&
+                scrollView.contentOffset.y <= middleYContentOffset! &&
+                containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
         {
             scrollView.contentOffset.y = middleYContentOffset!
         }
         
         // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
         if containerDrawerView?.status != .Top {
-            customMapCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
+            //  customMapCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
             customMapCollectionView.isScrollEnabled = false
             containerDrawerView?.swipeToNextState = true
         }
@@ -381,18 +446,18 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction
         if
             topYContentOffset != nil &&
-            containerDrawerView?.status == .Top &&
-            customMapCollectionView.contentOffset.y <= topYContentOffset!
+                containerDrawerView?.status == .Top &&
+                customMapCollectionView.contentOffset.y <= topYContentOffset!
         {
             containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
         }
-
+        
         // Preventing the drawer view to be dragged when it's status is top and user is scrolling down
         if
             containerDrawerView?.status == .Top &&
-            customMapCollectionView.contentOffset.y > topYContentOffset ?? -91 &&
-            yTranslation > 0 &&
-            containerDrawerView?.swipeToNextState == false
+                customMapCollectionView.contentOffset.y > topYContentOffset ?? -91 &&
+                yTranslation > 0 &&
+                containerDrawerView?.swipeToNextState == false
         {
             containerDrawerView?.canDrag = false
             containerDrawerView?.slideView.frame.origin.y = 0

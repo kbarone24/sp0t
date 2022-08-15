@@ -102,4 +102,8 @@ struct UserProfile: Identifiable, Codable {
         }
         return selectedFriends
     }
+    
+    func friendsContains(id: String) -> Bool {
+        return id != self.id || !friendIDs.contains(id)
+    }
 }
