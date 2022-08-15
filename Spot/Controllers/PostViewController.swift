@@ -31,11 +31,17 @@ class PostController: UIViewController {
     var commentNoti = false /// present commentsVC if opened from notification comment
     
     var dotView: UIView!
+    
+    var drawerView: DrawerView?
                         
     deinit {
         print("deinit")
     }
   
+    override func viewWillAppear(_ animated: Bool) {
+        drawerView?.showCloseButton = true
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PostPageOpen")
@@ -736,9 +742,9 @@ class PostCell: UICollectionViewCell {
     
     @objc func spotTap() {
         if let postVC = viewContainingController() as? PostController {
-            let spotVC = SpotPageController(mapPost: post)
-            spotVC.modalPresentationStyle = .fullScreen
-            postVC.present(spotVC, animated: true)
+            let spotVC = SpotPageController(mapPost: post, presentedDrawerView: postVC.drawerView)
+            postVC.drawerView?.showCloseButton = false
+            postVC.navigationController?.pushViewController(spotVC, animated: true)
         }
     }
     

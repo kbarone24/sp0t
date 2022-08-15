@@ -269,9 +269,9 @@ class MapController: UIViewController {
         sheetView = DrawerView(present: postVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
         })
+        postVC.drawerView = sheetView
         sheetView?.present(to: .Top)
         sheetView?.canInteract = false
-        sheetView?.showCloseButton = true
         sheetView?.swipeDownToDismiss = true
     }
     

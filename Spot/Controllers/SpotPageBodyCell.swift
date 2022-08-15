@@ -48,7 +48,6 @@ extension SpotPageBodyCell {
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.cornerRadius = 2
-            $0.backgroundColor = .gray
             contentView.addSubview($0)
         }
         postImage.snp.makeConstraints {
