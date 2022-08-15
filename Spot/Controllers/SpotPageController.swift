@@ -72,6 +72,10 @@ class SpotPageController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         barView.isHidden = false
     }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        Mixpanel.mainInstance().track(event: "SpotPageOpen")
+    }
 }
 
 extension SpotPageController {
