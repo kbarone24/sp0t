@@ -22,6 +22,7 @@ class SpotPageController: UIViewController {
     private var mapPostLabel: UILabel!
     private var communityPostLabel: UILabel!
     private lazy var imageManager = SDWebImageManager()
+    private var drawerView: DrawerView?
     
     private var mapID: String?
     private var mapName: String?
@@ -41,12 +42,13 @@ class SpotPageController: UIViewController {
     private var communityPost: [MapPost] = []
     
     
-    init(mapPost: MapPost) {
+    init(mapPost: MapPost, presentedDrawerView: DrawerView? = nil) {
         super.init(nibName: nil, bundle: nil)
         self.mapID = mapPost.mapID
         self.mapName = mapPost.mapName
         self.spotName = mapPost.spotName
         self.spotID = mapPost.spotID
+        self.drawerView = presentedDrawerView
     }
 
     required init?(coder: NSCoder) {
@@ -66,13 +68,17 @@ class SpotPageController: UIViewController {
             self.fetchRelatedPost()
         }
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        barView.isHidden = false
+    }
 }
 
 extension SpotPageController {
     private func viewSetup() {
         view.backgroundColor = .white
-        navigationItem.setHidesBackButton(true, animated: true)
-        
+        navigationController?.setNavigationBarHidden(true, animated: true)
+
         spotPageCollectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .vertical
@@ -108,11 +114,11 @@ extension SpotPageController {
         barView = UIView {
             $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
             $0.backgroundColor = .gray
-            view.addSubview($0)
+            drawerView?.slideView.addSubview($0)
         }
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.text = "asdcasd"
+            $0.text = ""
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
             $0.textAlignment = .center
             $0.numberOfLines = 0
@@ -257,12 +263,33 @@ extension SpotPageController {
     }
     
     @objc func addSpotAction() {
-        
+        if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
+        DispatchQueue.main.async {
+            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
+                let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+                if let mainNav = window as? UINavigationController {
+                    if let mapVC = mainNav.viewControllers[0] as? MapController {
+                        vc.mapVC = mapVC
+                    } else {
+                        return
+                    }
+                } else {
+                    return
+                }
+                self.barView.isHidden = true
+                let transition = CATransition()
+                transition.duration = 0.3
+                transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
+                transition.type = CATransitionType.push
+                transition.subtype = CATransitionSubtype.fromTop
+                self.navigationController?.view.layer.add(transition, forKey: kCATransition)
+                self.navigationController?.pushViewController(vc, animated: false)
+            }
+        }
     }
     
     @objc func backButtonAction() {
-        barBackButton.isHidden = true
-        dismiss(animated: true)
+        navigationController?.popViewController(animated: true)
     }
 }
 
@@ -383,10 +410,10 @@ extension SpotPageController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if scrollView.contentOffset.y > -91 {
             barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
-            titleLabel.text = scrollView.contentOffset.y > 0 ? self.spotName : ""
+            titleLabel.text = scrollView.contentOffset.y > 0 ? spotName : ""
         }
         
-        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 350)) && fetching == .refreshEnabled && fetchCommunityPostComplete == false {
+        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 500)) && fetching == .refreshEnabled && fetchCommunityPostComplete == false {
             fetchRelatedPostComplete ? fetchCommunityPost() : fetchRelatedPost()
         }
     }
