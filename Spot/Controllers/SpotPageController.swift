@@ -396,24 +396,6 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             }
         }
     }
-    
-    func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
-        if indexPath.section != 0 {
-            let collectionCell = collectionView.cellForItem(at: indexPath)
-            UIView.animate(withDuration: 0.15) {
-                collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-            }
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, didUnhighlightItemAt indexPath: IndexPath) {
-        if indexPath.section != 0 {
-            let collectionCell = collectionView.cellForItem(at: indexPath)
-            UIView.animate(withDuration: 0.15) {
-                collectionCell?.transform = .identity
-            }
-        }
-    }
 }
 
 extension SpotPageController: UIScrollViewDelegate {
