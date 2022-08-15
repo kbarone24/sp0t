@@ -31,6 +31,7 @@ class SpotPageBodyCell: UICollectionViewCell {
     override func prepareForReuse() {
         if postImage != nil {
             postImage.image = UIImage()
+            postImage.sd_cancelCurrentImageLoad()
         }
     }
     
