@@ -73,6 +73,9 @@ class SpotPageController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         barView.isHidden = false
+        drawerView?.canInteract = false
+        drawerView?.swipeDownToDismiss = false
+        drawerView?.showCloseButton = false
     }
     
     override func viewDidAppear(_ animated: Bool) {
