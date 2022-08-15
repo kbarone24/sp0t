@@ -16,9 +16,7 @@ class SpotPageBodyCell: UICollectionViewCell {
     private var postData: MapPost?
     private lazy var fetching = false
     private lazy var imageManager = SDWebImageManager()
-    
-    public var delegate: CustomMapBodyCellDelegate?
-    
+        
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()

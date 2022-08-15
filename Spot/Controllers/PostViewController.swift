@@ -40,9 +40,7 @@ class PostController: UIViewController {
     }
 
     var dotView: UIView!
-    
-    var drawerView: DrawerView?
-                        
+                            
     deinit {
         print("deinit post")
     }
@@ -51,10 +49,6 @@ class PostController: UIViewController {
         super.viewWillAppear(animated)
         setUpNavBar()
         configureDrawerView()
-    }
-  
-    override func viewWillAppear(_ animated: Bool) {
-        drawerView?.showCloseButton = true
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -69,6 +63,7 @@ class PostController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print(self)
         setUpView()
     }
     
@@ -97,6 +92,7 @@ class PostController: UIViewController {
     func configureDrawerView() {
         containerDrawerView?.swipeDownToDismiss = true
         containerDrawerView?.canInteract = true
+        containerDrawerView?.showCloseButton = true
         DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
     }
     
@@ -848,8 +844,8 @@ extension PostCell {
     
     @objc func spotTap() {
         if let postVC = viewContainingController() as? PostController {
-            let spotVC = SpotPageController(mapPost: post, presentedDrawerView: postVC.drawerView)
-            postVC.drawerView?.showCloseButton = false
+            let spotVC = SpotPageController(mapPost: post, presentedDrawerView: postVC.containerDrawerView)
+            postVC.containerDrawerView?.showCloseButton = false
             postVC.navigationController?.pushViewController(spotVC, animated: true)
         }
     }
