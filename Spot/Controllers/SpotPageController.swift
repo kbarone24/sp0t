@@ -30,7 +30,9 @@ class SpotPageController: UIViewController {
     private var spotID: String!
     private var spot: MapSpot? {
         didSet {
-            spotPageCollectionView.reloadSections(IndexSet(integer: 0))
+            DispatchQueue.main.async {
+                self.spotPageCollectionView.reloadSections(IndexSet(integer: 0))
+            }
         }
     }
         
@@ -63,7 +65,7 @@ class SpotPageController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
-        DispatchQueue.main.async {
+        DispatchQueue.global(qos: .userInitiated).async {
             self.fetchSpot()
             self.fetchRelatedPost()
         }
@@ -217,7 +219,9 @@ extension SpotPageController {
                 self.endDocument = snap?.documents.last
                 self.fetching = .refreshEnabled
             }
-            self.spotPageCollectionView.reloadSections(IndexSet(integer: 1))
+            DispatchQueue.main.async {
+                self.spotPageCollectionView.reloadSections(IndexSet(integer: 1))
+            }
         }
     }
     
@@ -262,7 +266,9 @@ extension SpotPageController {
                 print("Community post fetch completed")
             }
             self.fetching = .refreshEnabled
-            self.spotPageCollectionView.reloadSections(IndexSet(integer: 2))
+            DispatchQueue.main.async {
+                self.spotPageCollectionView.reloadSections(IndexSet(integer: 2))
+            }
         }
     }
     
@@ -418,7 +424,9 @@ extension SpotPageController: UIScrollViewDelegate {
         }
         
         if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 500)) && fetching == .refreshEnabled && fetchCommunityPostComplete == false {
-            fetchRelatedPostComplete ? fetchCommunityPost() : fetchRelatedPost()
+            DispatchQueue.global(qos: .userInitiated).async {
+                self.fetchRelatedPostComplete ? self.fetchCommunityPost() : self.fetchRelatedPost()
+            }
         }
     }
 }
