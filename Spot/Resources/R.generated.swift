@@ -349,7 +349,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 228 images.
+  /// This `R.image` struct is generated, and contains static references to 235 images.
   struct image {
     /// Image `AcceptedTheirFriendRequest`.
     static let acceptedTheirFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedTheirFriendRequest")
@@ -375,6 +375,8 @@ struct R: Rswift.Validatable {
     static let aliveOff = Rswift.ImageResource(bundle: R.hostingBundle, name: "AliveOff")
     /// Image `AliveOn`.
     static let aliveOn = Rswift.ImageResource(bundle: R.hostingBundle, name: "AliveOn")
+    /// Image `AnnotationSpotTarget`.
+    static let annotationSpotTarget = Rswift.ImageResource(bundle: R.hostingBundle, name: "AnnotationSpotTarget")
     /// Image `ArtTag`.
     static let artTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ArtTag")
     /// Image `BackArrow-1`.
@@ -461,8 +463,18 @@ struct R: Rswift.Validatable {
     static let cocktailTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "CocktailTag")
     /// Image `CoffeeTag`.
     static let coffeeTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "CoffeeTag")
+    /// Image `CommentButton`.
+    static let commentButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "CommentButton")
+    /// Image `CommentLikeButtonFilled`.
+    static let commentLikeButtonFilled = Rswift.ImageResource(bundle: R.hostingBundle, name: "CommentLikeButtonFilled")
+    /// Image `CommentLikeButton`.
+    static let commentLikeButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "CommentLikeButton")
     /// Image `CommentNotification`.
     static let commentNotification = Rswift.ImageResource(bundle: R.hostingBundle, name: "CommentNotification")
+    /// Image `CommentSegCommentIcon`.
+    static let commentSegCommentIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "CommentSegCommentIcon")
+    /// Image `CommentSegLikeIcon`.
+    static let commentSegLikeIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "CommentSegLikeIcon")
     /// Image `CookTag`.
     static let cookTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "CookTag")
     /// Image `CowTag`.
@@ -571,6 +583,8 @@ struct R: Rswift.Validatable {
     static let leafTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "LeafTag")
     /// Image `LikeButtonFilled`.
     static let likeButtonFilled = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikeButtonFilled")
+    /// Image `LikeButton`.
+    static let likeButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikeButton")
     /// Image `LikeNotification`.
     static let likeNotification = Rswift.ImageResource(bundle: R.hostingBundle, name: "LikeNotification")
     /// Image `LikedYourMap`.
@@ -615,6 +629,8 @@ struct R: Rswift.Validatable {
     static let natureTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "NatureTag")
     /// Image `NewPostBackground`.
     static let newPostBackground = Rswift.ImageResource(bundle: R.hostingBundle, name: "NewPostBackground")
+    /// Image `NewPostsIcon`.
+    static let newPostsIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "NewPostsIcon")
     /// Image `NewSpotIcon`.
     static let newSpotIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "NewSpotIcon")
     /// Image `NextArrow`.
@@ -695,6 +711,8 @@ struct R: Rswift.Validatable {
     static let reaperTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "ReaperTag")
     /// Image `RefreshIcon`.
     static let refreshIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "RefreshIcon")
+    /// Image `ReplayIcon`.
+    static let replayIcon = Rswift.ImageResource(bundle: R.hostingBundle, name: "ReplayIcon")
     /// Image `ReportSpotButton`.
     static let reportSpotButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "ReportSpotButton")
     /// Image `SaladTag`.
@@ -803,10 +821,6 @@ struct R: Rswift.Validatable {
     static let xFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "XFriendRequest")
     /// Image `X`.
     static let x = Rswift.ImageResource(bundle: R.hostingBundle, name: "X")
-    /// Image `commentButton`.
-    static let commentButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "commentButton")
-    /// Image `likeButton`.
-    static let likeButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "likeButton")
 
     #if os(iOS) || os(tvOS)
     /// `UIImage(named: "AcceptedTheirFriendRequest", bundle: ..., traitCollection: ...)`
@@ -889,6 +903,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "AliveOn", bundle: ..., traitCollection: ...)`
     static func aliveOn(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.aliveOn, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "AnnotationSpotTarget", bundle: ..., traitCollection: ...)`
+    static func annotationSpotTarget(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.annotationSpotTarget, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1194,9 +1215,44 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "CommentButton", bundle: ..., traitCollection: ...)`
+    static func commentButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.commentButton, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "CommentLikeButton", bundle: ..., traitCollection: ...)`
+    static func commentLikeButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.commentLikeButton, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "CommentLikeButtonFilled", bundle: ..., traitCollection: ...)`
+    static func commentLikeButtonFilled(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.commentLikeButtonFilled, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "CommentNotification", bundle: ..., traitCollection: ...)`
     static func commentNotification(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.commentNotification, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "CommentSegCommentIcon", bundle: ..., traitCollection: ...)`
+    static func commentSegCommentIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.commentSegCommentIcon, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "CommentSegLikeIcon", bundle: ..., traitCollection: ...)`
+    static func commentSegLikeIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.commentSegLikeIcon, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1572,6 +1628,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LikeButton", bundle: ..., traitCollection: ...)`
+    static func likeButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.likeButton, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "LikeButtonFilled", bundle: ..., traitCollection: ...)`
     static func likeButtonFilled(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.likeButtonFilled, compatibleWith: traitCollection)
@@ -1729,6 +1792,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "NewPostBackground", bundle: ..., traitCollection: ...)`
     static func newPostBackground(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.newPostBackground, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "NewPostsIcon", bundle: ..., traitCollection: ...)`
+    static func newPostsIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.newPostsIcon, compatibleWith: traitCollection)
     }
     #endif
 
@@ -2009,6 +2079,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "RefreshIcon", bundle: ..., traitCollection: ...)`
     static func refreshIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.refreshIcon, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "ReplayIcon", bundle: ..., traitCollection: ...)`
+    static func replayIcon(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.replayIcon, compatibleWith: traitCollection)
     }
     #endif
 
@@ -2390,20 +2467,6 @@ struct R: Rswift.Validatable {
     }
     #endif
 
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "commentButton", bundle: ..., traitCollection: ...)`
-    static func commentButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.commentButton, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "likeButton", bundle: ..., traitCollection: ...)`
-    static func likeButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.likeButton, compatibleWith: traitCollection)
-    }
-    #endif
-
     fileprivate init() {}
   }
 
@@ -2502,13 +2565,22 @@ struct R: Rswift.Validatable {
 struct _R: Rswift.Validatable {
   static func validate() throws {
     #if os(iOS) || os(tvOS)
+    try nib.validate()
+    #endif
+    #if os(iOS) || os(tvOS)
     try storyboard.validate()
     #endif
   }
 
   #if os(iOS) || os(tvOS)
-  struct nib {
-    struct _FriendPostView: Rswift.NibResourceType {
+  struct nib: Rswift.Validatable {
+    static func validate() throws {
+      try _FriendPostView.validate()
+      try _SpotNameView.validate()
+      try _SpotPostView.validate()
+    }
+
+    struct _FriendPostView: Rswift.NibResourceType, Rswift.Validatable {
       let bundle = R.hostingBundle
       let name = "FriendPostView"
 
@@ -2516,10 +2588,16 @@ struct _R: Rswift.Validatable {
         return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? FriendPostView
       }
 
+      static func validate() throws {
+        if UIKit.UIImage(named: "ReplayIcon", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'ReplayIcon' is used in nib 'FriendPostView', but couldn't be loaded.") }
+        if #available(iOS 11.0, tvOS 11.0, *) {
+        }
+      }
+
       fileprivate init() {}
     }
 
-    struct _SpotNameView: Rswift.NibResourceType {
+    struct _SpotNameView: Rswift.NibResourceType, Rswift.Validatable {
       let bundle = R.hostingBundle
       let name = "SpotNameView"
 
@@ -2527,15 +2605,28 @@ struct _R: Rswift.Validatable {
         return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? SpotNameView
       }
 
+      static func validate() throws {
+        if UIKit.UIImage(named: "AnnotationSpotTarget", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'AnnotationSpotTarget' is used in nib 'SpotNameView', but couldn't be loaded.") }
+        if #available(iOS 11.0, tvOS 11.0, *) {
+        }
+      }
+
       fileprivate init() {}
     }
 
-    struct _SpotPostView: Rswift.NibResourceType {
+    struct _SpotPostView: Rswift.NibResourceType, Rswift.Validatable {
       let bundle = R.hostingBundle
       let name = "SpotPostView"
 
       func firstView(owner ownerOrNil: AnyObject?, options optionsOrNil: [UINib.OptionsKey : Any]? = nil) -> SpotPostView? {
         return instantiate(withOwner: ownerOrNil, options: optionsOrNil)[0] as? SpotPostView
+      }
+
+      static func validate() throws {
+        if UIKit.UIImage(named: "AnnotationSpotTarget", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'AnnotationSpotTarget' is used in nib 'SpotPostView', but couldn't be loaded.") }
+        if UIKit.UIImage(named: "ReplayIcon", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'ReplayIcon' is used in nib 'SpotPostView', but couldn't be loaded.") }
+        if #available(iOS 11.0, tvOS 11.0, *) {
+        }
       }
 
       fileprivate init() {}

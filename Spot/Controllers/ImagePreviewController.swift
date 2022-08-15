@@ -121,9 +121,6 @@ class ImagePreviewController: UIViewController {
         post.postImage = selectedImages
         post.imageLocations = imageLocations
         
-        let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.9
-        post.imageHeight = getImageHeight(aspectRatios: post.aspectRatios ?? [], maxAspect: cameraAspect)
-        
         let imageLocation = UploadPostModel.shared.selectedObjects.first?.rawLocation ?? UserDataModel.shared.currentLocation ?? CLLocation()
         if !locationIsEmpty(location: imageLocation) {
             post.postLat = imageLocation.coordinate.latitude
@@ -140,7 +137,7 @@ class ImagePreviewController: UIViewController {
         let post = UploadPostModel.shared.postObject!
         
         /// camera aspect is also the max aspect for any image'
-        let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
+        let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
         let cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
@@ -267,9 +264,9 @@ class ImagePreviewController: UIViewController {
         
         textView = UITextView {
             $0.delegate = self
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 19)
             $0.backgroundColor = nil
             $0.textColor = .white
+            $0.font = UIFont(name: "SFCompactText-Regular", size: 19)
             $0.alpha = 0.6
             $0.tintColor = UIColor(named: "SpotGreen")
             $0.text = textViewPlaceholder
@@ -624,12 +621,13 @@ extension ImagePreviewController: UITextViewDelegate {
     }
     
     func addTagTable(tagString: String) {
-        print("add tag table")
         if tagFriendsView == nil {
-            tagFriendsView = TagFriendsView()
-            tagFriendsView!.delegate = self
-            tagFriendsView!.searchText = tagString
-            postDetailView.addSubview(tagFriendsView!)
+            tagFriendsView = TagFriendsView {
+                $0.delegate = self
+                $0.textColor = .white
+                $0.searchText = tagString
+                postDetailView.addSubview($0)
+            }
             tagFriendsView!.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
                 $0.height.equalTo(90)
@@ -797,7 +795,7 @@ class PostImagePreview: PostImageView {
         
         snp.removeConstraints()
         
-        let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
+        let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
         let cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
         let post = UploadPostModel.shared.postObject!
@@ -820,7 +818,7 @@ class PostImagePreview: PostImageView {
         }
         
         for sub in subviews { sub.removeFromSuperview() } /// remove any old masks
-        if currentAspect > 1.6 { addTop() }
+        if currentAspect > 1.45 { addTop() }
     }
     
     func setCurrentImage() {
@@ -874,16 +872,6 @@ class PostImagePreview: PostImageView {
             $0.locations = [0, 1]
             topMask.layer.addSublayer($0)
         }
-    }
-    
-    func getImageHeight(aspectRatio: CGFloat, maxAspect: CGFloat) -> CGFloat {
-        
-        var imageAspect =  min(aspectRatio, maxAspect)
-        if imageAspect > 1.1 && imageAspect < 1.6 { imageAspect = 1.6 } /// stretch iPhone vertical
-        if imageAspect > 1.6 { imageAspect = maxAspect } /// round to max aspect
-        
-        let imageHeight = UIScreen.main.bounds.width * imageAspect
-        return imageHeight
     }
 }
 

@@ -10,47 +10,52 @@ import UIKit
 import SnapKit
 import Firebase
 import Mixpanel
+import FirebaseUI
 
 class CustomMapHeaderCell: UICollectionViewCell {
-
+    
     private var mapCoverImage: UIImageView!
     private var mapName: UILabel!
-    private var mapCreaterProfileImage1: UIImageView!
-    private var mapCreaterProfileImage2: UIImageView!
-    private var mapCreaterProfileImage3: UIImageView!
-    private var mapCreaterProfileImage4: UIImageView!
-    private var mapCreaterCount: UILabel!
+    private var mapCreatorProfileImage1: UIImageView!
+    private var mapCreatorProfileImage2: UIImageView!
+    private var mapCreatorProfileImage3: UIImageView!
+    private var mapCreatorProfileImage4: UIImageView!
+    private var userButton: UIButton!
+    private var mapCreatorCount: UILabel!
     private var mapInfo: UILabel!
     public var actionButton: UIButton!
     private var mapBio: UILabel!
-
+    
     private var mapData: CustomMap!
     private var fourMapMemberProfile: [UserProfile] = []
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
     }
-
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     override func prepareForReuse() {
+        mapCoverImage.sd_cancelCurrentImageLoad()
+        mapCreatorProfileImage1.sd_cancelCurrentImageLoad()
+        mapCreatorProfileImage2.sd_cancelCurrentImageLoad()
+        mapCreatorProfileImage3.sd_cancelCurrentImageLoad()
+        mapCreatorProfileImage4.sd_cancelCurrentImageLoad()
     }
-
-    public func cellSetup(userProfile: UserProfile, mapData: CustomMap?, fourMapMemberProfile: [UserProfile]) {
+    
+    public func cellSetup(mapData: CustomMap?, fourMapMemberProfile: [UserProfile]) {
         guard mapData != nil else { return }
         self.mapData = mapData
         self.fourMapMemberProfile = fourMapMemberProfile
-
+        
         setMapName()
         setMapInfo()
         setMapMemberInfo()
         setActionButton()
-
-        mapCoverImage.image = mapData?.coverImage
-
+        
         if mapData!.mapDescription != nil || mapData!.mapDescription != "" {
             mapBio.text = mapData!.mapDescription
         }
@@ -60,7 +65,7 @@ class CustomMapHeaderCell: UICollectionViewCell {
 extension CustomMapHeaderCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
-
+        
         mapCoverImage = UIImageView {
             $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
@@ -73,7 +78,7 @@ extension CustomMapHeaderCell {
             $0.width.height.equalTo(84)
         }
         mapCoverImage.layer.cornerRadius = 19
-
+        
         mapName = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
@@ -87,80 +92,77 @@ extension CustomMapHeaderCell {
             $0.height.equalTo(23)
             $0.trailing.equalToSuperview().inset(14)
         }
-
-        mapCreaterProfileImage1 = UIImageView {
-            $0.image = UIImage()
+        
+        mapCreatorProfileImage1 = UIImageView {
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.borderWidth = 1.5
+            $0.layer.cornerRadius = 11
             $0.layer.borderColor = UIColor.white.cgColor
             contentView.addSubview($0)
         }
-        mapCreaterProfileImage1.snp.makeConstraints {
+        mapCreatorProfileImage1.snp.makeConstraints {
             $0.top.equalTo(mapName.snp.bottom).offset(7)
             $0.leading.equalTo(mapName)
             $0.width.height.equalTo(22)
         }
-        mapCreaterProfileImage1.layer.cornerRadius = 11
-
-        mapCreaterProfileImage2 = UIImageView {
+        
+        mapCreatorProfileImage2 = UIImageView {
+            $0.contentMode = .scaleAspectFill
+            $0.layer.masksToBounds = true
+            $0.layer.borderWidth = 1.5
+            $0.layer.cornerRadius = 11
+            $0.layer.borderColor = UIColor.white.cgColor
+            contentView.insertSubview($0, belowSubview: mapCreatorProfileImage1)
+        }
+        mapCreatorProfileImage2.snp.makeConstraints {
+            $0.top.equalTo(mapCreatorProfileImage1)
+            $0.leading.equalTo(mapCreatorProfileImage1).offset(15)
+            $0.width.height.equalTo(22)
+        }
+        
+        mapCreatorProfileImage3 = UIImageView {
+            $0.contentMode = .scaleAspectFill
+            $0.layer.masksToBounds = true
+            $0.layer.borderWidth = 1.5
+            $0.layer.cornerRadius = 11
+            $0.layer.borderColor = UIColor.white.cgColor
+            contentView.insertSubview($0, belowSubview: mapCreatorProfileImage2)
+        }
+        mapCreatorProfileImage3.snp.makeConstraints {
+            $0.top.equalTo(mapCreatorProfileImage1)
+            $0.leading.equalTo(mapCreatorProfileImage2).offset(15)
+            $0.width.height.equalTo(22)
+        }
+        
+        mapCreatorProfileImage4 = UIImageView {
             $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.borderWidth = 1.5
+            $0.layer.cornerRadius = 11
             $0.layer.borderColor = UIColor.white.cgColor
-            contentView.insertSubview($0, belowSubview: mapCreaterProfileImage1)
+            contentView.insertSubview($0, belowSubview: mapCreatorProfileImage3)
         }
-        mapCreaterProfileImage2.snp.makeConstraints {
-            $0.top.equalTo(mapCreaterProfileImage1)
-            $0.leading.equalTo(mapCreaterProfileImage1).offset(15)
+        mapCreatorProfileImage4.snp.makeConstraints {
+            $0.top.equalTo(mapCreatorProfileImage1)
+            $0.leading.equalTo(mapCreatorProfileImage3).offset(15)
             $0.width.height.equalTo(22)
         }
-        mapCreaterProfileImage2.layer.cornerRadius = 11
-
-        mapCreaterProfileImage3 = UIImageView {
-            $0.image = UIImage()
-            $0.contentMode = .scaleAspectFill
-            $0.layer.masksToBounds = true
-            $0.layer.borderWidth = 1.5
-            $0.layer.borderColor = UIColor.white.cgColor
-            contentView.insertSubview($0, belowSubview: mapCreaterProfileImage2)
-        }
-        mapCreaterProfileImage3.snp.makeConstraints {
-            $0.top.equalTo(mapCreaterProfileImage1)
-            $0.leading.equalTo(mapCreaterProfileImage2).offset(15)
-            $0.width.height.equalTo(22)
-        }
-        mapCreaterProfileImage3.layer.cornerRadius = 11
-
-        mapCreaterProfileImage4 = UIImageView {
-            $0.image = UIImage()
-            $0.contentMode = .scaleAspectFill
-            $0.layer.masksToBounds = true
-            $0.layer.borderWidth = 1.5
-            $0.layer.borderColor = UIColor.white.cgColor
-            contentView.insertSubview($0, belowSubview: mapCreaterProfileImage3)
-        }
-        mapCreaterProfileImage4.snp.makeConstraints {
-            $0.top.equalTo(mapCreaterProfileImage1)
-            $0.leading.equalTo(mapCreaterProfileImage3).offset(15)
-            $0.width.height.equalTo(22)
-        }
-        mapCreaterProfileImage4.layer.cornerRadius = 11
-
-        mapCreaterCount = UILabel {
+        
+        mapCreatorCount = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
             $0.text = ""
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
-        mapCreaterCount.snp.makeConstraints {
-            $0.leading.equalTo(mapCreaterProfileImage4.snp.trailing).offset(4)
-            $0.centerY.equalTo(mapCreaterProfileImage1)
+        mapCreatorCount.snp.makeConstraints {
+            $0.leading.equalTo(mapCreatorProfileImage4.snp.trailing).offset(4)
+            $0.centerY.equalTo(mapCreatorProfileImage1)
             $0.trailing.lessThanOrEqualToSuperview().inset(14)
         }
-
+                
         mapInfo = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
@@ -170,10 +172,10 @@ extension CustomMapHeaderCell {
         }
         mapInfo.snp.makeConstraints {
             $0.leading.equalTo(mapName)
-            $0.top.equalTo(mapCreaterProfileImage1.snp.bottom).offset(8)
+            $0.top.equalTo(mapCreatorProfileImage1.snp.bottom).offset(8)
             $0.trailing.lessThanOrEqualToSuperview().inset(14)
         }
-
+        
         actionButton = UIButton {
             $0.setTitle("Follow map", for: .normal)
             $0.setTitleColor(.black, for: .normal)
@@ -187,7 +189,7 @@ extension CustomMapHeaderCell {
             $0.top.equalTo(mapCoverImage.snp.bottom).offset(15)
         }
         actionButton.layer.cornerRadius = 37 / 2
-
+        
         mapBio = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
@@ -199,8 +201,19 @@ extension CustomMapHeaderCell {
             $0.leading.trailing.equalToSuperview().inset(15)
             $0.top.equalTo(actionButton.snp.bottom).offset(16)
         }
+        
+        userButton = UIButton {
+            $0.addTarget(self, action: #selector(userTap), for: .touchUpInside)
+            contentView.addSubview($0)
+        }
+        userButton.snp.makeConstraints {
+            $0.leading.equalTo(mapCoverImage.snp.trailing).offset(5)
+            $0.top.equalTo(mapName.snp.bottom).offset(4)
+            $0.height.equalTo(28)
+            $0.trailing.equalTo(mapCreatorCount.snp.trailing)
+        }
     }
-
+    
     private func setMapName() {
         if mapData!.secret {
             let imageAttachment = NSTextAttachment()
@@ -215,8 +228,10 @@ extension CustomMapHeaderCell {
         } else {
             mapName.text = mapData!.mapName
         }
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
+        mapCoverImage.sd_setImage(with: URL(string: mapData!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
     }
-
+    
     private func setMapInfo() {
         if mapData!.likers.count == 0 && mapData!.spotIDs.count == 0 {
             mapInfo.text = "\(mapData!.postIDs.count) posts"
@@ -228,44 +243,47 @@ extension CustomMapHeaderCell {
             mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
         }
     }
-
+    
     private func setMapMemberInfo() {
         guard fourMapMemberProfile.count != 0 else { return }
-        mapCreaterCount.text = "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
-        mapCreaterProfileImage1.image = fourMapMemberProfile[0].profilePic
+        mapCreatorCount.text = "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
+        mapCreatorProfileImage1.image = fourMapMemberProfile[0].profilePic
+        let userTransformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+        mapCreatorProfileImage1.sd_setImage(with: URL(string: fourMapMemberProfile[0].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+
         switch fourMapMemberProfile.count {
         case 1:
-            mapCreaterCount.text = "\(fourMapMemberProfile[0].username)"
-            mapCreaterProfileImage4.removeFromSuperview()
-            mapCreaterProfileImage3.removeFromSuperview()
-            mapCreaterProfileImage2.removeFromSuperview()
-            mapCreaterCount.snp.makeConstraints {
-                $0.leading.equalTo(mapCreaterProfileImage1.snp.trailing).offset(4)
+            mapCreatorCount.text = "\(fourMapMemberProfile[0].username)"
+            mapCreatorProfileImage4.removeFromSuperview()
+            mapCreatorProfileImage3.removeFromSuperview()
+            mapCreatorProfileImage2.removeFromSuperview()
+            mapCreatorCount.snp.makeConstraints {
+                $0.leading.equalTo(mapCreatorProfileImage1.snp.trailing).offset(4)
             }
         case 2:
-            mapCreaterCount.text = "\(fourMapMemberProfile[0].username) & \(fourMapMemberProfile[1].username)"
-            mapCreaterProfileImage2.image = fourMapMemberProfile[1].profilePic
-            mapCreaterProfileImage4.removeFromSuperview()
-            mapCreaterProfileImage3.removeFromSuperview()
-            mapCreaterCount.snp.makeConstraints {
-                $0.leading.equalTo(mapCreaterProfileImage2.snp.trailing).offset(4)
+            mapCreatorCount.text = "\(fourMapMemberProfile[0].username) & \(fourMapMemberProfile[1].username)"
+            mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            mapCreatorProfileImage4.removeFromSuperview()
+            mapCreatorProfileImage3.removeFromSuperview()
+            mapCreatorCount.snp.makeConstraints {
+                $0.leading.equalTo(mapCreatorProfileImage2.snp.trailing).offset(4)
             }
         case 3:
-            mapCreaterProfileImage2.image = fourMapMemberProfile[1].profilePic
-            mapCreaterProfileImage3.image = fourMapMemberProfile[2].profilePic
-            mapCreaterProfileImage4.removeFromSuperview()
-            mapCreaterCount.snp.makeConstraints {
-                $0.leading.equalTo(mapCreaterProfileImage3.snp.trailing).offset(4)
+            mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            mapCreatorProfileImage3.sd_setImage(with: URL(string: fourMapMemberProfile[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            mapCreatorProfileImage4.removeFromSuperview()
+            mapCreatorCount.snp.makeConstraints {
+                $0.leading.equalTo(mapCreatorProfileImage3.snp.trailing).offset(4)
             }
         case 4:
-            mapCreaterProfileImage2.image = fourMapMemberProfile[1].profilePic
-            mapCreaterProfileImage3.image = fourMapMemberProfile[2].profilePic
-            mapCreaterProfileImage4.image = fourMapMemberProfile[3].profilePic
+            mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            mapCreatorProfileImage3.sd_setImage(with: URL(string: fourMapMemberProfile[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            mapCreatorProfileImage4.sd_setImage(with: URL(string: fourMapMemberProfile[3].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
         default:
             return
         }
     }
-
+    
     private func setActionButton() {
         if mapData!.memberIDs.contains(UserDataModel.shared.userInfo.id!) == false && mapData!.likers.contains(UserDataModel.shared.userInfo.id!) == false {
             actionButton.setTitle("Follow map", for: .normal)
@@ -279,7 +297,7 @@ extension CustomMapHeaderCell {
         }
         actionButton.addTarget(self, action: #selector(actionButtonAction), for: .touchUpInside)
     }
-
+    
     @objc func actionButtonAction() {
         UIView.animate(withDuration: 0.15) {
             self.actionButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
@@ -288,7 +306,7 @@ extension CustomMapHeaderCell {
                 self.actionButton.transform = .identity
             }
         }
-
+        
         switch actionButton.titleLabel?.text {
         case "Follow map":
             Mixpanel.mainInstance().track(event: "CustomMapFollowMap")
@@ -323,6 +341,12 @@ extension CustomMapHeaderCell {
         default:
             return
         }
+    }
+    
+    @objc func userTap() {
+        guard let customMapVC = viewContainingController() as? CustomMapController else { return }
+        let friendListVC = FriendsListController(fromVC: customMapVC, allowsSelection: false, showsSearchBar: false, friendIDs: mapData.memberIDs, friendsList: [], confirmedIDs: [], presentedWithDrawerView: customMapVC.containerDrawerView!)
+        customMapVC.present(friendListVC, animated: true)
     }
 }
 

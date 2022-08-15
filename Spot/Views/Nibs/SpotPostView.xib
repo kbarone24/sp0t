@@ -13,9 +13,22 @@
             <rect key="frame" x="0.0" y="0.0" width="89" height="88"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
+                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="AnnotationSpotTarget" translatesAutoresizingMaskIntoConstraints="NO" id="Q7J-Df-mzs">
+                    <rect key="frame" x="35" y="60" width="18" height="9"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
                 <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" id="tkJ-mk-5q7">
                     <rect key="frame" x="15" y="2" width="57" height="57"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
+                </imageView>
+                <view alpha="0.45000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zbk-sL-H3g">
+                    <rect key="frame" x="15" y="2" width="57" height="57"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                </view>
+                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="ReplayIcon" translatesAutoresizingMaskIntoConstraints="NO" id="JTx-2a-Akg">
+                    <rect key="frame" x="30.5" y="13" width="27.5" height="31"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 </imageView>
                 <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" id="Wte-82-e2r">
                     <rect key="frame" x="15" y="0.0" width="58" height="66"/>
@@ -35,10 +48,17 @@
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <connections>
                 <outlet property="backgroundImage" destination="Wte-82-e2r" id="IrD-xo-K9u"/>
+                <outlet property="imageMask" destination="zbk-sL-H3g" id="tHc-TJ-Fxu"/>
                 <outlet property="postImage" destination="tkJ-mk-5q7" id="oBD-FK-bng"/>
+                <outlet property="replayIcon" destination="JTx-2a-Akg" id="e3i-rl-Sd9"/>
+                <outlet property="spotIcon" destination="Q7J-Df-mzs" id="e7e-UX-dJL"/>
                 <outlet property="spotLabel" destination="suC-Vw-Mox" id="bfE-25-Ubq"/>
             </connections>
             <point key="canvasLocation" x="-17592.028985507248" y="-11661.160714285714"/>
         </view>
     </objects>
+    <resources>
+        <image name="AnnotationSpotTarget" width="18" height="9"/>
+        <image name="ReplayIcon" width="28" height="32"/>
+    </resources>
 </document>

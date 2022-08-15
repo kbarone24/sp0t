@@ -273,12 +273,11 @@ extension ChooseSpotController: UISearchBarDelegate {
         
         nearbyEnteredCount += 1
         
-        getSpot(spotID: spotKey) { spot, failed in
-            if failed { self.noAccessCount += 1; self.accessEscape(); return }
+        getSpot(spotID: spotKey) { spot in
+            if spot == nil { self.noAccessCount += 1; self.accessEscape(); return }
+            var spotInfo = spot!
             
-            var spotInfo = spot
             if self.hasPOILevelAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? []) {
-                
                 let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
                 let spotLocation = CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)
                 
