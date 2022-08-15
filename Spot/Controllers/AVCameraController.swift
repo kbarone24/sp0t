@@ -471,7 +471,9 @@ class AVCameraController: UIViewController {
             transition.subtype = CATransitionSubtype.fromBottom
             
             DispatchQueue.main.async {
-                self.mapVC.uploadMapReset()
+                if let _ = self.navigationController?.viewControllers[(self.navigationController?.viewControllers.count ?? 2) - 2] as? MapController {
+                    self.mapVC.uploadMapReset()
+                }
                 self.navigationController?.view.layer.add(transition, forKey:kCATransition)
                 self.navigationController?.popViewController(animated: false)
             }
