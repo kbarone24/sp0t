@@ -124,7 +124,7 @@ extension CustomMapController {
     private func addInitialPosts() {
         if !(mapData?.postGroup.isEmpty ?? true) {
             postsList = mapData!.postsDictionary.map{$0.value}.sorted(by: {$0.timestamp.seconds > $1.timestamp.seconds})
-            DispatchQueue.main.async { self.collectionView.reloadData() }
+            if self.collectionView != nil { DispatchQueue.main.async { self.collectionView.reloadData() } }
         }
     }
     

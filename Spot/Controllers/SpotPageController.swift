@@ -166,7 +166,7 @@ extension SpotPageController {
             let completeText = NSMutableAttributedString(string: frontPadding)
             completeText.append(attachmentString)
             completeText.append(NSAttributedString(string: " "))
-            completeText.append(NSAttributedString(string: "Community Post" + bottomPadding))
+            completeText.append(NSAttributedString(string: "Community Posts" + bottomPadding))
             $0.attributedText = completeText
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
