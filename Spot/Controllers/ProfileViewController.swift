@@ -302,11 +302,17 @@ extension ProfileViewController {
         maps.sort(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
         DispatchQueue.main.async { self.profileCollectionView.reloadData() }
     }
+    
+    private func getMyMap() -> CustomMap {
+        var mapData = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
+        mapData.createPosts(posts: posts)
+        return mapData
+    }
 }
 
 extension ProfileViewController: CustomMapDelegate {
     func finishPassing(updatedMap: CustomMap?) {
-        if updatedMap != nil, let i = maps.firstIndex(where: {$0.id == updatedMap!.id!}) {
+        if updatedMap?.id ?? "" != "", let i = maps.firstIndex(where: {$0.id == updatedMap!.id!}) {
             maps[i] = updatedMap!
         }
     }
@@ -368,7 +374,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
             if let _ = cell as? ProfileMyMapCell {
-                let customMapVC = CustomMapController(userProfile: userProfile, mapData: nil, postsList: posts, presentedDrawerView: containerDrawerView, mapType: .myMap)
+                let mapData = getMyMap()
+                let customMapVC = CustomMapController(userProfile: userProfile, mapData: mapData, postsList: [], presentedDrawerView: containerDrawerView, mapType: .myMap)
                 customMapVC.delegate = self
                 navigationController?.pushViewController(customMapVC, animated: true)
             } else if let _ = cell as? ProfileBodyCell {

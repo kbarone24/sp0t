@@ -26,7 +26,7 @@ class MapController: UIViewController {
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     
-    var mapView: MKMapView!
+    var mapView: SpotMapView!
     var titleView: MapTitleView!
     var bottomMapMask: UIView!
     
@@ -43,7 +43,6 @@ class MapController: UIViewController {
     
     var firstTimeGettingLocation = true
     var feedLoaded = false
-    var shouldCluster = true /// should cluster is false when nearby (tab index 1) selected and max zoom enabled
     
     lazy var friendsPostsDictionary = [String: MapPost]()
     lazy var postAnnotations = [String: PostAnnotation]()
@@ -111,7 +110,7 @@ class MapController: UIViewController {
     }
     
     func addMapView() {
-        mapView = MKMapView {
+        mapView = SpotMapView {
             $0.delegate = self
             $0.mapType = .mutedStandard
             $0.overrideUserInterfaceStyle = .light
@@ -271,9 +270,13 @@ class MapController: UIViewController {
     func openSelectedMap() {
         let map = getSelectedMap()
         let unsortedPosts = map == nil ? friendsPostsDictionary.map{$0.value} : map!.postsDictionary.map{$0.value}
-        let posts = sortPosts(unsortedPosts)
+        let posts = mapView.sortPosts(unsortedPosts)
         let mapType: MapType = map == nil ? .friendsMap : .customMap
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: posts, presentedDrawerView: nil, mapType: mapType)
+        /// create map from current posts for friends map
+        var passMap = map == nil ? CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: []) : map!
+        if mapType == .friendsMap { passMap.createPosts(posts: posts) }
+        
+        let customMapVC = CustomMapController(userProfile: nil, mapData: passMap, postsList: posts, presentedDrawerView: nil, mapType: mapType)
         sheetView = DrawerView(present: customMapVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
         })
@@ -284,6 +287,13 @@ class MapController: UIViewController {
     func toggleHomeAppearance(hidden: Bool) {
         mapsCollection.isHidden = hidden
         newPostsButton.isHidden = hidden
+        /// if hidden, remove annotations, else reset with selected annotations
+        if hidden {
+            mapView.removeAllAnnos()
+        } else {
+            mapView.delegate = self
+            addMapAnnotations(index: selectedItemIndex)
+        }
     }
     
     func animateHomeAlphas() {
