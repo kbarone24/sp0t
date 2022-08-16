@@ -27,8 +27,8 @@ class PostController: UIViewController {
     
     var postsCollection: UICollectionView!
     unowned var containerDrawerView: DrawerView?
-    
     var openComments = false
+    
     var selectedPostIndex = 0 {
         didSet {
             let post = postsList[selectedPostIndex]
@@ -117,7 +117,6 @@ class PostController: UIViewController {
         }
                         
         addNotifications()
-        selectedPostIndex = 0
     }
     
     func addNotifications() {
@@ -355,7 +354,7 @@ class PostCell: UICollectionViewCell {
     let cellHeight = UIScreen.main.bounds.height
     let cellWidth = UIScreen.main.bounds.width
     var bottomInset: CGFloat {
-        return (UIScreen.main.bounds.height - (UserDataModel.shared.maxAspect * UIScreen.main.bounds.width))/2 + 10
+        return (UIScreen.main.bounds.height - (UserDataModel.shared.maxAspect * UIScreen.main.bounds.width))/2 - 10
     }
     
     override func layoutSubviews() {
@@ -765,7 +764,7 @@ class PostCell: UICollectionViewCell {
             if currentAspect > 1.45 {
                 $0.bottom.equalTo(dotView.snp.bottom).offset(5)
             } else if currentAspect > 1.1 {
-                $0.bottom.equalTo(buttonView.snp.top).offset(22)
+                $0.bottom.equalTo(buttonView.snp.top).offset(-5)
             } else {
                 $0.centerY.equalToSuperview()
             }

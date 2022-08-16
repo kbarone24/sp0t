@@ -139,42 +139,44 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         let friendRequestQuery = friendReqRef.whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
         
         fetchGroup.enter()
-        friendRequestQuery.getDocuments { [weak self] (snap, err) in
-            guard let self = self else { return }
-            guard let allDocs = snap?.documents else {fetchGroup.leave(); return }
-            // checking if all pending friend requests have been queried
-            if allDocs.count == 0 || allDocs.count == self.pendingFriendRequests.count {
-                fetchGroup.leave();
-                return
-            }
-            
-            let friendRequestGroup = DispatchGroup()
-            for doc in allDocs {
-                /// friendRequestGroup is the dispatch for pending friend requests fetch
-                friendRequestGroup.enter()
-                do {
-                    let notif = try doc.data(as: UserNotification.self)
-                    guard var notification = notif else { friendRequestGroup.leave(); continue }
-                    notification.id = doc.documentID
-                                        
-                    if !notification.seen {
-                      DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
-                    }
-                                 
+        DispatchQueue.global().async {
+            friendRequestQuery.getDocuments { [weak self] (snap, err) in
+                guard let self = self else { return }
+                guard let allDocs = snap?.documents else {fetchGroup.leave(); return }
+                // checking if all pending friend requests have been queried
+                if allDocs.count == 0 || allDocs.count == self.pendingFriendRequests.count {
+                    fetchGroup.leave();
+                    return
+                }
+                
+                let friendRequestGroup = DispatchGroup()
+                for doc in allDocs {
+                    /// friendRequestGroup is the dispatch for pending friend requests fetch
+                    friendRequestGroup.enter()
+                    do {
+                        let notif = try doc.data(as: UserNotification.self)
+                        guard var notification = notif else { friendRequestGroup.leave(); continue }
+                        notification.id = doc.documentID
+                                            
+                        if !notification.seen {
+                          DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
+                        }
+                                     
 
-                    self.getUserInfo(userID: notification.senderID) { [weak self] (user) in
-                        guard let self = self else { return }
-                        notification.userInfo = user
-                        self.pendingFriendRequests.append(notification)
-                        friendRequestGroup.leave()
-                    }
-                    
-                } catch {
-                    friendRequestGroup.leave() }
-            }
-            /// leave friend request group once all friend requests are appended
-            friendRequestGroup.notify(queue: .main) {
-                fetchGroup.leave()
+                        self.getUserInfo(userID: notification.senderID) { [weak self] (user) in
+                            guard let self = self else { return }
+                            notification.userInfo = user
+                            self.pendingFriendRequests.append(notification)
+                            friendRequestGroup.leave()
+                        }
+                        
+                    } catch {
+                        friendRequestGroup.leave() }
+                }
+                /// leave friend request group once all friend requests are appended
+                friendRequestGroup.notify(queue: .main) {
+                    fetchGroup.leave()
+                }
             }
         }
 
