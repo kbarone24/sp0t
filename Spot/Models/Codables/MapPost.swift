@@ -25,7 +25,7 @@ struct MapPost: Identifiable, Codable {
     var frameIndexes: [Int]? = []
     var friendsList: [String]
     var hideFromFeed: Bool? = false
-    var imageLocations: [[String: Double]]? = [[:]]
+    var imageLocations: [[String: Double]]? = []
     var imageURLs: [String]
     var inviteList: [String]? = []
     var likers: [String]
@@ -36,7 +36,7 @@ struct MapPost: Identifiable, Codable {
     var posterID: String
     var posterUsername: String? = ""
     var privacyLevel: String? = "friends"
-    var seenList: [String]? = []
+    var seenList: [String]? = [UserDataModel.shared.uid]
     var spotID: String? = ""
     var spotLat: Double? = 0.0
     var spotLong: Double? = 0.0
@@ -62,7 +62,7 @@ struct MapPost: Identifiable, Codable {
     var commentsHeight: CGFloat? = 0
     
     var seen: Bool {
-        return seenList!.contains(UserDataModel.shared.uid)
+        return seenList?.contains(UserDataModel.shared.uid) ?? true
     }
     var seconds: Int64 {
         return timestamp.seconds

@@ -723,29 +723,31 @@ extension NSObject {
         let db: Firestore! = Firestore.firestore()
         var commentList: [MapComment] = []
         
-        db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, err) in
-            
-            if err != nil { completion(commentList); return }
-            if commentSnap!.documents.count == 0 { completion(commentList); return }
-            guard let self = self else { return }
+        DispatchQueue.global().async {
+            db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, err) in
+                
+                if err != nil { completion(commentList); return }
+                if commentSnap!.documents.count == 0 { completion(commentList); return }
+                guard let self = self else { return }
 
-            var index = 0
-            for doc in commentSnap!.documents {
-                do {
-                    let commentInf = try doc.data(as: MapComment.self)
-                    guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
-                                        
-                    self.getUserInfo(userID: commentInfo.commenterID) { user in
-                        commentInfo.userInfo = user
-                        if !commentList.contains(where: {$0.id == doc.documentID}) {
-                            commentList.append(commentInfo)
-                            commentList.sort(by: {$0.seconds < $1.seconds})
+                var index = 0
+                for doc in commentSnap!.documents {
+                    do {
+                        let commentInf = try doc.data(as: MapComment.self)
+                        guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+                                            
+                        self.getUserInfo(userID: commentInfo.commenterID) { user in
+                            commentInfo.userInfo = user
+                            if !commentList.contains(where: {$0.id == doc.documentID}) {
+                                commentList.append(commentInfo)
+                                commentList.sort(by: {$0.seconds < $1.seconds})
+                            }
+                            
+                            index += 1; if index == commentSnap!.documents.count { completion(commentList) }
                         }
                         
-                        index += 1; if index == commentSnap!.documents.count { completion(commentList) }
-                    }
-                    
-                } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+                    } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+                }
             }
         }
     }
@@ -754,28 +756,30 @@ extension NSObject {
         let db: Firestore! = Firestore.firestore()
         let emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp())
         
-        db.collection("posts").document(postID).getDocument { [weak self] doc, err in
-            guard let self = self else { return }
-            if err != nil { completion(emptyPost); return }
-            
-            do {
-                let unwrappedInfo = try doc?.data(as: MapPost.self)
-                guard var postInfo = unwrappedInfo else { completion(emptyPost); return }
+        DispatchQueue.global().async {
+            db.collection("posts").document(postID).getDocument { [weak self] doc, err in
+                guard let self = self else { return }
+                if err != nil { completion(emptyPost); return }
                 
-                var count = 0
-                self.getUserInfo(userID: postInfo.posterID) { user in
-                    postInfo.userInfo = user
-                    count += 1
-                    if count == 2 { completion(postInfo); return }
-                }
-                
-                self.getComments(postID: postID) { comments in
-                    postInfo.commentList = comments
-                    count += 1
-                    if count == 2 { completion(postInfo); return }
-                }
-                
-            } catch { completion(emptyPost); return }
+                do {
+                    let unwrappedInfo = try doc?.data(as: MapPost.self)
+                    guard var postInfo = unwrappedInfo else { completion(emptyPost); return }
+                    
+                    var count = 0
+                    self.getUserInfo(userID: postInfo.posterID) { user in
+                        postInfo.userInfo = user
+                        count += 1
+                        if count == 2 { completion(postInfo); return }
+                    }
+                    
+                    self.getComments(postID: postID) { comments in
+                        postInfo.commentList = comments
+                        count += 1
+                        if count == 2 { completion(postInfo); return }
+                    }
+                    
+                } catch { completion(emptyPost); return }
+            }
         }
     }
 
@@ -793,15 +797,17 @@ extension NSObject {
             
         } else {
             let emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
-            db.collection("users").document(userID).getDocument { (doc, err) in
-                if err != nil { return }
-                do {
-                    let userInfo = try doc!.data(as: UserProfile.self)
-                    guard var info = userInfo else { completion(emptyProfile); return }
-                    info.id = doc!.documentID
-                    completion(info)
-                    return
-                } catch { completion(emptyProfile); return }
+            DispatchQueue.global().async {
+                db.collection("users").document(userID).getDocument { (doc, err) in
+                    if err != nil { return }
+                    do {
+                        let userInfo = try doc!.data(as: UserProfile.self)
+                        guard var info = userInfo else { completion(emptyProfile); return }
+                        info.id = doc!.documentID
+                        completion(info)
+                        return
+                    } catch { completion(emptyProfile); return }
+                }
             }
         }
     }
@@ -849,16 +855,18 @@ extension NSObject {
             completion(user)
             return
         } else {
-            db.collection("users").whereField("username", isEqualTo: username).getDocuments { snap, err in
-                guard let doc = snap?.documents.first else { completion(nil); return }
-                do {
-                    let unwrappedInfo = try doc.data(as: UserProfile.self)
-                    guard let userInfo = unwrappedInfo else { completion(nil); return }
-                    completion(userInfo)
-                    return
-                } catch {
-                    completion(nil)
-                    return
+            DispatchQueue.global().async {
+                db.collection("users").whereField("username", isEqualTo: username).getDocuments { snap, err in
+                    guard let doc = snap?.documents.first else { completion(nil); return }
+                    do {
+                        let unwrappedInfo = try doc.data(as: UserProfile.self)
+                        guard let userInfo = unwrappedInfo else { completion(nil); return }
+                        completion(userInfo)
+                        return
+                    } catch {
+                        completion(nil)
+                        return
+                    }
                 }
             }
         }
@@ -868,23 +876,25 @@ extension NSObject {
         let db: Firestore! = Firestore.firestore()
         let spotRef = db.collection("spots").document(spotID)
         
-        spotRef.getDocument { (doc, err) in
-            do {
-                let unwrappedInfo = try doc?.data(as: MapSpot.self)
-                guard var spotInfo = unwrappedInfo else { completion(nil); return }
-                
-                spotInfo.id = spotID
-                spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
-                for visitor in spotInfo.visitorList {
-                    if UserDataModel.shared.userInfo.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
+        DispatchQueue.global().async {
+            spotRef.getDocument { (doc, err) in
+                do {
+                    let unwrappedInfo = try doc?.data(as: MapSpot.self)
+                    guard var spotInfo = unwrappedInfo else { completion(nil); return }
+                    
+                    spotInfo.id = spotID
+                    spotInfo.spotDescription = "" /// remove spotdescription, no use for it here, will either be replaced with POI description or username
+                    for visitor in spotInfo.visitorList {
+                        if UserDataModel.shared.userInfo.friendIDs.contains(visitor) { spotInfo.friendVisitors += 1 }
+                    }
+                    
+                    completion(spotInfo)
+                    return
+                    
+                } catch {
+                    completion(nil)
+                    return
                 }
-                
-                completion(spotInfo)
-                return
-                
-            } catch {
-                completion(nil)
-                return
             }
         }
     }
@@ -892,15 +902,18 @@ extension NSObject {
     func getMap(mapID: String, completion: @escaping (_ map: CustomMap?) -> Void) {
         let db: Firestore! = Firestore.firestore()
         let mapRef = db.collection("maps").document(mapID)
-        mapRef.getDocument { (doc, err) in
-            do {
-                let unwrappedInfo = try doc?.data(as: CustomMap.self)
-                guard let mapInfo = unwrappedInfo else { completion(nil); return }
-                completion(mapInfo)
-                return
-            } catch {
-                completion(nil)
-                return
+        
+        DispatchQueue.global().async {
+            mapRef.getDocument { (doc, err) in
+                do {
+                    let unwrappedInfo = try doc?.data(as: CustomMap.self)
+                    guard let mapInfo = unwrappedInfo else { completion(nil); return }
+                    completion(mapInfo)
+                    return
+                } catch {
+                    completion(nil)
+                    return
+                }
             }
         }
     }

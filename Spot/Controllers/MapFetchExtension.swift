@@ -212,29 +212,15 @@ extension MapController {
     
     func addPostToDictionary(post: MapPost, map: CustomMap?) {
         let post = setSecondaryPostValues(post: post)
-        if selectedItemIndex == 0 && map == nil { addPostAnnotation(post: post) } /// 0 always selected on initial fetch
+        if selectedItemIndex == 0 && map == nil { mapView.addPostAnnotation(post: post) } /// 0 always selected on initial fetch
         
         if map == nil {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
-            
         } else {
             /// map posts are sorted by spot rather than user
             if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map!.id!}) {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id!)
-             //   UserDataModel.shared.userInfo.mapsList[i].postsDictionary[post.id!] = post
-                if post.spotID ?? "" == "" {
-                    /// attach by postID
-                    let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
-                    UserDataModel.shared.userInfo.mapsList[i].postGroup.append(MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
-
-                } else if !map!.postGroup.contains(where: {$0.id == post.spotID!}) {
-                    let coordinate = CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!)
-                    UserDataModel.shared.userInfo.mapsList[i].postGroup.append(MapPostGroup(id: post.spotID!, coordinate: coordinate, spotName: post.spotName!, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
-                    
-                } else if let i = map!.postGroup.firstIndex(where: {$0.id == post.spotID}) {
-                    UserDataModel.shared.userInfo.mapsList[i].postGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
-                    UserDataModel.shared.userInfo.mapsList[i].postGroup[i].sortPostIDs()
-                }
+                let _ = UserDataModel.shared.userInfo.mapsList[i].updateGroup(post: post)
             }
         }
     }
@@ -271,15 +257,9 @@ extension MapController {
                 do {
                     let mapIn = try doc.data(as: CustomMap.self)
                     guard var mapInfo = mapIn else { continue }
-                    /// append spots to show on map even if there's no post attached
-                    if !mapInfo.spotIDs.isEmpty {
-                        for i in 0...mapInfo.spotIDs.count - 1 {
-                            let coordinate = CLLocationCoordinate2D(latitude: mapInfo.spotLocations[safe: i]?["lat"] ?? 0.0, longitude: mapInfo.spotLocations[safe: i]?["long"] ?? 0.0)
-                            mapInfo.postGroup.append(MapPostGroup(id: mapInfo.spotIDs[i], coordinate: coordinate, spotName: mapInfo.spotNames[safe: i] ?? "", postIDs: []))
-                        }
-                    }
-                    
+                    mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
+                    
                     self.homeFetchGroup.enter()
                     self.getRecentPosts(map: mapInfo)
                 } catch {
@@ -328,38 +308,18 @@ extension MapController {
             }
         }
     }
-    
-    func sortPosts(_ posts: [MapPost]) -> [MapPost] {
-        posts.sorted(by: { p1, p2 in
-            guard p1.seen == p2.seen else {
-                return !p1.seen && p2.seen
-            }
             
-            return p1.timestamp.seconds > p2.timestamp.seconds
-        })
-    }
-    
-    func sortPostGroup(_ group: [MapPostGroup]) -> [MapPostGroup] {
-        /// MapPostGroup postIDs will already be sorted
-        group.sorted(by: { g1, g2 in
-            guard (g1.postIDs.first?.seen ?? true) == (g2.postIDs.first?.seen ?? true) else {
-                return !(g1.postIDs.first?.seen ?? true) && (g2.postIDs.first?.seen ?? true)
-            }
-            return g1.postIDs.first?.timestamp.seconds ?? 0 > g2.postIDs.first?.timestamp.seconds ?? 0
-        })
-    }
-    
     func getSortedCoordinates() -> [CLLocationCoordinate2D] {
         let map = getSelectedMap()
         if map == nil {
             var posts = friendsPostsDictionary.map({$0.value})
             if posts.contains(where: {!$0.seen}) { posts = posts.filter({!$0.seen}) }
-            posts = sortPosts(posts)
+            posts = mapView.sortPosts(posts)
             return posts.map({CLLocationCoordinate2D(latitude: $0.postLat, longitude: $0.postLong)})
         } else {
             var group = map!.postGroup
             if group.contains(where: {$0.postIDs.contains(where: {!$0.seen})}) { group = group.filter({$0.postIDs.contains(where: {!$0.seen})})}
-            group = sortPostGroup(group)
+            group = mapView.sortPostGroup(group)
             return group.map({$0.coordinate})
         }
     }
