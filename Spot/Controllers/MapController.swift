@@ -17,6 +17,11 @@ import FirebaseFirestore
 import FirebaseAuth
 import FirebaseMessaging
 
+protocol MapControllerDelegate: AnyObject {
+    func getHeelsMap()
+    func addHeelsMap()
+}
+
 class MapController: UIViewController {
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -59,6 +64,9 @@ class MapController: UIViewController {
     
     var startTime: Int64!
     
+    var addFriends: AddFriendsView!
+    var heelsMap: CustomMap!
+    
     /// sheet view: Must declare outside to listen to UIEvent
     private var sheetView: DrawerView? {
         didSet {
@@ -76,7 +84,6 @@ class MapController: UIViewController {
         addNotifications()
         runMapFetches()
         setUpNavBar()
-        
         locationManager.delegate = self
     }
     
@@ -194,9 +201,9 @@ class MapController: UIViewController {
         if titleView != nil { return titleView }
         
         titleView = MapTitleView {
+            $0.searchButton.addTarget(self, action: #selector(openFindFriendsDrawer(_:)), for: .touchUpInside)
             $0.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
             $0.notiButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
-            
         }
         
         let notificationRef = self.db.collection("users").document(self.uid).collection("notifications")
@@ -218,8 +225,7 @@ class MapController: UIViewController {
         
         return titleView
     }
-    
-    
+        
     
     @objc func addTap(_ sender: UIButton) {
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
@@ -256,6 +262,28 @@ class MapController: UIViewController {
         notifVC.containerDrawerView = sheetView
         sheetView?.present(to: .Top)
     }
+    
+    @objc func openFindFriends(_ sender: UIButton){
+        let findFriendsVC = FindFriendsController()
+        self.navigationController?.pushViewController(findFriendsVC, animated: true)
+        addFriends.removeFromSuperview()
+    }
+    
+    @objc func openFindFriendsDrawer(_ sender: UIButton){
+        let ffvc = FindFriendsController()
+        
+        sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+            self.sheetView = nil
+        })
+        
+        sheetView?.swipeDownToDismiss = false
+        sheetView?.canInteract = false
+        sheetView?.present(to: .Top)
+        sheetView?.showCloseButton = false
+        
+        ffvc.contentDrawer = sheetView
+    }
+
     
     func openPost(posts: [MapPost]) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
@@ -518,6 +546,95 @@ class MapTitleView: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+}
+
+class AddFriendsView: UIView {
+    var note: UILabel!
+    var profileButton: UIButton!
+    var addFriendButton: UIButton!
+    var searchButton: UIButton!
+    
+    override var intrinsicContentSize: CGSize {
+        return UIView.layoutFittingExpandedSize
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.layer.cornerRadius = 17
+        self.backgroundColor = .white
+        
+        note = UILabel {
+            $0.text = "Add friends to your map"
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            addSubview($0)
+        }
+        
+        note.snp.makeConstraints{
+            $0.top.equalToSuperview().offset(11)
+            $0.centerX.equalToSuperview()
+        }
+        
+        let animals = UIImageView {
+            $0.contentMode = .scaleToFill
+            $0.image = UIImage(named: "FriendsEmptyState")
+            addSubview($0)
+        }
+        
+        animals.snp.makeConstraints{
+            $0.height.equalTo(53.12)
+            $0.width.equalTo(151)
+            $0.centerX.equalToSuperview().offset(-5)
+            $0.centerY.equalToSuperview().offset(-10)
+        }
+        
+        
+        addFriendButton = UIButton {
+            $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            $0.layer.cornerRadius = 13
+            $0.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
+            let customButtonTitle = NSMutableAttributedString(string: "Find Friends", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                NSAttributedString.Key.foregroundColor: UIColor.black
+            ])
+            $0.setAttributedTitle(customButtonTitle, for: .normal)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            $0.isHidden = false
+            addSubview($0)
+        }
+        addFriendButton.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(15)
+            $0.bottom.equalToSuperview().offset(-13)
+            $0.height.equalTo(39)
+        }
+        
+        let cancel = UIButton {
+            $0.setImage(UIImage(named: "ChooseSpotCancel"), for: .normal)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            $0.addTarget(self, action: #selector(self.closeFindFriends(_:)), for: .touchUpInside)
+            $0.isHidden = false
+            addSubview($0)
+        }
+        
+        cancel.snp.makeConstraints {
+            $0.trailing.equalToSuperview().offset(-5)
+            $0.top.equalToSuperview().offset(5)
+            $0.height.width.equalTo(19.81)
+        }
+        
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    
+    @objc func closeFindFriends(_ sender: UIButton) {
+        self.removeFromSuperview()
+    }
+    
 }
 
 class NewPostsButton: UIButton {
