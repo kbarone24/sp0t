@@ -465,12 +465,12 @@ extension MapController: MapControllerDelegate {
         UserDataModel.shared.userInfo.mapsList.append(heelsMap)
         print("MAP list: ", UserDataModel.shared.userInfo.mapsList)
         self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").updateData([
-            "memberIDs": FieldValue.arrayUnion([UserDataModel.shared.userInfo.id])
+            "memberIDs": FieldValue.arrayUnion([UserDataModel.shared.userInfo.id!])
         ])
         
         self.homeFetchGroup.enter()
         self.getRecentPosts(map: heelsMap)
-        self.reloadMapsCollection()
+        self.reloadMapsCollection(reload: false)
     }
     
 }
