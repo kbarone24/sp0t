@@ -159,7 +159,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             }
             /// leave friend request group once all friend requests are appended
             friendRequestGroup.notify(queue: .main) {
-                print("leaving friend request query")
                 fetchGroup.leave()
             }
         }
@@ -236,7 +235,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                 
         fetchGroup.notify(queue: DispatchQueue.main) { [weak self] in
             guard let self = self else { return }
-            print("made it to end of query")
             self.sortAndReload()
         }
     }
@@ -281,7 +279,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     @objc func leaveNotifs() {
         if navigationController?.viewControllers.count == 1 {
-            print("leaving 1")
             contentDrawer?.closeAction()
         } else {
             navigationController?.popViewController(animated: true)
