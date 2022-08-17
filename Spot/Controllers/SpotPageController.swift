@@ -22,7 +22,7 @@ class SpotPageController: UIViewController {
     private var mapPostLabel: UILabel!
     private var communityPostLabel: UILabel!
     private lazy var imageManager = SDWebImageManager()
-    private var drawerView: DrawerView?
+    private var containerDrawerView: DrawerView?
     
     private var mapID: String?
     private var mapName: String?
@@ -50,7 +50,7 @@ class SpotPageController: UIViewController {
         self.mapName = mapPost.mapName
         self.spotName = mapPost.spotName
         self.spotID = mapPost.spotID
-        self.drawerView = presentedDrawerView
+        self.containerDrawerView = presentedDrawerView
     }
 
     required init?(coder: NSCoder) {
@@ -72,10 +72,8 @@ class SpotPageController: UIViewController {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        barView.isHidden = false
-        drawerView?.canInteract = false
-        drawerView?.swipeDownToDismiss = false
-        drawerView?.showCloseButton = false
+        setUpNavBar()
+        configureDrawerView()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -84,9 +82,22 @@ class SpotPageController: UIViewController {
 }
 
 extension SpotPageController {
+    private func setUpNavBar() {
+        navigationController?.setNavigationBarHidden(true, animated: true)
+        barView.isHidden = false
+    }
+    
+    private func configureDrawerView() {
+        containerDrawerView?.canInteract = false
+        containerDrawerView?.swipeDownToDismiss = false
+        containerDrawerView?.showCloseButton = false
+        if self.containerDrawerView?.status != .Top {
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        }
+    }
+    
     private func viewSetup() {
         view.backgroundColor = .white
-        navigationController?.setNavigationBarHidden(true, animated: true)
 
         spotPageCollectionView = {
             let layout = UICollectionViewFlowLayout()
@@ -123,7 +134,7 @@ extension SpotPageController {
         barView = UIView {
             $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
             $0.backgroundColor = .gray
-            drawerView?.slideView.addSubview($0)
+            containerDrawerView?.slideView.addSubview($0)
         }
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)

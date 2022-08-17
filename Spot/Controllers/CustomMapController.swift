@@ -48,7 +48,6 @@ class CustomMapController: UIViewController {
         }
     }
     
-//    public unowned var profileVC: ProfileViewController?
     public var delegate: CustomMapDelegate?
     private unowned var mapController: MapController?
     private lazy var imageManager = SDWebImageManager()
@@ -159,9 +158,11 @@ extension CustomMapController {
         if containerDrawerView == nil { return }
         containerDrawerView?.canInteract = true
         containerDrawerView?.swipeDownToDismiss = false
-        
+        containerDrawerView?.showCloseButton = false
         let position: DrawerViewDetent = fullScreenOnDismissal ? .Top : .Middle
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: position) }
+        if position.rawValue != containerDrawerView?.status.rawValue {
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: position) }
+        }
         fullScreenOnDismissal = false
     }
     
@@ -351,11 +352,7 @@ extension CustomMapController {
     @objc func backButtonAction() {
         barBackButton.isHidden = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Change `2.0` to the desired number of seconds.
-            if self.navigationController?.viewControllers.count == 1 {
-                self.containerDrawerView?.closeAction()
-            } else {
-                self.navigationController?.popViewController(animated: true)
-            }
+            self.containerDrawerView?.closeAction()
         }
         delegate?.finishPassing(updatedMap: mapData)
     }

@@ -93,7 +93,9 @@ class PostController: UIViewController {
         containerDrawerView?.swipeDownToDismiss = true
         containerDrawerView?.canInteract = true
         containerDrawerView?.showCloseButton = true
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        if containerDrawerView?.status != .Top {
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        }
     }
     
     func setUpView() {
@@ -844,7 +846,6 @@ extension PostCell {
     @objc func spotTap() {
         if let postVC = viewContainingController() as? PostController {
             let spotVC = SpotPageController(mapPost: post, presentedDrawerView: postVC.containerDrawerView)
-            postVC.containerDrawerView?.showCloseButton = false
             postVC.navigationController?.pushViewController(spotVC, animated: true)
         }
     }
