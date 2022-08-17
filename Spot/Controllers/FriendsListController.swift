@@ -254,7 +254,6 @@ extension FriendsListController: UISearchBarDelegate {
     }
 }
 
-
 extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return queried ? queriedFriends.count : friendsList.count

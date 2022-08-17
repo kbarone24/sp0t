@@ -76,7 +76,10 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     func configureDrawerView() {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        containerDrawerView?.showCloseButton = false
+        if self.containerDrawerView?.status != .Top {
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        }
     }
     
     func setUpNavBar() {

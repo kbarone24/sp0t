@@ -15,11 +15,6 @@ import FirebaseFunctions
 
 
 class ProfileViewController: UIViewController {
-        
-    // If start from middle position and need to be draggable
-    private var fromMiddleDrag: Bool = false
-    private var topYContentOffset: CGFloat?
-    private var middleYContentOffset: CGFloat?
     
     private var profileCollectionView: UICollectionView!
     private var noPostLabel: UILabel!
@@ -80,16 +75,15 @@ class ProfileViewController: UIViewController {
         runFetches()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
+        setUpNavBar()
+        configureDrawerView()
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ProfileOpen")
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
-        navigationController?.setNavigationBarHidden(false, animated: true)
-        configureDrawerView()
-        setUpNavBar()
     }
     
     @objc func mapLikersChanged(_ notification: NSNotification) {
@@ -148,7 +142,10 @@ extension ProfileViewController {
     private func configureDrawerView() {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        containerDrawerView?.showCloseButton = false
+        if self.containerDrawerView?.status != .Top {
+            self.containerDrawerView?.present(to: .Top)
+        }
     }
         
     private func getUserInfo() {
@@ -208,15 +205,6 @@ extension ProfileViewController {
             return view
         }()
         view.addSubview(profileCollectionView)
-
-        // Setups for if need to drag and start position is middle
-        if fromMiddleDrag {
-            // Need a new pan gesture to react when profileCollectionView scroll disables
-            let scrollViewPanGesture = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
-            scrollViewPanGesture.delegate = self
-            profileCollectionView.addGestureRecognizer(scrollViewPanGesture)
-            profileCollectionView.isScrollEnabled = false
-        }
         
         profileCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -409,98 +397,11 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         // Show navigation bar when user scroll pass the header section
-        if topYContentOffset != nil {
-            if scrollView.contentOffset.y > -91.0 {
-                navigationController?.navigationBar.isTranslucent = false
-                if(scrollView.contentOffset.y > 0){
-                    self.title = userProfile?.name
-                } else { self.title = ""}
-            }
-        } else {
-            if fromMiddleDrag == false {
-                topYContentOffset = scrollView.contentOffset.y
-            }
+        if scrollView.contentOffset.y > -91.0 {
+            navigationController?.navigationBar.isTranslucent = false
+            if(scrollView.contentOffset.y > 0){
+                self.title = userProfile?.name
+            } else { self.title = ""}
         }
-
-        if fromMiddleDrag {
-            // Disable the bouncing effect when scroll view is scrolled to top
-            if topYContentOffset != nil {
-                if
-                    containerDrawerView?.status == .Top &&
-                    scrollView.contentOffset.y <= topYContentOffset!
-                {
-                    scrollView.contentOffset.y = topYContentOffset!
-                }
-            }
-            
-            // Get middle y content offset
-            if middleYContentOffset == nil {
-                middleYContentOffset = scrollView.contentOffset.y
-            }
-            
-            // Set scroll view content offset when in transition
-            if
-                middleYContentOffset != nil &&
-                topYContentOffset != nil &&
-                scrollView.contentOffset.y <= middleYContentOffset! &&
-                containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
-            {
-                scrollView.contentOffset.y = middleYContentOffset!
-            }
-            
-            // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
-            if containerDrawerView?.status != .Top {
-                profileCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
-                profileCollectionView.isScrollEnabled = false
-                containerDrawerView?.swipeToNextState = true
-            }
-        }
-    }
-}
-
-extension ProfileViewController: UIGestureRecognizerDelegate {
-    @objc func onPan(_ recognizer: UIPanGestureRecognizer) {
-        // Swipe up y translation < 0
-        // Swipe down y translation > 0
-        let yTranslation = recognizer.translation(in: recognizer.view).y
-        
-        // Get the initial Top y position contentOffset
-        if containerDrawerView?.status == .Top && topYContentOffset == nil {
-            topYContentOffset = profileCollectionView.contentOffset.y
-        }
-        
-        // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction
-        if
-            topYContentOffset != nil &&
-            containerDrawerView?.status == .Top &&
-            profileCollectionView.contentOffset.y <= topYContentOffset!
-        {
-            profileCollectionView.isScrollEnabled = true
-            containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
-        }
-
-        // Preventing the drawer view to be dragged when it's status is top and user is scrolling down
-        if
-            containerDrawerView?.status == .Top &&
-            profileCollectionView.contentOffset.y > topYContentOffset ?? -50 &&
-            yTranslation > 0 &&
-            containerDrawerView?.swipeToNextState == false
-        {
-            containerDrawerView?.canDrag = false
-            containerDrawerView?.slideView.frame.origin.y = 0
-        }
-        
-        // Enable drag when the drawer view is on top and user swipes down
-        if profileCollectionView.contentOffset.y <= topYContentOffset ?? -50 && yTranslation >= 0 {
-            containerDrawerView?.canDrag = true
-        }
-        
-        // Need to prevent content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
-        
-        recognizer.setTranslation(.zero, in: recognizer.view)
-    }
-    
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return true
     }
 }
