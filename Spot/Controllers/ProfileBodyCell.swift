@@ -59,7 +59,7 @@ extension ProfileBodyCell {
         contentView.backgroundColor = .white
         
         mapImage = UIImageView {
-            $0.image = R.image.signuplogo()
+            $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.cornerRadius = 14
