@@ -41,141 +41,129 @@ class LandingPageController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setUpVideoLayer()
+        view.backgroundColor = .white
+        
+        //setUpVideoLayer()
         
         var heightAdjust: CGFloat = 0
         if UIScreen.main.bounds.height < 800 { heightAdjust = 20 }
         
-        let logoImage = UIImageView(frame: CGRect(x: UIScreen.main.bounds.width/2 - 50.5, y: 57 - heightAdjust, width: 101, height: 103))
-        logoImage.image = UIImage(named: "LandingPageLogo")
-        logoImage.contentMode = .scaleAspectFit
-        view.addSubview(logoImage)
-        
-        let createAccountButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 152, y: UIScreen.main.bounds.height - 268, width: 304, height: 48))
-        createAccountButton.setImage(UIImage(named: "CreateAccountButton")!, for: .normal)
-        createAccountButton.addTarget(self, action: #selector(createAccountTap(_:)), for: .touchUpInside)
-        view.addSubview(createAccountButton)
-        
-        let beenHereLabel = UILabel(frame: CGRect(x: UIScreen.main.bounds.width/2 - 100, y: createAccountButton.frame.maxY + 27, width: 200, height: 17))
-        beenHereLabel.text = "Been here before?"
-        beenHereLabel.textAlignment = .center
-        beenHereLabel.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        beenHereLabel.font = UIFont(name: "SFCompactText-Regular", size: 16)
-        view.addSubview(beenHereLabel)
-        
-        let loginWithEmail = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 152, y: beenHereLabel.frame.maxY + 9, width: 304, height: 45))
-        loginWithEmail.setImage(UIImage(named: "LoginWithEmail"), for: .normal)
-        loginWithEmail.addTarget(self, action: #selector(loginWithEmailTap(_:)), for: .touchUpInside)
-        view.addSubview(loginWithEmail)
-        
-        let loginWithPhone = UIButton(frame: CGRect(x: UIScreen.main.bounds.width/2 - 152, y: loginWithEmail.frame.maxY + 12, width: 304, height: 45))
-        loginWithPhone.setImage(UIImage(named: "LoginWithPhone"), for: .normal)
-        loginWithPhone.addTarget(self, action: #selector(loginWithPhoneTap(_:)), for: .touchUpInside)
-        view.addSubview(loginWithPhone)
-    }
-    
-    func setUpVideoLayer() {
-        
-        videoPreviewView = UIView(frame: view.bounds)
-        videoPreviewView.backgroundColor = nil
-        view.addSubview(videoPreviewView)
-        
-        thumbnailImage = UIImageView(frame: videoPreviewView.frame)
-        thumbnailImage.contentMode = .scaleAspectFill
-        
-        _ = try? AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playback, mode: .default, options: .mixWithOthers)
-        
-        let videoURL = Bundle.main.url(forResource:"LandingScreenVideo", withExtension: "mp4")
-        
-        /// add preview thumbnail
-        let previewImage = videoSnapshot(url: videoURL!)
-        if previewImage != nil {
-            print("add thumbnail")
-            thumbnailImage.image = previewImage
-            videoPreviewView.addSubview(thumbnailImage)
+
+        let createAccountButton = UIButton {
+            $0.layer.cornerRadius = 15
+            $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            let customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                NSAttributedString.Key.foregroundColor: UIColor.black
+            ])
+            $0.setAttributedTitle(customButtonTitle, for: .normal)
+            $0.setImage(nil, for: .normal)
+            $0.addTarget(self, action: #selector(createAccountTap(_:)), for: .touchUpInside)
+            view.addSubview($0)
         }
         
-        let playerItem = AVPlayerItem(url: videoURL!)
         
-        videoPlayer = AVQueuePlayer(url: videoURL!)
-        videoPlayer.isMuted = true
-        
-        playerLooper = AVPlayerLooper(player: videoPlayer, templateItem: playerItem)
-        
-        playerLayer = AVPlayerLayer(player: videoPlayer)
-        playerLayer.videoGravity = .resizeAspectFill
-        playerLayer.frame = videoPreviewView.frame
-        
-        videoPlayer.addObserver(self, forKeyPath: "status", options: [.old, .new], context: nil)
-        
-        /// add video mask
-        let gl0 = CAGradientLayer()
-        let color0 = UIColor(named: "SpotBlack")!.withAlphaComponent(0.7).cgColor
-        let color1 = UIColor.clear.cgColor
-        gl0.colors = [color1, color0]
-        gl0.startPoint = CGPoint(x: 0, y: 0.6)
-        gl0.endPoint = CGPoint(x: 0, y: 1.0)
-        gl0.frame = self.view.bounds
-        videoPreviewView.layer.addSublayer(gl0)
-        
-        let gl1 = CAGradientLayer()
-        gl1.colors = [color0, color1]
-        gl1.startPoint = CGPoint(x: 0, y: 0.0)
-        gl1.endPoint = CGPoint(x: 0, y: 0.35)
-        gl1.frame = self.view.bounds
-        videoPreviewView.layer.addSublayer(gl1)
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(setPlayerToNil(_:)), name: UIApplication.didEnterBackgroundNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(reinitializePlayerLayer(_:)), name: UIApplication.willEnterForegroundNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(setPlayerToNil(_:)), name: UIApplication.willResignActiveNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(reinitializePlayerLayer(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
-    }
-    
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if object as AnyObject? === videoPlayer {
-            /// start video only when its ready so that we can show an image preview before the videoPlayer starts playing
-            if keyPath == "status" {
-                if videoPlayer.status == .readyToPlay {
-                    if thumbnailImage != nil { thumbnailImage.removeFromSuperview() }
-                    videoPreviewView.layer.addSublayer(playerLayer)
-                    DispatchQueue.main.async {
-                        self.videoPlayer.playImmediately(atRate: 1.0)
-                        self.firstLoad = false
-                    }
-                }
-            }
+        createAccountButton.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(50)
+            $0.height.equalTo(58)
+            $0.top.equalToSuperview().offset(351)
         }
-    }
-    
-    @objc func reinitializePlayerLayer(_ sender: NSNotification) {
-        if videoPlayer != nil && !firstLoad {
-            playerLayer = AVPlayerLayer(player: videoPlayer)
-            if videoPlayer.timeControlStatus == .paused {  videoPlayer.play() }
-        }
-    }
-    
-    @objc func setPlayerToNil(_ sender: NSNotification) {
-        videoPlayer?.pause()
-        playerLayer = nil
-    }
-    
-    
-    func videoSnapshot(url: URL) -> UIImage? {
-        let asset = AVURLAsset(url: url)
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        
-        let timestamp = CMTime(seconds: 1, preferredTimescale: 60)
-        
-        do {
-            let imageRef = try generator.copyCGImage(at: timestamp, actualTime: nil)
-            return UIImage(cgImage: imageRef)
+
+        let loginButton = UIButton {
+            $0.layer.cornerRadius = 15
+            $0.backgroundColor = .white
+            $0.layer.borderWidth = 1.0
+            $0.layer.borderColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1).cgColor
+            let customButtonTitle = NSMutableAttributedString(string: "Log in", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                NSAttributedString.Key.foregroundColor: UIColor.black
+            ])
+            $0.setAttributedTitle(customButtonTitle, for: .normal)
+            $0.setImage(nil, for: .normal)
+            $0.addTarget(self, action: #selector(loginWithPhoneTap(_:)), for: .touchUpInside)
+            view.addSubview($0)
         }
         
-        catch let error as NSError {
-            print("Image failed with error \(error)")
-            return nil
+        
+        loginButton.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(50)
+            $0.height.equalTo(58)
+            $0.top.equalTo(createAccountButton.snp.bottom).offset(16)
         }
+        
+        let loginButton2 = UIButton {
+            $0.layer.cornerRadius = 15
+            $0.backgroundColor = .black
+            $0.layer.borderWidth = 1.0
+            $0.layer.borderColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1).cgColor
+            let customButtonTitle = NSMutableAttributedString(string: "Log in with email", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                NSAttributedString.Key.foregroundColor: UIColor.white
+            ])
+            $0.setAttributedTitle(customButtonTitle, for: .normal)
+            $0.setImage(nil, for: .normal)
+            $0.addTarget(self, action: #selector(loginWithEmailTap(_:)), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        
+        
+        loginButton2.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(50)
+            $0.height.equalTo(58)
+            $0.top.equalTo(loginButton.snp.bottom).offset(16)
+        }
+        
+        
+        let titleScreen = UIView {
+            view.addSubview($0)
+        }
+        
+        titleScreen.snp.makeConstraints{
+            $0.height.equalTo(60)
+            $0.top.equalToSuperview().offset(208)
+            $0.width.equalTo(106)
+            $0.centerX.equalToSuperview()
+        }
+        
+        let logo = UIImageView {
+            $0.contentMode = .center
+            $0.image = UIImage(named: "sp0tLogo")
+            titleScreen.addSubview($0)
+        }
+        
+        logo.snp.makeConstraints{
+            $0.leading.equalToSuperview()
+            $0.width.equalTo(38.32)
+            $0.height.equalTo(55.95)
+            $0.bottom.equalToSuperview()
+        }
+        
+        let title = UILabel {
+            $0.text = "SPOT"
+            $0.font = UIFont(name: "SFCompactRounded-Black", size: 32)
+            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            titleScreen.addSubview($0)
+        }
+        
+      title.snp.makeConstraints{
+            $0.bottom.equalToSuperview()
+            $0.leading.equalTo(logo.snp.trailing).offset(-10)
+        }
+        
+        let subTitle = UILabel {
+            $0.text = "Share your world"
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 22)
+            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            view.addSubview($0)
+        }
+        
+        subTitle.snp.makeConstraints{
+            $0.top.equalTo(titleScreen.snp.bottom).offset(9.05)
+            $0.centerX.equalToSuperview()
+        }
+        
+        
+        
     }
     
     @objc func createAccountTap(_ sender: UIButton) {

@@ -230,7 +230,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     func getContacts() {
        
         DispatchQueue.main.async {
-            self.activityIndicatorView = CustomActivityIndicator(frame: CGRect(x: 0, y: UIScreen.main.bounds.minX + 40, width: UIScreen.main.bounds.width, height: 30))
+            self.activityIndicatorView = CustomActivityIndicator(frame: CGRect(x: 0, y: UIScreen.main.bounds.minY + 40, width: UIScreen.main.bounds.width, height: 30))
             self.activityIndicatorView.isHidden = true
             self.tableView.addSubview(self.activityIndicatorView)
         }
