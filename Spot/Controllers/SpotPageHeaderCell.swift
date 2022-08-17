@@ -12,7 +12,6 @@ import Firebase
 import Mixpanel
 
 class SpotPageHeaderCell: UICollectionViewCell {
-
     private var spotName: UILabel!
     private var spotInfo: UILabel!
 
@@ -32,6 +31,7 @@ class SpotPageHeaderCell: UICollectionViewCell {
 
     public func cellSetup(spotName: String, spot: MapSpot?) {
         self.spotName.text = spotName
+        self.spotName.sizeToFit()
         guard spot != nil else { return }
         spotInfo.text = (spot!.city == "" || spot!.city == nil) ? "\(spot!.postIDs.count) posts" : "\(spot!.city!) • \(spot!.postIDs.count) posts"
     }
@@ -50,7 +50,7 @@ extension SpotPageHeaderCell {
         }
         spotName.snp.makeConstraints {
             $0.top.equalToSuperview().offset(50)
-            $0.leading.trailing.equalToSuperview().offset(17)
+            $0.leading.trailing.equalToSuperview().inset(17)
             $0.height.equalTo(23)
         }
         

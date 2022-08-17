@@ -279,6 +279,7 @@ extension MapController {
                 do {
                     let postIn = try doc.data(as: MapPost.self)
                     guard let postInfo = postIn else { return }
+                    if self.deletedPostIDs.contains(postInfo.id ?? "") { return }
                     if postInfo.mapID != "" {
                         /// check map dictionary for add
                         if let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID}) {
@@ -337,11 +338,13 @@ extension MapController {
     }
     
     @objc func notifyPostOpen(_ notification: NSNotification) {
+        print("post open")
         guard let postID = notification.userInfo?.first?.value as? String else { return }
         /// check every map for post and update if necessary
         /// check coordinate to refresh annotation on the map
         var coordinate: CLLocationCoordinate2D?
         if var post = friendsPostsDictionary[postID] {
+            print("set in friends dic")
             if !post.seenList!.contains(uid) { post.seenList?.append(uid) }
             friendsPostsDictionary[postID] = post
             coordinate = post.coordinate
@@ -367,9 +370,27 @@ extension MapController {
         }
     }
     
-    @objc func notifyPostChange(_ notification: NSNotification) {
+    @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
-       // updatePost(post: post, map: nil)
+        guard let mapID = notification.userInfo?["mapID"] as? String else { return }
+        guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+        /// remove from friends stuff
+        friendsPostsDictionary.removeValue(forKey: post.id!)
+        deletedPostIDs.append(post.id!)
+        /// remove from map
+        if mapID != "" {
+            if mapDelete {
+                UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == mapID})
+            } else if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == mapID}) {
+                DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id!, spotID: spotDelete ? post.spotID! : "") }
+            }
+        }
+        /// remove annotation
+        if let i = mapView.annotations.firstIndex(where: {$0.coordinate.isEqualTo(coordinate: post.coordinate)}) {
+            DispatchQueue.main.async { self.mapView.removeAnnotation(self.mapView.annotations[i])}
+        }
+        DispatchQueue.main.async { self.reloadMapsCollection(reload: true) }
     }
     
     @objc func notifyCommentChange(_ notification: NSNotification) {
