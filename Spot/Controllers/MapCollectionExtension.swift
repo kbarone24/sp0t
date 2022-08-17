@@ -52,15 +52,14 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func addMapAnnotations(index: Int) {
         selectedItemIndex = index
-        mapView.removeAnnotations(mapView.annotations)
-        
+        mapView.removeAllAnnos()
+
         if index == 0 {
-            for post in friendsPostsDictionary.values { addPostAnnotation(post: post) }
+            for post in friendsPostsDictionary.values { mapView.addPostAnnotation(post: post) }
         } else {
             let map = getSelectedMap()!
-            for group in map.postGroup { addSpotAnnotation(group: group)}
+            for group in map.postGroup { mapView.addSpotAnnotation(group: group, map: map) }
         }
-        
         self.centerMapOnPosts(animated: false)
     }
 }

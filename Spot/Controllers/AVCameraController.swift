@@ -120,7 +120,7 @@ class AVCameraController: UIViewController {
         view.backgroundColor = UIColor(named: "SpotBlack")
         view.isUserInteractionEnabled = false
         
-        let cameraAspect: CGFloat = UserDataModel.shared.screenSize == 0 ? 1.7 : UserDataModel.shared.screenSize == 1 ? 1.78 : 1.85
+        let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
@@ -471,7 +471,9 @@ class AVCameraController: UIViewController {
             transition.subtype = CATransitionSubtype.fromBottom
             
             DispatchQueue.main.async {
-                self.mapVC.uploadMapReset()
+                if let _ = self.navigationController?.viewControllers[(self.navigationController?.viewControllers.count ?? 2) - 2] as? MapController {
+                    self.mapVC.uploadMapReset()
+                }
                 self.navigationController?.view.layer.add(transition, forKey:kCATransition)
                 self.navigationController?.popViewController(animated: false)
             }

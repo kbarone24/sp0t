@@ -34,10 +34,10 @@ class SpotPostAnnotationView: MKAnnotationView {
         postIDs = posts.map({$0.id!})
         let post = posts.first
         
-        let nibView = loadNib(post: post, spotName: spotName)
-        self.image = nibView.asImage()
-
         if post != nil {
+            let nibView = loadNib(post: post!, spotName: spotName)
+            self.image = nibView.asImage()
+
             guard let url = URL(string: post!.imageURLs.first ?? "") else { image = nibView.asImage(); return }
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
             self.imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
@@ -48,11 +48,15 @@ class SpotPostAnnotationView: MKAnnotationView {
         }
     }
     
-    func loadNib(post: MapPost?, spotName: String) -> SpotPostView {
+    func loadNib(post: MapPost, spotName: String) -> SpotPostView {
         let infoWindow = SpotPostView.instanceFromNib() as! SpotPostView
         infoWindow.clipsToBounds = false
-        infoWindow.backgroundImage.image = post!.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
+        infoWindow.backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
         infoWindow.postImage.layer.cornerRadius = 57/2
+        
+        infoWindow.imageMask.layer.cornerRadius = 57/2
+        infoWindow.imageMask.isHidden = !post.seen
+        infoWindow.replayIcon.isHidden = !post.seen
         
         if spotName != "" {
             /// bordered text
@@ -68,6 +72,7 @@ class SpotPostAnnotationView: MKAnnotationView {
         } else {
             /// no spot attached to this post
             infoWindow.spotLabel.isHidden = true
+            infoWindow.spotIcon.isHidden = true
         }
         
         infoWindow.resizeView()

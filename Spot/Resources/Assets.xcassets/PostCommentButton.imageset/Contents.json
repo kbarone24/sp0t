@@ -1,19 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "PostComment1x.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "PostComment2x.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "PostComment3x.png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "Group 21781.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {
