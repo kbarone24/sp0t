@@ -12,6 +12,7 @@ import UIKit
 import Firebase
 import FirebaseUI
 import Mixpanel
+import IQKeyboardManagerSwift
 
 
 class HeelsMapPopUpController: UIViewController {
@@ -49,6 +50,7 @@ class HeelsMapPopUpController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        IQKeyboardManager.shared.enableAutoToolbar = false
     }
     
     func loadInfoView(){
@@ -149,6 +151,10 @@ class HeelsMapPopUpController: UIViewController {
                     NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
             ])
             $0.attributedPlaceholder = placeholderText
+            $0.textContentType = .emailAddress
+            $0.keyboardType = .emailAddress
+            $0.autocorrectionType = .no
+            $0.autocapitalizationType = .none
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 21)
             $0.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
             $0.textAlignment = .center
@@ -184,10 +190,8 @@ class HeelsMapPopUpController: UIViewController {
     }
     
     func validateEmail(){
-        
         let allLower = searchTextGlobal.lowercased()
-        
-        if(allLower.contains("unc.edu")){
+        if(allLower.contains("unc.edu")) {
             joinButton.alpha = 1.0
             joinButton.addTarget(self, action: #selector(addHeelsMap(_:)), for: .touchUpInside)
         } else {
@@ -197,9 +201,10 @@ class HeelsMapPopUpController: UIViewController {
     }
     
     @objc func addHeelsMap(_ sender: UIButton){
-        print(searchTextGlobal)
+        let schoolEmail = searchTextGlobal.lowercased().trimmingCharacters(in: .whitespaces)
+        db.collection("users").document(uid).updateData(["schoolEmail" : schoolEmail])
         mapDelegate.addHeelsMap()
-        dismiss(animated: true, completion: nil)
+        DispatchQueue.main.async { self.dismiss(animated: true, completion: nil) }
     }
     
     @objc func close(_ sender: UIButton){
@@ -211,13 +216,11 @@ class HeelsMapPopUpController: UIViewController {
 // MARK: - HeelsMap UITextFieldDelegate
 extension HeelsMapPopUpController: UITextFieldDelegate {
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
-      print(textField.text)
-      return false
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        return false
     }
     
     func textFieldDidChangeSelection(_ textField: UITextField) {
-        print(textField.text)
         searchTextGlobal = textField.text!
         validateEmail()
     }
