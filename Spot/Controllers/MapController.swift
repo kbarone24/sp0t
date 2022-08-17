@@ -102,28 +102,7 @@ class MapController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "MapOpen")
     }
-    
-    func addAdditionalOnboarding(){
-        /*let docRef = self.db.collection("users").document(self.uid)
-
-        docRef.getDocument { (document, error) in
-            if let document = document, document.exists {
-                var aviURL = document.get("avatarURL")
-                if(aviURL == ""){
-                    let avc = AvatarSelectionController(sentFrom: "map")
-                    self.navigationController!.pushViewController(avc, animated: true)
-                } else if (friends < 5){
-                    print("not enough friends 🙁")
-                }
-                
-                //print("Document data: \(dataDescription)")
-            } else {
-                print("Document does not exist")
-            }
-        }*/
-    }
-    
-    
+        
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
         //  NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
