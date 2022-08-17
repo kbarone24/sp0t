@@ -25,9 +25,7 @@ extension MapController {
         if feedLoaded { return }
         feedLoaded = true
         
-        DispatchQueue.main.async {
-            self.loadAdditionalOnboarding()
-        }
+        DispatchQueue.main.async { self.loadAdditionalOnboarding() }
         
         DispatchQueue.global(qos: .userInitiated).async {
             print("get maps", Timestamp(date: Date()).seconds - self.startTime)
@@ -48,45 +46,6 @@ extension MapController {
         }
     }
     
-    func displayHeelsMap() {
-        var heelsMapAdded = false
-        var heelsMapMembers = 0
-        print("NUMBER OF MAPS: ", UserDataModel.shared.userInfo.mapsList.count)
-        for map in UserDataModel.shared.userInfo.mapsList {
-            if(map.mapName == "Heelsmap"){
-                heelsMapAdded = true
-            }
-        }
-    
-        if(!self.userInChapelHill() && !heelsMapAdded){
-            let vc = HeelsMapPopUpController()
-            vc.mapDelegate = self
-            self.present(vc, animated: true)
-        }
-    }
-    
-    
-    func loadAdditionalOnboarding() {
-        if(UserDataModel.shared.userInfo.avatarURL == ""){
-            let avc = AvatarSelectionController(sentFrom: "map")
-            self.navigationController!.pushViewController(avc, animated: true)
-        }
-        else if(UserDataModel.shared.userInfo.friendsList.count < 5){
-            self.addFriends = AddFriendsView {
-                $0.layer.cornerRadius = 13
-                $0.isHidden = false
-                self.view.addSubview($0)
-            }
-            
-            self.addFriends.addFriendButton.addTarget(self, action: #selector(self.openFindFriends(_:)), for: .touchUpInside)
-            
-            self.addFriends.snp.makeConstraints{
-                $0.height.equalTo(160)
-                $0.leading.trailing.equalToSuperview().inset(16)
-                $0.centerY.equalToSuperview()
-            }
-        }
-    }
     
     func reloadMapsCollection(reload: Bool) {
         if !reload { UserDataModel.shared.userInfo.sortMaps() }
@@ -304,6 +263,7 @@ extension MapController {
                     guard var mapInfo = mapIn else { continue }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
+                    print("ct", UserDataModel.shared.userInfo.mapsList.count)
                     
                     self.homeFetchGroup.enter()
                     self.getRecentPosts(map: mapInfo)
@@ -435,8 +395,45 @@ extension MapController {
 }
 
 extension MapController: MapControllerDelegate {
+    func displayHeelsMap() {
+        var heelsMapAdded = false
+        var heelsMapMembers = 0
+        for map in UserDataModel.shared.userInfo.mapsList {
+            if(map.mapName == "Heelsmap"){
+                heelsMapAdded = true
+            }
+        }
+    
+        if(!self.userInChapelHill() && !heelsMapAdded){
+            let vc = HeelsMapPopUpController()
+            vc.mapDelegate = self
+            self.present(vc, animated: true)
+        }
+    }
+    
+    
+    func loadAdditionalOnboarding() {
+        if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
+            let avc = AvatarSelectionController(sentFrom: "map")
+            self.navigationController!.pushViewController(avc, animated: true)
+        }
+        else if (UserDataModel.shared.userInfo.friendIDs.count < 5) {
+            self.addFriends = AddFriendsView {
+                $0.layer.cornerRadius = 13
+                $0.isHidden = false
+                self.view.addSubview($0)
+            }
+            
+            self.addFriends.addFriendButton.addTarget(self, action: #selector(self.openFindFriends(_:)), for: .touchUpInside)
+            self.addFriends.snp.makeConstraints{
+                $0.height.equalTo(160)
+                $0.leading.trailing.equalToSuperview().inset(16)
+                $0.centerY.equalToSuperview()
+            }
+        }
+    }
+
     func getHeelsMap() {
-        print("heels")
         self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").getDocument { (heelsMapSnap, err) in
             do {
                 let mapIn = try heelsMapSnap?.data(as: CustomMap.self)
@@ -457,21 +454,19 @@ extension MapController: MapControllerDelegate {
                 return
             }
         }
-        
-
     }
     
-    func addHeelsMap(){
+    func addHeelsMap() {
         UserDataModel.shared.userInfo.mapsList.append(heelsMap)
-        print("MAP list: ", UserDataModel.shared.userInfo.mapsList)
         self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").updateData([
             "memberIDs": FieldValue.arrayUnion([UserDataModel.shared.userInfo.id!])
         ])
+        self.reloadMapsCollection(reload: false)
         
         self.homeFetchGroup.enter()
-        self.getRecentPosts(map: heelsMap)
-        self.reloadMapsCollection(reload: false)
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getRecentPosts(map: self.heelsMap)
+        }
     }
-    
 }
 

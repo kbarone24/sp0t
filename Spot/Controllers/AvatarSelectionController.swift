@@ -55,7 +55,8 @@ class AvatarSelectionController: UIViewController {
             self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
         }
                 
-        if(self.centerCell != (self.collectionView.cellForItem(at: IndexPath(row: 5, section: 0)) as! AvatarCell)){
+        print("did appear")
+        if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(row: 5, section: 0)) as! AvatarCell)){
                 self.centerCell = (self.collectionView.cellForItem(at: IndexPath(row: 5, section: 0)) as! AvatarCell)
                 transformToLarge()
         }
@@ -72,9 +73,9 @@ class AvatarSelectionController: UIViewController {
     }
     
     func setUp() {
+        print("set up")
         ///hardcode cell height in case its laid out before view fully appears -> hard code body height so mask stays with cell change
         resetCell()
-        
         
         let title = UILabel {
             $0.text = "Choose your avatar"
@@ -99,7 +100,6 @@ class AvatarSelectionController: UIViewController {
             $0.top.equalTo(title.snp.bottom).offset(9.05)
             $0.centerX.equalToSuperview()
         }
-        
         
         //acts up if I set up the view using the other style
         collectionView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 189)
