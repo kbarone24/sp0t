@@ -53,12 +53,13 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     }
     
     deinit {
-        print("notifications deinit")
+        NotificationCenter.default.removeObserver(self)
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(rawValue: "DeletePost"), object: nil)
         setupView()
     }
     
@@ -331,9 +332,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         }
     }
     
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+        notifications.removeAll(where: {$0.postID == post.id})
+        if mapDelete {
+            notifications.removeAll(where: {$0.mapID == post.mapID})
+        }
+        DispatchQueue.main.async { self.tableView.reloadData() }
     }
 }
 

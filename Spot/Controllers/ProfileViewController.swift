@@ -87,6 +87,7 @@ class ProfileViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name(("DeletePost")), object: nil)
         navigationController?.setNavigationBarHidden(false, animated: true)
         configureDrawerView()
         setUpNavBar()
@@ -114,10 +115,17 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func popVC() {
-        if navigationController?.viewControllers.count == 1 {
-            containerDrawerView?.closeAction()
-        } else {
-            navigationController?.popViewController(animated: true)
+        containerDrawerView?.closeAction()
+    }
+    
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+        
+        posts.removeAll(where: {$0.id == post.id})
+        if mapDelete {
+            maps.removeAll(where: {$0.id == post.mapID ?? ""})
+            DispatchQueue.main.async { self.profileCollectionView.reloadData() }
         }
     }
 }
@@ -191,9 +199,10 @@ extension ProfileViewController {
     
     private func viewSetup() {
         view.backgroundColor = .white
-
         self.title = ""
         navigationItem.backButtonTitle = ""
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
                         
         profileCollectionView = {
             let layout = UICollectionViewFlowLayout()

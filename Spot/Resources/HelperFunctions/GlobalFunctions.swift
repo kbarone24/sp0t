@@ -505,7 +505,6 @@ extension UIViewController {
         posters.append(contentsOf: addedUsers)
         
         let db: Firestore = Firestore.firestore()
-        
         // adjust user values for added users
         for poster in posters {            
             /// increment addedUsers spotScore by 1

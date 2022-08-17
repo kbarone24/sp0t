@@ -169,7 +169,8 @@ extension CustomMapController {
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
-        
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
+
         view.backgroundColor = .white
         navigationItem.setHidesBackButton(true, animated: true)
         
@@ -346,6 +347,23 @@ extension CustomMapController {
     @objc func DrawerViewToBottomCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerClose")
         barBackButton.isHidden = true
+    }
+    
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+        
+        if mapDelete {
+            containerDrawerView?.closeAction()
+        } else {
+            postsList.removeAll(where: {$0.id == post.id})
+            DispatchQueue.main.async {
+                self.collectionView.reloadData()
+                if let anno = self.mapController?.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: post.coordinate)}) {
+                    self.mapController?.mapView.removeAnnotation(anno)
+                }
+            }
+        }
     }
     
     @objc func backButtonAction() {

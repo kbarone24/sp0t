@@ -60,6 +60,7 @@ class SpotPageController: UIViewController {
     deinit {
         print("SpotPageController(\(self) deinit")
         barView.removeFromSuperview()
+        NotificationCenter.default.removeObserver(self)
     }
     
     override func viewDidLoad() {
@@ -85,6 +86,7 @@ class SpotPageController: UIViewController {
 
 extension SpotPageController {
     private func viewSetup() {
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         view.backgroundColor = .white
         navigationController?.setNavigationBarHidden(true, animated: true)
 
@@ -302,7 +304,20 @@ extension SpotPageController {
     }
     
     @objc func backButtonAction() {
-        navigationController?.popViewController(animated: true)
+        drawerView?.closeAction()
+    }
+    
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+        
+        if spotDelete {
+            drawerView?.closeAction()
+        } else {
+            relatedPost.removeAll(where: {$0.id == post.id})
+            communityPost.removeAll(where: {$0.id == post.id})
+            DispatchQueue.main.async { self.spotPageCollectionView.reloadData() }
+        }
     }
 }
 
