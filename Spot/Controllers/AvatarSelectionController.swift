@@ -51,16 +51,20 @@ class AvatarSelectionController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        DispatchQueue.main.async {
+        //DispatchQueue.main.async {
             self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
+        //}
+        
+        DispatchQueue.main.async {
+            if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)){
+                    self.centerCell = (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)
+                    self.transformToLarge()
+            }
         }
                 
         print("did appear")
-        if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(row: 5, section: 0)) as! AvatarCell)){
-                self.centerCell = (self.collectionView.cellForItem(at: IndexPath(row: 5, section: 0)) as! AvatarCell)
-                transformToLarge()
-        }
-            print("center cell: ", centerCell.avatar!)
+
+        //print("center cell: ", centerCell.avatar!)
                 
         let layoutMargins: CGFloat = self.collectionView.layoutMargins.left + self.collectionView.layoutMargins.left
         let sideInset = (self.view.frame.width / 2) - layoutMargins
@@ -166,13 +170,16 @@ class AvatarSelectionController: UIViewController {
         ///finding cell at the center
         let center = self.view.convert(self.collectionView.center, to: self.collectionView)
 
-        if let indexPath = collectionView.indexPathForItem(at: center) {
-            if(self.centerCell != (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)){
-                self.centerCell = (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)
-                transformToLarge()
+        DispatchQueue.main.async { [self] in
+            if let indexPath = self.collectionView.indexPathForItem(at: center) {
+                if(self.centerCell != (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)){
+                    self.centerCell = (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)
+                    self.transformToLarge()
+                }
+                print("center cell (scrollView): ", centerCell.avatar!)
             }
-            print("center cell (scrollView): ", centerCell.avatar!)
         }
+
     }
     
    func transformToLarge(){
