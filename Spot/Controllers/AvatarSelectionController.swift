@@ -51,10 +51,10 @@ class AvatarSelectionController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
-        
-        //collectionView.reloadData()
-        
+        DispatchQueue.main.async {
+            self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
+        }
+                
         if(self.centerCell != (self.collectionView.cellForItem(at: IndexPath(row: 5, section: 0)) as! AvatarCell)){
                 self.centerCell = (self.collectionView.cellForItem(at: IndexPath(row: 5, section: 0)) as! AvatarCell)
                 transformToLarge()
@@ -155,8 +155,10 @@ class AvatarSelectionController: UIViewController {
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView){
-        collectionView.reloadData()
-        collectionView.layoutSubviews()
+        DispatchQueue.main.async {
+            self.collectionView.reloadData()
+            self.collectionView.layoutSubviews()
+        }
 
         guard scrollView is UICollectionView else {
             return}
@@ -260,9 +262,6 @@ func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPat
      // might need when debugging
 }
 
-extension AvatarSelectionController: UICollectionViewDelegateFlowLayout {
-    //might need when debugging
-}
 
 final class MyCollectionViewFlowLayout: UICollectionViewFlowLayout {
     
@@ -347,6 +346,3 @@ class AvatarCell: UICollectionViewCell {
         }
     }
 }
-
-
-
