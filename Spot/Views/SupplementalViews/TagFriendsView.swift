@@ -24,6 +24,7 @@ class TagFriendsView: UIView {
             runQuery()
         }
     }
+    var textColor: UIColor = .white
             
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -86,6 +87,7 @@ extension TagFriendsView: UICollectionViewDelegate, UICollectionViewDataSource, 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TagFriendCell", for: indexPath) as? TagFriendCell {
             cell.setUp(user: queryUsers[indexPath.row])
+            cell.textColor = textColor
             return cell
         }
         return UICollectionViewCell()
@@ -105,6 +107,12 @@ class TagFriendCell: UICollectionViewCell {
     var username: UILabel!
     var profileImage: UIImageView!
     var avatarImage: UIImageView!
+    
+    var textColor: UIColor = .black {
+        didSet {
+            username.textColor = textColor
+        }
+    }
     
     func setUp(user: UserProfile) {
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
@@ -145,7 +153,7 @@ class TagFriendCell: UICollectionViewCell {
         }
         
         username = UILabel {
-            $0.textColor = .white
+            $0.textColor = textColor
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
             $0.textAlignment = .center
             $0.lineBreakMode = .byTruncatingTail

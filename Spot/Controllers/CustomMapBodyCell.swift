@@ -9,21 +9,14 @@
 import UIKit
 import SDWebImage
 
-protocol CustomMapBodyCellDelegate {
-    func finishFetching(mapPostID: String, fetchedMapPost: MapPost )
-}
-
 class CustomMapBodyCell: UICollectionViewCell {
     
     private var postImage: UIImageView!
     private var postLocation: UILabel!
-    private var postID: String!
     private var postData: MapPost?
     private lazy var fetching = false
     private lazy var imageManager = SDWebImageManager()
-    
-    public var delegate: CustomMapBodyCellDelegate?
-    
+        
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
@@ -40,25 +33,22 @@ class CustomMapBodyCell: UICollectionViewCell {
         }
     }
     
-    public func cellSetup(postID: String, postData: MapPost?) {
-        self.postID = postID
+    public func cellSetup(postData: MapPost) {
         self.postData = postData
-        if postData != nil {
-            postImage.image = postData?.postImage[0]
-            if postData!.spotName != "" {
-                let imageAttachment = NSTextAttachment()
-                imageAttachment.image = UIImage(named: "Vector")
-                imageAttachment.bounds = CGRect(x: 0, y: -2.5, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
-                let attachmentString = NSAttributedString(attachment: imageAttachment)
-                let completeText = NSMutableAttributedString(string: "")
-                completeText.append(attachmentString)
-                completeText.append(NSAttributedString(string: " "))
-                completeText.append(NSAttributedString(string: postData!.spotName!))
-                self.postLocation.attributedText = completeText
-            }
-        } else {
-            guard fetching == false else { return }
-            fetchPostData(ID: postID)
+        
+        let userTransformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2/3, height: (UIScreen.main.bounds.width * 2/3) * 1.5), scaleMode: .aspectFill)
+        postImage.sd_setImage(with: URL(string: postData.imageURLs.first ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+        
+        if postData.spotName != "" {
+            let imageAttachment = NSTextAttachment()
+            imageAttachment.image = UIImage(named: "Vector")
+            imageAttachment.bounds = CGRect(x: 0, y: -2.5, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
+            let attachmentString = NSAttributedString(attachment: imageAttachment)
+            let completeText = NSMutableAttributedString(string: "")
+            completeText.append(attachmentString)
+            completeText.append(NSAttributedString(string: " "))
+            completeText.append(NSAttributedString(string: postData.spotName!))
+            self.postLocation.attributedText = completeText
         }
     }
 }
@@ -82,49 +72,12 @@ extension CustomMapBodyCell {
             $0.textColor = UIColor(red: 1, green: 1, blue: 1, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
             $0.alpha = 0.96
+            $0.lineBreakMode = .byTruncatingTail
             contentView.addSubview($0)
         }
         postLocation.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(8)
+            $0.leading.trailing.equalToSuperview().inset(8)
             $0.bottom.equalToSuperview().inset(9)
-        }
-    }
-    
-    private func fetchPostData(ID: String) {
-        DispatchQueue.main.async {
-            self.fetching = true
-            self.getPost(postID: ID) { mapPost in
-                if mapPost.spotName != "" {
-                    let imageAttachment = NSTextAttachment()
-                    imageAttachment.image = UIImage(named: "Vector")
-                    imageAttachment.bounds = CGRect(x: 0, y: -2.5, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
-                    let attachmentString = NSAttributedString(attachment: imageAttachment)
-                    let completeText = NSMutableAttributedString(string: "")
-                    completeText.append(attachmentString)
-                    completeText.append(NSAttributedString(string: " "))
-                    completeText.append(NSAttributedString(string: mapPost.spotName!))
-                    self.postLocation.attributedText = completeText
-                }
-                
-                self.imageManager.loadImage(with: URL(string: mapPost.imageURLs[0]), options: .highPriority, context: nil, progress: nil) { [weak self] (image, data, err, cache, download, url) in
-                    self?.fetching = false
-                    guard self != nil else { return }
-                    let image = image ?? UIImage()
-                    self?.postImage.image = image
-                    var mapPostWithImage = mapPost
-                    mapPostWithImage.postImage.append(image)
-                    let userInfo = ["mapPost": mapPostWithImage]
-                    NotificationCenter.default.post(name: NSNotification.Name("FetchedMapPost"), object: nil, userInfo: userInfo)
-                    
-                    if self!.postID != mapPostWithImage.id {
-                        self?.postLocation.text = ""
-                        self?.postImage.image = UIImage()
-                        self?.cellSetup(postID: self!.postID, postData: self?.postData)
-                    }
-                    
-//                    self?.delegate?.finishFetching(mapPostID: ID, fetchedMapPost: mapPostWithImage)
-                }
-            }
         }
     }
 }

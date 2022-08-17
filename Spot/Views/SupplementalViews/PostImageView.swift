@@ -10,19 +10,17 @@ import Foundation
 import UIKit
 
 class PostImageView: UIImageView, UIGestureRecognizerDelegate {
-    
     var stillImage: UIImage
     var animationIndex: Int
-    
     var originalCenter: CGPoint
     var activeAnimation = false
+    var currentAspect: CGFloat
     
     override init(frame: CGRect) {
-        
         stillImage = UIImage()
         animationIndex = 0
         originalCenter = .zero
-
+        currentAspect = 0
         super.init(frame: frame)
         
         tag = 16
@@ -31,6 +29,10 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
         contentMode = .scaleAspectFill
             
         enableZoom()
+    }
+    
+    override func layoutSubviews() {
+        if currentAspect > 1.45 { addBottomMask() }
     }
     
     required init?(coder: NSCoder) {
@@ -119,6 +121,26 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
         return true
     }
 
+    func addBottomMask() {
+        let imageMask = UIView {
+            addSubview($0)
+        }
+        imageMask.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+        let _ = CAGradientLayer {
+            $0.frame = self.bounds
+            $0.colors = [
+                UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
+                UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
+                UIColor(red: 0, green: 0, blue: 0, alpha: 0.6).cgColor,
+            ]
+            $0.locations = [0, 0.48, 1]
+            $0.startPoint = CGPoint(x: 0.5, y: 0)
+            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
+            imageMask.layer.addSublayer($0)
+        }
+    }
 }
 
 class ImageScrollView: UIScrollView {
