@@ -21,7 +21,6 @@ use_frameworks!
   pod 'JPSVolumeButtonHandler'
   pod 'Firebase/Functions'
   pod 'SnapKit'
-  pod 'R.swift'
 
   target 'SpotTests' do
     inherit! :search_paths
