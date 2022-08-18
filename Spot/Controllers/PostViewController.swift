@@ -29,6 +29,8 @@ class PostController: UIViewController {
     unowned var containerDrawerView: DrawerView?
     var openComments = false
     
+    lazy var deleteIndicator = CustomActivityIndicator()
+    
     var selectedPostIndex = 0 {
         didSet {
             let post = postsList[selectedPostIndex]
@@ -117,7 +119,7 @@ class PostController: UIViewController {
         postsCollection.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-                        
+        selectedPostIndex = 0
         addNotifications()
     }
     

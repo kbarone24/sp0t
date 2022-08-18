@@ -736,7 +736,7 @@ extension PostCell {
     
     @objc func elipsesTap() {
         /// action sheet with delete post or report post showing
-       // addActionSheet()
+        addActionSheet()
     }
 }
 
@@ -764,4 +764,3 @@ extension PostCell {
         }
     }
 }
-

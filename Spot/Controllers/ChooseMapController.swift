@@ -195,7 +195,6 @@ class ChooseMapController: UIViewController {
                 UploadPostModel.shared.postObject.imageURLs = imageURLs
                 UploadPostModel.shared.postObject.timestamp = Firebase.Timestamp(date: Date())
                 let post = UploadPostModel.shared.postObject!
-                
                 self.uploadPost(post: post)
 
                 if spot != nil {

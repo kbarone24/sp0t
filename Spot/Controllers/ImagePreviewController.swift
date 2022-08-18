@@ -65,7 +65,6 @@ class ImagePreviewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         IQKeyboardManager.shared.enable = true
-        cancelOnDismiss = true
         disableKeyboardMethods()
     }
 
@@ -80,6 +79,7 @@ class ImagePreviewController: UIViewController {
     }
     
     func enableKeyboardMethods() {
+        cancelOnDismiss = false
         IQKeyboardManager.shared.enableAutoToolbar = false
         IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
@@ -87,6 +87,7 @@ class ImagePreviewController: UIViewController {
     }
     
     func disableKeyboardMethods() {
+        cancelOnDismiss = true
         IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
@@ -455,9 +456,13 @@ class ImagePreviewController: UIViewController {
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {
+        print("keyboard will show")
         if cancelOnDismiss { return }
+        print("1")
         if !textView.isFirstResponder { addNewSpotView(notification: notification) }
+        print("2")
         if !shouldRepositionTextView { return }
+        print("3")
         /// new spot name view editing when textview not first responder
         postDetailView.bottomMask.alpha = 0.0
         animateWithKeyboard(notification: notification) { keyboardFrame in
@@ -544,6 +549,7 @@ extension ImagePreviewController: UIGestureRecognizerDelegate {
 
 extension ImagePreviewController: ChooseSpotDelegate {
     func finishPassing(spot: MapSpot?) {
+        cancelOnDismiss = false
         if spot != nil {
             UploadPostModel.shared.setSpotValues(spot: spot)
             spotNameButton.spotName = spot!.spotName

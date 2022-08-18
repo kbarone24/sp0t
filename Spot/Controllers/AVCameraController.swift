@@ -66,7 +66,7 @@ class AVCameraController: UIViewController {
             cameraController = AVSpotCamera()
             /// else show preview
             DispatchQueue.main.async {
-                if UploadPostModel.shared.allAuths() { self.configureCameraController() } else { self.addAccessMask() } /// ask user for camera/gallery access if not granted
+                if UploadPostModel.shared.allAuths() { self.configureCameraController() } else { self.view.isUserInteractionEnabled = true; self.addAccessMask() } /// ask user for camera/gallery access if not granted
             }
             
         } else {
@@ -109,7 +109,10 @@ class AVCameraController: UIViewController {
     }
     
     override func viewDidLoad() {
-        
+        setUpView()
+    }
+    
+    func setUpView() {
         addCameraView() /// add main camera
         setUpPost() /// set up main mapPost object
         fetchAssets() /// fetch gallery assets

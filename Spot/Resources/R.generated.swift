@@ -515,6 +515,8 @@ struct R: Rswift.Validatable {
     static let editProfilePicture = Rswift.ImageResource(bundle: R.hostingBundle, name: "EditProfilePicture")
     /// Image `EggTag`.
     static let eggTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "EggTag")
+    /// Image `Elipses`.
+    static let elipses = Rswift.ImageResource(bundle: R.hostingBundle, name: "Elipses")
     /// Image `Elephant 2`.
     static let elephant2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "Elephant 2")
     /// Image `Elephant`.
@@ -593,16 +595,6 @@ struct R: Rswift.Validatable {
     static let invitedContact = Rswift.ImageResource(bundle: R.hostingBundle, name: "InvitedContact")
     /// Image `JoinedContact`.
     static let joinedContact = Rswift.ImageResource(bundle: R.hostingBundle, name: "JoinedContact")
-    /// Image `LandingPage0`.
-    static let landingPage0 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage0")
-    /// Image `LandingPage1`.
-    static let landingPage1 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage1")
-    /// Image `LandingPage2`.
-    static let landingPage2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage2")
-    /// Image `LandingPage3`.
-    static let landingPage3 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage3")
-    /// Image `LandingPage4`.
-    static let landingPage4 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage4")
     /// Image `LandingPageLogo`.
     static let landingPageLogo = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPageLogo")
     /// Image `LeafTag`.
@@ -1481,6 +1473,9 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "Elipses", bundle: ..., traitCollection: ...)`
+    static func elipses(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.elipses, compatibleWith: traitCollection)
     /// `UIImage(named: "Elephant 2", bundle: ..., traitCollection: ...)`
     static func elephant2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.elephant2, compatibleWith: traitCollection)
@@ -1750,41 +1745,6 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "JoinedContact", bundle: ..., traitCollection: ...)`
     static func joinedContact(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.joinedContact, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "LandingPage0", bundle: ..., traitCollection: ...)`
-    static func landingPage0(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.landingPage0, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "LandingPage1", bundle: ..., traitCollection: ...)`
-    static func landingPage1(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.landingPage1, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "LandingPage2", bundle: ..., traitCollection: ...)`
-    static func landingPage2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.landingPage2, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "LandingPage3", bundle: ..., traitCollection: ...)`
-    static func landingPage3(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.landingPage3, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "LandingPage4", bundle: ..., traitCollection: ...)`
-    static func landingPage4(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.landingPage4, compatibleWith: traitCollection)
     }
     #endif
 
@@ -3178,7 +3138,6 @@ struct _R: Rswift.Validatable {
       }
 
       static func validate() throws {
-        if UIKit.UIImage(named: "CameraLaunchButton", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Image named 'CameraLaunchButton' is used in storyboard 'Upload', but couldn't be loaded.") }
         if #available(iOS 11.0, tvOS 11.0, *) {
           if UIKit.UIColor(named: "SpotBlack", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Color named 'SpotBlack' is used in storyboard 'Upload', but couldn't be loaded.") }
         }

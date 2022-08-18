@@ -19,7 +19,6 @@
                         <viewLayoutGuide key="safeArea" id="Lfb-E1-zm7"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
-                    <tabBarItem key="tabBarItem" title="" image="CameraLaunchButton" selectedImage="CameraLaunchButton" id="hRb-kl-OZu"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="IWg-9X-u83" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -107,7 +106,6 @@
     </scenes>
     <color key="tintColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
     <resources>
-        <image name="CameraLaunchButton" width="36" height="27"/>
         <namedColor name="SpotBlack">
             <color red="0.070588235294117646" green="0.070588235294117646" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
