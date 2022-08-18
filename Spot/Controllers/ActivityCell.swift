@@ -142,7 +142,7 @@ class ActivityCell: UITableViewCell {
         }
         
         username = UILabel{
-            $0.text = notification.senderUsername
+            $0.text = notification.userInfo?.username ?? ""
             $0.isUserInteractionEnabled = true
             $0.numberOfLines = 0
             $0.textColor = .black

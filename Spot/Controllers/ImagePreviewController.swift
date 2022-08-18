@@ -534,6 +534,7 @@ class ImagePreviewController: UIViewController {
         let post = UploadPostModel.shared.postObject!
         var newSpot = MapSpot(founderID: uid, imageURL: "", privacyLevel: "friends", spotDescription: "", spotLat: post.postLat, spotLong: post.postLong, spotName: spotName)
         newSpot.id = UUID().uuidString
+        newSpot.posterUsername = UserDataModel.shared.userInfo.username
         finishPassing(spot: newSpot)
         UploadPostModel.shared.postType = .newSpot
     }
