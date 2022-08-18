@@ -351,17 +351,19 @@ extension CustomMapController {
     
     @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
-        guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
-        
-        if mapDelete {
-            containerDrawerView?.closeAction()
-        } else {
-            postsList.removeAll(where: {$0.id == post.id})
-            DispatchQueue.main.async {
-                self.collectionView.reloadData()
-                if let anno = self.mapController?.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: post.coordinate)}) {
-                    self.mapController?.mapView.removeAnnotation(anno)
-                }
+        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+      //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+   
+        /// check if post being deleted from map controllers child and update map if necessary
+        let secondVC = navigationController?.viewControllers[safe: (navigationController?.viewControllers.count ?? 2) - 2] is Self
+        postsList.removeAll(where: {$0.id == post.id})
+        mapData?.removePost(postID: post.id!, spotID: spotDelete ? post.spotID! : "")
+
+        DispatchQueue.main.async {
+            self.collectionView.reloadData()
+            if secondVC {
+                self.mapController?.mapView.removeAllAnnos()
+                self.addInitialAnnotations(posts: self.postsList)
             }
         }
     }

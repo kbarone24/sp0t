@@ -17,16 +17,23 @@ extension PostController {
         var leaveCount = 0
         var spotDelete = false
         var mapDelete = false
+        var spotRemove = false
         checkForSpotDelete(spotID: post.spotID ?? "") { delete in
             spotDelete = delete
             leaveCount += 1
-            if leaveCount == 2 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete) }
+            if leaveCount == 3 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove) }
+        }
+        
+        checkForSpotRemove(spotID: post.spotID ?? "", mapID: post.mapID ?? "", postID: post.id!) { remove in
+            spotRemove = remove
+            leaveCount += 1
+            if leaveCount == 3 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove) }
         }
 
         checkForMapDelete(mapID: post.mapID ?? "") { delete in
             mapDelete = delete
             leaveCount += 1
-            if leaveCount == 2 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete) }
+            if leaveCount == 3 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove) }
         }
     }
     
@@ -37,15 +44,15 @@ extension PostController {
         view.addSubview(deleteIndicator)
     }
     
-    func runDeletes(post: MapPost, spotDelete: Bool, mapDelete: Bool) {
+    func runDeletes(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
         self.deleteIndicator.removeFromSuperview()
         self.deletePostLocally()
-        self.sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete)
-        self.deletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete)
+        self.sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete, spotRemove: spotRemove)
+        self.deletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
     }
     
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void) {
-        if mapID == "" { completion(false) }
+        if mapID == "" { completion(false); return }
         db.collection("posts").whereField("mapID", isEqualTo: mapID).getDocuments { snap, err in
             let mapDelete = snap?.documents.count ?? 0 == 1
             completion(mapDelete)
@@ -54,11 +61,18 @@ extension PostController {
     }
     
     func checkForSpotDelete(spotID: String, completion: @escaping(_ delete: Bool) -> Void) {
-        if spotID == "" { completion(false) }
+        if spotID == "" { completion(false); return }
         db.collection("spots").whereField("spotID", isEqualTo: spotID).getDocuments { snap, err in
             let spotDelete = snap?.documents.count ?? 0 == 1
             completion(spotDelete)
             return
+        }
+    }
+    
+    func checkForSpotRemove(spotID: String, mapID: String, postID: String, completion: @escaping(_ remove: Bool) -> Void) {
+        if spotID == "" || mapID == "" { completion(false); return }
+        db.collection("posts").whereField("mapID", isEqualTo: mapID).whereField("spotID", isEqualTo: spotID).whereField("postID", isNotEqualTo: postID).limit(to: 1).getDocuments { snap, err in
+            completion(snap?.documents.count ?? 0 == 0)
         }
     }
     
@@ -76,16 +90,16 @@ extension PostController {
         }
     }
     
-    func sendPostDeleteNotification(post: MapPost, mapID: String, mapDelete: Bool, spotDelete: Bool) {
-        let infoPass: [String: Any] = ["post": post, "mapID": mapID, "mapDelete": mapDelete, "spotDelete": spotDelete]
+    func sendPostDeleteNotification(post: MapPost, mapID: String, mapDelete: Bool, spotDelete: Bool, spotRemove: Bool) {
+        let infoPass: [String: Any] = ["post": post, "mapID": mapID, "mapDelete": mapDelete, "spotDelete": spotDelete, "spotRemove": spotRemove]
         NotificationCenter.default.post(name: Notification.Name("DeletePost"), object: nil, userInfo: infoPass)
     }
     
-    func deletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool) {
+    func deletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
         var posters = [uid]
         posters.append(contentsOf: post.addedUsers ?? [])
         let functions = Functions.functions()
-        functions.httpsCallable("postDelete").call(["postIDs": [post.id], "spotID": post.spotID ?? "", "mapID": post.mapID ?? "", "uid": self.uid, "posters": posters, "spotDelete": spotDelete, "mapDelete": mapDelete]) { result, error in
+        functions.httpsCallable("postDelete").call(["postIDs": [post.id], "spotID": post.spotID ?? "", "mapID": post.mapID ?? "", "uid": self.uid, "posters": posters, "spotDelete": spotDelete, "mapDelete": mapDelete, "spotRemove": spotRemove]) { result, error in
             print("result", result?.data as Any, error as Any)
         }
     }

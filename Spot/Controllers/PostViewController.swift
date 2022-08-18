@@ -119,7 +119,7 @@ class PostController: UIViewController {
         postsCollection.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-                        
+        selectedPostIndex = 0
         addNotifications()
     }
     

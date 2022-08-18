@@ -60,6 +60,7 @@ class ProfileViewController: UIViewController {
     
     deinit {
         print("ProfileViewController(\(self) deinit")
+        NotificationCenter.default.removeObserver(self)
     }
     
     init(userProfile: UserProfile? = nil, presentedDrawerView: DrawerView? = nil) {
@@ -86,8 +87,6 @@ class ProfileViewController: UIViewController {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name(("DeletePost")), object: nil)
         navigationController?.setNavigationBarHidden(false, animated: true)
         configureDrawerView()
         setUpNavBar()
@@ -121,17 +120,23 @@ class ProfileViewController: UIViewController {
     @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
         guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
-        
+        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+        guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
+
         posts.removeAll(where: {$0.id == post.id})
         if mapDelete {
             maps.removeAll(where: {$0.id == post.mapID ?? ""})
             DispatchQueue.main.async { self.profileCollectionView.reloadData() }
+            
+        } else if post.mapID ?? "" != "" {
+            if let i = maps.firstIndex(where: {$0.id == post.mapID!}) {
+                maps[i].removePost(postID: post.id!, spotID: spotDelete || spotRemove ? post.spotID! : "")
+            }
         }
     }
 }
 
 extension ProfileViewController {
-    
     private func setUpNavBar() {
         navigationController!.setNavigationBarHidden(false, animated: true)
         navigationController!.navigationBar.barTintColor = UIColor.white
@@ -266,12 +271,14 @@ extension ProfileViewController {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { return }
-                    self.posts.append(postInfo)
-                    let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
-                    self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
-                        guard self != nil else { return }
-                        let image = image ?? UIImage()
+                    self.setPostDetails(post: postInfo) { post in
+                        self.posts.append(post)
+                        let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
+                        self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
+                            guard self != nil else { return }
+                            let image = image ?? UIImage()
                         self?.postImages.append(image)
+                        }
                     }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")

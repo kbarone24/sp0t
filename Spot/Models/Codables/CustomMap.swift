@@ -161,6 +161,7 @@ struct CustomMap: Identifiable, Codable {
                 spotNames.remove(at: i)
                 spotLocations.remove(at: i)
             }
+            postGroup.removeAll(where: {$0.id == spotID})
         }
     }
 }
