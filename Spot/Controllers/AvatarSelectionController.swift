@@ -51,20 +51,16 @@ class AvatarSelectionController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        //DispatchQueue.main.async {
-            self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
-        //}
+        self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
         
         DispatchQueue.main.async {
             if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)){
                     self.centerCell = (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)
-                    self.transformToLarge()
+                self.centerCell?.transformToLarge()
             }
         }
                 
         print("did appear")
-
-        //print("center cell: ", centerCell.avatar!)
                 
         let layoutMargins: CGFloat = self.collectionView.layoutMargins.left + self.collectionView.layoutMargins.left
         let sideInset = (self.view.frame.width / 2) - layoutMargins
@@ -168,28 +164,19 @@ class AvatarSelectionController: UIViewController {
             return}
         
         ///finding cell at the center
-        let center = self.view.convert(self.collectionView.center, to: self.collectionView)
+        //let center = self.view.convert(self.collectionView.center, to: self.collectionView)
 
         DispatchQueue.main.async { [self] in
-            if let indexPath = self.collectionView.indexPathForItem(at: center) {
-                if(self.centerCell != (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)){
-                    self.centerCell = (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)
-                    self.transformToLarge()
-                }
+            let center = self.view.convert(self.collectionView.center, to: self.collectionView)
+            if let indexPath = self.collectionView.indexPathForItem(at: center){
+                self.centerCell = (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)
+                self.centerCell?.transformToLarge()
                 print("center cell (scrollView): ", centerCell.avatar!)
             }
         }
 
     }
     
-   func transformToLarge(){
-       self.centerCell.avatarImage?.alpha = 1.0
-       self.centerCell.avatarImage?.snp.updateConstraints{
-            $0.height.equalTo(89.4)
-            $0.width.equalTo(62)
-        }
-        
-    }
     
     func transformToStandard(){
         self.centerCell.avatarImage?.alpha = 1.0
@@ -277,8 +264,8 @@ final class MyCollectionViewFlowLayout: UICollectionViewFlowLayout {
         
         scrollDirection = .horizontal
         minimumInteritemSpacing = 15
-        itemSize = CGSize(width: 62, height: 89.4)
-        sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
+        itemSize = CGSize(width: 64, height: 91.4)
+        //sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
         
     }
     
@@ -294,7 +281,7 @@ final class MyCollectionViewFlowLayout: UICollectionViewFlowLayout {
                 offsetAdjustment = itemOffset - horizontalOffset
             }
         })
-        return CGPoint(x: proposedContentOffset.x + offsetAdjustment, y: proposedContentOffset.y)
+        return CGPoint(x: proposedContentOffset.x + offsetAdjustment + 10, y: proposedContentOffset.y)
     }
 }
 
@@ -303,6 +290,7 @@ class AvatarCell: UICollectionViewCell {
     
     var avatar: String?
     var avatarImage: UIImageView!
+    var scaled = false
         
     // variables for activity indicator that will be used later
     lazy var activityIndicator = UIActivityIndicatorView()
@@ -332,7 +320,7 @@ class AvatarCell: UICollectionViewCell {
         }
         
         avatarImage?.snp.makeConstraints{
-            $0.bottom.equalToSuperview()
+            $0.centerY.equalToSuperview()
             //bunny is small so need to make a little bigger
             if(avatar == "bunny"){
                 $0.width.equalTo(55)
@@ -344,6 +332,19 @@ class AvatarCell: UICollectionViewCell {
             $0.centerX.equalToSuperview()
         }
     }
+    
+    func transformToLarge(){
+        
+        self.scaled = true
+        UIView.animate(withDuration: 0.1){
+            self.avatarImage?.snp.updateConstraints{
+                $0.height.equalTo(89.4)
+                $0.width.equalTo(62)
+            }
+        }
+        self.avatarImage?.alpha = 1.0
+
+     }
         
     func resetCell() {
         if self.contentView.subviews.isEmpty == false {
