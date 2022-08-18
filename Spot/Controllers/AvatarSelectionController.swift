@@ -24,6 +24,9 @@ class AvatarSelectionController: UIViewController {
     var centerAvi = CGPoint(x: 0.0, y: 0.0)
     var from: String!
 
+    var onDoneBlock : ((Bool) -> Void)?
+
+    
     init(sentFrom: String){
         super.init(nibName: nil, bundle: nil)
         from = sentFrom
@@ -130,6 +133,24 @@ class AvatarSelectionController: UIViewController {
             $0.height.equalTo(52)
             $0.top.equalTo(collectionView.snp.bottom).offset(50)
         }
+        
+        if(from == "edit"){
+            let backButton = UIButton {
+                $0.setTitle("Cancel", for: .normal)
+                $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
+                $0.titleLabel?.font = UIFont(name: "SFCompactText-Medium", size: 14)
+                $0.addTarget(self, action: #selector(dismissAction), for: .touchUpInside)
+                view.addSubview($0)
+            }
+            backButton.snp.makeConstraints {
+                $0.leading.equalToSuperview().offset(22)
+                $0.top.equalToSuperview().offset(60)
+            }
+        }
+    }
+    
+    @objc func dismissAction(_ sender: UIButton){
+        self.presentingViewController?.dismiss(animated: false, completion:nil)
     }
     
     func resetCell() {
@@ -195,7 +216,7 @@ class AvatarSelectionController: UIViewController {
                 
         if(from == "map"){
             self.navigationController!.popViewController(animated: true)
-        } else {
+        } else if from == "create" {
             let storyboard = UIStoryboard(name: "Map", bundle: nil)
              let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
              let navController = UINavigationController(rootViewController: vc)
@@ -208,7 +229,11 @@ class AvatarSelectionController: UIViewController {
                  .first?.windows
                  .filter({$0.isKeyWindow}).first
              keyWindow?.rootViewController = navController
+        } else {
+            onDoneBlock!(true)
+            self.presentingViewController?.dismiss(animated: false, completion:nil)
         }
+        
         
     }
 }
