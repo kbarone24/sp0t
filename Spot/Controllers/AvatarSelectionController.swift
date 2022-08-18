@@ -13,22 +13,15 @@ import Firebase
 
 class AvatarSelectionController: UIViewController {
         
-    private let myCollectionViewFlowLayout = MyCollectionViewFlowLayout()
-    
-    var itemHeight, itemWidth: CGFloat!
-
-    var friendRequests: [UserNotification] = []
-    
-    var collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewLayout.init())
-    
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    
+    var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
+    var friendRequests: [UserNotification] = []
+
+    private let myCollectionViewFlowLayout = MyCollectionViewFlowLayout()
+    var collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewLayout.init())
     var centerCell: AvatarCell!
     
-    var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
-    
     var centerAvi = CGPoint(x: 0.0, y: 0.0)
-    
     var from: String!
 
     init(sentFrom: String){
@@ -52,28 +45,22 @@ class AvatarSelectionController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
-        
         DispatchQueue.main.async {
             if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)){
                     self.centerCell = (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)
                 self.centerCell?.transformToLarge()
             }
         }
-                
-        print("did appear")
-                
         let layoutMargins: CGFloat = self.collectionView.layoutMargins.left + self.collectionView.layoutMargins.left
         let sideInset = (self.view.frame.width / 2) - layoutMargins
         self.collectionView.contentInset = UIEdgeInsets(top: 0, left: sideInset, bottom: 0, right: sideInset)
     }
     
-        
     func setUpFriendRequests(friendRequests: [UserNotification]){
         self.friendRequests = friendRequests
     }
     
     func setUp() {
-        print("set up")
         ///hardcode cell height in case its laid out before view fully appears -> hard code body height so mask stays with cell change
         resetCell()
         
@@ -83,7 +70,6 @@ class AvatarSelectionController: UIViewController {
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
             view.addSubview($0)
         }
-        
         title.snp.makeConstraints{
           $0.top.equalToSuperview().offset(138)
           $0.centerX.equalToSuperview()
@@ -95,7 +81,6 @@ class AvatarSelectionController: UIViewController {
             $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
             view.addSubview($0)
         }
-        
         subTitle.snp.makeConstraints{
             $0.top.equalTo(title.snp.bottom).offset(9.05)
             $0.centerX.equalToSuperview()
@@ -107,6 +92,7 @@ class AvatarSelectionController: UIViewController {
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.isScrollEnabled = true
+        collectionView.allowsSelection = true
         collectionView.collectionViewLayout = self.myCollectionViewFlowLayout
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.register(AvatarCell.self, forCellWithReuseIdentifier: "AvatarCell")
@@ -116,7 +102,7 @@ class AvatarSelectionController: UIViewController {
         collectionView.snp.makeConstraints{
             $0.top.equalTo(subTitle.snp.bottom).offset(16)
             $0.width.equalToSuperview()
-            $0.height.equalTo(89.4)
+            $0.height.equalTo(95)
         }
         
         let selectButton = UIButton {
@@ -125,12 +111,12 @@ class AvatarSelectionController: UIViewController {
             var customButtonTitle = NSMutableAttributedString()
             if(from == "create"){
                 customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15)!,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
             } else {
                 customButtonTitle = NSMutableAttributedString(string: "Select", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15)!,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
             }
@@ -139,15 +125,11 @@ class AvatarSelectionController: UIViewController {
             $0.addTarget(self, action: #selector(selectedTap(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
-        
-        
         selectButton.snp.makeConstraints{
             $0.leading.trailing.equalToSuperview().inset(78)
             $0.height.equalTo(52)
             $0.top.equalTo(collectionView.snp.bottom).offset(50)
         }
-
-        
     }
     
     func resetCell() {
@@ -162,7 +144,6 @@ class AvatarSelectionController: UIViewController {
 
         guard scrollView is UICollectionView else {
             return}
-        
         ///finding cell at the center
         //let center = self.view.convert(self.collectionView.center, to: self.collectionView)
 
@@ -171,7 +152,6 @@ class AvatarSelectionController: UIViewController {
             if let indexPath = self.collectionView.indexPathForItem(at: center){
                 self.centerCell = (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)
                 self.centerCell?.transformToLarge()
-                print("center cell (scrollView): ", centerCell.avatar!)
             }
         }
 
@@ -208,7 +188,6 @@ class AvatarSelectionController: UIViewController {
     
     @objc func selectedTap(_ sender: UIButton){
         let avatarURL = AvatarURLs().getURL(name: centerCell.avatar!)
-        
         UserDataModel.shared.userInfo.avatarURL = avatarURL
         UserDataModel.shared.userInfo.avatarPic = UIImage(named: centerCell.avatar!)!
         let db = Firestore.firestore()
@@ -246,14 +225,12 @@ extension AvatarSelectionController: UICollectionViewDelegate, UICollectionViewD
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AvatarCell", for: indexPath) as? AvatarCell else { return UICollectionViewCell() }
         cell.setUp(avatar: avatars[indexPath.row])
-        //cell.globalRow = indexPath.row
         return cell
     }
-}
-
-func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-     collectionView.selectItem(at: indexPath, animated: true, scrollPosition: .left)
-     // might need when debugging
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.selectItem(at: indexPath, animated: true, scrollPosition: .left)
+    }
 }
 
 
@@ -261,12 +238,10 @@ final class MyCollectionViewFlowLayout: UICollectionViewFlowLayout {
     
     override func prepare() {
         super.prepare()
-        
         scrollDirection = .horizontal
         minimumInteritemSpacing = 15
         itemSize = CGSize(width: 64, height: 91.4)
         //sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
-        
     }
     
     override func targetContentOffset(forProposedContentOffset proposedContentOffset: CGPoint, withScrollingVelocity velocity: CGPoint) -> CGPoint {
@@ -318,7 +293,6 @@ class AvatarCell: UICollectionViewCell {
             $0.image = UIImage(named: avatar)
             contentView.addSubview($0)
         }
-        
         avatarImage?.snp.makeConstraints{
             $0.centerY.equalToSuperview()
             //bunny is small so need to make a little bigger
@@ -334,7 +308,6 @@ class AvatarCell: UICollectionViewCell {
     }
     
     func transformToLarge(){
-        
         self.scaled = true
         UIView.animate(withDuration: 0.1){
             self.avatarImage?.snp.updateConstraints{
@@ -343,7 +316,6 @@ class AvatarCell: UICollectionViewCell {
             }
         }
         self.avatarImage?.alpha = 1.0
-
      }
         
     func resetCell() {

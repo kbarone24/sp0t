@@ -181,7 +181,6 @@ class FindFriendsController: UIViewController {
         searchIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 30))
         searchIndicator.isHidden = true
         resultsTable.addSubview(searchIndicator)
-        
     }
     
     func loadOutletViews() {
@@ -193,10 +192,10 @@ class FindFriendsController: UIViewController {
             view.addSubview($0)
         }
         
-        mainView.snp.makeConstraints{
+        mainView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(searchBarContainer.snp.bottom).offset(20)
-            $0.width.equalToSuperview()
-            //idk about height
+            $0.bottom.equalToSuperview()
         }
         
         sendInvitesView = SendInvitesView()
@@ -227,31 +226,27 @@ class FindFriendsController: UIViewController {
     func loadSuggestedTable() {
     
         suggestedTable = UITableView {
-            $0.frame = CGRect(x: 0, y: searchContactsView.frame.maxY + 15, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - searchContactsView.frame.maxY - 15)
-            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 200, right: 0)
+            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
             $0.backgroundColor = .white
             $0.tag = 0
             $0.separatorStyle = .none
             $0.allowsSelection = false
             $0.delegate = self
             $0.dataSource = self
-            $0.isScrollEnabled = UIScreen.main.bounds.height < 650
+            $0.isScrollEnabled = false
             $0.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
             $0.register(SuggestedFriendsHeader.self, forHeaderFooterViewReuseIdentifier: "SuggestedHeader")
             mainView.addSubview($0)
-            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
+        suggestedTable.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(searchContactsView.snp.bottom).offset(20)
+            $0.bottom.equalToSuperview().offset(-50)
         }
               
         suggestedIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 40, width: UIScreen.main.bounds.width, height: 30))
         suggestedIndicator.isHidden = true
         suggestedTable.addSubview(suggestedIndicator)
-        
-        suggestedTable.snp.makeConstraints{
-            $0.top.equalTo(searchContactsView.snp.bottom)
-            $0.bottom.equalToSuperview()
-            $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(UIScreen.main.bounds.height - searchBarContainer.frame.maxY - 120-15)
-        }
     }
     
     @objc func notifyRequestSent(_ sender: NSNotification) {
@@ -308,7 +303,7 @@ class FindFriendsController: UIViewController {
             for id in friend.friendIDs {
                 
                 /// only add non-friends + people we haven't sent a request to yet
-                if !UserDataModel.shared.userInfo.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) && id != uid {
+                if !UserDataModel.shared.userInfo.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) && id != uid && id != "T4KMLe3XlQaPBJvtZVArqXQvaNT2"{
                     
                     
                     if let i = mutuals.firstIndex(where: {$0.id == id}) {
@@ -406,7 +401,6 @@ class FindFriendsController: UIViewController {
                     let userIn = try snap?.data(as: UserProfile.self)
                     guard var userInfo = userIn else { index += 1; if index == topMutuals.count { self.finishSuggestedLoad()}; return }
                     userInfo.mutualFriends = user.count
-                    /// get spotsList to sort top mutuals by
                     
                     self.db.collection("posts").whereField("posterID", isEqualTo: user.id).getDocuments { [weak self] (listSnap, err) in
                         guard let self = self else { return }
@@ -443,7 +437,7 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         let dataSource = tableView.tag == 0 ? suggestedUsers : queryUsers
-        let maxRows = UserDataModel.shared.largeScreen ? 5 : 4
+        let maxRows = UserDataModel.shared.screenSize == 0 ? 4 : 5
         return dataSource.count > maxRows ? maxRows : dataSource.count
     }
     

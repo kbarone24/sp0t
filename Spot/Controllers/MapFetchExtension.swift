@@ -87,8 +87,6 @@ extension MapController {
                 
                 if UserDataModel.shared.userInfo.id == "" { UserDataModel.shared.userInfo = activeUser } else { self.updateUserInfo(user: activeUser) }
                 if UserDataModel.shared.userInfo.profilePic == UIImage() { self.getUserProfilePics() }
-                
-                UserDataModel.shared.userInfo.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
                 for id in self.deletedFriendIDs { UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
                 NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
 
@@ -117,7 +115,6 @@ extension MapController {
     
     func updateUserInfo(user: UserProfile) {
         // update user info fields to avoid overwriting map values
-        print("update user info")
         UserDataModel.shared.userInfo.avatarURL = user.avatarURL
         UserDataModel.shared.userInfo.currentLocation = user.currentLocation
         UserDataModel.shared.userInfo.imageURL = user.imageURL

@@ -270,7 +270,8 @@ extension ProfileViewController {
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
-                    guard let postInfo = unwrappedInfo else { return }
+                    guard var postInfo = unwrappedInfo else { return }
+                    postInfo = self.setSecondaryPostValues(post: postInfo)
                     self.setPostDetails(post: postInfo) { post in
                         self.posts.append(post)
                         let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
