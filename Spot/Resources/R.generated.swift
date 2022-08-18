@@ -85,6 +85,7 @@ struct R: Rswift.Validatable {
   }
 
   static func validate() throws {
+    try font.validate()
     try intern.validate()
   }
 
@@ -286,6 +287,55 @@ struct R: Rswift.Validatable {
     static func sfCompactTextSemiboldOtf(_: Void = ()) -> Foundation.URL? {
       let fileResource = R.file.sfCompactTextSemiboldOtf
       return fileResource.bundle.url(forResource: fileResource)
+    }
+
+    fileprivate init() {}
+  }
+
+  /// This `R.font` struct is generated, and contains static references to 5 fonts.
+  struct font: Rswift.Validatable {
+    /// Font `SFCompactText-Bold`.
+    static let sfCompactTextBold = Rswift.FontResource(fontName: "SFCompactText-Bold")
+    /// Font `SFCompactText-Heavy`.
+    static let sfCompactTextHeavy = Rswift.FontResource(fontName: "SFCompactText-Heavy")
+    /// Font `SFCompactText-Medium`.
+    static let sfCompactTextMedium = Rswift.FontResource(fontName: "SFCompactText-Medium")
+    /// Font `SFCompactText-Regular`.
+    static let sfCompactTextRegular = Rswift.FontResource(fontName: "SFCompactText-Regular")
+    /// Font `SFCompactText-Semibold`.
+    static let sfCompactTextSemibold = Rswift.FontResource(fontName: "SFCompactText-Semibold")
+
+    /// `UIFont(name: "SFCompactText-Bold", size: ...)`
+    static func sfCompactTextBold(size: CGFloat) -> UIKit.UIFont? {
+      return UIKit.UIFont(resource: sfCompactTextBold, size: size)
+    }
+
+    /// `UIFont(name: "SFCompactText-Heavy", size: ...)`
+    static func sfCompactTextHeavy(size: CGFloat) -> UIKit.UIFont? {
+      return UIKit.UIFont(resource: sfCompactTextHeavy, size: size)
+    }
+
+    /// `UIFont(name: "SFCompactText-Medium", size: ...)`
+    static func sfCompactTextMedium(size: CGFloat) -> UIKit.UIFont? {
+      return UIKit.UIFont(resource: sfCompactTextMedium, size: size)
+    }
+
+    /// `UIFont(name: "SFCompactText-Regular", size: ...)`
+    static func sfCompactTextRegular(size: CGFloat) -> UIKit.UIFont? {
+      return UIKit.UIFont(resource: sfCompactTextRegular, size: size)
+    }
+
+    /// `UIFont(name: "SFCompactText-Semibold", size: ...)`
+    static func sfCompactTextSemibold(size: CGFloat) -> UIKit.UIFont? {
+      return UIKit.UIFont(resource: sfCompactTextSemibold, size: size)
+    }
+
+    static func validate() throws {
+      if R.font.sfCompactTextBold(size: 42) == nil { throw Rswift.ValidationError(description:"[R.swift] Font 'SFCompactText-Bold' could not be loaded, is 'SF-Compact-Text-Bold.otf' added to the UIAppFonts array in this targets Info.plist?") }
+      if R.font.sfCompactTextHeavy(size: 42) == nil { throw Rswift.ValidationError(description:"[R.swift] Font 'SFCompactText-Heavy' could not be loaded, is 'SF-Compact-Text-Heavy.otf' added to the UIAppFonts array in this targets Info.plist?") }
+      if R.font.sfCompactTextMedium(size: 42) == nil { throw Rswift.ValidationError(description:"[R.swift] Font 'SFCompactText-Medium' could not be loaded, is 'SF-Compact-Text-Medium.otf' added to the UIAppFonts array in this targets Info.plist?") }
+      if R.font.sfCompactTextRegular(size: 42) == nil { throw Rswift.ValidationError(description:"[R.swift] Font 'SFCompactText-Regular' could not be loaded, is 'SF-Compact-Text-Regular.otf' added to the UIAppFonts array in this targets Info.plist?") }
+      if R.font.sfCompactTextSemibold(size: 42) == nil { throw Rswift.ValidationError(description:"[R.swift] Font 'SFCompactText-Semibold' could not be loaded, is 'SF-Compact-Text-Semibold.otf' added to the UIAppFonts array in this targets Info.plist?") }
     }
 
     fileprivate init() {}
