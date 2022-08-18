@@ -39,7 +39,7 @@ extension MapController {
                 print("home fetch", Timestamp(date: Date()).seconds - self.startTime)
                 self.attachNewPostListener()
                 self.newPostsButton.isHidden = false
-                self.reloadMapsCollection(reload: false)
+                self.reloadMapsCollection(resort: true)
                 self.displayHeelsMap()
             }
         }
@@ -490,7 +490,7 @@ extension MapController: MapControllerDelegate {
         self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").updateData([
             "memberIDs": FieldValue.arrayUnion([UserDataModel.shared.userInfo.id!])
         ])
-        self.reloadMapsCollection(reload: false)
+        self.reloadMapsCollection(resort: true)
         
         self.homeFetchGroup.enter()
         DispatchQueue.global(qos: .userInitiated).async {
