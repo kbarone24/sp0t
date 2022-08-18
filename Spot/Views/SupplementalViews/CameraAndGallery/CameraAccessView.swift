@@ -11,7 +11,6 @@ import UIKit
 import Photos
 
 class CameraAccessView: UIView {
-    
     var cancelButton: UIButton!
     var label0: UILabel!
     var label1: UILabel!
@@ -21,11 +20,11 @@ class CameraAccessView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        isUserInteractionEnabled = true
         backgroundColor = .black
     }
     
     func setUp() {
-        
         resetView()
         
         cancelButton = UIButton(frame: CGRect(x: 4, y: 17, width: 50, height: 50))
@@ -92,11 +91,11 @@ class CameraAccessView: UIView {
     }
     
     @objc func cameraAccessTap(_ sender: UIButton) {
+        print("camera tap")
         askForCameraAccess(first: true)
     }
     
     func checkForRemove() {
-
         /// remove mask and return to camera if user has authorized camera + gallery
         if UploadPostModel.shared.allAuths() {
             guard let camera = viewContainingController() as? AVCameraController else { return }
@@ -143,6 +142,7 @@ class CameraAccessView: UIView {
     }
         
     @objc func galleryAccessTap(_ sender: UIButton) {
+        print("gallery")
         askForGallery(first: true)
     }
     

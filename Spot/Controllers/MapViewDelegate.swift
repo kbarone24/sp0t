@@ -278,11 +278,9 @@ class SpotMapView: MKMapView {
         if let index = map.spotIDs.firstIndex(of: group.id) {
             let location = map.spotLocations[index]
             spotAnnotation.coordinate = CLLocationCoordinate2D(latitude: location["lat"]!, longitude: location["long"]!)
-        } else {
-            let post = map.postsDictionary[group.id]
-            spotAnnotation.coordinate = CLLocationCoordinate2D(latitude: post!.postLat, longitude: post!.postLong)
+        } else if let post = map.postsDictionary[group.id] {
+            spotAnnotation.coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
         }
-        
         DispatchQueue.main.async { self.addAnnotation(spotAnnotation) }
     }
     

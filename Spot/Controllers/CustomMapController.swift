@@ -169,7 +169,8 @@ extension CustomMapController {
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
-        
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
+
         view.backgroundColor = .white
         navigationItem.setHidesBackButton(true, animated: true)
         
@@ -346,6 +347,25 @@ extension CustomMapController {
     @objc func DrawerViewToBottomCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerClose")
         barBackButton.isHidden = true
+    }
+    
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+      //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+   
+        /// check if post being deleted from map controllers child and update map if necessary
+        let secondVC = navigationController?.viewControllers[safe: (navigationController?.viewControllers.count ?? 2) - 2] is Self
+        postsList.removeAll(where: {$0.id == post.id})
+        mapData?.removePost(postID: post.id!, spotID: spotDelete ? post.spotID! : "")
+
+        DispatchQueue.main.async {
+            self.collectionView.reloadData()
+            if secondVC {
+                self.mapController?.mapView.removeAllAnnos()
+                self.addInitialAnnotations(posts: self.postsList)
+            }
+        }
     }
     
     @objc func backButtonAction() {

@@ -378,26 +378,25 @@ extension UIViewController {
     }
 
     func uploadPost(post: MapPost) {
-        
+        /// send local notification first
+        var notiPost = post
+        notiPost.id = post.id!
+        let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo)
+        notiPost.commentList = [commentObject]
+        notiPost = setSecondaryPostValues(post: notiPost)
+        notiPost.userInfo = UserDataModel.shared.userInfo
+        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
+
         let db = Firestore.firestore()
         let postRef = db.collection("posts").document(post.id!)
         do {
             try postRef.setData(from: post)
             self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
             
-            let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo)
-            
             let commentRef = postRef.collection("comments").document(commentObject.id!)
 
             do {
                 try commentRef.setData(from: commentObject)
-                
-                var notiPost = post
-                notiPost.id = post.id!
-                notiPost.commentList = [commentObject]
-                notiPost = setSecondaryPostValues(post: notiPost)
-                NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
-
             } catch {
                 print("failed uploading comment")
             }
@@ -505,7 +504,6 @@ extension UIViewController {
         posters.append(contentsOf: addedUsers)
         
         let db: Firestore = Firestore.firestore()
-        
         // adjust user values for added users
         for poster in posters {            
             /// increment addedUsers spotScore by 1

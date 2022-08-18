@@ -33,14 +33,16 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.selectItem(at: indexPath, animated: true, scrollPosition: .left)
-        
-        if indexPath.item != selectedItemIndex {
+        selectMapAt(index: indexPath.item)
+    }
+    
+    func selectMapAt(index: Int) {
+        if index != selectedItemIndex {
             DispatchQueue.main.async {
-                self.addMapAnnotations(index: indexPath.item)
+                self.addMapAnnotations(index: index, reload: false)
                 self.setNewPostsButtonCount()
             }
-            
-            if indexPath.row != 0 { UserDataModel.shared.userInfo.mapsList[indexPath.row - 1].selected.toggle() }
+            if index != 0 { UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle() }
         }
     }
     
@@ -50,7 +52,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         return feedLoaded ? CGSize(width: itemWidth, height: itemWidth * 0.95) : CGSize(width: UIScreen.main.bounds.width, height: itemWidth * 0.95)
     }
     
-    func addMapAnnotations(index: Int) {
+    func addMapAnnotations(index: Int, reload: Bool) {
         selectedItemIndex = index
         mapView.removeAllAnnos()
 
@@ -60,7 +62,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             let map = getSelectedMap()!
             for group in map.postGroup { mapView.addSpotAnnotation(group: group, map: map) }
         }
-        self.centerMapOnPosts(animated: false)
+        if !reload { self.centerMapOnPosts(animated: false) }
     }
 }
 

@@ -50,7 +50,6 @@ class MapController: UIViewController {
     var feedLoaded = false
     
     lazy var friendsPostsDictionary = [String: MapPost]()
-    lazy var postAnnotations = [String: PostAnnotation]()
     
     /// use to avoid deleted documents entering from cache
     lazy var deletedSpotIDs: [String] = []
@@ -87,7 +86,6 @@ class MapController: UIViewController {
         locationManager.delegate = self
     }
     
-    
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
     }
@@ -100,14 +98,17 @@ class MapController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "MapOpen")
     }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
         
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostOpen(_:)), name: NSNotification.Name(("PostOpen")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostChange(_:)), name: NSNotification.Name(("PostChange")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
-
-        //  NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
     }
     
     func setUpViews() {
@@ -320,7 +321,7 @@ class MapController: UIViewController {
             mapView.removeAllAnnos()
         } else {
             mapView.delegate = self
-            addMapAnnotations(index: selectedItemIndex)
+            addMapAnnotations(index: selectedItemIndex, reload: true)
         }
     }
     
