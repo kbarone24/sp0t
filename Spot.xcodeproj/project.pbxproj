@@ -259,6 +259,12 @@
 		8C3B953A28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
 		8C3B953B28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
 		8C3B953C28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
+		8C3B954E28AE932B00C06586 /* DeletePost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B954D28AE932B00C06586 /* DeletePost.swift */; };
+		8C3B954F28AE932B00C06586 /* DeletePost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B954D28AE932B00C06586 /* DeletePost.swift */; };
+		8C3B955028AE932B00C06586 /* DeletePost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B954D28AE932B00C06586 /* DeletePost.swift */; };
+		8C3B955228AE933D00C06586 /* PostCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */; };
+		8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */; };
+		8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */; };
 		8C3BAF58260C413F00349091 /* ConfirmCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */; };
 		8C3BAF59260C413F00349091 /* ConfirmCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */; };
 		8C3BAF5A260C413F00349091 /* ConfirmCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */; };
@@ -460,6 +466,8 @@
 		8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeelsMapPopUpController.swift; sourceTree = "<group>"; };
 		8C3B953528AD533100C06586 /* AvatarSelectionController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AvatarSelectionController.swift; sourceTree = "<group>"; };
 		8C3B953928AD546E00C06586 /* AvatarURLs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AvatarURLs.swift; path = Spot/Controllers/AvatarURLs.swift; sourceTree = SOURCE_ROOT; };
+		8C3B954D28AE932B00C06586 /* DeletePost.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeletePost.swift; sourceTree = "<group>"; };
+		8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostCellActionSheet.swift; sourceTree = "<group>"; };
 		8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmCodeController.swift; sourceTree = "<group>"; };
 		8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerController.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
@@ -719,6 +727,8 @@
 				599BD2BA23C652BD00ECB84A /* PostViewController.swift */,
 				59DFA25122C27B4800A59D29 /* CommentsViewController.swift */,
 				8C3B952528AC042B00C06586 /* PostCell.swift */,
+				8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */,
+				8C3B954D28AE932B00C06586 /* DeletePost.swift */,
 			);
 			name = Feed;
 			sourceTree = "<group>";
@@ -1265,11 +1275,13 @@
 				5916A8B724A5542800118E83 /* ResultSpot.swift in Sources */,
 				599371B0234E468500204F59 /* SearchContactsController.swift in Sources */,
 				59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */,
+				8C3B954E28AE932B00C06586 /* DeletePost.swift in Sources */,
 				8C1E48B2289C54CB0093030D /* SpotPostView.swift in Sources */,
 				413BA16328785E8B00FD80AF /* EditProfileViewController.swift in Sources */,
 				8C34207A261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				4106ECD428A3F0B400680005 /* SpotPageBodyCell.swift in Sources */,
 				8C1E48E028AB38560093030D /* SimpleMapHeaderCell.swift in Sources */,
+				8C3B955228AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8C3B952628AC042B00C06586 /* PostCell.swift in Sources */,
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8C1E4880289C54C10093030D /* SpotNameAnnotationView.swift in Sources */,
@@ -1407,6 +1419,7 @@
 				8C3B952728AC042B00C06586 /* PostCell.swift in Sources */,
 				8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				593AC546243E56D400C08237 /* LandingPageController.swift in Sources */,
+				8C3B954F28AE932B00C06586 /* DeletePost.swift in Sources */,
 				59E2354A246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				8C3420B1261273140017CB2F /* SendInvitesController.swift in Sources */,
 				59FCF5B024734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
@@ -1446,6 +1459,7 @@
 				8CC3653B26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				5916A8BC24A566F400118E83 /* ResultUser.swift in Sources */,
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
+				8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				593AC54A243F898300C08237 /* UsernameController.swift in Sources */,
 				8C34207B261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				59BAF9D92360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */,
@@ -1493,6 +1507,7 @@
 				8C3B952828AC042B00C06586 /* PostCell.swift in Sources */,
 				8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				593AC547243E56D400C08237 /* LandingPageController.swift in Sources */,
+				8C3B955028AE932B00C06586 /* DeletePost.swift in Sources */,
 				59E2354B246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				8C3420B2261273140017CB2F /* SendInvitesController.swift in Sources */,
 				59FCF5B124734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
@@ -1532,6 +1547,7 @@
 				8CC3653C26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				5916A8BD24A566F400118E83 /* ResultUser.swift in Sources */,
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
+				8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				593AC54B243F898300C08237 /* UsernameController.swift in Sources */,
 				8C34207C261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				59BAF9DA2360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */,
