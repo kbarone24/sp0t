@@ -40,8 +40,8 @@ class ProfileMyMapCell: UICollectionViewCell {
     }
     
     public func cellSetup(userAccount: String, myMapsImage: [UIImage], relation: ProfileRelation) {
-        mapName.text = myMapImages.count == 0 ? "" : "@\(userAccount)'s map"
         self.myMapImages = myMapsImage
+        mapName.text = myMapImages.count == 0 ? "" : "@\(userAccount)'s map"
         mapPrivateBlurView.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
         mapPrivateIcon.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
     }

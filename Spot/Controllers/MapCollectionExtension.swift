@@ -85,8 +85,12 @@ class MapHomeCell: UICollectionViewCell {
         setUpView()
         if map != nil {
             mapCoverImage.isHidden = false
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 180, height: 140), scaleMode: .aspectFill)
-            mapCoverImage.sd_setImage(with: URL(string: map!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            if map?.mapName == "Heelsmap" {
+                mapCoverImage.image = UIImage(named: "HeelsmapCover")
+            } else {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 180, height: 140), scaleMode: .aspectFill)
+                mapCoverImage.sd_setImage(with: URL(string: map!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            }
             let textString = NSMutableAttributedString(string: map?.mapName ?? "").shrinkLineHeight()
             nameLabel.attributedText = textString
             nameLabel.sizeToFit()

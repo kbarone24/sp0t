@@ -41,6 +41,8 @@ class FindFriendsController: UIViewController {
     var searchContactsView: SearchContactsView!
     var suggestedIndicator: CustomActivityIndicator!
     var suggestedTable: UITableView!
+    
+    var contentDrawer: DrawerView?
 
     
     override func viewDidLoad() {
@@ -280,7 +282,10 @@ class FindFriendsController: UIViewController {
 
     
     @objc func exit(_ sender: UIButton) {
-        self.navigationController!.popViewController(animated: true)
+        if let drawer = contentDrawer {
+            drawer.closeAction()
+        } else { navigationController!.popViewController(animated: true)
+        }
     }
     
     @objc func searchCancelTap(_ sender: UIButton) {
