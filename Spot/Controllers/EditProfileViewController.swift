@@ -11,7 +11,7 @@ import Mixpanel
 import Firebase
 import FirebaseFunctions
 
-class EditProfileViewController: UIViewController, UIAdaptivePresentationControllerDelegate {
+class EditProfileViewController: UIViewController {
     
     private var editLabel: UILabel!
     private var backButton: UIButton!
@@ -97,7 +97,7 @@ class EditProfileViewController: UIViewController, UIAdaptivePresentationControl
     @objc func avatarEditAction() {
         let vc = AvatarSelectionController(sentFrom: "edit")
         //vc.delegate = self
-        vc.presentationController?.delegate = self
+        vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
         vc.onDoneBlock = {result in
             self.avatarChanged = true
             print("avatarChanged", UserDataModel.shared.userInfo.avatarURL)
