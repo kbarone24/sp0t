@@ -103,6 +103,9 @@ class ProfileViewController: UIViewController {
     @objc func editButtonAction() {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.profileVC = self
+        editVC.onDoneBlock = {result in
+            self.userProfile = result
+        }
         editVC.modalPresentationStyle = .fullScreen
         present(editVC, animated: true)
     }
