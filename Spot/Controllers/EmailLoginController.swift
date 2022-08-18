@@ -212,6 +212,11 @@ class EmailLoginController: UIViewController {
         }
     }
     
+    func openAvi(){
+        let aviVC = AvatarSelectionController(sentFrom: "create")
+        navigationController!.pushViewController(aviVC, animated: true)
+    }
+    
     func animateToMap() {
         
         self.loginButton.isEnabled = true
