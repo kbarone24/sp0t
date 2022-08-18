@@ -133,6 +133,24 @@ class AvatarSelectionController: UIViewController {
             $0.height.equalTo(52)
             $0.top.equalTo(collectionView.snp.bottom).offset(50)
         }
+        
+        if(from == "edit"){
+            let backButton = UIButton {
+                $0.setTitle("Cancel", for: .normal)
+                $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
+                $0.titleLabel?.font = UIFont(name: "SFCompactText-Medium", size: 14)
+                $0.addTarget(self, action: #selector(dismissAction), for: .touchUpInside)
+                view.addSubview($0)
+            }
+            backButton.snp.makeConstraints {
+                $0.leading.equalToSuperview().offset(22)
+                $0.top.equalToSuperview().offset(60)
+            }
+        }
+    }
+    
+    @objc func dismissAction(_ sender: UIButton){
+        self.presentingViewController?.dismiss(animated: false, completion:nil)
     }
     
     func resetCell() {
