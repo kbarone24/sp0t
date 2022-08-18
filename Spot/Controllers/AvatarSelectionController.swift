@@ -24,6 +24,9 @@ class AvatarSelectionController: UIViewController {
     var centerAvi = CGPoint(x: 0.0, y: 0.0)
     var from: String!
 
+    var onDoneBlock : ((Bool) -> Void)?
+
+    
     init(sentFrom: String){
         super.init(nibName: nil, bundle: nil)
         from = sentFrom
@@ -195,7 +198,7 @@ class AvatarSelectionController: UIViewController {
                 
         if(from == "map"){
             self.navigationController!.popViewController(animated: true)
-        } else {
+        } else if from == "create" {
             let storyboard = UIStoryboard(name: "Map", bundle: nil)
              let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
              let navController = UINavigationController(rootViewController: vc)
@@ -208,7 +211,11 @@ class AvatarSelectionController: UIViewController {
                  .first?.windows
                  .filter({$0.isKeyWindow}).first
              keyWindow?.rootViewController = navController
+        } else {
+            onDoneBlock!(true)
+            self.presentingViewController?.dismiss(animated: false, completion:nil)
         }
+        
         
     }
 }

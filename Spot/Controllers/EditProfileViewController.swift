@@ -11,7 +11,7 @@ import Mixpanel
 import Firebase
 import FirebaseFunctions
 
-class EditProfileViewController: UIViewController {
+class EditProfileViewController: UIViewController, UIAdaptivePresentationControllerDelegate {
     
     private var editLabel: UILabel!
     private var backButton: UIButton!
@@ -31,10 +31,13 @@ class EditProfileViewController: UIViewController {
     private var nameChanged: Bool = false
     private var locationChanged: Bool = false
     private var profileChanged: Bool = false
+    private var avatarChanged: Bool = false
     
     public var profileVC: ProfileViewController?
     private var userProfile: UserProfile?
     private let db = Firestore.firestore()
+    
+    var onDoneBlock : ((UserProfile) -> Void)?
     
     init(userProfile: UserProfile? = nil) {
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
@@ -92,6 +95,16 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func avatarEditAction() {
+        let vc = AvatarSelectionController(sentFrom: "edit")
+        //vc.delegate = self
+        vc.presentationController?.delegate = self
+        vc.onDoneBlock = {result in
+            self.avatarChanged = true
+            print("avatarChanged", UserDataModel.shared.userInfo.avatarURL)
+            self.avatarImage.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.avatarURL!))
+            self.userProfile?.avatarURL = UserDataModel.shared.userInfo.avatarURL!
+        }
+        self.present(vc, animated: true)
         Mixpanel.mainInstance().track(event: "AvatarSelect")
     }
     
@@ -109,11 +122,11 @@ class EditProfileViewController: UIViewController {
             if nameChanged || locationChanged {
                 try userRef.setData(from: userProfile, merge: true)
             }
-            
             if profileChanged {
                 updateProfileImage()
             } else {
                 self.activityIndicator.stopAnimating()
+                onDoneBlock!(userProfile!)
                 self.dismiss(animated: true)
             }
             
@@ -160,6 +173,11 @@ class EditProfileViewController: UIViewController {
         if textField == locationTextfield {
             locationChanged = true
         }
+    }
+    
+    
+    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController){
+        print("dismissed sheet")
     }
     
 }
