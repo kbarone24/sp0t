@@ -63,14 +63,12 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        setUpNavBar()
         configureDrawerView()
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        //navigationController?.navigationBar.isTranslucent = false
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
-        setUpNavBar()
-
     }
     
     func configureDrawerView() {
@@ -85,7 +83,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     func setUpNavBar() {
         self.title = "Notifications"
         navigationItem.backButtonTitle = ""
-
+        navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController!.navigationBar.barTintColor = UIColor.white
         navigationController!.navigationBar.isTranslucent = false
         navigationController!.navigationBar.barStyle = .black
@@ -103,7 +101,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             target: self,
             action: #selector(leaveNotifs)
         )
-        
     }
     
     
