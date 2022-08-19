@@ -69,6 +69,8 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     override func viewDidAppear(_ animated: Bool) {
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
+        // Set navigation bar hidden equals false here to avoid unexpected nav bar animation
+        navigationController?.setNavigationBarHidden(false, animated: true)
     }
     
     func configureDrawerView() {
@@ -83,7 +85,6 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     func setUpNavBar() {
         self.title = "Notifications"
         navigationItem.backButtonTitle = ""
-        navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController!.navigationBar.barTintColor = UIColor.white
         navigationController!.navigationBar.isTranslucent = false
         navigationController!.navigationBar.barStyle = .black
