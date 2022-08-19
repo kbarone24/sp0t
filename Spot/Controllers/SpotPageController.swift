@@ -190,7 +190,9 @@ extension SpotPageController {
     
     private func fetchSpot() {
         let db: Firestore = Firestore.firestore()
+        print("fetchSpot")
         db.collection("spots").document(spotID).getDocument { [weak self] snap, err in
+            print("fetchSpot finished")
             do {
                 guard let self = self else { return }
                 let unwrappedInfo = try snap?.data(as: MapSpot.self)
@@ -204,6 +206,7 @@ extension SpotPageController {
     
     private func fetchRelatedPost() {
         guard fetching == .refreshEnabled else { return }
+        print("fetchRelatedPost")
         let db: Firestore = Firestore.firestore()
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
         let conditionedQuery = (mapID == nil || mapID == "") ? baseQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid) : baseQuery.whereField("mapID", isEqualTo: mapID!)
@@ -214,6 +217,7 @@ extension SpotPageController {
         fetching = .activelyRefreshing
         finalQuery.getDocuments { (snap, err) in
             guard err == nil else { self.fetching = .refreshEnabled; return }
+            print("fetchRelatedPost finished")
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
@@ -228,7 +232,6 @@ extension SpotPageController {
                 self.fetchRelatedPostComplete = true
                 self.fetching = .refreshDisabled
                 self.fetchCommunityPost(12 - snap!.documents.count)
-                print("Related post fetch completed")
             } else {
                 self.endDocument = snap?.documents.last
                 self.fetching = .refreshEnabled
@@ -241,6 +244,7 @@ extension SpotPageController {
     
     private func fetchCommunityPost(_ number: Int = 12) {
         guard fetching != .activelyRefreshing else { return }
+        print("fetchCommunityPost")
         let db: Firestore = Firestore.firestore()
         var mustFilter = false
         var baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
@@ -249,13 +253,15 @@ extension SpotPageController {
         } else {
             mustFilter = true
         }
-        var finalQuery = baseQuery.limit(to: number).order(by: "timestamp", descending: true)
+        var finalQuery = baseQuery.limit(to: number)
         if endDocument != nil {
             finalQuery = finalQuery.start(atDocument: endDocument!)
         }
         fetching = .activelyRefreshing
         finalQuery.getDocuments { (snap, err) in
             guard err == nil else { self.fetching = .refreshEnabled; return }
+            print("fetchCommunityPost finished")
+            var tempCommunityPosts: [MapPost] = []
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
@@ -264,24 +270,24 @@ extension SpotPageController {
                         if self.relatedPost.contains(where: { mapPost in
                             mapPost.id == postInfo.id
                         }) == false {
-                            self.communityPost.append(postInfo)
+                            tempCommunityPosts.append(postInfo)
                         }
                     } else {
-                        self.communityPost.append(postInfo)
+                        tempCommunityPosts.append(postInfo)
                     }
-
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
             }
+            let sortedTempCommunityPosts = tempCommunityPosts.sorted(by: { $0.timestamp.compare($1.timestamp) == ComparisonResult.orderedDescending })
+            self.communityPost.append(contentsOf: sortedTempCommunityPosts)
             self.endDocument = snap!.documents.count < 12 ? nil : snap?.documents.last
             if snap!.documents.count < 12 {
                 self.fetchCommunityPostComplete = true
-                print("Community post fetch completed")
             }
             self.fetching = .refreshEnabled
             DispatchQueue.main.async {
-                self.spotPageCollectionView.reloadSections(IndexSet(integer: 2))
+                self.spotPageCollectionView.reloadData()
             }
         }
     }
