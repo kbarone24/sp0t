@@ -246,14 +246,8 @@ extension SpotPageController {
         guard fetching != .activelyRefreshing else { return }
         print("fetchCommunityPost")
         let db: Firestore = Firestore.firestore()
-        var mustFilter = false
-        var baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
-        if (mapID == nil || mapID == "") == false {
-            baseQuery = baseQuery.whereField("mapID", isNotEqualTo: mapID!)
-        } else {
-            mustFilter = true
-        }
-        var finalQuery = baseQuery.limit(to: number)
+        let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
+        var finalQuery = baseQuery.limit(to: number).order(by: "timestamp", descending: true)
         if endDocument != nil {
             finalQuery = finalQuery.start(atDocument: endDocument!)
         }
@@ -261,26 +255,27 @@ extension SpotPageController {
         finalQuery.getDocuments { (snap, err) in
             guard err == nil else { self.fetching = .refreshEnabled; return }
             print("fetchCommunityPost finished")
-            var tempCommunityPosts: [MapPost] = []
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
-                    if mustFilter {
+                    // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
+                    // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
+                    if (self.mapID == nil || self.mapID == "") == false {
+                        if postInfo.mapID != self.mapID {
+                            self.communityPost.append(postInfo)
+                        }
+                    } else {
                         if self.relatedPost.contains(where: { mapPost in
                             mapPost.id == postInfo.id
                         }) == false {
-                            tempCommunityPosts.append(postInfo)
+                            self.communityPost.append(postInfo)
                         }
-                    } else {
-                        tempCommunityPosts.append(postInfo)
                     }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
             }
-            let sortedTempCommunityPosts = tempCommunityPosts.sorted(by: { $0.timestamp.compare($1.timestamp) == ComparisonResult.orderedDescending })
-            self.communityPost.append(contentsOf: sortedTempCommunityPosts)
             self.endDocument = snap!.documents.count < 12 ? nil : snap?.documents.last
             if snap!.documents.count < 12 {
                 self.fetchCommunityPostComplete = true
@@ -414,6 +409,11 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                     collectionCell?.transform = .identity
                 }
             }
+            guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
+            postVC.postsList = [indexPath.section == 1 ? relatedPost[indexPath.row] : communityPost[indexPath.row]]
+            postVC.containerDrawerView = containerDrawerView
+            barView.isHidden = true
+            DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
         }
     }
 }
