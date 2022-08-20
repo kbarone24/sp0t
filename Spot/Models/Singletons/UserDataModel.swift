@@ -26,7 +26,7 @@ class UserDataModel {
     var largeScreen = UIScreen.main.bounds.width > 800
     
     var maxAspect: CGFloat {
-        return screenSize == 0 ? 1.7 : screenSize == 1 ? 1.78 : 1.85
+        return screenSize == 0 ? 1.6 : screenSize == 1 ? 1.78 : 1.85
     }
     
     var currentLocation: CLLocation!

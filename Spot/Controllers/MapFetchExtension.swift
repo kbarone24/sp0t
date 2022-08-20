@@ -5,7 +5,6 @@
 //  Created by Kenny Barone on 7/22/22.
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
-
 import Foundation
 import UIKit
 import Firebase
@@ -14,7 +13,6 @@ import FirebaseUI
 import MapKit
 
 extension MapController {
-
     func runMapFetches() {
         startTime = Timestamp(date: Date()).seconds
         DispatchQueue.global(qos: .userInitiated).async {
@@ -25,6 +23,8 @@ extension MapController {
     @objc func notifyUserLoad(_ notification: NSNotification) {
         if feedLoaded { return }
         feedLoaded = true
+        
+        DispatchQueue.main.async { self.loadAdditionalOnboarding() }
         
         DispatchQueue.global(qos: .userInitiated).async {
             print("get maps", Timestamp(date: Date()).seconds - self.startTime)
@@ -38,18 +38,19 @@ extension MapController {
                 print("home fetch", Timestamp(date: Date()).seconds - self.startTime)
                 self.attachNewPostListener()
                 self.newPostsButton.isHidden = false
-                self.reloadMapsCollection(reload: false)
+                self.reloadMapsCollection(resort: true)
+                self.displayHeelsMap()
             }
         }
     }
     
-    func reloadMapsCollection(reload: Bool) {
-        if !reload { UserDataModel.shared.userInfo.sortMaps() }
+    func reloadMapsCollection(resort: Bool) {
+        if resort { UserDataModel.shared.userInfo.sortMaps() }
         
         DispatchQueue.main.async {
             self.mapsCollection.reloadData()
             self.mapsCollection.selectItem(at: IndexPath(item: self.selectedItemIndex, section: 0), animated: false, scrollPosition: .left)
-            if !reload { self.centerMapOnPosts(animated: true) }
+            if resort { print("resort"); self.centerMapOnPosts(animated: true) }
             self.setNewPostsButtonCount()
         }
     }
@@ -85,8 +86,6 @@ extension MapController {
                 
                 if UserDataModel.shared.userInfo.id == "" { UserDataModel.shared.userInfo = activeUser } else { self.updateUserInfo(user: activeUser) }
                 if UserDataModel.shared.userInfo.profilePic == UIImage() { self.getUserProfilePics() }
-                
-                UserDataModel.shared.userInfo.friendIDs = userSnap?.get("friendsList") as? [String] ?? []
                 for id in self.deletedFriendIDs { UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
                 NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
 
@@ -115,7 +114,6 @@ extension MapController {
     
     func updateUserInfo(user: UserProfile) {
         // update user info fields to avoid overwriting map values
-        print("update user info")
         UserDataModel.shared.userInfo.avatarURL = user.avatarURL
         UserDataModel.shared.userInfo.currentLocation = user.currentLocation
         UserDataModel.shared.userInfo.imageURL = user.imageURL
@@ -153,8 +151,8 @@ extension MapController {
 
     func getRecentPosts(map: CustomMap?) {
         /// fetch all posts in last 7 days
-        let seconds = Date().timeIntervalSince1970 - 86400 * 60
-        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400 * 50
+        let seconds = Date().timeIntervalSince1970 - 86400 * 7
+        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400
         let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
         var recentQuery = db.collection("posts").whereField("timestamp", isGreaterThanOrEqualTo: timestamp)
         ///query by mapID or friendsList for friends posts
@@ -171,7 +169,7 @@ extension MapController {
                     let postIn = try doc.data(as: MapPost.self)
                     /// if !contains, run query, else update with new values + update comments
                     guard let postInfo = postIn else { continue }
-                    if self.postsContains(postID: postInfo.id!, mapID: map?.id ?? "") { self.updatePost(post: postInfo, map: map); continue }
+                    if self.postsContains(postID: postInfo.id!, mapID: map?.id ?? "", newPost: false) { self.updatePost(post: postInfo, map: map); continue }
                     if map == nil && !UserDataModel.shared.userInfo.friendsContains(id: postInfo.posterID) { continue }
                     /// check seenList if older than 24 hours
                     if postInfo.timestamp.seconds < Int64(yesterdaySeconds) && postInfo.seenList!.contains(self.uid) { continue }
@@ -181,9 +179,8 @@ extension MapController {
                         guard let self = self else { return }
                         if post.id ?? "" != "" {
                             DispatchQueue.main.async {
-                                self.addPostToDictionary(post: post, map: map)
+                                self.addPostToDictionary(post: post, map: map, newPost: false, index: self.selectedItemIndex)
                             }
-                            
                         }
                         recentGroup.leave()
                     }
@@ -199,10 +196,11 @@ extension MapController {
         }
     }
     
-    func postsContains(postID: String, mapID: String) -> Bool {
-        if mapID == "" {
+    func postsContains(postID: String, mapID: String, newPost: Bool) -> Bool {
+        if mapID == "" || newPost {
             return self.friendsPostsDictionary[postID] != nil
-        } else {
+        }
+        if mapID != "" {
             if let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == mapID}) {
                 return map.postsDictionary[postID] != nil
             }
@@ -210,17 +208,22 @@ extension MapController {
         return false
     }
     
-    func addPostToDictionary(post: MapPost, map: CustomMap?) {
+    func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool, index: Int) {
         let post = setSecondaryPostValues(post: post)
-        if selectedItemIndex == 0 && map == nil { mapView.addPostAnnotation(post: post) } /// 0 always selected on initial fetch
-        
-        if map == nil {
+        /// add new post to both dictionaries
+        if map == nil || newPost {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
-        } else {
+            if index == 0 { mapView.addPostAnnotation(post: post) }
+        }
+        if map != nil {
             /// map posts are sorted by spot rather than user
             if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map!.id!}) {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id!)
                 let _ = UserDataModel.shared.userInfo.mapsList[i].updateGroup(post: post)
+                if index - 1 == i {
+                    /// remove and re-add annotation
+                    self.addMapAnnotations(index: index, reload: true)
+                }
             }
         }
     }
@@ -269,7 +272,6 @@ extension MapController {
         }
     }
     
-    
     func attachNewPostListener() {
         /// listen for new posts entering
         newPostListener = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 1).addSnapshotListener { [weak self] snap, err in
@@ -279,29 +281,16 @@ extension MapController {
                 do {
                     let postIn = try doc.data(as: MapPost.self)
                     guard let postInfo = postIn else { return }
-                    if postInfo.mapID != "" {
-                        /// check map dictionary for add
-                        if let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID}) {
-                            if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID!) {
-                                self.setPostDetails(post: postInfo) { [weak self] post in
-                                    guard let self = self else { return }
-                                    self.addPostToDictionary(post: post, map: map)
-                                    self.reloadMapsCollection(reload: true)
-                                }
-                            }
+                    if self.deletedPostIDs.contains(postInfo.id ?? "") { return }
+                    let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
+                    /// check map dictionary for add
+                    if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID ?? "", newPost: true) {
+                        self.setPostDetails(post: postInfo) { [weak self] post in
+                            guard let self = self else { return }
+                            self.addPostToDictionary(post: post, map: map, newPost: true, index: self.selectedItemIndex)
+                            self.reloadMapsCollection(resort: false)
                         }
                     }
-                
-                    if postInfo.friendsList.contains(self.uid) {
-                        if !self.postsContains(postID: postInfo.id!, mapID: "") {
-                            self.setPostDetails(post: postInfo) { [weak self] post in
-                                guard let self = self else { return }
-                                self.addPostToDictionary(post: post, map: nil)
-                                self.reloadMapsCollection(reload: true)
-                            }
-                        }
-                    }
-
                 } catch {
                     return
                 }
@@ -357,9 +346,11 @@ extension MapController {
         }
         
         DispatchQueue.main.async {
-            self.reloadMapsCollection(reload: true)
+            print("reload maps collection")
+            self.reloadMapsCollection(resort: false)
             if coordinate != nil {
                 if let annotation = self.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: coordinate!)}) {
+                    print("remove and add annotation")
                     self.mapView.removeAnnotation(annotation)
                     self.mapView.addAnnotation(annotation)
                 }
@@ -367,9 +358,52 @@ extension MapController {
         }
     }
     
-    @objc func notifyPostChange(_ notification: NSNotification) {
+    @objc func notifyNewPost(_ notification: NSNotification) {
+        /// add new post + zoom in on map
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
-       // updatePost(post: post, map: nil)
+        /// add new map to mapsList if applicable
+        var map = notification.userInfo?["map"] as? CustomMap
+        let emptyMap = map == nil || map?.id ?? "" == ""
+        if !emptyMap && !(UserDataModel.shared.userInfo.mapsList.contains(where: {$0.id == map!.id!})) {
+            map!.addSpotGroups()
+            UserDataModel.shared.userInfo.mapsList.append(map!)
+        }
+        DispatchQueue.main.async {
+            self.addPostToDictionary(post: post, map: map, newPost: true, index: 0)
+            self.selectMapAt(index: 0)
+            self.reloadMapsCollection(resort: true)
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            /// animate to spot if post to map, to post location if friends map
+          ///  let coordinate = mapIndex == 1 && post.spotID ?? "" != "" ? CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!) : post.coordinate
+            self.animateTo(coordinate: post.coordinate)
+        }
+    }
+
+    
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let mapID = notification.userInfo?["mapID"] as? String else { return }
+        guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+        guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
+        /// remove from friends stuff
+        friendsPostsDictionary.removeValue(forKey: post.id!)
+        deletedPostIDs.append(post.id!)
+        /// remove from map
+        if mapID != "" {
+            if mapDelete {
+                UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == mapID})
+            } else if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == mapID}) {
+                DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id!, spotID: spotDelete || spotRemove ? post.spotID! : "") }
+            }
+        }
+        /// remove annotation
+        if let i = mapView.annotations.firstIndex(where: {$0.coordinate.isEqualTo(coordinate: post.coordinate)}) {
+            DispatchQueue.main.async { self.mapView.removeAnnotation(self.mapView.annotations[i])}
+        }
+        DispatchQueue.main.async { self.reloadMapsCollection(resort: false) }
     }
     
     @objc func notifyCommentChange(_ notification: NSNotification) {
@@ -388,4 +422,92 @@ extension MapController {
             }
         }
     }
+    
+    @objc func enterForeground() {
+        DispatchQueue.main.async { self.checkForActivityIndicator() }
+    }
+    
+    func checkForActivityIndicator() {
+        /// resume frozen indicator
+        if mapsCollection != nil, let cell = mapsCollection.cellForItem(at: IndexPath(item: 0, section: 0)) as? MapLoadingCell {
+            cell.activityIndicator.startAnimating()
+        }
+    }
 }
+
+extension MapController: MapControllerDelegate {
+    func displayHeelsMap() {
+        var heelsMapAdded = false
+        var heelsMapMembers = 0
+        for map in UserDataModel.shared.userInfo.mapsList {
+            if(map.mapName == "Heelsmap"){
+                heelsMapAdded = true
+            }
+        }
+    
+        if(!self.userInChapelHill() && !heelsMapAdded){
+            let vc = HeelsMapPopUpController()
+            vc.mapDelegate = self
+            self.present(vc, animated: true)
+        }
+    }
+    
+    
+    func loadAdditionalOnboarding() {
+        if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
+            let avc = AvatarSelectionController(sentFrom: "map")
+            self.navigationController!.pushViewController(avc, animated: true)
+        }
+        else if (UserDataModel.shared.userInfo.friendIDs.count < 5) {
+            self.addFriends = AddFriendsView {
+                $0.layer.cornerRadius = 13
+                $0.isHidden = false
+                self.view.addSubview($0)
+            }
+            
+            self.addFriends.addFriendButton.addTarget(self, action: #selector(self.openFindFriends(_:)), for: .touchUpInside)
+            self.addFriends.snp.makeConstraints{
+                $0.height.equalTo(160)
+                $0.leading.trailing.equalToSuperview().inset(16)
+                $0.centerY.equalToSuperview()
+            }
+        }
+    }
+
+    func getHeelsMap() {
+        self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").getDocument { (heelsMapSnap, err) in
+            do {
+                let mapIn = try heelsMapSnap?.data(as: CustomMap.self)
+                guard var mapInfo = mapIn else { self.homeFetchGroup.leave(); return;}
+                mapInfo.memberIDs = mapIn!.memberIDs
+                /// append spots to show on map even if there's no post attached
+                if !mapInfo.spotIDs.isEmpty {
+                    for i in 0...mapInfo.spotIDs.count - 1 {
+                        let coordinate = CLLocationCoordinate2D(latitude: mapInfo.spotLocations[safe: i]?["lat"] ?? 0.0, longitude: mapInfo.spotLocations[safe: i]?["long"] ?? 0.0)
+                        mapInfo.postGroup.append(MapPostGroup(id: mapInfo.spotIDs[i], coordinate: coordinate, spotName: mapInfo.spotNames[safe: i] ?? "", postIDs: []))
+                    }
+                }
+                
+                self.heelsMap = mapInfo
+                                
+            } catch {
+                /// remove broken friend object
+                return
+            }
+        }
+    }
+    
+    func addHeelsMap() {
+        UserDataModel.shared.userInfo.mapsList.append(heelsMap)
+        self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").updateData([
+            "memberIDs": FieldValue.arrayUnion([UserDataModel.shared.userInfo.id!])
+        ])
+        self.reloadMapsCollection(resort: true)
+        
+        self.homeFetchGroup.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getRecentPosts(map: self.heelsMap)
+        }
+    }
+}
+

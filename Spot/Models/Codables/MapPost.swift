@@ -36,7 +36,7 @@ struct MapPost: Identifiable, Codable {
     var posterID: String
     var posterUsername: String? = ""
     var privacyLevel: String? = "friends"
-    var seenList: [String]? = [UserDataModel.shared.uid]
+    var seenList: [String]? = []
     var spotID: String? = ""
     var spotLat: Double? = 0.0
     var spotLong: Double? = 0.0
@@ -62,7 +62,8 @@ struct MapPost: Identifiable, Codable {
     var commentsHeight: CGFloat? = 0
     
     var seen: Bool {
-        return seenList?.contains(UserDataModel.shared.uid) ?? true
+        let weekAgoSeconds = Date().timeIntervalSince1970 - 86400 * 7
+        return (seenList?.contains(UserDataModel.shared.uid) ?? true) || timestamp.seconds < Int64(weekAgoSeconds)
     }
     var seconds: Int64 {
         return timestamp.seconds

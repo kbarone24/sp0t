@@ -101,6 +101,7 @@ extension AVCameraController {
         /// set spot values
         var spot = MapSpot(founderID: postDraft.createdBy ?? "", imageURL: "", privacyLevel: postDraft.spotPrivacy ?? "", spotDescription: postDraft.caption ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, spotName: postDraft.spotName)
         spot.visitorList = postDraft.visitorList ?? []
+        spot.posterUsername = UserDataModel.shared.userInfo.username
         spot.id = post.spotID ?? ""
         spot.poiCategory = postDraft.poiCategory
         spot.phone = postDraft.phone
@@ -120,8 +121,7 @@ extension AVCameraController {
                     
                     post.imageURLs = imageURLs
                     post.timestamp = Firebase.Timestamp(date: Date())
-                    
-                    self.uploadPost(post: post)
+                    self.uploadPost(post: post, map: map)
 
                     if spot.id != "" {
                         spot.imageURL = imageURLs.first ?? ""

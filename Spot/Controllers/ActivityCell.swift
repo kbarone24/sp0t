@@ -119,10 +119,9 @@ class ActivityCell: UITableViewCell {
                     $0.sd_setImage(with: URL(string: imageURLs[0]), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
                 }
             }
-            
         }
         
-        postImage.snp.makeConstraints{
+        postImage.snp.makeConstraints {
             $0.centerY.equalToSuperview()
             let notiType = notification.type
             switch notiType {
@@ -141,8 +140,8 @@ class ActivityCell: UITableViewCell {
             }
         }
         
-        username = UILabel{
-            $0.text = notification.senderUsername
+        username = UILabel {
+            $0.text = notification.userInfo?.username ?? ""
             $0.isUserInteractionEnabled = true
             $0.numberOfLines = 0
             $0.textColor = .black
@@ -153,7 +152,7 @@ class ActivityCell: UITableViewCell {
             contentView.addSubview($0)
         }
         
-        timestamp = UILabel{
+        timestamp = UILabel {
             $0.toTimeString(timestamp: notification.timestamp)
             $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
             $0.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)

@@ -13,10 +13,6 @@ enum MapType {
     case customMap
 }
 
-protocol CustomMapDelegate {
-    func finishPassing(updatedMap: CustomMap?)
-}
-
 
 class CustomMapController: UIViewController {
     private var topYContentOffset: CGFloat?
@@ -37,6 +33,8 @@ class CustomMapController: UIViewController {
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
+            print("map data", mapData?.postGroup.count)
+            print("ct", UserDataModel.shared.userInfo.mapsList[0].postGroup.count)
             if collectionView != nil { DispatchQueue.main.async {self.collectionView.reloadData()}}
         }
     }
@@ -49,7 +47,6 @@ class CustomMapController: UIViewController {
         }
     }
     
-    public var delegate: CustomMapDelegate?
     private unowned var mapController: MapController?
     private lazy var imageManager = SDWebImageManager()
     
@@ -103,12 +100,12 @@ class CustomMapController: UIViewController {
         super.viewWillAppear(animated)
         setUpNavBar()
         configureDrawerView()
+        mapController?.mapView.delegate = self
         if barView != nil { barView.isHidden = false }
     }
     
     override func viewDidAppear(_ animated: Bool) {
         Mixpanel.mainInstance().track(event: "CustomMapOpen")
-        mapController?.mapView.delegate = self
         DispatchQueue.main.async { self.addInitialAnnotations(posts: self.postsList) }
     }
     
@@ -171,7 +168,8 @@ extension CustomMapController {
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
-        
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
+
         view.backgroundColor = .white
         navigationItem.setHidesBackButton(true, animated: true)
         
@@ -292,8 +290,8 @@ extension CustomMapController {
                                 DispatchQueue.main.async {
                                     self.postsList.append(post)
                                     self.mapData!.postsDictionary.updateValue(post, forKey: post.id!)
-                                    let newGroup = self.mapData!.updateGroup(post: post)
-                                    if self.mapType == .friendsMap { self.addAnnotation(post: post) } else { self.addAnnotation(group: newGroup) }
+                                    let groupData = self.mapData!.updateGroup(post: post)
+                                    if self.mapType == .friendsMap { self.addAnnotation(post: post) } else { self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup) }
                                 }
                             }
                             postGroup.leave()
@@ -319,8 +317,19 @@ extension CustomMapController {
         }
     }
     
-    func addAnnotation(group: MapPostGroup?) {
-        if group != nil { mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!) }
+    func addAnnotation(group: MapPostGroup?, newGroup: Bool) {
+        if group != nil {
+            if newGroup {
+                /// add new group
+                mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
+            } else {
+                /// update existing group
+                if let anno = mapController?.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: group!.coordinate)}) {
+                    mapController?.mapView.removeAnnotation(anno)
+                    mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
+                }
+            }
+        }
     }
         
     func addInitialAnnotations(posts: [MapPost]) {
@@ -352,12 +361,30 @@ extension CustomMapController {
         barBackButton.isHidden = true
     }
     
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+      //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+   
+        /// check if post being deleted from map controllers child and update map if necessary
+        let secondVC = navigationController?.viewControllers[safe: (navigationController?.viewControllers.count ?? 2) - 2] is Self
+        postsList.removeAll(where: {$0.id == post.id})
+        mapData?.removePost(postID: post.id!, spotID: spotDelete ? post.spotID! : "")
+
+        DispatchQueue.main.async {
+            self.collectionView.reloadData()
+            if secondVC {
+                self.mapController?.mapView.removeAllAnnos()
+                self.addInitialAnnotations(posts: self.postsList)
+            }
+        }
+    }
+    
     @objc func backButtonAction() {
         barBackButton.isHidden = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Change `2.0` to the desired number of seconds.
             self.containerDrawerView?.closeAction()
         }
-        delegate?.finishPassing(updatedMap: mapData)
     }
     
     @objc func editMapAction() {
