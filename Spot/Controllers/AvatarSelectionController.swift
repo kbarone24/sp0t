@@ -166,26 +166,6 @@ class AvatarSelectionController: UIViewController {
         }
     }
     
-    ///trying to implement tap to scroll -- keeping in case we have time to work on
-    /*override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        ///trying to auto-scroll to animal when touched instead of swiping
-        
-        if let touch = touches.first {
-            let position = touch.location(in: view)
-            print("TOUCHEEEDDD", position)
-            
-            if let indexPath = collectionView.indexPathForItem(at: position) {
-                print(" 📍CENTER CELL: ", indexPath)
-                collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: false)
-                if(self.centerCell != (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)){
-                    self.centerCell = (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)
-                    transformToLarge()
-                }
-                print("center: ", centerCell.avatar!)
-            }
-        }
-    }*/
-    
     @objc func selectedTap(_ sender: UIButton){
         let avatarURL = AvatarURLs().getURL(name: centerCell.avatar!)
         UserDataModel.shared.userInfo.avatarURL = avatarURL

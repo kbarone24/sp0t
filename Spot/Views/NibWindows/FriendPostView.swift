@@ -21,6 +21,7 @@ class FriendPostView: UIView {
     @IBOutlet weak var username: UILabel!
     @IBOutlet weak var moreLabel: UILabel!
     @IBOutlet weak var timestamp: UILabel!
+    @IBOutlet weak var postCount: UILabel!
     
     class func instanceFromNib() -> UIView {
         return UINib(nibName: "FriendPostView", bundle: nil).instantiate(withOwner: self, options: nil).first as! UIView
@@ -50,6 +51,7 @@ class FriendPostView: UIView {
         postImage.frame = CGRect(x: (bounds.width - postImage.bounds.width)/2, y: postImage.frame.minY, width: postImage.bounds.width, height: postImage.bounds.height)
         imageMask.frame = postImage.frame
         replayIcon.frame = CGRect(x: postImage.frame.minX + 15.5, y: postImage.frame.minY + 13, width: 27.7, height: 31)
+        postCount.frame = CGRect(x: backgroundImage.frame.minX + 39, y: postCount.frame.minY, width: postCount.frame.width, height: postCount.frame.height)
 
         avatarView.frame = CGRect(x: (bounds.width - avatarView.bounds.width)/2, y: avatarView.frame.minY, width: avatarView.bounds.width, height: avatarView.frame.height)
     }

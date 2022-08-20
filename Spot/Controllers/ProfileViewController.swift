@@ -43,14 +43,14 @@ class ProfileViewController: UIViewController {
     private var postImages = [UIImage]() {
         didSet {
             if postImages.count == posts.count {
-                profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 1)])
+                DispatchQueue.main.async { self.profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 1)]) }
             }
         }
     }
     private var relation: ProfileRelation = .myself
     private var pendingFriendRequestNotiID: String? {
         didSet {
-            profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
+            DispatchQueue.main.async { self.profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)]) }
         }
     }
     public var mapSelectedIndex: Int?
@@ -134,6 +134,16 @@ class ProfileViewController: UIViewController {
             }
         }
     }
+    
+    @objc func notifyMapChange(_ notification: NSNotification) {
+        guard let userInfo = notification.userInfo as? [String: Any] else { return }
+        let mapID = userInfo["mapID"] as! String
+        let likers = userInfo["mapLikers"] as! [String]
+        if let i = maps.firstIndex(where: {$0.id == mapID}) {
+            maps[i].likers = likers
+            
+        }
+    }
 }
 
 extension ProfileViewController {
@@ -208,7 +218,8 @@ extension ProfileViewController {
         navigationItem.backButtonTitle = ""
         
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
-                        
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyMapChange(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
+
         profileCollectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .vertical
@@ -327,14 +338,6 @@ extension ProfileViewController {
     }
 }
 
-extension ProfileViewController: CustomMapDelegate {
-    func finishPassing(updatedMap: CustomMap?) {
-        if updatedMap?.id ?? "" != "", let i = maps.firstIndex(where: {$0.id == updatedMap!.id!}) {
-            maps[i] = updatedMap!
-        }
-    }
-}
-
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -393,12 +396,10 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             if let _ = cell as? ProfileMyMapCell {
                 let mapData = getMyMap()
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: mapData, postsList: [], presentedDrawerView: containerDrawerView, mapType: .myMap)
-                customMapVC.delegate = self
                 navigationController?.pushViewController(customMapVC, animated: true)
             } else if let _ = cell as? ProfileBodyCell {
                 mapSelectedIndex = indexPath.row - 1
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
-                customMapVC.delegate = self
                 navigationController?.pushViewController(customMapVC, animated: true)
             }
         }

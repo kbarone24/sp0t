@@ -116,7 +116,6 @@ class EditProfileViewController: UIViewController {
                 self.activityIndicator.stopAnimating()
                 self.dismiss(animated: true)
             }
-            
         } catch {
             //handle error
         }

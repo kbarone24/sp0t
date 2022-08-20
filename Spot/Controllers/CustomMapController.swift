@@ -13,10 +13,6 @@ enum MapType {
     case customMap
 }
 
-protocol CustomMapDelegate {
-    func finishPassing(updatedMap: CustomMap?)
-}
-
 
 class CustomMapController: UIViewController {
     private var topYContentOffset: CGFloat?
@@ -36,6 +32,8 @@ class CustomMapController: UIViewController {
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
+            print("map data", mapData?.postGroup.count)
+            print("ct", UserDataModel.shared.userInfo.mapsList[0].postGroup.count)
             if collectionView != nil { DispatchQueue.main.async {self.collectionView.reloadData()}}
         }
     }
@@ -48,8 +46,6 @@ class CustomMapController: UIViewController {
         }
     }
     
-//    public unowned var profileVC: ProfileViewController?
-    public var delegate: CustomMapDelegate?
     private unowned var mapController: MapController?
     private lazy var imageManager = SDWebImageManager()
     
@@ -103,12 +99,12 @@ class CustomMapController: UIViewController {
         super.viewWillAppear(animated)
         setUpNavBar()
         configureDrawerView()
+        mapController?.mapView.delegate = self
         if barView != nil { barView.isHidden = false }
     }
     
     override func viewDidAppear(_ animated: Bool) {
         Mixpanel.mainInstance().track(event: "CustomMapOpen")
-        mapController?.mapView.delegate = self
         DispatchQueue.main.async { self.addInitialAnnotations(posts: self.postsList) }
     }
     
@@ -291,8 +287,8 @@ extension CustomMapController {
                                 DispatchQueue.main.async {
                                     self.postsList.append(post)
                                     self.mapData!.postsDictionary.updateValue(post, forKey: post.id!)
-                                    let newGroup = self.mapData!.updateGroup(post: post)
-                                    if self.mapType == .friendsMap { self.addAnnotation(post: post) } else { self.addAnnotation(group: newGroup) }
+                                    let groupData = self.mapData!.updateGroup(post: post)
+                                    if self.mapType == .friendsMap { self.addAnnotation(post: post) } else { self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup) }
                                 }
                             }
                             postGroup.leave()
@@ -318,8 +314,19 @@ extension CustomMapController {
         }
     }
     
-    func addAnnotation(group: MapPostGroup?) {
-        if group != nil { mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!) }
+    func addAnnotation(group: MapPostGroup?, newGroup: Bool) {
+        if group != nil {
+            if newGroup {
+                /// add new group
+                mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
+            } else {
+                /// update existing group
+                if let anno = mapController?.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: group!.coordinate)}) {
+                    mapController?.mapView.removeAnnotation(anno)
+                    mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
+                }
+            }
+        }
     }
         
     func addInitialAnnotations(posts: [MapPost]) {
@@ -377,7 +384,6 @@ extension CustomMapController {
                 self.navigationController?.popViewController(animated: true)
             }
         }
-        delegate?.finishPassing(updatedMap: mapData)
     }
     
     @objc func editMapAction() {

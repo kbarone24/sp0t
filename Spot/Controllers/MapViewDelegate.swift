@@ -85,7 +85,7 @@ extension MapController: MKMapViewDelegate {
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         /// remove clustering if zoomed in to ground level
         guard let mapView = mapView as? SpotMapView else { return }
-        if mapView.region.span.longitudeDelta < 0.0017 {
+        if mapView.region.span.longitudeDelta < 0.0013 {
             if mapView.shouldCluster {
                 mapView.shouldCluster = false
                 let annotations = self.mapView.annotations
@@ -121,7 +121,7 @@ extension MapController: MKMapViewDelegate {
     
     func animateTo(coordinate: CLLocationCoordinate2D?) {
         if coordinate != nil {
-            DispatchQueue.main.async { self.mapView.setRegion(MKCoordinateRegion(center: coordinate!, span: MKCoordinateSpan(latitudeDelta: 0.0015, longitudeDelta: 0.0015)), animated: true) }
+            DispatchQueue.main.async { self.mapView.setRegion(MKCoordinateRegion(center: coordinate!, span: MKCoordinateSpan(latitudeDelta: 0.0012, longitudeDelta: 0.0012)), animated: true) }
         }
     }
 }
@@ -294,6 +294,7 @@ class SpotMapView: MKMapView {
         annotationView.mapView = self
         annotationView.clusteringIdentifier = !cluster && shouldCluster ? MKMapViewDefaultClusterAnnotationViewReuseIdentifier : nil
         annotationView.updateImage(posts: posts, spotName: group.spotName, id: group.id)
+        annotationView.isSelected = posts.contains(where: {!$0.seen})
         return annotationView
     }
     
@@ -311,8 +312,8 @@ class SpotMapView: MKMapView {
         annotationView.annotation = anno
         annotationView.mapView = self
         annotationView.clusteringIdentifier = shouldCluster ? MKMapViewDefaultClusterAnnotationViewReuseIdentifier : nil
-
         annotationView.updateImage(posts: [post])
+        annotationView.isSelected = !post.seen
         return annotationView
     }
     

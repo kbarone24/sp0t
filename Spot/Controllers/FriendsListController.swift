@@ -135,7 +135,7 @@ class FriendsListController: UIViewController {
     
     func addSearchBar() {
         searchBar = UISearchBar {
-            $0.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
+            $0.tintColor = UIColor(named: "SpotGreen")
             $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
             $0.searchTextField.leftView?.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
             $0.delegate = self

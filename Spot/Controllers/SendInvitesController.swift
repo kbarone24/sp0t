@@ -82,7 +82,7 @@ class SendInvitesController: UIViewController {
         
         searchBar = UISearchBar {
             $0.searchBarStyle = .default
-            $0.tintColor = .white
+            $0.tintColor = UIColor(named: "SpotGreen")
             $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
             $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
             $0.searchTextField.leftView?.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
