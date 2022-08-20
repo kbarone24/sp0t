@@ -30,8 +30,7 @@ extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
                 transitionContext.containerView.addSubview(presentedView)
                 UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
                     presentedView.frame.origin = .zero
-                } completion: { success in
-                    transitionContext.completeTransition(success)
+                    transitionContext.completeTransition(true)
                 }
             }
         } else {

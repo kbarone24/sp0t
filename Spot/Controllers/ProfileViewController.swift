@@ -15,11 +15,6 @@ import FirebaseFunctions
 
 
 class ProfileViewController: UIViewController {
-        
-    // If start from middle position and need to be draggable
-    private var fromMiddleDrag: Bool = false
-    private var topYContentOffset: CGFloat?
-    private var middleYContentOffset: CGFloat?
     
     private var profileCollectionView: UICollectionView!
     private var noPostLabel: UILabel!
@@ -43,14 +38,14 @@ class ProfileViewController: UIViewController {
     private var postImages = [UIImage]() {
         didSet {
             if postImages.count == posts.count {
-                DispatchQueue.main.async { self.profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 1)]) }
+                profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 1)])
             }
         }
     }
     private var relation: ProfileRelation = .myself
     private var pendingFriendRequestNotiID: String? {
         didSet {
-            DispatchQueue.main.async { self.profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)]) }
+            profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
         }
     }
     public var mapSelectedIndex: Int?
@@ -60,7 +55,6 @@ class ProfileViewController: UIViewController {
     
     deinit {
         print("ProfileViewController(\(self) deinit")
-        NotificationCenter.default.removeObserver(self)
     }
     
     init(userProfile: UserProfile? = nil, presentedDrawerView: DrawerView? = nil) {
@@ -81,15 +75,16 @@ class ProfileViewController: UIViewController {
         runFetches()
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        Mixpanel.mainInstance().track(event: "ProfileOpen")
+    override func viewWillAppear(_ animated: Bool) {
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
+        setUpNavBar()
+        configureDrawerView()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        navigationController?.setNavigationBarHidden(false, animated: true)
-        configureDrawerView()
-        setUpNavBar()
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+//        navigationController?.setNavigationBarHidden(false, animated: true)
+        Mixpanel.mainInstance().track(event: "ProfileOpen")
     }
     
     @objc func mapLikersChanged(_ notification: NSNotification) {
@@ -103,9 +98,6 @@ class ProfileViewController: UIViewController {
     @objc func editButtonAction() {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.profileVC = self
-        editVC.onDoneBlock = {result in
-            self.userProfile = result
-        }
         editVC.modalPresentationStyle = .fullScreen
         present(editVC, animated: true)
     }
@@ -117,41 +109,22 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func popVC() {
-        containerDrawerView?.closeAction()
-    }
-    
-    @objc func notifyPostDelete(_ notification: NSNotification) {
-        guard let post = notification.userInfo?["post"] as? MapPost else { return }
-        guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
-        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
-        guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
-
-        posts.removeAll(where: {$0.id == post.id})
-        if mapDelete {
-            maps.removeAll(where: {$0.id == post.mapID ?? ""})
-            DispatchQueue.main.async { self.profileCollectionView.reloadData() }
-            
-        } else if post.mapID ?? "" != "" {
-            if let i = maps.firstIndex(where: {$0.id == post.mapID!}) {
-                maps[i].removePost(postID: post.id!, spotID: spotDelete || spotRemove ? post.spotID! : "")
-            }
-        }
-    }
-    
-    @objc func notifyMapChange(_ notification: NSNotification) {
-        guard let userInfo = notification.userInfo as? [String: Any] else { return }
-        let mapID = userInfo["mapID"] as! String
-        let likers = userInfo["mapLikers"] as! [String]
-        if let i = maps.firstIndex(where: {$0.id == mapID}) {
-            maps[i].likers = likers
-            
+        if navigationController?.viewControllers.count == 1 {
+            containerDrawerView?.closeAction()
+        } else {
+            navigationController?.popViewController(animated: true)
         }
     }
 }
 
 extension ProfileViewController {
+    
     private func setUpNavBar() {
-        navigationController!.setNavigationBarHidden(false, animated: true)
+        navigationController!.setNavigationBarHidden(false, animated: false)
+        
+        // Hacky way to avoid the nav bar get pushed up, when user go to custom map and drag the drawer to top, to middle and go back to profile
+        navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 47.0)
+        
         navigationController!.navigationBar.barTintColor = UIColor.white
         navigationController!.navigationBar.isTranslucent = true
         navigationController!.navigationBar.barStyle = .black
@@ -174,7 +147,10 @@ extension ProfileViewController {
     private func configureDrawerView() {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        containerDrawerView?.showCloseButton = false
+        if self.containerDrawerView?.status != .Top {
+            self.containerDrawerView?.present(to: .Top)
+        }
     }
         
     private func getUserInfo() {
@@ -217,12 +193,10 @@ extension ProfileViewController {
     
     private func viewSetup() {
         view.backgroundColor = .white
+
         self.title = ""
         navigationItem.backButtonTitle = ""
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyMapChange(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
-
+                        
         profileCollectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .vertical
@@ -236,15 +210,6 @@ extension ProfileViewController {
             return view
         }()
         view.addSubview(profileCollectionView)
-
-        // Setups for if need to drag and start position is middle
-        if fromMiddleDrag {
-            // Need a new pan gesture to react when profileCollectionView scroll disables
-            let scrollViewPanGesture = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
-            scrollViewPanGesture.delegate = self
-            profileCollectionView.addGestureRecognizer(scrollViewPanGesture)
-            profileCollectionView.isScrollEnabled = false
-        }
         
         profileCollectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -284,16 +249,13 @@ extension ProfileViewController {
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
-                    guard var postInfo = unwrappedInfo else { return }
-                    postInfo = self.setSecondaryPostValues(post: postInfo)
-                    self.setPostDetails(post: postInfo) { post in
-                        self.posts.append(post)
-                        let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
-                        self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
-                            guard self != nil else { return }
-                            let image = image ?? UIImage()
+                    guard let postInfo = unwrappedInfo else { return }
+                    self.posts.append(postInfo)
+                    let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
+                    self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
+                        guard self != nil else { return }
+                        let image = image ?? UIImage()
                         self?.postImages.append(image)
-                        }
                     }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
@@ -338,6 +300,14 @@ extension ProfileViewController {
         var mapData = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         mapData.createPosts(posts: posts)
         return mapData
+    }
+}
+
+extension ProfileViewController: CustomMapDelegate {
+    func finishPassing(updatedMap: CustomMap?) {
+        if updatedMap?.id ?? "" != "", let i = maps.firstIndex(where: {$0.id == updatedMap!.id!}) {
+            maps[i] = updatedMap!
+        }
     }
 }
 
@@ -399,10 +369,12 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             if let _ = cell as? ProfileMyMapCell {
                 let mapData = getMyMap()
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: mapData, postsList: [], presentedDrawerView: containerDrawerView, mapType: .myMap)
+                customMapVC.delegate = self
                 navigationController?.pushViewController(customMapVC, animated: true)
             } else if let _ = cell as? ProfileBodyCell {
                 mapSelectedIndex = indexPath.row - 1
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
+                customMapVC.delegate = self
                 navigationController?.pushViewController(customMapVC, animated: true)
             }
         }
@@ -430,98 +402,11 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         // Show navigation bar when user scroll pass the header section
-        if topYContentOffset != nil {
-            if scrollView.contentOffset.y > -91.0 {
-                navigationController?.navigationBar.isTranslucent = false
-                if(scrollView.contentOffset.y > 0){
-                    self.title = userProfile?.name
-                } else { self.title = ""}
-            }
-        } else {
-            if fromMiddleDrag == false {
-                topYContentOffset = scrollView.contentOffset.y
-            }
+        if scrollView.contentOffset.y > -91.0 {
+            navigationController?.navigationBar.isTranslucent = false
+            if(scrollView.contentOffset.y > 0){
+                self.title = userProfile?.name
+            } else { self.title = ""}
         }
-
-        if fromMiddleDrag {
-            // Disable the bouncing effect when scroll view is scrolled to top
-            if topYContentOffset != nil {
-                if
-                    containerDrawerView?.status == .Top &&
-                    scrollView.contentOffset.y <= topYContentOffset!
-                {
-                    scrollView.contentOffset.y = topYContentOffset!
-                }
-            }
-            
-            // Get middle y content offset
-            if middleYContentOffset == nil {
-                middleYContentOffset = scrollView.contentOffset.y
-            }
-            
-            // Set scroll view content offset when in transition
-            if
-                middleYContentOffset != nil &&
-                topYContentOffset != nil &&
-                scrollView.contentOffset.y <= middleYContentOffset! &&
-                containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
-            {
-                scrollView.contentOffset.y = middleYContentOffset!
-            }
-            
-            // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
-            if containerDrawerView?.status != .Top {
-                profileCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
-                profileCollectionView.isScrollEnabled = false
-                containerDrawerView?.swipeToNextState = true
-            }
-        }
-    }
-}
-
-extension ProfileViewController: UIGestureRecognizerDelegate {
-    @objc func onPan(_ recognizer: UIPanGestureRecognizer) {
-        // Swipe up y translation < 0
-        // Swipe down y translation > 0
-        let yTranslation = recognizer.translation(in: recognizer.view).y
-        
-        // Get the initial Top y position contentOffset
-        if containerDrawerView?.status == .Top && topYContentOffset == nil {
-            topYContentOffset = profileCollectionView.contentOffset.y
-        }
-        
-        // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction
-        if
-            topYContentOffset != nil &&
-            containerDrawerView?.status == .Top &&
-            profileCollectionView.contentOffset.y <= topYContentOffset!
-        {
-            profileCollectionView.isScrollEnabled = true
-            containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
-        }
-
-        // Preventing the drawer view to be dragged when it's status is top and user is scrolling down
-        if
-            containerDrawerView?.status == .Top &&
-            profileCollectionView.contentOffset.y > topYContentOffset ?? -50 &&
-            yTranslation > 0 &&
-            containerDrawerView?.swipeToNextState == false
-        {
-            containerDrawerView?.canDrag = false
-            containerDrawerView?.slideView.frame.origin.y = 0
-        }
-        
-        // Enable drag when the drawer view is on top and user swipes down
-        if profileCollectionView.contentOffset.y <= topYContentOffset ?? -50 && yTranslation >= 0 {
-            containerDrawerView?.canDrag = true
-        }
-        
-        // Need to prevent content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
-        
-        recognizer.setTranslation(.zero, in: recognizer.view)
-    }
-    
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return true
     }
 }
