@@ -143,7 +143,8 @@ extension SpotPageController {
             $0.textAlignment = .center
             $0.numberOfLines = 0
             $0.sizeToFit()
-            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: view.frame.width, height: 18))
+            $0.adjustsFontSizeToFitWidth = true
+            $0.frame = CGRect(origin: CGPoint(x: 50, y: 55), size: CGSize(width: view.frame.width - 100, height: 18))
             barView.addSubview($0)
         }
         barBackButton = UIButton {
@@ -413,7 +414,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             postVC.postsList = [indexPath.section == 1 ? relatedPost[indexPath.row] : communityPost[indexPath.row]]
             postVC.containerDrawerView = containerDrawerView
             barView.isHidden = true
-            DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
+            self.navigationController!.pushViewController(postVC, animated: true)
         }
     }
 }

@@ -83,6 +83,7 @@ class ProfileViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+//        navigationController?.setNavigationBarHidden(false, animated: true)
         Mixpanel.mainInstance().track(event: "ProfileOpen")
     }
     
@@ -119,7 +120,11 @@ class ProfileViewController: UIViewController {
 extension ProfileViewController {
     
     private func setUpNavBar() {
-        navigationController!.setNavigationBarHidden(false, animated: true)
+        navigationController!.setNavigationBarHidden(false, animated: false)
+        
+        // Hacky way to avoid the nav bar get pushed up, when user go to custom map and drag the drawer to top, to middle and go back to profile
+        navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 47.0)
+        
         navigationController!.navigationBar.barTintColor = UIColor.white
         navigationController!.navigationBar.isTranslucent = true
         navigationController!.navigationBar.barStyle = .black
