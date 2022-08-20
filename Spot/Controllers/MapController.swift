@@ -109,6 +109,7 @@ class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     func setUpViews() {
@@ -597,7 +598,7 @@ class AddFriendsView: UIView {
             $0.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
             let customButtonTitle = NSMutableAttributedString(string: "Find Friends", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                 NSAttributedString.Key.foregroundColor: UIColor.black
             ])
             $0.setAttributedTitle(customButtonTitle, for: .normal)

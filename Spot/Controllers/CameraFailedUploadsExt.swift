@@ -121,8 +121,7 @@ extension AVCameraController {
                     
                     post.imageURLs = imageURLs
                     post.timestamp = Firebase.Timestamp(date: Date())
-                    
-                    self.uploadPost(post: post)
+                    self.uploadPost(post: post, map: map)
 
                     if spot.id != "" {
                         spot.imageURL = imageURLs.first ?? ""

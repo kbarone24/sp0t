@@ -32,10 +32,11 @@ class SpotPostAnnotationView: MKAnnotationView {
     func updateImage(posts: [MapPost], spotName: String, id: String) {
         self.id = id
         postIDs = posts.map({$0.id!})
+        print("postids", postIDs)
         let post = posts.first
         
         if post != nil {
-            let nibView = loadNib(post: post!, spotName: spotName)
+            let nibView = loadNib(post: post!, spotName: spotName, postCount: posts.count)
             self.image = nibView.asImage()
 
             guard let url = URL(string: post!.imageURLs.first ?? "") else { image = nibView.asImage(); return }
@@ -48,7 +49,7 @@ class SpotPostAnnotationView: MKAnnotationView {
         }
     }
     
-    func loadNib(post: MapPost, spotName: String) -> SpotPostView {
+    func loadNib(post: MapPost, spotName: String, postCount: Int) -> SpotPostView {
         let infoWindow = SpotPostView.instanceFromNib() as! SpotPostView
         infoWindow.clipsToBounds = false
         infoWindow.backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
@@ -57,6 +58,15 @@ class SpotPostAnnotationView: MKAnnotationView {
         infoWindow.imageMask.layer.cornerRadius = 57/2
         infoWindow.imageMask.isHidden = !post.seen
         infoWindow.replayIcon.isHidden = !post.seen
+        
+        if postCount > 1 {
+            infoWindow.postCount.backgroundColor = post.seen ? .white : UIColor(named: "SpotGreen")
+            infoWindow.postCount.layer.cornerRadius = 10
+            infoWindow.postCount.font = UIFont(name: "SFCompactText-Heavy", size: 12.5)
+            infoWindow.postCount.text = String(postCount)
+        } else {
+            infoWindow.postCount.isHidden = true
+        }
         
         if spotName != "" {
             /// bordered text
