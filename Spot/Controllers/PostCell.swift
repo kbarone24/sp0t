@@ -732,6 +732,7 @@ extension PostCell {
                 print(result?.data as Any, error as Any)
             }
         }
+        incrementTopFriends(friendID: post.posterID, increment: -1)
     }
     
     @objc func elipsesTap() {
@@ -762,5 +763,7 @@ extension PostCell {
         for user in post.taggedUserIDs ?? [] {
             db.collection("users").document(user).collection("notifications").addDocument(data: likeNotiValues)
         }
+        
+        incrementTopFriends(friendID: post.posterID, increment: 1)
     }
 }

@@ -129,7 +129,6 @@ class EditProfileViewController: UIViewController {
                 onDoneBlock!(userProfile!)
                 self.dismiss(animated: true)
             }
-            
         } catch {
             //handle error
         }

@@ -233,9 +233,8 @@ extension SpotPageController {
     private func fetchCommunityPost(_ number: Int = 12) {
         guard fetching != .activelyRefreshing else { return }
         let db: Firestore = Firestore.firestore()
-        var mustFilter = false
+        let mustFilter = true
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
-        mustFilter = true
         var finalQuery = baseQuery.limit(to: number).order(by: "timestamp", descending: true)
         if endDocument != nil {
             finalQuery = finalQuery.start(atDocument: endDocument!)

@@ -312,7 +312,7 @@ extension CustomMapHeaderCell {
             Mixpanel.mainInstance().track(event: "CustomMapFollowMap")
             mapData.likers.append(UserDataModel.shared.userInfo.id!)
             setMapInfo()
-            let mapLikers = ["mapLikers": mapData.likers]
+            let mapLikers = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: mapLikers)
             let db = Firestore.firestore()
             db.collection("maps").document(mapData.id!).setData(["likers": mapData.likers], merge: true)
@@ -328,7 +328,7 @@ extension CustomMapHeaderCell {
                 self.mapData.likers.remove(at: userIndex)
                 db.collection("maps").document(self.mapData.id!).setData(["likers": self.mapData.likers], merge: true)
                 self.setMapInfo()
-                let mapLikers = ["mapLikers": self.mapData.likers]
+                let mapLikers = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
                 NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: mapLikers)
                 self.actionButton.setTitle("Follow map", for: .normal)
                 self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)

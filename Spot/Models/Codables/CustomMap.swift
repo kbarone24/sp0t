@@ -95,6 +95,7 @@ struct CustomMap: Identifiable, Codable {
     
     mutating func addSpotGroups() {
         /// append spots to show on map even if there's no post attached
+        postGroup.removeAll()
         if !spotIDs.isEmpty {
             for i in 0...spotIDs.count - 1 {
                 let coordinate = CLLocationCoordinate2D(latitude: spotLocations[safe: i]?["lat"] ?? 0.0, longitude: spotLocations[safe: i]?["long"] ?? 0.0)
@@ -103,11 +104,13 @@ struct CustomMap: Identifiable, Codable {
         }
     }
     
-    mutating func updateGroup(post: MapPost) -> MapPostGroup? {
+    mutating func updateGroup(post: MapPost) -> (group: MapPostGroup?, newGroup: Bool) {
         if post.spotID ?? "" == "" {
             /// attach by postID
             let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
-            postGroup.append(MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
+            let newGroup = MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
+            postGroup.append(newGroup)
+            return (newGroup, true)
             
         } else if !postGroup.contains(where: {$0.id == post.spotID!}) {
             let coordinate = CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!)
@@ -116,15 +119,16 @@ struct CustomMap: Identifiable, Codable {
             spotIDs.append(post.spotID!)
             spotLocations.append(["lat": post.spotLat ?? post.postLat, "long": post.spotLong ?? post.postLong])
             spotNames.append(post.spotName ?? "")
-            return newGroup
-            
+            return (newGroup, true)
+
         } else if let i = postGroup.firstIndex(where: {$0.id == post.spotID}) {
             if !postGroup[i].postIDs.contains(where: {$0.id == post.id}) {
                 postGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
                 postGroup[i].sortPostIDs()
+                return (postGroup[i], false)
             }
         }
-        return nil
+        return (nil, false)
     }
     
     mutating func createPosts(posts: [MapPost]) {
@@ -153,7 +157,7 @@ struct CustomMap: Identifiable, Codable {
             postIDs.remove(at: i)
             postImageURLs.remove(at: i)
             postLocations.remove(at: i)
-            postTimestamps.remove(at: i)
+         //   postTimestamps.remove(at: i)
         }
         if spotID != "" {
             if let i = spotIDs.firstIndex(where: {$0 == spotID}) {
