@@ -22,7 +22,7 @@ class SpotPageController: UIViewController {
     private var mapPostLabel: UILabel!
     private var communityPostLabel: UILabel!
     private lazy var imageManager = SDWebImageManager()
-    private var drawerView: DrawerView?
+    private var containerDrawerView: DrawerView?
     
     private var mapID: String?
     private var mapName: String?
@@ -50,7 +50,7 @@ class SpotPageController: UIViewController {
         self.mapName = mapPost.mapName
         self.spotName = mapPost.spotName
         self.spotID = mapPost.spotID
-        self.drawerView = presentedDrawerView
+        self.containerDrawerView = presentedDrawerView
     }
 
     required init?(coder: NSCoder) {
@@ -60,7 +60,6 @@ class SpotPageController: UIViewController {
     deinit {
         print("SpotPageController(\(self) deinit")
         barView.removeFromSuperview()
-        NotificationCenter.default.removeObserver(self)
     }
     
     override func viewDidLoad() {
@@ -73,10 +72,8 @@ class SpotPageController: UIViewController {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        barView.isHidden = false
-        drawerView?.canInteract = false
-        drawerView?.swipeDownToDismiss = false
-        drawerView?.showCloseButton = false
+        setUpNavBar()
+        configureDrawerView()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -85,10 +82,22 @@ class SpotPageController: UIViewController {
 }
 
 extension SpotPageController {
-    private func viewSetup() {
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
-        view.backgroundColor = .white
+    private func setUpNavBar() {
         navigationController?.setNavigationBarHidden(true, animated: true)
+        barView.isHidden = false
+    }
+    
+    private func configureDrawerView() {
+        containerDrawerView?.canInteract = false
+        containerDrawerView?.swipeDownToDismiss = false
+        containerDrawerView?.showCloseButton = false
+        if self.containerDrawerView?.status != .Top {
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        }
+    }
+    
+    private func viewSetup() {
+        view.backgroundColor = .white
 
         spotPageCollectionView = {
             let layout = UICollectionViewFlowLayout()
@@ -125,7 +134,7 @@ extension SpotPageController {
         barView = UIView {
             $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
             $0.backgroundColor = .gray
-            drawerView?.slideView.addSubview($0)
+            containerDrawerView?.slideView.addSubview($0)
         }
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
@@ -134,7 +143,8 @@ extension SpotPageController {
             $0.textAlignment = .center
             $0.numberOfLines = 0
             $0.sizeToFit()
-            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: view.frame.width, height: 18))
+            $0.adjustsFontSizeToFitWidth = true
+            $0.frame = CGRect(origin: CGPoint(x: 50, y: 55), size: CGSize(width: view.frame.width - 100, height: 18))
             barView.addSubview($0)
         }
         barBackButton = UIButton {
@@ -181,7 +191,9 @@ extension SpotPageController {
     
     private func fetchSpot() {
         let db: Firestore = Firestore.firestore()
+        print("fetchSpot")
         db.collection("spots").document(spotID).getDocument { [weak self] snap, err in
+            print("fetchSpot finished")
             do {
                 guard let self = self else { return }
                 let unwrappedInfo = try snap?.data(as: MapSpot.self)
@@ -195,6 +207,7 @@ extension SpotPageController {
     
     private func fetchRelatedPost() {
         guard fetching == .refreshEnabled else { return }
+        print("fetchRelatedPost")
         let db: Firestore = Firestore.firestore()
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
         let conditionedQuery = (mapID == nil || mapID == "") ? baseQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid) : baseQuery.whereField("mapID", isEqualTo: mapID!)
@@ -205,6 +218,7 @@ extension SpotPageController {
         fetching = .activelyRefreshing
         finalQuery.getDocuments { (snap, err) in
             guard err == nil else { self.fetching = .refreshEnabled; return }
+            print("fetchRelatedPost finished")
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
@@ -219,7 +233,6 @@ extension SpotPageController {
                 self.fetchRelatedPostComplete = true
                 self.fetching = .refreshDisabled
                 self.fetchCommunityPost(12 - snap!.documents.count)
-                print("Related post fetch completed")
             } else {
                 self.endDocument = snap?.documents.last
                 self.fetching = .refreshEnabled
@@ -232,8 +245,8 @@ extension SpotPageController {
     
     private func fetchCommunityPost(_ number: Int = 12) {
         guard fetching != .activelyRefreshing else { return }
+        print("fetchCommunityPost")
         let db: Firestore = Firestore.firestore()
-        let mustFilter = true
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
         var finalQuery = baseQuery.limit(to: number).order(by: "timestamp", descending: true)
         if endDocument != nil {
@@ -242,20 +255,24 @@ extension SpotPageController {
         fetching = .activelyRefreshing
         finalQuery.getDocuments { (snap, err) in
             guard err == nil else { self.fetching = .refreshEnabled; return }
+            print("fetchCommunityPost finished")
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
-                    if mustFilter {
+                    // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
+                    // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
+                    if (self.mapID == nil || self.mapID == "") == false {
+                        if postInfo.mapID != self.mapID {
+                            self.communityPost.append(postInfo)
+                        }
+                    } else {
                         if self.relatedPost.contains(where: { mapPost in
                             mapPost.id == postInfo.id
                         }) == false {
                             self.communityPost.append(postInfo)
                         }
-                    } else {
-                        self.communityPost.append(postInfo)
                     }
-
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
@@ -263,11 +280,10 @@ extension SpotPageController {
             self.endDocument = snap!.documents.count < 12 ? nil : snap?.documents.last
             if snap!.documents.count < 12 {
                 self.fetchCommunityPostComplete = true
-                print("Community post fetch completed")
             }
             self.fetching = .refreshEnabled
             DispatchQueue.main.async {
-                self.spotPageCollectionView.reloadSections(IndexSet(integer: 2))
+                self.spotPageCollectionView.reloadData()
             }
         }
     }
@@ -299,14 +315,7 @@ extension SpotPageController {
     }
     
     @objc func backButtonAction() {
-        drawerView?.closeAction()
-    }
-    
-    @objc func notifyPostDelete(_ notification: NSNotification) {
-        guard let post = notification.userInfo?["post"] as? MapPost else { return }
-        relatedPost.removeAll(where: {$0.id == post.id})
-        communityPost.removeAll(where: {$0.id == post.id})
-        DispatchQueue.main.async { self.spotPageCollectionView.reloadData() }
+        navigationController?.popViewController(animated: true)
     }
 }
 
@@ -401,6 +410,11 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                     collectionCell?.transform = .identity
                 }
             }
+            guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
+            postVC.postsList = [indexPath.section == 1 ? relatedPost[indexPath.row] : communityPost[indexPath.row]]
+            postVC.containerDrawerView = containerDrawerView
+            barView.isHidden = true
+            self.navigationController!.pushViewController(postVC, animated: true)
         }
     }
 }
