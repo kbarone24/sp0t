@@ -32,6 +32,7 @@ class CustomMapController: UIViewController {
     private var barView: UIView!
     private var titleLabel: UILabel!
     private var barBackButton: UIButton!
+    private var drawerViewIsDragging = false
     
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
@@ -342,10 +343,12 @@ extension CustomMapController {
     }
     @objc func DrawerViewToMiddleCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerHalf")
+        collectionView.isScrollEnabled = false
         barBackButton.isHidden = true
     }
     @objc func DrawerViewToBottomCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerClose")
+        collectionView.isScrollEnabled = false
         barBackButton.isHidden = true
     }
     
@@ -468,7 +471,6 @@ extension CustomMapController: UIScrollViewDelegate {
         
         // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
         if containerDrawerView?.status != .Top {
-            //  customMapCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
             collectionView.isScrollEnabled = false
             containerDrawerView?.swipeToNextState = true
         }
@@ -544,16 +546,16 @@ extension CustomMapController: MKMapViewDelegate {
 
 extension CustomMapController: UIGestureRecognizerDelegate {
     @objc func onPan(_ recognizer: UIPanGestureRecognizer) {
-        // Swipe up y translation < 0
-        // Swipe down y translation > 0
+        // Finger swipes up y translation < 0
+        // Finger swipes down y translation > 0
         let yTranslation = recognizer.translation(in: recognizer.view).y
-        
+
         // Get the initial Top y position contentOffset
         if containerDrawerView?.status == .Top && topYContentOffset == nil {
             topYContentOffset = collectionView.contentOffset.y
         }
         
-        // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction
+        // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user finger swipe direction
         if
             topYContentOffset != nil &&
                 containerDrawerView?.status == .Top &&
@@ -562,7 +564,7 @@ extension CustomMapController: UIGestureRecognizerDelegate {
             containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
         }
         
-        // Preventing the drawer view to be dragged when it's status is top and user is scrolling down
+        // Preventing the drawer view to be dragged when it's status is top and user finger is swiping up
         if
             containerDrawerView?.status == .Top &&
                 collectionView.contentOffset.y > topYContentOffset ?? -91 &&
@@ -573,7 +575,7 @@ extension CustomMapController: UIGestureRecognizerDelegate {
             containerDrawerView?.slideView.frame.origin.y = 0
         }
         
-        // Reset drawer view varaiables when the drawer view is on top and user swipes down
+        // Reset drawer view varaiables when the drawer view is on top and user finger swipes down
         if collectionView.contentOffset.y <= topYContentOffset ?? -91 && yTranslation > 0 {
             containerDrawerView?.canDrag = true
             barBackButton.isHidden = true
@@ -587,3 +589,87 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         return true
     }
 }
+//@objc func onPan(_ recognizer: UIPanGestureRecognizer) {
+//    // Finger swipes up y translation < 0
+//    // Finger swipes down y translation > 0
+//    let yTranslation = recognizer.translation(in: recognizer.view).y
+//
+//    // Get the initial Top y position contentOffset
+//    if containerDrawerView?.status == .Top && topYContentOffset == nil {
+//        topYContentOffset = collectionView.contentOffset.y
+//    }
+//
+//    // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user finger swipe direction
+//    if
+//        topYContentOffset != nil &&
+//        containerDrawerView?.status == .Top &&
+//        collectionView.contentOffset.y <= topYContentOffset! + 1
+//    {
+//        containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
+//    }
+//
+//    // Preventing the drawer view to be dragged when it's status is top and user finger is swiping up
+//    if
+//        containerDrawerView?.status == .Top &&
+//        collectionView.contentOffset.y > topYContentOffset ?? -91 &&
+//        yTranslation < 0 &&
+//        containerDrawerView?.swipeToNextState == false
+//    {
+//        containerDrawerView?.canDrag = false
+//        containerDrawerView?.slideView.frame.origin.y = 0
+//    }
+//
+//    // Reset drawer view varaiables when the drawer view is on top and user finger swipes down
+//    if collectionView.contentOffset.y <= topYContentOffset ?? -91 && yTranslation > 0 {
+//        containerDrawerView?.canDrag = true
+//        barBackButton.isHidden = true
+//    }
+//
+//    // Need to prevent content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
+//    recognizer.setTranslation(.zero, in: recognizer.view)
+//}
+
+//func scrollViewDidScroll(_ scrollView: UIScrollView) {
+//    let itemHeight = UIScreen.main.bounds.width * 1.373
+//    if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 1.5)) && refresh == .refreshEnabled {
+//        self.getPosts()
+//        refresh = .activelyRefreshing
+//    }
+//    
+//    if topYContentOffset != nil && containerDrawerView?.status == .Top {
+//        // Disable the bouncing effect when scroll view is scrolled to top
+//        if scrollView.contentOffset.y <= topYContentOffset! {
+//            scrollView.contentOffset.y = topYContentOffset!
+//        }
+//        // Show navigation bar + adjust offset for small header
+//        if scrollView.contentOffset.y > topYContentOffset! {
+//            barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
+//            var titleText = ""
+//            if scrollView.contentOffset.y > 0 {
+//                titleText = mapType == .friendsMap ? "Friends posts" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
+//            }
+//            titleLabel.text = titleText
+//        }
+//    }
+//    
+//    // Get middle y content offset
+//    if middleYContentOffset == nil {
+//        middleYContentOffset = scrollView.contentOffset.y
+//    }
+//    
+//    // Set scroll view content offset when in transition
+//    if
+//        middleYContentOffset != nil &&
+//        topYContentOffset != nil &&
+//        scrollView.contentOffset.y <= middleYContentOffset! &&
+//        containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
+//    {
+//        scrollView.contentOffset.y = middleYContentOffset!
+//    }
+//    
+//    // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
+//    if containerDrawerView?.status != .Top {
+//        collectionView.isScrollEnabled = false
+//        containerDrawerView?.swipeToNextState = true
+//    }
+//}
