@@ -113,7 +113,6 @@ class CustomMapController: UIViewController {
         super.viewWillDisappear(animated)
         mapController?.mapView.removeAllAnnos()
         barView.isHidden = true
-       // mapController?.mapView.delegate = nil
     }
 }
 

@@ -75,8 +75,8 @@ extension MapController: MKMapViewDelegate {
             for id in view.postIDs { posts.append(friendsPostsDictionary[id]!) }
             DispatchQueue.main.async { self.openPost(posts: posts) }
             
-        } else if let view = view as? SpotNameView {
-            print("open spot page")
+        } else if let view = view as? SpotNameAnnotationView {
+            openSpot(spotID: view.id, spotName: view.spotName)
         }
         
         mapView.deselectAnnotation(view.annotation, animated: false)

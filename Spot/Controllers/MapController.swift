@@ -314,6 +314,19 @@ class MapController: UIViewController {
         sheetView?.present(to: .Middle)
     }
     
+    func openSpot(spotID: String, spotName: String) {
+        var emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp(date: Date()))
+        emptyPost.spotID = spotID
+        emptyPost.spotName = spotName
+        let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: nil)
+        sheetView = DrawerView(present: spotVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+            self.sheetView = nil
+        })
+        spotVC.containerDrawerView = sheetView
+        spotVC.containerDrawerView?.showCloseButton = false
+        sheetView?.present(to: .Top)
+    }
+    
     func toggleHomeAppearance(hidden: Bool) {
         mapsCollection.isHidden = hidden
         newPostsButton.isHidden = hidden
