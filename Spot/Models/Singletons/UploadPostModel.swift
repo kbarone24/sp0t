@@ -177,7 +177,6 @@ class UploadPostModel {
                 mapObject!.spotIDs.append(spotObject!.id!)
                 mapObject!.spotNames.append(spotObject!.spotName)
                 mapObject!.spotLocations.append(["lat": spotObject!.spotLat, "long": spotObject!.spotLong])
-
             }
         }
 

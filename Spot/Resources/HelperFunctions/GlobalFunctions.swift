@@ -377,27 +377,26 @@ extension UIViewController {
         }
     }
 
-    func uploadPost(post: MapPost) {
-        
+    func uploadPost(post: MapPost, map: CustomMap?) {
+        /// send local notification first
+        var notiPost = post
+        notiPost.id = post.id!
+        let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo)
+        notiPost.commentList = [commentObject]
+        notiPost = setSecondaryPostValues(post: notiPost)
+        notiPost.userInfo = UserDataModel.shared.userInfo
+        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any, "map": map as Any]))
+
         let db = Firestore.firestore()
         let postRef = db.collection("posts").document(post.id!)
         do {
             try postRef.setData(from: post)
             self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
             
-            let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo)
-            
             let commentRef = postRef.collection("comments").document(commentObject.id!)
 
             do {
                 try commentRef.setData(from: commentObject)
-                
-                var notiPost = post
-                notiPost.id = post.id!
-                notiPost.commentList = [commentObject]
-                notiPost = setSecondaryPostValues(post: notiPost)
-                NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post" : notiPost as Any]))
-
             } catch {
                 print("failed uploading comment")
             }
@@ -480,24 +479,33 @@ extension UIViewController {
     
     func uploadMap(map: CustomMap, newMap: Bool, post: MapPost) {
         let db: Firestore = Firestore.firestore()
-        let timestamp = Timestamp(date: Date())
-        let mapRef = db.collection("maps").document(map.id!)
-        var uploadMap = map
-        uploadMap.postTimestamps.append(timestamp)
-        
-        do {
-            try mapRef.setData(from: uploadMap, merge: true)
-        } catch {
-            print("failed uploading map")
+        if newMap {
+            let mapRef = db.collection("maps").document(map.id!)
+            var uploadMap = map
+            uploadMap.postTimestamps.append(post.timestamp)
+            do {
+                try mapRef.setData(from: uploadMap, merge: true)
+            } catch {
+                print("failed uploading map")
+            }
+        } else {
+            /// update values with backend function
+            let functions = Functions.functions()
+            let postLocation = ["lat": post.postLat, "long": post.postLong]
+            let spotLocation = ["lat": post.spotLat ?? 0.0, "long": post.spotLong ?? 0.0]
+            var posters = [UserDataModel.shared.uid]
+            if !(post.addedUsers?.isEmpty ?? true) { posters.append(contentsOf: post.addedUsers!) }
+            print("spot id", post.spotID)
+            functions.httpsCallable("runMapTransactions").call(["mapID": map.id!, "uid": UserDataModel.shared.uid, "postID": post.id!, "postImageURL": post.imageURLs.first ?? "", "postLocation": postLocation, "posters": posters, "posterUsername": UserDataModel.shared.userInfo.username, "spotID": post.spotID ?? "", "spotName": post.spotName ?? "", "spotLocation": spotLocation]) { result, error in
+                print(result?.data as Any, error as Any)
+            }
         }
-                
         let documentID = UUID().uuidString
         db.collection("mapLocations").document(documentID).setData(["mapID": map.id!, "postID": post.id!])
         setMapLocations(mapLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), documentID: documentID)
     }
     
     func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String) {
-        
         let tag = post.tag ?? ""
         let addedUsers = post.addedUsers ?? []
         
@@ -505,7 +513,6 @@ extension UIViewController {
         posters.append(contentsOf: addedUsers)
         
         let db: Firestore = Firestore.firestore()
-        
         // adjust user values for added users
         for poster in posters {            
             /// increment addedUsers spotScore by 1
@@ -515,12 +522,15 @@ extension UIViewController {
             /// remove this user for topFriends increments
             var dictionaryFriends = posters
             dictionaryFriends.removeAll(where: {$0 == poster})
-            for user in dictionaryFriends { userValues["topFriends.\(user)"] = FieldValue.increment(Int64(1)) } /// increment top friends if added friends
+            /// increment top friends if added friends
+            for user in dictionaryFriends {
+                incrementTopFriends(friendID: user, increment: 5)
+            }
             
             db.collection("users").document(poster).updateData(userValues)
         }
     }
-    
+        
     func removeFriend(friendID: String) {
         print("remove friend")
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
@@ -1035,6 +1045,31 @@ extension NSObject {
         var rect = layoutManager.boundingRect(forGlyphRange: pointer.move(), in: textContainer)
         rect = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height)
         return rect
+    }
+    
+    func incrementTopFriends(friendID: String, increment: Int64) {
+        let db: Firestore = Firestore.firestore()
+        if UserDataModel.shared.userInfo.friendIDs.contains(friendID) {
+            db.collection("users").document(UserDataModel.shared.uid).updateData(["topFriends.\(friendID)": FieldValue.increment(increment)])
+            db.collection("users").document(friendID).updateData(["topFriends.\(UserDataModel.shared.uid)": FieldValue.increment(increment)])
+        }
+    }
+    
+    func getStatusHeight() -> CGFloat {
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+        return statusHeight
+    }
+    
+    func getImageLayoutValues(imageAspect: CGFloat) -> (imageHeight: CGFloat, bottomConstraint: CGFloat) {
+        let statusHeight = getStatusHeight()
+        let maxHeight = UserDataModel.shared.maxAspect * UIScreen.main.bounds.width
+        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
+        let maxY = minY + maxHeight
+        let currentHeight = getImageHeight(aspectRatio: imageAspect, maxAspect: UserDataModel.shared.maxAspect)
+        let imageBottom: CGFloat = imageAspect > 1.1 ? maxY : (minY + maxY + currentHeight)/2 - 15
+        let bottomConstraint = UIScreen.main.bounds.height - imageBottom
+        return (currentHeight, bottomConstraint)
     }
 }
 

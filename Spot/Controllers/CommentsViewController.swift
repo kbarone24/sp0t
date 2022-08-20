@@ -247,7 +247,9 @@ extension CommentsController {
         let postID = post.id!
         let postsRef = self.db.collection("posts").document(postID).collection("comments").document(commentID)
                 postsRef.delete()
-        self.db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(-1))])
+        
+        db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(-1))])
+        incrementTopFriends(friendID: post.posterID, increment: -1)
         updateParent()
     }
     
@@ -294,7 +296,9 @@ extension CommentsController {
                 "posterUsername" : post.userInfo?.username ?? "",
                 "taggedUserIDs": taggedUserIDs
             ] as [String: Any] )
+            /// set extraneous values
             self.db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(1))])
+            self.incrementTopFriends(friendID: post.posterID, increment: 1)
         } catch {
             print("failed uploading comment")
         }

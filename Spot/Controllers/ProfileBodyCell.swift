@@ -31,7 +31,11 @@ class ProfileBodyCell: UICollectionViewCell {
     }
     
     public func cellSetup(mapData: CustomMap) {
-        mapImage.sd_setImage(with: URL(string: mapData.imageURL))
+        var urlString = mapData.imageURL
+        if let i = mapData.posterIDs.lastIndex(where: {$0 == UserDataModel.shared.uid}) {
+            urlString = mapData.postImageURLs[i]
+        }
+        mapImage.sd_setImage(with: URL(string: urlString))
         if mapData.secret {
             let imageAttachment = NSTextAttachment()
             imageAttachment.image = UIImage(named: "SecretMap")
@@ -59,7 +63,6 @@ extension ProfileBodyCell {
         contentView.backgroundColor = .white
         
         mapImage = UIImageView {
-            $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.layer.cornerRadius = 14

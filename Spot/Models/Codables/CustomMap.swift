@@ -95,6 +95,7 @@ struct CustomMap: Identifiable, Codable {
     
     mutating func addSpotGroups() {
         /// append spots to show on map even if there's no post attached
+        postGroup.removeAll()
         if !spotIDs.isEmpty {
             for i in 0...spotIDs.count - 1 {
                 let coordinate = CLLocationCoordinate2D(latitude: spotLocations[safe: i]?["lat"] ?? 0.0, longitude: spotLocations[safe: i]?["long"] ?? 0.0)
@@ -103,11 +104,13 @@ struct CustomMap: Identifiable, Codable {
         }
     }
     
-    mutating func updateGroup(post: MapPost) -> MapPostGroup? {
+    mutating func updateGroup(post: MapPost) -> (group: MapPostGroup?, newGroup: Bool) {
         if post.spotID ?? "" == "" {
             /// attach by postID
             let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
-            postGroup.append(MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)]))
+            let newGroup = MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
+            postGroup.append(newGroup)
+            return (newGroup, true)
             
         } else if !postGroup.contains(where: {$0.id == post.spotID!}) {
             let coordinate = CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!)
@@ -116,21 +119,53 @@ struct CustomMap: Identifiable, Codable {
             spotIDs.append(post.spotID!)
             spotLocations.append(["lat": post.spotLat ?? post.postLat, "long": post.spotLong ?? post.postLong])
             spotNames.append(post.spotName ?? "")
-            return newGroup
-            
+            return (newGroup, true)
+
         } else if let i = postGroup.firstIndex(where: {$0.id == post.spotID}) {
             if !postGroup[i].postIDs.contains(where: {$0.id == post.id}) {
                 postGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
                 postGroup[i].sortPostIDs()
+                return (postGroup[i], false)
             }
         }
-        return nil
+        return (nil, false)
     }
     
     mutating func createPosts(posts: [MapPost]) {
         for post in posts {
             postsDictionary.updateValue(post, forKey: post.id!)
             let _ = updateGroup(post: post)
+        }
+    }
+    /// spotID == "" when not deleting spot
+    mutating func removePost(postID: String, spotID: String) {
+        /// remove from dictionary
+        postsDictionary.removeValue(forKey: postID)
+        /// remove id from post group
+        if let i = postGroup.firstIndex(where: {$0.postIDs.contains(where: {$0.id == postID})}) {
+            if let j = postGroup[i].postIDs.firstIndex(where: {$0.id == postID}) {
+                postGroup[i].postIDs.remove(at: j)
+                /// remove from post group entirely if no spot attached
+                if postGroup[i].postIDs.count == 0 && postGroup[i].spotName == "" { postGroup.remove(at: i) }
+            }
+        }
+        /// remove associated values
+        posterDictionary.removeValue(forKey: postID)
+        if let i = postIDs.firstIndex(where: {$0 == postID}) {
+            posterIDs.remove(at: i)
+            posterUsernames.remove(at: i)
+            postIDs.remove(at: i)
+            postImageURLs.remove(at: i)
+            postLocations.remove(at: i)
+         //   postTimestamps.remove(at: i)
+        }
+        if spotID != "" {
+            if let i = spotIDs.firstIndex(where: {$0 == spotID}) {
+                spotIDs.remove(at: i)
+                spotNames.remove(at: i)
+                spotLocations.remove(at: i)
+            }
+            postGroup.removeAll(where: {$0.id == spotID})
         }
     }
 }

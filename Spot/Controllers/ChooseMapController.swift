@@ -195,8 +195,7 @@ class ChooseMapController: UIViewController {
                 UploadPostModel.shared.postObject.imageURLs = imageURLs
                 UploadPostModel.shared.postObject.timestamp = Firebase.Timestamp(date: Date())
                 let post = UploadPostModel.shared.postObject!
-                
-                self.uploadPost(post: post)
+                self.uploadPost(post: post, map: map)
 
                 if spot != nil {
                     var spot = spot!
@@ -381,6 +380,7 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "MapsHeader") as? CustomMapsHeader else { return UIView() }
         header.mapsEmpty = customMaps.isEmpty
+        header.newMap = newMap != nil
         return header
     }
     
@@ -397,7 +397,12 @@ class CustomMapsHeader: UITableViewHeaderFooterView {
     var mapLabel: UILabel!
     var mapsEmpty: Bool = true {
         didSet {
-            if !mapsEmpty { customMapsLabel.isHidden = false }
+            customMapsLabel.isHidden = mapsEmpty
+        }
+    }
+    var newMap: Bool = false {
+        didSet {
+            newMapButton.isHidden = newMap
         }
     }
     
@@ -572,9 +577,9 @@ class MyMapButton: UIButton {
             addSubview($0)
         }
         avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(7)
-            $0.width.equalTo(26)
-            $0.height.equalTo(37.5)
+            $0.leading.equalTo(12)
+            $0.width.equalTo(29.12)
+            $0.height.equalTo(42)
             $0.centerY.equalToSuperview()
         }
         
@@ -585,7 +590,7 @@ class MyMapButton: UIButton {
             addSubview($0)
         }
         mapLabel.snp.makeConstraints {
-            $0.leading.equalTo(avatarImage.snp.trailing).offset(4)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(8)
             $0.top.equalTo(10)
         }
         

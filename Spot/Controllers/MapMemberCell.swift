@@ -31,7 +31,7 @@ class MapMemberCell: UICollectionViewCell {
             userImageView.image = UIImage(named: "AddMembers")
         }
 
-        userNameLabel.text = user.name
+        userNameLabel.text = user.username
     }
     
     override func prepareForReuse() {

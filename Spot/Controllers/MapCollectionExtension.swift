@@ -17,7 +17,6 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if !feedLoaded, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapLoadingCell", for: indexPath) as? MapLoadingCell {
-            cell.setUp()
             return cell
         }
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapCell", for: indexPath) as? MapHomeCell {
@@ -33,14 +32,17 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.selectItem(at: indexPath, animated: true, scrollPosition: .left)
-        
-        if indexPath.item != selectedItemIndex {
-            DispatchQueue.main.async {
-                self.addMapAnnotations(index: indexPath.item)
+        selectMapAt(index: indexPath.item)
+    }
+    
+    func selectMapAt(index: Int) {
+        DispatchQueue.main.async {
+            if index != self.selectedItemIndex {
+                self.selectedItemIndex = index
                 self.setNewPostsButtonCount()
+                self.addMapAnnotations(index: index, reload: false)
+                if index != 0 { UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle() }
             }
-            
-            if indexPath.row != 0 { UserDataModel.shared.userInfo.mapsList[indexPath.row - 1].selected.toggle() }
         }
     }
     
@@ -50,17 +52,17 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         return feedLoaded ? CGSize(width: itemWidth, height: itemWidth * 0.95) : CGSize(width: UIScreen.main.bounds.width, height: itemWidth * 0.95)
     }
     
-    func addMapAnnotations(index: Int) {
-        selectedItemIndex = index
+    func addMapAnnotations(index: Int, reload: Bool) {
         mapView.removeAllAnnos()
-
         if index == 0 {
             for post in friendsPostsDictionary.values { mapView.addPostAnnotation(post: post) }
         } else {
             let map = getSelectedMap()!
             for group in map.postGroup { mapView.addSpotAnnotation(group: group, map: map) }
         }
-        self.centerMapOnPosts(animated: false)
+        if !reload {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { self.centerMapOnPosts(animated: false) })
+        }
     }
 }
 
@@ -83,8 +85,12 @@ class MapHomeCell: UICollectionViewCell {
         setUpView()
         if map != nil {
             mapCoverImage.isHidden = false
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 180, height: 140), scaleMode: .aspectFill)
-            mapCoverImage.sd_setImage(with: URL(string: map!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            if map?.mapName == "Heelsmap" {
+                mapCoverImage.image = UIImage(named: "HeelsmapCover")
+            } else {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 180, height: 140), scaleMode: .aspectFill)
+                mapCoverImage.sd_setImage(with: URL(string: map!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            }
             let textString = NSMutableAttributedString(string: map?.mapName ?? "").shrinkLineHeight()
             nameLabel.attributedText = textString
             nameLabel.sizeToFit()
@@ -218,15 +224,6 @@ class MapLoadingCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func setUp() {
-    
-        if activityIndicator != nil { activityIndicator.removeFromSuperview() }
         activityIndicator = CustomActivityIndicator {
             $0.startAnimating()
             addSubview($0)
@@ -237,4 +234,7 @@ class MapLoadingCell: UICollectionViewCell {
         }
     }
 
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }

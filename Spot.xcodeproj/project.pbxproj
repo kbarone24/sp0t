@@ -21,7 +21,6 @@
 		4106ECD428A3F0B400680005 /* SpotPageBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4106ECD328A3F0B300680005 /* SpotPageBodyCell.swift */; };
 		412555C4285AEA0300C071A4 /* BottomToTopTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 412555C3285AEA0200C071A4 /* BottomToTopTransition.swift */; };
 		4134867F285930DF0098B27B /* ImagePreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4134867E285930DF0098B27B /* ImagePreviewController.swift */; };
-		41348681285930FA0098B27B /* LandingScreenVideo.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 41348680285930FA0098B27B /* LandingScreenVideo.mp4 */; };
 		413486872859310E0098B27B /* SF-Compact-Text-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486822859310E0098B27B /* SF-Compact-Text-Medium.otf */; };
 		413486882859310E0098B27B /* SF-Compact-Text-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486832859310E0098B27B /* SF-Compact-Text-Bold.otf */; };
 		413486892859310E0098B27B /* SF-Compact-Text-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */; };
@@ -38,6 +37,7 @@
 		416AE77B2896F1280037B8AF /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE77A2896F1280037B8AF /* ProfileViewController.swift */; };
 		416AE77D2896F2F60037B8AF /* CustomMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE77C2896F2F60037B8AF /* CustomMap.swift */; };
 		416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE7802896F35F0037B8AF /* GlobalFunctions.swift */; };
+		41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AC5A5D2866285800C522B1 /* R.generated.swift */; };
 		41EA047F289428590050B791 /* EditMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41EA047E289428590050B791 /* EditMapController.swift */; };
 		59004DFF22C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E0022C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
@@ -247,6 +247,24 @@
 		8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
 		8C373D5D27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
 		8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
+		8C3B952628AC042B00C06586 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B952528AC042B00C06586 /* PostCell.swift */; };
+		8C3B952728AC042B00C06586 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B952528AC042B00C06586 /* PostCell.swift */; };
+		8C3B952828AC042B00C06586 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B952528AC042B00C06586 /* PostCell.swift */; };
+		8C3B953228AD530300C06586 /* HeelsMapPopUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */; };
+		8C3B953328AD530300C06586 /* HeelsMapPopUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */; };
+		8C3B953428AD530300C06586 /* HeelsMapPopUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */; };
+		8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
+		8C3B953728AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
+		8C3B953828AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
+		8C3B953A28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
+		8C3B953B28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
+		8C3B953C28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
+		8C3B954E28AE932B00C06586 /* DeletePost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B954D28AE932B00C06586 /* DeletePost.swift */; };
+		8C3B954F28AE932B00C06586 /* DeletePost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B954D28AE932B00C06586 /* DeletePost.swift */; };
+		8C3B955028AE932B00C06586 /* DeletePost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B954D28AE932B00C06586 /* DeletePost.swift */; };
+		8C3B955228AE933D00C06586 /* PostCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */; };
+		8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */; };
+		8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */; };
 		8C3BAF58260C413F00349091 /* ConfirmCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */; };
 		8C3BAF59260C413F00349091 /* ConfirmCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */; };
 		8C3BAF5A260C413F00349091 /* ConfirmCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */; };
@@ -346,7 +364,6 @@
 		4106ECD328A3F0B300680005 /* SpotPageBodyCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPageBodyCell.swift; sourceTree = "<group>"; };
 		412555C3285AEA0200C071A4 /* BottomToTopTransition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomToTopTransition.swift; sourceTree = "<group>"; };
 		4134867E285930DF0098B27B /* ImagePreviewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImagePreviewController.swift; sourceTree = "<group>"; };
-		41348680285930FA0098B27B /* LandingScreenVideo.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = LandingScreenVideo.mp4; sourceTree = "<group>"; };
 		413486822859310E0098B27B /* SF-Compact-Text-Medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Medium.otf"; sourceTree = "<group>"; };
 		413486832859310E0098B27B /* SF-Compact-Text-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Bold.otf"; sourceTree = "<group>"; };
 		413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Heavy.otf"; sourceTree = "<group>"; };
@@ -363,6 +380,7 @@
 		416AE77A2896F1280037B8AF /* ProfileViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
 		416AE77C2896F2F60037B8AF /* CustomMap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMap.swift; sourceTree = "<group>"; };
 		416AE7802896F35F0037B8AF /* GlobalFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlobalFunctions.swift; sourceTree = "<group>"; };
+		41AC5A5D2866285800C522B1 /* R.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = R.generated.swift; sourceTree = "<group>"; };
 		41EA047E289428590050B791 /* EditMapController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditMapController.swift; sourceTree = "<group>"; };
 		59056A5223197E4B00C7E753 /* PostNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostNotification.swift; sourceTree = "<group>"; };
 		5916A8B224A27F8500118E83 /* MapSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSpot.swift; sourceTree = "<group>"; };
@@ -444,6 +462,12 @@
 		8C342079261140FA0017CB2F /* FindFriendsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindFriendsController.swift; sourceTree = "<group>"; };
 		8C3420AF261273140017CB2F /* SendInvitesController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendInvitesController.swift; sourceTree = "<group>"; };
 		8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsPostGroup.swift; sourceTree = "<group>"; };
+		8C3B952528AC042B00C06586 /* PostCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCell.swift; sourceTree = "<group>"; };
+		8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeelsMapPopUpController.swift; sourceTree = "<group>"; };
+		8C3B953528AD533100C06586 /* AvatarSelectionController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AvatarSelectionController.swift; sourceTree = "<group>"; };
+		8C3B953928AD546E00C06586 /* AvatarURLs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AvatarURLs.swift; path = Spot/Controllers/AvatarURLs.swift; sourceTree = SOURCE_ROOT; };
+		8C3B954D28AE932B00C06586 /* DeletePost.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeletePost.swift; sourceTree = "<group>"; };
+		8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostCellActionSheet.swift; sourceTree = "<group>"; };
 		8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmCodeController.swift; sourceTree = "<group>"; };
 		8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerController.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
@@ -603,8 +627,8 @@
 			isa = PBXGroup;
 			children = (
 				7A9A551522273F71007469C7 /* Chapel Hill.gpx */,
-				41348680285930FA0098B27B /* LandingScreenVideo.mp4 */,
 				5947712E2326E091008E50B9 /* Assets.xcassets */,
+				41AC5A5D2866285800C522B1 /* R.generated.swift */,
 				59F4701D2368933C00BB79CC /* SceneDelegate.swift */,
 				1DF6E03422089F4500BA0C36 /* AppDelegate.swift */,
 				8C298795268FACE80071E75A /* HelperFunctions */,
@@ -678,6 +702,8 @@
 				8C1E486E289C54800093030D /* MapCollectionExtension.swift */,
 				8C1E48CA289C55090093030D /* MapFetchExtension.swift */,
 				8C1E4872289C54900093030D /* MapViewDelegate.swift */,
+				8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */,
+				8C3B953528AD533100C06586 /* AvatarSelectionController.swift */,
 			);
 			name = Map;
 			sourceTree = "<group>";
@@ -700,6 +726,9 @@
 			children = (
 				599BD2BA23C652BD00ECB84A /* PostViewController.swift */,
 				59DFA25122C27B4800A59D29 /* CommentsViewController.swift */,
+				8C3B952528AC042B00C06586 /* PostCell.swift */,
+				8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */,
+				8C3B954D28AE932B00C06586 /* DeletePost.swift */,
 			);
 			name = Feed;
 			sourceTree = "<group>";
@@ -862,6 +891,7 @@
 				8C1E4865289C54370093030D /* FriendsListCell.swift */,
 				8C99B1192863A44E00C98A32 /* RefreshStatus.swift */,
 				59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */,
+				8C3B953928AD546E00C06586 /* AvatarURLs.swift */,
 			);
 			path = HelperObjects;
 			sourceTree = "<group>";
@@ -947,6 +977,7 @@
 			buildConfigurationList = 1DF6E05922089F4800BA0C36 /* Build configuration list for PBXNativeTarget "Spot" */;
 			buildPhases = (
 				E67C62FFDE53E58C0D170652 /* [CP] Check Pods Manifest.lock */,
+				41AC5A5C286626A000C522B1 /* Run Script */,
 				1DF6E02D22089F4500BA0C36 /* Sources */,
 				1DF6E02E22089F4500BA0C36 /* Frameworks */,
 				1DF6E02F22089F4500BA0C36 /* Resources */,
@@ -1068,7 +1099,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				8C1E48C7289C54CB0093030D /* FriendPostView.xib in Resources */,
-				41348681285930FA0098B27B /* LandingScreenVideo.mp4 in Resources */,
 				413486872859310E0098B27B /* SF-Compact-Text-Medium.otf in Resources */,
 				1DF6E03F22089F4800BA0C36 /* LaunchScreen.storyboard in Resources */,
 				4134868B2859310E0098B27B /* SF-Compact-Text-Regular.otf in Resources */,
@@ -1131,6 +1161,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		41AC5A5C286626A000C522B1 /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				$SRCROOT/Spot/Resources/R.generated.swift,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$PODS_ROOT/R.swift/rswift\" generate \"$SRCROOT/Spot/Resources/R.generated.swift\"\n";
+		};
 		596C132A241AF0E400D2CA29 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1226,11 +1275,14 @@
 				5916A8B724A5542800118E83 /* ResultSpot.swift in Sources */,
 				599371B0234E468500204F59 /* SearchContactsController.swift in Sources */,
 				59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */,
+				8C3B954E28AE932B00C06586 /* DeletePost.swift in Sources */,
 				8C1E48B2289C54CB0093030D /* SpotPostView.swift in Sources */,
 				413BA16328785E8B00FD80AF /* EditProfileViewController.swift in Sources */,
 				8C34207A261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				4106ECD428A3F0B400680005 /* SpotPageBodyCell.swift in Sources */,
 				8C1E48E028AB38560093030D /* SimpleMapHeaderCell.swift in Sources */,
+				8C3B955228AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
+				8C3B952628AC042B00C06586 /* PostCell.swift in Sources */,
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8C1E4880289C54C10093030D /* SpotNameAnnotationView.swift in Sources */,
 				416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */,
@@ -1251,6 +1303,7 @@
 				598B700D2305E49500613AFD /* FriendRequest.swift in Sources */,
 				594CE11B24C939040051516C /* MapComment.swift in Sources */,
 				1DF6E03722089F4500BA0C36 /* SignUpController.swift in Sources */,
+				8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				5F497B3E2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift in Sources */,
 				3ED3F1A622147EAE008CC29B /* ResetViewController.swift in Sources */,
@@ -1266,6 +1319,8 @@
 				8C342073260FBC0F0017CB2F /* ContactsOverviewController.swift in Sources */,
 				8C1E4873289C54900093030D /* MapViewDelegate.swift in Sources */,
 				413BA16D288A764F00FD80AF /* CustomMapController.swift in Sources */,
+				41AC5A5E2866285800C522B1 /* R.generated.swift in Sources */,
+				8C3B953A28AD546E00C06586 /* AvatarURLs.swift in Sources */,
 				4106ECD028A3371A00680005 /* SpotPageController.swift in Sources */,
 				8C29879C2693A05A0071E75A /* CircleView.swift in Sources */,
 				5F119A1F2869F46600D75CE8 /* FriendRequestCell.swift in Sources */,
@@ -1302,6 +1357,7 @@
 				8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */,
 				8C1E48D3289C58470093030D /* ProfileMyMapImageCollectionViewCell.swift in Sources */,
 				8C2209F8284D4B9300E5D165 /* ContactFriend.swift in Sources */,
+				8C3B953228AD530300C06586 /* HeelsMapPopUpController.swift in Sources */,
 				41EA047F289428590050B791 /* EditMapController.swift in Sources */,
 				414BB49C288D314F00660AED /* CustomMapHeaderCell.swift in Sources */,
 				414CD283289EB383001F1776 /* ProfileBodyCell.swift in Sources */,
@@ -1332,6 +1388,7 @@
 				599371B1234E468500204F59 /* SearchContactsController.swift in Sources */,
 				59A8880822E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */,
+				8C3B953728AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				8C1E4867289C54370093030D /* FriendsListCell.swift in Sources */,
 				8C1E48B3289C54CB0093030D /* SpotPostView.swift in Sources */,
 				8C8DBB772888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
@@ -1356,10 +1413,13 @@
 				8C1E489B289C54CB0093030D /* FriendPostView.swift in Sources */,
 				599BD2BC23C652BD00ECB84A /* PostViewController.swift in Sources */,
 				59004E1522CA5CA1004E06EF /* SignUpController.swift in Sources */,
+				8C3B953B28AD546E00C06586 /* AvatarURLs.swift in Sources */,
 				59056A5423197E4B00C7E753 /* PostNotification.swift in Sources */,
 				8CC2A55326BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
+				8C3B952728AC042B00C06586 /* PostCell.swift in Sources */,
 				8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				593AC546243E56D400C08237 /* LandingPageController.swift in Sources */,
+				8C3B954F28AE932B00C06586 /* DeletePost.swift in Sources */,
 				59E2354A246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				8C3420B1261273140017CB2F /* SendInvitesController.swift in Sources */,
 				59FCF5B024734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
@@ -1367,6 +1427,7 @@
 				8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8CCE3416288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B424A27F8500118E83 /* MapSpot.swift in Sources */,
+				8C3B953328AD530300C06586 /* HeelsMapPopUpController.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF59260C413F00349091 /* ConfirmCodeController.swift in Sources */,
 				59F4701F2368933C00BB79CC /* SceneDelegate.swift in Sources */,
@@ -1398,6 +1459,7 @@
 				8CC3653B26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				5916A8BC24A566F400118E83 /* ResultUser.swift in Sources */,
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
+				8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				593AC54A243F898300C08237 /* UsernameController.swift in Sources */,
 				8C34207B261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				59BAF9D92360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */,
@@ -1414,6 +1476,7 @@
 				599371B2234E468600204F59 /* SearchContactsController.swift in Sources */,
 				59A8880722E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */,
+				8C3B953828AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				8C1E4868289C54370093030D /* FriendsListCell.swift in Sources */,
 				8C1E48B4289C54CB0093030D /* SpotPostView.swift in Sources */,
 				8C8DBB782888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
@@ -1438,10 +1501,13 @@
 				8C1E489C289C54CB0093030D /* FriendPostView.swift in Sources */,
 				599BD2BD23C652BD00ECB84A /* PostViewController.swift in Sources */,
 				59004E1622CA5CA1004E06EF /* SignUpController.swift in Sources */,
+				8C3B953C28AD546E00C06586 /* AvatarURLs.swift in Sources */,
 				59056A5523197E4B00C7E753 /* PostNotification.swift in Sources */,
 				8CC2A55426BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
+				8C3B952828AC042B00C06586 /* PostCell.swift in Sources */,
 				8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				593AC547243E56D400C08237 /* LandingPageController.swift in Sources */,
+				8C3B955028AE932B00C06586 /* DeletePost.swift in Sources */,
 				59E2354B246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				8C3420B2261273140017CB2F /* SendInvitesController.swift in Sources */,
 				59FCF5B124734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
@@ -1449,6 +1515,7 @@
 				8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8CCE3417288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B524A27F8500118E83 /* MapSpot.swift in Sources */,
+				8C3B953428AD530300C06586 /* HeelsMapPopUpController.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF5A260C413F00349091 /* ConfirmCodeController.swift in Sources */,
 				59F470202368933C00BB79CC /* SceneDelegate.swift in Sources */,
@@ -1480,6 +1547,7 @@
 				8CC3653C26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				5916A8BD24A566F400118E83 /* ResultUser.swift in Sources */,
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
+				8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				593AC54B243F898300C08237 /* UsernameController.swift in Sources */,
 				8C34207C261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				59BAF9DA2360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */,
