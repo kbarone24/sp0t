@@ -13,7 +13,6 @@ import FirebaseUI
 import MapKit
 
 extension MapController {
-
     func runMapFetches() {
         startTime = Timestamp(date: Date()).seconds
         DispatchQueue.global(qos: .userInitiated).async {
@@ -152,8 +151,8 @@ extension MapController {
 
     func getRecentPosts(map: CustomMap?) {
         /// fetch all posts in last 7 days
-        let seconds = Date().timeIntervalSince1970 - 86400 * 60
-        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400 * 50
+        let seconds = Date().timeIntervalSince1970 - 86400 * 7
+        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400
         let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
         var recentQuery = db.collection("posts").whereField("timestamp", isGreaterThanOrEqualTo: timestamp)
         ///query by mapID or friendsList for friends posts
@@ -180,9 +179,8 @@ extension MapController {
                         guard let self = self else { return }
                         if post.id ?? "" != "" {
                             DispatchQueue.main.async {
-                                self.addPostToDictionary(post: post, map: map, newPost: false)
+                                self.addPostToDictionary(post: post, map: map, newPost: false, index: self.selectedItemIndex)
                             }
-                            
                         }
                         recentGroup.leave()
                     }
@@ -210,18 +208,22 @@ extension MapController {
         return false
     }
     
-    func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool) {
+    func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool, index: Int) {
         let post = setSecondaryPostValues(post: post)
-        if selectedItemIndex == 0 && map == nil { mapView.addPostAnnotation(post: post) } /// 0 always selected on initial fetch
         /// add new post to both dictionaries
         if map == nil || newPost {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
+            if index == 0 { mapView.addPostAnnotation(post: post) }
         }
         if map != nil {
             /// map posts are sorted by spot rather than user
             if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map!.id!}) {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id!)
                 let _ = UserDataModel.shared.userInfo.mapsList[i].updateGroup(post: post)
+                if index - 1 == i {
+                    /// remove and re-add annotation
+                    self.addMapAnnotations(index: index, reload: true)
+                }
             }
         }
     }
@@ -260,7 +262,6 @@ extension MapController {
                     guard var mapInfo = mapIn else { continue }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
-                    print("ct", UserDataModel.shared.userInfo.mapsList.count)
                     
                     self.homeFetchGroup.enter()
                     self.getRecentPosts(map: mapInfo)
@@ -286,7 +287,7 @@ extension MapController {
                     if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID ?? "", newPost: true) {
                         self.setPostDetails(post: postInfo) { [weak self] post in
                             guard let self = self else { return }
-                            self.addPostToDictionary(post: post, map: map, newPost: true)
+                            self.addPostToDictionary(post: post, map: map, newPost: true, index: self.selectedItemIndex)
                             self.reloadMapsCollection(resort: false)
                         }
                     }
@@ -362,17 +363,20 @@ extension MapController {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
         /// add new map to mapsList if applicable
         var map = notification.userInfo?["map"] as? CustomMap
-        if map != nil && !(UserDataModel.shared.userInfo.mapsList.contains(where: {$0.id == map!.id!})) {
+        let emptyMap = map == nil || map?.id ?? "" == ""
+        if !emptyMap && !(UserDataModel.shared.userInfo.mapsList.contains(where: {$0.id == map!.id!})) {
             map!.addSpotGroups()
             UserDataModel.shared.userInfo.mapsList.append(map!)
         }
-        let mapIndex = map != nil ? 1 : 0
         DispatchQueue.main.async {
+            self.addPostToDictionary(post: post, map: map, newPost: true, index: 0)
+            self.selectMapAt(index: 0)
             self.reloadMapsCollection(resort: true)
-            self.selectMapAt(index: mapIndex)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            /// animate to spot if post to map, to post location if friends map
+          ///  let coordinate = mapIndex == 1 && post.spotID ?? "" != "" ? CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!) : post.coordinate
             self.animateTo(coordinate: post.coordinate)
         }
     }
@@ -416,6 +420,17 @@ extension MapController {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]!.commentList = commentList
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]!.commentCount = max(0, commentList.count - 1)
             }
+        }
+    }
+    
+    @objc func enterForeground() {
+        DispatchQueue.main.async { self.checkForActivityIndicator() }
+    }
+    
+    func checkForActivityIndicator() {
+        /// resume frozen indicator
+        if mapsCollection != nil, let cell = mapsCollection.cellForItem(at: IndexPath(item: 0, section: 0)) as? MapLoadingCell {
+            cell.activityIndicator.startAnimating()
         }
     }
 }
