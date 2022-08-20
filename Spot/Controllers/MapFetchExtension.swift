@@ -151,8 +151,8 @@ extension MapController {
 
     func getRecentPosts(map: CustomMap?) {
         /// fetch all posts in last 7 days
-        let seconds = Date().timeIntervalSince1970 - 86400 * 7
-        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400
+        let seconds = Date().timeIntervalSince1970 - 86400 * 14
+        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400 * 7
         let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
         var recentQuery = db.collection("posts").whereField("timestamp", isGreaterThanOrEqualTo: timestamp)
         ///query by mapID or friendsList for friends posts

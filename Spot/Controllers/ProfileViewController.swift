@@ -55,6 +55,7 @@ class ProfileViewController: UIViewController {
     
     deinit {
         print("ProfileViewController(\(self) deinit")
+        NotificationCenter.default.removeObserver(self)
     }
     
     init(userProfile: UserProfile? = nil, presentedDrawerView: DrawerView? = nil) {
@@ -76,7 +77,6 @@ class ProfileViewController: UIViewController {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil)
         setUpNavBar()
         configureDrawerView()
     }
@@ -193,9 +193,11 @@ extension ProfileViewController {
     
     private func viewSetup() {
         view.backgroundColor = .white
-
         self.title = ""
         navigationItem.backButtonTitle = ""
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyMapChange(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
                         
         profileCollectionView = {
             let layout = UICollectionViewFlowLayout()
@@ -301,12 +303,32 @@ extension ProfileViewController {
         mapData.createPosts(posts: posts)
         return mapData
     }
-}
+    
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+        guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
 
-extension ProfileViewController: CustomMapDelegate {
-    func finishPassing(updatedMap: CustomMap?) {
-        if updatedMap?.id ?? "" != "", let i = maps.firstIndex(where: {$0.id == updatedMap!.id!}) {
-            maps[i] = updatedMap!
+        posts.removeAll(where: {$0.id == post.id})
+        if mapDelete {
+            maps.removeAll(where: {$0.id == post.mapID ?? ""})
+            DispatchQueue.main.async { self.profileCollectionView.reloadData() }
+            
+        } else if post.mapID ?? "" != "" {
+            if let i = maps.firstIndex(where: {$0.id == post.mapID!}) {
+                maps[i].removePost(postID: post.id!, spotID: spotDelete || spotRemove ? post.spotID! : "")
+            }
+        }
+    }
+    
+    @objc func notifyMapChange(_ notification: NSNotification) {
+        guard let userInfo = notification.userInfo as? [String: Any] else { return }
+        let mapID = userInfo["mapID"] as! String
+        let likers = userInfo["mapLikers"] as! [String]
+        if let i = maps.firstIndex(where: {$0.id == mapID}) {
+            maps[i].likers = likers
+            
         }
     }
 }
@@ -369,12 +391,10 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             if let _ = cell as? ProfileMyMapCell {
                 let mapData = getMyMap()
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: mapData, postsList: [], presentedDrawerView: containerDrawerView, mapType: .myMap)
-                customMapVC.delegate = self
                 navigationController?.pushViewController(customMapVC, animated: true)
             } else if let _ = cell as? ProfileBodyCell {
                 mapSelectedIndex = indexPath.row - 1
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
-                customMapVC.delegate = self
                 navigationController?.pushViewController(customMapVC, animated: true)
             }
         }
@@ -397,6 +417,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             }
         }
     }
+    
 }
 
 extension ProfileViewController: UIScrollViewDelegate {

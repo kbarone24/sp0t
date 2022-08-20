@@ -22,7 +22,7 @@ class SpotPageController: UIViewController {
     private var mapPostLabel: UILabel!
     private var communityPostLabel: UILabel!
     private lazy var imageManager = SDWebImageManager()
-    private var containerDrawerView: DrawerView?
+    public var containerDrawerView: DrawerView?
     
     private var mapID: String?
     private var mapName: String?
@@ -315,7 +315,7 @@ extension SpotPageController {
     }
     
     @objc func backButtonAction() {
-        navigationController?.popViewController(animated: true)
+        containerDrawerView?.closeAction()
     }
 }
 

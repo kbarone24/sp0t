@@ -12,6 +12,7 @@ import MapKit
 
 class SpotNameAnnotationView: MKAnnotationView {
     var id = ""
+    var spotName = ""
     unowned var mapView: MKMapView?
     
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
@@ -25,6 +26,8 @@ class SpotNameAnnotationView: MKAnnotationView {
     }
     
     func setUp(spotID: String, spotName: String) {
+        self.id = spotID
+        self.spotName = spotName
         let infoWindow = SpotNameView.instanceFromNib() as! SpotNameView
         let attributes: [NSAttributedString.Key : Any] = [
             NSAttributedString.Key.strokeColor: UIColor.white,

@@ -65,7 +65,6 @@ class PostController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        print(self)
         setUpView()
     }
     
