@@ -478,7 +478,7 @@ class GalleryCell: UICollectionViewCell {
     
     var asset: PHAsset! {
         didSet {
-            liveIndicator?.isHidden = asset.mediaSubtypes.contains(.photoLive)
+            liveIndicator?.isHidden = !(asset.mediaSubtypes.contains(.photoLive))
         }
     }
     

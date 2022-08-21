@@ -16,9 +16,6 @@ import IQKeyboardManagerSwift
 import SnapKit
 
 class ImagePreviewController: UIViewController {
-    
-    var spotObject: MapSpot!
-                
     var currentImage: PostImagePreview!
     var nextImage: PostImagePreview!
     var previousImage: PostImagePreview!
@@ -461,7 +458,6 @@ class ImagePreviewController: UIViewController {
     @objc func keyboardWillShow(_ notification: NSNotification) {
         if cancelOnDismiss { return }
         if !textView.isFirstResponder { addNewSpotView(notification: notification) }
-        print("keyboard show")
         if !shouldRepositionTextView { return }
         shouldRepositionTextView = false
         /// new spot name view editing when textview not first responder

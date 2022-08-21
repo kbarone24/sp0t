@@ -68,7 +68,6 @@ extension UIViewController {
     }
     
     func hasPOILevelAccess(creatorID: String, privacyLevel: String, inviteList: [String]) -> Bool {
-        
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
         if UserDataModel.shared.adminIDs.contains(where: {$0 == creatorID}) {
@@ -76,14 +75,12 @@ extension UIViewController {
                 return false
             }
         }
-        
         if privacyLevel == "friends" {
-            if !UserDataModel.shared.userInfo.friendIDs.contains(where: {$0 == creatorID}){
+            if !UserDataModel.shared.userInfo.friendIDs.contains(where: {$0 == creatorID}) {
                 if uid != creatorID {
                     return false
                 }
             }
-            
         } else if privacyLevel == "invite" {
             if !inviteList.contains(where: {$0 == uid}) {
                 return false
@@ -823,8 +820,7 @@ extension NSObject {
     }
     
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
-        var postInfo = post
-        
+        var postInfo = setSecondaryPostValues(post: post)
         /// detail group tracks comments and added users fetches
         let detailGroup = DispatchGroup()
         detailGroup.enter()

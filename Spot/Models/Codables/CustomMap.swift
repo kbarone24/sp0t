@@ -16,6 +16,7 @@ struct CustomMap: Identifiable, Codable {
     
     @DocumentID var id: String?
     
+    var communityMap: Bool? = false
     var founderID: String
     var imageURL: String
     var likers: [String]
@@ -62,6 +63,7 @@ struct CustomMap: Identifiable, Codable {
     
     enum CodingKeys: String, CodingKey {
         case id
+        case communityMap
         case founderID
         case imageURL
         case likers

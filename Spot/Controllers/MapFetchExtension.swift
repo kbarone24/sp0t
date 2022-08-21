@@ -38,19 +38,19 @@ extension MapController {
                 print("home fetch", Timestamp(date: Date()).seconds - self.startTime)
                 self.attachNewPostListener()
                 self.newPostsButton.isHidden = false
-                self.reloadMapsCollection(resort: true)
+                self.reloadMapsCollection(resort: true, newPost: false)
                 self.displayHeelsMap()
             }
         }
     }
     
-    func reloadMapsCollection(resort: Bool) {
+    func reloadMapsCollection(resort: Bool, newPost: Bool) {
         if resort { UserDataModel.shared.userInfo.sortMaps() }
         
         DispatchQueue.main.async {
             self.mapsCollection.reloadData()
             self.mapsCollection.selectItem(at: IndexPath(item: self.selectedItemIndex, section: 0), animated: false, scrollPosition: .left)
-            if resort { print("resort"); self.centerMapOnPosts(animated: true) }
+            if resort && !newPost { self.centerMapOnPosts(animated: true) }
             self.setNewPostsButtonCount()
         }
     }
@@ -191,6 +191,7 @@ extension MapController {
                 }
             }
             recentGroup.notify(queue: .global()) {
+                print("home fetch leave")
                 self.homeFetchGroup.leave()
             }
         }
@@ -209,7 +210,6 @@ extension MapController {
     }
     
     func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool, index: Int) {
-        let post = setSecondaryPostValues(post: post)
         /// add new post to both dictionaries
         if map == nil || newPost {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
@@ -253,7 +253,7 @@ extension MapController {
     }
     
     func getMaps() {
-        db.collection("maps").whereField("memberIDs", arrayContains: uid).getDocuments { [weak self] snap, err in
+        db.collection("maps").whereField("likers", arrayContains: uid).getDocuments { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
             for doc in snap.documents {
@@ -268,6 +268,7 @@ extension MapController {
                 } catch {
                     continue
                 }
+                NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
             }
         }
     }
@@ -288,7 +289,7 @@ extension MapController {
                         self.setPostDetails(post: postInfo) { [weak self] post in
                             guard let self = self else { return }
                             self.addPostToDictionary(post: post, map: map, newPost: true, index: self.selectedItemIndex)
-                            self.reloadMapsCollection(resort: false)
+                            self.reloadMapsCollection(resort: false, newPost: true)
                         }
                     }
                 } catch {
@@ -347,7 +348,7 @@ extension MapController {
         
         DispatchQueue.main.async {
             print("reload maps collection")
-            self.reloadMapsCollection(resort: false)
+            self.reloadMapsCollection(resort: false, newPost: false)
             if coordinate != nil {
                 if let annotation = self.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: coordinate!)}) {
                     print("remove and add annotation")
@@ -371,7 +372,7 @@ extension MapController {
         DispatchQueue.main.async {
             self.addPostToDictionary(post: post, map: map, newPost: true, index: 0)
             self.selectMapAt(index: 0)
-            self.reloadMapsCollection(resort: true)
+            self.reloadMapsCollection(resort: true, newPost: true )
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -403,7 +404,7 @@ extension MapController {
         if let i = mapView.annotations.firstIndex(where: {$0.coordinate.isEqualTo(coordinate: post.coordinate)}) {
             DispatchQueue.main.async { self.mapView.removeAnnotation(self.mapView.annotations[i])}
         }
-        DispatchQueue.main.async { self.reloadMapsCollection(resort: false) }
+        DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
     }
     
     @objc func notifyCommentChange(_ notification: NSNotification) {
@@ -421,6 +422,10 @@ extension MapController {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]!.commentCount = max(0, commentList.count - 1)
             }
         }
+    }
+    
+    @objc func mapLikersChanged(_ notification: NSNotification) {
+        reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
     }
     
     @objc func enterForeground() {
@@ -454,6 +459,7 @@ extension MapController: MapControllerDelegate {
     
     
     func loadAdditionalOnboarding() {
+        print("ct", UserDataModel.shared.userInfo.friendIDs.count)
         if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
             let avc = AvatarSelectionController(sentFrom: "map")
             self.navigationController!.pushViewController(avc, animated: true)
@@ -500,10 +506,10 @@ extension MapController: MapControllerDelegate {
     func addHeelsMap() {
         UserDataModel.shared.userInfo.mapsList.append(heelsMap)
         self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").updateData([
-            "memberIDs": FieldValue.arrayUnion([UserDataModel.shared.userInfo.id!])
+            "memberIDs": FieldValue.arrayUnion([uid]),
+            "likers": FieldValue.arrayUnion([uid])
         ])
-        self.reloadMapsCollection(resort: true)
-        
+        reloadMapsCollection(resort: true, newPost: true)
         self.homeFetchGroup.enter()
         DispatchQueue.global(qos: .userInitiated).async {
             self.getRecentPosts(map: self.heelsMap)
