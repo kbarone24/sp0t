@@ -307,15 +307,18 @@ extension CustomMapHeaderCell {
             }
         }
         
+        let db = Firestore.firestore()
         switch actionButton.titleLabel?.text {
         case "Follow map":
             Mixpanel.mainInstance().track(event: "CustomMapFollowMap")
             mapData.likers.append(UserDataModel.shared.userInfo.id!)
+            UserDataModel.shared.userInfo.mapsList.append(mapData!)
             setMapInfo()
-            let mapLikers = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: mapLikers)
-            let db = Firestore.firestore()
+            
+            let userInfo = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: userInfo)
             db.collection("maps").document(mapData.id!).setData(["likers": mapData.likers], merge: true)
+            
             self.actionButton.setTitle("Following", for: .normal)
             self.actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         case "Following":
@@ -323,13 +326,15 @@ extension CustomMapHeaderCell {
             alert.overrideUserInterfaceStyle = .light
             let unfollowAction = UIAlertAction(title: "Unfollow", style: .default) { action in
                 Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
-                let db = Firestore.firestore()
                 guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.userInfo.id!) else { return }
                 self.mapData.likers.remove(at: userIndex)
-                db.collection("maps").document(self.mapData.id!).setData(["likers": self.mapData.likers], merge: true)
+                UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == self.mapData!.id!})
                 self.setMapInfo()
-                let mapLikers = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: mapLikers)
+
+                let userInfo = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: userInfo)
+                db.collection("maps").document(self.mapData.id!).setData(["likers": self.mapData.likers], merge: true)
+
                 self.actionButton.setTitle("Follow map", for: .normal)
                 self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             }

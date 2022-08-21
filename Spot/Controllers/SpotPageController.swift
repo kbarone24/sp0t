@@ -14,7 +14,7 @@ import SDWebImage
 
 class SpotPageController: UIViewController {
 
-    private var spotPageCollectionView: UICollectionView!
+    private var collectionView: UICollectionView!
     private var addSpotButton: UIButton!
     private var barView: UIView!
     private var titleLabel: UILabel!
@@ -31,7 +31,7 @@ class SpotPageController: UIViewController {
     private var spot: MapSpot? {
         didSet {
             DispatchQueue.main.async {
-                self.spotPageCollectionView.reloadSections(IndexSet(integer: 0))
+                self.collectionView.reloadSections(IndexSet(integer: 0))
             }
         }
     }
@@ -60,6 +60,7 @@ class SpotPageController: UIViewController {
     deinit {
         print("SpotPageController(\(self) deinit")
         barView.removeFromSuperview()
+        NotificationCenter.default.removeObserver(self)
     }
     
     override func viewDidLoad() {
@@ -98,8 +99,9 @@ extension SpotPageController {
     
     private func viewSetup() {
         view.backgroundColor = .white
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
 
-        spotPageCollectionView = {
+        collectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .vertical
             let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -110,8 +112,8 @@ extension SpotPageController {
             view.register(SpotPageBodyCell.self, forCellWithReuseIdentifier: "SpotPageBodyCell")
             return view
         }()
-        view.addSubview(spotPageCollectionView)
-        spotPageCollectionView.snp.makeConstraints {
+        view.addSubview(collectionView)
+        collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
         
@@ -216,14 +218,20 @@ extension SpotPageController {
             finalQuery = finalQuery.start(atDocument: endDocument!)
         }
         fetching = .activelyRefreshing
-        finalQuery.getDocuments { (snap, err) in
+        finalQuery.getDocuments { [weak self ](snap, err) in
+            guard let self = self else { return }
             guard err == nil else { self.fetching = .refreshEnabled; return }
-            print("fetchRelatedPost finished")
+            let postGroup = DispatchGroup()
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
-                    self.relatedPost.append(postInfo)
+                    postGroup.enter()
+                    self.setPostDetails(post: postInfo) { [weak self] post in
+                        guard let self = self else { return }
+                        self.relatedPost.append(post)
+                        postGroup.leave()
+                    }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
@@ -237,8 +245,8 @@ extension SpotPageController {
                 self.endDocument = snap?.documents.last
                 self.fetching = .refreshEnabled
             }
-            DispatchQueue.main.async {
-                self.spotPageCollectionView.reloadSections(IndexSet(integer: 1))
+            postGroup.notify(queue: .main) {
+                self.collectionView.reloadSections(IndexSet(integer: 1))
             }
         }
     }
@@ -253,25 +261,31 @@ extension SpotPageController {
             finalQuery = finalQuery.start(atDocument: endDocument!)
         }
         fetching = .activelyRefreshing
-        finalQuery.getDocuments { (snap, err) in
+        finalQuery.getDocuments { [weak self] (snap, err) in
+            guard let self = self else { return }
             guard err == nil else { self.fetching = .refreshEnabled; return }
-            print("fetchCommunityPost finished")
+            let postGroup = DispatchGroup()
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
-                    // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
-                    // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
-                    if (self.mapID == nil || self.mapID == "") == false {
-                        if postInfo.mapID != self.mapID {
-                            self.communityPost.append(postInfo)
+                    postGroup.enter()
+                    self.setPostDetails(post: postInfo) { [weak self] post in
+                        guard let self = self else { return }
+                        // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
+                        // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
+                        if (self.mapID == nil || self.mapID == "") == false {
+                            if post.mapID != self.mapID {
+                                self.communityPost.append(post)
+                            }
+                        } else {
+                            if self.relatedPost.contains(where: { mapPost in
+                                mapPost.id == post.id
+                            }) == false {
+                                self.communityPost.append(post)
+                            }
                         }
-                    } else {
-                        if self.relatedPost.contains(where: { mapPost in
-                            mapPost.id == postInfo.id
-                        }) == false {
-                            self.communityPost.append(postInfo)
-                        }
+                        postGroup.leave()
                     }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
@@ -282,8 +296,8 @@ extension SpotPageController {
                 self.fetchCommunityPostComplete = true
             }
             self.fetching = .refreshEnabled
-            DispatchQueue.main.async {
-                self.spotPageCollectionView.reloadData()
+            postGroup.notify(queue: .main) {
+                self.collectionView.reloadData()
             }
         }
     }
@@ -316,6 +330,18 @@ extension SpotPageController {
     
     @objc func backButtonAction() {
         containerDrawerView?.closeAction()
+    }
+    
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+      //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+   
+        /// check if post being deleted from map controllers child and update map if necessary
+        relatedPost.removeAll(where: {$0.id == post.id})
+        communityPost.removeAll(where: {$0.id == post.id})
+
+        DispatchQueue.main.async { self.collectionView.reloadData() }
     }
 }
 

@@ -381,7 +381,8 @@ extension CustomMapController {
     
     @objc func backButtonAction() {
         barBackButton.isHidden = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Change `2.0` to the desired number of seconds.
+        if navigationController?.viewControllers.count == 1 { mapController?.offsetCustomMapCenter() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             self.containerDrawerView?.closeAction()
         }
     }

@@ -124,6 +124,10 @@ extension MapController: MKMapViewDelegate {
             DispatchQueue.main.async { self.mapView.setRegion(MKCoordinateRegion(center: coordinate!, span: MKCoordinateSpan(latitudeDelta: 0.0012, longitudeDelta: 0.0012)), animated: true) }
         }
     }
+    
+    func offsetCustomMapCenter() {
+        DispatchQueue.main.async { self.centerMapOnPosts(animated: false) }
+    }
 }
 
 

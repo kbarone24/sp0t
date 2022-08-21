@@ -125,6 +125,7 @@ class PostController: UIViewController {
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostLike(_:)), name: NSNotification.Name("PostLike"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name("DeletePost"), object: nil)
     }
         
     @objc func notifyPostLike(_ notification: NSNotification) {
@@ -143,6 +144,18 @@ class PostController: UIViewController {
             postsList[i].commentCount = max(0, commentList.count - 1)
             postsList[i].commentList = commentList
             DispatchQueue.main.async { self.postsCollection.reloadData() }
+        }
+    }
+    
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        DispatchQueue.main.async {
+            if let index = self.postsList.firstIndex(where: {$0.id == post.id}) {
+                print("got index")
+                self.deletePostLocally(index: index)
+            } else {
+                print("no index")
+            }
         }
     }
     
@@ -281,7 +294,6 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
         
     func exitPosts() {
         containerDrawerView?.closeAction()
-        
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostIndexChange"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostLike"), object: nil)
     }
