@@ -32,7 +32,6 @@ class SpotPostAnnotationView: MKAnnotationView {
     func updateImage(posts: [MapPost], spotName: String, id: String) {
         self.id = id
         postIDs = posts.map({$0.id!})
-        print("postids", postIDs)
         let post = posts.first
         
         if post != nil {

@@ -58,14 +58,24 @@ class ChooseSpotController: UIViewController {
         runChooseSpotFetch()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        previewVC?.cancelOnDismiss = true
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ChooseSpotOpen")
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        /// added to will disappear due to lag when dismissing and quick tapping on ImagePreviewController
+        super.viewWillDisappear(animated)
+        previewVC?.cancelOnDismiss = false
+    }
+    
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        previewVC?.cancelOnDismiss = false 
     }
     
     func setUpView() {

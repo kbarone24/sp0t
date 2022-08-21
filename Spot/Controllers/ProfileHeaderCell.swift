@@ -255,7 +255,7 @@ extension ProfileHeaderCell {
     
     private func getNotiIDAndAcceptFriendRequest() {
         let db = Firestore.firestore()
-        let query = db.collection("users").document(UserDataModel.shared.userInfo.id!).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
+        let query = db.collection("users").document(UserDataModel.shared.uid).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             for doc in snap!.documents {
@@ -278,7 +278,7 @@ extension ProfileHeaderCell {
     
     private func getNotiIDAndRemoveFriendRequest() {
         let db = Firestore.firestore()
-        let query = db.collection("users").document(UserDataModel.shared.userInfo.id!).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
+        let query = db.collection("users").document(UserDataModel.shared.uid).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             for doc in snap!.documents {

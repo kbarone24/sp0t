@@ -28,14 +28,14 @@ class CustomMapController: UIViewController {
     private var barView: UIView!
     private var titleLabel: UILabel!
     private var barBackButton: UIButton!
+    private var addButton: UIButton!
     private var drawerViewIsDragging = false
     
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
-            print("map data", mapData?.postGroup.count)
-            print("ct", UserDataModel.shared.userInfo.mapsList[0].postGroup.count)
             if collectionView != nil { DispatchQueue.main.async {self.collectionView.reloadData()}}
+            if addButton != nil { addButton.isHidden = !(mapData?.memberIDs.contains(uid) ?? false) }
         }
     }
     private var firstMaxFourMapMemberList: [UserProfile] = []
@@ -233,6 +233,18 @@ extension CustomMapController {
             $0.leading.equalToSuperview().offset(22)
             $0.centerY.equalTo(titleLabel)
         }
+        
+        addButton = AddButton {
+            $0.addTarget(self, action: #selector(addAction), for: .touchUpInside)
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+        addButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(24)
+            $0.bottom.equalToSuperview().inset(35)
+            $0.width.height.equalTo(73)
+        }
+
         containerDrawerView?.slideView.addSubview(barView)
     }
     
@@ -381,8 +393,22 @@ extension CustomMapController {
     
     @objc func backButtonAction() {
         barBackButton.isHidden = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Change `2.0` to the desired number of seconds.
+        if navigationController?.viewControllers.count == 1 { mapController?.offsetCustomMapCenter() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             self.containerDrawerView?.closeAction()
+        }
+    }
+    
+    @objc func addAction() {
+        if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
+        DispatchQueue.main.async {
+            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
+                vc.mapObject = self.mapData
+                self.barView.isHidden = true
+                let transition = AddButtonTransition()
+                self.navigationController?.view.layer.add(transition, forKey: kCATransition)
+                self.navigationController?.pushViewController(vc, animated: false)
+            }
         }
     }
     
@@ -410,7 +436,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
             headerCell.cellSetup(mapData: mapData, fourMapMemberProfile: firstMaxFourMapMemberList)
-            if mapData!.memberIDs.contains(UserDataModel.shared.userInfo.id!) {
+            if mapData!.memberIDs.contains(UserDataModel.shared.uid) {
                 headerCell.actionButton.addTarget(self, action: #selector(editMapAction), for: .touchUpInside)
             }
             return headerCell

@@ -109,6 +109,7 @@ class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
@@ -134,8 +135,7 @@ class MapController: UIViewController {
         }
         makeMapHomeConstraints()
                         
-        let addButton = UIButton {
-            $0.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
+        let addButton = AddButton {
             $0.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
             mapView.addSubview($0)
         }
@@ -233,13 +233,8 @@ class MapController: UIViewController {
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
-                vc.mapVC = self
                 
-                let transition = CATransition()
-                transition.duration = 0.3
-                transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-                transition.type = CATransitionType.push
-                transition.subtype = CATransitionSubtype.fromTop
+                let transition = AddButtonTransition()
                 self.navigationController?.view.layer.add(transition, forKey: kCATransition)
                 self.navigationController?.pushViewController(vc, animated: false)
             }

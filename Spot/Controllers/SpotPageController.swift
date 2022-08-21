@@ -14,8 +14,8 @@ import SDWebImage
 
 class SpotPageController: UIViewController {
 
-    private var spotPageCollectionView: UICollectionView!
-    private var addSpotButton: UIButton!
+    private var collectionView: UICollectionView!
+    private var addButton: UIButton!
     private var barView: UIView!
     private var titleLabel: UILabel!
     private var barBackButton: UIButton!
@@ -30,8 +30,10 @@ class SpotPageController: UIViewController {
     private var spotID: String!
     private var spot: MapSpot? {
         didSet {
+            if spot == nil { return }
             DispatchQueue.main.async {
-                self.spotPageCollectionView.reloadSections(IndexSet(integer: 0))
+                self.collectionView.reloadSections(IndexSet(integer: 0))
+                self.addButton.isHidden = !self.hasPOILevelAccess(creatorID: self.spot!.founderID, privacyLevel: self.spot!.privacyLevel , inviteList: self.spot!.inviteList ?? [])
             }
         }
     }
@@ -60,6 +62,7 @@ class SpotPageController: UIViewController {
     deinit {
         print("SpotPageController(\(self) deinit")
         barView.removeFromSuperview()
+        NotificationCenter.default.removeObserver(self)
     }
     
     override func viewDidLoad() {
@@ -98,8 +101,9 @@ extension SpotPageController {
     
     private func viewSetup() {
         view.backgroundColor = .white
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
 
-        spotPageCollectionView = {
+        collectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .vertical
             let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -110,22 +114,17 @@ extension SpotPageController {
             view.register(SpotPageBodyCell.self, forCellWithReuseIdentifier: "SpotPageBodyCell")
             return view
         }()
-        view.addSubview(spotPageCollectionView)
-        spotPageCollectionView.snp.makeConstraints {
+        view.addSubview(collectionView)
+        collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
         
-        addSpotButton = UIButton {
-            $0.layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.25).cgColor
-            $0.layer.shadowOpacity = 1
-            $0.layer.shadowRadius = 8
-            $0.layer.shadowOffset = CGSize(width: 0, height: 0.5)
-            $0.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
-            $0.setTitle("", for: .normal)
-            $0.addTarget(self, action: #selector(addSpotAction), for: .touchUpInside)
+        addButton = AddButton {
+            $0.addTarget(self, action: #selector(addAction), for: .touchUpInside)
+            $0.isHidden = true
             view.addSubview($0)
         }
-        addSpotButton.snp.makeConstraints {
+        addButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(24)
             $0.bottom.equalToSuperview().inset(35)
             $0.width.height.equalTo(73)
@@ -216,14 +215,20 @@ extension SpotPageController {
             finalQuery = finalQuery.start(atDocument: endDocument!)
         }
         fetching = .activelyRefreshing
-        finalQuery.getDocuments { (snap, err) in
+        finalQuery.getDocuments { [weak self ](snap, err) in
+            guard let self = self else { return }
             guard err == nil else { self.fetching = .refreshEnabled; return }
-            print("fetchRelatedPost finished")
+            let postGroup = DispatchGroup()
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
-                    self.relatedPost.append(postInfo)
+                    postGroup.enter()
+                    self.setPostDetails(post: postInfo) { [weak self] post in
+                        guard let self = self else { return }
+                        self.relatedPost.append(post)
+                        postGroup.leave()
+                    }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
@@ -237,8 +242,8 @@ extension SpotPageController {
                 self.endDocument = snap?.documents.last
                 self.fetching = .refreshEnabled
             }
-            DispatchQueue.main.async {
-                self.spotPageCollectionView.reloadSections(IndexSet(integer: 1))
+            postGroup.notify(queue: .main) {
+                self.collectionView.reloadSections(IndexSet(integer: 1))
             }
         }
     }
@@ -253,25 +258,31 @@ extension SpotPageController {
             finalQuery = finalQuery.start(atDocument: endDocument!)
         }
         fetching = .activelyRefreshing
-        finalQuery.getDocuments { (snap, err) in
+        finalQuery.getDocuments { [weak self] (snap, err) in
+            guard let self = self else { return }
             guard err == nil else { self.fetching = .refreshEnabled; return }
-            print("fetchCommunityPost finished")
+            let postGroup = DispatchGroup()
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
-                    // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
-                    // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
-                    if (self.mapID == nil || self.mapID == "") == false {
-                        if postInfo.mapID != self.mapID {
-                            self.communityPost.append(postInfo)
+                    postGroup.enter()
+                    self.setPostDetails(post: postInfo) { [weak self] post in
+                        guard let self = self else { return }
+                        // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
+                        // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
+                        if (self.mapID == nil || self.mapID == "") == false {
+                            if post.mapID != self.mapID {
+                                self.communityPost.append(post)
+                            }
+                        } else {
+                            if self.relatedPost.contains(where: { mapPost in
+                                mapPost.id == post.id
+                            }) == false {
+                                self.communityPost.append(post)
+                            }
                         }
-                    } else {
-                        if self.relatedPost.contains(where: { mapPost in
-                            mapPost.id == postInfo.id
-                        }) == false {
-                            self.communityPost.append(postInfo)
-                        }
+                        postGroup.leave()
                     }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
@@ -282,32 +293,19 @@ extension SpotPageController {
                 self.fetchCommunityPostComplete = true
             }
             self.fetching = .refreshEnabled
-            DispatchQueue.main.async {
-                self.spotPageCollectionView.reloadData()
+            postGroup.notify(queue: .main) {
+                self.collectionView.reloadData()
             }
         }
     }
     
-    @objc func addSpotAction() {
+    @objc func addAction() {
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
-                let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
-                if let mainNav = window as? UINavigationController {
-                    if let mapVC = mainNav.viewControllers[0] as? MapController {
-                        vc.mapVC = mapVC
-                    } else {
-                        return
-                    }
-                } else {
-                    return
-                }
+                vc.spotObject = self.spot
                 self.barView.isHidden = true
-                let transition = CATransition()
-                transition.duration = 0.3
-                transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-                transition.type = CATransitionType.push
-                transition.subtype = CATransitionSubtype.fromTop
+                let transition = AddButtonTransition()
                 self.navigationController?.view.layer.add(transition, forKey: kCATransition)
                 self.navigationController?.pushViewController(vc, animated: false)
             }
@@ -316,6 +314,18 @@ extension SpotPageController {
     
     @objc func backButtonAction() {
         containerDrawerView?.closeAction()
+    }
+    
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+    //    guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+      //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+   
+        /// check if post being deleted from map controllers child and update map if necessary
+        relatedPost.removeAll(where: {$0.id == post.id})
+        communityPost.removeAll(where: {$0.id == post.id})
+
+        DispatchQueue.main.async { self.collectionView.reloadData() }
     }
 }
 
