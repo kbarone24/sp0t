@@ -823,8 +823,7 @@ extension NSObject {
     }
     
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
-        var postInfo = post
-        
+        var postInfo = setSecondaryPostValues(post: post)
         /// detail group tracks comments and added users fetches
         let detailGroup = DispatchGroup()
         detailGroup.enter()

@@ -461,7 +461,6 @@ class ImagePreviewController: UIViewController {
     @objc func keyboardWillShow(_ notification: NSNotification) {
         if cancelOnDismiss { return }
         if !textView.isFirstResponder { addNewSpotView(notification: notification) }
-        print("keyboard show")
         if !shouldRepositionTextView { return }
         shouldRepositionTextView = false
         /// new spot name view editing when textview not first responder

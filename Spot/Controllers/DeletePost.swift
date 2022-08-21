@@ -46,7 +46,7 @@ extension PostController {
     
     func runDeletes(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
         self.deleteIndicator.removeFromSuperview()
-        self.deletePostLocally()
+        self.deletePostLocally(index: selectedPostIndex)
         self.sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete, spotRemove: spotRemove)
         self.deletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
     }
@@ -76,16 +76,18 @@ extension PostController {
         }
     }
     
-    func deletePostLocally() {
+    func deletePostLocally(index: Int) {
         if postsList.count > 1 {
+            /// check for if == selectedPostIndex
             postsCollection.performBatchUpdates {
-                self.postsList.remove(at: selectedPostIndex)
-                self.postsCollection.deleteItems(at: [IndexPath(item: self.selectedPostIndex, section: 0)])
+                self.postsList.remove(at: index)
+                self.postsCollection.deleteItems(at: [IndexPath(item: index, section: 0)])
                 if self.selectedPostIndex >= postsList.count { self.selectedPostIndex = postsList.count - 1 }
             } completion: { _ in
                 self.postsCollection.reloadData()
             }
         } else {
+            print("exit posts")
             exitPosts()
         }
     }

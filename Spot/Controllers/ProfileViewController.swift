@@ -16,13 +16,13 @@ import FirebaseFunctions
 
 class ProfileViewController: UIViewController {
     
-    private var profileCollectionView: UICollectionView!
+    private var collectionView: UICollectionView!
     private var noPostLabel: UILabel!
     
     // MARK: Fetched datas
     public var userProfile: UserProfile? {
         didSet {
-            if profileCollectionView != nil { DispatchQueue.main.async { self.profileCollectionView.reloadData() } }
+            if collectionView != nil { DispatchQueue.main.async { self.collectionView.reloadData() } }
         }
     }
     public var maps = [CustomMap]() {
@@ -35,21 +35,14 @@ class ProfileViewController: UIViewController {
             noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
         }
     }
-    private var postImages = [UIImage]() {
-        didSet {
-            if postImages.count == posts.count {
-                profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 1)])
-            }
-        }
-    }
+    private var postImages = [UIImage]()
     private var relation: ProfileRelation = .myself
     private var pendingFriendRequestNotiID: String? {
         didSet {
-            profileCollectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
+            collectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
         }
     }
-    public var mapSelectedIndex: Int?
-    
+
     private lazy var imageManager = SDWebImageManager()
     public unowned var containerDrawerView: DrawerView?
     
@@ -62,6 +55,10 @@ class ProfileViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
         containerDrawerView = presentedDrawerView
+        
+        /// need to add immediately to track active user profile getting fetched
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyMapsLoad(_:)), name: NSNotification.Name(("UserMapsLoad")), object: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -87,14 +84,6 @@ class ProfileViewController: UIViewController {
         Mixpanel.mainInstance().track(event: "ProfileOpen")
     }
     
-    @objc func mapLikersChanged(_ notification: NSNotification) {
-        if let likers = notification.userInfo?["mapLikers"] as? [String] {
-            guard mapSelectedIndex != nil else { return }
-            maps[mapSelectedIndex!].likers = likers
-            mapSelectedIndex = nil
-        }
-    }
-
     @objc func editButtonAction() {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.profileVC = self
@@ -154,6 +143,7 @@ extension ProfileViewController {
     }
         
     private func getUserInfo() {
+        if userProfile?.username ?? "" == "" { return }
         /// username passed through for tagged user not in friends list
         getUserFromUsername(username: userProfile!.username) { [weak self] user in
             guard let self = self else { return }
@@ -199,7 +189,7 @@ extension ProfileViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyMapChange(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
                         
-        profileCollectionView = {
+        collectionView = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .vertical
             let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -211,9 +201,9 @@ extension ProfileViewController {
             view.register(ProfileBodyCell.self, forCellWithReuseIdentifier: "ProfileBodyCell")
             return view
         }()
-        view.addSubview(profileCollectionView)
+        view.addSubview(collectionView)
         
-        profileCollectionView.snp.makeConstraints {
+        collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
         
@@ -252,12 +242,18 @@ extension ProfileViewController {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { return }
-                    self.posts.append(postInfo)
+                    self.setPostDetails(post: postInfo) { [weak self] post in
+                        guard let self = self else { return }
+                        self.posts.append(post)
+                    }
                     let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
                     self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
-                        guard self != nil else { return }
+                        guard let self = self else { return }
                         let image = image ?? UIImage()
-                        self?.postImages.append(image)
+                        self.postImages.append(image)
+                        if self.postImages.count == snap!.documents.count {
+                            DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 1)]) }
+                        }
                     }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
@@ -277,14 +273,13 @@ extension ProfileViewController {
         let query = db.collection("maps").whereField("memberIDs", arrayContains: userProfile?.id ?? "")
         query.getDocuments { (snap, err) in
             if err != nil  { return }
-            self.maps.removeAll()
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: CustomMap.self)
                     guard let mapInfo = unwrappedInfo else { return }
                     /// friend doesn't have access to secret map
                     if mapInfo.secret && !mapInfo.memberIDs.contains(UserDataModel.shared.uid) { continue }
-                    self.maps.append(mapInfo)
+                    if !self.maps.contains(where: {$0.id == mapInfo.id}) { self.maps.append(mapInfo) }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
@@ -295,7 +290,7 @@ extension ProfileViewController {
     
     private func sortAndReloadMaps() {
         maps.sort(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
-        DispatchQueue.main.async { self.profileCollectionView.reloadData() }
+        DispatchQueue.main.async { self.collectionView.reloadData() }
     }
     
     private func getMyMap() -> CustomMap {
@@ -313,7 +308,7 @@ extension ProfileViewController {
         posts.removeAll(where: {$0.id == post.id})
         if mapDelete {
             maps.removeAll(where: {$0.id == post.mapID ?? ""})
-            DispatchQueue.main.async { self.profileCollectionView.reloadData() }
+            DispatchQueue.main.async { self.collectionView.reloadData() }
             
         } else if post.mapID ?? "" != "" {
             if let i = maps.firstIndex(where: {$0.id == post.mapID!}) {
@@ -327,9 +322,32 @@ extension ProfileViewController {
         let mapID = userInfo["mapID"] as! String
         let likers = userInfo["mapLikers"] as! [String]
         if let i = maps.firstIndex(where: {$0.id == mapID}) {
-            maps[i].likers = likers
-            
+            /// remove if this user
+            if !likers.contains(userProfile!.id!) {
+                DispatchQueue.main.async {
+                    self.maps.remove(at: i)
+                    self.collectionView.reloadData()
+                }
+            } else {
+                /// update likers if current user liked map through another users mapsList
+                self.maps[i].likers = likers
+            }
+        } else {
+            if likers.contains(self.userProfile!.id!) {
+                getMaps()
+            }
         }
+    }
+    
+    @objc func notifyUserLoad(_ notification: NSNotification) {
+        userProfile = UserDataModel.shared.userInfo
+        getUserRelation()
+        viewSetup()
+        runFetches()
+    }
+    
+    @objc func notifyMapsLoad(_ notification: NSNotification) {
+        getMaps()
     }
 }
 
@@ -393,8 +411,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: mapData, postsList: [], presentedDrawerView: containerDrawerView, mapType: .myMap)
                 navigationController?.pushViewController(customMapVC, animated: true)
             } else if let _ = cell as? ProfileBodyCell {
-                mapSelectedIndex = indexPath.row - 1
-                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[mapSelectedIndex!], postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
+                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[indexPath.row - 1], postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
                 navigationController?.pushViewController(customMapVC, animated: true)
             }
         }
