@@ -58,7 +58,7 @@ class NewMapController: UIViewController {
     func addMapObject() {
         let post = UploadPostModel.shared.postObject!
         mapObject = CustomMap(id: UUID().uuidString, founderID: uid, imageURL: "", likers: [], mapName: "", memberIDs: [uid], posterDictionary: [post.id! : [uid]], posterIDs: [uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: [], postLocations: [["lat": post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: UploadPostModel.shared.postObject.postImage.first ?? UIImage(named: "BlankImage"))
-        if !(post.addedUsers?.isEmpty ?? true) { mapObject.memberIDs.append(contentsOf: post.addedUsers!); mapObject.memberProfiles!.append(contentsOf: post.addedUserProfiles!); mapObject.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!) }
+        if !(post.addedUsers?.isEmpty ?? true) { mapObject.memberIDs.append(contentsOf: post.addedUsers!); mapObject.likers.append(contentsOf: post.addedUsers!); mapObject.memberProfiles!.append(contentsOf: post.addedUserProfiles!); mapObject.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!) }
     }
     
     func setUpView() {
@@ -278,6 +278,7 @@ extension NewMapController: FriendsListDelegate {
         var members = selectedUsers
         members.append(UserDataModel.shared.userInfo)
         mapObject.memberIDs = members.map({$0.id!})
+        mapObject.likers = mapObject.memberIDs
         mapObject.memberProfiles = members
         DispatchQueue.main.async { self.collaboratorsCollection.reloadData() }
     }
