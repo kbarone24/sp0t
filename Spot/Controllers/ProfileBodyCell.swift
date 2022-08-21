@@ -46,7 +46,7 @@ class ProfileBodyCell: UICollectionViewCell {
             completeText.append(NSAttributedString(string: " \(mapData.mapName)"))
             self.mapName.attributedText = completeText
         } else {
-            self.mapName.text = mapData.mapName
+            self.mapName.attributedText = NSAttributedString(string: mapData.mapName) 
         }
         self.friendsCount.text = mapData.memberIDs.count == 1 ? "" : "\(mapData.memberIDs.count)"
         self.friendsIcon.snp.updateConstraints {

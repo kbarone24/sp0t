@@ -15,7 +15,7 @@ import SDWebImage
 class SpotPageController: UIViewController {
 
     private var collectionView: UICollectionView!
-    private var addSpotButton: UIButton!
+    private var addButton: UIButton!
     private var barView: UIView!
     private var titleLabel: UILabel!
     private var barBackButton: UIButton!
@@ -30,8 +30,10 @@ class SpotPageController: UIViewController {
     private var spotID: String!
     private var spot: MapSpot? {
         didSet {
+            if spot == nil { return }
             DispatchQueue.main.async {
                 self.collectionView.reloadSections(IndexSet(integer: 0))
+                self.addButton.isHidden = !self.hasPOILevelAccess(creatorID: self.spot!.founderID, privacyLevel: self.spot!.privacyLevel , inviteList: self.spot!.inviteList ?? [])
             }
         }
     }
@@ -117,17 +119,12 @@ extension SpotPageController {
             $0.edges.equalToSuperview()
         }
         
-        addSpotButton = UIButton {
-            $0.layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.25).cgColor
-            $0.layer.shadowOpacity = 1
-            $0.layer.shadowRadius = 8
-            $0.layer.shadowOffset = CGSize(width: 0, height: 0.5)
-            $0.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
-            $0.setTitle("", for: .normal)
-            $0.addTarget(self, action: #selector(addSpotAction), for: .touchUpInside)
+        addButton = AddButton {
+            $0.addTarget(self, action: #selector(addAction), for: .touchUpInside)
+            $0.isHidden = true
             view.addSubview($0)
         }
-        addSpotButton.snp.makeConstraints {
+        addButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(24)
             $0.bottom.equalToSuperview().inset(35)
             $0.width.height.equalTo(73)
@@ -302,26 +299,13 @@ extension SpotPageController {
         }
     }
     
-    @objc func addSpotAction() {
+    @objc func addAction() {
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
-                let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
-                if let mainNav = window as? UINavigationController {
-                    if let mapVC = mainNav.viewControllers[0] as? MapController {
-                        vc.mapVC = mapVC
-                    } else {
-                        return
-                    }
-                } else {
-                    return
-                }
+                vc.spotObject = self.spot
                 self.barView.isHidden = true
-                let transition = CATransition()
-                transition.duration = 0.3
-                transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-                transition.type = CATransitionType.push
-                transition.subtype = CATransitionSubtype.fromTop
+                let transition = AddButtonTransition()
                 self.navigationController?.view.layer.add(transition, forKey: kCATransition)
                 self.navigationController?.pushViewController(vc, animated: false)
             }
@@ -334,7 +318,7 @@ extension SpotPageController {
     
     @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
-        guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+    //    guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
       //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
    
         /// check if post being deleted from map controllers child and update map if necessary

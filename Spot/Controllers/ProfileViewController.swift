@@ -155,7 +155,7 @@ extension ProfileViewController {
     }
     
     private func getUserRelation() {
-        if self.userProfile?.id == UserDataModel.shared.userInfo.id {
+        if self.userProfile?.id == UserDataModel.shared.uid {
             relation = .myself
         } else if UserDataModel.shared.userInfo.friendsList.contains(where: { user in
             user.id == userProfile?.id
@@ -166,7 +166,7 @@ extension ProfileViewController {
         }) {
             relation = .pending
         } else if self.userProfile!.pendingFriendRequests.contains(where: { user in
-            user == UserDataModel.shared.userInfo.id
+            user == UserDataModel.shared.uid
         }) {
             relation = .received
         } else {

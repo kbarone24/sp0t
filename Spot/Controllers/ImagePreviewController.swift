@@ -16,9 +16,6 @@ import IQKeyboardManagerSwift
 import SnapKit
 
 class ImagePreviewController: UIViewController {
-    
-    var spotObject: MapSpot!
-                
     var currentImage: PostImagePreview!
     var nextImage: PostImagePreview!
     var previousImage: PostImagePreview!

@@ -253,7 +253,7 @@ extension MapController {
     }
     
     func getMaps() {
-        db.collection("maps").whereField("memberIDs", arrayContains: uid).getDocuments { [weak self] snap, err in
+        db.collection("maps").whereField("likers", arrayContains: uid).getDocuments { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
             for doc in snap.documents {
@@ -459,6 +459,7 @@ extension MapController: MapControllerDelegate {
     
     
     func loadAdditionalOnboarding() {
+        print("ct", UserDataModel.shared.userInfo.friendIDs.count)
         if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
             let avc = AvatarSelectionController(sentFrom: "map")
             self.navigationController!.pushViewController(avc, animated: true)
@@ -505,7 +506,8 @@ extension MapController: MapControllerDelegate {
     func addHeelsMap() {
         UserDataModel.shared.userInfo.mapsList.append(heelsMap)
         self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").updateData([
-            "memberIDs": FieldValue.arrayUnion([UserDataModel.shared.userInfo.id!])
+            "memberIDs": FieldValue.arrayUnion([uid]),
+            "likers": FieldValue.arrayUnion([uid])
         ])
         reloadMapsCollection(resort: true, newPost: true)
         self.homeFetchGroup.enter()
