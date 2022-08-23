@@ -689,7 +689,7 @@ extension NSObject {
     func setSecondaryPostValues(post: MapPost) -> MapPost {
         var newPost = post
         /// round to nearest line height
-        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 65)
+        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 51.9)
         return newPost
     }
     

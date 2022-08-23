@@ -49,7 +49,7 @@ class ProfileHeaderCell: UICollectionViewCell {
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
         self.profile = userProfile
         
-        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFit)
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
         profileImage.sd_setImage(with: URL(string: userProfile.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
         let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)

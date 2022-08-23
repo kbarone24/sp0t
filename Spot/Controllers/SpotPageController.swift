@@ -15,7 +15,7 @@ import SDWebImage
 class SpotPageController: UIViewController {
 
     private var collectionView: UICollectionView!
-    private var addButton: UIButton!
+  ///  private var addButton: UIButton!
     private var barView: UIView!
     private var titleLabel: UILabel!
     private var barBackButton: UIButton!
@@ -33,15 +33,16 @@ class SpotPageController: UIViewController {
             if spot == nil { return }
             DispatchQueue.main.async {
                 self.collectionView.reloadSections(IndexSet(integer: 0))
-                self.addButton.isHidden = !self.hasPOILevelAccess(creatorID: self.spot!.founderID, privacyLevel: self.spot!.privacyLevel , inviteList: self.spot!.inviteList ?? [])
+          //      self.addButton.isHidden = !self.hasPOILevelAccess(creatorID: self.spot!.founderID, privacyLevel: self.spot!.privacyLevel , inviteList: self.spot!.inviteList ?? [])
             }
         }
     }
         
-    private var endDocument: DocumentSnapshot?
+    private var relatedEndDocument: DocumentSnapshot?
+    private var communityEndDocument: DocumentSnapshot?
     private var fetchRelatedPostComplete = false
     private var fetchCommunityPostComplete = false
-    private var fetching: RefreshStatus = .refreshEnabled
+    private var fetching: RefreshStatus = .activelyRefreshing
     private var relatedPost: [MapPost] = []
     private var communityPost: [MapPost] = []
     
@@ -119,7 +120,7 @@ extension SpotPageController {
             $0.edges.equalToSuperview()
         }
         
-        addButton = AddButton {
+      /* addButton = AddButton {
             $0.addTarget(self, action: #selector(addAction), for: .touchUpInside)
             $0.isHidden = true
             view.addSubview($0)
@@ -128,7 +129,7 @@ extension SpotPageController {
             $0.trailing.equalToSuperview().inset(24)
             $0.bottom.equalToSuperview().inset(35)
             $0.width.height.equalTo(73)
-        }
+        } */
         
         barView = UIView {
             $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
@@ -147,7 +148,7 @@ extension SpotPageController {
             barView.addSubview($0)
         }
         barBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
+            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
             $0.setTitle("", for: .normal)
             $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
             barView.addSubview($0)
@@ -190,9 +191,7 @@ extension SpotPageController {
     
     private func fetchSpot() {
         let db: Firestore = Firestore.firestore()
-        print("fetchSpot")
         db.collection("spots").document(spotID).getDocument { [weak self] snap, err in
-            print("fetchSpot finished")
             do {
                 guard let self = self else { return }
                 let unwrappedInfo = try snap?.data(as: MapSpot.self)
@@ -205,24 +204,25 @@ extension SpotPageController {
     }
     
     private func fetchRelatedPost() {
-        guard fetching == .refreshEnabled else { return }
-        print("fetchRelatedPost")
+        print("fetch related")
         let db: Firestore = Firestore.firestore()
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
         let conditionedQuery = (mapID == nil || mapID == "") ? baseQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid) : baseQuery.whereField("mapID", isEqualTo: mapID!)
-        var finalQuery = conditionedQuery.limit(to: 12).order(by: "timestamp", descending: true)
-        if endDocument != nil {
-            finalQuery = finalQuery.start(atDocument: endDocument!)
-        }
+        var finalQuery = conditionedQuery.limit(to: 13).order(by: "timestamp", descending: true)
+        if relatedEndDocument != nil { finalQuery = finalQuery.start(atDocument: relatedEndDocument!)  }
+        
         fetching = .activelyRefreshing
         finalQuery.getDocuments { [weak self ](snap, err) in
             guard let self = self else { return }
-            guard err == nil else { self.fetching = .refreshEnabled; return }
+            guard let allDocs = snap?.documents else { return }
+            
+            let docs = allDocs.count == 13 ? allDocs.dropLast() : allDocs
             let postGroup = DispatchGroup()
-            for doc in snap!.documents {
+            for doc in docs {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
-                    guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
+                    guard let postInfo = unwrappedInfo else { continue }
+                    if self.relatedPost.contains(where: {$0.id == postInfo.id}) { continue }
                     postGroup.enter()
                     self.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
@@ -233,69 +233,75 @@ extension SpotPageController {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
             }
-            if snap!.documents.count < 12 {
-                self.endDocument = nil
-                self.fetchRelatedPostComplete = true
-                self.fetching = .refreshDisabled
-                self.fetchCommunityPost(12 - snap!.documents.count)
-            } else {
-                self.endDocument = snap?.documents.last
-                self.fetching = .refreshEnabled
-            }
+            
             postGroup.notify(queue: .main) {
-                self.collectionView.reloadSections(IndexSet(integer: 1))
+                self.relatedEndDocument = allDocs.last
+                self.fetchRelatedPostComplete = docs.count < 12
+                self.fetching = .refreshEnabled
+                if docs.count < 12 { self.fetchCommunityPost() }
+                
+                self.relatedPost.sort(by: {$0.seconds > $1.seconds})
+                self.collectionView.reloadData()
             }
         }
     }
     
-    private func fetchCommunityPost(_ number: Int = 12) {
-        guard fetching != .activelyRefreshing else { return }
-        print("fetchCommunityPost")
+    private func fetchCommunityPost() {
         let db: Firestore = Firestore.firestore()
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
-        var finalQuery = baseQuery.limit(to: number).order(by: "timestamp", descending: true)
-        if endDocument != nil {
-            finalQuery = finalQuery.start(atDocument: endDocument!)
-        }
+        var finalQuery = baseQuery.limit(to: 13).order(by: "timestamp", descending: true)
+        if communityEndDocument != nil { finalQuery = finalQuery.start(atDocument: communityEndDocument!) }
+        
         fetching = .activelyRefreshing
         finalQuery.getDocuments { [weak self] (snap, err) in
             guard let self = self else { return }
-            guard err == nil else { self.fetching = .refreshEnabled; return }
+            guard let allDocs = snap?.documents else { return }
+            if allDocs.count == 0 { self.fetching = .refreshDisabled }
+            let docs = allDocs.count == 13 ? allDocs.dropLast() : allDocs
+            if docs.count < 12 { self.fetching = .refreshDisabled }
+            
             let postGroup = DispatchGroup()
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
-                    guard let postInfo = unwrappedInfo else { self.fetching = .refreshEnabled; return }
+                    guard let postInfo = unwrappedInfo else { continue }
+                    if self.relatedPost.contains(where: {$0.id == postInfo.id}) { continue }
+                    
                     postGroup.enter()
                     self.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
-                        // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
-                        // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
-                        if (self.mapID == nil || self.mapID == "") == false {
-                            if post.mapID != self.mapID {
-                                self.communityPost.append(post)
-                            }
-                        } else {
-                            if self.relatedPost.contains(where: { mapPost in
-                                mapPost.id == post.id
-                            }) == false {
-                                self.communityPost.append(post)
-                            }
-                        }
+                        self.addCommunityPost(postInfo: post)
                         postGroup.leave()
                     }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
             }
-            self.endDocument = snap!.documents.count < 12 ? nil : snap?.documents.last
-            if snap!.documents.count < 12 {
-                self.fetchCommunityPostComplete = true
-            }
-            self.fetching = .refreshEnabled
+
             postGroup.notify(queue: .main) {
+                if self.fetching == .refreshDisabled {
+                    self.fetchCommunityPostComplete = true
+                } else {
+                    self.fetching = .refreshEnabled
+                }
+                
+                self.communityEndDocument = allDocs.last
+                self.relatedPost.sort(by: {$0.seconds > $1.seconds})
+                self.communityPost.sort(by: {$0.seconds > $1.seconds})
                 self.collectionView.reloadData()
             }
+        }
+    }
+    
+    func addCommunityPost(postInfo: MapPost) {
+        // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
+        // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
+        if mapID != "" && postInfo.mapID == mapID {
+            relatedPost.append(postInfo)
+        } else if mapID == "" && hasPostAccess(post: postInfo) {
+            relatedPost.append(postInfo)
+        } else {
+            communityPost.append(postInfo)
         }
     }
     
@@ -353,37 +359,21 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             headerCell.cellSetup(spotName: spotName, spot: spot)
             return headerCell
         } else if let bodyCell = cell as? SpotPageBodyCell {
-            
             // Setup map post label
-            if indexPath == IndexPath(row: 0, section: 1) && view.subviews.contains(mapPostLabel) == false {
-                collectionView.addSubview(mapPostLabel)
+            if indexPath == IndexPath(row: 0, section: 1) {
                 let frontPadding = "    "
                 let bottomPadding = "   "
                 mapPostLabel.text = frontPadding + ((mapName == nil || mapName == "") ? "Friends posts" : "\(mapName!)") + bottomPadding
-                mapPostLabel.snp.makeConstraints {
-                    $0.leading.equalToSuperview()
-                    $0.top.equalToSuperview().offset(cell.frame.minY - 15.5)
-                    $0.height.equalTo(31)
-                }
+                addHeaderView(label: mapPostLabel, cell: cell, communityEmpty: false)
             }
-            // Setup community post label
+            /// set up community post label
             if communityPost.count != 0 {
-                if indexPath == IndexPath(row: 0, section: 2) && view.subviews.contains(communityPostLabel) == false {
-                    collectionView.addSubview(communityPostLabel)
-                    communityPostLabel.snp.makeConstraints {
-                        $0.leading.equalToSuperview()
-                        $0.top.equalToSuperview().offset(cell.frame.minY - 15.5)
-                        $0.height.equalTo(31)
-                    }
+                if indexPath == IndexPath(row: 0, section: 2)  {
+                    addHeaderView(label: communityPostLabel, cell: cell, communityEmpty: false)
                 }
-            } else {
-                if indexPath == IndexPath(row: relatedPost.count - 1, section: 1) && view.subviews.contains(communityPostLabel) == false {
-                    collectionView.addSubview(communityPostLabel)
-                    communityPostLabel.snp.makeConstraints {
-                        $0.leading.equalToSuperview()
-                        $0.top.equalToSuperview().offset(cell.frame.maxY - 15.5)
-                        $0.height.equalTo(31)
-                    }
+            } else if fetchCommunityPostComplete {
+                if indexPath == IndexPath(row: relatedPost.count - 1, section: 1) {
+                    addHeaderView(label: communityPostLabel, cell: cell, communityEmpty: true)
                 }
             }
             
@@ -392,6 +382,20 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             return bodyCell
         }
         return cell
+    }
+    
+    func addHeaderView(label: UILabel, cell: UICollectionViewCell, communityEmpty: Bool) {
+        if !collectionView.subviews.contains(label) { collectionView.addSubview(label) }
+        label.snp.removeConstraints()
+        label.snp.makeConstraints {
+            $0.leading.equalToSuperview()
+            $0.height.equalTo(31)
+            if !communityEmpty {
+                $0.top.equalToSuperview().offset(cell.frame.minY - 15.5)
+            } else {
+                $0.bottom.equalToSuperview().offset(cell.frame.maxY + 15.5)
+            }
+        }
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -436,8 +440,9 @@ extension SpotPageController: UIScrollViewDelegate {
             titleLabel.text = scrollView.contentOffset.y > 0 ? spotName : ""
         }
         
-        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 500)) && fetching == .refreshEnabled && fetchCommunityPostComplete == false {
+        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 500)) && fetching == .refreshEnabled {
             DispatchQueue.global(qos: .userInitiated).async {
+                print("fetch")
                 self.fetchRelatedPostComplete ? self.fetchCommunityPost() : self.fetchRelatedPost()
             }
         }
