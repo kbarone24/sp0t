@@ -98,7 +98,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         ]
                
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow-1"),
+            image: UIImage(named: "BackArrowDark"),
             style: .plain,
             target: self,
             action: #selector(leaveNotifs)

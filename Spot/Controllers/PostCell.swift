@@ -365,7 +365,7 @@ class PostCell: UICollectionViewCell {
         userView.snp.makeConstraints {
             $0.leading.equalToSuperview()
             $0.trailing.equalTo(buttonView.snp.leading).offset(-15)
-            $0.bottom.equalTo(captionLabel.snp.top).offset(-7)
+            $0.bottom.equalTo(captionLabel.snp.top).offset(-10)
             $0.height.equalTo(25)
         }
         
@@ -628,6 +628,8 @@ extension PostCell {
         captionLabel.lineBreakMode = .byWordWrapping
         captionLabel.snp.updateConstraints { $0.height.equalTo(newHeight) }
         overflow = false
+        
+        captionLabel.attributedText = NSAttributedString(string: post.caption)
         addCaptionAttString()
     }
     
