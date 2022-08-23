@@ -1,19 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "Group 21297.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "Group 21297-1.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "Group 21297-2.png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "NewMapIcon.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {

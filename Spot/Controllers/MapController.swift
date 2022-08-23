@@ -122,6 +122,7 @@ class MapController: UIViewController {
     func addMapView() {
         mapView = SpotMapView {
             $0.delegate = self
+            $0.spotMapDelegate = self
             $0.mapType = .mutedStandard
             $0.overrideUserInterfaceStyle = .light
             $0.pointOfInterestFilter = .excludingAll
@@ -330,6 +331,7 @@ class MapController: UIViewController {
             mapView.removeAllAnnos()
         } else {
             mapView.delegate = self
+            mapView.spotMapDelegate = self
             addMapAnnotations(index: selectedItemIndex, reload: true)
         }
     }
@@ -434,9 +436,9 @@ extension MapController: CLLocationManagerDelegate {
 
 extension MapController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
+      /*  if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
             return false
-        }
+        } */
         return true
     }
 }
