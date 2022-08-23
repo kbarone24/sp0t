@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 import Mixpanel
+import IQKeyboardManagerSwift
 
 class UsernameController: UIViewController, UITextFieldDelegate {
     
@@ -18,118 +19,290 @@ class UsernameController: UIViewController, UITextFieldDelegate {
     var nextButton: UIButton!
     var statusIcon: UIImageView!
     var activityIndicator: CustomActivityIndicator!
-    var errorBox: UIView!
-    var errorLabel: UILabel!
+    var statusLabel: UIButton!
     
     var newUser: NewUser!
     
-        
+    var cancelOnDismiss = false
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        enableKeyboardMethods()
         if usernameField != nil { usernameField.becomeFirstResponder() }
         Mixpanel.mainInstance().track(event: "SignUpUsernameOpen")
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        IQKeyboardManager.shared.enable = true
+        disableKeyboardMethods()
+    }
+    
+    func enableKeyboardMethods() {
+        cancelOnDismiss = false
+        IQKeyboardManager.shared.enableAutoToolbar = false
+        IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+    
+    func disableKeyboardMethods() {
+        cancelOnDismiss = true
+        IQKeyboardManager.shared.enable = true
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .white
+        setUpViews()
+        setUpNavBar()
+    }
+    
+    func setUpNavBar(){
+        navigationController!.navigationBar.barTintColor = UIColor.white
+        navigationController!.navigationBar.isTranslucent = false
+        navigationController!.navigationBar.barStyle = .black
+        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.view.backgroundColor = .white
+        navigationController?.navigationBar.addWhiteBackground()
         
-        view.backgroundColor = UIColor(named: "SpotBlack")
-        navigationItem.title = "Create account"
+        let logo = UIImage(named: "OnboardingLogo")
+        let imageView = UIImageView(image:logo)
+        imageView.snp.makeConstraints{
+            $0.height.equalTo(32.9)
+            $0.width.equalTo(78)
+        }
+        self.navigationItem.titleView = imageView
 
-        let backArrow = UIImage(named: "BackArrow")?.withRenderingMode(.alwaysOriginal)
-        navigationController?.navigationBar.backIndicatorImage = backArrow
-        navigationController?.navigationBar.backIndicatorTransitionMaskImage = backArrow
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(named: "BackArrow-1"),
+            style: .plain,
+            target: self,
+            action: #selector(self.backTapped(_:))
+        )
+        navigationController?.navigationBar.addWhiteBackground()
+    }
+    
+    func setUpViews(){
+
+        let usernameLabel = UILabel {
+            $0.text = "Create your username"
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
+            view.addSubview($0)
+
+        }
+        usernameLabel.snp.makeConstraints{
+            $0.top.equalToSuperview().offset(114)
+            $0.centerX.equalToSuperview()
+        }
+        
+        
+        usernameField = UITextField {
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
+            $0.textAlignment = .center
+            $0.tintColor = UIColor(named: "SpotGreen")
+            $0.textColor = .black
+            var placeholderText = NSMutableAttributedString()
+            placeholderText = NSMutableAttributedString(string: "@sp0tb0t", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5),
+                    NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
+            ])
+            $0.attributedPlaceholder = placeholderText
+            $0.autocorrectionType = .no
+            $0.autocapitalizationType = .words
+            $0.delegate = self
+            $0.textContentType = .name
+            $0.addTarget(self, action: #selector(usernameChanged(_:)), for: .editingChanged)
+            view.addSubview($0)
+        }
+        usernameField.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.top.equalTo(usernameLabel.snp.bottom).offset(30)
+            $0.height.equalTo(40)
+        }
+        
+        let bottomLine = UIView {
+            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+            view.addSubview($0)
+        }
+        bottomLine.snp.makeConstraints{
+            $0.height.equalTo(1.5)
+            $0.width.equalTo(usernameField.snp.width)
+            $0.top.equalTo(usernameField.snp.bottom).offset(5)
+            $0.centerX.equalToSuperview()
+        }
+        
+        nextButton = UIButton {
+             $0.layer.cornerRadius = 9
+             $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+             let customButtonTitle = NSMutableAttributedString(string: "Next", attributes: [
+                 NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
+                 NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+             ])
+             $0.setAttributedTitle(customButtonTitle, for: .normal)
+             $0.setImage(nil, for: .normal)
+             $0.addTarget(self, action: #selector(nextTapped(_:)), for: .touchUpInside)
+             view.addSubview($0)
+        }
+        
+        nextButton.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.height.equalTo(49)
+            $0.bottom.equalToSuperview().offset(-30)
+        }
                 
-        let usernameLabel = UILabel(frame: CGRect(x: 50, y: 150, width: UIScreen.main.bounds.width - 100, height: 18))
-        usernameLabel.text = "Pick your username!"
-        usernameLabel.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        usernameLabel.font = UIFont(name: "SFCompactText-Regular", size: 15)
-        usernameLabel.textAlignment = .center
-        view.addSubview(usernameLabel)
+        statusLabel = UIButton{
+            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
+            $0.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.setTitleColor(UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14)
+            $0.contentVerticalAlignment = .center
+            $0.contentHorizontalAlignment = .center
+            $0.isHidden = false
+            view.addSubview($0)
+        }
+        statusLabel.snp.makeConstraints{
+            $0.top.equalTo(bottomLine.snp.bottom).offset(15)
+            $0.centerX.equalToSuperview()
+            $0.width.equalTo(200)
+            $0.height.equalTo(30)
+        }
         
-        usernameField = PaddedTextField(frame: CGRect(x: 60, y: usernameLabel.frame.maxY + 15, width: UIScreen.main.bounds.width - 120, height: 44))
-        usernameField.backgroundColor = nil
-        usernameField.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        usernameField.autocorrectionType = .no
-        usernameField.autocapitalizationType = .none
-        usernameField.delegate = self
-        usernameField.textAlignment = .center
-        usernameField.font = UIFont(name: "SFCompactText-Regular", size: 28)!
-        usernameField.addTarget(self, action: #selector(usernameChanged(_:)), for: .editingChanged)
-        view.addSubview(usernameField)
-        
-        statusIcon = UIImageView(frame: CGRect(x: usernameField.frame.maxX - 3, y: usernameField.frame.minY + 14, width: 20, height: 20))
-        statusIcon.image = UIImage()
-        view.addSubview(statusIcon)
-
-        let bottomLine = UIView(frame: CGRect(x: 27, y: usernameField.frame.maxY + 5, width: UIScreen.main.bounds.width - 54, height: 1.25))
-        bottomLine.layer.cornerRadius = 15
-        bottomLine.backgroundColor = .white
-        view.addSubview(bottomLine)
-        
-        nextButton = UIButton(frame: CGRect(x: (UIScreen.main.bounds.width - 217)/2, y: bottomLine.frame.maxY + 30, width: 217, height: 40))
-        nextButton.alpha = 0.65
-        nextButton.setImage(UIImage(named: "OnboardNextButton"), for: .normal)
-        nextButton.addTarget(self, action: #selector(nextTapped(_:)), for: .touchUpInside)
-        view.addSubview(nextButton)
-        
-        activityIndicator = CustomActivityIndicator(frame: CGRect(x: UIScreen.main.bounds.width/2 - 32, y: 98, width: 20, height: 20))
-        activityIndicator.isHidden = true
-        view.addSubview(activityIndicator)
-        
-        errorBox = UIView(frame: CGRect(x: 0, y: nextButton.frame.maxY + 30, width: UIScreen.main.bounds.width, height: 32))
-        errorBox.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
-        view.addSubview(errorBox)
-        errorBox.isHidden = true
-        
-        errorLabel = UILabel(frame: CGRect(x: 23, y: 7, width: UIScreen.main.bounds.width - 46, height: 18))
-        errorLabel.lineBreakMode = .byWordWrapping
-        errorLabel.numberOfLines = 0
-        errorLabel.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
-        errorLabel.textAlignment = .center
-        errorLabel.font = UIFont(name: "SFCompactText-Regular", size: 14)
-        errorLabel.text = "Invalid credentials, please try again."
-        errorBox.addSubview(errorLabel)
-        errorLabel.isHidden = true
+        activityIndicator = CustomActivityIndicator {
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+        activityIndicator.snp.makeConstraints{
+            $0.top.equalTo(bottomLine.snp.bottom).offset(15)
+            $0.centerX.equalToSuperview()
+            $0.width.height.equalTo(20)
+        }
     }
     
     func setAvailable() {
         activityIndicator.stopAnimating()
-        statusIcon.image = UIImage(named: "UsernameAvailable")
+        statusLabel.isHidden = false
+        statusLabel.setImage(UIImage(named: "usernameAvailable-1"), for: .normal)
+        statusLabel.setTitleColor(UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1), for: .normal)
+        statusLabel.setTitle("Available", for: .normal)
         nextButton.alpha = 1.0
+        nextButton.isUserInteractionEnabled = true
+
     }
     
     func setUnavailable() {
         activityIndicator.stopAnimating()
-        statusIcon.image = UIImage(named: "UsernameTaken")
+        statusLabel.isHidden = false
+        statusLabel.setImage(UIImage(named: "UsernameTaken-1"), for: .normal)
+        statusLabel.setTitleColor(UIColor(red: 1, green: 0.376, blue: 0.42, alpha: 1), for: .normal)
+        statusLabel.setTitle("Taken", for: .normal)
         nextButton.alpha = 0.65
+        nextButton.isUserInteractionEnabled = false
     }
     
     func setEmpty() {
         activityIndicator.stopAnimating()
-        statusIcon.image = UIImage()
+        statusLabel.isHidden = true
         nextButton.alpha = 0.65
+        nextButton.isUserInteractionEnabled = false
     }
+    
+    @objc func keyboardWillShow(_ notification: NSNotification) {
+        print("keyboard will show")
+        if cancelOnDismiss { return }
+        /// new spot name view editing when textview not first responder
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.nextButton.snp.removeConstraints()
+            self.nextButton.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(18)
+                $0.height.equalTo(49)
+                $0.bottom.equalToSuperview().offset(-keyboardFrame.height - 20)
+            }
+        }
+    }
+
+    @objc func keyboardWillHide(_ notification: NSNotification) {
+        /// new spot name view editing when textview not first responder
+        if cancelOnDismiss { return }
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.nextButton.snp.removeConstraints()
+            self.nextButton.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(18)
+                $0.height.equalTo(49)
+                $0.bottom.equalToSuperview().offset(-30)
+            }
+        }
+    }
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+
+      if textField.text == "" {
+        textField.text = "@"
+        }
+    }
+    
+    func textFieldDidChange(textField: UITextField){
+
+      guard let text = textField.text else { return }
+      
+        if text.contains("$") && text.count == 1 {
+          textField.text = ""
+        }
+      if !text.hasPrefix("@") {
+          print("does not have prefix")
+        textField.text = "@" + text
+      }
+    }
+    
     
     /// max username = 16 char
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         let currentText = textField.text ?? ""
         
-        guard let stringRange = Range(range, in: currentText) else { return false }
         
+        guard let stringRange = Range(range, in: currentText) else { return false }
         let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
-        return updatedText.count <= 16
+
+        
+        guard let text = textField.text else { return true }
+        
+        var remove = text.count
+        for x in text {
+            if x == "@"{
+                remove -= 1
+            }
+        }
+        
+        let currentCharacterCount = remove
+        let newLength = currentCharacterCount + string.count - range.length
+                
+        return newLength <= 16
     }
     
     @objc func usernameChanged(_ sender: UITextField) {
         
         setEmpty()
-
+        
+        guard let text = sender.text else { return }
+        
         var lowercaseUsername = sender.text?.lowercased() ?? ""
         lowercaseUsername = lowercaseUsername.trimmingCharacters(in: .whitespaces)
+        if(lowercaseUsername.count > 2){
+            lowercaseUsername.remove(at: lowercaseUsername.startIndex)
+        }
 
         usernameText = lowercaseUsername
-        if usernameText == "" { return }
+        
+        if text.contains("$") && text.count == 1 {
+            sender.text = ""
+          }
+        if !text.hasPrefix("@") {
+            print("does not have prefix")
+            sender.text = "@" + text
+        }
 
         NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.runUsernameQuery), object: nil)
         self.perform(#selector(self.runUsernameQuery), with: nil, afterDelay: 0.4)
@@ -186,8 +359,10 @@ class UsernameController: UIViewController, UITextFieldDelegate {
 
         guard var username = usernameField.text?.lowercased() else { return }
         username = username.trimmingCharacters(in: .whitespaces)
+        if(username.count > 2){
+            username.remove(at: username.startIndex)
+        }
 
-        sender.isEnabled = false
         activityIndicator.startAnimating()
         
         /// check username status again on completion
@@ -196,29 +371,20 @@ class UsernameController: UIViewController, UITextFieldDelegate {
             if errorMessage != "" {
                 
                 Mixpanel.mainInstance().track(event: "SignUpUsernameError", properties: ["error": errorMessage])
-                
-                self.errorBox.isHidden = false
-                self.errorLabel.isHidden = false
-                self.errorLabel.text = errorMessage
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-                    guard let self = self else { return }
-                    self.errorLabel.isHidden = true
-                    self.errorBox.isHidden = true
-                }
-                
+                                
             } else {
                 
                 self.newUser.username = username
-                
-                if let vc = self.storyboard?.instantiateViewController(withIdentifier: "PhoneVC") as? PhoneController {
-                    
-                    Mixpanel.mainInstance().track(event: "SignUpUsernameSuccess")
 
-                    vc.codeType = .newAccount
-                    vc.newUser = self.newUser
-                    self.navigationController?.pushViewController(vc, animated: true)
-                }
+                
+                let vc = PhoneController()
+                    
+                Mixpanel.mainInstance().track(event: "SignUpUsernameSuccess")
+
+                vc.codeType = .newAccount
+                vc.newUser = self.newUser
+                self.navigationController?.pushViewController(vc, animated: true)
+                
             }
             
             sender.isEnabled = true
@@ -226,5 +392,6 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         }
     }
 }
+    
 
 
