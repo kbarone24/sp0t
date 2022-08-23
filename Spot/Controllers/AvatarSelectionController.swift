@@ -54,6 +54,7 @@ class AvatarSelectionController: UIViewController {
                 self.centerCell?.transformToLarge()
             }
         }
+        
         let layoutMargins: CGFloat = self.collectionView.layoutMargins.left + self.collectionView.layoutMargins.left
         let sideInset = (self.view.frame.width / 2) - layoutMargins
         self.collectionView.contentInset = UIEdgeInsets(top: 0, left: sideInset, bottom: 0, right: sideInset)

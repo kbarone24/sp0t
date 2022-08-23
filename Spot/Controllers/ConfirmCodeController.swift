@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 import Mixpanel
+import IQKeyboardManagerSwift
 
 class ConfirmCodeController: UIViewController {
     
@@ -27,55 +28,143 @@ class ConfirmCodeController: UIViewController {
     var errorBox: UIView!
     var errorLabel: UILabel!
     
+    var cancelOnDismiss = false
+
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
+        enableKeyboardMethods()
         if codeField != nil { codeField.becomeFirstResponder() }
         Mixpanel.mainInstance().track(event: "ConfirmCodeOpen")
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        IQKeyboardManager.shared.enable = true
+        disableKeyboardMethods()
+    }
+    
+    func enableKeyboardMethods() {
+        cancelOnDismiss = false
+        IQKeyboardManager.shared.enableAutoToolbar = false
+        IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+    
+    func disableKeyboardMethods() {
+        cancelOnDismiss = true
+        IQKeyboardManager.shared.enable = true
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
     
     override func viewDidLoad() {
-        
         super.viewDidLoad()
+        setUpViews()
+        setUpNavBar()
+    }
+    
+    func setUpNavBar(){
+        navigationController!.navigationBar.barTintColor = UIColor.white
+        navigationController!.navigationBar.isTranslucent = false
+        navigationController!.navigationBar.barStyle = .black
+        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.view.backgroundColor = .white
+        navigationController?.navigationBar.addWhiteBackground()
         
-        view.backgroundColor = UIColor(named: "SpotBlack")
-        navigationItem.title = codeType == .newAccount ? "Create account" : "Log in"
+        let logo = UIImage(named: "OnboardingLogo")
+        let imageView = UIImageView(image:logo)
+        //imageView.contentMode = .scaleToFill
+        imageView.snp.makeConstraints{
+            $0.height.equalTo(32.9)
+            $0.width.equalTo(78)
 
-        let backArrow = UIImage(named: "BackArrow")?.withRenderingMode(.alwaysOriginal)
-        navigationController?.navigationBar.backIndicatorImage = backArrow
-        navigationController?.navigationBar.backIndicatorTransitionMaskImage = backArrow
+        }
+        self.navigationItem.titleView = imageView
+
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(named: "BackArrow-1"),
+            style: .plain,
+            target: self,
+            action: #selector(backTapped(_:))
+        )
+    }
+    func setUpViews(){
+        view.backgroundColor = .white
         
-        label = UILabel(frame: CGRect(x: 10, y: 134, width: UIScreen.main.bounds.width - 20, height: 18))
-        label.text = "Enter your code:"
-        label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Regular", size: 15)
-        label.textAlignment = .center
-        view.addSubview(label)
+        let labelText = "Verify your phone number"
+        let minX: CGFloat = codeType == .multifactor ? 27 : 10
         
-        codeField = PaddedTextField(frame: CGRect(x: 27, y: label.frame.maxY + 31, width: UIScreen.main.bounds.width - 54, height: 60))
-        codeField.backgroundColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        codeField.font = UIFont(name: "SFCompactText-Semibold", size: 28)
-        codeField.textAlignment = .center
-        codeField.tintColor = UIColor(named: "SpotGreen")
-        codeField.textColor = .black
-        codeField.layer.cornerRadius = 15
-        codeField.layer.borderWidth = 1
-        codeField.layer.borderColor = UIColor(red: 0.158, green: 0.158, blue: 0.158, alpha: 1).cgColor
-        codeField.textContentType = .oneTimeCode
-        codeField.keyboardType = .numberPad
-        codeField.addTarget(self, action: #selector(codeChanged(_:)), for: .editingChanged)
-        view.addSubview(codeField)
+        label = UILabel {
+            $0.text = labelText
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
+            view.addSubview($0)
+        }
+        label.snp.makeConstraints{
+            $0.top.equalToSuperview().offset(114)
+            $0.centerX.equalToSuperview()
+        }
         
-        confirmButton = UIButton(frame: CGRect(x: (UIScreen.main.bounds.width - 217)/2, y: codeField.frame.maxY + 32, width: 217, height: 40))
-        confirmButton.alpha = 0.65
-        confirmButton.setImage(UIImage(named: "ConfirmButton"), for: .normal)
-        confirmButton.addTarget(self, action: #selector(confirmTapped(_:)), for: .touchUpInside)
-        view.addSubview(confirmButton)
+        codeField = PaddedTextField {
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
+            $0.textAlignment = .center
+            $0.tintColor = UIColor(named: "SpotGreen")
+            $0.textColor = .black
+            var placeholderText = NSMutableAttributedString()
+            placeholderText = NSMutableAttributedString(string: "00000", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5),
+                    NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
+            ])
+            $0.attributedPlaceholder = placeholderText
+            $0.addTarget(self, action: #selector(codeChanged(_:)), for: .editingChanged)
+            view.addSubview($0)
+        }
+        codeField.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.top.equalTo(label.snp.bottom).offset(30)
+            $0.height.equalTo(40)
+        }
         
-        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 165, width: UIScreen.main.bounds.width, height: 30))
-        activityIndicator.isHidden = true
-        view.addSubview(activityIndicator)
+        let bottomLine = UIView {
+            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+            view.addSubview($0)
+        }
+        bottomLine.snp.makeConstraints{
+            $0.height.equalTo(1.5)
+            $0.width.equalTo(codeField.snp.width)
+            $0.top.equalTo(codeField.snp.bottom).offset(5)
+            $0.centerX.equalToSuperview()
+        }
+        
+        confirmButton = UIButton {
+             $0.layer.cornerRadius = 9
+             $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+             let customButtonTitle = NSMutableAttributedString(string: "Send code", attributes: [
+                 NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
+                 NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+             ])
+             $0.setAttributedTitle(customButtonTitle, for: .normal)
+             $0.setImage(nil, for: .normal)
+             $0.addTarget(self, action: #selector(confirmTapped(_:)), for: .touchUpInside)
+             view.addSubview($0)
+        }
+        confirmButton.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.height.equalTo(49)
+            $0.bottom.equalToSuperview().offset(-30)
+        }
+                
+        activityIndicator = CustomActivityIndicator {
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+        activityIndicator.snp.makeConstraints{
+            $0.top.equalTo(bottomLine.snp.bottom).offset(15)
+            $0.centerX.equalToSuperview()
+            $0.width.height.equalTo(20)
+        }
 
         errorBox = UIView(frame: CGRect(x: 0, y: UIScreen.main.bounds.height - 250, width: UIScreen.main.bounds.width, height: 32))
         errorBox.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
@@ -93,8 +182,39 @@ class ConfirmCodeController: UIViewController {
         errorBox.addSubview(errorLabel)
     }
     
+    @objc func backTapped(_ sender: UIButton) {
+        self.dismiss(animated: false, completion: nil)
+    }
+    
     @objc func codeChanged(_ sender: UITextField) {
         confirmButton.alpha = sender.text?.count ?? 0 != 6 ? 0.65 : 1.0
+    }
+    
+    @objc func keyboardWillShow(_ notification: NSNotification) {
+        print("keyboard will show")
+        if cancelOnDismiss { return }
+        /// new spot name view editing when textview not first responder
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.confirmButton.snp.removeConstraints()
+            self.confirmButton.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(18)
+                $0.height.equalTo(49)
+                $0.bottom.equalToSuperview().offset(-keyboardFrame.height - 20)
+            }
+        }
+    }
+
+    @objc func keyboardWillHide(_ notification: NSNotification) {
+        /// new spot name view editing when textview not first responder
+        if cancelOnDismiss { return }
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.confirmButton.snp.removeConstraints()
+            self.confirmButton.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(18)
+                $0.height.equalTo(49)
+                $0.bottom.equalToSuperview().offset(-30)
+            }
+        }
     }
     
     @objc func confirmTapped(_ sender: UIButton) {
@@ -120,37 +240,24 @@ class ConfirmCodeController: UIViewController {
             
             if err == nil && authResult != nil {
                 
-                
-                
                 if self.codeType == .logIn {
                     self.animateToMap()
                     return
                 } else if self.codeType == .newAccount {
-                    print("yo?")
                     let avi = AvatarSelectionController(sentFrom: "create")
                     self.navigationController!.pushViewController(avi, animated: true)
                 }
                 
                 let user = authResult!.user
-                let emailCredential = EmailAuthProvider.credential(withEmail: self.newUser.email, password: self.newUser.password)
-                user.link(with: emailCredential) { (emailResult, err) in
-                    
-                    if err == nil && emailResult != nil {
-                        self.activityIndicator.stopAnimating()
-                        self.saveUserToFirebase()
-                        self.presentSearchOverview()
+
+                sender.isUserInteractionEnabled = true
+                self.showError(message: err?.localizedDescription ?? "")
                         
-                    } else {
-                        sender.isUserInteractionEnabled = true
-                        self.showError(message: err?.localizedDescription ?? "")
+                Mixpanel.mainInstance().track(event: "ConfirmCodeInvalidAuth", properties: ["error": err?.localizedDescription ?? ""])
                         
-                        Mixpanel.mainInstance().track(event: "ConfirmCodeInvalidAuth", properties: ["error": err?.localizedDescription ?? ""])
-                        
-                        /// unlink phone number verification so that user doesnt' have half an acount created and can try again with this phone number
-                        Auth.auth().currentUser?.unlink(fromProvider: user.providerID, completion: nil)
-                    }
-                }
-                
+                /// unlink phone number verification so that user doesnt' have half an acount created and can try again with this phone number
+                Auth.auth().currentUser?.unlink(fromProvider: user.providerID, completion: nil)
+            
             } else {
                 Mixpanel.mainInstance().track(event: "ConfirmCodeInvalidCode")
                 sender.isUserInteractionEnabled = true
@@ -216,7 +323,6 @@ class ConfirmCodeController: UIViewController {
         let usernameKeywords = newUser.username.getKeywordArray()
         
         let values = ["name" : newUser.name,
-                      "email" : newUser.email,
                       "username" : newUser.username,
                       "phone" : newUser.phone,
                       "userBio" : "",

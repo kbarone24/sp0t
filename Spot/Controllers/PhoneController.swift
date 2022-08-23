@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 import Mixpanel
+import IQKeyboardManagerSwift
 
 enum CodeType {
     case newAccount
@@ -34,80 +35,141 @@ class PhoneController: UIViewController {
     var errorLabel: UILabel!
     var codeType: CodeType!
     
+    var cancelOnDismiss = false
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "PhoneOpen")
+        enableKeyboardMethods()
         if phoneField != nil { phoneField.becomeFirstResponder() }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        IQKeyboardManager.shared.enable = true
+        disableKeyboardMethods()
     }
     
     
     override func viewDidLoad() {
-        
         super.viewDidLoad()
+        setUpViews()
+        setUpNavBar()
+    }
+    
+    func enableKeyboardMethods() {
+        cancelOnDismiss = false
+        IQKeyboardManager.shared.enableAutoToolbar = false
+        IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+    
+    func disableKeyboardMethods() {
+        cancelOnDismiss = true
+        IQKeyboardManager.shared.enable = true
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+    
+    func setUpNavBar(){
+        navigationController!.navigationBar.barTintColor = UIColor.white
+        navigationController!.navigationBar.isTranslucent = false
+        navigationController!.navigationBar.barStyle = .black
+        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.view.backgroundColor = .white
+        navigationController?.navigationBar.addWhiteBackground()
         
-        view.backgroundColor = UIColor(named: "SpotBlack")
-        navigationItem.title = codeType == .newAccount ? "Create account" : "Log in"
+        let logo = UIImage(named: "OnboardingLogo")
+        let imageView = UIImageView(image:logo)
+        //imageView.contentMode = .scaleToFill
+        imageView.snp.makeConstraints{
+            $0.height.equalTo(32.9)
+            $0.width.equalTo(78)
 
-        let backArrow = UIImage(named: "BackArrow")?.withRenderingMode(.alwaysOriginal)
-        
-        /// log in isnt stacked on anything - presented directly form landing page
-        if navigationController?.viewControllers.count ?? 0 == 1 {
-            
-            navigationController?.navigationBar.setBackgroundImage(UIImage(color: UIColor(named: "SpotBlack")!), for: .default)
-            let action = !root ? #selector(backTapped(_:)) : #selector(rootBackTapped(_:))
-            navigationItem.leftBarButtonItem = UIBarButtonItem(image: backArrow, style: .plain, target: self, action: action)
-
-        } else {
-            navigationController?.navigationBar.backIndicatorImage = backArrow
-            navigationController?.navigationBar.backIndicatorTransitionMaskImage = backArrow
         }
+        self.navigationItem.titleView = imageView
+
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(named: "BackArrow-1"),
+            style: .plain,
+            target: self,
+            action: #selector(backTapped(_:))
+        )
+    }
+    
+    func setUpViews(){
+        view.backgroundColor = .white
 
         country = CountryCode(id: 224, code: "+1", name: "United States")
         
-        let labelText = codeType == .newAccount ? "Almost done! \n We need your phone # to verify your account" : codeType == .multifactor ? "Verify your phone number:" : ""
-        let minX: CGFloat = codeType == .multifactor ? 27 : 10
+        let labelText = "Verify your phone number"
         
-        label = UILabel(frame: CGRect(x: minX, y: 120, width: UIScreen.main.bounds.width - 20, height: 36))
-        label.text = labelText
-        label.textColor = UIColor(red: 0.608, green: 0.608, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Regular", size: 15)
-        label.textAlignment = codeType == .newAccount ? .center : .left
-        label.numberOfLines = 0
-        label.lineBreakMode = .byWordWrapping
-        view.addSubview(label)
-        
-        phoneField = UITextField(frame: CGRect(x: 27, y: label.frame.maxY + 22, width: UIScreen.main.bounds.width - 54, height: 60))
-        phoneField.backgroundColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
-        phoneField.font = UIFont(name: "SFCompactText-Semibold", size: 28)
-        phoneField.textAlignment = .left
-        phoneField.tintColor = UIColor(named: "SpotGreen")
-        phoneField.textColor = .black
-        phoneField.layer.cornerRadius = 15
-        phoneField.layer.borderWidth = 1
-        phoneField.layer.borderColor = UIColor(red: 0.158, green: 0.158, blue: 0.158, alpha: 1).cgColor
-        phoneField.textContentType = .telephoneNumber
-        phoneField.keyboardType = .numberPad
-        phoneField.addTarget(self, action: #selector(phoneNumberChanged(_:)), for: .editingChanged)
-        view.addSubview(phoneField)
-        
-        /// country code overlaps with left portion of phoneField
-        countryCodeView = CountryCodeView(frame: CGRect(x: phoneField.frame.minX + 10, y: phoneField.frame.minY + 8, width: 130, height: 40))
-        countryCodeView.setUp(country: country)
-        let tap = UITapGestureRecognizer(target: self, action: #selector(openCountryPicker(_:)))
-        countryCodeView.addGestureRecognizer(tap)
-        countryCodeView.frame = CGRect(x: countryCodeView.frame.minX, y: countryCodeView.frame.minY, width: countryCodeView.separatorLine.frame.maxX + 10, height: countryCodeView.frame.height)
-        view.addSubview(countryCodeView)
-                
-        paddingView = UIView(frame: CGRect(x: 0, y: 0, width: countryCodeView.bounds.width + 10, height: phoneField.frame.height))
-        phoneField.leftView = paddingView
-        phoneField.leftViewMode = UITextField.ViewMode.always
+        label = UILabel {
+            $0.text = labelText
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
+            view.addSubview($0)
 
-        sendButton = UIButton(frame: CGRect(x: (UIScreen.main.bounds.width - 217)/2, y: phoneField.frame.maxY + 32, width: 217, height: 40))
-        sendButton.alpha = 0.65
-        sendButton.setImage(UIImage(named: "SendCodeButton"), for: .normal)
-        sendButton.addTarget(self, action: #selector(sendCode(_:)), for: .touchUpInside)
-        view.addSubview(sendButton)
-                
+        }
+        label.snp.makeConstraints{
+            $0.top.equalToSuperview().offset(114)
+            $0.centerX.equalToSuperview()
+        }
+        
+        phoneField = UITextField {
+            //$0.backgroundColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
+            $0.textAlignment = .center
+            $0.tintColor = UIColor(named: "SpotGreen")
+            $0.textColor = .black
+            var placeholderText = NSMutableAttributedString()
+            placeholderText = NSMutableAttributedString(string: "000-000-0000", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5),
+                    NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
+            ])
+            $0.attributedPlaceholder = placeholderText
+            $0.keyboardType = .numberPad
+            $0.addTarget(self, action: #selector(phoneNumberChanged(_:)), for: .editingChanged)
+            view.addSubview($0)
+        }
+        phoneField.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.top.equalTo(label.snp.bottom).offset(30)
+            $0.height.equalTo(40)
+        }
+        
+        let bottomLine = UIView {
+            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+            view.addSubview($0)
+        }
+        bottomLine.snp.makeConstraints{
+            $0.height.equalTo(1.5)
+            $0.width.equalTo(phoneField.snp.width)
+            $0.top.equalTo(phoneField.snp.bottom).offset(5)
+            $0.centerX.equalToSuperview()
+        }
+        
+        
+        sendButton = UIButton {
+             $0.layer.cornerRadius = 9
+             $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+             let customButtonTitle = NSMutableAttributedString(string: "Send code", attributes: [
+                 NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
+                 NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+             ])
+             $0.setAttributedTitle(customButtonTitle, for: .normal)
+             $0.setImage(nil, for: .normal)
+             $0.addTarget(self, action: #selector(sendCode(_:)), for: .touchUpInside)
+             view.addSubview($0)
+        }
+        sendButton.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.height.equalTo(49)
+            $0.bottom.equalToSuperview().offset(-30)
+        }
+        
+
         errorBox = UIView(frame: CGRect(x: 0, y: sendButton.frame.maxY + 30, width: UIScreen.main.bounds.width, height: 32))
         errorBox.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
         errorBox.isHidden = true
@@ -123,9 +185,44 @@ class PhoneController: UIViewController {
         errorLabel.isHidden = true
         errorBox.addSubview(errorLabel)
         
-        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 165, width: UIScreen.main.bounds.width, height: 30))
-        activityIndicator.isHidden = true
-        view.addSubview(activityIndicator)
+        activityIndicator = CustomActivityIndicator {
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+
+        activityIndicator.snp.makeConstraints{
+            $0.top.equalTo(bottomLine.snp.bottom).offset(15)
+            $0.centerX.equalToSuperview()
+            $0.width.height.equalTo(20)
+        }
+        
+    }
+    
+    @objc func keyboardWillShow(_ notification: NSNotification) {
+        print("keyboard will show")
+        if cancelOnDismiss { return }
+        /// new spot name view editing when textview not first responder
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.sendButton.snp.removeConstraints()
+            self.sendButton.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(18)
+                $0.height.equalTo(49)
+                $0.bottom.equalToSuperview().offset(-keyboardFrame.height - 20)
+            }
+        }
+    }
+
+    @objc func keyboardWillHide(_ notification: NSNotification) {
+        /// new spot name view editing when textview not first responder
+        if cancelOnDismiss { return }
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.sendButton.snp.removeConstraints()
+            self.sendButton.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(18)
+                $0.height.equalTo(49)
+                $0.bottom.equalToSuperview().offset(-30)
+            }
+        }
     }
     
     @objc func openCountryPicker(_ sender: UITapGestureRecognizer) {
@@ -136,7 +233,7 @@ class PhoneController: UIViewController {
     }
     
     @objc func backTapped(_ sender: UIButton) {
-        self.dismiss(animated: false, completion: nil)
+        self.dismiss(animated: true)
     }
 
     @objc func rootBackTapped(_ sender: UIButton) {
@@ -262,6 +359,8 @@ class PhoneController: UIViewController {
     
     @objc func phoneNumberChanged(_ sender: UITextField) {
         sendButton.alpha = sender.text?.count ?? 0 < 10 ? 0.65 : 1.0
+        sendButton.isUserInteractionEnabled = sender.text?.count ?? 0 < 10 ? false : true
+
     }
     
     func resetCountry(country: CountryCode) {
@@ -311,4 +410,28 @@ class CountryCodeView: UIView {
         separatorLine.backgroundColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0)
         addSubview(separatorLine)
     }
+}
+
+extension UITextField {
+  func useUnderline() -> Void {
+    let border = CALayer()
+    let borderWidth = CGFloat(2.0) // Border Width
+    border.borderColor = UIColor.black.cgColor
+    border.frame = CGRect(origin: CGPoint(x: 0,y :self.frame.size.height - borderWidth), size: CGSize(width: self.frame.size.width, height: self.frame.size.height))
+    border.borderWidth = borderWidth
+    self.layer.addSublayer(border)
+    self.layer.masksToBounds = true
+  }
+    
+}
+
+extension UITextField {
+    public func addBottomBorder(color: UIColor = UIColor.black, marginToUp: CGFloat = 1.00, height: CGFloat = 1.00){
+        let bottomLine = CALayer()
+        bottomLine.frame = CGRect(x: 0, y: self.frame.size.height - marginToUp, width: self.frame.size.width, height: height)
+        bottomLine.backgroundColor = color.cgColor
+        borderStyle = .none
+        layer.addSublayer(bottomLine)
+    }
+    
 }
