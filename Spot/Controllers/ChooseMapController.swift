@@ -692,8 +692,3 @@ class PostButton: UIButton {
         fatalError("init(coder:) has not been implemented")
     }
 }
-
-class FailedUploadView {
-    
-}
-

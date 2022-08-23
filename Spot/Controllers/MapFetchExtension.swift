@@ -50,7 +50,7 @@ extension MapController {
         DispatchQueue.main.async {
             self.mapsCollection.reloadData()
             self.mapsCollection.selectItem(at: IndexPath(item: self.selectedItemIndex, section: 0), animated: false, scrollPosition: .left)
-            if resort && !newPost { self.centerMapOnPosts(animated: true) }
+            if resort && !newPost { self.centerMapOnMapPosts(animated: true) }
             self.setNewPostsButtonCount()
         }
     }
@@ -459,7 +459,6 @@ extension MapController: MapControllerDelegate {
     
     
     func loadAdditionalOnboarding() {
-        print("ct", UserDataModel.shared.userInfo.friendIDs.count)
         if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
             let avc = AvatarSelectionController(sentFrom: "map")
             self.navigationController!.pushViewController(avc, animated: true)
