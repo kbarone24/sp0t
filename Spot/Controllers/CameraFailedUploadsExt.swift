@@ -121,8 +121,7 @@ extension AVCameraController {
                     
                     post.imageURLs = imageURLs
                     post.timestamp = Firebase.Timestamp(date: Date())
-                    
-                    self.uploadPost(post: post)
+                    self.uploadPost(post: post, map: map)
 
                     if spot.id != "" {
                         spot.imageURL = imageURLs.first ?? ""
@@ -147,6 +146,7 @@ extension AVCameraController {
                         map.posterUsernames.append(UserDataModel.shared.userInfo.username)
                         for poster in posters {
                             if !map.memberIDs.contains(poster) { map.memberIDs.append(poster) }
+                            if !map.likers.contains(poster) { map.likers.append(poster) }
                         }
                     }
                     

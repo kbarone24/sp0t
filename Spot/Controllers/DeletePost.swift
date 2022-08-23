@@ -18,7 +18,7 @@ extension PostController {
         var spotDelete = false
         var mapDelete = false
         var spotRemove = false
-        checkForSpotDelete(spotID: post.spotID ?? "") { delete in
+        checkForSpotDelete(spotID: post.spotID ?? "", postID: post.id!) { delete in
             spotDelete = delete
             leaveCount += 1
             if leaveCount == 3 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove) }
@@ -46,7 +46,7 @@ extension PostController {
     
     func runDeletes(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
         self.deleteIndicator.removeFromSuperview()
-        self.deletePostLocally()
+        self.deletePostLocally(index: selectedPostIndex)
         self.sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: mapDelete, spotDelete: spotDelete, spotRemove: spotRemove)
         self.deletePostFunctions(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove)
     }
@@ -60,10 +60,10 @@ extension PostController {
         }
     }
     
-    func checkForSpotDelete(spotID: String, completion: @escaping(_ delete: Bool) -> Void) {
+    func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void) {
         if spotID == "" { completion(false); return }
-        db.collection("spots").whereField("spotID", isEqualTo: spotID).getDocuments { snap, err in
-            let spotDelete = snap?.documents.count ?? 0 == 1
+        db.collection("posts").whereField("spotID", isEqualTo: spotID).getDocuments { snap, err in
+            let spotDelete = snap?.documents.count ?? 0 == 1 && snap?.documents.first?.documentID ?? "" == postID
             completion(spotDelete)
             return
         }
@@ -71,21 +71,23 @@ extension PostController {
     
     func checkForSpotRemove(spotID: String, mapID: String, postID: String, completion: @escaping(_ remove: Bool) -> Void) {
         if spotID == "" || mapID == "" { completion(false); return }
-        db.collection("posts").whereField("mapID", isEqualTo: mapID).whereField("spotID", isEqualTo: spotID).whereField("postID", isNotEqualTo: postID).limit(to: 1).getDocuments { snap, err in
-            completion(snap?.documents.count ?? 0 == 0)
+        db.collection("posts").whereField("mapID", isEqualTo: mapID).whereField("spotID", isEqualTo: spotID).getDocuments { snap, err in
+            completion(snap?.documents.count ?? 0 <= 1)
         }
     }
     
-    func deletePostLocally() {
+    func deletePostLocally(index: Int) {
         if postsList.count > 1 {
+            /// check for if == selectedPostIndex
             postsCollection.performBatchUpdates {
-                self.postsList.remove(at: selectedPostIndex)
-                self.postsCollection.deleteItems(at: [IndexPath(item: self.selectedPostIndex, section: 0)])
+                self.postsList.remove(at: index)
+                self.postsCollection.deleteItems(at: [IndexPath(item: index, section: 0)])
                 if self.selectedPostIndex >= postsList.count { self.selectedPostIndex = postsList.count - 1 }
             } completion: { _ in
                 self.postsCollection.reloadData()
             }
         } else {
+            print("exit posts")
             exitPosts()
         }
     }

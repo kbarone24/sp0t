@@ -13,10 +13,6 @@ enum MapType {
     case customMap
 }
 
-protocol CustomMapDelegate {
-    func finishPassing(updatedMap: CustomMap?)
-}
-
 
 class CustomMapController: UIViewController {
     private var topYContentOffset: CGFloat?
@@ -32,11 +28,14 @@ class CustomMapController: UIViewController {
     private var barView: UIView!
     private var titleLabel: UILabel!
     private var barBackButton: UIButton!
+  //  private var addButton: UIButton!
+    private var drawerViewIsDragging = false
     
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
             if collectionView != nil { DispatchQueue.main.async {self.collectionView.reloadData()}}
+          //  if addButton != nil { addButton.isHidden = !(mapData?.memberIDs.contains(uid) ?? false) }
         }
     }
     private var firstMaxFourMapMemberList: [UserProfile] = []
@@ -45,25 +44,25 @@ class CustomMapController: UIViewController {
     public unowned var containerDrawerView: DrawerView? {
         didSet {
             configureDrawerView()
+            if !ranSetUp { runInitialFetches() }
         }
     }
     
-//    public unowned var profileVC: ProfileViewController?
-    public var delegate: CustomMapDelegate?
     private unowned var mapController: MapController?
     private lazy var imageManager = SDWebImageManager()
     
     private var mapType: MapType!
     var centeredMap = false
     var fullScreenOnDismissal = false
+    var ranSetUp = false
     
     init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], presentedDrawerView: DrawerView?, mapType: MapType) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile
         self.mapData = mapData
         self.postsList = postsList
-        self.containerDrawerView = presentedDrawerView
         self.mapType = mapType
+        self.containerDrawerView = presentedDrawerView
     }
     
     required init?(coder: NSCoder) {
@@ -79,11 +78,40 @@ class CustomMapController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
         if let mapNav = window as? UINavigationController {
             guard let mapVC = mapNav.viewControllers[0] as? MapController else { return }
             mapController = mapVC
         }
+        if !ranSetUp && containerDrawerView != nil { runInitialFetches() }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setUpNavBar()
+        configureDrawerView()
+        if barView != nil { barView.isHidden = false }
+
+        mapController?.mapView.delegate = self
+        mapController?.mapView.spotMapDelegate = self
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        Mixpanel.mainInstance().track(event: "CustomMapOpen")
+        DispatchQueue.main.async { self.addInitialAnnotations(posts: self.postsList) }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        mapController?.mapView.removeAllAnnos()
+        barView.isHidden = true
+    }
+}
+
+extension CustomMapController {
+    private func runInitialFetches() {
+        ranSetUp = true
         addInitialPosts()
 
         switch mapType {
@@ -99,28 +127,6 @@ class CustomMapController: UIViewController {
         }
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        setUpNavBar()
-        configureDrawerView()
-        if barView != nil { barView.isHidden = false }
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        Mixpanel.mainInstance().track(event: "CustomMapOpen")
-        mapController?.mapView.delegate = self
-        DispatchQueue.main.async { self.addInitialAnnotations(posts: self.postsList) }
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        mapController?.mapView.removeAllAnnos()
-        barView.isHidden = true
-       // mapController?.mapView.delegate = nil
-    }
-}
-
-extension CustomMapController {
     private func addInitialPosts() {
         if !(mapData?.postGroup.isEmpty ?? true) {
             postsList = mapData!.postsDictionary.map{$0.value}.sorted(by: {$0.timestamp.seconds > $1.timestamp.seconds})
@@ -159,13 +165,16 @@ extension CustomMapController {
         if containerDrawerView == nil { return }
         containerDrawerView?.canInteract = true
         containerDrawerView?.swipeDownToDismiss = false
-        
+        containerDrawerView?.showCloseButton = false
         let position: DrawerViewDetent = fullScreenOnDismissal ? .Top : .Middle
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: position) }
+        if position.rawValue != containerDrawerView?.status.rawValue {
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: position) }
+        }
         fullScreenOnDismissal = false
     }
     
     private func viewSetup() {
+        if containerDrawerView == nil { return }
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
@@ -197,7 +206,7 @@ extension CustomMapController {
         collectionView.isScrollEnabled = false
         
         floatBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
+            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
             $0.backgroundColor = .white
             $0.setTitle("", for: .normal)
             $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
@@ -225,7 +234,7 @@ extension CustomMapController {
             barView.addSubview($0)
         }
         barBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
+            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
             $0.setTitle("", for: .normal)
             $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
             $0.isHidden = true
@@ -235,6 +244,18 @@ extension CustomMapController {
             $0.leading.equalToSuperview().offset(22)
             $0.centerY.equalTo(titleLabel)
         }
+        
+      /*  addButton = AddButton {
+            $0.addTarget(self, action: #selector(addAction), for: .touchUpInside)
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+        addButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(24)
+            $0.bottom.equalToSuperview().inset(35)
+            $0.width.height.equalTo(73)
+        } */
+
         containerDrawerView?.slideView.addSubview(barView)
     }
     
@@ -291,8 +312,8 @@ extension CustomMapController {
                                 DispatchQueue.main.async {
                                     self.postsList.append(post)
                                     self.mapData!.postsDictionary.updateValue(post, forKey: post.id!)
-                                    let newGroup = self.mapData!.updateGroup(post: post)
-                                    if self.mapType == .friendsMap { self.addAnnotation(post: post) } else { self.addAnnotation(group: newGroup) }
+                                    let groupData = self.mapData!.updateGroup(post: post)
+                                    if self.mapType == .friendsMap { self.addAnnotation(post: post) } else { self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup) }
                                 }
                             }
                             postGroup.leave()
@@ -318,8 +339,19 @@ extension CustomMapController {
         }
     }
     
-    func addAnnotation(group: MapPostGroup?) {
-        if group != nil { mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!) }
+    func addAnnotation(group: MapPostGroup?, newGroup: Bool) {
+        if group != nil {
+            if newGroup {
+                /// add new group
+                mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
+            } else {
+                /// update existing group
+                if let anno = mapController?.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: group!.coordinate)}) {
+                    mapController?.mapView.removeAnnotation(anno)
+                    mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
+                }
+            }
+        }
     }
         
     func addInitialAnnotations(posts: [MapPost]) {
@@ -342,10 +374,12 @@ extension CustomMapController {
     }
     @objc func DrawerViewToMiddleCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerHalf")
+        collectionView.isScrollEnabled = false
         barBackButton.isHidden = true
     }
     @objc func DrawerViewToBottomCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerClose")
+        collectionView.isScrollEnabled = false
         barBackButton.isHidden = true
     }
     
@@ -370,14 +404,23 @@ extension CustomMapController {
     
     @objc func backButtonAction() {
         barBackButton.isHidden = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Change `2.0` to the desired number of seconds.
-            if self.navigationController?.viewControllers.count == 1 {
-                self.containerDrawerView?.closeAction()
-            } else {
-                self.navigationController?.popViewController(animated: true)
+        DispatchQueue.main.async {
+            if self.navigationController?.viewControllers.count == 1 { self.mapController?.offsetCustomMapCenter() }
+            self.containerDrawerView?.closeAction()
+        }
+    }
+    
+    @objc func addAction() {
+        if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
+        DispatchQueue.main.async {
+            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
+                vc.mapObject = self.mapData
+                self.barView.isHidden = true
+                let transition = AddButtonTransition()
+                self.navigationController?.view.layer.add(transition, forKey: kCATransition)
+                self.navigationController?.pushViewController(vc, animated: false)
             }
         }
-        delegate?.finishPassing(updatedMap: mapData)
     }
     
     @objc func editMapAction() {
@@ -404,7 +447,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
             headerCell.cellSetup(mapData: mapData, fourMapMemberProfile: firstMaxFourMapMemberList)
-            if mapData!.memberIDs.contains(UserDataModel.shared.userInfo.id!) {
+            if mapData!.memberIDs.contains(UserDataModel.shared.uid) {
                 headerCell.actionButton.addTarget(self, action: #selector(editMapAction), for: .touchUpInside)
             }
             return headerCell
@@ -435,7 +478,8 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 0 { return }
-        openPost(posts: Array(postsList.suffix(from: indexPath.item)))
+    //    openPost(posts: Array(postsList.suffix(from: indexPath.item)))
+        openPost(posts: [postsList[indexPath.row]])
     }
     
     func openPost(posts: [MapPost]) {
@@ -444,6 +488,14 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         postVC.postsList = posts
         postVC.containerDrawerView = containerDrawerView
         DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
+    }
+    
+    func openSpot(spotID: String, spotName: String) {
+        var emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp(date: Date()))
+        emptyPost.spotID = spotID
+        emptyPost.spotName = spotName
+        let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: containerDrawerView)
+        navigationController?.pushViewController(spotVC, animated: true)
     }
 }
 
@@ -491,9 +543,42 @@ extension CustomMapController: UIScrollViewDelegate {
         
         // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
         if containerDrawerView?.status != .Top {
-            //  customMapCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
             collectionView.isScrollEnabled = false
             containerDrawerView?.swipeToNextState = true
+        }
+    }
+}
+
+extension CustomMapController: SpotMapViewDelegate {
+    func openPostFromSpotPost(view: SpotPostAnnotationView) {
+        var posts: [MapPost] = []
+        for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
+        DispatchQueue.main.async { self.openPost(posts: posts) }
+    }
+    
+    func openSpotFromSpotPost(view: SpotPostAnnotationView) {
+        openSpot(spotID: view.id, spotName: view.spotName)
+    }
+    
+    func openSpotFromSpotName(view: SpotNameAnnotationView) {
+        openSpot(spotID: view.id, spotName: view.spotName)
+    }
+    
+    func openPostFromFriendsPost(view: FriendPostAnnotationView) {
+        var posts: [MapPost] = []
+        for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
+        DispatchQueue.main.async { self.openPost(posts: posts) }
+    }
+    
+    func centerMapOnPostsInCluster(view: FriendPostAnnotationView) {
+        var coordinates: [CLLocationCoordinate2D] = []
+        for id in view.postIDs {
+            if let post = mapData!.postsDictionary[id] { coordinates.append(post.coordinate) }
+        }
+        let region = MKCoordinateRegion(coordinates: coordinates, overview: false)
+        DispatchQueue.main.async {
+            self.containerDrawerView?.present(to: .Bottom)
+            self.mapController?.mapView.setRegion(region, animated: true)
         }
     }
 }
@@ -521,24 +606,7 @@ extension CustomMapController: MKMapViewDelegate {
         return MKAnnotationView()
     }
     
-    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        if let view = view as? SpotPostAnnotationView {
-            var posts: [MapPost] = []
-            for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
-            DispatchQueue.main.async { self.openPost(posts: posts) }
-            
-        } else if let view = view as? FriendPostAnnotationView {
-            var posts: [MapPost] = []
-            for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
-            DispatchQueue.main.async { self.openPost(posts: posts) }
-            
-        } else if let view = view as? SpotNameView {
-            print("open spot page")
-        }
-        mapView.deselectAnnotation(view.annotation, animated: false)
-    }
-    /*
-    func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+/*    func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         print("change visible")
         if refresh == .refreshEnabled {
             getPosts()
@@ -558,7 +626,7 @@ extension CustomMapController: MKMapViewDelegate {
     
     func setInitialRegion() {
         let coordinates = postsList.map({$0.coordinate})
-        let region = MKCoordinateRegion(coordinates: coordinates)
+        let region = MKCoordinateRegion(coordinates: coordinates, overview: true)
         mapController?.mapView.setRegion(region, animated: false)
         mapController?.mapView.setOffsetRegion(region: region, offset: -200, animated: false)
         centeredMap = true
@@ -567,16 +635,16 @@ extension CustomMapController: MKMapViewDelegate {
 
 extension CustomMapController: UIGestureRecognizerDelegate {
     @objc func onPan(_ recognizer: UIPanGestureRecognizer) {
-        // Swipe up y translation < 0
-        // Swipe down y translation > 0
+        // Finger swipes up y translation < 0
+        // Finger swipes down y translation > 0
         let yTranslation = recognizer.translation(in: recognizer.view).y
-        
+
         // Get the initial Top y position contentOffset
         if containerDrawerView?.status == .Top && topYContentOffset == nil {
             topYContentOffset = collectionView.contentOffset.y
         }
         
-        // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user swipe direction
+        // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user finger swipe direction
         if
             topYContentOffset != nil &&
                 containerDrawerView?.status == .Top &&
@@ -585,7 +653,7 @@ extension CustomMapController: UIGestureRecognizerDelegate {
             containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
         }
         
-        // Preventing the drawer view to be dragged when it's status is top and user is scrolling down
+        // Preventing the drawer view to be dragged when it's status is top and user finger is swiping up
         if
             containerDrawerView?.status == .Top &&
                 collectionView.contentOffset.y > topYContentOffset ?? -91 &&
@@ -596,7 +664,7 @@ extension CustomMapController: UIGestureRecognizerDelegate {
             containerDrawerView?.slideView.frame.origin.y = 0
         }
         
-        // Reset drawer view varaiables when the drawer view is on top and user swipes down
+        // Reset drawer view varaiables when the drawer view is on top and user finger swipes down
         if collectionView.contentOffset.y <= topYContentOffset ?? -91 && yTranslation > 0 {
             containerDrawerView?.canDrag = true
             barBackButton.isHidden = true
@@ -610,3 +678,87 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         return true
     }
 }
+//@objc func onPan(_ recognizer: UIPanGestureRecognizer) {
+//    // Finger swipes up y translation < 0
+//    // Finger swipes down y translation > 0
+//    let yTranslation = recognizer.translation(in: recognizer.view).y
+//
+//    // Get the initial Top y position contentOffset
+//    if containerDrawerView?.status == .Top && topYContentOffset == nil {
+//        topYContentOffset = collectionView.contentOffset.y
+//    }
+//
+//    // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user finger swipe direction
+//    if
+//        topYContentOffset != nil &&
+//        containerDrawerView?.status == .Top &&
+//        collectionView.contentOffset.y <= topYContentOffset! + 1
+//    {
+//        containerDrawerView?.swipeToNextState = yTranslation > 0 ? true : false
+//    }
+//
+//    // Preventing the drawer view to be dragged when it's status is top and user finger is swiping up
+//    if
+//        containerDrawerView?.status == .Top &&
+//        collectionView.contentOffset.y > topYContentOffset ?? -91 &&
+//        yTranslation < 0 &&
+//        containerDrawerView?.swipeToNextState == false
+//    {
+//        containerDrawerView?.canDrag = false
+//        containerDrawerView?.slideView.frame.origin.y = 0
+//    }
+//
+//    // Reset drawer view varaiables when the drawer view is on top and user finger swipes down
+//    if collectionView.contentOffset.y <= topYContentOffset ?? -91 && yTranslation > 0 {
+//        containerDrawerView?.canDrag = true
+//        barBackButton.isHidden = true
+//    }
+//
+//    // Need to prevent content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
+//    recognizer.setTranslation(.zero, in: recognizer.view)
+//}
+
+//func scrollViewDidScroll(_ scrollView: UIScrollView) {
+//    let itemHeight = UIScreen.main.bounds.width * 1.373
+//    if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 1.5)) && refresh == .refreshEnabled {
+//        self.getPosts()
+//        refresh = .activelyRefreshing
+//    }
+//    
+//    if topYContentOffset != nil && containerDrawerView?.status == .Top {
+//        // Disable the bouncing effect when scroll view is scrolled to top
+//        if scrollView.contentOffset.y <= topYContentOffset! {
+//            scrollView.contentOffset.y = topYContentOffset!
+//        }
+//        // Show navigation bar + adjust offset for small header
+//        if scrollView.contentOffset.y > topYContentOffset! {
+//            barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
+//            var titleText = ""
+//            if scrollView.contentOffset.y > 0 {
+//                titleText = mapType == .friendsMap ? "Friends posts" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
+//            }
+//            titleLabel.text = titleText
+//        }
+//    }
+//    
+//    // Get middle y content offset
+//    if middleYContentOffset == nil {
+//        middleYContentOffset = scrollView.contentOffset.y
+//    }
+//    
+//    // Set scroll view content offset when in transition
+//    if
+//        middleYContentOffset != nil &&
+//        topYContentOffset != nil &&
+//        scrollView.contentOffset.y <= middleYContentOffset! &&
+//        containerDrawerView!.slideView.frame.minY >= middleYContentOffset! - topYContentOffset!
+//    {
+//        scrollView.contentOffset.y = middleYContentOffset!
+//    }
+//    
+//    // Whenever drawer view is not in top position, scroll to top, disable scroll and enable drawer view swipe to next state
+//    if containerDrawerView?.status != .Top {
+//        collectionView.isScrollEnabled = false
+//        containerDrawerView?.swipeToNextState = true
+//    }
+//}

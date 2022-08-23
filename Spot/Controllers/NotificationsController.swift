@@ -64,26 +64,28 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        setUpNavBar()
         configureDrawerView()
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        //navigationController?.navigationBar.isTranslucent = false
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
-        setUpNavBar()
-
+        // Set navigation bar hidden equals false here to avoid unexpected nav bar animation
+        navigationController?.setNavigationBarHidden(false, animated: true)
     }
     
     func configureDrawerView() {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        containerDrawerView?.showCloseButton = false
+        if self.containerDrawerView?.status != .Top {
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
+        }
     }
     
     func setUpNavBar() {
         self.title = "Notifications"
         navigationItem.backButtonTitle = ""
-
         navigationController!.navigationBar.barTintColor = UIColor.white
         navigationController!.navigationBar.isTranslucent = false
         navigationController!.navigationBar.barStyle = .black
@@ -96,12 +98,11 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         ]
                
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow-1"),
+            image: UIImage(named: "BackArrowDark"),
             style: .plain,
             target: self,
             action: #selector(leaveNotifs)
         )
-        
     }
     
     

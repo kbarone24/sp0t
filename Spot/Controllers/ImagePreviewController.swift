@@ -16,9 +16,6 @@ import IQKeyboardManagerSwift
 import SnapKit
 
 class ImagePreviewController: UIViewController {
-    
-    var spotObject: MapSpot!
-                
     var currentImage: PostImagePreview!
     var nextImage: PostImagePreview!
     var previousImage: PostImagePreview!
@@ -47,6 +44,7 @@ class ImagePreviewController: UIViewController {
     
     var shouldRepositionTextView = false /// keyboardWillShow firing late -> this variable tells keyboardWillChange whether to reposition
     var snapBottomConstraintToImage = false
+    lazy var firstImageBottomConstraint: CGFloat = 0
     
     var tagFriendsView: TagFriendsView?
     
@@ -141,8 +139,7 @@ class ImagePreviewController: UIViewController {
         let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
         let cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
-        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+        let statusHeight = getStatusHeight()
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
         let maxY = minY + cameraHeight
                 
@@ -198,10 +195,10 @@ class ImagePreviewController: UIViewController {
             view.addSubview($0)
         }
         chooseMapButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(12)
-            $0.top.equalTo(maxY + 6)
-            $0.width.equalTo(162)
-            $0.height.equalTo(40)
+            $0.trailing.equalToSuperview().inset(7)
+            $0.top.equalTo(maxY + 10)
+            $0.width.equalTo(172)
+            $0.height.equalTo(50)
         }
         
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
@@ -256,8 +253,11 @@ class ImagePreviewController: UIViewController {
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(300)
             if firstImageAspect > 1.1 {
+                /// set to bottom of first image so it doesnt move as we swipe between images
+                let layoutValues = getImageLayoutValues(imageAspect: firstImageAspect)
+                firstImageBottomConstraint = layoutValues.bottomConstraint
                 snapBottomConstraintToImage = true
-                $0.bottom.equalTo(currentImage.snp.bottom)
+                $0.bottom.equalToSuperview().inset(firstImageBottomConstraint)
             } else {
                 $0.bottom.equalTo(chooseMapButton.snp.top).offset(-25)
             }
@@ -456,13 +456,10 @@ class ImagePreviewController: UIViewController {
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {
-        print("keyboard will show")
         if cancelOnDismiss { return }
-        print("1")
         if !textView.isFirstResponder { addNewSpotView(notification: notification) }
-        print("2")
         if !shouldRepositionTextView { return }
-        print("3")
+        shouldRepositionTextView = false
         /// new spot name view editing when textview not first responder
         postDetailView.bottomMask.alpha = 0.0
         animateWithKeyboard(notification: notification) { keyboardFrame in
@@ -480,13 +477,12 @@ class ImagePreviewController: UIViewController {
         /// new spot name view editing when textview not first responder
         if cancelOnDismiss { return }
         if !textView.isFirstResponder { removeNewSpotView() }
-        shouldRepositionTextView = false
         animateWithKeyboard(notification: notification) { keyboardFrame in
             self.postDetailView.snp.removeConstraints()
             self.postDetailView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
                 $0.height.equalTo(300)
-                if self.snapBottomConstraintToImage { $0.bottom.equalTo(self.currentImage.snp.bottom) } else { $0.bottom.equalTo(self.chooseMapButton.snp.top).offset(-25) }
+                $0.bottom.equalToSuperview().inset(self.firstImageBottomConstraint)
             }
         }
     }
@@ -613,8 +609,10 @@ extension ImagePreviewController: UITextViewDelegate {
         let containsAt = tagTuple.containsAt
         if !containsAt {
             removeTagTable()
+            textView.autocorrectionType = .default
         } else {
             addTagTable(tagString: tagString)
+            textView.autocorrectionType = .no
         }
     }
     
@@ -623,7 +621,6 @@ extension ImagePreviewController: UITextViewDelegate {
             tagFriendsView!.removeFromSuperview()
             tagFriendsView = nil
             spotNameButton.isHidden = false
-            textView.autocorrectionType = .default
         }
     }
     
@@ -641,7 +638,6 @@ extension ImagePreviewController: UITextViewDelegate {
                 $0.bottom.equalTo(spotNameButton.snp.bottom)
             }
             spotNameButton.isHidden = true
-            textView.autocorrectionType = .no
         } else {
             tagFriendsView?.searchText = tagString
         }
@@ -799,26 +795,18 @@ class PostImagePreview: PostImageView {
     }
     
     func makeConstraints() {
-        
         snp.removeConstraints()
-        
-        let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
-        let cameraHeight = UIScreen.main.bounds.width * cameraAspect
-        
+            
         let post = UploadPostModel.shared.postObject!
         let currentImage = post.postImage[safe: post.frameIndexes?[safe: index] ?? -1] ?? UIImage(color: .black, size: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width))!
         let currentAspect = (currentImage.size.height) / (currentImage.size.width)
-        let currentHeight = getImageHeight(aspectRatio: currentAspect, maxAspect: cameraAspect)
-        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
-        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
-        let maxY = minY + cameraHeight
-        
-        let imageY: CGFloat = currentAspect + 0.02 >= cameraAspect ? minY : (minY + maxY - currentHeight)/2 + 15
+        let layoutValues = getImageLayoutValues(imageAspect: currentAspect)
+        let currentHeight = layoutValues.imageHeight
+        let bottomConstraint = layoutValues.bottomConstraint
         
         snp.makeConstraints {
             $0.height.equalTo(currentHeight)
-            $0.top.equalTo(imageY)
+            $0.bottom.equalToSuperview().inset(bottomConstraint)
             if index == post.selectedImageIndex { $0.leading.trailing.equalToSuperview() }
             else if index < post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
             else if index > post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width) }
@@ -869,10 +857,10 @@ class PostImagePreview: PostImageView {
             $0.height.equalTo(100)
         }
         let _ = CAGradientLayer {
-            $0.frame = topMask.bounds
+            $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 100)
             $0.colors = [
               UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-              UIColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor
+              UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.45).cgColor
             ]
             $0.startPoint = CGPoint(x: 0.5, y: 1.0)
             $0.endPoint = CGPoint(x: 0.5, y: 0.0)
@@ -909,19 +897,28 @@ class PostDetailView: UIView {
 }
 
 class ChooseMapButton: UIButton {
+    var contentArea: UIView!
     var chooseLabel: UILabel!
     var nextArrow: UIImageView!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        layer.cornerRadius = 9
-        backgroundColor = UIColor(named: "SpotGreen")
         
+        contentArea = UIView {
+            $0.backgroundColor = UIColor(named: "SpotGreen")
+            $0.layer.cornerRadius = 9
+            $0.isUserInteractionEnabled = false
+            addSubview($0)
+        }
+        contentArea.snp.makeConstraints {
+            $0.edges.equalToSuperview().inset(5)
+        }
+                
         chooseLabel = UILabel {
             $0.text = "Choose a map"
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 15)
-            addSubview($0)
+            contentArea.addSubview($0)
         }
         chooseLabel.snp.makeConstraints {
             $0.leading.equalTo(18)
@@ -930,7 +927,7 @@ class ChooseMapButton: UIButton {
         
         nextArrow = UIImageView {
             $0.image = UIImage(named: "NextArrow")
-            addSubview($0)
+            contentArea.addSubview($0)
         }
         nextArrow.snp.makeConstraints {
             $0.leading.equalTo(chooseLabel.snp.trailing).offset(10)

@@ -438,6 +438,7 @@ extension EditMapController: FriendsListDelegate {
     func finishPassing(selectedUsers: [UserProfile]) {
         Mixpanel.mainInstance().track(event: "EditMapInviteFriends")
         mapData?.memberIDs.append(contentsOf: selectedUsers.map({$0.id!}))
+        mapData?.likers.append(contentsOf: selectedUsers.map({$0.id!}))
         memberList.append(contentsOf: selectedUsers)
         memberLabel.text = "MEMBERS (\(mapData!.memberIDs.count))"
         DispatchQueue.main.async { self.mapMemberCollectionView.reloadData() }
