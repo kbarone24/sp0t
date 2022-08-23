@@ -24,10 +24,10 @@
             </objects>
             <point key="canvasLocation" x="-2080" y="808"/>
         </scene>
-        <!--Sign Up Controller-->
+        <!--Name Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController storyboardIdentifier="SignUp" id="BYZ-38-t0r" customClass="SignUpController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="SignUp" id="BYZ-38-t0r" customClass="NameController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -74,12 +74,12 @@
         <!--Phone Controller-->
         <scene sceneID="SZt-ze-ew5">
             <objects>
-                <viewController storyboardIdentifier="PhoneVC" title="Phone Controller" id="byO-bf-wlw" customClass="PhoneController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="PhoneVC" title="Phone Controller" interfaceStyle="light" id="byO-bf-wlw" customClass="PhoneController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="hzn-Kc-D0p">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="CUL-ky-qrX"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </view>
                     <extendedEdge key="edgesForExtendedLayout"/>
                 </viewController>

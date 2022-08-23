@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1DF6E03522089F4500BA0C36 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03422089F4500BA0C36 /* AppDelegate.swift */; };
-		1DF6E03722089F4500BA0C36 /* SignUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03622089F4500BA0C36 /* SignUpController.swift */; };
+		1DF6E03722089F4500BA0C36 /* NameController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03622089F4500BA0C36 /* NameController.swift */; };
 		1DF6E03A22089F4500BA0C36 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1DF6E03822089F4500BA0C36 /* Main.storyboard */; };
 		1DF6E03F22089F4800BA0C36 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1DF6E03D22089F4800BA0C36 /* LaunchScreen.storyboard */; };
 		1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E04922089F4800BA0C36 /* SpotTests.swift */; };
@@ -45,8 +45,8 @@
 		59004E1222CA5C9A004E06EF /* ResetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED3F1A522147EAE008CC29B /* ResetViewController.swift */; };
 		59004E1322CA5C9D004E06EF /* EmailLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6189562213DEAD00A7CFF4 /* EmailLoginController.swift */; };
 		59004E1422CA5C9D004E06EF /* EmailLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6189562213DEAD00A7CFF4 /* EmailLoginController.swift */; };
-		59004E1522CA5CA1004E06EF /* SignUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03622089F4500BA0C36 /* SignUpController.swift */; };
-		59004E1622CA5CA1004E06EF /* SignUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03622089F4500BA0C36 /* SignUpController.swift */; };
+		59004E1522CA5CA1004E06EF /* NameController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03622089F4500BA0C36 /* NameController.swift */; };
+		59004E1622CA5CA1004E06EF /* NameController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF6E03622089F4500BA0C36 /* NameController.swift */; };
 		59004E1722CA5CA4004E06EF /* MapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801B22174BB1008B835A /* MapController.swift */; };
 		59004E1822CA5CA4004E06EF /* MapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A37801B22174BB1008B835A /* MapController.swift */; };
 		59004E2722CBB1E6004E06EF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1DF6E03822089F4500BA0C36 /* Main.storyboard */; };
@@ -354,7 +354,7 @@
 /* Begin PBXFileReference section */
 		1DF6E03122089F4500BA0C36 /* Spot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Spot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF6E03422089F4500BA0C36 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Delegates/AppDelegate.swift; sourceTree = "<group>"; };
-		1DF6E03622089F4500BA0C36 /* SignUpController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpController.swift; sourceTree = "<group>"; };
+		1DF6E03622089F4500BA0C36 /* NameController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameController.swift; sourceTree = "<group>"; };
 		1DF6E03922089F4500BA0C36 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		1DF6E03E22089F4800BA0C36 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1DF6E04522089F4800BA0C36 /* SpotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -693,7 +693,7 @@
 				593AC544243E56D400C08237 /* LandingPageController.swift */,
 				3ED3F1A522147EAE008CC29B /* ResetViewController.swift */,
 				3E6189562213DEAD00A7CFF4 /* EmailLoginController.swift */,
-				1DF6E03622089F4500BA0C36 /* SignUpController.swift */,
+				1DF6E03622089F4500BA0C36 /* NameController.swift */,
 				593AC548243F898300C08237 /* UsernameController.swift */,
 				593AC54C243FAA2B00C08237 /* PhoneController.swift */,
 				8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */,
@@ -1312,7 +1312,7 @@
 				59E23549246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				598B700D2305E49500613AFD /* FriendRequest.swift in Sources */,
 				594CE11B24C939040051516C /* MapComment.swift in Sources */,
-				1DF6E03722089F4500BA0C36 /* SignUpController.swift in Sources */,
+				1DF6E03722089F4500BA0C36 /* NameController.swift in Sources */,
 				8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				5F497B3E2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift in Sources */,
@@ -1425,7 +1425,7 @@
 				8C1E4898289C54CB0093030D /* SpotNameView.swift in Sources */,
 				8C1E489B289C54CB0093030D /* FriendPostView.swift in Sources */,
 				599BD2BC23C652BD00ECB84A /* PostViewController.swift in Sources */,
-				59004E1522CA5CA1004E06EF /* SignUpController.swift in Sources */,
+				59004E1522CA5CA1004E06EF /* NameController.swift in Sources */,
 				8C3B955B28B2B47100C06586 /* AddSpotButton.swift in Sources */,
 				8C3B953B28AD546E00C06586 /* AvatarURLs.swift in Sources */,
 				59056A5423197E4B00C7E753 /* PostNotification.swift in Sources */,
@@ -1515,7 +1515,7 @@
 				8C1E4899289C54CB0093030D /* SpotNameView.swift in Sources */,
 				8C1E489C289C54CB0093030D /* FriendPostView.swift in Sources */,
 				599BD2BD23C652BD00ECB84A /* PostViewController.swift in Sources */,
-				59004E1622CA5CA1004E06EF /* SignUpController.swift in Sources */,
+				59004E1622CA5CA1004E06EF /* NameController.swift in Sources */,
 				8C3B955C28B2B47100C06586 /* AddSpotButton.swift in Sources */,
 				8C3B953C28AD546E00C06586 /* AvatarURLs.swift in Sources */,
 				59056A5523197E4B00C7E753 /* PostNotification.swift in Sources */,
