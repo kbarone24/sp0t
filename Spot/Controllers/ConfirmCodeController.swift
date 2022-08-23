@@ -375,13 +375,4 @@ class ConfirmCodeController: UIViewController {
        //let avi = AvatarSelectionController(sentFrom: "create")
        //navigationController!.pushViewController(avi, animated: true)
     }
-    
-    func presentSearchOverview() {
-        
-        /// replace animate to map logic with search contacts
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        if let vc = storyboard.instantiateViewController(withIdentifier: "ContactsOverview") as? ContactsOverviewController {
-            navigationController?.pushViewController(vc, animated: true)
-        }
-    }
 }
