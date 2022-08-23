@@ -58,10 +58,24 @@ class ChooseSpotController: UIViewController {
         runChooseSpotFetch()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        previewVC?.cancelOnDismiss = true
+    }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ChooseSpotOpen")
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        /// added to will disappear due to lag when dismissing and quick tapping on ImagePreviewController
+        super.viewWillDisappear(animated)
+        previewVC?.cancelOnDismiss = false
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
     }
     
     func setUpView() {
@@ -78,25 +92,32 @@ class ChooseSpotController: UIViewController {
         
         searchBar = UISearchBar {
             $0.frame = CGRect(x: 16, y: 6, width: UIScreen.main.bounds.width - 32, height: 36)
-            $0.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
+            $0.tintColor = UIColor(named: "SpotGreen")
+            $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
             $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
-            $0.delegate = self
+            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.searchTextField.font = UIFont(name: "SFCompactText-Medium", size: 15)
+            $0.clipsToBounds = true
+            $0.layer.masksToBounds = true
             $0.autocapitalizationType = .none
             $0.autocorrectionType = .no
             $0.placeholder = " Search"
             $0.clipsToBounds = true
-            $0.layer.cornerRadius = 3
+            $0.layer.cornerRadius = 2
+            $0.searchTextField.layer.cornerRadius = 2
             $0.returnKeyType = .done
+            $0.backgroundImage = UIImage()
+            $0.delegate = self
             $0.keyboardDistanceFromTextField = 250
+            $0.searchTextField.enablesReturnKeyAutomatically = false
             searchBarContainer.addSubview($0)
         }
         searchBar.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.leading.trailing.equalToSuperview().inset(14)
             $0.top.equalTo(6)
             $0.height.equalTo(36)
         }
-        
+     
         tableView = UITableView {
             $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
             $0.backgroundColor = .white
@@ -507,10 +528,7 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
         DispatchQueue.main.async {
             self.searchBar.resignFirstResponder()
             self.delegate?.finishPassing(spot: spot)
-            self.dismiss(animated: true) {
-                print("cancel false")
-                self.previewVC?.cancelOnDismiss = false
-            }
+            self.dismiss(animated: true)
         }
     }
 }

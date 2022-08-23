@@ -109,6 +109,8 @@ class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     func setUpViews() {
@@ -120,6 +122,7 @@ class MapController: UIViewController {
     func addMapView() {
         mapView = SpotMapView {
             $0.delegate = self
+            $0.spotMapDelegate = self
             $0.mapType = .mutedStandard
             $0.overrideUserInterfaceStyle = .light
             $0.pointOfInterestFilter = .excludingAll
@@ -133,8 +136,7 @@ class MapController: UIViewController {
         }
         makeMapHomeConstraints()
                         
-        let addButton = UIButton {
-            $0.setImage(UIImage(named: "AddToSpotButton"), for: .normal)
+        let addButton = AddButton {
             $0.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
             mapView.addSubview($0)
         }
@@ -232,13 +234,7 @@ class MapController: UIViewController {
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
-                vc.mapVC = self
-                
-                let transition = CATransition()
-                transition.duration = 0.3
-                transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-                transition.type = CATransitionType.push
-                transition.subtype = CATransitionSubtype.fromTop
+                let transition = AddButtonTransition()
                 self.navigationController?.view.layer.add(transition, forKey: kCATransition)
                 self.navigationController?.pushViewController(vc, animated: false)
             }
@@ -272,7 +268,6 @@ class MapController: UIViewController {
     
     @objc func openFindFriendsDrawer(_ sender: UIButton){
         let ffvc = FindFriendsController()
-        
         sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
         })
@@ -281,7 +276,6 @@ class MapController: UIViewController {
         sheetView?.canInteract = false
         sheetView?.present(to: .Top)
         sheetView?.showCloseButton = false
-        
         ffvc.contentDrawer = sheetView
     }
 
@@ -313,14 +307,29 @@ class MapController: UIViewController {
         sheetView?.present(to: .Middle)
     }
     
+    func openSpot(spotID: String, spotName: String) {
+        var emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp(date: Date()))
+        emptyPost.spotID = spotID
+        emptyPost.spotName = spotName
+        let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: nil)
+        sheetView = DrawerView(present: spotVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+            self.sheetView = nil
+        })
+        spotVC.containerDrawerView = sheetView
+        spotVC.containerDrawerView?.showCloseButton = false
+        sheetView?.present(to: .Top)
+    }
+    
     func toggleHomeAppearance(hidden: Bool) {
         mapsCollection.isHidden = hidden
         newPostsButton.isHidden = hidden
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
             mapView.removeAllAnnos()
+            if addFriends != nil { addFriends.removeFromSuperview() } /// remove add friends view whenever leaving home screen
         } else {
             mapView.delegate = self
+            mapView.spotMapDelegate = self
             addMapAnnotations(index: selectedItemIndex, reload: true)
         }
     }
@@ -425,9 +434,9 @@ extension MapController: CLLocationManagerDelegate {
 
 extension MapController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
+      /*  if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
             return false
-        }
+        } */
         return true
     }
 }
@@ -597,7 +606,7 @@ class AddFriendsView: UIView {
             $0.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
             let customButtonTitle = NSMutableAttributedString(string: "Find Friends", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                 NSAttributedString.Key.foregroundColor: UIColor.black
             ])
             $0.setAttributedTitle(customButtonTitle, for: .normal)

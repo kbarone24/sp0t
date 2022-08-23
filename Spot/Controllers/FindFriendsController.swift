@@ -67,7 +67,7 @@ class FindFriendsController: UIViewController {
         ]
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow-1"),
+            image: UIImage(named: "BackArrowDark"),
             style: .plain,
             target: self,
             action: #selector(self.exit(_:))
@@ -115,7 +115,7 @@ class FindFriendsController: UIViewController {
         
         searchBar = UISearchBar {
             $0.searchBarStyle = .default
-            $0.tintColor = .white
+            $0.tintColor = UIColor(named: "SpotGreen")
             $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
             $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
             $0.searchTextField.leftView?.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
@@ -155,7 +155,6 @@ class FindFriendsController: UIViewController {
             $0.trailing.equalToSuperview().offset(-16)
             $0.centerY.equalTo(searchBar.snp.centerY)
         }
-        
         
         resultsTable = UITableView {
             $0.dataSource = self
@@ -659,7 +658,7 @@ class SendInvitesView: UIView {
             $0.contentMode = UIView.ContentMode.right
             $0.isHidden = false
             $0.translatesAutoresizingMaskIntoConstraints = true
-            $0.image =  UIImage(named: "Carot")
+            $0.image =  UIImage(named: "SideCarat")
             $0.layer.cornerRadius = 0
             self.addSubview($0)
         }
@@ -731,7 +730,7 @@ class SearchContactsView: UIView {
             $0.contentMode = UIView.ContentMode.right
             $0.isHidden = false
             $0.translatesAutoresizingMaskIntoConstraints = true
-            $0.image =  UIImage(named: "Carot")
+            $0.image =  UIImage(named: "SideCarat")
             $0.layer.cornerRadius = 0
             self.addSubview($0)
         }

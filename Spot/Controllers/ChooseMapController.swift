@@ -158,7 +158,11 @@ class ChooseMapController: UIViewController {
     }
 
     @objc func myMapTap() {
-        myMapButton.buttonSelected = !myMapButton.buttonSelected
+        toggleMyMap()
+    }
+    
+    func toggleMyMap() {
+        myMapButton.buttonSelected.toggle()
         UploadPostModel.shared.postObject.hideFromFeed = !myMapButton.buttonSelected
         enablePostButton()
     }
@@ -195,7 +199,7 @@ class ChooseMapController: UIViewController {
                 UploadPostModel.shared.postObject.imageURLs = imageURLs
                 UploadPostModel.shared.postObject.timestamp = Firebase.Timestamp(date: Date())
                 let post = UploadPostModel.shared.postObject!
-                self.uploadPost(post: post)
+                self.uploadPost(post: post, map: map)
 
                 if spot != nil {
                     var spot = spot!
@@ -338,6 +342,8 @@ extension ChooseMapController: NewMapDelegate {
         UploadPostModel.shared.mapObject = map
         UploadPostModel.shared.postObject.mapID = map.id!
         UploadPostModel.shared.postObject.mapName = map.mapName
+        /// if private map, make sure mymapbutton is deselected, if public, make sure selected
+        if myMapButton.buttonSelected == map.secret { toggleMyMap() }
         
         DispatchQueue.main.async { self.tableView.reloadData() }
         enablePostButton()
@@ -380,6 +386,7 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "MapsHeader") as? CustomMapsHeader else { return UIView() }
         header.mapsEmpty = customMaps.isEmpty
+        header.newMap = newMap != nil
         return header
     }
     
@@ -396,7 +403,12 @@ class CustomMapsHeader: UITableViewHeaderFooterView {
     var mapLabel: UILabel!
     var mapsEmpty: Bool = true {
         didSet {
-            if !mapsEmpty { customMapsLabel.isHidden = false }
+            customMapsLabel.isHidden = mapsEmpty
+        }
+    }
+    var newMap: Bool = false {
+        didSet {
+            newMapButton.isHidden = newMap
         }
     }
     
@@ -475,21 +487,56 @@ class CustomMapUploadCell: UITableViewCell {
     var nameLabel: UILabel!
     var selectedImage: UIImageView!
     
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setUpView()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     func setUp(map: CustomMap, selected: Bool, beginningCell: Bool, endCell: Bool) {
+        var maskedCorners = CACornerMask()
+        if beginningCell { maskedCorners.insert([.layerMaxXMinYCorner, .layerMinXMinYCorner]) }
+        if endCell { maskedCorners.insert([.layerMinXMaxYCorner, .layerMaxXMaxYCorner]) }
+        pillView.layer.maskedCorners = maskedCorners
+
+        let url = map.imageURL
+        if map.coverImage != UIImage () {
+            mapImage.image = map.coverImage
+        } else if url != "" {
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+            mapImage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        }
+        
+        let buttonImage = selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
+        selectedImage.image = buttonImage
+        
+        if map.secret {
+            let imageAttachment = NSTextAttachment()
+            imageAttachment.image = UIImage(named: "SecretMap")
+            imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
+            let attachmentString = NSAttributedString(attachment: imageAttachment)
+            let completeText = NSMutableAttributedString(string: "")
+            completeText.append(attachmentString)
+            completeText.append(NSAttributedString(string: " \(map.mapName)"))
+            self.nameLabel.attributedText = completeText
+        } else {
+            nameLabel.attributedText = NSAttributedString(string: map.mapName)
+        }
+    }
+
+    func setUpView() {
         backgroundColor = .white
         selectionStyle = .none
         
-        if pillView != nil { pillView.removeFromSuperview() }
         pillView = UIView {
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
             $0.layer.borderWidth = 1
             $0.layer.borderColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1).cgColor
             $0.clipsToBounds = true
             $0.layer.cornerRadius = 12
-            var maskedCorners = CACornerMask()
-            if beginningCell { maskedCorners.insert([.layerMaxXMinYCorner, .layerMinXMinYCorner]) }
-            if endCell { maskedCorners.insert([.layerMinXMaxYCorner, .layerMaxXMaxYCorner]) }
-            $0.layer.maskedCorners = maskedCorners
             contentView.addSubview($0)
         }
         pillView.snp.makeConstraints {
@@ -498,19 +545,10 @@ class CustomMapUploadCell: UITableViewCell {
             $0.top.bottom.equalToSuperview()
         }
         
-        if mapImage != nil { mapImage.removeFromSuperview() }
         mapImage = UIImageView {
             $0.layer.cornerRadius = 17
             $0.clipsToBounds = true
             $0.contentMode = .scaleAspectFill
-
-            let url = map.imageURL
-            if map.coverImage != UIImage () {
-                $0.image = map.coverImage
-            } else if url != "" {
-                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-            }
             pillView.addSubview($0)
         }
         mapImage.snp.makeConstraints {
@@ -519,10 +557,7 @@ class CustomMapUploadCell: UITableViewCell {
             $0.centerY.equalToSuperview()
         }
         
-        if selectedImage != nil { selectedImage.removeFromSuperview() }
-        let buttonImage = selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
         selectedImage = UIImageView {
-            $0.image = buttonImage
             pillView.addSubview($0)
         }
         selectedImage.snp.makeConstraints {
@@ -532,7 +567,6 @@ class CustomMapUploadCell: UITableViewCell {
         }
 
         nameLabel = UILabel {
-            $0.text = map.mapName
             $0.textColor = .black
             $0.lineBreakMode = .byTruncatingTail
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 18)
@@ -543,6 +577,7 @@ class CustomMapUploadCell: UITableViewCell {
             $0.trailing.lessThanOrEqualTo(selectedImage.snp.leading).offset(-8)
             $0.centerY.equalToSuperview()
         }
+
     }
 }
 
@@ -571,9 +606,9 @@ class MyMapButton: UIButton {
             addSubview($0)
         }
         avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(7)
-            $0.width.equalTo(26)
-            $0.height.equalTo(37.5)
+            $0.leading.equalTo(12)
+            $0.width.equalTo(29.12)
+            $0.height.equalTo(42)
             $0.centerY.equalToSuperview()
         }
         
@@ -584,7 +619,7 @@ class MyMapButton: UIButton {
             addSubview($0)
         }
         mapLabel.snp.makeConstraints {
-            $0.leading.equalTo(avatarImage.snp.trailing).offset(4)
+            $0.leading.equalTo(avatarImage.snp.trailing).offset(8)
             $0.top.equalTo(10)
         }
         
@@ -657,8 +692,3 @@ class PostButton: UIButton {
         fatalError("init(coder:) has not been implemented")
     }
 }
-
-class FailedUploadView {
-    
-}
-

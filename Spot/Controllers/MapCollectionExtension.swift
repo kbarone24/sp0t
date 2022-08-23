@@ -17,7 +17,6 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if !feedLoaded, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapLoadingCell", for: indexPath) as? MapLoadingCell {
-            cell.setUp()
             return cell
         }
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapCell", for: indexPath) as? MapHomeCell {
@@ -37,12 +36,13 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
     
     func selectMapAt(index: Int) {
-        if index != selectedItemIndex {
-            DispatchQueue.main.async {
-                self.addMapAnnotations(index: index, reload: false)
+        DispatchQueue.main.async {
+            if index != self.selectedItemIndex {
+                self.selectedItemIndex = index
                 self.setNewPostsButtonCount()
+                self.addMapAnnotations(index: index, reload: false)
+                if index != 0 { UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle() }
             }
-            if index != 0 { UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle() }
         }
     }
     
@@ -53,16 +53,16 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
     
     func addMapAnnotations(index: Int, reload: Bool) {
-        selectedItemIndex = index
         mapView.removeAllAnnos()
-
         if index == 0 {
             for post in friendsPostsDictionary.values { mapView.addPostAnnotation(post: post) }
         } else {
             let map = getSelectedMap()!
             for group in map.postGroup { mapView.addSpotAnnotation(group: group, map: map) }
         }
-        if !reload { self.centerMapOnPosts(animated: false) }
+        if !reload {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { self.centerMapOnMapPosts(animated: false) })
+        }
     }
 }
 
@@ -224,15 +224,6 @@ class MapLoadingCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func setUp() {
-    
-        if activityIndicator != nil { activityIndicator.removeFromSuperview() }
         activityIndicator = CustomActivityIndicator {
             $0.startAnimating()
             addSubview($0)
@@ -243,4 +234,7 @@ class MapLoadingCell: UICollectionViewCell {
         }
     }
 
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }

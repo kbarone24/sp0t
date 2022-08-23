@@ -162,11 +162,12 @@ class UploadPostModel {
     }
     
     func setFinalPostValues() {
-        var postFriends = postObject.privacyLevel == "invite" ? spotObject!.inviteList!.filter(UserDataModel.shared.userInfo.friendIDs.contains) : UserDataModel.shared.userInfo.friendIDs
-        let uid = UserDataModel.shared.uid
-        if !postFriends.contains(uid) { postFriends.append(uid) }
+        var postFriends = mapObject == nil ? UserDataModel.shared.userInfo.friendIDs : mapObject!.likers
+        /// if map selected && mymap selected, add friendsList
+        if mapObject != nil && !postObject.hideFromFeed! { postFriends.append(contentsOf: UserDataModel.shared.userInfo.friendIDs) }
+        if !postFriends.contains(UserDataModel.shared.uid) && !postObject.hideFromFeed! { postFriends.append(UserDataModel.shared.uid) }
         postObject.friendsList = postFriends
-        postObject.privacyLevel = spotObject != nil && spotObject?.privacyLevel == "friends" ? "friends" : "public"
+        postObject.privacyLevel = mapObject != nil && mapObject!.secret ? "invite" : mapObject != nil && mapObject!.communityMap! ? "public" : "friends"
     }
 
     func setFinalMapValues() {
@@ -177,7 +178,6 @@ class UploadPostModel {
                 mapObject!.spotIDs.append(spotObject!.id!)
                 mapObject!.spotNames.append(spotObject!.spotName)
                 mapObject!.spotLocations.append(["lat": spotObject!.spotLat, "long": spotObject!.spotLong])
-
             }
         }
 

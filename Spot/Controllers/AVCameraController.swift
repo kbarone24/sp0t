@@ -25,9 +25,9 @@ class AVCameraController: UIViewController {
     let db: Firestore! = Firestore.firestore()
     
     var cameraController: AVSpotCamera!
-    unowned var mapVC: MapController!
     
-    var spotObject: MapSpot!
+    var spotObject: MapSpot?
+    var mapObject: CustomMap?
     var volumeHandler: JPSVolumeButtonHandler! /// capture image on volume button tap
     
     lazy var cameraView = UIView()
@@ -109,6 +109,8 @@ class AVCameraController: UIViewController {
     }
     
     override func viewDidLoad() {
+        print("spotobj", spotObject)
+        print("mapobj", mapObject)
         setUpView()
     }
     
@@ -442,8 +444,6 @@ class AVCameraController: UIViewController {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
                 
                 let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: resizedImage, animationImages: [], animationIndex: 0, directionUp: true, gifMode: self.gifMode, creationDate: Date(), fromCamera: true)
-                
-                vc.spotObject = self.spotObject
                 vc.cameraObject = object
                 
                 if let navController = self.navigationController {
@@ -459,14 +459,11 @@ class AVCameraController: UIViewController {
     }
     
     func cancelTap() {
-        
         /// show view controller sliding down as transtition
         DispatchQueue.main.async {
-            
             /// set to title view for smoother transition
             self.navigationItem.leftBarButtonItem = UIBarButtonItem()
             self.navigationItem.rightBarButtonItem = UIBarButtonItem()
-            self.navigationItem.titleView = self.mapVC.getTitleView()
             
             let transition = CATransition()
             transition.duration = 0.3
@@ -475,8 +472,8 @@ class AVCameraController: UIViewController {
             transition.subtype = CATransitionSubtype.fromBottom
             
             DispatchQueue.main.async {
-                if let _ = self.navigationController?.viewControllers[(self.navigationController?.viewControllers.count ?? 2) - 2] as? MapController {
-                    self.mapVC.uploadMapReset()
+                if let mapVC = self.navigationController?.viewControllers[(self.navigationController?.viewControllers.count ?? 2) - 2] as? MapController {
+                    mapVC.uploadMapReset()
                 }
                 self.navigationController?.view.layer.add(transition, forKey:kCATransition)
                 self.navigationController?.popViewController(animated: false)

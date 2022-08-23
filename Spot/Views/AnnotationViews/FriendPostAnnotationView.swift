@@ -42,7 +42,7 @@ class FriendPostAnnotationView: MKAnnotationView {
             }
         }
         
-        let nibView = loadNib(post: post, cluster: cluster, moreText: moreText)
+        let nibView = loadNib(post: post, postCount: posts.count, moreText: moreText)
         id = post.id!
         postIDs = posts.map{$0.id ?? ""}
         
@@ -71,7 +71,7 @@ class FriendPostAnnotationView: MKAnnotationView {
         self.image = nibView.asImage()
     }
         
-    func loadNib(post: MapPost, cluster: Bool, moreText: String) -> FriendPostView {
+    func loadNib(post: MapPost, postCount: Int, moreText: String) -> FriendPostView {
         let infoWindow = FriendPostView.instanceFromNib() as! FriendPostView
         infoWindow.clipsToBounds = false
         
@@ -87,6 +87,15 @@ class FriendPostAnnotationView: MKAnnotationView {
         infoWindow.username.font = UIFont(name: "SFCompactText-Bold", size: 11.5)
         infoWindow.username.numberOfLines = 1
         infoWindow.username.sizeToFit()
+        
+        if postCount > 1 {
+            infoWindow.postCount.backgroundColor = post.seen ? .white : UIColor(named: "SpotGreen")
+            infoWindow.postCount.layer.cornerRadius = 10
+            infoWindow.postCount.font = UIFont(name: "SFCompactText-Heavy", size: 12.5)
+            infoWindow.postCount.text = String(postCount)
+        } else {
+            infoWindow.postCount.isHidden = true
+        }
         
         /// adjust for cluster
         let moreShowing = moreText != ""
