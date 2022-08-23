@@ -234,7 +234,6 @@ class MapController: UIViewController {
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
-                
                 let transition = AddButtonTransition()
                 self.navigationController?.view.layer.add(transition, forKey: kCATransition)
                 self.navigationController?.pushViewController(vc, animated: false)
@@ -269,7 +268,6 @@ class MapController: UIViewController {
     
     @objc func openFindFriendsDrawer(_ sender: UIButton){
         let ffvc = FindFriendsController()
-        
         sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
         })
@@ -278,7 +276,6 @@ class MapController: UIViewController {
         sheetView?.canInteract = false
         sheetView?.present(to: .Top)
         sheetView?.showCloseButton = false
-        
         ffvc.contentDrawer = sheetView
     }
 
@@ -329,6 +326,7 @@ class MapController: UIViewController {
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
             mapView.removeAllAnnos()
+            if addFriends != nil { addFriends.removeFromSuperview() } /// remove add friends view whenever leaving home screen
         } else {
             mapView.delegate = self
             mapView.spotMapDelegate = self
