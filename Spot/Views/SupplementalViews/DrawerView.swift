@@ -156,9 +156,6 @@ class DrawerView: NSObject {
     
     // MARK: Present
     public func present(to: DrawerViewDetent = .Middle) {
-        print("present-")
-
-        let currentStatus = status
         switch to {
         case .Top:
             goTop()
@@ -168,28 +165,19 @@ class DrawerView: NSObject {
             goBottom()
         }
         detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
-        if currentStatus.rawValue != to.rawValue {
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut) {
-                self.slideView.frame.origin.y = self.yPosition
-                self.parentVC.view.layoutIfNeeded()
-            } completion: { success in
-                self.topConstraints?.deactivate()
-                self.midConstraints?.deactivate()
-                self.botConstraints?.deactivate()
-                NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
-            }
-        } else {
-            let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
-            animation.values = [0, -20, 0]
-            animation.duration = 0.5
-            animation.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeOut)
-            slideView.layer.add(animation, forKey: nil)
+        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut) {
+            self.slideView.frame.origin.y = self.yPosition
+            self.parentVC.view.layoutIfNeeded()
+        } completion: { success in
+            self.topConstraints?.deactivate()
+            self.midConstraints?.deactivate()
+            self.botConstraints?.deactivate()
+            NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
         }
     }
     
     // MARK: Set position functions
     private func goTop() {
-        print("going top")
         topConstraints?.activate()
         yPosition = 0
         status = .Top
