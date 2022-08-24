@@ -58,11 +58,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if #available(iOS 15.0, *) {
             UITableView.appearance().sectionHeaderTopPadding = 0.0
         }
-        
-        IQKeyboardManager.shared.enable = true
-        IQKeyboardManager.shared.enableAutoToolbar = true
-     //   IQKeyboardManager.shared.shouldShowToolbarPlaceholder = false
-        
+                
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33")
                         

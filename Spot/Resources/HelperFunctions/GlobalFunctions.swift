@@ -992,6 +992,20 @@ extension NSObject {
             "seen": false
         ])
     }
+    
+    func adjustPostFriendsList(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
+        db.collection("posts").whereField("posterID", isEqualTo: friendID).order(by: "timestamp", descending: true).getDocuments { snap, err in
+            guard let snap = snap else { return }
+            for doc in snap.documents {
+                let hideFromFeed = doc.get("hideFromFeed") as? Bool ?? false
+                let privacyLevel = doc.get("privacyLevel") as? String ?? "friends"
+                if !hideFromFeed && privacyLevel != "invite" {
+                    doc.reference.updateData(["friendsList" : FieldValue.arrayUnion([userID])])
+                }
+            }
+        }
+    }
 
     func getAttString(caption: String, taggedFriends: [String], font: UIFont, maxWidth: CGFloat) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {
         let attString = NSMutableAttributedString(string: caption)

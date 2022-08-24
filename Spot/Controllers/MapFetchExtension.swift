@@ -27,7 +27,6 @@ extension MapController {
         DispatchQueue.main.async { self.loadAdditionalOnboarding() }
         
         DispatchQueue.global(qos: .userInitiated).async {
-            print("get maps", Timestamp(date: Date()).seconds - self.startTime)
             self.getMaps()
             self.homeFetchGroup.enter()
             self.getRecentPosts(map: nil)
@@ -35,11 +34,10 @@ extension MapController {
             /// home fetch group once here and once for maps posts
             self.homeFetchGroup.notify(queue: .main) { [weak self] in
                 guard let self = self else { return }
-                print("home fetch", Timestamp(date: Date()).seconds - self.startTime)
                 self.attachNewPostListener()
                 self.newPostsButton.isHidden = false
                 self.reloadMapsCollection(resort: true, newPost: false)
-                self.displayHeelsMap()
+                if self.userInChapelHill() { self.displayHeelsMap() }
             }
         }
     }
@@ -284,6 +282,8 @@ extension MapController {
                     guard let postInfo = postIn else { return }
                     if self.deletedPostIDs.contains(postInfo.id ?? "") { return }
                     let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
+                    /// friendsPost from someone user isn't friends with
+                    if map == nil && !UserDataModel.shared.userInfo.friendIDs.contains(postInfo.posterID) { return }
                     /// check map dictionary for add
                     if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID ?? "", newPost: true) {
                         self.setPostDetails(post: postInfo) { [weak self] post in

@@ -341,7 +341,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 214 images.
+  /// This `R.image` struct is generated, and contains static references to 212 images.
   struct image {
     /// Image `AcceptedTheirFriendRequest`.
     static let acceptedTheirFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedTheirFriendRequest")
@@ -735,8 +735,6 @@ struct R: Rswift.Validatable {
     static let umbrellaTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "UmbrellaTag")
     /// Image `UsernameAvailable`.
     static let usernameAvailable = Rswift.ImageResource(bundle: R.hostingBundle, name: "UsernameAvailable")
-    /// Image `UsernameTaken-1`.
-    static let usernameTaken1 = Rswift.ImageResource(bundle: R.hostingBundle, name: "UsernameTaken-1")
     /// Image `UsernameTaken`.
     static let usernameTaken = Rswift.ImageResource(bundle: R.hostingBundle, name: "UsernameTaken")
     /// Image `UsersMapNotFriends`.
@@ -769,8 +767,6 @@ struct R: Rswift.Validatable {
     static let sp0tLogo = Rswift.ImageResource(bundle: R.hostingBundle, name: "sp0tLogo")
     /// Image `spotLogo`.
     static let spotLogo = Rswift.ImageResource(bundle: R.hostingBundle, name: "spotLogo")
-    /// Image `usernameAvailable-1`.
-    static let usernameAvailable1 = Rswift.ImageResource(bundle: R.hostingBundle, name: "usernameAvailable-1")
 
     #if os(iOS) || os(tvOS)
     /// `UIImage(named: "AcceptedTheirFriendRequest", bundle: ..., traitCollection: ...)`
@@ -2152,13 +2148,6 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "UsernameTaken-1", bundle: ..., traitCollection: ...)`
-    static func usernameTaken1(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.usernameTaken1, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "UsersMapNotFriends", bundle: ..., traitCollection: ...)`
     static func usersMapNotFriends(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.usersMapNotFriends, compatibleWith: traitCollection)
@@ -2260,13 +2249,6 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "spotLogo", bundle: ..., traitCollection: ...)`
     static func spotLogo(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.spotLogo, compatibleWith: traitCollection)
-    }
-    #endif
-
-    #if os(iOS) || os(tvOS)
-    /// `UIImage(named: "usernameAvailable-1", bundle: ..., traitCollection: ...)`
-    static func usernameAvailable1(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
-      return UIKit.UIImage(resource: R.image.usernameAvailable1, compatibleWith: traitCollection)
     }
     #endif
 

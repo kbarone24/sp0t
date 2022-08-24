@@ -26,7 +26,6 @@ struct UserProfile: Identifiable, Codable {
     var sentInvites: [String] = []
     var spotScore: Int? = 0
     var topFriends: [String: Int]? = [:]
-    var tutorialList: [Bool] = []
     var userBio: String
     var username: String
 
@@ -57,7 +56,6 @@ struct UserProfile: Identifiable, Codable {
         case sentInvites
         case spotScore
         case topFriends
-        case tutorialList
         case userBio
         case username
     }
@@ -105,6 +103,6 @@ struct UserProfile: Identifiable, Codable {
     }
     
     func friendsContains(id: String) -> Bool {
-        return id != self.id || !friendIDs.contains(id)
+        return id == self.id || friendIDs.contains(id)
     }
 }
