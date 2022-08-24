@@ -10,10 +10,13 @@ import Foundation
 import UIKit
 import Mixpanel
 
+protocol CountryPickerDelegate {
+    func finishPassing(code: CountryCode)
+}
+
 class CountryPickerController: UIViewController {
-    
+    var delegate: CountryPickerDelegate?
     var tableView: UITableView!
-    var phoneController: PhoneController!
     
     let countries = [
             CountryCode(id: 224, code: "+1", name: "United States"),
@@ -258,7 +261,7 @@ class CountryPickerController: UIViewController {
         super.viewDidLoad()
         
         tableView = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
-        tableView.backgroundColor = UIColor(named: "SpotBlack")
+        tableView.backgroundColor = .white
         tableView.separatorStyle = .none
         tableView.dataSource = self
         tableView.delegate = self
@@ -285,7 +288,7 @@ extension CountryPickerController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "CountryCell") as? CountryCell {
-            cell.setUp(country: countries[indexPath.row])
+            cell.setUp(code: countries[indexPath.row])
             return cell
         } else { return UITableViewCell() }
     }
@@ -306,76 +309,106 @@ extension CountryPickerController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let code = countries[indexPath.row]
-        phoneController.resetCountry(country: code)
+        delegate?.finishPassing(code: code)
         Mixpanel.mainInstance().track(event: "CountryPickerSelectCountry", properties: ["country": code.name])
         self.dismiss(animated: true, completion: nil)
     }
 }
 
 class CountryCell: UITableViewCell {
-    
     var countryName: UILabel!
     var countryCode: UILabel!
     var bottomLine: UIView!
     
-    func setUp(country: CountryCode) {
-        
-        backgroundColor = UIColor(named: "SpotBlack")
+    var code: CountryCode! {
+        didSet {
+            countryName.text = code.name
+            countryCode.text = code.code
+        }
+    }
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        backgroundColor = .white
         selectionStyle = .none
         
-        if countryName != nil { countryName.text = "" }
-        countryName = UILabel(frame: CGRect(x: 14, y: 20, width: UIScreen.main.bounds.width - 114, height: 20))
-        countryName.text = country.name
-        countryName.textColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1.0)
-        countryName.font = UIFont(name: "SFCompactText-Regular", size: 16)
-        countryName.textAlignment = .left
-        addSubview(countryName)
-        
-        if countryCode != nil { countryCode.text = "" }
-        countryCode = UILabel(frame: CGRect(x: UIScreen.main.bounds.width - 100, y: 20, width: 86, height: 20))
-        countryCode.text = country.code
-        countryCode.textColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0)
-        countryCode.font = UIFont(name: "SFCompactText-Regular", size: 16)
-        countryCode.textAlignment = .right
-        addSubview(countryCode)
-        
-        if bottomLine != nil { bottomLine.backgroundColor = nil }
-        bottomLine = UIView(frame: CGRect(x: 14, y: 49, width: UIScreen.main.bounds.width - 28, height: 1))
-        bottomLine.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
-        addSubview(bottomLine)
+        countryCode = UILabel {
+            $0.textColor = UIColor.darkGray
+            $0.font = UIFont(name: "SFCompactText-Regular", size: 16)
+            contentView.addSubview($0)
+        }
+        countryCode.snp.makeConstraints {
+            $0.trailing.equalToSuperview().offset(-14)
+            $0.top.equalTo(20)
+        }
+
+        countryName = UILabel {
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+            contentView.addSubview($0)
+        }
+        countryName.snp.makeConstraints {
+            $0.leading.equalTo(16)
+            $0.trailing.equalTo(countryCode.snp.leading).offset(-10)
+            $0.top.equalTo(20)
+        }
+            
+        bottomLine = UIView {
+            $0.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
+            contentView.addSubview($0)
+        }
+        bottomLine.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(14)
+            $0.bottom.equalToSuperview()
+            $0.height.equalTo(1)
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func setUp(code: CountryCode) {
+        self.code = code
     }
 }
 
 class CountryPickerHeader: UITableViewHeaderFooterView {
-    
     var label: UILabel!
+    var exitButton: UIButton!
     
     override init(reuseIdentifier: String?) {
-        
         super.init(reuseIdentifier: reuseIdentifier)
         
         let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor(named: "SpotBlack")
+        backgroundView.backgroundColor = .white
         self.backgroundView = backgroundView
         
-        backgroundColor = UIColor(named: "SpotBlack")
+        label = UILabel {
+            $0.text = "Select country"
+            $0.textColor = .black
+            $0.textAlignment = .center
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 18)
+            addSubview($0)
+        }
+        label.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(2)
+        }
         
-        if label != nil { return }
-        label = UILabel(frame: CGRect(x: 100, y: 15, width: UIScreen.main.bounds.width - 200, height: 20))
-        label.text = "Select country"
-        label.textColor = .white
-        label.textAlignment = .center
-        label.font = UIFont(name: "SFCompactText-Regular", size: 16)
-        addSubview(label)
-        
-        let exitButton = UIButton(frame: CGRect(x: UIScreen.main.bounds.width - 45, y: 9, width: 35, height: 35))
-        exitButton.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-        exitButton.setImage(UIImage(named: "CancelButton"), for: .normal)
-        exitButton.addTarget(self, action: #selector(exit(_:)), for: .touchUpInside)
-        self.addSubview(exitButton)
+        exitButton = UIButton {
+            $0.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
+            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+            $0.addTarget(self, action: #selector(exit), for: .touchUpInside)
+            addSubview($0)
+        }
+        exitButton.snp.makeConstraints {
+            $0.leading.top.equalTo(10)
+            $0.height.width.equalTo(35)
+        }
     }
     
-    @objc func exit(_ sender: UIButton) {
+    @objc func exit() {
         if let vc = viewContainingController() as? CountryPickerController {
             vc.dismiss(animated: true, completion: nil)
         }

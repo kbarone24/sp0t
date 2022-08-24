@@ -67,7 +67,7 @@ class FindFriendsController: UIViewController {
         ]
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow-1"),
+            image: UIImage(named: "BackArrowDark"),
             style: .plain,
             target: self,
             action: #selector(self.exit(_:))
@@ -658,7 +658,7 @@ class SendInvitesView: UIView {
             $0.contentMode = UIView.ContentMode.right
             $0.isHidden = false
             $0.translatesAutoresizingMaskIntoConstraints = true
-            $0.image =  UIImage(named: "Carot")
+            $0.image =  UIImage(named: "SideCarat")
             $0.layer.cornerRadius = 0
             self.addSubview($0)
         }
@@ -730,7 +730,7 @@ class SearchContactsView: UIView {
             $0.contentMode = UIView.ContentMode.right
             $0.isHidden = false
             $0.translatesAutoresizingMaskIntoConstraints = true
-            $0.image =  UIImage(named: "Carot")
+            $0.image =  UIImage(named: "SideCarat")
             $0.layer.cornerRadius = 0
             self.addSubview($0)
         }

@@ -10,9 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 
-
 class AvatarSelectionController: UIViewController {
-        
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
     var friendRequests: [UserNotification] = []
@@ -26,11 +24,10 @@ class AvatarSelectionController: UIViewController {
 
     var onDoneBlock : ((Bool) -> Void)?
 
-    
     init(sentFrom: String){
         super.init(nibName: nil, bundle: nil)
         from = sentFrom
-        if(from == "map"){
+        if (from == "map" || from == "create") {
             navigationItem.hidesBackButton = true
         }
     }
@@ -54,6 +51,7 @@ class AvatarSelectionController: UIViewController {
                 self.centerCell?.transformToLarge()
             }
         }
+        
         let layoutMargins: CGFloat = self.collectionView.layoutMargins.left + self.collectionView.layoutMargins.left
         let sideInset = (self.view.frame.width / 2) - layoutMargins
         self.collectionView.contentInset = UIEdgeInsets(top: 0, left: sideInset, bottom: 0, right: sideInset)

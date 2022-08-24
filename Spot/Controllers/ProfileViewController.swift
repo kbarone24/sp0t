@@ -25,16 +25,10 @@ class ProfileViewController: UIViewController {
             if collectionView != nil { DispatchQueue.main.async { self.collectionView.reloadData() } }
         }
     }
-    public var maps = [CustomMap]() {
-        didSet {
-            noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
-        }
-    }
-    private var posts = [MapPost]() {
-        didSet {
-            noPostLabel.isHidden = (maps.count == 0 && posts.count == 0) ? false : true
-        }
-    }
+    public lazy var maps = [CustomMap]()
+    private lazy var posts = [MapPost]()
+    private lazy var deletedPostIDs: [String] = []
+    
     private var postImages = [UIImage]()
     private var relation: ProfileRelation = .myself
     private var pendingFriendRequestNotiID: String? {
@@ -45,6 +39,17 @@ class ProfileViewController: UIViewController {
 
     private lazy var imageManager = SDWebImageManager()
     public unowned var containerDrawerView: DrawerView?
+    
+    var postsFetched = false {
+        didSet {
+            noPostLabel.isHidden = mapsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+        }
+    }
+    var mapsFetched = false {
+        didSet {
+            noPostLabel.isHidden = postsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+        }
+    }
     
     deinit {
         print("ProfileViewController(\(self) deinit")
@@ -126,7 +131,7 @@ extension ProfileViewController {
         ]
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow-1"),
+            image: UIImage(named: "BackArrowDark"),
             style: .plain,
             target: self,
             action: #selector(popVC)
@@ -208,7 +213,7 @@ extension ProfileViewController {
         }
         
         noPostLabel = UILabel {
-            $0.text = "\(userProfile!.name) hasn't posted yet"
+            $0.text = "\(userProfile!.username) hasn't posted yet"
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
             $0.isHidden = true
@@ -225,8 +230,6 @@ extension ProfileViewController {
         let query = db.collection("posts").whereField("posterID", isEqualTo: userProfile!.id!).order(by: "timestamp", descending: true).limit(to: 9)
         query.getDocuments { (snap, err) in
             if err != nil  { return }
-            self.posts.removeAll()
-            self.postImages.removeAll()
             
             // Set transform size
             var size = CGSize(width: 150, height: 150)
@@ -238,13 +241,16 @@ extension ProfileViewController {
                 size = CGSize(width: 200, height: 200)
             }
             
+            if snap!.documents.count == 0 { self.postsFetched = true }
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { return }
+                    if self.deletedPostIDs.contains(postInfo.id!) { continue }
                     self.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         self.posts.append(post)
+                        self.postsFetched = true
                     }
                     let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
                     self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
@@ -284,6 +290,7 @@ extension ProfileViewController {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
             }
+            self.mapsFetched = true
             self.sortAndReloadMaps()
         }
     }
@@ -304,8 +311,14 @@ extension ProfileViewController {
         guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
         guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
         guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
-
-        posts.removeAll(where: {$0.id == post.id})
+        deletedPostIDs.append(post.id!)
+        
+        if posts.contains(where: {$0.id == post.id}) {
+            posts.removeAll()
+            postImages.removeAll()
+            DispatchQueue.main.async { self.collectionView.reloadData() }
+            DispatchQueue.global().async { self.getNinePosts() }
+        }
         if mapDelete {
             maps.removeAll(where: {$0.id == post.mapID ?? ""})
             DispatchQueue.main.async { self.collectionView.reloadData() }
@@ -340,6 +353,7 @@ extension ProfileViewController {
     }
     
     @objc func notifyUserLoad(_ notification: NSNotification) {
+        if userProfile?.username ?? "" != "" { return }
         userProfile = UserDataModel.shared.userInfo
         getUserRelation()
         viewSetup()

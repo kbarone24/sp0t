@@ -20,7 +20,8 @@ class LandingPageController: UIViewController {
     var thumbnailImage: UIImageView! /// show preview thumbnail while video is buffering
     var videoPreviewView: UIView!
     var firstLoad = true /// determine whether video player has been loaded yet
-    
+    var privacyNote : UITextView!
+    var privacyLinks: UITextView!
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
     }
@@ -31,7 +32,6 @@ class LandingPageController: UIViewController {
     }
     
     deinit {
-        if videoPlayer != nil { videoPlayer.removeObserver(self, forKeyPath: "status") }
         NotificationCenter.default.removeObserver(self, name: UIApplication.didEnterBackgroundNotification, object: nil) /// deinit player on send to background
         NotificationCenter.default.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil) /// deinit player on resign active
         NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil) /// reinit player on send to foreground
@@ -42,18 +42,42 @@ class LandingPageController: UIViewController {
         super.viewDidLoad()
         
         view.backgroundColor = .white
+                
+        let loginButton = UIButton {
+            $0.layer.cornerRadius = 28
+            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+            let customButtonTitle = NSMutableAttributedString(string: "Log in", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+                NSAttributedString.Key.foregroundColor: UIColor(red: 0.488, green: 0.488, blue: 0.488, alpha: 1)
+            ])
+            $0.setAttributedTitle(customButtonTitle, for: .normal)
+            $0.setImage(nil, for: .normal)
+            $0.addTarget(self, action: #selector(loginWithPhoneTap(_:)), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        loginButton.snp.makeConstraints{
+            $0.leading.trailing.equalToSuperview().inset(27)
+            $0.height.equalTo(55.97)
+            $0.centerY.equalToSuperview()
+        }
         
-        //setUpVideoLayer()
         
-        var heightAdjust: CGFloat = 0
-        if UIScreen.main.bounds.height < 800 { heightAdjust = 20 }
+        let logo = UIImageView {
+            $0.image = UIImage(named: "LandingscreenLogo")
+            view.addSubview($0)
+        }
+        logo.snp.makeConstraints{
+            $0.bottom.equalTo(loginButton.snp.top).offset(-34)
+            $0.centerX.equalToSuperview()
+            $0.height.equalTo(133)
+            $0.width.equalTo(238)
+        }
         
-
         let createAccountButton = UIButton {
-            $0.layer.cornerRadius = 15
-            $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            $0.layer.cornerRadius = 28
+            $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
             let customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 17.5) as Any,
                 NSAttributedString.Key.foregroundColor: UIColor.black
             ])
             $0.setAttributedTitle(customButtonTitle, for: .normal)
@@ -61,132 +85,72 @@ class LandingPageController: UIViewController {
             $0.addTarget(self, action: #selector(createAccountTap(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
-        
-        
         createAccountButton.snp.makeConstraints{
-            $0.leading.trailing.equalToSuperview().inset(50)
-            $0.height.equalTo(58)
-            $0.top.equalToSuperview().offset(351)
+            $0.leading.trailing.equalToSuperview().inset(27)
+            $0.height.equalTo(55.97)
+            $0.top.equalTo(loginButton.snp.bottom).offset(12)
         }
+                
 
-        let loginButton = UIButton {
-            $0.layer.cornerRadius = 15
-            $0.backgroundColor = .white
-            $0.layer.borderWidth = 1.0
-            $0.layer.borderColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1).cgColor
-            let customButtonTitle = NSMutableAttributedString(string: "Log in", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
-                NSAttributedString.Key.foregroundColor: UIColor.black
-            ])
-            $0.setAttributedTitle(customButtonTitle, for: .normal)
-            $0.setImage(nil, for: .normal)
-            $0.addTarget(self, action: #selector(loginWithPhoneTap(_:)), for: .touchUpInside)
+        let privacyNote = UILabel {
+            $0.text = "By creating an account, you agree to sp0t’s"
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 0.8)
+            $0.font = UIFont(name: "SFCompactText-Medium", size: 13)
             view.addSubview($0)
         }
-        
-        
-        loginButton.snp.makeConstraints{
-            $0.leading.trailing.equalToSuperview().inset(50)
-            $0.height.equalTo(58)
-            $0.top.equalTo(createAccountButton.snp.bottom).offset(16)
-        }
-        
-        let loginButton2 = UIButton {
-            $0.layer.cornerRadius = 15
-            $0.backgroundColor = .black
-            $0.layer.borderWidth = 1.0
-            $0.layer.borderColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1).cgColor
-            let customButtonTitle = NSMutableAttributedString(string: "Log in with email", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
-                NSAttributedString.Key.foregroundColor: UIColor.white
-            ])
-            $0.setAttributedTitle(customButtonTitle, for: .normal)
-            $0.setImage(nil, for: .normal)
-            $0.addTarget(self, action: #selector(loginWithEmailTap(_:)), for: .touchUpInside)
-            view.addSubview($0)
-        }
-        
-        
-        loginButton2.snp.makeConstraints{
-            $0.leading.trailing.equalToSuperview().inset(50)
-            $0.height.equalTo(58)
-            $0.top.equalTo(loginButton.snp.bottom).offset(16)
-        }
-        
-        
-        let titleScreen = UIView {
-            view.addSubview($0)
-        }
-        
-        titleScreen.snp.makeConstraints{
-            $0.height.equalTo(60)
-            $0.top.equalToSuperview().offset(208)
-            $0.width.equalTo(106)
+        privacyNote.snp.makeConstraints{
+            $0.top.equalTo(createAccountButton.snp.bottom).offset(20)
             $0.centerX.equalToSuperview()
         }
+                
+        privacyLinks = UITextView()
+        privacyLinks.backgroundColor = .clear
+
+        let attributedString = NSMutableAttributedString(string: "Privacy Policy and Terms of Service")
+        let totalRange = NSRange(location: 0, length: attributedString.length)
+        attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-Medium", size: 13)!, range: totalRange)
+        attributedString.addAttribute(.foregroundColor, value: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), range: totalRange)
+
+        let url = URL(string: "https://www.sp0t.app/privacy")!
+        privacyLinks.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 0.8)
+        privacyLinks.font = UIFont(name: "SFCompactText-Medium", size: 13)
+
+        // Set the 'click here' substring to be the link
+        attributedString.setAttributes([.link: url], range: NSMakeRange(0, attributedString.length))
+        attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-SemiBold", size: 13)!, range: totalRange)
+        attributedString.addAttribute(.foregroundColor, value: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 0.7), range: totalRange)
+
+        self.privacyLinks.attributedText = attributedString
+        self.privacyLinks.isUserInteractionEnabled = true
+        self.privacyLinks.isEditable = false
+
         
-        let logo = UIImageView {
-            $0.contentMode = .center
-            $0.image = UIImage(named: "sp0tLogo")
-            titleScreen.addSubview($0)
+        self.privacyLinks.linkTextAttributes = [
+            .foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1),
+        ]
+
+        view.addSubview(privacyLinks)
+        
+        privacyLinks.snp.makeConstraints{
+            $0.top.equalTo(privacyNote.snp.bottom).offset(-7)
+            $0.width.equalTo(250)
+            $0.height.equalTo(50)
+            $0.centerX.equalToSuperview().offset(5)
         }
-        
-        logo.snp.makeConstraints{
-            $0.leading.equalToSuperview()
-            $0.width.equalTo(38.32)
-            $0.height.equalTo(55.95)
-            $0.bottom.equalToSuperview()
-        }
-        
-        let title = UILabel {
-            $0.text = "SPOT"
-            $0.font = UIFont(name: "SFCompactRounded-Black", size: 32)
-            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            titleScreen.addSubview($0)
-        }
-        
-      title.snp.makeConstraints{
-            $0.bottom.equalToSuperview()
-            $0.leading.equalTo(logo.snp.trailing).offset(-10)
-        }
-        
-        let subTitle = UILabel {
-            $0.text = "Share your world"
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 22)
-            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            view.addSubview($0)
-        }
-        
-        subTitle.snp.makeConstraints{
-            $0.top.equalTo(titleScreen.snp.bottom).offset(9.05)
-            $0.centerX.equalToSuperview()
-        }
-        
-        
-        
     }
     
     @objc func createAccountTap(_ sender: UIButton) {
-        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "SignUp") as? SignUpController {
+        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "SignUp") as? NameController {
             let navController = UINavigationController(rootViewController: vc)
             navController.modalPresentationStyle = .fullScreen
             self.present(navController, animated: false, completion: nil)
         }
     }
-    
-    @objc func loginWithEmailTap(_ sender: UIButton) {
-        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "EmailLogin") as? EmailLoginController {
-            let navController = UINavigationController(rootViewController: vc)
-            navController.modalPresentationStyle = .fullScreen
-            self.present(navController, animated: false, completion: nil)
-        }
-    }
-    
+        
     @objc func loginWithPhoneTap(_ sender: UIButton) {
         if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhoneVC") as? PhoneController {
-            
+            vc.root = true
             vc.codeType = .logIn
-            
             let navController = UINavigationController(rootViewController: vc)
             navController.modalPresentationStyle = .fullScreen
             self.present(navController, animated: false, completion: nil)
