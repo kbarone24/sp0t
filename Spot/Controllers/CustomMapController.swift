@@ -516,7 +516,9 @@ extension CustomMapController: UIScrollViewDelegate {
             }
             // Show navigation bar + adjust offset for small header
             if scrollView.contentOffset.y > topYContentOffset! {
-                barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
+                UIView.animate(withDuration: 0.3) {
+                    self.barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
+                }
                 var titleText = ""
                 if scrollView.contentOffset.y > 0 {
                     titleText = mapType == .friendsMap ? "Friends posts" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
