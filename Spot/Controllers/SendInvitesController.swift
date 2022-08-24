@@ -518,7 +518,6 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
             let formattedNumber = pendingNumber.formatNumber()
         /// update header
             UserDataModel.shared.userInfo.sentInvites.append(formattedNumber)
-            
         /// update local sentInvites
             sentInvites.append(formattedNumber)
         

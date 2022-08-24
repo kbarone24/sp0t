@@ -341,7 +341,7 @@ struct R: Rswift.Validatable {
     fileprivate init() {}
   }
 
-  /// This `R.image` struct is generated, and contains static references to 203 images.
+  /// This `R.image` struct is generated, and contains static references to 212 images.
   struct image {
     /// Image `AcceptedTheirFriendRequest`.
     static let acceptedTheirFriendRequest = Rswift.ImageResource(bundle: R.hostingBundle, name: "AcceptedTheirFriendRequest")
@@ -551,8 +551,20 @@ struct R: Rswift.Validatable {
     static let honeyTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "HoneyTag")
     /// Image `InviteFriends`.
     static let inviteFriends = Rswift.ImageResource(bundle: R.hostingBundle, name: "InviteFriends")
+    /// Image `LandingPage0`.
+    static let landingPage0 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage0")
+    /// Image `LandingPage1`.
+    static let landingPage1 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage1")
+    /// Image `LandingPage2`.
+    static let landingPage2 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage2")
+    /// Image `LandingPage3`.
+    static let landingPage3 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage3")
+    /// Image `LandingPage4`.
+    static let landingPage4 = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPage4")
     /// Image `LandingPageLogo`.
     static let landingPageLogo = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingPageLogo")
+    /// Image `LandingscreenLogo`.
+    static let landingscreenLogo = Rswift.ImageResource(bundle: R.hostingBundle, name: "LandingscreenLogo")
     /// Image `LeafTag`.
     static let leafTag = Rswift.ImageResource(bundle: R.hostingBundle, name: "LeafTag")
     /// Image `LikeButtonFilled`.
@@ -611,6 +623,8 @@ struct R: Rswift.Validatable {
     static let onboardNextButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "OnboardNextButton")
     /// Image `OnboardSearchContactsButton`.
     static let onboardSearchContactsButton = Rswift.ImageResource(bundle: R.hostingBundle, name: "OnboardSearchContactsButton")
+    /// Image `OnboardingLogo`.
+    static let onboardingLogo = Rswift.ImageResource(bundle: R.hostingBundle, name: "OnboardingLogo")
     /// Image `Panda`.
     static let panda = Rswift.ImageResource(bundle: R.hostingBundle, name: "Panda")
     /// Image `ParkTag`.
@@ -743,12 +757,16 @@ struct R: Rswift.Validatable {
     static let cowDance = Rswift.ImageResource(bundle: R.hostingBundle, name: "cowDance")
     /// Image `giraffeDance`.
     static let giraffeDance = Rswift.ImageResource(bundle: R.hostingBundle, name: "giraffeDance")
+    /// Image `globalChilling`.
+    static let globalChilling = Rswift.ImageResource(bundle: R.hostingBundle, name: "globalChilling")
     /// Image `lionDance`.
     static let lionDance = Rswift.ImageResource(bundle: R.hostingBundle, name: "lionDance")
     /// Image `pigDance`.
     static let pigDance = Rswift.ImageResource(bundle: R.hostingBundle, name: "pigDance")
     /// Image `sp0tLogo`.
     static let sp0tLogo = Rswift.ImageResource(bundle: R.hostingBundle, name: "sp0tLogo")
+    /// Image `spotLogo`.
+    static let spotLogo = Rswift.ImageResource(bundle: R.hostingBundle, name: "spotLogo")
 
     #if os(iOS) || os(tvOS)
     /// `UIImage(named: "AcceptedTheirFriendRequest", bundle: ..., traitCollection: ...)`
@@ -1479,9 +1497,51 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LandingPage0", bundle: ..., traitCollection: ...)`
+    static func landingPage0(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.landingPage0, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LandingPage1", bundle: ..., traitCollection: ...)`
+    static func landingPage1(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.landingPage1, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LandingPage2", bundle: ..., traitCollection: ...)`
+    static func landingPage2(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.landingPage2, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LandingPage3", bundle: ..., traitCollection: ...)`
+    static func landingPage3(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.landingPage3, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LandingPage4", bundle: ..., traitCollection: ...)`
+    static func landingPage4(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.landingPage4, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "LandingPageLogo", bundle: ..., traitCollection: ...)`
     static func landingPageLogo(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.landingPageLogo, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "LandingscreenLogo", bundle: ..., traitCollection: ...)`
+    static func landingscreenLogo(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.landingscreenLogo, compatibleWith: traitCollection)
     }
     #endif
 
@@ -1685,6 +1745,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "OnboardSearchContactsButton", bundle: ..., traitCollection: ...)`
     static func onboardSearchContactsButton(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.onboardSearchContactsButton, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "OnboardingLogo", bundle: ..., traitCollection: ...)`
+    static func onboardingLogo(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.onboardingLogo, compatibleWith: traitCollection)
     }
     #endif
 
@@ -2151,6 +2218,13 @@ struct R: Rswift.Validatable {
     #endif
 
     #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "globalChilling", bundle: ..., traitCollection: ...)`
+    static func globalChilling(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.globalChilling, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
     /// `UIImage(named: "lionDance", bundle: ..., traitCollection: ...)`
     static func lionDance(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.lionDance, compatibleWith: traitCollection)
@@ -2168,6 +2242,13 @@ struct R: Rswift.Validatable {
     /// `UIImage(named: "sp0tLogo", bundle: ..., traitCollection: ...)`
     static func sp0tLogo(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
       return UIKit.UIImage(resource: R.image.sp0tLogo, compatibleWith: traitCollection)
+    }
+    #endif
+
+    #if os(iOS) || os(tvOS)
+    /// `UIImage(named: "spotLogo", bundle: ..., traitCollection: ...)`
+    static func spotLogo(compatibleWith traitCollection: UIKit.UITraitCollection? = nil) -> UIKit.UIImage? {
+      return UIKit.UIImage(resource: R.image.spotLogo, compatibleWith: traitCollection)
     }
     #endif
 
@@ -2418,34 +2499,19 @@ struct _R: Rswift.Validatable {
 
       let bundle = R.hostingBundle
       let confirmVC = StoryboardViewControllerResource<ConfirmCodeController>(identifier: "ConfirmVC")
-      let contactsOverview = StoryboardViewControllerResource<ContactsOverviewController>(identifier: "ContactsOverview")
       let countryPicker = StoryboardViewControllerResource<CountryPickerController>(identifier: "CountryPicker")
-      let emailLogin = StoryboardViewControllerResource<EmailLoginController>(identifier: "EmailLogin")
-      let forgotPassword = StoryboardViewControllerResource<ResetViewController>(identifier: "ForgotPassword")
       let landingPage = StoryboardViewControllerResource<LandingPageController>(identifier: "LandingPage")
       let name = "Main"
       let phoneVC = StoryboardViewControllerResource<PhoneController>(identifier: "PhoneVC")
-      let signUp = StoryboardViewControllerResource<SignUpController>(identifier: "SignUp")
+      let signUp = StoryboardViewControllerResource<NameController>(identifier: "SignUp")
       let usernameVC = StoryboardViewControllerResource<UsernameController>(identifier: "UsernameVC")
 
       func confirmVC(_: Void = ()) -> ConfirmCodeController? {
         return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: confirmVC)
       }
 
-      func contactsOverview(_: Void = ()) -> ContactsOverviewController? {
-        return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: contactsOverview)
-      }
-
       func countryPicker(_: Void = ()) -> CountryPickerController? {
         return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: countryPicker)
-      }
-
-      func emailLogin(_: Void = ()) -> EmailLoginController? {
-        return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: emailLogin)
-      }
-
-      func forgotPassword(_: Void = ()) -> ResetViewController? {
-        return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: forgotPassword)
       }
 
       func landingPage(_: Void = ()) -> LandingPageController? {
@@ -2456,7 +2522,7 @@ struct _R: Rswift.Validatable {
         return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: phoneVC)
       }
 
-      func signUp(_: Void = ()) -> SignUpController? {
+      func signUp(_: Void = ()) -> NameController? {
         return UIKit.UIStoryboard(resource: self).instantiateViewController(withResource: signUp)
       }
 
@@ -2469,13 +2535,10 @@ struct _R: Rswift.Validatable {
           if UIKit.UIColor(named: "SpotBlack", in: R.hostingBundle, compatibleWith: nil) == nil { throw Rswift.ValidationError(description: "[R.swift] Color named 'SpotBlack' is used in storyboard 'Main', but couldn't be loaded.") }
         }
         if _R.storyboard.main().confirmVC() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'confirmVC' could not be loaded from storyboard 'Main' as 'ConfirmCodeController'.") }
-        if _R.storyboard.main().contactsOverview() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'contactsOverview' could not be loaded from storyboard 'Main' as 'ContactsOverviewController'.") }
         if _R.storyboard.main().countryPicker() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'countryPicker' could not be loaded from storyboard 'Main' as 'CountryPickerController'.") }
-        if _R.storyboard.main().emailLogin() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'emailLogin' could not be loaded from storyboard 'Main' as 'EmailLoginController'.") }
-        if _R.storyboard.main().forgotPassword() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'forgotPassword' could not be loaded from storyboard 'Main' as 'ResetViewController'.") }
         if _R.storyboard.main().landingPage() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'landingPage' could not be loaded from storyboard 'Main' as 'LandingPageController'.") }
         if _R.storyboard.main().phoneVC() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'phoneVC' could not be loaded from storyboard 'Main' as 'PhoneController'.") }
-        if _R.storyboard.main().signUp() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'signUp' could not be loaded from storyboard 'Main' as 'SignUpController'.") }
+        if _R.storyboard.main().signUp() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'signUp' could not be loaded from storyboard 'Main' as 'NameController'.") }
         if _R.storyboard.main().usernameVC() == nil { throw Rswift.ValidationError(description:"[R.swift] ViewController with identifier 'usernameVC' could not be loaded from storyboard 'Main' as 'UsernameController'.") }
       }
 

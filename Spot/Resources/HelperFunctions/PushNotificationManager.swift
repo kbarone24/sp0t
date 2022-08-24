@@ -25,14 +25,11 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
     }
     
     func registerForPushNotifications() {
-        
         UNUserNotificationCenter.current().getNotificationSettings { (settings) in
-            
             if settings.authorizationStatus == .authorized {
+                print("auth")
                 return
-            }
-            
-            else {
+            } else {
                 // Either denied or notDetermined
                 let authOptions: UNAuthorizationOptions = [.alert, .badge]
                 UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { (granted: Bool, err) in
@@ -48,7 +45,6 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
         }
         
         UNUserNotificationCenter.current().delegate = self
-        
     }
     
     func updateFirestorePushTokenIfNeeded() {
