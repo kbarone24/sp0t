@@ -10,36 +10,31 @@ import UIKit
 import Firebase
 import CoreLocation
 import Mixpanel
-import IQKeyboardManagerSwift
-
 
 class NameController: UIViewController, UITextFieldDelegate {
-                
+    var label: UILabel!
     var nameField: UITextField!
     var nextButton: UIButton!
-
-    var activityIndicator: CustomActivityIndicator!
         
-    var label: UILabel!
-    var countryCodeView: CountryCodeView!
     var paddingView: UIView!
     var submitButton: UIButton!
-    
     var newUser: NewUser!
     
     var cancelOnDismiss = false
 
-    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "SignUp1Open")
         enableKeyboardMethods()
-        if nameField != nil { nameField.becomeFirstResponder() }
+        if nameField != nil { DispatchQueue.main.async { self.nameField.becomeFirstResponder() }}
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        IQKeyboardManager.shared.enable = true
         disableKeyboardMethods()
     }
         
@@ -51,15 +46,12 @@ class NameController: UIViewController, UITextFieldDelegate {
     
     func enableKeyboardMethods() {
         cancelOnDismiss = false
-        IQKeyboardManager.shared.enableAutoToolbar = false
-        IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
     }
     
     func disableKeyboardMethods() {
         cancelOnDismiss = true
-        IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }
@@ -74,16 +66,14 @@ class NameController: UIViewController, UITextFieldDelegate {
         
         let logo = UIImage(named: "OnboardingLogo")
         let imageView = UIImageView(image:logo)
-        //imageView.contentMode = .scaleToFill
-        imageView.snp.makeConstraints{
+        imageView.snp.makeConstraints {
             $0.height.equalTo(32.9)
             $0.width.equalTo(78)
-
         }
         self.navigationItem.titleView = imageView
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow-1"),
+            image: UIImage(named: "BackArrowDark"),
             style: .plain,
             target: self,
             action: #selector(backTapped(_:))
@@ -92,7 +82,6 @@ class NameController: UIViewController, UITextFieldDelegate {
     
     func setUpViews(){
         view.backgroundColor = .white
-               
         newUser = NewUser(name: "", username: "", phone: "")
         
         label = UILabel {
@@ -100,7 +89,6 @@ class NameController: UIViewController, UITextFieldDelegate {
             $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
             view.addSubview($0)
-
         }
         label.snp.makeConstraints{
             $0.top.equalToSuperview().offset(114)
@@ -108,14 +96,13 @@ class NameController: UIViewController, UITextFieldDelegate {
         }
                 
         nameField = UITextField {
-            //$0.backgroundColor = UIColor(red: 0.933, green: 0.933, blue: 0.933, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
             $0.textAlignment = .center
             $0.tintColor = UIColor(named: "SpotGreen")
             $0.textColor = .black
             var placeholderText = NSMutableAttributedString()
             placeholderText = NSMutableAttributedString(string: "sp0t b0tterson", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5),
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
             ])
             $0.attributedPlaceholder = placeholderText
@@ -161,33 +148,21 @@ class NameController: UIViewController, UITextFieldDelegate {
             $0.height.equalTo(49)
             $0.bottom.equalToSuperview().offset(-30)
         }
-        
-        activityIndicator = CustomActivityIndicator(){
-            $0.isHidden = true
-            view.addSubview($0)
-
-        }
-        activityIndicator.snp.makeConstraints{
-            $0.top.equalTo(bottomLine.snp.bottom).offset(20)
-            $0.width.height.equalTo(20)
-            $0.centerX.equalToSuperview()
-        }
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        let message = nameFieldComplete(name: nameField.text ?? "")
-        nextButton.alpha = message == "" ? 1.0 : 0.65
-        nextButton.isUserInteractionEnabled = message == "" ? true : false
+        let complete = nameFieldComplete(name: nameField.text ?? "")
+        nextButton.isEnabled = complete
+        nextButton.alpha = complete ? 1.0 : 0.65
     }
     
     @objc func textChanged(_ sender: UITextView) {
-        let message = nameFieldComplete(name: nameField.text ?? "")
-        nextButton.alpha = message == "" ? 1.0 : 0.65
-        nextButton.isUserInteractionEnabled = message == "" ? true : false
+        let complete = nameFieldComplete(name: nameField.text ?? "")
+        nextButton.isEnabled = complete
+        nextButton.alpha = complete ? 1.0 : 0.65
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {
-        print("keyboard will show")
         if cancelOnDismiss { return }
         /// new spot name view editing when textview not first responder
         animateWithKeyboard(notification: notification) { keyboardFrame in
@@ -221,61 +196,34 @@ class NameController: UIViewController, UITextFieldDelegate {
     /// limit name field to 25 characters
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         let currentText = textField.text ?? ""
-        
         guard let stringRange = Range(range, in: currentText) else { return false }
-        
         let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
         
-        if textField.tag == 0 {
-            return updatedText.count <= 25
-        } else {
-            return true
-        }
+        return updatedText.count <= 25
     }
     
     @objc func backTapped(_ sender: UIButton) {
-        self.dismiss(animated: false, completion: nil)
+        DispatchQueue.main.async { self.dismiss(animated: false, completion: nil) }
     }
         
     @objc func nextTapped(_ sender: UIButton){
-        
-        self.view.endEditing(true)
-
+        DispatchQueue.main.async { self.view.endEditing(true) }
         //gets the text values from the text boxes
         guard let name = nameField.text else { return }
-        
         //Checks to see if there is text field without text entered into it
-        
-        let errorMessage = self.nameFieldComplete(name: name)
-        
-        if errorMessage == "" {
-            
+        if nameFieldComplete(name: name) {
             self.newUser.name = name
             let vc = UsernameController()
-            Mixpanel.mainInstance().track(event: "SignUp1Success")
             vc.newUser = self.newUser
-            self.navigationController?.pushViewController(vc, animated: true)
-    
-                
-        } else {
-            Mixpanel.mainInstance().track(event: "SignUp1InvalidFields", properties: ["error": errorMessage])
-            nextButton.isUserInteractionEnabled = false
+            DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
+            
+            Mixpanel.mainInstance().track(event: "SignUp1Success")
         }
     }
     
-    //add new user's account to firestore w/ uid key and name,email,username value pairs
-    
-    
     //Function checks to see if text is entered into all fields
-    private func nameFieldComplete(name: String) -> String {
-        
-        var errorMessage = ""
-        
-        if name.isEmpty {
-            errorMessage = "Please enter your name."
-        }
-
-        return errorMessage
+    private func nameFieldComplete(name: String) -> Bool {
+        return !name.trimmingCharacters(in: .whitespaces).isEmpty
     }
     
     func termsTap(_ sender: UIButton) {
@@ -284,10 +232,4 @@ class NameController: UIViewController, UITextFieldDelegate {
             UIApplication.shared.open(url)
         }
     }
-    
-    //Hide keyboard when user touches screen
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        self.view.endEditing(true)
-    }
-    
 }

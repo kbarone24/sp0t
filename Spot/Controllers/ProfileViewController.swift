@@ -27,6 +27,7 @@ class ProfileViewController: UIViewController {
     }
     public lazy var maps = [CustomMap]()
     private lazy var posts = [MapPost]()
+    private lazy var deletedPostIDs: [String] = []
     
     private var postImages = [UIImage]()
     private var relation: ProfileRelation = .myself
@@ -245,6 +246,7 @@ extension ProfileViewController {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { return }
+                    if self.deletedPostIDs.contains(postInfo.id!) { continue }
                     self.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         self.posts.append(post)
@@ -309,8 +311,14 @@ extension ProfileViewController {
         guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
         guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
         guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
-
-        posts.removeAll(where: {$0.id == post.id})
+        deletedPostIDs.append(post.id!)
+        
+        if posts.contains(where: {$0.id == post.id}) {
+            posts.removeAll()
+            postImages.removeAll()
+            DispatchQueue.main.async { self.collectionView.reloadData() }
+            DispatchQueue.global().async { self.getNinePosts() }
+        }
         if mapDelete {
             maps.removeAll(where: {$0.id == post.mapID ?? ""})
             DispatchQueue.main.async { self.collectionView.reloadData() }
