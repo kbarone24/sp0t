@@ -689,7 +689,7 @@ extension NSObject {
     func setSecondaryPostValues(post: MapPost) -> MapPost {
         var newPost = post
         /// round to nearest line height
-        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 65)
+        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 51.9)
         return newPost
     }
     
@@ -991,6 +991,20 @@ extension NSObject {
             "type": "friendRequest",
             "seen": false
         ])
+    }
+    
+    func adjustPostFriendsList(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
+        db.collection("posts").whereField("posterID", isEqualTo: friendID).order(by: "timestamp", descending: true).getDocuments { snap, err in
+            guard let snap = snap else { return }
+            for doc in snap.documents {
+                let hideFromFeed = doc.get("hideFromFeed") as? Bool ?? false
+                let privacyLevel = doc.get("privacyLevel") as? String ?? "friends"
+                if !hideFromFeed && privacyLevel != "invite" {
+                    doc.reference.updateData(["friendsList" : FieldValue.arrayUnion([userID])])
+                }
+            }
+        }
     }
 
     func getAttString(caption: String, taggedFriends: [String], font: UIFont, maxWidth: CGFloat) -> ((NSMutableAttributedString, [(rect: CGRect, username: String)])) {

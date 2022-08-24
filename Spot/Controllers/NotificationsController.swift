@@ -61,6 +61,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(rawValue: "DeletePost"), object: nil)
         setupView()
+        askForNotifications()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -98,7 +99,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         ]
                
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrow-1"),
+            image: UIImage(named: "BackArrowDark"),
             style: .plain,
             target: self,
             action: #selector(leaveNotifs)
@@ -541,5 +542,13 @@ class ActivityIndicatorCell: UITableViewCell {
         activityIndicator.startAnimating()
         activityIndicator.translatesAutoresizingMaskIntoConstraints = true
         contentView.addSubview(activityIndicator)
+    }
+}
+
+/// ask for notis
+extension NotificationsController {
+    func askForNotifications() {
+        let pushManager = PushNotificationManager(userID: uid)
+        pushManager.registerForPushNotifications()
     }
 }

@@ -22,12 +22,12 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="g5H-hZ-kIU" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2080" y="808"/>
+            <point key="canvasLocation" x="-2054" y="62"/>
         </scene>
-        <!--Sign Up Controller-->
+        <!--Name Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController storyboardIdentifier="SignUp" id="BYZ-38-t0r" customClass="SignUpController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="SignUp" id="BYZ-38-t0r" customClass="NameController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -74,12 +74,12 @@
         <!--Phone Controller-->
         <scene sceneID="SZt-ze-ew5">
             <objects>
-                <viewController storyboardIdentifier="PhoneVC" title="Phone Controller" id="byO-bf-wlw" customClass="PhoneController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="PhoneVC" title="Phone Controller" interfaceStyle="light" id="byO-bf-wlw" customClass="PhoneController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="hzn-Kc-D0p">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="CUL-ky-qrX"/>
-                        <color key="backgroundColor" name="SpotBlack"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </view>
                     <extendedEdge key="edgesForExtendedLayout"/>
                 </viewController>
@@ -102,55 +102,6 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ppj-2r-1Lv" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="2633" y="62"/>
-        </scene>
-        <!--Contacts Overview Controller-->
-        <scene sceneID="i6n-5L-yT6">
-            <objects>
-                <viewController storyboardIdentifier="ContactsOverview" interfaceStyle="dark" id="Uaf-lN-EtD" customClass="ContactsOverviewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="DjC-fS-siO">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="7K3-AQ-Iq4"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </view>
-                    <extendedEdge key="edgesForExtendedLayout"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="dtC-PO-y4j" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="3667" y="62"/>
-        </scene>
-        <!--resetView-->
-        <scene sceneID="HRS-Cp-xON">
-            <objects>
-                <viewController storyboardIdentifier="ForgotPassword" title="resetView" id="VBi-4S-HmH" customClass="ResetViewController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="vFk-2O-OHB">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="cme-O4-bPL"/>
-                    </view>
-                    <extendedEdge key="edgesForExtendedLayout"/>
-                    <navigationItem key="navigationItem" id="Ede-Nc-fk7"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="05g-aM-7Gk" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-768" y="1606"/>
-        </scene>
-        <!--Email Login Controller-->
-        <scene sceneID="kEs-Lq-NMz">
-            <objects>
-                <viewController storyboardIdentifier="EmailLogin" title="Email Login Controller" interfaceStyle="light" id="gWK-HF-6yf" customClass="EmailLoginController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="KtO-vt-APb">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="Cnz-rS-oVl"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                    </view>
-                    <extendedEdge key="edgesForExtendedLayout"/>
-                    <navigationItem key="navigationItem" id="MIG-VT-X50"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="z2e-P3-jzF" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-768" y="808"/>
         </scene>
     </scenes>
     <resources>

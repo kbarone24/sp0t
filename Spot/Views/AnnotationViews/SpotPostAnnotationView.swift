@@ -13,6 +13,7 @@ import FirebaseUI
 
 class SpotPostAnnotationView: MKAnnotationView {
     var id = ""
+    var spotName = ""
     var postIDs: [String] = []
     
     lazy var imageManager = SDWebImageManager()
@@ -31,9 +32,10 @@ class SpotPostAnnotationView: MKAnnotationView {
     
     func updateImage(posts: [MapPost], spotName: String, id: String) {
         self.id = id
-        postIDs = posts.map({$0.id!})
-        let post = posts.first
+        self.spotName = spotName
+        self.postIDs = posts.map({$0.id!})
         
+        let post = posts.first
         if post != nil {
             let nibView = loadNib(post: post!, spotName: spotName, postCount: posts.count)
             self.image = nibView.asImage()

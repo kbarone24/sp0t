@@ -122,6 +122,7 @@ class MapController: UIViewController {
     func addMapView() {
         mapView = SpotMapView {
             $0.delegate = self
+            $0.spotMapDelegate = self
             $0.mapType = .mutedStandard
             $0.overrideUserInterfaceStyle = .light
             $0.pointOfInterestFilter = .excludingAll
@@ -233,7 +234,6 @@ class MapController: UIViewController {
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
-                
                 let transition = AddButtonTransition()
                 self.navigationController?.view.layer.add(transition, forKey: kCATransition)
                 self.navigationController?.pushViewController(vc, animated: false)
@@ -268,7 +268,6 @@ class MapController: UIViewController {
     
     @objc func openFindFriendsDrawer(_ sender: UIButton){
         let ffvc = FindFriendsController()
-        
         sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
         })
@@ -277,7 +276,6 @@ class MapController: UIViewController {
         sheetView?.canInteract = false
         sheetView?.present(to: .Top)
         sheetView?.showCloseButton = false
-        
         ffvc.contentDrawer = sheetView
     }
 
@@ -328,8 +326,10 @@ class MapController: UIViewController {
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
             mapView.removeAllAnnos()
+            if addFriends != nil { addFriends.removeFromSuperview() } /// remove add friends view whenever leaving home screen
         } else {
             mapView.delegate = self
+            mapView.spotMapDelegate = self
             addMapAnnotations(index: selectedItemIndex, reload: true)
         }
     }
@@ -434,9 +434,9 @@ extension MapController: CLLocationManagerDelegate {
 
 extension MapController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
+      /*  if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
             return false
-        }
+        } */
         return true
     }
 }

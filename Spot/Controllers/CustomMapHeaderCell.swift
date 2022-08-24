@@ -285,16 +285,17 @@ extension CustomMapHeaderCell {
     }
     
     private func setActionButton() {
-        if mapData!.memberIDs.contains(UserDataModel.shared.uid) == false && mapData!.likers.contains(UserDataModel.shared.uid) == false {
-            actionButton.setTitle("Follow map", for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+        if mapData!.memberIDs.contains(UserDataModel.shared.uid) && !(mapData!.communityMap ?? false) {
+            actionButton.setTitle("Edit map", for: .normal)
+            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         } else if mapData!.likers.contains(UserDataModel.shared.uid) {
             actionButton.setTitle("Following", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-        } else if mapData!.memberIDs.contains(UserDataModel.shared.uid) {
-            actionButton.setTitle("Edit map", for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+        } else if !mapData!.secret {
+            actionButton.setTitle("Follow map", for: .normal)
+            actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
         }
+
         actionButton.addTarget(self, action: #selector(actionButtonAction), for: .touchUpInside)
     }
     

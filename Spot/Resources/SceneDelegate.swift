@@ -19,7 +19,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             self.window = UIWindow(windowScene: windowScene)
             
             if Auth.auth().currentUser != nil {
-                checkForPhoneAuth()
+                self.animateToMap()
                 
             } else {
                 let sb = UIStoryboard(name: "Main", bundle: nil)
@@ -30,7 +30,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             }
         }
     }
-    
+    /*
     func checkForPhoneAuth() {
         /// use user defaults as primary, firestore as backup
         let defaults = UserDefaults.standard
@@ -41,7 +41,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             self.animateToMap()
             
         } else {
-            
+
             let db = Firestore.firestore()
             db.collection("users").whereField("email", isEqualTo: Auth.auth().currentUser?.email ?? "").getDocuments { (snap, err) in
 
@@ -75,7 +75,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             self.window!.makeKeyAndVisible()
         }
     }
-    
+    */
     func animateToMap() {
         let sb = UIStoryboard(name: "Map", bundle: nil)
         let vc = sb.instantiateViewController(withIdentifier: "MapVC") as! MapController

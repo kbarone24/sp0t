@@ -28,14 +28,14 @@ class CustomMapController: UIViewController {
     private var barView: UIView!
     private var titleLabel: UILabel!
     private var barBackButton: UIButton!
-    private var addButton: UIButton!
+  //  private var addButton: UIButton!
     private var drawerViewIsDragging = false
     
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
             if collectionView != nil { DispatchQueue.main.async {self.collectionView.reloadData()}}
-            if addButton != nil { addButton.isHidden = !(mapData?.memberIDs.contains(uid) ?? false) }
+          //  if addButton != nil { addButton.isHidden = !(mapData?.memberIDs.contains(uid) ?? false) }
         }
     }
     private var firstMaxFourMapMemberList: [UserProfile] = []
@@ -44,6 +44,7 @@ class CustomMapController: UIViewController {
     public unowned var containerDrawerView: DrawerView? {
         didSet {
             configureDrawerView()
+            if !ranSetUp { runInitialFetches() }
         }
     }
     
@@ -53,14 +54,15 @@ class CustomMapController: UIViewController {
     private var mapType: MapType!
     var centeredMap = false
     var fullScreenOnDismissal = false
+    var ranSetUp = false
     
     init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], presentedDrawerView: DrawerView?, mapType: MapType) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile
         self.mapData = mapData
         self.postsList = postsList
-        self.containerDrawerView = presentedDrawerView
         self.mapType = mapType
+        self.containerDrawerView = presentedDrawerView
     }
     
     required init?(coder: NSCoder) {
@@ -76,32 +78,23 @@ class CustomMapController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
         if let mapNav = window as? UINavigationController {
             guard let mapVC = mapNav.viewControllers[0] as? MapController else { return }
             mapController = mapVC
         }
-        addInitialPosts()
-
-        switch mapType {
-        case .customMap:
-            getMapInfo()
-        case .friendsMap:
-            viewSetup()
-            getPosts()
-        case .myMap:
-            viewSetup()
-            getPosts()
-        default: return
-        }
+        if !ranSetUp && containerDrawerView != nil { runInitialFetches() }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
         configureDrawerView()
-        mapController?.mapView.delegate = self
         if barView != nil { barView.isHidden = false }
+
+        mapController?.mapView.delegate = self
+        mapController?.mapView.spotMapDelegate = self
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -117,6 +110,23 @@ class CustomMapController: UIViewController {
 }
 
 extension CustomMapController {
+    private func runInitialFetches() {
+        ranSetUp = true
+        addInitialPosts()
+
+        switch mapType {
+        case .customMap:
+            getMapInfo()
+        case .friendsMap:
+            viewSetup()
+            getPosts()
+        case .myMap:
+            viewSetup()
+            getPosts()
+        default: return
+        }
+    }
+    
     private func addInitialPosts() {
         if !(mapData?.postGroup.isEmpty ?? true) {
             postsList = mapData!.postsDictionary.map{$0.value}.sorted(by: {$0.timestamp.seconds > $1.timestamp.seconds})
@@ -164,6 +174,7 @@ extension CustomMapController {
     }
     
     private func viewSetup() {
+        if containerDrawerView == nil { return }
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
@@ -195,7 +206,7 @@ extension CustomMapController {
         collectionView.isScrollEnabled = false
         
         floatBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
+            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
             $0.backgroundColor = .white
             $0.setTitle("", for: .normal)
             $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
@@ -223,7 +234,7 @@ extension CustomMapController {
             barView.addSubview($0)
         }
         barBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrow-1"), for: .normal)
+            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
             $0.setTitle("", for: .normal)
             $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
             $0.isHidden = true
@@ -234,7 +245,7 @@ extension CustomMapController {
             $0.centerY.equalTo(titleLabel)
         }
         
-        addButton = AddButton {
+      /*  addButton = AddButton {
             $0.addTarget(self, action: #selector(addAction), for: .touchUpInside)
             $0.isHidden = true
             view.addSubview($0)
@@ -243,7 +254,7 @@ extension CustomMapController {
             $0.trailing.equalToSuperview().inset(24)
             $0.bottom.equalToSuperview().inset(35)
             $0.width.height.equalTo(73)
-        }
+        } */
 
         containerDrawerView?.slideView.addSubview(barView)
     }
@@ -412,8 +423,8 @@ extension CustomMapController {
     
     @objc func backButtonAction() {
         barBackButton.isHidden = true
-        if navigationController?.viewControllers.count == 1 { mapController?.offsetCustomMapCenter() }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        DispatchQueue.main.async {
+            if self.navigationController?.viewControllers.count == 1 { self.mapController?.offsetCustomMapCenter() }
             self.containerDrawerView?.closeAction()
         }
     }
@@ -486,7 +497,8 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 0 { return }
-        openPost(posts: Array(postsList.suffix(from: indexPath.item)))
+    //    openPost(posts: Array(postsList.suffix(from: indexPath.item)))
+        openPost(posts: [postsList[indexPath.row]])
     }
     
     func openPost(posts: [MapPost]) {
@@ -495,6 +507,14 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         postVC.postsList = posts
         postVC.containerDrawerView = containerDrawerView
         DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
+    }
+    
+    func openSpot(spotID: String, spotName: String) {
+        var emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp(date: Date()))
+        emptyPost.spotID = spotID
+        emptyPost.spotName = spotName
+        let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: containerDrawerView)
+        navigationController?.pushViewController(spotVC, animated: true)
     }
 }
 
@@ -539,6 +559,40 @@ extension CustomMapController: UIScrollViewDelegate {
     }
 }
 
+extension CustomMapController: SpotMapViewDelegate {
+    func openPostFromSpotPost(view: SpotPostAnnotationView) {
+        var posts: [MapPost] = []
+        for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
+        DispatchQueue.main.async { self.openPost(posts: posts) }
+    }
+    
+    func openSpotFromSpotPost(view: SpotPostAnnotationView) {
+        openSpot(spotID: view.id, spotName: view.spotName)
+    }
+    
+    func openSpotFromSpotName(view: SpotNameAnnotationView) {
+        openSpot(spotID: view.id, spotName: view.spotName)
+    }
+    
+    func openPostFromFriendsPost(view: FriendPostAnnotationView) {
+        var posts: [MapPost] = []
+        for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
+        DispatchQueue.main.async { self.openPost(posts: posts) }
+    }
+    
+    func centerMapOnPostsInCluster(view: FriendPostAnnotationView) {
+        var coordinates: [CLLocationCoordinate2D] = []
+        for id in view.postIDs {
+            if let post = mapData!.postsDictionary[id] { coordinates.append(post.coordinate) }
+        }
+        let region = MKCoordinateRegion(coordinates: coordinates, overview: false)
+        DispatchQueue.main.async {
+            self.containerDrawerView?.present(to: .Bottom)
+            self.mapController?.mapView.setRegion(region, animated: true)
+        }
+    }
+}
+
 extension CustomMapController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
@@ -562,24 +616,7 @@ extension CustomMapController: MKMapViewDelegate {
         return MKAnnotationView()
     }
     
-    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        if let view = view as? SpotPostAnnotationView {
-            var posts: [MapPost] = []
-            for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
-            DispatchQueue.main.async { self.openPost(posts: posts) }
-            
-        } else if let view = view as? FriendPostAnnotationView {
-            var posts: [MapPost] = []
-            for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
-            DispatchQueue.main.async { self.openPost(posts: posts) }
-            
-        } else if let view = view as? SpotNameView {
-            print("open spot page")
-        }
-        mapView.deselectAnnotation(view.annotation, animated: false)
-    }
-    /*
-    func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+/*    func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         print("change visible")
         if refresh == .refreshEnabled {
             getPosts()
@@ -599,7 +636,7 @@ extension CustomMapController: MKMapViewDelegate {
     
     func setInitialRegion() {
         let coordinates = postsList.map({$0.coordinate})
-        let region = MKCoordinateRegion(coordinates: coordinates)
+        let region = MKCoordinateRegion(coordinates: coordinates, overview: true)
         mapController?.mapView.setRegion(region, animated: false)
         mapController?.mapView.setOffsetRegion(region: region, offset: -200, animated: false)
         centeredMap = true
