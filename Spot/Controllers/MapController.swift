@@ -110,6 +110,7 @@ class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
@@ -299,6 +300,7 @@ class MapController: UIViewController {
         var passMap = map == nil ? CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: []) : map!
         if mapType == .friendsMap { passMap.createPosts(posts: posts) }
         
+        print("groups", passMap.postGroup.map({$0.postIDs}))
         let customMapVC = CustomMapController(userProfile: nil, mapData: passMap, postsList: posts, presentedDrawerView: nil, mapType: mapType)
         sheetView = DrawerView(present: customMapVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
@@ -323,6 +325,7 @@ class MapController: UIViewController {
     func toggleHomeAppearance(hidden: Bool) {
         mapsCollection.isHidden = hidden
         newPostsButton.isHidden = hidden
+        print("hidden", hidden)
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
             mapView.removeAllAnnos()

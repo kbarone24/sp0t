@@ -121,11 +121,10 @@ class ContactCell: UITableViewCell {
              $0.lineBreakMode = .byTruncatingTail
              contentView.addSubview($0)
          }
-        
         name.snp.makeConstraints{
             $0.leading.equalTo(profilePic.snp.trailing).offset(8)
             $0.centerY.equalToSuperview().offset(-10)
-            $0.width.equalTo(150)
+            $0.trailing.equalToSuperview().offset(-120)
         }
                 
         detail = UILabel {
@@ -137,8 +136,6 @@ class ContactCell: UITableViewCell {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
-        
-        
         detail.snp.makeConstraints{
             $0.leading.equalTo(profilePic.snp.trailing).offset(8)
             $0.top.equalTo(name.snp.bottom)

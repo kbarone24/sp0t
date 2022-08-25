@@ -33,7 +33,7 @@ class ProfileBodyCell: UICollectionViewCell {
     public func cellSetup(mapData: CustomMap) {
         var urlString = mapData.imageURL
         if let i = mapData.posterIDs.lastIndex(where: {$0 == UserDataModel.shared.uid}) {
-            urlString = mapData.postImageURLs[i]
+            urlString = mapData.postImageURLs[safe: i] ?? ""
         }
         mapImage.sd_setImage(with: URL(string: urlString))
         if mapData.secret {
