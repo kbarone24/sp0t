@@ -35,7 +35,6 @@ struct UserProfile: Identifiable, Codable {
     
     var spotsList: [String] = []
     var friendsList: [UserProfile] = []
-    var postCount: Int = 0
     var mutualFriends: Int = 0
     var selected: Bool = false
     var mapsList: [CustomMap] = []

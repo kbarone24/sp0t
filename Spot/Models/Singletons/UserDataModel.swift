@@ -13,8 +13,7 @@ import Firebase
 
 /// keep main user data in a singleton to avoid having to pass mapVC too much. Serves the function of the primary global variable
 class UserDataModel {
-    
-    let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+    var uid: String { Auth.auth().currentUser?.uid ?? "invalid user" }
     static let shared = UserDataModel()
     
     var userInfo: UserProfile!

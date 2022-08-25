@@ -300,7 +300,12 @@ class SpotMapView: MKMapView {
         /// spotNameLabel >  72
         let tapLocation = sender.location(in: sender.view)
         guard let annotationView = sender.view as? SpotPostAnnotationView else { return }
-        tapLocation.y > 72 ? spotMapDelegate?.openSpotFromSpotPost(view: annotationView) : spotMapDelegate?.openPostFromSpotPost(view: annotationView)
+        
+        if tapLocation.y > 72 {
+            if annotationView.spotName != "" { spotMapDelegate?.openSpotFromSpotPost(view: annotationView) }
+        } else {
+            spotMapDelegate?.openPostFromSpotPost(view: annotationView)
+        }
     }
 
     @objc func spotNameTap(_ sender: UITapGestureRecognizer) {
