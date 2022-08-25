@@ -31,15 +31,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Set translucent. (Default value is already true, so this can  be removed if desired.)
         UINavigationBar.appearance().isTranslucent = true
         //UINavigationBar.appearance().edgesForExtendedLayout = UIRectEdge.none
-        
-
-        
+                
         /// set bar button appearance (remove "back" from back buttons)
         let BarButtonItemAppearance = UIBarButtonItem.appearance()
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .normal)
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .selected)
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .highlighted)
-        
         
         /// search bar attributes
         UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor(red: 0.514, green: 0.518, blue: 0.537, alpha: 1), NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any]

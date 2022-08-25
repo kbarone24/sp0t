@@ -423,13 +423,18 @@ extension MapController {
             }
         }
     }
-    
+        
     @objc func mapLikersChanged(_ notification: NSNotification) {
         reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
     }
     
     @objc func enterForeground() {
         DispatchQueue.main.async { self.checkForActivityIndicator() }
+    }
+    
+    @objc func notifyLogout() {
+        userListener.remove()
+        newPostListener.remove()
     }
     
     func checkForActivityIndicator() {
