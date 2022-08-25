@@ -300,6 +300,7 @@ extension CustomMapController {
                 
                 let docs = self.refresh == .refreshDisabled ? allDocs : allDocs.dropLast()
                 let postGroup = DispatchGroup()
+                print("ct", docs.count, self.postsList.count)
                 for doc in docs {
                     do {
                         let unwrappedInfo = try doc.data(as: MapPost.self)
@@ -342,9 +343,11 @@ extension CustomMapController {
     func addAnnotation(group: MapPostGroup?, newGroup: Bool) {
         if group != nil {
             if newGroup {
+                print("new group", group?.spotName)
                 /// add new group
                 mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
             } else {
+                print("update group", group?.spotName)
                 /// update existing group
                 if let anno = mapController?.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: group!.coordinate)}) {
                     mapController?.mapView.removeAnnotation(anno)
@@ -358,7 +361,8 @@ extension CustomMapController {
         if mapType == .friendsMap {
             for post in posts { mapController?.mapView.addPostAnnotation(post: post) }
         } else {
-            for group in mapData!.postGroup { mapController?.mapView.addSpotAnnotation(group: group, map: mapData!) }
+            print("mapdata", mapData?.postGroup.map({$0.postIDs}))
+            for group in mapData!.postGroup { print("ids", group.postIDs); mapController?.mapView.addSpotAnnotation(group: group, map: mapData!) }
         }
     }
     

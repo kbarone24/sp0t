@@ -97,11 +97,10 @@ struct CustomMap: Identifiable, Codable {
     
     mutating func addSpotGroups() {
         /// append spots to show on map even if there's no post attached
-        postGroup.removeAll()
         if !spotIDs.isEmpty {
             for i in 0...spotIDs.count - 1 {
                 let coordinate = CLLocationCoordinate2D(latitude: spotLocations[safe: i]?["lat"] ?? 0.0, longitude: spotLocations[safe: i]?["long"] ?? 0.0)
-                postGroup.append(MapPostGroup(id: spotIDs[i], coordinate: coordinate, spotName: spotNames[safe: i] ?? "", postIDs: []))
+                if !postGroup.contains(where: {$0.id == spotIDs[i]}) { postGroup.append(MapPostGroup(id: spotIDs[i], coordinate: coordinate, spotName: spotNames[safe: i] ?? "", postIDs: [])) }
             }
         }
     }

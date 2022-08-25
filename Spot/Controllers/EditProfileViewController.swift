@@ -141,6 +141,7 @@ class EditProfileViewController: UIViewController {
             do {
                 try Auth.auth().signOut()
                 self.dismiss(animated: false, completion: {
+                    NotificationCenter.default.post(Notification(name: Notification.Name("Logout"), object: nil, userInfo: nil))
                     self.profileVC?.containerDrawerView?.closeAction()
                     UserDataModel.shared.destroy()
                     if let landingPage = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
