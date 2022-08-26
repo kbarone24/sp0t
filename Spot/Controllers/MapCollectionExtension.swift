@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import FirebaseUI
+import Mixpanel
 
 extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -36,6 +37,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
     
     func selectMapAt(index: Int) {
+        Mixpanel.mainInstance().track(event: "MapControllerSelectMapAt", properties: ["index": index])
         DispatchQueue.main.async {
             if index != self.selectedItemIndex {
                 self.selectedItemIndex = index

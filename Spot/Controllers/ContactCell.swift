@@ -176,15 +176,17 @@ class ContactCell: UITableViewCell {
     }
             
     @objc func inviteFriend(_ sender: Any) {
+        Mixpanel.mainInstance().track(event: "ContactCellInviteFriend")
         if let vc = viewContainingController() as? SendInvitesController {
             vc.sendInvite(number: number)
         }
     }
     
     @objc func addFriend(_ sender: Any) {
+        Mixpanel.mainInstance().track(event: "ContactCellAddFriend")
         addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: contact.id!)
         let title = NSMutableAttributedString(string: "Pending", attributes: [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
             NSAttributedString.Key.foregroundColor: UIColor.black
         ])
         statusButton.setAttributedTitle(title, for: .normal)
@@ -226,14 +228,14 @@ class StatusButton: UIButton {
                 self.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
 
                 let customButtonTitle = NSMutableAttributedString(string: "Add", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
                 self.setAttributedTitle(customButtonTitle, for: .normal)
             case .pending:
                 self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
                 let customButtonTitle = NSMutableAttributedString(string: "Pending", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
                 self.setAttributedTitle(customButtonTitle, for: .normal)
@@ -242,7 +244,7 @@ class StatusButton: UIButton {
             case .friends:
                 self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
                 let customButtonTitle = NSMutableAttributedString(string: "Friends", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
                 self.setAttributedTitle(customButtonTitle, for: .normal)
@@ -254,7 +256,7 @@ class StatusButton: UIButton {
             case .joined:
                 self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
                 let customButtonTitle = NSMutableAttributedString(string: "Joined", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
                 self.setAttributedTitle(customButtonTitle, for: .normal)
@@ -262,7 +264,7 @@ class StatusButton: UIButton {
             case .invited:
                 self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
                 let customButtonTitle = NSMutableAttributedString(string: "Invited", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
                 self.setAttributedTitle(customButtonTitle, for: .normal)
@@ -272,7 +274,7 @@ class StatusButton: UIButton {
                 self.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
 
                 let customButtonTitle = NSMutableAttributedString(string: "Invite", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
                 self.setAttributedTitle(customButtonTitle, for: .normal)
