@@ -264,7 +264,7 @@ extension ProfileHeaderCell {
                     guard let notification = unwrappedInfo else { return }
                     if notification.senderID == self.profile!.id {
                         self.pendingFriendNotiID = notification.id
-                        self.acceptFriendRequest(friendID: self.profile.id!, notificationID: self.pendingFriendNotiID!)
+                        self.acceptFriendRequest(friend: self.profile, notificationID: self.pendingFriendNotiID!)
                         let notiID:[String: String?] = ["notiID": self.pendingFriendNotiID]
                         NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: notiID as [AnyHashable : Any])
                         break

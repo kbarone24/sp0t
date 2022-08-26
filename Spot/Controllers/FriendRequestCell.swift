@@ -163,7 +163,7 @@ class FriendRequestCell: UICollectionViewCell {
             $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
 
             let customButtonTitle = NSMutableAttributedString(string: "Confirmed", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                 //NSAttributedString.Key.backgroundColor: UIColor.red,
                 NSAttributedString.Key.foregroundColor: UIColor.black
             ])

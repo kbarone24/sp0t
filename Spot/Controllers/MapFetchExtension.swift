@@ -187,7 +187,6 @@ extension MapController {
                 }
             }
             recentGroup.notify(queue: .global()) {
-                print("home fetch leave")
                 self.homeFetchGroup.leave()
             }
         }
@@ -433,6 +432,19 @@ extension MapController {
     @objc func notifyLogout() {
         userListener.remove()
         newPostListener.remove()
+    }
+    
+    @objc func notifyFriendsListAdd() {
+        /// query friends posts again
+        homeFetchGroup.enter()
+        homeFetchGroup.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            self.reloadMapsCollection(resort: true, newPost: false)
+        }
+        
+        DispatchQueue.global().async {
+            self.getRecentPosts(map: nil)
+        }
     }
     
     func checkForActivityIndicator() {
