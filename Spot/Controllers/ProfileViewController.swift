@@ -38,7 +38,11 @@ class ProfileViewController: UIViewController {
     }
 
     private lazy var imageManager = SDWebImageManager()
-    public unowned var containerDrawerView: DrawerView?
+    public unowned var containerDrawerView: DrawerView? {
+        didSet {
+            configureDrawerView()
+        }
+    }
     
     var postsFetched = false {
         didSet {
@@ -85,7 +89,6 @@ class ProfileViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-//        navigationController?.setNavigationBarHidden(false, animated: true)
         Mixpanel.mainInstance().track(event: "ProfileOpen")
     }
     
@@ -142,9 +145,7 @@ extension ProfileViewController {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
-        if self.containerDrawerView?.status != .Top {
-            self.containerDrawerView?.present(to: .Top)
-        }
+        containerDrawerView?.present(to: .Top)
     }
         
     private func getUserInfo() {

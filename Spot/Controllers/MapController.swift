@@ -269,7 +269,7 @@ class MapController: UIViewController {
     
     @objc func openFindFriendsDrawer(_ sender: UIButton){
         let ffvc = FindFriendsController()
-        sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+        sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         
@@ -284,7 +284,7 @@ class MapController: UIViewController {
     func openPost(posts: [MapPost]) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = posts
-        sheetView = DrawerView(present: postVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+        sheetView = DrawerView(present: postVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         postVC.containerDrawerView = sheetView
@@ -302,7 +302,7 @@ class MapController: UIViewController {
         
         print("groups", passMap.postGroup.map({$0.postIDs}))
         let customMapVC = CustomMapController(userProfile: nil, mapData: passMap, postsList: posts, presentedDrawerView: nil, mapType: mapType)
-        sheetView = DrawerView(present: customMapVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+        sheetView = DrawerView(present: customMapVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         customMapVC.containerDrawerView = sheetView
@@ -314,7 +314,7 @@ class MapController: UIViewController {
         emptyPost.spotID = spotID
         emptyPost.spotName = spotName
         let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: nil)
-        sheetView = DrawerView(present: spotVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+        sheetView = DrawerView(present: spotVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         spotVC.containerDrawerView = sheetView
