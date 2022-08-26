@@ -229,6 +229,7 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     }
     
     @objc func cancelTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "CalleryCancelTap")
         if let cameraVC = navigationController?.viewControllers.first(where: {$0 is AVCameraController}) as? AVCameraController {
             cameraVC.cancelFromGallery()
             DispatchQueue.main.async { self.navigationController?.popToViewController(cameraVC, animated: true) }
@@ -236,6 +237,7 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     }
     
     @objc func nextTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "GalleryNextTap")
         if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
             DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: false) }
         }
@@ -405,7 +407,6 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
     }
     
     func cancelFetchForRowAt(index: Int) {
-        
         Mixpanel.mainInstance().track(event: "GalleryCancelImageFetch")
         
         guard let cell = collectionView.cellForItem(at: IndexPath(item: index, section: 0)) as? GalleryCell else { return }
@@ -432,7 +433,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
     }
     
     func addPreviewView(object: ImageObject, galleryIndex: Int) {
-        
+        Mixpanel.mainInstance().track(event: "GalleryPreviewTap")
         /// add ImagePreviewView over top of gallery
         guard let cell = collectionView.cellForItem(at: IndexPath(row: galleryIndex, section: 0)) as? GalleryCell else { return }
                         
@@ -599,6 +600,7 @@ class GalleryCell: UICollectionViewCell {
     } */
     
     @objc func circleTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "GalleryCircleTap")
         guard let picker = viewContainingController() as? PhotoGalleryController else { return }
         UploadPostModel.shared.selectedObjects.contains(where: {$0.id == id}) ? picker.deselect(index: globalRow) : picker.select(index: globalRow)
     }

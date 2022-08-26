@@ -252,6 +252,7 @@ class FriendRequestCell: UICollectionViewCell {
     }
     
     @objc func profileTap(_ sender: Any){
+        Mixpanel.mainInstance().track(event: "NotificationsFriendRequestUserTap")
         collectionDelegate?.getProfile(userProfile: friendRequest.userInfo!)
     }
     

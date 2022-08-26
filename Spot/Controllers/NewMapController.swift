@@ -11,6 +11,7 @@ import UIKit
 import Firebase
 import FirebaseUI
 import IQKeyboardManagerSwift
+import Mixpanel
 
 protocol NewMapDelegate {
     func finishPassing(map: CustomMap)
@@ -189,10 +190,12 @@ class NewMapController: UIViewController {
     @objc func togglePrivacy(_ sender: UIButton) {
         switch sender.tag {
         case 0:
+            Mixpanel.mainInstance().track(event: "NewMapPrivateMapOn")
             secretToggle.setImage(UIImage(named: "PrivateMapOn"), for: .normal)
             secretToggle.tag = 1
             mapObject.secret = true
         case 1:
+            Mixpanel.mainInstance().track(event: "NewMapPrivateMapOff")
             secretToggle.setImage(UIImage(named: "PrivateMapOff"), for: .normal)
             secretToggle.tag = 0
             mapObject.secret = false
@@ -201,6 +204,7 @@ class NewMapController: UIViewController {
     }
     
     @objc func createTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "NewMapCreateTap")
         var text = nameField.text ?? ""
         while text.last?.isWhitespace ?? false { text = String(text.dropLast()) }
         mapObject.mapName = text
@@ -209,6 +213,7 @@ class NewMapController: UIViewController {
     }
     
     @objc func cancelTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "NewMapCancelTap")
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
     

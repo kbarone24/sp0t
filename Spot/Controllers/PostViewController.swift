@@ -185,10 +185,6 @@ class PostController: UIViewController {
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
         navigationController?.pushViewController(customMapVC, animated: true)
     }
-            
-    @objc func exitPosts(_ sender: UIBarButtonItem) {
-        exitPosts()
-    }
 }
 
 extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching, UICollectionViewDelegateFlowLayout {

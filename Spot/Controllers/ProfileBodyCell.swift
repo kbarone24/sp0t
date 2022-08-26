@@ -30,9 +30,9 @@ class ProfileBodyCell: UICollectionViewCell {
         if mapImage != nil { mapImage.sd_cancelCurrentImageLoad() }
     }
     
-    public func cellSetup(mapData: CustomMap) {
+    public func cellSetup(mapData: CustomMap, userID: String) {
         var urlString = mapData.imageURL
-        if let i = mapData.posterIDs.lastIndex(where: {$0 == UserDataModel.shared.uid}) {
+        if let i = mapData.posterIDs.lastIndex(where: {$0 == userID}) {
             urlString = mapData.postImageURLs[safe: i] ?? ""
         }
         mapImage.sd_setImage(with: URL(string: urlString))

@@ -199,17 +199,17 @@ extension ProfileHeaderCell {
         switch relation {
         case .myself:
             // Action is set in ProfileViewController
-            Mixpanel.mainInstance().track(event: "EditButtonAction")
+            Mixpanel.mainInstance().track(event: "ProfileHeaderEditTap")
         case .friend:
             // No Action
-            Mixpanel.mainInstance().track(event: "ProfileFriendButton")
             return
         case .pending, .received:
             if relation == .pending {
-                Mixpanel.mainInstance().track(event: "ProfilePendingButton")
+                Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendTap")
                 let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
                 alert.overrideUserInterfaceStyle = .light
                 let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
+                    Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
                     self.getNotiIDAndRemoveFriendRequest()
                     self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
                     self.actionButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
@@ -221,7 +221,7 @@ extension ProfileHeaderCell {
                 let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
                 containerVC.present(alert, animated: true)
             } else {
-                Mixpanel.mainInstance().track(event: "ProfileAcceptButton")
+                Mixpanel.mainInstance().track(event: "ProfileHeaderAcceptTap")
                 getNotiIDAndAcceptFriendRequest()
                 actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
                 actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
@@ -230,7 +230,7 @@ extension ProfileHeaderCell {
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitleColor(.black, for: .normal)
         case .stranger:
-            Mixpanel.mainInstance().track(event: "ProfileAddFriendButton")
+            Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
             addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: profile.id!)
             actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
@@ -250,7 +250,7 @@ extension ProfileHeaderCell {
     }
     
     @objc func locationButtonAction() {
-        Mixpanel.mainInstance().track(event: "LocationButtonAction")
+        Mixpanel.mainInstance().track(event: "ProfileHeaderLocationTap")
     }
     
     private func getNotiIDAndAcceptFriendRequest() {

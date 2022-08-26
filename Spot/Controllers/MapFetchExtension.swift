@@ -37,7 +37,7 @@ extension MapController {
                 self.attachNewPostListener()
                 self.newPostsButton.isHidden = false
                 self.reloadMapsCollection(resort: true, newPost: false)
-                if self.userInChapelHill() { self.displayHeelsMap() }
+                self.displayHeelsMap()
             }
         }
     }
@@ -54,14 +54,12 @@ extension MapController {
     }
     
     func getAdmins() {
-        
         self.db.collection("users").whereField("admin", isEqualTo: true).getDocuments { (snap, err) in
             if err != nil { return }
             for admin in snap!.documents { UserDataModel.shared.adminIDs.append(admin.documentID) }
         }
-        
         ///opt kenny/ellie/tyler/b0t/hog/hog0 out of tracking
-        if uid == "djEkPdL5GQUyJamNXiMbtjrsUYM2" || uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" || uid == "QgwnBsP9mlSudEuONsAsyVqvWEZ2" || uid == "X6CB24zc4iZFE8maYGvlxBp1mhb2" {
+        if uid == "djEkPdL5GQUyJamNXiMbtjrsUYM2" || uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" || uid == "X6CB24zc4iZFE8maYGvlxBp1mhb2" || uid == "HhDmknXyHDdWF54t6s8IEbEBlXD2" || uid == "oAKwM2NgLjTlaE2xqvKEXiIVKYu1" {
             Mixpanel.mainInstance().optOutTracking()
         }
     }
@@ -448,18 +446,17 @@ extension MapController {
 extension MapController: MapControllerDelegate {
     func displayHeelsMap() {
         var heelsMapAdded = false
-        var heelsMapMembers = 0
         for map in UserDataModel.shared.userInfo.mapsList {
             if(map.mapName == "Heelsmap"){
                 heelsMapAdded = true
             }
         }
     
-        if(!self.userInChapelHill() && !heelsMapAdded){
+        if (self.userInChapelHill() && !heelsMapAdded) {
             let vc = HeelsMapPopUpController()
             vc.mapDelegate = self
             self.present(vc, animated: true)
-        }
+         }
     }
     
     
@@ -475,7 +472,7 @@ extension MapController: MapControllerDelegate {
                 self.view.addSubview($0)
             }
             
-            self.addFriends.addFriendButton.addTarget(self, action: #selector(self.openFindFriends(_:)), for: .touchUpInside)
+            self.addFriends.addFriendButton.addTarget(self, action: #selector(self.findFriendsTap(_:)), for: .touchUpInside)
             self.addFriends.snp.makeConstraints{
                 $0.height.equalTo(160)
                 $0.leading.trailing.equalToSuperview().inset(16)
@@ -489,7 +486,6 @@ extension MapController: MapControllerDelegate {
             do {
                 let mapIn = try heelsMapSnap?.data(as: CustomMap.self)
                 guard var mapInfo = mapIn else { self.homeFetchGroup.leave(); return;}
-                mapInfo.memberIDs = mapIn!.memberIDs
                 /// append spots to show on map even if there's no post attached
                 if !mapInfo.spotIDs.isEmpty {
                     for i in 0...mapInfo.spotIDs.count - 1 {
@@ -497,11 +493,9 @@ extension MapController: MapControllerDelegate {
                         mapInfo.postGroup.append(MapPostGroup(id: mapInfo.spotIDs[i], coordinate: coordinate, spotName: mapInfo.spotNames[safe: i] ?? "", postIDs: []))
                     }
                 }
-                
                 self.heelsMap = mapInfo
-                                
+
             } catch {
-                /// remove broken friend object
                 return
             }
         }

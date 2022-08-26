@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Firebase
 import FirebaseUI
+import Mixpanel
 
 protocol FriendsListDelegate {
     func finishPassing(selectedUsers: [UserProfile])
@@ -189,10 +190,12 @@ class FriendsListController: UIViewController {
         var selectedUsers: [UserProfile] = []
         for friend in friendsList { if friend.selected { selectedUsers.append(friend) }}
         delegate?.finishPassing(selectedUsers: selectedUsers)
+        Mixpanel.mainInstance().track(event: "FriendsListDoneTap", properties: ["selectedCount": selectedUsers.count])
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
     
     @objc func cancelTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "FriendsListCancel")
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
     
