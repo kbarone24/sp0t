@@ -356,7 +356,7 @@ extension ConfirmCodeController {
             /// call on front end for immediate post adjust
             if friendID != sp0tb0tID {
                 DispatchQueue.global().async {
-                    self.adjustPostFriendsList(userID: uid, friendID: friendID)
+                    self.adjustPostFriendsList(userID: uid, friendID: friendID, completion: nil)
                 }
             }
         }

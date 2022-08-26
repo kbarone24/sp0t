@@ -111,6 +111,7 @@ class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsListAdd), name: NSNotification.Name(("FriendsListAdd")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
@@ -124,15 +125,6 @@ class MapController: UIViewController {
         mapView = SpotMapView {
             $0.delegate = self
             $0.spotMapDelegate = self
-            $0.mapType = .mutedStandard
-            $0.overrideUserInterfaceStyle = .light
-            $0.pointOfInterestFilter = .excludingAll
-            $0.showsCompass = false
-            $0.showsTraffic = false
-            $0.tag = 13
-            $0.register(FriendPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "FriendsPost")
-            $0.register(SpotPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotPost")
-            $0.register(SpotNameAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotName")
             view.addSubview($0)
         }
         makeMapHomeConstraints()
@@ -276,7 +268,7 @@ class MapController: UIViewController {
     func openFindFriends() {
         let findFriendsVC = FindFriendsController()
         self.navigationController?.pushViewController(findFriendsVC, animated: true)
-        addFriends.removeFromSuperview()
+        if addFriends != nil { addFriends.removeFromSuperview() }
     }
  
     func openPost(posts: [MapPost]) {
