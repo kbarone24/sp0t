@@ -100,12 +100,11 @@ class EditProfileViewController: UIViewController {
         vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
         vc.onDoneBlock = { result in
             self.avatarChanged = true
-            print("avatarChanged", UserDataModel.shared.userInfo.avatarURL)
             self.avatarImage.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.avatarURL!))
             self.userProfile?.avatarURL = UserDataModel.shared.userInfo.avatarURL!
         }
         self.present(vc, animated: true)
-        Mixpanel.mainInstance().track(event: "AvatarSelect")
+        Mixpanel.mainInstance().track(event: "EditProfileAvatarSelect")
     }
     
     @objc func saveAction() {

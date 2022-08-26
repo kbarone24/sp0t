@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import Mixpanel
 /// uiaction methods
 extension PostCell {
     func addActionSheet() {
@@ -28,11 +29,12 @@ extension PostCell {
         guard let postVC = viewContainingController() as? PostController else { return }
         let alert = UIAlertController(title: "Delete post", message: "Are you sure you want to delete this post?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
-            print("cancel")
+            Mixpanel.mainInstance().track(event: "DeletePostCancelTap")
         }))
         alert.addAction(UIAlertAction(title: "Delete",
                                       style: .destructive,
                                       handler: {(_: UIAlertAction!) in
+            Mixpanel.mainInstance().track(event: "DeletePostTap")
             postVC.deletePost(post: self.post)
         }))
         postVC.present(alert, animated: true)
@@ -42,6 +44,7 @@ extension PostCell {
         let alertController = UIAlertController(title: "Report user", message: "", preferredStyle: .alert)
         let confirmAction = UIAlertAction(title: "Report user", style: .default) { (_) in
             if let txtField = alertController.textFields?.first, let text = txtField.text {
+                Mixpanel.mainInstance().track(event: "ReportPostTap")
                 self.db.collection("feedback").addDocument(data: [
                     "feedbackText": text,
                     "postID" : self.post.id!,
@@ -51,7 +54,9 @@ extension PostCell {
                 self.showConfirmationAction(deletePost: false)
             }
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (_) in }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
+            Mixpanel.mainInstance().track(event: "ReportPostCancelTap")
+        }
         alertController.addTextField { (textField) in
             textField.autocorrectionType = .default
             textField.placeholder = "Why are you reporting this user?"

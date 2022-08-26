@@ -95,32 +95,10 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         }
     }
     
-    @objc func doneTap(_ sender: UIButton) {
-        animateToMap()
-    }
-    
     @objc func presentSendInvites(_ sender: UITapGestureRecognizer) {
         let sendInvitesVC = SendInvitesController()
         navigationController!.pushViewController(sendInvitesVC, animated: true)
     }
-
-    func animateToMap() {
-        
-        let storyboard = UIStoryboard(name: "Map", bundle: nil)
-        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
-        let navController = UINavigationController(rootViewController: vc)
-        navController.modalPresentationStyle = .fullScreen
-        
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter({$0.activationState == .foregroundActive})
-            .map({$0 as? UIWindowScene})
-            .compactMap({$0})
-            .first?.windows
-            .filter({$0.isKeyWindow}).first
-        keyWindow?.rootViewController = navController
-    }
-    
-    
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return dataFetched ? 20 : 0
@@ -175,8 +153,10 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
                 guard let self = self else { return }
                 
                 if access {
+                    Mixpanel.mainInstance().track(event: "ContactsAuthEnabled")
                     self.getContacts()
                 } else {
+                    Mixpanel.mainInstance().track(event: "ContactsAuthDisabled")
                     if CNContactStore.authorizationStatus(for: .contacts) == .denied {
                         let alert = UIAlertController(title: "Allow contacts access to add friends", message: nil, preferredStyle: .alert)
                         alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
@@ -197,11 +177,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
                             case .default:
                                 print("default")
                             case .cancel:
-                                if self.navigationController == nil {
-                                    self.dismiss(animated: true, completion: nil)
-                                } else {
-                                    self.animateToMap()
-                                }
+                                self.navigationController?.popViewController(animated: true)
                             case .destructive:
                                 print("destruct")
                             @unknown default:

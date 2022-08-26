@@ -294,11 +294,8 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     }
     
     @objc func leaveNotifs() {
-        if navigationController?.viewControllers.count == 1 {
-            containerDrawerView?.closeAction()
-        } else {
-            navigationController?.popViewController(animated: true)
-        }
+        Mixpanel.mainInstance().track(event: "NotificationsBackTap")
+        containerDrawerView?.closeAction()
     }
     
     ///modified copy from global functions
