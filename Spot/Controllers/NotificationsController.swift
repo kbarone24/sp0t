@@ -493,10 +493,9 @@ extension NotificationsController: notificationDelegateProtocol {
     }
     
     func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification] {
-        guard let i1 = pendingFriendRequests.firstIndex(where: {$0.id == friendRequest.id}) else {
-            print("friend Request not found");
-            return []}
-        pendingFriendRequests.remove(at: i1)
+        if let i1 = pendingFriendRequests.firstIndex(where: {$0.id == friendRequest.id}) {
+            pendingFriendRequests.remove(at: i1)
+        }
         return pendingFriendRequests
     }
     
