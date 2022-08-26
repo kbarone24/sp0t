@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import MapKit
+import Mixpanel
 
 //functions for loading nearby spots in nearby view
 extension MapController: MKMapViewDelegate {
@@ -68,25 +69,7 @@ extension MapController: MKMapViewDelegate {
     func getSelectedMap() -> CustomMap? {
         return selectedItemIndex == 0 ? nil : UserDataModel.shared.userInfo.mapsList[selectedItemIndex - 1]
     }
-    /*
-    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        if let view = view as? SpotPostAnnotationView {
-            openSpotPost(view: view)
-            
-        } else if let view = view as? FriendPostAnnotationView {
-            var posts: [MapPost] = []
-            for id in view.postIDs { posts.append(friendsPostsDictionary[id]!) }
-            DispatchQueue.main.async { self.openPost(posts: posts) }
-            
-        } else if let view = view as? SpotNameAnnotationView {
-            openSpot(spotID: view.id, spotName: view.spotName)
-        }
-        
-        mapView.deselectAnnotation(view.annotation, animated: false)
-    }
-    */
-    
-    
+
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         /// remove clustering if zoomed in to ground level
         guard let mapView = mapView as? SpotMapView else { return }
@@ -291,13 +274,14 @@ class SpotMapView: MKMapView {
     }
     
     @objc func friendsPostTap(_ sender: UITapGestureRecognizer) {
+        Mixpanel.mainInstance().track(event: "MapControllerFriendAnnotationTap")
         let tapLocation = sender.location(in: sender.view)
         guard let annotationView = sender.view as? FriendPostAnnotationView else { return }
         tapLocation.y > 65 ? spotMapDelegate?.centerMapOnPostsInCluster(view: annotationView) : spotMapDelegate?.openPostFromFriendsPost(view: annotationView)
     }
     
     @objc func spotPostTap(_ sender: UITapGestureRecognizer) {
-        /// spotNameLabel >  72
+        Mixpanel.mainInstance().track(event: "MapControllerSpotPostAnnotationTap")
         let tapLocation = sender.location(in: sender.view)
         guard let annotationView = sender.view as? SpotPostAnnotationView else { return }
         
@@ -309,6 +293,7 @@ class SpotMapView: MKMapView {
     }
 
     @objc func spotNameTap(_ sender: UITapGestureRecognizer) {
+        Mixpanel.mainInstance().track(event: "MapControllerSpotNameAnnotationTap")
         guard let annotationView = sender.view as? SpotNameAnnotationView else { return }
         spotMapDelegate?.openSpotFromSpotName(view: annotationView)
     }

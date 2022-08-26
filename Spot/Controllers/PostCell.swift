@@ -389,6 +389,7 @@ class PostCell: UICollectionViewCell {
         usernameLabel = UILabel {
             $0.text = post.userInfo?.username ?? ""
             $0.textColor = .white
+            $0.isUserInteractionEnabled = true
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
             let tap = UITapGestureRecognizer(target: self, action: #selector(userTap))
             $0.addGestureRecognizer(tap)
@@ -570,11 +571,13 @@ class PostCell: UICollectionViewCell {
 /// action methods
 extension PostCell {
     @objc func userTap() {
+        Mixpanel.mainInstance().track(event: "PostPageUserTap")
         if post.userInfo == nil { return }
         openProfile(user: post.userInfo!)
     }
     
     @objc func spotTap() {
+        Mixpanel.mainInstance().track(event: "PostPageSpotTap")
         if let postVC = viewContainingController() as? PostController {
             let spotVC = SpotPageController(mapPost: post, presentedDrawerView: postVC.containerDrawerView)
             postVC.containerDrawerView?.showCloseButton = false
@@ -583,6 +586,7 @@ extension PostCell {
     }
     
     @objc func mapTap() {
+        Mixpanel.mainInstance().track(event: "PostPageMapTap")
         if post.mapID ?? "" == "" { return }
         if let postVC = self.viewContainingController() as? PostController {
             postVC.openMap(mapID: post.mapID!)
@@ -599,8 +603,10 @@ extension PostCell {
         if tapInTagRect(sender: sender) {
             return
         } else if overflow {
+            Mixpanel.mainInstance().track(event: "PostPageExpandCaption")
             expandCaption()
         } else if let postVC = self.viewContainingController() as? PostController {
+            Mixpanel.mainInstance().track(event: "PostPageOpenCommentsFromCaption")
             postVC.openComments(row: globalRow, animated: true)
         }
     }
@@ -608,6 +614,7 @@ extension PostCell {
     func tapInTagRect(sender: UITapGestureRecognizer) -> Bool {
         for r in tagRect {
             if r.rect.contains(sender.location(in: sender.view)) {
+                Mixpanel.mainInstance().track(event: "PostPageOpenTaggedUserProfile")
                 /// open tag from friends list
                 if let friend = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == r.username}) {
                     openProfile(user: friend)
@@ -634,13 +641,14 @@ extension PostCell {
     }
     
     @objc func commentsTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "PostPageCommentsTap")
         if let postVC = self.viewContainingController() as? PostController {
             postVC.openComments(row: globalRow, animated: true)
         }
     }
         
     @objc func nextTap(_ sender: UIButton) {
-        
+        Mixpanel.mainInstance().track(event: "PostPageNextTap")
         guard let postVC = viewContainingController() as? PostController else { return }
         if (post.selectedImageIndex! < (post.frameIndexes?.count ?? 0) - 1) && imageFetched {
             nextImage()
@@ -654,7 +662,7 @@ extension PostCell {
     }
     
     @objc func previousTap(_ sender: UIButton) {
-        
+        Mixpanel.mainInstance().track(event: "PostPagePreviousTap")
         guard let postVC = viewContainingController() as? PostController else { return }
 
         if post.selectedImageIndex! > 0 {
@@ -676,10 +684,12 @@ extension PostCell {
     }
     
     func nextImage() {
+        Mixpanel.mainInstance().track(event: "PostPageNextImage")
         incrementImage(index: 1)
     }
     
     func previousImage() {
+        Mixpanel.mainInstance().track(event: "PostPagePreviousImage")
         incrementImage(index: -1)
     }
     
@@ -693,10 +703,12 @@ extension PostCell {
     }
     
     func nextPost() {
+        Mixpanel.mainInstance().track(event: "PostPageNextPost")
         incrementPost(index: 1)
     }
     
     func previousPost() {
+        Mixpanel.mainInstance().track(event: "PostPagePreviousPost")
         incrementPost(index: -1)
     }
     
@@ -724,7 +736,8 @@ extension PostCell {
         guard let postVC = viewContainingController() as? PostController else { return }
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": postVC.selectedPostIndex as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("PostLike"), object: nil, userInfo: infoPass)
-        
+        Mixpanel.mainInstance().track(event: "PostPageLikePost")
+
         DispatchQueue.global().async { self.likePostDB(post: self.post) }
     }
     
@@ -737,7 +750,8 @@ extension PostCell {
         guard let postVC = viewContainingController() as? PostController else { return }
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": postVC.selectedPostIndex as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("PostLike"), object: nil, userInfo: infoPass)
-        
+        Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
+
         let updatePost = post! /// local object
         /// run unlike function from functions
         DispatchQueue.global().async {
@@ -751,6 +765,7 @@ extension PostCell {
     }
     
     @objc func elipsesTap() {
+        Mixpanel.mainInstance().track(event: "PostPageElipsesTap")
         /// action sheet with delete post or report post showing
         addActionSheet()
     }

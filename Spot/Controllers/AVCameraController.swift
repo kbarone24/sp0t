@@ -109,8 +109,6 @@ class AVCameraController: UIViewController {
     }
     
     override func viewDidLoad() {
-        print("spotobj", spotObject)
-        print("mapobj", mapObject)
         setUpView()
     }
     

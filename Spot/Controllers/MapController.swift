@@ -205,7 +205,7 @@ class MapController: UIViewController {
         if titleView != nil { return titleView }
         
         titleView = MapTitleView {
-            $0.searchButton.addTarget(self, action: #selector(openFindFriendsDrawer(_:)), for: .touchUpInside)
+            $0.searchButton.addTarget(self, action: #selector(searchTap(_:)), for: .touchUpInside)
             $0.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
             $0.notiButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
         }
@@ -232,6 +232,7 @@ class MapController: UIViewController {
         
     
     @objc func addTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "MapControllerAddTap")
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
@@ -243,6 +244,7 @@ class MapController: UIViewController {
     }
     
     @objc func profileTap(_ sender: Any){
+        Mixpanel.mainInstance().track(event: "MapControllerProfileTap")
         let profileVC = ProfileViewController(userProfile: nil)
         sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
@@ -252,8 +254,8 @@ class MapController: UIViewController {
     }
     
     @objc func openNotis(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "MapControllerNotificationsTap")
         let notifVC = NotificationsController()
-        
         sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
@@ -261,26 +263,22 @@ class MapController: UIViewController {
         sheetView?.present(to: .Top)
     }
     
-    @objc func openFindFriends(_ sender: UIButton){
+    @objc func searchTap(_ sender: UIButton){
+        Mixpanel.mainInstance().track(event: "MapControllerSearchTap")
+        openFindFriends()
+    }
+    
+    @objc func findFriendsTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "MapControllerFindFriendsTap")
+        openFindFriends()
+    }
+    
+    func openFindFriends() {
         let findFriendsVC = FindFriendsController()
         self.navigationController?.pushViewController(findFriendsVC, animated: true)
         addFriends.removeFromSuperview()
     }
-    
-    @objc func openFindFriendsDrawer(_ sender: UIButton){
-        let ffvc = FindFriendsController()
-        sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
-            self.sheetView = nil
-        })
-        
-        sheetView?.swipeDownToDismiss = false
-        sheetView?.canInteract = false
-        sheetView?.present(to: .Top)
-        sheetView?.showCloseButton = false
-        ffvc.contentDrawer = sheetView
-    }
-
-    
+ 
     func openPost(posts: [MapPost]) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = posts
@@ -325,7 +323,6 @@ class MapController: UIViewController {
     func toggleHomeAppearance(hidden: Bool) {
         mapsCollection.isHidden = hidden
         newPostsButton.isHidden = hidden
-        print("hidden", hidden)
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
             mapView.removeAllAnnos()
@@ -381,22 +378,17 @@ extension MapController: CLLocationManagerDelegate {
     }
     
     func checkLocationAuth() {
-        
         switch locationManager.authorizationStatus {
-            
         case .notDetermined:
             locationManager.requestWhenInUseAuthorization()
             break
-            
             //prompt user to open their settings if they havent allowed location services
         case .restricted, .denied:
             presentLocationAlert()
             break
-            
         case .authorizedWhenInUse, .authorizedAlways:
             locationManager.startUpdatingLocation()
             break
-            
         @unknown default:
             fatalError()
         }
@@ -406,7 +398,6 @@ extension MapController: CLLocationManagerDelegate {
         let alert = UIAlertController(title: "Spot needs your location to find spots near you", message: nil, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
             switch action.style{
-                
             case .default:
                 Mixpanel.mainInstance().track(event: "LocationServicesSettingsOpen")
                 UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:]) { (allowed) in
@@ -645,9 +636,9 @@ class AddFriendsView: UIView {
     
     
     @objc func closeFindFriends(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "MapControllerCloseFindFriends")
         self.removeFromSuperview()
     }
-    
 }
 
 class NewPostsButton: UIButton {
@@ -727,8 +718,10 @@ class NewPostsButton: UIButton {
     @objc func tap() {
         guard let mapVC = viewContainingController() as? MapController else { return }
         if unseenPosts > 0 {
+            Mixpanel.mainInstance().track(event: "MapControllerAnimateToMostRecentPost")
             mapVC.animateToMostRecentPost()
         } else {
+            Mixpanel.mainInstance().track(event: "MapControllerOpenSelectedMap")
             mapVC.openSelectedMap()
         }
     }

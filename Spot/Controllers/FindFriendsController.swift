@@ -253,7 +253,6 @@ class FindFriendsController: UIViewController {
     }
     
     @objc func notifyRequestSent(_ sender: NSNotification) {
-        
         /// notify request sent from search contacts and update suggested users if necessary
         if let receiverID = sender.userInfo?.first?.value as? String {
             if let i = suggestedUsers.firstIndex(where: {$0.0.id == receiverID}) {
@@ -265,21 +264,20 @@ class FindFriendsController: UIViewController {
     }
     
     @objc func presentSendInvites(_ sender: UITapGestureRecognizer) {
-        
-        let adminID = uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
-        if UserDataModel.shared.userInfo.sentInvites.count > 7 && !adminID { return }
-        
+        Mixpanel.mainInstance().track(event: "FindFriendsSendInvitesTap")
         let sendInvitesVC = SendInvitesController()
         navigationController!.pushViewController(sendInvitesVC, animated: true)
     }
     
     @objc func presentSearchContacts(_ sender: UITapGestureRecognizer) {
+        Mixpanel.mainInstance().track(event: "FindFriendsSearchContactsTap")
         let searchContactsVC = SearchContactsController()
         navigationController!.pushViewController(searchContactsVC, animated: true)
     }
     
     
     @objc func exit(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "FindFriendsExitTap")
         if let drawer = contentDrawer {
             drawer.closeAction()
         } else { navigationController!.popViewController(animated: true)
@@ -291,7 +289,6 @@ class FindFriendsController: UIViewController {
     }
     
     func getSuggestedFriends() {
-        
         /// get mutual friends by cycling through friends of everyone on friendsList
         
         var mutuals: [(id: String, count: Int)] = []

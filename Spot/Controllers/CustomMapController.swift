@@ -13,7 +13,6 @@ enum MapType {
     case customMap
 }
 
-
 class CustomMapController: UIViewController {
     private var topYContentOffset: CGFloat?
     private var middleYContentOffset: CGFloat?
@@ -343,11 +342,9 @@ extension CustomMapController {
     func addAnnotation(group: MapPostGroup?, newGroup: Bool) {
         if group != nil {
             if newGroup {
-                print("new group", group?.spotName)
                 /// add new group
                 mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
             } else {
-                print("update group", group?.spotName)
                 /// update existing group
                 if let anno = mapController?.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: group!.coordinate)}) {
                     mapController?.mapView.removeAnnotation(anno)
@@ -361,7 +358,6 @@ extension CustomMapController {
         if mapType == .friendsMap {
             for post in posts { mapController?.mapView.addPostAnnotation(post: post) }
         } else {
-            print("mapdata", mapData?.postGroup.map({$0.postIDs}))
             for group in mapData!.postGroup { print("ids", group.postIDs); mapController?.mapView.addSpotAnnotation(group: group, map: mapData!) }
         }
     }
@@ -426,6 +422,7 @@ extension CustomMapController {
     }
     
     @objc func backButtonAction() {
+        Mixpanel.mainInstance().track(event: "CustomMapBackTap")
         barBackButton.isHidden = true
         DispatchQueue.main.async {
             if self.navigationController?.viewControllers.count == 1 { self.mapController?.offsetCustomMapCenter() }
@@ -434,6 +431,7 @@ extension CustomMapController {
     }
     
     @objc func addAction() {
+        Mixpanel.mainInstance().track(event: "CustomMapAddTap")
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
@@ -501,8 +499,8 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 0 { return }
-    //    openPost(posts: Array(postsList.suffix(from: indexPath.item)))
         openPost(posts: [postsList[indexPath.row]])
+        Mixpanel.mainInstance().track(event: "CustomMapOpenPostFromGallery")
     }
     
     func openPost(posts: [MapPost]) {

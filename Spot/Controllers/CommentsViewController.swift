@@ -665,12 +665,14 @@ class CommentCell: UITableViewCell {
     }
     
     @objc func likeTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "CommentsLikeComment")
         if let commentsVC = viewContainingController() as? CommentsController {
             commentsVC.likeComment(comment: comment, post: post)
         }
     }
     
     @objc func unlikeTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "CommentsUnlikeComment")
         if let commentsVC = viewContainingController() as? CommentsController {
             commentsVC.unlikeComment(comment: comment, post: post)
         }
@@ -680,6 +682,7 @@ class CommentCell: UITableViewCell {
         // tag tap
         for r in tagRect {
             if r.rect.contains(sender.location(in: sender.view)) {
+                Mixpanel.mainInstance().track(event: "CommentsOpenTaggedUserProfile")
                 /// open tag from friends list
                 if let friend = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == r.username}) {
                     openProfile(user: friend)
@@ -691,10 +694,12 @@ class CommentCell: UITableViewCell {
                 }
             }
         }
+        Mixpanel.mainInstance().track(event: "CommentsTapTagUser")
         tagUser()
     }
     
     @objc func userTap() {
+        Mixpanel.mainInstance().track(event: "CommentsUserTap")
         guard let user = comment.userInfo else { return }
         openProfile(user: user)
     }
@@ -764,12 +769,14 @@ class CommentsControl: UITableViewHeaderFooterView {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
     @objc func commentSegTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "CommentsCommentsSegTap")
         if selectedIndex == 1 {
             switchToCommentSeg()
         }
     }
         
     @objc func likeSegTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "CommentsLikeSegTap")
         if selectedIndex == 0 {
             switchToLikeSeg()
             guard let commentsVC = viewContainingController() as? CommentsController else { return }
@@ -913,13 +920,14 @@ class LikeSeg: UIButton {
 }
 
 class LikerCell: UITableViewCell {
-    
     var profilePic: UIImageView!
     var username: UILabel!
+    var user: UserProfile!
     
-    func setUp(user: UserProfile) {
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
-        resetCell()
+        contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(likerCellTap)))
         
         profilePic = UIImageView {
             $0.layer.cornerRadius = 39/2
@@ -932,15 +940,8 @@ class LikerCell: UITableViewCell {
             $0.top.equalTo(15)
             $0.width.height.equalTo(39)
         }
-        
-        let url = user.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-        }
-                      
+      
         username = UILabel {
-            $0.text = user.username
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
             contentView.addSubview($0)
@@ -951,9 +952,24 @@ class LikerCell: UITableViewCell {
         }
     }
     
-    func resetCell() {
-        if profilePic != nil { profilePic.image = UIImage(); profilePic.removeFromSuperview() }
-        if username != nil { username.text = ""; username.removeFromSuperview() }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func setUp(user: UserProfile) {
+        let url = user.imageURL
+        if url != "" {
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+        }
+        username.text = user.username
+        self.user = user
+    }
+                                         
+    @objc func likerCellTap() {
+        Mixpanel.mainInstance().track(event: "CommentsLikerCellTap")
+        guard let commentsVC = viewContainingController() as? CommentsController else { return }
+        commentsVC.openProfile(user: user)
     }
     
     override func prepareForReuse() {

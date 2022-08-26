@@ -93,6 +93,7 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func editButtonAction() {
+        Mixpanel.mainInstance().track(event: "ProfileEditProfileTap")
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.profileVC = self
         editVC.modalPresentationStyle = .fullScreen
@@ -100,7 +101,7 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func friendListButtonAction() {
-        Mixpanel.mainInstance().track(event: "FriendListButtonAction")
+        Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
         let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [], presentedWithDrawerView: containerDrawerView!)
         present(friendListVC, animated: true)
     }
@@ -389,7 +390,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages, relation: relation)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
-            bodyCell.cellSetup(mapData: maps[indexPath.row - 1])
+            bodyCell.cellSetup(mapData: maps[indexPath.row - 1], userID: userProfile!.id!)
             return bodyCell
         }
         return cell

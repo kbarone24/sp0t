@@ -217,7 +217,7 @@ class NameController: UIViewController, UITextFieldDelegate {
             vc.newUser = self.newUser
             DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
             
-            Mixpanel.mainInstance().track(event: "SignUp1Success")
+            Mixpanel.mainInstance().track(event: "NameControllerSuccess")
         }
     }
     

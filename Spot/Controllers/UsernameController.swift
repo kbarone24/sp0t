@@ -344,7 +344,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
             } else {
                 self.newUser.username = username
                 let vc = PhoneController()
-                Mixpanel.mainInstance().track(event: "SignUpUsernameSuccess")
+                Mixpanel.mainInstance().track(event: "UsernameContorllerSuccess")
                 vc.codeType = .newAccount
                 vc.newUser = self.newUser
                 DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }

@@ -183,7 +183,6 @@ class ConfirmCodeController: UIViewController {
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {
-        print("keyboard will show")
         if cancelOnDismiss { return }
         /// new spot name view editing when textview not first responder
         animateWithKeyboard(notification: notification) { keyboardFrame in
@@ -228,10 +227,12 @@ class ConfirmCodeController: UIViewController {
                 }
                 
                 if self.codeType == .logIn {
+                    Mixpanel.mainInstance().track(event: "ConfirmCodeLoginSuccess")
                     DispatchQueue.main.async { self.animateToMap() }
                     return
                 } else if self.codeType == .newAccount {
                     self.getInitialFriends { friendIDs in
+                        Mixpanel.mainInstance().track(event: "ConfirmCodeNewAccountSuccess")
                         self.saveUserToFirebase(friendIDs: friendIDs)
                         self.setInitialValues(friendIDs: friendIDs)
                         let avi = AvatarSelectionController(sentFrom: "create")

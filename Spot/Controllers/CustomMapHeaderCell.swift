@@ -356,6 +356,7 @@ extension CustomMapHeaderCell {
     }
     
     @objc func userTap() {
+        Mixpanel.mainInstance().track(event: "CustomMapMembersTap")
         guard let customMapVC = viewContainingController() as? CustomMapController else { return }
         let friendListVC = FriendsListController(fromVC: customMapVC, allowsSelection: false, showsSearchBar: false, friendIDs: mapData.memberIDs, friendsList: [], confirmedIDs: [], presentedWithDrawerView: customMapVC.containerDrawerView!)
         customMapVC.present(friendListVC, animated: true)
