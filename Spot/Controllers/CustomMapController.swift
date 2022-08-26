@@ -60,6 +60,7 @@ class CustomMapController: UIViewController {
         self.userProfile = userProfile
         self.mapData = mapData
         self.postsList = postsList
+        print("map type", mapType)
         self.mapType = mapType
         self.containerDrawerView = presentedDrawerView
     }
@@ -299,7 +300,6 @@ extension CustomMapController {
                 
                 let docs = self.refresh == .refreshDisabled ? allDocs : allDocs.dropLast()
                 let postGroup = DispatchGroup()
-                print("ct", docs.count, self.postsList.count)
                 for doc in docs {
                     do {
                         let unwrappedInfo = try doc.data(as: MapPost.self)
@@ -358,7 +358,7 @@ extension CustomMapController {
         if mapType == .friendsMap {
             for post in posts { mapController?.mapView.addPostAnnotation(post: post) }
         } else {
-            for group in mapData!.postGroup { print("ids", group.postIDs); mapController?.mapView.addSpotAnnotation(group: group, map: mapData!) }
+            for group in mapData!.postGroup { mapController?.mapView.addSpotAnnotation(group: group, map: mapData!) }
         }
     }
     
@@ -599,7 +599,15 @@ extension CustomMapController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
         
-        if let anno = annotation as? PostAnnotation {
+        if let anno = annotation as? MKClusterAnnotation {
+            if anno.memberAnnotations.contains(where: {$0 is PostAnnotation}) {
+                let posts = getPostsFor(cluster: anno)
+                return mapView.getPostClusterAnnotation(anno: anno, posts: posts)
+            } else if anno.memberAnnotations.contains(where: {$0 is SpotPostAnnotation}) {
+                print("get spot cluster", anno)
+                return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: mapData)
+            }
+        } else if let anno = annotation as? PostAnnotation {
             guard let post = mapData!.postsDictionary[anno.postID] else { return MKAnnotationView() }
             return mapView.getPostAnnotation(anno: anno, post: post)
             
@@ -607,13 +615,6 @@ extension CustomMapController: MKMapViewDelegate {
             /// set up spot post view with 1 post
             return mapView.getSpotAnnotation(anno: anno, selectedMap: mapData)
             
-        } else if let anno = annotation as? MKClusterAnnotation {
-            if anno.memberAnnotations.first is PostAnnotation {
-                let posts = getPostsFor(cluster: anno)
-                return mapView.getPostClusterAnnotation(anno: anno, posts: posts)
-            } else {
-                return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: mapData)
-            }
         }
         return MKAnnotationView()
     }
