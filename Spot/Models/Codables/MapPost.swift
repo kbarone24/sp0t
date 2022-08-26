@@ -62,8 +62,8 @@ struct MapPost: Identifiable, Codable {
     var commentsHeight: CGFloat? = 0
     
     var seen: Bool {
-        let weekAgoSeconds = Date().timeIntervalSince1970 - 86400 * 7
-        return (seenList?.contains(UserDataModel.shared.uid) ?? true) || timestamp.seconds < Int64(weekAgoSeconds)
+        let twoWeeks = Date().timeIntervalSince1970 - 86400 * 14
+        return (seenList?.contains(UserDataModel.shared.uid) ?? true) || timestamp.seconds < Int64(twoWeeks)
     }
     var seconds: Int64 {
         return timestamp.seconds

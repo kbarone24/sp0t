@@ -123,8 +123,8 @@ extension FriendRequestCollectionCell: friendRequestCollectionCellDelegate{
     
     func acceptFriend(sender: AnyObject?) {
         let cell = sender as! FriendRequestCell
-        let friendID = cell.friendRequest.userInfo!.id
+        let friend = cell.friendRequest.userInfo!
         let notifID = cell.friendRequest.id
-        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friendID: friendID!, notificationID: notifID!)}
+        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friend: friend, notificationID: notifID!)}
     }
 }

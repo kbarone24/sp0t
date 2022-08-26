@@ -945,16 +945,24 @@ extension NSObject {
         db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayUnion([receiverID])])
     }
 
-    func acceptFriendRequest(friendID: String, notificationID: String) {
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        let functions = Functions.functions()
-                
-        addFriendToFriendsList(userID: uid, friendID: friendID)
-        addFriendToFriendsList(userID: friendID, friendID: uid)
-        sendFriendRequestNotis(friendID: friendID, notificationID: notificationID)
+    func acceptFriendRequest(friend: UserProfile, notificationID: String) {
+        /// add friend to user info
+        UserDataModel.shared.userInfo.friendsList.append(friend)
+        UserDataModel.shared.userInfo.friendIDs.append(friend.id!)
         
-        functions.httpsCallable("acceptFriendRequest").call(["userID": uid, "friendID": friendID, "username": UserDataModel.shared.userInfo.username]) { result, error in
-            print(result?.data as Any, error as Any)
+        /// adjust in firebase
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+        addFriendToFriendsList(userID: uid, friendID: friend.id!)
+        addFriendToFriendsList(userID: friend.id!, friendID: uid)
+        sendFriendRequestNotis(friendID: friend.id!, notificationID: notificationID)
+        
+        /// adjust individual posts "friendsList" docs
+        DispatchQueue.global().async {
+            self.adjustPostFriendsList(userID: uid, friendID: friend.id!, completion: { _ in
+                /// send notification to home to reload posts
+                NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListAdd")))
+            })
+            self.adjustPostFriendsList(userID: friend.id!, friendID: uid, completion: nil)
         }
     }
     
@@ -993,7 +1001,7 @@ extension NSObject {
         ])
     }
     
-    func adjustPostFriendsList(userID: String, friendID: String) {
+    func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool)->())?) {
         let db: Firestore = Firestore.firestore()
         db.collection("posts").whereField("posterID", isEqualTo: friendID).order(by: "timestamp", descending: true).getDocuments { snap, err in
             guard let snap = snap else { return }
@@ -1004,6 +1012,7 @@ extension NSObject {
                     doc.reference.updateData(["friendsList" : FieldValue.arrayUnion([userID])])
                 }
             }
+            completion?(true)
         }
     }
 
