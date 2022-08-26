@@ -95,9 +95,7 @@ extension SpotPageController {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
-        if self.containerDrawerView?.status != .Top {
-            DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
-        }
+        containerDrawerView?.present(to: .Top)
     }
     
     private func viewSetup() {
