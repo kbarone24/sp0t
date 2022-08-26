@@ -165,7 +165,8 @@ class DrawerView: NSObject {
             goBottom()
         }
         detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
-        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseOut) {
+
+        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
             self.slideView.frame.origin.y = self.yPosition
             self.parentVC.view.layoutIfNeeded()
         } completion: { success in
