@@ -34,12 +34,8 @@ class AvatarSelectionController: UIViewController {
             navigationItem.hidesBackButton = true
         }
         if (from == "edit") {
-            print("coming from edit")
-            print("curr av: ", currAv)
             for i in 0..<(avatars.count) {
-                print("for loop: ", i)
                 if(currAv!.contains(avatars[i])){
-                    print("found it")
                     avatars.swapAt(i, 5)
                 }
             }
@@ -63,7 +59,6 @@ class AvatarSelectionController: UIViewController {
             if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)){
                     self.centerCell = (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)
                 self.centerCell?.transformToLarge()
-                print("in center")
             }
         }
         
