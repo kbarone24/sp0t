@@ -10,7 +10,9 @@ import Foundation
 import UIKit
 import Firebase
 
+
 class AvatarSelectionController: UIViewController {
+        
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
     var friendRequests: [UserNotification] = []
@@ -24,11 +26,23 @@ class AvatarSelectionController: UIViewController {
 
     var onDoneBlock : ((Bool) -> Void)?
 
-    init(sentFrom: String){
+    
+    init(sentFrom: String, currAv: String?){
         super.init(nibName: nil, bundle: nil)
         from = sentFrom
-        if (from == "map" || from == "create") {
+        if(from == "map"){
             navigationItem.hidesBackButton = true
+        }
+        if (from == "edit") {
+            print("coming from edit")
+            print("curr av: ", currAv)
+            for i in 0..<(avatars.count) {
+                print("for loop: ", i)
+                if(currAv!.contains(avatars[i])){
+                    print("found it")
+                    avatars.swapAt(i, 5)
+                }
+            }
         }
     }
     
@@ -40,17 +54,19 @@ class AvatarSelectionController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         setUp()
+        self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
         DispatchQueue.main.async {
             if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)){
                     self.centerCell = (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)
                 self.centerCell?.transformToLarge()
+                print("in center")
             }
         }
+        
         
         let layoutMargins: CGFloat = self.collectionView.layoutMargins.left + self.collectionView.layoutMargins.left
         let sideInset = (self.view.frame.width / 2) - layoutMargins
