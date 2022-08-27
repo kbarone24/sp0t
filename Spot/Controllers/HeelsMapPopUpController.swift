@@ -13,15 +13,15 @@ import Firebase
 import FirebaseUI
 import Mixpanel
 import IQKeyboardManagerSwift
+import MapKit
+
 
 
 class HeelsMapPopUpController: UIViewController {
     
     let db: Firestore = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-    
-    var members = 0
-        
+            
     var textFieldContainer: UIView!
     var textField: UITextField!
     var joinButton: UIButton!
@@ -33,16 +33,16 @@ class HeelsMapPopUpController: UIViewController {
     var friendsJoined: UIButton!
     var subtitle: UILabel!
     var friendsText = ""
-    
+    var heelsMap: CustomMap!
+    var heelsCount = 0
+
     var mapDelegate: MapControllerDelegate!
         
     override func viewDidLoad() {
         
         super.viewDidLoad()
         view.backgroundColor = .white
-        
-        mapDelegate.getHeelsMap()
-        //friendsText = String(members) + " Friends"
+        getHeelsMap()
         loadInfoView()
         loadSearchView()
         
@@ -79,7 +79,10 @@ class HeelsMapPopUpController: UIViewController {
             $0.top.equalTo(icon.snp.bottom).offset(3)
         }
         
-        /*friendsJoined = UIButton {
+        friendsText = String(heelsCount) + " Friends"
+
+        
+        friendsJoined = UIButton {
             $0.setImage(UIImage(named: "Friends")?.alpha(0.5), for: .normal)
             let customButtonTitle = NSMutableAttributedString(string: friendsText, attributes: [
                 NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
@@ -96,7 +99,7 @@ class HeelsMapPopUpController: UIViewController {
         friendsJoined.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(titleLabel.snp.bottom).offset(8)
-        }*/
+        }
         
         subtitle = UILabel {
             $0.text = "UNC's community map"
@@ -107,7 +110,7 @@ class HeelsMapPopUpController: UIViewController {
         
         subtitle.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(titleLabel.snp.bottom).offset(13)
+            $0.top.equalTo(friendsJoined.snp.bottom).offset(13)
         }
         
         let cancel = UIButton {
@@ -121,7 +124,7 @@ class HeelsMapPopUpController: UIViewController {
         cancel.snp.makeConstraints {
             $0.trailing.equalToSuperview().offset(-5)
             $0.top.equalToSuperview().offset(5)
-            $0.height.width.equalTo(25.56)
+            $0.height.width.equalTo(40)
         }
         
     }
@@ -200,11 +203,38 @@ class HeelsMapPopUpController: UIViewController {
         }
     }
     
+    func getHeelsMap() {
+         self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").getDocument { (heelsMapSnap, err) in
+             do {
+                 let mapIn = try heelsMapSnap?.data(as: CustomMap.self)
+                 guard var mapInfo = mapIn else { return;}
+                 /// append spots to show on map even if there's no post attached
+                 if !mapInfo.spotIDs.isEmpty {
+                     for i in 0...mapInfo.spotIDs.count - 1 {
+                         let coordinate = CLLocationCoordinate2D(latitude: mapInfo.spotLocations[safe: i]?["lat"] ?? 0.0, longitude: mapInfo.spotLocations[safe: i]?["long"] ?? 0.0)
+                         mapInfo.postGroup.append(MapPostGroup(id: mapInfo.spotIDs[i], coordinate: coordinate, spotName: mapInfo.spotNames[safe: i] ?? "", postIDs: []))
+                     }
+                 }
+                 self.heelsMap = mapInfo
+                 self.friendsText = String(mapInfo.memberIDs.count) + " Friends"
+                 let customButtonTitle = NSMutableAttributedString(string: self.friendsText, attributes: [
+                     NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                     NSAttributedString.Key.foregroundColor: UIColor(red: 0.712, green: 0.712, blue: 0.712, alpha: 1)
+                 ])
+                 self.friendsJoined.setAttributedTitle(customButtonTitle, for: .normal)
+                                 
+             } catch {
+                 /// remove broken friend object
+                 return
+             }
+         }
+     }
+    
     @objc func addHeelsMap(_ sender: UIButton){
         Mixpanel.mainInstance().track(event: "HeelsMapAddUser")
         let schoolEmail = searchTextGlobal.lowercased().trimmingCharacters(in: .whitespaces)
         db.collection("users").document(uid).updateData(["schoolEmail" : schoolEmail])
-        mapDelegate.addHeelsMap()
+        mapDelegate.addHeelsMap(heelsMap: self.heelsMap)
         DispatchQueue.main.async { self.dismiss(animated: true, completion: nil) }
     }
     

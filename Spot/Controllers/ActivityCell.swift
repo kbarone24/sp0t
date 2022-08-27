@@ -21,6 +21,8 @@ class ActivityCell: UITableViewCell {
     
     var username: UILabel!
     var detail: UILabel!
+    var subtitle: String!
+    var time: String!
     var timestamp: UILabel!
     var profilePic: UIImageView!
     var userAvatar: UIImageView!
@@ -151,26 +153,76 @@ class ActivityCell: UITableViewCell {
             $0.addGestureRecognizer(tap)
             contentView.addSubview($0)
         }
+
+        //timestamp constraints set later because they rely on detail constraints
+
+        let notiType = notification.type
+        switch notiType {
+        case "like":
+            subtitle = "liked your post yeah supercool name"
+        case "comment":
+            subtitle = "commented on your post"
+        case "friendRequest":
+            subtitle = "you are now friends!"
+        case "commentTag":
+            subtitle = "mentioned you in a comment"
+        case "commentLike":
+            subtitle = "liked your comment"
+        case "commentComment":
+            var notifText = "commented on "
+            notifText += notification.originalPoster!
+            notifText += "'s post"
+            subtitle = notifText
+        case "commentOnAdd":
+            var notifText = "commented on "
+            notifText += notification.originalPoster!
+            notifText += "'s post"
+            subtitle = notifText
+        case "likeOnAdd":
+            var notifText = "liked "
+            notifText += notification.originalPoster!
+            notifText += "'s post"
+            subtitle = notifText
+        case "mapInvite":
+            subtitle = "invited you to a map!"
+        case "mapPost":
+            var notifText = "posted to "
+            notifText += notification.postInfo!.mapName!
+            subtitle = notifText
+        case "post":
+            var notifText = "posted at "
+            notifText += notification.postInfo!.spotName!
+            subtitle = notifText
+        case "postAdd":
+            subtitle = "added you to a post"
+        case "publicSpotAccepted":
+            subtitle = "Your public submission was approved!"
+        case "cityPost":
+            var notifText = "posted in "
+            notifText += notification.postInfo!.spotName!
+            subtitle = notifText
+        default:
+            subtitle = notification.type
+        }
         
         timestamp = UILabel {
             $0.toTimeString(timestamp: notification.timestamp)
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
-            $0.textColor = UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
         }
         
-        //timestamp constraints set later because they rely on detail constraints
+        time = timestamp.text
+        let combined = subtitle + "  " + time
+        let attributedString = NSMutableAttributedString(string: combined)
+        let detailRange = NSRange(location: 0, length: attributedString.length - time.count)
+        let timeRange = NSRange(location: attributedString.length - time.count, length: time.count)
         
-        var detailWidth = 0.0
+        attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-Regular", size: 14.5)!, range: detailRange)
+        attributedString.addAttribute(.foregroundColor, value: UIColor.black, range: detailRange)
         
-        if(timestamp.intrinsicContentSize.width < 20){
-            detailWidth = 215 + 20
-        } else if (timestamp.intrinsicContentSize.width < 30){
-            detailWidth = 215 + 10
-        } else { detailWidth = 215 }
+        attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-Regular", size: 14.5)!, range: timeRange)
+        attributedString.addAttribute(.foregroundColor, value: UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1), range: timeRange)
         
-        
+        var detailWidth = 230.0
+                
         detail = UILabel {
             let notiType = notification.type
             switch notiType {
@@ -221,40 +273,43 @@ class ActivityCell: UITableViewCell {
                 $0.text = notification.type
             }
             
+            $0.attributedText = attributedString
             $0.numberOfLines = 2
             $0.lineBreakMode = NSLineBreakMode.byWordWrapping
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 14.5)
             $0.translatesAutoresizingMaskIntoConstraints = false
+            $0.sizeToFit()
             detailOriginalWidth = $0.intrinsicContentSize.width
             $0.preferredMaxLayoutWidth = detailWidth
             contentView.addSubview($0)
         }
-        
-        detailOriginalHeight = detail.intrinsicContentSize.height
-        
+                        
         username.snp.makeConstraints{
             $0.leading.equalTo(profilePic.snp.trailing).offset(8)
-            $0.centerY.equalToSuperview().offset((-1*detailOriginalHeight)/2)
+            $0.centerY.equalToSuperview()
         }
-        
-        
         
         detail.snp.makeConstraints{
             $0.top.equalTo(username.snp.bottom)
             $0.leading.equalTo(profilePic.snp.trailing).offset(7)
             $0.width.lessThanOrEqualTo(detailWidth)
+            $0.trailing.equalTo(postImage.snp.leading).offset(-10)
         }
         
-        timestamp.snp.makeConstraints{
-            $0.bottom.equalTo(detail.snp.bottom)
-            var timeLeading = detail.intrinsicContentSize.width
-            if(timeLeading < detailOriginalWidth){
-                timeLeading = detailOriginalWidth - detail.intrinsicContentSize.width
-            }
-            $0.leading.equalTo(detail.snp.leading).offset(timeLeading + 6)
-        }
+        detailOriginalHeight = detail.intrinsicContentSize.height
+        print("detail lines: ", detailOriginalHeight)
         
+        username.snp.updateConstraints{
+            $0.centerY.equalToSuperview().offset((-1*detailOriginalHeight)/2)
+        }
+
+    }
+    
+    func lines(label: UILabel) -> Int {
+        let textSize = CGSize(width: label.frame.size.width, height: CGFloat(Float.infinity))
+        let rHeight = lroundf(Float(label.sizeThatFits(textSize).height))
+        let charSize = lroundf(Float(label.font.lineHeight))
+        let lineCount = rHeight/charSize
+        return lineCount
     }
     
     @objc func profileTap() {

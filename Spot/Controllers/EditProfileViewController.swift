@@ -37,7 +37,7 @@ class EditProfileViewController: UIViewController {
     private var userProfile: UserProfile?
     private let db = Firestore.firestore()
     
-    var onDoneBlock : ((UserProfile) -> Void)?
+    var onDoneBlock : ((Bool) -> Void)?
     
     init(userProfile: UserProfile? = nil) {
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
@@ -95,7 +95,7 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func avatarEditAction() {
-        let vc = AvatarSelectionController(sentFrom: "edit")
+        let vc = AvatarSelectionController(sentFrom: "edit", currAv: UserDataModel.shared.userInfo.avatarURL!)
         //vc.delegate = self
         vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
         vc.onDoneBlock = { result in
@@ -125,7 +125,7 @@ class EditProfileViewController: UIViewController {
                 updateProfileImage()
             } else {
                 self.activityIndicator.stopAnimating()
-                onDoneBlock!(userProfile!)
+                self.onDoneBlock!(true)
                 self.dismiss(animated: true)
             }
         } catch {

@@ -24,7 +24,7 @@ extension MapController {
         if feedLoaded { return }
         feedLoaded = true
         
-        DispatchQueue.main.async { self.loadAdditionalOnboarding() }
+        //DispatchQueue.main.async {  }
         
         DispatchQueue.global(qos: .userInitiated).async {
             self.getMaps()
@@ -36,8 +36,9 @@ extension MapController {
                 guard let self = self else { return }
                 self.attachNewPostListener()
                 self.newPostsButton.isHidden = false
+                self.loadAdditionalOnboarding()
                 self.reloadMapsCollection(resort: true, newPost: false)
-                self.displayHeelsMap()
+                if self.userInChapelHill(){self.displayHeelsMap()}
             }
         }
     }
@@ -257,7 +258,6 @@ extension MapController {
                     guard var mapInfo = mapIn else { continue }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
-                    
                     self.homeFetchGroup.enter()
                     self.getRecentPosts(map: mapInfo)
                 } catch {
@@ -454,31 +454,15 @@ extension MapController {
             cell.activityIndicator.startAnimating()
         }
     }
-}
-
-extension MapController: MapControllerDelegate {
-    func displayHeelsMap() {
-        var heelsMapAdded = false
-        for map in UserDataModel.shared.userInfo.mapsList {
-            if(map.mapName == "Heelsmap"){
-                heelsMapAdded = true
-            }
-        }
-    
-        if (self.userInChapelHill() && !heelsMapAdded) {
-            let vc = HeelsMapPopUpController()
-            vc.mapDelegate = self
-            self.present(vc, animated: true)
-         }
-    }
-    
     
     func loadAdditionalOnboarding() {
+        let posts = friendsPostsDictionary.filter{!$0.value.seen}.count
         if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
-            let avc = AvatarSelectionController(sentFrom: "map")
+            let avc = AvatarSelectionController(sentFrom: "map", currAv: nil)
             self.navigationController!.pushViewController(avc, animated: true)
         }
-        else if (UserDataModel.shared.userInfo.friendIDs.count < 5) {
+        else if (UserDataModel.shared.userInfo.friendIDs.count < 6 && posts == 0) {
+            print("unseen posts: ", newPostsButton.unseenPosts)
             self.addFriends = AddFriendsView {
                 $0.layer.cornerRadius = 13
                 $0.isHidden = false
@@ -493,28 +477,19 @@ extension MapController: MapControllerDelegate {
             }
         }
     }
+}
 
-    func getHeelsMap() {
-        self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").getDocument { (heelsMapSnap, err) in
-            do {
-                let mapIn = try heelsMapSnap?.data(as: CustomMap.self)
-                guard var mapInfo = mapIn else { self.homeFetchGroup.leave(); return;}
-                /// append spots to show on map even if there's no post attached
-                if !mapInfo.spotIDs.isEmpty {
-                    for i in 0...mapInfo.spotIDs.count - 1 {
-                        let coordinate = CLLocationCoordinate2D(latitude: mapInfo.spotLocations[safe: i]?["lat"] ?? 0.0, longitude: mapInfo.spotLocations[safe: i]?["long"] ?? 0.0)
-                        mapInfo.postGroup.append(MapPostGroup(id: mapInfo.spotIDs[i], coordinate: coordinate, spotName: mapInfo.spotNames[safe: i] ?? "", postIDs: []))
-                    }
-                }
-                self.heelsMap = mapInfo
-
-            } catch {
-                return
-            }
+extension MapController: MapControllerDelegate {
+    
+    func displayHeelsMap() {
+        if userInChapelHill() && !UserDataModel.shared.userInfo.mapsList.contains(where: {$0.id == heelsMapID}) {
+            let vc = HeelsMapPopUpController()
+            vc.mapDelegate = self
+            self.present(vc, animated: true)
         }
     }
     
-    func addHeelsMap() {
+    func addHeelsMap(heelsMap: CustomMap) {
         UserDataModel.shared.userInfo.mapsList.append(heelsMap)
         self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").updateData([
             "memberIDs": FieldValue.arrayUnion([uid]),
@@ -523,8 +498,8 @@ extension MapController: MapControllerDelegate {
         reloadMapsCollection(resort: true, newPost: true)
         self.homeFetchGroup.enter()
         DispatchQueue.global(qos: .userInitiated).async {
-            self.getRecentPosts(map: self.heelsMap)
+            self.getRecentPosts(map: heelsMap)
         }
     }
+    
 }
-
