@@ -267,9 +267,14 @@ class MapController: UIViewController {
     }
     
     func openFindFriends() {
-        let findFriendsVC = FindFriendsController()
-        self.navigationController?.pushViewController(findFriendsVC, animated: true)
-        if addFriends != nil { addFriends.removeFromSuperview() }
+        let ffvc = FindFriendsController()
+        sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+            self.sheetView = nil
+        })
+        sheetView?.swipeDownToDismiss = false
+        sheetView?.canInteract = false
+        sheetView?.present(to: .Top)
+        ffvc.contentDrawer = sheetView
     }
  
     func openPost(posts: [MapPost]) {
