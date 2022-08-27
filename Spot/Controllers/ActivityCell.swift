@@ -224,6 +224,55 @@ class ActivityCell: UITableViewCell {
         var detailWidth = 230.0
                 
         detail = UILabel {
+            let notiType = notification.type
+            switch notiType {
+            case "like":
+                $0.text = "liked your post"
+            case "comment":
+                $0.text = "commented on your post"
+            case "friendRequest":
+                $0.text = "is now your friend!"
+            case "commentTag":
+                $0.text = "mentioned you in a comment"
+            case "commentLike":
+                $0.text = "liked your comment"
+            case "commentComment":
+                var notifText = "commented on "
+                notifText += notification.originalPoster!
+                notifText += "'s post"
+                $0.text = notifText
+            case "commentOnAdd":
+                var notifText = "commented on "
+                notifText += notification.originalPoster!
+                notifText += "'s post"
+                $0.text = notifText
+            case "likeOnAdd":
+                var notifText = "liked "
+                notifText += notification.originalPoster!
+                notifText += "'s post"
+                $0.text = notifText
+            case "mapInvite":
+                $0.text = "invited you to a map!"
+            case "mapPost":
+                var notifText = "posted to "
+                notifText += notification.postInfo!.mapName!
+                $0.text = notifText
+            case "post":
+                var notifText = "posted at "
+                notifText += notification.postInfo!.spotName!
+                $0.text = notifText
+            case "postAdd":
+                $0.text = "added you to a post"
+            case "publicSpotAccepted":
+                $0.text = "Your public submission was approved!"
+            case "cityPost":
+                var notifText = "posted in "
+                notifText += notification.postInfo!.spotName!
+                $0.text = notifText
+            default:
+                $0.text = notification.type
+            }
+            
             $0.attributedText = attributedString
             $0.numberOfLines = 2
             $0.lineBreakMode = NSLineBreakMode.byWordWrapping

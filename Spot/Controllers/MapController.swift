@@ -238,6 +238,7 @@ class MapController: UIViewController {
     @objc func profileTap(_ sender: Any){
         Mixpanel.mainInstance().track(event: "MapControllerProfileTap")
         let profileVC = ProfileViewController(userProfile: nil)
+        profileVC.deletedPostIDs = deletedPostIDs
         sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
