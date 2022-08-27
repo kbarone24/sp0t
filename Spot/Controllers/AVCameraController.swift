@@ -521,6 +521,7 @@ class AVCameraController: UIViewController {
     func openGallery() {
         if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "PhotoGallery") as? PhotoGalleryController {
             DispatchQueue.main.async {
+                if self.navigationController?.viewControllers.contains(where: {$0 is PhotoGalleryController}) ?? false { return }
                 self.navigationController?.pushViewController(vc, animated: true)
             }
         }

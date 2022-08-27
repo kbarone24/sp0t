@@ -180,8 +180,8 @@ class ChooseMapController: UIViewController {
 
         let uid = uid
         let post = UploadPostModel.shared.postObject!
-        let spot = UploadPostModel.shared.spotObject
-        let map = UploadPostModel.shared.mapObject
+        var spot = UploadPostModel.shared.spotObject
+        var map = UploadPostModel.shared.mapObject
         let newMap = self.newMap != nil
         progressBar.isHidden = false
 
@@ -189,30 +189,27 @@ class ChooseMapController: UIViewController {
         DispatchQueue.global(qos: .userInitiated).async {
             self.uploadPostImage(post.postImage, postID: post.id!, progressFill: self.progressFill, fullWidth: fullWidth) { [weak self] imageURLs, failed in
                 guard let self = self else { return }
-                
                 if imageURLs.isEmpty && failed {
                     Mixpanel.mainInstance().track(event: "FailedPostUpload")
                     self.runFailedUpload()
                     return
                 }
-                
+            
                 UploadPostModel.shared.postObject.imageURLs = imageURLs
                 UploadPostModel.shared.postObject.timestamp = Firebase.Timestamp(date: Date())
-                let post = UploadPostModel.shared.postObject!
-                self.uploadPost(post: post, map: map)
-
+                
                 if spot != nil {
-                    var spot = spot!
-                    spot.imageURL = imageURLs.first ?? ""
-                    self.uploadSpot(post: post, spot: spot, submitPublic: false)
+                    spot!.imageURL = imageURLs.first ?? ""
+                    self.uploadSpot(post: post, spot: spot!, submitPublic: false)
+                }
+                if map != nil {
+                    if map!.imageURL == "" { map!.imageURL = imageURLs.first ?? "" }
+                    map!.postImageURLs.append(imageURLs.first ?? "")
+                    self.uploadMap(map: map!, newMap: newMap, post: post)
                 }
                 
-                if map != nil {
-                    var map = map!
-                    if map.imageURL == "" { map.imageURL = imageURLs.first ?? "" }
-                    map.postImageURLs.append(imageURLs.first ?? "")
-                    self.uploadMap(map: map, newMap: newMap, post: post)
-                }
+                let post = UploadPostModel.shared.postObject!
+                self.uploadPost(post: post, map: map)
                 
                 let visitorList = spot?.visitorList ?? []
                 self.setUserValues(poster: uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
