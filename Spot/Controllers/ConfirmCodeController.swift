@@ -234,7 +234,7 @@ class ConfirmCodeController: UIViewController {
                     self.getInitialFriends { friendIDs in
                         self.saveUserToFirebase(friendIDs: friendIDs)
                         self.setInitialValues(friendIDs: friendIDs)
-                        let avi = AvatarSelectionController(sentFrom: "create")
+                        let avi = AvatarSelectionController(sentFrom: "create", currAv: nil)
                         DispatchQueue.main.async { self.navigationController!.pushViewController(avi, animated: true) }
                     }
                 }

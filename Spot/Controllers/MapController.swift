@@ -18,8 +18,8 @@ import FirebaseAuth
 import FirebaseMessaging
 
 protocol MapControllerDelegate: AnyObject {
-    func getHeelsMap()
-    func addHeelsMap()
+    func displayHeelsMap()
+    func addHeelsMap(heelsMap: CustomMap)
 }
 
 class MapController: UIViewController {
@@ -64,7 +64,7 @@ class MapController: UIViewController {
     var startTime: Int64!
     
     var addFriends: AddFriendsView!
-    var heelsMap: CustomMap!
+    var heelsMapID = "9ECABEF9-0036-4082-A06A-C8943428FFF4"
     
     /// sheet view: Must declare outside to listen to UIEvent
     private var sheetView: DrawerView? {
@@ -326,7 +326,11 @@ class MapController: UIViewController {
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
             mapView.removeAllAnnos()
-            if addFriends != nil { addFriends.removeFromSuperview() } /// remove add friends view whenever leaving home screen
+            if addFriends != nil {
+                print("here")
+                self.addFriends.removeFromSuperview()
+                
+            } /// remove add friends view whenever leaving home screen
         } else {
             mapView.delegate = self
             mapView.spotMapDelegate = self
@@ -631,7 +635,7 @@ class AddFriendsView: UIView {
         cancel.snp.makeConstraints {
             $0.trailing.equalToSuperview().offset(-5)
             $0.top.equalToSuperview().offset(5)
-            $0.height.width.equalTo(19.81)
+            $0.height.width.equalTo(30)
         }
         
     }
