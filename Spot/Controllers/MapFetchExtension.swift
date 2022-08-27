@@ -462,7 +462,6 @@ extension MapController {
             self.navigationController!.pushViewController(avc, animated: true)
         }
         else if (UserDataModel.shared.userInfo.friendIDs.count < 6 && posts == 0) {
-            print("unseen posts: ", newPostsButton.unseenPosts)
             self.addFriends = AddFriendsView {
                 $0.layer.cornerRadius = 13
                 $0.isHidden = false

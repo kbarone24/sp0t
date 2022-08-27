@@ -305,6 +305,7 @@ extension CustomMapController {
                         let unwrappedInfo = try doc.data(as: MapPost.self)
                         guard let postInfo = unwrappedInfo else { return }
                         if self.postsList.contains(where: {$0.id == postInfo.id}) { continue }
+                        if !self.hasMapPostAccess(post: postInfo) { continue }
                         postGroup.enter()
                         self.setPostDetails(post: postInfo) { [weak self] post in
                             guard let self = self else { return }
@@ -331,6 +332,15 @@ extension CustomMapController {
                 }
             }
         }
+    }
+    
+    func hasMapPostAccess(post: MapPost) -> Bool {
+        if mapType == .friendsMap {
+            return hasPostAccess(post: post)
+        } else if mapType == .myMap {
+            return hasPostAccess(post: post) && !(post.hideFromFeed ?? false)
+        }
+        return true
     }
     
     func addAnnotation(post: MapPost) {

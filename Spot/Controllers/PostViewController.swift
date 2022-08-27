@@ -91,9 +91,10 @@ class PostController: UIViewController {
     }
     
     func configureDrawerView() {
+        print("configur")
         containerDrawerView?.swipeDownToDismiss = true
         containerDrawerView?.canInteract = true
-        containerDrawerView?.showCloseButton = true
+        containerDrawerView?.showCloseButton = false
         DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
     }
     

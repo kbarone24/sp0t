@@ -49,6 +49,7 @@ class NewMapController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         IQKeyboardManager.shared.enableAutoToolbar = false
+        if nameField != nil { nameField.becomeFirstResponder() }
     }
     
     override func viewDidDisappear(_ animated: Bool) {

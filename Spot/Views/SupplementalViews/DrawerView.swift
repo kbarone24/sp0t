@@ -166,7 +166,7 @@ class DrawerView: NSObject {
         }
         detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
 
-        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
+        UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
             self.slideView.frame.origin.y = self.yPosition
             self.parentVC.view.layoutIfNeeded()
         } completion: { success in
@@ -270,7 +270,7 @@ class DrawerView: NSObject {
             } */
                     
             // Animate the drawer view to the set position
-            UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.35 * self.parentVC.view.frame.height / 0.35)) {
+            UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.25 * self.parentVC.view.frame.height / 0.25)) {
                 self.slideView.frame.origin.y = self.yPosition
                 self.parentVC.view.layoutIfNeeded()
             } completion: { success in
@@ -289,7 +289,7 @@ class DrawerView: NSObject {
     
     func closeAction() {
         /// animation duration as a proportion of drawer's current position (0.3 is default duration)
-        let animationDuration = ((slideView.frame.height - slideView.frame.origin.y) * 0.3) / parentVC.view.bounds.height
+        let animationDuration = ((slideView.frame.height - slideView.frame.origin.y) * 0.25) / parentVC.view.bounds.height
         if myNav.viewControllers.count == 1 {
             UIView.animate(withDuration: animationDuration, animations: {
                 self.slideView.frame.origin.y = self.parentVC.view.frame.height

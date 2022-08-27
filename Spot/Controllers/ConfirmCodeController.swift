@@ -219,31 +219,45 @@ class ConfirmCodeController: UIViewController {
         activityIndicator.startAnimating()
         sender.isUserInteractionEnabled = false
         
-        Auth.auth().signIn(with: phoneCredential) { (authResult, err) in
-            if err == nil && authResult != nil {
-                DispatchQueue.main.async {
-                    self.view.endEditing(true)
-                    self.activityIndicator.stopAnimating()
-                }
-                
-                if self.codeType == .logIn {
-                    Mixpanel.mainInstance().track(event: "ConfirmCodeLoginSuccess")
-                    DispatchQueue.main.async { self.animateToMap() }
-                    return
-                } else if self.codeType == .newAccount {
-                    self.getInitialFriends { friendIDs in
-                        Mixpanel.mainInstance().track(event: "ConfirmCodeNewAccountSuccess")
-                        self.saveUserToFirebase(friendIDs: friendIDs)
-                        self.setInitialValues(friendIDs: friendIDs)
-                        let avi = AvatarSelectionController(sentFrom: "create")
-                        DispatchQueue.main.async { self.navigationController!.pushViewController(avi, animated: true) }
+        checkForUsername { available in
+            /// want to check to make sure no one took this username while user was authenticating
+            if !available { self.showError(message: "Username taken"); return }
+            Auth.auth().signIn(with: phoneCredential) { (authResult, err) in
+                if err == nil && authResult != nil {
+                    DispatchQueue.main.async {
+                        self.view.endEditing(true)
+                        self.activityIndicator.stopAnimating()
                     }
+                    
+                    if self.codeType == .logIn {
+                        Mixpanel.mainInstance().track(event: "ConfirmCodeLoginSuccess")
+                        DispatchQueue.main.async { self.animateToMap() }
+                        return
+                    } else if self.codeType == .newAccount {
+                        self.getInitialFriends { friendIDs in
+                            Mixpanel.mainInstance().track(event: "ConfirmCodeNewAccountSuccess")
+                            self.saveUserToFirebase(friendIDs: friendIDs)
+                            self.setInitialValues(friendIDs: friendIDs)
+                            let avi = AvatarSelectionController(sentFrom: "create")
+                            DispatchQueue.main.async { self.navigationController!.pushViewController(avi, animated: true) }
+                        }
+                    }
+                } else {
+                    Mixpanel.mainInstance().track(event: "ConfirmCodeInvalidCode")
+                    sender.isUserInteractionEnabled = true
+                    self.showError(message: "Invalid code")
                 }
-            } else {
-                Mixpanel.mainInstance().track(event: "ConfirmCodeInvalidCode")
-                sender.isUserInteractionEnabled = true
-                self.showError(message: "Invalid code")
             }
+        }
+    }
+    
+    func checkForUsername(completion: @escaping(_ available: Bool) -> Void) {
+        if newUser == nil { completion(true); return}
+        let db = Firestore.firestore()
+        let usersRef = db.collection("usernames")
+        let query = usersRef.whereField("username", isEqualTo: newUser.username)
+        query.getDocuments { snap, err in
+            completion(snap?.documents.count ?? 0 == 0)
         }
     }
   

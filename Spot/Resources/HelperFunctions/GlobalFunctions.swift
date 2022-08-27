@@ -24,6 +24,7 @@ extension UIViewController {
         return pred.evaluate(with: username) && username.count > 1
     }
     
+    
     func isValidEmail(email:String?) -> Bool {
         guard email != nil else { return false }
         let regEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
@@ -90,11 +91,9 @@ extension UIViewController {
     }
     
     func hasPostAccess(post: MapPost) -> Bool {
-        
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         if uid == post.posterID { return true }
         if UserDataModel.shared.adminIDs.contains(where: {$0 == post.posterID}) { return false }
-        
         if post.privacyLevel == "friends" {
             if !UserDataModel.shared.userInfo.friendIDs.contains(post.posterID) { return false }
         } else if post.privacyLevel == "invite" {

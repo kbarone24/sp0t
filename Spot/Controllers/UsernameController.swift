@@ -25,12 +25,12 @@ class UsernameController: UIViewController, UITextFieldDelegate {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "SignUpUsernameOpen")
+        enableKeyboardMethods()
+        if usernameField != nil { DispatchQueue.main.async { self.usernameField.becomeFirstResponder() }}
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        enableKeyboardMethods()
-        if usernameField != nil { DispatchQueue.main.async { self.usernameField.becomeFirstResponder() }}
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -309,7 +309,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
     
     func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void) {
         if !isValidUsername(username: username) { completion("Too short"); return }
-        
+
         let db = Firestore.firestore()
         let usersRef = db.collection("usernames")
         let query = usersRef.whereField("username", isEqualTo: username)
