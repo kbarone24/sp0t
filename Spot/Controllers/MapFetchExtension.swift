@@ -392,6 +392,7 @@ extension MapController {
         /// remove from map
         if mapID != "" {
             if mapDelete {
+                selectedItemIndex = 0 /// reset to avoid index out of bounds
                 UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == mapID})
             } else if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == mapID}) {
                 DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id!, spotID: spotDelete || spotRemove ? post.spotID! : "") }

@@ -27,7 +27,7 @@ class ProfileViewController: UIViewController {
     }
     public lazy var maps = [CustomMap]()
     private lazy var posts = [MapPost]()
-    private lazy var deletedPostIDs: [String] = []
+    public lazy var deletedPostIDs: [String] = []
     
     private var postImages = [UIImage]()
     private var relation: ProfileRelation = .myself
