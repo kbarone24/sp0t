@@ -38,7 +38,11 @@ class ProfileViewController: UIViewController {
     }
 
     private lazy var imageManager = SDWebImageManager()
-    public unowned var containerDrawerView: DrawerView?
+    public unowned var containerDrawerView: DrawerView? {
+        didSet {
+            configureDrawerView()
+        }
+    }
     
     var postsFetched = false {
         didSet {
@@ -85,11 +89,11 @@ class ProfileViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-//        navigationController?.setNavigationBarHidden(false, animated: true)
         Mixpanel.mainInstance().track(event: "ProfileOpen")
     }
     
     @objc func editButtonAction() {
+        Mixpanel.mainInstance().track(event: "ProfileEditProfileTap")
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.profileVC = self
         editVC.modalPresentationStyle = .fullScreen
@@ -102,7 +106,7 @@ class ProfileViewController: UIViewController {
     }
     
     @objc func friendListButtonAction() {
-        Mixpanel.mainInstance().track(event: "FriendListButtonAction")
+        Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
         let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [], presentedWithDrawerView: containerDrawerView!)
         present(friendListVC, animated: true)
     }
@@ -147,9 +151,7 @@ extension ProfileViewController {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
-        if self.containerDrawerView?.status != .Top {
-            self.containerDrawerView?.present(to: .Top)
-        }
+        containerDrawerView?.present(to: .Top)
     }
         
     private func getUserInfo() {
@@ -393,7 +395,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages, relation: relation)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
-            bodyCell.cellSetup(mapData: maps[indexPath.row - 1])
+            bodyCell.cellSetup(mapData: maps[indexPath.row - 1], userID: userProfile!.id!)
             return bodyCell
         }
         return cell

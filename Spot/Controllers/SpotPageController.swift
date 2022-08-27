@@ -95,9 +95,7 @@ extension SpotPageController {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
-        if self.containerDrawerView?.status != .Top {
-            DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
-        }
+        containerDrawerView?.present(to: .Top)
     }
     
     private func viewSetup() {
@@ -306,6 +304,7 @@ extension SpotPageController {
     }
     
     @objc func addAction() {
+        Mixpanel.mainInstance().track(event: "SpotPageAddTap")
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
@@ -319,6 +318,7 @@ extension SpotPageController {
     }
     
     @objc func backButtonAction() {
+        Mixpanel.mainInstance().track(event: "SpotPageBackTap")
         containerDrawerView?.closeAction()
     }
     
@@ -416,6 +416,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section != 0 {
+            Mixpanel.mainInstance().track(event: "SpotPageGalleryPostTap")
             let collectionCell = collectionView.cellForItem(at: indexPath)
             UIView.animate(withDuration: 0.15) {
                 collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)

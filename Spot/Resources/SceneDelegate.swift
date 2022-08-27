@@ -15,12 +15,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
                 
         if let windowScene = (scene as? UIWindowScene) {
-            
             self.window = UIWindow(windowScene: windowScene)
             
             if Auth.auth().currentUser != nil {
                 self.animateToMap()
-                
             } else {
                 let sb = UIStoryboard(name: "Main", bundle: nil)
                 let vc = sb.instantiateViewController(withIdentifier: "LandingPage") as! LandingPageController
@@ -30,52 +28,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             }
         }
     }
-    /*
-    func checkForPhoneAuth() {
-        /// use user defaults as primary, firestore as backup
-        let defaults = UserDefaults.standard
-        let verified = defaults.object(forKey: "verifiedPhone") as? Bool ?? false
-        
-        if verified {
-            Mixpanel.mainInstance().track(event: "PreAuthenticatedUser")
-            self.animateToMap()
-            
-        } else {
-
-            let db = Firestore.firestore()
-            db.collection("users").whereField("email", isEqualTo: Auth.auth().currentUser?.email ?? "").getDocuments { (snap, err) in
-
-                if let doc = snap?.documents.first {
-                    /// if user is verified but its not already saved to defaults ( could have deleted the app and redownloaded), save it to defaults and send them to the map
-                    let verified = doc.get("verifiedPhone") as? Bool ?? false
-                    if verified {
-                        Mixpanel.mainInstance().track(event: "SceneDelegateDefaultVerificationFail")
-                        defaults.set(true, forKey: "verifiedPhone")
-                        self.animateToMap()
-                    } else {
-                        self.sendUserToPhoneAuth()
-                    }
-                    
-                } else {
-                    self.sendUserToPhoneAuth()
-                }
-            }
-        }
-    }
-    
-    func sendUserToPhoneAuth() {
-        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhoneVC") as? PhoneController {
-            
-            vc.codeType = .multifactor
-            vc.root = true
-            
-            let navController = UINavigationController(rootViewController: vc)
-            navController.modalPresentationStyle = .fullScreen
-            self.window!.rootViewController = navController
-            self.window!.makeKeyAndVisible()
-        }
-    }
-    */
+   
     func animateToMap() {
         let sb = UIStoryboard(name: "Map", bundle: nil)
         let vc = sb.instantiateViewController(withIdentifier: "MapVC") as! MapController

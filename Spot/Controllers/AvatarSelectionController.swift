@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import Firebase
+import Mixpanel
 
 
 class AvatarSelectionController: UIViewController {
@@ -159,6 +160,7 @@ class AvatarSelectionController: UIViewController {
     }
     
     @objc func dismissAction(_ sender: UIButton){
+        Mixpanel.mainInstance().track(event: "AvatarSelectionDismiss")
         self.presentingViewController?.dismiss(animated: false, completion:nil)
     }
     
@@ -180,6 +182,7 @@ class AvatarSelectionController: UIViewController {
         DispatchQueue.main.async { [self] in
             let center = self.view.convert(self.collectionView.center, to: self.collectionView)
             if let indexPath = self.collectionView.indexPathForItem(at: center){
+                Mixpanel.mainInstance().track(event: "AvatarSelectionScrollNewAvatar")
                 self.centerCell = (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)
                 self.centerCell?.transformToLarge()
             }
@@ -197,6 +200,7 @@ class AvatarSelectionController: UIViewController {
     }
     
     @objc func selectedTap(_ sender: UIButton){
+        Mixpanel.mainInstance().track(event: "AvatarSelectionSelectTap")
         let avatarURL = AvatarURLs().getURL(name: centerCell.avatar!)
         UserDataModel.shared.userInfo.avatarURL = avatarURL
         UserDataModel.shared.userInfo.avatarPic = UIImage(named: centerCell.avatar!)!
@@ -222,8 +226,6 @@ class AvatarSelectionController: UIViewController {
             onDoneBlock!(true)
             self.presentingViewController?.dismiss(animated: false, completion:nil)
         }
-        
-        
     }
 }
 
@@ -243,6 +245,7 @@ extension AvatarSelectionController: UICollectionViewDelegate, UICollectionViewD
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        Mixpanel.mainInstance().track(event: "AvatarSelectionTapNewAvatar")
         collectionView.selectItem(at: indexPath, animated: true, scrollPosition: .left)
     }
 }

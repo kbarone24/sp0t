@@ -11,6 +11,8 @@ import UIKit
 import Firebase
 import FirebaseUI
 import Mixpanel
+import Geofirestore
+import CoreLocation
 
 enum FriendStatus {
     case none
@@ -36,14 +38,16 @@ class FindFriendsController: UIViewController {
     lazy var queryUsers: [(UserProfile, FriendStatus)] = []
     lazy var searchRefreshCount = 0
     lazy var searchTextGlobal = ""
-
+    lazy var nearbyEnteredCount = 0
+    lazy var nearbyAppendCount = 0
+    
     var sendInvitesView: SendInvitesView!
     var searchContactsView: SearchContactsView!
     var suggestedIndicator: CustomActivityIndicator!
     var suggestedTable: UITableView!
     
     var contentDrawer: DrawerView?
-
+    let sp0tb0tID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
     
     override func viewDidLoad() {
         
@@ -52,18 +56,18 @@ class FindFriendsController: UIViewController {
         
         self.title = "Find Friends"
         navigationItem.backButtonTitle = ""
-
+        
         navigationController!.navigationBar.barTintColor = UIColor.white
         navigationController!.navigationBar.isTranslucent = false
         navigationController!.navigationBar.barStyle = .black
         navigationController!.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
         navigationController?.navigationBar.addWhiteBackground()
-
-
+        
+        
         navigationController!.navigationBar.titleTextAttributes = [
-                .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-                .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
+            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
+            .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
         ]
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(
@@ -72,7 +76,7 @@ class FindFriendsController: UIViewController {
             target: self,
             action: #selector(self.exit(_:))
         )
-
+        
         loadSearchBar()
         loadOutletViews()
         loadSuggestedTable()
@@ -97,7 +101,7 @@ class FindFriendsController: UIViewController {
         
         Mixpanel.mainInstance().track(event: "FindFriendsOpen")
     }
-        
+    
     func loadSearchBar() {
         
         searchBarContainer = UIView {
@@ -176,7 +180,7 @@ class FindFriendsController: UIViewController {
             $0.width.equalToSuperview()
             $0.height.equalTo(UIScreen.main.bounds.height - searchBarContainer.frame.maxY)
         }
-
+        
         searchIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 20, width: UIScreen.main.bounds.width, height: 30))
         searchIndicator.isHidden = true
         resultsTable.addSubview(searchIndicator)
@@ -223,7 +227,7 @@ class FindFriendsController: UIViewController {
     }
     
     func loadSuggestedTable() {
-    
+        
         suggestedTable = UITableView {
             $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
             $0.backgroundColor = .white
@@ -242,14 +246,13 @@ class FindFriendsController: UIViewController {
             $0.top.equalTo(searchContactsView.snp.bottom).offset(20)
             $0.bottom.equalToSuperview().offset(-50)
         }
-              
+        
         suggestedIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 40, width: UIScreen.main.bounds.width, height: 30))
         suggestedIndicator.isHidden = true
         suggestedTable.addSubview(suggestedIndicator)
     }
     
     @objc func notifyRequestSent(_ sender: NSNotification) {
-        
         /// notify request sent from search contacts and update suggested users if necessary
         if let receiverID = sender.userInfo?.first?.value as? String {
             if let i = suggestedUsers.firstIndex(where: {$0.0.id == receiverID}) {
@@ -259,23 +262,22 @@ class FindFriendsController: UIViewController {
             UserDataModel.shared.userInfo.pendingFriendRequests.append(receiverID)
         }
     }
-        
+    
     @objc func presentSendInvites(_ sender: UITapGestureRecognizer) {
-        
-        let adminID = uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2"
-        if UserDataModel.shared.userInfo.sentInvites.count > 7 && !adminID { return }
-        
+        Mixpanel.mainInstance().track(event: "FindFriendsSendInvitesTap")
         let sendInvitesVC = SendInvitesController()
         navigationController!.pushViewController(sendInvitesVC, animated: true)
     }
     
     @objc func presentSearchContacts(_ sender: UITapGestureRecognizer) {
+        Mixpanel.mainInstance().track(event: "FindFriendsSearchContactsTap")
         let searchContactsVC = SearchContactsController()
         navigationController!.pushViewController(searchContactsVC, animated: true)
     }
-
+    
     
     @objc func exit(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "FindFriendsExitTap")
         if let drawer = contentDrawer {
             drawer.closeAction()
         } else { navigationController!.popViewController(animated: true)
@@ -287,13 +289,12 @@ class FindFriendsController: UIViewController {
     }
     
     func getSuggestedFriends() {
-        
         /// get mutual friends by cycling through friends of everyone on friendsList
         
         var mutuals: [(id: String, count: Int)] = []
         
         var x = 0 /// outer friends list counter
-                
+        
         for friend in UserDataModel.shared.userInfo.friendsList {
             
             var y = 0 /// inner friendslist counter
@@ -302,8 +303,7 @@ class FindFriendsController: UIViewController {
             for id in friend.friendIDs {
                 
                 /// only add non-friends + people we haven't sent a request to yet
-                if !UserDataModel.shared.userInfo.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) && id != uid && id != "T4KMLe3XlQaPBJvtZVArqXQvaNT2"{
-                    
+                if !UserDataModel.shared.userInfo.friendIDs.contains(id) && !UserDataModel.shared.userInfo.pendingFriendRequests.contains(id) && id != uid && id != sp0tb0tID {
                     
                     if let i = mutuals.firstIndex(where: {$0.id == id}) {
                         /// increment mutuals index if already added to mutuals
@@ -320,7 +320,6 @@ class FindFriendsController: UIViewController {
     }
     
     func runMutualSort(mutuals: [(id: String, count: Int)]) {
-        
         var mutuals = mutuals
         mutuals.sort(by: {$0.count > $1.count})
         
@@ -329,21 +328,26 @@ class FindFriendsController: UIViewController {
             getPendingFriends(mutuals: mutuals)
         } else {
             /// get spotsCount + cities
-            getUserSpots(mutuals: mutuals)
+            addSortedFriends(mutuals: mutuals)
         }
     }
     
     func getPendingFriends(mutuals: [(id: String, count: Int)]) {
-        
         var pendingRequests = UserDataModel.shared.userInfo.pendingFriendRequests
-//        if pendingRequests.count == 0 { getUserSpots(mutuals: mutuals) }
         
         var mutuals = mutuals
         var secondaryMutuals: [(id: String, secondaryCount: Int)] = [] /// get "mutuals" from pending friend requests to fill up the rest of suggestions
         
         var pendingIndex = 0
-        if mutuals.count == 0 { pendingRequests.append("T4KMLe3XlQaPBJvtZVArqXQvaNT2")} /// will have the effect of just showing the top users worldwide
-       
+        if pendingRequests.count == 0 {
+            if mutuals.count < 5 {
+                getNearbyUsers(radius: 0.5)
+            } else {
+                addSortedFriends(mutuals: mutuals)
+            }
+            return
+        }
+
         for id in pendingRequests {
             self.db.collection("users").document(id).getDocument { [weak self] (snap, err) in
                 guard let self = self else { return }
@@ -365,29 +369,29 @@ class FindFriendsController: UIViewController {
                             if pendingIndex == pendingRequests.count {
                                 /// add secondary mutuals at the end of the array. sort by spotscore if the user doesn't have a lot of secondary mutuals (usually just spotbot as mutual)
                                 secondaryMutuals.sort(by: {$0.secondaryCount > $1.secondaryCount})
-                                print("sec", secondaryMutuals.prefix(20))
                                 for user in secondaryMutuals { mutuals.append((id: user.id, count: 0)) }
-                                self.getUserSpots(mutuals: mutuals)
+                                self.addSortedFriends(mutuals: mutuals)
                             }
                         }
                     }
+                    
                 } else {
                     pendingIndex += 1
                     if pendingIndex == pendingRequests.count {
                         /// add secondary mutuals at the end of the array
                         secondaryMutuals.sort(by: {$0.secondaryCount > $1.secondaryCount})
                         for user in secondaryMutuals { mutuals.append((id: user.id, count: 0)) }
-                        self.getUserSpots(mutuals: mutuals)
+                        self.addSortedFriends(mutuals: mutuals)
                     }
                 }
             }
         }
     }
     
-    func getUserSpots(mutuals: [(id: String, count: Int)]) {
+    func addSortedFriends(mutuals: [(id: String, count: Int)]) {
         
         var index = 0
-        let topMutuals = mutuals.contains(where: {$0.count > 0}) ? mutuals.prefix(20) : mutuals.prefix(500) /// make the selection much larger for new users to always get top spotters in their suggested
+        let topMutuals = mutuals.prefix(20) /// make the selection much larger for new users to always get top spotters in their suggested
         if topMutuals.count == 0 { removeTable() }
         
         /// get user data for top 20 mutuals
@@ -400,13 +404,9 @@ class FindFriendsController: UIViewController {
                     let userIn = try snap?.data(as: UserProfile.self)
                     guard var userInfo = userIn else { index += 1; if index == topMutuals.count { self.finishSuggestedLoad()}; return }
                     userInfo.mutualFriends = user.count
-                    
-                    self.db.collection("posts").whereField("posterID", isEqualTo: user.id).getDocuments { [weak self] (listSnap, err) in
-                        guard let self = self else { return }
-                        userInfo.postCount = listSnap?.documents.count ?? 0
-                        self.suggestedUsers.append((userInfo, .none))
-                        index += 1; if index == topMutuals.count { self.finishSuggestedLoad()} ; return
-                    }
+                    self.suggestedUsers.append((userInfo, .none))
+                    index += 1
+                    if index == topMutuals.count { self.finishSuggestedLoad() }
                     
                 } catch {
                     index += 1
@@ -416,10 +416,35 @@ class FindFriendsController: UIViewController {
         }
     }
     
+    func getNearbyUsers(radius: CGFloat) {
+        let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("posts"))
+        let circleQuery = geoFirestore.query(withCenter: UserDataModel.shared.currentLocation, radius: radius)
+        let _ = circleQuery.observe(.documentEntered, with: loadPostFromDB)
+        let _ = circleQuery.observeReady { [weak self] in
+            guard let self = self else { return }
+            if self.nearbyEnteredCount < 5 {
+                self.nearbyEnteredCount = 0
+                self.nearbyAppendCount = 0
+                self.getNearbyUsers(radius: radius * 2)
+            }
+        }
+    }
+    
+    func loadPostFromDB(key: String?, location: CLLocation?) {
+        nearbyEnteredCount += 1
+        guard let postKey = key else { return }
+        getPost(postID: postKey) { post in
+            if post.posterID != "" && !UserDataModel.shared.userInfo.friendIDs.contains(where: {$0 == post.posterID}) && !self.suggestedUsers.contains(where: {$0.0.id == post.posterID}) { self.suggestedUsers.append((post.userInfo!, .none)) }
+            self.nearbyAppendCount += 1
+            if self.nearbyEnteredCount == self.nearbyAppendCount {
+                self.finishSuggestedLoad()
+            }
+        }
+    }
+    
     func finishSuggestedLoad() {
         /// sort by combined spots x mutual friends
-        suggestedUsers.sort(by: {$0.0.postCount/3 + $0.0.mutualFriends > $1.0.postCount/3 + $1.0.mutualFriends})
-        if suggestedUsers.count > 20 { suggestedUsers.removeAll(where: {$0.0.postCount < 5})} /// if initial user load, only show users with 3 or more spots
+        suggestedUsers.sort(by: {$0.0.spotScore!/5 + $0.0.mutualFriends > $1.0.spotScore!/5 + $1.0.mutualFriends})
         
         DispatchQueue.main.async {
             self.suggestedIndicator.stopAnimating()
@@ -512,7 +537,7 @@ extension FindFriendsController: UISearchBarDelegate {
             self.mainView.isHidden = false
         }
     }
-
+    
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
@@ -542,7 +567,7 @@ extension FindFriendsController: UISearchBarDelegate {
         /// query names for matches
         let userRef = db.collection("users")
         let nameQuery = userRef.whereField("nameKeywords", arrayContains: searchText.lowercased()).limit(to: 5)
-
+        
         nameQuery.getDocuments{ [weak self] (snap, err) in
             
             guard let self = self else { return }
@@ -564,7 +589,7 @@ extension FindFriendsController: UISearchBarDelegate {
                         let status: FriendStatus = UserDataModel.shared.userInfo.friendIDs.contains(info.id!) ? .friends : UserDataModel.shared.userInfo.pendingFriendRequests.contains(info.id!) ? .pending : .none
                         self.queryUsers.append((info, status))
                     }
-
+                    
                     if doc == docs.last { self.reloadResultsTable() }
                     
                 } catch { if doc == docs.last { self.reloadResultsTable() } }
@@ -576,7 +601,7 @@ extension FindFriendsController: UISearchBarDelegate {
         ///query usernames for matches
         let userRef = db.collection("users")
         let usernameQuery = userRef.whereField("usernameKeywords", arrayContains: searchText.lowercased()).limit(to: 5)
-
+        
         usernameQuery.getDocuments { [weak self] (snap, err) in
             
             guard let self = self else { return }
@@ -584,7 +609,7 @@ extension FindFriendsController: UISearchBarDelegate {
             if !self.queryValid(searchText: searchText) { return }
             
             if docs.count == 0 { self.reloadResultsTable() }
-
+            
             for doc in docs {
                 do {
                     
@@ -671,26 +696,26 @@ class SendInvitesView: UIView {
         }
         
         inviteFriendsText = UILabel{
-             $0.text = "Invite Friends"
-             $0.numberOfLines = 0
-             $0.textColor = .black
-             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-             $0.translatesAutoresizingMaskIntoConstraints = false
-             self.addSubview($0)
-         }
+            $0.text = "Invite Friends"
+            $0.numberOfLines = 0
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            self.addSubview($0)
+        }
         
         inviteFriendsText.snp.makeConstraints{
             $0.centerY.equalToSuperview()
             $0.leading.equalTo(inviteFriendsIcon.snp.trailing).offset(10)
         }
-
+        
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = nil
     }
-        
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -744,14 +769,14 @@ class SearchContactsView: UIView {
         
         
         searchContactsText = UILabel{
-             $0.text = "Search contacts"
-             $0.numberOfLines = 0
-             $0.textColor = .black
-             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-             $0.translatesAutoresizingMaskIntoConstraints = false
-             self.addSubview($0)
-         }
-                
+            $0.text = "Search contacts"
+            $0.numberOfLines = 0
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            self.addSubview($0)
+        }
+        
         searchContactsText.snp.makeConstraints{
             $0.centerY.equalToSuperview()
             $0.leading.equalTo(searchContactsIcon.snp.trailing).offset(10)
@@ -766,7 +791,7 @@ class SearchContactsView: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
 }
 
 class SuggestedFriendsHeader: UITableViewHeaderFooterView {
@@ -780,15 +805,15 @@ class SuggestedFriendsHeader: UITableViewHeaderFooterView {
         let backgroundView = UIView()
         backgroundView.backgroundColor = .white
         self.backgroundView = backgroundView
-
+        
         if label != nil { label.text = "" }
         
         
         label = UILabel {
-        $0.text = "Suggested friends"
-        $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
-        addSubview($0)
+            $0.text = "Suggested friends"
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
+            addSubview($0)
         }
         
         label.snp.makeConstraints{

@@ -13,7 +13,6 @@ enum MapType {
     case customMap
 }
 
-
 class CustomMapController: UIViewController {
     private var topYContentOffset: CGFloat?
     private var middleYContentOffset: CGFloat?
@@ -61,6 +60,7 @@ class CustomMapController: UIViewController {
         self.userProfile = userProfile
         self.mapData = mapData
         self.postsList = postsList
+        print("map type", mapType)
         self.mapType = mapType
         self.containerDrawerView = presentedDrawerView
     }
@@ -422,6 +422,7 @@ extension CustomMapController {
     }
     
     @objc func backButtonAction() {
+        Mixpanel.mainInstance().track(event: "CustomMapBackTap")
         barBackButton.isHidden = true
         DispatchQueue.main.async {
             if self.navigationController?.viewControllers.count == 1 { self.mapController?.offsetCustomMapCenter() }
@@ -430,6 +431,7 @@ extension CustomMapController {
     }
     
     @objc func addAction() {
+        Mixpanel.mainInstance().track(event: "CustomMapAddTap")
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
@@ -497,8 +499,8 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 0 { return }
-    //    openPost(posts: Array(postsList.suffix(from: indexPath.item)))
         openPost(posts: [postsList[indexPath.row]])
+        Mixpanel.mainInstance().track(event: "CustomMapOpenPostFromGallery")
     }
     
     func openPost(posts: [MapPost]) {
@@ -597,7 +599,15 @@ extension CustomMapController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
         
-        if let anno = annotation as? PostAnnotation {
+        if let anno = annotation as? MKClusterAnnotation {
+            if anno.memberAnnotations.contains(where: {$0 is PostAnnotation}) {
+                let posts = getPostsFor(cluster: anno)
+                return mapView.getPostClusterAnnotation(anno: anno, posts: posts)
+            } else if anno.memberAnnotations.contains(where: {$0 is SpotPostAnnotation}) {
+                print("get spot cluster", anno)
+                return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: mapData)
+            }
+        } else if let anno = annotation as? PostAnnotation {
             guard let post = mapData!.postsDictionary[anno.postID] else { return MKAnnotationView() }
             return mapView.getPostAnnotation(anno: anno, post: post)
             
@@ -605,13 +615,6 @@ extension CustomMapController: MKMapViewDelegate {
             /// set up spot post view with 1 post
             return mapView.getSpotAnnotation(anno: anno, selectedMap: mapData)
             
-        } else if let anno = annotation as? MKClusterAnnotation {
-            if anno.memberAnnotations.first is PostAnnotation {
-                let posts = getPostsFor(cluster: anno)
-                return mapView.getPostClusterAnnotation(anno: anno, posts: posts)
-            } else {
-                return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: mapData)
-            }
         }
         return MKAnnotationView()
     }

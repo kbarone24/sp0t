@@ -10,7 +10,6 @@ import UIKit
 import FirebaseUI
 
 class MapMemberCell: UICollectionViewCell {
-    
     private var userImageView: UIImageView!
     private var userNameLabel: UILabel!
     

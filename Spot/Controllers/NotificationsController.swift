@@ -79,9 +79,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
-        if self.containerDrawerView?.status != .Top {
-            DispatchQueue.main.async { self.containerDrawerView?.present(to: .Top) }
-        }
+        containerDrawerView?.present(to: .Top)
     }
     
     func setUpNavBar() {
@@ -294,11 +292,8 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     }
     
     @objc func leaveNotifs() {
-        if navigationController?.viewControllers.count == 1 {
-            containerDrawerView?.closeAction()
-        } else {
-            navigationController?.popViewController(animated: true)
-        }
+        Mixpanel.mainInstance().track(event: "NotificationsBackTap")
+        containerDrawerView?.closeAction()
     }
     
     ///modified copy from global functions
@@ -496,10 +491,9 @@ extension NotificationsController: notificationDelegateProtocol {
     }
     
     func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification] {
-        guard let i1 = pendingFriendRequests.firstIndex(where: {$0.id == friendRequest.id}) else {
-            print("friend Request not found");
-            return []}
-        pendingFriendRequests.remove(at: i1)
+        if let i1 = pendingFriendRequests.firstIndex(where: {$0.id == friendRequest.id}) {
+            pendingFriendRequests.remove(at: i1)
+        }
         return pendingFriendRequests
     }
     

@@ -140,6 +140,7 @@ class LandingPageController: UIViewController {
     }
     
     @objc func createAccountTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "LandingPageCreateAccountTap")
         if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "SignUp") as? NameController {
             let navController = UINavigationController(rootViewController: vc)
             navController.modalPresentationStyle = .fullScreen
@@ -148,6 +149,7 @@ class LandingPageController: UIViewController {
     }
         
     @objc func loginWithPhoneTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "LandingPageLoginWithPhoneTap")
         if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhoneVC") as? PhoneController {
             vc.root = true
             vc.codeType = .logIn
