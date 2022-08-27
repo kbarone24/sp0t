@@ -503,7 +503,6 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
         switch result {
         
         case .sent:
-            
             Mixpanel.mainInstance().track(event: "SendInvitesInviteSent")
             
         /// update cell

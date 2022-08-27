@@ -404,6 +404,7 @@ class ImagePreviewController: UIViewController {
     }
     
     @objc func backTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "ImagePreviewBackTap")
         if cameraObject != nil { UploadPostModel.shared.selectedObjects.removeAll(where: {$0.fromCamera})} /// remove old captured image
         
         let controllers = navigationController?.viewControllers
@@ -418,6 +419,7 @@ class ImagePreviewController: UIViewController {
     }
     
     @objc func atTap() {
+        Mixpanel.mainInstance().track(event: "ImagePreviewTagUserTap")
         /// add extra space if in the middle of word
         let textString = textView.text.isEmpty || textView.text.last == " " ? "@" : " @"
         textView.insertText(textString)
@@ -425,6 +427,7 @@ class ImagePreviewController: UIViewController {
     }
     
     @objc func spotTap() {
+        Mixpanel.mainInstance().track(event: "ImagePreviewSpotNameTap")
         if newSpotNameView.spotName != "" { newSpotNameView.textView.becomeFirstResponder(); return }
         textView.resignFirstResponder()
         launchPicker()
@@ -438,6 +441,7 @@ class ImagePreviewController: UIViewController {
     }
     
     @objc func chooseMapTap() {
+        Mixpanel.mainInstance().track(event: "ImagePreviewChooseMapTap")
         let captionText = textView.text ?? ""
         UploadPostModel.shared.postObject.caption = captionText == textViewPlaceholder ? "" : captionText
         UploadPostModel.shared.setTaggedUsers()

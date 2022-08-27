@@ -55,14 +55,12 @@ extension MapController {
     }
     
     func getAdmins() {
-        
         self.db.collection("users").whereField("admin", isEqualTo: true).getDocuments { (snap, err) in
             if err != nil { return }
             for admin in snap!.documents { UserDataModel.shared.adminIDs.append(admin.documentID) }
         }
-        
         ///opt kenny/ellie/tyler/b0t/hog/hog0 out of tracking
-        if uid == "djEkPdL5GQUyJamNXiMbtjrsUYM2" || uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" || uid == "QgwnBsP9mlSudEuONsAsyVqvWEZ2" || uid == "X6CB24zc4iZFE8maYGvlxBp1mhb2" {
+        if uid == "djEkPdL5GQUyJamNXiMbtjrsUYM2" || uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" || uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" || uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" || uid == "X6CB24zc4iZFE8maYGvlxBp1mhb2" || uid == "HhDmknXyHDdWF54t6s8IEbEBlXD2" || uid == "oAKwM2NgLjTlaE2xqvKEXiIVKYu1" {
             Mixpanel.mainInstance().optOutTracking()
         }
     }
@@ -190,7 +188,6 @@ extension MapController {
                 }
             }
             recentGroup.notify(queue: .global()) {
-                print("home fetch leave")
                 self.homeFetchGroup.leave()
             }
         }
@@ -423,13 +420,31 @@ extension MapController {
             }
         }
     }
-    
+        
     @objc func mapLikersChanged(_ notification: NSNotification) {
         reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
     }
     
     @objc func enterForeground() {
         DispatchQueue.main.async { self.checkForActivityIndicator() }
+    }
+    
+    @objc func notifyLogout() {
+        userListener.remove()
+        newPostListener.remove()
+    }
+    
+    @objc func notifyFriendsListAdd() {
+        /// query friends posts again
+        homeFetchGroup.enter()
+        homeFetchGroup.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            self.reloadMapsCollection(resort: true, newPost: false)
+        }
+        
+        DispatchQueue.global().async {
+            self.getRecentPosts(map: nil)
+        }
     }
     
     func checkForActivityIndicator() {
@@ -453,7 +468,7 @@ extension MapController {
                 self.view.addSubview($0)
             }
             
-            self.addFriends.addFriendButton.addTarget(self, action: #selector(self.openFindFriends(_:)), for: .touchUpInside)
+            self.addFriends.addFriendButton.addTarget(self, action: #selector(self.findFriendsTap(_:)), for: .touchUpInside)
             self.addFriends.snp.makeConstraints{
                 $0.height.equalTo(160)
                 $0.leading.trailing.equalToSuperview().inset(16)
@@ -472,7 +487,6 @@ extension MapController: MapControllerDelegate {
             self.present(vc, animated: true)
         }
     }
-        
     
     func addHeelsMap(heelsMap: CustomMap) {
         UserDataModel.shared.userInfo.mapsList.append(heelsMap)

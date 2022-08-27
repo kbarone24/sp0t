@@ -150,7 +150,7 @@ class HeelsMapPopUpController: UIViewController {
             $0.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
             var placeholderText = NSMutableAttributedString()
             placeholderText = NSMutableAttributedString(string: "Enter school email", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 21),
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 21) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
             ])
             $0.attributedPlaceholder = placeholderText
@@ -176,7 +176,7 @@ class HeelsMapPopUpController: UIViewController {
             $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             var customButtonTitle = NSMutableAttributedString()
             customButtonTitle = NSMutableAttributedString(string: "Join", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 14.5),
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 14.5) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
             $0.setAttributedTitle(customButtonTitle, for: .normal)
@@ -231,6 +231,7 @@ class HeelsMapPopUpController: UIViewController {
      }
     
     @objc func addHeelsMap(_ sender: UIButton){
+        Mixpanel.mainInstance().track(event: "HeelsMapAddUser")
         let schoolEmail = searchTextGlobal.lowercased().trimmingCharacters(in: .whitespaces)
         db.collection("users").document(uid).updateData(["schoolEmail" : schoolEmail])
         mapDelegate.addHeelsMap(heelsMap: self.heelsMap)
@@ -238,6 +239,7 @@ class HeelsMapPopUpController: UIViewController {
     }
     
     @objc func close(_ sender: UIButton){
+        Mixpanel.mainInstance().track(event: "HeelsMapCloseTap")
         dismiss(animated: true)
     }
 }

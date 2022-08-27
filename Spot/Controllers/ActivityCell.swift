@@ -264,6 +264,7 @@ class ActivityCell: UITableViewCell {
     }
     
     @objc func profileTap() {
+        Mixpanel.mainInstance().track(event: "ActivityCellFriendTap")
         notificationControllerDelegate?.getProfile(userProfile: notification.userInfo!)
     }
     

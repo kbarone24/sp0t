@@ -104,7 +104,7 @@ class EditProfileViewController: UIViewController {
             self.userProfile?.avatarURL = UserDataModel.shared.userInfo.avatarURL!
         }
         self.present(vc, animated: true)
-        Mixpanel.mainInstance().track(event: "AvatarSelect")
+        Mixpanel.mainInstance().track(event: "EditProfileAvatarSelect")
     }
     
     @objc func saveAction() {
@@ -140,6 +140,7 @@ class EditProfileViewController: UIViewController {
             do {
                 try Auth.auth().signOut()
                 self.dismiss(animated: false, completion: {
+                    NotificationCenter.default.post(Notification(name: Notification.Name("Logout"), object: nil, userInfo: nil))
                     self.profileVC?.containerDrawerView?.closeAction()
                     UserDataModel.shared.destroy()
                     if let landingPage = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {

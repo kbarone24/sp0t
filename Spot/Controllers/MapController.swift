@@ -110,6 +110,8 @@ class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsListAdd), name: NSNotification.Name(("FriendsListAdd")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
@@ -123,15 +125,6 @@ class MapController: UIViewController {
         mapView = SpotMapView {
             $0.delegate = self
             $0.spotMapDelegate = self
-            $0.mapType = .mutedStandard
-            $0.overrideUserInterfaceStyle = .light
-            $0.pointOfInterestFilter = .excludingAll
-            $0.showsCompass = false
-            $0.showsTraffic = false
-            $0.tag = 13
-            $0.register(FriendPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "FriendsPost")
-            $0.register(SpotPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotPost")
-            $0.register(SpotNameAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotName")
             view.addSubview($0)
         }
         makeMapHomeConstraints()
@@ -204,7 +197,7 @@ class MapController: UIViewController {
         if titleView != nil { return titleView }
         
         titleView = MapTitleView {
-            $0.searchButton.addTarget(self, action: #selector(openFindFriendsDrawer(_:)), for: .touchUpInside)
+            $0.searchButton.addTarget(self, action: #selector(searchTap(_:)), for: .touchUpInside)
             $0.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
             $0.notiButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
         }
@@ -231,6 +224,7 @@ class MapController: UIViewController {
         
     
     @objc func addTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "MapControllerAddTap")
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
@@ -242,6 +236,7 @@ class MapController: UIViewController {
     }
     
     @objc func profileTap(_ sender: Any){
+        Mixpanel.mainInstance().track(event: "MapControllerProfileTap")
         let profileVC = ProfileViewController(userProfile: nil)
         sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
@@ -251,8 +246,8 @@ class MapController: UIViewController {
     }
     
     @objc func openNotis(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "MapControllerNotificationsTap")
         let notifVC = NotificationsController()
-        
         sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
@@ -260,30 +255,26 @@ class MapController: UIViewController {
         sheetView?.present(to: .Top)
     }
     
-    @objc func openFindFriends(_ sender: UIButton){
+    @objc func searchTap(_ sender: UIButton){
+        Mixpanel.mainInstance().track(event: "MapControllerSearchTap")
+        openFindFriends()
+    }
+    
+    @objc func findFriendsTap(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "MapControllerFindFriendsTap")
+        openFindFriends()
+    }
+    
+    func openFindFriends() {
         let findFriendsVC = FindFriendsController()
         self.navigationController?.pushViewController(findFriendsVC, animated: true)
-        addFriends.removeFromSuperview()
+        if addFriends != nil { addFriends.removeFromSuperview() }
     }
-    
-    @objc func openFindFriendsDrawer(_ sender: UIButton){
-        let ffvc = FindFriendsController()
-        sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
-            self.sheetView = nil
-        })
-        
-        sheetView?.swipeDownToDismiss = false
-        sheetView?.canInteract = false
-        sheetView?.present(to: .Top)
-        sheetView?.showCloseButton = false
-        ffvc.contentDrawer = sheetView
-    }
-
-    
+ 
     func openPost(posts: [MapPost]) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = posts
-        sheetView = DrawerView(present: postVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+        sheetView = DrawerView(present: postVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         postVC.containerDrawerView = sheetView
@@ -299,8 +290,9 @@ class MapController: UIViewController {
         var passMap = map == nil ? CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: []) : map!
         if mapType == .friendsMap { passMap.createPosts(posts: posts) }
         
+        print("groups", passMap.postGroup.map({$0.postIDs}))
         let customMapVC = CustomMapController(userProfile: nil, mapData: passMap, postsList: posts, presentedDrawerView: nil, mapType: mapType)
-        sheetView = DrawerView(present: customMapVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+        sheetView = DrawerView(present: customMapVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         customMapVC.containerDrawerView = sheetView
@@ -312,7 +304,7 @@ class MapController: UIViewController {
         emptyPost.spotID = spotID
         emptyPost.spotName = spotName
         let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: nil)
-        sheetView = DrawerView(present: spotVC, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+        sheetView = DrawerView(present: spotVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         spotVC.containerDrawerView = sheetView
@@ -382,22 +374,17 @@ extension MapController: CLLocationManagerDelegate {
     }
     
     func checkLocationAuth() {
-        
         switch locationManager.authorizationStatus {
-            
         case .notDetermined:
             locationManager.requestWhenInUseAuthorization()
             break
-            
             //prompt user to open their settings if they havent allowed location services
         case .restricted, .denied:
             presentLocationAlert()
             break
-            
         case .authorizedWhenInUse, .authorizedAlways:
             locationManager.startUpdatingLocation()
             break
-            
         @unknown default:
             fatalError()
         }
@@ -407,7 +394,6 @@ extension MapController: CLLocationManagerDelegate {
         let alert = UIAlertController(title: "Spot needs your location to find spots near you", message: nil, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
             switch action.style{
-                
             case .default:
                 Mixpanel.mainInstance().track(event: "LocationServicesSettingsOpen")
                 UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:]) { (allowed) in
@@ -646,9 +632,9 @@ class AddFriendsView: UIView {
     
     
     @objc func closeFindFriends(_ sender: UIButton) {
+        Mixpanel.mainInstance().track(event: "MapControllerCloseFindFriends")
         self.removeFromSuperview()
     }
-    
 }
 
 class NewPostsButton: UIButton {
@@ -728,8 +714,10 @@ class NewPostsButton: UIButton {
     @objc func tap() {
         guard let mapVC = viewContainingController() as? MapController else { return }
         if unseenPosts > 0 {
+            Mixpanel.mainInstance().track(event: "MapControllerAnimateToMostRecentPost")
             mapVC.animateToMostRecentPost()
         } else {
+            Mixpanel.mainInstance().track(event: "MapControllerOpenSelectedMap")
             mapVC.openSelectedMap()
         }
     }
