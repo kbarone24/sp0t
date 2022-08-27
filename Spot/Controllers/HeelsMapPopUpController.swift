@@ -79,9 +79,7 @@ class HeelsMapPopUpController: UIViewController {
             $0.top.equalTo(icon.snp.bottom).offset(3)
         }
         
-        friendsText = String(heelsCount) + " Friends"
-
-        
+        friendsText = String(heelsCount) + " Joined"
         friendsJoined = UIButton {
             $0.setImage(UIImage(named: "Friends")?.alpha(0.5), for: .normal)
             let customButtonTitle = NSMutableAttributedString(string: friendsText, attributes: [
@@ -102,7 +100,7 @@ class HeelsMapPopUpController: UIViewController {
         }
         
         subtitle = UILabel {
-            $0.text = "UNC's community map"
+            $0.text = "Join UNC's community map"
             $0.font = UIFont(name: "SFCompactText-Medium", size: 19)
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
             view.addSubview($0)

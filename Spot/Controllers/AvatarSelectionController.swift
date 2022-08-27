@@ -13,7 +13,6 @@ import Mixpanel
 
 
 class AvatarSelectionController: UIViewController {
-        
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
     var friendRequests: [UserNotification] = []
@@ -27,8 +26,7 @@ class AvatarSelectionController: UIViewController {
 
     var onDoneBlock : ((Bool) -> Void)?
 
-    
-    init(sentFrom: String, currAv: String?){
+    init(sentFrom: String){
         super.init(nibName: nil, bundle: nil)
         from = sentFrom
         if(from == "map"){
@@ -36,7 +34,9 @@ class AvatarSelectionController: UIViewController {
         }
         if (from == "edit") {
             for i in 0..<(avatars.count) {
-                if(currAv!.contains(avatars[i])){
+                let userAvatarURL = UserDataModel.shared.userInfo.avatarURL ?? ""
+                let url = AvatarURLs.shared.getURL(name: avatars[i])
+                if userAvatarURL == url {
                     avatars.swapAt(i, 5)
                 }
             }
@@ -51,7 +51,7 @@ class AvatarSelectionController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         setUp()
-        self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false)
+        DispatchQueue.main.async { self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false) }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -279,7 +279,6 @@ final class MyCollectionViewFlowLayout: UICollectionViewFlowLayout {
 
 // MARK: avatar cell
 class AvatarCell: UICollectionViewCell {
-    
     var avatar: String?
     var avatarImage: UIImageView!
     var scaled = false

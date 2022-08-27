@@ -38,7 +38,7 @@ extension MapController {
                 self.newPostsButton.isHidden = false
                 self.loadAdditionalOnboarding()
                 self.reloadMapsCollection(resort: true, newPost: false)
-                if self.userInChapelHill(){self.displayHeelsMap()}
+                self.displayHeelsMap()
             }
         }
     }
@@ -456,9 +456,9 @@ extension MapController {
     }
     
     func loadAdditionalOnboarding() {
-        let posts = friendsPostsDictionary.filter{!$0.value.seen}.count
+        let posts = friendsPostsDictionary.count
         if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
-            let avc = AvatarSelectionController(sentFrom: "map", currAv: nil)
+            let avc = AvatarSelectionController(sentFrom: "map")
             self.navigationController!.pushViewController(avc, animated: true)
         }
         else if (UserDataModel.shared.userInfo.friendIDs.count < 6 && posts == 0) {
