@@ -492,7 +492,6 @@ extension UIViewController {
             let spotLocation = ["lat": post.spotLat ?? 0.0, "long": post.spotLong ?? 0.0]
             var posters = [UserDataModel.shared.uid]
             if !(post.addedUsers?.isEmpty ?? true) { posters.append(contentsOf: post.addedUsers!) }
-            print("spot id", post.spotID)
             functions.httpsCallable("runMapTransactions").call(["mapID": map.id!, "uid": UserDataModel.shared.uid, "postID": post.id!, "postImageURL": post.imageURLs.first ?? "", "postLocation": postLocation, "posters": posters, "posterUsername": UserDataModel.shared.userInfo.username, "spotID": post.spotID ?? "", "spotName": post.spotName ?? "", "spotLocation": spotLocation]) { result, error in
                 print(result?.data as Any, error as Any)
             }

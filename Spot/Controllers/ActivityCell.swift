@@ -179,7 +179,7 @@ class ActivityCell: UITableViewCell {
             case "comment":
                 $0.text = "commented on your post"
             case "friendRequest":
-                $0.text = "you are now friends!"
+                $0.text = "is now your friend!"
             case "commentTag":
                 $0.text = "mentioned you in a comment"
             case "commentLike":
