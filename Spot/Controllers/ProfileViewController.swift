@@ -97,6 +97,11 @@ class ProfileViewController: UIViewController {
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
         editVC.profileVC = self
         editVC.modalPresentationStyle = .fullScreen
+        editVC.onDoneBlock = { result in
+            print("avatarChanged", UserDataModel.shared.userInfo.avatarURL)
+            //self.avatarImage.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.avatarURL!))
+            self.userProfile?.avatarURL = UserDataModel.shared.userInfo.avatarURL!
+        }
         present(editVC, animated: true)
     }
     
