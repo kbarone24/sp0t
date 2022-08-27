@@ -235,7 +235,7 @@ class ConfirmCodeController: UIViewController {
                         Mixpanel.mainInstance().track(event: "ConfirmCodeNewAccountSuccess")
                         self.saveUserToFirebase(friendIDs: friendIDs)
                         self.setInitialValues(friendIDs: friendIDs)
-                        let avi = AvatarSelectionController(sentFrom: "create", currAv: nil)
+                        let avi = AvatarSelectionController(sentFrom: "create")
                         DispatchQueue.main.async { self.navigationController!.pushViewController(avi, animated: true) }
                     }
                 }

@@ -95,7 +95,7 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func avatarEditAction() {
-        let vc = AvatarSelectionController(sentFrom: "edit", currAv: UserDataModel.shared.userInfo.avatarURL!)
+        let vc = AvatarSelectionController(sentFrom: "edit")
         //vc.delegate = self
         vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
         vc.onDoneBlock = { result in

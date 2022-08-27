@@ -159,7 +159,7 @@ class ActivityCell: UITableViewCell {
         let notiType = notification.type
         switch notiType {
         case "like":
-            subtitle = "liked your post yeah supercool name"
+            subtitle = "liked your post"
         case "comment":
             subtitle = "commented on your post"
         case "friendRequest":
