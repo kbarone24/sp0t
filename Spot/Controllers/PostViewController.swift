@@ -91,7 +91,6 @@ class PostController: UIViewController {
     }
     
     func configureDrawerView() {
-        print("configur")
         containerDrawerView?.swipeDownToDismiss = true
         containerDrawerView?.canInteract = true
         containerDrawerView?.showCloseButton = false

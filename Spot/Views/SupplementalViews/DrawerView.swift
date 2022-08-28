@@ -47,6 +47,7 @@ class DrawerView: NSObject {
         }
     }
     public var swipeDownToDismiss: Bool = false
+    public var swipingDownToDismiss: Bool = false
     public var swipeToNextState: Bool = true
     
     // MARK: Private variable
@@ -231,6 +232,7 @@ class DrawerView: NSObject {
             /// swipe to dismiss from full-screen-only view
             let topOffset = slideView.frame.origin.y
             if self.swipeDownToDismiss && (topOffset * 5 + velocity.y) > 1000 {
+                self.swipingDownToDismiss = true
                 closeAction()
                 return
             }
@@ -299,6 +301,7 @@ class DrawerView: NSObject {
                 self.status = DrawerViewStatus.Close
                 self.slideView.removeFromSuperview()
                 self.myNav.removeFromParent()
+                self.swipingDownToDismiss = false
             }
         } else {
             myNav.popViewController(animated: true)
@@ -312,6 +315,8 @@ class DrawerView: NSObject {
 
 extension DrawerView: UINavigationControllerDelegate {
     func navigationController(_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        print("offset", slideView.frame.origin.y)
+        transitionAnimation.startingOffset = slideView.frame.origin.y
         transitionAnimation.transitionMode = operation == .push ? .present : .pop
         return transitionAnimation
     }
