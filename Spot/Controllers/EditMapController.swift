@@ -114,6 +114,7 @@ class EditMapController: UIViewController {
     }
     
     @objc func privateMapSwitchAction() {
+        HapticGenerator.shared.play(.light)
         privateButton.setImage(UIImage(named: privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? "PrivateMapOn" : "PrivateMapOff"), for: .normal)
     }
     

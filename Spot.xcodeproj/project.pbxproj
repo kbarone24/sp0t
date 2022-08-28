@@ -296,6 +296,10 @@
 		8C99B11A2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
 		8C99B11B2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
 		8C99B11C2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
+		8CA512A528BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CA512A428BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf */; };
+		8CA512A728BC056900F8C1FE /* HapticGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512A628BC056900F8C1FE /* HapticGenerator.swift */; };
+		8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512A628BC056900F8C1FE /* HapticGenerator.swift */; };
+		8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512A628BC056900F8C1FE /* HapticGenerator.swift */; };
 		8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
 		8CB400BE2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
 		8CB400BF2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
@@ -475,6 +479,8 @@
 		8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TagFriendsView.swift; sourceTree = "<group>"; };
 		8C92898626CB18F10028DB69 /* CameraAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraAccessView.swift; sourceTree = "<group>"; };
 		8C99B1192863A44E00C98A32 /* RefreshStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshStatus.swift; sourceTree = "<group>"; };
+		8CA512A428BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-SemiboldItalic.otf"; sourceTree = "<group>"; };
+		8CA512A628BC056900F8C1FE /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
 		8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
 		8CC2A54926BC7F99000ADA7A /* ImageObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObject.swift; sourceTree = "<group>"; };
 		8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFetcher.swift; sourceTree = "<group>"; };
@@ -663,6 +669,7 @@
 		59056A56231DDF0300C7E753 /* fonts */ = {
 			isa = PBXGroup;
 			children = (
+				8CA512A428BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf */,
 				413486832859310E0098B27B /* SF-Compact-Text-Bold.otf */,
 				413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */,
 				413486822859310E0098B27B /* SF-Compact-Text-Medium.otf */,
@@ -957,6 +964,7 @@
 				8CC3653926C5E9A900AC40AB /* UploadPostModel.swift */,
 				8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */,
 				8C88B0E627B46E3900DB4039 /* PostImageModel.swift */,
+				8CA512A628BC056900F8C1FE /* HapticGenerator.swift */,
 			);
 			path = Singletons;
 			sourceTree = "<group>";
@@ -1100,6 +1108,7 @@
 				413486892859310E0098B27B /* SF-Compact-Text-Heavy.otf in Resources */,
 				8C1E48C1289C54CB0093030D /* SpotPostView.xib in Resources */,
 				59A5A3D5253A87EC00789B7E /* GoogleService-Info.plist in Resources */,
+				8CA512A528BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf in Resources */,
 				8CDFEF46284D3B570038A9B8 /* Map.storyboard in Resources */,
 				8C1EAF83284BD08F00474879 /* Notifications.storyboard in Resources */,
 				413486882859310E0098B27B /* SF-Compact-Text-Bold.otf in Resources */,
@@ -1243,6 +1252,7 @@
 				5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */,
 				8C8DBB862888BE9F00B31BFD /* TagFriendsView.swift in Sources */,
 				597A626E25A8F9910052C560 /* Tag.swift in Sources */,
+				8CA512A728BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				59F6ABAF234EA73500E18AAF /* Contact.swift in Sources */,
 				5916A8B724A5542800118E83 /* ResultSpot.swift in Sources */,
 				599371B0234E468500204F59 /* SearchContactsController.swift in Sources */,
@@ -1355,6 +1365,7 @@
 			files = (
 				59F6ABB0234EA73500E18AAF /* Contact.swift in Sources */,
 				593AC54E243FAA2B00C08237 /* PhoneController.swift in Sources */,
+				8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
 				599371B1234E468500204F59 /* SearchContactsController.swift in Sources */,
 				59A8880822E8B79C00F8863B /* AppDelegate.swift in Sources */,
@@ -1442,6 +1453,7 @@
 			files = (
 				59F6ABB1234EA73500E18AAF /* Contact.swift in Sources */,
 				593AC54F243FAA2B00C08237 /* PhoneController.swift in Sources */,
+				8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
 				599371B2234E468600204F59 /* SearchContactsController.swift in Sources */,
 				59A8880722E8B79C00F8863B /* AppDelegate.swift in Sources */,
