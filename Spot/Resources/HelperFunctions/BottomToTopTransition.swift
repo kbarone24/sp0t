@@ -16,6 +16,8 @@ class BottomToTopTransition: NSObject {
         case pop
     }
     var transitionMode: BottomToTopTransitionMode = .present
+    var startingOffset: CGFloat = 0
+    /// set current offset variable to pass through?
 }
 
 extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
@@ -37,11 +39,15 @@ extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
             let transitionModeKey = (transitionMode == .pop) ? UITransitionContextViewKey.to : UITransitionContextViewKey.from
             let finalViewModeKey = (transitionMode == .pop) ? UITransitionContextViewControllerKey.from : UITransitionContextViewControllerKey.to
             if let previousView = transitionContext.view(forKey: transitionModeKey) {
+                print("p view", previousView.frame.minY)
                 let nowView = transitionContext.viewController(forKey: finalViewModeKey)?.view
+                nowView!.frame = CGRect(x: nowView!.frame.minX, y: startingOffset, width: nowView!.frame.width, height: nowView!.frame.height)
+                print("now view", nowView!.frame.minY)
                 transitionContext.containerView.insertSubview(previousView, belowSubview: nowView ?? UIView())
                 UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {
                     nowView?.frame.origin = CGPoint(x: 0, y: transitionContext.containerView.frame.height)
                 } completion: { success in
+                    self.startingOffset = 0
                     nowView?.removeFromSuperview()
                     transitionContext.completeTransition(success)
                 }
