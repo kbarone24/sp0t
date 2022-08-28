@@ -83,7 +83,7 @@ extension MapController {
                 
                 if UserDataModel.shared.userInfo.id == "" { UserDataModel.shared.userInfo = activeUser } else { self.updateUserInfo(user: activeUser) }
                 if UserDataModel.shared.userInfo.profilePic == UIImage() { self.getUserProfilePics() }
-                for id in self.deletedFriendIDs { UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == id}) } /// unfriended friend reentered from cache
+
                 NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
 
                 for friend in UserDataModel.shared.userInfo.friendIDs {
@@ -277,7 +277,7 @@ extension MapController {
                 do {
                     let postIn = try doc.data(as: MapPost.self)
                     guard let postInfo = postIn else { return }
-                    if self.deletedPostIDs.contains(postInfo.id ?? "") { return }
+                    if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { return }
                     let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
                     /// friendsPost from someone user isn't friends with
                     if map == nil && !UserDataModel.shared.userInfo.friendIDs.contains(postInfo.posterID) { return }
@@ -388,7 +388,7 @@ extension MapController {
         guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
         /// remove from friends stuff
         friendsPostsDictionary.removeValue(forKey: post.id!)
-        deletedPostIDs.append(post.id!)
+        UserDataModel.shared.deletedPostIDs.append(post.id!)
         /// remove from map
         if mapID != "" {
             if mapDelete {

@@ -26,7 +26,7 @@ class DrawerView: NSObject {
     // MARK: Public variable
     public lazy var slideView = UIView {
         $0.backgroundColor = .clear
-        $0.layer.cornerRadius = 10
+        $0.layer.cornerRadius = UserDataModel.shared.screenSize == 0 ? 0 : 10
         $0.layer.shadowColor = UIColor.black.cgColor
         $0.layer.shadowOffset = CGSize(width: 2, height: 2)
         $0.layer.shadowOpacity = 0.8
@@ -91,7 +91,7 @@ class DrawerView: NSObject {
     override init() {
         super.init()
     }
-    public init(present: UIViewController = UIViewController(), drawerConrnerRadius: CGFloat = 20, detentsInAscending: [DrawerViewDetent] = [.Bottom, .Middle, .Top], closeAction: (() -> Void)? = nil) {
+    public init(present: UIViewController = UIViewController(), detentsInAscending: [DrawerViewDetent] = [.Bottom, .Middle, .Top], closeAction: (() -> Void)? = nil) {
         super.init()
         if let parent = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController as? UINavigationController {
             if parent.visibleViewController != nil {
@@ -99,9 +99,10 @@ class DrawerView: NSObject {
             }
         }
         rootVC = present
-        slideView.layer.cornerRadius = drawerConrnerRadius
+        let drawerCornerRadius: CGFloat = UserDataModel.shared.screenSize == 0 ? 0 : 20
+        slideView.layer.cornerRadius = drawerCornerRadius
         detents = detentsInAscending
-        viewSetup(cornerRadius: drawerConrnerRadius)
+        viewSetup(cornerRadius: drawerCornerRadius)
         closeDo = closeAction
     }
     

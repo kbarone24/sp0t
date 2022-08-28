@@ -217,6 +217,7 @@ class ChooseMapController: UIViewController {
                 Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
                 /// enable upload animation to finish
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    HapticGenerator.shared.play(.soft)
                     self.popToMap()
                 }
             }
