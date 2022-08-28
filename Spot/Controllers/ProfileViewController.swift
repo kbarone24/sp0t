@@ -27,7 +27,6 @@ class ProfileViewController: UIViewController {
     }
     public lazy var maps = [CustomMap]()
     private lazy var posts = [MapPost]()
-    public lazy var deletedPostIDs: [String] = []
     
     private var postImages = [UIImage]()
     private var relation: ProfileRelation = .myself
@@ -253,14 +252,14 @@ extension ProfileViewController {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { return }
-                    if self.deletedPostIDs.contains(postInfo.id!) { continue }
+                    if UserDataModel.shared.deletedPostIDs.contains(postInfo.id!) { continue }
                     self.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         self.posts.append(post)
                         self.postsFetched = true
                     }
                     let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
-                    self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[0]), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
+                    self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[safe: 0] ?? ""), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
                         guard let self = self else { return }
                         let image = image ?? UIImage()
                         self.postImages.append(image)
@@ -318,7 +317,6 @@ extension ProfileViewController {
         guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
         guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
         guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
-        deletedPostIDs.append(post.id!)
         
         if posts.contains(where: {$0.id == post.id}) {
             posts.removeAll()

@@ -130,9 +130,10 @@ class AVCameraController: UIViewController {
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
         
         /// start camera area below notch on iPhone X+
-        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
-        let cameraY: CGFloat = minY == 2 ? minY + cameraHeight - 30 : minY + cameraHeight - 108
-        let galleryY: CGFloat = minY == 2 ? cameraY : minY + cameraHeight + 13
+        let smallScreen = UserDataModel.shared.screenSize == 0
+        let minY = statusHeight
+        let cameraOffset: CGFloat = !smallScreen ? 108 : 10
+        let galleryOffset: CGFloat = !smallScreen ? 50 : 35
         
         cameraView = UIView {
             $0.layer.cornerRadius = 15
@@ -190,7 +191,7 @@ class AVCameraController: UIViewController {
             view.addSubview($0)
         }
         cameraButton.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(cameraY)
+            $0.bottom.equalToSuperview().offset(-cameraOffset)
             $0.width.height.equalTo(104)
             $0.centerX.equalToSuperview()
         }
@@ -208,7 +209,7 @@ class AVCameraController: UIViewController {
         }
         galleryButton.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(37)
-            $0.top.equalTo(galleryY)
+            $0.bottom.equalToSuperview().offset(-galleryOffset)
             $0.width.equalTo(34)
             $0.height.equalTo(29)
         }
@@ -344,7 +345,7 @@ class AVCameraController: UIViewController {
             
             let imageObj = (ImageObject(id: UUID().uuidString, asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], animationIndex: 0, directionUp: true, gifMode: false, creationDate: creationDate, fromCamera: false), false)
             UploadPostModel.shared.imageObjects.append(imageObj)
-            
+
             /// sort on final load
             let finalLoad = UploadPostModel.shared.imageObjects.count == assetsFull.count
             
@@ -486,7 +487,7 @@ class AVCameraController: UIViewController {
             guard let self = self else { return }
             try? self.cameraController.displayPreview(on: self.cameraView)
             self.view.isUserInteractionEnabled = true
-            self.setAutoExposure()
+         //   self.setAutoExposure()
         }
     }
     

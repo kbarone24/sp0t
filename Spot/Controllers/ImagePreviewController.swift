@@ -23,7 +23,7 @@ class ImagePreviewController: UIViewController {
     
     var backButton: UIButton!
     var dotView: UIView!
-    var chooseMapButton: ChooseMapButton!
+    var nextButton: NextButton!
     var draftsButton: UIButton!
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
@@ -37,13 +37,13 @@ class ImagePreviewController: UIViewController {
     var cancelOnDismiss = false
     var cameraObject: ImageObject!
     
-    var panGesture: UIPanGestureRecognizer! /// swipe down to close keyboard
+    var swipeToClose: UIPanGestureRecognizer! /// swipe down to close keyboard
+    var tapToClose: UITapGestureRecognizer! /// tap to close keyboard
     
     var textView: UITextView!
-    let textViewPlaceholder = "What's up..."
+    let textViewPlaceholder = "Write a caption..."
     
     var shouldRepositionTextView = false /// keyboardWillShow firing late -> this variable tells keyboardWillChange whether to reposition
-    var snapBottomConstraintToImage = false
     lazy var firstImageBottomConstraint: CGFloat = 0
     
     var tagFriendsView: TagFriendsView?
@@ -184,26 +184,31 @@ class ImagePreviewController: UIViewController {
         }
         backButton.snp.makeConstraints {
             $0.leading.equalTo(5.5)
-            $0.top.equalTo(previewBackground.snp.top).offset(55)
+            $0.top.equalTo(previewBackground.snp.top).offset(60)
             $0.width.equalTo(48.6)
             $0.height.equalTo(38.6)
         }
                 
         /// add share to and drafts
-        chooseMapButton = ChooseMapButton {
+        nextButton = NextButton {
             $0.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
+            $0.isEnabled = true
             view.addSubview($0)
         }
-        chooseMapButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(7)
-            $0.top.equalTo(maxY + 10)
-            $0.width.equalTo(172)
-            $0.height.equalTo(50)
+        nextButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(15)
+            $0.bottom.equalToSuperview().inset(50)
+            $0.width.equalTo(94)
+            $0.height.equalTo(40)
         }
         
-        panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
-        panGesture.isEnabled = false
-        view.addGestureRecognizer(panGesture)
+        swipeToClose = UIPanGestureRecognizer(target: self, action: #selector(swipeToClose(_:)))
+        swipeToClose.isEnabled = false
+        view.addGestureRecognizer(swipeToClose)
+        
+        tapToClose = UITapGestureRecognizer(target: self, action: #selector(tapToClose(_:)))
+        tapToClose.isEnabled = false
+        currentImage.addGestureRecognizer(tapToClose)
         
         let tap = UITapGestureRecognizer(target: self, action: #selector(captionTap))
         tap.delegate = self
@@ -212,14 +217,14 @@ class ImagePreviewController: UIViewController {
         
     func addDotView() {
         let imageCount = UploadPostModel.shared.postObject.frameIndexes!.count
-        let dotWidth = (14 * imageCount) + (10 * (imageCount - 1))
+        let dotWidth = (9 * imageCount) + (5 * (imageCount - 1))
         dotView = UIView {
             $0.backgroundColor = nil
             view.addSubview($0)
         }
         dotView.snp.makeConstraints {
-            $0.top.equalTo(previewBackground.snp.top).offset(68)
-            $0.height.equalTo(14)
+            $0.top.equalTo(previewBackground.snp.top).offset(73)
+            $0.height.equalTo(9)
             $0.width.equalTo(dotWidth)
             $0.centerX.equalToSuperview()
         }
@@ -230,49 +235,41 @@ class ImagePreviewController: UIViewController {
         if dotView != nil { for sub in dotView.subviews { sub.removeFromSuperview() } }
         for i in 0...UploadPostModel.shared.postObject.frameIndexes!.count - 1 {
             let dot = UIView {
-                $0.backgroundColor = .white
-                $0.alpha = i == UploadPostModel.shared.postObject.selectedImageIndex! ? 1.0 : 0.35
-                $0.layer.cornerRadius = 7
+                $0.layer.borderColor = UIColor.white.cgColor
+                $0.layer.borderWidth = 1
+                $0.backgroundColor = i == UploadPostModel.shared.postObject.selectedImageIndex! ? .white : .clear
+                $0.layer.cornerRadius = 9/2
                 dotView.addSubview($0)
             }
-            let leading = i * 24
+            let leading = i * 14
             dot.snp.makeConstraints {
                 $0.leading.equalTo(leading)
                 $0.top.equalToSuperview()
-                $0.width.height.equalTo(14)
+                $0.width.height.equalTo(9)
             }
         }
     }
 
     func addPostDetail() {
-        let firstImageAspect = (UploadPostModel.shared.postObject.postImage.first ?? UIImage()).size.height / (UploadPostModel.shared.postObject.postImage.first ?? UIImage()).size.width
         postDetailView = PostDetailView {
             view.addSubview($0)
         }
         postDetailView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(300)
-            if firstImageAspect > 1.1 {
-                /// set to bottom of first image so it doesnt move as we swipe between images
-                let layoutValues = getImageLayoutValues(imageAspect: firstImageAspect)
-                firstImageBottomConstraint = layoutValues.bottomConstraint
-                snapBottomConstraintToImage = true
-                $0.bottom.equalToSuperview().inset(firstImageBottomConstraint)
-            } else {
-                $0.bottom.equalTo(chooseMapButton.snp.top).offset(-25)
-            }
+            $0.height.equalTo(160)
+            $0.bottom.equalTo(nextButton.snp.top).offset(-15)
         }
         
         textView = UITextView {
             $0.delegate = self
             $0.backgroundColor = nil
             $0.textColor = .white
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 19)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
             $0.alpha = 0.6
             $0.tintColor = UIColor(named: "SpotGreen")
             $0.text = textViewPlaceholder
             $0.returnKeyType = .done
-            $0.textContainerInset = UIEdgeInsets(top: 14, left: 19, bottom: 14, right: 60)
+            $0.textContainerInset = UIEdgeInsets(top: 12, left: 19, bottom: 14, right: 60)
             $0.isScrollEnabled = false
             $0.textContainer.maximumNumberOfLines = 6
             $0.textContainer.lineBreakMode = .byTruncatingHead
@@ -288,20 +285,20 @@ class ImagePreviewController: UIViewController {
         atButton = UIButton {
             $0.backgroundColor = UIColor.black.withAlphaComponent(0.5)
             $0.setTitle("@", for: .normal)
-            $0.setTitleColor(.white.withAlphaComponent(0.75), for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-BoldItalic", size: 25)
+            $0.setTitleColor(.white, for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-SemiboldItalic", size: 25)
             $0.contentHorizontalAlignment = .center
             $0.contentVerticalAlignment = .center
-            $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 1.5, right: 0)
-            $0.layer.cornerRadius = 35/2
+            $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 2.5, right: 0)
+            $0.layer.cornerRadius = 36/2
             $0.addTarget(self, action: #selector(atTap), for: .touchUpInside)
             $0.isHidden = true
             textView.addSubview($0)
         }
         atButton.snp.makeConstraints {
             $0.trailing.equalTo(postDetailView.snp.trailing).inset(18)
-            $0.top.equalToSuperview().offset(5)
-            $0.height.width.equalTo(38)
+            $0.top.equalToSuperview()
+            $0.height.width.equalTo(36)
         }
         
         spotNameButton = SpotNameButton {
@@ -420,10 +417,14 @@ class ImagePreviewController: UIViewController {
     
     @objc func atTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewTagUserTap")
+        HapticGenerator.shared.play(.light)
+        /// remove if @ was just tapped
+        if textView.text.last == "@" { return  }
         /// add extra space if in the middle of word
         let textString = textView.text.isEmpty || textView.text.last == " " ? "@" : " @"
         textView.insertText(textString)
         addTagTable(tagString: "")
+        
     }
     
     @objc func spotTap() {
@@ -472,7 +473,7 @@ class ImagePreviewController: UIViewController {
             self.postDetailView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
                 $0.bottom.equalToSuperview().offset(-keyboardFrame.height)
-                $0.height.equalTo(300)
+                $0.height.equalTo(160)
             }
         }
     }
@@ -485,8 +486,8 @@ class ImagePreviewController: UIViewController {
             self.postDetailView.snp.removeConstraints()
             self.postDetailView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
-                $0.height.equalTo(300)
-                $0.bottom.equalToSuperview().inset(self.firstImageBottomConstraint)
+                $0.height.equalTo(160)
+                $0.bottom.equalTo(self.nextButton.snp.top).offset(-15)
             }
         }
     }
@@ -500,7 +501,7 @@ class ImagePreviewController: UIViewController {
         }
         newSpotMask!.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(newSpotNameView.snp.top).offset(-200)
+            $0.top.equalTo(newSpotNameView.snp.top).offset(-160)
             $0.bottom.equalToSuperview()
         }
 
@@ -575,7 +576,9 @@ extension ImagePreviewController: TagFriendsDelegate {
 extension ImagePreviewController: UITextViewDelegate {
     
     func textViewDidBeginEditing(_ textView: UITextView) {
-        panGesture.isEnabled = true
+        HapticGenerator.shared.play(.medium)
+        swipeToClose.isEnabled = true
+        tapToClose.isEnabled = true
         if textView.text == textViewPlaceholder { textView.text = ""; textView.alpha = 1.0 }
         textView.isUserInteractionEnabled = true
         
@@ -583,7 +586,8 @@ extension ImagePreviewController: UITextViewDelegate {
     }
     
     func textViewDidEndEditing(_ textView: UITextView) {
-        panGesture.isEnabled = false
+        swipeToClose.isEnabled = false
+        tapToClose.isEnabled = false
         if textView.text == "" { textView.text = textViewPlaceholder; textView.alpha = 0.6 }
         textView.isUserInteractionEnabled = false
         
@@ -659,16 +663,22 @@ extension ImagePreviewController: UITextViewDelegate {
         return max(51, size.height)
     }
     
-    @objc func pan(_ sender: UIPanGestureRecognizer) {
-        
+    @objc func swipeToClose(_ sender: UIPanGestureRecognizer) {
         if !self.textView.isFirstResponder { return }
-        
         let direction = sender.velocity(in: view)
         
         if abs(direction.y) > 100 {
             textView.resignFirstResponder()
-            panGesture.isEnabled = false
+            swipeToClose.isEnabled = false
+            tapToClose.isEnabled = false
         }
+    }
+    
+    @objc func tapToClose(_ sender: UITapGestureRecognizer) {
+        if !self.textView.isFirstResponder { return }
+        textView.resignFirstResponder()
+        swipeToClose.isEnabled = false
+        tapToClose.isEnabled = false
     }
 }
 
@@ -786,7 +796,7 @@ class PostImagePreview: PostImageView {
         contentMode = .scaleAspectFill
         clipsToBounds = true
         isUserInteractionEnabled = true
-        layer.cornerRadius = 15
+        layer.cornerRadius = 5
         backgroundColor = nil
     }
     
@@ -809,8 +819,9 @@ class PostImagePreview: PostImageView {
         let bottomConstraint = layoutValues.bottomConstraint
         
         snp.makeConstraints {
+            print("bottom constraint", bottomConstraint)
             $0.height.equalTo(currentHeight)
-            $0.bottom.equalToSuperview().inset(bottomConstraint)
+            $0.bottom.equalTo(-bottomConstraint)
             if index == post.selectedImageIndex { $0.leading.trailing.equalToSuperview() }
             else if index < post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
             else if index > post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width) }
@@ -900,10 +911,9 @@ class PostDetailView: UIView {
     }
 }
 
-class ChooseMapButton: UIButton {
+class PaddedNextButton: UIButton {
     var contentArea: UIView!
-    var chooseLabel: UILabel!
-    var nextArrow: UIImageView!
+    var nextLabel: UILabel!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -918,26 +928,14 @@ class ChooseMapButton: UIButton {
             $0.edges.equalToSuperview().inset(5)
         }
                 
-        chooseLabel = UILabel {
-            $0.text = "Choose a map"
+        nextLabel = UILabel {
+            $0.text = "Next"
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 15)
             contentArea.addSubview($0)
         }
-        chooseLabel.snp.makeConstraints {
-            $0.leading.equalTo(18)
-            $0.centerY.equalToSuperview()
-        }
-        
-        nextArrow = UIImageView {
-            $0.image = UIImage(named: "NextArrow")
-            contentArea.addSubview($0)
-        }
-        nextArrow.snp.makeConstraints {
-            $0.leading.equalTo(chooseLabel.snp.trailing).offset(10)
-            $0.height.equalTo(14.6)
-            $0.width.equalTo(15.9)
-            $0.centerY.equalToSuperview().offset(1)
+        nextLabel.snp.makeConstraints {
+            $0.centerX.centerY.equalToSuperview()
         }
     }
     
