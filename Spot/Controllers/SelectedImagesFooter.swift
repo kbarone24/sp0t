@@ -118,10 +118,10 @@ class SelectedImagesFooter: UICollectionReusableView {
             detailView.addSubview($0)
         }
         nextButton.snp.makeConstraints {
-            $0.top.equalToSuperview()
+            $0.top.equalToSuperview().offset(2)
             $0.trailing.equalToSuperview().inset(15)
-            $0.height.equalTo(40)
             $0.width.equalTo(94)
+            $0.height.equalTo(40)
         }
     }
     

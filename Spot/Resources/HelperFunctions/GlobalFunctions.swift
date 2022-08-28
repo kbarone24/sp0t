@@ -718,7 +718,7 @@ extension NSObject {
     
     func getRoundedAspectRatio(aspect: CGFloat) -> CGFloat {
         var imageAspect = aspect
-        if imageAspect > 1.1 && imageAspect < 1.45 { imageAspect = 1.45 } /// stretch iPhone vertical
+        if imageAspect > 1.1 && imageAspect < 1.45 { imageAspect = 1.333 } /// stretch iPhone vertical
         if imageAspect > 1.45 { imageAspect = UserDataModel.shared.maxAspect } /// round to max aspect
         return imageAspect
     }
@@ -1083,8 +1083,9 @@ extension NSObject {
         let maxHeight = UserDataModel.shared.maxAspect * UIScreen.main.bounds.width
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
         let maxY = minY + maxHeight
+        let midY = maxY - 86
         let currentHeight = getImageHeight(aspectRatio: imageAspect, maxAspect: UserDataModel.shared.maxAspect)
-        let imageBottom: CGFloat = imageAspect > 1.1 ? maxY : (minY + maxY + currentHeight)/2 - 15
+        let imageBottom: CGFloat = imageAspect > 1.45 ? maxY : imageAspect > 1.1 ? midY : (minY + maxY + currentHeight)/2 - 15
         let bottomConstraint = UIScreen.main.bounds.height - imageBottom
         return (currentHeight, bottomConstraint)
     }

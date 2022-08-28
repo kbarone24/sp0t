@@ -189,6 +189,7 @@ class NewMapController: UIViewController {
     }
     
     @objc func togglePrivacy(_ sender: UIButton) {
+        HapticGenerator.shared.play(.light)
         switch sender.tag {
         case 0:
             Mixpanel.mainInstance().track(event: "NewMapPrivateMapOn")

@@ -51,11 +51,6 @@ class MapController: UIViewController {
     
     lazy var friendsPostsDictionary = [String: MapPost]()
     
-    /// use to avoid deleted documents entering from cache
-    lazy var deletedSpotIDs: [String] = []
-    lazy var deletedPostIDs: [String] = []
-    lazy var deletedFriendIDs: [String] = []
-    
     var notiListener: ListenerRegistration!
     
     var refresh: RefreshStatus = .activelyRefreshing
@@ -238,8 +233,7 @@ class MapController: UIViewController {
     @objc func profileTap(_ sender: Any){
         Mixpanel.mainInstance().track(event: "MapControllerProfileTap")
         let profileVC = ProfileViewController(userProfile: nil)
-        profileVC.deletedPostIDs = deletedPostIDs
-        sheetView = DrawerView(present: profileVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
+        sheetView = DrawerView(present: profileVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         profileVC.containerDrawerView = sheetView
@@ -249,7 +243,7 @@ class MapController: UIViewController {
     @objc func openNotis(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "MapControllerNotificationsTap")
         let notifVC = NotificationsController()
-        sheetView = DrawerView(present: notifVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
+        sheetView = DrawerView(present: notifVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         notifVC.containerDrawerView = sheetView
@@ -268,7 +262,7 @@ class MapController: UIViewController {
     
     func openFindFriends() {
         let ffvc = FindFriendsController()
-        sheetView = DrawerView(present: ffvc, drawerConrnerRadius: 22, detentsInAscending: [.Top], closeAction: {
+        sheetView = DrawerView(present: ffvc, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
         })
         sheetView?.swipeDownToDismiss = false
@@ -280,7 +274,7 @@ class MapController: UIViewController {
     func openPost(posts: [MapPost]) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = posts
-        sheetView = DrawerView(present: postVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
+        sheetView = DrawerView(present: postVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         postVC.containerDrawerView = sheetView
@@ -298,10 +292,9 @@ class MapController: UIViewController {
         
         print("groups", passMap.postGroup.map({$0.postIDs}))
         let customMapVC = CustomMapController(userProfile: nil, mapData: passMap, postsList: posts, presentedDrawerView: nil, mapType: mapType)
-        sheetView = DrawerView(present: customMapVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
+        sheetView = DrawerView(present: customMapVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
-        customMapVC.containerDrawerView = sheetView
         sheetView?.present(to: .Middle)
     }
     
@@ -310,7 +303,7 @@ class MapController: UIViewController {
         emptyPost.spotID = spotID
         emptyPost.spotName = spotName
         let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: nil)
-        sheetView = DrawerView(present: spotVC, drawerConrnerRadius: 22, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
+        sheetView = DrawerView(present: spotVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
         spotVC.containerDrawerView = sheetView
