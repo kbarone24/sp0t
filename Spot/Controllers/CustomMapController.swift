@@ -60,7 +60,6 @@ class CustomMapController: UIViewController {
         self.userProfile = userProfile
         self.mapData = mapData
         self.postsList = postsList
-        print("map type", mapType)
         self.mapType = mapType
         self.containerDrawerView = presentedDrawerView
     }
@@ -111,6 +110,7 @@ class CustomMapController: UIViewController {
 
 extension CustomMapController {
     private func runInitialFetches() {
+        print("run initial fetches")
         ranSetUp = true
         addInitialPosts()
 
