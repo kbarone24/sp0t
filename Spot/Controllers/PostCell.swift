@@ -59,7 +59,7 @@ class PostCell: UICollectionViewCell {
     let cellHeight = UIScreen.main.bounds.height
     let cellWidth = UIScreen.main.bounds.width
     var bottomInset: CGFloat {
-        return (UIScreen.main.bounds.height - (UserDataModel.shared.maxAspect * UIScreen.main.bounds.width))/2 - 10
+        return (UIScreen.main.bounds.height - (UserDataModel.shared.maxAspect * UIScreen.main.bounds.width))/2 + 10
     }
     
     override func layoutSubviews() {
@@ -95,7 +95,7 @@ class PostCell: UICollectionViewCell {
     
     func addImageView() {
         imageView = PostImageView {
-            $0.layer.cornerRadius = 19
+            $0.layer.cornerRadius = 5
             contentView.addSubview($0)
         }
     }
@@ -107,7 +107,7 @@ class PostCell: UICollectionViewCell {
         buttonView.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(15)
             $0.bottom.equalToSuperview().inset(bottomInset)
-            $0.width.equalTo(41.4)
+            $0.width.equalTo(45)
             $0.height.equalTo(127)
         }
         
@@ -134,7 +134,7 @@ class PostCell: UICollectionViewCell {
         commentButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalTo(numComments.snp.top).offset(-1)
-            $0.height.equalTo(41.4)
+            $0.height.equalTo(45)
         }
         
         numLikes = UILabel {
@@ -156,8 +156,8 @@ class PostCell: UICollectionViewCell {
         }
         likeButton.snp.makeConstraints {
             $0.bottom.equalTo(numLikes.snp.top).offset(-1)
-            $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(36.8)
+            $0.leading.trailing.equalToSuperview().inset(-0.15)
+            $0.height.equalTo(40.85)
         }
         
     }
@@ -288,14 +288,14 @@ class PostCell: UICollectionViewCell {
             contentView.addSubview($0)
         }
         dotView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(detailView.snp.bottom).offset(15)
             $0.height.equalTo(2)
         }
         
         if post.frameIndexes?.count ?? 0 < 2 { return }
         let spaces = CGFloat(7 * post.frameIndexes!.count - 1)
-        let dotWidth = (UIScreen.main.bounds.width - 32 - spaces) / CGFloat(post.frameIndexes!.count)
+        let dotWidth = (UIScreen.main.bounds.width - spaces) / CGFloat(post.frameIndexes!.count)
         var offset: CGFloat = 0
         for i in 0...(post.frameIndexes!.count) - 1 {
             let line = UIView {
@@ -366,14 +366,14 @@ class PostCell: UICollectionViewCell {
             $0.leading.equalToSuperview()
             $0.trailing.equalTo(buttonView.snp.leading).offset(-15)
             $0.bottom.equalTo(captionLabel.snp.top).offset(-10)
-            $0.height.equalTo(25)
+            $0.height.equalTo(29)
         }
         
         profileImage = UIImageView {
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
             $0.backgroundColor = .gray
-            $0.layer.cornerRadius = 25/2
+            $0.layer.cornerRadius = 29/2
             $0.isUserInteractionEnabled = true
             let tap = UITapGestureRecognizer(target: self, action: #selector(userTap))
             $0.addGestureRecognizer(tap)
@@ -381,7 +381,8 @@ class PostCell: UICollectionViewCell {
         }
         profileImage.snp.makeConstraints {
             $0.leading.equalTo(12)
-            $0.width.height.equalTo(25)
+            $0.width.height.equalTo(29)
+            $0.centerY.equalToSuperview()
         }
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
         profileImage.sd_setImage(with: URL(string: post.userInfo?.imageURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
@@ -488,9 +489,9 @@ class PostCell: UICollectionViewCell {
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(currentHeight)
             if currentAspect > 1.45 {
-                $0.bottom.equalTo(dotView.snp.bottom).offset(5)
+                $0.bottom.equalTo(dotView.snp.bottom).offset(2)
             } else if currentAspect > 1.1 {
-                $0.bottom.equalTo(buttonView.snp.top).offset(-5)
+                $0.bottom.equalTo(buttonView.snp.top).offset(-20)
             } else {
                 $0.centerY.equalToSuperview()
             }
