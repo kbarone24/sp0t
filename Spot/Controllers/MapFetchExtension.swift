@@ -344,11 +344,9 @@ extension MapController {
         }
         
         DispatchQueue.main.async {
-            print("reload maps collection")
             self.reloadMapsCollection(resort: false, newPost: false)
             if coordinate != nil {
                 if let annotation = self.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: coordinate!)}) {
-                    print("remove and add annotation")
                     self.mapView.removeAnnotation(annotation)
                     self.mapView.addAnnotation(annotation)
                 }

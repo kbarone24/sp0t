@@ -102,7 +102,6 @@ class PostController: UIViewController {
         postsCollection = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .horizontal
-            
             let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
             view.tag = 16
             view.backgroundColor = .black
