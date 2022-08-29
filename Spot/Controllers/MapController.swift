@@ -290,11 +290,11 @@ class MapController: UIViewController {
         var passMap = map == nil ? CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: []) : map!
         if mapType == .friendsMap { passMap.createPosts(posts: posts) }
         
-        print("groups", passMap.postGroup.map({$0.postIDs}))
         let customMapVC = CustomMapController(userProfile: nil, mapData: passMap, postsList: posts, presentedDrawerView: nil, mapType: mapType)
         sheetView = DrawerView(present: customMapVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
+        customMapVC.containerDrawerView = sheetView
         sheetView?.present(to: .Middle)
     }
     

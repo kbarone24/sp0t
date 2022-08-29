@@ -106,7 +106,7 @@ class FriendRequestCell: UICollectionViewCell {
                 $0.isHidden = false
                 let url = notification.userInfo!.avatarURL!
                 if url != "" {
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFit)
+                    let transformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFill)
                     $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
                 } else { print("Avatar not found") }
                 $0.translatesAutoresizingMaskIntoConstraints = false
