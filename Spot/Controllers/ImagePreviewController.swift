@@ -122,6 +122,7 @@ class ImagePreviewController: UIViewController {
         
         let imageLocation = UploadPostModel.shared.selectedObjects.first?.rawLocation ?? UserDataModel.shared.currentLocation ?? CLLocation()
         if !locationIsEmpty(location: imageLocation) {
+            post.setImageLocation = true
             post.postLat = imageLocation.coordinate.latitude
             post.postLong = imageLocation.coordinate.longitude
         }
@@ -132,17 +133,8 @@ class ImagePreviewController: UIViewController {
     
     func addPreviewView() {
         /// add initial preview view and buttons
-
         let post = UploadPostModel.shared.postObject!
         
-        /// camera aspect is also the max aspect for any image'
-        let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
-        let cameraHeight = UIScreen.main.bounds.width * cameraAspect
-        
-        let statusHeight = getStatusHeight()
-        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
-        let maxY = minY + cameraHeight
-                
         previewBackground = UIView {
             $0.backgroundColor = UIColor(named: "SpotBlack")
             $0.layer.cornerRadius = 15

@@ -230,8 +230,10 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                         userGroup.enter()
                         let post = notification.postID
                         self.getPost(postID: post!) { post in
-                            notification.postInfo = post
-                            userGroup.leave()
+                            self.setPostDetails(post: post) { post in
+                                notification.postInfo = post
+                                userGroup.leave()
+                            }
                         }
                     }
             

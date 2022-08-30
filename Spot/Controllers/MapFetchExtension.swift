@@ -23,9 +23,7 @@ extension MapController {
     @objc func notifyUserLoad(_ notification: NSNotification) {
         if feedLoaded { return }
         feedLoaded = true
-        
-        //DispatchQueue.main.async {  }
-        
+                
         DispatchQueue.global(qos: .userInitiated).async {
             self.getMaps()
             self.homeFetchGroup.enter()
@@ -94,7 +92,7 @@ extension MapController {
                             if !UserDataModel.shared.userInfo.friendsList.contains(where: {$0.id == friend}) {
                                 UserDataModel.shared.userInfo.friendsList.append(info)
                                 if UserDataModel.shared.userInfo.friendsList.count == UserDataModel.shared.userInfo.friendIDs.count {
-                                    UserDataModel.shared.userInfo.sortFriends() /// sort for top friends
+                                    self.sortFriends() /// sort for top friends
                                 }
                             }
                             
@@ -118,6 +116,7 @@ extension MapController {
         UserDataModel.shared.userInfo.pendingFriendRequests = user.pendingFriendRequests
         UserDataModel.shared.userInfo.spotScore = user.spotScore
         UserDataModel.shared.userInfo.topFriends = user.topFriends
+        UserDataModel.shared.userInfo.friendIDs = user.friendIDs
         UserDataModel.shared.userInfo.username = user.username
     }
     
@@ -207,7 +206,7 @@ extension MapController {
     
     func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool, index: Int) {
         /// add new post to both dictionaries
-        if map == nil || newPost {
+        if map == nil || (newPost && !(post.hideFromFeed ?? false)) {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
             if index == 0 { mapView.addPostAnnotation(post: post) }
         }
@@ -216,25 +215,28 @@ extension MapController {
             if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map!.id!}) {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id!)
                 let _ = UserDataModel.shared.userInfo.mapsList[i].updateGroup(post: post)
-                if index - 1 == i {
+                if index - 1 == i && self.sheetView == nil {
                     /// remove and re-add annotation
-                    self.addMapAnnotations(index: index, reload: true)
+                    DispatchQueue.main.async { self.addMapAnnotations(index: index, reload: true) }
                 }
             }
         }
     }
 
     func updatePost(post: MapPost, map: CustomMap?) {
-        var post = post
+        /// use old post to only update values that CHANGE -> comments and likers
         let oldPost = map == nil ? friendsPostsDictionary[post.id!] : map!.postsDictionary[post.id!]
-        if post.commentCount != oldPost!.commentCount {
+        guard var oldPost = oldPost else { return }
+        oldPost.likers = post.likers
+        if post.commentCount != oldPost.commentCount {
             getComments(postID: post.id!) { [weak self] comments in
                 guard let self = self else { return }
-                post.commentList = comments
-                self.updatePostDictionary(post: post, mapID: map?.id ?? "")
+                oldPost.commentList = comments
+                oldPost.commentCount = post.commentCount
+                self.updatePostDictionary(post: oldPost, mapID: map?.id ?? "")
             }
         } else {
-            updatePostDictionary(post: post, mapID: map?.id ?? "")
+            updatePostDictionary(post: oldPost, mapID: map?.id ?? "")
         }
     }
     
@@ -263,8 +265,9 @@ extension MapController {
                 } catch {
                     continue
                 }
-                NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
             }
+            self.mapsLoaded = true
+            NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
         }
     }
     
@@ -280,7 +283,7 @@ extension MapController {
                     if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { return }
                     let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
                     /// friendsPost from someone user isn't friends with
-                    if map == nil && !UserDataModel.shared.userInfo.friendIDs.contains(postInfo.posterID) { return }
+                    if map == nil && !UserDataModel.shared.userInfo.friendIDs.contains(postInfo.posterID) || postInfo.hideFromFeed ?? false { return }
                     /// check map dictionary for add
                     if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID ?? "", newPost: true) {
                         self.setPostDetails(post: postInfo) { [weak self] post in
@@ -364,10 +367,13 @@ extension MapController {
             map!.addSpotGroups()
             UserDataModel.shared.userInfo.mapsList.append(map!)
         }
+        let mapIndex = post.hideFromFeed! ? 1 : 0
         DispatchQueue.main.async {
+            self.selectMapAt(index: 0) /// select map at 0 to reset selected index (resort might mess with selecting index 1)
             self.addPostToDictionary(post: post, map: map, newPost: true, index: 0)
-            self.selectMapAt(index: 0)
-            self.reloadMapsCollection(resort: true, newPost: true )
+            self.reloadMapsCollection(resort: true, newPost: true)
+            self.selectMapAt(index: mapIndex)
+            self.reloadMapsCollection(resort: false, newPost: false)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -423,16 +429,7 @@ extension MapController {
     @objc func mapLikersChanged(_ notification: NSNotification) {
         reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
     }
-    
-    @objc func enterForeground() {
-        DispatchQueue.main.async { self.checkForActivityIndicator() }
-    }
-    
-    @objc func notifyLogout() {
-        userListener.remove()
-        newPostListener.remove()
-    }
-    
+        
     @objc func notifyFriendsListAdd() {
         /// query friends posts again
         homeFetchGroup.enter()
@@ -444,6 +441,30 @@ extension MapController {
         DispatchQueue.global().async {
             self.getRecentPosts(map: nil)
         }
+    }
+    
+    @objc func notifyEditMap(_ notification: NSNotification) {
+        guard let map = notification.userInfo?["map"] as? CustomMap else { return }
+        if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map.id}) {
+            UserDataModel.shared.userInfo.mapsList[i].memberIDs = map.memberIDs
+            UserDataModel.shared.userInfo.mapsList[i].likers = map.likers
+            UserDataModel.shared.userInfo.mapsList[i].memberProfiles = map.memberProfiles
+            UserDataModel.shared.userInfo.mapsList[i].imageURL = map.imageURL
+            UserDataModel.shared.userInfo.mapsList[i].mapName = map.mapName
+            UserDataModel.shared.userInfo.mapsList[i].mapDescription = map.mapDescription
+            UserDataModel.shared.userInfo.mapsList[i].secret = map.secret
+            print("reload maps collection")
+            DispatchQueue.main.async { self.mapsCollection.reloadItems(at: [IndexPath(item: i + 1, section: 0)]) }
+        }
+    }
+    
+    @objc func enterForeground() {
+        DispatchQueue.main.async { self.checkForActivityIndicator() }
+    }
+    
+    @objc func notifyLogout() {
+        userListener.remove()
+        newPostListener.remove()
     }
     
     func checkForActivityIndicator() {

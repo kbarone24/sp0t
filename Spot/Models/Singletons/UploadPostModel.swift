@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import Photos
 import Mixpanel
+import Firebase
 
 class UploadPostModel {
     
@@ -68,6 +69,12 @@ class UploadPostModel {
         postObject.spotLong = spot?.spotLong ?? 0.0
         postObject.spotName = spot?.spotName ?? ""
         postObject.spotPrivacy = spot?.privacyLevel ?? ""
+        
+        /// if post with no location, use spot location
+        if !postObject.setImageLocation && spot != nil {
+            postObject.postLat = spot!.spotLat
+            postObject.postLong = spot!.spotLong
+        }
     }
     
     func resortSpots(coordinate: CLLocationCoordinate2D) {
@@ -162,17 +169,16 @@ class UploadPostModel {
     }
     
     func setFinalPostValues() {
-        var postFriends = mapObject == nil ? UserDataModel.shared.userInfo.friendIDs : mapObject!.likers
+        var postFriends =  postObject.hideFromFeed! ? [] : UserDataModel.shared.userInfo.friendIDs
         /// if map selected && mymap selected, add friendsList
-        if mapObject != nil && !postObject.hideFromFeed! { postFriends.append(contentsOf: UserDataModel.shared.userInfo.friendIDs) }
+        if mapObject != nil && mapObject!.secret { postObject.inviteList = mapObject!.likers }
         if !postFriends.contains(UserDataModel.shared.uid) && !postObject.hideFromFeed! { postFriends.append(UserDataModel.shared.uid) }
         postObject.friendsList = postFriends
         postObject.privacyLevel = mapObject != nil && mapObject!.secret ? "invite" : mapObject != nil && mapObject!.communityMap! ? "public" : "friends"
+        postObject.timestamp = Firebase.Timestamp(date: Date())
     }
 
     func setFinalMapValues() {
-        mapObject!.postIDs.append(postObject.id!)
-        mapObject!.postLocations.append(["lat": postObject.postLat, "long": postObject.postLong])
         if spotObject != nil {
             if !mapObject!.spotIDs.contains(spotObject!.id!) {
                 mapObject!.spotIDs.append(spotObject!.id!)
@@ -180,16 +186,7 @@ class UploadPostModel {
                 mapObject!.spotLocations.append(["lat": spotObject!.spotLat, "long": spotObject!.spotLong])
             }
         }
-
-        let uid = UserDataModel.shared.uid
-        var posters = [uid]
-        if !(postObject.addedUsers?.isEmpty ?? true) { posters.append(contentsOf: postObject.addedUsers!) }
-        mapObject!.posterDictionary[postObject.id!] = posters
-        mapObject!.posterIDs.append(uid)
-        mapObject!.posterUsernames.append(UserDataModel.shared.userInfo.username)
-        for poster in posters {
-            if !mapObject!.memberIDs.contains(poster) { mapObject!.memberIDs.append(poster) }
-        }
+        mapObject!.postTimestamps.append(postObject.timestamp)
     }
 
     func allAuths() -> Bool {

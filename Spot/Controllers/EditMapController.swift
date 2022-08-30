@@ -95,15 +95,17 @@ class EditMapController: UIViewController {
         activityIndicator.startAnimating()
         let userRef = db.collection("maps").document(mapData!.id!)
         do {
-            mapData?.mapName = mapNameTextField.text!
-            mapData?.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
-            mapData?.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
-            try userRef.setData(from: mapData, merge: true)
+            mapData!.mapName = mapNameTextField.text!
+            mapData!.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
+            mapData!.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
             
-            if mapCoverChanged == false {
+            try userRef.setData(from: mapData, merge: true)
+            if mapData!.secret { self.updatePostInviteLists(inviteList: mapData!.memberIDs) }
+            self.updateUserInfo()
+            
+            if mapCoverChanged {
                 updateMapCover()
             } else {
-                customMapVC?.mapData = mapData
                 activityIndicator.stopAnimating()
                 dismiss(animated: true)
             }
@@ -113,11 +115,28 @@ class EditMapController: UIViewController {
         }
     }
     
+    func updatePostInviteLists(inviteList: [String]) {
+        let mapID = mapData!.id!
+        DispatchQueue.global().async {
+            self.db.collection("posts").whereField("mapID", isEqualTo: mapID).whereField("hideFromFeed", isEqualTo: true).getDocuments { snap, err in
+                guard let snap = snap else { return }
+                for doc in snap.documents {
+                    doc.reference.updateData(["inviteList" : inviteList])
+                }
+            }
+        }
+    }
+    
+    func updateUserInfo() {
+        // might be better to send notification to update mapscollection with cover image change
+        NotificationCenter.default.post(Notification(name: Notification.Name("EditMap"), object: nil, userInfo: ["map": mapData as Any]))
+
+    }
+    
     @objc func privateMapSwitchAction() {
         HapticGenerator.shared.play(.light)
         privateButton.setImage(UIImage(named: privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? "PrivateMapOn" : "PrivateMapOff"), for: .normal)
     }
-    
 }
 
 extension EditMapController {
@@ -286,9 +305,15 @@ extension EditMapController {
             $0.trailing.equalTo(privateButton.snp.leading).offset(-14)
         }
         
-        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 165, width: UIScreen.main.bounds.width, height: 30))
-        activityIndicator.isHidden = true
-        view.addSubview(activityIndicator)
+        activityIndicator = CustomActivityIndicator {
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+        activityIndicator.snp.makeConstraints{
+            $0.bottom.equalToSuperview().inset(150)
+            $0.centerX.equalToSuperview()
+            $0.width.height.equalTo(30)
+        }
     }
     
     private func updateMapCover(){
@@ -318,7 +343,7 @@ extension EditMapController {
                     let values = ["imageURL": urlStr]
                     self.db.collection("maps").document(self.mapData!.id!).setData(values, merge: true)
                     self.mapData?.imageURL = urlStr
-                    self.customMapVC?.mapData = self.mapData
+                    self.updateUserInfo()
                     self.activityIndicator.stopAnimating()
                     self.dismiss(animated: true)
                     return

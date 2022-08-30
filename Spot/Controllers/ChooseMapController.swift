@@ -176,10 +176,10 @@ class ChooseMapController: UIViewController {
         /// make sure there is a spot object attached to this post if posting to a spot
         /// need to enable create new spot
         UploadPostModel.shared.setFinalPostValues()
-        if newMap == nil && UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
+        if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
 
         let uid = uid
-        let post = UploadPostModel.shared.postObject!
+        var post = UploadPostModel.shared.postObject!
         var spot = UploadPostModel.shared.spotObject
         var map = UploadPostModel.shared.mapObject
         let newMap = self.newMap != nil
@@ -194,9 +194,7 @@ class ChooseMapController: UIViewController {
                     self.runFailedUpload()
                     return
                 }
-            
-                UploadPostModel.shared.postObject.imageURLs = imageURLs
-                UploadPostModel.shared.postObject.timestamp = Firebase.Timestamp(date: Date())
+                post.imageURLs = imageURLs
                 
                 if spot != nil {
                     spot!.imageURL = imageURLs.first ?? ""
@@ -208,9 +206,8 @@ class ChooseMapController: UIViewController {
                     self.uploadMap(map: map!, newMap: newMap, post: post)
                 }
                 
-                let post = UploadPostModel.shared.postObject!
                 self.uploadPost(post: post, map: map)
-                
+
                 let visitorList = spot?.visitorList ?? []
                 self.setUserValues(poster: uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
                             
@@ -278,7 +275,6 @@ class ChooseMapController: UIViewController {
         postObject.taggedUsers = post.taggedUsers
         postObject.taggedUserIDs = post.taggedUserIDs
         postObject.uid = uid
-        print("spot id", spot?.id ?? "")
         
         postObject.visitorList = spot?.visitorList ?? []
         postObject.newSpot = UploadPostModel.shared.postType == .newSpot
