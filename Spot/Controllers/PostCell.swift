@@ -174,110 +174,107 @@ class PostCell: UICollectionViewCell {
             $0.height.equalTo(16.55)
         }
         /// need to run fetch here for secret maps to see if user has access
-        getMapAccess(mapID: post.mapID ?? "", postPrivacy: post.privacyLevel ?? "friends") { [weak self] access in
-            guard let self = self else { return }
-            if access {
-                self.mapIcon = UIImageView {
-                    $0.image = UIImage(named: "FeedMapIcon")
-                    self.detailView.addSubview($0)
-                }
-                self.mapIcon.snp.makeConstraints {
-                    $0.leading.equalTo(13)
-                    $0.bottom.equalToSuperview().inset(1)
-                    $0.width.equalTo(15.2)
-                    $0.height.equalTo(15)
-                }
-
-                self.mapName = UILabel {
-                    $0.text = self.post.mapName ?? ""
-                    $0.textColor = .white
-                    $0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
-                    self.detailView.addSubview($0)
-                }
-                self.mapName.snp.makeConstraints {
-                    $0.leading.equalTo(self.mapIcon.snp.trailing).offset(5)
-                    $0.trailing.lessThanOrEqualToSuperview()
-                    $0.bottom.equalToSuperview()
-                }
-                
-                let mapButton = UIButton {
-                    $0.addTarget(self, action: #selector(self.mapTap), for: .touchUpInside)
-                    self.detailView.addSubview($0)
-                }
-                mapButton.snp.makeConstraints {
-                    $0.leading.equalTo(self.mapIcon.snp.leading)
-                    $0.trailing.equalTo(self.mapName.snp.trailing)
-                    $0.height.equalToSuperview()
-                }
-                
-                if self.post.spotID ?? "" != "" {
-                    self.separatorLine = UIView {
-                        $0.backgroundColor = UIColor.white.withAlphaComponent(0.4)
-                        $0.layer.cornerRadius = 1
-                        self.detailView.addSubview($0)
-                    }
-                    self.separatorLine.snp.makeConstraints {
-                        $0.leading.equalTo(self.mapName.snp.trailing).offset(8)
-                        $0.bottom.equalToSuperview()
-                        $0.width.equalTo(2)
-                        $0.height.equalTo(14)
-                    }
-                }
+        let access = hasMapAccess(post: post)
+        if access {
+            self.mapIcon = UIImageView {
+                $0.image = UIImage(named: "FeedMapIcon")
+                self.detailView.addSubview($0)
+            }
+            self.mapIcon.snp.makeConstraints {
+                $0.leading.equalTo(13)
+                $0.bottom.equalToSuperview().inset(1)
+                $0.width.equalTo(15.2)
+                $0.height.equalTo(15)
+            }
+            
+            self.mapName = UILabel {
+                $0.text = self.post.mapName ?? ""
+                $0.textColor = .white
+                $0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
+                self.detailView.addSubview($0)
+            }
+            self.mapName.snp.makeConstraints {
+                $0.leading.equalTo(self.mapIcon.snp.trailing).offset(5)
+                $0.trailing.lessThanOrEqualToSuperview()
+                $0.bottom.equalToSuperview()
+            }
+            
+            let mapButton = UIButton {
+                $0.addTarget(self, action: #selector(self.mapTap), for: .touchUpInside)
+                self.detailView.addSubview($0)
+            }
+            mapButton.snp.makeConstraints {
+                $0.leading.equalTo(self.mapIcon.snp.leading)
+                $0.trailing.equalTo(self.mapName.snp.trailing)
+                $0.height.equalToSuperview()
             }
             
             if self.post.spotID ?? "" != "" {
-                self.spotIcon = UIImageView {
-                    $0.image = UIImage(named: "FeedSpotIcon")
+                self.separatorLine = UIView {
+                    $0.backgroundColor = UIColor.white.withAlphaComponent(0.4)
+                    $0.layer.cornerRadius = 1
                     self.detailView.addSubview($0)
                 }
-                self.spotIcon.snp.makeConstraints {
-                    $0.bottom.equalToSuperview().inset(1)
-                    $0.width.equalTo(12.8)
-                    $0.height.equalTo(15.55)
-                    if self.post.mapID ?? "" == "" {
-                        $0.leading.equalTo(13)
-                    } else {
-                        $0.leading.equalTo(self.separatorLine.snp.trailing).offset(8)
-                    }
+                self.separatorLine.snp.makeConstraints {
+                    $0.leading.equalTo(self.mapName.snp.trailing).offset(8)
+                    $0.bottom.equalToSuperview()
+                    $0.width.equalTo(2)
+                    $0.height.equalTo(14)
                 }
-                
-                self.spotLabel = UILabel {
-                    $0.text = self.post.spotName ?? ""
-                    $0.textColor = .white
-                    $0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
+            }
+        }
+        
+        if self.post.spotID ?? "" != "" {
+            self.spotIcon = UIImageView {
+                $0.image = UIImage(named: "FeedSpotIcon")
+                self.detailView.addSubview($0)
+            }
+            self.spotIcon.snp.makeConstraints {
+                $0.bottom.equalToSuperview().inset(1)
+                $0.width.equalTo(12.8)
+                $0.height.equalTo(15.55)
+                if !access {
+                    $0.leading.equalTo(13)
+                } else {
+                    $0.leading.equalTo(self.separatorLine.snp.trailing).offset(8)
+                }
+            }
+            
+            self.spotLabel = UILabel {
+                $0.text = self.post.spotName ?? ""
+                $0.textColor = .white
+                $0.font = UIFont(name: "SFCompactText-Semibold", size: 15.5)
+                self.detailView.addSubview($0)
+            }
+            self.spotLabel.snp.makeConstraints {
+                $0.leading.equalTo(self.spotIcon.snp.trailing).offset(5)
+                $0.trailing.lessThanOrEqualToSuperview()
+                $0.bottom.equalToSuperview()
+            }
+            
+            let spotButton = UIButton {
+                $0.addTarget(self, action: #selector(self.spotTap), for: .touchUpInside)
+                self.detailView.addSubview($0)
+            }
+            spotButton.snp.updateConstraints {
+                $0.leading.equalTo(self.spotIcon.snp.leading)
+                $0.trailing.equalTo(self.spotLabel.snp.trailing)
+                $0.height.equalToSuperview()
+            }
+            
+            if self.post.mapID ?? "" == "" {
+                self.cityLabel = UILabel {
+                    $0.text = self.post.city ?? ""
+                    $0.textColor = UIColor.white.withAlphaComponent(0.6)
+                    $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
                     self.detailView.addSubview($0)
                 }
-                self.spotLabel.snp.makeConstraints {
-                    $0.leading.equalTo(self.spotIcon.snp.trailing).offset(5)
+                self.cityLabel.snp.makeConstraints {
+                    $0.leading.equalTo(self.spotLabel.snp.trailing).offset(4)
                     $0.trailing.lessThanOrEqualToSuperview()
                     $0.bottom.equalToSuperview()
                 }
-                
-                let spotButton = UIButton {
-                    $0.addTarget(self, action: #selector(self.spotTap), for: .touchUpInside)
-                    self.detailView.addSubview($0)
-                }
-                spotButton.snp.updateConstraints {
-                    $0.leading.equalTo(self.spotIcon.snp.leading)
-                    $0.trailing.equalTo(self.spotLabel.snp.trailing)
-                    $0.height.equalToSuperview()
-                }
-                
-                if self.post.mapID ?? "" == "" {
-                    self.cityLabel = UILabel {
-                        $0.text = self.post.city ?? ""
-                        $0.textColor = UIColor.white.withAlphaComponent(0.6)
-                        $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
-                        self.detailView.addSubview($0)
-                    }
-                    self.cityLabel.snp.makeConstraints {
-                        $0.leading.equalTo(self.spotLabel.snp.trailing).offset(4)
-                        $0.trailing.lessThanOrEqualToSuperview()
-                        $0.bottom.equalToSuperview()
-                    }
-                }
             }
-
         }
     }
     
@@ -330,6 +327,7 @@ class PostCell: UICollectionViewCell {
             contentView.addSubview($0)
         }
         addCaptionAttString()
+        print("caption height", post.captionHeight, post.caption)
         captionLabel.snp.makeConstraints {
             $0.leading.equalTo(13)
             $0.trailing.equalTo(buttonView.snp.leading).offset(-15)
@@ -527,14 +525,12 @@ class PostCell: UICollectionViewCell {
         }
     }
         
-    func getMapAccess(mapID: String, postPrivacy: String, completion: @escaping(_ access: Bool) -> Void) {
-        if mapID == "" { completion(false); return }
-        if postPrivacy != "invite" { completion(true); return }
-        getMap(mapID: mapID) { map in
-            let access = map?.memberIDs.contains(where: {$0 == UserDataModel.shared.uid}) ?? false
-            completion(access)
-            return
+    func hasMapAccess(post: MapPost) -> Bool {
+        if post.mapID ?? "" == "" { return false }
+        if post.privacyLevel == "invite" {
+            return post.inviteList?.contains(uid) ?? false
         }
+        return true
     }
     
     func resetTextInfo() {

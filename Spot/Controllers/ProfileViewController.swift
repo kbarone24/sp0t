@@ -67,6 +67,7 @@ class ProfileViewController: UIViewController {
         /// need to add immediately to track active user profile getting fetched
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyMapsLoad(_:)), name: NSNotification.Name(("UserMapsLoad")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -97,8 +98,6 @@ class ProfileViewController: UIViewController {
         editVC.profileVC = self
         editVC.modalPresentationStyle = .fullScreen
         editVC.onDoneBlock = { result in
-            print("avatarChanged", UserDataModel.shared.userInfo.avatarURL)
-            //self.avatarImage.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.avatarURL!))
             self.userProfile?.avatarURL = UserDataModel.shared.userInfo.avatarURL!
         }
         present(editVC, animated: true)
@@ -367,6 +366,20 @@ extension ProfileViewController {
     
     @objc func notifyMapsLoad(_ notification: NSNotification) {
         getMaps()
+    }
+    
+    @objc func notifyEditMap(_ notification: NSNotification) {
+        guard let map = notification.userInfo?["map"] as? CustomMap else { return }
+        if let i = maps.firstIndex(where: {$0.id == map.id}) {
+            maps[i].memberIDs = map.memberIDs
+            maps[i].likers = map.likers
+            maps[i].memberProfiles = map.memberProfiles
+            maps[i].imageURL = map.imageURL
+            maps[i].mapName = map.mapName
+            maps[i].mapDescription = map.mapDescription
+            maps[i].secret = map.secret
+            DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 1)]) }
+        }
     }
 }
 

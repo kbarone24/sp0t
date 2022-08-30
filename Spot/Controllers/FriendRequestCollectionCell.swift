@@ -125,6 +125,6 @@ extension FriendRequestCollectionCell: friendRequestCollectionCellDelegate{
         let cell = sender as! FriendRequestCell
         let friend = cell.friendRequest.userInfo!
         let notifID = cell.friendRequest.id
-        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friend: friend, notificationID: notifID!)}
+        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friend: friend, notificationID: notifID!) }
     }
 }

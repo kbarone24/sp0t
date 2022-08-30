@@ -299,21 +299,19 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
     }
     
     func checkForUpdates(postID: String, index: Int) {
+        /// update just the necessary info -> comments and likes
         getPost(postID: postID) { [weak self] post in
             guard let self = self else { return }
-            var newPost = post
-            newPost.commentList = post.commentList
-            newPost.commentCount = post.commentCount
-            newPost.likers = post.likers
-            self.updateCollectionInfo(post: newPost, index: index)
-        }
-    }
-    
-    func updateCollectionInfo(post: MapPost, index: Int) {
-        self.postsList[index] = post
-        if index != selectedPostIndex { return }
-        if let cell = postsCollection.cellForItem(at: IndexPath(item: index, section: 0)) as? PostCell {
-            DispatchQueue.main.async { cell.updatePost(post: post) }
+            if let i = self.postsList.firstIndex(where: {$0.id == postID}) {
+                self.postsList[i].commentList = post.commentList
+                self.postsList[i].commentCount = post.commentCount
+                self.postsList[i].likers = post.likers
+                if index != self.selectedPostIndex { print("dont update"); return }
+                /// update cell if this is the current post
+                if let cell = self.postsCollection.cellForItem(at: IndexPath(item: index, section: 0)) as? PostCell {
+                    DispatchQueue.main.async { cell.updatePost(post: self.postsList[i]) }
+                }
+            }
         }
     }
 }
