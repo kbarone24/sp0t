@@ -33,7 +33,7 @@ class CustomMapController: UIViewController {
     private var userProfile: UserProfile?
     public var mapData: CustomMap? {
         didSet {
-            if collectionView != nil { DispatchQueue.main.async {self.collectionView.reloadData()}}
+            if collectionView != nil { DispatchQueue.main.async { self.collectionView.reloadData()} }
           //  if addButton != nil { addButton.isHidden = !(mapData?.memberIDs.contains(uid) ?? false) }
         }
     }
@@ -104,13 +104,12 @@ class CustomMapController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         mapController?.mapView.removeAllAnnos()
-        barView.isHidden = true
+        if barView != nil { barView.isHidden = true }
     }
 }
 
 extension CustomMapController {
     private func runInitialFetches() {
-        print("run initial fetches")
         ranSetUp = true
         addInitialPosts()
 
@@ -150,7 +149,7 @@ extension CustomMapController {
     private func runMapSetup() {
         mapData!.addSpotGroups()
         DispatchQueue.global(qos: .userInitiated).async {
-            self.getMapMember()
+            self.getMapMembers()
             self.getPosts()
         }
         DispatchQueue.main.async { self.viewSetup() }
@@ -179,6 +178,7 @@ extension CustomMapController {
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
 
         view.backgroundColor = .white
         navigationItem.setHidesBackButton(true, animated: true)
@@ -259,9 +259,10 @@ extension CustomMapController {
         containerDrawerView?.slideView.addSubview(barView)
     }
     
-    private func getMapMember() {
+    private func getMapMembers() {
         let dispatch = DispatchGroup()
         var memberList: [UserProfile] = []
+        firstMaxFourMapMemberList.removeAll()
         // Get the first four map member
         for index in 0...(mapData!.memberIDs.count < 4 ? (mapData!.memberIDs.count - 1) : 3) {
             dispatch.enter()
@@ -335,10 +336,13 @@ extension CustomMapController {
     }
     
     func hasMapPostAccess(post: MapPost) -> Bool {
-        if mapType == .friendsMap {
-            return hasPostAccess(post: post)
-        } else if mapType == .myMap {
-            return hasPostAccess(post: post) && !(post.hideFromFeed ?? false)
+        if UserDataModel.shared.deletedPostIDs.contains(post.id!) { return false }
+        if mapType == .friendsMap || mapType == .myMap {
+            /// show only friends level posts for friends map and my map,
+            if post.privacyLevel == "invite" && post.hideFromFeed ?? false {
+                return (post.inviteList?.contains(uid) ?? false)
+            }
+            return UserDataModel.shared.userInfo.friendIDs.contains(post.posterID) || uid == post.posterID
         }
         return true
     }
@@ -428,6 +432,14 @@ extension CustomMapController {
                 self.mapController?.mapView.removeAllAnnos()
                 self.addInitialAnnotations(posts: self.postsList)
             }
+        }
+    }
+    
+    @objc func notifyEditMap(_ notification: NSNotification) {
+        guard let map = notification.userInfo?["map"] as? CustomMap else { return }
+        if map.id == mapData!.id {
+            mapData = map
+            DispatchQueue.global().async { self.getMapMembers() }
         }
     }
     

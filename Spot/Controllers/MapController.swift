@@ -48,6 +48,7 @@ class MapController: UIViewController {
     
     var firstTimeGettingLocation = true
     var feedLoaded = false
+    var mapsLoaded = false
     
     lazy var friendsPostsDictionary = [String: MapPost]()
     
@@ -62,12 +63,14 @@ class MapController: UIViewController {
     var heelsMapID = "9ECABEF9-0036-4082-A06A-C8943428FFF4"
     
     /// sheet view: Must declare outside to listen to UIEvent
-    private var sheetView: DrawerView? {
+    var sheetView: DrawerView? {
         didSet {
             let hidden = sheetView != nil
-            navigationController?.setNavigationBarHidden(hidden, animated: false)
-            toggleHomeAppearance(hidden: hidden)
-            animateHomeAlphas()
+            DispatchQueue.main.async {
+                self.toggleHomeAppearance(hidden: hidden)
+                self.animateHomeAlphas()
+                self.navigationController?.setNavigationBarHidden(hidden, animated: false)
+            }
         }
     }
     
@@ -105,6 +108,7 @@ class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsListAdd), name: NSNotification.Name(("FriendsListAdd")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
@@ -318,7 +322,6 @@ class MapController: UIViewController {
         if hidden {
             mapView.removeAllAnnos()
             if addFriends != nil {
-                print("here")
                 self.addFriends.removeFromSuperview()
                 
             } /// remove add friends view whenever leaving home screen
@@ -351,11 +354,10 @@ class MapController: UIViewController {
 
 extension MapController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        
-        if status != .authorizedWhenInUse {
+        if status == .denied || status == .restricted {
             Mixpanel.mainInstance().track(event: "LocationServicesDenied")
             presentLocationAlert()
-        } else {
+        } else if status == .authorizedWhenInUse || status == .authorizedWhenInUse {
             Mixpanel.mainInstance().track(event: "LocationServicesAllowed")
             locationManager.startUpdatingLocation()
         }
@@ -369,6 +371,8 @@ extension MapController: CLLocationManagerDelegate {
             mapView.setRegion(MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 400000, longitudinalMeters: 400000), animated: false)
             firstTimeGettingLocation = false
             NotificationCenter.default.post(name: Notification.Name("UpdateLocation"), object: nil)
+            /// map might load before user accepts location services
+            if self.mapsLoaded { self.displayHeelsMap() }
         }
     }
     

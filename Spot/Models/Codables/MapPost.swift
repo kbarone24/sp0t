@@ -61,6 +61,7 @@ struct MapPost: Identifiable, Codable {
     var cellHeight: CGFloat? = 0
     var commentsHeight: CGFloat? = 0
     
+    var setImageLocation = false
     var seen: Bool {
         let twoWeeks = Date().timeIntervalSince1970 - 86400 * 14
         return (seenList?.contains(UserDataModel.shared.uid) ?? true) || timestamp.seconds < Int64(twoWeeks)

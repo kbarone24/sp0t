@@ -224,10 +224,6 @@ class ConfirmCodeController: UIViewController {
             if !available { self.showError(message: "Username taken"); return }
             Auth.auth().signIn(with: phoneCredential) { (authResult, err) in
                 if err == nil && authResult != nil {
-                    DispatchQueue.main.async {
-                        self.view.endEditing(true)
-                        self.activityIndicator.stopAnimating()
-                    }
                     
                     if self.codeType == .logIn {
                         Mixpanel.mainInstance().track(event: "ConfirmCodeLoginSuccess")
@@ -238,8 +234,7 @@ class ConfirmCodeController: UIViewController {
                             Mixpanel.mainInstance().track(event: "ConfirmCodeNewAccountSuccess")
                             self.saveUserToFirebase(friendIDs: friendIDs)
                             self.setInitialValues(friendIDs: friendIDs)
-                            let avi = AvatarSelectionController(sentFrom: "create")
-                            DispatchQueue.main.async { self.navigationController!.pushViewController(avi, animated: true) }
+                            self.presentAvatarSelection()
                         }
                     }
                 } else {
@@ -313,7 +308,19 @@ class ConfirmCodeController: UIViewController {
         db.collection("usernames").document(docID).setData(["username" : newUser.username])
     }
     
+    func presentAvatarSelection() {
+        let avi = AvatarSelectionController(sentFrom: "create")
+        DispatchQueue.main.async {
+            self.view.endEditing(true)
+            self.activityIndicator.stopAnimating()
+            self.navigationController!.pushViewController(avi, animated: true)
+        }
+    }
+    
     func animateToMap() {
+        view.endEditing(true)
+        activityIndicator.stopAnimating()
+        
         let storyboard = UIStoryboard(name: "Map", bundle: nil)
         let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
         let navController = UINavigationController(rootViewController: vc)

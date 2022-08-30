@@ -68,6 +68,29 @@ extension UIViewController {
         return false
     }
     
+    func sortFriends() {
+        /// sort friends based on user's top friends
+        if UserDataModel.shared.userInfo.topFriends?.isEmpty ?? true { return }
+        
+        let topFriendsDictionary = UserDataModel.shared.userInfo.topFriends
+        let sortedFriends = topFriendsDictionary!.sorted(by: {$0.value > $1.value})
+        UserDataModel.shared.userInfo.friendIDs = sortedFriends.map({$0.key})
+        
+        let topFriends = Array(sortedFriends.map({$0.key}))
+        var friendObjects: [UserProfile] = []
+        
+        for friend in topFriends {
+            if let object = UserDataModel.shared.userInfo.friendsList.first(where: {$0.id == friend}) {
+                friendObjects.append(object)
+            }
+        }
+        /// add any friend not in top friends
+        for friend in UserDataModel.shared.userInfo.friendsList {
+            if !friendObjects.contains(where: {$0.id == friend.id}) { friendObjects.append(friend) }
+        }
+        UserDataModel.shared.userInfo.friendsList = friendObjects
+    }
+    
     func hasPOILevelAccess(creatorID: String, privacyLevel: String, inviteList: [String]) -> Bool {
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
@@ -89,20 +112,7 @@ extension UIViewController {
         }
         return true
     }
-    
-    func hasPostAccess(post: MapPost) -> Bool {
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        if uid == post.posterID { return true }
-        if UserDataModel.shared.adminIDs.contains(where: {$0 == post.posterID}) { return false }
-        if post.privacyLevel == "friends" {
-            if !UserDataModel.shared.userInfo.friendIDs.contains(post.posterID) { return false }
-        } else if post.privacyLevel == "invite" {
-            if !(post.inviteList?.contains(uid) ?? false) { return false }
-        }
-        
-        return true
-    }
-    
+
     func setPostLocations(postLocation: CLLocationCoordinate2D, postID: String) {
         
         let location = CLLocation(latitude: postLocation.latitude, longitude: postLocation.longitude)
@@ -477,10 +487,8 @@ extension UIViewController {
         let db: Firestore = Firestore.firestore()
         if newMap {
             let mapRef = db.collection("maps").document(map.id!)
-            var uploadMap = map
-            uploadMap.postTimestamps.append(post.timestamp)
             do {
-                try mapRef.setData(from: uploadMap, merge: true)
+                try mapRef.setData(from: map, merge: true)
             } catch {
                 print("failed uploading map")
             }
@@ -533,10 +541,11 @@ extension UIViewController {
         
         removeFriendFromFriendsList(userID: uid, friendID: friendID)
         removeFriendFromFriendsList(userID: friendID, friendID: uid)
-
+        /// firebase function broken
+/*
         functions.httpsCallable("removeFriend").call(["userID": uid, "friendID": friendID]) { result, error in
             print(result?.data as Any, error as Any)
-        }
+        } */
     }
     
     func removeFriendFromFriendsList(userID: String, friendID: String) {
