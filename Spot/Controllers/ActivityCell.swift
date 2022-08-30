@@ -221,7 +221,7 @@ class ActivityCell: UITableViewCell {
         attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-Regular", size: 14.5)!, range: timeRange)
         attributedString.addAttribute(.foregroundColor, value: UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1), range: timeRange)
         
-        var detailWidth = 230.0
+        let detailWidth = 230.0
                 
         detail = UILabel {
             let notiType = notification.type
@@ -296,8 +296,6 @@ class ActivityCell: UITableViewCell {
         }
         
         detailOriginalHeight = detail.intrinsicContentSize.height
-        print("detail lines: ", detailOriginalHeight)
-        
         username.snp.updateConstraints{
             $0.centerY.equalToSuperview().offset((-1*detailOriginalHeight)/2)
         }

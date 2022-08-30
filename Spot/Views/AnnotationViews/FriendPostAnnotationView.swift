@@ -83,7 +83,7 @@ class FriendPostAnnotationView: MKAnnotationView {
         infoWindow.imageMask.isHidden = !post.seen
         infoWindow.replayIcon.isHidden = !post.seen
         
-        infoWindow.username.text = post.userInfo!.username
+        infoWindow.username.text = post.userInfo?.username ?? ""
         infoWindow.username.font = UIFont(name: "SFCompactText-Bold", size: 11.5)
         infoWindow.username.numberOfLines = 1
         infoWindow.username.sizeToFit()

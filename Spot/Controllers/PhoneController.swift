@@ -273,7 +273,6 @@ class PhoneController: UIViewController, UITextFieldDelegate {
     }
     
     func validatePhoneNumber(phoneNumber: String) {
-        print("phone number", phoneNumber)
         /// raw number only needed for searching db for sentInvites to this number
         PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil) { (verificationID, error) in
             if let error = error {
@@ -305,7 +304,6 @@ class PhoneController: UIViewController, UITextFieldDelegate {
         let defaults = UserDefaults.standard
         let defaultsPhone = defaults.object(forKey: "phoneNumber") as? String ?? ""
         let db = Firestore.firestore()
-        print("defaults", defaultsPhone, "number", phoneNumber)
         
         if defaultsPhone == phoneNumber {
             completion(true)

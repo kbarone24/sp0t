@@ -292,15 +292,28 @@ extension SpotPageController {
     }
     
     func addCommunityPost(postInfo: MapPost) {
+        if !hasPostAccess(post: postInfo) { return }
         // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
         // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
         if mapID != "" && postInfo.mapID == mapID {
             relatedPost.append(postInfo)
-        } else if mapID == "" && hasPostAccess(post: postInfo) {
+        } else if mapID == "" {
             relatedPost.append(postInfo)
         } else {
             communityPost.append(postInfo)
         }
+    }
+    
+    func hasPostAccess(post: MapPost) -> Bool {
+        /// show all posts except secret map posts from secret maps. Allow friends level access for posts posted to friends feed, invite level access for posts hidden from friends feed / myMap
+        if post.privacyLevel == "invite" {
+            if post.hideFromFeed ?? false {
+                return (post.inviteList?.contains(UserDataModel.shared.uid)) ?? false
+            } else {
+                return UserDataModel.shared.userInfo.friendIDs.contains(post.posterID) || UserDataModel.shared.uid == post.posterID
+            }
+        }
+        return true
     }
     
     @objc func addAction() {
