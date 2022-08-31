@@ -31,13 +31,6 @@ class LandingPageController: UIViewController {
         Mixpanel.mainInstance().track(event: "LandingPageOpen")
     }
     
-    deinit {
-        NotificationCenter.default.removeObserver(self, name: UIApplication.didEnterBackgroundNotification, object: nil) /// deinit player on send to background
-        NotificationCenter.default.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil) /// deinit player on resign active
-        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil) /// reinit player on send to foreground
-        NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil) /// reinit player on become active
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
