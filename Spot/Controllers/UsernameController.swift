@@ -139,7 +139,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
             $0.setAttributedTitle(customButtonTitle, for: .normal)
             $0.setImage(nil, for: .normal)
             $0.addTarget(self, action: #selector(nextTapped(_:)), for: .touchUpInside)
-            $0.alpha = 0.65
+            $0.alpha = 0.4
             view.addSubview($0)
         }
         nextButton.snp.makeConstraints{
@@ -192,14 +192,14 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         statusLabel.setImage(UIImage(named: "UsernameTaken"), for: .normal)
         statusLabel.setTitleColor(UIColor(red: 1, green: 0.376, blue: 0.42, alpha: 1), for: .normal)
         statusLabel.setTitle(text, for: .normal)
-        nextButton.alpha = 0.65
+        nextButton.alpha = 0.4
         nextButton.isEnabled = false
     }
     
     func setEmpty() {
         activityIndicator.stopAnimating()
         statusLabel.isHidden = true
-        nextButton.alpha = 0.65
+        nextButton.alpha = 0.4
         nextButton.isEnabled = false
     }
     

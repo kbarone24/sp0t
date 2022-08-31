@@ -51,8 +51,10 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let spacing: CGFloat = 9 + 5 * 3
-        let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.6
-        return feedLoaded ? CGSize(width: itemWidth, height: itemWidth * 0.95) : CGSize(width: UIScreen.main.bounds.width, height: itemWidth * 0.95)
+        let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.7
+        let itemHeight = itemWidth * 0.95
+        let firstItemWidth = itemWidth * 1.15
+        return feedLoaded ? indexPath.item == 0 ? CGSize(width: firstItemWidth, height: itemHeight) : CGSize(width: itemWidth, height: itemHeight) : CGSize(width: UIScreen.main.bounds.width, height: itemHeight)
     }
     
     
@@ -104,7 +106,7 @@ class MapHomeCell: UICollectionViewCell {
             friendsCoverImage.isHidden = false
             friendsCoverImage.setUp(avatarURLs: avatarURLs!, annotation: false, completion: { _ in })
             friendsCoverImage.backgroundColor = .white
-            let textString = NSMutableAttributedString(string: "Friends").shrinkLineHeight()
+            let textString = NSMutableAttributedString(string: "Friends map").shrinkLineHeight()
             nameLabel.attributedText = textString
         }
         
