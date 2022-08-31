@@ -33,7 +33,7 @@ class SpotPageHeaderCell: UICollectionViewCell {
         self.spotName.text = spotName
         self.spotName.sizeToFit()
         guard spot != nil else { return }
-        spotInfo.text = (spot!.city == "" || spot!.city == nil) ? "\(spot!.postIDs.count) posts" : "\(spot!.city!) • \(spot!.postIDs.count) posts"
+        spotInfo.text = spot!.city ?? ""
     }
 }
 

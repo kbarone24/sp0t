@@ -35,7 +35,9 @@ class ProfileBodyCell: UICollectionViewCell {
         if let i = mapData.posterIDs.lastIndex(where: {$0 == userID}) {
             urlString = mapData.postImageURLs[safe: i] ?? ""
         }
-        mapImage.sd_setImage(with: URL(string: urlString))
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 200, height: 200), scaleMode: .aspectFill)
+        mapImage.sd_setImage(with: URL(string: urlString), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+        
         if mapData.secret {
             let imageAttachment = NSTextAttachment()
             imageAttachment.image = UIImage(named: "SecretMap")
