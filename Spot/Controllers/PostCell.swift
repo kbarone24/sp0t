@@ -327,7 +327,6 @@ class PostCell: UICollectionViewCell {
             contentView.addSubview($0)
         }
         addCaptionAttString()
-        print("caption height", post.captionHeight, post.caption)
         captionLabel.snp.makeConstraints {
             $0.leading.equalTo(13)
             $0.trailing.equalTo(buttonView.snp.leading).offset(-15)

@@ -9,7 +9,6 @@
 import Foundation
 
 struct CountryCode {
-    
     var id: Int
     var code: String
     var name: String

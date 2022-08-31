@@ -1339,6 +1339,12 @@ extension UIImageView {
     }
 }
 
+extension UIImage {
+    func aspectRatio() -> CGFloat {
+        return size.height/size.width
+    }
+}
+
 extension UINavigationBar {
     
     func addShadow() {

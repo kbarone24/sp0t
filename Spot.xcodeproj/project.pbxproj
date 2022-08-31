@@ -244,8 +244,6 @@
 		8C3B953328AD530300C06586 /* HeelsMapPopUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */; };
 		8C3B953428AD530300C06586 /* HeelsMapPopUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */; };
 		8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
-		8C3B953728AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
-		8C3B953828AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
 		8C3B953A28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
 		8C3B953B28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
 		8C3B953C28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
@@ -300,6 +298,15 @@
 		8CA512A728BC056900F8C1FE /* HapticGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512A628BC056900F8C1FE /* HapticGenerator.swift */; };
 		8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512A628BC056900F8C1FE /* HapticGenerator.swift */; };
 		8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512A628BC056900F8C1FE /* HapticGenerator.swift */; };
+		8CA512AD28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */; };
+		8CA512AE28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */; };
+		8CA512AF28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */; };
+		8CA512B128BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */; };
+		8CA512B228BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */; };
+		8CA512B328BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */; };
+		8CA512B528BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */; };
+		8CA512B628BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */; };
+		8CA512B728BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */; };
 		8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
 		8CB400BE2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
 		8CB400BF2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */; };
@@ -481,6 +488,9 @@
 		8C99B1192863A44E00C98A32 /* RefreshStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshStatus.swift; sourceTree = "<group>"; };
 		8CA512A428BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-SemiboldItalic.otf"; sourceTree = "<group>"; };
 		8CA512A628BC056900F8C1FE /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
+		8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapNotificationsExtension.swift; sourceTree = "<group>"; };
+		8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapsHeader.swift; sourceTree = "<group>"; };
+		8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapUploadCell.swift; sourceTree = "<group>"; };
 		8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
 		8CC2A54926BC7F99000ADA7A /* ImageObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObject.swift; sourceTree = "<group>"; };
 		8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFetcher.swift; sourceTree = "<group>"; };
@@ -660,6 +670,7 @@
 		4124E7D7286362D8002543DD /* HelperControllers */ = {
 			isa = PBXGroup;
 			children = (
+				8C3B953528AD533100C06586 /* AvatarSelectionController.swift */,
 				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
 				413BA164287C917000FD80AF /* FriendsListController.swift */,
 			);
@@ -698,9 +709,9 @@
 				7A37801B22174BB1008B835A /* MapController.swift */,
 				8C1E486E289C54800093030D /* MapCollectionExtension.swift */,
 				8C1E48CA289C55090093030D /* MapFetchExtension.swift */,
+				8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */,
 				8C1E4872289C54900093030D /* MapViewDelegate.swift */,
 				8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */,
-				8C3B953528AD533100C06586 /* AvatarSelectionController.swift */,
 			);
 			name = Map;
 			sourceTree = "<group>";
@@ -740,6 +751,8 @@
 				4134867E285930DF0098B27B /* ImagePreviewController.swift */,
 				8C8DBB712888BE5C00B31BFD /* ChooseSpotController.swift */,
 				414CD27928975D64001F1776 /* ChooseMapController.swift */,
+				8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */,
+				8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */,
 				8C8DBB812888BE9300B31BFD /* NewMapController.swift */,
 			);
 			name = Upload;
@@ -1297,7 +1310,9 @@
 				8C3BAF5F260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
 				8C1E4873289C54900093030D /* MapViewDelegate.swift in Sources */,
+				8CA512B528BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */,
 				413BA16D288A764F00FD80AF /* CustomMapController.swift in Sources */,
+				8CA512AD28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */,
 				8C3B953A28AD546E00C06586 /* AvatarURLs.swift in Sources */,
 				8C3B955628B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
 				4106ECD028A3371A00680005 /* SpotPageController.swift in Sources */,
@@ -1309,6 +1324,7 @@
 				5FDAF23E2858FD06001EDC57 /* DrawerView.swift in Sources */,
 				8C8DBB762888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				593AC545243E56D400C08237 /* LandingPageController.swift in Sources */,
+				8CA512B128BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */,
 				7A37801C22174BB1008B835A /* MapController.swift in Sources */,
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
@@ -1368,12 +1384,13 @@
 				8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
 				599371B1234E468500204F59 /* SearchContactsController.swift in Sources */,
+				8CA512B628BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */,
 				59A8880822E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */,
-				8C3B953728AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				8C1E4867289C54370093030D /* FriendsListCell.swift in Sources */,
 				8C1E48B3289C54CB0093030D /* SpotPostView.swift in Sources */,
 				8C8DBB772888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
+				8CA512B228BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CCE3412288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
 				59DFA25522C285CF00A59D29 /* CommentsViewController.swift in Sources */,
@@ -1422,6 +1439,7 @@
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11424B6A6CF0051516C /* MapPost.swift in Sources */,
 				59F6ABBE23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
+				8CA512AE28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */,
 				8CB400BE2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				59826EA0244FA078004B858F /* PhotoGalleryController.swift in Sources */,
 				8C29879D2693A05A0071E75A /* CircleView.swift in Sources */,
@@ -1456,12 +1474,13 @@
 				8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
 				599371B2234E468600204F59 /* SearchContactsController.swift in Sources */,
+				8CA512B728BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */,
 				59A8880722E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */,
-				8C3B953828AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				8C1E4868289C54370093030D /* FriendsListCell.swift in Sources */,
 				8C1E48B4289C54CB0093030D /* SpotPostView.swift in Sources */,
 				8C8DBB782888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
+				8CA512B328BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CCE3413288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
 				59DFA25622C285D000A59D29 /* CommentsViewController.swift in Sources */,
@@ -1510,6 +1529,7 @@
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11524B6A6CF0051516C /* MapPost.swift in Sources */,
 				59F6ABBF23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
+				8CA512AF28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */,
 				8CB400BF2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				59826EA1244FA078004B858F /* PhotoGalleryController.swift in Sources */,
 				8C29879E2693A05A0071E75A /* CircleView.swift in Sources */,
@@ -1705,7 +1725,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 10;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1775,7 +1795,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
