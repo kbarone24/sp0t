@@ -26,7 +26,11 @@ class PostController: UIViewController {
     var spotObject: MapSpot!
     
     var postsCollection: UICollectionView!
-    unowned var containerDrawerView: DrawerView?
+    unowned var containerDrawerView: DrawerView? {
+        didSet {
+            configureDrawerView()
+        }
+    }
     var openComments = false
     
     lazy var deleteIndicator = CustomActivityIndicator()
