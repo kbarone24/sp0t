@@ -186,7 +186,8 @@ extension EditMapController {
         mapCoverImage = UIImageView {
             $0.layer.cornerRadius = 22.85
             $0.layer.masksToBounds = true
-            $0.sd_setImage(with: URL(string: mapData!.imageURL))
+            let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
+            $0.sd_setImage(with: URL(string: mapData!.imageURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
             view.addSubview($0)
         }
         mapCoverImage.snp.makeConstraints {
@@ -463,9 +464,13 @@ extension EditMapController: UICollectionViewDelegate, UICollectionViewDataSourc
 extension EditMapController: FriendsListDelegate {
     func finishPassing(selectedUsers: [UserProfile]) {
         Mixpanel.mainInstance().track(event: "EditMapInviteFriends")
-        mapData?.memberIDs.append(contentsOf: selectedUsers.map({$0.id!}))
-        mapData?.likers.append(contentsOf: selectedUsers.map({$0.id!}))
-        memberList.append(contentsOf: selectedUsers)
+        for user in selectedUsers {
+            if !mapData!.memberIDs.contains(where: {$0 == user.id!}) {
+                mapData!.memberIDs.append(user.id!)
+                memberList.append(user)
+            }
+            if !mapData!.likers.contains(where: {$0 == user.id}) { mapData!.likers.append(user.id!) }
+        }
         memberLabel.text = "MEMBERS (\(mapData!.memberIDs.count))"
         DispatchQueue.main.async { self.mapMemberCollectionView.reloadData() }
     }

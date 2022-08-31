@@ -28,7 +28,6 @@ class ProfileViewController: UIViewController {
     public lazy var maps = [CustomMap]()
     private lazy var posts = [MapPost]()
     
-    private var postImages = [UIImage]()
     private var relation: ProfileRelation = .myself
     private var pendingFriendRequestNotiID: String? {
         didSet {
@@ -240,50 +239,37 @@ extension ProfileViewController {
     
     private func getNinePosts() {
         let db = Firestore.firestore()
-        let query = db.collection("posts").whereField("posterID", isEqualTo: userProfile!.id!).order(by: "timestamp", descending: true).limit(to: 9)
+        let query = db.collection("posts").whereField("posterID", isEqualTo: userProfile!.id!).whereField("friendsList", arrayContains: UserDataModel.shared.uid).order(by: "timestamp", descending: true).limit(to: 9)
         query.getDocuments { (snap, err) in
-            if err != nil  { return }
-            
-            // Set transform size
-            var size = CGSize(width: 150, height: 150)
-            if snap!.documents.count >= 9 {
-                size = CGSize(width: 100, height: 100)
-            } else if snap!.documents.count >= 4 {
-                size = CGSize(width: 150, height: 150)
-            } else {
-                size = CGSize(width: 200, height: 200)
-            }
-            
-            if snap!.documents.count == 0 { self.postsFetched = true }
-            for doc in snap!.documents {
+            guard let snap = snap else { return }
+            let dispatch = DispatchGroup()
+            if snap.documents.count == 0 { self.postsFetched = true }
+            for doc in snap.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
-                    guard let postInfo = unwrappedInfo else { return }
+                    guard let postInfo = unwrappedInfo else { continue }
                     if UserDataModel.shared.deletedPostIDs.contains(postInfo.id!) { continue }
+                    dispatch.enter()
                     self.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         self.posts.append(post)
                         self.postsFetched = true
-                    }
-                    let transformer = SDImageResizingTransformer(size: size, scaleMode: .aspectFill)
-                    self.imageManager.loadImage(with: URL(string: postInfo.imageURLs[safe: 0] ?? ""), options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
-                        guard let self = self else { return }
-                        let image = image ?? UIImage()
-                        self.postImages.append(image)
-                        if self.postImages.count == snap!.documents.count {
-                            DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 1)]) }
-                        }
+                        dispatch.leave()
                     }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
                 }
+            }
+            dispatch.notify(queue: .main) { [weak self] in
+                guard let self = self else { return }
+                self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 1)])
             }
         }
     }
     
     private func getMaps() {
         if relation == .myself {
-            maps = UserDataModel.shared.userInfo.mapsList
+            maps = UserDataModel.shared.userInfo.mapsList.filter({$0.memberIDs.contains(UserDataModel.shared.uid)}) /// only show maps user is member of, not follower maps
             sortAndReloadMaps()
             return
         }
@@ -327,7 +313,6 @@ extension ProfileViewController {
         
         if posts.contains(where: {$0.id == post.id}) {
             posts.removeAll()
-            postImages.removeAll()
             DispatchQueue.main.async { self.collectionView.reloadData() }
             DispatchQueue.global().async { self.getNinePosts() }
         }
@@ -411,7 +396,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
             return headerCell
         } else if let mapCell = cell as? ProfileMyMapCell {
-            mapCell.cellSetup(userAccount: userProfile!.username, myMapsImage: postImages, relation: relation)
+            mapCell.cellSetup(userAccount: userProfile!.username, posts: posts, relation: relation)
             return mapCell
         } else if let bodyCell = cell as? ProfileBodyCell {
             bodyCell.cellSetup(mapData: maps[indexPath.row - 1], userID: userProfile!.id!)
