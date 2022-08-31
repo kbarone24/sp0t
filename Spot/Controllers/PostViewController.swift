@@ -98,7 +98,6 @@ class PostController: UIViewController {
     }
     
     func setUpView() {
-        
         postsCollection = {
             let layout = UICollectionViewFlowLayout()
             layout.scrollDirection = .horizontal

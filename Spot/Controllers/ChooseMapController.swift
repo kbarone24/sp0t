@@ -350,7 +350,7 @@ extension ChooseMapController: NewMapDelegate {
     func finishPassing(map: CustomMap) {
         Mixpanel.mainInstance().track(event: "ChooseMapCreateNew")
         newMap = map
-        customMaps.append(map)
+        customMaps.insert(map, at: 0)
         selectMap(map: map)
     }
     
