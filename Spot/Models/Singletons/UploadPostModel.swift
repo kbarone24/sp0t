@@ -174,7 +174,7 @@ class UploadPostModel {
         if mapObject != nil && mapObject!.secret { postObject.inviteList = mapObject!.likers }
         if !postFriends.contains(UserDataModel.shared.uid) && !postObject.hideFromFeed! { postFriends.append(UserDataModel.shared.uid) }
         postObject.friendsList = postFriends
-        postObject.privacyLevel = mapObject != nil && mapObject!.secret ? "invite" : mapObject != nil && mapObject!.communityMap! ? "public" : "friends"
+        postObject.privacyLevel = mapObject != nil && mapObject!.secret ? "invite" : mapObject != nil && (mapObject!.communityMap ?? false) ? "public" : "friends"
         postObject.timestamp = Firebase.Timestamp(date: Date())
     }
 
