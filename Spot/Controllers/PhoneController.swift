@@ -251,7 +251,6 @@ class PhoneController: UIViewController, UITextFieldDelegate {
         sender.isEnabled = false
         activityIndicator.startAnimating()
         
-        print("send")
         checkForUser(phoneNumber: phoneNumber) { userExists in
             print("check", userExists)
             /// validate if user already exists
