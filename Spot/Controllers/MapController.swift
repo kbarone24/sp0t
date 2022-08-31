@@ -68,7 +68,7 @@ class MapController: UIViewController {
             let hidden = sheetView != nil
             DispatchQueue.main.async {
                 self.toggleHomeAppearance(hidden: hidden)
-                self.animateHomeAlphas()
+                if !hidden { self.animateHomeAlphas() }
                 self.navigationController?.setNavigationBarHidden(hidden, animated: false)
             }
         }

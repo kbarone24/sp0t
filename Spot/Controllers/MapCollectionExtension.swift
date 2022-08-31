@@ -82,7 +82,6 @@ class MapHomeCell: UICollectionViewCell {
     
     override var isSelected: Bool {
         didSet {
-            print("set selected", isSelected)
             contentArea.backgroundColor = isSelected ? UIColor(red: 0.843, green: 0.992, blue: 1, alpha: 1) : UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
             contentArea.layer.borderColor = isSelected ? UIColor(named: "SpotGreen")!.cgColor : UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1).cgColor
         }
@@ -92,20 +91,28 @@ class MapHomeCell: UICollectionViewCell {
         setUpView()
         if map != nil {
             mapCoverImage.isHidden = false
-            if map?.mapName == "Heelsmap" {
+            friendsCoverImage.isHidden = true
+            if map!.id == "9ECABEF9-0036-4082-A06A-C8943428FFF4" {
                 mapCoverImage.image = UIImage(named: "HeelsmapCover")
             } else {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 180, height: 140), scaleMode: .aspectFill)
                 mapCoverImage.sd_setImage(with: URL(string: map!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
             }
+            mapCoverImage.layer.cornerRadius = 9
+            mapCoverImage.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
+            
             let textString = NSMutableAttributedString(string: map?.mapName ?? "").shrinkLineHeight()
             nameLabel.attributedText = textString
             nameLabel.sizeToFit()
             if map!.secret { lockIcon.isHidden = false }
         } else {
             friendsCoverImage.isHidden = false
+            mapCoverImage.isHidden = true
             friendsCoverImage.setUp(avatarURLs: avatarURLs!, annotation: false, completion: { _ in })
             friendsCoverImage.backgroundColor = .white
+            friendsCoverImage.layer.cornerRadius = 9
+            friendsCoverImage.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
+            
             let textString = NSMutableAttributedString(string: "Friends map").shrinkLineHeight()
             nameLabel.attributedText = textString
         }
@@ -114,13 +121,14 @@ class MapHomeCell: UICollectionViewCell {
             newIndicator.isHidden = false
         }
         
+        
         /// add image bottom corner radius
         let maskPath = UIBezierPath(roundedRect: mapCoverImage.bounds,
                                     byRoundingCorners: [.topLeft, .topRight],
                                     cornerRadii: CGSize(width: 9.0, height: 0.0))
         let maskLayer = CAShapeLayer()
         maskLayer.path = maskPath.cgPath
-        if map != nil { mapCoverImage.layer.mask = maskLayer } else { friendsCoverImage.layer.mask = maskLayer }
+     //   if map != nil { mapCoverImage.layer.mask = maskLayer } else { friendsCoverImage.layer.mask = maskLayer }
     }
     
     func setUpView() {

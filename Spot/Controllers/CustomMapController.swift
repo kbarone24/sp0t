@@ -630,7 +630,6 @@ extension CustomMapController: MKMapViewDelegate {
                 let posts = getPostsFor(cluster: anno)
                 return mapView.getPostClusterAnnotation(anno: anno, posts: posts)
             } else if anno.memberAnnotations.contains(where: {$0 is SpotPostAnnotation}) {
-                print("get spot cluster", anno)
                 return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: mapData)
             }
         } else if let anno = annotation as? PostAnnotation {
