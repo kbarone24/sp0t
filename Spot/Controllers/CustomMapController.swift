@@ -263,10 +263,13 @@ extension CustomMapController {
         let dispatch = DispatchGroup()
         var memberList: [UserProfile] = []
         firstMaxFourMapMemberList.removeAll()
+        
+        let communityMap = mapData!.communityMap ?? false
+        let members = communityMap ? mapData!.memberIDs.reversed() : mapData!.memberIDs
         // Get the first four map member
-        for index in 0...(mapData!.memberIDs.count < 4 ? (mapData!.memberIDs.count - 1) : 3) {
+        for index in 0...(members.count < 4 ? (members.count - 1) : 3) {
             dispatch.enter()
-            getUserInfo(userID: mapData!.memberIDs[index]) { user in
+            getUserInfo(userID: members[index]) { user in
                 memberList.insert(user, at: 0)
                 dispatch.leave()
             }
@@ -274,7 +277,7 @@ extension CustomMapController {
         dispatch.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
             self.firstMaxFourMapMemberList = memberList
-            self.firstMaxFourMapMemberList.sort(by: {$0.id == self.mapData!.founderID && $1.id != self.mapData!.founderID})
+            if !communityMap { self.firstMaxFourMapMemberList.sort(by: {$0.id == self.mapData!.founderID && $1.id != self.mapData!.founderID}) }
             self.collectionView.reloadSections(IndexSet(integer: 0))
         }
     }
@@ -384,6 +387,7 @@ extension CustomMapController {
             self.barBackButton.isHidden = false
         })
         // When in top position enable collection view scroll
+        print("enable bar interaction")
         barView.isUserInteractionEnabled = true
         collectionView.isScrollEnabled = true
         
