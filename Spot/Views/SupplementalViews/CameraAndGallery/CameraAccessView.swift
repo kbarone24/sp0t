@@ -15,70 +15,123 @@ class CameraAccessView: UIView {
     var label0: UILabel!
     var label1: UILabel!
     
-    var cameraAccess: UIButton!
-    var galleryAccess: UIButton!
+    var cameraAccessButton: UIButton!
+    var galleryAccessButton: UIButton!
+    var locationAccessButton: UIButton!
+    
+    var cameraAccess = false {
+        didSet {
+            cameraAccessButton.alpha = cameraAccess ? 0.3 : 1.0
+            cameraAccessButton.isEnabled = !cameraAccess
+        }
+    }
+    
+    var galleryAccess = false {
+        didSet {
+            galleryAccessButton.alpha = galleryAccess ? 0.3 : 1.0
+            galleryAccessButton.isEnabled = !galleryAccess
+        }
+    }
+    
+    var locationAccess = false {
+        didSet {
+            locationAccessButton.alpha = locationAccess ? 0.3 : 1.0
+            locationAccessButton.isEnabled = !locationAccess
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = true
         backgroundColor = .black
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyLocationAccess), name: NSNotification.Name(("UpdateLocation")), object: nil)
+
+        cancelButton = UIButton {
+            $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+            $0.contentHorizontalAlignment = .fill
+            $0.contentVerticalAlignment = .fill
+            $0.setImage(UIImage(named: "CancelButton"), for: .normal)
+            $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+            addSubview($0)
+        }
+        cancelButton.snp.makeConstraints {
+            $0.leading.equalTo(4)
+            $0.top.equalTo(17)
+            $0.width.height.equalTo(50)
+        }
+        
+        label0 = UILabel {
+            $0.text = "Share on sp0t"
+            $0.textColor = .white
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 24)
+            $0.textAlignment = .center
+            addSubview($0)
+        }
+        label0.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(-200)
+        }
+        
+        label1 = UILabel {
+            $0.text = "Enable access to post!"
+            $0.textColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0)
+            $0.font = UIFont(name: "SFCompactText-Regular", size: 15)
+            $0.textAlignment = .center
+            addSubview($0)
+        }
+        label1.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(30)
+            $0.top.equalTo(label0.snp.bottom).offset(10)
+        }
+        
+        locationAccessButton = UIButton {
+            $0.setTitle("Enable location access", for: .normal)
+            $0.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
+            $0.contentHorizontalAlignment = .center
+            $0.addTarget(self, action: #selector(locationAccessTap), for: .touchUpInside)
+            addSubview($0)
+        }
+        locationAccessButton.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(label1.snp.bottom).offset(55)
+        }
+        
+        cameraAccessButton = UIButton {
+            $0.setTitle("Enable camera access", for: .normal)
+            $0.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
+            $0.contentHorizontalAlignment = .center
+            $0.addTarget(self, action: #selector(cameraAccessTap), for: .touchUpInside)
+            addSubview($0)
+        }
+        cameraAccessButton.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(locationAccessButton.snp.bottom).offset(15)
+        }
+        
+        galleryAccessButton = UIButton {
+            $0.setTitle("Enable gallery access", for: .normal)
+            $0.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
+            $0.contentHorizontalAlignment = .center
+            $0.addTarget(self, action: #selector(galleryAccessTap), for: .touchUpInside)
+            addSubview($0)
+        }
+        galleryAccessButton.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(cameraAccessButton.snp.bottom).offset(15)
+        }
     }
     
-    func setUp() {
-        resetView()
-        
-        cancelButton = UIButton(frame: CGRect(x: 4, y: 17, width: 50, height: 50))
-        cancelButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        cancelButton.contentHorizontalAlignment = .fill
-        cancelButton.contentVerticalAlignment = .fill
-        cancelButton.setImage(UIImage(named: "CancelButton"), for: .normal)
-        cancelButton.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
-        addSubview(cancelButton)
-
-        label0 = UILabel(frame: CGRect(x: 50, y: UIScreen.main.bounds.height/4, width: UIScreen.main.bounds.width - 100, height: 20))
-        label0.text = "Share on sp0t"
-        label0.textColor = .white
-        label0.font = UIFont(name: "SFCompactText-Semibold", size: 22)
-        label0.textAlignment = .center
-        addSubview(label0)
-        
-        label1 = UILabel(frame: CGRect(x: 30, y: label0.frame.maxY + 10, width: UIScreen.main.bounds.width - 60, height: 15))
-        label1.text = "Enable access to take pictures."
-        label1.textColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0)
-        label1.font = UIFont(name: "SFCompactText-Regular", size: 15)
-        label1.textAlignment = .center
-        addSubview(label1)
-        
-        let cameraAuthorized = UploadPostModel.shared.cameraAccess == .authorized
-        cameraAccess = UIButton(frame: CGRect(x: 30, y: label1.frame.maxY + 55, width: UIScreen.main.bounds.width - 60, height: 40))
-        cameraAccess.titleEdgeInsets = UIEdgeInsets(top: 10, left: 5, bottom: 10, right: 5)
-        cameraAccess.setTitle("Enable camera access", for: .normal)
-        cameraAccess.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        cameraAccess.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
-        cameraAccess.contentHorizontalAlignment = .center
-        cameraAccess.alpha = cameraAuthorized ? 0.3 : 1.0
-        if !cameraAuthorized { cameraAccess.addTarget(self, action: #selector(cameraAccessTap(_:)), for: .touchUpInside)}
-        addSubview(cameraAccess)
-        
-
-        let galleryAuthorized = UploadPostModel.shared.galleryAccess == .authorized
-        galleryAccess = UIButton(frame: CGRect(x: 30, y: cameraAccess.frame.maxY + 10, width: UIScreen.main.bounds.width - 60, height: 40))
-        galleryAccess.titleEdgeInsets = UIEdgeInsets(top: 10, left: 5, bottom: 10, right: 5)
-        galleryAccess.setTitle("Enable gallery access", for: .normal)
-        galleryAccess.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-        galleryAccess.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
-        galleryAccess.contentHorizontalAlignment = .center
-        galleryAccess.alpha = galleryAuthorized ? 0.3 : 1.0
-        if !galleryAuthorized { galleryAccess.addTarget(self, action: #selector(galleryAccessTap(_:)), for: .touchUpInside)}
-        addSubview(galleryAccess)
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
-    
-    func resetView() {
-        if cancelButton != nil { cancelButton.setImage(UIImage(), for: .normal)}
-        if label0 != nil { label0.text = "" }
-        if label1 != nil { label1.text = "" }
-        if cameraAccess != nil { cameraAccess.setTitle("", for: .normal) }
-        if galleryAccess != nil { galleryAccess.setTitle("", for: .normal)}
+ 
+    func setUp(cameraAccess: Bool, galleryAccess: Bool, locationAccess: Bool) {
+        self.cameraAccess = cameraAccess
+        self.galleryAccess = galleryAccess
+        self.locationAccess = locationAccess
     }
     
     required init?(coder: NSCoder) {
@@ -90,8 +143,7 @@ class CameraAccessView: UIView {
         camera.cancelTap()
     }
     
-    @objc func cameraAccessTap(_ sender: UIButton) {
-        print("camera tap")
+    @objc func cameraAccessTap() {
         askForCameraAccess(first: true)
     }
     
@@ -104,9 +156,6 @@ class CameraAccessView: UIView {
                 camera.accessMask = nil
                 camera.configureCameraController()
             }
-            
-        } else {
-            setUp() /// reload view
         }
     }
     
@@ -135,14 +184,14 @@ class CameraAccessView: UIView {
             
         case .authorized:
             UploadPostModel.shared.cameraAccess = .authorized
+            cameraAccess = true
             checkForRemove()
             
         default: return
         }
     }
         
-    @objc func galleryAccessTap(_ sender: UIButton) {
-        print("gallery")
+    @objc func galleryAccessTap() {
         askForGallery(first: true)
     }
     
@@ -168,11 +217,21 @@ class CameraAccessView: UIView {
 
         case .authorized, .limited:
             UploadPostModel.shared.galleryAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+            galleryAccess = true
             NotificationCenter.default.post(name: Notification.Name(rawValue: "GalleryAuthorized"), object: nil, userInfo: nil)
             checkForRemove()
             
         default: return
             
         }
+    }
+    
+    @objc func locationAccessTap() {
+        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil )
+    }
+    
+    @objc func notifyLocationAccess() {
+        locationAccess = true
+        checkForRemove()
     }
 }

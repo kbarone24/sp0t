@@ -13,14 +13,14 @@ class ProfileMyMapCell: UICollectionViewCell {
     private var mapPrivateBlurView: UIVisualEffectView!
     private var mapPrivateIcon: UIImageView!
     private var mapName: UILabel!
-    private var myMapImages: [UIImage] = [] {
+    private var posts: [MapPost] = [] {
         didSet {
-            if myMapImages.count >= 9 {
-                myMapImages = Array(myMapImages[0...8])
-            } else if myMapImages.count >= 4 {
-                myMapImages = Array(myMapImages[0...3])
+            if posts.count >= 9 {
+                posts = Array(posts[0...8])
+            } else if posts.count >= 4 {
+                posts = Array(posts[0...3])
             } else {
-                myMapImages = myMapImages.count == 0 ? [] : [myMapImages[0]]
+                posts = posts.count == 0 ? [] : [posts[0]]
             }
             mapImageCollectionView.reloadData()
         }
@@ -39,9 +39,9 @@ class ProfileMyMapCell: UICollectionViewCell {
         
     }
     
-    public func cellSetup(userAccount: String, myMapsImage: [UIImage], relation: ProfileRelation) {
-        self.myMapImages = myMapsImage
-        mapName.text = myMapImages.count == 0 ? "" : "@\(userAccount)'s map"
+    public func cellSetup(userAccount: String, posts: [MapPost], relation: ProfileRelation) {
+        self.posts = posts
+        mapName.text = posts.count == 0 ? "" : "@\(userAccount)'s map"
         mapPrivateBlurView.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
         mapPrivateIcon.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
     }
@@ -106,12 +106,13 @@ extension ProfileMyMapCell: UICollectionViewDataSource, UICollectionViewDelegate
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return myMapImages.count
+        return posts.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProfileMyMapImageCollectionViewCell", for: indexPath) as! ProfileMyMapImageCollectionViewCell
-        cell.mapImageView.image = myMapImages[indexPath.row]
+        cell.count = posts.count
+        cell.imageURL = posts[indexPath.row].imageURLs.first ?? ""
         return cell
     }
     
@@ -120,8 +121,8 @@ extension ProfileMyMapCell: UICollectionViewDataSource, UICollectionViewDelegate
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let seperateLineWidth = 2 * (sqrt(CGFloat(myMapImages.count)) - 1)
-        return CGSize(width: (collectionView.frame.width - seperateLineWidth) / sqrt(CGFloat(myMapImages.count)) , height: (collectionView.frame.height - seperateLineWidth) / sqrt(CGFloat(myMapImages.count)))
+        let seperateLineWidth = 2 * (sqrt(CGFloat(posts.count)) - 1)
+        return CGSize(width: (collectionView.frame.width - seperateLineWidth) / sqrt(CGFloat(posts.count)) , height: (collectionView.frame.height - seperateLineWidth) / sqrt(CGFloat(posts.count)))
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {

@@ -33,18 +33,17 @@ class SpotPageController: UIViewController {
             if spot == nil { return }
             DispatchQueue.main.async {
                 self.collectionView.reloadSections(IndexSet(integer: 0))
-          //      self.addButton.isHidden = !self.hasPOILevelAccess(creatorID: self.spot!.founderID, privacyLevel: self.spot!.privacyLevel , inviteList: self.spot!.inviteList ?? [])
             }
         }
     }
         
     private var relatedEndDocument: DocumentSnapshot?
     private var communityEndDocument: DocumentSnapshot?
-    private var fetchRelatedPostComplete = false
-    private var fetchCommunityPostComplete = false
+    private var fetchRelatedPostsComplete = false
+    private var fetchCommunityPostsComplete = false
     private var fetching: RefreshStatus = .activelyRefreshing
-    private var relatedPost: [MapPost] = []
-    private var communityPost: [MapPost] = []
+    private var relatedPosts: [MapPost] = []
+    private var communityPosts: [MapPost] = []
     
     
     init(mapPost: MapPost, presentedDrawerView: DrawerView? = nil) {
@@ -71,7 +70,7 @@ class SpotPageController: UIViewController {
         viewSetup()
         DispatchQueue.global(qos: .userInitiated).async {
             self.fetchSpot()
-            self.fetchRelatedPost()
+            self.fetchRelatedPosts()
         }
     }
     
@@ -201,7 +200,7 @@ extension SpotPageController {
         }
     }
     
-    private func fetchRelatedPost() {
+    private func fetchRelatedPosts() {
         print("fetch related")
         let db: Firestore = Firestore.firestore()
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
@@ -220,11 +219,11 @@ extension SpotPageController {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { continue }
-                    if self.relatedPost.contains(where: {$0.id == postInfo.id}) { continue }
+                    if self.relatedPosts.contains(where: {$0.id == postInfo.id}) { continue }
                     postGroup.enter()
                     self.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
-                        self.relatedPost.append(post)
+                        self.addRelatedPost(postInfo: post)
                         postGroup.leave()
                     }
                 } catch let parseError {
@@ -234,11 +233,11 @@ extension SpotPageController {
             
             postGroup.notify(queue: .main) {
                 self.relatedEndDocument = allDocs.last
-                self.fetchRelatedPostComplete = docs.count < 12
+                self.fetchRelatedPostsComplete = docs.count < 12
                 self.fetching = .refreshEnabled
                 if docs.count < 12 { self.fetchCommunityPost() }
                 
-                self.relatedPost.sort(by: {$0.seconds > $1.seconds})
+                self.relatedPosts.sort(by: {$0.seconds > $1.seconds})
                 self.collectionView.reloadData()
             }
         }
@@ -263,7 +262,7 @@ extension SpotPageController {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { continue }
-                    if self.relatedPost.contains(where: {$0.id == postInfo.id}) { continue }
+                    if self.relatedPosts.contains(where: {$0.id == postInfo.id}) { continue }
                     
                     postGroup.enter()
                     self.setPostDetails(post: postInfo) { [weak self] post in
@@ -278,17 +277,22 @@ extension SpotPageController {
 
             postGroup.notify(queue: .main) {
                 if self.fetching == .refreshDisabled {
-                    self.fetchCommunityPostComplete = true
+                    self.fetchCommunityPostsComplete = true
                 } else {
                     self.fetching = .refreshEnabled
                 }
                 
                 self.communityEndDocument = allDocs.last
-                self.relatedPost.sort(by: {$0.seconds > $1.seconds})
-                self.communityPost.sort(by: {$0.seconds > $1.seconds})
+                self.relatedPosts.sort(by: {$0.seconds > $1.seconds})
+                self.communityPosts.sort(by: {$0.seconds > $1.seconds})
                 self.collectionView.reloadData()
             }
         }
+    }
+    
+    func addRelatedPost(postInfo: MapPost) {
+        if !hasPostAccess(post: postInfo) { return }
+        relatedPosts.append(postInfo)
     }
     
     func addCommunityPost(postInfo: MapPost) {
@@ -296,11 +300,11 @@ extension SpotPageController {
         // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
         // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
         if mapID != "" && postInfo.mapID == mapID {
-            relatedPost.append(postInfo)
+            relatedPosts.append(postInfo)
         } else if mapID == "" {
-            relatedPost.append(postInfo)
+            relatedPosts.append(postInfo)
         } else {
-            communityPost.append(postInfo)
+            communityPosts.append(postInfo)
         }
     }
     
@@ -341,8 +345,8 @@ extension SpotPageController {
       //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
    
         /// check if post being deleted from map controllers child and update map if necessary
-        relatedPost.removeAll(where: {$0.id == post.id})
-        communityPost.removeAll(where: {$0.id == post.id})
+        relatedPosts.removeAll(where: {$0.id == post.id})
+        communityPosts.removeAll(where: {$0.id == post.id})
 
         DispatchQueue.main.async { self.collectionView.reloadData() }
     }
@@ -358,9 +362,9 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
         case 0:
             return 1
         case 1:
-            return relatedPost.count
+            return relatedPosts.count
         case 2:
-            return communityPost.count
+            return communityPosts.count
         default:
             return 0
         }
@@ -380,17 +384,17 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                 addHeaderView(label: mapPostLabel, cell: cell, communityEmpty: false)
             }
             /// set up community post label
-            if communityPost.count != 0 {
+            if communityPosts.count != 0 {
                 if indexPath == IndexPath(row: 0, section: 2)  {
                     addHeaderView(label: communityPostLabel, cell: cell, communityEmpty: false)
                 }
-            } else if fetchCommunityPostComplete {
-                if indexPath == IndexPath(row: relatedPost.count - 1, section: 1) {
+            } else if fetchCommunityPostsComplete {
+                if indexPath == IndexPath(row: relatedPosts.count - 1, section: 1) {
                     addHeaderView(label: communityPostLabel, cell: cell, communityEmpty: true)
                 }
             }
             
-            bodyCell.cellSetup(mapPost: indexPath.section == 1 ? relatedPost[indexPath.row] : communityPost[indexPath.row])
+            bodyCell.cellSetup(mapPost: indexPath.section == 1 ? relatedPosts[indexPath.row] : communityPosts[indexPath.row])
                         
             return bodyCell
         }
@@ -439,7 +443,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                 }
             }
             guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
-            postVC.postsList = [indexPath.section == 1 ? relatedPost[indexPath.row] : communityPost[indexPath.row]]
+            postVC.postsList = [indexPath.section == 1 ? relatedPosts[indexPath.row] : communityPosts[indexPath.row]]
             postVC.containerDrawerView = containerDrawerView
             barView.isHidden = true
             self.navigationController!.pushViewController(postVC, animated: true)
@@ -457,7 +461,7 @@ extension SpotPageController: UIScrollViewDelegate {
         if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 500)) && fetching == .refreshEnabled {
             DispatchQueue.global(qos: .userInitiated).async {
                 print("fetch")
-                self.fetchRelatedPostComplete ? self.fetchCommunityPost() : self.fetchRelatedPost()
+                self.fetchRelatedPostsComplete ? self.fetchCommunityPost() : self.fetchRelatedPosts()
             }
         }
     }

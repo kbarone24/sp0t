@@ -283,9 +283,7 @@ class SpotMapView: MKMapView {
         if selectedMap == nil { return MKAnnotationView() }
         var selectedPostGroup: [MapPostGroup] = []
         /// each member has a post group -> get all the post groups
-        print("members", anno.memberAnnotations)
         for annotation in anno.memberAnnotations {
-            print("annotation", annotation)
             if let member = annotation as? SpotPostAnnotation, let group = selectedMap!.postGroup.first(where: {$0.id == member.id}) { selectedPostGroup.append(group) }
         }
         /// sort post groups for display and get all posts in cluster

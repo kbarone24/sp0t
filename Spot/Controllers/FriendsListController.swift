@@ -38,10 +38,17 @@ class FriendsListController: UIViewController {
     var delegate: FriendsListDelegate?
     
     var previousVC: UIViewController?
-    
     var drawerView: DrawerView?
+    var sentFrom: SentFrom!
+    
+    enum SentFrom {
+        case Profile
+        case NewMap
+        case CustomMap
+        case EditMap
+    }
         
-    init(fromVC: UIViewController, allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String], presentedWithDrawerView: DrawerView? = nil) {
+    init(fromVC: UIViewController, allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String], sentFrom: SentFrom, presentedWithDrawerView: DrawerView? = nil) {
         previousVC = fromVC
         self.allowsSelection = allowsSelection
         self.showsSearchBar = showsSearchBar
@@ -49,6 +56,7 @@ class FriendsListController: UIViewController {
         self.friendsList = friendsList
         self.queriedFriends = friendsList
         self.confirmedIDs = confirmedIDs
+        self.sentFrom = sentFrom
         self.drawerView = presentedWithDrawerView
         super.init(nibName: nil, bundle: nil)
     }
@@ -101,7 +109,7 @@ class FriendsListController: UIViewController {
         }
         
         titleLabel = UILabel {
-            $0.text = allowsSelection ? "Select friends" : "Friends list"
+            $0.text = sentFrom == .NewMap ? "Select friends" : sentFrom == .Profile ? "Friends" : "Members"
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.textAlignment = .center
