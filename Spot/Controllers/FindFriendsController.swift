@@ -203,7 +203,7 @@ class FindFriendsController: UIViewController {
         
         sendInvitesView = SendInvitesView()
         sendInvitesView.setUp()
-        sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
+    //    sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
         mainView.addSubview(sendInvitesView)
         
         sendInvitesView.snp.makeConstraints{
@@ -651,7 +651,6 @@ extension FindFriendsController: UISearchBarDelegate {
 }
 
 class SendInvitesView: UIView {
-    
     var inviteFriendsIcon: UIImageView!
     var carot: UIImageView!
     var inviteFriendsText: UILabel!
@@ -659,6 +658,7 @@ class SendInvitesView: UIView {
     func setUp() {
         
         self.backgroundColor = .white
+        self.alpha = 0.3
         
         inviteFriendsIcon = UIImageView {
             $0.layer.masksToBounds = false

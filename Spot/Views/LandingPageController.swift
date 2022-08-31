@@ -37,7 +37,7 @@ class LandingPageController: UIViewController {
         view.backgroundColor = .white
                 
         let loginButton = UIButton {
-            $0.layer.cornerRadius = 28
+            $0.layer.cornerRadius = 9
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
             let customButtonTitle = NSMutableAttributedString(string: "Log in", attributes: [
                 NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
@@ -67,7 +67,7 @@ class LandingPageController: UIViewController {
         }
         
         let createAccountButton = UIButton {
-            $0.layer.cornerRadius = 28
+            $0.layer.cornerRadius = 9
             $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
             let customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
                 NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 17.5) as Any,

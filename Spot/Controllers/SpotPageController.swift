@@ -33,7 +33,6 @@ class SpotPageController: UIViewController {
             if spot == nil { return }
             DispatchQueue.main.async {
                 self.collectionView.reloadSections(IndexSet(integer: 0))
-          //      self.addButton.isHidden = !self.hasPOILevelAccess(creatorID: self.spot!.founderID, privacyLevel: self.spot!.privacyLevel , inviteList: self.spot!.inviteList ?? [])
             }
         }
     }

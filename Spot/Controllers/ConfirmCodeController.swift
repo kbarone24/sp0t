@@ -145,6 +145,7 @@ class ConfirmCodeController: UIViewController {
             $0.setAttributedTitle(customButtonTitle, for: .normal)
             $0.setImage(nil, for: .normal)
             $0.addTarget(self, action: #selector(confirmTapped(_:)), for: .touchUpInside)
+            $0.alpha = 0.4
             view.addSubview($0)
         }
         confirmButton.snp.makeConstraints{
@@ -179,7 +180,7 @@ class ConfirmCodeController: UIViewController {
     }
     
     @objc func codeChanged(_ sender: UITextField) {
-        confirmButton.alpha = sender.text?.count ?? 0 != 6 ? 0.65 : 1.0
+        confirmButton.alpha = sender.text?.count ?? 0 != 6 ? 0.4 : 1.0
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {

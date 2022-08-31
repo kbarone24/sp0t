@@ -25,6 +25,7 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
     }
     
     func registerForPushNotifications() {
+        updateFirestorePushTokenIfNeeded()
         UNUserNotificationCenter.current().getNotificationSettings { (settings) in
             if settings.authorizationStatus != .authorized {
                 // Either denied or notDetermined
