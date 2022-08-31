@@ -70,7 +70,6 @@ class CustomMapController: UIViewController {
     
     deinit {
         print("CustomMapController(\(self) deinit")
-        floatBackButton.removeFromSuperview()
         NotificationCenter.default.removeObserver(self)
         barView.removeFromSuperview()
     }
@@ -390,7 +389,7 @@ extension CustomMapController {
         print("enable bar interaction")
         barView.isUserInteractionEnabled = true
         collectionView.isScrollEnabled = true
-        
+        collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
         // Get top y content offset
         if topYContentOffset == nil {
             topYContentOffset = collectionView.contentOffset.y
@@ -450,6 +449,7 @@ extension CustomMapController {
     @objc func backButtonAction() {
         Mixpanel.mainInstance().track(event: "CustomMapBackTap")
         barBackButton.isHidden = true
+        floatBackButton.isHidden = true
         DispatchQueue.main.async {
             if self.navigationController?.viewControllers.count == 1 { self.mapController?.offsetCustomMapCenter() }
             self.containerDrawerView?.closeAction()
