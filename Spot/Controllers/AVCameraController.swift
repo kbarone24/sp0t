@@ -120,7 +120,7 @@ class AVCameraController: UIViewController {
     }
     
     func addCameraView() {
-        view.backgroundColor = UIColor(named: "SpotBlack")
+        view.backgroundColor = UIColor.black
         view.isUserInteractionEnabled = false
         
         let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
@@ -132,12 +132,11 @@ class AVCameraController: UIViewController {
         /// start camera area below notch on iPhone X+
         let smallScreen = UserDataModel.shared.screenSize == 0
         let minY = statusHeight
-        let cameraOffset: CGFloat = !smallScreen ? 108 : 10
         let galleryOffset: CGFloat = !smallScreen ? 50 : 35
         
         cameraView = UIView {
-            $0.layer.cornerRadius = 15
-            $0.backgroundColor = .black
+            $0.layer.cornerRadius = 5
+            $0.backgroundColor = UIColor(named: "SpotBlack")
             view.addSubview($0)
         }
         
@@ -157,7 +156,7 @@ class AVCameraController: UIViewController {
         }
         cancelButton.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(4)
-            $0.top.equalToSuperview().offset(37)
+            $0.top.equalToSuperview().offset(10)
             $0.width.height.equalTo(50)
         }
         
@@ -183,16 +182,13 @@ class AVCameraController: UIViewController {
         volumeHandler = JPSVolumeButtonHandler(up: {self.capture()}, downBlock: {self.capture()})
         volumeHandler.start(true)
         
-        cameraButton = UIButton {
-            $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-            $0.setImage(UIImage(named: "CameraButton"), for: .normal)
+        cameraButton = CameraButton {
             $0.addTarget(self, action: #selector(captureImage(_:)), for: .touchUpInside)
-            $0.imageView?.contentMode = .scaleAspectFill
             view.addSubview($0)
         }
         cameraButton.snp.makeConstraints {
-            $0.bottom.equalToSuperview().offset(-cameraOffset)
-            $0.width.height.equalTo(104)
+            $0.bottom.equalTo(cameraView.snp.bottom).offset(-28)
+            $0.width.height.equalTo(76)
             $0.centerX.equalToSuperview()
         }
         
@@ -238,7 +234,7 @@ class AVCameraController: UIViewController {
         }
         flashButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(12)
-            $0.top.equalToSuperview().offset(49)
+            $0.top.equalToSuperview().offset(22)
             $0.width.height.equalTo(38.28)
         }
         
@@ -284,7 +280,7 @@ class AVCameraController: UIViewController {
     func addAccessMask() {
         let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 82 : 2
         accessMask = CameraAccessView {
-            $0.setUp()
+            $0.setUp(cameraAccess: UploadPostModel.shared.cameraAccess == .authorized, galleryAccess: UploadPostModel.shared.galleryAccess == .authorized, locationAccess: UploadPostModel.shared.locationAccess)
             view.addSubview($0)
         }
         accessMask.snp.makeConstraints {
@@ -487,7 +483,7 @@ class AVCameraController: UIViewController {
             guard let self = self else { return }
             try? self.cameraController.displayPreview(on: self.cameraView)
             self.view.isUserInteractionEnabled = true
-            self.setAutoExposure()
+           self.setAutoExposure()
         }
     }
     
@@ -666,5 +662,32 @@ extension AVCameraController: UIGestureRecognizerDelegate {
     
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         return !(touch.view?.isKind(of: UIButton.self) ?? false) /// cancel touche
+    }
+}
+
+class CameraButton: UIButton {
+    override var isEnabled: Bool {
+        didSet {
+            alpha = isEnabled ? 1.0 : 0.5
+        }
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = UIColor.white.withAlphaComponent(0.3)
+        layer.cornerRadius = 76/2
+        layer.borderColor = UIColor.white.cgColor
+        layer.borderWidth = 7
+    }
+    
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        super.hitTest(point, with: event)
+        if !self.isEnabled { return nil }
+        let newArea = CGRect(x: -10, y: -10, width: frame.width + 20, height: frame.height + 20)
+        return newArea.contains(point) ? self : nil
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }

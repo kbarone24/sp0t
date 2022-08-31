@@ -26,6 +26,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             if avatarURLs.count < 5 && !avatarURLs.contains(UserDataModel.shared.userInfo.avatarURL ?? "") { avatarURLs.append(UserDataModel.shared.userInfo.avatarURL ?? "") }
             let postsList = map == nil ? friendsPostsDictionary.map({$0.value}) : map!.postsDictionary.map({$0.value})
             cell.setUp(map: map, avatarURLs: Array(avatarURLs), postsList: postsList)
+            cell.isSelected = selectedItemIndex == indexPath.row
             return cell
         }
         return UICollectionViewCell()
@@ -54,6 +55,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         return feedLoaded ? CGSize(width: itemWidth, height: itemWidth * 0.95) : CGSize(width: UIScreen.main.bounds.width, height: itemWidth * 0.95)
     }
     
+    
     func addMapAnnotations(index: Int, reload: Bool) {
         mapView.removeAllAnnos()
         if index == 0 {
@@ -78,6 +80,7 @@ class MapHomeCell: UICollectionViewCell {
     
     override var isSelected: Bool {
         didSet {
+            print("set selected", isSelected)
             contentArea.backgroundColor = isSelected ? UIColor(red: 0.843, green: 0.992, blue: 1, alpha: 1) : UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
             contentArea.layer.borderColor = isSelected ? UIColor(named: "SpotGreen")!.cgColor : UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1).cgColor
         }
@@ -192,9 +195,9 @@ class MapHomeCell: UICollectionViewCell {
         }
         lockIcon.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.bottom.equalTo(nameLabel.snp.top).offset(4.5)
+            $0.bottom.equalTo(nameLabel.snp.top).offset(1.5)
             $0.width.equalTo(21)
-            $0.height.equalTo(19)
+            $0.height.equalTo(18.5)
         }
         
         layoutIfNeeded()

@@ -496,7 +496,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
             return headerCell
             
         } else if let headerCell = cell as? SimpleMapHeaderCell {
-            let text = mapType == .friendsMap ? "Friends posts" : "@\(userProfile!.username)'s posts"
+            let text = mapType == .friendsMap ? "Friends map" : "@\(userProfile!.username)'s posts"
             headerCell.mapText = text
             return headerCell
             
@@ -565,7 +565,7 @@ extension CustomMapController: UIScrollViewDelegate {
                 }
                 var titleText = ""
                 if scrollView.contentOffset.y > 0 {
-                    titleText = mapType == .friendsMap ? "Friends posts" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
+                    titleText = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
                 }
                 titleLabel.text = titleText
             }

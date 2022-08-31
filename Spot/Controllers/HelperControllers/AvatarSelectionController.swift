@@ -22,17 +22,21 @@ class AvatarSelectionController: UIViewController {
     var centerCell: AvatarCell!
     
     var centerAvi = CGPoint(x: 0.0, y: 0.0)
-    var from: String!
+    var sentFrom: SentFrom!
 
-    var onDoneBlock : ((Bool) -> Void)?
+    enum SentFrom {
+        case create
+        case map
+        case edit
+    }
 
-    init(sentFrom: String){
+    var onDoneBlock : ((String, String) -> Void)?
+
+    init(sentFrom: SentFrom) {
         super.init(nibName: nil, bundle: nil)
-        from = sentFrom
-        if(from == "map"){
-            navigationItem.hidesBackButton = true
-        }
-        if (from == "edit") {
+        self.sentFrom = sentFrom
+        if sentFrom == .edit {
+            navigationItem.hidesBackButton = false
             for i in 0..<(avatars.count) {
                 let userAvatarURL = UserDataModel.shared.userInfo.avatarURL ?? ""
                 let url = AvatarURLs.shared.getURL(name: avatars[i])
@@ -40,6 +44,8 @@ class AvatarSelectionController: UIViewController {
                     avatars.swapAt(i, 5)
                 }
             }
+        } else {
+            navigationItem.hidesBackButton = true
         }
     }
     
@@ -122,7 +128,7 @@ class AvatarSelectionController: UIViewController {
             $0.layer.cornerRadius = 15
             $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             var customButtonTitle = NSMutableAttributedString()
-            if(from == "create"){
+            if sentFrom == .create {
                 customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
                     NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15)!,
                     NSAttributedString.Key.foregroundColor: UIColor.black
@@ -144,7 +150,7 @@ class AvatarSelectionController: UIViewController {
             $0.top.equalTo(collectionView.snp.bottom).offset(50)
         }
         
-        if(from == "edit"){
+        if sentFrom == .edit {
             let backButton = UIButton {
                 $0.setTitle("Cancel", for: .normal)
                 $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
@@ -202,14 +208,16 @@ class AvatarSelectionController: UIViewController {
     @objc func selectedTap(_ sender: UIButton){
         Mixpanel.mainInstance().track(event: "AvatarSelectionSelectTap")
         let avatarURL = AvatarURLs().getURL(name: centerCell.avatar!)
-        UserDataModel.shared.userInfo.avatarURL = avatarURL
-        UserDataModel.shared.userInfo.avatarPic = UIImage(named: centerCell.avatar!)!
-        let db = Firestore.firestore()
-        db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
+        if sentFrom != .edit {
+            UserDataModel.shared.userInfo.avatarURL = avatarURL
+            UserDataModel.shared.userInfo.avatarPic = UIImage(named: centerCell.avatar!)!
+            let db = Firestore.firestore()
+            db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
+        }
                 
-        if(from == "map"){
+        if sentFrom == .map {
             self.navigationController!.popViewController(animated: true)
-        } else if from == "create" {
+        } else if sentFrom == .create {
             let storyboard = UIStoryboard(name: "Map", bundle: nil)
              let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
              let navController = UINavigationController(rootViewController: vc)
@@ -223,7 +231,7 @@ class AvatarSelectionController: UIViewController {
                  .filter({$0.isKeyWindow}).first
              keyWindow?.rootViewController = navController
         } else {
-            onDoneBlock!(true)
+            onDoneBlock!(avatarURL, centerCell.avatar!)
             self.presentingViewController?.dismiss(animated: false, completion:nil)
         }
     }

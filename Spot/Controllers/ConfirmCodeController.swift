@@ -309,7 +309,7 @@ class ConfirmCodeController: UIViewController {
     }
     
     func presentAvatarSelection() {
-        let avi = AvatarSelectionController(sentFrom: "create")
+        let avi = AvatarSelectionController(sentFrom: .create)
         DispatchQueue.main.async {
             self.view.endEditing(true)
             self.activityIndicator.stopAnimating()

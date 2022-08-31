@@ -95,17 +95,14 @@ class ProfileViewController: UIViewController {
     @objc func editButtonAction() {
         Mixpanel.mainInstance().track(event: "ProfileEditProfileTap")
         let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
-        editVC.profileVC = self
         editVC.modalPresentationStyle = .fullScreen
-        editVC.onDoneBlock = { result in
-            self.userProfile?.avatarURL = UserDataModel.shared.userInfo.avatarURL!
-        }
+        editVC.delegate = self
         present(editVC, animated: true)
     }
     
     @objc func friendListButtonAction() {
         Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
-        let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [], presentedWithDrawerView: containerDrawerView!)
+        let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [], sentFrom: .Profile, presentedWithDrawerView: containerDrawerView!)
         present(friendListVC, animated: true)
     }
     
@@ -115,6 +112,17 @@ class ProfileViewController: UIViewController {
         } else {
             navigationController?.popViewController(animated: true)
         }
+    }
+}
+
+extension ProfileViewController: EditProfileDelegate {
+    func finishPassing(userInfo: UserProfile) {
+        self.userProfile = userInfo
+        DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 0)]) }
+    }
+    
+    func logout() {
+        DispatchQueue.main.async { self.containerDrawerView?.closeAction() }
     }
 }
 
@@ -378,7 +386,7 @@ extension ProfileViewController {
             maps[i].mapName = map.mapName
             maps[i].mapDescription = map.mapDescription
             maps[i].secret = map.secret
-            DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 1)]) }
+            DispatchQueue.main.async { self.collectionView.reloadData() }
         }
     }
 }

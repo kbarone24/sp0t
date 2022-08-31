@@ -164,7 +164,7 @@ class AVSpotCamera: NSObject {
 
         view.layer.insertSublayer(previewLayer!, at: 0)
         previewLayer?.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: cameraHeight)
-        previewLayer?.cornerRadius = 15
+        previewLayer?.cornerRadius = 5
         previewShown = true
     }
     

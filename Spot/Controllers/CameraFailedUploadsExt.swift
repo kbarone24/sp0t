@@ -96,7 +96,7 @@ extension AVCameraController {
         let actualTimestamp = Timestamp(seconds: postDraft.timestamp, nanoseconds: 0)
         var aspectRatios: [CGFloat] = []
         for ratio in postDraft.aspectRatios ?? [] { aspectRatios.append(CGFloat(ratio)) }
-        var post = MapPost(id: UUID().uuidString, addedUsers: postDraft.addedUsers, aspectRatios: aspectRatios, caption: postDraft.caption ?? "", city: postDraft.city, createdBy: postDraft.createdBy, frameIndexes: postDraft.frameIndexes, friendsList: postDraft.friendsList ?? [], hideFromFeed: postDraft.hideFromFeed, imageLocations: [], imageURLs: [], inviteList: postDraft.inviteList ?? [], likers: [], mapID: postDraft.mapID ?? "", mapName: postDraft.mapName ?? "", postLat: postDraft.postLat, postLong: postDraft.postLong, posterID: uid, posterUsername: UserDataModel.shared.userInfo.username, privacyLevel: postDraft.privacyLevel ?? "", seenList: [uid], spotID: postDraft.spotID ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, spotName: postDraft.spotName, spotPrivacy: postDraft.spotPrivacy, tag: "", taggedUserIDs: postDraft.taggedUserIDs ?? [], taggedUsers: postDraft.taggedUsers ?? [], timestamp: actualTimestamp, addedUserProfiles: [], userInfo: UserDataModel.shared.userInfo, mapInfo: nil, commentList: [], postImage: uploadImages, postScore: 0, selectedImageIndex: 0, imageHeight: 0, captionHeight: 0, cellHeight: 0, commentsHeight: 0)
+        var post = MapPost(id: UUID().uuidString, addedUsers: postDraft.addedUsers, aspectRatios: aspectRatios, caption: postDraft.caption ?? "", city: postDraft.city, createdBy: postDraft.createdBy, frameIndexes: postDraft.frameIndexes, friendsList: postDraft.friendsList ?? [], hideFromFeed: postDraft.hideFromFeed, imageLocations: [], imageURLs: [], inviteList: postDraft.inviteList ?? [], likers: [], mapID: postDraft.mapID ?? "", mapName: postDraft.mapName ?? "", postLat: postDraft.postLat, postLong: postDraft.postLong, posterID: uid, posterUsername: UserDataModel.shared.userInfo.username, privacyLevel: postDraft.privacyLevel ?? "", seenList: [], spotID: postDraft.spotID ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, spotName: postDraft.spotName, spotPrivacy: postDraft.spotPrivacy, tag: "", taggedUserIDs: postDraft.taggedUserIDs ?? [], taggedUsers: postDraft.taggedUsers ?? [], timestamp: actualTimestamp, addedUserProfiles: [], userInfo: UserDataModel.shared.userInfo, mapInfo: nil, commentList: [], postImage: uploadImages, postScore: 0, selectedImageIndex: 0, imageHeight: 0, captionHeight: 0, cellHeight: 0, commentsHeight: 0)
         
         /// set spot values
         var spot = MapSpot(founderID: postDraft.createdBy ?? "", imageURL: "", privacyLevel: postDraft.spotPrivacy ?? "", spotDescription: postDraft.caption ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, spotName: postDraft.spotName)
@@ -121,40 +121,30 @@ extension AVCameraController {
                     
                     post.imageURLs = imageURLs
                     post.timestamp = Firebase.Timestamp(date: Date())
-                    self.uploadPost(post: post, map: map)
-
+                    
+                    let newMap = post.mapID ?? "" != "" && map.id ?? "" == ""
+                    if newMap {
+                        map = CustomMap(id: post.mapID!, founderID: self.uid, imageURL: imageURLs.first!, likers: [self.uid], mapName: post.mapName ?? "", memberIDs: [self.uid], posterDictionary: [post.id! : [self.uid]], posterIDs: [self.uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: post.imageURLs, postLocations: [["lat" : post.postLat, "long": post.postLong]], postTimestamps: [post.timestamp], secret: false, spotIDs: [], spotNames: [], spotLocations: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: uploadImages.first!)
+                        /// add added users
+                        if !(post.addedUsers?.isEmpty ?? true) { map.memberIDs.append(contentsOf: post.addedUsers!); map.likers.append(contentsOf: post.addedUsers!); map.memberProfiles!.append(contentsOf: post.addedUserProfiles!); map.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!) }
+                        if spot.id != "" {
+                            map.spotIDs.append(spot.id!)
+                            map.spotNames.append(spot.spotName)
+                            map.spotLocations.append(["lat": spot.spotLat, "long": spot.spotLong])
+                        }
+                    }
+                    
                     if spot.id != "" {
                         spot.imageURL = imageURLs.first ?? ""
                         self.uploadSpot(post: post, spot: spot, submitPublic: false)
                     }
-                    
-                    let newMap = post.mapID ?? "" != "" && map.id ?? "" == ""
-                    if newMap {
-                        map = CustomMap(id: post.mapID!, founderID: self.uid, imageURL: imageURLs.first!, likers: [], mapName: post.mapName ?? "", memberIDs: [self.uid], posterDictionary: [post.id! : [self.uid]], posterIDs: [self.uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: post.imageURLs, postLocations: [["lat" : post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [post.spotID ?? ""], memberProfiles: [UserDataModel.shared.userInfo], coverImage: uploadImages.first!)
-                  
-                    } else if map.id ?? "" != "" {
-                        /// set final map values
-                        map.postIDs.append(post.id!)
-                        if spot.id ?? "" != "" && !map.spotIDs.contains(spot.id!) { map.spotIDs.append(spot.id!) }
-                        map.postLocations.append(["lat": post.postLat, "long": post.postLong])
-                        
-                        let uid = UserDataModel.shared.uid
-                        var posters = [uid]
-                        if !(post.addedUsers?.isEmpty ?? true) { posters.append(contentsOf: post.addedUsers!) }
-                        map.posterDictionary[post.id!] = posters
-                        map.posterIDs.append(uid)
-                        map.posterUsernames.append(UserDataModel.shared.userInfo.username)
-                        for poster in posters {
-                            if !map.memberIDs.contains(poster) { map.memberIDs.append(poster) }
-                            if !map.likers.contains(poster) { map.likers.append(poster) }
-                        }
-                    }
-                    
-                    if !(post.addedUsers ?? []).isEmpty { map.posterDictionary[post.id!]!.append(contentsOf: post.addedUsers!) }
+
                     if map.id ?? "" != "" {
                         if map.imageURL == "" { map.imageURL = imageURLs.first ?? "" }
                         self.uploadMap(map: map, newMap: newMap, post: post)
                     }
+                    
+                    self.uploadPost(post: post, map: map)
 
                     let visitorList = spot.visitorList
                     self.setUserValues(poster: self.uid, post: post, spotID: spot.id ?? "", visitorList: visitorList, mapID: map.id ?? "")
@@ -172,15 +162,15 @@ extension AVCameraController {
         deletePostDraft()
         let alert = UIAlertController(title: "Post successfully uploaded!", message: "", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
-            self.navigationController?.popViewController(animated: true)
+            self.cancelTap()
         }))
         present(alert, animated: true, completion: nil)
     }
     
     func showFailAlert() {
-        let alert = UIAlertController(title: "Upload failed", message: "Spot saved to your drafts", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Upload failed", message: "Post saved to your drafts", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
-            self.navigationController?.popViewController(animated: true)
+            self.cancelTap()
         }))
         present(alert, animated: true, completion: nil)
     }
