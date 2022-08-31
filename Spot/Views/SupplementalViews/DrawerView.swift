@@ -208,9 +208,10 @@ class DrawerView: NSObject {
         let translation = recognizer.translation(in: recognizer.view)
         let velocity = recognizer.velocity(in: recognizer.view)
         // When the user is still dragging or start dragging the if statement here will be fall through
+        guard canDrag else { return }
         if recognizer.state == .began || recognizer.state == .changed {
             // Add the translation in y to slideView when slideView's minY is larger than 0
-            if slideView.frame.minY >= 0 && canDrag {
+            if slideView.frame.minY >= 0 {
                 slideView.frame.origin.y += translation.y
             }
             
