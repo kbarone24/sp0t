@@ -232,7 +232,6 @@ class SpotMapView: MKMapView {
         annotationView.updateImage(posts: posts, spotName: group.spotName, id: group.id)
         annotationView.isSelected = posts.contains(where: {!$0.seen})
         annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotPostTap(_:))))
-        print("return annotationview")
         return annotationView
     }
         

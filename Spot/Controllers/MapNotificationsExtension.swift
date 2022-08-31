@@ -54,7 +54,6 @@ extension MapController {
             UserDataModel.shared.userInfo.mapsList.append(map!)
         }
         let mapIndex = post.hideFromFeed! ? 1 : 0
-        print("map index", mapIndex)
         let dictionaryIndex = post.hideFromFeed! ? -1 : 0
         DispatchQueue.main.async {
             self.addPostToDictionary(post: post, map: map, newPost: true, index: dictionaryIndex)
