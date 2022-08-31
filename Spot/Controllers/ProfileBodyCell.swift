@@ -12,10 +12,7 @@ import FirebaseUI
 class ProfileBodyCell: UICollectionViewCell {
     private var mapImage: UIImageView!
     private var mapName: UILabel!
-    private var friendsCount: UILabel!
-    private var friendsIcon: UIImageView!
-    private var likesCount: UILabel!
-    private var postsCount: UILabel!
+    private var spotsLabel: UILabel!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -35,7 +32,9 @@ class ProfileBodyCell: UICollectionViewCell {
         if let i = mapData.posterIDs.lastIndex(where: {$0 == userID}) {
             urlString = mapData.postImageURLs[safe: i] ?? ""
         }
-        mapImage.sd_setImage(with: URL(string: urlString))
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 200, height: 200), scaleMode: .aspectFill)
+        mapImage.sd_setImage(with: URL(string: urlString), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+        
         if mapData.secret {
             let imageAttachment = NSTextAttachment()
             imageAttachment.image = UIImage(named: "SecretMap")
@@ -48,13 +47,8 @@ class ProfileBodyCell: UICollectionViewCell {
         } else {
             self.mapName.attributedText = NSAttributedString(string: mapData.mapName) 
         }
-        self.friendsCount.text = mapData.memberIDs.count == 1 ? "" : "\(mapData.memberIDs.count)"
-        self.friendsIcon.snp.updateConstraints {
-            $0.width.equalTo(mapData.memberIDs.count == 1 ? 0 : 13.33)
-        }
-        self.friendsIcon.isHidden = mapData.memberIDs.count == 1
-        self.likesCount.text = mapData.likers.count != 0 ? (mapData.memberIDs.count == 1 ? "\(mapData.likers.count) likes" : " • \(mapData.likers.count) likes") : ""
-        self.postsCount.text = mapData.postLocations.count != 0 ? ((mapData.memberIDs.count == 1 && mapData.likers.count == 0) ? "\(mapData.postLocations.count) posts" : " • \(mapData.postLocations.count) posts") : ""
+        
+        spotsLabel.text = mapData.spotIDs.count > 1 ? "\(mapData.spotIDs.count) spots" : ""
     }
 }
 
@@ -84,53 +78,14 @@ extension ProfileBodyCell {
             $0.top.equalTo(mapImage.snp.bottom).offset(6)
         }
         
-        friendsCount = UILabel {
+        spotsLabel = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.text = ""
             contentView.addSubview($0)
         }
-        friendsCount.snp.makeConstraints {
+        spotsLabel.snp.makeConstraints {
             $0.leading.equalTo(mapImage)
             $0.top.equalTo(mapName.snp.bottom).offset(1)
-            $0.trailing.lessThanOrEqualToSuperview()
-        }
-        
-        friendsIcon = UIImageView {
-            $0.image = UIImage(named: "Friends")?.withRenderingMode(.alwaysTemplate)
-            $0.tintColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
-            $0.contentMode = .scaleAspectFit
-            $0.layer.masksToBounds = true
-            contentView.addSubview($0)
-        }
-        friendsIcon.snp.makeConstraints {
-            $0.leading.equalTo(friendsCount.snp.trailing).offset(3)
-            $0.top.equalTo(friendsCount).offset(3)
-            $0.width.equalTo(13.33)
-            $0.height.equalTo(10)
-        }
-        
-        likesCount = UILabel {
-            $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.text = ""
-            contentView.addSubview($0)
-        }
-        likesCount.snp.makeConstraints {
-            $0.leading.equalTo(friendsIcon.snp.trailing)
-            $0.top.equalTo(friendsCount)
-            $0.trailing.lessThanOrEqualToSuperview()
-        }
-        
-        postsCount = UILabel {
-            $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.text = ""
-            contentView.addSubview($0)
-        }
-        postsCount.snp.makeConstraints {
-            $0.leading.equalTo(likesCount.snp.trailing)
-            $0.top.equalTo(friendsCount)
             $0.trailing.lessThanOrEqualToSuperview()
         }
     }

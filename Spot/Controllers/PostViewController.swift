@@ -310,7 +310,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
                 self.postsList[i].commentList = post.commentList
                 self.postsList[i].commentCount = post.commentCount
                 self.postsList[i].likers = post.likers
-                if index != self.selectedPostIndex { print("dont update"); return }
+                if index != self.selectedPostIndex { return }
                 /// update cell if this is the current post
                 if let cell = self.postsCollection.cellForItem(at: IndexPath(item: index, section: 0)) as? PostCell {
                     DispatchQueue.main.async { cell.updatePost(post: self.postsList[i]) }

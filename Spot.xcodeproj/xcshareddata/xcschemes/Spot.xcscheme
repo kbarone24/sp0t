@@ -82,7 +82,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <LocationScenarioReference
-         identifier = "../Spot/Chapel Hill.gpx"
+         identifier = "../Spot/Resources/Chapel Hill.gpx"
          referenceType = "0">
       </LocationScenarioReference>
    </LaunchAction>

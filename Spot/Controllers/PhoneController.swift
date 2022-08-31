@@ -167,7 +167,7 @@ class PhoneController: UIViewController, UITextFieldDelegate {
             ])
             $0.setAttributedTitle(customButtonTitle, for: .normal)
             $0.addTarget(self, action: #selector(sendCode(_:)), for: .touchUpInside)
-            $0.alpha = 0.65
+            $0.alpha = 0.4
             $0.isEnabled = false
             view.addSubview($0)
         }
@@ -251,7 +251,6 @@ class PhoneController: UIViewController, UITextFieldDelegate {
         sender.isEnabled = false
         activityIndicator.startAnimating()
         
-        print("send")
         checkForUser(phoneNumber: phoneNumber) { userExists in
             print("check", userExists)
             /// validate if user already exists
@@ -343,7 +342,7 @@ class PhoneController: UIViewController, UITextFieldDelegate {
     
     @objc func phoneNumberChanged(_ sender: UITextField) {
         let text = sender.text ?? ""
-        sendButton.alpha = text.count < 10 ? 0.65 : 1.0
+        sendButton.alpha = text.count < 10 ? 0.4 : 1.0
         sendButton.isEnabled = text.count < 10 ? false : true
     }
 }

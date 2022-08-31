@@ -11,6 +11,11 @@ import Mixpanel
 import Firebase
 import FirebaseFunctions
 
+protocol EditProfileDelegate {
+    func finishPassing(userInfo: UserProfile)
+    func logout()
+}
+
 class EditProfileViewController: UIViewController {
     
     private var editLabel: UILabel!
@@ -28,17 +33,13 @@ class EditProfileViewController: UIViewController {
     private var logoutButton: UIButton!
     private var activityIndicator: CustomActivityIndicator!
     
-    private var nameChanged: Bool = false
-    private var locationChanged: Bool = false
     private var profileChanged: Bool = false
     private var avatarChanged: Bool = false
     
-    public var profileVC: ProfileViewController?
+    public var delegate: EditProfileDelegate?
     private var userProfile: UserProfile?
     private let db = Firestore.firestore()
-    
-    var onDoneBlock : ((Bool) -> Void)?
-    
+        
     init(userProfile: UserProfile? = nil) {
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
         super.init(nibName: nil, bundle: nil)
@@ -95,13 +96,13 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func avatarEditAction() {
-        let vc = AvatarSelectionController(sentFrom: "edit")
+        let vc = AvatarSelectionController(sentFrom: .edit)
         //vc.delegate = self
         vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
-        vc.onDoneBlock = { result in
+        vc.onDoneBlock = { (avatarURL, avatarName) in
             self.avatarChanged = true
-            self.avatarImage.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.avatarURL!))
-            self.userProfile?.avatarURL = UserDataModel.shared.userInfo.avatarURL!
+            self.avatarImage.image = UIImage(named: avatarName)
+            self.userProfile?.avatarURL = avatarURL
         }
         self.present(vc, animated: true)
         Mixpanel.mainInstance().track(event: "EditProfileAvatarSelect")
@@ -110,26 +111,18 @@ class EditProfileViewController: UIViewController {
     @objc func saveAction() {
         Mixpanel.mainInstance().track(event: "EditProfileSave")
         self.activityIndicator.startAnimating()
+        
+        userProfile!.currentLocation = locationTextfield.text ?? ""
+        userProfile!.name = nameTextfield.text ?? ""
+        
         let userRef = db.collection("users").document(userProfile!.id!)
-        do {
-            if nameChanged {
-                userProfile?.name = nameTextfield.text!
-            }
-            if locationChanged {
-                userProfile?.currentLocation = locationTextfield.text!
-            }
-            if nameChanged || locationChanged {
-                try userRef.setData(from: userProfile, merge: true)
-            }
-            if profileChanged {
-                updateProfileImage()
-            } else {
-                self.activityIndicator.stopAnimating()
-                self.onDoneBlock!(true)
-                self.dismiss(animated: true)
-            }
-        } catch {
-            //handle error
+        userRef.updateData(["name" : userProfile!.name, "currentLocation": userProfile!.currentLocation, "avatarURL": self.userProfile!.avatarURL as Any])
+        if profileChanged {
+            updateProfileImage()
+        } else {
+            delegate?.finishPassing(userInfo: userProfile!)
+            self.activityIndicator.stopAnimating()
+            self.dismiss(animated: true)
         }
     }
     
@@ -139,20 +132,22 @@ class EditProfileViewController: UIViewController {
             Mixpanel.mainInstance().track(event: "Logout")
             do {
                 try Auth.auth().signOut()
-                self.dismiss(animated: false, completion: {
-                    NotificationCenter.default.post(Notification(name: Notification.Name("Logout"), object: nil, userInfo: nil))
-                    self.profileVC?.containerDrawerView?.closeAction()
-                    UserDataModel.shared.destroy()
-                    if let landingPage = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
-                        let keyWindow = UIApplication.shared.connectedScenes
-                            .filter({$0.activationState == .foregroundActive})
-                            .map({$0 as? UIWindowScene})
-                            .compactMap({$0})
-                            .first?.windows
-                            .filter({$0.isKeyWindow}).first
-                        keyWindow?.rootViewController = landingPage
-                    }
-                })
+                DispatchQueue.main.async {
+                    self.dismiss(animated: false, completion: {
+                        NotificationCenter.default.post(Notification(name: Notification.Name("Logout"), object: nil, userInfo: nil))
+                        self.delegate?.logout()
+                        UserDataModel.shared.destroy()
+                        if let landingPage = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
+                            let keyWindow = UIApplication.shared.connectedScenes
+                                .filter({$0.activationState == .foregroundActive})
+                                .map({$0 as? UIWindowScene})
+                                .compactMap({$0})
+                                .first?.windows
+                                .filter({$0.isKeyWindow}).first
+                            keyWindow?.rootViewController = landingPage
+                        }
+                    })
+                }
             } catch let signOutError as NSError {
                 print ("Error signing out: %@", signOutError)
             }
@@ -163,17 +158,6 @@ class EditProfileViewController: UIViewController {
         alert.addAction(logoutAction)
         present(alert, animated: true)
     }
-    
-    @objc func textFieldDidChange(_ textField: UITextField) {
-        if textField == nameTextfield {
-            nameChanged = true
-        }
-        
-        if textField == locationTextfield {
-            locationChanged = true
-        }
-    }
-    
     
     public func presentationControllerDidDismiss(_ presentationController: UIPresentationController){
         print("dismissed sheet")
@@ -304,7 +288,6 @@ extension EditProfileViewController {
             $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
-            $0.addTarget(self, action: #selector(EditProfileViewController.textFieldDidChange(_:)), for: .editingChanged)
             view.addSubview($0)
         }
         nameTextfield.snp.makeConstraints {
@@ -334,7 +317,6 @@ extension EditProfileViewController {
             $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
-            $0.addTarget(self, action: #selector(EditProfileViewController.textFieldDidChange(_:)), for: .editingChanged)
             view.addSubview($0)
         }
         locationTextfield.snp.makeConstraints {
@@ -356,9 +338,15 @@ extension EditProfileViewController {
             $0.centerX.equalToSuperview()
         }
         
-        activityIndicator = CustomActivityIndicator(frame: CGRect(x: 0, y: 165, width: UIScreen.main.bounds.width, height: 30))
-        activityIndicator.isHidden = true
-        view.addSubview(activityIndicator)
+        activityIndicator = CustomActivityIndicator {
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+        activityIndicator.snp.makeConstraints{
+            $0.bottom.equalToSuperview().inset(150)
+            $0.centerX.equalToSuperview()
+            $0.width.height.equalTo(30)
+        }
     }
     
     private func updateProfileImage(){
@@ -387,12 +375,14 @@ extension EditProfileViewController {
                     urlStr = (url?.absoluteString)!
                     guard let self = self else { return }
                     
+                    self.userProfile!.imageURL = urlStr
+                    self.userProfile!.profilePic = image ?? UIImage()
+
                     let values = ["imageURL": urlStr]
-                    self.db.collection("users").document(self.userProfile!.id!).setData(values, merge: true)
+                    self.db.collection("users").document(self.userProfile!.id!).updateData(values)
                     self.activityIndicator.stopAnimating()
-                    self.dismiss(animated: true) {
-                        self.profileVC?.userProfile = UserDataModel.shared.userInfo
-                    }
+                    self.delegate?.finishPassing(userInfo: self.userProfile!)
+                    self.dismiss(animated: true)
                     return
                 })
             } else { print("handle error")}

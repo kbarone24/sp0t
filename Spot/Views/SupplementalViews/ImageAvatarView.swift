@@ -16,6 +16,8 @@ class ImageAvatarView: UIImageView {
     var backgroundView: UIView!
         
     func setUp(avatarURLs: [String], annotation: Bool, completion: @escaping(_ success: Bool) -> Void) {
+        /// temporary -> just show first 5 
+        let avatarURLs = avatarURLs.prefix(5)
         backgroundColor = .clear
         layer.cornerRadius = 2
         clipsToBounds = true

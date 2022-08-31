@@ -29,8 +29,8 @@ class UploadPostModel {
     
     var cameraAccess: AVAuthorizationStatus = .notDetermined
     var galleryAccess: PHAuthorizationStatus = .notDetermined
+    var locationAccess: Bool = false
     
-    var tappedLocation: CLLocation!
     static let shared = UploadPostModel()
     
     enum PostType {
@@ -43,7 +43,6 @@ class UploadPostModel {
     init() {
         cameraAccess = AVCaptureDevice.authorizationStatus(for: .video)
         galleryAccess = PHPhotoLibrary.authorizationStatus()
-        tappedLocation = CLLocation()
     }
     
     func selectObject(imageObject: ImageObject, selected: Bool) {
@@ -190,7 +189,7 @@ class UploadPostModel {
     }
 
     func allAuths() -> Bool {
-        return cameraAccess == .authorized &&  (galleryAccess == .authorized || galleryAccess == .limited)
+        return cameraAccess == .authorized &&  (galleryAccess == .authorized || galleryAccess == .limited) && locationAccess
     }
     
     func destroy() {
@@ -199,7 +198,6 @@ class UploadPostModel {
         nearbySpots.removeAll()
         friendObjects.removeAll()
         assetsFull = nil
-        tappedLocation = CLLocation()
         
         postObject = nil
         spotObject = nil
