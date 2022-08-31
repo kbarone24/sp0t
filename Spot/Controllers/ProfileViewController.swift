@@ -44,12 +44,12 @@ class ProfileViewController: UIViewController {
     
     var postsFetched = false {
         didSet {
-            noPostLabel.isHidden = mapsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+            noPostLabel.isHidden = (relation == .myself || relation == .friend) && mapsFetched && (maps.count == 0 && posts.count == 0) ? false : true
         }
     }
     var mapsFetched = false {
         didSet {
-            noPostLabel.isHidden = postsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+            noPostLabel.isHidden = (relation == .myself || relation == .friend) && postsFetched && (maps.count == 0 && posts.count == 0) ? false : true
         }
     }
     

@@ -153,13 +153,13 @@ class NameController: UIViewController, UITextFieldDelegate {
     func textFieldDidBeginEditing(_ textField: UITextField) {
         let complete = nameFieldComplete(name: nameField.text ?? "")
         nextButton.isEnabled = complete
-        nextButton.alpha = complete ? 1.0 : 0.65
+        nextButton.alpha = complete ? 1.0 : 0.4
     }
     
     @objc func textChanged(_ sender: UITextView) {
         let complete = nameFieldComplete(name: nameField.text ?? "")
         nextButton.isEnabled = complete
-        nextButton.alpha = complete ? 1.0 : 0.65
+        nextButton.alpha = complete ? 1.0 : 0.4
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {

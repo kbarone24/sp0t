@@ -827,6 +827,7 @@ extension NSObject {
     }
     
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
+        if post.id ?? "" == "" { completion(post); return }
         var postInfo = setSecondaryPostValues(post: post)
         /// detail group tracks comments and added users fetches
         let detailGroup = DispatchGroup()

@@ -509,6 +509,7 @@ class NotificationsButton: UIButton {
 }
 
 class MapTitleView: UIView {
+    var spotLogo: UIImageView!
     var profileButton: UIButton!
     var notiButton: NotificationsButton!
     var searchButton: UIButton!
@@ -519,6 +520,17 @@ class MapTitleView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
+        spotLogo = UIImageView {
+            $0.image = UIImage(named: "HomeLogo")
+            addSubview($0)
+        }
+        spotLogo.snp.makeConstraints {
+            $0.leading.equalTo(16)
+            $0.width.equalTo(83.37)
+            $0.height.equalTo(36)
+            $0.centerY.equalToSuperview()
+        }
         
         profileButton = UIButton {
             $0.setImage(UIImage(named: "ProfileNavIcon"), for: .normal)
