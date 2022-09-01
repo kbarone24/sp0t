@@ -233,27 +233,20 @@ extension CustomMapHeaderCell {
     }
     
     private func setMapInfo() {
-        if mapData!.likers.count == 0 && mapData!.spotIDs.count == 0 {
-            mapInfo.text = "\(mapData!.postIDs.count) posts"
-        } else if mapData!.likers.count == 0 {
-            mapInfo.text = "\(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
-        } else if mapData!.spotIDs.count == 0 {
-            mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.postIDs.count) posts"
-        } else {
-            mapInfo.text = "\(mapData!.likers.count) followers • \(mapData!.spotIDs.count) spots • \(mapData!.postIDs.count) posts"
-        }
+        mapInfo.text = mapData!.spotIDs.count > 1 ? "\(mapData!.spotIDs.count) spots" : mapData!.spotIDs.count > 0 ? "\(mapData!.spotIDs.count) spot" : ""
     }
     
     private func setMapMemberInfo() {
         guard fourMapMemberProfile.count != 0 else { return }
-        mapCreatorCount.text = "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
+        let communityMap = mapData.communityMap ?? false
+        mapCreatorCount.text = communityMap ? "+ \(mapData.memberIDs.count - 4)" : "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
         mapCreatorProfileImage1.image = fourMapMemberProfile[0].profilePic
         let userTransformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
         mapCreatorProfileImage1.sd_setImage(with: URL(string: fourMapMemberProfile[0].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
 
         switch fourMapMemberProfile.count {
         case 1:
-            mapCreatorCount.text = "\(fourMapMemberProfile[0].username)"
+            if !communityMap { mapCreatorCount.text = "\(fourMapMemberProfile[0].username)" }
             mapCreatorProfileImage4.removeFromSuperview()
             mapCreatorProfileImage3.removeFromSuperview()
             mapCreatorProfileImage2.removeFromSuperview()
@@ -261,7 +254,7 @@ extension CustomMapHeaderCell {
                 $0.leading.equalTo(mapCreatorProfileImage1.snp.trailing).offset(4)
             }
         case 2:
-            mapCreatorCount.text = "\(fourMapMemberProfile[0].username) & \(fourMapMemberProfile[1].username)"
+            if !communityMap { mapCreatorCount.text = "\(fourMapMemberProfile[0].username) & \(fourMapMemberProfile[1].username)" }
             mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
             mapCreatorProfileImage4.removeFromSuperview()
             mapCreatorProfileImage3.removeFromSuperview()
@@ -285,7 +278,15 @@ extension CustomMapHeaderCell {
     }
     
     private func setActionButton() {
-        if mapData!.memberIDs.contains(UserDataModel.shared.uid) && !(mapData!.communityMap ?? false) {
+        if mapData!.communityMap ?? false {
+            if mapData!.memberIDs.contains(UserDataModel.shared.uid) {
+                actionButton.setTitle("Joined", for: .normal)
+                actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            } else {
+                actionButton.setTitle("Join", for: .normal)
+                actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            }
+        } else if mapData!.memberIDs.contains(UserDataModel.shared.uid) {
             actionButton.setTitle("Edit map", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         } else if mapData!.likers.contains(UserDataModel.shared.uid) {
@@ -310,7 +311,7 @@ extension CustomMapHeaderCell {
         
         let db = Firestore.firestore()
         switch actionButton.titleLabel?.text {
-        case "Follow map":
+        case "Follow map", "Join" :
             Mixpanel.mainInstance().track(event: "CustomMapFollowMap")
             mapData.likers.append(UserDataModel.shared.uid)
             UserDataModel.shared.userInfo.mapsList.append(mapData!)
@@ -323,7 +324,8 @@ extension CustomMapHeaderCell {
             if mapData.communityMap ?? false { values["memberIDs"] = FieldValue.arrayUnion([UserDataModel.shared.uid]) }
             db.collection("maps").document(mapData.id!).updateData(values)
             
-            self.actionButton.setTitle("Following", for: .normal)
+            let title = mapData.communityMap ?? false ? "Joined" : "Following"
+            self.actionButton.setTitle(title, for: .normal)
             self.actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         case "Following":
             let alert = UIAlertController(title: "Are you sure you want to unfollow?", message: "", preferredStyle: .alert)
@@ -358,7 +360,7 @@ extension CustomMapHeaderCell {
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CustomMapMembersTap")
         guard let customMapVC = viewContainingController() as? CustomMapController else { return }
-        let friendListVC = FriendsListController(fromVC: customMapVC, allowsSelection: false, showsSearchBar: false, friendIDs: mapData.memberIDs, friendsList: [], confirmedIDs: [], presentedWithDrawerView: customMapVC.containerDrawerView!)
+        let friendListVC = FriendsListController(fromVC: customMapVC, allowsSelection: false, showsSearchBar: false, friendIDs: mapData.memberIDs, friendsList: [], confirmedIDs: [], sentFrom: .CustomMap, presentedWithDrawerView: customMapVC.containerDrawerView!)
         customMapVC.present(friendListVC, animated: true)
     }
 }

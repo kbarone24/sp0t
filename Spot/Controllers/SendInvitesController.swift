@@ -541,9 +541,9 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
         if (MFMessageComposeViewController.canSendText()) {
             
             let controller = MFMessageComposeViewController()
-            let betaString = "https://testflight.apple.com/join/dtVe46HZ"
+            let betaString = "https://testflight.apple.com/join/D22GVBSJ"
             
-            controller.body = "Hey! Here’s an invite to download sp0t, the app for finding and sharing cool spots: \(betaString)"
+            controller.body = "Here’s a link to download the sp0t app 🌎🦦👀 \(betaString)"
             controller.recipients = [number]
             controller.messageComposeDelegate = self
             

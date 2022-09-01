@@ -7,9 +7,18 @@
 //
 
 import UIKit
+import FirebaseUI
 
 class ProfileMyMapImageCollectionViewCell: UICollectionViewCell {
     var mapImageView: UIImageView!
+    var count: Int = 0
+    var imageURL: String = "" {
+        didSet {
+            let scale: CGFloat = count == 9 ? 100 : count == 1 ? 200 : 150
+            let transformer = SDImageResizingTransformer(size: CGSize(width: scale, height: scale), scaleMode: .aspectFill)
+            if mapImageView != nil { mapImageView.sd_setImage(with: URL(string: imageURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) }
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -21,7 +30,7 @@ class ProfileMyMapImageCollectionViewCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
-        
+        mapImageView.sd_cancelCurrentImageLoad()
     }
 }
 

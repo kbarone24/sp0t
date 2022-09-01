@@ -19,7 +19,6 @@ class ImagePreviewController: UIViewController {
     var currentImage: PostImagePreview!
     var nextImage: PostImagePreview!
     var previousImage: PostImagePreview!
-    var previewBackground: UIView! /// tracks where detail view will be added
     
     var backButton: UIButton!
     var dotView: UIView!
@@ -132,18 +131,10 @@ class ImagePreviewController: UIViewController {
     }
     
     func addPreviewView() {
+        view.backgroundColor = .black
         /// add initial preview view and buttons
         let post = UploadPostModel.shared.postObject!
-        
-        previewBackground = UIView {
-            $0.backgroundColor = UIColor(named: "SpotBlack")
-            $0.layer.cornerRadius = 15
-            view.addSubview($0)
-        }
-        previewBackground.snp.makeConstraints {
-            $0.leading.trailing.top.bottom.equalToSuperview()
-        }
-                
+
         currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex!)
         view.addSubview(currentImage)
         currentImage.makeConstraints()
@@ -176,7 +167,7 @@ class ImagePreviewController: UIViewController {
         }
         backButton.snp.makeConstraints {
             $0.leading.equalTo(5.5)
-            $0.top.equalTo(previewBackground.snp.top).offset(60)
+            $0.top.equalToSuperview().offset(60)
             $0.width.equalTo(48.6)
             $0.height.equalTo(38.6)
         }
@@ -215,7 +206,7 @@ class ImagePreviewController: UIViewController {
             view.addSubview($0)
         }
         dotView.snp.makeConstraints {
-            $0.top.equalTo(previewBackground.snp.top).offset(73)
+            $0.top.equalToSuperview().offset(73)
             $0.height.equalTo(9)
             $0.width.equalTo(dotWidth)
             $0.centerX.equalToSuperview()
@@ -261,7 +252,7 @@ class ImagePreviewController: UIViewController {
             $0.tintColor = UIColor(named: "SpotGreen")
             $0.text = textViewPlaceholder
             $0.returnKeyType = .done
-            $0.textContainerInset = UIEdgeInsets(top: 12, left: 19, bottom: 14, right: 60)
+            $0.textContainerInset = UIEdgeInsets(top: 10, left: 19, bottom: 14, right: 60)
             $0.isScrollEnabled = false
             $0.textContainer.maximumNumberOfLines = 6
             $0.textContainer.lineBreakMode = .byTruncatingHead
@@ -285,11 +276,12 @@ class ImagePreviewController: UIViewController {
             $0.layer.cornerRadius = 36/2
             $0.addTarget(self, action: #selector(atTap), for: .touchUpInside)
             $0.isHidden = true
-            textView.addSubview($0)
+            $0.clipsToBounds = false
+            postDetailView.addSubview($0)
         }
         atButton.snp.makeConstraints {
-            $0.trailing.equalTo(postDetailView.snp.trailing).inset(18)
-            $0.top.equalToSuperview()
+            $0.trailing.equalToSuperview().inset(15)
+            $0.top.equalTo(textView.snp.top).offset(-4)
             $0.height.width.equalTo(36)
         }
         
@@ -307,6 +299,10 @@ class ImagePreviewController: UIViewController {
         newSpotNameView = NewSpotNameView {
             $0.isHidden = true
             view.addSubview($0)
+        }
+        
+        if UserDataModel.shared.screenSize == 0 && UploadPostModel.shared.postObject.postImage.contains(where: {$0.aspectRatio() > 1.45 }) {
+            addExtraMask()
         }
     }
         
@@ -530,6 +526,17 @@ class ImagePreviewController: UIViewController {
         newSpot.posterUsername = UserDataModel.shared.userInfo.username
         finishPassing(spot: newSpot)
         UploadPostModel.shared.postType = .newSpot
+    }
+    
+    func addExtraMask() {
+        let extraMask = UIView {
+            $0.backgroundColor = UIColor.black.withAlphaComponent(0.65)
+            view.insertSubview($0, belowSubview: nextButton)
+        }
+        extraMask.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.top.equalTo(postDetailView.snp.bottom)
+        }
     }
 }
 
@@ -811,7 +818,6 @@ class PostImagePreview: PostImageView {
         let bottomConstraint = layoutValues.bottomConstraint
         
         snp.makeConstraints {
-            print("bottom constraint", bottomConstraint)
             $0.height.equalTo(currentHeight)
             $0.bottom.equalTo(-bottomConstraint)
             if index == post.selectedImageIndex { $0.leading.trailing.equalToSuperview() }
@@ -897,7 +903,7 @@ class PostDetailView: UIView {
             ]
             $0.startPoint = CGPoint(x: 0.5, y: 0.0)
             $0.endPoint = CGPoint(x: 0.5, y: 1.0)
-            $0.locations = [0, 0.35, 1]
+            $0.locations = [0, 0.5, 1]
             bottomMask.layer.addSublayer($0)
         }
     }

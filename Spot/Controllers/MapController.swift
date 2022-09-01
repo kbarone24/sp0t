@@ -68,7 +68,7 @@ class MapController: UIViewController {
             let hidden = sheetView != nil
             DispatchQueue.main.async {
                 self.toggleHomeAppearance(hidden: hidden)
-                self.animateHomeAlphas()
+                if !hidden { self.animateHomeAlphas() }
                 self.navigationController?.setNavigationBarHidden(hidden, animated: false)
             }
         }
@@ -135,7 +135,7 @@ class MapController: UIViewController {
         addButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(20)
             $0.bottom.equalToSuperview().inset(110) /// offset 65 px for portion of map below fold
-            $0.height.width.equalTo(73)
+            $0.height.width.equalTo(92)
         }
     }
     
@@ -356,9 +356,9 @@ extension MapController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         if status == .denied || status == .restricted {
             Mixpanel.mainInstance().track(event: "LocationServicesDenied")
-            presentLocationAlert()
         } else if status == .authorizedWhenInUse || status == .authorizedWhenInUse {
             Mixpanel.mainInstance().track(event: "LocationServicesAllowed")
+            UploadPostModel.shared.locationAccess = true
             locationManager.startUpdatingLocation()
         }
     }
@@ -367,12 +367,17 @@ extension MapController: CLLocationManagerDelegate {
         guard let location = locations.last else { return }
         UserDataModel.shared.currentLocation = location
         if (firstTimeGettingLocation) {
+            if manager.accuracyAuthorization == .reducedAccuracy { Mixpanel.mainInstance().track(event: "PreciseLocationOff") }
             /// set current location to show while feed loads
-            mapView.setRegion(MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 400000, longitudinalMeters: 400000), animated: false)
             firstTimeGettingLocation = false
             NotificationCenter.default.post(name: Notification.Name("UpdateLocation"), object: nil)
+            
             /// map might load before user accepts location services
-            if self.mapsLoaded { self.displayHeelsMap() }
+            if self.mapsLoaded {
+                self.displayHeelsMap()
+            } else {
+                self.mapView.setRegion(MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 400000, longitudinalMeters: 400000), animated: false)
+            }
         }
     }
     
@@ -383,9 +388,10 @@ extension MapController: CLLocationManagerDelegate {
             break
             //prompt user to open their settings if they havent allowed location services
         case .restricted, .denied:
-            presentLocationAlert()
+          //  presentLocationAlert()
             break
         case .authorizedWhenInUse, .authorizedAlways:
+            UploadPostModel.shared.locationAccess = true
             locationManager.startUpdatingLocation()
             break
         @unknown default:
@@ -503,6 +509,7 @@ class NotificationsButton: UIButton {
 }
 
 class MapTitleView: UIView {
+    var spotLogo: UIImageView!
     var profileButton: UIButton!
     var notiButton: NotificationsButton!
     var searchButton: UIButton!
@@ -513,6 +520,17 @@ class MapTitleView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
+        spotLogo = UIImageView {
+            $0.image = UIImage(named: "HomeLogo")
+            addSubview($0)
+        }
+        spotLogo.snp.makeConstraints {
+            $0.leading.equalTo(16)
+            $0.width.equalTo(83.37)
+            $0.height.equalTo(36)
+            $0.centerY.equalToSuperview()
+        }
         
         profileButton = UIButton {
             $0.setImage(UIImage(named: "ProfileNavIcon"), for: .normal)
