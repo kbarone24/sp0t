@@ -333,7 +333,7 @@ class FindFriendsController: UIViewController {
     }
     
     func getPendingFriends(mutuals: [(id: String, count: Int)]) {
-        var pendingRequests = UserDataModel.shared.userInfo.pendingFriendRequests
+        let pendingRequests = UserDataModel.shared.userInfo.pendingFriendRequests
         
         var mutuals = mutuals
         var secondaryMutuals: [(id: String, secondaryCount: Int)] = [] /// get "mutuals" from pending friend requests to fill up the rest of suggestions
