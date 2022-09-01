@@ -55,6 +55,8 @@ class CustomMapController: UIViewController {
     var fullScreenOnDismissal = false
     var ranSetUp = false
     
+    private var currentContainerCanDragStatus: Bool? = nil
+    
     init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], presentedDrawerView: DrawerView?, mapType: MapType) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile
@@ -162,6 +164,8 @@ extension CustomMapController {
     private func configureDrawerView() {
         if containerDrawerView == nil { return }
         containerDrawerView?.canInteract = true
+        containerDrawerView?.canDrag = currentContainerCanDragStatus ?? true
+        currentContainerCanDragStatus = nil
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
         let position: DrawerViewDetent = fullScreenOnDismissal ? .Top : .Middle
@@ -379,6 +383,7 @@ extension CustomMapController {
     }
     
     @objc func DrawerViewToTopCompletion() {
+        guard currentContainerCanDragStatus == nil else { return }
         Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")
         UIView.transition(with: self.barBackButton, duration: 0.1,
                           options: .transitionCrossDissolve,
@@ -532,6 +537,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     func openPost(posts: [MapPost]) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         if containerDrawerView?.status == .Top { fullScreenOnDismissal = true }
+        currentContainerCanDragStatus = containerDrawerView?.canDrag
         postVC.postsList = posts
         postVC.containerDrawerView = containerDrawerView
         DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
