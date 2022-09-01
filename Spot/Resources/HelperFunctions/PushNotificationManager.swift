@@ -25,11 +25,9 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
     }
     
     func registerForPushNotifications() {
+        updateFirestorePushTokenIfNeeded()
         UNUserNotificationCenter.current().getNotificationSettings { (settings) in
-            if settings.authorizationStatus == .authorized {
-                print("auth")
-                return
-            } else {
+            if settings.authorizationStatus != .authorized {
                 // Either denied or notDetermined
                 let authOptions: UNAuthorizationOptions = [.alert, .badge]
                 UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { (granted: Bool, err) in
@@ -43,12 +41,10 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
                 }
             }
         }
-        
         UNUserNotificationCenter.current().delegate = self
     }
     
     func updateFirestorePushTokenIfNeeded() {
-        
         if let token = Messaging.messaging().fcmToken {
             let usersRef = Firestore.firestore().collection("users").document(userID)
             usersRef.setData(["notificationToken": token], merge: true)
@@ -60,9 +56,7 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        
         receivedNoti = true
-        
         // tell the app that we have finished processing the user’s action / response
         completionHandler()
     }

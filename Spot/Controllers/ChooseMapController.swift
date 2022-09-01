@@ -22,8 +22,9 @@ class ChooseMapController: UIViewController {
     
     private var buttonView: UIView!
     private var postButton: UIButton!
-    private var myMapButton: MyMapButton!
-    private var tableView: UITableView!
+    private var friendsMapButton: FriendsMapButton!
+    private var tableView: ChooseMapTableView!
+    private var bottomMask: UIView!
     private var heightConstraint: Constraint? = nil
     
     private var progressBar: UIView!
@@ -55,8 +56,12 @@ class ChooseMapController: UIViewController {
         super.viewWillDisappear(animated)
     }
     
+    override func viewDidLayoutSubviews() {
+        addBottomMask()
+    }
+    
     func setUpNavBar() {
-        navigationItem.title = "Choose a map"
+        navigationItem.title = "Post to maps"
         
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.tintColor = .black
@@ -79,39 +84,31 @@ class ChooseMapController: UIViewController {
         }
         postButton.snp.makeConstraints {
             $0.bottom.equalToSuperview().offset(-48)
-            $0.leading.trailing.equalToSuperview().inset(64)
+            $0.leading.trailing.equalToSuperview().inset(49)
             $0.height.equalTo(58)
         }
         
-        myMapButton = MyMapButton {
-            $0.addTarget(self, action: #selector(myMapTap), for: .touchUpInside)
+        friendsMapButton = FriendsMapButton {
+            $0.addTarget(self, action: #selector(friendsMapTap), for: .touchUpInside)
             view.addSubview($0)
         }
-        myMapButton.snp.makeConstraints {
+        friendsMapButton.snp.makeConstraints {
             $0.top.equalTo(45)
-            $0.leading.equalTo(17)
-            $0.trailing.equalToSuperview().inset(25)
-            $0.height.equalTo(61)
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(62)
         }
     }
     
     func addTableView() {
-        tableView = UITableView {
-            $0.backgroundColor = nil
-            $0.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
-            $0.separatorStyle = .none
+        tableView = ChooseMapTableView {
             $0.dataSource = self
             $0.delegate = self
-            $0.showsVerticalScrollIndicator = false
-            $0.register(CustomMapsHeader.self, forHeaderFooterViewReuseIdentifier: "MapsHeader")
-            $0.register(CustomMapUploadCell.self, forCellReuseIdentifier: "MapCell")
-            $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
         tableView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(myMapButton.snp.bottom).offset(22)
-            $0.bottom.equalTo(postButton.snp.top).offset(-20)
+            $0.top.equalTo(friendsMapButton.snp.bottom).offset(38)
+            $0.bottom.equalTo(postButton.snp.top)
         }
     }
     
@@ -154,17 +151,41 @@ class ChooseMapController: UIViewController {
     }
     
     func enablePostButton() {
-        postButton.isEnabled = myMapButton.buttonSelected || UploadPostModel.shared.postObject.mapID != ""
+        postButton.isEnabled = friendsMapButton.buttonSelected || UploadPostModel.shared.postObject.mapID != ""
     }
 
-    @objc func myMapTap() {
-        toggleMyMap()
+    @objc func friendsMapTap() {
+        toggleFriendsMap()
+        HapticGenerator.shared.play(.light)
     }
     
-    func toggleMyMap() {
-        myMapButton.buttonSelected.toggle()
-        UploadPostModel.shared.postObject.hideFromFeed = !myMapButton.buttonSelected
+    func toggleFriendsMap() {
+        friendsMapButton.buttonSelected.toggle()
+        UploadPostModel.shared.postObject.hideFromFeed = !friendsMapButton.buttonSelected
         enablePostButton()
+    }
+    
+    func addBottomMask() {
+        if bottomMask != nil { return }
+        print("add bottom mask")
+        bottomMask = UIView {
+            $0.backgroundColor = nil
+            $0.isUserInteractionEnabled = false
+            view.addSubview($0)
+        }
+        view.bringSubviewToFront(postButton)
+        let _ = CAGradientLayer {
+            print("post frame", postButton.frame)
+            $0.frame = CGRect(x: 0, y: postButton.frame.minY - 200, width: UIScreen.main.bounds.width, height: 200)
+            $0.colors = [
+                UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor,
+                UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0).cgColor
+            ]
+            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
+            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
+            $0.locations = [0, 1]
+            bottomMask.layer.addSublayer($0)
+        }
     }
             
     @objc func shareTap() {
@@ -183,7 +204,9 @@ class ChooseMapController: UIViewController {
         var spot = UploadPostModel.shared.spotObject
         var map = UploadPostModel.shared.mapObject
         let newMap = self.newMap != nil
+        
         progressBar.isHidden = false
+        view.bringSubviewToFront(progressBar)
 
         let fullWidth = self.progressBar.bounds.width - 2
         DispatchQueue.global(qos: .userInitiated).async {
@@ -327,7 +350,7 @@ extension ChooseMapController: NewMapDelegate {
     func finishPassing(map: CustomMap) {
         Mixpanel.mainInstance().track(event: "ChooseMapCreateNew")
         newMap = map
-        customMaps.append(map)
+        customMaps.insert(map, at: 0)
         selectMap(map: map)
     }
     
@@ -337,7 +360,7 @@ extension ChooseMapController: NewMapDelegate {
         UploadPostModel.shared.postObject.mapID = map.id!
         UploadPostModel.shared.postObject.mapName = map.mapName
         /// if private map, make sure mymapbutton is deselected, if public, make sure selected
-        if myMapButton.buttonSelected == map.secret { toggleMyMap() }
+        if friendsMapButton.buttonSelected == map.secret { toggleFriendsMap() }
         
         DispatchQueue.main.async { self.tableView.reloadData() }
         enablePostButton()
@@ -370,11 +393,11 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 56
+        return 70
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 72
+        return 40
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -387,196 +410,28 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let map = customMaps[indexPath.row]
         map.id == UploadPostModel.shared.postObject.mapID ? deselectMap(map: map) : selectMap(map: map)
+        HapticGenerator.shared.play(.light)
     }
 }
 
-class CustomMapsHeader: UITableViewHeaderFooterView {
-    var customMapsLabel: UILabel!
-    var newMapButton: UIButton!
-    var plusIcon: UIImageView!
-    var mapLabel: UILabel!
-    var mapsEmpty: Bool = true {
-        didSet {
-            customMapsLabel.isHidden = mapsEmpty
-        }
+class ChooseMapTableView: UITableView {
+    override init(frame: CGRect, style: UITableView.Style) {
+        super.init(frame: frame, style: style)
+        backgroundColor = nil
+        contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
+        separatorStyle = .none
+        showsVerticalScrollIndicator = false
+        register(CustomMapsHeader.self, forHeaderFooterViewReuseIdentifier: "MapsHeader")
+        register(CustomMapUploadCell.self, forCellReuseIdentifier: "MapCell")
+        translatesAutoresizingMaskIntoConstraints = false
     }
-    var newMap: Bool = false {
-        didSet {
-            newMapButton.isHidden = newMap
-        }
-    }
-    
-    override init(reuseIdentifier: String?) {
-        super.init(reuseIdentifier: reuseIdentifier)
-        let backgroundView = UIView()
-        backgroundView.backgroundColor = .white
-        self.backgroundView = backgroundView
-                
-        customMapsLabel = UILabel {
-            $0.text = "CUSTOM MAPS"
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
-            $0.isHidden = true
-            addSubview($0)
-        }
-        customMapsLabel.snp.makeConstraints {
-            $0.leading.equalTo(15)
-            $0.bottom.equalToSuperview().inset(6)
-        }
-
-        newMapButton = UIButton {
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            $0.addTarget(self, action: #selector(newMapTap(_:)), for: .touchUpInside)
-            $0.layer.cornerRadius = 11
-            $0.layer.borderWidth = 1
-            $0.layer.borderColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1).cgColor
-            addSubview($0)
-        }
-        newMapButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(26)
-            $0.bottom.equalToSuperview().inset(10)
-            $0.width.equalTo(119)
-            $0.height.equalTo(38)
-        }
-
-        plusIcon = UIImageView {
-            $0.image = UIImage(named: "PlusIcon")
-            newMapButton.addSubview($0)
-        }
-        plusIcon.snp.makeConstraints {
-            $0.leading.equalTo(12)
-            $0.width.height.equalTo(15)
-            $0.centerY.equalToSuperview()
-        }
-        
-        mapLabel = UILabel {
-            $0.text = "New map"
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 15.5)
-            newMapButton.addSubview($0)
-        }
-        mapLabel.snp.makeConstraints {
-            $0.leading.equalTo(plusIcon.snp.trailing).offset(8)
-            $0.centerY.equalToSuperview()
-        }
-    }
-
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    @objc func newMapTap(_ sender: UIButton) {
-        if let chooseMapVC = viewContainingController() as? ChooseMapController {
-            if let newMapVC = chooseMapVC.storyboard?.instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
-                newMapVC.delegate = chooseMapVC
-                chooseMapVC.present(newMapVC, animated: true)
-            }
-        }
-    }
 }
 
-class CustomMapUploadCell: UITableViewCell {
-    var pillView: UIView!
-    var mapImage: UIImageView!
-    var nameLabel: UILabel!
-    var selectedImage: UIImageView!
-    
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setUpView()
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func setUp(map: CustomMap, selected: Bool, beginningCell: Bool, endCell: Bool) {
-        var maskedCorners = CACornerMask()
-        if beginningCell { maskedCorners.insert([.layerMaxXMinYCorner, .layerMinXMinYCorner]) }
-        if endCell { maskedCorners.insert([.layerMinXMaxYCorner, .layerMaxXMaxYCorner]) }
-        pillView.layer.maskedCorners = maskedCorners
-
-        let url = map.imageURL
-        if map.coverImage != UIImage () {
-            mapImage.image = map.coverImage
-        } else if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            mapImage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-        }
-        
-        let buttonImage = selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
-        selectedImage.image = buttonImage
-        
-        if map.secret {
-            let imageAttachment = NSTextAttachment()
-            imageAttachment.image = UIImage(named: "SecretMap")
-            imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
-            let attachmentString = NSAttributedString(attachment: imageAttachment)
-            let completeText = NSMutableAttributedString(string: "")
-            completeText.append(attachmentString)
-            completeText.append(NSAttributedString(string: " \(map.mapName)"))
-            self.nameLabel.attributedText = completeText
-        } else {
-            nameLabel.attributedText = NSAttributedString(string: map.mapName)
-        }
-    }
-
-    func setUpView() {
-        backgroundColor = .white
-        selectionStyle = .none
-        
-        pillView = UIView {
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            $0.layer.borderWidth = 1
-            $0.layer.borderColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1).cgColor
-            $0.clipsToBounds = true
-            $0.layer.cornerRadius = 12
-            contentView.addSubview($0)
-        }
-        pillView.snp.makeConstraints {
-            $0.leading.equalTo(15)
-            $0.trailing.equalToSuperview().inset(25)
-            $0.top.bottom.equalToSuperview()
-        }
-        
-        mapImage = UIImageView {
-            $0.layer.cornerRadius = 17
-            $0.clipsToBounds = true
-            $0.contentMode = .scaleAspectFill
-            pillView.addSubview($0)
-        }
-        mapImage.snp.makeConstraints {
-            $0.leading.equalTo(9)
-            $0.height.width.equalTo(34)
-            $0.centerY.equalToSuperview()
-        }
-        
-        selectedImage = UIImageView {
-            pillView.addSubview($0)
-        }
-        selectedImage.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(14)
-            $0.height.width.equalTo(29)
-            $0.centerY.equalToSuperview()
-        }
-
-        nameLabel = UILabel {
-            $0.textColor = .black
-            $0.lineBreakMode = .byTruncatingTail
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 18)
-            pillView.addSubview($0)
-        }
-        nameLabel.snp.makeConstraints {
-            $0.leading.equalTo(mapImage.snp.trailing).offset(8)
-            $0.trailing.lessThanOrEqualTo(selectedImage.snp.leading).offset(-8)
-            $0.centerY.equalToSuperview()
-        }
-
-    }
-}
-
-class MyMapButton: UIButton {
-    var avatarImage: UIImageView!
+class FriendsMapButton: UIButton {
+    var friendsMapIcon: UIImageView!
     var mapLabel: UILabel!
     var detailLabel: UILabel!
     var selectedImage: UIImageView!
@@ -589,43 +444,28 @@ class MyMapButton: UIButton {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-        layer.cornerRadius = 17.5
-        layer.borderWidth = 1
-        layer.borderColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1).cgColor
+        backgroundColor = nil
         
-        avatarImage = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.avatarPic
+        friendsMapIcon = UIImageView {
+            $0.image = UIImage(named: "FriendsMapIcon")
             $0.contentMode = .scaleAspectFill
             addSubview($0)
         }
-        avatarImage.snp.makeConstraints {
-            $0.leading.equalTo(12)
-            $0.width.equalTo(29.12)
-            $0.height.equalTo(42)
-            $0.centerY.equalToSuperview()
+        friendsMapIcon.snp.makeConstraints {
+            $0.leading.equalTo(9)
+            $0.width.equalTo(60)
+            $0.height.equalTo(62)
         }
         
         mapLabel = UILabel {
-            $0.text = "My map"
+            $0.text = "Friends map"
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 18)
             addSubview($0)
         }
         mapLabel.snp.makeConstraints {
-            $0.leading.equalTo(avatarImage.snp.trailing).offset(8)
-            $0.top.equalTo(10)
-        }
-        
-        detailLabel = UILabel {
-            $0.text = "Friends can see your map"
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14)
-            addSubview($0)
-        }
-        detailLabel.snp.makeConstraints {
-            $0.leading.equalTo(mapLabel.snp.leading)
-            $0.top.equalTo(mapLabel.snp.bottom).offset(1)
+            $0.leading.equalTo(friendsMapIcon.snp.trailing).offset(4)
+            $0.top.equalTo(18)
         }
         
         let buttonImage = buttonSelected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
@@ -634,9 +474,23 @@ class MyMapButton: UIButton {
             addSubview($0)
         }
         selectedImage.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(14)
-            $0.height.width.equalTo(29)
+            $0.trailing.equalToSuperview().inset(22)
+            $0.height.width.equalTo(33)
             $0.centerY.equalToSuperview()
+        }
+        
+        detailLabel = UILabel {
+            $0.text = "You and your friends shared world"
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14)
+            $0.adjustsFontSizeToFitWidth = true
+            $0.minimumScaleFactor = 0.7
+            addSubview($0)
+        }
+        detailLabel.snp.makeConstraints {
+            $0.leading.equalTo(mapLabel.snp.leading)
+            $0.top.equalTo(mapLabel.snp.bottom).offset(1)
+            $0.trailing.lessThanOrEqualTo(selectedImage.snp.leading).offset(-8)
         }
     }
     
@@ -657,7 +511,7 @@ class PostButton: UIButton {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = UIColor(named: "SpotGreen")
-        layer.cornerRadius = 15
+        layer.cornerRadius = 9
         
         postIcon = UIImageView {
             $0.image = UIImage(named: "PostIcon")

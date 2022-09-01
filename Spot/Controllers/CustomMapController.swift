@@ -55,6 +55,8 @@ class CustomMapController: UIViewController {
     var fullScreenOnDismissal = false
     var ranSetUp = false
     
+    private var currentContainerCanDragStatus: Bool? = nil
+    
     init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], presentedDrawerView: DrawerView?, mapType: MapType) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile
@@ -70,7 +72,6 @@ class CustomMapController: UIViewController {
     
     deinit {
         print("CustomMapController(\(self) deinit")
-        floatBackButton.removeFromSuperview()
         NotificationCenter.default.removeObserver(self)
         barView.removeFromSuperview()
     }
@@ -163,6 +164,8 @@ extension CustomMapController {
     private func configureDrawerView() {
         if containerDrawerView == nil { return }
         containerDrawerView?.canInteract = true
+        containerDrawerView?.canDrag = currentContainerCanDragStatus ?? true
+        currentContainerCanDragStatus = nil
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
         let position: DrawerViewDetent = fullScreenOnDismissal ? .Top : .Middle
@@ -263,10 +266,13 @@ extension CustomMapController {
         let dispatch = DispatchGroup()
         var memberList: [UserProfile] = []
         firstMaxFourMapMemberList.removeAll()
+        
+        let communityMap = mapData!.communityMap ?? false
+        let members = communityMap ? mapData!.memberIDs.reversed() : mapData!.memberIDs
         // Get the first four map member
-        for index in 0...(mapData!.memberIDs.count < 4 ? (mapData!.memberIDs.count - 1) : 3) {
+        for index in 0...(members.count < 4 ? (members.count - 1) : 3) {
             dispatch.enter()
-            getUserInfo(userID: mapData!.memberIDs[index]) { user in
+            getUserInfo(userID: members[index]) { user in
                 memberList.insert(user, at: 0)
                 dispatch.leave()
             }
@@ -274,7 +280,7 @@ extension CustomMapController {
         dispatch.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
             self.firstMaxFourMapMemberList = memberList
-            self.firstMaxFourMapMemberList.sort(by: {$0.id == self.mapData!.founderID && $1.id != self.mapData!.founderID})
+            if !communityMap { self.firstMaxFourMapMemberList.sort(by: {$0.id == self.mapData!.founderID && $1.id != self.mapData!.founderID}) }
             self.collectionView.reloadSections(IndexSet(integer: 0))
         }
     }
@@ -377,6 +383,7 @@ extension CustomMapController {
     }
     
     @objc func DrawerViewToTopCompletion() {
+        guard currentContainerCanDragStatus == nil else { return }
         Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")
         UIView.transition(with: self.barBackButton, duration: 0.1,
                           options: .transitionCrossDissolve,
@@ -384,9 +391,10 @@ extension CustomMapController {
             self.barBackButton.isHidden = false
         })
         // When in top position enable collection view scroll
+        print("enable bar interaction")
         barView.isUserInteractionEnabled = true
         collectionView.isScrollEnabled = true
-        
+        collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
         // Get top y content offset
         if topYContentOffset == nil {
             topYContentOffset = collectionView.contentOffset.y
@@ -446,6 +454,7 @@ extension CustomMapController {
     @objc func backButtonAction() {
         Mixpanel.mainInstance().track(event: "CustomMapBackTap")
         barBackButton.isHidden = true
+        floatBackButton.isHidden = true
         DispatchQueue.main.async {
             if self.navigationController?.viewControllers.count == 1 { self.mapController?.offsetCustomMapCenter() }
             self.containerDrawerView?.closeAction()
@@ -496,7 +505,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
             return headerCell
             
         } else if let headerCell = cell as? SimpleMapHeaderCell {
-            let text = mapType == .friendsMap ? "Friends posts" : "@\(userProfile!.username)'s posts"
+            let text = mapType == .friendsMap ? "Friends map" : "@\(userProfile!.username)'s posts"
             headerCell.mapText = text
             return headerCell
             
@@ -528,6 +537,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     func openPost(posts: [MapPost]) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         if containerDrawerView?.status == .Top { fullScreenOnDismissal = true }
+        currentContainerCanDragStatus = containerDrawerView?.canDrag
         postVC.postsList = posts
         postVC.containerDrawerView = containerDrawerView
         DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
@@ -565,7 +575,7 @@ extension CustomMapController: UIScrollViewDelegate {
                 }
                 var titleText = ""
                 if scrollView.contentOffset.y > 0 {
-                    titleText = mapType == .friendsMap ? "Friends posts" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
+                    titleText = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
                 }
                 titleLabel.text = titleText
             }
@@ -626,7 +636,6 @@ extension CustomMapController: MKMapViewDelegate {
                 let posts = getPostsFor(cluster: anno)
                 return mapView.getPostClusterAnnotation(anno: anno, posts: posts)
             } else if anno.memberAnnotations.contains(where: {$0 is SpotPostAnnotation}) {
-                print("get spot cluster", anno)
                 return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: mapData)
             }
         } else if let anno = annotation as? PostAnnotation {

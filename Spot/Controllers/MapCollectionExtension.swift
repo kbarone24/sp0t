@@ -26,6 +26,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             if avatarURLs.count < 5 && !avatarURLs.contains(UserDataModel.shared.userInfo.avatarURL ?? "") { avatarURLs.append(UserDataModel.shared.userInfo.avatarURL ?? "") }
             let postsList = map == nil ? friendsPostsDictionary.map({$0.value}) : map!.postsDictionary.map({$0.value})
             cell.setUp(map: map, avatarURLs: Array(avatarURLs), postsList: postsList)
+            cell.isSelected = selectedItemIndex == indexPath.row
             return cell
         }
         return UICollectionViewCell()
@@ -50,9 +51,12 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let spacing: CGFloat = 9 + 5 * 3
-        let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.6
-        return feedLoaded ? CGSize(width: itemWidth, height: itemWidth * 0.95) : CGSize(width: UIScreen.main.bounds.width, height: itemWidth * 0.95)
+        let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.7
+        let itemHeight = itemWidth * 0.95
+        let firstItemWidth = itemWidth * 1.15
+        return feedLoaded ? indexPath.item == 0 ? CGSize(width: firstItemWidth, height: itemHeight) : CGSize(width: itemWidth, height: itemHeight) : CGSize(width: UIScreen.main.bounds.width, height: itemHeight)
     }
+    
     
     func addMapAnnotations(index: Int, reload: Bool) {
         mapView.removeAllAnnos()
@@ -87,21 +91,29 @@ class MapHomeCell: UICollectionViewCell {
         setUpView()
         if map != nil {
             mapCoverImage.isHidden = false
-            if map?.mapName == "Heelsmap" {
+            friendsCoverImage.isHidden = true
+            if map!.id == "9ECABEF9-0036-4082-A06A-C8943428FFF4" {
                 mapCoverImage.image = UIImage(named: "HeelsmapCover")
             } else {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 180, height: 140), scaleMode: .aspectFill)
                 mapCoverImage.sd_setImage(with: URL(string: map!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
             }
+            mapCoverImage.layer.cornerRadius = 9
+            mapCoverImage.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
+            
             let textString = NSMutableAttributedString(string: map?.mapName ?? "").shrinkLineHeight()
             nameLabel.attributedText = textString
             nameLabel.sizeToFit()
             if map!.secret { lockIcon.isHidden = false }
         } else {
             friendsCoverImage.isHidden = false
+            mapCoverImage.isHidden = true
             friendsCoverImage.setUp(avatarURLs: avatarURLs!, annotation: false, completion: { _ in })
             friendsCoverImage.backgroundColor = .white
-            let textString = NSMutableAttributedString(string: "Friends").shrinkLineHeight()
+            friendsCoverImage.layer.cornerRadius = 9
+            friendsCoverImage.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
+            
+            let textString = NSMutableAttributedString(string: "Friends map").shrinkLineHeight()
             nameLabel.attributedText = textString
         }
         
@@ -109,13 +121,14 @@ class MapHomeCell: UICollectionViewCell {
             newIndicator.isHidden = false
         }
         
+        
         /// add image bottom corner radius
         let maskPath = UIBezierPath(roundedRect: mapCoverImage.bounds,
                                     byRoundingCorners: [.topLeft, .topRight],
                                     cornerRadii: CGSize(width: 9.0, height: 0.0))
         let maskLayer = CAShapeLayer()
         maskLayer.path = maskPath.cgPath
-        if map != nil { mapCoverImage.layer.mask = maskLayer } else { friendsCoverImage.layer.mask = maskLayer }
+     //   if map != nil { mapCoverImage.layer.mask = maskLayer } else { friendsCoverImage.layer.mask = maskLayer }
     }
     
     func setUpView() {
@@ -192,9 +205,9 @@ class MapHomeCell: UICollectionViewCell {
         }
         lockIcon.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.bottom.equalTo(nameLabel.snp.top).offset(4.5)
+            $0.bottom.equalTo(nameLabel.snp.top).offset(1.5)
             $0.width.equalTo(21)
-            $0.height.equalTo(19)
+            $0.height.equalTo(18.5)
         }
         
         layoutIfNeeded()
