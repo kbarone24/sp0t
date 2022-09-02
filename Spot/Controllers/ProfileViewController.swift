@@ -432,6 +432,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
             if let _ = cell as? ProfileMyMapCell {
+                guard relation == .friend || relation == .myself else { return }
                 let mapData = getMyMap()
                 let customMapVC = CustomMapController(userProfile: userProfile, mapData: mapData, postsList: [], presentedDrawerView: containerDrawerView, mapType: .myMap)
                 navigationController?.pushViewController(customMapVC, animated: true)
