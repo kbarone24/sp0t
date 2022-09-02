@@ -41,7 +41,7 @@ class ProfileMyMapCell: UICollectionViewCell {
     
     public func cellSetup(userAccount: String, posts: [MapPost], relation: ProfileRelation) {
         self.posts = posts
-        mapName.text = posts.count == 0 ? "" : "@\(userAccount)'s map"
+        mapName.text = "@\(userAccount)'s map"
         mapPrivateBlurView.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
         mapPrivateIcon.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
     }

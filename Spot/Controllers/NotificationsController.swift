@@ -71,8 +71,9 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     override func viewDidAppear(_ animated: Bool) {
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
-        // Set navigation bar hidden equals false here to avoid unexpected nav bar animation
-        navigationController?.setNavigationBarHidden(false, animated: true)
+        
+        // Set navigation bar translucent to false
+        navigationController?.navigationBar.isTranslucent = false
     }
     
     func configureDrawerView() {
@@ -84,9 +85,12 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     
     func setUpNavBar() {
         self.title = "Notifications"
+        navigationController?.setNavigationBarHidden(false, animated: false)
+        navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 47.0)
         navigationItem.backButtonTitle = ""
         navigationController!.navigationBar.barTintColor = UIColor.white
-        navigationController!.navigationBar.isTranslucent = false
+        // Nav bar shouldn't be translucent, however we need it to be here to avoid nav bar jumping. will set it back to false in viewDidAppear
+        navigationController!.navigationBar.isTranslucent = true
         navigationController!.navigationBar.barStyle = .black
         navigationController!.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
@@ -101,7 +105,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             style: .plain,
             target: self,
             action: #selector(leaveNotifs)
-        )
+        )        
     }
     
     
