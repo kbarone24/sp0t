@@ -158,6 +158,9 @@ class DrawerView: NSObject {
     
     // MARK: Present
     public func present(to: DrawerViewDetent = .Middle) {
+        self.topConstraints?.deactivate()
+        self.midConstraints?.deactivate()
+        self.botConstraints?.deactivate()
         switch to {
         case .Top:
             goTop()
@@ -172,9 +175,6 @@ class DrawerView: NSObject {
             self.slideView.frame.origin.y = self.yPosition
             self.parentVC.view.layoutIfNeeded()
         } completion: { success in
-            self.topConstraints?.deactivate()
-            self.midConstraints?.deactivate()
-            self.botConstraints?.deactivate()
             NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
         }
     }
@@ -239,6 +239,9 @@ class DrawerView: NSObject {
                 return
             }
 
+            self.topConstraints?.deactivate()
+            self.midConstraints?.deactivate()
+            self.botConstraints?.deactivate()
             // Check the velocity of gesture to determine if it's a swipe or a drag
             if swipeToNextState && abs(velocity.y) > 1000 {
                 // This is a swipe
@@ -278,9 +281,6 @@ class DrawerView: NSObject {
                 self.slideView.frame.origin.y = self.yPosition
                 self.parentVC.view.layoutIfNeeded()
             } completion: { success in
-                self.topConstraints?.deactivate()
-                self.midConstraints?.deactivate()
-                self.botConstraints?.deactivate()
                 NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
             }
         }
