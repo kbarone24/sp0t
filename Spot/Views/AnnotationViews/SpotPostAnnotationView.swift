@@ -21,9 +21,7 @@ class SpotPostAnnotationView: MKAnnotationView {
 
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
-        collisionMode = .circle
         canShowCallout = false
-        centerOffset = CGPoint(x: 0, y: -20)
         addTap()
     }
     required init?(coder aDecoder: NSCoder) {
@@ -37,7 +35,7 @@ class SpotPostAnnotationView: MKAnnotationView {
         
         let post = posts.first
         if post != nil {
-            let nibView = loadNib(post: post!, spotName: spotName, postCount: posts.count)
+            let nibView = loadPostNib(post: post!, spotName: spotName, postCount: posts.count)
             self.image = nibView.asImage()
 
             guard let url = URL(string: post!.imageURLs.first ?? "") else { image = nibView.asImage(); return }
@@ -46,11 +44,19 @@ class SpotPostAnnotationView: MKAnnotationView {
                 guard let self = self else { return }
                 nibView.postImage.image = image
                 self.image = nibView.asImage()
+                self.collisionMode = .circle
+                self.centerOffset = CGPoint(x: 0, y: -20)
             }
+        } else {
+            /// no post attached to this spot
+            let nibView = loadNameNib(spotName: spotName, spotID: id)
+            image = nibView.asImage()
+            collisionMode = .rectangle
+            centerOffset = CGPoint(x: 0, y: 10)
         }
     }
     
-    func loadNib(post: MapPost, spotName: String, postCount: Int) -> SpotPostView {
+    func loadPostNib(post: MapPost, spotName: String, postCount: Int) -> SpotPostView {
         let infoWindow = SpotPostView.instanceFromNib() as! SpotPostView
         infoWindow.clipsToBounds = false
         infoWindow.backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
@@ -86,6 +92,20 @@ class SpotPostAnnotationView: MKAnnotationView {
             infoWindow.spotIcon.isHidden = true
         }
         
+        infoWindow.resizeView()
+        return infoWindow
+    }
+    
+    func loadNameNib(spotName: String, spotID: String) -> SpotNameView {
+        let infoWindow = SpotNameView.instanceFromNib() as! SpotNameView
+        let attributes: [NSAttributedString.Key : Any] = [
+            NSAttributedString.Key.strokeColor: UIColor.white,
+            NSAttributedString.Key.foregroundColor: UIColor.black,
+            NSAttributedString.Key.strokeWidth: -3,
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 14.5)!
+        ]
+        infoWindow.spotLabel.attributedText = NSAttributedString(string: spotName, attributes: attributes)
+        infoWindow.spotLabel.sizeToFit()
         infoWindow.resizeView()
         return infoWindow
     }

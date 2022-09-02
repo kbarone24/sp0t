@@ -269,6 +269,9 @@
 		8C3BAF67260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF68260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF6D260D229100349091 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C3BAF6C260D229100349091 /* MapKit.framework */; };
+		8C53A80A28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */; };
+		8C53A80B28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */; };
+		8C53A80C28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */; };
 		8C5AF2EA288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
 		8C5AF2EB288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
 		8C5AF2EC288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
@@ -477,6 +480,7 @@
 		8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerController.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
 		8C3BAF6C260D229100349091 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapOnboardingExtension.swift; sourceTree = "<group>"; };
 		8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAvatarView.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C88B0E627B46E3900DB4039 /* PostImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageModel.swift; sourceTree = "<group>"; };
@@ -712,6 +716,7 @@
 				8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */,
 				8C1E4872289C54900093030D /* MapViewDelegate.swift */,
 				8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */,
+				8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */,
 			);
 			name = Map;
 			sourceTree = "<group>";
@@ -1288,6 +1293,7 @@
 				594CE11324B6A6CF0051516C /* MapPost.swift in Sources */,
 				59FCF5B224734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
 				593AC549243F898300C08237 /* UsernameController.swift in Sources */,
+				8C53A80A28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
 				5916A8BB24A566F400118E83 /* ResultUser.swift in Sources */,
 				59FCF5AF24734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				5F81C1272862EFBF0088A5B0 /* UserNotification.swift in Sources */,
@@ -1380,6 +1386,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				59F6ABB0234EA73500E18AAF /* Contact.swift in Sources */,
+				8C53A80B28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
 				593AC54E243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
@@ -1470,6 +1477,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				59F6ABB1234EA73500E18AAF /* Contact.swift in Sources */,
+				8C53A80C28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
 				593AC54F243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
@@ -1796,8 +1804,8 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 13;
-				DEVELOPMENT_TEAM = "";
-        ENABLE_PREVIEWS = YES;
+				DEVELOPMENT_TEAM = H5355TZ8Q3;
+				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",

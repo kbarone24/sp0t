@@ -114,9 +114,11 @@ class EditProfileViewController: UIViewController {
         
         userProfile!.currentLocation = locationTextfield.text ?? ""
         userProfile!.name = nameTextfield.text ?? ""
+        let lowercaseName = userProfile!.name.lowercased()
+        let nameKeywords = lowercaseName.getKeywordArray()
         
         let userRef = db.collection("users").document(userProfile!.id!)
-        userRef.updateData(["name" : userProfile!.name, "currentLocation": userProfile!.currentLocation, "avatarURL": self.userProfile!.avatarURL as Any])
+        userRef.updateData(["name" : userProfile!.name, "currentLocation": userProfile!.currentLocation, "avatarURL": self.userProfile!.avatarURL as Any, "lowercaseName": lowercaseName, "nameKeywords": nameKeywords])
         if profileChanged {
             updateProfileImage()
         } else {

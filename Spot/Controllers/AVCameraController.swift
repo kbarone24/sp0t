@@ -278,15 +278,12 @@ class AVCameraController: UIViewController {
     }
     
     func addAccessMask() {
-        let minY : CGFloat = UIScreen.main.bounds.height > 800 ? 82 : 2
         accessMask = CameraAccessView {
             $0.setUp(cameraAccess: UploadPostModel.shared.cameraAccess == .authorized, galleryAccess: UploadPostModel.shared.galleryAccess == .authorized, locationAccess: UploadPostModel.shared.locationAccess)
             view.addSubview($0)
         }
         accessMask.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.top.equalToSuperview().offset(minY)
-            $0.height.equalToSuperview().inset(minY/2)
+            $0.edges.equalToSuperview()
         }
     }
     
@@ -483,7 +480,7 @@ class AVCameraController: UIViewController {
             guard let self = self else { return }
             try? self.cameraController.displayPreview(on: self.cameraView)
             self.view.isUserInteractionEnabled = true
-           self.setAutoExposure()
+            self.setAutoExposure()
         }
     }
     

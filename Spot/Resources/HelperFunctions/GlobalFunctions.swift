@@ -383,7 +383,7 @@ extension UIViewController {
         }
     }
 
-    func uploadPost(post: MapPost, map: CustomMap?) {
+    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
         /// send local notification first
         var notiPost = post
         notiPost.id = post.id!
@@ -398,9 +398,9 @@ extension UIViewController {
         do {
             try postRef.setData(from: post)
             self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
-            
+            if !newMap { self.sendPostNotification(post: post, map: map, spot: spot) } /// send new map notis for new map
             let commentRef = postRef.collection("comments").document(commentObject.id!)
-
+            
             do {
                 try commentRef.setData(from: commentObject)
             } catch {
@@ -408,6 +408,13 @@ extension UIViewController {
             }
         } catch {
             print("failed uploading post")
+        }
+    }
+    
+    func sendPostNotification(post: MapPost, map: CustomMap?, spot: MapSpot?) {
+        let functions = Functions.functions()
+        functions.httpsCallable("sendPostNotifications").call(["communityMap": map?.communityMap ?? false, "friendIDs": UserDataModel.shared.userInfo.friendIDs, "imageURLs": post.imageURLs, "mapID": map.id ?? "": "mapMembers": map?.memberIDs ?? [], "mapName": map?.mapName ?? "", "postID": post.id!, "posterID": UserDataModel.shared.uid, "posterUsername": UserDataModel.shared.userInfo.username, "privacyLevel": post.privacyLevel, "spotID": spot.id ?? "", "spotName": spot?.spotName ?? "", "spotVisitors": spot?.visitorList ?? [], "taggedUserIDs": post.taggedUserIDs]) { result, error in
+            print(result?.data as Any, error as Any)
         }
     }
             

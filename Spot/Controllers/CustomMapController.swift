@@ -547,6 +547,8 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         var emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp(date: Date()))
         emptyPost.spotID = spotID
         emptyPost.spotName = spotName
+        emptyPost.mapID = mapData!.id
+        emptyPost.mapName = mapData!.mapName
         let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: containerDrawerView)
         navigationController?.pushViewController(spotVC, animated: true)
     }
@@ -603,11 +605,7 @@ extension CustomMapController: SpotMapViewDelegate {
     func openSpotFromSpotPost(view: SpotPostAnnotationView) {
         openSpot(spotID: view.id, spotName: view.spotName)
     }
-    
-    func openSpotFromSpotName(view: SpotNameAnnotationView) {
-        openSpot(spotID: view.id, spotName: view.spotName)
-    }
-    
+        
     func openPostFromFriendsPost(view: FriendPostAnnotationView) {
         var posts: [MapPost] = []
         for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
