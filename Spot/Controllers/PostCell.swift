@@ -577,7 +577,6 @@ extension PostCell {
         Mixpanel.mainInstance().track(event: "PostPageSpotTap")
         if let postVC = viewContainingController() as? PostController {
             let spotVC = SpotPageController(mapPost: post, presentedDrawerView: postVC.containerDrawerView)
-            postVC.containerDrawerView?.showCloseButton = false
             postVC.navigationController?.pushViewController(spotVC, animated: true)
         }
     }
