@@ -343,7 +343,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         self.activityIndicatorView.stopAnimating()
         
         sendInvitesView = SendInvitesView{
-            $0.setUp()
+            $0.setUp(sentInvites: UserDataModel.shared.userInfo.sentInvites.count)
             $0.isUserInteractionEnabled = true
             $0.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
             $0.isHidden = false

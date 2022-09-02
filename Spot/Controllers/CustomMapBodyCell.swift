@@ -27,10 +27,8 @@ class CustomMapBodyCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
-        if postImage != nil {
-            postImage.image = UIImage()
-            postLocation.text = ""
-        }
+        if postImage != nil { postImage.sd_cancelCurrentImageLoad(); postImage.image = UIImage() }
+        if postLocation != nil { postLocation.text = "" }
     }
     
     public func cellSetup(postData: MapPost) {

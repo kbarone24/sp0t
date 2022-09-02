@@ -302,10 +302,12 @@ class MapController: UIViewController {
         sheetView?.present(to: .Middle)
     }
     
-    func openSpot(spotID: String, spotName: String) {
+    func openSpot(spotID: String, spotName: String, mapID: String, mapName: String) {
         var emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp(date: Date()))
         emptyPost.spotID = spotID
         emptyPost.spotName = spotName
+        emptyPost.mapID = mapID
+        emptyPost.mapName = mapName
         let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: nil)
         sheetView = DrawerView(present: spotVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
@@ -328,7 +330,7 @@ class MapController: UIViewController {
         } else {
             mapView.delegate = self
             mapView.spotMapDelegate = self
-            addMapAnnotations(index: selectedItemIndex, reload: true)
+            DispatchQueue.main.async { self.addMapAnnotations(index: self.selectedItemIndex, reload: true) }
         }
     }
     

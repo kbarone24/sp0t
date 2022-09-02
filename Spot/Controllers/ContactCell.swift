@@ -148,7 +148,7 @@ class ContactCell: UITableViewCell {
         }
         
         //cell details and adding targets that depend on contact type
-        if(contact != nil){
+        if (contact != nil) {
             name.text = contact!.name
             detail.text = contact!.username
             if friend == .none{

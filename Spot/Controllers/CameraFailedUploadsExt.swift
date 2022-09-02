@@ -144,7 +144,7 @@ extension AVCameraController {
                         self.uploadMap(map: map, newMap: newMap, post: post)
                     }
                     
-                    self.uploadPost(post: post, map: map)
+                    self.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
 
                     let visitorList = spot.visitorList
                     self.setUserValues(poster: self.uid, post: post, spotID: spot.id ?? "", visitorList: visitorList, mapID: map.id ?? "")

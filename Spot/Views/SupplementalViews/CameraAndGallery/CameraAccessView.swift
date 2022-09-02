@@ -12,115 +12,90 @@ import Photos
 
 class CameraAccessView: UIView {
     var cancelButton: UIButton!
-    var label0: UILabel!
-    var label1: UILabel!
+    var label: UILabel!
     
-    var cameraAccessButton: UIButton!
-    var galleryAccessButton: UIButton!
-    var locationAccessButton: UIButton!
+    var cameraAccessButton: AccessButton!
+    var galleryAccessButton: AccessButton!
+    var locationAccessButton: AccessButton!
     
     var cameraAccess = false {
         didSet {
-            cameraAccessButton.alpha = cameraAccess ? 0.3 : 1.0
-            cameraAccessButton.isEnabled = !cameraAccess
+            cameraAccessButton.access = cameraAccess
         }
     }
     
     var galleryAccess = false {
         didSet {
-            galleryAccessButton.alpha = galleryAccess ? 0.3 : 1.0
-            galleryAccessButton.isEnabled = !galleryAccess
+            galleryAccessButton.access = galleryAccess
         }
     }
     
     var locationAccess = false {
         didSet {
-            locationAccessButton.alpha = locationAccess ? 0.3 : 1.0
-            locationAccessButton.isEnabled = !locationAccess
+            if locationAccessButton != nil { locationAccessButton!.access = locationAccess }
         }
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = true
-        backgroundColor = .black
+        backgroundColor = .white
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLocationAccess), name: NSNotification.Name(("UpdateLocation")), object: nil)
 
         cancelButton = UIButton {
             $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
             $0.contentHorizontalAlignment = .fill
             $0.contentVerticalAlignment = .fill
-            $0.setImage(UIImage(named: "CancelButton"), for: .normal)
+            $0.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
             addSubview($0)
         }
         cancelButton.snp.makeConstraints {
             $0.leading.equalTo(4)
-            $0.top.equalTo(17)
+            $0.top.equalTo(44)
             $0.width.height.equalTo(50)
         }
         
-        label0 = UILabel {
-            $0.text = "Share on sp0t"
-            $0.textColor = .white
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 24)
+        label = UILabel {
+            $0.text = "Enable access to share on sp0t"
+            $0.textColor = .black
+            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20)
             $0.textAlignment = .center
             addSubview($0)
         }
-        label0.snp.makeConstraints {
+        label.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview().offset(-200)
+            $0.centerY.equalToSuperview().offset(-150)
         }
         
-        label1 = UILabel {
-            $0.text = "Enable access to post!"
-            $0.textColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0)
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 15)
-            $0.textAlignment = .center
-            addSubview($0)
-        }
-        label1.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(30)
-            $0.top.equalTo(label0.snp.bottom).offset(10)
-        }
-        
-        locationAccessButton = UIButton {
-            $0.setTitle("Enable location access", for: .normal)
-            $0.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
-            $0.contentHorizontalAlignment = .center
-            $0.addTarget(self, action: #selector(locationAccessTap), for: .touchUpInside)
-            addSubview($0)
-        }
-        locationAccessButton.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(label1.snp.bottom).offset(55)
-        }
-        
-        cameraAccessButton = UIButton {
-            $0.setTitle("Enable camera access", for: .normal)
-            $0.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
-            $0.contentHorizontalAlignment = .center
+        cameraAccessButton = AccessButton {
+            $0.setUp(type: .camera, enabled: cameraAccess)
             $0.addTarget(self, action: #selector(cameraAccessTap), for: .touchUpInside)
             addSubview($0)
         }
         cameraAccessButton.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(locationAccessButton.snp.bottom).offset(15)
+            $0.top.equalTo(label.snp.bottom).offset(30)
+            $0.leading.trailing.equalToSuperview().inset(20)
         }
         
-        galleryAccessButton = UIButton {
-            $0.setTitle("Enable gallery access", for: .normal)
-            $0.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Regular", size: 16)
-            $0.contentHorizontalAlignment = .center
+        galleryAccessButton = AccessButton {
+            $0.setUp(type:  .gallery, enabled: galleryAccess)
             $0.addTarget(self, action: #selector(galleryAccessTap), for: .touchUpInside)
             addSubview($0)
         }
         galleryAccessButton.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(cameraAccessButton.snp.bottom).offset(15)
+            $0.top.equalTo(cameraAccessButton.snp.bottom).offset(25)
+            $0.leading.trailing.equalToSuperview().inset(20)
+        }
+
+        locationAccessButton = AccessButton {
+            $0.setUp(type: .location, enabled: locationAccess)
+            $0.addTarget(self, action: #selector(locationAccessTap), for: .touchUpInside)
+            addSubview($0)
+        }
+        locationAccessButton.snp.makeConstraints {
+            $0.top.equalTo(galleryAccessButton.snp.bottom).offset(25)
+            $0.leading.trailing.equalToSuperview().inset(20)
         }
     }
     
@@ -132,6 +107,7 @@ class CameraAccessView: UIView {
         self.cameraAccess = cameraAccess
         self.galleryAccess = galleryAccess
         self.locationAccess = locationAccess
+        locationAccessButton.isHidden = locationAccess
     }
     
     required init?(coder: NSCoder) {
@@ -160,9 +136,6 @@ class CameraAccessView: UIView {
     }
     
     func askForCameraAccess(first: Bool) {
-        
-        guard let camera = viewContainingController() as? AVCameraController else { return }
-        
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { response in
@@ -171,22 +144,12 @@ class CameraAccessView: UIView {
                 }
             }
         case .denied, .restricted:
-            
             /// open settings immediately if user had already rejected
-            if first {UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return }
-            
-            let alert = UIAlertController(title: "Allow camera access to take a picture", message: nil, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
-                UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil )}
-            ))
-            alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: nil))
-            camera.present(alert, animated: false, completion: nil)
-            
+            if first { DispatchQueue.main.async { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return } }
         case .authorized:
             UploadPostModel.shared.cameraAccess = .authorized
             cameraAccess = true
             checkForRemove()
-            
         default: return
         }
     }
@@ -196,42 +159,111 @@ class CameraAccessView: UIView {
     }
     
     func askForGallery(first: Bool) {
-        
-        guard let camera = viewContainingController() as? AVCameraController else { return }
-
         switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
-        
         case .notDetermined:
             PHPhotoLibrary.requestAuthorization { _ in self.askForGallery(first: false) }
-            
         case .restricted, .denied:
-            
-            if first {UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return }
-
-            let alert = UIAlertController(title: "Allow gallery access to upload pictures from your camera roll", message: nil, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { action in
-                UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil) }))
-            alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: nil))
-            camera.present(alert, animated: true, completion: nil)
-            
-
+            if first { DispatchQueue.main.async { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return } }
         case .authorized, .limited:
             UploadPostModel.shared.galleryAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite)
             galleryAccess = true
             NotificationCenter.default.post(name: Notification.Name(rawValue: "GalleryAuthorized"), object: nil, userInfo: nil)
             checkForRemove()
-            
         default: return
-            
         }
     }
     
     @objc func locationAccessTap() {
-        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil )
+        DispatchQueue.main.async { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ) }
     }
     
     @objc func notifyLocationAccess() {
         locationAccess = true
         checkForRemove()
     }
+}
+
+class AccessButton: UIButton {
+    var icon: UIImageView!
+    var label: UILabel!
+    var checkBox: UIImageView!
+    
+    var access = false {
+        didSet {
+            DispatchQueue.main.async {
+                self.checkBox.image = self.access ? UIImage(named: "MapToggleOn")!.alpha(0.5) : UIImage(named: "MapToggleOff")
+                self.icon.alpha = self.access ? 0.22 : 1.0
+                self.label.alpha = self.access ? 0.22 : 1.0
+            }
+        }
+    }
+    
+    enum AccessButtonType {
+        case camera
+        case gallery
+        case location
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        icon = UIImageView {
+            addSubview($0)
+        }
+
+        label = UILabel {
+            $0.textColor = UIColor(red: 0.504, green: 0.504, blue: 0.504, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
+            addSubview($0)
+        }
+        label.snp.makeConstraints {
+            $0.leading.equalTo(69)
+            $0.centerY.equalToSuperview()
+        }
+        
+        checkBox = UIImageView {
+            addSubview($0)
+        }
+        checkBox.snp.makeConstraints {
+            $0.trailing.equalToSuperview().offset(-26)
+            $0.centerY.equalToSuperview()
+            $0.height.width.equalTo(33)
+        }
+    }
+    
+    func setUp(type: AccessButtonType, enabled: Bool) {
+        switch type {
+        case .camera:
+            label.text = "Camera"
+            icon.image = UIImage(named: "CameraAccess") /// placeholder
+            icon.snp.makeConstraints {
+                $0.leading.equalTo(18)
+                $0.centerY.equalToSuperview()
+                $0.width.equalTo(38.35)
+                $0.height.equalTo(30.4)
+            }
+        case .gallery:
+            label.text = "Photo gallery"
+            icon.image = UIImage(named: "GalleryAccess") /// placeholder
+            icon.snp.makeConstraints {
+                $0.leading.equalTo(18)
+                $0.centerY.equalToSuperview()
+                $0.width.equalTo(37.2)
+                $0.height.equalTo(31)
+            }
+        case .location:
+            label.text = "Location"
+            icon.image = UIImage(named: "LocationAccess") /// placeholder
+            icon.snp.makeConstraints {
+                $0.leading.equalTo(20)
+                $0.centerY.equalToSuperview()
+                $0.width.equalTo(28)
+                $0.height.equalTo(32.8)
+            }
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
 }

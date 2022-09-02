@@ -195,6 +195,8 @@ class ActivityCell: UITableViewCell {
             subtitle = notifText
         case "postAdd":
             subtitle = "added you to a post"
+        case "postTag":
+            subtitle = "tagged you in a post!"
         case "publicSpotAccepted":
             subtitle = "Your public submission was approved!"
         case "cityPost":
