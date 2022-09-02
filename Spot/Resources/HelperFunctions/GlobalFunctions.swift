@@ -398,7 +398,7 @@ extension UIViewController {
         do {
             try postRef.setData(from: post)
             self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
-            if !newMap { self.sendPostNotification(post: post, map: map, spot: spot) } /// send new map notis for new map
+            if !newMap { self.sendPostNotifications(post: post, map: map, spot: spot) } /// send new map notis for new map
             let commentRef = postRef.collection("comments").document(commentObject.id!)
             
             do {
@@ -411,13 +411,29 @@ extension UIViewController {
         }
     }
     
-    func sendPostNotification(post: MapPost, map: CustomMap?, spot: MapSpot?) {
+    func sendPostNotifications(post: MapPost, map: CustomMap?, spot: MapSpot?) {
         let functions = Functions.functions()
-        functions.httpsCallable("sendPostNotifications").call(["communityMap": map?.communityMap ?? false, "friendIDs": UserDataModel.shared.userInfo.friendIDs, "imageURLs": post.imageURLs, "mapID": map.id ?? "": "mapMembers": map?.memberIDs ?? [], "mapName": map?.mapName ?? "", "postID": post.id!, "posterID": UserDataModel.shared.uid, "posterUsername": UserDataModel.shared.userInfo.username, "privacyLevel": post.privacyLevel, "spotID": spot.id ?? "", "spotName": spot?.spotName ?? "", "spotVisitors": spot?.visitorList ?? [], "taggedUserIDs": post.taggedUserIDs]) { result, error in
+        let notiValues: [String: Any] = [
+            "communityMap": map?.communityMap ?? false,
+             "friendIDs": UserDataModel.shared.userInfo.friendIDs,
+             "imageURLs": post.imageURLs,
+             "mapID": map?.id ?? "",
+             "mapMembers": map?.memberIDs ?? [],
+             "mapName": map?.mapName ?? "",
+             "postID": post.id!,
+             "posterID": UserDataModel.shared.uid,
+             "posterUsername": UserDataModel.shared.userInfo.username,
+             "privacyLevel": post.privacyLevel ?? "friends",
+             "spotID": spot?.id ?? "",
+             "spotName": spot?.spotName ?? "",
+             "spotVisitors": spot?.visitorList ?? [],
+            "taggedUserIDs": post.taggedUserIDs ?? []
+        ]
+        functions.httpsCallable("sendPostNotification").call(notiValues) { result, error in
             print(result?.data as Any, error as Any)
         }
     }
-            
+                
     func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) {
         
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
