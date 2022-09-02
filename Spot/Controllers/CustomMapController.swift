@@ -346,7 +346,7 @@ extension CustomMapController {
         if mapType == .friendsMap || mapType == .myMap {
             /// show only friends level posts for friends map and my map,
             if post.privacyLevel == "invite" && post.hideFromFeed ?? false {
-                return (post.inviteList?.contains(uid) ?? false)
+                return false
             }
             return UserDataModel.shared.userInfo.friendIDs.contains(post.posterID) || uid == post.posterID
         }
@@ -391,7 +391,6 @@ extension CustomMapController {
             self.barBackButton.isHidden = false
         })
         // When in top position enable collection view scroll
-        print("enable bar interaction")
         barView.isUserInteractionEnabled = true
         collectionView.isScrollEnabled = true
         collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)

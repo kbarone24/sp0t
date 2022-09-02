@@ -347,10 +347,13 @@ extension NotificationsController: UITableViewDataSource {
         
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView.cellForRow(at: indexPath) is ActivityCell {
-            if let post = notifications[indexPath.row].postInfo {
-                let comment = notifications[indexPath.row].type.contains("comment")
+            let notification = notifications[indexPath.row]
+            if notification.type == "mapInvite" {
+                openMap(mapID: notification.mapID ?? "")
+            } else if let post = notification.postInfo {
+                let comment = notification.type.contains("comment")
                 openPost(post: post, commentNoti: comment)
-            } else if let user = notifications[indexPath.row].userInfo {
+            } else if let user = notification.userInfo {
                 openProfile(user: user)
             }
         }
@@ -516,6 +519,13 @@ extension NotificationsController {
         postVC.containerDrawerView = containerDrawerView
         postVC.openComments = commentNoti
         DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
+    }
+    
+    func openMap(mapID: String) {
+        var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
+        map.id = mapID
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
+        navigationController?.pushViewController(customMapVC, animated: true)
     }
 }
 

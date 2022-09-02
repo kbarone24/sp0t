@@ -216,7 +216,7 @@ class HeelsMapPopUpController: UIViewController {
                  self.heelsMap = mapInfo
                  self.friendsText = String(mapInfo.memberIDs.count) + " Friends"
                  let customButtonTitle = NSMutableAttributedString(string: self.friendsText, attributes: [
-                     NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15),
+                     NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15)!,
                      NSAttributedString.Key.foregroundColor: UIColor(red: 0.712, green: 0.712, blue: 0.712, alpha: 1)
                  ])
                  self.friendsJoined.setAttributedTitle(customButtonTitle, for: .normal)
