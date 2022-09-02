@@ -15,6 +15,7 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     var originalCenter: CGPoint
     var activeAnimation = false
     var currentAspect: CGFloat
+    var imageMask: UIView!
     
     override init(frame: CGRect) {
         stillImage = UIImage()
@@ -122,7 +123,8 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     }
 
     func addBottomMask() {
-        let imageMask = UIView {
+        if imageMask != nil { return }
+        imageMask = UIView {
             addSubview($0)
         }
         imageMask.snp.makeConstraints {

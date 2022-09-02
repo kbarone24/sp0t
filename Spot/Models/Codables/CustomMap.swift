@@ -180,9 +180,8 @@ struct MapPostGroup {
     mutating func sortPostIDs() {
         postIDs = postIDs.sorted(by: { p1, p2 in
             guard p1.seen == p2.seen else {
-                return p1.seen && !p2.seen
+                return !p1.seen && p2.seen
             }
-            
             return p1.timestamp.seconds > p2.timestamp.seconds
         })
     }

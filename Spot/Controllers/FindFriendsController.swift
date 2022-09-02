@@ -99,6 +99,8 @@ class FindFriendsController: UIViewController {
             DispatchQueue.main.async { self.suggestedTable.reloadData() }
         }
         
+        if sendInvitesView != nil { sendInvitesView.sentInvites = UserDataModel.shared.userInfo.sentInvites.count }
+        
         Mixpanel.mainInstance().track(event: "FindFriendsOpen")
     }
     
@@ -202,8 +204,8 @@ class FindFriendsController: UIViewController {
         }
         
         sendInvitesView = SendInvitesView()
-        sendInvitesView.setUp()
-    //    sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
+        sendInvitesView.setUp(sentInvites: UserDataModel.shared.userInfo.sentInvites.count)
+        sendInvitesView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
         mainView.addSubview(sendInvitesView)
         
         sendInvitesView.snp.makeConstraints{
@@ -655,10 +657,31 @@ class SendInvitesView: UIView {
     var carot: UIImageView!
     var inviteFriendsText: UILabel!
     
-    func setUp() {
-        
+    let sp0tTeamIDs: [String] = ["oAKwM2NgLjTlaE2xqvKEXiIVKYu1", "qLfKUwe9VlOPC4DFZlkAFYOqeFU2", "zNAQkeId8DeawASyJjhXlm9gxw92", "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2", "HhDmknXyHDdWF54t6s8IEbEBlXD2", "Za1OQPFoCWWbAdxB5yu98iE8WZT2", "nbYNFFjDCGNxy6y8RC9XHlQ09xn1"]
+    let ambassadorIDs: [String] = ["nFlnUij0WTaV6XYRTWsGH3vLTMk1", "zaVmbTLPK5cJyR2fPMGPBb97TTm1", "6DcfWZX5hoOQamPpAybUUKDO5xC2", "Xk8C5Q86yycYeg9czDdGehKZTIW2", "5T1dWS40XJh0Jr7JzI26FSJz0In2", "t7pHGv46kPdwAOzDM1WjJw8D5FG3", "6txCLp2HrNgyxb3jNIMUkwQ5eVI2", "ykJBCMXv00S749T6n5WvNfiQpRh2", "oU7cbUagBuhwDdqH58TkgI8Yjfb2", "jVp0i6VwXDQnqKzSUx6UrgASdCq2", "5Afq7zbKm8TgfcscGIFQ45qe8Hz2", "YTOL4M8fT4SroDPddOqgBwAUAml2", "AYZzEdFk1vWKyKtTRhHmMINSRDC3", "AECeLLnRQCUIkfsTmIylQYTiiun2", "8QNeFx33XhRdNecbEE2yuZXtAnD2", "Rv2g30sMNSZ2UOwVSkDd3ulakQi1", "1g7VJrLJmtaMWvbB5a9lTVSFTrf1", "CIfupNSapGXd2p9SSgvd4SPdoM13", "JPMC8KxBqnVxXvHnT8NoWggKl5m2", "NauGOu8MM0NO0O7MM3PatAtitlu1", "jDARwPSQi7hzwv53Ang4pWxpPUN2", "BYoN1PXBcAeVgdLoErlrQNtRE0t1", "p4H4jdawHeUBfbRO1So5ULXrfEm1", "27cHPHFFehVS0Cj55DYLk0ZY6ic2", "7rJFpS2wXjceadgecyiF45JgLWi1", "GZXapTf0VzL38Np37DKrjCSIqZm2", "UHOKS5Pi5cSDvakjJHnzK5cbrAX2", "Ud511YB7ZTQonLhjs8LaSrOojNu1", "JJbtKFbdREdrt0XPDno2oh37GZw1"]
+    
+    var sentInvites: Int = 0 {
+        didSet {
+            print("sentinvites", sentInvites)
+            setEnabled()
+        }
+    }
+    
+    var invitesEnabled: Bool = false {
+        didSet {
+            if invitesEnabled {
+                isUserInteractionEnabled = true
+                alpha = 1.0
+            } else {
+                isUserInteractionEnabled = true
+                alpha = 0.3
+            }
+        }
+    }
+    
+    func setUp(sentInvites: Int) {
         self.backgroundColor = .white
-        self.alpha = 0.3
+        self.sentInvites = sentInvites
         
         inviteFriendsIcon = UIImageView {
             $0.layer.masksToBounds = false
@@ -718,6 +741,10 @@ class SendInvitesView: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func setEnabled() {
+        invitesEnabled = sp0tTeamIDs.contains(UserDataModel.shared.uid) || ambassadorIDs.contains(UserDataModel.shared.uid) && sentInvites < 3
     }
 }
 

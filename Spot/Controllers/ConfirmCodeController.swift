@@ -281,6 +281,7 @@ class ConfirmCodeController: UIViewController {
             topFriends[friend] = value
         }
         
+        let blankAvatarURL = "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F00000000resources%2FGroup%2021877(1).png?alt=media&token=5c102486-f5b2-41d7-83a0-96f8ffcddcbe"
         let values = ["name" : newUser.name,
                       "username" : newUser.username,
                       "phone" : newUser.phone,
@@ -289,7 +290,7 @@ class ConfirmCodeController: UIViewController {
                       "spotScore" : 0,
                       "admin" : false,
                       "lowercaseName" : lowercaseName,
-                      "imageURL" :  "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2FProfileActive3x.png?alt=media&token=91e9cab9-70a8-4d31-9866-c3861c8b7b89",
+                      "imageURL" :  blankAvatarURL,
                       "currentLocation" : "",
                       "verifiedPhone" : true,
                       "sentInvites" : [],

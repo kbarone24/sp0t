@@ -456,7 +456,8 @@ extension CommentsController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
-        return commentList[indexPath.row + 1].commenterID == self.uid ? .delete : .none
+        guard let comment = commentList[safe: indexPath.row + 1] else { return .none }
+        return comment.commenterID == self.uid ? .delete : .none
     }
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
@@ -467,10 +468,12 @@ extension CommentsController: UITableViewDelegate, UITableViewDataSource {
             deleteComment(commentID: commentID)
             
             let path = IndexPath(row: indexPath.row, section: 0)
-            tableView.performBatchUpdates {
-                tableView.deleteRows(at: [path], with: .fade)
-            } completion: { _ in
-                tableView.reloadData()
+            DispatchQueue.main.async {
+                tableView.performBatchUpdates {
+                    tableView.deleteRows(at: [path], with: .fade)
+                } completion: { _ in
+                    tableView.reloadData()
+                }
             }
         }
     }

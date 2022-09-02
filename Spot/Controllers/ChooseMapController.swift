@@ -229,7 +229,7 @@ class ChooseMapController: UIViewController {
                     self.uploadMap(map: map!, newMap: newMap, post: post)
                 }
                 
-                self.uploadPost(post: post, map: map)
+                self.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
 
                 let visitorList = spot?.visitorList ?? []
                 self.setUserValues(poster: uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
@@ -360,7 +360,7 @@ extension ChooseMapController: NewMapDelegate {
         UploadPostModel.shared.postObject.mapID = map.id!
         UploadPostModel.shared.postObject.mapName = map.mapName
         /// if private map, make sure mymapbutton is deselected, if public, make sure selected
-        if friendsMapButton.buttonSelected == map.secret { toggleFriendsMap() }
+        if map.secret && friendsMapButton.buttonSelected { toggleFriendsMap() }
         
         DispatchQueue.main.async { self.tableView.reloadData() }
         enablePostButton()

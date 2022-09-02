@@ -42,12 +42,10 @@ extension MapController {
     }
     
     func reloadMapsCollection(resort: Bool, newPost: Bool) {
-        print("reload maps", resort, newPost)
         if resort { UserDataModel.shared.userInfo.sortMaps() }
         
         DispatchQueue.main.async {
             self.mapsCollection.reloadData()
-            print("select item at", self.selectedItemIndex)
             self.mapsCollection.selectItem(at: IndexPath(item: self.selectedItemIndex, section: 0), animated: false, scrollPosition: .left)
             if resort && !newPost { self.centerMapOnMapPosts(animated: true) }
             self.setNewPostsButtonCount()
@@ -170,8 +168,8 @@ extension MapController {
 
     func getRecentPosts(map: CustomMap?) {
         /// fetch all posts in last 7 days
-        let seconds = Date().timeIntervalSince1970 - 86400 * 14
-        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400 * 7
+        let seconds = Date().timeIntervalSince1970 - 86400 * 7
+        let yesterdaySeconds = Date().timeIntervalSince1970 - 86400
         let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
         var recentQuery = db.collection("posts").whereField("timestamp", isGreaterThanOrEqualTo: timestamp)
         ///query by mapID or friendsList for friends posts
@@ -217,7 +215,7 @@ extension MapController {
     
     func postsContains(postID: String, mapID: String, newPost: Bool) -> Bool {
         if mapID == "" || newPost {
-            return self.friendsPostsDictionary[postID] != nil
+            if self.friendsPostsDictionary[postID] != nil { return true }
         }
         if mapID != "" {
             if let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == mapID}) {
@@ -229,7 +227,7 @@ extension MapController {
     
     func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool, index: Int) {
         /// add new post to both dictionaries
-        if map == nil || (newPost && !(post.hideFromFeed ?? false)) {
+        if map == nil || (newPost && !(post.hideFromFeed ?? false) && UserDataModel.shared.userInfo.friendsContains(id: post.posterID)) {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
             if index == 0 { mapView.addPostAnnotation(post: post) }
         }
@@ -296,27 +294,83 @@ extension MapController {
     
     func attachNewPostListener() {
         /// listen for new posts entering
-        newPostListener = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 1).addSnapshotListener { [weak self] snap, err in
+        newPostListener = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 1).addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
+            if snap.metadata.isFromCache { return }
+            
             if let doc = snap.documents.first {
                 do {
                     let postIn = try doc.data(as: MapPost.self)
                     guard let postInfo = postIn else { return }
+                    /// new post has 2 separate writes, wait for post location to get set to load it in
+                    if doc.get("g") as? String == nil { return }
                     if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { return }
                     let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
-                    /// friendsPost from someone user isn't friends with
-                    if map == nil && !UserDataModel.shared.userInfo.friendIDs.contains(postInfo.posterID) || postInfo.hideFromFeed ?? false { return }
-                    /// check map dictionary for add
-                    if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID ?? "", newPost: true) {
-                        self.setPostDetails(post: postInfo) { [weak self] post in
-                            guard let self = self else { return }
-                            self.addPostToDictionary(post: post, map: map, newPost: true, index: self.selectedItemIndex)
-                            self.reloadMapsCollection(resort: false, newPost: true)
-                        }
+                    
+                    let postAccess = self.hasNewPostAccess(post: postInfo, map: map)
+                    if postAccess.access == false { return }
+                    /// if user was just added to a new map, load that map then add the post to the map. Otherwise load in the new post
+                    if postAccess.newMap {
+                        self.loadNewMap(post: postInfo)
+                    } else {
+                        self.finishNewMapPostLoad(postInfo: postInfo, map: map)
                     }
                 } catch {
                     return
+                }
+            }
+        })
+    }
+        
+    func hasNewPostAccess(post: MapPost, map: CustomMap?) -> (access: Bool, newMap: Bool) {
+        if map == nil {
+            /// non-friend post, user doesn't have map access
+            if !UserDataModel.shared.userInfo.friendsContains(id: post.posterID) { return (false, false) }
+            if (post.mapID ?? "") != "" {
+                /// friend post to new map
+                if (post.inviteList?.contains(uid) ?? false) {
+                    return (true, true)
+                } else if post.privacyLevel == "invite" {
+                    /// user doesnt have access -on post to a secret map
+                    return (false, false)
+                } else {
+                    /// user not added to map, just add to freinds map
+                    return (true, false)
+                }
+            }
+            /// friend post, not posted to a map
+            return (true, false)
+        }
+        /// friend post to existing map
+        return (true, false)
+    }
+    
+    func loadNewMap(post: MapPost) {
+        db.collection("maps").document(post.mapID!).getDocument { doc, err in
+            guard let doc = doc else { return }
+            do {
+                let mapIn = try doc.data(as: CustomMap.self)
+                guard var mapInfo = mapIn else { return }
+                mapInfo.addSpotGroups()
+                UserDataModel.shared.userInfo.mapsList.insert(mapInfo, at: 0)
+                self.finishNewMapPostLoad(postInfo: post, map: mapInfo)
+            } catch {
+                return
+            }
+        }
+    }
+    
+    func finishNewMapPostLoad(postInfo: MapPost, map: CustomMap?) {
+        /// check map dictionary for add
+        if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID ?? "", newPost: true) {
+            self.setPostDetails(post: postInfo) { [weak self] post in
+                guard let self = self else { return }
+                if !self.postsContains(postID: post.id!, mapID: post.mapID ?? "", newPost: true) {
+                    DispatchQueue.main.async {
+                        self.addPostToDictionary(post: post, map: map, newPost: true, index: self.selectedItemIndex)
+                        self.reloadMapsCollection(resort: false, newPost: true)
+                    }
                 }
             }
         }
@@ -342,12 +396,6 @@ extension MapController {
         newPostsButton.unseenPosts = map == nil ? friendsPostsDictionary.filter{!$0.value.seen}.count : map!.postsDictionary.filter{!$0.value.seen}.count
     }
     
-    func userInChapelHill() -> Bool {
-        let chapelHillLocation = CLLocation(latitude: 35.9132, longitude: -79.0558)
-        let distance = UserDataModel.shared.currentLocation.distance(from: chapelHillLocation)
-        /// include users within 10km of downtown CH
-        return distance/1000 < 10
-    }
         
     func checkForActivityIndicator() {
         /// resume frozen indicator
@@ -355,51 +403,4 @@ extension MapController {
             cell.activityIndicator.startAnimating()
         }
     }
-    
-    func loadAdditionalOnboarding() {
-        let posts = friendsPostsDictionary.count
-        if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
-            let avc = AvatarSelectionController(sentFrom: .map)
-            self.navigationController!.pushViewController(avc, animated: true)
-        }
-        else if (UserDataModel.shared.userInfo.friendIDs.count < 6 && posts == 0) {
-            self.addFriends = AddFriendsView {
-                $0.layer.cornerRadius = 13
-                $0.isHidden = false
-                self.view.addSubview($0)
-            }
-            
-            self.addFriends.addFriendButton.addTarget(self, action: #selector(self.findFriendsTap(_:)), for: .touchUpInside)
-            self.addFriends.snp.makeConstraints{
-                $0.height.equalTo(160)
-                $0.leading.trailing.equalToSuperview().inset(16)
-                $0.centerY.equalToSuperview()
-            }
-        }
-    }
-}
-
-extension MapController: MapControllerDelegate {
-    
-    func displayHeelsMap() {
-        if userInChapelHill() && !UserDataModel.shared.userInfo.mapsList.contains(where: {$0.id == heelsMapID}) {
-            let vc = HeelsMapPopUpController()
-            vc.mapDelegate = self
-            self.present(vc, animated: true)
-        }
-    }
-    
-    func addHeelsMap(heelsMap: CustomMap) {
-        UserDataModel.shared.userInfo.mapsList.append(heelsMap)
-        self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").updateData([
-            "memberIDs": FieldValue.arrayUnion([uid]),
-            "likers": FieldValue.arrayUnion([uid])
-        ])
-        reloadMapsCollection(resort: true, newPost: true)
-        self.homeFetchGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getRecentPosts(map: heelsMap)
-        }
-    }
-    
 }
