@@ -170,7 +170,7 @@ class UploadPostModel {
     func setFinalPostValues() {
         var postFriends =  postObject.hideFromFeed! ? [] : UserDataModel.shared.userInfo.friendIDs
         /// if map selected && mymap selected, add friendsList
-        if mapObject != nil && mapObject!.secret { postObject.inviteList = mapObject!.likers }
+        if mapObject != nil { postObject.inviteList = mapObject!.likers }
         if !postFriends.contains(UserDataModel.shared.uid) && !postObject.hideFromFeed! { postFriends.append(UserDataModel.shared.uid) }
         postObject.friendsList = postFriends
         postObject.privacyLevel = mapObject != nil && mapObject!.secret ? "invite" : mapObject != nil && (mapObject!.communityMap ?? false) ? "public" : "friends"

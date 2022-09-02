@@ -150,7 +150,7 @@ class PostCell: UICollectionViewCell {
         }
         
         likeButton = UIButton {
-            liked ? $0.addTarget(self, action: #selector(unlikePost(_:)), for: .touchUpInside) : $0.addTarget(self, action: #selector(likePost(_:)), for: .touchUpInside)
+            $0.addTarget(self, action: #selector(likeTap(_:)), for: .touchUpInside)
             $0.setImage(likeImage, for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             buttonView.addSubview($0)
@@ -540,7 +540,7 @@ class PostCell: UICollectionViewCell {
         if spotIcon != nil { spotIcon.removeFromSuperview() }
         if spotLabel != nil { spotLabel.text = ""; spotLabel.removeFromSuperview() }
         if cityLabel != nil { cityLabel.text = ""; cityLabel.removeFromSuperview() }
-        if likeButton != nil { likeButton.removeFromSuperview() }
+        if likeButton != nil { likeButton.setImage(UIImage(), for: .normal); likeButton.removeFromSuperview() }
         if commentButton != nil { commentButton.removeFromSuperview() }
         if numLikes != nil { numLikes.text = ""; numLikes.removeFromSuperview() }
         if numComments != nil { numComments.text = ""; numComments.removeFromSuperview() }
@@ -714,35 +714,26 @@ extension PostCell {
         postVC.selectedPostIndex += index
         postVC.postsCollection.scrollToItem(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .left, animated: true)
     }
-        
-    @objc func doubleTap(_ sender: UITapGestureRecognizer) {
-        if post.likers.contains(uid) { return }
-        likePost()
-    }
     
-    @objc func likePost(_ sender: UIButton) {
-        likePost()
+    @objc func likeTap(_ sender: UIButton) {
+        post.likers.contains(uid) ? unlikePost() : likePost()
+        layoutLikesAndComments()
     }
     
     func likePost() {
         post.likers.append(self.uid)
-        likeButton.removeTarget(self, action: #selector(likePost(_:)), for: .touchUpInside)
-        likeButton.addTarget(self, action: #selector(unlikePost(_:)), for: .touchUpInside)
-        layoutLikesAndComments()
-        
+        //update main data source -- send notification to map, update comments
         guard let postVC = viewContainingController() as? PostController else { return }
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": postVC.selectedPostIndex as Any] as [String : Any]
         NotificationCenter.default.post(name: Notification.Name("PostLike"), object: nil, userInfo: infoPass)
         Mixpanel.mainInstance().track(event: "PostPageLikePost")
 
-        DispatchQueue.global().async { self.likePostDB(post: self.post) }
+        let updatePost = post! /// local object
+        DispatchQueue.global().async { self.likePostDB(post: updatePost) }
     }
     
-    @objc func unlikePost(_ sender: UIButton) {
+    func unlikePost() {
         post.likers.removeAll(where: {$0 == self.uid})
-        likeButton.removeTarget(self, action: #selector(unlikePost(_:)), for: .touchUpInside)
-        likeButton.addTarget(self, action: #selector(likePost(_:)), for: .touchUpInside)
-        layoutLikesAndComments()
         //update main data source -- send notification to map, update comments
         guard let postVC = viewContainingController() as? PostController else { return }
         let infoPass = ["post": self.post as Any, "id": vcid as Any, "index": postVC.selectedPostIndex as Any] as [String : Any]
@@ -750,15 +741,7 @@ extension PostCell {
         Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
 
         let updatePost = post! /// local object
-        /// run unlike function from functions
-        DispatchQueue.global().async {
-            self.db.collection("posts").document(updatePost.id!).updateData(["likers" : FieldValue.arrayRemove([self.uid])])
-            let functions = Functions.functions()
-            functions.httpsCallable("unlikePost").call(["postID": updatePost.id!, "posterID": updatePost.posterID, "likerID": self.uid]) { result, error in
-                print(result?.data as Any, error as Any)
-            }
-        }
-        incrementTopFriends(friendID: post.posterID, increment: -1)
+        DispatchQueue.global().async { self.unlikePostDB(post: updatePost) }
     }
     
     @objc func elipsesTap() {
@@ -792,5 +775,14 @@ extension PostCell {
         }
         
         incrementTopFriends(friendID: post.posterID, increment: 1)
+    }
+    
+    func unlikePostDB(post: MapPost) {
+        self.db.collection("posts").document(post.id!).updateData(["likers" : FieldValue.arrayRemove([self.uid])])
+        let functions = Functions.functions()
+        functions.httpsCallable("unlikePost").call(["postID": post.id!, "posterID": post.posterID, "likerID": self.uid]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
+        incrementTopFriends(friendID: post.posterID, increment: -1)
     }
 }
