@@ -67,8 +67,8 @@ extension MapController {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             /// animate to spot if post to map, to post location if friends map
-          ///  let coordinate = mapIndex == 1 && post.spotID ?? "" != "" ? CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!) : post.coordinate
-            self.animateTo(coordinate: post.coordinate)
+           let coordinate = mapIndex == 1 && post.spotID ?? "" != "" ? CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!) : post.coordinate
+            self.animateTo(coordinate: coordinate)
         }
     }
 

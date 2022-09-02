@@ -134,7 +134,7 @@ class ActivityCell: UITableViewCell {
             case "mapInvite":
                 $0.width.equalTo(45.07)
                 $0.height.equalTo(30.04)
-                $0.trailing.equalToSuperview().offset(-13.5)
+                $0.trailing.equalToSuperview().offset(-15)
             default:
                 $0.width.equalTo(44)
                 $0.height.equalTo(52)
@@ -184,7 +184,7 @@ class ActivityCell: UITableViewCell {
             notifText += "'s post"
             subtitle = notifText
         case "mapInvite":
-            subtitle = "invited you to a map!"
+            subtitle = "invited you to \(notification.mapName ?? "a map")!"
         case "mapPost":
             var notifText = "posted to "
             notifText += notification.postInfo!.mapName!
