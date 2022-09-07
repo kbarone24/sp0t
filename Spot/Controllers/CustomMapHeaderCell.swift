@@ -13,7 +13,6 @@ import Mixpanel
 import FirebaseUI
 
 class CustomMapHeaderCell: UICollectionViewCell {
-    
     private var mapCoverImage: UIImageView!
     private var mapName: UILabel!
     private var mapCreatorProfileImage1: UIImageView!
@@ -74,7 +73,7 @@ extension CustomMapHeaderCell {
         }
         mapCoverImage.snp.makeConstraints {
             $0.top.equalToSuperview()
-            $0.leading.equalToSuperview().offset(15)
+            $0.leading.equalTo(15)
             $0.width.height.equalTo(84)
         }
         mapCoverImage.layer.cornerRadius = 19
@@ -89,7 +88,6 @@ extension CustomMapHeaderCell {
         mapName.snp.makeConstraints {
             $0.leading.equalTo(mapCoverImage.snp.trailing).offset(12)
             $0.top.equalTo(mapCoverImage).offset(4)
-            $0.height.equalTo(23)
             $0.trailing.equalToSuperview().inset(14)
         }
         
@@ -157,12 +155,7 @@ extension CustomMapHeaderCell {
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
-        mapCreatorCount.snp.makeConstraints {
-            $0.leading.equalTo(mapCreatorProfileImage4.snp.trailing).offset(4)
-            $0.centerY.equalTo(mapCreatorProfileImage1)
-            $0.trailing.lessThanOrEqualToSuperview().inset(14)
-        }
-                
+         
         mapInfo = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
@@ -206,12 +199,6 @@ extension CustomMapHeaderCell {
             $0.addTarget(self, action: #selector(userTap), for: .touchUpInside)
             contentView.addSubview($0)
         }
-        userButton.snp.makeConstraints {
-            $0.leading.equalTo(mapCoverImage.snp.trailing).offset(5)
-            $0.top.equalTo(mapName.snp.bottom).offset(4)
-            $0.height.equalTo(28)
-            $0.trailing.equalTo(mapCreatorCount.snp.trailing)
-        }
     }
     
     private func setMapName() {
@@ -238,42 +225,56 @@ extension CustomMapHeaderCell {
     
     private func setMapMemberInfo() {
         guard fourMapMemberProfile.count != 0 else { return }
+        
         let communityMap = mapData.communityMap ?? false
         mapCreatorCount.text = communityMap ? "+ \(mapData.memberIDs.count - 4)" : "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
-        mapCreatorProfileImage1.image = fourMapMemberProfile[0].profilePic
+        
         let userTransformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
         mapCreatorProfileImage1.sd_setImage(with: URL(string: fourMapMemberProfile[0].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-
+        
         switch fourMapMemberProfile.count {
         case 1:
             if !communityMap { mapCreatorCount.text = "\(fourMapMemberProfile[0].username)" }
-            mapCreatorProfileImage4.removeFromSuperview()
-            mapCreatorProfileImage3.removeFromSuperview()
-            mapCreatorProfileImage2.removeFromSuperview()
-            mapCreatorCount.snp.makeConstraints {
-                $0.leading.equalTo(mapCreatorProfileImage1.snp.trailing).offset(4)
-            }
         case 2:
             if !communityMap { mapCreatorCount.text = "\(fourMapMemberProfile[0].username) & \(fourMapMemberProfile[1].username)" }
             mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-            mapCreatorProfileImage4.removeFromSuperview()
-            mapCreatorProfileImage3.removeFromSuperview()
-            mapCreatorCount.snp.makeConstraints {
-                $0.leading.equalTo(mapCreatorProfileImage2.snp.trailing).offset(4)
-            }
         case 3:
             mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
             mapCreatorProfileImage3.sd_setImage(with: URL(string: fourMapMemberProfile[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-            mapCreatorProfileImage4.removeFromSuperview()
-            mapCreatorCount.snp.makeConstraints {
-                $0.leading.equalTo(mapCreatorProfileImage3.snp.trailing).offset(4)
-            }
         case 4:
             mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
             mapCreatorProfileImage3.sd_setImage(with: URL(string: fourMapMemberProfile[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
             mapCreatorProfileImage4.sd_setImage(with: URL(string: fourMapMemberProfile[3].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
         default:
             return
+        }
+        makeMapNameConstraints()
+    }
+    
+    private func makeMapNameConstraints() {
+        mapCreatorCount.snp.removeConstraints()
+        userButton.snp.removeConstraints()
+
+        mapCreatorProfileImage2.isHidden = fourMapMemberProfile.count < 2
+        mapCreatorProfileImage3.isHidden = fourMapMemberProfile.count < 3
+        mapCreatorProfileImage4.isHidden = fourMapMemberProfile.count < 4
+        
+        mapCreatorCount.snp.makeConstraints {
+            $0.centerY.equalTo(mapCreatorProfileImage1)
+            $0.trailing.lessThanOrEqualToSuperview().inset(14)
+            switch fourMapMemberProfile.count {
+            case 1: $0.leading.equalTo(mapCreatorProfileImage1.snp.trailing).offset(4)
+            case 2: $0.leading.equalTo(mapCreatorProfileImage2.snp.trailing).offset(4)
+            case 3: $0.leading.equalTo(mapCreatorProfileImage3.snp.trailing).offset(4)
+            case 4: $0.leading.equalTo(mapCreatorProfileImage4.snp.trailing).offset(4)
+            default: return
+            }
+        }
+        userButton.snp.makeConstraints {
+            $0.leading.equalTo(mapCoverImage.snp.trailing).offset(5)
+            $0.top.equalTo(mapName.snp.bottom).offset(4)
+            $0.height.equalTo(28)
+            $0.trailing.equalTo(mapCreatorCount.snp.trailing)
         }
     }
     

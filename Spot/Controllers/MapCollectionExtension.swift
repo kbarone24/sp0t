@@ -33,7 +33,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        collectionView.selectItem(at: indexPath, animated: true, scrollPosition: .left)
+        collectionView.selectItem(at: indexPath, animated: true, scrollPosition: [])
         selectMapAt(index: indexPath.item)
     }
     
@@ -67,7 +67,10 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             for group in map.postGroup { mapView.addSpotAnnotation(group: group, map: map) }
         }
         if !reload {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { self.centerMapOnMapPosts(animated: false) })
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [weak self] in
+                guard let self = self else { return }
+                self.centerMapOnMapPosts(animated: false)
+            })
         }
     }
 }

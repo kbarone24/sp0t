@@ -662,7 +662,6 @@ class SendInvitesView: UIView {
     
     var sentInvites: Int = 0 {
         didSet {
-            print("sentinvites", sentInvites)
             setEnabled()
         }
     }

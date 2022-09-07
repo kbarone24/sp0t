@@ -43,10 +43,11 @@ extension MapController {
     
     func reloadMapsCollection(resort: Bool, newPost: Bool) {
         if resort { UserDataModel.shared.userInfo.sortMaps() }
+        let scrollPosition: UICollectionView.ScrollPosition = resort ? .left : []
         
         DispatchQueue.main.async {
             self.mapsCollection.reloadData()
-            self.mapsCollection.selectItem(at: IndexPath(item: self.selectedItemIndex, section: 0), animated: false, scrollPosition: .left)
+            self.mapsCollection.selectItem(at: IndexPath(item: self.selectedItemIndex, section: 0), animated: false, scrollPosition: scrollPosition)
             if resort && !newPost { self.centerMapOnMapPosts(animated: true) }
             self.setNewPostsButtonCount()
         }
@@ -93,6 +94,7 @@ extension MapController {
                                 UserDataModel.shared.userInfo.friendsList.append(info)
                                 if UserDataModel.shared.userInfo.friendsList.count == UserDataModel.shared.userInfo.friendIDs.count {
                                     self.sortFriends() /// sort for top friends
+                                    NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
                                 }
                             }
                             
@@ -384,7 +386,7 @@ extension MapController {
             posts = mapView.sortPosts(posts)
             return posts.map({CLLocationCoordinate2D(latitude: $0.postLat, longitude: $0.postLong)})
         } else {
-            var group = map!.postGroup
+            var group = map!.postGroup.filter({!$0.postIDs.isEmpty}) /// dont include empty spots
             if group.contains(where: {$0.postIDs.contains(where: {!$0.seen})}) { group = group.filter({$0.postIDs.contains(where: {!$0.seen})})}
             group = mapView.sortPostGroup(group)
             return group.map({$0.coordinate})

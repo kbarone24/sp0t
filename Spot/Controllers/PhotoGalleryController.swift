@@ -51,6 +51,7 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
                 
         NotificationCenter.default.addObserver(self, selector: #selector(removePreview(_:)), name: NSNotification.Name("PreviewRemove"), object: nil)
         /// check for limited gallery access
+        print("gallery access", UploadPostModel.shared.galleryAccess == .denied, UploadPostModel.shared.galleryAccess == .limited, UploadPostModel.shared.galleryAccess == .restricted, UploadPostModel.shared.galleryAccess == .authorized, UploadPostModel.shared.galleryAccess == .notDetermined)
         if UploadPostModel.shared.galleryAccess == .limited {
             PHPhotoLibrary.shared().register(self) /// eventually probably want to do this after
             showLimitedAlert()
@@ -173,7 +174,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         alert.addAction(UIAlertAction(title: "Keep current selection", style: .default, handler: nil))
         
         self.present(alert, animated: true, completion: nil)
-        
     }
 
     func showMaxImagesAlert() {
@@ -217,13 +217,11 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     
     // for .limited photoGallery access
     func photoLibraryDidChange(_ changeInstance: PHChange) {
-        
         DispatchQueue.main.async {
-            
             if changeInstance.changeDetails(for: UploadPostModel.shared.assetsFull) != nil {
                 /// couldn't get change handler to work so just reload everything for now
                 UploadPostModel.shared.imageObjects.removeAll()
-                self.collectionView.reloadData()
+                self.fetchGalleryAssets()
             }
         }
     }
@@ -248,6 +246,43 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
             imagePreview.removeFromSuperview()
             imagePreview = nil
         }
+    }
+}
+
+extension PhotoGalleryController {
+    func fetchGalleryAssets() {
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
+        fetchOptions.fetchLimit = 10000
+        
+        guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
+                let assetsFull = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions)
+        let indexSet = assetsFull.count > 10000 ? IndexSet(0...9999) : IndexSet(0..<assetsFull.count)
+        UploadPostModel.shared.assetsFull = assetsFull
+        
+        DispatchQueue.global(qos: .default).async { assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
+            
+            guard let self = self else { return }
+            if self.cancelOnDismiss { stop.pointee = true } /// cancel on dismiss = true when view is popped
+            
+            var location = CLLocation()
+            if let l = object.location { location = l }
+            
+            var creationDate = Date()
+            if let d = object.creationDate { creationDate = d }
+            
+            let imageObj = (ImageObject(id: UUID().uuidString, asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], animationIndex: 0, directionUp: true, gifMode: false, creationDate: creationDate, fromCamera: false), false)
+            UploadPostModel.shared.imageObjects.append(imageObj)
+
+            /// sort on final load
+            let finalLoad = UploadPostModel.shared.imageObjects.count == assetsFull.count
+            
+            if finalLoad {
+                UploadPostModel.shared.imageObjects.sort(by: {!$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected})
+                DispatchQueue.main.async { self.collectionView.reloadData() }
+            }
+        }}
     }
 }
 

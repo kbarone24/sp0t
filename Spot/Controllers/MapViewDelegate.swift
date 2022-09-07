@@ -67,7 +67,7 @@ extension MapController: MKMapViewDelegate {
     }
     
     func getSelectedMap() -> CustomMap? {
-        return selectedItemIndex == 0 ? nil : UserDataModel.shared.userInfo.mapsList[selectedItemIndex - 1]
+        return selectedItemIndex == 0 ? nil : UserDataModel.shared.userInfo.mapsList[safe: selectedItemIndex - 1] ?? nil
     }
 
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
@@ -122,7 +122,11 @@ extension MapController: SpotMapViewDelegate {
     func openPostFromSpotPost(view: SpotPostAnnotationView) {
         let map = getSelectedMap()
         var posts: [MapPost] = []
-        for id in view.postIDs { posts.append((map?.postsDictionary[id])!) }
+        /// patch fix for double post getting added
+        for id in view.postIDs {
+            let post = map?.postsDictionary[id]
+            if !posts.contains(where: {$0.id ?? "" == post?.id ?? ""}) { posts.append(post!) }
+        }
         DispatchQueue.main.async { self.openPost(posts: posts) }
     }
     
@@ -133,7 +137,10 @@ extension MapController: SpotMapViewDelegate {
     
     func openPostFromFriendsPost(view: FriendPostAnnotationView) {
         var posts: [MapPost] = []
-        for id in view.postIDs { posts.append(friendsPostsDictionary[id]!) }
+        for id in view.postIDs {
+            let post = friendsPostsDictionary[id]
+            if !posts.contains(where: {$0.id ?? "" == post?.id ?? ""}) { posts.append(post!) }
+        }
         DispatchQueue.main.async { self.openPost(posts: posts) }
     }
     

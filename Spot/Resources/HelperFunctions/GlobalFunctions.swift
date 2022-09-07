@@ -293,8 +293,9 @@ extension UIViewController {
         // Start the animation
         animator.startAnimation()
     }
+    // https://www.advancedswift.com/animate-with-ios-keyboard-swift/
+    
 }
-// https://www.advancedswift.com/animate-with-ios-keyboard-swift/
 
 /// upload post functions
 extension UIViewController {
@@ -560,12 +561,12 @@ extension UIViewController {
     func removeFriend(friendID: String) {
         print("remove friend")
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        let functions = Functions.functions()
         
         removeFriendFromFriendsList(userID: uid, friendID: friendID)
         removeFriendFromFriendsList(userID: friendID, friendID: uid)
         /// firebase function broken
 /*
+        let functions = Functions.functions()
         functions.httpsCallable("removeFriend").call(["userID": uid, "friendID": friendID]) { result, error in
             print(result?.data as Any, error as Any)
         } */
@@ -719,19 +720,19 @@ extension NSObject {
     func setSecondaryPostValues(post: MapPost) -> MapPost {
         var newPost = post
         /// round to nearest line height
-        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 51.9)
+        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 52)
         return newPost
     }
     
     func getCaptionHeight(caption: String, fontSize: CGFloat, maxCaption: CGFloat) -> CGFloat {
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 80, height: UIScreen.main.bounds.height))
+        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 88, height: UIScreen.main.bounds.height))
         tempLabel.text = caption
         tempLabel.font = UIFont(name: "SFCompactText-Medium", size: fontSize)
         tempLabel.numberOfLines = 0
         tempLabel.lineBreakMode = .byWordWrapping
         tempLabel.sizeToFit()
 
-        return maxCaption != 0 ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height
+        return maxCaption != 0 ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height.rounded(.up)
     }
     
     func getImageHeight(aspectRatios: [CGFloat], maxAspect: CGFloat) -> CGFloat {
@@ -861,7 +862,7 @@ extension NSObject {
         }
         
         detailGroup.enter()
-        self.getComments(postID: postInfo.id!) { comments in
+        getComments(postID: postInfo.id!) { comments in
             postInfo.commentList = comments
             detailGroup.leave()
         }
@@ -880,7 +881,8 @@ extension NSObject {
         taggedUserGroup.notify(queue: .global()) {
             detailGroup.leave()
         }
-        detailGroup.notify(queue: .global()) {
+        detailGroup.notify(queue: .global()) { [weak self] in
+            guard self != nil else { return }
             completion(postInfo)
             return
         }
@@ -958,8 +960,7 @@ extension NSObject {
     func addFriend(senderProfile: UserProfile, receiverID: String) {
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let db: Firestore = Firestore.firestore()
-        let notiID = UUID().uuidString
-        let ref = db.collection("users").document(receiverID).collection("notifications").document(notiID)
+        let ref = db.collection("users").document(receiverID).collection("notifications").document(senderProfile.id!) /// using UID for friend rquest should make it so user cant send a double friend request
         
         let time = Date()
         

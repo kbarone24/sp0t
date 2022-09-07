@@ -73,7 +73,7 @@ class CustomMapController: UIViewController {
     deinit {
         print("CustomMapController(\(self) deinit")
         NotificationCenter.default.removeObserver(self)
-        barView.removeFromSuperview()
+        if barView != nil {  barView.removeFromSuperview() }
     }
     
     override func viewDidLoad() {
@@ -148,6 +148,7 @@ extension CustomMapController {
     }
     
     private func runMapSetup() {
+        if mapData == nil { return }
         mapData!.addSpotGroups()
         DispatchQueue.global(qos: .userInitiated).async {
             self.getMapMembers()
@@ -281,7 +282,7 @@ extension CustomMapController {
             guard let self = self else { return }
             self.firstMaxFourMapMemberList = memberList
             if !communityMap { self.firstMaxFourMapMemberList.sort(by: {$0.id == self.mapData!.founderID && $1.id != self.mapData!.founderID}) }
-            self.collectionView.reloadSections(IndexSet(integer: 0))
+            self.collectionView.reloadData()
         }
     }
     
@@ -516,7 +517,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return indexPath.section == 0 && mapType == .customMap ? CGSize(width: view.frame.width, height: mapData?.mapDescription != nil ? 180 : 155) : indexPath.section == 0 ? CGSize(width: view.frame.width, height: 35) : CGSize(width: view.frame.width/2 - 0.5, height: (view.frame.width/2 - 0.5) * 267 / 194.5)
+        return indexPath.section == 0 && mapType == .customMap ? CGSize(width: UIScreen.main.bounds.width, height: mapData?.mapDescription != nil ? 180 : 155) : indexPath.section == 0 ? CGSize(width: view.frame.width, height: 35) : CGSize(width: UIScreen.main.bounds.width/2 - 0.5, height: (UIScreen.main.bounds.width/2 - 0.5) * 267 / 194.5)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -529,15 +530,16 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 0 { return }
-        openPost(posts: [postsList[indexPath.row]])
+        openPost(posts: postsList, row: indexPath.item)
         Mixpanel.mainInstance().track(event: "CustomMapOpenPostFromGallery")
     }
     
-    func openPost(posts: [MapPost]) {
+    func openPost(posts: [MapPost], row: Int) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         if containerDrawerView?.status == .Top { fullScreenOnDismissal = true }
         currentContainerCanDragStatus = containerDrawerView?.canDrag
         postVC.postsList = posts
+        postVC.selectedPostIndex = row
         postVC.containerDrawerView = containerDrawerView
         DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
     }
@@ -598,7 +600,7 @@ extension CustomMapController: SpotMapViewDelegate {
     func openPostFromSpotPost(view: SpotPostAnnotationView) {
         var posts: [MapPost] = []
         for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
-        DispatchQueue.main.async { self.openPost(posts: posts) }
+        DispatchQueue.main.async { self.openPost(posts: posts, row: 0) }
     }
     
     func openSpotFromSpotPost(view: SpotPostAnnotationView) {
@@ -608,7 +610,7 @@ extension CustomMapController: SpotMapViewDelegate {
     func openPostFromFriendsPost(view: FriendPostAnnotationView) {
         var posts: [MapPost] = []
         for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
-        DispatchQueue.main.async { self.openPost(posts: posts) }
+        DispatchQueue.main.async { self.openPost(posts: posts, row: 0) }
     }
     
     func centerMapOnPostsInCluster(view: FriendPostAnnotationView) {

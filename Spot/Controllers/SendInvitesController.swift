@@ -375,13 +375,12 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
         if tableView.tag == 1 { return min(queryContacts.count, 10) }
         
         let head = sectionTitles[section]
         let firstIndex = contacts.firstIndex(where: {$0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head})
         let finalIndex = contacts.lastIndex(where: {$0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head})
-        return Int(finalIndex! - firstIndex!) + 1
+        return finalIndex == nil || firstIndex == nil ? 1 : Int(finalIndex! - firstIndex!) + 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -393,7 +392,7 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
         let head = sectionTitles[indexPath.section]
         /// get first contact starting with this section letter and count from there
         let firstIndex = contacts.firstIndex(where: {$0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head})!
-        let contact = contacts[firstIndex + indexPath.row]
+        guard let contact = contacts[safe: firstIndex + indexPath.row] else { return cell }
         cell.set(contact: nil, inviteContact: contact.0, friend: .none, invited: contact.1)
         return cell
     }
