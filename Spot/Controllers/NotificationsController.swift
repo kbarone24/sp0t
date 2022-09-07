@@ -31,7 +31,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     var notifications: [UserNotification] = []
     var pendingFriendRequests: [UserNotification] = []
     
-    var tableView = UITableView()
+    var tableView = UITableView(frame: .zero, style: .grouped)
     
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
