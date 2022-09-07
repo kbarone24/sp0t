@@ -89,8 +89,9 @@ class PostCell: UICollectionViewCell {
         /// update on new likers/comments fetch
         self.post.commentList = post.commentList
         self.post.likers = post.likers
-        numComments.text = String(max(post.commentList.count - 1, 0))
-        numLikes.text = String(post.likers.count)
+        layoutLikesAndComments()
+       /* numComments.text = String(max(post.commentList.count - 1, 0))
+        numLikes.text = String(post.likers.count) */
     }
     
     func addImageView() {

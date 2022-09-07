@@ -27,8 +27,13 @@ class UploadPostModel {
     var nearbySpots: [MapSpot] = []
     var friendObjects: [UserProfile] = []
     
-    var cameraAccess: AVAuthorizationStatus = .notDetermined
-    var galleryAccess: PHAuthorizationStatus = .notDetermined
+    var cameraAccess: AVAuthorizationStatus {
+        return AVCaptureDevice.authorizationStatus(for: .video)
+    }
+    var galleryAccess: PHAuthorizationStatus {
+        return PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    }
+    
     var locationAccess: Bool = false
     
     static let shared = UploadPostModel()
@@ -40,11 +45,6 @@ class UploadPostModel {
         case newSpot
     }
 
-    init() {
-        cameraAccess = AVCaptureDevice.authorizationStatus(for: .video)
-        galleryAccess = PHPhotoLibrary.authorizationStatus()
-    }
-    
     func selectObject(imageObject: ImageObject, selected: Bool) {
         Mixpanel.mainInstance().track(event: "GallerySelectImage", properties: ["selected": selected])
         if let i = imageObjects.firstIndex(where: {$0.image.id == imageObject.id}) {
@@ -74,22 +74,6 @@ class UploadPostModel {
             postObject.postLat = spot!.spotLat
             postObject.postLong = spot!.spotLong
         }
-    }
-    
-    func resortSpots(coordinate: CLLocationCoordinate2D) {
-        
-        for i in 0...nearbySpots.count - 1 {
-            
-            let spot = nearbySpots[i]
-            let spotLocation = CLLocation(latitude: spot.spotLat, longitude: spot.spotLong)
-            let postLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-
-            nearbySpots[i].spotScore = spot.getSpotRank(location: postLocation)
-            nearbySpots[i].distance = postLocation.distance(from: spotLocation)            
-        }
-        
-        nearbySpots.removeAll(where: {$0.distance > 20000})
-        nearbySpots.sort(by: { !$0.selected! && !$1.selected! ? $0.spotScore > $1.spotScore : $0.selected! && !$1.selected! })
     }
     
     func setPostCity() {

@@ -268,10 +268,13 @@ extension CommentsController {
         
         Mixpanel.mainInstance().track(event: "CommentsPost")
         
+        var commenterIDList = [uid]
+        let excludingFirstCommenter = Array(commentList.map({$0.commenterID}).suffix(commentList.count - 1))
+        commenterIDList.append(contentsOf: excludingFirstCommenter)
+        
         let commentID = UUID().uuidString
         let taggedUsers = getTaggedUsers(text: commentText)
         let taggedUsernames = taggedUsers.map({$0.username})
-        let commenterIDList = commentList.map({$0.commenterID})
         let taggedUserIDs = taggedUsers.map({$0.id ?? ""})
         
         let comment = MapComment(id: commentID, comment: commentText, commenterID: self.uid, taggedUsers: taggedUsernames, timestamp: Timestamp(date: Date()), userInfo: UserDataModel.shared.userInfo)
@@ -283,25 +286,26 @@ extension CommentsController {
             self.updateParent()
         }
         
-        let commentRef = db.collection("posts").document(self.post.id!).collection("comments").document(commentID)
-        do {
-            try commentRef.setData(from: comment)
-            /// set additional values for notification handling
-            commentRef.updateData([
-                "addedUsers" : post.addedUsers ?? [],
-                "commenterIDList" : commenterIDList,
-                "commenterUsername" : UserDataModel.shared.userInfo.username,
-                "imageURL" : post.imageURLs.first ?? "",
-                "posterID": post.posterID,
-                "posterUsername" : post.userInfo?.username ?? "",
-                "taggedUserIDs": taggedUserIDs
-            ] as [String: Any] )
-            /// set extraneous values
-            self.db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(1))])
-            self.incrementTopFriends(friendID: post.posterID, increment: 1)
-        } catch {
-            print("failed uploading comment")
-        }
+        let commentRef = db.collection("posts").document(self.post.id!).collection("comments")
+        /// set additional values for notification handling
+        commentRef.addDocument(data: [
+            "addedUsers" : post.addedUsers ?? [],
+            "comment": comment.comment,
+            "commenterID": comment.commenterID,
+            "commenterIDList" : commenterIDList,
+            "commenterUsername" : UserDataModel.shared.userInfo.username,
+            "imageURL" : post.imageURLs.first ?? "",
+            "likers": [],
+            "posterID": post.posterID,
+            "posterUsername" : post.userInfo?.username ?? "",
+            "taggedUserIDs": taggedUserIDs,
+            "taggedUsers": comment.taggedUsers ?? [],
+            "timestamp": comment.timestamp
+        ] as [String: Any] )
+        /// set extraneous values
+        self.db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(1))])
+        self.incrementTopFriends(friendID: post.posterID, increment: 1)
+   
     }
     
     func resetTextView() {
