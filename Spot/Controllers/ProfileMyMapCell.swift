@@ -56,7 +56,7 @@ extension ProfileMyMapCell {
             let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
             view.delegate = self
             view.dataSource = self
-            view.backgroundColor = .clear
+            view.backgroundColor = UIColor(named: "BlankImage")
             view.layer.masksToBounds = true
             view.layer.cornerRadius = 14
             view.isUserInteractionEnabled = false

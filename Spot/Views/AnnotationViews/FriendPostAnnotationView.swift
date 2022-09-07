@@ -30,7 +30,7 @@ class FriendPostAnnotationView: MKAnnotationView {
     
     func updateImage(posts: [MapPost]) {
         let cluster = posts.count > 1
-        let post = posts.first!
+        guard let post = posts.first else { return }
         let posters = posts.map{$0.posterID}.uniqued()
         
         var moreText = ""

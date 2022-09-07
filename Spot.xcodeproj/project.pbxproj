@@ -269,6 +269,9 @@
 		8C3BAF67260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF68260CFB7B00349091 /* CountryCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3BAF65260CFB7B00349091 /* CountryCode.swift */; };
 		8C3BAF6D260D229100349091 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C3BAF6C260D229100349091 /* MapKit.framework */; };
+		8C51D93028C7EECB009CCD00 /* EmailLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C51D92F28C7EECB009CCD00 /* EmailLoginController.swift */; };
+		8C51D93128C7EECB009CCD00 /* EmailLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C51D92F28C7EECB009CCD00 /* EmailLoginController.swift */; };
+		8C51D93228C7EECB009CCD00 /* EmailLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C51D92F28C7EECB009CCD00 /* EmailLoginController.swift */; };
 		8C53A80A28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */; };
 		8C53A80B28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */; };
 		8C53A80C28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */; };
@@ -480,6 +483,7 @@
 		8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryPickerController.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
 		8C3BAF6C260D229100349091 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		8C51D92F28C7EECB009CCD00 /* EmailLoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailLoginController.swift; sourceTree = "<group>"; };
 		8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapOnboardingExtension.swift; sourceTree = "<group>"; };
 		8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAvatarView.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
@@ -703,6 +707,7 @@
 				593AC54C243FAA2B00C08237 /* PhoneController.swift */,
 				8C3BAF57260C413F00349091 /* ConfirmCodeController.swift */,
 				8C3BAF5E260CF5D000349091 /* CountryPickerController.swift */,
+				8C51D92F28C7EECB009CCD00 /* EmailLoginController.swift */,
 			);
 			name = Main;
 			sourceTree = "<group>";
@@ -1365,6 +1370,7 @@
 				414CD283289EB383001F1776 /* ProfileBodyCell.swift in Sources */,
 				8CB400BD2739DDC900DFFCEE /* ImagePreviewView.swift in Sources */,
 				416AE77D2896F2F60037B8AF /* CustomMap.swift in Sources */,
+				8C51D93028C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				5F119A202869F46600D75CE8 /* FriendRequestCollectionCell.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C1E48CF289C57650093030D /* ProfileHeaderCell.swift in Sources */,
@@ -1397,6 +1403,7 @@
 				8C1E4867289C54370093030D /* FriendsListCell.swift in Sources */,
 				8C1E48B3289C54CB0093030D /* SpotPostView.swift in Sources */,
 				8C8DBB772888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
+				8C51D93128C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8CA512B228BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CCE3412288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
@@ -1488,6 +1495,7 @@
 				8C1E4868289C54370093030D /* FriendsListCell.swift in Sources */,
 				8C1E48B4289C54CB0093030D /* SpotPostView.swift in Sources */,
 				8C8DBB782888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
+				8C51D93228C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8CA512B328BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CCE3413288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
@@ -1733,7 +1741,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 18;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1803,7 +1811,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 18;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;

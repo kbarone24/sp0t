@@ -23,6 +23,7 @@ class SpotPageController: UIViewController {
     private var communityPostLabel: UILabel!
     private lazy var imageManager = SDWebImageManager()
     public var containerDrawerView: DrawerView?
+    private var activityIndicator: CustomActivityIndicator!
     
     private var mapID: String?
     private var mapName: String?
@@ -184,6 +185,16 @@ extension SpotPageController {
             $0.layer.cornerRadius = 8
             $0.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
         }
+        
+        activityIndicator = CustomActivityIndicator {
+            $0.startAnimating()
+            view.addSubview($0)
+        }
+        activityIndicator.snp.makeConstraints {
+            $0.top.equalTo(200)
+            $0.centerX.equalToSuperview()
+            $0.width.height.equalTo(30)
+        }
     }
     
     private func fetchSpot() {
@@ -201,7 +212,6 @@ extension SpotPageController {
     }
     
     private func fetchRelatedPosts() {
-        print("fetch related")
         let db: Firestore = Firestore.firestore()
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
         let conditionedQuery = (mapID == nil || mapID == "") ? baseQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid) : baseQuery.whereField("mapID", isEqualTo: mapID!)
@@ -232,6 +242,7 @@ extension SpotPageController {
             }
             
             postGroup.notify(queue: .main) {
+                self.activityIndicator.stopAnimating()
                 self.relatedEndDocument = allDocs.last
                 self.fetchRelatedPostsComplete = docs.count < 12
                 self.fetching = .refreshEnabled
@@ -276,6 +287,7 @@ extension SpotPageController {
             }
 
             postGroup.notify(queue: .main) {
+                self.activityIndicator.stopAnimating()
                 if self.fetching == .refreshDisabled {
                     self.fetchCommunityPostsComplete = true
                 } else {
@@ -292,7 +304,7 @@ extension SpotPageController {
     
     func addRelatedPost(postInfo: MapPost) {
         if !hasPostAccess(post: postInfo) { return }
-        relatedPosts.append(postInfo)
+        if !relatedPosts.contains(where: {$0.id == postInfo.id}) { relatedPosts.append(postInfo) }
     }
     
     func addCommunityPost(postInfo: MapPost) {
@@ -300,11 +312,11 @@ extension SpotPageController {
         // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
         // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
         if mapID != "" && postInfo.mapID == mapID {
-            relatedPosts.append(postInfo)
+            if !relatedPosts.contains(where: {$0.id == postInfo.id}) { relatedPosts.append(postInfo) }
         } else if mapID == "" {
-            relatedPosts.append(postInfo)
+            if !relatedPosts.contains(where: {$0.id == postInfo.id}) { relatedPosts.append(postInfo) }
         } else {
-            communityPosts.append(postInfo)
+            if !communityPosts.contains(where: {$0.id == postInfo.id}) { communityPosts.append(postInfo) }
         }
     }
     
@@ -443,7 +455,8 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                 }
             }
             guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
-            postVC.postsList = [indexPath.section == 1 ? relatedPosts[indexPath.row] : communityPosts[indexPath.row]]
+            postVC.postsList = indexPath.section == 1 ? relatedPosts : communityPosts
+            postVC.selectedPostIndex = indexPath.item
             postVC.containerDrawerView = containerDrawerView
             barView.isHidden = true
             self.navigationController!.pushViewController(postVC, animated: true)

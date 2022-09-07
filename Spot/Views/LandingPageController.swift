@@ -13,15 +13,11 @@ import AVKit
 import Mixpanel
 
 class LandingPageController: UIViewController {
-    
-    var playerLooper: AVPlayerLooper!
-    var playerLayer: AVPlayerLayer!
-    var videoPlayer: AVQueuePlayer!
     var thumbnailImage: UIImageView! /// show preview thumbnail while video is buffering
-    var videoPreviewView: UIView!
     var firstLoad = true /// determine whether video player has been loaded yet
     var privacyNote : UITextView!
     var privacyLinks: UITextView!
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
     }
@@ -110,7 +106,7 @@ class LandingPageController: UIViewController {
 
         // Set the 'click here' substring to be the link
         attributedString.setAttributes([.link: url], range: NSMakeRange(0, attributedString.length))
-        attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-SemiBold", size: 13)!, range: totalRange)
+        attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-Semibold", size: 13)!, range: totalRange)
         attributedString.addAttribute(.foregroundColor, value: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 0.7), range: totalRange)
 
         self.privacyLinks.attributedText = attributedString
@@ -129,6 +125,30 @@ class LandingPageController: UIViewController {
             $0.width.equalTo(250)
             $0.height.equalTo(50)
             $0.centerX.equalToSuperview().offset(5)
+        }
+        
+     //   addEmailLogin()
+    }
+    
+    func addEmailLogin() {
+        let emailButton = UIButton {
+            $0.addTarget(self, action: #selector(emailTap), for: .touchUpInside)
+            $0.setTitle("Login with email", for: .normal)
+            $0.setTitleColor(UIColor.lightGray, for: .normal)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 18)
+            view.addSubview($0)
+        }
+        emailButton.snp.makeConstraints {
+            $0.bottom.equalTo(-80)
+            $0.centerX.equalToSuperview()
+        }
+    }
+    
+    @objc func emailTap() {
+        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "EmailLogin") as? EmailLoginController {
+            let navController = UINavigationController(rootViewController: vc)
+            navController.modalPresentationStyle = .fullScreen
+            self.present(navController, animated: false, completion: nil)
         }
     }
     

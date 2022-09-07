@@ -13,7 +13,6 @@ import FirebaseFirestoreSwift
 import MapKit
 
 struct CustomMap: Identifiable, Codable {
-    
     @DocumentID var id: String?
     
     var communityMap: Bool? = false

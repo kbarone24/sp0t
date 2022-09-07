@@ -28,6 +28,7 @@ class FriendsListController: UIViewController {
     var titleLabel: UILabel!
     var tableView: UITableView!
     var searchBar: UISearchBar?
+    var activityIndicator: CustomActivityIndicator!
 
     var confirmedIDs: [String] /// users who cannot be unselected
     var friendIDs: [String]
@@ -140,6 +141,16 @@ class FriendsListController: UIViewController {
             $0.top.equalTo(topConstraint)
             $0.height.equalToSuperview().inset(inset)
         }
+        
+        activityIndicator = CustomActivityIndicator {
+            $0.isHidden = true
+            view.addSubview($0)
+        }
+        activityIndicator.snp.makeConstraints {
+            $0.top.equalTo(100)
+            $0.centerX.equalToSuperview()
+            $0.width.height.equalTo(30)
+        }
     }
     
     func addSearchBar() {
@@ -169,6 +180,7 @@ class FriendsListController: UIViewController {
     }
     
     func getFriends() {
+        DispatchQueue.main.async { self.activityIndicator.startAnimating() }
         let db: Firestore = Firestore.firestore()
         let dispatch = DispatchGroup()
         
@@ -190,6 +202,7 @@ class FriendsListController: UIViewController {
         
         dispatch.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
+            self.activityIndicator.stopAnimating()
             self.tableView.reloadData()
         }
     }

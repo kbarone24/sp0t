@@ -425,7 +425,7 @@ class ImagePreviewController: UIViewController {
     @objc func captionTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewCaptionTap")
         if newSpotNameView.textView.isFirstResponder { return }
-        shouldRepositionTextView = true
+     //   shouldRepositionTextView = true
         textView.becomeFirstResponder()
     }
     
@@ -449,10 +449,12 @@ class ImagePreviewController: UIViewController {
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {
+        print("keyboard show")
         if cancelOnDismiss { return }
         if !textView.isFirstResponder { addNewSpotView(notification: notification) }
-        if !shouldRepositionTextView { return }
-        shouldRepositionTextView = false
+    //    if !shouldRepositionTextView { print("keyboard no repo"); return }
+   //     shouldRepositionTextView = false
+        print("keyboard repo")
         /// new spot name view editing when textview not first responder
         postDetailView.bottomMask.alpha = 0.0
         animateWithKeyboard(notification: notification) { keyboardFrame in
