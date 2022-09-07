@@ -121,7 +121,11 @@ class PostController: UIViewController {
         postsCollection.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        selectedPostIndex = 0
+        if selectedPostIndex == nil {
+            selectedPostIndex = 0
+        } else {
+            DispatchQueue.main.async { self.postsCollection.scrollToItem(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .left, animated: false) }
+        }
         addNotifications()
     }
     
@@ -298,8 +302,11 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
     }
     
     func setSeen(post: MapPost) {
+        /// set seen on map
         db.collection("posts").document(post.id!).updateData(["seenList" : FieldValue.arrayUnion([uid])])
         NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["postID" : post.id as Any]))
+        /// show notification as seen
+        updateNotifications(postID: post.id ?? "")
     }
     
     func checkForUpdates(postID: String, index: Int) {
@@ -315,6 +322,15 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
                 if let cell = self.postsCollection.cellForItem(at: IndexPath(item: index, section: 0)) as? PostCell {
                     DispatchQueue.main.async { cell.updatePost(post: self.postsList[i]) }
                 }
+            }
+        }
+    }
+    
+    func updateNotifications(postID: String) {
+        db.collection("users").document(uid).collection("notifications").whereField("postID", isEqualTo: postID).getDocuments { snap, err in
+            guard let snap = snap else { return }
+            for doc in snap.documents {
+                doc.reference.updateData(["seen" : true])
             }
         }
     }

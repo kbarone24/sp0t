@@ -23,12 +23,10 @@ extension MapController {
             coordinate = post.coordinate
         }
         
-        if !UserDataModel.shared.userInfo.mapsList.isEmpty {
-            for i in 0...UserDataModel.shared.userInfo.mapsList.count - 1 {
-                UserDataModel.shared.userInfo.mapsList[i].updateSeen(postID: postID)
-                if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
-                    coordinate = UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]?.coordinate
-                }
+        for i in 0..<UserDataModel.shared.userInfo.mapsList.count {
+            UserDataModel.shared.userInfo.mapsList[i].updateSeen(postID: postID)
+            if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
+                coordinate = UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]?.coordinate
             }
         }
         
@@ -107,7 +105,7 @@ extension MapController {
             friendsPostsDictionary[postID]!.commentCount = max(0, commentList.count - 1)
         }
         
-        for i in 0...UserDataModel.shared.userInfo.mapsList.count - 1 {
+        for i in 0..<UserDataModel.shared.userInfo.mapsList.count {
             if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]!.commentList = commentList
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]!.commentCount = max(0, commentList.count - 1)
@@ -124,7 +122,7 @@ extension MapController {
         homeFetchGroup.enter()
         homeFetchGroup.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
-            self.reloadMapsCollection(resort: true, newPost: false)
+            self.reloadMapsCollection(resort: false, newPost: false)
         }
         
         DispatchQueue.global().async {

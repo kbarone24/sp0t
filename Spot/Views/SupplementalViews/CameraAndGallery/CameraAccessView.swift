@@ -147,7 +147,6 @@ class CameraAccessView: UIView {
             /// open settings immediately if user had already rejected
             if first { DispatchQueue.main.async { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return } }
         case .authorized:
-            UploadPostModel.shared.cameraAccess = .authorized
             cameraAccess = true
             checkForRemove()
         default: return
@@ -165,7 +164,6 @@ class CameraAccessView: UIView {
         case .restricted, .denied:
             if first { DispatchQueue.main.async { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return } }
         case .authorized, .limited:
-            UploadPostModel.shared.galleryAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite)
             galleryAccess = true
             NotificationCenter.default.post(name: Notification.Name(rawValue: "GalleryAuthorized"), object: nil, userInfo: nil)
             checkForRemove()

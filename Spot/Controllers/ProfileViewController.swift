@@ -44,12 +44,12 @@ class ProfileViewController: UIViewController {
     
     var postsFetched = false {
         didSet {
-            noPostLabel.isHidden = (relation == .myself || relation == .friend) && mapsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+            noPostLabel.isHidden = mapsFetched && (maps.count == 0 && posts.count == 0) ? false : true
         }
     }
     var mapsFetched = false {
         didSet {
-            noPostLabel.isHidden = (relation == .myself || relation == .friend) && postsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+            noPostLabel.isHidden = postsFetched && (maps.count == 0 && posts.count == 0) ? false : true
         }
     }
     
@@ -65,6 +65,7 @@ class ProfileViewController: UIViewController {
         
         /// need to add immediately to track active user profile getting fetched
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyMapsLoad(_:)), name: NSNotification.Name(("UserMapsLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
     }
@@ -269,7 +270,8 @@ extension ProfileViewController {
     
     private func getMaps() {
         if relation == .myself {
-            maps = UserDataModel.shared.userInfo.mapsList.filter({$0.memberIDs.contains(UserDataModel.shared.uid)}) /// only show maps user is member of, not follower maps
+            mapsFetched = true
+            maps = UserDataModel.shared.userInfo.mapsList.filter({$0.posterIDs.contains(UserDataModel.shared.uid)}) /// only show maps user is member of, not follower maps
             sortAndReloadMaps()
             return
         }
@@ -357,6 +359,14 @@ extension ProfileViewController {
         runFetches()
     }
     
+    @objc func notifyFriendsLoad() {
+        // update active user friends list when all friends load on userListener fetch
+        guard let userID = userProfile?.id as? String else { return }
+        if userID == UserDataModel.shared.uid {
+            userProfile!.friendsList = UserDataModel.shared.userInfo.friendsList
+        }
+    }
+    
     @objc func notifyMapsLoad(_ notification: NSNotification) {
         getMaps()
     }
@@ -383,7 +393,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return section == 0 ? 1 : (maps.count + 1)
+        print("hidden", noPostLabel.isHidden, mapsFetched, postsFetched)
+        return section == 0 ? 1 : noPostLabel.isHidden && (!maps.isEmpty || !posts.isEmpty) ? maps.count + 1 : 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {

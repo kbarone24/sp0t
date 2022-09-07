@@ -261,7 +261,8 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
             let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
             cell.cellSetUp(user: user)
         } else {
-            cell.cellSetUp(user: mapObject.memberProfiles![indexPath.row - 1])
+            guard let profile = mapObject.memberProfiles?[safe: indexPath.row - 1] else { return cell }
+            cell.cellSetUp(user: profile)
         }
         return cell
     }

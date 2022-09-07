@@ -322,7 +322,7 @@ class AVCameraController: UIViewController {
         guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
         
         let assetsFull = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions)
-        let indexSet = assetsFull.count > 10000 ? IndexSet(0...9999) : IndexSet(0...assetsFull.count - 1)
+        let indexSet = assetsFull.count > 10000 ? IndexSet(0...9999) : IndexSet(0..<assetsFull.count)
         UploadPostModel.shared.assetsFull = assetsFull
         
         DispatchQueue.global(qos: .default).async { assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
@@ -480,7 +480,7 @@ class AVCameraController: UIViewController {
             guard let self = self else { return }
             try? self.cameraController.displayPreview(on: self.cameraView)
             self.view.isUserInteractionEnabled = true
-     //       self.setAutoExposure()
+            self.setAutoExposure()
         }
     }
     
@@ -578,8 +578,6 @@ class AVCameraController: UIViewController {
     }
     
     func setFocus(position: CGPoint) {
-        
-        
         if AVCaptureDevice.authorizationStatus(for: .video) != .authorized { return }
         
         let bounds = UIScreen.main.bounds

@@ -140,7 +140,7 @@ class ChooseMapController: UIViewController {
     }
     
     func getCustomMaps() {
-        customMaps = UserDataModel.shared.userInfo.mapsList.sorted(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
+        customMaps = UserDataModel.shared.userInfo.mapsList.filter({$0.memberIDs.contains(UserDataModel.shared.uid)}).sorted(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
     }
     
     func reloadTable() {

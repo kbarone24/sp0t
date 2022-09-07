@@ -39,6 +39,22 @@
             </objects>
             <point key="canvasLocation" x="-768" y="62"/>
         </scene>
+        <!--Email Login Controller-->
+        <scene sceneID="mWd-NS-aKS">
+            <objects>
+                <viewController storyboardIdentifier="EmailLogin" id="R9f-j8-Ttj" customClass="EmailLoginController" customModule="Spot" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="kRg-0J-WFy">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="UfR-3w-dtw"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Bzi-Zj-YIb" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-775" y="944"/>
+        </scene>
         <!--Username Controller-->
         <scene sceneID="Nhv-as-XuE">
             <objects>
