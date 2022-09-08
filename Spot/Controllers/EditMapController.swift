@@ -386,7 +386,6 @@ extension EditMapController: UITextViewDelegate {
         if textView.text == "Add a map bio..." {
             textView.text = ""
             textView.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
-            textView.alpha = 1
         }
     }
     
@@ -394,7 +393,6 @@ extension EditMapController: UITextViewDelegate {
         if textView.text == "" {
             textView.text = "Add a map bio..."
             textView.textColor = UIColor(red: 165/255, green: 165/255, blue: 165/255, alpha: 1)
-            textView.alpha = 0.4
         }
     }
 }
