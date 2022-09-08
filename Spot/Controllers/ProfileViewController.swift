@@ -277,7 +277,7 @@ extension ProfileViewController {
         }
         
         let db = Firestore.firestore()
-        let query = db.collection("maps").whereField("memberIDs", arrayContains: userProfile?.id ?? "")
+        let query = db.collection("maps").whereField("posterIDs", arrayContains: userProfile?.id ?? "")
         query.getDocuments { (snap, err) in
             if err != nil  { return }
             for doc in snap!.documents {

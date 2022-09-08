@@ -125,9 +125,12 @@ extension AVCameraController {
                     let newMap = post.mapID ?? "" != "" && map.id ?? "" == ""
                     if newMap {
                         map = CustomMap(id: post.mapID!, founderID: self.uid, imageURL: imageURLs.first!, likers: [self.uid], mapName: post.mapName ?? "", memberIDs: [self.uid], posterDictionary: [post.id! : [self.uid]], posterIDs: [self.uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: post.imageURLs, postLocations: [["lat" : post.postLat, "long": post.postLong]], postTimestamps: [post.timestamp], secret: false, spotIDs: [], spotNames: [], spotLocations: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: uploadImages.first!)
+                        let lowercaseName = (post.mapName ?? "").lowercased()
+                        map.lowercaseName = lowercaseName
+                        map.searchKeywords = lowercaseName.getKeywordArray()
                         /// add added users
                         if !(post.addedUsers?.isEmpty ?? true) { map.memberIDs.append(contentsOf: post.addedUsers!); map.likers.append(contentsOf: post.addedUsers!); map.memberProfiles!.append(contentsOf: post.addedUserProfiles!); map.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!) }
-                        if spot.id != "" {
+                        if spot.id != "" {bc 
                             map.spotIDs.append(spot.id!)
                             map.spotNames.append(spot.spotName)
                             map.spotLocations.append(["lat": spot.spotLat, "long": spot.spotLong])

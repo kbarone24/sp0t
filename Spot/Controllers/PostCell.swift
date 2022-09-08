@@ -470,6 +470,7 @@ class PostCell: UICollectionViewCell {
         let frameIndexes = post.frameIndexes ?? []
         
         guard let still = images[safe: frameIndexes[post.selectedImageIndex!]] else { return }
+        if still.size.width == 0 { return } /// patch for crash on undefined constraints
         imageView.image = still
         imageView.stillImage = still
         contentView.sendSubviewToBack(imageView)
@@ -480,7 +481,7 @@ class PostCell: UICollectionViewCell {
         
         let rawAspect = min(still.size.height/still.size.width, UserDataModel.shared.maxAspect)
         let currentAspect = getRoundedAspectRatio(aspect: rawAspect)
-        let currentHeight = currentAspect * UIScreen.main.bounds.width
+        let currentHeight = max(currentAspect * UIScreen.main.bounds.width, 100)
         imageView.currentAspect = currentAspect
 
         imageView.snp.removeConstraints()

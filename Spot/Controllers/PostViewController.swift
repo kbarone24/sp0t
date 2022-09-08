@@ -121,8 +121,8 @@ class PostController: UIViewController {
         postsCollection.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        if selectedPostIndex == nil {
-            selectedPostIndex = 0
+        if selectedPostIndex == 0 {
+            selectedPostIndex = 0 /// set again here to make sure didSet methods are called
         } else {
             DispatchQueue.main.async { self.postsCollection.scrollToItem(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .left, animated: false) }
         }

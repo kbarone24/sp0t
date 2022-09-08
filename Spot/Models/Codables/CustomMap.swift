@@ -19,7 +19,9 @@ struct CustomMap: Identifiable, Codable {
     var founderID: String
     var imageURL: String
     var likers: [String]
+    var lowercaseName: String?
     var mapBio: String?
+    var mapDescription: String?
     var mapName: String
     var memberIDs: [String]
     var posterDictionary: [String: [String]] = [:]
@@ -29,11 +31,11 @@ struct CustomMap: Identifiable, Codable {
     var postImageURLs: [String]
     var postLocations: [[String: Double]] = []
     var postTimestamps: [Firebase.Timestamp] = []
+    var searchKeywords: [String]? = []
     var secret: Bool
     var spotIDs: [String]
     var spotNames: [String] = []
     var spotLocations: [[String: Double]] = []
-    var mapDescription: String?
     
     var selected = false
     var memberProfiles: [UserProfile]? = []
@@ -65,6 +67,7 @@ struct CustomMap: Identifiable, Codable {
         case communityMap
         case founderID
         case imageURL
+        case lowercaseName
         case likers
         case mapName
         case memberIDs
@@ -75,6 +78,7 @@ struct CustomMap: Identifiable, Codable {
         case postImageURLs
         case postLocations
         case postTimestamps
+        case searchKeywords
         case secret
         case spotIDs
         case spotNames

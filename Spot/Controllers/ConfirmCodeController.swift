@@ -13,7 +13,6 @@ import Mixpanel
 import IQKeyboardManagerSwift
 
 class ConfirmCodeController: UIViewController {
-    var phoneNumber: String!
     var newUser: NewUser!
     var codeType: CodeType!
     

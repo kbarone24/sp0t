@@ -175,6 +175,40 @@ extension UIViewController {
         }
     }
     
+    func updateUsername(newUsername: String, oldUsername: String) {
+        let db = Firestore.firestore()
+        db.collection("maps").getDocuments { snap, err in
+            for doc in snap!.documents {
+                var posterUsernames = doc.get("posterUsernames") as! [String]
+                for i in 0..<posterUsernames.count {
+                    if posterUsernames[i] == oldUsername {
+                        posterUsernames[i] = newUsername
+                    }
+                }
+                doc.reference.updateData(["posterUsernames" : posterUsernames])
+            }
+        }
+        db.collection("users").whereField("username", isEqualTo: oldUsername).getDocuments { snap, err in
+            if let doc = snap!.documents.first {
+                let keywords = newUsername.getKeywordArray()
+                doc.reference.updateData(["username" : newUsername, "usernameKeywords": keywords])
+            }
+        }
+        db.collection("usernames").whereField("username", isEqualTo: oldUsername).getDocuments { snap, err in
+            if let doc = snap!.documents.first {
+                print("got 3")
+                doc.reference.updateData(["username" : newUsername])
+            }
+        }
+        
+        db.collection("spots").whereField("posterUsername", isEqualTo: oldUsername).getDocuments { snap, err in
+            if let doc = snap!.documents.first {
+                print("got 4")
+                doc.reference.updateData(["posterUsername" : newUsername])
+            }
+        }
+    }
+    
     // move to backend func
     func updateUserTags(oldUsername: String, newUsername: String) {
         
@@ -752,7 +786,7 @@ extension NSObject {
     func getRoundedAspectRatio(aspect: CGFloat) -> CGFloat {
         var imageAspect = aspect
         if imageAspect > 1.1 && imageAspect < 1.45 { imageAspect = 1.333 } /// stretch iPhone vertical
-        if imageAspect > 1.45 { imageAspect = UserDataModel.shared.maxAspect } /// round to max aspect
+        else if imageAspect > 1.45 { imageAspect = UserDataModel.shared.maxAspect } /// round to max aspect
         return imageAspect
     }
     
