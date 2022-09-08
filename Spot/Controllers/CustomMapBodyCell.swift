@@ -54,7 +54,6 @@ class CustomMapBodyCell: UICollectionViewCell {
 extension CustomMapBodyCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
-        
         postImage = UIImageView {
             $0.image = UIImage()
             $0.contentMode = .scaleAspectFill

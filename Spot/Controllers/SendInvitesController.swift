@@ -89,7 +89,7 @@ class SendInvitesController: UIViewController {
             $0.delegate = self
             $0.autocapitalizationType = .none
             $0.autocorrectionType = .no
-            $0.placeholder = "Search users"
+            $0.placeholder = "Search contacts"
             $0.searchTextField.font = UIFont(name: "SFCompactText-Medium", size: 15)
             $0.clipsToBounds = true
             $0.layer.masksToBounds = true
@@ -391,7 +391,7 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
         
         let head = sectionTitles[indexPath.section]
         /// get first contact starting with this section letter and count from there
-        let firstIndex = contacts.firstIndex(where: {$0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head})!
+        guard let firstIndex = contacts.firstIndex(where: {$0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head}) else { return cell }
         guard let contact = contacts[safe: firstIndex + indexPath.row] else { return cell }
         cell.set(contact: nil, inviteContact: contact.0, friend: .none, invited: contact.1)
         return cell

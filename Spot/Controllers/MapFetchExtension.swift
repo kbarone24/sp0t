@@ -84,6 +84,8 @@ extension MapController {
                 if UserDataModel.shared.userInfo.profilePic == UIImage() { self.getUserProfilePics() }
 
                 NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+                self.titleView.profileButton.profileImage.sd_setImage(with: URL(string: UserDataModel.shared.userInfo.imageURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
 
                 for friend in UserDataModel.shared.userInfo.friendIDs {
                     self.db.collection("users").document(friend).getDocument { (friendSnap, err) in
