@@ -402,6 +402,9 @@ extension CustomMapController {
     }
     @objc func DrawerViewToMiddleCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerHalf")
+        // This line of code move the initial load naivgation bar up so it won't block the friend list button
+      //  navigationController?.navigationBar.frame.origin = CGPoint(x: 0, y: 0)
+
         collectionView.isScrollEnabled = false
         containerDrawerView?.swipeToNextState = true
         barBackButton.isHidden = true

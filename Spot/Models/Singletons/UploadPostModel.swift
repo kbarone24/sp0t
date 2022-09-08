@@ -79,6 +79,7 @@ class UploadPostModel {
     func setPostCity() {
         reverseGeocodeFromCoordinate() { [weak self] (city) in
             guard let self = self else { return }
+            guard self.postObject != nil else { return }
             self.postObject.city = city
         }
     }
@@ -95,6 +96,7 @@ class UploadPostModel {
         var selectedUsers: [UserProfile] = []
         let words = text.components(separatedBy: .whitespacesAndNewlines)
         for w in words {
+            if w.count == 0 { continue }
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
                 if let f = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == username}) {
