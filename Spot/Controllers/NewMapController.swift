@@ -210,6 +210,8 @@ class NewMapController: UIViewController {
         var text = nameField.text ?? ""
         while text.last?.isWhitespace ?? false { text = String(text.dropLast()) }
         mapObject.mapName = text
+        mapObject.lowercaseName = text.lowercased()
+        mapObject.searchKeywords = mapObject.lowercaseName!.getKeywordArray()
         delegate?.finishPassing(map: mapObject)
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }

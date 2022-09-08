@@ -252,7 +252,6 @@ class PhoneController: UIViewController, UITextFieldDelegate {
         activityIndicator.startAnimating()
         
         checkForUser(phoneNumber: phoneNumber) { userExists in
-            print("check", userExists)
             /// validate if user already exists
             if self.codeType == .logIn {
                 if userExists {
@@ -282,12 +281,12 @@ class PhoneController: UIViewController, UITextFieldDelegate {
                 
             } else {
                 DispatchQueue.main.async { self.view.endEditing(true) }
-                if self.newUser != nil { self.newUser.phone = phoneNumber }
+                let formattedNumber = self.countryCode.code + phoneNumber.formatNumber()
+                if self.newUser != nil { self.newUser.phone = formattedNumber } /// formatted # for database
                 
                 let vc = ConfirmCodeController()
                 Mixpanel.mainInstance().track(event: "PhoneCodeSent")
                 vc.verificationID = verificationID!
-                vc.phoneNumber = phoneNumber
                 vc.codeType = self.codeType
                 
                 if self.newUser != nil { vc.newUser = self.newUser }
@@ -303,17 +302,18 @@ class PhoneController: UIViewController, UITextFieldDelegate {
         let defaults = UserDefaults.standard
         let defaultsPhone = defaults.object(forKey: "phoneNumber") as? String ?? ""
         let db = Firestore.firestore()
+        let formattedNumber = countryCode.code + phoneNumber.formatNumber()
         
-        if defaultsPhone == phoneNumber {
+        if defaultsPhone == formattedNumber {
             completion(true)
             return
         } else {
-            db.collection("users").whereField("phone", isEqualTo: phoneNumber).getDocuments { (snap, err) in
+            db.collection("users").whereField("phone", isEqualTo: formattedNumber).getDocuments { (snap, err) in
                 if let doc = snap?.documents.first {
                     /// if user is verified but its not already saved to defaults (app could've been deleted), save it to defaults
                     let verified = doc.get("verifiedPhone") as? Bool ?? false
                     if verified {
-                        defaults.set(phoneNumber, forKey: "phoneNumber")
+                        defaults.set(formattedNumber, forKey: "phoneNumber")
                         completion(true)
                         return
                     } else {

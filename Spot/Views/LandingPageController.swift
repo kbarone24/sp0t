@@ -127,7 +127,7 @@ class LandingPageController: UIViewController {
             $0.centerX.equalToSuperview().offset(5)
         }
         
-     //   addEmailLogin()
+        addEmailLogin()
     }
     
     func addEmailLogin() {
