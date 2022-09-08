@@ -198,7 +198,7 @@ class MapController: UIViewController {
         titleView = MapTitleView {
             $0.searchButton.addTarget(self, action: #selector(searchTap(_:)), for: .touchUpInside)
             $0.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
-            $0.notiButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
+            $0.notificationsButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
         }
         
         let notificationRef = self.db.collection("users").document(self.uid).collection("notifications")
@@ -211,9 +211,9 @@ class MapController: UIViewController {
                 return
             } else {
                 if snap!.documents.count > 0 {
-                    self.titleView.notiButton.pendingCount = snap!.documents.count
+                    self.titleView.notificationsButton.pendingCount = snap!.documents.count
                 } else {
-                    self.titleView.notiButton.pendingCount = 0
+                    self.titleView.notificationsButton.pendingCount = 0
                 }
             }
         }
@@ -325,7 +325,6 @@ class MapController: UIViewController {
             mapView.removeAllAnnos()
             if addFriends != nil {
                 self.addFriends.removeFromSuperview()
-                
             } /// remove add friends view whenever leaving home screen
         } else {
             mapView.delegate = self
@@ -483,7 +482,7 @@ class NotificationsButton: UIButton {
         }
         
         bubbleIcon = UIView {
-            $0.backgroundColor = UIColor(red: 1, green: 0.4, blue: 0.544, alpha: 1)
+            $0.backgroundColor = UIColor(red: 1, green: 0.421, blue: 0.873, alpha: 1)
             $0.layer.cornerRadius = 16/2
             $0.isHidden = true
             addSubview($0)
@@ -510,10 +509,34 @@ class NotificationsButton: UIButton {
     }
 }
 
+class ProfileButton: UIButton {
+    var profileImage: UIImageView!
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .white
+        layer.cornerRadius = 39/2
+        layer.borderColor = UIColor.black.cgColor
+        layer.borderWidth = 2
+        
+        profileImage = UIImageView {
+            $0.layer.cornerRadius = 33/2
+            $0.layer.masksToBounds = true
+            addSubview($0)
+        }
+        profileImage.snp.makeConstraints {
+            $0.edges.equalToSuperview().inset(3)
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
 class MapTitleView: UIView {
     var spotLogo: UIImageView!
-    var profileButton: UIButton!
-    var notiButton: NotificationsButton!
+    var profileButton: ProfileButton!
+    var notificationsButton: NotificationsButton!
     var searchButton: UIButton!
     
     override var intrinsicContentSize: CGSize {
@@ -534,35 +557,34 @@ class MapTitleView: UIView {
             $0.centerY.equalToSuperview()
         }
         
-        profileButton = UIButton {
-            $0.setImage(UIImage(named: "ProfileNavIcon"), for: .normal)
+        profileButton = ProfileButton {
             addSubview($0)
         }
         profileButton.snp.makeConstraints {
-            $0.trailing.equalTo(-30)
-            $0.top.equalTo(5)
-            $0.width.equalTo(23.5)
-            $0.height.equalTo(29)
+            $0.trailing.equalTo(-22)
+            $0.centerY.equalToSuperview()
+            $0.width.height.equalTo(39)
         }
         
-        notiButton = NotificationsButton {
+        notificationsButton = NotificationsButton {
             addSubview($0)
         }
-        notiButton.snp.makeConstraints {
-            $0.trailing.equalTo(profileButton.snp.leading).offset(-30)
-            $0.top.equalTo(0)
+        notificationsButton.snp.makeConstraints {
+            $0.trailing.equalTo(profileButton.snp.leading).offset(-20)
+            $0.centerY.equalToSuperview().offset(-3) /// offset for noti indicator
             $0.height.equalTo(35)
             $0.width.equalTo(30)
         }
         
         searchButton = UIButton {
-            $0.setImage(UIImage(named: "SearchNavIcon"), for: .normal)
+            $0.setImage(UIImage(named: "FindFriendsNavIcon"), for: .normal)
             addSubview($0)
         }
         searchButton.snp.makeConstraints {
-            $0.trailing.equalTo(notiButton.snp.leading).offset(-30)
-            $0.top.equalTo(5)
-            $0.height.width.equalTo(29)
+            $0.trailing.equalTo(notificationsButton.snp.leading).offset(-20)
+            $0.centerY.equalToSuperview().offset(2.5)
+            $0.width.equalTo(45)
+            $0.height.equalTo(33.75)
         }
     }
     

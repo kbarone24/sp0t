@@ -656,6 +656,7 @@ class SendInvitesView: UIView {
     var inviteFriendsIcon: UIImageView!
     var carot: UIImageView!
     var inviteFriendsText: UILabel!
+    var subtitle: UILabel!
     
     let sp0tTeamIDs: [String] = ["oAKwM2NgLjTlaE2xqvKEXiIVKYu1", "qLfKUwe9VlOPC4DFZlkAFYOqeFU2", "zNAQkeId8DeawASyJjhXlm9gxw92", "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2", "HhDmknXyHDdWF54t6s8IEbEBlXD2", "Za1OQPFoCWWbAdxB5yu98iE8WZT2", "nbYNFFjDCGNxy6y8RC9XHlQ09xn1"]
     let ambassadorIDs: [String] = ["nFlnUij0WTaV6XYRTWsGH3vLTMk1", "zaVmbTLPK5cJyR2fPMGPBb97TTm1", "6DcfWZX5hoOQamPpAybUUKDO5xC2", "Xk8C5Q86yycYeg9czDdGehKZTIW2", "5T1dWS40XJh0Jr7JzI26FSJz0In2", "t7pHGv46kPdwAOzDM1WjJw8D5FG3", "6txCLp2HrNgyxb3jNIMUkwQ5eVI2", "ykJBCMXv00S749T6n5WvNfiQpRh2", "oU7cbUagBuhwDdqH58TkgI8Yjfb2", "jVp0i6VwXDQnqKzSUx6UrgASdCq2", "5Afq7zbKm8TgfcscGIFQ45qe8Hz2", "YTOL4M8fT4SroDPddOqgBwAUAml2", "AYZzEdFk1vWKyKtTRhHmMINSRDC3", "AECeLLnRQCUIkfsTmIylQYTiiun2", "8QNeFx33XhRdNecbEE2yuZXtAnD2", "Rv2g30sMNSZ2UOwVSkDd3ulakQi1", "1g7VJrLJmtaMWvbB5a9lTVSFTrf1", "CIfupNSapGXd2p9SSgvd4SPdoM13", "JPMC8KxBqnVxXvHnT8NoWggKl5m2", "NauGOu8MM0NO0O7MM3PatAtitlu1", "jDARwPSQi7hzwv53Ang4pWxpPUN2", "BYoN1PXBcAeVgdLoErlrQNtRE0t1", "p4H4jdawHeUBfbRO1So5ULXrfEm1", "27cHPHFFehVS0Cj55DYLk0ZY6ic2", "7rJFpS2wXjceadgecyiF45JgLWi1", "GZXapTf0VzL38Np37DKrjCSIqZm2", "UHOKS5Pi5cSDvakjJHnzK5cbrAX2", "Ud511YB7ZTQonLhjs8LaSrOojNu1", "JJbtKFbdREdrt0XPDno2oh37GZw1"]
@@ -690,9 +691,8 @@ class SendInvitesView: UIView {
             $0.translatesAutoresizingMaskIntoConstraints = true
             $0.image =  UIImage(named: "InviteFriends")
             $0.layer.cornerRadius = 0
-            self.addSubview($0)
+            addSubview($0)
         }
-        
         inviteFriendsIcon.snp.makeConstraints{
             $0.width.height.equalTo(56)
             $0.centerY.equalToSuperview()
@@ -707,30 +707,38 @@ class SendInvitesView: UIView {
             $0.translatesAutoresizingMaskIntoConstraints = true
             $0.image =  UIImage(named: "SideCarat")
             $0.layer.cornerRadius = 0
-            self.addSubview($0)
+            addSubview($0)
         }
-        
-        carot.snp.makeConstraints{
+        carot.snp.makeConstraints {
             $0.width.equalTo(12.73)
             $0.height.equalTo(19.8)
             $0.centerY.equalToSuperview()
             $0.trailing.equalToSuperview().offset(-20)
         }
         
-        inviteFriendsText = UILabel{
+        inviteFriendsText = UILabel {
             $0.text = "Invite Friends"
             $0.numberOfLines = 0
             $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 17)
             $0.translatesAutoresizingMaskIntoConstraints = false
-            self.addSubview($0)
+            addSubview($0)
         }
-        
-        inviteFriendsText.snp.makeConstraints{
-            $0.centerY.equalToSuperview()
+        inviteFriendsText.snp.makeConstraints {
             $0.leading.equalTo(inviteFriendsIcon.snp.trailing).offset(10)
+            $0.centerY.equalToSuperview().offset(-9)
         }
         
+        subtitle = UILabel {
+            $0.text = "Send friends a download link"
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14)
+            addSubview($0)
+        }
+        subtitle.snp.makeConstraints {
+            $0.leading.equalTo(inviteFriendsText)
+            $0.top.equalTo(inviteFriendsText.snp.bottom).offset(1)
+        }
     }
     
     override init(frame: CGRect) {
@@ -748,13 +756,11 @@ class SendInvitesView: UIView {
 }
 
 class SearchContactsView: UIView {
-    
     var searchContactsIcon: UIImageView!
     var carot: UIImageView!
     var searchContactsText: UILabel!
     
     func setUp(){
-        
         self.backgroundColor = .white
         
         searchContactsIcon = UIImageView {
@@ -767,13 +773,11 @@ class SearchContactsView: UIView {
             $0.layer.cornerRadius = 0
             self.addSubview($0)
         }
-        
         searchContactsIcon.snp.makeConstraints{
             $0.width.height.equalTo(56)
             $0.centerY.equalToSuperview()
             $0.leading.equalToSuperview().offset(16)
         }
-        
         
         carot = UIImageView {
             $0.layer.masksToBounds = false
@@ -785,7 +789,6 @@ class SearchContactsView: UIView {
             $0.layer.cornerRadius = 0
             self.addSubview($0)
         }
-        
         carot.snp.makeConstraints{
             $0.width.equalTo(12.73)
             $0.height.equalTo(19.8)
@@ -793,16 +796,14 @@ class SearchContactsView: UIView {
             $0.trailing.equalToSuperview().offset(-20)
         }
         
-        
         searchContactsText = UILabel{
             $0.text = "Search contacts"
             $0.numberOfLines = 0
             $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 17)
             $0.translatesAutoresizingMaskIntoConstraints = false
             self.addSubview($0)
         }
-        
         searchContactsText.snp.makeConstraints{
             $0.centerY.equalToSuperview()
             $0.leading.equalTo(searchContactsIcon.snp.trailing).offset(10)
