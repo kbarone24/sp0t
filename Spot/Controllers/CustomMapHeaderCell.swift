@@ -301,15 +301,7 @@ extension CustomMapHeaderCell {
         actionButton.addTarget(self, action: #selector(actionButtonAction), for: .touchUpInside)
     }
     
-    @objc func actionButtonAction() {
-        UIView.animate(withDuration: 0.15) {
-            self.actionButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } completion: { (Bool) in
-            UIView.animate(withDuration: 0.15) {
-                self.actionButton.transform = .identity
-            }
-        }
-        
+    @objc func actionButtonAction() {        
         let db = Firestore.firestore()
         switch actionButton.titleLabel?.text {
         case "Follow map", "Join" :
@@ -328,10 +320,13 @@ extension CustomMapHeaderCell {
             let title = mapData.communityMap ?? false ? "Joined" : "Following"
             self.actionButton.setTitle(title, for: .normal)
             self.actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-        case "Following":
-            let alert = UIAlertController(title: "Are you sure you want to unfollow?", message: "", preferredStyle: .alert)
+        case "Following", "Joined":
+            let following = actionButton.titleLabel?.text == "Following"
+            let title = following ? "Unfollow this map?" : "Leave this map?"
+            let alert = UIAlertController(title: title, message: "", preferredStyle: .alert)
             alert.overrideUserInterfaceStyle = .light
-            let unfollowAction = UIAlertAction(title: "Unfollow", style: .default) { action in
+            let actionTitle = following ? "Unfollow" : "Leave"
+            let unfollowAction = UIAlertAction(title: actionTitle, style: .destructive) { action in
                 Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
                 guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.uid) else { return }
                 self.mapData.likers.remove(at: userIndex)

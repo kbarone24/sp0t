@@ -130,7 +130,7 @@ extension AVCameraController {
                         map.searchKeywords = lowercaseName.getKeywordArray()
                         /// add added users
                         if !(post.addedUsers?.isEmpty ?? true) { map.memberIDs.append(contentsOf: post.addedUsers!); map.likers.append(contentsOf: post.addedUsers!); map.memberProfiles!.append(contentsOf: post.addedUserProfiles!); map.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!) }
-                        if spot.id != "" {bc 
+                        if spot.id != "" {
                             map.spotIDs.append(spot.id!)
                             map.spotNames.append(spot.spotName)
                             map.spotLocations.append(["lat": spot.spotLat, "long": spot.spotLong])
