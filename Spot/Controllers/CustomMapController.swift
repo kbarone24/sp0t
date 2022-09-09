@@ -224,7 +224,7 @@ extension CustomMapController {
         }
         
         barView = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
+            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 78)
             $0.isUserInteractionEnabled = false
         }
         titleLabel = UILabel {
@@ -403,7 +403,7 @@ extension CustomMapController {
     @objc func DrawerViewToMiddleCompletion() {
         Mixpanel.mainInstance().track(event: "CustomMapDrawerHalf")
         // This line of code move the initial load naivgation bar up so it won't block the friend list button
-      //  navigationController?.navigationBar.frame.origin = CGPoint(x: 0, y: 0)
+        navigationController?.navigationBar.frame.origin = CGPoint(x: 0, y: 0)
 
         collectionView.isScrollEnabled = false
         containerDrawerView?.swipeToNextState = true
@@ -579,11 +579,10 @@ extension CustomMapController: UIScrollViewDelegate {
                 UIView.animate(withDuration: 0.3) {
                     self.barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
                 }
-                var titleText = ""
-                if scrollView.contentOffset.y > 0 {
-                    titleText = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
-                }
+                let titleText = scrollView.contentOffset.y > 0 ? mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? "" : ""
+                barView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: scrollView.contentOffset.y > 0 ? 91 : 78)
                 titleLabel.text = titleText
+                titleLabel.isHidden = titleText == ""
             }
         }
         
