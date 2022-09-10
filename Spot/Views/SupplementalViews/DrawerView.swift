@@ -26,7 +26,7 @@ class DrawerView: NSObject {
     // MARK: Public variable
     public lazy var slideView = UIView {
         $0.backgroundColor = .clear
-        $0.layer.cornerRadius = UserDataModel.shared.screenSize == 0 ? 0 : 10
+        $0.layer.cornerRadius = UserDataModel.shared.screenSize == 0 ? 0 : 20
         $0.layer.shadowColor = UIColor.black.cgColor
         $0.layer.shadowOffset = CGSize(width: 2, height: 2)
         $0.layer.shadowOpacity = 0.8
@@ -65,6 +65,7 @@ class DrawerView: NSObject {
         $0.backgroundColor = .clear
     }
     private let transitionAnimation = BottomToTopTransition()
+    private var drawerCornerRadius: CGFloat = 0.0
     
     private var rootVC = UIViewController()
     private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
@@ -99,7 +100,7 @@ class DrawerView: NSObject {
             }
         }
         rootVC = present
-        let drawerCornerRadius: CGFloat = UserDataModel.shared.screenSize == 0 ? 0 : 20
+        drawerCornerRadius = UserDataModel.shared.screenSize == 0 ? 0 : 20
         slideView.layer.cornerRadius = drawerCornerRadius
         detents = detentsInAscending
         viewSetup(cornerRadius: drawerCornerRadius)
@@ -173,6 +174,7 @@ class DrawerView: NSObject {
 
         UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
             self.slideView.frame.origin.y = self.yPosition
+            self.myNav.view.layer.cornerRadius = self.drawerCornerRadius
             self.parentVC.view.layoutIfNeeded()
         } completion: { success in
             NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
@@ -184,18 +186,21 @@ class DrawerView: NSObject {
         topConstraints?.activate()
         yPosition = 0
         status = .Top
+        drawerCornerRadius = 0
         animationCompleteNotificationName = "DrawerViewToTopComplete"
     }
     private func goMid() {
         midConstraints?.activate()
         yPosition = (0.45 * parentVC.view.frame.height)
         status = .Middle
+        drawerCornerRadius = 20
         animationCompleteNotificationName = "DrawerViewToMiddleComplete"
     }
     private func goBottom() {
         botConstraints?.activate()
         yPosition = parentVC.view.frame.height - 200
         status = .Bottom
+        drawerCornerRadius = 20
         animationCompleteNotificationName = "DrawerViewToBottomComplete"
     }
     
@@ -222,6 +227,11 @@ class DrawerView: NSObject {
                 status = .Middle
             } else if slideView.frame.minY == (parentVC.view.frame.height - 100) {
                 status = .Bottom
+            }
+            
+            if slideView.frame.minY <= 0.45 * slideView.frame.height {
+                let portion = (UserDataModel.shared.screenSize == 0 ? 0 : 20) / (0.45 * slideView.frame.height)
+                myNav.view.layer.cornerRadius = slideView.frame.minY * portion
             }
             
             // Prevent drawer view in top position can still scroll top
@@ -279,6 +289,7 @@ class DrawerView: NSObject {
             // Animate the drawer view to the set position
             UIView.animate(withDuration: abs(yPosition - self.slideView.frame.origin.y) / (0.25 * self.parentVC.view.frame.height / 0.25)) {
                 self.slideView.frame.origin.y = self.yPosition
+                self.myNav.view.layer.cornerRadius = self.drawerCornerRadius
                 self.parentVC.view.layoutIfNeeded()
             } completion: { success in
                 NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
