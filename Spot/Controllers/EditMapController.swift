@@ -137,6 +137,10 @@ class EditMapController: UIViewController {
         HapticGenerator.shared.play(.light)
         privateButton.setImage(UIImage(named: privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? "PrivateMapOn" : "PrivateMapOff"), for: .normal)
     }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        view.endEditing(true)
+    }
 }
 
 extension EditMapController {
@@ -231,7 +235,7 @@ extension EditMapController {
             $0.textAlignment = .center
             $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
             $0.backgroundColor = .white
-            $0.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
+            $0.textColor = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? UIColor(red: 165/255, green: 165/255, blue: 165/255, alpha: 1) : UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
             $0.alpha = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? 0.4 : 1
             $0.textContainer.maximumNumberOfLines = 2
             $0.textContainer.lineBreakMode = .byTruncatingTail
@@ -386,6 +390,7 @@ extension EditMapController: UITextViewDelegate {
         if textView.text == "Add a map bio..." {
             textView.text = ""
             textView.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
+            textView.alpha = 1
         }
     }
     
@@ -393,6 +398,7 @@ extension EditMapController: UITextViewDelegate {
         if textView.text == "" {
             textView.text = "Add a map bio..."
             textView.textColor = UIColor(red: 165/255, green: 165/255, blue: 165/255, alpha: 1)
+            textView.alpha = 0.4
         }
     }
 }
