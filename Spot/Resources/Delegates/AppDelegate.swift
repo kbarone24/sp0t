@@ -22,8 +22,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         db.settings = settings
         
         /// set navigation bar appearance with gradient
-        UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrowDark")
-        UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage(named: "BackArrowDark")
+        // Fix ticket 281
+        UINavigationBar.appearance().backIndicatorImage = UIImage()//UIImage(named: "BackArrowDark")
+        UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage()//UIImage(named: "BackArrowDark")
         
         // Sets the translucent background color
         // Set translucent. (Default value is already true, so this can  be removed if desired.)
