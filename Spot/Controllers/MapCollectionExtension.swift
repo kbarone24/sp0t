@@ -63,7 +63,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         if index == 0 {
             for post in friendsPostsDictionary.values { mapView.addPostAnnotation(post: post) }
         } else {
-            let map = getSelectedMap()!
+            guard let map = getSelectedMap() else { return }
             for group in map.postGroup { mapView.addSpotAnnotation(group: group, map: map) }
         }
         if !reload {

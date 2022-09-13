@@ -269,7 +269,8 @@ extension CommentsController {
         Mixpanel.mainInstance().track(event: "CommentsPost")
         
         var commenterIDList = [uid]
-        let excludingFirstCommenter = Array(commentList.map({$0.commenterID}).suffix(commentList.count - 1))
+        let suffixCount = max(commentList.count - 1, 0)
+        let excludingFirstCommenter = Array(commentList.map({$0.commenterID}).suffix(suffixCount))
         commenterIDList.append(contentsOf: excludingFirstCommenter)
         
         let commentID = UUID().uuidString
