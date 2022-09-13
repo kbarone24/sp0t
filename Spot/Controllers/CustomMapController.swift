@@ -226,7 +226,7 @@ class CustomMapController: UIViewController {
         }
         
         barView = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
+            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 78)
             $0.isUserInteractionEnabled = false
         }
         titleLabel = UILabel {
@@ -288,7 +288,8 @@ class CustomMapController: UIViewController {
         if containerDrawerView == nil { return }
         Mixpanel.mainInstance().track(event: "CustomMapDrawerHalf")
         // This line of code move the initial load naivgation bar up so it won't block the friend list button
-      //  navigationController?.navigationBar.frame.origin = CGPoint(x: 0, y: 0)
+        navigationController?.navigationBar.frame.origin = CGPoint(x: 0, y: 0)
+
         collectionView.isScrollEnabled = false
         containerDrawerView?.swipeToNextState = true
         barBackButton.isHidden = true
@@ -366,5 +367,4 @@ class CustomMapController: UIViewController {
         present(editVC, animated: true)
     }
 }
-
 
