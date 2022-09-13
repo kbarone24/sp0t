@@ -41,7 +41,7 @@ class MapController: UIViewController {
     
     let locationManager = CLLocationManager()
     lazy var imageManager = SDWebImageManager()
-    var userListener, newPostListener: ListenerRegistration!
+    var userListener, mapsListener, newPostListener: ListenerRegistration!
     
     let homeFetchGroup = DispatchGroup()
     let mapPostsGroup = DispatchGroup()
@@ -224,6 +224,7 @@ class MapController: UIViewController {
     
     @objc func addTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "MapControllerAddTap")
+        if addFriends != nil { addFriends.removeFromSuperview() }
         if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {

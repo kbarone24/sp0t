@@ -131,7 +131,7 @@ extension MapController {
     }
     
     @objc func notifyEditMap(_ notification: NSNotification) {
-        guard let map = notification.userInfo?["map"] as? CustomMap else { return }
+      /*  guard let map = notification.userInfo?["map"] as? CustomMap else { return }
         if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map.id}) {
             UserDataModel.shared.userInfo.mapsList[i].memberIDs = map.memberIDs
             UserDataModel.shared.userInfo.mapsList[i].likers = map.likers
@@ -141,15 +141,20 @@ extension MapController {
             UserDataModel.shared.userInfo.mapsList[i].mapDescription = map.mapDescription
             UserDataModel.shared.userInfo.mapsList[i].secret = map.secret
             DispatchQueue.main.async { self.mapsCollection.reloadItems(at: [IndexPath(item: i + 1, section: 0)]) }
-        }
+        } */
     }
     
     @objc func enterForeground() {
-        DispatchQueue.main.async { self.checkForActivityIndicator() }
+        /// check for activity indicator will begin animation
+        if !checkForActivityIndicator() {
+            /// re-run fetch, listener might missed posts when app in background
+            reRunMapFetch()
+        }
     }
     
     @objc func notifyLogout() {
         userListener.remove()
         newPostListener.remove()
+        mapsListener.remove()
     }
 }
