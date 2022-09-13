@@ -63,12 +63,13 @@ class AvatarSelectionController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         DispatchQueue.main.async {
-            if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)){
-                    self.centerCell = (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)
-                self.centerCell?.transformToLarge()
+            if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)) {
+                if let cell = self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as? AvatarCell {
+                    self.centerCell = cell
+                    self.centerCell!.transformToLarge()
+                }
             }
         }
-        
         
         let layoutMargins: CGFloat = self.collectionView.layoutMargins.left + self.collectionView.layoutMargins.left
         let sideInset = (self.view.frame.width / 2) - layoutMargins
@@ -193,9 +194,7 @@ class AvatarSelectionController: UIViewController {
                 self.centerCell?.transformToLarge()
             }
         }
-
     }
-    
     
     func transformToStandard(){
         self.centerCell.avatarImage?.alpha = 1.0
@@ -300,7 +299,12 @@ class AvatarCell: UICollectionViewCell {
         
     override init(frame: CGRect) {
         super.init(frame: frame)
-       // initialize what is needed
+       
+        avatarImage = UIImageView {
+            $0.alpha = 0.5
+            $0.contentMode = .scaleToFill
+            contentView.addSubview($0)
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -308,16 +312,11 @@ class AvatarCell: UICollectionViewCell {
     }
         
     func setUp(avatar: String) {
-        resetCell()
         self.avatar = avatar
-                 
-        avatarImage = UIImageView {
-            $0.alpha = 0.5
-            $0.contentMode = .scaleToFill
-            $0.image = UIImage(named: avatar)
-            contentView.addSubview($0)
-        }
-        avatarImage?.snp.makeConstraints{
+        avatarImage.image = UIImage(named: avatar)
+        
+        avatarImage.snp.removeConstraints()
+        avatarImage.snp.makeConstraints {
             $0.centerY.equalToSuperview()
             //bunny is small so need to make a little bigger
             if(avatar == "bunny"){
@@ -332,21 +331,18 @@ class AvatarCell: UICollectionViewCell {
     }
     
     func transformToLarge(){
-        self.scaled = true
-        UIView.animate(withDuration: 0.1){
-            self.avatarImage?.snp.updateConstraints{
+        scaled = true
+        avatarImage.snp.removeConstraints()
+        UIView.animate(withDuration: 0.1) {
+            self.avatarImage.snp.makeConstraints {
                 $0.height.equalTo(89.4)
                 $0.width.equalTo(62)
             }
         }
-        self.avatarImage?.alpha = 1.0
-     }
-        
-    func resetCell() {
-        if self.contentView.subviews.isEmpty == false {
-            for subview in self.contentView.subviews {
-                subview.removeFromSuperview()
-            }
-        }
+        avatarImage.alpha = 1.0
+    }
+    
+    override func prepareForReuse() {
+        if avatarImage != nil { avatarImage.alpha = 0.5 } 
     }
 }

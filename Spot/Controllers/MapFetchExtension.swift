@@ -231,11 +231,10 @@ extension MapController {
     
     func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool, index: Int) {
         /// add new post to both dictionaries
-        if map == nil || (newPost && !(post.hideFromFeed ?? false) && UserDataModel.shared.userInfo.friendsContains(id: post.posterID)) {
+        if map == nil || map?.id ?? "" == "" || (newPost && !(post.hideFromFeed ?? false) && UserDataModel.shared.userInfo.friendsContains(id: post.posterID)) {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
             if index == 0 { mapView.addPostAnnotation(post: post) }
-        }
-        if map != nil {
+        } else {
             /// map posts are sorted by spot rather than user
             if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map!.id!}) {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id!)
@@ -276,13 +275,18 @@ extension MapController {
     }
     
     func getMaps() {
-        db.collection("maps").whereField("likers", arrayContains: uid).getDocuments { [weak self] snap, err in
+        mapsListener = db.collection("maps").whereField("likers", arrayContains: uid).addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] snap, err in
             guard let self = self else { return }
             guard let snap = snap else { return }
+            if snap.metadata.isFromCache { return }
             for doc in snap.documents {
                 do {
                     let mapIn = try doc.data(as: CustomMap.self)
                     guard var mapInfo = mapIn else { continue }
+                    if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == mapInfo.id}) {
+                        self.updateMap(map: mapInfo, index: i)
+                        continue
+                    }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
                     self.homeFetchGroup.enter()
@@ -293,7 +297,18 @@ extension MapController {
             }
             self.mapsLoaded = true
             NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
-        }
+        })
+    }
+    
+    func updateMap(map: CustomMap, index: Int) {
+        UserDataModel.shared.userInfo.mapsList[index].memberIDs = map.memberIDs
+        UserDataModel.shared.userInfo.mapsList[index].likers = map.likers
+        UserDataModel.shared.userInfo.mapsList[index].memberProfiles = map.memberProfiles
+        UserDataModel.shared.userInfo.mapsList[index].imageURL = map.imageURL
+        UserDataModel.shared.userInfo.mapsList[index].mapName = map.mapName
+        UserDataModel.shared.userInfo.mapsList[index].mapDescription = map.mapDescription
+        UserDataModel.shared.userInfo.mapsList[index].secret = map.secret
+        DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
     }
     
     func attachNewPostListener() {
@@ -401,10 +416,27 @@ extension MapController {
     }
     
         
-    func checkForActivityIndicator() {
+    func checkForActivityIndicator() -> Bool {
         /// resume frozen indicator
         if mapsCollection != nil, let cell = mapsCollection.cellForItem(at: IndexPath(item: 0, section: 0)) as? MapLoadingCell {
-            cell.activityIndicator.startAnimating()
+            DispatchQueue.main.async { cell.activityIndicator.startAnimating() }
+            return true
+        }
+        return false
+    }
+    
+    func reRunMapFetch() {
+        print("re run fetch")
+        homeFetchGroup.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getRecentPosts(map: nil)
+        }
+        
+        for map in UserDataModel.shared.userInfo.mapsList {
+            homeFetchGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                self.getRecentPosts(map: map)
+            }
         }
     }
 }

@@ -139,9 +139,37 @@ extension UIViewController {
         }
     }
     
+    // update map locations with correct ID
+    func updateBadMapLocations() {
+        let db = Firestore.firestore()
+        db.collection("mapLocations").getDocuments { snap, err in
+            for doc in snap!.documents {
+                let postID = doc.get("postID") as! String
+                let mapID = doc.get("mapID") as! String
+                let location = doc.get("l") as! [Double]
+                if postID != doc.documentID {
+                    db.collection("mapLocations").document(postID).setData(["postID" : postID, "mapID": mapID])
+                    self.setMapLocations(mapLocation: CLLocationCoordinate2D(latitude: location[0], longitude: location[1]), documentID: postID)
+                    doc.reference.delete()
+                    print("update", postID)
+                }
+            }
+        }
+    }
+    // delete deleted map locations
+    func fixDeleteMapLocations() {
+        let db = Firestore.firestore()
+        db.collection("mapLocations").getDocuments { snap, err in
+            for doc in snap!.documents {
+                db.collection("posts").document(doc.documentID).getDocument { snap, err in
+                    if !(snap?.exists ?? false) { doc.reference.delete() }
+                }
+            }
+        }
+    }
+    
     func setMapLocations(mapLocation: CLLocationCoordinate2D, documentID: String) {
         let location = CLLocation(latitude: mapLocation.latitude, longitude: mapLocation.longitude)
-        
         GeoFirestore(collectionRef: Firestore.firestore().collection("mapLocations")).setLocation(location: location, forDocumentWithID: documentID) { (error) in
             if (error != nil) {
                 print("An error occured: \(String(describing: error))")
@@ -561,9 +589,8 @@ extension UIViewController {
                 print(result?.data as Any, error as Any)
             }
         }
-        let documentID = UUID().uuidString
-        db.collection("mapLocations").document(documentID).setData(["mapID": map.id!, "postID": post.id!])
-        setMapLocations(mapLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), documentID: documentID)
+        db.collection("mapLocations").document(post.id!).setData(["mapID": map.id!, "postID": post.id!])
+        setMapLocations(mapLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), documentID: post.id!)
     }
     
     func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String) {
@@ -791,7 +818,7 @@ extension NSObject {
     }
     
     func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
-        
+        if postID == "" { completion([]); return }
         let db: Firestore! = Firestore.firestore()
         var commentList: [MapComment] = []
         
@@ -1108,7 +1135,7 @@ extension NSObject {
         }
         
         for tag in tags {
-            var rect = (rect: getRect(str: attString, range: tag.range, maxWidth: maxWidth ), username: tag.username)
+            var rect = (rect: getRect(str: attString, range: tag.range, maxWidth: maxWidth), username: tag.username)
             rect.0 = CGRect(x: rect.0.minX, y: rect.0.minY, width: rect.0.width, height: rect.0.height)
             
             if (!freshRect.contains(where: {$0 == rect})) {
@@ -1124,7 +1151,7 @@ extension NSObject {
         let layoutManager = NSLayoutManager()
         layoutManager.addTextContainer(textContainer)
         textStorage.addLayoutManager(layoutManager)
-        textContainer.lineFragmentPadding = 10
+        textContainer.lineFragmentPadding = 0
         let pointer = UnsafeMutablePointer<NSRange>.allocate(capacity: 1)
         layoutManager.characterRange(forGlyphRange: range, actualGlyphRange: pointer)
         var rect = layoutManager.boundingRect(forGlyphRange: pointer.move(), in: textContainer)

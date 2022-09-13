@@ -93,25 +93,24 @@ class EditMapController: UIViewController {
     @objc func saveAction() {
         Mixpanel.mainInstance().track(event: "EditMapSave")
         activityIndicator.startAnimating()
-        let userRef = db.collection("maps").document(mapData!.id!)
-        do {
-            mapData!.mapName = mapNameTextField.text!
-            mapData!.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
-            mapData!.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
-            
-            try userRef.setData(from: mapData, merge: true)
-            if mapData!.secret { self.updatePostInviteLists(inviteList: mapData!.memberIDs) }
-            self.updateUserInfo()
-            
-            if mapCoverChanged {
-                updateMapCover()
-            } else {
-                activityIndicator.stopAnimating()
-                dismiss(animated: true)
-            }
+        let mapsRef = db.collection("maps").document(mapData!.id!)
+        
+        mapData!.mapName = mapNameTextField.text!
+        mapData!.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
+        mapData!.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
+        mapData!.lowercaseName = mapData!.mapName.lowercased()
+        mapData!.searchKeywords = mapData!.lowercaseName!.getKeywordArray()
+        
+        mapsRef.updateData(["mapName" : mapNameTextField.text!, "mapDescription": mapData!.mapDescription!, "secret": mapData!.secret, "likers": FieldValue.arrayUnion(mapData!.likers), "memberIDs": FieldValue.arrayUnion(mapData!.memberIDs), "lowercaseName": mapData!.lowercaseName!, "searchKeywords": mapData!.searchKeywords!, "updateUserID": UserDataModel.shared.uid, "updateUsername": UserDataModel.shared.userInfo.username])
+        
+        if mapData!.secret { self.updatePostInviteLists(inviteList: mapData!.memberIDs) }
+        self.updateUserInfo()
 
-        } catch {
-            //handle error
+        if mapCoverChanged {
+            updateMapCover()
+        } else {
+            activityIndicator.stopAnimating()
+            dismiss(animated: true)
         }
     }
     
