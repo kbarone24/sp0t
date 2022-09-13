@@ -31,7 +31,7 @@ class ProfileViewController: UIViewController {
     private var relation: ProfileRelation = .myself
     private var pendingFriendRequestNotiID: String? {
         didSet {
-            collectionView.reloadItems(at: [IndexPath(row: 0, section: 0)])
+            DispatchQueue.main.async { self.collectionView.reloadData() }
         }
     }
 
@@ -263,7 +263,7 @@ extension ProfileViewController {
             }
             dispatch.notify(queue: .main) { [weak self] in
                 guard let self = self else { return }
-                self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 1)])
+                self.collectionView.reloadData()
             }
         }
     }
@@ -393,7 +393,6 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        print("hidden", noPostLabel.isHidden, mapsFetched, postsFetched)
         return section == 0 ? 1 : noPostLabel.isHidden && (!maps.isEmpty || !posts.isEmpty) ? maps.count + 1 : 0
     }
     

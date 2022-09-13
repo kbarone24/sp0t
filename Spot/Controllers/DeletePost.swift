@@ -98,6 +98,7 @@ extension PostController {
     }
     
     func deletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
+        db.collection("mapLocations").document(post.id!).delete()
         var posters = [uid]
         posters.append(contentsOf: post.addedUsers ?? [])
         let functions = Functions.functions()

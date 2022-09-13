@@ -20,7 +20,6 @@ struct CustomMap: Identifiable, Codable {
     var imageURL: String
     var likers: [String]
     var lowercaseName: String?
-    var mapBio: String?
     var mapDescription: String?
     var mapName: String
     var memberIDs: [String]
@@ -69,6 +68,7 @@ struct CustomMap: Identifiable, Codable {
         case imageURL
         case lowercaseName
         case likers
+        case mapDescription
         case mapName
         case memberIDs
         case posterDictionary

@@ -10,12 +10,9 @@ import UIKit
 import SDWebImage
 
 class CustomMapBodyCell: UICollectionViewCell {
-    
     private var postImage: UIImageView!
     private var postLocation: UILabel!
     private var postData: MapPost?
-    private lazy var fetching = false
-    private lazy var imageManager = SDWebImageManager()
         
     override init(frame: CGRect) {
         super.init(frame: frame)

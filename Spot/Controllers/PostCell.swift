@@ -344,7 +344,7 @@ class PostCell: UICollectionViewCell {
     
     func addCaptionAttString() {
         if !(post.taggedUsers?.isEmpty ?? true) {
-            let attString = self.getAttString(caption: post.caption, taggedFriends: post.taggedUsers!, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 71.4)
+            let attString = self.getAttString(caption: post.caption, taggedFriends: post.taggedUsers!, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 88)
             captionLabel.attributedText = attString.0
             tagRect = attString.1
         }
@@ -599,6 +599,7 @@ extension PostCell {
     
     @objc func captionTap(_ sender: UITapGestureRecognizer) {
         if tapInTagRect(sender: sender) {
+            /// profile open handled on function call
             return
         } else if overflow {
             Mixpanel.mainInstance().track(event: "PostPageExpandCaption")
@@ -611,7 +612,8 @@ extension PostCell {
     
     func tapInTagRect(sender: UITapGestureRecognizer) -> Bool {
         for r in tagRect {
-            if r.rect.contains(sender.location(in: sender.view)) {
+            let expandedRect = CGRect(x: r.rect.minX - 3, y: r.rect.minY, width: r.rect.width + 6, height: r.rect.height + 3)
+            if expandedRect.contains(sender.location(in: sender.view)) {
                 Mixpanel.mainInstance().track(event: "PostPageOpenTaggedUserProfile")
                 /// open tag from friends list
                 if let friend = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == r.username}) {
