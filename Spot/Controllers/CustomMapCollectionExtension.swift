@@ -63,7 +63,9 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     
     func openPost(posts: [MapPost], row: Int) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
-        if containerDrawerView?.status == .Top { fullScreenOnDismissal = true }
+        if navigationController!.viewControllers.last is PostController { return } // double stack happening here
+        
+        if containerDrawerView?.status == .Top { fullScreenOnDismissal = true; offsetOnDismissal = collectionView.contentOffset.y }
         currentContainerCanDragStatus = containerDrawerView?.canDrag
         postVC.postsList = posts
         postVC.selectedPostIndex = row

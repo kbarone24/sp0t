@@ -19,7 +19,6 @@ import FirebaseMessaging
 
 protocol MapControllerDelegate: AnyObject {
     func displayHeelsMap()
-    func addHeelsMap(heelsMap: CustomMap)
 }
 
 class MapController: UIViewController {
@@ -46,6 +45,7 @@ class MapController: UIViewController {
     let homeFetchGroup = DispatchGroup()
     let mapPostsGroup = DispatchGroup()
     
+    var firstOpen = false
     var firstTimeGettingLocation = true
     var feedLoaded = false
     var mapsLoaded = false
@@ -61,6 +61,7 @@ class MapController: UIViewController {
     
     var addFriends: AddFriendsView!
     var heelsMapID = "9ECABEF9-0036-4082-A06A-C8943428FFF4"
+    var newMapID: String? 
     
     /// sheet view: Must declare outside to listen to UIEvent
     var sheetView: DrawerView? {
@@ -323,7 +324,6 @@ class MapController: UIViewController {
         newPostsButton.isHidden = hidden
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
-            mapView.removeAllAnnos()
             if addFriends != nil {
                 self.addFriends.removeFromSuperview()
             } /// remove add friends view whenever leaving home screen

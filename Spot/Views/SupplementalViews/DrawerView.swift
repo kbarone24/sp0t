@@ -328,7 +328,6 @@ class DrawerView: NSObject {
 
 extension DrawerView: UINavigationControllerDelegate {
     func navigationController(_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-        print("offset", slideView.frame.origin.y)
         transitionAnimation.startingOffset = slideView.frame.origin.y
         transitionAnimation.transitionMode = operation == .push ? .present : .pop
         return transitionAnimation

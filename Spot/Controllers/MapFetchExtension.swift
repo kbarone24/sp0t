@@ -36,7 +36,6 @@ extension MapController {
                 self.newPostsButton.isHidden = false
                 self.loadAdditionalOnboarding()
                 self.reloadMapsCollection(resort: true, newPost: false)
-                self.displayHeelsMap()
             }
         }
     }
@@ -44,6 +43,11 @@ extension MapController {
     func reloadMapsCollection(resort: Bool, newPost: Bool) {
         if resort { UserDataModel.shared.userInfo.sortMaps() }
         let scrollPosition: UICollectionView.ScrollPosition = resort ? .left : []
+        /// select new map on add from onboarding
+        if newMapID != nil, let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == newMapID}) {
+            selectMapAt(index: index + 1)
+            newMapID = nil
+        }
         
         DispatchQueue.main.async {
             self.mapsCollection.reloadData()
@@ -234,7 +238,9 @@ extension MapController {
         if map == nil || map?.id ?? "" == "" || (newPost && !(post.hideFromFeed ?? false) && UserDataModel.shared.userInfo.friendsContains(id: post.posterID)) {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
             if index == 0 { mapView.addPostAnnotation(post: post) }
-        } else {
+        }
+
+        if map != nil {
             /// map posts are sorted by spot rather than user
             if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map!.id!}) {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id!)
@@ -291,6 +297,16 @@ extension MapController {
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
                     self.homeFetchGroup.enter()
                     self.getRecentPosts(map: mapInfo)
+                    
+                    /// add new notify method for new map since initial notify method wont be called
+                    if self.mapsLoaded {
+                        print("fetch new map")
+                        self.homeFetchGroup.notify(queue: .main) { [weak self] in
+                            guard let self = self else { return }
+                            self.reloadMapsCollection(resort: true, newPost: false)
+                        }
+                    }
+                    
                 } catch {
                     continue
                 }
@@ -301,6 +317,10 @@ extension MapController {
     }
     
     func updateMap(map: CustomMap, index: Int) {
+        /// only reload if display content changes
+        let oldMap = UserDataModel.shared.userInfo.mapsList[index]
+        let reload = oldMap.mapName != map.mapName || oldMap.imageURL != map.imageURL || oldMap.secret != map.secret
+        
         UserDataModel.shared.userInfo.mapsList[index].memberIDs = map.memberIDs
         UserDataModel.shared.userInfo.mapsList[index].likers = map.likers
         UserDataModel.shared.userInfo.mapsList[index].memberProfiles = map.memberProfiles
@@ -308,8 +328,12 @@ extension MapController {
         UserDataModel.shared.userInfo.mapsList[index].mapName = map.mapName
         UserDataModel.shared.userInfo.mapsList[index].mapDescription = map.mapDescription
         UserDataModel.shared.userInfo.mapsList[index].secret = map.secret
-        DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
+        
+        if reload {
+            DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
+        }
     }
+    
     
     func attachNewPostListener() {
         /// listen for new posts entering
@@ -327,14 +351,10 @@ extension MapController {
                     if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { return }
                     let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
                     
-                    let postAccess = self.hasNewPostAccess(post: postInfo, map: map)
-                    if postAccess.access == false { return }
-                    /// if user was just added to a new map, load that map then add the post to the map. Otherwise load in the new post
-                    if postAccess.newMap {
-                        self.loadNewMap(post: postInfo)
-                    } else {
+                    if self.hasNewPostAccess(post: postInfo, map: map) {
                         self.finishNewMapPostLoad(postInfo: postInfo, map: map)
                     }
+                   
                 } catch {
                     return
                 }
@@ -342,29 +362,14 @@ extension MapController {
         })
     }
         
-    func hasNewPostAccess(post: MapPost, map: CustomMap?) -> (access: Bool, newMap: Bool) {
+    func hasNewPostAccess(post: MapPost, map: CustomMap?) -> (Bool) {
         if map == nil {
-            /// non-friend post, user doesn't have map access
-            if !UserDataModel.shared.userInfo.friendsContains(id: post.posterID) { return (false, false) }
-            if (post.mapID ?? "") != "" {
-                /// friend post to new map
-                if (post.inviteList?.contains(uid) ?? false) {
-                    return (true, true)
-                } else if post.privacyLevel == "invite" {
-                    /// user doesnt have access -on post to a secret map
-                    return (false, false)
-                } else {
-                    /// user not added to map, just add to freinds map
-                    return (true, false)
-                }
-            }
-            /// friend post, not posted to a map
-            return (true, false)
+            return post.friendsList.contains(uid)
         }
-        /// friend post to existing map
-        return (true, false)
+        return true
     }
     
+    /*
     func loadNewMap(post: MapPost) {
         db.collection("maps").document(post.mapID!).getDocument { doc, err in
             guard let doc = doc else { return }
@@ -378,8 +383,8 @@ extension MapController {
                 return
             }
         }
-    }
-    
+    } */
+
     func finishNewMapPostLoad(postInfo: MapPost, map: CustomMap?) {
         /// check map dictionary for add
         if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID ?? "", newPost: true) {
@@ -394,7 +399,7 @@ extension MapController {
             }
         }
     }
-            
+    
     func getSortedCoordinates() -> [CLLocationCoordinate2D] {
         let map = getSelectedMap()
         if map == nil {
