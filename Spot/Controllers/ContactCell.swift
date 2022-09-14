@@ -218,7 +218,6 @@ class StatusButton: UIButton {
     
     func setUpButton(contact: UserProfile?, inviteContact: CNContact?, friend: FriendStatus, invited: InviteStatus) {
         self.layer.cornerRadius = 14
-
         ///setting up different buttons
         if(contact != nil){
             switch friend {

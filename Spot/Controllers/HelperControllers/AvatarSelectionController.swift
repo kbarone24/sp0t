@@ -16,22 +16,22 @@ class AvatarSelectionController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
     var friendRequests: [UserNotification] = []
-
+    
     private let myCollectionViewFlowLayout = MyCollectionViewFlowLayout()
     var collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewLayout.init())
     var centerCell: AvatarCell!
     
     var centerAvi = CGPoint(x: 0.0, y: 0.0)
     var sentFrom: SentFrom!
-
+    
     enum SentFrom {
         case create
         case map
         case edit
     }
-
+    
     var onDoneBlock : ((String, String) -> Void)?
-
+    
     init(sentFrom: SentFrom) {
         super.init(nibName: nil, bundle: nil)
         self.sentFrom = sentFrom
@@ -91,8 +91,8 @@ class AvatarSelectionController: UIViewController {
             view.addSubview($0)
         }
         title.snp.makeConstraints{
-          $0.top.equalToSuperview().offset(138)
-          $0.centerX.equalToSuperview()
+            $0.top.equalToSuperview().offset(138)
+            $0.centerX.equalToSuperview()
         }
         
         let subTitle = UILabel {
@@ -180,12 +180,12 @@ class AvatarSelectionController: UIViewController {
             self.collectionView.reloadData()
             self.collectionView.layoutSubviews()
         }
-
+        
         guard scrollView is UICollectionView else {
             return}
         ///finding cell at the center
         //let center = self.view.convert(self.collectionView.center, to: self.collectionView)
-
+        
         DispatchQueue.main.async { [self] in
             let center = self.view.convert(self.collectionView.center, to: self.collectionView)
             if let indexPath = self.collectionView.indexPathForItem(at: center){
@@ -213,22 +213,23 @@ class AvatarSelectionController: UIViewController {
             let db = Firestore.firestore()
             db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
         }
-                
+        
         if sentFrom == .map {
             self.navigationController!.popViewController(animated: true)
         } else if sentFrom == .create {
             let storyboard = UIStoryboard(name: "Map", bundle: nil)
-             let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
-             let navController = UINavigationController(rootViewController: vc)
-             navController.modalPresentationStyle = .fullScreen
-             
-             let keyWindow = UIApplication.shared.connectedScenes
-                 .filter({$0.activationState == .foregroundActive})
-                 .map({$0 as? UIWindowScene})
-                 .compactMap({$0})
-                 .first?.windows
-                 .filter({$0.isKeyWindow}).first
-             keyWindow?.rootViewController = navController
+            let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
+            vc.firstOpen = true
+            let navController = UINavigationController(rootViewController: vc)
+            navController.modalPresentationStyle = .fullScreen
+            
+            let keyWindow = UIApplication.shared.connectedScenes
+                .filter({$0.activationState == .foregroundActive})
+                .map({$0 as? UIWindowScene})
+                .compactMap({$0})
+                .first?.windows
+                .filter({$0.isKeyWindow}).first
+            keyWindow?.rootViewController = navController
         } else {
             onDoneBlock!(avatarURL, centerCell.avatar!)
             self.presentingViewController?.dismiss(animated: false, completion:nil)
@@ -289,17 +290,17 @@ class AvatarCell: UICollectionViewCell {
     var avatar: String?
     var avatarImage: UIImageView!
     var scaled = false
-        
+    
     // variables for activity indicator that will be used later
     lazy var activityIndicator = UIActivityIndicatorView()
     var globalRow = 0
     
     var directionUp = true
     var animationIndex = 0
-        
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
-       
+        
         avatarImage = UIImageView {
             $0.alpha = 0.5
             $0.contentMode = .scaleToFill
@@ -310,7 +311,7 @@ class AvatarCell: UICollectionViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-        
+    
     func setUp(avatar: String) {
         self.avatar = avatar
         avatarImage.image = UIImage(named: avatar)
@@ -330,7 +331,7 @@ class AvatarCell: UICollectionViewCell {
         }
     }
     
-    func transformToLarge(){
+    func transformToLarge() {
         scaled = true
         avatarImage.snp.removeConstraints()
         UIView.animate(withDuration: 0.1) {
@@ -343,6 +344,6 @@ class AvatarCell: UICollectionViewCell {
     }
     
     override func prepareForReuse() {
-        if avatarImage != nil { avatarImage.alpha = 0.5 } 
+        if avatarImage != nil { avatarImage.alpha = 0.5 }
     }
 }

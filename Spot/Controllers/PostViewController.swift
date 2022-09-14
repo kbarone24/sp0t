@@ -79,14 +79,12 @@ class PostController: UIViewController {
     
     
     func cancelDownloads() {
-        
         // cancel image loading operations and reset map
         for op in PostImageModel.shared.loadingOperations {
             guard let imageLoader = PostImageModel.shared.loadingOperations[op.key] else { continue }
             imageLoader.cancel()
             PostImageModel.shared.loadingOperations.removeValue(forKey: op.key)
         }
-        
         PostImageModel.shared.loadingQueue.cancelAllOperations()
     }
     

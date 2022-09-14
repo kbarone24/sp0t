@@ -21,11 +21,20 @@ extension MapController {
     
     func loadAdditionalOnboarding() {
         let posts = friendsPostsDictionary.count
-        if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
+        if firstOpen {
+            let vc = EnterMapCodeController()
+            vc.delegate = self
+            DispatchQueue.main.async { self.present(vc, animated: true) }
+            
+        } else if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
             let avc = AvatarSelectionController(sentFrom: .map)
             self.navigationController!.pushViewController(avc, animated: true)
-        }
-        else if (UserDataModel.shared.userInfo.friendIDs.count < 6 && posts == 0) {
+            
+        } else if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
+            displayHeelsMap()
+            db.collection("users").document(uid).updateData(["respondedToCampusMap" : true])
+            
+        } else if (UserDataModel.shared.userInfo.friendIDs.count < 4 && posts == 0) {
             self.addFriends = AddFriendsView {
                 $0.layer.cornerRadius = 13
                 $0.isHidden = false
@@ -40,29 +49,20 @@ extension MapController {
             }
         }
     }
-}
-
-extension MapController: MapControllerDelegate {
-
+    
+    
     func displayHeelsMap() {
+        /// maps list check shouldnt be necessary anymore
         if userInChapelHill() && !UserDataModel.shared.userInfo.mapsList.contains(where: {$0.id == heelsMapID}) {
             let vc = HeelsMapPopUpController()
-            vc.mapDelegate = self
-            self.present(vc, animated: true)
-        }
-    }
-    
-    func addHeelsMap(heelsMap: CustomMap) {
-        UserDataModel.shared.userInfo.mapsList.append(heelsMap)
-        self.db.collection("maps").document("9ECABEF9-0036-4082-A06A-C8943428FFF4").updateData([
-            "memberIDs": FieldValue.arrayUnion([uid]),
-            "likers": FieldValue.arrayUnion([uid])
-        ])
-        reloadMapsCollection(resort: true, newPost: true)
-        self.homeFetchGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getRecentPosts(map: heelsMap)
+            vc.delegate = self
+            DispatchQueue.main.async { self.present(vc, animated: true) }
         }
     }
 }
 
+extension MapController: MapCodeDelegate {
+    func finishPassing(newMapID: String) {
+        self.newMapID = newMapID
+    }
+}

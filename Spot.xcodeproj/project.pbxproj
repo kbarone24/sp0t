@@ -241,8 +241,6 @@
 		8C3B952728AC042B00C06586 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B952528AC042B00C06586 /* PostCell.swift */; };
 		8C3B952828AC042B00C06586 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B952528AC042B00C06586 /* PostCell.swift */; };
 		8C3B953228AD530300C06586 /* HeelsMapPopUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */; };
-		8C3B953328AD530300C06586 /* HeelsMapPopUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */; };
-		8C3B953428AD530300C06586 /* HeelsMapPopUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */; };
 		8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
 		8C3B953A28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
 		8C3B953B28AD546E00C06586 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953928AD546E00C06586 /* AvatarURLs.swift */; };
@@ -287,6 +285,9 @@
 		8C61EB4F28CBBF3600E7180A /* CustomMapFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB4E28CBBF3600E7180A /* CustomMapFetchExtension.swift */; };
 		8C61EB5028CBBF3600E7180A /* CustomMapFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB4E28CBBF3600E7180A /* CustomMapFetchExtension.swift */; };
 		8C61EB5128CBBF3600E7180A /* CustomMapFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB4E28CBBF3600E7180A /* CustomMapFetchExtension.swift */; };
+		8C61EB5328D237E600E7180A /* EnterMapCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */; };
+		8C61EB5428D237E600E7180A /* EnterMapCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */; };
+		8C61EB5528D237E600E7180A /* EnterMapCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */; };
 		8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
@@ -498,6 +499,7 @@
 		8C61EB4628CBBF1400E7180A /* CustomMapCollectionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapCollectionExtension.swift; sourceTree = "<group>"; };
 		8C61EB4A28CBBF2900E7180A /* CustomMapDelegateExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapDelegateExtension.swift; sourceTree = "<group>"; };
 		8C61EB4E28CBBF3600E7180A /* CustomMapFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapFetchExtension.swift; sourceTree = "<group>"; };
+		8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnterMapCodeController.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C88B0E627B46E3900DB4039 /* PostImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageModel.swift; sourceTree = "<group>"; };
 		8C8DBB712888BE5C00B31BFD /* ChooseSpotController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseSpotController.swift; sourceTree = "<group>"; };
@@ -693,6 +695,8 @@
 				8C3B953528AD533100C06586 /* AvatarSelectionController.swift */,
 				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
 				413BA164287C917000FD80AF /* FriendsListController.swift */,
+				8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */,
+				8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */,
 			);
 			path = HelperControllers;
 			sourceTree = "<group>";
@@ -732,7 +736,6 @@
 				8C1E48CA289C55090093030D /* MapFetchExtension.swift */,
 				8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */,
 				8C1E4872289C54900093030D /* MapViewDelegate.swift */,
-				8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */,
 				8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */,
 			);
 			name = Map;
@@ -1329,6 +1332,7 @@
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				5F497B3E2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift in Sources */,
 				59DFA25222C27B4800A59D29 /* CommentsViewController.swift in Sources */,
+				8C61EB5328D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */,
 				59056A5323197E4B00C7E753 /* PostNotification.swift in Sources */,
 				5F2B5A7D288EE5830006DDA6 /* ContactCell.swift in Sources */,
@@ -1411,6 +1415,7 @@
 			files = (
 				59F6ABB0234EA73500E18AAF /* Contact.swift in Sources */,
 				8C53A80B28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
+				8C61EB5428D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				593AC54E243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
@@ -1459,7 +1464,6 @@
 				8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8CCE3416288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B424A27F8500118E83 /* MapSpot.swift in Sources */,
-				8C3B953328AD530300C06586 /* HeelsMapPopUpController.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF59260C413F00349091 /* ConfirmCodeController.swift in Sources */,
 				59F4701F2368933C00BB79CC /* SceneDelegate.swift in Sources */,
@@ -1506,6 +1510,7 @@
 			files = (
 				59F6ABB1234EA73500E18AAF /* Contact.swift in Sources */,
 				8C53A80C28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
+				8C61EB5528D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				593AC54F243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
@@ -1554,7 +1559,6 @@
 				8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8CCE3417288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B524A27F8500118E83 /* MapSpot.swift in Sources */,
-				8C3B953428AD530300C06586 /* HeelsMapPopUpController.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF5A260C413F00349091 /* ConfirmCodeController.swift in Sources */,
 				59F470202368933C00BB79CC /* SceneDelegate.swift in Sources */,
@@ -1765,7 +1769,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1835,7 +1839,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 20;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
