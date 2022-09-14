@@ -172,6 +172,7 @@ extension CustomMapController {
     }
     
     func addInitialAnnotations(posts: [MapPost]) {
+        mapController?.mapView.removeAllAnnos()
         if mapType == .friendsMap {
             for post in posts { mapController?.mapView.addPostAnnotation(post: post) }
         } else {

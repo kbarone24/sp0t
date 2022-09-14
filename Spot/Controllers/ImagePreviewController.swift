@@ -42,7 +42,7 @@ class ImagePreviewController: UIViewController {
     var textView: UITextView!
     let textViewPlaceholder = "Write a caption..."
     
-    var shouldRepositionTextView = false /// keyboardWillShow firing late -> this variable tells keyboardWillChange whether to reposition
+    var shouldAnimateTextMask = false /// keyboardWillShow firing late -> this variable tells keyboardWillChange whether to reposition
     lazy var firstImageBottomConstraint: CGFloat = 0
     
     var tagFriendsView: TagFriendsView?
@@ -425,7 +425,7 @@ class ImagePreviewController: UIViewController {
     @objc func captionTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewCaptionTap")
         if newSpotNameView.textView.isFirstResponder { return }
-     //   shouldRepositionTextView = true
+        shouldAnimateTextMask = true
         textView.becomeFirstResponder()
     }
     
@@ -452,11 +452,11 @@ class ImagePreviewController: UIViewController {
         print("keyboard show")
         if cancelOnDismiss { return }
         if !textView.isFirstResponder { addNewSpotView(notification: notification) }
-    //    if !shouldRepositionTextView { print("keyboard no repo"); return }
-   //     shouldRepositionTextView = false
-        print("keyboard repo")
+        
+        /// only animate mask on initial open
+        if shouldAnimateTextMask { postDetailView.bottomMask.alpha = 0.0 }
+        shouldAnimateTextMask = false
         /// new spot name view editing when textview not first responder
-        postDetailView.bottomMask.alpha = 0.0
         animateWithKeyboard(notification: notification) { keyboardFrame in
             self.postDetailView.bottomMask.alpha = 1.0
             self.postDetailView.snp.removeConstraints()

@@ -52,6 +52,7 @@ extension MapController: MKMapViewDelegate {
         /// zoom out map to show all annotations in view
         let map = getSelectedMap()
         var coordinates = getSortedCoordinates()
+        print("coordinates", coordinates)
         /// add fist 10 post coordiates to set location for map with no new posts
         if coordinates.isEmpty && map != nil {
             for location in map!.postLocations.prefix(10) { coordinates.append(CLLocationCoordinate2D(latitude: location["lat"] ?? 0.0, longitude: location["long"] ?? 0.0)) }
@@ -386,7 +387,7 @@ extension MKCoordinateRegion {
             return
         }
         
-        let minSpan = overview ? 0.05 : 0.0001
+        let minSpan = overview ? 0.001 : 0.0001
         var span = MKCoordinateSpan(latitudeDelta: 0.0, longitudeDelta: 0.0)
         var minLatitude: CLLocationDegrees = coordinates.first!.latitude
         var maxLatitude: CLLocationDegrees = coordinates.first!.latitude
@@ -404,7 +405,6 @@ extension MKCoordinateRegion {
             let long = Double(coordinate.longitude)
             if lat < minLatitude {
                 if spanOutOfRange(span: MKCoordinateSpan(latitudeDelta: maxLatitude - lat, longitudeDelta: span.longitudeDelta).getAdjustedSpan()) { continue }
-                
                 minLat = lat
             }
             if lat > maxLatitude {
@@ -426,7 +426,6 @@ extension MKCoordinateRegion {
             maxLongitude = maxLong
             span = MKCoordinateSpan(latitudeDelta: max(minSpan, maxLatitude - minLatitude), longitudeDelta: max(minSpan, maxLongitude - minLongitude)).getAdjustedSpan()
         }
-        
         let center = CLLocationCoordinate2DMake((minLatitude + maxLatitude)/2, (minLongitude + maxLongitude)/2)
         self.init(center: center, span: span)
     }

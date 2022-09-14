@@ -49,10 +49,11 @@ class CustomMapController: UIViewController {
     }
     var drawerViewIsDragging = false
     var currentContainerCanDragStatus: Bool? = nil
+    var fullScreenOnDismissal = false
+    var offsetOnDismissal: CGFloat = 0
         
     var mapType: MapType!
     var centeredMap = false
-    var fullScreenOnDismissal = false
     var ranSetUp = false
     
     var circleQuery: GFSCircleQuery?
@@ -74,7 +75,7 @@ class CustomMapController: UIViewController {
     
     deinit {
         print("CustomMapController(\(self) deinit")
-        if barView != nil {  barView.removeFromSuperview() }
+        if barView != nil { barView.removeFromSuperview() }
     }
     
     override func viewDidLoad() {
@@ -92,8 +93,10 @@ class CustomMapController: UIViewController {
         super.viewWillAppear(animated)
         setUpNavBar()
         configureDrawerView()
-        if barView != nil { barView.isHidden = false }
-
+        if barView != nil {
+            barView.isHidden = false
+        }
+        
         mapController?.mapView.delegate = self
         mapController?.mapView.spotMapDelegate = self
         mapController?.mapView.shouldCluster = true
@@ -101,12 +104,14 @@ class CustomMapController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         Mixpanel.mainInstance().track(event: "CustomMapOpen")
-        DispatchQueue.main.async { self.addInitialAnnotations(posts: self.postsList) }
+        /// only shouldn't be empty if another CustomMapController was stacked. use centered map variable to see if fetch ran yet for stacked VC
+        if (mapController?.mapView.annotations.isEmpty ?? true) || !centeredMap {
+            DispatchQueue.main.async { self.addInitialAnnotations(posts: self.postsList) }
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        mapController?.mapView.removeAllAnnos()
         if barView != nil { barView.isHidden = true }
     }
 
@@ -171,10 +176,12 @@ class CustomMapController: UIViewController {
         currentContainerCanDragStatus = nil
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
+        
         let position: DrawerViewDetent = fullScreenOnDismissal ? .Top : .Middle
         if position.rawValue != containerDrawerView?.status.rawValue {
             DispatchQueue.main.async { self.containerDrawerView?.present(to: position) }
         }
+        if position == .Top { configureFullScreen(); collectionView.contentOffset.y = offsetOnDismissal }
         fullScreenOnDismissal = false
     }
     
@@ -268,13 +275,18 @@ class CustomMapController: UIViewController {
     @objc func DrawerViewToTopCompletion() {
         guard currentContainerCanDragStatus == nil else { return }
         if containerDrawerView == nil { return }
-
-        Mixpanel.mainInstance().track(event: "CustomMapDrawerOpen")
+        configureFullScreen()
+    }
+    
+    func configureFullScreen() {
+        barBackButton.alpha = 0.0
+        self.barBackButton.isHidden = false
         UIView.transition(with: self.barBackButton, duration: 0.1,
                           options: .transitionCrossDissolve,
                           animations: {
-            self.barBackButton.isHidden = false
+            self.barBackButton.alpha = 1.0
         })
+        
         // When in top position enable collection view scroll
         barView.isUserInteractionEnabled = true
         collectionView.isScrollEnabled = true
@@ -284,6 +296,7 @@ class CustomMapController: UIViewController {
             topYContentOffset = collectionView.contentOffset.y
         }
     }
+    
     @objc func DrawerViewToMiddleCompletion() {
         if containerDrawerView == nil { return }
         Mixpanel.mainInstance().track(event: "CustomMapDrawerHalf")
@@ -337,11 +350,14 @@ class CustomMapController: UIViewController {
         Mixpanel.mainInstance().track(event: "CustomMapBackTap")
         barBackButton.isHidden = true
         floatBackButton.isHidden = true
-        NotificationCenter.default.removeObserver(self) /// remove observer to cancel drawer methods
+        NotificationCenter.default.removeObserver(self) /// remove observer to cancel drawer methods before sheetView is set to nil on mapVC
 
         DispatchQueue.main.async {
+            self.mapController?.mapView.removeAllAnnos()
             if self.navigationController?.viewControllers.count == 1 { self.mapController?.offsetCustomMapCenter() }
             self.containerDrawerView?.closeAction()
+            self.mapController?.mapView.delegate = nil
+            self.mapController?.mapView.spotMapDelegate = nil
         }
     }
     

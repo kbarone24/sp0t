@@ -13,7 +13,6 @@ import Firebase
 import FirebaseFirestoreSwift
 
 struct UserProfile: Identifiable, Codable {
-    
     @DocumentID var id: String?
     
     var avatarURL: String? = ""
@@ -41,7 +40,7 @@ struct UserProfile: Identifiable, Codable {
     
     var pending: Bool?
     var friend: Bool?
-
+    var respondedToCampusMap: Bool? = false
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -52,6 +51,7 @@ struct UserProfile: Identifiable, Codable {
         case name
         case pendingFriendRequests
         case phone
+        case respondedToCampusMap
         case sentInvites
         case spotScore
         case topFriends
