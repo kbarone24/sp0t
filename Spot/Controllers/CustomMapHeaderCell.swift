@@ -227,7 +227,7 @@ extension CustomMapHeaderCell {
         guard fourMapMemberProfile.count != 0 else { return }
         
         let communityMap = mapData.communityMap ?? false
-        mapCreatorCount.text = communityMap ? "+ \(mapData.memberIDs.count - 4)" : "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
+        mapCreatorCount.text = communityMap ? mapData.memberIDs.count > 4 ? "+ \(mapData.memberIDs.count - 4)" : "" : "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
         
         let userTransformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
         mapCreatorProfileImage1.sd_setImage(with: URL(string: fourMapMemberProfile[0].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
@@ -284,7 +284,7 @@ extension CustomMapHeaderCell {
                 actionButton.setTitle("Joined", for: .normal)
                 actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
             } else {
-                actionButton.setTitle("Join", for: .normal)
+                actionButton.setTitle("Enter code", for: .normal)
                 actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             }
         } else if mapData!.memberIDs.contains(UserDataModel.shared.uid) {
@@ -302,46 +302,32 @@ extension CustomMapHeaderCell {
     }
     
     @objc func actionButtonAction() {        
-        let db = Firestore.firestore()
         switch actionButton.titleLabel?.text {
-        case "Follow map", "Join" :
-            Mixpanel.mainInstance().track(event: "CustomMapFollowMap")
-            mapData.likers.append(UserDataModel.shared.uid)
-            UserDataModel.shared.userInfo.mapsList.append(mapData!)
-            setMapInfo()
-            
-            let userInfo = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: userInfo)
-            
-            var values: [String: Any] = ["likers": FieldValue.arrayUnion([UserDataModel.shared.uid])]
-            if mapData.communityMap ?? false { values["memberIDs"] = FieldValue.arrayUnion([UserDataModel.shared.uid]) }
-            db.collection("maps").document(mapData.id!).updateData(values)
-            
-            let title = mapData.communityMap ?? false ? "Joined" : "Following"
-            self.actionButton.setTitle(title, for: .normal)
-            self.actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+        case "Follow map":
+            followMap()
+
+        case "Enter code":
+            guard let customMapVC = viewContainingController() as? CustomMapController else { return }
+            let heelsMapID = "9ECABEF9-0036-4082-A06A-C8943428FFF4"
+            if mapData!.id == heelsMapID {
+                let vc = HeelsMapPopUpController()
+                vc.delegate = self
+                DispatchQueue.main.async { customMapVC.present(vc, animated: true) }
+            } else {
+                let vc = EnterMapCodeController()
+                vc.delegate = self
+                DispatchQueue.main.async { customMapVC.present(vc, animated: true) }
+            }
+
         case "Following", "Joined":
             let following = actionButton.titleLabel?.text == "Following"
             let title = following ? "Unfollow this map?" : "Leave this map?"
             let alert = UIAlertController(title: title, message: "", preferredStyle: .alert)
             alert.overrideUserInterfaceStyle = .light
+            
             let actionTitle = following ? "Unfollow" : "Leave"
             let unfollowAction = UIAlertAction(title: actionTitle, style: .destructive) { action in
-                Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
-                guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.uid) else { return }
-                self.mapData.likers.remove(at: userIndex)
-                UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == self.mapData!.id!})
-                self.setMapInfo()
-
-                let userInfo = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: userInfo)
-                
-                var values: [String: Any] = ["likers": FieldValue.arrayRemove([UserDataModel.shared.uid])]
-                if self.mapData.communityMap ?? false { values["memberIDs"] = FieldValue.arrayRemove([UserDataModel.shared.uid]) }
-                db.collection("maps").document(self.mapData.id!).updateData(values)
-
-                self.actionButton.setTitle("Follow map", for: .normal)
-                self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+                self.unfollowMap()
             }
             let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
             alert.addAction(unfollowAction)
@@ -353,6 +339,59 @@ extension CustomMapHeaderCell {
         }
     }
     
+    func followMap() {
+        let db = Firestore.firestore()
+        Mixpanel.mainInstance().track(event: "CustomMapFollowMap")
+        mapData.likers.append(UserDataModel.shared.uid)
+        if mapData?.communityMap ?? false {
+            mapData.memberIDs.append(UserDataModel.shared.uid)
+            if fourMapMemberProfile.count < 4 { fourMapMemberProfile.append(UserDataModel.shared.userInfo) }
+        }
+        
+        UserDataModel.shared.userInfo.mapsList.append(mapData!)
+        setMapInfo()
+        setMapMemberInfo()
+        
+        let userInfo = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: userInfo)
+        
+        var values: [String: Any] = ["likers": FieldValue.arrayUnion([UserDataModel.shared.uid])]
+        if mapData.communityMap ?? false { values["memberIDs"] = FieldValue.arrayUnion([UserDataModel.shared.uid]) }
+        db.collection("maps").document(mapData.id!).updateData(values)
+        
+        let title = mapData.communityMap ?? false ? "Joined" : "Following"
+        self.actionButton.setTitle(title, for: .normal)
+        self.actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+    }
+    
+    func unfollowMap() {
+        let db = Firestore.firestore()
+        Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
+        guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.uid) else { return }
+        mapData.likers.remove(at: userIndex)
+        if mapData.communityMap ?? false, let memberIndex = self.mapData.memberIDs.firstIndex(of: UserDataModel.shared.uid) {
+            mapData.memberIDs.remove(at: memberIndex)
+        }
+        if let fourMemberIndex = fourMapMemberProfile.firstIndex(where: {$0.id == UserDataModel.shared.uid}) {
+            fourMapMemberProfile.remove(at: fourMemberIndex)
+        }
+        
+        UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == self.mapData!.id!})
+        setMapInfo()
+        setMapMemberInfo()
+
+        let userInfo = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "MapLikersChanged"), object: nil, userInfo: userInfo)
+        
+        var values: [String: Any] = ["likers": FieldValue.arrayRemove([UserDataModel.shared.uid])]
+        if mapData.communityMap ?? false { values["memberIDs"] = FieldValue.arrayRemove([UserDataModel.shared.uid]) }
+        db.collection("maps").document(self.mapData.id!).updateData(values)
+
+        let title = mapData.communityMap ?? false ? "Enter code" : "Follow map"
+        actionButton.setTitle(title, for: .normal)
+        actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+    }
+    
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CustomMapMembersTap")
         guard let customMapVC = viewContainingController() as? CustomMapController else { return }
@@ -361,3 +400,8 @@ extension CustomMapHeaderCell {
     }
 }
 
+extension CustomMapHeaderCell: MapCodeDelegate {
+    func finishPassing(newMapID: String) {
+        followMap()
+    }
+}

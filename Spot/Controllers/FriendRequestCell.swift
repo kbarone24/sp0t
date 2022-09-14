@@ -218,7 +218,7 @@ class FriendRequestCell: UICollectionViewCell {
 
         closeButton = UIButton {
             $0.frame = CGRect(x: 0, y: 0, width: 33, height: 33)
-            $0.setImage(UIImage(named: "XFriendRequest"), for: .normal)
+            $0.setImage(UIImage(named: "CancelButtonGray"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
             $0.translatesAutoresizingMaskIntoConstraints = false

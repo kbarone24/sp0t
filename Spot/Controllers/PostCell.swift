@@ -113,7 +113,6 @@ class PostCell: UICollectionViewCell {
         }
         
         let liked = post.likers.contains(uid)
-        print("liked", liked, post.likers)
         let likeImage = liked ? UIImage(named: "LikeButtonFilled") : UIImage(named: "LikeButton")
         
         numComments = UILabel {

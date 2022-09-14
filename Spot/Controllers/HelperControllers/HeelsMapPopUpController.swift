@@ -15,8 +15,6 @@ import Mixpanel
 import IQKeyboardManagerSwift
 import MapKit
 
-
-
 class HeelsMapPopUpController: UIViewController {
     
     let db: Firestore = Firestore.firestore()
@@ -35,17 +33,14 @@ class HeelsMapPopUpController: UIViewController {
     var friendsText = ""
     var heelsMap: CustomMap!
     var heelsCount = 0
-
-    var mapDelegate: MapControllerDelegate!
+    var delegate: MapCodeDelegate?
         
     override func viewDidLoad() {
-        
         super.viewDidLoad()
         view.backgroundColor = .white
         getHeelsMap()
         loadInfoView()
         loadSearchView()
-        
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -112,7 +107,7 @@ class HeelsMapPopUpController: UIViewController {
         }
         
         let cancel = UIButton {
-            $0.setImage(UIImage(named: "XFriendRequest"), for: .normal)
+            $0.setImage(UIImage(named: "CancelButtonGray"), for: .normal)
             $0.translatesAutoresizingMaskIntoConstraints = false
             $0.addTarget(self, action: #selector(self.close(_:)), for: .touchUpInside)
             $0.isHidden = false
@@ -129,13 +124,11 @@ class HeelsMapPopUpController: UIViewController {
     
         
     func loadSearchView() {
-        
         textFieldContainer = UIView {
             $0.backgroundColor = nil
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
-        
         textFieldContainer.snp.makeConstraints{
             $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(subtitle.snp.bottom).offset(20)
@@ -162,7 +155,6 @@ class HeelsMapPopUpController: UIViewController {
             $0.delegate = self
             textFieldContainer.addSubview($0)
         }
-        
         textField.snp.makeConstraints{
             $0.leading.equalToSuperview().offset(16)
             $0.trailing.equalToSuperview().offset(-16)
@@ -182,7 +174,6 @@ class HeelsMapPopUpController: UIViewController {
             $0.alpha = 0.5
             view.addSubview($0)
         }
-        
         joinButton.snp.makeConstraints{
             $0.leading.trailing.equalToSuperview().inset(50)
             $0.height.equalTo(49)
@@ -231,8 +222,9 @@ class HeelsMapPopUpController: UIViewController {
     @objc func addHeelsMap(_ sender: UIButton){
         Mixpanel.mainInstance().track(event: "HeelsMapAddUser")
         let schoolEmail = searchTextGlobal.lowercased().trimmingCharacters(in: .whitespaces)
+        delegate?.finishPassing(newMapID: heelsMap.id!)
         db.collection("users").document(uid).updateData(["schoolEmail" : schoolEmail])
-        mapDelegate.addHeelsMap(heelsMap: self.heelsMap)
+        db.collection("maps").document(heelsMap.id!).updateData(["memberIDs": FieldValue.arrayUnion([uid]), "likers": FieldValue.arrayUnion([uid])])
         DispatchQueue.main.async { self.dismiss(animated: true, completion: nil) }
     }
     
