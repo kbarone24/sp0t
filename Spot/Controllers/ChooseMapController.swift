@@ -218,7 +218,8 @@ class ChooseMapController: UIViewController {
                     return
                 }
                 post.imageURLs = imageURLs
-                
+                if UploadPostModel.shared.imageFromCamera { SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage()) }
+
                 if spot != nil {
                     spot!.imageURL = imageURLs.first ?? ""
                     self.uploadSpot(post: post, spot: spot!, submitPublic: false)
@@ -228,9 +229,8 @@ class ChooseMapController: UIViewController {
                     map!.postImageURLs.append(imageURLs.first ?? "")
                     self.uploadMap(map: map!, newMap: newMap, post: post)
                 }
-                
                 self.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
-
+                
                 let visitorList = spot?.visitorList ?? []
                 self.setUserValues(poster: uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
                             

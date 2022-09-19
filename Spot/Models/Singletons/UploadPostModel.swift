@@ -13,10 +13,10 @@ import Mixpanel
 import Firebase
 
 class UploadPostModel {
-    
     var assetsFull: PHFetchResult<PHAsset>!
     var selectedObjects: [ImageObject] = []
     var imageObjects: [(image: ImageObject, selected: Bool)] = []
+    var imageFromCamera = false
     
     var postObject: MapPost!
     var spotObject: MapSpot?
@@ -165,6 +165,7 @@ class UploadPostModel {
 
     func setFinalMapValues() {
         if spotObject != nil {
+            mapObject!.postSpotIDs.append(spotObject!.id!)
             if !mapObject!.spotIDs.contains(spotObject!.id!) {
                 mapObject!.spotIDs.append(spotObject!.id!)
                 mapObject!.spotNames.append(spotObject!.spotName)
@@ -188,5 +189,6 @@ class UploadPostModel {
         postObject = nil
         spotObject = nil
         mapObject = nil
+        imageFromCamera = false
     }
 }

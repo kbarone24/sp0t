@@ -22,7 +22,8 @@ extension MapController {
             friendsPostsDictionary[postID] = post
             coordinate = post.coordinate
         }
-        
+        updateFriendsPostGroupSeen(postID: postID)
+
         for i in 0..<UserDataModel.shared.userInfo.mapsList.count {
             UserDataModel.shared.userInfo.mapsList[i].updateSeen(postID: postID)
             if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
@@ -40,6 +41,7 @@ extension MapController {
             }
         }
     }
+    
     
     @objc func notifyNewPost(_ notification: NSNotification) {
         /// add new post + zoom in on map
@@ -77,8 +79,11 @@ extension MapController {
         guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
         guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
         guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
+        /// only pass through spot ID if removing from the map
+        let spotID = spotDelete || spotRemove ? post.spotID! : ""
         /// remove from friends stuff
         friendsPostsDictionary.removeValue(forKey: post.id!)
+        removeFromFriendsPostGroup(postID: post.id!, spotID: spotID)
         UserDataModel.shared.deletedPostIDs.append(post.id!)
         /// remove from map
         if mapID != "" {
@@ -86,7 +91,7 @@ extension MapController {
                 selectedItemIndex = 0 /// reset to avoid index out of bounds
                 UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == mapID})
             } else if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == mapID}) {
-                DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id!, spotID: spotDelete || spotRemove ? post.spotID! : "") }
+                DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id!, spotID: spotID) }
             }
         }
         /// remove annotation
