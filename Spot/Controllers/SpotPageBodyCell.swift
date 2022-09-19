@@ -35,7 +35,7 @@ class SpotPageBodyCell: UICollectionViewCell {
     
     public func cellSetup(mapPost: MapPost) {
         let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2/3, height: (UIScreen.main.bounds.width * 2/3) * 1.5), scaleMode: .aspectFill)
-        postImage.sd_setImage(with: URL(string: mapPost.imageURLs[0]), placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)), options: .highPriority, context: [.imageTransformer: transformer])
+        postImage.sd_setImage(with: URL(string: mapPost.imageURLs.first ?? ""), placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)), options: .highPriority, context: [.imageTransformer: transformer])
     }
 }
 

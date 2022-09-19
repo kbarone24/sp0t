@@ -926,6 +926,7 @@
 		8C298793268FA0A50071E75A /* HelperObjects */ = {
 			isa = PBXGroup;
 			children = (
+				8CA512A628BC056900F8C1FE /* HapticGenerator.swift */,
 				8C1E4865289C54370093030D /* FriendsListCell.swift */,
 				8C99B1192863A44E00C98A32 /* RefreshStatus.swift */,
 				59CF623624479D56008E25DE /* SpotPhotoAlbum.swift */,
@@ -1005,7 +1006,6 @@
 				8CC3653926C5E9A900AC40AB /* UploadPostModel.swift */,
 				8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */,
 				8C88B0E627B46E3900DB4039 /* PostImageModel.swift */,
-				8CA512A628BC056900F8C1FE /* HapticGenerator.swift */,
 			);
 			path = Singletons;
 			sourceTree = "<group>";
@@ -1769,7 +1769,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 22;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1839,7 +1839,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 22;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;

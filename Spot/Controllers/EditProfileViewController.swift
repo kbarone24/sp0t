@@ -288,6 +288,7 @@ extension EditProfileViewController {
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
             $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            $0.delegate = self
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
             view.addSubview($0)
@@ -317,6 +318,7 @@ extension EditProfileViewController {
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
             $0.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            $0.delegate = self
             $0.setLeftPaddingPoints(8)
             $0.setRightPaddingPoints(8)
             view.addSubview($0)
@@ -402,5 +404,14 @@ extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigati
 
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         dismiss(animated: true)
+    }
+}
+
+extension EditProfileViewController: UITextFieldDelegate {
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentText = textField.text ?? ""
+        guard let stringRange = Range(range, in: currentText) else { return false }
+        let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
+        return updatedText.count <= 25
     }
 }

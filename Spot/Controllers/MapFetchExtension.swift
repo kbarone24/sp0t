@@ -237,7 +237,11 @@ extension MapController {
         /// add new post to both dictionaries
         if map == nil || map?.id ?? "" == "" || (newPost && !(post.hideFromFeed ?? false) && UserDataModel.shared.userInfo.friendsContains(id: post.posterID)) {
             friendsPostsDictionary.updateValue(post, forKey: post.id!)
-            if index == 0 { mapView.addPostAnnotation(post: post) }
+            let groupData = updateFriendsPostGroup(post: post)
+            if index == 0 {
+                let map = getFriendsMapObject()
+                mapView.addPostAnnotation(group: groupData.group, newGroup: groupData.newGroup, map: map)
+            }
         }
 
         if map != nil {
@@ -252,6 +256,7 @@ extension MapController {
             }
         }
     }
+    
 
     func updatePost(post: MapPost, map: CustomMap?) {
         /// use old post to only update values that CHANGE -> comments and likers
@@ -402,17 +407,12 @@ extension MapController {
     
     func getSortedCoordinates() -> [CLLocationCoordinate2D] {
         let map = getSelectedMap()
-        if map == nil {
-            var posts = friendsPostsDictionary.map({$0.value})
-            if posts.contains(where: {!$0.seen}) { posts = posts.filter({!$0.seen}) }
-            posts = mapView.sortPosts(posts)
-            return posts.map({CLLocationCoordinate2D(latitude: $0.postLat, longitude: $0.postLong)})
-        } else {
-            var group = map!.postGroup.filter({!$0.postIDs.isEmpty}) /// dont include empty spots
-            if group.contains(where: {$0.postIDs.contains(where: {!$0.seen})}) { group = group.filter({$0.postIDs.contains(where: {!$0.seen})})}
-            group = mapView.sortPostGroup(group)
-            return group.map({$0.coordinate})
-        }
+        /// filter for spots without posts
+        var group = map == nil ? postGroup.filter({!$0.postIDs.isEmpty}) : map!.postGroup.filter({!$0.postIDs.isEmpty})
+        
+        if group.contains(where: {$0.postIDs.contains(where: {!$0.seen})}) { group = group.filter({$0.postIDs.contains(where: {!$0.seen})})}
+        group = mapView.sortPostGroup(group)
+        return group.map({$0.coordinate})
     }
     
     func setNewPostsButtonCount() {
@@ -443,5 +443,54 @@ extension MapController {
                 self.getRecentPosts(map: map)
             }
         }
+    }
+}
+
+/// friend postGroup methods
+extension MapController {
+    func updateFriendsPostGroup(post: MapPost) -> (group: MapPostGroup?, newGroup: Bool) {
+        if post.spotID ?? "" == "" {
+            /// attach by postID
+            let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
+            let newGroup = MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
+            postGroup.append(newGroup)
+            return (newGroup, true)
+            
+        } else if !postGroup.contains(where: {$0.id == post.spotID!}) {
+            let coordinate = CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!)
+            let newGroup = MapPostGroup(id: post.spotID!, coordinate: coordinate, spotName: post.spotName!, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
+            postGroup.append(newGroup)
+            return (newGroup, true)
+
+        } else if let i = postGroup.firstIndex(where: {$0.id == post.spotID}) {
+            if !postGroup[i].postIDs.contains(where: {$0.id == post.id}) {
+                postGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
+                postGroup[i].sortPostIDs()
+                return (postGroup[i], false)
+            }
+        }
+        return (nil, false)
+    }
+
+    func updateFriendsPostGroupSeen(postID: String) {
+        if let i = postGroup.firstIndex(where: {$0.postIDs.contains(where: {$0.id == postID})}) {
+            if let j = postGroup[i].postIDs.firstIndex(where: {$0.id == postID}) {
+                postGroup[i].postIDs[j].seen = true
+                postGroup[i].sortPostIDs()
+            }
+        }
+    }
+
+    func removeFromFriendsPostGroup(postID: String, spotID: String) {
+        /// remove id from post group
+        if let i = postGroup.firstIndex(where: {$0.postIDs.contains(where: {$0.id == postID})}) {
+            if let j = postGroup[i].postIDs.firstIndex(where: {$0.id == postID}) {
+                postGroup[i].postIDs.remove(at: j)
+                /// remove from post group entirely if no spot attached
+                if postGroup[i].postIDs.count == 0 && postGroup[i].spotName == "" { postGroup.remove(at: i) }
+            }
+        }
+        
+        if spotID != "" { postGroup.removeAll(where: {$0.id == spotID}) }
     }
 }

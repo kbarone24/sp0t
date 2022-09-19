@@ -29,6 +29,7 @@ struct CustomMap: Identifiable, Codable {
     var postIDs: [String]
     var postImageURLs: [String]
     var postLocations: [[String: Double]] = []
+    var postSpotIDs: [String] = []
     var postTimestamps: [Firebase.Timestamp] = []
     var searchKeywords: [String]? = []
     var secret: Bool
@@ -76,6 +77,7 @@ struct CustomMap: Identifiable, Codable {
         case posterUsernames
         case postIDs
         case postImageURLs
+        case postSpotIDs
         case postLocations
         case postTimestamps
         case searchKeywords
@@ -100,13 +102,23 @@ struct CustomMap: Identifiable, Codable {
     
     mutating func addSpotGroups() {
         /// append spots to show on map even if there's no post attached
-        if !spotIDs.isEmpty {
-            for i in 0...spotIDs.count - 1 {
+            for i in 0..<spotIDs.count {
+                var postsToSpot: [String] = []
+                var postSpotTimestamps: [Timestamp] = []
+                var postersAtSpot: [String] = []
+                /// get  postSpotIDs and matching timestamps
+                for j in 0..<postSpotIDs.count {
+                    if postSpotIDs[j] == spotIDs[i] {
+                        postsToSpot.append(postSpotIDs[j])
+                        postSpotTimestamps.append(postTimestamps[safe: j] ?? Timestamp(seconds: 1, nanoseconds: 1))
+                        if !postersAtSpot.contains(posterIDs[safe: j] ?? "") { postersAtSpot.append(posterIDs[safe: j] ?? "")}
+                    }
+                }
+
                 let coordinate = CLLocationCoordinate2D(latitude: spotLocations[safe: i]?["lat"] ?? 0.0, longitude: spotLocations[safe: i]?["long"] ?? 0.0)
-                if !postGroup.contains(where: {$0.id == spotIDs[i]}) { postGroup.append(MapPostGroup(id: spotIDs[i], coordinate: coordinate, spotName: spotNames[safe: i] ?? "", postIDs: [])) }
+                if !postGroup.contains(where: {$0.id == spotIDs[i]}) { postGroup.append(MapPostGroup(id: spotIDs[i], coordinate: coordinate, spotName: spotNames[safe: i] ?? "", postIDs: [], postsToSpot: postsToSpot, postTimestamps: postSpotTimestamps, numberOfPosters: postersAtSpot.count)) }
             }
         }
-    }
     
     mutating func updateGroup(post: MapPost) -> (group: MapPostGroup?, newGroup: Bool) {
         if post.spotID ?? "" == "" {
@@ -179,6 +191,11 @@ struct MapPostGroup {
     var coordinate: CLLocationCoordinate2D
     var spotName: String
     var postIDs: [(id: String, timestamp: Timestamp, seen: Bool)]
+    
+    /// properties for sorting
+    var postsToSpot: [String] = []
+    var postTimestamps: [Timestamp] = []
+    var numberOfPosters: Int = 0
     
     mutating func sortPostIDs() {
         postIDs = postIDs.sorted(by: { p1, p2 in
