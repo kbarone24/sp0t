@@ -14,21 +14,14 @@ extension CustomMapController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
         
-        if let anno = annotation as? MKClusterAnnotation {
-            if anno.memberAnnotations.contains(where: {$0 is PostAnnotation}) {
-                let posts = getPostsFor(cluster: anno)
-                return mapView.getPostClusterAnnotation(anno: anno, posts: posts)
-            } else if anno.memberAnnotations.contains(where: {$0 is SpotPostAnnotation}) {
-                return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: mapData)
-            }
-        } else if let anno = annotation as? PostAnnotation {
-            guard let post = mapData!.postsDictionary[anno.postID] else { return MKAnnotationView() }
-            return mapView.getPostAnnotation(anno: anno, post: post)
-            
-        } else if let anno = annotation as? SpotPostAnnotation {
+        if let anno = annotation as? SpotAnnotation {
             /// set up spot post view with 1 post
             return mapView.getSpotAnnotation(anno: anno, selectedMap: mapData)
             
+        } else if let anno = annotation as? MKClusterAnnotation {
+            if anno.memberAnnotations.contains(where: {$0 is SpotAnnotation}) {
+                return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: mapData)
+            }
         }
         return MKAnnotationView()
     }
@@ -37,16 +30,6 @@ extension CustomMapController: MKMapViewDelegate {
         // gets called too much -> just use gesture recognizer
         if centeredMap { closeDrawer() }
         centeredMap = false
-    }
-    
-    func getPostsFor(cluster: MKClusterAnnotation) -> [MapPost] {
-        var posts: [MapPost] = []
-        for memberAnno in cluster.memberAnnotations {
-            if let member = memberAnno as? PostAnnotation, let post = mapData!.postsDictionary[member.postID] {
-                posts.append(post)
-            }
-        }
-        return mapController!.mapView.sortPosts(posts)
     }
     
     func setInitialRegion() {
@@ -111,6 +94,10 @@ extension CustomMapController: UIGestureRecognizerDelegate {
 }
 
 extension CustomMapController: SpotMapViewDelegate {
+    func openSpotFromSpotName(view: SpotNameAnnotationView) {
+        openSpot(spotID: view.id, spotName: view.spotName)
+    }
+    
     func openPostFromSpotPost(view: SpotPostAnnotationView) {
         var posts: [MapPost] = []
         for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
@@ -121,12 +108,6 @@ extension CustomMapController: SpotMapViewDelegate {
         openSpot(spotID: view.id, spotName: view.spotName)
     }
         
-    func openPostFromFriendsPost(view: FriendPostAnnotationView) {
-        var posts: [MapPost] = []
-        for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
-        DispatchQueue.main.async { self.openPost(posts: posts, row: 0) }
-    }
-    
     func centerMapOnPostsInCluster(view: FriendPostAnnotationView) {
         closeDrawer()
 

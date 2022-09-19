@@ -18,16 +18,19 @@ class SpotNameAnnotationView: MKAnnotationView {
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         collisionMode = .rectangle
+        clusteringIdentifier = nil
         centerOffset = CGPoint(x: 0, y: 10)
+        displayPriority = .defaultHigh
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setUp(spotID: String, spotName: String) {
+    func setUp(spotID: String, spotName: String, priority: Float) {
         self.id = spotID
         self.spotName = spotName
+        self.displayPriority = .init(rawValue: priority)
         let infoWindow = SpotNameView.instanceFromNib() as! SpotNameView
         let attributes: [NSAttributedString.Key : Any] = [
             NSAttributedString.Key.strokeColor: UIColor.white,
@@ -51,6 +54,8 @@ class SpotNameAnnotationView: MKAnnotationView {
         tap.delegate = self
         addGestureRecognizer(tap)
     }
+    
+    
 }
 
 extension SpotNameAnnotationView: UIGestureRecognizerDelegate {

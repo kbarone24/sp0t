@@ -71,7 +71,7 @@ extension CustomMapController {
                                     self.postsList.append(post)
                                     self.mapData!.postsDictionary.updateValue(post, forKey: post.id!)
                                     let groupData = self.mapData!.updateGroup(post: post)
-                                    if self.mapType == .friendsMap { self.addAnnotation(post: post) } else { self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup) }
+                                    self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup)
                                 }
                             }
                             postGroup.leave()
@@ -130,7 +130,7 @@ extension CustomMapController {
                         self.postsList.append(post)
                         self.mapData!.postsDictionary.updateValue(post, forKey: post.id!)
                         let groupData = self.mapData!.updateGroup(post: post)
-                        if self.mapType == .friendsMap { self.addAnnotation(post: post) } else { self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup) }
+                        self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup)
                     }
                 }
                 self.geoFetchGroup.leave()
@@ -150,12 +150,6 @@ extension CustomMapController {
         return true
     }
     
-    func addAnnotation(post: MapPost) {
-        if mapType == .friendsMap {
-            mapController?.mapView.addPostAnnotation(post: post)
-        }
-    }
-    
     func addAnnotation(group: MapPostGroup?, newGroup: Bool) {
         if group != nil {
             if newGroup {
@@ -173,10 +167,6 @@ extension CustomMapController {
     
     func addInitialAnnotations(posts: [MapPost]) {
         mapController?.mapView.removeAllAnnos()
-        if mapType == .friendsMap {
-            for post in posts { mapController?.mapView.addPostAnnotation(post: post) }
-        } else {
-            for group in mapData!.postGroup { mapController?.mapView.addSpotAnnotation(group: group, map: mapData!) }
-        }
+        for group in mapData!.postGroup { mapController?.mapView.addSpotAnnotation(group: group, map: mapData!) }
     }
 }

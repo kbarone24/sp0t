@@ -83,6 +83,7 @@ class AVCameraController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "CameraOpen")
+        UploadPostModel.shared.imageFromCamera = false /// reset when camera reappears
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -437,6 +438,7 @@ class AVCameraController: UIViewController {
                 
                 let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: resizedImage, animationImages: [], animationIndex: 0, directionUp: true, gifMode: self.gifMode, creationDate: Date(), fromCamera: true)
                 vc.cameraObject = object
+                UploadPostModel.shared.imageFromCamera = true
                 
                 if let navController = self.navigationController {
                     navController.pushViewController(vc, animated: false)

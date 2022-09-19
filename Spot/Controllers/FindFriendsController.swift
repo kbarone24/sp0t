@@ -50,7 +50,6 @@ class FindFriendsController: UIViewController {
     let sp0tb0tID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
     
     override func viewDidLoad() {
-        
         super.viewDidLoad()
         view.backgroundColor = .white
         
@@ -82,14 +81,10 @@ class FindFriendsController: UIViewController {
         loadSuggestedTable()
         
         DispatchQueue.global(qos: .userInitiated).async { self.getSuggestedFriends() }
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyRequestSent(_:)), name: NSNotification.Name("FriendRequest"), object: nil)
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        
         super.viewDidAppear(animated)
-        
         if suggestedIndicator != nil && suggestedUsers.count == 0 && !suggestedTable.isHidden {
             /// resume frozen indicator animation
             DispatchQueue.main.async { self.suggestedIndicator.startAnimating() }
@@ -100,8 +95,12 @@ class FindFriendsController: UIViewController {
         }
         
         if sendInvitesView != nil { sendInvitesView.sentInvites = UserDataModel.shared.userInfo.sentInvites.count }
-        
         Mixpanel.mainInstance().track(event: "FindFriendsOpen")
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyAddFriend(_:)), name: NSNotification.Name("ContactCellAddFriend"), object: nil)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     func loadSearchBar() {
@@ -254,14 +253,13 @@ class FindFriendsController: UIViewController {
         suggestedTable.addSubview(suggestedIndicator)
     }
     
-    @objc func notifyRequestSent(_ sender: NSNotification) {
+    @objc func notifyAddFriend(_ sender: NSNotification) {
         /// notify request sent from search contacts and update suggested users if necessary
         if let receiverID = sender.userInfo?.first?.value as? String {
             if let i = suggestedUsers.firstIndex(where: {$0.0.id == receiverID}) {
                 suggestedUsers[i].1 = .pending
                 suggestedTable.reloadData()
             }
-            UserDataModel.shared.userInfo.pendingFriendRequests.append(receiverID)
         }
     }
     
@@ -282,7 +280,8 @@ class FindFriendsController: UIViewController {
         Mixpanel.mainInstance().track(event: "FindFriendsExitTap")
         if let drawer = contentDrawer {
             drawer.closeAction()
-        } else { navigationController!.popViewController(animated: true)
+        } else {
+            navigationController!.popViewController(animated: true)
         }
     }
     

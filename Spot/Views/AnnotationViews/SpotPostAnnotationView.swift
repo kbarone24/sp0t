@@ -22,6 +22,7 @@ class SpotPostAnnotationView: MKAnnotationView {
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         canShowCallout = false
+        displayPriority = .required
         addTap()
     }
     required init?(coder aDecoder: NSCoder) {
@@ -31,11 +32,12 @@ class SpotPostAnnotationView: MKAnnotationView {
     func updateImage(posts: [MapPost], spotName: String, id: String) {
         self.id = id
         self.spotName = spotName
-        self.postIDs = posts.map({$0.id!})
+        /// only include unseen posts in cluster
+        self.postIDs = posts.contains(where: {!$0.seen}) ? posts.filter({!$0.seen}).map{$0.id!} : posts.map({$0.id!})
         
         let post = posts.first
         if post != nil {
-            let nibView = loadPostNib(post: post!, spotName: spotName, postCount: posts.count)
+            let nibView = loadPostNib(post: post!, spotName: spotName, postCount: postIDs.count)
             self.image = nibView.asImage()
 
             guard let url = URL(string: post!.imageURLs.first ?? "") else { image = nibView.asImage(); return }
@@ -47,12 +49,6 @@ class SpotPostAnnotationView: MKAnnotationView {
                 self.collisionMode = .circle
                 self.centerOffset = CGPoint(x: 0, y: -20)
             }
-        } else {
-            /// no post attached to this spot
-            let nibView = loadNameNib(spotName: spotName, spotID: id)
-            image = nibView.asImage()
-            collisionMode = .rectangle
-            centerOffset = CGPoint(x: 0, y: 10)
         }
     }
     
@@ -96,20 +92,6 @@ class SpotPostAnnotationView: MKAnnotationView {
         return infoWindow
     }
     
-    func loadNameNib(spotName: String, spotID: String) -> SpotNameView {
-        let infoWindow = SpotNameView.instanceFromNib() as! SpotNameView
-        let attributes: [NSAttributedString.Key : Any] = [
-            NSAttributedString.Key.strokeColor: UIColor.white,
-            NSAttributedString.Key.foregroundColor: UIColor.black,
-            NSAttributedString.Key.strokeWidth: -3,
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 14.5)!
-        ]
-        infoWindow.spotLabel.attributedText = NSAttributedString(string: spotName, attributes: attributes)
-        infoWindow.spotLabel.sizeToFit()
-        infoWindow.resizeView()
-        return infoWindow
-    }
-    
     func addTap() {
         /// prevent map lag on selection
         let tap = UITapGestureRecognizer()
@@ -136,8 +118,13 @@ extension SpotPostAnnotationView: UIGestureRecognizerDelegate {
     }
 }
 
-class SpotPostAnnotation: MKPointAnnotation {
+class SpotAnnotation: MKPointAnnotation {
     var id = ""
+    var type: AnnotationType!
+    enum AnnotationType {
+        case post
+        case name
+    }
     override init() {
         super.init()
     }

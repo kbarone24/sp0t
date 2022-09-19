@@ -65,6 +65,7 @@ class ProfileHeaderCell: UICollectionViewCell {
             }
         }
         friendListButton.setTitle("\(userProfile.friendIDs.count) friends", for: .normal)
+        
         self.relation = relation
         switch relation {
         case .myself:
@@ -148,7 +149,7 @@ extension ProfileHeaderCell {
             $0.height.equalTo(19)
             $0.width.equalTo(113)
         }
-        
+        /// location button will truncate if overflow
         locationButton = UIButton {
             $0.setImage(UIImage(named: "ProfileLocation"), for: .normal)
             $0.setTitle("", for: .normal)
@@ -157,30 +158,32 @@ extension ProfileHeaderCell {
             $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
             $0.addTarget(self, action: #selector(locationButtonAction), for: .touchUpInside)
+            $0.snp.contentCompressionResistanceHorizontalPriority = 700
             contentView.addSubview($0)
         }
         locationButton.snp.makeConstraints {
-            $0.leading.equalTo(profileAccount)
             $0.top.equalTo(profileAccount.snp.bottom).offset(1)
             $0.height.equalTo(38)
+            $0.leading.equalTo(profileImage.snp.trailing).offset(15)
         }
-        
+
+        /// friends list button always shows in its entirety
         friendListButton = UIButton {
             $0.setImage(UIImage(named: "Friends"), for: .normal)
             $0.setTitle("", for: .normal)
-            $0.titleLabel?.adjustsFontSizeToFitWidth = true
             $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
             $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
             $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
+            $0.titleLabel?.adjustsFontSizeToFitWidth = false
             contentView.addSubview($0)
         }
         friendListButton.snp.makeConstraints {
-            $0.leading.equalTo(locationButton.snp.trailing).offset(15)
             $0.top.equalTo(locationButton)
-            $0.trailing.lessThanOrEqualToSuperview()
+            $0.leading.equalTo(locationButton.snp.trailing).offset(15)
+            $0.trailing.lessThanOrEqualToSuperview().inset(20)
             $0.height.equalTo(38)
         }
-        
+
         actionButton = UIButton {
             $0.setTitle("Edit profile", for: .normal)
             $0.setTitleColor(.black, for: .normal)
