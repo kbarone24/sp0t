@@ -10,49 +10,32 @@ import Foundation
 import UIKit
 import MapKit
 import Mixpanel
+import Firebase
 
 //functions for loading nearby spots in nearby view
 extension MapController: MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
-        let selectedMap = getSelectedMap()
-        
-        if let anno = annotation as? PostAnnotation {
-            guard let post = friendsPostsDictionary[anno.postID] else { return MKAnnotationView() }
-            return mapView.getPostAnnotation(anno: anno, post: post)
-            
-        } else if let anno = annotation as? SpotPostAnnotation {
+        var selectedMap = getSelectedMap()
+        if selectedMap == nil { selectedMap = getFriendsMapObject() }
+
+        if let anno = annotation as? SpotAnnotation {
             /// set up spot post view with 1 post
             return mapView.getSpotAnnotation(anno: anno, selectedMap: selectedMap)
             
         } else if let anno = annotation as? MKClusterAnnotation {
-            if anno.memberAnnotations.contains(where: {$0 is PostAnnotation}) {
-                let posts = getPostsFor(cluster: anno)
-                return mapView.getPostClusterAnnotation(anno: anno, posts: posts)
-            } else if anno.memberAnnotations.contains(where: {$0 is SpotPostAnnotation}) {
+            if anno.memberAnnotations.contains(where: {$0 is SpotAnnotation}) {
                 return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: selectedMap)
             }
         }
-        
         return MKAnnotationView()
-    }
-    
-    func getPostsFor(cluster: MKClusterAnnotation) -> [MapPost] {
-        var posts: [MapPost] = []
-        for memberAnno in cluster.memberAnnotations {
-            if let member = memberAnno as? PostAnnotation, let post = friendsPostsDictionary[member.postID] {
-                posts.append(post)
-            }
-        }
-        return posts
     }
     
     func centerMapOnMapPosts(animated: Bool) {
         /// zoom out map to show all annotations in view
         let map = getSelectedMap()
         var coordinates = getSortedCoordinates()
-        print("coordinates", coordinates)
         /// add fist 10 post coordiates to set location for map with no new posts
         if coordinates.isEmpty && map != nil {
             for location in map!.postLocations.prefix(10) { coordinates.append(CLLocationCoordinate2D(latitude: location["lat"] ?? 0.0, longitude: location["long"] ?? 0.0)) }
@@ -74,6 +57,7 @@ extension MapController: MKMapViewDelegate {
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         /// remove clustering if zoomed in to ground level
         guard let mapView = mapView as? SpotMapView else { return }
+        
         if mapView.region.span.longitudeDelta < 0.0013 {
             if mapView.shouldCluster {
                 mapView.shouldCluster = false
@@ -92,20 +76,27 @@ extension MapController: MKMapViewDelegate {
                     self.mapView.addAnnotations(annotations)
                 }
             }
+            /// see if should add/remove spot annos
+            if mapView.region.span.longitudeDelta < 0.2 {
+                if !mapView.shouldShowSpots {
+                    mapView.shouldShowSpots = true
+                    mapView.addSpotAnnotationsOnZoom(map: getSelectedMap())
+                }
+            } else {
+                if mapView.shouldShowSpots {
+                    mapView.shouldShowSpots = false
+                    mapView.removeSpotAnnotationsOnZoom(map: getSelectedMap())
+                }
+            }
         }
     }
     
     func animateToMostRecentPost() {
-        let map = getSelectedMap()
-        if map == nil {
-            let posts = friendsPostsDictionary.map({$0.value})
-            let coordinate = mapView.sortPosts(posts).first?.coordinate
-            animateTo(coordinate: coordinate)
-        } else {
-            let group = map!.postGroup
-            let coordinate = mapView.sortPostGroup(group).first?.coordinate
-            animateTo(coordinate: coordinate)
-        }
+        var map = getSelectedMap()
+        if map == nil { map = getFriendsMapObject() }
+        let group = map!.postGroup
+        let coordinate = mapView.sortPostGroup(group).first?.coordinate
+        animateTo(coordinate: coordinate)
     }
     
     func animateTo(coordinate: CLLocationCoordinate2D?) {
@@ -121,7 +112,8 @@ extension MapController: MKMapViewDelegate {
 
 extension MapController: SpotMapViewDelegate {
     func openPostFromSpotPost(view: SpotPostAnnotationView) {
-        let map = getSelectedMap()
+        var map = getSelectedMap()
+        if map == nil { map = getFriendsMapObject() }
         var posts: [MapPost] = []
         /// patch fix for double post getting added
         for id in view.postIDs {
@@ -136,13 +128,9 @@ extension MapController: SpotMapViewDelegate {
         openSpot(spotID: view.id, spotName: view.spotName, mapID: map?.id ?? "", mapName: map?.mapName ?? "")
     }
     
-    func openPostFromFriendsPost(view: FriendPostAnnotationView) {
-        var posts: [MapPost] = []
-        for id in view.postIDs {
-            let post = friendsPostsDictionary[id]
-            if !posts.contains(where: {$0.id ?? "" == post?.id ?? ""}) { posts.append(post!) }
-        }
-        DispatchQueue.main.async { self.openPost(posts: posts) }
+    func openSpotFromSpotName(view: SpotNameAnnotationView) {
+        let map = getSelectedMap()
+        openSpot(spotID: view.id, spotName: view.spotName, mapID: map?.id ?? "", mapName: map?.mapName ?? "")
     }
     
     func centerMapOnPostsInCluster(view: FriendPostAnnotationView) {
@@ -158,12 +146,13 @@ extension MapController: SpotMapViewDelegate {
 protocol SpotMapViewDelegate {
     func openPostFromSpotPost(view: SpotPostAnnotationView)
     func openSpotFromSpotPost(view: SpotPostAnnotationView)
-    func openPostFromFriendsPost(view: FriendPostAnnotationView)
+    func openSpotFromSpotName(view: SpotNameAnnotationView)
     func centerMapOnPostsInCluster(view: FriendPostAnnotationView)
 }
 
 class SpotMapView: MKMapView {
     var shouldCluster = false
+    var shouldShowSpots = false
     var spotMapDelegate: SpotMapViewDelegate?
     
     override init(frame: CGRect) {
@@ -176,9 +165,8 @@ class SpotMapView: MKMapView {
         showsTraffic = false
         showsUserLocation = false
         tag = 13
-        register(FriendPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "FriendsPost")
+        register(SpotNameAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotName")
         register(SpotPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotPost")
-        register(FriendPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "FriendsPostCluster")
         register(SpotPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotPostCluster")
     }
     
@@ -201,28 +189,51 @@ class SpotMapView: MKMapView {
         setRegion(adjustedRegion, animated: animated)
     }
         
-    func addPostAnnotation(post: MapPost) {
-        let postAnnotation = PostAnnotation()
-        postAnnotation.coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
-        postAnnotation.postID = post.id!
-        DispatchQueue.main.async { self.addAnnotation(postAnnotation) }
+    func addPostAnnotation(group: MapPostGroup?, newGroup: Bool, map: CustomMap) {
+        if group != nil {
+            if newGroup {
+                /// add new group
+                addSpotAnnotation(group: group!, map: map)
+            } else {
+                /// update existing group
+                if let anno = annotations.first(where: {$0.coordinate.isEqualTo(coordinate: group!.coordinate)}) {
+                    removeAnnotation(anno)
+                    addSpotAnnotation(group: group!, map: map)
+                }
+            }
+        }
     }
     
     func addSpotAnnotation(group: MapPostGroup, map: CustomMap) {
-        let spotAnnotation = SpotPostAnnotation()
+        let spotAnnotation = SpotAnnotation()
         spotAnnotation.id = group.id
+        spotAnnotation.type = group.postIDs.isEmpty ? .name : .post
         
-        if let index = map.spotIDs.firstIndex(of: group.id) {
-            let location = map.spotLocations[index]
-            spotAnnotation.coordinate = CLLocationCoordinate2D(latitude: location["lat"]!, longitude: location["long"]!)
-        } else if let post = map.postsDictionary[group.id] {
+        if group.spotName == "", let post = map.postsDictionary[group.id] {
             spotAnnotation.coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
+        } else {
+            spotAnnotation.coordinate = CLLocationCoordinate2D(latitude: group.coordinate.latitude, longitude: group.coordinate.longitude)
         }
+            
         DispatchQueue.main.async { self.addAnnotation(spotAnnotation) }
     }
     
     func removeAllAnnos() {
         removeAnnotations(annotations)
+    }
+    
+    func removeSpotAnnotationsOnZoom(map: CustomMap?) {
+        if map == nil { return }
+        var annotations = annotations.filter({$0 is SpotAnnotation}) as? [SpotAnnotation] ?? []
+        annotations = annotations.filter({$0.type == .name})
+        DispatchQueue.main.async { self.removeAnnotations(annotations) }
+    }
+    
+    func addSpotAnnotationsOnZoom(map: CustomMap?) {
+        if map == nil { return }
+        for group in map!.postGroup.filter({$0.postIDs.isEmpty}) {
+            DispatchQueue.main.async { self.addSpotAnnotation(group: group, map: map!) }
+        }
     }
     
     func getSpotPostAnnotation(anno: MKAnnotation, posts: [MapPost], group: MapPostGroup, cluster: Bool) -> SpotPostAnnotationView {
@@ -236,37 +247,24 @@ class SpotMapView: MKMapView {
         annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotPostTap(_:))))
         return annotationView
     }
-            
-    func getPostAnnotation(anno: PostAnnotation, post: MapPost) -> FriendPostAnnotationView {
-        guard let annotationView = dequeueReusableAnnotationView(withIdentifier: "FriendsPost") as? FriendPostAnnotationView else { return FriendPostAnnotationView() }
+    
+    func getSpotNameAnnotation(anno: MKAnnotation, group: MapPostGroup) -> SpotNameAnnotationView {
+        let reuseIdentifier = "SpotName"
+        guard let annotationView = dequeueReusableAnnotationView(withIdentifier: reuseIdentifier) as? SpotNameAnnotationView else { return SpotNameAnnotationView() }
         annotationView.annotation = anno
         annotationView.mapView = self
-        annotationView.clusteringIdentifier = shouldCluster ? "FriendsPostCluster" : nil
-        annotationView.updateImage(posts: [post])
-        annotationView.isSelected = !post.seen
-        annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(friendsPostTap(_:))))
+        let priority = getSpotDisplayPriority(group: group)
+        annotationView.setUp(spotID: group.id, spotName: group.spotName, priority: priority)
+        annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotNameTap(_:))))
         return annotationView
     }
-    
-    func getSpotAnnotation(anno: SpotPostAnnotation, selectedMap: CustomMap?) -> MKAnnotationView {
+
+    func getSpotAnnotation(anno: SpotAnnotation, selectedMap: CustomMap?) -> MKAnnotationView {
         guard selectedMap != nil, let group = selectedMap!.postGroup.first(where: {$0.id == anno.id}) else { return MKAnnotationView() }
         var posts: [MapPost] = []
         for id in group.postIDs.map({$0.id}) { posts.append(selectedMap!.postsDictionary[id]!) }
        
-        return getSpotPostAnnotation(anno: anno, posts: posts, group: group, cluster: false)
-    }
-    
-    
-    func getPostClusterAnnotation(anno: MKClusterAnnotation, posts: [MapPost]) -> FriendPostAnnotationView {
-        // set up friend posts view with multiple posts
-        guard let annotationView = dequeueReusableAnnotationView(withIdentifier: "FriendsPostCluster") as? FriendPostAnnotationView else { return FriendPostAnnotationView() }
-        annotationView.annotation = anno
-        annotationView.mapView = self
-        annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(friendsPostTap(_:))))
-        
-        let posts = sortPosts(posts)
-        annotationView.updateImage(posts: posts)
-        return annotationView
+        return !posts.isEmpty ? getSpotPostAnnotation(anno: anno, posts: posts, group: group, cluster: false) : getSpotNameAnnotation(anno: anno, group: group)
     }
     
     func getSpotClusterAnnotation(anno: MKClusterAnnotation, selectedMap: CustomMap?) -> MKAnnotationView {
@@ -274,7 +272,7 @@ class SpotMapView: MKMapView {
         var selectedPostGroup: [MapPostGroup] = []
         /// each member has a post group -> get all the post groups
         for annotation in anno.memberAnnotations {
-            if let member = annotation as? SpotPostAnnotation, let group = selectedMap!.postGroup.first(where: {$0.id == member.id}) { selectedPostGroup.append(group) }
+            if let member = annotation as? SpotAnnotation, let group = selectedMap!.postGroup.first(where: {$0.id == member.id}) { selectedPostGroup.append(group) }
         }
         /// sort post groups for display and get all posts in cluster
         var posts: [MapPost] = []
@@ -288,13 +286,6 @@ class SpotMapView: MKMapView {
         return getSpotPostAnnotation(anno: anno, posts: posts, group: firstPostGroup, cluster: true)
     }
     
-    @objc func friendsPostTap(_ sender: UITapGestureRecognizer) {
-        Mixpanel.mainInstance().track(event: "MapControllerFriendAnnotationTap")
-        let tapLocation = sender.location(in: sender.view)
-        guard let annotationView = sender.view as? FriendPostAnnotationView else { return }
-        tapLocation.y > 65 ? spotMapDelegate?.centerMapOnPostsInCluster(view: annotationView) : spotMapDelegate?.openPostFromFriendsPost(view: annotationView)
-    }
-    
     @objc func spotPostTap(_ sender: UITapGestureRecognizer) {
         Mixpanel.mainInstance().track(event: "MapControllerSpotPostAnnotationTap")
         let tapLocation = sender.location(in: sender.view)
@@ -306,7 +297,13 @@ class SpotMapView: MKMapView {
             spotMapDelegate?.openPostFromSpotPost(view: annotationView)
         }
     }
-
+    
+    @objc func spotNameTap(_ sender: UITapGestureRecognizer) {
+        Mixpanel.mainInstance().track(event: "MapControllerSpotNameAnnotationTap")
+        guard let annotationView = sender.view as? SpotNameAnnotationView else { return }
+        spotMapDelegate?.openSpotFromSpotName(view: annotationView)
+    }
+    
     func sortPostGroup(_ group: [MapPostGroup]) -> [MapPostGroup] {
         /// MapPostGroup postIDs will already be sorted
         group.sorted(by: { g1, g2 in
@@ -325,6 +322,27 @@ class SpotMapView: MKMapView {
             
             return p1.timestamp.seconds > p2.timestamp.seconds
         })
+    }
+    
+    func getSpotDisplayPriority(group: MapPostGroup) -> Float {
+        var spotScore = max(0, Float(group.numberOfPosters - 1) * 200)
+        
+        for i in 0..<group.postsToSpot.count {
+            var postScore: Float = 10
+            /// increment for each friend post
+            let postTime = Float(group.postTimestamps[safe: i]?.seconds ?? 1)
+            let currentTime = Float(Date().timeIntervalSince1970)
+            let timeSincePost = currentTime - postTime
+            
+            /// add multiplier for recent posts
+            var factor = min(1 + (2500000 / timeSincePost), 20)
+            let multiplier = pow(1.2, factor)
+            factor = multiplier
+            
+            postScore *= factor
+            spotScore += postScore
+        }
+        return spotScore
     }
 }
 

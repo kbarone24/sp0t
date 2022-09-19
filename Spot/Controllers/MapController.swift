@@ -51,6 +51,7 @@ class MapController: UIViewController {
     var mapsLoaded = false
     
     lazy var friendsPostsDictionary = [String: MapPost]()
+    lazy var postGroup: [MapPostGroup] = []
     
     var notiListener: ListenerRegistration!
     
@@ -288,15 +289,14 @@ class MapController: UIViewController {
     }
     
     func openSelectedMap() {
-        let map = getSelectedMap()
+        var map = getSelectedMap()
         let unsortedPosts = map == nil ? friendsPostsDictionary.map{$0.value} : map!.postsDictionary.map{$0.value}
         let posts = mapView.sortPosts(unsortedPosts)
         let mapType: MapType = map == nil ? .friendsMap : .customMap
         /// create map from current posts for friends map
-        var passMap = map == nil ? CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: []) : map!
-        if mapType == .friendsMap { passMap.createPosts(posts: posts) }
+        if map == nil { map = getFriendsMapObject() }
         
-        let customMapVC = CustomMapController(userProfile: nil, mapData: passMap, postsList: posts, presentedDrawerView: nil, mapType: mapType)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: posts, presentedDrawerView: nil, mapType: mapType)
         sheetView = DrawerView(present: customMapVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })

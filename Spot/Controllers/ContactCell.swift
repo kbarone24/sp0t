@@ -39,18 +39,18 @@ class ContactCell: UITableViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-        
+    
     // MARK: setting up views
     func set(contact: UserProfile?, inviteContact: CNContact?, friend: FriendStatus, invited: InviteStatus){
-                
+        
         self.resetCell()
         
         self.contact = contact
         
         self.backgroundColor = .white
-                
+        
         self.contentView.isUserInteractionEnabled = true
-
+        
         //keeping them buttons in case we wanna click into profiles in the future
         let profilePicButton = UIButton()
         contentView.addSubview(profilePicButton)
@@ -60,7 +60,7 @@ class ContactCell: UITableViewCell {
             $0.leading.equalToSuperview().offset(16)
             $0.height.width.equalTo(50)
         }
-                
+        
         if(contact != nil){
             profilePic = UIImageView {
                 $0.layer.masksToBounds = false
@@ -89,7 +89,7 @@ class ContactCell: UITableViewCell {
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(50)
         }
-
+        
         if (contact?.avatarURL ?? "") != "" {
             userAvatar = UIImageView{
                 $0.layer.masksToBounds = false
@@ -113,20 +113,20 @@ class ContactCell: UITableViewCell {
         }
         
         name = UILabel{
-             //$0.text = contact?.name
-             $0.isUserInteractionEnabled = false
-             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-             $0.adjustsFontSizeToFitWidth = false
-             $0.lineBreakMode = .byTruncatingTail
-             contentView.addSubview($0)
-         }
+            //$0.text = contact?.name
+            $0.isUserInteractionEnabled = false
+            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+            $0.adjustsFontSizeToFitWidth = false
+            $0.lineBreakMode = .byTruncatingTail
+            contentView.addSubview($0)
+        }
         name.snp.makeConstraints{
             $0.leading.equalTo(profilePic.snp.trailing).offset(8)
             $0.centerY.equalToSuperview().offset(-10)
             $0.trailing.equalToSuperview().offset(-120)
         }
-                
+        
         detail = UILabel {
             //$0.text = contact?.username
             $0.numberOfLines = 0
@@ -165,7 +165,7 @@ class ContactCell: UITableViewCell {
         }
         
         contentView.addSubview(statusButton)
-
+        
         statusButton.snp.makeConstraints{
             $0.trailing.equalToSuperview().offset(-18)
             $0.centerY.equalToSuperview()
@@ -174,7 +174,7 @@ class ContactCell: UITableViewCell {
         }
         
     }
-            
+    
     @objc func inviteFriend(_ sender: Any) {
         Mixpanel.mainInstance().track(event: "ContactCellInviteFriend")
         if let vc = viewContainingController() as? SendInvitesController {
@@ -184,7 +184,10 @@ class ContactCell: UITableViewCell {
     
     @objc func addFriend(_ sender: Any) {
         Mixpanel.mainInstance().track(event: "ContactCellAddFriend")
-        addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: contact.id!)
+        let receiverID = contact.id!
+        NotificationCenter.default.post(name: NSNotification.Name("ContactCellAddFriend"), object: nil, userInfo: ["receiverID": receiverID])
+
+        addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: receiverID)
         let title = NSMutableAttributedString(string: "Pending", attributes: [
             NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
             NSAttributedString.Key.foregroundColor: UIColor.black
@@ -201,14 +204,14 @@ class ContactCell: UITableViewCell {
                 subview.removeFromSuperview()
             }
         }
-         
+        
     }
-
-       override func prepareForReuse() {
-           super.prepareForReuse()
-           if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
-           if userAvatar != nil { userAvatar.sd_cancelCurrentImageLoad() }
-           self.isUserInteractionEnabled = true
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
+        if userAvatar != nil { userAvatar.sd_cancelCurrentImageLoad() }
+        self.isUserInteractionEnabled = true
         // Remove Subviews Or Layers That Were Added Just For This Cell
     }
     
@@ -225,7 +228,7 @@ class StatusButton: UIButton {
                 self.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
                 self.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
                 self.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
-
+                
                 let customButtonTitle = NSMutableAttributedString(string: "Add", attributes: [
                     NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
@@ -239,7 +242,7 @@ class StatusButton: UIButton {
                 ])
                 self.setAttributedTitle(customButtonTitle, for: .normal)
                 self.setImage(nil, for: .normal)
-
+                
             case .friends:
                 self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
                 let customButtonTitle = NSMutableAttributedString(string: "Friends", attributes: [
@@ -250,7 +253,7 @@ class StatusButton: UIButton {
                 self.setImage(nil, for: .normal)
             }
         } else {
-
+            
             switch invited {
             case .joined:
                 self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
@@ -271,7 +274,7 @@ class StatusButton: UIButton {
             case .none:
                 self.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
                 self.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
-
+                
                 let customButtonTitle = NSMutableAttributedString(string: "Invite", attributes: [
                     NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
@@ -287,7 +290,7 @@ class StatusButton: UIButton {
         super.init(frame: frame)
         backgroundColor = nil
     }
-        
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

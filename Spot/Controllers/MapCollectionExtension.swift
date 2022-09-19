@@ -60,18 +60,24 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func addMapAnnotations(index: Int, reload: Bool) {
         mapView.removeAllAnnos()
-        if index == 0 {
-            for post in friendsPostsDictionary.values { mapView.addPostAnnotation(post: post) }
-        } else {
-            guard let map = getSelectedMap() else { return }
-            for group in map.postGroup { mapView.addSpotAnnotation(group: group, map: map) }
-        }
+        var map = getSelectedMap()
+        /// create temp map to represent friends map
+        if map == nil { map = getFriendsMapObject() }
+        for group in map!.postGroup { mapView.addSpotAnnotation(group: group, map: map!) }
+    
         if !reload {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [weak self] in
                 guard let self = self else { return }
                 self.centerMapOnMapPosts(animated: false)
             })
         }
+    }
+    
+    func getFriendsMapObject() -> CustomMap {
+        var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
+        map.postsDictionary = friendsPostsDictionary
+        map.postGroup = postGroup
+        return map
     }
 }
 
