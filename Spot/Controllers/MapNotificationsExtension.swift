@@ -46,6 +46,8 @@ extension MapController {
     @objc func notifyNewPost(_ notification: NSNotification) {
         /// add new post + zoom in on map
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        mapView.shouldCluster = false
+        mapView.lockClusterOnUpload = true
         /// add new map to mapsList if applicable
         var map = notification.userInfo?["map"] as? CustomMap
         let emptyMap = map == nil || map?.id ?? "" == ""
@@ -67,8 +69,11 @@ extension MapController {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             /// animate to spot if post to map, to post location if friends map
-           let coordinate = mapIndex == 1 && post.spotID ?? "" != "" ? CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!) : post.coordinate
-            self.animateTo(coordinate: coordinate)
+            self.animateTo(coordinate: post.coordinate)
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.mapView.lockClusterOnUpload = false
         }
     }
 

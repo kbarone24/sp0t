@@ -787,7 +787,6 @@ class SpotNameButton: UIButton {
 }
 
 class PostImagePreview: PostImageView {
-    
     var index: Int!
     
     convenience init(frame: CGRect, index: Int) {
@@ -836,11 +835,13 @@ class PostImagePreview: PostImageView {
         let images = post.postImage
         let frameIndexes = post.frameIndexes ?? []
         
+        animationImages?.removeAll()
+        
         let still = images[safe: frameIndexes[safe: index] ?? -1] ?? UIImage.init(color: UIColor(named: "SpotBlack")!, size: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width))!
         image = still
         stillImage = still
         
-        let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: post.selectedImageIndex!)
+        let animationImages = getGifImages(selectedImages: images, frameIndexes: post.frameIndexes!, imageIndex: index)
         self.animationImages = animationImages
         animationIndex = 0
 

@@ -21,6 +21,7 @@ class SpotNameAnnotationView: MKAnnotationView {
         clusteringIdentifier = nil
         centerOffset = CGPoint(x: 0, y: 10)
         displayPriority = .defaultHigh
+        alpha = 0.75
     }
     
     required init?(coder aDecoder: NSCoder) {
