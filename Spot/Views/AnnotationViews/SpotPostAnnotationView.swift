@@ -15,48 +15,93 @@ class SpotPostAnnotationView: MKAnnotationView {
     var id = ""
     var spotName = ""
     var postIDs: [String] = []
+
+    var unseenPost = false
+    var spotCluster = false
     
     lazy var imageManager = SDWebImageManager()
     unowned var mapView: MKMapView?
-
+    
+    override var clusteringIdentifier: String? {
+        didSet {
+            /// get clustering id if clustering is turned off
+            displayPriority = clusteringIdentifier != nil ? .required : .init(rawValue: getPostRank(unseenPost: unseenPost, spotName: spotName))
+            print("display priority", displayPriority)
+        }
+    }
+    
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         canShowCallout = false
-        displayPriority = .required
         addTap()
     }
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func updateImage(posts: [MapPost], spotName: String, id: String) {
+    func updateImage(posts: [MapPost], spotName: String, id: String, spotCluster: Bool) {
         self.id = id
         self.spotName = spotName
         /// only include unseen posts in cluster
-        self.postIDs = posts.contains(where: {!$0.seen}) ? posts.filter({!$0.seen}).map{$0.id!} : posts.map({$0.id!})
+        self.unseenPost = posts.contains(where: {!$0.seen})
+        self.spotCluster = spotCluster
+        self.postIDs = unseenPost ? posts.filter({!$0.seen}).map{$0.id!} : posts.map({$0.id!})
+        let postCount = postIDs.count
         
         let post = posts.first
         if post != nil {
-            let nibView = loadPostNib(post: post!, spotName: spotName, postCount: postIDs.count)
+            /// load friend view if multiple spots in the cluster
+            let nibView = spotCluster ? loadClusterNib(post: post!, postCount: postCount, moreText: getMoreText(posts: posts)) : loadPostNib(post: post!, spotName: spotName, postCount: postCount, moreText: getMoreText(posts: posts))
             self.image = nibView.asImage()
-
+            
             guard let url = URL(string: post!.imageURLs.first ?? "") else { image = nibView.asImage(); return }
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
             self.imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, data, err, cache, download, url) in
                 guard let self = self else { return }
-                nibView.postImage.image = image
+                self.setPostImage(nibView: nibView, image: image ?? UIImage())
+            }
+            
+            loadAvatarView(nibView: nibView, posts: posts)
+        }
+        
+    }
+    
+    func loadAvatarView(nibView: UIView, posts: [MapPost]) {
+        /// set up avatar for cluster
+        var avatarURLs = [posts[0].userInfo?.avatarURL ?? ""]
+        for i in 1..<posts.count {
+            let url = posts[i].userInfo?.avatarURL ?? ""
+            if !avatarURLs.contains(url) { avatarURLs.append(posts[i].userInfo?.avatarURL ?? "") }
+        }
+        if let nibView = nibView as? FriendPostView {
+            nibView.avatarView.setUp(avatarURLs: avatarURLs, annotation: true) { success in
+                nibView.bringSubviewToFront(nibView.avatarView)
                 self.image = nibView.asImage()
-                self.collisionMode = .circle
-                self.centerOffset = CGPoint(x: 0, y: -20)
+            }
+        } else if let nibView = nibView as? SpotPostView {
+            nibView.avatarView.setUp(avatarURLs: avatarURLs, annotation: true) { success in
+                nibView.bringSubviewToFront(nibView.avatarView)
+                self.image = nibView.asImage()
             }
         }
     }
     
-    func loadPostNib(post: MapPost, spotName: String, postCount: Int) -> SpotPostView {
+    func setPostImage(nibView: UIView, image: UIImage) {
+        if let nibView = nibView as? SpotPostView {
+            nibView.postImage.image = image
+        } else if let nibView = nibView as? FriendPostView {
+            nibView.postImage.image = image
+        }
+        self.image = nibView.asImage()
+        self.collisionMode = .circle
+        self.centerOffset = CGPoint(x: 0, y: -20)
+    }
+    
+    func loadPostNib(post: MapPost, spotName: String, postCount: Int, moreText: String) -> SpotPostView {
         let infoWindow = SpotPostView.instanceFromNib() as! SpotPostView
         infoWindow.clipsToBounds = false
         infoWindow.backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
-        infoWindow.postImage.layer.cornerRadius = 57/2
+        infoWindow.postImage.layer.cornerRadius = post.seen ? 57/2 : 65/2
         
         infoWindow.imageMask.layer.cornerRadius = 57/2
         infoWindow.imageMask.isHidden = !post.seen
@@ -88,8 +133,47 @@ class SpotPostAnnotationView: MKAnnotationView {
             infoWindow.spotIcon.isHidden = true
         }
         
-        infoWindow.resizeView()
+        infoWindow.usernameLabel.setUp(post: post, moreText: moreText, spotAnnotation: true)
+        infoWindow.resizeView(seen: post.seen)
         return infoWindow
+    }
+    
+    func loadClusterNib(post: MapPost, postCount: Int, moreText: String) -> FriendPostView {
+        let infoWindow = FriendPostView.instanceFromNib() as! FriendPostView
+        infoWindow.clipsToBounds = false
+        
+        infoWindow.backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
+        infoWindow.postImage.layer.cornerRadius = post.seen ? 57/2 : 65/2
+        
+        infoWindow.imageMask.layer.cornerRadius = 57/2
+        infoWindow.imageMask.isHidden = !post.seen
+        infoWindow.replayIcon.isHidden = !post.seen
+        
+        if postCount > 1 {
+            infoWindow.postCount.backgroundColor = post.seen ? .white : UIColor(named: "SpotGreen")
+            infoWindow.postCount.layer.cornerRadius = 10
+            infoWindow.postCount.font = UIFont(name: "SFCompactText-Heavy", size: 12.5)
+            infoWindow.postCount.text = String(postCount)
+        } else {
+            infoWindow.postCount.isHidden = true
+        }
+        
+        infoWindow.usernameLabel.setUp(post: post, moreText: moreText, spotAnnotation: false)
+        infoWindow.resizeView(seen: post.seen)
+        return infoWindow
+    }
+
+    func getMoreText(posts: [MapPost]) -> String {
+        let posters = posts.map{$0.posterID}.uniqued()
+        var moreText = ""
+        if posters.count > 2 {
+            moreText = "+ \(posters.count - 1) more"
+        } else if posters.count > 1 {
+            if let otherPost = posts.first(where: {$0.posterID != posts.first?.posterID ?? ""}) {
+                moreText = "& \(otherPost.userInfo?.username ?? "")"
+            }
+        }
+        return moreText
     }
     
     func addTap() {
@@ -100,6 +184,10 @@ class SpotPostAnnotationView: MKAnnotationView {
         tap.numberOfTapsRequired = 1
         tap.delegate = self
         addGestureRecognizer(tap)
+    }
+    
+    func getPostRank(unseenPost: Bool, spotName: String) -> Float {
+        return unseenPost ? 800 : spotName != "" ? 750 : 700
     }
 }
 

@@ -12,7 +12,6 @@ import FirebaseUI
 class ProfileBodyCell: UICollectionViewCell {
     private var mapImage: UIImageView!
     private var mapName: UILabel!
-    private var spotsLabel: UILabel!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -47,8 +46,6 @@ class ProfileBodyCell: UICollectionViewCell {
         } else {
             self.mapName.attributedText = NSAttributedString(string: mapData.mapName) 
         }
-        
-        spotsLabel.text = mapData.spotIDs.count > 1 ? "\(mapData.spotIDs.count) spots" : ""
     }
 }
 
@@ -76,17 +73,6 @@ extension ProfileBodyCell {
         mapName.snp.makeConstraints {
             $0.leading.trailing.equalTo(mapImage)
             $0.top.equalTo(mapImage.snp.bottom).offset(6)
-        }
-        
-        spotsLabel = UILabel {
-            $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            contentView.addSubview($0)
-        }
-        spotsLabel.snp.makeConstraints {
-            $0.leading.equalTo(mapImage)
-            $0.top.equalTo(mapName.snp.bottom).offset(1)
-            $0.trailing.lessThanOrEqualToSuperview()
         }
     }
 }

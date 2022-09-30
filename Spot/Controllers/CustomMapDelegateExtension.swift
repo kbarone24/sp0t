@@ -11,6 +11,20 @@ import UIKit
 import MapKit
 
 extension CustomMapController: MKMapViewDelegate {
+    @objc func notifyPostOpen(_ notification: NSNotification) {
+        /// update post annotation as seen
+        guard let postID = notification.userInfo?.first?.value as? String else { return }
+        guard let mapVC = mapController else { return }
+        self.mapData!.updateSeen(postID: postID)
+        let coordinate = mapData!.postsDictionary[postID]?.coordinate
+        if coordinate != nil, let annotation = mapVC.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: coordinate!)}) {
+            DispatchQueue.main.async {
+                mapVC.mapView.removeAnnotation(annotation)
+                mapVC.mapView.addAnnotation(annotation)
+            }
+        }
+    }
+    
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
         
@@ -27,9 +41,39 @@ extension CustomMapController: MKMapViewDelegate {
     }
     
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+        guard let mapView = mapView as? SpotMapView else { return }
         // gets called too much -> just use gesture recognizer
-        if centeredMap { closeDrawer() }
-        centeredMap = false
+        if mapView.region.span.longitudeDelta < 0.0013 {
+            if mapView.shouldCluster {
+                mapView.shouldCluster = false
+                let annotations = mapView.annotations
+                DispatchQueue.main.async {
+                    mapView.removeAllAnnos()
+                    mapView.addAnnotations(annotations)
+                }
+            }
+        } else {
+            if !mapView.shouldCluster {
+                mapView.shouldCluster = true
+                let annotations = mapView.annotations
+                DispatchQueue.main.async {
+                    mapView.removeAllAnnos()
+                    mapView.addAnnotations(annotations)
+                }
+            }
+            /// see if should add/remove spot annos
+            if mapView.region.span.longitudeDelta < 0.2 {
+                if !mapView.shouldShowSpots {
+                    mapView.shouldShowSpots = true
+                    mapView.addSpotAnnotationsOnZoom(map: mapData!)
+                }
+            } else {
+                if mapView.shouldShowSpots {
+                    mapView.shouldShowSpots = false
+                    mapView.removeSpotAnnotationsOnZoom(map: mapData!)
+                }
+            }
+        }
     }
     
     func setInitialRegion() {
@@ -108,7 +152,7 @@ extension CustomMapController: SpotMapViewDelegate {
         openSpot(spotID: view.id, spotName: view.spotName)
     }
         
-    func centerMapOnPostsInCluster(view: FriendPostAnnotationView) {
+    func centerMapOnPostsInCluster(view: SpotPostAnnotationView) {
         closeDrawer()
 
         var coordinates: [CLLocationCoordinate2D] = []

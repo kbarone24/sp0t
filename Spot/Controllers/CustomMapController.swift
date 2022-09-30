@@ -43,13 +43,13 @@ class CustomMapController: UIViewController {
     unowned var mapController: MapController?
     unowned var containerDrawerView: DrawerView? {
         didSet {
-            configureDrawerView()
+            configureDrawerView(present: false)
             if !ranSetUp { runInitialFetches() }
         }
     }
     var drawerViewIsDragging = false
     var currentContainerCanDragStatus: Bool? = nil
-    var fullScreenOnDismissal = false
+    var presentToFullScreen = false
     var offsetOnDismissal: CGFloat = 0
         
     var mapType: MapType!
@@ -92,7 +92,7 @@ class CustomMapController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView()
+        configureDrawerView(present: !isMovingToParent) /// only present when view reappears
         if barView != nil {
             barView.isHidden = false
         }
@@ -169,7 +169,7 @@ class CustomMapController: UIViewController {
         navigationController!.navigationBar.isTranslucent = true
     }
     
-    private func configureDrawerView() {
+    private func configureDrawerView(present: Bool) {
         if containerDrawerView == nil { return }
         containerDrawerView?.canInteract = true
         containerDrawerView?.canDrag = currentContainerCanDragStatus ?? true
@@ -177,12 +177,12 @@ class CustomMapController: UIViewController {
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
         
-        let position: DrawerViewDetent = fullScreenOnDismissal ? .Top : .Middle
-        if position.rawValue != containerDrawerView?.status.rawValue {
+        let position: DrawerViewDetent = presentToFullScreen ? .Top : .Middle
+        if position.rawValue != containerDrawerView?.status.rawValue && present {
             DispatchQueue.main.async { self.containerDrawerView?.present(to: position) }
         }
         if position == .Top { configureFullScreen(); collectionView.contentOffset.y = offsetOnDismissal }
-        fullScreenOnDismissal = false
+        presentToFullScreen = false
     }
     
     private func viewSetup() {
@@ -192,6 +192,7 @@ class CustomMapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostOpen(_:)), name: NSNotification.Name(("PostOpen")), object: nil)
 
         view.backgroundColor = .white
         navigationItem.setHidesBackButton(true, animated: true)
@@ -233,31 +234,47 @@ class CustomMapController: UIViewController {
         }
         
         barView = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 78)
-            $0.isUserInteractionEnabled = false
+      ///      $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 90)
+            containerDrawerView?.slideView.addSubview($0)
         }
+        barView.snp.makeConstraints {
+            $0.leading.top.width.equalToSuperview()
+            $0.height.equalTo(90)
+        }
+        
+        barBackButton = UIButton {
+            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
+            $0.setTitle("", for: .normal)
+            $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
+        //    $0.isHidden = true
+        //    $0.sizeToFit()
+            barView.addSubview($0)
+        }
+        barBackButton.snp.makeConstraints {
+            $0.leading.equalTo(22)
+            $0.bottom.equalTo(-12)
+            $0.height.equalTo(21.5)
+            $0.width.equalTo(30)
+        }
+
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.text = ""
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
             $0.textAlignment = .center
-            $0.numberOfLines = 0
-            $0.sizeToFit()
-            $0.frame = CGRect(origin: CGPoint(x: 0, y: 55), size: CGSize(width: view.frame.width, height: 23))
+            $0.lineBreakMode = .byTruncatingTail
+            $0.adjustsFontSizeToFitWidth = true
+            $0.minimumScaleFactor = 0.75
+            $0.numberOfLines = 1
+            $0.clipsToBounds = true
             barView.addSubview($0)
         }
-        barBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
-            $0.setTitle("", for: .normal)
-            $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
-            $0.isHidden = true
-            barView.addSubview($0)
+        titleLabel.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(60)
+            $0.bottom.equalTo(barBackButton)
+         //   $0.trailing.equalToSuperview().offset(-22)
         }
-        barBackButton.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(22)
-            $0.centerY.equalTo(titleLabel)
-        }
-        
+                
       /*  addButton = AddButton {
             $0.addTarget(self, action: #selector(addAction), for: .touchUpInside)
             $0.isHidden = true
@@ -268,8 +285,7 @@ class CustomMapController: UIViewController {
             $0.bottom.equalToSuperview().inset(35)
             $0.width.height.equalTo(73)
         } */
-
-        containerDrawerView?.slideView.addSubview(barView)
+        view.bringSubviewToFront(floatBackButton)
     }
     
     @objc func DrawerViewToTopCompletion() {
@@ -288,7 +304,6 @@ class CustomMapController: UIViewController {
         })
         
         // When in top position enable collection view scroll
-        barView.isUserInteractionEnabled = true
         collectionView.isScrollEnabled = true
         collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
         // Get top y content offset
@@ -313,6 +328,7 @@ class CustomMapController: UIViewController {
         }
         collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
         barView.backgroundColor = .clear
+        barView.isUserInteractionEnabled = false
         titleLabel.text = ""
     }
     @objc func DrawerViewToBottomCompletion() {
@@ -324,6 +340,7 @@ class CustomMapController: UIViewController {
         barBackButton.isHidden = true
         collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
         barView.backgroundColor = .clear
+        barView.isUserInteractionEnabled = true
         titleLabel.text = ""
     }
     

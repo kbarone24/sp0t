@@ -44,7 +44,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return indexPath.section == 0 && mapType == .customMap ? CGSize(width: UIScreen.main.bounds.width, height: mapData?.mapDescription ?? "" != "" ? 180 : 155) : indexPath.section == 0 ? CGSize(width: view.frame.width, height: 35) : CGSize(width: UIScreen.main.bounds.width/2 - 0.5, height: (UIScreen.main.bounds.width/2 - 0.5) * 267 / 194.5)
+        return indexPath.section == 0 && mapType == .customMap ? CGSize(width: UIScreen.main.bounds.width, height: getHeaderHeight()) : indexPath.section == 0 ? CGSize(width: view.frame.width, height: 35) : CGSize(width: UIScreen.main.bounds.width/2 - 0.5, height: (UIScreen.main.bounds.width/2 - 0.5) * 267 / 194.5)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -61,11 +61,21 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         Mixpanel.mainInstance().track(event: "CustomMapOpenPostFromGallery")
     }
     
+    func getHeaderHeight() -> CGFloat {
+        let temp = UILabel(frame: CGRect(x: 19, y: 0, width: UIScreen.main.bounds.width - 38, height: 0))
+        temp.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
+        temp.text = mapData!.mapDescription ?? ""
+        temp.numberOfLines = 0
+        temp.lineBreakMode = .byWordWrapping
+        temp.sizeToFit()
+        return temp.frame.height + 148
+    }
+                                                                        
     func openPost(posts: [MapPost], row: Int) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         if navigationController!.viewControllers.last is PostController { return } // double stack happening here
         
-        if containerDrawerView?.status == .Top { fullScreenOnDismissal = true; offsetOnDismissal = collectionView.contentOffset.y }
+        if containerDrawerView?.status == .Top { presentToFullScreen = true; offsetOnDismissal = collectionView.contentOffset.y }
         currentContainerCanDragStatus = containerDrawerView?.canDrag
         postVC.postsList = posts
         postVC.selectedPostIndex = row
@@ -111,6 +121,7 @@ extension CustomMapController: UIScrollViewDelegate {
                     titleText = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
                 }
                 titleLabel.text = titleText
+                titleLabel.sizeToFit()
             }
         }
         
