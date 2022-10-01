@@ -73,6 +73,7 @@ class UploadPostModel {
         if !postObject.setImageLocation && spot != nil {
             postObject.postLat = spot!.spotLat
             postObject.postLong = spot!.spotLong
+            setPostCity()
         }
     }
     

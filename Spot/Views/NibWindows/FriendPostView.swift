@@ -36,8 +36,8 @@ class FriendPostView: UIView {
         backgroundImage.frame = CGRect(x: (bounds.width - backgroundImage.bounds.width)/2, y: backgroundImage.frame.minY, width: backgroundImage.bounds.width, height: backgroundImage.bounds.height)
         postImage.frame = CGRect(x: (bounds.width - postImage.bounds.width)/2, y: postImage.frame.minY, width: postImage.bounds.width, height: postImage.bounds.height)
         imageMask.frame = postImage.frame
-        replayIcon.frame = CGRect(x: postImage.frame.minX + 15.5, y: postImage.frame.minY + 13, width: 27.7, height: 31)
-        postCount.frame = CGRect(x: backgroundImage.frame.minX + 39, y: postCount.frame.minY, width: postCount.frame.width, height: postCount.frame.height)
+        replayIcon.frame = CGRect(x: postImage.frame.midX - 27.7/2, y: postImage.frame.midY - 15.5, width: 27.7, height: 31)
+        postCount.frame = CGRect(x: backgroundImage.frame.minX + 49, y: postCount.frame.minY, width: postCount.frame.width, height: postCount.frame.height)
 
         ///  need to slide up avatar view in case post already seen (smaller post frame)
         avatarView.frame = CGRect(x: (bounds.width - avatarView.bounds.width)/2, y: backgroundImage.frame.maxY - 2, width: avatarView.bounds.width, height: avatarView.frame.height)

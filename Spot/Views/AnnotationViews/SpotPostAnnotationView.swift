@@ -24,15 +24,16 @@ class SpotPostAnnotationView: MKAnnotationView {
     
     override var clusteringIdentifier: String? {
         didSet {
+            displayPriority = .required
             /// get clustering id if clustering is turned off
-            displayPriority = clusteringIdentifier != nil ? .required : .init(rawValue: getPostRank(unseenPost: unseenPost, spotName: spotName))
-            print("display priority", displayPriority)
+         //   displayPriority = clusteringIdentifier != nil ? .required : unseenPost ? .required : .defaultHigh //.init(rawValue: getPostRank(unseenPost: unseenPost, spotName: spotName))
         }
     }
     
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         canShowCallout = false
+        collisionMode = .circle
         addTap()
     }
     required init?(coder aDecoder: NSCoder) {
@@ -93,7 +94,6 @@ class SpotPostAnnotationView: MKAnnotationView {
             nibView.postImage.image = image
         }
         self.image = nibView.asImage()
-        self.collisionMode = .circle
         self.centerOffset = CGPoint(x: 0, y: -20)
     }
     
@@ -101,9 +101,9 @@ class SpotPostAnnotationView: MKAnnotationView {
         let infoWindow = SpotPostView.instanceFromNib() as! SpotPostView
         infoWindow.clipsToBounds = false
         infoWindow.backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
-        infoWindow.postImage.layer.cornerRadius = post.seen ? 57/2 : 65/2
+        infoWindow.postImage.layer.cornerRadius = post.seen ? 67/2 : 75/2
         
-        infoWindow.imageMask.layer.cornerRadius = 57/2
+        infoWindow.imageMask.layer.cornerRadius = 67/2
         infoWindow.imageMask.isHidden = !post.seen
         infoWindow.replayIcon.isHidden = !post.seen
         
@@ -122,7 +122,7 @@ class SpotPostAnnotationView: MKAnnotationView {
                 NSAttributedString.Key.strokeColor: UIColor.white,
                 NSAttributedString.Key.foregroundColor: UIColor.black,
                 NSAttributedString.Key.strokeWidth: -3,
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 14.5)!
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 13.5)!
             ]
             infoWindow.spotLabel.attributedText = NSAttributedString(string: spotName, attributes: attributes)
             infoWindow.spotLabel.sizeToFit()
@@ -143,9 +143,9 @@ class SpotPostAnnotationView: MKAnnotationView {
         infoWindow.clipsToBounds = false
         
         infoWindow.backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
-        infoWindow.postImage.layer.cornerRadius = post.seen ? 57/2 : 65/2
+        infoWindow.postImage.layer.cornerRadius = post.seen ? 67/2 : 75/2
         
-        infoWindow.imageMask.layer.cornerRadius = 57/2
+        infoWindow.imageMask.layer.cornerRadius = 67/2
         infoWindow.imageMask.isHidden = !post.seen
         infoWindow.replayIcon.isHidden = !post.seen
         
@@ -187,7 +187,7 @@ class SpotPostAnnotationView: MKAnnotationView {
     }
     
     func getPostRank(unseenPost: Bool, spotName: String) -> Float {
-        return unseenPost ? 800 : spotName != "" ? 750 : 700
+        return unseenPost ? 1000 : spotName != "" ? 950 : 900
     }
 }
 

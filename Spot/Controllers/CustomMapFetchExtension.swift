@@ -118,7 +118,6 @@ extension CustomMapController {
     }
     
     func loadPostFromDB(key: String?, location: CLLocation?) {
-        print("load", key)
         guard let key = key else { return }
         if !mapData!.postIDs.contains(key) { return }
         if postsList.contains(where: {$0.id == key}) { return }
@@ -155,17 +154,15 @@ extension CustomMapController {
             if newGroup {
                 /// add new group
                 mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
-            } else {
+            } else if let anno = mapController?.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: group!.coordinate)}) {
                 /// update existing group
-                if let anno = mapController?.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: group!.coordinate)}) {
                     mapController?.mapView.removeAnnotation(anno)
                     mapController?.mapView.addSpotAnnotation(group: group!, map: mapData!)
-                }
             }
         }
     }
     
-    func addInitialAnnotations(posts: [MapPost]) {
+    func addInitialAnnotations() {
         mapController?.mapView.removeAllAnnos()
         for group in mapData!.postGroup { mapController?.mapView.addSpotAnnotation(group: group, map: mapData!) }
     }

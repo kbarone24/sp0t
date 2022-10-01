@@ -262,7 +262,7 @@ class ImagePreviewController: UIViewController {
         textView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.height.lessThanOrEqualToSuperview().inset(36)
-            $0.bottom.equalToSuperview()
+            $0.bottom.equalToSuperview().offset(-3)
         }
         
         atButton = UIButton {
@@ -491,11 +491,12 @@ class ImagePreviewController: UIViewController {
         }
         newSpotMask!.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(newSpotNameView.snp.top).offset(-160)
+            $0.top.equalTo(newSpotNameView.snp.top).offset(-200)
             $0.bottom.equalToSuperview()
         }
 
         newSpotNameView.isHidden = false
+        postDetailView.isHidden = true
         view.bringSubviewToFront(newSpotNameView)
         newSpotNameView.snp.removeConstraints()
         newSpotNameView.snp.makeConstraints {
@@ -516,6 +517,7 @@ class ImagePreviewController: UIViewController {
         }
         
         newSpotNameView.isHidden = true
+        postDetailView.isHidden = false
         newSpotMask!.removeFromSuperview()
         newSpotMask = nil
     }
@@ -1043,7 +1045,7 @@ class NewSpotMask: UIView {
             $0.colors = [
                 UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
                 UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor,
-                UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.7).cgColor
+                UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.8).cgColor
             ]
             $0.startPoint = CGPoint(x: 0.5, y: 0.0)
             $0.endPoint = CGPoint(x: 0.5, y: 1.0)

@@ -101,7 +101,7 @@ class ChooseSpotController: UIViewController {
             $0.layer.masksToBounds = true
             $0.autocapitalizationType = .none
             $0.autocorrectionType = .no
-            $0.placeholder = " Search"
+            $0.placeholder = " Search spots"
             $0.clipsToBounds = true
             $0.layer.cornerRadius = 2
             $0.searchTextField.layer.cornerRadius = 2
