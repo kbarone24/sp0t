@@ -41,6 +41,7 @@ extension CustomMapController: MKMapViewDelegate {
     }
     
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+        if centeredMap && containerDrawerView?.status != .Bottom { closeDrawer() }
         guard let mapView = mapView as? SpotMapView else { return }
         // gets called too much -> just use gesture recognizer
         if mapView.region.span.longitudeDelta < 0.0013 {
@@ -65,12 +66,12 @@ extension CustomMapController: MKMapViewDelegate {
             if mapView.region.span.longitudeDelta < 0.2 {
                 if !mapView.shouldShowSpots {
                     mapView.shouldShowSpots = true
-                    mapView.addSpotAnnotationsOnZoom(map: mapData!)
+                //    mapView.addSpotAnnotationsOnZoom(map: mapData!)
                 }
             } else {
                 if mapView.shouldShowSpots {
                     mapView.shouldShowSpots = false
-                    mapView.removeSpotAnnotationsOnZoom(map: mapData!)
+               //   mapView.removeSpotAnnotationsOnZoom(map: mapData!)
                 }
             }
         }
@@ -85,12 +86,8 @@ extension CustomMapController: MKMapViewDelegate {
     }
     
     func closeDrawer() {
+        print("close drawer")
         DispatchQueue.main.async { self.containerDrawerView?.present(to: .Bottom) }
-        /* if refresh == .refreshEnabled {
-            refresh = .activelyRefreshing
-            /// should refresh only if large change from previous search region
-            DispatchQueue.global(qos: .userInitiated).async { self.getNearbyPosts() }
-        } */
     }
 }
 

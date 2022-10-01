@@ -81,12 +81,12 @@ extension MapController: MKMapViewDelegate {
             if mapView.region.span.longitudeDelta < 0.2 {
                 if !mapView.shouldShowSpots {
                     mapView.shouldShowSpots = true
-                    mapView.addSpotAnnotationsOnZoom(map: getSelectedMap())
+                  //  mapView.addSpotAnnotationsOnZoom(map: getSelectedMap())
                 }
             } else {
                 if mapView.shouldShowSpots {
                     mapView.shouldShowSpots = false
-                    mapView.removeSpotAnnotationsOnZoom(map: getSelectedMap())
+                 //   mapView.removeSpotAnnotationsOnZoom(map: getSelectedMap())
                 }
             }
         }
@@ -298,20 +298,23 @@ class SpotMapView: MKMapView {
         guard let annotationView = sender.view as? SpotPostAnnotationView else { return }
         
         let frame = annotationView.bounds
-        print("anno frame", annotationView.frame)
         let postFrame = CGRect(x: frame.midX - 35, y: 0, width: 70, height: 70)
-        print("post frame", postFrame, tapLocation)
         
+        let usernameAvatarTouchArea = CGRect(x: frame.midX + 10, y: 42, width: frame.width/2 - 10, height: 38)
         if postFrame.contains(tapLocation) {
             spotMapDelegate?.openPostFromSpotPost(view: annotationView)
             
         } else if annotationView.spotCluster {
-            /// avatar + username area becomes touch area
+            /// avatar + username area becomes touch area (avatar and username are beneath the post frame)
             let avatarFrame = CGRect(x: frame.midX - 43, y: frame.maxY - 66, width: frame.width, height: 66)
             if avatarFrame.contains(tapLocation) { spotMapDelegate?.centerMapOnPostsInCluster(view: annotationView) }
             
         } else if tapLocation.y > frame.maxY - 22 {
             if annotationView.spotName != "" { spotMapDelegate?.openSpotFromSpotPost(view: annotationView) }
+            
+        } else if usernameAvatarTouchArea.contains(tapLocation) {
+            /// username / avatar tap (avatar and username are to the right of the post frame)
+            spotMapDelegate?.centerMapOnPostsInCluster(view: annotationView)
         }
     }
     
@@ -421,8 +424,8 @@ extension MKCoordinateRegion {
             self.init(center: UserDataModel.shared.currentLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15))
             return
         }
-        
-        let minSpan = overview ? 0.001 : 0.0001
+        let minSpan = 0.001
+      //  let minSpan = overview ? 0.001 : 0.0001
         var span = MKCoordinateSpan(latitudeDelta: 0.0, longitudeDelta: 0.0)
         var minLatitude: CLLocationDegrees = coordinates.first!.latitude
         var maxLatitude: CLLocationDegrees = coordinates.first!.latitude

@@ -38,13 +38,13 @@ class SpotPostView: UIView {
         spotIcon.frame = CGRect(x: backgroundImage.frame.midX - spotIcon.bounds.width/2, y: backgroundImage.frame.maxY - 4.23, width: spotIcon.bounds.width, height: spotIcon.bounds.height)
         postImage.frame = CGRect(x: (bounds.width - postImage.bounds.width)/2, y: postImage.frame.minY, width: postImage.bounds.width, height: postImage.bounds.height)
         imageMask.frame = postImage.frame
-        replayIcon.frame = CGRect(x: postImage.frame.minX + 15.5, y: postImage.frame.minY + 13, width: 27.7, height: 31)
-        postCount.frame = CGRect(x: backgroundImage.frame.minX + 39, y: postCount.frame.minY, width: postCount.frame.width, height: postCount.frame.height)
+        replayIcon.frame = CGRect(x: postImage.frame.midX - 27.7/2, y: postImage.frame.midY - 31/2, width: 27.7, height: 31)
+        postCount.frame = CGRect(x: backgroundImage.frame.minX + 49, y: postCount.frame.minY, width: postCount.frame.width, height: postCount.frame.height)
                 
 
-        let spotY = backgroundImage.isHidden ? 0 : spotIcon.frame.maxY + 2
+        let spotY = backgroundImage.isHidden ? 0 : spotIcon.frame.maxY + 1
         spotLabel.frame = CGRect(x: (bounds.width - spotLabel.bounds.width)/2, y: spotY, width: spotLabel.bounds.width, height: spotLabel.bounds.height)
         avatarView.frame = CGRect(x: (spotIcon.frame.maxX + 25) - avatarView.frame.width, y: spotIcon.frame.maxY - 40, width: avatarView.frame.width, height: avatarView.frame.height)
-        usernameLabel.repositionSubviews(minX: avatarView.frame.maxX - 12, minY: avatarView.frame.minY + 7)
+        usernameLabel.repositionSubviews(minX: avatarView.frame.maxX - 12, minY: avatarView.frame.minY + 9)
     }
 }

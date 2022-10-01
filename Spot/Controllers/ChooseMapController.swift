@@ -175,8 +175,7 @@ class ChooseMapController: UIViewController {
         }
         view.bringSubviewToFront(postButton)
         let _ = CAGradientLayer {
-            print("post frame", postButton.frame)
-            $0.frame = CGRect(x: 0, y: postButton.frame.minY - 200, width: UIScreen.main.bounds.width, height: 200)
+            $0.frame = CGRect(x: 0, y: postButton.frame.minY - 120, width: UIScreen.main.bounds.width, height: 120)
             $0.colors = [
                 UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor,
                 UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0).cgColor
@@ -418,7 +417,7 @@ class ChooseMapTableView: UITableView {
     override init(frame: CGRect, style: UITableView.Style) {
         super.init(frame: frame, style: style)
         backgroundColor = nil
-        contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
+        contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 80, right: 0)
         separatorStyle = .none
         showsVerticalScrollIndicator = false
         register(CustomMapsHeader.self, forHeaderFooterViewReuseIdentifier: "MapsHeader")

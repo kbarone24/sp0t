@@ -21,18 +21,12 @@ extension MapController {
     
     func loadAdditionalOnboarding() {
         let posts = friendsPostsDictionary.count
-        if firstOpen {
-            let vc = EnterMapCodeController()
-            vc.delegate = self
-            DispatchQueue.main.async { self.present(vc, animated: true) }
-            
-        } else if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
+         if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
             let avc = AvatarSelectionController(sentFrom: .map)
             self.navigationController!.pushViewController(avc, animated: true)
             
         } else if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
             displayHeelsMap()
-            db.collection("users").document(uid).updateData(["respondedToCampusMap" : true])
             
         } else if (UserDataModel.shared.userInfo.friendIDs.count < 4 && posts == 0) {
             self.addFriends = AddFriendsView {
@@ -57,6 +51,7 @@ extension MapController {
             let vc = HeelsMapPopUpController()
             vc.delegate = self
             DispatchQueue.main.async { self.present(vc, animated: true) }
+            db.collection("users").document(uid).updateData(["respondedToCampusMap" : true])
         }
     }
 }

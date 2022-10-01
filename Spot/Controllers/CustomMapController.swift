@@ -59,7 +59,7 @@ class CustomMapController: UIViewController {
     var circleQuery: GFSCircleQuery?
     let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("posts"))
     lazy var geoFetchGroup = DispatchGroup()
-    
+        
     init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], presentedDrawerView: DrawerView?, mapType: MapType) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile
@@ -106,7 +106,7 @@ class CustomMapController: UIViewController {
         Mixpanel.mainInstance().track(event: "CustomMapOpen")
         /// only shouldn't be empty if another CustomMapController was stacked. use centered map variable to see if fetch ran yet for stacked VC
         if (mapController?.mapView.annotations.isEmpty ?? true) || !centeredMap {
-            DispatchQueue.main.async { self.addInitialAnnotations(posts: self.postsList) }
+            DispatchQueue.main.async { self.addInitialAnnotations() }
         }
     }
     
@@ -150,6 +150,7 @@ class CustomMapController: UIViewController {
                 guard let self = self else { return }
                 self.mapData = map
                 self.runMapSetup()
+                DispatchQueue.main.async { self.addInitialAnnotations() }
             }
         }
     }
@@ -274,18 +275,6 @@ class CustomMapController: UIViewController {
             $0.bottom.equalTo(barBackButton)
          //   $0.trailing.equalToSuperview().offset(-22)
         }
-                
-      /*  addButton = AddButton {
-            $0.addTarget(self, action: #selector(addAction), for: .touchUpInside)
-            $0.isHidden = true
-            view.addSubview($0)
-        }
-        addButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(24)
-            $0.bottom.equalToSuperview().inset(35)
-            $0.width.height.equalTo(73)
-        } */
-        view.bringSubviewToFront(floatBackButton)
     }
     
     @objc func DrawerViewToTopCompletion() {
@@ -306,6 +295,7 @@ class CustomMapController: UIViewController {
         // When in top position enable collection view scroll
         collectionView.isScrollEnabled = true
         collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
+        barView.isUserInteractionEnabled = true
         // Get top y content offset
         if topYContentOffset == nil {
             topYContentOffset = collectionView.contentOffset.y
@@ -340,7 +330,7 @@ class CustomMapController: UIViewController {
         barBackButton.isHidden = true
         collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
         barView.backgroundColor = .clear
-        barView.isUserInteractionEnabled = true
+        barView.isUserInteractionEnabled = false
         titleLabel.text = ""
     }
     
@@ -361,6 +351,7 @@ class CustomMapController: UIViewController {
             DispatchQueue.global().async { self.getMapMembers() }
         }
     }
+    
     
     @objc func backButtonAction() {
         centeredMap = false /// will prevent drawer to close on map move

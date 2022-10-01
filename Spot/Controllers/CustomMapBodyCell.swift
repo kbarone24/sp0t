@@ -32,6 +32,7 @@ class CustomMapBodyCell: UICollectionViewCell {
         self.postData = postData
         
         let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2/3, height: (UIScreen.main.bounds.width * 2/3) * 1.5), scaleMode: .aspectFill)
+        postImage.image = UIImage()
         postImage.sd_cancelCurrentImageLoad()
         postImage.sd_setImage(with: URL(string: postData.imageURLs.first ?? ""), placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)), options: .highPriority, context: [.imageTransformer: transformer])
         

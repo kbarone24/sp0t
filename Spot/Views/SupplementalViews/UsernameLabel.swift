@@ -33,8 +33,8 @@ class UsernameLabel: UILabel {
         }
         
         timestamp = UILabel {
-            $0.frame = CGRect(x: 46, y: 2.5, width: 20, height: 12)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 10.5)
+            $0.frame = CGRect(x: 46, y: 2.8, width: 20, height: 12)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 10)
             $0.textColor = UIColor(red: 0.575, green: 0.575, blue: 0.575, alpha: 1)
             $0.numberOfLines = 1
             addSubview($0)
@@ -54,7 +54,7 @@ class UsernameLabel: UILabel {
             moreLabel.text = moreText
             moreLabel.sizeToFit()
             
-            let spaceWidth: CGFloat = spotAnnotation ? 12 : 8
+            let spaceWidth: CGFloat = spotAnnotation ? 14 : 8
             let newWidth = max(moreLabel.frame.width, username.frame.width) + spaceWidth
             resizeView(newWidth: newWidth)
         } else {
@@ -76,9 +76,9 @@ class UsernameLabel: UILabel {
         let usernameHeight = moreLabel.isHidden ? username.bounds.height + 4 : bounds.height
         let adjustedY = minY + (bounds.height - usernameHeight) / 2
         frame = CGRect(x: minX, y: adjustedY, width: bounds.width, height: usernameHeight)
-        let usernameX: CGFloat = spotAnnotation ? 8 : 4
+        let usernameX: CGFloat = spotAnnotation ? 10 : 4
         username.frame = CGRect(x: usernameX, y: 2, width: username.bounds.width, height: username.bounds.height)
-        timestamp.frame = CGRect(x: username.frame.maxX + 2, y: 2.5, width: timestamp.bounds.width, height: timestamp.bounds.height)
+        timestamp.frame = CGRect(x: username.frame.maxX + 2, y: 2.8, width: timestamp.bounds.width, height: timestamp.bounds.height)
         moreLabel.frame = CGRect(x: 4, y: username.bounds.maxY, width: moreLabel.bounds.width, height: moreLabel.bounds.height)
     }
 }
