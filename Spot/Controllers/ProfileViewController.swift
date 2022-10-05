@@ -68,6 +68,7 @@ class ProfileViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyMapsLoad(_:)), name: NSNotification.Name(("UserMapsLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -384,6 +385,19 @@ extension ProfileViewController {
             DispatchQueue.main.async { self.collectionView.reloadData() }
         }
     }
+    
+    @objc func notifyFriendRequestAccept(_ notification: NSNotification) {
+        relation = .friend
+        userProfile?.friendIDs.append(UserDataModel.shared.uid)
+        userProfile?.friendsList.append(UserDataModel.shared.userInfo)
+        userProfile?.topFriends?[UserDataModel.shared.uid] = 0
+        DispatchQueue.main.async { self.collectionView.reloadData() }
+        
+        /// run get nine posts now that friendslist field has started to be updated
+        DispatchQueue.global().async {
+            self.getNinePosts()
+        }
+    }
 }
 
 extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -393,7 +407,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return section == 0 ? 1 : noPostLabel.isHidden && (!maps.isEmpty || !posts.isEmpty) ? maps.count + 1 : 0
+        return section == 0 ? 1 : noPostLabel?.isHidden ?? false && (!maps.isEmpty || !posts.isEmpty) ? maps.count + 1 : 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -421,7 +435,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = (view.frame.width - 40) / 2
-        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: 160) : CGSize(width: width , height: 250)
+        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: 160) : CGSize(width: width , height: 230)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -470,7 +484,6 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             }
         }
     }
-    
 }
 
 extension ProfileViewController: UIScrollViewDelegate {

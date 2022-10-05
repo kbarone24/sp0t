@@ -59,7 +59,7 @@ class PostCell: UICollectionViewCell {
     let cellHeight = UIScreen.main.bounds.height
     let cellWidth = UIScreen.main.bounds.width
     var bottomInset: CGFloat {
-        return (UIScreen.main.bounds.height - (UserDataModel.shared.maxAspect * UIScreen.main.bounds.width))/2 + 10
+        return (UIScreen.main.bounds.height - (UserDataModel.shared.maxAspect * UIScreen.main.bounds.width))/2 + 16
     }
     
     override func layoutSubviews() {
@@ -106,9 +106,9 @@ class PostCell: UICollectionViewCell {
             contentView.addSubview($0)
         }
         buttonView.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(15)
+            $0.trailing.equalToSuperview().inset(13)
             $0.bottom.equalToSuperview().inset(bottomInset)
-            $0.width.equalTo(45)
+            $0.width.equalTo(43)
             $0.height.equalTo(127)
         }
         
@@ -135,7 +135,7 @@ class PostCell: UICollectionViewCell {
         commentButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalTo(numComments.snp.top).offset(-1)
-            $0.height.equalTo(45)
+            $0.height.equalTo(43)
         }
         
         numLikes = UILabel {
@@ -158,9 +158,8 @@ class PostCell: UICollectionViewCell {
         likeButton.snp.makeConstraints {
             $0.bottom.equalTo(numLikes.snp.top).offset(-1)
             $0.leading.trailing.equalToSuperview().inset(-0.15)
-            $0.height.equalTo(40.85)
+            $0.height.equalTo(39)
         }
-        
     }
     
     func addDetailView() {

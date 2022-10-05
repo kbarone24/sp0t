@@ -15,6 +15,7 @@ import FirebaseUI
 class CustomMapHeaderCell: UICollectionViewCell {
     private var mapCoverImage: UIImageView!
     private var mapName: UILabel!
+    private var joinedIcon: UIImageView!
     private var mapCreatorProfileImage1: UIImageView!
     private var mapCreatorProfileImage2: UIImageView!
     private var mapCreatorProfileImage3: UIImageView!
@@ -51,7 +52,6 @@ class CustomMapHeaderCell: UICollectionViewCell {
         self.fourMapMemberProfile = fourMapMemberProfile
         
         setMapName()
-        setMapInfo()
         setMapMemberInfo()
         setActionButton()
         
@@ -80,9 +80,11 @@ extension CustomMapHeaderCell {
         
         mapName = UILabel {
             $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.adjustsFontSizeToFitWidth = true
+            $0.font = UIFont(name: "SFCompactText-Heavy", size: 22)
             $0.text = ""
+            $0.numberOfLines = 2
+            $0.adjustsFontSizeToFitWidth = true
+         //   $0.lineBreakMode = .byWordWrapping
             contentView.addSubview($0)
         }
         mapName.snp.makeConstraints {
@@ -90,85 +92,84 @@ extension CustomMapHeaderCell {
             $0.top.equalTo(mapCoverImage).offset(4)
             $0.trailing.equalToSuperview().inset(14)
         }
+        /// show when >7 users at a map
+        joinedIcon = UIImageView {
+            $0.image = UIImage(named: "Friends")
+            $0.isHidden = true
+            contentView.addSubview($0)
+        }
+        joinedIcon.snp.makeConstraints {
+            $0.leading.equalTo(mapName)
+            $0.top.equalTo(mapName.snp.bottom).offset(7)
+            $0.width.equalTo(18.66)
+            $0.height.equalTo(14)
+        }
         
         mapCreatorProfileImage1 = UIImageView {
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
-            $0.layer.borderWidth = 1.5
-            $0.layer.cornerRadius = 11
+            $0.layer.borderWidth = 2
+            $0.layer.cornerRadius = 34/2
             $0.layer.borderColor = UIColor.white.cgColor
             contentView.addSubview($0)
         }
         mapCreatorProfileImage1.snp.makeConstraints {
             $0.top.equalTo(mapName.snp.bottom).offset(7)
             $0.leading.equalTo(mapName)
-            $0.width.height.equalTo(22)
+            $0.width.height.equalTo(34)
         }
         
         mapCreatorProfileImage2 = UIImageView {
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
-            $0.layer.borderWidth = 1.5
-            $0.layer.cornerRadius = 11
+            $0.layer.borderWidth = 2
+            $0.layer.cornerRadius = 34/2
             $0.layer.borderColor = UIColor.white.cgColor
             contentView.insertSubview($0, belowSubview: mapCreatorProfileImage1)
         }
         mapCreatorProfileImage2.snp.makeConstraints {
             $0.top.equalTo(mapCreatorProfileImage1)
-            $0.leading.equalTo(mapCreatorProfileImage1).offset(15)
-            $0.width.height.equalTo(22)
+            $0.leading.equalTo(mapCreatorProfileImage1).offset(22)
+            $0.width.height.equalTo(34)
         }
         
         mapCreatorProfileImage3 = UIImageView {
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
-            $0.layer.borderWidth = 1.5
-            $0.layer.cornerRadius = 11
+            $0.layer.borderWidth = 2
+            $0.layer.cornerRadius = 34/2
             $0.layer.borderColor = UIColor.white.cgColor
             contentView.insertSubview($0, belowSubview: mapCreatorProfileImage2)
         }
         mapCreatorProfileImage3.snp.makeConstraints {
             $0.top.equalTo(mapCreatorProfileImage1)
-            $0.leading.equalTo(mapCreatorProfileImage2).offset(15)
-            $0.width.height.equalTo(22)
+            $0.leading.equalTo(mapCreatorProfileImage2).offset(22)
+            $0.width.height.equalTo(34)
         }
         
         mapCreatorProfileImage4 = UIImageView {
             $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
             $0.layer.masksToBounds = true
-            $0.layer.borderWidth = 1.5
-            $0.layer.cornerRadius = 11
+            $0.layer.borderWidth = 2
+            $0.layer.cornerRadius = 34/2
             $0.layer.borderColor = UIColor.white.cgColor
             contentView.insertSubview($0, belowSubview: mapCreatorProfileImage3)
         }
         mapCreatorProfileImage4.snp.makeConstraints {
             $0.top.equalTo(mapCreatorProfileImage1)
-            $0.leading.equalTo(mapCreatorProfileImage3).offset(15)
-            $0.width.height.equalTo(22)
+            $0.leading.equalTo(mapCreatorProfileImage3).offset(22)
+            $0.width.height.equalTo(34)
         }
         
         mapCreatorCount = UILabel {
-            $0.textColor = .black
+            $0.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
             $0.text = ""
             $0.adjustsFontSizeToFitWidth = true
             contentView.addSubview($0)
         }
-         
-        mapInfo = UILabel {
-            $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
-            $0.text = ""
-            $0.adjustsFontSizeToFitWidth = true
-            contentView.addSubview($0)
-        }
-        mapInfo.snp.makeConstraints {
-            $0.leading.equalTo(mapName)
-            $0.top.equalTo(mapCreatorProfileImage1.snp.bottom).offset(8)
-            $0.trailing.lessThanOrEqualToSuperview().inset(14)
-        }
-        
+
         actionButton = UIButton {
             $0.setTitle("Follow map", for: .normal)
             $0.setTitleColor(.black, for: .normal)
@@ -179,20 +180,21 @@ extension CustomMapHeaderCell {
         actionButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(14)
             $0.height.equalTo(37)
-            $0.top.equalTo(mapCoverImage.snp.bottom).offset(15)
+            $0.bottom.equalToSuperview().inset(12)
         }
         actionButton.layer.cornerRadius = 37 / 2
         
         mapBio = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
+            $0.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
             $0.text = ""
-            $0.adjustsFontSizeToFitWidth = true
+            $0.numberOfLines = 0
+            $0.lineBreakMode = .byWordWrapping
             contentView.addSubview($0)
         }
         mapBio.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(15)
-            $0.top.equalTo(actionButton.snp.bottom).offset(16)
+            $0.leading.trailing.equalToSuperview().inset(19)
+            $0.top.equalTo(mapCoverImage.snp.bottom).offset(12)
         }
         
         userButton = UIButton {
@@ -214,39 +216,42 @@ extension CustomMapHeaderCell {
             mapName.attributedText = completeText
         } else {
             mapName.text = mapData!.mapName
+            mapName.sizeToFit()
         }
         let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
         mapCoverImage.sd_setImage(with: URL(string: mapData!.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
     }
-    
-    private func setMapInfo() {
-        mapInfo.text = mapData!.spotIDs.count > 1 ? "\(mapData!.spotIDs.count) spots" : mapData!.spotIDs.count > 0 ? "\(mapData!.spotIDs.count) spot" : ""
-    }
-    
+   
     private func setMapMemberInfo() {
         guard fourMapMemberProfile.count != 0 else { return }
-        
         let communityMap = mapData.communityMap ?? false
-        mapCreatorCount.text = communityMap ? mapData.memberIDs.count > 4 ? "+ \(mapData.memberIDs.count - 4)" : "" : "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
-        
-        let userTransformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
-        mapCreatorProfileImage1.sd_setImage(with: URL(string: fourMapMemberProfile[0].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-        
-        switch fourMapMemberProfile.count {
-        case 1:
-            if !communityMap { mapCreatorCount.text = "\(fourMapMemberProfile[0].username)" }
-        case 2:
-            if !communityMap { mapCreatorCount.text = "\(fourMapMemberProfile[0].username) & \(fourMapMemberProfile[1].username)" }
-            mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-        case 3:
-            mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-            mapCreatorProfileImage3.sd_setImage(with: URL(string: fourMapMemberProfile[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-        case 4:
-            mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-            mapCreatorProfileImage3.sd_setImage(with: URL(string: fourMapMemberProfile[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-            mapCreatorProfileImage4.sd_setImage(with: URL(string: fourMapMemberProfile[3].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
-        default:
-            return
+
+        if mapData.memberIDs.count < 7 {
+            let userTransformer = SDImageResizingTransformer(size: CGSize(width: 50, height: 50), scaleMode: .aspectFill)
+            mapCreatorProfileImage1.sd_setImage(with: URL(string: fourMapMemberProfile[0].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            
+            switch fourMapMemberProfile.count {
+            case 1:
+                if !communityMap { mapCreatorCount.text = "\(fourMapMemberProfile[0].username)" }
+            case 2:
+                if !communityMap { mapCreatorCount.text = "\(fourMapMemberProfile[0].username) & \(fourMapMemberProfile[1].username)" }
+                mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+            case 3:
+                mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorProfileImage3.sd_setImage(with: URL(string: fourMapMemberProfile[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorCount.text = communityMap ? "" : "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
+            case 4:
+                mapCreatorProfileImage2.sd_setImage(with: URL(string: fourMapMemberProfile[1].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorProfileImage3.sd_setImage(with: URL(string: fourMapMemberProfile[2].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorProfileImage4.sd_setImage(with: URL(string: fourMapMemberProfile[3].imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: userTransformer])
+                mapCreatorCount.text = communityMap ? mapData.memberIDs.count > 4 ? "+ \(mapData.memberIDs.count - 4)" : "" : "\(fourMapMemberProfile[0].username) + \(mapData.memberIDs.count - 1)"
+            default:
+                return
+            }
+        } else {
+            /// show joined icon if >7 members
+            mapCreatorCount.text = "\(mapData.memberIDs.count) joined"
+            joinedIcon.isHidden = false
         }
         makeMapNameConstraints()
     }
@@ -254,22 +259,30 @@ extension CustomMapHeaderCell {
     private func makeMapNameConstraints() {
         mapCreatorCount.snp.removeConstraints()
         userButton.snp.removeConstraints()
-
-        mapCreatorProfileImage2.isHidden = fourMapMemberProfile.count < 2
-        mapCreatorProfileImage3.isHidden = fourMapMemberProfile.count < 3
-        mapCreatorProfileImage4.isHidden = fourMapMemberProfile.count < 4
+        let joinedShowing = mapData.memberIDs.count > 6
+        
+        mapCreatorProfileImage1.isHidden = joinedShowing
+        mapCreatorProfileImage2.isHidden = joinedShowing || fourMapMemberProfile.count < 2
+        mapCreatorProfileImage3.isHidden = joinedShowing || fourMapMemberProfile.count < 3
+        mapCreatorProfileImage4.isHidden = joinedShowing || fourMapMemberProfile.count < 4
         
         mapCreatorCount.snp.makeConstraints {
-            $0.centerY.equalTo(mapCreatorProfileImage1)
             $0.trailing.lessThanOrEqualToSuperview().inset(14)
-            switch fourMapMemberProfile.count {
-            case 1: $0.leading.equalTo(mapCreatorProfileImage1.snp.trailing).offset(4)
-            case 2: $0.leading.equalTo(mapCreatorProfileImage2.snp.trailing).offset(4)
-            case 3: $0.leading.equalTo(mapCreatorProfileImage3.snp.trailing).offset(4)
-            case 4: $0.leading.equalTo(mapCreatorProfileImage4.snp.trailing).offset(4)
-            default: return
+            if joinedShowing {
+                $0.centerY.equalTo(joinedIcon)
+                $0.leading.equalTo(joinedIcon.snp.trailing).offset(4)
+            } else {
+                $0.centerY.equalTo(mapCreatorProfileImage1)
+                switch fourMapMemberProfile.count {
+                case 1: $0.leading.equalTo(mapCreatorProfileImage1.snp.trailing).offset(3)
+                case 2: $0.leading.equalTo(mapCreatorProfileImage2.snp.trailing).offset(3)
+                case 3: $0.leading.equalTo(mapCreatorProfileImage3.snp.trailing).offset(3)
+                case 4: $0.leading.equalTo(mapCreatorProfileImage4.snp.trailing).offset(3)
+                default: return
+                }
             }
         }
+        
         userButton.snp.makeConstraints {
             $0.leading.equalTo(mapCoverImage.snp.trailing).offset(5)
             $0.top.equalTo(mapName.snp.bottom).offset(4)
@@ -284,7 +297,7 @@ extension CustomMapHeaderCell {
                 actionButton.setTitle("Joined", for: .normal)
                 actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
             } else {
-                actionButton.setTitle("Enter code", for: .normal)
+                actionButton.setTitle("Join", for: .normal)
                 actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             }
         } else if mapData!.memberIDs.contains(UserDataModel.shared.uid) {
@@ -349,7 +362,6 @@ extension CustomMapHeaderCell {
         }
         
         UserDataModel.shared.userInfo.mapsList.append(mapData!)
-        setMapInfo()
         setMapMemberInfo()
         
         let userInfo = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
@@ -377,7 +389,6 @@ extension CustomMapHeaderCell {
         }
         
         UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == self.mapData!.id!})
-        setMapInfo()
         setMapMemberInfo()
 
         let userInfo = ["mapLikers": self.mapData.likers, "mapID": self.mapData.id!] as [String : Any]
@@ -387,7 +398,7 @@ extension CustomMapHeaderCell {
         if mapData.communityMap ?? false { values["memberIDs"] = FieldValue.arrayRemove([UserDataModel.shared.uid]) }
         db.collection("maps").document(self.mapData.id!).updateData(values)
 
-        let title = mapData.communityMap ?? false ? "Enter code" : "Follow map"
+        let title = mapData.communityMap ?? false ? "Join" : "Follow map"
         actionButton.setTitle(title, for: .normal)
         actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
     }

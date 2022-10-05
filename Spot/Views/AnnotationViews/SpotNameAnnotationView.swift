@@ -21,6 +21,7 @@ class SpotNameAnnotationView: MKAnnotationView {
         clusteringIdentifier = nil
         centerOffset = CGPoint(x: 0, y: 10)
         displayPriority = .defaultHigh
+        alpha = 1.0
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -36,7 +37,7 @@ class SpotNameAnnotationView: MKAnnotationView {
             NSAttributedString.Key.strokeColor: UIColor.white,
             NSAttributedString.Key.foregroundColor: UIColor.black,
             NSAttributedString.Key.strokeWidth: -3,
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 14.5)!
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 14)!
         ]
         infoWindow.spotLabel.attributedText = NSAttributedString(string: spotName, attributes: attributes)
         infoWindow.spotLabel.sizeToFit()

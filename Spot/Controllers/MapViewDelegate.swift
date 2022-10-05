@@ -57,11 +57,12 @@ extension MapController: MKMapViewDelegate {
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         /// remove clustering if zoomed in to ground level
         guard let mapView = mapView as? SpotMapView else { return }
+        if mapView.lockClusterOnUpload { return }
         
-        if mapView.region.span.longitudeDelta < 0.0013 {
+        if mapView.region.span.longitudeDelta < 0.0014 {
             if mapView.shouldCluster {
                 mapView.shouldCluster = false
-                let annotations = self.mapView.annotations
+                let annotations = mapView.annotations
                 DispatchQueue.main.async {
                     mapView.removeAllAnnos()
                     self.mapView.addAnnotations(annotations)
@@ -70,7 +71,7 @@ extension MapController: MKMapViewDelegate {
         } else {
             if !mapView.shouldCluster {
                 mapView.shouldCluster = true
-                let annotations = self.mapView.annotations
+                let annotations = mapView.annotations
                 DispatchQueue.main.async {
                     mapView.removeAllAnnos()
                     self.mapView.addAnnotations(annotations)
@@ -80,12 +81,12 @@ extension MapController: MKMapViewDelegate {
             if mapView.region.span.longitudeDelta < 0.2 {
                 if !mapView.shouldShowSpots {
                     mapView.shouldShowSpots = true
-                    mapView.addSpotAnnotationsOnZoom(map: getSelectedMap())
+                  //  mapView.addSpotAnnotationsOnZoom(map: getSelectedMap())
                 }
             } else {
                 if mapView.shouldShowSpots {
                     mapView.shouldShowSpots = false
-                    mapView.removeSpotAnnotationsOnZoom(map: getSelectedMap())
+                 //   mapView.removeSpotAnnotationsOnZoom(map: getSelectedMap())
                 }
             }
         }
@@ -101,7 +102,7 @@ extension MapController: MKMapViewDelegate {
     
     func animateTo(coordinate: CLLocationCoordinate2D?) {
         if coordinate != nil {
-            DispatchQueue.main.async { self.mapView.setRegion(MKCoordinateRegion(center: coordinate!, span: MKCoordinateSpan(latitudeDelta: 0.0012, longitudeDelta: 0.0012)), animated: true) }
+            DispatchQueue.main.async { self.mapView.setRegion(MKCoordinateRegion(center: coordinate!, span: MKCoordinateSpan(latitudeDelta: 0.00139, longitudeDelta: 0.00139)), animated: true) }
         }
     }
     
@@ -133,10 +134,13 @@ extension MapController: SpotMapViewDelegate {
         openSpot(spotID: view.id, spotName: view.spotName, mapID: map?.id ?? "", mapName: map?.mapName ?? "")
     }
     
-    func centerMapOnPostsInCluster(view: FriendPostAnnotationView) {
+    func centerMapOnPostsInCluster(view: SpotPostAnnotationView) {
+        var map = getSelectedMap()
+        if map == nil { map = getFriendsMapObject() }
         var coordinates: [CLLocationCoordinate2D] = []
+
         for id in view.postIDs {
-            if let post = friendsPostsDictionary[id] { coordinates.append(post.coordinate) }
+            if let post = map!.postsDictionary[id] { coordinates.append(post.coordinate) }
         }
         let region = MKCoordinateRegion(coordinates: coordinates, overview: false)
         DispatchQueue.main.async { self.mapView.setRegion(region, animated: true) }
@@ -147,12 +151,13 @@ protocol SpotMapViewDelegate {
     func openPostFromSpotPost(view: SpotPostAnnotationView)
     func openSpotFromSpotPost(view: SpotPostAnnotationView)
     func openSpotFromSpotName(view: SpotNameAnnotationView)
-    func centerMapOnPostsInCluster(view: FriendPostAnnotationView)
+    func centerMapOnPostsInCluster(view: SpotPostAnnotationView)
 }
 
 class SpotMapView: MKMapView {
     var shouldCluster = false
     var shouldShowSpots = false
+    var lockClusterOnUpload = false
     var spotMapDelegate: SpotMapViewDelegate?
     
     override init(frame: CGRect) {
@@ -236,13 +241,13 @@ class SpotMapView: MKMapView {
         }
     }
     
-    func getSpotPostAnnotation(anno: MKAnnotation, posts: [MapPost], group: MapPostGroup, cluster: Bool) -> SpotPostAnnotationView {
+    func getSpotPostAnnotation(anno: MKAnnotation, posts: [MapPost], group: MapPostGroup, cluster: Bool, spotCluster: Bool) -> SpotPostAnnotationView {
         let reuseIdentifier = cluster ? "SpotPostCluster" : "SpotPost"
         guard let annotationView = dequeueReusableAnnotationView(withIdentifier: reuseIdentifier) as? SpotPostAnnotationView else { return SpotPostAnnotationView() }
         annotationView.annotation = anno
         annotationView.mapView = self
         annotationView.clusteringIdentifier = !cluster && shouldCluster ? "SpotPostCluster" : nil
-        annotationView.updateImage(posts: posts, spotName: group.spotName, id: group.id)
+        annotationView.updateImage(posts: posts, spotName: group.spotName, id: group.id, spotCluster: spotCluster)
         annotationView.isSelected = posts.contains(where: {!$0.seen})
         annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotPostTap(_:))))
         return annotationView
@@ -264,7 +269,7 @@ class SpotMapView: MKMapView {
         var posts: [MapPost] = []
         for id in group.postIDs.map({$0.id}) { posts.append(selectedMap!.postsDictionary[id]!) }
        
-        return !posts.isEmpty ? getSpotPostAnnotation(anno: anno, posts: posts, group: group, cluster: false) : getSpotNameAnnotation(anno: anno, group: group)
+        return !posts.isEmpty ? getSpotPostAnnotation(anno: anno, posts: posts, group: group, cluster: false, spotCluster: false) : getSpotNameAnnotation(anno: anno, group: group)
     }
     
     func getSpotClusterAnnotation(anno: MKClusterAnnotation, selectedMap: CustomMap?) -> MKAnnotationView {
@@ -283,7 +288,8 @@ class SpotMapView: MKMapView {
             for id in group.postIDs.map({$0.id}) { posts.append((selectedMap!.postsDictionary[id])!) }
         }
         
-        return getSpotPostAnnotation(anno: anno, posts: posts, group: firstPostGroup, cluster: true)
+        let spotCluster = selectedPostGroup.count > 1
+        return getSpotPostAnnotation(anno: anno, posts: posts, group: firstPostGroup, cluster: true, spotCluster: spotCluster)
     }
     
     @objc func spotPostTap(_ sender: UITapGestureRecognizer) {
@@ -291,10 +297,24 @@ class SpotMapView: MKMapView {
         let tapLocation = sender.location(in: sender.view)
         guard let annotationView = sender.view as? SpotPostAnnotationView else { return }
         
-        if tapLocation.y > 72 || annotationView.postIDs.isEmpty {
-            if annotationView.spotName != "" { spotMapDelegate?.openSpotFromSpotPost(view: annotationView) }
-        } else {
+        let frame = annotationView.bounds
+        let postFrame = CGRect(x: frame.midX - 35, y: 0, width: 70, height: 70)
+        
+        let usernameAvatarTouchArea = CGRect(x: frame.midX + 10, y: 42, width: frame.width/2 - 10, height: 38)
+        if postFrame.contains(tapLocation) {
             spotMapDelegate?.openPostFromSpotPost(view: annotationView)
+            
+        } else if annotationView.spotCluster {
+            /// avatar + username area becomes touch area (avatar and username are beneath the post frame)
+            let avatarFrame = CGRect(x: frame.midX - 43, y: frame.maxY - 66, width: frame.width, height: 66)
+            if avatarFrame.contains(tapLocation) { spotMapDelegate?.centerMapOnPostsInCluster(view: annotationView) }
+            
+        } else if tapLocation.y > frame.maxY - 22 {
+            if annotationView.spotName != "" { spotMapDelegate?.openSpotFromSpotPost(view: annotationView) }
+            
+        } else if usernameAvatarTouchArea.contains(tapLocation) {
+            /// username / avatar tap (avatar and username are to the right of the post frame)
+            spotMapDelegate?.centerMapOnPostsInCluster(view: annotationView)
         }
     }
     
@@ -404,8 +424,8 @@ extension MKCoordinateRegion {
             self.init(center: UserDataModel.shared.currentLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15))
             return
         }
-        
-        let minSpan = overview ? 0.001 : 0.0001
+        let minSpan = 0.001
+      //  let minSpan = overview ? 0.001 : 0.0001
         var span = MKCoordinateSpan(latitudeDelta: 0.0, longitudeDelta: 0.0)
         var minLatitude: CLLocationDegrees = coordinates.first!.latitude
         var maxLatitude: CLLocationDegrees = coordinates.first!.latitude

@@ -203,6 +203,17 @@ extension UIViewController {
         }
     }
     
+    func updateMapNameInPosts(mapID: String, newName: String) {
+        let db = Firestore.firestore()
+        DispatchQueue.global().async {
+            db.collection("posts").whereField("mapID", isEqualTo: mapID).getDocuments { snap, err in
+                for postDoc in snap!.documents {
+                    postDoc.reference.updateData(["mapName" : newName])
+                }
+            }
+        }
+    }
+    
     func updateUsername(newUsername: String, oldUsername: String) {
         let db = Firestore.firestore()
         db.collection("maps").getDocuments { snap, err in
