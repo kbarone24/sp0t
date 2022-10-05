@@ -321,7 +321,7 @@ extension CommentsController {
     
     func openProfile(user: UserProfile) {
         postVC.openProfile(user: user, openComments: true)
-        dismiss(animated: true)
+        DispatchQueue.main.async { self.dismiss(animated: true) }
     }
 }
 

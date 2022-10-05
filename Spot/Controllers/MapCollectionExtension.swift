@@ -33,6 +33,10 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if indexPath.item == selectedItemIndex {
+            openSelectedMap()
+            return
+        }
         collectionView.selectItem(at: indexPath, animated: true, scrollPosition: [])
         selectMapAt(index: indexPath.item)
     }
@@ -93,6 +97,7 @@ class MapHomeCell: UICollectionViewCell {
         didSet {
             contentArea.backgroundColor = isSelected ? UIColor(red: 0.843, green: 0.992, blue: 1, alpha: 1) : UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
             contentArea.layer.borderColor = isSelected ? UIColor(named: "SpotGreen")!.cgColor : UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1).cgColor
+            if lockIcon != nil { lockIcon.image = isSelected ? UIImage(named: "HomeLockIconSelected") : UIImage(named: "HomeLockIcon") }
         }
     }
     
@@ -208,7 +213,7 @@ class MapHomeCell: UICollectionViewCell {
         
         if lockIcon != nil { lockIcon.removeFromSuperview() }
         lockIcon = UIImageView {
-            $0.image = UIImage(named: "HomeLockIcon")
+            $0.image = isSelected ? UIImage(named: "HomeLockIconSelected") : UIImage(named: "HomeLockIcon")
             $0.isHidden = true
             addSubview($0)
         }
@@ -244,6 +249,7 @@ extension NSAttributedString {
 
 class MapLoadingCell: UICollectionViewCell {
     var activityIndicator: CustomActivityIndicator!
+    var label: UILabel!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -253,8 +259,21 @@ class MapLoadingCell: UICollectionViewCell {
             addSubview($0)
         }
         activityIndicator.snp.makeConstraints {
-            $0.centerX.centerY.equalToSuperview()
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(-10)
             $0.width.height.equalTo(30)
+        }
+        
+        label = UILabel {
+            $0.text = "Loading maps"
+            $0.textColor = .black.withAlphaComponent(0.5)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 12)
+            $0.textAlignment = .center
+            addSubview($0)
+        }
+        label.snp.makeConstraints {
+            $0.top.equalTo(activityIndicator.snp.bottom).offset(5)
+            $0.centerX.equalToSuperview()
         }
     }
 

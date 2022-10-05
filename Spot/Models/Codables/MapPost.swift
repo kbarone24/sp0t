@@ -70,7 +70,7 @@ struct MapPost: Identifiable, Codable {
         return timestamp.seconds
     }
     var coordinate: CLLocationCoordinate2D {
-        return CLLocationCoordinate2D(latitude: postLat, longitude: postLong)
+        return spotID ?? "" == "" ? CLLocationCoordinate2D(latitude: postLat, longitude: postLong) : CLLocationCoordinate2D(latitude: spotLat ?? postLat, longitude: spotLong ?? postLong)
     }
     
     enum CodingKeys: String, CodingKey {

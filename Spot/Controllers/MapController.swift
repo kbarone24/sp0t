@@ -135,7 +135,7 @@ class MapController: UIViewController {
             mapView.addSubview($0)
         }
         addButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(20)
+            $0.trailing.equalToSuperview().inset(23)
             $0.bottom.equalToSuperview().inset(110) /// offset 65 px for portion of map below fold
             $0.height.width.equalTo(92)
         }
@@ -300,8 +300,9 @@ class MapController: UIViewController {
         sheetView = DrawerView(present: customMapVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
             self.sheetView = nil
         })
+
         customMapVC.containerDrawerView = sheetView
-        sheetView?.present(to: .Middle)
+        sheetView?.present(to: .Top)
     }
     
     func openSpot(spotID: String, spotName: String, mapID: String, mapName: String) {

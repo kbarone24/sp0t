@@ -16,18 +16,19 @@ class ImageAvatarView: UIImageView {
     var backgroundView: UIView!
         
     func setUp(avatarURLs: [String], annotation: Bool, completion: @escaping(_ success: Bool) -> Void) {
-        /// temporary -> just show first 5 
-        let avatarURLs = avatarURLs.prefix(5)
         backgroundColor = .clear
         layer.cornerRadius = 2
         clipsToBounds = true
         contentMode = .scaleAspectFill
         
-        /// background view will slide with even # of images to center the view
         backgroundView = UIView {
             $0.backgroundColor = .clear
             addSubview($0)
         }
+        /// temporary -> just show first 5 
+        let avatarURLs = avatarURLs.prefix(5)
+        
+        /// background view will slide with even # of images to center the view
         let even = avatarURLs.count % 2 == 0
         if annotation { addBackgroundFrame(even: even) } else { makeBackgroundConstraints(even: even) }
 
@@ -52,7 +53,7 @@ class ImageAvatarView: UIImageView {
             }
         }
     }
-        
+
     override func removeFromSuperview() {
         super.removeFromSuperview()
         imageManager.cancelAll()

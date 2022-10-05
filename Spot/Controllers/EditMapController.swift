@@ -90,11 +90,13 @@ class EditMapController: UIViewController {
         present(alertController, animated: true)
     }
     
-    @objc func saveAction() {
+    @objc func saveAction(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "EditMapSave")
+        sender.isEnabled = false
         activityIndicator.startAnimating()
         let mapsRef = db.collection("maps").document(mapData!.id!)
         
+        if mapData!.mapName != mapNameTextField.text! { updateMapNameInPosts(mapID: mapData!.id!, newName: mapNameTextField.text!) }
         mapData!.mapName = mapNameTextField.text!
         mapData!.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
         mapData!.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
@@ -178,7 +180,7 @@ extension EditMapController {
             $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
             $0.clipsToBounds = true
             $0.layer.cornerRadius = 37 / 2
-            $0.addTarget(self, action: #selector(saveAction), for: .touchUpInside)
+            $0.addTarget(self, action: #selector(saveAction(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
         doneButton.snp.makeConstraints {
@@ -215,6 +217,7 @@ extension EditMapController {
             $0.text = mapData!.mapName
             $0.font = UIFont(name: "SFCompactText-Bold", size: 21)
             $0.textColor = .black
+            $0.delegate = self
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
             $0.layer.cornerRadius = 5
             $0.layer.borderWidth = 1
@@ -232,18 +235,19 @@ extension EditMapController {
             $0.text = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? "Add a map bio..." : mapData!.mapDescription
             $0.delegate = self
             $0.textAlignment = .center
-            $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
             $0.backgroundColor = .white
-            $0.textColor = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? UIColor(red: 165/255, green: 165/255, blue: 165/255, alpha: 1) : UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
-            $0.alpha = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? 0.4 : 1
-            $0.textContainer.maximumNumberOfLines = 2
-            $0.textContainer.lineBreakMode = .byTruncatingTail
+            $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
+            $0.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
+            $0.alpha = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? 0.6 : 1
+            $0.isScrollEnabled = false
+            $0.textContainer.maximumNumberOfLines = 3
+            $0.textContainer.lineBreakMode = .byTruncatingHead
             view.addSubview($0)
         }
         mapDescription.snp.makeConstraints {
             $0.top.equalTo(mapNameTextField.snp.bottom).offset(21)
             $0.leading.trailing.equalToSuperview().inset(29)
-            $0.height.equalTo(34)
+            $0.height.equalTo(70)
         }
 
         memberLabel = UILabel {
@@ -253,7 +257,7 @@ extension EditMapController {
             view.addSubview($0)
         }
         memberLabel.snp.makeConstraints {
-            $0.top.equalTo(mapNameTextField.snp.bottom).offset(84)
+            $0.top.equalTo(mapDescription.snp.bottom).offset(14)
             $0.leading.equalToSuperview().inset(16)
         }
         
@@ -315,7 +319,7 @@ extension EditMapController {
             view.addSubview($0)
         }
         activityIndicator.snp.makeConstraints{
-            $0.bottom.equalToSuperview().inset(150)
+            $0.top.equalTo(mapNameTextField.snp.bottom).offset(20)
             $0.centerX.equalToSuperview()
             $0.width.height.equalTo(30)
         }
@@ -399,6 +403,21 @@ extension EditMapController: UITextViewDelegate {
             textView.textColor = UIColor(red: 165/255, green: 165/255, blue: 165/255, alpha: 1)
             textView.alpha = 0.4
         }
+    }
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        let currentText = textView.text ?? ""
+        guard let stringRange = Range(range, in: currentText) else { return false }
+        let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
+        return updatedText.count < textView.text.count || updatedText.count <= 140
+    }
+}
+
+extension EditMapController: UITextFieldDelegate {
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentText = textField.text ?? ""
+        guard let stringRange = Range(range, in: currentText) else { return false }
+        let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
+        return updatedText.count < currentText.count || updatedText.count <= 50
     }
 }
 
