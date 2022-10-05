@@ -164,14 +164,15 @@ class NotificationsController: UIViewController, UITableViewDelegate {
                         notification.id = doc.documentID
                                             
                         if !notification.seen {
-                          DispatchQueue.main.async { doc.reference.updateData(["seen" : true]) }
+                            doc.reference.updateData(["seen" : true])
                         }
                                      
-
                         self.getUserInfo(userID: notification.senderID) { [weak self] (user) in
                             guard let self = self else { return }
-                            notification.userInfo = user
-                            self.pendingFriendRequests.append(notification)
+                            if user.id != "" {
+                                notification.userInfo = user
+                                self.pendingFriendRequests.append(notification)
+                            }
                             friendRequestGroup.leave()
                         }
                         
@@ -441,7 +442,7 @@ extension NotificationsController: UITableViewDataSource {
             cell.notificationControllerDelegate = self
             cell.setUp(notifs: notifs)
             return cell
-        } else{
+        } else {
             if indexPath.section == 0 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCollectionCell") as! FriendRequestCollectionCell
                 let notifs = pendingFriendRequests
@@ -449,7 +450,7 @@ extension NotificationsController: UITableViewDataSource {
 
                 cell.setUp(notifs: notifs)
                 return cell
-            } else{
+            } else {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as! ActivityCell
                 let notif = notifications[indexPath.row]
                 cell.notificationControllerDelegate = self

@@ -407,7 +407,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return section == 0 ? 1 : noPostLabel.isHidden && (!maps.isEmpty || !posts.isEmpty) ? maps.count + 1 : 0
+        return section == 0 ? 1 : noPostLabel?.isHidden ?? false && (!maps.isEmpty || !posts.isEmpty) ? maps.count + 1 : 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
