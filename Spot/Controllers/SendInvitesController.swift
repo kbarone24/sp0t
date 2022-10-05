@@ -542,7 +542,7 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
             let controller = MFMessageComposeViewController()
             let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
 
-            let betaString = build == "21" ? "https://testflight.apple.com/join/D22GVBSJ" : "https://testflight.apple.com/join/ewgGbjkR"
+            let betaString = build == "25" ? "https://testflight.apple.com/join/D22GVBSJ" : "https://testflight.apple.com/join/ewgGbjkR"
             
             controller.body = "Here’s a link to download the sp0t app 🌎🦦👀 \(betaString)"
             controller.recipients = [number]

@@ -90,7 +90,7 @@ struct CustomMap: Identifiable, Codable {
     mutating func updateSeen(postID: String) {
         guard var post = postsDictionary[postID] else { return }
         let uid = UserDataModel.shared.uid
-        if !post.seenList!.contains(uid) { post.seenList?.append(uid) }
+        if !(post.seenList?.contains(uid) ?? false) { post.seenList?.append(uid) }
         postsDictionary[postID] = post
         if let i = postGroup.firstIndex(where: {$0.postIDs.contains(where: {$0.id == postID})}) {
             if let j = postGroup[i].postIDs.firstIndex(where: {$0.id == postID}) {

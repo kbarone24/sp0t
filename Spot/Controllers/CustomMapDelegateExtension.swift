@@ -15,7 +15,10 @@ extension CustomMapController: MKMapViewDelegate {
         /// update post annotation as seen
         guard let postID = notification.userInfo?.first?.value as? String else { return }
         guard let mapVC = mapController else { return }
-        self.mapData!.updateSeen(postID: postID)
+        if mapData == nil { return } /// patch fix for update seen crash
+        
+        DispatchQueue.main.async { self.mapData!.updateSeen(postID: postID) }
+        
         let coordinate = mapData!.postsDictionary[postID]?.coordinate
         if coordinate != nil, let annotation = mapVC.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: coordinate!)}) {
             DispatchQueue.main.async {
