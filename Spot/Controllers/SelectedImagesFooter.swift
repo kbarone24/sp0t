@@ -112,7 +112,7 @@ class SelectedImagesFooter: UICollectionReusableView {
         }
         imageCount = UploadPostModel.shared.selectedObjects.count
 
-        nextButton = NextButton {
+        nextButton = FooterNextButton {
             $0.isEnabled = imageSelected
             $0.addTarget(self, action: #selector(nextTap(_:)), for: .touchUpInside)
             detailView.addSubview($0)
@@ -248,7 +248,7 @@ class SelectedImageCell: UICollectionViewCell {
     }
 }
 
-class NextButton: UIButton {
+class FooterNextButton: UIButton {
     override var isEnabled: Bool {
         didSet {
             backgroundColor = isEnabled ? UIColor(named: "SpotGreen") : UIColor(red: 0.367, green: 0.367, blue: 0.367, alpha: 1)

@@ -25,30 +25,42 @@ class CustomMapUploadCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setUp(map: CustomMap, selected: Bool, beginningCell: Bool, endCell: Bool) {
-        let url = map.imageURL
-        if map.coverImage != UIImage () {
-            mapImage.image = map.coverImage
-        } else if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            mapImage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+    func setUp(map: CustomMap?, selected: Bool) {
+        if map == nil {
+            mapImage.image = UIImage(named: "NewMapCellImage")
+            selectedImage.image = UIImage()
+            
+        } else {
+            let url = map!.imageURL
+            if map!.coverImage != UIImage () {
+                mapImage.image = map!.coverImage
+            } else if url != "" {
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+                mapImage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            }
+            let buttonImage = selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
+            selectedImage.image = buttonImage
         }
         
-        let buttonImage = selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
-        selectedImage.image = buttonImage
+        if map == nil {
+            nameLabel.attributedText = NSAttributedString(string: "New map")
         
-        if map.secret {
+        } else if map!.secret {
             let imageAttachment = NSTextAttachment()
             imageAttachment.image = UIImage(named: "SecretMap")
             imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
             let attachmentString = NSAttributedString(attachment: imageAttachment)
             let completeText = NSMutableAttributedString(string: "")
             completeText.append(attachmentString)
-            completeText.append(NSAttributedString(string: " \(map.mapName)"))
+            completeText.append(NSAttributedString(string: " \(map!.mapName)"))
             self.nameLabel.attributedText = completeText
         } else {
-            nameLabel.attributedText = NSAttributedString(string: map.mapName)
+            nameLabel.attributedText = NSAttributedString(string: map!.mapName)
         }
+        
+        let disableCell = !selected && UploadPostModel.shared.mapObject != nil
+        contentView.alpha = disableCell ? 0.2 : 1.0
+        isUserInteractionEnabled = disableCell ? false : true
     }
 
     func setUpView() {
@@ -98,6 +110,11 @@ class CustomMapUploadCell: UITableViewCell {
             $0.height.equalTo(1)
             $0.bottom.equalToSuperview()
         }
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        if mapImage != nil { mapImage.sd_cancelCurrentImageLoad() }
     }
 }
 
