@@ -34,7 +34,8 @@ class AVCameraController: UIViewController {
     var cameraButton: UIButton!
     var galleryButton: UIButton!
     var flashButton: UIButton!
-    var cancelButton: UIButton!
+    var cancelButton: UIButton?
+    var backButton: UIButton?
     var cameraRotateButton: UIButton!
     var cameraMask: UIView!
     
@@ -51,6 +52,7 @@ class AVCameraController: UIViewController {
     
     var gifMode = false
     var cancelOnDismiss = false
+    var newMapMode = false
     
     var accessMask: CameraAccessView!
     var postDraft: PostDraft?
@@ -99,7 +101,8 @@ class AVCameraController: UIViewController {
      
         /// show nav bar when returning to map
         if isMovingFromParent {
-            UploadPostModel.shared.destroy()
+            /// destroy if returning to map
+            if UploadPostModel.shared.mapObject == nil { UploadPostModel.shared.destroy() }
             volumeHandler = nil
             self.navigationController?.setNavigationBarHidden(false, animated: false)
         }
@@ -123,6 +126,7 @@ class AVCameraController: UIViewController {
     func addCameraView() {
         view.backgroundColor = UIColor.black
         view.isUserInteractionEnabled = false
+        newMapMode = UploadPostModel.shared.mapObject != nil
         
         let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
@@ -147,18 +151,44 @@ class AVCameraController: UIViewController {
             $0.height.equalTo(cameraHeight)
         }
         
-        cancelButton = UIButton {
-            $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-            $0.contentHorizontalAlignment = .fill
-            $0.contentVerticalAlignment = .fill
-            $0.setImage(UIImage(named: "CancelButton"), for: .normal)
-            $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
-            cameraView.addSubview($0)
-        }
-        cancelButton.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(4)
-            $0.top.equalToSuperview().offset(10)
-            $0.width.height.equalTo(50)
+        if newMapMode {
+            backButton = UIButton {
+                $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+                $0.contentHorizontalAlignment = .fill
+                $0.contentVerticalAlignment = .fill
+                $0.setImage(UIImage(named: "BackArrow"), for: .normal)
+                $0.addTarget(self, action: #selector(backTap), for: .touchUpInside)
+                cameraView.addSubview($0)
+            }
+            backButton!.snp.makeConstraints {
+                $0.leading.equalTo(5.5)
+                $0.top.equalToSuperview().offset(10)
+                $0.width.equalTo(48.6)
+                $0.height.equalTo(38.6)
+            }
+            
+            let titleView = NewMapTitleView {
+                cameraView.addSubview($0)
+            }
+            titleView.snp.makeConstraints {
+                $0.top.equalTo(backButton!.snp.top).offset(2)
+                $0.centerX.equalToSuperview()
+            }
+
+        } else {
+            cancelButton = UIButton {
+                $0.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+                $0.contentHorizontalAlignment = .fill
+                $0.contentVerticalAlignment = .fill
+                $0.setImage(UIImage(named: "CancelButton"), for: .normal)
+                $0.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
+                cameraView.addSubview($0)
+            }
+            cancelButton!.snp.makeConstraints {
+                $0.leading.equalToSuperview().offset(4)
+                $0.top.equalToSuperview().offset(10)
+                $0.width.height.equalTo(50)
+            }
         }
         
         tapIndicator = UIImageView {
@@ -276,6 +306,8 @@ class AVCameraController: UIViewController {
                                                selector: #selector(galleryAuthorized(_:)),
                                                name: NSNotification.Name(rawValue: "GalleryAuthorized"),
                                                object: nil)
+        
+        addTop()
     }
     
     func addAccessMask() {
@@ -288,17 +320,30 @@ class AVCameraController: UIViewController {
         }
     }
     
+    func addTop() {
+        let topMask = UIView {
+            cameraView.insertSubview($0, at: 0)
+        }
+        topMask.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(150)
+        }
+        let _ = CAGradientLayer {
+            $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 100)
+            $0.colors = [
+              UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+              UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.45).cgColor
+            ]
+            $0.startPoint = CGPoint(x: 0.5, y: 1.0)
+            $0.endPoint = CGPoint(x: 0.5, y: 0.0)
+            $0.locations = [0, 1]
+            topMask.layer.addSublayer($0)
+        }
+    }
+
     func setUpPost() {
-        /// spotObject is nil unless posting directly to a spot page
-        let spotObject = UploadPostModel.shared.spotObject
-        /// use spot coordinate or user's current location for starting location
-        let coordinate = spotObject == nil ? UserDataModel.shared.currentLocation.coordinate : CLLocationCoordinate2D(latitude: spotObject!.spotLat, longitude: spotObject!.spotLong)
-        
-        UploadPostModel.shared.postObject = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: coordinate.latitude, postLong: coordinate.longitude, posterID: uid, timestamp: Timestamp(date: Date()))
-        UploadPostModel.shared.postObject.id = UUID().uuidString
-        UploadPostModel.shared.postObject.posterUsername = UserDataModel.shared.userInfo.username
-        UploadPostModel.shared.postObject.privacyLevel = "friends"
-        UploadPostModel.shared.setPostCity() /// set with every location change to avoid async lag on upload
+        /// new post object already created for new map mode
+        if !newMapMode { UploadPostModel.shared.createSharedInstance() }
     }
     
     /// authorized gallery access for the first time
@@ -392,14 +437,16 @@ class AVCameraController: UIViewController {
     func disableButtons() {
         /// disable buttons while camera is capturing
         cameraButton.isEnabled = false
-        cancelButton.isUserInteractionEnabled = false
+        backButton?.isUserInteractionEnabled = false
+        cancelButton?.isUserInteractionEnabled = false
         galleryButton.isUserInteractionEnabled = false
         volumeHandler.stop()
     }
     
     func enableButtons() {
         cameraButton.isEnabled = true
-        cancelButton.isUserInteractionEnabled = true
+        backButton?.isUserInteractionEnabled = true
+        cancelButton?.isUserInteractionEnabled = true
         galleryButton.isUserInteractionEnabled = true
         volumeHandler.start(true)
     }
@@ -448,14 +495,14 @@ class AVCameraController: UIViewController {
         
     }
     
-    @objc func cancelTap(_ sender: UIButton) {
-        cancelTap()
+    @objc func backTap() {
+        /// pop regularly back to new map
+        DispatchQueue.main.async { self.navigationController?.popViewController(animated: true) }
     }
     
-    func cancelTap() {
+    @objc func cancelTap() {
         /// show view controller sliding down as transtition
         DispatchQueue.main.async {
-            /// set to title view for smoother transition
             self.navigationItem.leftBarButtonItem = UIBarButtonItem()
             self.navigationItem.rightBarButtonItem = UIBarButtonItem()
             
@@ -469,6 +516,7 @@ class AVCameraController: UIViewController {
                 if let mapVC = self.navigationController?.viewControllers[(self.navigationController?.viewControllers.count ?? 2) - 2] as? MapController {
                     mapVC.uploadMapReset()
                 }
+                /// add up to down transition on return to map
                 self.navigationController?.view.layer.add(transition, forKey:kCATransition)
                 self.navigationController?.popViewController(animated: false)
             }

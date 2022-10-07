@@ -162,6 +162,7 @@ class MapController: UIViewController {
         mapsCollection.dataSource = self
         mapsCollection.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell")
         mapsCollection.register(MapLoadingCell.self, forCellWithReuseIdentifier: "MapLoadingCell")
+        mapsCollection.register(AddMapCell.self, forCellWithReuseIdentifier: "AddMapCell")
         view.addSubview(mapsCollection)
         mapsCollection.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.topMargin)
@@ -182,11 +183,11 @@ class MapController: UIViewController {
     }
     
     func setUpNavBar() {
-        view.backgroundColor = .white
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationItem.leftBarButtonItem = nil
         navigationItem.rightBarButtonItem = nil
         
+        view.backgroundColor = .white
         navigationController?.navigationBar.addWhiteBackground()
         navigationItem.titleView = getTitleView()
         if let mapNav = navigationController as? MapNavigationController {
@@ -223,6 +224,17 @@ class MapController: UIViewController {
         return titleView
     }
         
+    func openNewMap() {
+        Mixpanel.mainInstance().track(event: "MapControllerNewMapTap")
+        if navigationController!.viewControllers.contains(where: {$0 is NewMapController}) { return }
+        DispatchQueue.main.async {
+            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
+                UploadPostModel.shared.createSharedInstance()
+                vc.presentedModally = true
+                self.navigationController?.pushViewController(vc, animated: true)
+            }
+        }
+    }
     
     @objc func addTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "MapControllerAddTap")
@@ -349,9 +361,7 @@ class MapController: UIViewController {
     
     /// custom reset nav bar (patch fix for CATransition)
     func uploadMapReset() {
-        DispatchQueue.main.async {
-            self.setUpNavBar()
-        }
+        DispatchQueue.main.async { self.setUpNavBar() }
     }
 }
 

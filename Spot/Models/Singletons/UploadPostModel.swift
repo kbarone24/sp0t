@@ -57,6 +57,15 @@ class UploadPostModel {
         }
     }
     
+    func createSharedInstance() {
+        let coordinate = UserDataModel.shared.currentLocation.coordinate
+        postObject = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: coordinate.latitude, postLong: coordinate.longitude, posterID: UserDataModel.shared.uid, timestamp: Timestamp(date: Date()))
+        postObject.id = UUID().uuidString
+        postObject.posterUsername = UserDataModel.shared.userInfo.username
+        postObject.privacyLevel = "friends"
+        setPostCity() /// set with every location change to avoid async lag on upload
+    }
+    
     func setSpotValues(spot: MapSpot?) {
         spotObject = spot
         if spot != nil { spotObject!.selected = true }
@@ -75,6 +84,12 @@ class UploadPostModel {
             postObject.postLong = spot!.spotLong
             setPostCity()
         }
+    }
+    
+    func setMapValues(map: CustomMap?) {
+        mapObject = map
+        postObject.mapID = map?.id ?? ""
+        postObject.mapName = map?.mapName ?? ""
     }
     
     func setPostCity() {
@@ -175,6 +190,77 @@ class UploadPostModel {
         }
         mapObject!.postTimestamps.append(postObject.timestamp)
     }
+    
+    
+    func saveToDrafts() {
+        let post = postObject!
+        let spot = spotObject
+        let map = mapObject
+        
+        let selectedImages = post.postImage
+        guard let appDelegate =
+                UIApplication.shared.delegate as? AppDelegate else { return }
+        
+        let managedContext =
+        appDelegate.persistentContainer.viewContext
+        
+        var imageObjects : [ImageModel] = []
+        
+        var index: Int16 = 0
+        for image in selectedImages {
+            let im = ImageModel(context: managedContext)
+            im.imageData = image.jpegData(compressionQuality: 0.5)
+            im.position = index
+            imageObjects.append(im)
+            index += 1
+        }
+        
+        var aspectRatios: [Float] = []
+        for aspect in post.aspectRatios ?? [] { aspectRatios.append(Float(aspect)) }
+        let postObject = PostDraft(context: managedContext)
+        postObject.addedUsers = post.addedUsers
+        postObject.aspectRatios = aspectRatios
+        postObject.caption = post.caption
+        postObject.city = post.city ?? ""
+        postObject.createdBy = post.createdBy
+        postObject.frameIndexes = post.frameIndexes ?? []
+        postObject.friendsList = post.friendsList
+        postObject.hideFromFeed = post.hideFromFeed ?? false
+        postObject.images = NSSet(array: imageObjects)
+        postObject.inviteList = spot?.inviteList ?? []
+        postObject.mapID = post.mapID
+        postObject.mapName = post.mapName
+        postObject.postLat = post.postLat
+        postObject.postLong = post.postLong
+        postObject.privacyLevel = post.privacyLevel
+        postObject.spotID = spot?.id ?? ""
+        postObject.spotLat = spot?.spotLat ?? 0.0
+        postObject.spotLong = spot?.spotLong ?? 0.0
+        postObject.spotName = spot?.spotName ?? ""
+        postObject.spotPrivacy = spot?.privacyLevel ?? ""
+        postObject.taggedUsers = post.taggedUsers
+        postObject.taggedUserIDs = post.taggedUserIDs
+        postObject.uid = UserDataModel.shared.uid
+        
+        postObject.visitorList = spot?.visitorList ?? []
+        postObject.newSpot = postType == .newSpot
+        postObject.postToPOI = postType == .postToPOI
+        postObject.poiCategory = spot?.poiCategory ?? ""
+        postObject.phone = spot?.phone ?? ""
+        
+        postObject.mapMemberIDs = map?.memberIDs ?? []
+        postObject.mapSecret = map?.secret ?? false
+        
+        let timestamp = Timestamp()
+        let seconds = timestamp.seconds
+        postObject.timestamp = seconds
+        do {
+            try managedContext.save()
+        } catch let error as NSError {
+            print("Could not save. \(error), \(error.userInfo)")
+        }
+    }
+
 
     func allAuths() -> Bool {
         return cameraAccess == .authorized &&  (galleryAccess == .authorized || galleryAccess == .limited) && locationAccess

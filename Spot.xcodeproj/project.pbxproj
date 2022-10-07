@@ -291,6 +291,15 @@
 		8C61EB5328D237E600E7180A /* EnterMapCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */; };
 		8C61EB5428D237E600E7180A /* EnterMapCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */; };
 		8C61EB5528D237E600E7180A /* EnterMapCodeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */; };
+		8C66225A28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66225928EF4A4200BA5D05 /* NewMapTitleView.swift */; };
+		8C66225B28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66225928EF4A4200BA5D05 /* NewMapTitleView.swift */; };
+		8C66225C28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66225928EF4A4200BA5D05 /* NewMapTitleView.swift */; };
+		8C66225E28EF4B6800BA5D05 /* PostButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66225D28EF4B6800BA5D05 /* PostButton.swift */; };
+		8C66225F28EF4B6800BA5D05 /* PostButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66225D28EF4B6800BA5D05 /* PostButton.swift */; };
+		8C66226028EF4B6800BA5D05 /* PostButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66225D28EF4B6800BA5D05 /* PostButton.swift */; };
+		8C66226228EF596700BA5D05 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226128EF596700BA5D05 /* ProgressBar.swift */; };
+		8C66226328EF596700BA5D05 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226128EF596700BA5D05 /* ProgressBar.swift */; };
+		8C66226428EF596700BA5D05 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226128EF596700BA5D05 /* ProgressBar.swift */; };
 		8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
@@ -320,9 +329,6 @@
 		8CA512AD28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */; };
 		8CA512AE28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */; };
 		8CA512AF28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */; };
-		8CA512B128BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */; };
-		8CA512B228BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */; };
-		8CA512B328BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */; };
 		8CA512B528BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */; };
 		8CA512B628BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */; };
 		8CA512B728BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */; };
@@ -504,6 +510,9 @@
 		8C61EB4A28CBBF2900E7180A /* CustomMapDelegateExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapDelegateExtension.swift; sourceTree = "<group>"; };
 		8C61EB4E28CBBF3600E7180A /* CustomMapFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapFetchExtension.swift; sourceTree = "<group>"; };
 		8C61EB5228D237E600E7180A /* EnterMapCodeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnterMapCodeController.swift; sourceTree = "<group>"; };
+		8C66225928EF4A4200BA5D05 /* NewMapTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMapTitleView.swift; sourceTree = "<group>"; };
+		8C66225D28EF4B6800BA5D05 /* PostButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostButton.swift; sourceTree = "<group>"; };
+		8C66226128EF596700BA5D05 /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C88B0E627B46E3900DB4039 /* PostImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageModel.swift; sourceTree = "<group>"; };
 		8C8DBB712888BE5C00B31BFD /* ChooseSpotController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseSpotController.swift; sourceTree = "<group>"; };
@@ -515,7 +524,6 @@
 		8CA512A428BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-SemiboldItalic.otf"; sourceTree = "<group>"; };
 		8CA512A628BC056900F8C1FE /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
 		8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapNotificationsExtension.swift; sourceTree = "<group>"; };
-		8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapsHeader.swift; sourceTree = "<group>"; };
 		8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMapUploadCell.swift; sourceTree = "<group>"; };
 		8CB400BC2739DDC900DFFCEE /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
 		8CC2A54926BC7F99000ADA7A /* ImageObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObject.swift; sourceTree = "<group>"; };
@@ -781,7 +789,6 @@
 				8C8DBB712888BE5C00B31BFD /* ChooseSpotController.swift */,
 				414CD27928975D64001F1776 /* ChooseMapController.swift */,
 				8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */,
-				8CA512B028BEB5CF00F8C1FE /* CustomMapsHeader.swift */,
 				8C8DBB812888BE9300B31BFD /* NewMapController.swift */,
 			);
 			name = Upload;
@@ -1001,6 +1008,9 @@
 				8C92898626CB18F10028DB69 /* CameraAccessView.swift */,
 				8C29879B2693A05A0071E75A /* CircleView.swift */,
 				597072F924291992008A481A /* AVSpotCamera.swift */,
+				8C66225928EF4A4200BA5D05 /* NewMapTitleView.swift */,
+				8C66225D28EF4B6800BA5D05 /* PostButton.swift */,
+				8C66226128EF596700BA5D05 /* ProgressBar.swift */,
 			);
 			path = CameraAndGallery;
 			sourceTree = "<group>";
@@ -1293,6 +1303,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C66225E28EF4B6800BA5D05 /* PostButton.swift in Sources */,
 				8C99B11A2863A44E00C98A32 /* RefreshStatus.swift in Sources */,
 				4134867F285930DF0098B27B /* ImagePreviewController.swift in Sources */,
 				5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */,
@@ -1316,6 +1327,7 @@
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8C4FDFBF28DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,
 				8C1E4880289C54C10093030D /* SpotNameAnnotationView.swift in Sources */,
+				8C66226228EF596700BA5D05 /* ProgressBar.swift in Sources */,
 				416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */,
 				8C1E48CB289C55090093030D /* MapFetchExtension.swift in Sources */,
 				8C1E4866289C54370093030D /* FriendsListCell.swift in Sources */,
@@ -1330,6 +1342,7 @@
 				5F81C1272862EFBF0088A5B0 /* UserNotification.swift in Sources */,
 				8C88B0E727B46E3900DB4039 /* PostImageModel.swift in Sources */,
 				59E23549246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
+				8C66225A28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */,
 				598B700D2305E49500613AFD /* FriendRequest.swift in Sources */,
 				8C61EB4F28CBBF3600E7180A /* CustomMapFetchExtension.swift in Sources */,
 				594CE11B24C939040051516C /* MapComment.swift in Sources */,
@@ -1362,7 +1375,6 @@
 				5FDAF23E2858FD06001EDC57 /* DrawerView.swift in Sources */,
 				8C8DBB762888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				593AC545243E56D400C08237 /* LandingPageController.swift in Sources */,
-				8CA512B128BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */,
 				7A37801C22174BB1008B835A /* MapController.swift in Sources */,
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
@@ -1426,6 +1438,7 @@
 				8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
 				599371B1234E468500204F59 /* SearchContactsController.swift in Sources */,
+				8C66225B28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */,
 				8CA512B628BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */,
 				59A8880822E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */,
@@ -1434,7 +1447,6 @@
 				8C8DBB772888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				8C51D93128C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8C61EB4828CBBF1400E7180A /* CustomMapCollectionExtension.swift in Sources */,
-				8CA512B228BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CCE3412288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
 				59DFA25522C285CF00A59D29 /* CommentsViewController.swift in Sources */,
@@ -1443,6 +1455,7 @@
 				8C8DBB732888BE5C00B31BFD /* ChooseSpotController.swift in Sources */,
 				8C1E4870289C54800093030D /* MapCollectionExtension.swift in Sources */,
 				8C1E487B289C54C10093030D /* SpotPostAnnotationView.swift in Sources */,
+				8C66225F28EF4B6800BA5D05 /* PostButton.swift in Sources */,
 				8C8DBB832888BE9300B31BFD /* NewMapController.swift in Sources */,
 				59CF623824479D57008E25DE /* SpotPhotoAlbum.swift in Sources */,
 				8C8DBB872888BE9F00B31BFD /* TagFriendsView.swift in Sources */,
@@ -1471,6 +1484,7 @@
 				8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8CCE3416288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B424A27F8500118E83 /* MapSpot.swift in Sources */,
+				8C66226328EF596700BA5D05 /* ProgressBar.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF59260C413F00349091 /* ConfirmCodeController.swift in Sources */,
 				59F4701F2368933C00BB79CC /* SceneDelegate.swift in Sources */,
@@ -1522,6 +1536,7 @@
 				8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
 				599371B2234E468600204F59 /* SearchContactsController.swift in Sources */,
+				8C66225C28EF4A4200BA5D05 /* NewMapTitleView.swift in Sources */,
 				8CA512B728BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */,
 				59A8880722E8B79C00F8863B /* AppDelegate.swift in Sources */,
 				8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */,
@@ -1530,7 +1545,6 @@
 				8C8DBB782888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				8C51D93228C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8C61EB4928CBBF1400E7180A /* CustomMapCollectionExtension.swift in Sources */,
-				8CA512B328BEB5CF00F8C1FE /* CustomMapsHeader.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CCE3413288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
 				59DFA25622C285D000A59D29 /* CommentsViewController.swift in Sources */,
@@ -1539,6 +1553,7 @@
 				8C8DBB742888BE5C00B31BFD /* ChooseSpotController.swift in Sources */,
 				8C1E4871289C54800093030D /* MapCollectionExtension.swift in Sources */,
 				8C1E487C289C54C10093030D /* SpotPostAnnotationView.swift in Sources */,
+				8C66226028EF4B6800BA5D05 /* PostButton.swift in Sources */,
 				8C8DBB842888BE9300B31BFD /* NewMapController.swift in Sources */,
 				59CF623924479D57008E25DE /* SpotPhotoAlbum.swift in Sources */,
 				8C8DBB882888BE9F00B31BFD /* TagFriendsView.swift in Sources */,
@@ -1567,6 +1582,7 @@
 				8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8CCE3417288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B524A27F8500118E83 /* MapSpot.swift in Sources */,
+				8C66226428EF596700BA5D05 /* ProgressBar.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C3BAF5A260C413F00349091 /* ConfirmCodeController.swift in Sources */,
 				59F470202368933C00BB79CC /* SceneDelegate.swift in Sources */,
@@ -1777,7 +1793,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1847,7 +1863,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
