@@ -46,6 +46,8 @@ extension MapController {
     @objc func notifyNewPost(_ notification: NSNotification) {
         /// add new post + zoom in on map
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        uploadMapReset()
+        
         mapView.shouldCluster = false
         mapView.lockClusterOnUpload = true
         /// add new map to mapsList if applicable
@@ -55,8 +57,8 @@ extension MapController {
             map!.addSpotGroups()
             UserDataModel.shared.userInfo.mapsList.append(map!)
         }
-        let mapIndex = post.hideFromFeed! ? 1 : 0
-        let dictionaryIndex = post.hideFromFeed! ? -1 : 0
+        let mapIndex = post.mapID == "" ? 0 : 1
+        let dictionaryIndex = post.mapID == "" ? 0 : -1
         DispatchQueue.main.async {
             self.addPostToDictionary(post: post, map: map, newPost: true, index: dictionaryIndex)
             self.selectMapAt(index: 0) /// select map at 0 to reset selected index (resort might mess with selecting index 1)

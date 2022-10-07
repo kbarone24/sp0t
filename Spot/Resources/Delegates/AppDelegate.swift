@@ -22,9 +22,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         db.settings = settings
         
         /// set navigation bar appearance with gradient
-        // Fix ticket 281
-        UINavigationBar.appearance().backIndicatorImage = UIImage()//UIImage(named: "BackArrowDark")
-        UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage()//UIImage(named: "BackArrowDark")
+        UINavigationBar.appearance().backIndicatorImage = UIImage()
+        UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage()
         
         // Sets the translucent background color
         // Set translucent. (Default value is already true, so this can  be removed if desired.)
@@ -46,10 +45,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         let navigationBarAppearance = UINavigationBarAppearance()
         navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 20)!]
-        navigationBarAppearance.backgroundColor = .white
-        //navigationBarAppearance.backgroundImage = UIImage(named: "BackArrowDark")
-        //navigationBarAppearance.shadowImage = UIImage()
-        
+        navigationBarAppearance.backgroundColor = .white        
         
         if #available(iOS 15.0, *) {
             UITableView.appearance().sectionHeaderTopPadding = 0.0

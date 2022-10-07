@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "NewMap1x.svg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

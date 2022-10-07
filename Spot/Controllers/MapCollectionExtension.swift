@@ -13,11 +13,16 @@ import Mixpanel
 
 extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return feedLoaded ? UserDataModel.shared.userInfo.mapsList.count + 1 : 1
+        return feedLoaded ? UserDataModel.shared.userInfo.mapsList.count + 2 : 1
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if !feedLoaded, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapLoadingCell", for: indexPath) as? MapLoadingCell {
+            /// display loading cell
+            return cell
+        }
+        if indexPath.row > UserDataModel.shared.userInfo.mapsList.count, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddMapCell", for: indexPath) as? AddMapCell {
+            /// display new map button
             return cell
         }
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapCell", for: indexPath) as? MapHomeCell {
@@ -33,10 +38,15 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if indexPath.item == selectedItemIndex {
+        if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
+            /// launch new map
+            openNewMap()
+            return
+        } else if indexPath.item == selectedItemIndex {
             openSelectedMap()
             return
         }
+        HapticGenerator.shared.play(.light)
         collectionView.selectItem(at: indexPath, animated: true, scrollPosition: [])
         selectMapAt(index: indexPath.item)
     }
@@ -254,9 +264,10 @@ class MapLoadingCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
+        
         activityIndicator = CustomActivityIndicator {
             $0.startAnimating()
-            addSubview($0)
+            contentView.addSubview($0)
         }
         activityIndicator.snp.makeConstraints {
             $0.centerX.equalToSuperview()
@@ -269,7 +280,7 @@ class MapLoadingCell: UICollectionViewCell {
             $0.textColor = .black.withAlphaComponent(0.5)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 12)
             $0.textAlignment = .center
-            addSubview($0)
+            contentView.addSubview($0)
         }
         label.snp.makeConstraints {
             $0.top.equalTo(activityIndicator.snp.bottom).offset(5)
@@ -277,6 +288,28 @@ class MapLoadingCell: UICollectionViewCell {
         }
     }
 
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class AddMapCell: UICollectionViewCell {
+    var newIcon: UIImageView!
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+        
+        newIcon = UIImageView {
+            $0.image = UIImage(named: "NewMapButton")
+            contentView.addSubview($0)
+        }
+        newIcon.snp.makeConstraints {
+            $0.leading.equalTo(10)
+            $0.centerY.equalToSuperview()
+        }
+    }
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

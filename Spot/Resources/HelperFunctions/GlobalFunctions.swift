@@ -15,6 +15,7 @@ import Geofirestore
 import MapKit
 import FirebaseFunctions
 import CoreData
+import Mixpanel
 
 extension UIViewController {
     
@@ -367,13 +368,12 @@ extension UIViewController {
         animator.startAnimation()
     }
     // https://www.advancedswift.com/animate-with-ios-keyboard-swift/
-    
 }
 
 /// upload post functions
 extension UIViewController {
     
-    func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, fullWidth: CGFloat, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())){
+    func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, fullWidth: CGFloat, completion: @escaping ((_ urls: [String], _ failed: Bool) -> ())) {
         
         var failed = false
         var success = false
@@ -455,6 +455,30 @@ extension UIViewController {
                 }
             }
         }
+    }
+    
+    func uploadPostToDB(newMap: Bool) {
+        let post = UploadPostModel.shared.postObject!
+        var spot = UploadPostModel.shared.spotObject
+        var map = UploadPostModel.shared.mapObject
+        
+        if UploadPostModel.shared.imageFromCamera { SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage()) }
+
+        if spot != nil {
+            spot!.imageURL = post.imageURLs.first ?? ""
+            self.uploadSpot(post: post, spot: spot!, submitPublic: false)
+        }
+        if map != nil {
+            if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
+            map!.postImageURLs.append(post.imageURLs.first ?? "")
+            self.uploadMap(map: map!, newMap: newMap, post: post)
+        }
+        self.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+        
+        let visitorList = spot?.visitorList ?? []
+        self.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
+                    
+        Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
     }
 
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
