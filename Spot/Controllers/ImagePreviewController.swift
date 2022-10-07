@@ -22,8 +22,11 @@ class ImagePreviewController: UIViewController {
     
     var backButton: UIButton!
     var dotView: UIView!
-    var nextButton: NextButton!
+    var nextButton: FooterNextButton?
+    var postButton: PostButton?
     var draftsButton: UIButton!
+    var progressBar: ProgressBar!
+    
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
     /// detailView
@@ -34,6 +37,7 @@ class ImagePreviewController: UIViewController {
     var newSpotMask: NewSpotMask?
     
     var cancelOnDismiss = false
+    var newMapMode = false
     var cameraObject: ImageObject!
     
     var swipeToClose: UIPanGestureRecognizer! /// swipe down to close keyboard
@@ -46,6 +50,9 @@ class ImagePreviewController: UIViewController {
     lazy var firstImageBottomConstraint: CGFloat = 0
     
     var tagFriendsView: TagFriendsView?
+    var actionButton: UIButton {
+        return newMapMode ? postButton ?? UIButton() : nextButton ?? UIButton()
+    }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -91,7 +98,7 @@ class ImagePreviewController: UIViewController {
     }
         
     func setPostInfo() {
-        
+        newMapMode = UploadPostModel.shared.mapObject != nil
         var post = UploadPostModel.shared.postObject!
         
         var selectedImages: [UIImage] = []
@@ -171,18 +178,51 @@ class ImagePreviewController: UIViewController {
             $0.width.equalTo(48.6)
             $0.height.equalTo(38.6)
         }
-                
-        /// add share to and drafts
-        nextButton = NextButton {
-            $0.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
-            $0.isEnabled = true
-            view.addSubview($0)
-        }
-        nextButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(15)
-            $0.bottom.equalToSuperview().inset(50)
-            $0.width.equalTo(94)
-            $0.height.equalTo(40)
+        
+        if newMapMode {
+            let titleView = NewMapTitleView {
+                view.addSubview($0)
+            }
+            titleView.snp.makeConstraints {
+                $0.top.equalTo(backButton!.snp.top).offset(2)
+                $0.centerX.equalToSuperview()
+            }
+            
+            postButton = PostButton {
+                $0.addTarget(self, action: #selector(postTap), for: .touchUpInside)
+                $0.isEnabled = true
+                view.addSubview($0)
+            }
+            postButton!.snp.makeConstraints {
+                $0.trailing.equalToSuperview().inset(15)
+                $0.bottom.equalToSuperview().inset(50)
+                $0.width.equalTo(94)
+                $0.height.equalTo(40)
+            }
+            
+            progressBar = ProgressBar {
+                $0.isHidden = true
+                view.addSubview($0)
+            }
+            progressBar.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(50)
+                $0.bottom.equalTo(postButton!.snp.top).offset(-20)
+                $0.height.equalTo(18)
+            }
+            
+        } else {
+            /// add share to and drafts
+            nextButton = FooterNextButton {
+                $0.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
+                $0.isEnabled = true
+                view.addSubview($0)
+            }
+            nextButton!.snp.makeConstraints {
+                $0.trailing.equalToSuperview().inset(15)
+                $0.bottom.equalToSuperview().inset(50)
+                $0.width.equalTo(94)
+                $0.height.equalTo(40)
+            }
         }
         
         swipeToClose = UIPanGestureRecognizer(target: self, action: #selector(swipeToClose(_:)))
@@ -240,7 +280,7 @@ class ImagePreviewController: UIViewController {
         postDetailView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(160)
-            $0.bottom.equalTo(nextButton.snp.top).offset(-15)
+            $0.bottom.equalTo(actionButton.snp.top).offset(-15)
         }
         
         textView = UITextView {
@@ -429,11 +469,15 @@ class ImagePreviewController: UIViewController {
         textView.becomeFirstResponder()
     }
     
-    @objc func chooseMapTap() {
-        Mixpanel.mainInstance().track(event: "ImagePreviewChooseMapTap")
+    func setCaptionValues() {
         let captionText = textView.text ?? ""
         UploadPostModel.shared.postObject.caption = captionText == textViewPlaceholder ? "" : captionText
         UploadPostModel.shared.setTaggedUsers()
+    }
+    
+    @objc func chooseMapTap() {
+        Mixpanel.mainInstance().track(event: "ImagePreviewChooseMapTap")
+        setCaptionValues()
         if let vc = storyboard?.instantiateViewController(withIdentifier: "ShareTo") as? ChooseMapController {
             navigationController?.pushViewController(vc, animated: true)
         }
@@ -477,7 +521,7 @@ class ImagePreviewController: UIViewController {
             self.postDetailView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
                 $0.height.equalTo(160)
-                $0.bottom.equalTo(self.nextButton.snp.top).offset(-15)
+                $0.bottom.equalTo(self.actionButton.snp.top).offset(-15)
             }
         }
     }
@@ -535,11 +579,69 @@ class ImagePreviewController: UIViewController {
     func addExtraMask() {
         let extraMask = UIView {
             $0.backgroundColor = UIColor.black.withAlphaComponent(0.65)
-            view.insertSubview($0, belowSubview: nextButton)
+            view.insertSubview($0, belowSubview: actionButton)
         }
         extraMask.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
             $0.top.equalTo(postDetailView.snp.bottom)
+        }
+    }
+    
+    @objc func postTap() {
+        Mixpanel.mainInstance().track(event: "ImagePreviewPostTap")
+        setCaptionValues()
+        /// upload post
+        UploadPostModel.shared.setFinalPostValues()
+        if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
+        
+        progressBar.isHidden = false
+        view.bringSubviewToFront(progressBar)
+        let fullWidth = self.progressBar.bounds.width - 2
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.uploadPostImage(UploadPostModel.shared.postObject.postImage, postID: UploadPostModel.shared.postObject.id!, progressFill: self.progressBar.progressFill, fullWidth: fullWidth) { [weak self] imageURLs, failed in
+                guard let self = self else { return }
+                if imageURLs.isEmpty && failed {
+                    Mixpanel.mainInstance().track(event: "FailedPostUpload")
+                    self.runFailedUpload()
+                    return
+                }
+                UploadPostModel.shared.postObject.imageURLs = imageURLs
+                self.uploadPostToDB(newMap: true)
+                /// enable upload animation to finish
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    HapticGenerator.shared.play(.soft)
+                    self.popToMap()
+                }
+            }
+        }
+    }
+    
+    func runFailedUpload() {
+        showFailAlert()
+        UploadPostModel.shared.saveToDrafts()
+    }
+        
+    func showFailAlert() {
+        let alert = UIAlertController(title: "Upload failed", message: "Spot saved to your drafts", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
+            switch action.style{
+            case .default:
+                self.popToMap()
+            case .cancel:
+                self.popToMap()
+            case .destructive:
+                self.popToMap()
+            @unknown default:
+                fatalError()
+            }}))
+        present(alert, animated: true, completion: nil)
+    }
+
+    func popToMap() {
+        UploadPostModel.shared.destroy()
+        DispatchQueue.main.async {
+            self.navigationController?.popToRootViewController(animated: true)
         }
     }
 }
