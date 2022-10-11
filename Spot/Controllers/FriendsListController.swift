@@ -49,7 +49,7 @@ class FriendsListController: UIViewController {
         case EditMap
     }
         
-    init(fromVC: UIViewController, allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String], sentFrom: SentFrom, presentedWithDrawerView: DrawerView? = nil) {
+    init(fromVC: UIViewController?, allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String], sentFrom: SentFrom, presentedWithDrawerView: DrawerView? = nil) {
         previousVC = fromVC
         self.allowsSelection = allowsSelection
         self.showsSearchBar = showsSearchBar
@@ -82,22 +82,6 @@ class FriendsListController: UIViewController {
         
         view.backgroundColor = .white
         
-        if allowsSelection {
-            doneButton = UIButton {
-                $0.setTitle("Done", for: .normal)
-                $0.setTitleColor(UIColor(named: "SpotGreen"), for: .normal)
-                $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 16)
-                $0.addTarget(self, action: #selector(doneTap(_:)), for: .touchUpInside)
-                view.addSubview($0)
-            }
-            doneButton!.snp.makeConstraints {
-                $0.trailing.equalToSuperview().inset(7)
-                $0.top.equalTo(12)
-                $0.width.equalTo(60)
-                $0.height.equalTo(30)
-            }
-        }
-        
         cancelButton = UIButton {
             $0.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -110,7 +94,7 @@ class FriendsListController: UIViewController {
         }
         
         titleLabel = UILabel {
-            $0.text = sentFrom == .NewMap ? "Select friends" : sentFrom == .Profile ? "Friends" : "Members"
+            $0.text = sentFrom == .NewMap ? "Add friends" : sentFrom == .Profile ? "Friends" : "Members"
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.textAlignment = .center
@@ -120,6 +104,24 @@ class FriendsListController: UIViewController {
             $0.top.equalTo(15)
             $0.width.equalTo(200)
             $0.centerX.equalToSuperview()
+        }
+        
+        if allowsSelection {
+            doneButton = UIButton {
+                $0.setTitle("Done", for: .normal)
+                $0.setTitleColor(.black, for: .normal)
+                $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+                $0.contentEdgeInsets = UIEdgeInsets(top: 9, left: 18, bottom: 9, right: 18)
+                $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+                $0.clipsToBounds = true
+                $0.layer.cornerRadius = 37 / 2
+                $0.addTarget(self, action: #selector(doneTap(_:)), for: .touchUpInside)
+                view.addSubview($0)
+            }
+            doneButton!.snp.makeConstraints {
+                $0.centerY.equalTo(titleLabel)
+                $0.trailing.equalToSuperview().inset(15)
+            }
         }
         
         tableView = UITableView {
@@ -154,16 +156,9 @@ class FriendsListController: UIViewController {
     }
     
     func addSearchBar() {
-        searchBar = UISearchBar {
-            $0.tintColor = UIColor(named: "SpotGreen")
-            $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
+        searchBar = SpotSearchBar {
+            $0.placeholder = " Search friends"
             $0.delegate = self
-            $0.autocapitalizationType = .none
-            $0.autocorrectionType = .no
-            $0.placeholder = " Search"
-            $0.clipsToBounds = true
-            $0.layer.cornerRadius = 3
             $0.keyboardDistanceFromTextField = 250
             view.addSubview($0)
         }
@@ -298,30 +293,33 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if self.previousVC?.navigationController != nil {
+        if sentFrom == .EditMap || sentFrom == .NewMap {
+            let id = queried ? queriedFriends[indexPath.row].id! : friendsList[indexPath.row].id!
+            if confirmedIDs.contains(id) { return } /// cannot unselect confirmed ID
+            
+            if queried { if let i = queriedFriends.firstIndex(where: {$0.id == id}) { queriedFriends[i].selected = !queriedFriends[i].selected } }
+            if let i = friendsList.firstIndex(where: {$0.id == id}) { friendsList[i].selected = !friendsList[i].selected }
+            DispatchQueue.main.async {
+                HapticGenerator.shared.play(.light)
+                self.tableView.reloadData()
+            }
+        } else {
+            /// should move this to a delegate to avoid unnecessary inheritance
             let profileVC = ProfileViewController(userProfile: self.friendsList[indexPath.row], presentedDrawerView: drawerView)
             self.previousVC?.navigationController!.pushViewController(profileVC, animated: true)
             dismiss(animated: true)
             return
         }
-        
-        let id = queried ? queriedFriends[indexPath.row].id! : friendsList[indexPath.row].id!
-        if confirmedIDs.contains(id) { return } /// cannot unselect confirmed ID
-        
-        if queried { if let i = queriedFriends.firstIndex(where: {$0.id == id}) { queriedFriends[i].selected = !queriedFriends[i].selected } }
-        if let i = friendsList.firstIndex(where: {$0.id == id}) { friendsList[i].selected = !friendsList[i].selected }
-        DispatchQueue.main.async { self.tableView.reloadData() }
-    }
+    }    
 }
 
 class ChooseFriendsCell: UITableViewCell {
-    
     var userID = ""
 
     var profileImage: UIImageView!
     var avatarImage: UIImageView!
     var username: UILabel!
-    var selectedBubble: UIView!
+    var selectedBubble: UIImageView!
     var bottomLine: UIView!
         
     func setUp(user: UserProfile, allowsSelection: Bool, editable: Bool) {
@@ -375,12 +373,8 @@ class ChooseFriendsCell: UITableViewCell {
         }
         
         if allowsSelection {
-            selectedBubble = UIView {
-                $0.frame = CGRect(x: UIScreen.main.bounds.width - 49, y: 17, width: 24, height: 24)
-                $0.backgroundColor = user.selected ? UIColor(named: "SpotGreen") : UIColor(red: 0.975, green: 0.975, blue: 0.975, alpha: 1)
-                $0.layer.borderColor = UIColor(red: 0.863, green: 0.863, blue: 0.863, alpha: 1).cgColor
-                $0.layer.borderWidth = 2
-                $0.layer.cornerRadius = 12.5
+            selectedBubble = UIImageView {
+                $0.image = user.selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
                 contentView.addSubview($0)
             }
             selectedBubble.snp.makeConstraints {

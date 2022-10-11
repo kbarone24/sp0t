@@ -31,12 +31,8 @@ class CustomMapController: UIViewController {
   //  private var addButton: UIButton!
     
     var userProfile: UserProfile?
-    public var mapData: CustomMap? {
-        didSet {
-            if collectionView != nil { DispatchQueue.main.async { self.collectionView.reloadData()} }
-          //  if addButton != nil { addButton.isHidden = !(mapData?.memberIDs.contains(uid) ?? false) }
-        }
-    }
+    public var mapData: CustomMap?
+    
     var firstMaxFourMapMemberList: [UserProfile] = []
     lazy var postsList: [MapPost] = []
     
@@ -63,8 +59,8 @@ class CustomMapController: UIViewController {
     init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], presentedDrawerView: DrawerView?, mapType: MapType) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile
-        self.mapData = mapData
         self.postsList = postsList.sorted(by: {$0.timestamp.seconds > $1.timestamp.seconds})
+        self.mapData = mapData
         self.mapType = mapType
         self.containerDrawerView = presentedDrawerView
     }
@@ -75,6 +71,7 @@ class CustomMapController: UIViewController {
     
     deinit {
         print("CustomMapController(\(self) deinit")
+        if floatBackButton != nil { floatBackButton.removeFromSuperview() }
         if barView != nil { barView.removeFromSuperview() }
     }
     
@@ -117,7 +114,6 @@ class CustomMapController: UIViewController {
 
     private func runInitialFetches() {
         ranSetUp = true
-        addInitialPosts()
 
         switch mapType {
         case .customMap:
@@ -131,14 +127,7 @@ class CustomMapController: UIViewController {
         default: return
         }
     }
-    
-    private func addInitialPosts() {
-        if !(mapData?.postGroup.isEmpty ?? true) {
-            postsList = mapData!.postsDictionary.map{$0.value}.sorted(by: {$0.timestamp.seconds > $1.timestamp.seconds})
-            if self.collectionView != nil { DispatchQueue.main.async { self.collectionView.reloadData() } }
-        }
-    }
-    
+        
     private func getMapInfo() {
         /// map passed through
         if mapData?.founderID ?? "" != "" {
@@ -171,6 +160,7 @@ class CustomMapController: UIViewController {
     }
     
     private func configureDrawerView(present: Bool) {
+        print("configure drawer view")
         if containerDrawerView == nil { return }
         containerDrawerView?.canInteract = true
         containerDrawerView?.canDrag = currentContainerCanDragStatus ?? true
@@ -348,6 +338,7 @@ class CustomMapController: UIViewController {
         guard let map = notification.userInfo?["map"] as? CustomMap else { return }
         if map.id == mapData!.id {
             mapData = map
+            DispatchQueue.main.async { self.collectionView.reloadData() }
             DispatchQueue.global().async { self.getMapMembers() }
         }
     }
@@ -381,14 +372,6 @@ class CustomMapController: UIViewController {
                 self.navigationController?.pushViewController(vc, animated: false)
             }
         }
-    }
-    
-    @objc func editMapAction() {
-        Mixpanel.mainInstance().track(event: "EnterEditMapController")
-        let editVC = EditMapController(mapData: mapData!)
-        editVC.customMapVC = self
-        editVC.modalPresentationStyle = .fullScreen
-        present(editVC, animated: true)
     }
 }
 

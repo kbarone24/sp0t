@@ -26,9 +26,6 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
             headerCell.cellSetup(mapData: mapData, fourMapMemberProfile: firstMaxFourMapMemberList)
-            if mapData!.memberIDs.contains(UserDataModel.shared.uid) && !(mapData!.communityMap ?? false) {
-                headerCell.actionButton.addTarget(self, action: #selector(editMapAction), for: .touchUpInside)
-            }
             return headerCell
             
         } else if let headerCell = cell as? SimpleMapHeaderCell {
@@ -74,9 +71,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     func openPost(posts: [MapPost], row: Int) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         if navigationController!.viewControllers.last is PostController { return } // double stack happening here
-        
-        if containerDrawerView?.status == .Top { presentToFullScreen = true; offsetOnDismissal = collectionView.contentOffset.y }
-        currentContainerCanDragStatus = containerDrawerView?.canDrag
+        setDrawerValuesForViewAppear()
         postVC.postsList = posts
         postVC.selectedPostIndex = row
         postVC.containerDrawerView = containerDrawerView
@@ -91,6 +86,11 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         emptyPost.mapName = mapData!.mapName
         let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: containerDrawerView)
         navigationController?.pushViewController(spotVC, animated: true)
+    }
+    
+    func setDrawerValuesForViewAppear() {
+        if containerDrawerView?.status == .Top { presentToFullScreen = true; offsetOnDismissal = collectionView.contentOffset.y }
+        currentContainerCanDragStatus = containerDrawerView?.canDrag
     }
 }
 

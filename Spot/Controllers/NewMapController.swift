@@ -37,18 +37,23 @@ class NewMapController: UIViewController {
     let uid: String = UserDataModel.shared.uid
     var mapObject: CustomMap!
     var presentedModally = false
-  
+    
+    let margin: CGFloat = 18
+    var actionButton: UIButton {
+        return presentedModally ? nextButton ?? UIButton() : createButton ?? UIButton()
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        addMapObject()
+        if mapObject == nil { addMapObject() }
         setUpView()
         presentationController?.delegate = self
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        IQKeyboardManager.shared.enableAutoToolbar = false
         if presentedModally { setUpNavBar() }
+        enableKeyboardMethods()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -59,7 +64,7 @@ class NewMapController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        IQKeyboardManager.shared.enableAutoToolbar = true
+        disableKeyboardMethods()
     }
     
     func addMapObject() {
@@ -70,7 +75,6 @@ class NewMapController: UIViewController {
     
     func setUpView() {
         view.backgroundColor = .white
-        let margin: CGFloat = 18
         
         /// back button will show if pushed directly on map
         if !presentedModally {
@@ -88,12 +92,12 @@ class NewMapController: UIViewController {
         }
         
         nameField = PaddedTextField {
+            $0.text = mapObject.mapName
             $0.textColor = UIColor.black.withAlphaComponent(0.8)
             $0.backgroundColor = UIColor(red: 0.983, green: 0.983, blue: 0.983, alpha: 1)
             $0.layer.borderColor = UIColor(red: 0.925, green: 0.925, blue: 0.925, alpha: 1).cgColor
             $0.layer.borderWidth = 1
             $0.layer.cornerRadius = 14
-            $0.keyboardDistanceFromTextField = 270
             $0.attributedPlaceholder = NSAttributedString(string: "Map name", attributes: [NSAttributedString.Key.foregroundColor: UIColor.black.withAlphaComponent(0.4)])
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 22)
             $0.textAlignment = .left
@@ -169,7 +173,10 @@ class NewMapController: UIViewController {
         }
         
         secretToggle = UIButton {
-            $0.setImage(UIImage(named: "PrivateMapOff"), for: .normal)
+            let tag = mapObject.secret ? 1 : 0
+            let image = tag == 1 ? UIImage(named: "PrivateMapOn") : UIImage(named: "PrivateMapOff")
+            $0.setImage(image, for: .normal)
+            $0.tag = tag
             $0.imageView?.contentMode = .scaleAspectFit
             $0.addTarget(self, action: #selector(togglePrivacy(_:)), for: .touchUpInside)
             view.addSubview($0)
@@ -188,7 +195,7 @@ class NewMapController: UIViewController {
                 view.addSubview($0)
             }
             nextButton!.snp.makeConstraints {
-                $0.top.equalTo(secretSublabel.snp.bottom).offset(38)
+                $0.bottom.equalToSuperview().offset(-100)
                 $0.leading.trailing.equalToSuperview().inset(margin)
                 $0.height.equalTo(51)
                 $0.centerX.equalToSuperview()
@@ -201,7 +208,7 @@ class NewMapController: UIViewController {
                 view.addSubview($0)
             }
             createButton!.snp.makeConstraints {
-                $0.top.equalTo(secretSublabel.snp.bottom).offset(38)
+                $0.bottom.equalToSuperview().offset(-100)
                 $0.leading.trailing.equalToSuperview().inset(margin)
                 $0.height.equalTo(51)
                 $0.centerX.equalToSuperview()
@@ -225,6 +232,20 @@ class NewMapController: UIViewController {
         if let mapNav = navigationController as? MapNavigationController {
             mapNav.requiredStatusBarStyle = .darkContent
         }
+    }
+    
+    func enableKeyboardMethods() {
+        IQKeyboardManager.shared.enableAutoToolbar = false
+        IQKeyboardManager.shared.enable = false
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+    
+    func disableKeyboardMethods() {
+        IQKeyboardManager.shared.enableAutoToolbar = true
+        IQKeyboardManager.shared.enable = true
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }
     
     @objc func togglePrivacy(_ sender: UIButton) {
@@ -260,6 +281,7 @@ class NewMapController: UIViewController {
         UploadPostModel.shared.setMapValues(map: mapObject)
         DispatchQueue.main.async {
             if let vc = self.storyboard?.instantiateViewController(withIdentifier: "AVCameraController") as? AVCameraController {
+                vc.newMapMode = true 
                 self.navigationController?.pushViewController(vc, animated: true)
             }
         }
@@ -280,12 +302,37 @@ class NewMapController: UIViewController {
     
     @objc func cancelTapped() {
         Mixpanel.mainInstance().track(event: "NewMapCancelTap")
+        if let mapVC = navigationController?.viewControllers.first as? MapController { mapVC.uploadMapReset() }
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
     
     @objc func keyboardPan(_ sender: UIPanGestureRecognizer) {
         if abs(sender.translation(in: view).y) > abs(sender.translation(in: view).x) {
             nameField.resignFirstResponder()
+        }
+    }
+    
+    @objc func keyboardWillShow(_ notification: NSNotification) {
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.actionButton.snp.removeConstraints()
+            self.actionButton.snp.makeConstraints {
+                $0.bottom.equalToSuperview().offset(-keyboardFrame.height - 10)
+                $0.leading.trailing.equalToSuperview().inset(self.margin)
+                $0.height.equalTo(51)
+                $0.centerX.equalToSuperview()
+            }
+        }
+    }
+    
+    @objc func keyboardWillHide(_ notification: NSNotification) {
+        animateWithKeyboard(notification: notification) { keyboardFrame in
+            self.actionButton.snp.removeConstraints()
+            self.actionButton.snp.makeConstraints {
+                $0.bottom.equalToSuperview().offset(-60)
+                $0.leading.trailing.equalToSuperview().inset(self.margin)
+                $0.height.equalTo(51)
+                $0.centerX.equalToSuperview()
+            }
         }
     }
 }

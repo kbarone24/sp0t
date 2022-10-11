@@ -89,7 +89,6 @@ extension CustomMapController: MKMapViewDelegate {
     }
     
     func closeDrawer() {
-        print("close drawer")
         DispatchQueue.main.async { self.containerDrawerView?.present(to: .Bottom) }
     }
 }

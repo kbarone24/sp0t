@@ -13,7 +13,7 @@ import FirebaseUI
 class CustomMapUploadCell: UITableViewCell {
     var mapImage: UIImageView!
     var nameLabel: UILabel!
-    var selectedImage: UIImageView!
+    var selectedBubble: UIImageView!
     var bottomLine: UIView!
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
@@ -25,10 +25,11 @@ class CustomMapUploadCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setUp(map: CustomMap?, selected: Bool) {
+    func setUp(map: CustomMap?, selected: Bool, newMap: Bool) {
+        if selected { print("secret", map!.secret) }
         if map == nil {
             mapImage.image = UIImage(named: "NewMapCellImage")
-            selectedImage.image = UIImage()
+            selectedBubble.image = UIImage()
             
         } else {
             let url = map!.imageURL
@@ -39,7 +40,7 @@ class CustomMapUploadCell: UITableViewCell {
                 mapImage.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
             }
             let buttonImage = selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
-            selectedImage.image = buttonImage
+            selectedBubble.image = buttonImage
         }
         
         if map == nil {
@@ -58,7 +59,7 @@ class CustomMapUploadCell: UITableViewCell {
             nameLabel.attributedText = NSAttributedString(string: map!.mapName)
         }
         
-        let disableCell = !selected && UploadPostModel.shared.mapObject != nil
+        let disableCell = !selected && newMap
         contentView.alpha = disableCell ? 0.2 : 1.0
         isUserInteractionEnabled = disableCell ? false : true
     }
@@ -79,10 +80,10 @@ class CustomMapUploadCell: UITableViewCell {
             $0.centerY.equalToSuperview()
         }
         
-        selectedImage = UIImageView {
+        selectedBubble = UIImageView {
             contentView.addSubview($0)
         }
-        selectedImage.snp.makeConstraints {
+        selectedBubble.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(21)
             $0.height.width.equalTo(33)
             $0.centerY.equalToSuperview()
@@ -96,7 +97,7 @@ class CustomMapUploadCell: UITableViewCell {
         }
         nameLabel.snp.makeConstraints {
             $0.leading.equalTo(mapImage.snp.trailing).offset(10)
-            $0.trailing.lessThanOrEqualTo(selectedImage.snp.leading).offset(-8)
+            $0.trailing.lessThanOrEqualTo(selectedBubble.snp.leading).offset(-8)
             $0.centerY.equalToSuperview()
         }
 
@@ -119,3 +120,29 @@ class CustomMapUploadCell: UITableViewCell {
 }
 
 
+class CustomMapsHeader: UITableViewHeaderFooterView {
+    var customMapsLabel: UILabel!
+    
+    override init(reuseIdentifier: String?) {
+        super.init(reuseIdentifier: reuseIdentifier)
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = .white
+        self.backgroundView = backgroundView
+        print("init header")
+                
+        customMapsLabel = UILabel {
+            $0.text = "MY MAPS"
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
+            addSubview($0)
+        }
+        customMapsLabel.snp.makeConstraints {
+            $0.leading.equalTo(15)
+            $0.bottom.equalToSuperview().inset(6)
+        }
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}

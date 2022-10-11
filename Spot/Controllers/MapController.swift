@@ -109,7 +109,6 @@ class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(mapLikersChanged(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsListAdd), name: NSNotification.Name(("FriendsListAdd")), object: nil)
@@ -250,6 +249,7 @@ class MapController: UIViewController {
     }
     
     @objc func profileTap(_ sender: Any){
+        if sheetView != nil { return } /// cancel on double tap
         Mixpanel.mainInstance().track(event: "MapControllerProfileTap")
         let profileVC = ProfileViewController(userProfile: nil)
         sheetView = DrawerView(present: profileVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
@@ -260,6 +260,7 @@ class MapController: UIViewController {
     }
     
     @objc func openNotis(_ sender: UIButton) {
+        if sheetView != nil { return } /// cancel on double tap
         Mixpanel.mainInstance().track(event: "MapControllerNotificationsTap")
         let notifVC = NotificationsController()
         sheetView = DrawerView(present: notifVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
@@ -280,6 +281,7 @@ class MapController: UIViewController {
     }
     
     func openFindFriends() {
+        if sheetView != nil { return } /// cancel on double tap
         let ffvc = FindFriendsController()
         sheetView = DrawerView(present: ffvc, detentsInAscending: [.Top], closeAction: {
             self.sheetView = nil
@@ -291,6 +293,7 @@ class MapController: UIViewController {
     }
  
     func openPost(posts: [MapPost]) {
+        if sheetView != nil { return } /// cancel on double tap
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = posts
         sheetView = DrawerView(present: postVC, detentsInAscending: [.Bottom, .Middle, .Top], closeAction: {
@@ -301,6 +304,7 @@ class MapController: UIViewController {
     }
     
     func openSelectedMap() {
+        if sheetView != nil { return } /// cancel on double tap
         var map = getSelectedMap()
         let unsortedPosts = map == nil ? friendsPostsDictionary.map{$0.value} : map!.postsDictionary.map{$0.value}
         let posts = mapView.sortPosts(unsortedPosts)
@@ -318,6 +322,7 @@ class MapController: UIViewController {
     }
     
     func openSpot(spotID: String, spotName: String, mapID: String, mapName: String) {
+        if sheetView != nil { return } /// cancel on double tap
         var emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp(date: Date()))
         emptyPost.spotID = spotID
         emptyPost.spotName = spotName
@@ -334,7 +339,7 @@ class MapController: UIViewController {
     
     func toggleHomeAppearance(hidden: Bool) {
         mapsCollection.isHidden = hidden
-        newPostsButton.isHidden = hidden
+        newPostsButton.setHidden(hidden: hidden)
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
             if addFriends != nil {
@@ -717,6 +722,12 @@ class NewPostsButton: UIButton {
         }
     }
     
+    var totalPosts: Int = 0 {
+        didSet {
+            isHidden = totalPosts == 0
+        }
+    }
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         translatesAutoresizingMaskIntoConstraints = false
@@ -765,6 +776,14 @@ class NewPostsButton: UIButton {
             $0.width.equalTo(8.9)
             $0.height.equalTo(15)
             $0.centerY.equalToSuperview()
+        }
+    }
+    
+    func setHidden(hidden: Bool) {
+        if totalPosts == 0 {
+            isHidden = true
+        } else {
+            isHidden = hidden
         }
     }
     
