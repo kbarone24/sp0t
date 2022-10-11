@@ -13,6 +13,9 @@ import CoreLocation
 
 extension CustomMapController {
     func getMapMembers() {
+        /// abort if not showing user profiles
+        if mapData?.memberIDs.count ?? 0 > 6 { DispatchQueue.main.async { self.collectionView.reloadData()}; return }
+        
         let dispatch = DispatchGroup()
         var memberList: [UserProfile] = []
         firstMaxFourMapMemberList.removeAll()
@@ -29,6 +32,7 @@ extension CustomMapController {
         }
         dispatch.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
+            
             self.firstMaxFourMapMemberList = memberList
             if !communityMap { self.firstMaxFourMapMemberList.sort(by: {$0.id == self.mapData!.founderID && $1.id != self.mapData!.founderID}) }
             self.collectionView.reloadData()
@@ -82,6 +86,7 @@ extension CustomMapController {
                     }
                 }
                 postGroup.notify(queue: .main) {
+                    print("sort and reload posts")
                     self.postsList.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
                     self.collectionView.reloadData()
                     if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }
@@ -92,7 +97,6 @@ extension CustomMapController {
     }
     
     func getNearbyPosts() {
-        print("get nearby")
         let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("mapLocations"))
         guard let center = mapController?.mapView.centerCoordinate.location else { return }
         /// get radius in KM
@@ -109,7 +113,6 @@ extension CustomMapController {
         let _ = self.circleQuery?.observe(.documentEntered, with: loadPostFromDB)
         
         geoFetchGroup.notify(queue: .main) {
-            print("geo notify")
             self.postsList.sort(by: {$0.timestamp.seconds > $1.timestamp.seconds})
             self.collectionView.reloadData()
             if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }

@@ -206,7 +206,6 @@ extension ProfileViewController {
         navigationItem.backButtonTitle = ""
         
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyMapChange(_:)), name: NSNotification.Name(("MapLikersChanged")), object: nil)
                         
         collectionView = {
             let layout = UICollectionViewFlowLayout()

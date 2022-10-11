@@ -124,11 +124,7 @@ extension MapController {
             }
         }
     }
-        
-    @objc func mapLikersChanged(_ notification: NSNotification) {
-        reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
-    }
-        
+                
     @objc func notifyFriendsListAdd() {
         /// query friends posts again
         homeFetchGroup.enter()
@@ -143,6 +139,9 @@ extension MapController {
     }
     
     @objc func notifyEditMap(_ notification: NSNotification) {
+        print("notify edit", UserDataModel.shared.userInfo.mapsList.map({$0.mapName}))
+        reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
+        /// update should happen by listener
       /*  guard let map = notification.userInfo?["map"] as? CustomMap else { return }
         if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map.id}) {
             UserDataModel.shared.userInfo.mapsList[i].memberIDs = map.memberIDs

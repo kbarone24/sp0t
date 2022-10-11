@@ -25,7 +25,7 @@ class DrawerView: NSObject {
     
     // MARK: Public variable
     public lazy var slideView = UIView {
-        $0.backgroundColor = .clear
+        $0.backgroundColor = .white
         $0.layer.cornerRadius = UserDataModel.shared.screenSize == 0 ? 0 : 20
         $0.layer.shadowColor = UIColor.black.cgColor
         $0.layer.shadowOffset = CGSize(width: 2, height: 2)

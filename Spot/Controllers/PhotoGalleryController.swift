@@ -474,7 +474,7 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
                         
         imagePreview = ImagePreviewView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         imagePreview.alpha = 0.0
-        imagePreview.galleryCollection = collectionView
+        imagePreview.delegate = self
         
         let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
         window?.addSubview(imagePreview)
@@ -482,7 +482,16 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
         let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
         imagePreview.imageExpand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])
     }
+}
 
+extension PhotoGalleryController: ImagePreviewDelegate {
+    func select(galleryIndex: Int) {
+        select(index: galleryIndex)
+    }
+    
+    func deselect(galleryIndex: Int) {
+        deselect(index: galleryIndex)
+    }
 }
 
 extension UIColor {

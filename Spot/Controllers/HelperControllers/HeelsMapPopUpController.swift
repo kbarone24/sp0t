@@ -46,6 +46,7 @@ class HeelsMapPopUpController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         IQKeyboardManager.shared.enableAutoToolbar = false
+        if textField != nil { textField.becomeFirstResponder() }
     }
     
     func loadInfoView(){
@@ -205,7 +206,7 @@ class HeelsMapPopUpController: UIViewController {
                      }
                  }
                  self.heelsMap = mapInfo
-                 self.friendsText = String(mapInfo.memberIDs.count) + " Friends"
+                 self.friendsText = String(mapInfo.memberIDs.count) + " Joined"
                  let customButtonTitle = NSMutableAttributedString(string: self.friendsText, attributes: [
                      NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15)!,
                      NSAttributedString.Key.foregroundColor: UIColor(red: 0.712, green: 0.712, blue: 0.712, alpha: 1)
