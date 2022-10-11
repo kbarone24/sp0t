@@ -34,6 +34,7 @@ extension MapController {
                 guard let self = self else { return }
                 self.attachNewPostListener()
                 self.newPostsButton.isHidden = false
+                self.newPostsButton.totalPosts = self.friendsPostsDictionary.count
                 self.loadAdditionalOnboarding()
                 self.reloadMapsCollection(resort: true, newPost: false)
             }
@@ -41,7 +42,13 @@ extension MapController {
     }
     
     func reloadMapsCollection(resort: Bool, newPost: Bool) {
-        if resort { UserDataModel.shared.userInfo.sortMaps() }
+        if resort {
+            /// reset selected item index on resort in case the position of the selected map changed
+            let mapID = UserDataModel.shared.userInfo.mapsList[safe: selectedItemIndex - 1]?.id ?? ""
+            UserDataModel.shared.userInfo.sortMaps()
+            if let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == mapID}) { selectedItemIndex = index + 1 } else { selectedItemIndex = 0 }
+        }
+        
         let scrollPosition: UICollectionView.ScrollPosition = resort ? .left : []
         /// select new map on add from onboarding
         if newMapID != nil, let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == newMapID}) {
@@ -294,10 +301,13 @@ extension MapController {
                 do {
                     let mapIn = try doc.data(as: CustomMap.self)
                     guard var mapInfo = mapIn else { continue }
+                    
+                    if UserDataModel.shared.deletedMapIDs.contains(where: {$0 == mapInfo.id}) { continue }
                     if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == mapInfo.id}) {
                         self.updateMap(map: mapInfo, index: i)
                         continue
                     }
+                    
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
                     self.homeFetchGroup.enter()
@@ -305,7 +315,6 @@ extension MapController {
                     
                     /// add new notify method for new map since initial notify method wont be called
                     if self.mapsLoaded {
-                        print("fetch new map")
                         self.homeFetchGroup.notify(queue: .main) { [weak self] in
                             guard let self = self else { return }
                             self.reloadMapsCollection(resort: true, newPost: false)
@@ -398,7 +407,8 @@ extension MapController {
                 if !self.postsContains(postID: post.id!, mapID: post.mapID ?? "", newPost: true) {
                     DispatchQueue.main.async {
                         self.addPostToDictionary(post: post, map: map, newPost: true, index: self.selectedItemIndex)
-                        self.reloadMapsCollection(resort: false, newPost: true)
+                  ///      let resort = self.selectedItemIndex == 0 /// patch fix for selected index getting messed up on resort if index > 0
+                        self.reloadMapsCollection(resort: true, newPost: true)
                     }
                 }
             }
@@ -418,6 +428,8 @@ extension MapController {
     func setNewPostsButtonCount() {
         let map = getSelectedMap()
         newPostsButton.unseenPosts = map == nil ? friendsPostsDictionary.filter{!$0.value.seen}.count : map!.postsDictionary.filter{!$0.value.seen}.count
+        /// show new posts button on friends map if the user has a friend (no real way of checking if that friend has actually posted to friends map)
+        newPostsButton.totalPosts = map == nil ? UserDataModel.shared.userInfo.friendIDs.count > 1 ? 1 : 0 : map!.postIDs.count
     }
     
         
@@ -431,7 +443,6 @@ extension MapController {
     }
     
     func reRunMapFetch() {
-        print("re run fetch")
         homeFetchGroup.enter()
         DispatchQueue.global(qos: .userInitiated).async {
             self.getRecentPosts(map: nil)
@@ -442,6 +453,11 @@ extension MapController {
             DispatchQueue.global(qos: .userInitiated).async {
                 self.getRecentPosts(map: map)
             }
+        }
+        
+        homeFetchGroup.notify(queue: .main) {
+          //  let resort = self.selectedItemIndex == 0
+            self.reloadMapsCollection(resort: true, newPost: false)
         }
     }
 }

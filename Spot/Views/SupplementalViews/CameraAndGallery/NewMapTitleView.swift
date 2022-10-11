@@ -32,11 +32,12 @@ class NewMapTitleView: UIView {
             $0.textColor = .white
             $0.font = UIFont(name: "SFCompactText-Bold", size: 16.5)
             $0.textAlignment = .center
+            $0.lineBreakMode = .byTruncatingTail
             addSubview($0)
         }
         mapLabel.snp.makeConstraints {
             $0.top.equalTo(topLabel.snp.bottom).offset(2)
-            $0.centerX.equalToSuperview()
+            $0.leading.trailing.equalToSuperview()
         }
     }    
     

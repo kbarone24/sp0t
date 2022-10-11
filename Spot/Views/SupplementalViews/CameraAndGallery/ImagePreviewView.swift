@@ -12,6 +12,11 @@ import Firebase
 import Photos
 import Mixpanel
 
+protocol ImagePreviewDelegate {
+    func select(galleryIndex: Int)
+    func deselect(galleryIndex: Int)
+}
+
 class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     
     var imageCloseTap: UITapGestureRecognizer!
@@ -29,7 +34,8 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     var zooming = false
     var originalCenter: CGPoint!
     
-    unowned var galleryCollection: UICollectionView!
+    var delegate: ImagePreviewDelegate?
+    var animateFromFooter = false
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -244,23 +250,20 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
             if self.maskImage.selectButton != nil { self.maskImage.selectButton.isHidden = true }
             if self.maskImage.aliveToggle != nil { self.maskImage.aliveToggle.isHidden = true }
             
-            /// main animation
-            UIView.animate(withDuration: 0.25) {
-                self.maskImage.frame = endFrame
-                self.maskImage.galleryCircle.alpha = 1.0
-                self.maskImage.galleryCircle.frame = CGRect(x: endFrame.width - 29, y: 6, width: 23, height: 23)
-                self.maskImage.liveIndicator.alpha = 1.0
-                self.maskImage.liveIndicator.frame = CGRect(x: endFrame.width/2 - 9, y: endFrame.height/2 - 9, width: 18, height: 18)
-                self.maskImage.galleryMask.alpha = 1.0
-                self.maskImage.layer.borderColor = UIColor(named: "SpotBlack")!.cgColor
-                self.maskImage.layer.borderWidth = 1
-            }
-            
-            /// background animation -> fade is only necessary for upload overview
-            let duration: CGFloat = 0.26
+            let duration = self.animateFromFooter && !self.maskImage.selected ? 0.0 : 0.25
+            /// main animation -> cancel if deselected from footer (weird animation)
             UIView.animate(withDuration: duration) {
                 self.backgroundColor = UIColor(named: "SpotBlack")!.withAlphaComponent(0.0)
-                
+                self.maskImage.frame = endFrame
+                if !self.animateFromFooter {
+                    self.maskImage.galleryCircle.alpha = 1.0
+                    self.maskImage.galleryCircle.frame = CGRect(x: endFrame.width - 29, y: 6, width: 23, height: 23)
+                    self.maskImage.liveIndicator.alpha = 1.0
+                    self.maskImage.liveIndicator.frame = CGRect(x: endFrame.width/2 - 9, y: endFrame.height/2 - 9, width: 18, height: 18)
+                    self.maskImage.galleryMask.alpha = 1.0
+                    self.maskImage.layer.borderColor = UIColor(named: "SpotBlack")!.cgColor
+                    self.maskImage.layer.borderWidth = 1
+                }
             } completion: { [weak self] complete in
                 guard let self = self else { return }
                 for subview in self.subviews { subview.removeFromSuperview() }
@@ -488,10 +491,7 @@ class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
         Mixpanel.mainInstance().track(event: "ImagePreviewSelectImage", properties: ["selected": selected])
         
         guard let previewView = superview as? ImagePreviewView else { return }
-        // defer to gallery/cluster select methods
-        if let gallery = previewView.galleryCollection.viewContainingController() as? PhotoGalleryController {
-            selected ? gallery.select(index: previewView.galleryIndex) : gallery.deselect(index: previewView.galleryIndex)
-        }
+        selected ? previewView.delegate?.select(galleryIndex: previewView.galleryIndex) : previewView.delegate?.deselect(galleryIndex: previewView.galleryIndex)
         
         circleView.selected = selected
         

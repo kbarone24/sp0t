@@ -54,7 +54,6 @@ class SelectedImagesFooter: UICollectionReusableView {
             collectionView!.contentInset = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
             collectionView!.delegate = self
             collectionView!.dataSource = self
-            collectionView!.allowsSelection = false
             collectionView!.dragInteractionEnabled = true
             collectionView!.dragDelegate = self
             collectionView!.dropDelegate = self
@@ -178,6 +177,30 @@ extension SelectedImagesFooter: UICollectionViewDelegate, UICollectionViewDataSo
         }
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        Mixpanel.mainInstance().track(event: "GalleryFooterPreviewTap")
+        
+        var object: ImageObject?
+        var galleryIndex = 0
+        
+        guard let cell = collectionView.cellForItem(at: IndexPath(row: indexPath.row, section: 0)) as? SelectedImageCell else { return }
+        guard let index = UploadPostModel.shared.imageObjects.firstIndex(where: {$0.image.id == cell.assetID}) else { return }
+        
+        object = UploadPostModel.shared.imageObjects[index].image
+        galleryIndex = index
+        
+        let imagePreview = ImagePreviewView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        imagePreview.alpha = 0.0
+        imagePreview.delegate = self
+        imagePreview.animateFromFooter = true
+        
+        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
+        window?.addSubview(imagePreview)
+        
+        let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
+        imagePreview.imageExpand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object!])
+    }
+    
     private func reorderItems(coordinator: UICollectionViewDropCoordinator, destinationIndexPath: IndexPath, collectionView: UICollectionView) {
         if let item = coordinator.items.first, let sourceIndexPath = item.sourceIndexPath {
             let selectedCount = UploadPostModel.shared.selectedObjects.count
@@ -193,6 +216,20 @@ extension SelectedImagesFooter: UICollectionViewDelegate, UICollectionViewDataSo
                 }
                 coordinator.drop(item.dragItem, toItemAt: destinationIndexPath)
             }
+        }
+    }
+}
+
+extension SelectedImagesFooter: ImagePreviewDelegate {
+    func select(galleryIndex: Int) {
+        if let gallery = viewContainingController() as? PhotoGalleryController {
+            gallery.select(index: galleryIndex)
+        }
+    }
+    
+    func deselect(galleryIndex: Int) {
+        if let gallery = viewContainingController() as? PhotoGalleryController {
+            gallery.deselect(index: galleryIndex)
         }
     }
 }

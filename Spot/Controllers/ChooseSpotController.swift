@@ -90,26 +90,10 @@ class ChooseSpotController: UIViewController {
             $0.height.equalTo(50)
         }
         
-        searchBar = UISearchBar {
-            $0.frame = CGRect(x: 16, y: 6, width: UIScreen.main.bounds.width - 32, height: 36)
-            $0.tintColor = UIColor(named: "SpotGreen")
-            $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-            $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-            $0.searchTextField.font = UIFont(name: "SFCompactText-Medium", size: 15)
-            $0.clipsToBounds = true
-            $0.layer.masksToBounds = true
-            $0.autocapitalizationType = .none
-            $0.autocorrectionType = .no
+        searchBar = SpotSearchBar {
             $0.placeholder = " Search spots"
-            $0.clipsToBounds = true
-            $0.layer.cornerRadius = 2
-            $0.searchTextField.layer.cornerRadius = 2
-            $0.returnKeyType = .done
-            $0.backgroundImage = UIImage()
             $0.delegate = self
             $0.keyboardDistanceFromTextField = 250
-            $0.searchTextField.enablesReturnKeyAutomatically = false
             searchBarContainer.addSubview($0)
         }
         searchBar.snp.makeConstraints {
