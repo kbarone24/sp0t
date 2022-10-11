@@ -118,25 +118,9 @@ class FindFriendsController: UIViewController {
             $0.height.equalTo(36)
         }
         
-        searchBar = UISearchBar {
-            $0.searchBarStyle = .default
-            $0.tintColor = UIColor(named: "SpotGreen")
-            $0.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-            $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        searchBar = SpotSearchBar {
             $0.delegate = self
-            $0.autocapitalizationType = .none
-            $0.autocorrectionType = .no
             $0.placeholder = "Search users"
-            $0.searchTextField.font = UIFont(name: "SFCompactText-Medium", size: 15)
-            $0.clipsToBounds = true
-            $0.layer.masksToBounds = true
-            $0.searchTextField.layer.masksToBounds = true
-            $0.searchTextField.clipsToBounds = true
-            $0.layer.cornerRadius = 2
-            $0.searchTextField.layer.cornerRadius = 2
-            $0.backgroundImage = UIImage()
-            $0.translatesAutoresizingMaskIntoConstraints = false
             searchBarContainer.addSubview($0)
         }
         searchBar.snp.makeConstraints{

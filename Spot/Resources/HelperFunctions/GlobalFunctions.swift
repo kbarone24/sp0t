@@ -1219,6 +1219,30 @@ extension NSObject {
         let bottomConstraint = UIScreen.main.bounds.height - imageBottom
         return (currentHeight, bottomConstraint)
     }
+    
+    func getAttributedStringWithImage(str: String, image: UIImage) -> NSMutableAttributedString {
+        let imageAttachment = NSTextAttachment()
+        imageAttachment.image = image
+        imageAttachment.bounds = CGRect(x: 0, y: 3, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
+        let attachmentString = NSAttributedString(attachment: imageAttachment)
+        let completeText = NSMutableAttributedString(string: "")
+        completeText.append(attachmentString)
+        completeText.append(NSAttributedString(string: " "))
+        completeText.append(NSAttributedString(string: str))
+        return completeText
+    }
+    
+    func updatePostInviteLists(mapID: String, inviteList: [String]) {
+        let db = Firestore.firestore()
+        DispatchQueue.global().async {
+            db.collection("posts").whereField("mapID", isEqualTo: mapID).whereField("hideFromFeed", isEqualTo: true).getDocuments { snap, err in
+                guard let snap = snap else { return }
+                for doc in snap.documents {
+                    doc.reference.updateData(["inviteList" : inviteList])
+                }
+            }
+        }
+    }
 }
 
 extension String {

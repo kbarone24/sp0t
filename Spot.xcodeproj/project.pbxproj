@@ -300,6 +300,10 @@
 		8C66226228EF596700BA5D05 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226128EF596700BA5D05 /* ProgressBar.swift */; };
 		8C66226328EF596700BA5D05 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226128EF596700BA5D05 /* ProgressBar.swift */; };
 		8C66226428EF596700BA5D05 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226128EF596700BA5D05 /* ProgressBar.swift */; };
+		8C66226628F0AFD400BA5D05 /* SpotSearchBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226528F0AFD400BA5D05 /* SpotSearchBar.swift */; };
+		8C66226828F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226728F4C05400BA5D05 /* PillButtonWithImage.swift */; };
+		8C66226928F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226728F4C05400BA5D05 /* PillButtonWithImage.swift */; };
+		8C66226A28F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66226728F4C05400BA5D05 /* PillButtonWithImage.swift */; };
 		8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
@@ -513,6 +517,8 @@
 		8C66225928EF4A4200BA5D05 /* NewMapTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMapTitleView.swift; sourceTree = "<group>"; };
 		8C66225D28EF4B6800BA5D05 /* PostButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostButton.swift; sourceTree = "<group>"; };
 		8C66226128EF596700BA5D05 /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
+		8C66226528F0AFD400BA5D05 /* SpotSearchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotSearchBar.swift; sourceTree = "<group>"; };
+		8C66226728F4C05400BA5D05 /* PillButtonWithImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillButtonWithImage.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C88B0E627B46E3900DB4039 /* PostImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageModel.swift; sourceTree = "<group>"; };
 		8C8DBB712888BE5C00B31BFD /* ChooseSpotController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseSpotController.swift; sourceTree = "<group>"; };
@@ -958,6 +964,8 @@
 				8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */,
 				8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */,
 				8C4FDFC228DAB2F800A3B479 /* UsernameLabel.swift */,
+				8C66226528F0AFD400BA5D05 /* SpotSearchBar.swift */,
+				8C66226728F4C05400BA5D05 /* PillButtonWithImage.swift */,
 			);
 			path = SupplementalViews;
 			sourceTree = "<group>";
@@ -1388,8 +1396,10 @@
 				414CD27C2899ABDB001F1776 /* MapMemberCell.swift in Sources */,
 				8C8DBB722888BE5C00B31BFD /* ChooseSpotController.swift in Sources */,
 				4106ECD228A35ABB00680005 /* SpotPageHeaderCell.swift in Sources */,
+				8C66226828F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
 				5F119A1A2869F3FF00D75CE8 /* NotificationsController.swift in Sources */,
 				59FCF5B524734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
+				8C66226628F0AFD400BA5D05 /* SpotSearchBar.swift in Sources */,
 				59FCF5AC24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				414CD27A28975D64001F1776 /* ChooseMapController.swift in Sources */,
 				413BA165287C917000FD80AF /* FriendsListController.swift in Sources */,
@@ -1511,6 +1521,7 @@
 				8C373D5D27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C5AF2EB288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
 				8C1E4881289C54C10093030D /* SpotNameAnnotationView.swift in Sources */,
+				8C66226928F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
 				8C3BAF60260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8CC3653B26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				8C61EB4C28CBBF2900E7180A /* CustomMapDelegateExtension.swift in Sources */,
@@ -1609,6 +1620,7 @@
 				8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C5AF2EC288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
 				8C1E4882289C54C10093030D /* SpotNameAnnotationView.swift in Sources */,
+				8C66226A28F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
 				8C3BAF61260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8CC3653C26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				8C61EB4D28CBBF2900E7180A /* CustomMapDelegateExtension.swift in Sources */,
@@ -1793,7 +1805,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 29;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -1863,7 +1875,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 29;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;

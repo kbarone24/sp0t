@@ -30,7 +30,6 @@ class ChooseMapController: UIViewController {
     private var progressBar: ProgressBar!
     
     override func viewDidLoad() {
-        
         super.viewDidLoad()
             
         addButtons()
@@ -124,16 +123,18 @@ class ChooseMapController: UIViewController {
     }
     
     func getCustomMaps() {
+        newMap = UploadPostModel.shared.mapObject
         customMaps = UserDataModel.shared.userInfo.mapsList.filter({$0.memberIDs.contains(UserDataModel.shared.uid)}).sorted(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
-    }
-    
-    func reloadTable() {
-        customMaps.sort(by: {$0.userTimestamp.seconds > $1.userTimestamp.seconds})
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
+        
+        if newMap != nil {
+            newMap!.coverImage = UploadPostModel.shared.postObject.postImage.first ?? UIImage() /// new map image not set when going through new map flow
+            customMaps.insert(newMap!, at: 0)
+            if newMap!.secret { toggleFriendsMap() }
         }
+        
+        DispatchQueue.main.async { self.tableView.reloadData() }
     }
-    
+        
     func enablePostButton() {
         postButton.isEnabled = friendsMapButton.buttonSelected || UploadPostModel.shared.postObject.mapID != ""
     }
@@ -151,7 +152,6 @@ class ChooseMapController: UIViewController {
     
     func addBottomMask() {
         if bottomMask != nil { return }
-        print("add bottom mask")
         bottomMask = UIView {
             $0.backgroundColor = nil
             $0.isUserInteractionEnabled = false
@@ -241,8 +241,14 @@ class ChooseMapController: UIViewController {
 extension ChooseMapController: NewMapDelegate {
     func finishPassing(map: CustomMap) {
         Mixpanel.mainInstance().track(event: "ChooseMapCreateNew")
+        /// only select if map was just created, update on edit
+        if newMap == nil {
+            customMaps.insert(map, at: 0)
+        } else {
+            customMaps[0] = map
+        }
+        
         newMap = map
-        customMaps.insert(map, at: 0)
         selectMap(map: map)
     }
     
@@ -251,7 +257,6 @@ extension ChooseMapController: NewMapDelegate {
         UploadPostModel.shared.setMapValues(map: map)
         /// if private map, make sure mymapbutton is deselected, if public, make sure selected
         if map.secret && friendsMapButton.buttonSelected { toggleFriendsMap() }
-        
         DispatchQueue.main.async { self.tableView.reloadData() }
         enablePostButton()
     }
@@ -268,15 +273,16 @@ extension ChooseMapController: NewMapDelegate {
 extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return customMaps.count
+        return newMap != nil ? customMaps.count : customMaps.count + 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? CustomMapUploadCell {
             let index = newMap != nil ? indexPath.row : indexPath.row - 1
+            /// map will be nil for row "-1" which represents the add spot row
             let map = customMaps[safe: index]
             let selected = UploadPostModel.shared.postObject.mapID == map?.id ?? "_"
-            cell.setUp(map: map, selected: selected)
+            cell.setUp(map: map, selected: selected, newMap: newMap != nil)
             return cell
         }
         return UITableViewCell()
@@ -285,17 +291,27 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 70
     }
-    
+        
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let index = newMap != nil ? indexPath.row : indexPath.row - 1
+        let index = indexPath.row - 1
         let map = customMaps[safe: index]
         if map == nil, let newMapVC = storyboard?.instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
             newMapVC.delegate = self
+            newMapVC.mapObject = newMap
             DispatchQueue.main.async { self.present(newMapVC, animated: true) }
         } else {
             map!.id == UploadPostModel.shared.postObject.mapID ? deselectMap(map: map!) : selectMap(map: map!)
             HapticGenerator.shared.play(.light)
         }
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 30
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        guard let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "MapsHeader") as? CustomMapsHeader else { return UIView() }
+        return header
     }
 }
 
@@ -307,6 +323,7 @@ class ChooseMapTableView: UITableView {
         separatorStyle = .none
         showsVerticalScrollIndicator = false
         register(CustomMapUploadCell.self, forCellReuseIdentifier: "MapCell")
+        register(CustomMapsHeader.self, forHeaderFooterViewReuseIdentifier: "MapsHeader")
         translatesAutoresizingMaskIntoConstraints = false
     }
     required init?(coder: NSCoder) {

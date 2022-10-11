@@ -18,10 +18,8 @@ class EditMapController: UIViewController {
     private var mapCoverImage: UIImageView!
     private var mapCoverImageSelectionButton: UIButton!
     private var mapNameTextField: UITextField!
-    private var memberLabel: UILabel!
     private var locationTextfield: UITextField!
     private var mapDescription: UITextView!
-    private var mapMemberCollectionView: UICollectionView!
     private var privateLabel: UILabel!
     private var privateDescriptionLabel: UILabel!
     private var privateButton: UIButton!
@@ -46,9 +44,6 @@ class EditMapController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getMembers()
-        }
     }
     
     @objc func dismissAction() {
@@ -103,9 +98,8 @@ class EditMapController: UIViewController {
         mapData!.lowercaseName = mapData!.mapName.lowercased()
         mapData!.searchKeywords = mapData!.lowercaseName!.getKeywordArray()
         
-        mapsRef.updateData(["mapName" : mapNameTextField.text!, "mapDescription": mapData!.mapDescription!, "secret": mapData!.secret, "likers": FieldValue.arrayUnion(mapData!.likers), "memberIDs": FieldValue.arrayUnion(mapData!.memberIDs), "lowercaseName": mapData!.lowercaseName!, "searchKeywords": mapData!.searchKeywords!, "updateUserID": UserDataModel.shared.uid, "updateUsername": UserDataModel.shared.userInfo.username])
+        mapsRef.updateData(["mapName" : mapNameTextField.text!, "mapDescription": mapData!.mapDescription!, "secret": mapData!.secret, "lowercaseName": mapData!.lowercaseName!, "searchKeywords": mapData!.searchKeywords!, "updateUserID": UserDataModel.shared.uid, "updateUsername": UserDataModel.shared.userInfo.username])
         
-        if mapData!.secret { self.updatePostInviteLists(inviteList: mapData!.memberIDs) }
         self.updateUserInfo()
 
         if mapCoverChanged {
@@ -115,19 +109,7 @@ class EditMapController: UIViewController {
             dismiss(animated: true)
         }
     }
-    
-    func updatePostInviteLists(inviteList: [String]) {
-        let mapID = mapData!.id!
-        DispatchQueue.global().async {
-            self.db.collection("posts").whereField("mapID", isEqualTo: mapID).whereField("hideFromFeed", isEqualTo: true).getDocuments { snap, err in
-                guard let snap = snap else { return }
-                for doc in snap.documents {
-                    doc.reference.updateData(["inviteList" : inviteList])
-                }
-            }
-        }
-    }
-    
+        
     func updateUserInfo() {
         // might be better to send notification to update mapscollection with cover image change
         NotificationCenter.default.post(Notification(name: Notification.Name("EditMap"), object: nil, userInfo: ["map": mapData as Any]))
@@ -250,45 +232,15 @@ extension EditMapController {
             $0.height.equalTo(70)
         }
 
-        memberLabel = UILabel {
-            $0.text = "MEMBERS (\(mapData!.memberIDs.count))"
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
-            $0.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
-            view.addSubview($0)
-        }
-        memberLabel.snp.makeConstraints {
-            $0.top.equalTo(mapDescription.snp.bottom).offset(14)
-            $0.leading.equalToSuperview().inset(16)
-        }
-        
-        mapMemberCollectionView = {
-            let layout = UICollectionViewFlowLayout()
-            layout.scrollDirection = .horizontal
-            let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-            view.contentInset.left = 16
-            view.delegate = self
-            view.dataSource = self
-            view.backgroundColor = .white
-            view.showsHorizontalScrollIndicator = false
-            view.register(MapMemberCell.self, forCellWithReuseIdentifier: "MapMemberCell")
-            return view
-        }()
-        view.addSubview(mapMemberCollectionView)
-        mapMemberCollectionView.snp.makeConstraints {
-            $0.top.equalTo(memberLabel.snp.bottom).offset(12)
-            $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(85)
-        }
-
         privateLabel = UILabel {
-            $0.text = "PRIVATE MAP"
+            $0.text = "Make this map secret"
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
             $0.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
             view.addSubview($0)
         }
         privateLabel.snp.makeConstraints {
-            $0.top.equalTo(mapMemberCollectionView.snp.bottom).offset(33)
-            $0.leading.equalTo(memberLabel)
+            $0.top.equalTo(mapDescription.snp.bottom).offset(33)
+            $0.leading.equalTo(16)
         }
         
         privateButton = UIButton {
@@ -303,9 +255,9 @@ extension EditMapController {
         }
         
         privateDescriptionLabel = UILabel {
-            $0.text = "Only invited members can see this map"
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.textColor = UIColor(red: 0.683, green: 0.683, blue: 0.683, alpha: 1)
+            $0.text = "Only you and invited friends will see this map"
+            $0.font = UIFont(name: "SFCompactText-Bold", size: 12)
+            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
             view.addSubview($0)
         }
         privateDescriptionLabel.snp.makeConstraints {
@@ -360,32 +312,6 @@ extension EditMapController {
             } else { print("handle error")}
         }
     }
-    
-    private func getMembers() {
-        let db: Firestore = Firestore.firestore()
-        let dispatch = DispatchGroup()
-        memberList.removeAll()
-        for id in mapData!.memberIDs {
-            dispatch.enter()
-            db.collection("users").document(id).getDocument { [weak self] snap, err in
-                do {
-                    guard let self = self else { return }
-                    let unwrappedInfo = try snap?.data(as: UserProfile.self)
-                    guard var userInfo = unwrappedInfo else { dispatch.leave(); return }
-                    userInfo.id = id
-                    self.memberList.append(userInfo)
-                    dispatch.leave()
-                } catch let parseError {
-                    print("JSON Error \(parseError.localizedDescription)")
-                    dispatch.leave()
-                }
-            }
-        }
-        dispatch.notify(queue: .main) { [weak self] in
-            guard let self = self else { return }
-            self.mapMemberCollectionView.reloadData()
-        }
-    }
 }
 
 extension EditMapController: UITextViewDelegate {
@@ -421,77 +347,6 @@ extension EditMapController: UITextFieldDelegate {
     }
 }
 
-extension EditMapController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 1
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return memberList.count + 1
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapMemberCell", for: indexPath) as! MapMemberCell
-        if indexPath.row == 0 {
-            let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
-            cell.cellSetUp(user: user)
-        } else {
-            cell.cellSetUp(user: memberList[indexPath.row - 1])
-        }
-        return cell
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard indexPath.row == 0 else { return }
-        let collectionCell = collectionView.cellForItem(at: indexPath)
-        UIView.animate(withDuration: 0.15) {
-            collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } completion: { success in
-            let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: self.mapData!.memberIDs)
-            let vc = FriendsListController(fromVC: self, allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.userInfo.friendIDs, friendsList: friendsList, confirmedIDs: self.mapData!.memberIDs, sentFrom: .EditMap)
-            vc.delegate = self
-            self.present(vc, animated: true)
-            UIView.animate(withDuration: 0.15) {
-                collectionCell?.transform = .identity
-            }
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 62, height: 85)
-    }
- 
-    func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
-        guard indexPath.row == 0 else { return }
-        let collectionCell = collectionView.cellForItem(at: indexPath)
-        UIView.animate(withDuration: 0.15) {
-            collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, didUnhighlightItemAt indexPath: IndexPath) {
-        guard indexPath.row == 0 else { return }
-        let collectionCell = collectionView.cellForItem(at: indexPath)
-        UIView.animate(withDuration: 0.15) {
-            collectionCell?.transform = .identity
-        }
-    }
-}
-
-extension EditMapController: FriendsListDelegate {
-    func finishPassing(selectedUsers: [UserProfile]) {
-        Mixpanel.mainInstance().track(event: "EditMapInviteFriends")
-        for user in selectedUsers {
-            if !mapData!.memberIDs.contains(where: {$0 == user.id!}) {
-                mapData!.memberIDs.append(user.id!)
-                memberList.append(user)
-            }
-            if !mapData!.likers.contains(where: {$0 == user.id}) { mapData!.likers.append(user.id!) }
-        }
-        memberLabel.text = "MEMBERS (\(mapData!.memberIDs.count))"
-        DispatchQueue.main.async { self.mapMemberCollectionView.reloadData() }
-    }
-}
 
 extension EditMapController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {

@@ -64,6 +64,8 @@ class UploadPostModel {
         postObject.posterUsername = UserDataModel.shared.userInfo.username
         postObject.privacyLevel = "friends"
         setPostCity() /// set with every location change to avoid async lag on upload
+        spotObject = nil
+        mapObject = nil
     }
     
     func setSpotValues(spot: MapSpot?) {

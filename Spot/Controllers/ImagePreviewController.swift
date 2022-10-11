@@ -23,9 +23,10 @@ class ImagePreviewController: UIViewController {
     var backButton: UIButton!
     var dotView: UIView!
     var nextButton: FooterNextButton?
-    var postButton: PostButton?
-    var draftsButton: UIButton!
-    var progressBar: ProgressBar!
+    var postButton: UIButton?
+    
+    var progressMask: UIView?
+    var progressBar: ProgressBar?
     
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
@@ -184,34 +185,42 @@ class ImagePreviewController: UIViewController {
                 view.addSubview($0)
             }
             titleView.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(60)
                 $0.top.equalTo(backButton!.snp.top).offset(2)
                 $0.centerX.equalToSuperview()
             }
             
-            postButton = PostButton {
+            postButton = PillButtonWithImage {
+                $0.setUp(image: UIImage(named: "PostIcon")!, str: "Post")
+                $0.layer.cornerRadius = 9
                 $0.addTarget(self, action: #selector(postTap), for: .touchUpInside)
-                $0.isEnabled = true
                 view.addSubview($0)
             }
             postButton!.snp.makeConstraints {
-                $0.trailing.equalToSuperview().inset(15)
-                $0.bottom.equalToSuperview().inset(50)
-                $0.width.equalTo(94)
-                $0.height.equalTo(40)
+                $0.leading.trailing.equalToSuperview().inset(18)
+                $0.height.equalTo(51)
+                $0.bottom.equalTo(-43)
             }
             
-            progressBar = ProgressBar {
+            progressMask = UIView {
+                $0.backgroundColor = .black.withAlphaComponent(0.7)
                 $0.isHidden = true
                 view.addSubview($0)
             }
-            progressBar.snp.makeConstraints {
+            progressMask!.snp.makeConstraints {
+                $0.edges.equalToSuperview()
+            }
+            
+            progressBar = ProgressBar {
+                progressMask!.addSubview($0)
+            }
+            progressBar!.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview().inset(50)
                 $0.bottom.equalTo(postButton!.snp.top).offset(-20)
                 $0.height.equalTo(18)
             }
             
         } else {
-            /// add share to and drafts
             nextButton = FooterNextButton {
                 $0.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
                 $0.isEnabled = true
@@ -231,7 +240,7 @@ class ImagePreviewController: UIViewController {
         
         tapToClose = UITapGestureRecognizer(target: self, action: #selector(tapToClose(_:)))
         tapToClose.isEnabled = false
-        currentImage.addGestureRecognizer(tapToClose)
+        view.addGestureRecognizer(tapToClose)
         
         let tap = UITapGestureRecognizer(target: self, action: #selector(captionTap))
         tap.delegate = self
@@ -280,7 +289,7 @@ class ImagePreviewController: UIViewController {
         postDetailView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(160)
-            $0.bottom.equalTo(actionButton.snp.top).offset(-15)
+            $0.bottom.equalToSuperview().offset(-105) /// hard code bc done button and next button not perfectly aligned
         }
         
         textView = UITextView {
@@ -493,7 +502,6 @@ class ImagePreviewController: UIViewController {
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {
-        print("keyboard show")
         if cancelOnDismiss { return }
         if !textView.isFirstResponder { addNewSpotView(notification: notification) }
         
@@ -589,17 +597,18 @@ class ImagePreviewController: UIViewController {
     
     @objc func postTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewPostTap")
+        postButton!.isEnabled = false
         setCaptionValues()
         /// upload post
         UploadPostModel.shared.setFinalPostValues()
         if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
         
-        progressBar.isHidden = false
-        view.bringSubviewToFront(progressBar)
-        let fullWidth = self.progressBar.bounds.width - 2
+        progressMask!.isHidden = false
+        view.bringSubviewToFront(progressMask!)
+        let fullWidth = self.progressBar!.bounds.width - 2
 
         DispatchQueue.global(qos: .userInitiated).async {
-            self.uploadPostImage(UploadPostModel.shared.postObject.postImage, postID: UploadPostModel.shared.postObject.id!, progressFill: self.progressBar.progressFill, fullWidth: fullWidth) { [weak self] imageURLs, failed in
+            self.uploadPostImage(UploadPostModel.shared.postObject.postImage, postID: UploadPostModel.shared.postObject.id!, progressFill: self.progressBar!.progressFill, fullWidth: fullWidth) { [weak self] imageURLs, failed in
                 guard let self = self else { return }
                 if imageURLs.isEmpty && failed {
                     Mixpanel.mainInstance().track(event: "FailedPostUpload")
@@ -781,6 +790,8 @@ extension ImagePreviewController: UITextViewDelegate {
     
     @objc func tapToClose(_ sender: UITapGestureRecognizer) {
         if !self.textView.isFirstResponder { return }
+        print("frame y", sender.location(in: postDetailView).y)
+        if sender.location(in: postDetailView).y > spotNameButton.frame.minY { print(">"); return }
         textView.resignFirstResponder()
         swipeToClose.isEnabled = false
         tapToClose.isEnabled = false
@@ -996,6 +1007,7 @@ class PostDetailView: UIView {
         super.layoutSubviews()
         if bottomMask != nil { return }
         bottomMask = UIView {
+            $0.isUserInteractionEnabled = false
             insertSubview($0, at: 0)
         }
         bottomMask.snp.makeConstraints {

@@ -117,8 +117,8 @@ class AVCameraController: UIViewController {
     }
     
     func setUpView() {
-        addCameraView() /// add main camera
         setUpPost() /// set up main mapPost object
+        addCameraView() /// add main camera
         fetchAssets() /// fetch gallery assets
         getFailedUploads()
     }
@@ -126,7 +126,6 @@ class AVCameraController: UIViewController {
     func addCameraView() {
         view.backgroundColor = UIColor.black
         view.isUserInteractionEnabled = false
-        newMapMode = UploadPostModel.shared.mapObject != nil
         
         let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
@@ -171,6 +170,7 @@ class AVCameraController: UIViewController {
                 cameraView.addSubview($0)
             }
             titleView.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(60)
                 $0.top.equalTo(backButton!.snp.top).offset(2)
                 $0.centerX.equalToSuperview()
             }

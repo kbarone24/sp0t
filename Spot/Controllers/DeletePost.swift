@@ -54,7 +54,14 @@ extension PostController {
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void) {
         if mapID == "" { completion(false); return }
         db.collection("posts").whereField("mapID", isEqualTo: mapID).getDocuments { snap, err in
-            let mapDelete = snap?.documents.count ?? 0 == 1
+            var postCount = 0
+            var mapDelete = false
+            for doc in snap?.documents ?? [] {
+                if !UserDataModel.shared.deletedPostIDs.contains(where: {$0 == doc.documentID}) { postCount += 1 }
+                if doc == snap!.documents.last { mapDelete = postCount == 1 }
+            }
+            
+            if mapDelete { UserDataModel.shared.deletedMapIDs.append(mapID) }
             completion(mapDelete)
             return
         }
