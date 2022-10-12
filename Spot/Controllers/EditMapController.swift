@@ -235,7 +235,7 @@ extension EditMapController {
         privateLabel = UILabel {
             $0.text = "Make this map secret"
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
-            $0.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
+            $0.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
             view.addSubview($0)
         }
         privateLabel.snp.makeConstraints {
@@ -255,9 +255,9 @@ extension EditMapController {
         }
         
         privateDescriptionLabel = UILabel {
-            $0.text = "Only you and invited friends will see this map"
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 12)
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.text = "Only invited friends will see this map"
+            $0.textColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
             view.addSubview($0)
         }
         privateDescriptionLabel.snp.makeConstraints {

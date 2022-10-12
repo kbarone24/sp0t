@@ -21,7 +21,12 @@ extension CustomMapController {
         firstMaxFourMapMemberList.removeAll()
         
         let communityMap = mapData!.communityMap ?? false
-        let members = communityMap ? mapData!.memberIDs.reversed() : mapData!.memberIDs
+        var members = Array(mapData!.memberIDs.reversed())
+        if let i = members.firstIndex(where: {$0 == mapData!.founderID}) {
+            let member = members.remove(at: i)
+            members.insert(member, at: 0)
+        }
+        
         // Get the first four map member
         for index in 0...(members.count < 4 ? (members.count - 1) : 3) {
             dispatch.enter()
