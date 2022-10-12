@@ -94,7 +94,7 @@ class FriendsListController: UIViewController {
         }
         
         titleLabel = UILabel {
-            $0.text = sentFrom == .NewMap ? "Add friends" : sentFrom == .Profile ? "Friends" : "Members"
+            $0.text = sentFrom == .NewMap || sentFrom == .EditMap ? "Add friends" : sentFrom == .Profile ? "Friends" : "Members"
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.textAlignment = .center
