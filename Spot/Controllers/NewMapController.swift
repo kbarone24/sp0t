@@ -415,7 +415,7 @@ class NextButton: UIButton {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = UIColor(named: "SpotGreen")
+        backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
         layer.cornerRadius = 9
      
         label = UILabel {

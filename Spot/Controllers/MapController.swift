@@ -724,7 +724,7 @@ class NewPostsButton: UIButton {
     
     var totalPosts: Int = 0 {
         didSet {
-            isHidden = totalPosts == 0
+            if totalPosts == 0 { isHidden = true }
         }
     }
     
