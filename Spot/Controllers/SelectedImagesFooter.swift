@@ -288,7 +288,7 @@ class SelectedImageCell: UICollectionViewCell {
 class FooterNextButton: UIButton {
     override var isEnabled: Bool {
         didSet {
-            backgroundColor = isEnabled ? UIColor(named: "SpotGreen") : UIColor(red: 0.367, green: 0.367, blue: 0.367, alpha: 1)
+            backgroundColor = isEnabled ? UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1) : UIColor(red: 0.367, green: 0.367, blue: 0.367, alpha: 1)
         }
     }
     

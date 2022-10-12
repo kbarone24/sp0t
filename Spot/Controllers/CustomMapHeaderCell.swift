@@ -368,6 +368,7 @@ extension CustomMapHeaderCell {
         let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: self.mapData!.memberIDs)
         let friendsVC = FriendsListController(fromVC: nil, allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.userInfo.friendIDs, friendsList: friendsList, confirmedIDs: self.mapData!.memberIDs, sentFrom: .EditMap)
         friendsVC.delegate = self
+        friendsVC.sentFrom = .EditMap
         vc.present(friendsVC, animated: true)
     }
     

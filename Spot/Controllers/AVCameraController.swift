@@ -157,11 +157,11 @@ class AVCameraController: UIViewController {
                 $0.contentVerticalAlignment = .fill
                 $0.setImage(UIImage(named: "BackArrow"), for: .normal)
                 $0.addTarget(self, action: #selector(backTap), for: .touchUpInside)
-                cameraView.addSubview($0)
+                view.addSubview($0)
             }
             backButton!.snp.makeConstraints {
                 $0.leading.equalTo(5.5)
-                $0.top.equalToSuperview().offset(10)
+                $0.top.equalTo(60)
                 $0.width.equalTo(48.6)
                 $0.height.equalTo(38.6)
             }
@@ -530,7 +530,7 @@ class AVCameraController: UIViewController {
             guard let self = self else { return }
             try? self.cameraController.displayPreview(on: self.cameraView)
             self.view.isUserInteractionEnabled = true
-            self.setAutoExposure()
+         //   self.setAutoExposure()
         }
     }
     
