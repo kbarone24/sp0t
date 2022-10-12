@@ -362,7 +362,8 @@ class SpotMapView: MKMapView {
             postScore *= factor
             spotScore += postScore
         }
-        return spotScore
+        /// > 1000 = required annotation, dont want this
+        return min(900, spotScore)
     }
 }
 
