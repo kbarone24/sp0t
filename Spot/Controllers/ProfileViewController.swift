@@ -244,7 +244,7 @@ extension ProfileViewController {
         query.getDocuments { (snap, err) in
             guard let snap = snap else { return }
             let dispatch = DispatchGroup()
-            if snap.documents.count == 0 { self.postsFetched = true }
+            if snap.documents.count == 0 && (self.relation == .friend || self.relation == .myself) { self.postsFetched = true }
             for doc in snap.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)

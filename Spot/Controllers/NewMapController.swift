@@ -117,7 +117,7 @@ class NewMapController: UIViewController {
         
         collaboratorLabel = UILabel {
             $0.text = "Add friends"
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
             view.addSubview($0)
         }
@@ -150,7 +150,7 @@ class NewMapController: UIViewController {
         
         secretLabel = UILabel {
             $0.text = "Make this map secret"
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+            $0.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
             view.addSubview($0)
         }
@@ -162,8 +162,8 @@ class NewMapController: UIViewController {
         
         secretSublabel = UILabel {
             $0.text = "Only you and invited friends will see this map"
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 12)
+            $0.textColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
             view.addSubview($0)
         }
         secretSublabel.snp.makeConstraints {
