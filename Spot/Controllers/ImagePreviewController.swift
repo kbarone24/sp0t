@@ -190,10 +190,9 @@ class ImagePreviewController: UIViewController {
                 $0.centerX.equalToSuperview()
             }
             
-            postButton = PillButtonWithImage {
-                $0.setUp(image: UIImage(named: "PostIcon")!, str: "Post")
-                $0.layer.cornerRadius = 9
+            postButton = PostButton {
                 $0.addTarget(self, action: #selector(postTap), for: .touchUpInside)
+                $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
                 view.addSubview($0)
             }
             postButton!.snp.makeConstraints {

@@ -19,7 +19,7 @@ extension MapController {
         var coordinate: CLLocationCoordinate2D?
         if var post = friendsPostsDictionary[postID] {
             if !post.seenList!.contains(uid) { post.seenList?.append(uid) }
-            friendsPostsDictionary[postID] = post
+            friendsPostsDictionary.updateValue(post, forKey: postID)
             coordinate = post.coordinate
         }
         updateFriendsPostGroupSeen(postID: postID)

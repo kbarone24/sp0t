@@ -190,6 +190,11 @@ class PostController: UIViewController {
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
         navigationController?.pushViewController(customMapVC, animated: true)
     }
+    
+    func openSpot(post: MapPost) {
+        let spotVC = SpotPageController(mapPost: post, presentedDrawerView: containerDrawerView)
+        navigationController?.pushViewController(spotVC, animated: true)
+    }
 }
 
 extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching, UICollectionViewDelegateFlowLayout {
