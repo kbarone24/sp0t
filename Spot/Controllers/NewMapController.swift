@@ -161,7 +161,7 @@ class NewMapController: UIViewController {
         }
         
         secretSublabel = UILabel {
-            $0.text = "Only you and invited friends will see this map"
+            $0.text = "Only invited friends will see this map"
             $0.textColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
             view.addSubview($0)
@@ -183,9 +183,9 @@ class NewMapController: UIViewController {
         }
         secretToggle.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(17)
-            $0.top.equalTo(secretLabel.snp.top).offset(2)
-            $0.width.equalTo(58.31)
-            $0.height.equalTo(32)
+            $0.top.equalTo(secretLabel.snp.top)
+            $0.width.equalTo(68)
+            $0.height.equalTo(38)
         }
         
         if presentedModally {

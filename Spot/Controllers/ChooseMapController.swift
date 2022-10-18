@@ -227,6 +227,8 @@ class ChooseMapController: UIViewController {
     }
 
     @objc func backTap(_ sender: UIBarButtonItem) {
+        /// reset new map object to show empty selection next time user comes through
+        UploadPostModel.shared.setMapValues(map: nil)
         self.navigationController?.popViewController(animated: true)
     }
     
