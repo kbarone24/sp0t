@@ -252,6 +252,8 @@ extension EditMapController {
         privateButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(17)
             $0.top.equalTo(privateLabel)
+            $0.width.equalTo(68)
+            $0.height.equalTo(38)
         }
         
         privateDescriptionLabel = UILabel {

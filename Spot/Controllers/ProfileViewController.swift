@@ -202,6 +202,7 @@ extension ProfileViewController {
     
     private func viewSetup() {
         view.backgroundColor = .white
+        //inputViewController?.edgesForExtendedLayout = .none
         self.title = ""
         navigationItem.backButtonTitle = ""
         

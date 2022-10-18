@@ -33,7 +33,6 @@ extension MapController {
             self.homeFetchGroup.notify(queue: .main) { [weak self] in
                 guard let self = self else { return }
                 self.attachNewPostListener()
-                print("not hidden")
                 self.newPostsButton.isHidden = self.sheetView != nil
                 self.newPostsButton.totalPosts = self.friendsPostsDictionary.count
                 self.loadAdditionalOnboarding()
