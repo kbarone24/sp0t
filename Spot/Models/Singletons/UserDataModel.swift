@@ -12,7 +12,7 @@ import CoreLocation
 import Firebase
 
 /// keep main user data in a singleton to avoid having to pass mapVC too much. Serves the function of the primary global variable
-class UserDataModel {
+final class UserDataModel {
     var uid: String { Auth.auth().currentUser?.uid ?? "invalid user" }
     static let shared = UserDataModel()
     
@@ -33,7 +33,7 @@ class UserDataModel {
     
     var currentLocation: CLLocation!
     
-    init() {
+    private init() {
         userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
         userInfo.id = ""
         currentLocation = CLLocation()

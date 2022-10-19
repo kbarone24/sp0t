@@ -12,7 +12,7 @@ import Photos
 import Mixpanel
 import Firebase
 
-class UploadPostModel {
+final class UploadPostModel {
     var assetsFull: PHFetchResult<PHAsset>!
     var selectedObjects: [ImageObject] = []
     var imageObjects: [(image: ImageObject, selected: Bool)] = []

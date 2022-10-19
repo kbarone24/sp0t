@@ -11,7 +11,7 @@ import UIKit
 import Firebase
 import FirebaseFirestoreSwift
 
-struct City: Identifiable, Codable {
+struct City: Identifiable, Codable, Hashable {
     
     @DocumentID var id: String?
     var cityName: String

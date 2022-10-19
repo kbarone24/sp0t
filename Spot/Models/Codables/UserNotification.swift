@@ -12,7 +12,7 @@ import Firebase
 import FirebaseFirestoreSwift
 
 
-struct UserNotification: Identifiable, Codable {
+struct UserNotification: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
     var seen: Bool
     var senderID: String
