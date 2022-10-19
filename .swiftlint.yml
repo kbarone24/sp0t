@@ -1,0 +1,53 @@
+included: # paths to include during linting. `--path` is ignored if present.
+    - Spot
+
+disabled_rules: # rule identifiers turned on by default to exclude from running
+    - colon
+    - comma
+    - control_statement
+    
+opt_in_rules: # some rules are turned off by default, so you need to opt-in
+    - empty_count
+    
+excluded: # paths to ignore during linting. Takes precedence over `included`.
+    - Carthage
+    - Pods
+    
+analyzer_rules: # Rules run by `swiftlint analyze`
+    - explicit_self
+
+# configurable rules can be customized from this configuration file
+# binary rules can set their severity level
+force_cast:
+    severity: warning
+
+force_try:
+    severity: warning
+
+line_length:
+    warning: 200
+    error: 1200
+    severity: warning
+    
+
+type_body_length:
+    warning: 300
+    error: 400
+
+file_length:
+    warning: 500
+    error: 1200
+    severity: warning
+
+type_name:
+    min_length: 4 # only warning
+    max_length: # warning and error
+    warning: 40
+    error: 50
+    excluded: iPhone # excluded via string
+    allowed_symbols: ["_"] # these are allowed in type names
+    
+identifier_name:
+    min_length: 3
+    error: 50
+    severity: warning

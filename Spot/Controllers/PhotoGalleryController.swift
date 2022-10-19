@@ -494,15 +494,6 @@ extension PhotoGalleryController: ImagePreviewDelegate {
     }
 }
 
-extension UIColor {
-    func image(_ size: CGSize = CGSize(width: 1, height: 1)) -> UIImage {
-        return UIGraphicsImageRenderer(size: size).image { rendererContext in
-            self.setFill()
-            rendererContext.fill(CGRect(origin: .zero, size: size))
-        }
-    }
-}
-
 class GalleryCell: UICollectionViewCell {
     var imageView: UIImageView!
     lazy var activityIndicator = UIActivityIndicatorView()
@@ -656,25 +647,3 @@ extension Collection {
         return indices.contains(index) ? self[index] : nil
     }
 }
-
-///https://stackoverflow.com/questions/26542035/create-uiimage-with-solid-color-in-swift
-public extension UIImage {
-    convenience init?(color: UIColor, size: CGSize = CGSize(width: 1, height: 1)) {
-        let rect = CGRect(origin: .zero, size: size)
-        UIGraphicsBeginImageContextWithOptions(rect.size, false, 0.0)
-        color.setFill()
-        UIRectFill(rect)
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        guard let cgImage = image?.cgImage else { return nil }
-        self.init(cgImage: cgImage)
-    }
-    
-    func alpha(_ a: CGFloat) -> UIImage {
-        return UIGraphicsImageRenderer(size: size, format: imageRendererFormat).image { (_) in
-            draw(in: CGRect(origin: .zero, size: size), blendMode: .normal, alpha: a)
-        }
-    }
-}
-

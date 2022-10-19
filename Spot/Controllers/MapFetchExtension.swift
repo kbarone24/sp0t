@@ -468,19 +468,19 @@ extension MapController {
         if post.spotID ?? "" == "" {
             /// attach by postID
             let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
-            let newGroup = MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
+            let newGroup = MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [MapPostGroup.PostID(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
             postGroup.append(newGroup)
             return (newGroup, true)
             
         } else if !postGroup.contains(where: {$0.id == post.spotID!}) {
             let coordinate = CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!)
-            let newGroup = MapPostGroup(id: post.spotID!, coordinate: coordinate, spotName: post.spotName!, postIDs: [(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
+            let newGroup = MapPostGroup(id: post.spotID!, coordinate: coordinate, spotName: post.spotName!, postIDs: [MapPostGroup.PostID(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
             postGroup.append(newGroup)
             return (newGroup, true)
 
         } else if let i = postGroup.firstIndex(where: {$0.id == post.spotID}) {
             if !postGroup[i].postIDs.contains(where: {$0.id == post.id}) {
-                postGroup[i].postIDs.append((id: post.id!, timestamp: post.timestamp, seen: post.seen))
+                postGroup[i].postIDs.append(MapPostGroup.PostID(id: post.id!, timestamp: post.timestamp, seen: post.seen))
                 postGroup[i].sortPostIDs()
                 return (postGroup[i], false)
             }
