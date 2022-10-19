@@ -30,6 +30,7 @@ class UploadPostModel {
     var cameraAccess: AVAuthorizationStatus {
         return AVCaptureDevice.authorizationStatus(for: .video)
     }
+    
     var galleryAccess: PHAuthorizationStatus {
         return PHPhotoLibrary.authorizationStatus(for: .readWrite)
     }
