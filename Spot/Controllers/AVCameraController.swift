@@ -530,7 +530,7 @@ class AVCameraController: UIViewController {
             guard let self = self else { return }
             try? self.cameraController.displayPreview(on: self.cameraView)
             self.view.isUserInteractionEnabled = true
-         //   self.setAutoExposure()
+            self.setAutoExposure()
         }
     }
     
