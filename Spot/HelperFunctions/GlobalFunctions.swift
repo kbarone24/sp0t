@@ -797,6 +797,11 @@ extension CLLocationDistance {
     }
 }
 
+// THIS IS NOT GOOD
+// TODO: Each returned value should be in a separate extension of it's file type.
+// Example `extension MapPost`
+// Extending NSObject is overkill
+
 extension NSObject {
     
     func getTaggedUsers(text: String) -> [UserProfile] {
@@ -1245,136 +1250,6 @@ extension NSObject {
     }
 }
 
-extension String {
-
-    func indices(of string: String) -> [Int] {
-        var indices = [Int]()
-        var searchStartIndex = self.startIndex
-
-        while searchStartIndex < self.endIndex,
-            let range = self.range(of: string, range: searchStartIndex..<self.endIndex),
-            !range.isEmpty
-        {
-            let index = distance(from: self.startIndex, to: range.lowerBound)
-            indices.append(index)
-            searchStartIndex = range.upperBound
-        }
-
-        return indices
-    }
-    
-    func getKeywordArray() -> [String] {
-        
-        var keywords: [String] = []
-        
-        keywords.append(contentsOf: getKeywordsFrom(index: 0))
-        let atIndexes = indices(of: " ")
-        
-        for index in atIndexes {
-            if index == count - 1 { continue }
-            keywords.append(contentsOf: getKeywordsFrom(index: index + 1))
-        }
-        
-        return keywords
-    }
-    
-    func getKeywordsFrom(index: Int) -> [String] {
-        
-        var keywords: [String] = []
-        if index > count { return keywords }
-        let subString = suffix(count - index)
-        
-        var word = ""
-        for sub in subString {
-            word = word + String(sub)
-            keywords.append(word)
-        }
-        
-        return keywords
-    }
-
-    func formatNumber() -> String {
-        var newNumber = components(separatedBy: CharacterSet.decimalDigits.inverted).joined() /// remove dashes and spaces
-        newNumber = String(newNumber.suffix(10)) /// match based on last 10 digits to eliminate country codes and formatting
-        return newNumber
-    }
-    
-    func spacesTrimmed() -> String {
-        var newString = self
-        while newString.last?.isWhitespace ?? false { newString = String(newString.dropLast(1))}
-        while newString.first?.isWhitespace ?? false { newString = String(newString.dropFirst(1))}
-        return newString
-    }
-}
-
-extension UIColor{
-    /** An easy way to get the color by providing the hexstring */
-    public convenience init(hexString: String) {
-        let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int = UInt32()
-        Scanner(string: hex).scanHexInt32(&int)
-        let a, r, g, b: UInt32
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
-        }
-        self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: CGFloat(a) / 255)
-    }
-    /** Return UIColor lighter */
-    public func lighter(by percentage: CGFloat = 50.0) -> UIColor? {
-        return self.adjust(by: abs(percentage) )
-    }
-    /** Return UIColor darker */
-    public func darker(by percentage: CGFloat = 50.0) -> UIColor? {
-        return self.adjust(by: -1 * abs(percentage) )
-    }
-    
-    public func adjust(by percentage: CGFloat = 50.0) -> UIColor? {
-        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-        if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
-            return UIColor(red: min(red + percentage/100, 1.0),
-                           green: min(green + percentage/100, 1.0),
-                           blue: min(blue + percentage/100, 1.0),
-                           alpha: alpha)
-        } else {
-            return nil
-        }
-    }
-    
-    /** Return contrast UIColor */
-    public func contrast() -> UIColor? {
-        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-        if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
-            return UIColor(red: 1 - red, green: 1 - green, blue: 1 - blue, alpha: alpha)
-        }
-        else {
-            return nil
-        }
-    }
-}
-
-extension UIScrollView {
-    
-    override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        next?.touchesBegan(touches, with: event)
-    }
-    
-    override open func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        next?.touchesMoved(touches, with: event)
-    }
-    
-    override open func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        next?.touchesEnded(touches, with: event)
-    }
-    
-}
-
 extension UIImageView {
     
     func animateGIF(directionUp: Bool, counter: Int) {
@@ -1484,12 +1359,6 @@ extension UIImageView {
     }
 }
 
-extension UIImage {
-    func aspectRatio() -> CGFloat {
-        return size.height/size.width
-    }
-}
-
 extension UINavigationBar {
     
     func addShadow() {
@@ -1595,26 +1464,6 @@ extension UINavigationBar {
     }
 }
 
-extension UINavigationItem {
-    func addBlackBackground() {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.backgroundImage = UIImage()
-        standardAppearance = appearance
-        scrollEdgeAppearance = appearance
-    }
-    
-    func removeBackgroundImage() {
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundImage = UIImage()
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
-        }
-    }
-}
-
 extension UITextView {
     
     // convert to nsRange in order to get correct cursor position with emojis
@@ -1696,23 +1545,6 @@ extension UIAlertAction {
         } set {
             self.setValue(newValue, forKey: "titleTextColor")
         }
-    }
-}
-
-class PaddedTextField: UITextField {
-    
-    let padding = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 5)
-    
-    override open func textRect(forBounds bounds: CGRect) -> CGRect {
-        return bounds.inset(by: padding)
-    }
-    
-    override open func placeholderRect(forBounds bounds: CGRect) -> CGRect {
-        return bounds.inset(by: padding)
-    }
-    
-    override open func editingRect(forBounds bounds: CGRect) -> CGRect {
-        return bounds.inset(by: padding)
     }
 }
 
