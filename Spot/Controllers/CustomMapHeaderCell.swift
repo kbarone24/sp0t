@@ -97,7 +97,7 @@ extension CustomMapHeaderCell {
         }
         /// show when >7 users at a map
         joinedIcon = UIImageView {
-            $0.image = UIImage(named: "Friends")
+            $0.image = UIImage(named: "FriendsIcon")
             $0.isHidden = true
             contentView.addSubview($0)
         }

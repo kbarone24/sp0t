@@ -1,8 +1,10 @@
 {
   "images" : [
     {
-      "filename" : "Friends.svg",
+      "filename" : "FriendsIcon.svg",
+
       "idiom" : "universal"
+
     }
   ],
   "info" : {

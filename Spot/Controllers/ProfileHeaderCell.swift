@@ -72,7 +72,7 @@ class ProfileHeaderCell: UICollectionViewCell {
             actionButton.setTitle("Edit profile", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         case .friend:
-            actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
+            actionButton.setImage(UIImage(named: "ProfileFriendsIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Friends", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
@@ -169,7 +169,7 @@ extension ProfileHeaderCell {
 
         /// friends list button always shows in its entirety
         friendListButton = UIButton {
-            $0.setImage(UIImage(named: "Friends"), for: .normal)
+            $0.setImage(UIImage(named: "FriendsIcon"), for: .normal)
             $0.setTitle("", for: .normal)
             $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
             $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
@@ -228,7 +228,7 @@ extension ProfileHeaderCell {
                 Mixpanel.mainInstance().track(event: "ProfileHeaderAcceptTap")
                 getNotiIDAndAcceptFriendRequest()
                 actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-                actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
+                actionButton.setImage(UIImage(named: "ProfileFriendsIcon"), for: .normal)
                 actionButton.setTitle("Friends", for: .normal)
             }
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
