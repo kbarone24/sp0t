@@ -797,6 +797,11 @@ extension CLLocationDistance {
     }
 }
 
+// THIS IS NOT GOOD
+// TODO: Each returned value should be in a separate extension of it's file type.
+// Example `extension MapPost`
+// Extending NSObject is overkill
+
 extension NSObject {
     
     func getTaggedUsers(text: String) -> [UserProfile] {
@@ -1245,136 +1250,6 @@ extension NSObject {
     }
 }
 
-extension String {
-
-    func indices(of string: String) -> [Int] {
-        var indices = [Int]()
-        var searchStartIndex = self.startIndex
-
-        while searchStartIndex < self.endIndex,
-            let range = self.range(of: string, range: searchStartIndex..<self.endIndex),
-            !range.isEmpty
-        {
-            let index = distance(from: self.startIndex, to: range.lowerBound)
-            indices.append(index)
-            searchStartIndex = range.upperBound
-        }
-
-        return indices
-    }
-    
-    func getKeywordArray() -> [String] {
-        
-        var keywords: [String] = []
-        
-        keywords.append(contentsOf: getKeywordsFrom(index: 0))
-        let atIndexes = indices(of: " ")
-        
-        for index in atIndexes {
-            if index == count - 1 { continue }
-            keywords.append(contentsOf: getKeywordsFrom(index: index + 1))
-        }
-        
-        return keywords
-    }
-    
-    func getKeywordsFrom(index: Int) -> [String] {
-        
-        var keywords: [String] = []
-        if index > count { return keywords }
-        let subString = suffix(count - index)
-        
-        var word = ""
-        for sub in subString {
-            word = word + String(sub)
-            keywords.append(word)
-        }
-        
-        return keywords
-    }
-
-    func formatNumber() -> String {
-        var newNumber = components(separatedBy: CharacterSet.decimalDigits.inverted).joined() /// remove dashes and spaces
-        newNumber = String(newNumber.suffix(10)) /// match based on last 10 digits to eliminate country codes and formatting
-        return newNumber
-    }
-    
-    func spacesTrimmed() -> String {
-        var newString = self
-        while newString.last?.isWhitespace ?? false { newString = String(newString.dropLast(1))}
-        while newString.first?.isWhitespace ?? false { newString = String(newString.dropFirst(1))}
-        return newString
-    }
-}
-
-extension UIColor{
-    /** An easy way to get the color by providing the hexstring */
-    public convenience init(hexString: String) {
-        let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int = UInt32()
-        Scanner(string: hex).scanHexInt32(&int)
-        let a, r, g, b: UInt32
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
-        }
-        self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: CGFloat(a) / 255)
-    }
-    /** Return UIColor lighter */
-    public func lighter(by percentage: CGFloat = 50.0) -> UIColor? {
-        return self.adjust(by: abs(percentage) )
-    }
-    /** Return UIColor darker */
-    public func darker(by percentage: CGFloat = 50.0) -> UIColor? {
-        return self.adjust(by: -1 * abs(percentage) )
-    }
-    
-    public func adjust(by percentage: CGFloat = 50.0) -> UIColor? {
-        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-        if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
-            return UIColor(red: min(red + percentage/100, 1.0),
-                           green: min(green + percentage/100, 1.0),
-                           blue: min(blue + percentage/100, 1.0),
-                           alpha: alpha)
-        } else {
-            return nil
-        }
-    }
-    
-    /** Return contrast UIColor */
-    public func contrast() -> UIColor? {
-        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-        if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
-            return UIColor(red: 1 - red, green: 1 - green, blue: 1 - blue, alpha: alpha)
-        }
-        else {
-            return nil
-        }
-    }
-}
-
-extension UIScrollView {
-    
-    override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        next?.touchesBegan(touches, with: event)
-    }
-    
-    override open func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        next?.touchesMoved(touches, with: event)
-    }
-    
-    override open func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        next?.touchesEnded(touches, with: event)
-    }
-    
-}
-
 extension UIImageView {
     
     func animateGIF(directionUp: Bool, counter: Int) {
@@ -1455,12 +1330,9 @@ extension UIImageView {
             guard let self = self else { return }
             self.animate5FrameAlive(directionUp: newDirection, counter: newCount)
         }
-    }
-
+    }  
     
-    
-    func roundCornersForAspectFit(radius: CGFloat)
-    {
+    func roundCornersForAspectFit(radius: CGFloat) {
         if let image = image {
             //calculate drawingRect
             let boundsScale = bounds.size.width / bounds.size.height
@@ -1480,137 +1352,6 @@ extension UIImageView {
             let mask = CAShapeLayer()
             mask.path = path.cgPath
             layer.mask = mask
-        }
-    }
-}
-
-extension UIImage {
-    func aspectRatio() -> CGFloat {
-        return size.height/size.width
-    }
-}
-
-extension UINavigationBar {
-    
-    func addShadow() {
-        /// gray line at bottom of nav bar
-        if let _ = layer.sublayers?.first(where: {$0.name == "bottomLine"}) { return }
-        
-        let bottomLine = CALayer()
-        bottomLine.frame = CGRect(x: 0.0, y: bounds.height - 1, width: bounds.width, height: 1.0)
-        bottomLine.backgroundColor = UIColor(red: 0.121, green: 0.121, blue: 0.121, alpha: 1).cgColor
-        bottomLine.shouldRasterize = true
-        bottomLine.name = "bottomLine"
-        layer.addSublayer(bottomLine)
-        
-        /// mask to show under nav bar
-        layer.masksToBounds = false
-        layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.37).cgColor
-        layer.shadowOpacity = 1
-        layer.shadowOffset = CGSize(width: 0, height: 4)
-        layer.shadowRadius = 6
-        layer.position = center
-        layer.shouldRasterize = true
-    }
-    
-    func removeShadow() {
-        if let sub = layer.sublayers?.first(where: {$0.name == "bottomLine"}) { sub.removeFromSuperlayer() }
-        layer.shadowRadius = 0
-        layer.shadowOffset = CGSize(width: 0, height: 0)
-    }
-    
-    func addGradientBackground(alpha: CGFloat) {
-        /// gradient nav bar background
-        let window = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
-        let navBarHeight = statusHeight + bounds.height
-
-        let gradient = CAGradientLayer()
-        let sizeLength: CGFloat = UIScreen.main.bounds.size.height * 2
-        let defaultNavigationBarFrame = CGRect(x: 0, y: 0, width: sizeLength, height: navBarHeight)
-        
-        gradient.frame = defaultNavigationBarFrame
-        gradient.colors = [UIColor(red: 0.10, green: 0.10, blue: 0.10, alpha: alpha).cgColor, UIColor(red: 0.07, green: 0.07, blue: 0.07, alpha: alpha).cgColor]
-        gradient.startPoint = CGPoint(x: 0.5, y: 0.0)
-        gradient.endPoint = CGPoint(x: 0.5, y: 1.0)
-        
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundImage = self.image(fromLayer: gradient)
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
-        } else {
-            setBackgroundImage(self.image(fromLayer: gradient), for: .default)
-        }
-    }
-    
-    func addBlackBackground() {
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundColor = .black
-            appearance.titleTextAttributes[.foregroundColor] = UIColor.white
-            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)!
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
-        } else {
-            setBackgroundImage(UIImage(color: UIColor.black), for: .default)
-        }
-    }
-    
-    func addWhiteBackground() {
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundColor = .white
-            appearance.titleTextAttributes[.foregroundColor] = UIColor.black
-            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)!
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
-        } else {
-            setBackgroundImage(UIImage(color: UIColor.white), for: .default)
-        }
-    }
-    
-    func removeBackgroundImage() {
-                
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundImage = UIImage()
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
-        } else {
-            setBackgroundImage(UIImage(), for: .default)
-        }
-    }
-    
-    func image(fromLayer layer: CALayer) -> UIImage {
-        UIGraphicsBeginImageContext(layer.frame.size)
-        layer.render(in: UIGraphicsGetCurrentContext()!)
-        let outputImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return outputImage!
-    }
-}
-
-extension UINavigationItem {
-    func addBlackBackground() {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.backgroundImage = UIImage()
-        standardAppearance = appearance
-        scrollEdgeAppearance = appearance
-    }
-    
-    func removeBackgroundImage() {
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundImage = UIImage()
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
         }
     }
 }
@@ -1696,23 +1437,6 @@ extension UIAlertAction {
         } set {
             self.setValue(newValue, forKey: "titleTextColor")
         }
-    }
-}
-
-class PaddedTextField: UITextField {
-    
-    let padding = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 5)
-    
-    override open func textRect(forBounds bounds: CGRect) -> CGRect {
-        return bounds.inset(by: padding)
-    }
-    
-    override open func placeholderRect(forBounds bounds: CGRect) -> CGRect {
-        return bounds.inset(by: padding)
-    }
-    
-    override open func editingRect(forBounds bounds: CGRect) -> CGRect {
-        return bounds.inset(by: padding)
     }
 }
 

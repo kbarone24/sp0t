@@ -12,7 +12,7 @@ import Photos
 import Mixpanel
 import Firebase
 
-class UploadPostModel {
+final class UploadPostModel {
     var assetsFull: PHFetchResult<PHAsset>!
     var selectedObjects: [ImageObject] = []
     var imageObjects: [(image: ImageObject, selected: Bool)] = []
@@ -30,6 +30,7 @@ class UploadPostModel {
     var cameraAccess: AVAuthorizationStatus {
         return AVCaptureDevice.authorizationStatus(for: .video)
     }
+    
     var galleryAccess: PHAuthorizationStatus {
         return PHPhotoLibrary.authorizationStatus(for: .readWrite)
     }

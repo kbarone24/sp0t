@@ -11,7 +11,7 @@ import UIKit
 import FirebaseFirestoreSwift
 import CoreLocation
 
-struct ResultSpot: Identifiable, Codable {
+struct ResultSpot: Identifiable, Codable, Hashable {
     
     @DocumentID var id: String?
     var spotName: String

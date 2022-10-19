@@ -11,7 +11,7 @@ import UIKit
 import Firebase
 import FirebaseFirestoreSwift
 
-struct MapComment: Identifiable, Codable {
+struct MapComment: Identifiable, Codable, Hashable {
     
     @DocumentID var id: String?
     var comment: String
