@@ -371,6 +371,7 @@
 		CD239A1528FFD6520099513F /* UICollectionViewCellExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1428FFD6520099513F /* UICollectionViewCellExtension.swift */; };
 		CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1628FFD6AF0099513F /* UIImageExtension.swift */; };
 		CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */; };
+		CD239A1B28FFD9A40099513F /* UINavigationBarExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -561,6 +562,7 @@
 		CD239A1428FFD6520099513F /* UICollectionViewCellExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UICollectionViewCellExtension.swift; sourceTree = "<group>"; };
 		CD239A1628FFD6AF0099513F /* UIImageExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExtension.swift; sourceTree = "<group>"; };
 		CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationItemExtension.swift; sourceTree = "<group>"; };
+		CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationBarExtension.swift; sourceTree = "<group>"; };
 		F762098B71569C89C087B675 /* Pods-Spot.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.debug.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1080,6 +1082,7 @@
 				CD239A1428FFD6520099513F /* UICollectionViewCellExtension.swift */,
 				CD239A1628FFD6AF0099513F /* UIImageExtension.swift */,
 				CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */,
+				CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */,
 			);
 			path = UIKitExtensions;
 			sourceTree = "<group>";
@@ -1396,6 +1399,7 @@
 				8C34207A261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				8C61EB4728CBBF1400E7180A /* CustomMapCollectionExtension.swift in Sources */,
 				4106ECD428A3F0B400680005 /* SpotPageBodyCell.swift in Sources */,
+				CD239A1B28FFD9A40099513F /* UINavigationBarExtension.swift in Sources */,
 				8C1E48E028AB38560093030D /* SimpleMapHeaderCell.swift in Sources */,
 				8C3B955228AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8C3B952628AC042B00C06586 /* PostCell.swift in Sources */,
