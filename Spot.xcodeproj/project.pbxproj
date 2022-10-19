@@ -383,7 +383,7 @@
 
 /* Begin PBXFileReference section */
 		1DF6E03122089F4500BA0C36 /* Spot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Spot.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1DF6E03422089F4500BA0C36 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Delegates/AppDelegate.swift; sourceTree = "<group>"; };
+		1DF6E03422089F4500BA0C36 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		1DF6E03622089F4500BA0C36 /* NameController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameController.swift; sourceTree = "<group>"; };
 		1DF6E03922089F4500BA0C36 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		1DF6E03E22089F4800BA0C36 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -602,6 +602,9 @@
 		1DF6E03322089F4500BA0C36 /* Spot */ = {
 			isa = PBXGroup;
 			children = (
+				1DF6E03422089F4500BA0C36 /* AppDelegate.swift */,
+				59F4701D2368933C00BB79CC /* SceneDelegate.swift */,
+				5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */,
 				59A5A3D1253A874600789B7E /* Info.plist */,
 				59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */,
 				598B70142314A78F00613AFD /* Spot.entitlements */,
@@ -609,6 +612,7 @@
 				1DF6E06622089F8D00BA0C36 /* Models */,
 				1DF6E06722089F9400BA0C36 /* Views */,
 				1DF6E06522089F8700BA0C36 /* Controllers */,
+				8C298795268FACE80071E75A /* HelperFunctions */,
 				8C298799268FADF90071E75A /* Storyboards */,
 			);
 			path = Spot;
@@ -634,6 +638,7 @@
 		1DF6E06522089F8700BA0C36 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				CD239A0328FFCC010099513F /* UISheetPresentation */,
 				599BD2C223C6533800ECB84A /* Main */,
 				599BD2C323C6534600ECB84A /* Map */,
 				599BD2C523C653DC00ECB84A /* Feed */,
@@ -678,9 +683,6 @@
 			children = (
 				7A9A551522273F71007469C7 /* Chapel Hill.gpx */,
 				5947712E2326E091008E50B9 /* Assets.xcassets */,
-				59F4701D2368933C00BB79CC /* SceneDelegate.swift */,
-				1DF6E03422089F4500BA0C36 /* AppDelegate.swift */,
-				8C298795268FACE80071E75A /* HelperFunctions */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -973,8 +975,6 @@
 		8C298795268FACE80071E75A /* HelperFunctions */ = {
 			isa = PBXGroup;
 			children = (
-				5FD686D12852526F00B88B3B /* Spot-Bridging-Header.h */,
-				5FD686D22852527300B88B3B /* UISheetPresentationControllerDetent+Private.h */,
 				59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */,
 				8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */,
 				5FDAF23B2857E65A001EDC57 /* Declarative.swift */,
@@ -1031,6 +1031,14 @@
 				8C88B0E627B46E3900DB4039 /* PostImageModel.swift */,
 			);
 			path = Singletons;
+			sourceTree = "<group>";
+		};
+		CD239A0328FFCC010099513F /* UISheetPresentation */ = {
+			isa = PBXGroup;
+			children = (
+				5FD686D22852527300B88B3B /* UISheetPresentationControllerDetent+Private.h */,
+			);
+			name = UISheetPresentation;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1859,7 +1867,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Resources/HelperFunctions/Spot-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Spot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1929,7 +1937,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = sp0tDevProfile;
-				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Resources/HelperFunctions/Spot-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Spot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
