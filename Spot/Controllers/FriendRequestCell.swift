@@ -159,7 +159,7 @@ class FriendRequestCell: UICollectionViewCell {
             $0.layer.cornerRadius = 14
             $0.layer.borderWidth = 1
             $0.layer.borderColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1).cgColor
-            $0.setImage(UIImage(named: "FriendsIcon"), for: .normal)
+            $0.setImage(UIImage(named: "ProfileFriendsIcon"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
 
             let customButtonTitle = NSMutableAttributedString(string: "Confirmed", attributes: [

@@ -198,6 +198,7 @@ class CustomMapController: UIViewController {
             view.register(CustomMapHeaderCell.self, forCellWithReuseIdentifier: "CustomMapHeaderCell")
             view.register(CustomMapBodyCell.self, forCellWithReuseIdentifier: "CustomMapBodyCell")
             view.register(SimpleMapHeaderCell.self, forCellWithReuseIdentifier: "SimpleMapHeaderCell")
+            view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
             return view
         }()
         view.addSubview(collectionView)
@@ -228,17 +229,15 @@ class CustomMapController: UIViewController {
       ///      $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 90)
             containerDrawerView?.slideView.addSubview($0)
         }
+        let height: CGFloat = UserDataModel.shared.screenSize == 0 ? 65 : 90
         barView.snp.makeConstraints {
             $0.leading.top.width.equalToSuperview()
-            $0.height.equalTo(90)
+            $0.height.equalTo(height)
         }
         
         barBackButton = UIButton {
             $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
-            $0.setTitle("", for: .normal)
             $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
-        //    $0.isHidden = true
-        //    $0.sizeToFit()
             barView.addSubview($0)
         }
         barBackButton.snp.makeConstraints {
@@ -263,7 +262,7 @@ class CustomMapController: UIViewController {
         titleLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(60)
             $0.bottom.equalTo(barBackButton)
-         //   $0.trailing.equalToSuperview().offset(-22)
+            $0.height.equalTo(22)
         }
     }
     

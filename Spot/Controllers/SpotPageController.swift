@@ -111,6 +111,7 @@ extension SpotPageController {
             view.backgroundColor = .clear
             view.register(SpotPageHeaderCell.self, forCellWithReuseIdentifier: "SpotPageHeaderCell")
             view.register(SpotPageBodyCell.self, forCellWithReuseIdentifier: "SpotPageBodyCell")
+            view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
             return view
         }()
         view.addSubview(collectionView)
@@ -131,9 +132,26 @@ extension SpotPageController {
         
         barView = UIView {
             $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
-            $0.backgroundColor = .gray
             containerDrawerView?.slideView.addSubview($0)
         }
+        let height: CGFloat = UserDataModel.shared.screenSize == 0 ? 65 : 90
+        barView.snp.makeConstraints {
+            $0.leading.top.width.equalToSuperview()
+            $0.height.equalTo(height)
+        }
+        
+        barBackButton = UIButton {
+            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
+            $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
+            barView.addSubview($0)
+        }
+        barBackButton.snp.makeConstraints {
+            $0.leading.equalTo(22)
+            $0.bottom.equalTo(-12)
+            $0.height.equalTo(21.5)
+            $0.width.equalTo(30)
+        }
+
         titleLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.text = ""
@@ -142,20 +160,14 @@ extension SpotPageController {
             $0.numberOfLines = 0
             $0.sizeToFit()
             $0.adjustsFontSizeToFitWidth = true
-            $0.frame = CGRect(origin: CGPoint(x: 50, y: 55), size: CGSize(width: view.frame.width - 100, height: 18))
             barView.addSubview($0)
         }
-        barBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
-            $0.setTitle("", for: .normal)
-            $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
-            barView.addSubview($0)
+        titleLabel.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(60)
+            $0.bottom.equalTo(barBackButton)
+            $0.height.equalTo(22)
         }
-        barBackButton.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(22)
-            $0.centerY.equalTo(titleLabel)
-        }
-        
+
         mapPostLabel = UILabel {
             $0.text = ""
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)

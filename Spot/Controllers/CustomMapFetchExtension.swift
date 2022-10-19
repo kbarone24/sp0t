@@ -28,7 +28,7 @@ extension CustomMapController {
         }
         
         // Get the first four map member
-        for index in 0...(members.count < 4 ? (members.count - 1) : 3) {
+        for index in 0...(members.count < 5 ? (members.count - 1) : 3) {
             dispatch.enter()
             getUserInfo(userID: members[index]) { user in
                 memberList.insert(user, at: 0)
