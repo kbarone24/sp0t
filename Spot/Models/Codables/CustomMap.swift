@@ -213,15 +213,3 @@ struct MapPostGroup: Hashable {
         })
     }
 }
-
-extension CLLocationCoordinate2D: Hashable {
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(location)
-        hasher.combine(latitude)
-        hasher.combine(longitude)
-    }
-    
-    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
-        lhs.location == rhs.location
-    }
-}

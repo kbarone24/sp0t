@@ -362,6 +362,15 @@
 		8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
 		8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
 		94CCAEDBE22BD4BD080DFB40 /* Pods_Spot.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CCE453E39170B954D39EDD55 /* Pods_Spot.framework */; };
+		CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0728FFD3610099513F /* MapKitExtension.swift */; };
+		CD239A0A28FFD3BB0099513F /* UIColorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0928FFD3BB0099513F /* UIColorExtension.swift */; };
+		CD239A0C28FFD4EE0099513F /* StringExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0B28FFD4EE0099513F /* StringExtension.swift */; };
+		CD239A0E28FFD5480099513F /* UIScrollViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0D28FFD5480099513F /* UIScrollViewExtension.swift */; };
+		CD239A1128FFD5AC0099513F /* PaddedTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1028FFD5AC0099513F /* PaddedTextField.swift */; };
+		CD239A1328FFD61C0099513F /* UITableViewCellExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1228FFD61C0099513F /* UITableViewCellExtension.swift */; };
+		CD239A1528FFD6520099513F /* UICollectionViewCellExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1428FFD6520099513F /* UICollectionViewCellExtension.swift */; };
+		CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1628FFD6AF0099513F /* UIImageExtension.swift */; };
+		CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -543,6 +552,15 @@
 		994C18FD0D847CBE77336F96 /* Pods-Spot.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.release.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.release.xcconfig"; sourceTree = "<group>"; };
 		A296FC0C74CC7D5302353491 /* Pods-SpotTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SpotTests.debug.xcconfig"; path = "Target Support Files/Pods-SpotTests/Pods-SpotTests.debug.xcconfig"; sourceTree = "<group>"; };
 		CCE453E39170B954D39EDD55 /* Pods_Spot.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Spot.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD239A0728FFD3610099513F /* MapKitExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapKitExtension.swift; sourceTree = "<group>"; };
+		CD239A0928FFD3BB0099513F /* UIColorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColorExtension.swift; sourceTree = "<group>"; };
+		CD239A0B28FFD4EE0099513F /* StringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtension.swift; sourceTree = "<group>"; };
+		CD239A0D28FFD5480099513F /* UIScrollViewExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIScrollViewExtension.swift; sourceTree = "<group>"; };
+		CD239A1028FFD5AC0099513F /* PaddedTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaddedTextField.swift; sourceTree = "<group>"; };
+		CD239A1228FFD61C0099513F /* UITableViewCellExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITableViewCellExtension.swift; sourceTree = "<group>"; };
+		CD239A1428FFD6520099513F /* UICollectionViewCellExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UICollectionViewCellExtension.swift; sourceTree = "<group>"; };
+		CD239A1628FFD6AF0099513F /* UIImageExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExtension.swift; sourceTree = "<group>"; };
+		CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationItemExtension.swift; sourceTree = "<group>"; };
 		F762098B71569C89C087B675 /* Pods-Spot.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.debug.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -613,6 +631,7 @@
 				1DF6E06722089F9400BA0C36 /* Views */,
 				1DF6E06522089F8700BA0C36 /* Controllers */,
 				8C298795268FACE80071E75A /* HelperFunctions */,
+				CD239A0428FFD3070099513F /* Extensions */,
 				8C298799268FADF90071E75A /* Storyboards */,
 			);
 			path = Spot;
@@ -670,6 +689,7 @@
 		1DF6E06722089F9400BA0C36 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				CD239A0F28FFD5830099513F /* Common */,
 				8C1E4876289C54C10093030D /* AnnotationViews */,
 				8C1E4893289C54CB0093030D /* Nibs */,
 				8C1E4883289C54CB0093030D /* NibWindows */,
@@ -1041,6 +1061,45 @@
 			name = UISheetPresentation;
 			sourceTree = "<group>";
 		};
+		CD239A0428FFD3070099513F /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				CD239A0628FFD33D0099513F /* FoundationExtensions */,
+				CD239A0528FFD3340099513F /* UIKitExtensions */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		CD239A0528FFD3340099513F /* UIKitExtensions */ = {
+			isa = PBXGroup;
+			children = (
+				CD239A0928FFD3BB0099513F /* UIColorExtension.swift */,
+				CD239A0728FFD3610099513F /* MapKitExtension.swift */,
+				CD239A0D28FFD5480099513F /* UIScrollViewExtension.swift */,
+				CD239A1228FFD61C0099513F /* UITableViewCellExtension.swift */,
+				CD239A1428FFD6520099513F /* UICollectionViewCellExtension.swift */,
+				CD239A1628FFD6AF0099513F /* UIImageExtension.swift */,
+				CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */,
+			);
+			path = UIKitExtensions;
+			sourceTree = "<group>";
+		};
+		CD239A0628FFD33D0099513F /* FoundationExtensions */ = {
+			isa = PBXGroup;
+			children = (
+				CD239A0B28FFD4EE0099513F /* StringExtension.swift */,
+			);
+			path = FoundationExtensions;
+			sourceTree = "<group>";
+		};
+		CD239A0F28FFD5830099513F /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				CD239A1028FFD5AC0099513F /* PaddedTextField.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1346,6 +1405,7 @@
 				8C66226228EF596700BA5D05 /* ProgressBar.swift in Sources */,
 				416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */,
 				8C1E48CB289C55090093030D /* MapFetchExtension.swift in Sources */,
+				CD239A0E28FFD5480099513F /* UIScrollViewExtension.swift in Sources */,
 				8C1E4866289C54370093030D /* FriendsListCell.swift in Sources */,
 				8C1E4862289C54240093030D /* ProfileMyMapCell.swift in Sources */,
 				8C1E487A289C54C10093030D /* SpotPostAnnotationView.swift in Sources */,
@@ -1366,9 +1426,11 @@
 				8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				5F497B3E2889BFEC0029EAF1 /* CameraFailedUploadsExt.swift in Sources */,
+				CD239A1328FFD61C0099513F /* UITableViewCellExtension.swift in Sources */,
 				59DFA25222C27B4800A59D29 /* CommentsViewController.swift in Sources */,
 				8C61EB5328D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				8C92898726CB18F10028DB69 /* CameraAccessView.swift in Sources */,
+				CD239A0C28FFD4EE0099513F /* StringExtension.swift in Sources */,
 				59056A5323197E4B00C7E753 /* PostNotification.swift in Sources */,
 				5F2B5A7D288EE5830006DDA6 /* ContactCell.swift in Sources */,
 				593AC54D243FAA2B00C08237 /* PhoneController.swift in Sources */,
@@ -1376,6 +1438,8 @@
 				8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8C3BAF5F260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
+				CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */,
+				CD239A1128FFD5AC0099513F /* PaddedTextField.swift in Sources */,
 				8C1E4873289C54900093030D /* MapViewDelegate.swift in Sources */,
 				8CA512B528BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */,
 				413BA16D288A764F00FD80AF /* CustomMapController.swift in Sources */,
@@ -1402,6 +1466,8 @@
 				412555C4285AEA0300C071A4 /* BottomToTopTransition.swift in Sources */,
 				8CC3653A26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				414CD27C2899ABDB001F1776 /* MapMemberCell.swift in Sources */,
+				CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */,
+				CD239A0A28FFD3BB0099513F /* UIColorExtension.swift in Sources */,
 				8C8DBB722888BE5C00B31BFD /* ChooseSpotController.swift in Sources */,
 				4106ECD228A35ABB00680005 /* SpotPageHeaderCell.swift in Sources */,
 				8C66226828F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
@@ -1432,6 +1498,7 @@
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C1E48CF289C57650093030D /* ProfileHeaderCell.swift in Sources */,
 				5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */,
+				CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */,
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C1E489A289C54CB0093030D /* FriendPostView.swift in Sources */,
 				8C61EB4B28CBBF2900E7180A /* CustomMapDelegateExtension.swift in Sources */,
@@ -1439,6 +1506,7 @@
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				8C5AF2EA288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
 				5916A8B324A27F8500118E83 /* MapSpot.swift in Sources */,
+				CD239A1528FFD6520099513F /* UICollectionViewCellExtension.swift in Sources */,
 				59826E9F244FA078004B858F /* PhotoGalleryController.swift in Sources */,
 				8CFD73EA2757E4FD00CBD162 /* TagCategory.swift in Sources */,
 				59BAF9D82360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */,
