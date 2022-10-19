@@ -12,7 +12,7 @@ import UIKit
 import Firebase
 import FirebaseFirestoreSwift
 
-struct UserProfile: Identifiable, Codable {
+struct UserProfile: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
     
     var avatarURL: String? = ""
