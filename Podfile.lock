@@ -433,6 +433,7 @@ PODS:
     - SDWebImage/Core (= 5.13.2)
   - SDWebImage/Core (5.13.2)
   - SnapKit (5.6.0)
+  - SwiftLint (0.49.1)
 
 DEPENDENCIES:
   - Firebase/Analytics
@@ -453,6 +454,7 @@ DEPENDENCIES:
   - R.swift
   - RSKImageCropper
   - SnapKit
+  - SwiftLint
 
 SPEC REPOS:
   trunk:
@@ -496,6 +498,7 @@ SPEC REPOS:
     - RSKImageCropper
     - SDWebImage
     - SnapKit
+    - SwiftLint
 
 EXTERNAL SOURCES:
   Geofirestore:
@@ -548,7 +551,8 @@ SPEC CHECKSUMS:
   RSKImageCropper: 90dfe482402fb8a40cabd5fea65186d9102cc425
   SDWebImage: 72f86271a6f3139cc7e4a89220946489d4b9a866
   SnapKit: e01d52ebb8ddbc333eefe2132acf85c8227d9c25
+  SwiftLint: 32ee33ded0636d0905ef6911b2b67bbaeeedafa5
 
-PODFILE CHECKSUM: 2e22917cfe48371bc305fd8f2656cddd4cc0070c
+PODFILE CHECKSUM: f08eaa81378167d0e62a9fcf6163210fe6fac6f9
 
 COCOAPODS: 1.11.3

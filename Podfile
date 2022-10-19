@@ -22,6 +22,7 @@ use_frameworks!
   pod 'Firebase/Functions'
   pod 'SnapKit'
   pod 'R.swift'
+  pod 'SwiftLint'
 
   target 'SpotTests' do
     inherit! :search_paths
