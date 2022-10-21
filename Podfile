@@ -1,5 +1,8 @@
 platform :ios, '14.0'
 
+# ignore all warnings from all pods
+inhibit_all_warnings!
+
 target 'Spot' do
 project 'Spot.xcodeproj'
 
@@ -22,6 +25,7 @@ use_frameworks!
   pod 'Firebase/Functions'
   pod 'SnapKit'
   pod 'R.swift'
+  pod 'SwiftLint'
 
   target 'SpotTests' do
     inherit! :search_paths

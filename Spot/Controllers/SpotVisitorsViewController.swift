@@ -6,11 +6,11 @@
 //  Copyright © 2021 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
-import SDWebImage
+import Foundation
 import Mixpanel
+import SDWebImage
+import UIKit
 
 class SpotVisitorsViewController: UIViewController {
     /*

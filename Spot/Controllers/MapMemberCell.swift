@@ -6,22 +6,22 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import UIKit
 import FirebaseUI
+import UIKit
 
 class MapMemberCell: UICollectionViewCell {
     private var userImageView: UIImageView!
     private var userNameLabel: UILabel!
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     func cellSetUp(user: UserProfile) {
         if user.imageURL != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
@@ -32,7 +32,7 @@ class MapMemberCell: UICollectionViewCell {
 
         userNameLabel.text = user.username
     }
-    
+
     override func prepareForReuse() {
         super.prepareForReuse()
         userImageView.sd_cancelCurrentImageLoad()
@@ -42,7 +42,7 @@ class MapMemberCell: UICollectionViewCell {
 extension MapMemberCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
-        
+
         userImageView = UIImageView {
             $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
@@ -54,7 +54,7 @@ extension MapMemberCell {
             $0.top.equalToSuperview()
             $0.width.height.equalTo(62)
         }
-        
+
         userNameLabel = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 14)

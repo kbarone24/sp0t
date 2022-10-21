@@ -6,34 +6,34 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
+import FirebaseUI
 import Foundation
 import UIKit
-import FirebaseUI
 
 class CustomMapUploadCell: UITableViewCell {
     var mapImage: UIImageView!
     var nameLabel: UILabel!
     var selectedBubble: UIImageView!
     var bottomLine: UIView!
-    
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setUpView()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     func setUp(map: CustomMap?, selected: Bool, newMap: Bool) {
         if selected { print("secret", map!.secret) }
         if map == nil {
             mapImage.image = UIImage(named: "NewMapCellImage")
             selectedBubble.image = UIImage()
-            
+
         } else {
             let url = map!.imageURL
-            if map!.coverImage != UIImage () {
+            if map!.coverImage != UIImage() {
                 mapImage.image = map!.coverImage
             } else if url != "" {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
@@ -42,10 +42,10 @@ class CustomMapUploadCell: UITableViewCell {
             let buttonImage = selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
             selectedBubble.image = buttonImage
         }
-        
+
         if map == nil {
             nameLabel.attributedText = NSAttributedString(string: "New map")
-        
+
         } else if map!.secret {
             let imageAttachment = NSTextAttachment()
             imageAttachment.image = UIImage(named: "SecretMap")
@@ -58,7 +58,7 @@ class CustomMapUploadCell: UITableViewCell {
         } else {
             nameLabel.attributedText = NSAttributedString(string: map!.mapName)
         }
-        
+
         let disableCell = !selected && newMap
         contentView.alpha = disableCell ? 0.2 : 1.0
         isUserInteractionEnabled = disableCell ? false : true
@@ -67,7 +67,7 @@ class CustomMapUploadCell: UITableViewCell {
     func setUpView() {
         backgroundColor = .white
         selectionStyle = .none
-        
+
         mapImage = UIImageView {
             $0.layer.cornerRadius = 9
             $0.clipsToBounds = true
@@ -79,7 +79,7 @@ class CustomMapUploadCell: UITableViewCell {
             $0.height.width.equalTo(49)
             $0.centerY.equalToSuperview()
         }
-        
+
         selectedBubble = UIImageView {
             contentView.addSubview($0)
         }
@@ -112,24 +112,23 @@ class CustomMapUploadCell: UITableViewCell {
             $0.bottom.equalToSuperview()
         }
     }
-    
+
     override func prepareForReuse() {
         super.prepareForReuse()
         if mapImage != nil { mapImage.sd_cancelCurrentImageLoad() }
     }
 }
 
-
 class CustomMapsHeader: UITableViewHeaderFooterView {
     var customMapsLabel: UILabel!
-    
+
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
         let backgroundView = UIView()
         backgroundView.backgroundColor = .white
         self.backgroundView = backgroundView
         print("init header")
-                
+
         customMapsLabel = UILabel {
             $0.text = "MY MAPS"
             $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
