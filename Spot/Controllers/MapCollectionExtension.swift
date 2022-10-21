@@ -6,16 +6,16 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import FirebaseUI
+import Foundation
 import Mixpanel
+import UIKit
 
 extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return feedLoaded ? UserDataModel.shared.userInfo.mapsList.count + 2 : 1
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if !feedLoaded, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapLoadingCell", for: indexPath) as? MapLoadingCell {
             /// display loading cell
@@ -27,16 +27,16 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         }
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapCell", for: indexPath) as? MapHomeCell {
             let map = UserDataModel.shared.userInfo.mapsList[safe: indexPath.row - 1]
-            var avatarURLs = map == nil ? friendsPostsDictionary.values.map({$0.userInfo?.avatarURL ?? ""}).uniqued().prefix(5) : []
+            var avatarURLs = map == nil ? friendsPostsDictionary.values.map({ $0.userInfo?.avatarURL ?? "" }).uniqued().prefix(5) : []
             if avatarURLs.count < 5 && !avatarURLs.contains(UserDataModel.shared.userInfo.avatarURL ?? "") { avatarURLs.append(UserDataModel.shared.userInfo.avatarURL ?? "") }
-            let postsList = map == nil ? friendsPostsDictionary.map({$0.value}) : map!.postsDictionary.map({$0.value})
+            let postsList = map == nil ? friendsPostsDictionary.map({ $0.value }) : map!.postsDictionary.map({ $0.value })
             cell.setUp(map: map, avatarURLs: Array(avatarURLs), postsList: postsList)
             cell.isSelected = selectedItemIndex == indexPath.row
             return cell
         }
         return UICollectionViewCell()
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
             /// launch new map
@@ -50,7 +50,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         collectionView.selectItem(at: indexPath, animated: true, scrollPosition: [])
         selectMapAt(index: indexPath.item)
     }
-    
+
     func selectMapAt(index: Int) {
         Mixpanel.mainInstance().track(event: "MapControllerSelectMapAt", properties: ["index": index])
         DispatchQueue.main.async {
@@ -62,7 +62,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             }
         }
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let spacing: CGFloat = 9 + 5 * 3
         let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.7
@@ -70,15 +70,14 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         let firstItemWidth = itemWidth * 1.15
         return feedLoaded ? indexPath.item == 0 ? CGSize(width: firstItemWidth, height: itemHeight) : CGSize(width: itemWidth, height: itemHeight) : CGSize(width: UIScreen.main.bounds.width, height: itemHeight)
     }
-    
-    
+
     func addMapAnnotations(index: Int, reload: Bool) {
         mapView.removeAllAnnos()
         var map = getSelectedMap()
         /// create temp map to represent friends map
         if map == nil { map = getFriendsMapObject() }
         for group in map!.postGroup { mapView.addSpotAnnotation(group: group, map: map!) }
-    
+
         if !reload {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [weak self] in
                 guard let self = self else { return }
@@ -86,7 +85,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             })
         }
     }
-    
+
     func getFriendsMapObject() -> CustomMap {
         var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         map.postsDictionary = friendsPostsDictionary
@@ -102,7 +101,7 @@ class MapHomeCell: UICollectionViewCell {
     var friendsCoverImage: ImageAvatarView!
     var lockIcon: UIImageView!
     var nameLabel: UILabel!
-    
+
     override var isSelected: Bool {
         didSet {
             contentArea.backgroundColor = isSelected ? UIColor(red: 0.843, green: 0.992, blue: 1, alpha: 1) : UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
@@ -110,7 +109,7 @@ class MapHomeCell: UICollectionViewCell {
             if lockIcon != nil { lockIcon.image = isSelected ? UIImage(named: "HomeLockIconSelected") : UIImage(named: "HomeLockIcon") }
         }
     }
-    
+
     func setUp(map: CustomMap?, avatarURLs: [String]?, postsList: [MapPost]) {
         setUpView()
         if map != nil {
@@ -124,7 +123,7 @@ class MapHomeCell: UICollectionViewCell {
             }
             mapCoverImage.layer.cornerRadius = 9
             mapCoverImage.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
-            
+
             let textString = NSMutableAttributedString(string: map?.mapName ?? "").shrinkLineHeight()
             nameLabel.attributedText = textString
             nameLabel.sizeToFit()
@@ -136,16 +135,15 @@ class MapHomeCell: UICollectionViewCell {
             friendsCoverImage.backgroundColor = .white
             friendsCoverImage.layer.cornerRadius = 9
             friendsCoverImage.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
-            
+
             let textString = NSMutableAttributedString(string: "Friends map").shrinkLineHeight()
             nameLabel.attributedText = textString
         }
-        
-        if postsList.contains(where: {!$0.seenList!.contains(UserDataModel.shared.uid)}) {
+
+        if postsList.contains(where: { !$0.seenList!.contains(UserDataModel.shared.uid) }) {
             newIndicator.isHidden = false
         }
-        
-        
+
         /// add image bottom corner radius
         let maskPath = UIBezierPath(roundedRect: mapCoverImage.bounds,
                                     byRoundingCorners: [.topLeft, .topRight],
@@ -154,7 +152,7 @@ class MapHomeCell: UICollectionViewCell {
         maskLayer.path = maskPath.cgPath
      //   if map != nil { mapCoverImage.layer.mask = maskLayer } else { friendsCoverImage.layer.mask = maskLayer }
     }
-    
+
     func setUpView() {
         contentArea.removeFromSuperview()
         contentArea = UIView {
@@ -168,11 +166,11 @@ class MapHomeCell: UICollectionViewCell {
             $0.top.leading.equalToSuperview().offset(3)
             $0.bottom.trailing.equalToSuperview()
         }
-        
+
         if newIndicator != nil { newIndicator.removeFromSuperview() }
         newIndicator = UIView {
             $0.backgroundColor = UIColor(named: "SpotGreen")
-            $0.layer.cornerRadius = 20/2
+            $0.layer.cornerRadius = 20 / 2
             $0.isHidden = true
             contentView.addSubview($0)
         }
@@ -180,7 +178,7 @@ class MapHomeCell: UICollectionViewCell {
             $0.top.leading.equalToSuperview()
             $0.width.height.equalTo(20)
         }
-        
+
         if mapCoverImage != nil { mapCoverImage.removeFromSuperview() }
         mapCoverImage = UIImageView {
             $0.layer.cornerRadius = 2
@@ -193,7 +191,7 @@ class MapHomeCell: UICollectionViewCell {
             $0.top.leading.trailing.equalToSuperview().inset(9)
             $0.bottom.equalToSuperview().inset(30)
         }
-        
+
         if friendsCoverImage != nil { friendsCoverImage.removeFromSuperview() }
         friendsCoverImage = ImageAvatarView {
             $0.clipsToBounds = true
@@ -203,7 +201,7 @@ class MapHomeCell: UICollectionViewCell {
         friendsCoverImage.snp.makeConstraints {
             $0.edges.equalTo(mapCoverImage.snp.edges)
         }
-        
+
         if nameLabel != nil { nameLabel.removeFromSuperview() }
         nameLabel = UILabel {
             $0.textColor = .black
@@ -220,7 +218,7 @@ class MapHomeCell: UICollectionViewCell {
             $0.top.equalTo(mapCoverImage.snp.bottom).offset(2)
             $0.bottom.equalToSuperview().inset(2)
         }
-        
+
         if lockIcon != nil { lockIcon.removeFromSuperview() }
         lockIcon = UIImageView {
             $0.image = isSelected ? UIImage(named: "HomeLockIconSelected") : UIImage(named: "HomeLockIcon")
@@ -233,10 +231,10 @@ class MapHomeCell: UICollectionViewCell {
             $0.width.equalTo(21)
             $0.height.equalTo(18.5)
         }
-        
+
         layoutIfNeeded()
     }
-    
+
     override func prepareForReuse() {
         super.prepareForReuse()
         if mapCoverImage != nil { mapCoverImage.sd_cancelCurrentImageLoad() }
@@ -260,11 +258,11 @@ extension NSAttributedString {
 class MapLoadingCell: UICollectionViewCell {
     var activityIndicator: CustomActivityIndicator!
     var label: UILabel!
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
-        
+
         activityIndicator = CustomActivityIndicator {
             $0.startAnimating()
             contentView.addSubview($0)
@@ -274,7 +272,7 @@ class MapLoadingCell: UICollectionViewCell {
             $0.centerY.equalToSuperview().offset(-10)
             $0.width.height.equalTo(30)
         }
-        
+
         label = UILabel {
             $0.text = "Loading maps"
             $0.textColor = .black.withAlphaComponent(0.5)
@@ -295,11 +293,11 @@ class MapLoadingCell: UICollectionViewCell {
 
 class AddMapCell: UICollectionViewCell {
     var newIcon: UIImageView!
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
-        
+
         newIcon = UIImageView {
             $0.image = UIImage(named: "NewMapButton")
             contentView.addSubview($0)
@@ -309,7 +307,7 @@ class AddMapCell: UICollectionViewCell {
             $0.centerY.equalToSuperview()
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

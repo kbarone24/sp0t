@@ -16,7 +16,7 @@ extension UINavigationItem {
         standardAppearance = appearance
         scrollEdgeAppearance = appearance
     }
-    
+
     func removeBackgroundImage() {
         if #available(iOS 15.0, *) {
             let appearance = UINavigationBarAppearance()

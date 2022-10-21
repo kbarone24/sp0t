@@ -7,8 +7,8 @@
 //
 
 import Foundation
-import UIKit
 import Mixpanel
+import UIKit
 /// uiaction methods
 extension PostCell {
     func addActionSheet() {
@@ -24,7 +24,7 @@ extension PostCell {
         guard let postVC = viewContainingController() as? PostController else { return }
         postVC.present(alert, animated: true)
     }
-    
+
     func addDeletePostAction() {
         guard let postVC = viewContainingController() as? PostController else { return }
         let alert = UIAlertController(title: "Delete post", message: "Are you sure you want to delete this post?", preferredStyle: .alert)
@@ -39,7 +39,7 @@ extension PostCell {
         }))
         postVC.present(alert, animated: true)
     }
-    
+
     func addReportPostAction() {
         let alertController = UIAlertController(title: "Report user", message: "", preferredStyle: .alert)
         let confirmAction = UIAlertAction(title: "Report user", style: .default) { (_) in
@@ -47,8 +47,8 @@ extension PostCell {
                 Mixpanel.mainInstance().track(event: "ReportPostTap")
                 self.db.collection("feedback").addDocument(data: [
                     "feedbackText": text,
-                    "postID" : self.post.id!,
-                    "type" : "reportPost",
+                    "postID": self.post.id!,
+                    "type": "reportPost",
                     "userID": self.uid
                 ])
                 self.showConfirmationAction(deletePost: false)
@@ -63,11 +63,11 @@ extension PostCell {
         }
         alertController.addAction(confirmAction)
         alertController.addAction(cancelAction)
-        
+
         guard let postVC = viewContainingController() as? PostController else { return }
         postVC.present(alertController, animated: true, completion: nil)
     }
-    
+
     func showConfirmationAction(deletePost: Bool) {
         let text = deletePost ? "Post successfully deleted!" : "Thank you for the feedback. We will review your report ASAP."
         let alert = UIAlertController(title: "Success!", message: text, preferredStyle: .alert)
@@ -78,4 +78,3 @@ extension PostCell {
 }
 
 ///https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
-

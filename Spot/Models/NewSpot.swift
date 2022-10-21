@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 class NewSpot {
-    
+
     var name: String
     var description: String
     var directions: String
@@ -26,8 +26,8 @@ class NewSpot {
     var gifMode: Bool
     var selectedUsers: [(uid: String, username: String)]!
     var draftID: Int64
-    
-    init(name: String, description: String, directions: String, spotLat: Double, spotLong: Double, tag1: String, tag2: String, tag3: String, createdBy: String, tips: String, visitorList: [String], spotImages: [UIImage], gifMode: Bool, selectedUsers : [(uid: String, username: String)], draftID: Int64) {
+
+    init(name: String, description: String, directions: String, spotLat: Double, spotLong: Double, tag1: String, tag2: String, tag3: String, createdBy: String, tips: String, visitorList: [String], spotImages: [UIImage], gifMode: Bool, selectedUsers: [(uid: String, username: String)], draftID: Int64) {
         self.name = name
         self.description = description
         self.directions = directions

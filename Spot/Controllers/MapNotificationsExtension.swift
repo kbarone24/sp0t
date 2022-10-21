@@ -6,10 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
+import Foundation
 import MapKit
+import UIKit
 
 extension MapController {
     @objc func notifyPostOpen(_ notification: NSNotification) {
@@ -30,30 +30,29 @@ extension MapController {
                 coordinate = UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]?.coordinate
             }
         }
-        
+
         DispatchQueue.main.async {
             self.reloadMapsCollection(resort: false, newPost: false)
             if coordinate != nil {
-                if let annotation = self.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: coordinate!)}) {
+                if let annotation = self.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate!) }) {
                     self.mapView.removeAnnotation(annotation)
                     self.mapView.addAnnotation(annotation)
                 }
             }
         }
     }
-    
-    
+
     @objc func notifyNewPost(_ notification: NSNotification) {
         /// add new post + zoom in on map
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
         uploadMapReset()
-        
+
         mapView.shouldCluster = false
         mapView.lockClusterOnUpload = true
         /// add new map to mapsList if applicable
         var map = notification.userInfo?["map"] as? CustomMap
         let emptyMap = map == nil || map?.id ?? "" == ""
-        if !emptyMap && !(UserDataModel.shared.userInfo.mapsList.contains(where: {$0.id == map!.id!})) {
+        if !emptyMap && !(UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == map!.id! })) {
             map!.addSpotGroups()
             UserDataModel.shared.userInfo.mapsList.append(map!)
         }
@@ -68,18 +67,17 @@ extension MapController {
                 self.reloadMapsCollection(resort: false, newPost: true)
             }
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             /// animate to spot if post to map, to post location if friends map
             self.animateTo(coordinate: post.coordinate)
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.mapView.lockClusterOnUpload = false
         }
     }
 
-    
     @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
         guard let mapID = notification.userInfo?["mapID"] as? String else { return }
@@ -96,27 +94,27 @@ extension MapController {
         if mapID != "" {
             if mapDelete {
                 selectedItemIndex = 0 /// reset to avoid index out of bounds
-                UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == mapID})
-            } else if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == mapID}) {
+                UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == mapID })
+            } else if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) {
                 DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id!, spotID: spotID) }
             }
         }
         /// remove annotation
-        if let i = mapView.annotations.firstIndex(where: {$0.coordinate.isEqualTo(coordinate: post.coordinate)}) {
-            DispatchQueue.main.async { self.mapView.removeAnnotation(self.mapView.annotations[i])}
+        if let i = mapView.annotations.firstIndex(where: { $0.coordinate.isEqualTo(coordinate: post.coordinate) }) {
+            DispatchQueue.main.async { self.mapView.removeAnnotation(self.mapView.annotations[i]) }
         }
         DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
     }
-    
+
     @objc func notifyCommentChange(_ notification: NSNotification) {
         guard let commentList = notification.userInfo?["commentList"] as? [MapComment] else { return }
         guard let postID = notification.userInfo?["postID"] as? String else { return }
-        
+
         if friendsPostsDictionary[postID] != nil {
             friendsPostsDictionary[postID]!.commentList = commentList
             friendsPostsDictionary[postID]!.commentCount = max(0, commentList.count - 1)
         }
-        
+
         for i in 0..<UserDataModel.shared.userInfo.mapsList.count {
             if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
                 UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]!.commentList = commentList
@@ -124,7 +122,7 @@ extension MapController {
             }
         }
     }
-                
+
     @objc func notifyFriendsListAdd() {
         /// query friends posts again
         homeFetchGroup.enter()
@@ -132,14 +130,14 @@ extension MapController {
             guard let self = self else { return }
             self.reloadMapsCollection(resort: false, newPost: false)
         }
-        
+
         DispatchQueue.global().async {
             self.getRecentPosts(map: nil)
         }
     }
-    
+
     @objc func notifyEditMap(_ notification: NSNotification) {
-        print("notify edit", UserDataModel.shared.userInfo.mapsList.map({$0.mapName}))
+        print("notify edit", UserDataModel.shared.userInfo.mapsList.map({ $0.mapName }))
         reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
         /// update should happen by listener
       /*  guard let map = notification.userInfo?["map"] as? CustomMap else { return }
@@ -154,7 +152,7 @@ extension MapController {
             DispatchQueue.main.async { self.mapsCollection.reloadItems(at: [IndexPath(item: i + 1, section: 0)]) }
         } */
     }
-    
+
     @objc func enterForeground() {
         /// check for activity indicator will begin animation
         if !checkForActivityIndicator() {
@@ -162,7 +160,7 @@ extension MapController {
             reRunMapFetch()
         }
     }
-    
+
     @objc func notifyLogout() {
         userListener.remove()
         newPostListener.remove()

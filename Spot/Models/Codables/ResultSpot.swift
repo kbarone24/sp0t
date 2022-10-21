@@ -6,13 +6,13 @@
 //  Copyright © 2020 sp0t, LLC. All rights reserved.
 //
 
+import CoreLocation
+import FirebaseFirestoreSwift
 import Foundation
 import UIKit
-import FirebaseFirestoreSwift
-import CoreLocation
 
 struct ResultSpot: Identifiable, Codable, Hashable {
-    
+
     @DocumentID var id: String?
     var spotName: String
     var l: [Double] = []
@@ -20,13 +20,13 @@ struct ResultSpot: Identifiable, Codable, Hashable {
     var spotLong: Double = 0.0
     var founderID: String
     var privacyLevel: String
-    var imageURL : String
+    var imageURL: String
 
     var visitorList: [String] = []
     var inviteList: [String]? = []
     var spotImage: UIImage = UIImage()
-    
-    ///for add new
+
+    /// for add new
     enum CodingKeys: String, CodingKey {
         case id
         case spotName

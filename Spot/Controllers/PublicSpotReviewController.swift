@@ -6,15 +6,14 @@
 //  Copyright © 2019 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
+import CoreLocation
 import Firebase
+import FirebaseAuth
 import FirebaseFirestore
 import FirebaseStorage
-import FirebaseAuth
-import CoreLocation
+import Foundation
 import GoogleMaps
-
+import UIKit
 
 class PublicSpotReviewController: UIViewController {
     override func viewDidLoad() {

@@ -11,14 +11,14 @@ import UIKit
 class PhotomapButtonViewController: UIViewController {
 
     @IBOutlet weak var label: UILabel!
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
     }
-    
-    func reloadContent(_ buttonName: String){
+
+    func reloadContent(_ buttonName: String) {
         label.text = buttonName
     }
 

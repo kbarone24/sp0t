@@ -6,15 +6,15 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
 import FirebaseFirestoreSwift
+import Foundation
 import MapKit
+import UIKit
 
 struct CustomMap: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
-    
+
     var communityMap: Bool? = false
     var founderID: String
     var imageURL: String
@@ -36,32 +36,32 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var spotIDs: [String]
     var spotNames: [String] = []
     var spotLocations: [[String: Double]] = []
-    
+
     var selected = false
     var memberProfiles: [UserProfile]? = []
     var coverImage: UIImage? = UIImage()
 
     var postsDictionary = [String: MapPost]()
     var postGroup: [MapPostGroup] = []
-    
+
     var userTimestamp: Timestamp {
-        if let lastUserPostIndex = posterIDs.lastIndex(where: {$0 == UserDataModel.shared.uid}) {
+        if let lastUserPostIndex = posterIDs.lastIndex(where: { $0 == UserDataModel.shared.uid }) {
             return postTimestamps[safe: lastUserPostIndex] ?? postTimestamps.first!
         }
         return postTimestamps.first!
     }
-    
+
     var userURL: String {
-        if let lastUserPostIndex = posterIDs.lastIndex(where: {$0 == UserDataModel.shared.uid}) {
+        if let lastUserPostIndex = posterIDs.lastIndex(where: { $0 == UserDataModel.shared.uid }) {
             return postImageURLs[safe: lastUserPostIndex] ?? postImageURLs.first!
         }
         return postImageURLs.first!
     }
-    
+
     var hasNewPost: Bool {
-        return postsDictionary.contains(where: { !$0.value.seen} )
+        return postsDictionary.contains(where: { !$0.value.seen })
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case communityMap
@@ -86,20 +86,20 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case spotNames
         case spotLocations
     }
-    
+
     mutating func updateSeen(postID: String) {
         guard var post = postsDictionary[postID] else { return }
         let uid = UserDataModel.shared.uid
         if !(post.seenList?.contains(uid) ?? false) { post.seenList?.append(uid) }
         postsDictionary[postID] = post
-        if let i = postGroup.firstIndex(where: {$0.postIDs.contains(where: {$0.id == postID})}) {
-            if let j = postGroup[i].postIDs.firstIndex(where: {$0.id == postID}) {
+        if let i = postGroup.firstIndex(where: { $0.postIDs.contains(where: { $0.id == postID }) }) {
+            if let j = postGroup[i].postIDs.firstIndex(where: { $0.id == postID }) {
                 postGroup[i].postIDs[j].seen = true
                 postGroup[i].sortPostIDs()
             }
         }
     }
-    
+
     mutating func addSpotGroups() {
         /// append spots to show on map even if there's no post attached
             for i in 0..<spotIDs.count {
@@ -116,10 +116,10 @@ struct CustomMap: Identifiable, Codable, Hashable {
                 }
 
                 let coordinate = CLLocationCoordinate2D(latitude: spotLocations[safe: i]?["lat"] ?? 0.0, longitude: spotLocations[safe: i]?["long"] ?? 0.0)
-                if !postGroup.contains(where: {$0.id == spotIDs[i]}) { postGroup.append(MapPostGroup(id: spotIDs[i], coordinate: coordinate, spotName: spotNames[safe: i] ?? "", postIDs: [], postsToSpot: postsToSpot, postTimestamps: postSpotTimestamps, numberOfPosters: postersAtSpot.count)) }
+                if !postGroup.contains(where: { $0.id == spotIDs[i] }) { postGroup.append(MapPostGroup(id: spotIDs[i], coordinate: coordinate, spotName: spotNames[safe: i] ?? "", postIDs: [], postsToSpot: postsToSpot, postTimestamps: postSpotTimestamps, numberOfPosters: postersAtSpot.count)) }
             }
         }
-    
+
     mutating func updateGroup(post: MapPost) -> (group: MapPostGroup?, newGroup: Bool) {
         if post.spotID ?? "" == "" {
             /// attach by postID
@@ -127,8 +127,8 @@ struct CustomMap: Identifiable, Codable, Hashable {
             let newGroup = MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [MapPostGroup.PostID(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
             postGroup.append(newGroup)
             return (newGroup, true)
-            
-        } else if !postGroup.contains(where: {$0.id == post.spotID!}) {
+
+        } else if !postGroup.contains(where: { $0.id == post.spotID! }) {
             let coordinate = CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!)
             let newGroup = MapPostGroup(id: post.spotID!, coordinate: coordinate, spotName: post.spotName!, postIDs: [MapPostGroup.PostID(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
             postGroup.append(newGroup)
@@ -137,8 +137,8 @@ struct CustomMap: Identifiable, Codable, Hashable {
             spotNames.append(post.spotName ?? "")
             return (newGroup, true)
 
-        } else if let i = postGroup.firstIndex(where: {$0.id == post.spotID}) {
-            if !postGroup[i].postIDs.contains(where: {$0.id == post.id}) {
+        } else if let i = postGroup.firstIndex(where: { $0.id == post.spotID }) {
+            if !postGroup[i].postIDs.contains(where: { $0.id == post.id }) {
                 postGroup[i].postIDs.append(MapPostGroup.PostID(id: post.id!, timestamp: post.timestamp, seen: post.seen))
                 postGroup[i].sortPostIDs()
                 return (postGroup[i], false)
@@ -146,11 +146,11 @@ struct CustomMap: Identifiable, Codable, Hashable {
         }
         return (nil, false)
     }
-    
+
     mutating func createPosts(posts: [MapPost]) {
         for post in posts {
             postsDictionary.updateValue(post, forKey: post.id!)
-            let _ = updateGroup(post: post)
+            _ = updateGroup(post: post)
         }
     }
     /// spotID == "" when not deleting spot
@@ -158,8 +158,8 @@ struct CustomMap: Identifiable, Codable, Hashable {
         /// remove from dictionary
         postsDictionary.removeValue(forKey: postID)
         /// remove id from post group
-        if let i = postGroup.firstIndex(where: {$0.postIDs.contains(where: {$0.id == postID})}) {
-            if let j = postGroup[i].postIDs.firstIndex(where: {$0.id == postID}) {
+        if let i = postGroup.firstIndex(where: { $0.postIDs.contains(where: { $0.id == postID }) }) {
+            if let j = postGroup[i].postIDs.firstIndex(where: { $0.id == postID }) {
                 postGroup[i].postIDs.remove(at: j)
                 /// remove from post group entirely if no spot attached
                 if postGroup[i].postIDs.count == 0 && postGroup[i].spotName == "" { postGroup.remove(at: i) }
@@ -167,7 +167,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         }
         /// remove associated values
         posterDictionary.removeValue(forKey: postID)
-        if let i = postIDs.firstIndex(where: {$0 == postID}) {
+        if let i = postIDs.firstIndex(where: { $0 == postID }) {
             posterIDs.remove(at: i)
             posterUsernames.remove(at: i)
             postIDs.remove(at: i)
@@ -176,34 +176,34 @@ struct CustomMap: Identifiable, Codable, Hashable {
          //   postTimestamps.remove(at: i)
         }
         if spotID != "" {
-            if let i = spotIDs.firstIndex(where: {$0 == spotID}) {
+            if let i = spotIDs.firstIndex(where: { $0 == spotID }) {
                 spotIDs.remove(at: i)
                 spotNames.remove(at: i)
                 spotLocations.remove(at: i)
             }
-            postGroup.removeAll(where: {$0.id == spotID})
+            postGroup.removeAll(where: { $0.id == spotID })
         }
     }
 }
 
 struct MapPostGroup: Hashable {
-    
+
     struct PostID: Hashable {
         var id: String
         var timestamp: Timestamp
         var seen: Bool
     }
-    
+
     var id: String /// can be post or spotID
     var coordinate: CLLocationCoordinate2D
     var spotName: String
     var postIDs: [PostID]
-    
+
     /// properties for sorting
     var postsToSpot: [String] = []
     var postTimestamps: [Timestamp] = []
     var numberOfPosters: Int = 0
-    
+
     mutating func sortPostIDs() {
         postIDs = postIDs.sorted(by: { p1, p2 in
             guard p1.seen == p2.seen else {

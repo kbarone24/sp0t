@@ -6,10 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import UIKit
-import Mixpanel
 import Firebase
 import FirebaseFunctions
+import Mixpanel
+import UIKit
 
 protocol EditProfileDelegate {
     func finishPassing(userInfo: UserProfile)
@@ -17,7 +17,7 @@ protocol EditProfileDelegate {
 }
 
 class EditProfileViewController: UIViewController {
-    
+
     private var editLabel: UILabel!
     private var backButton: UIButton!
     private var doneButton: UIButton!
@@ -32,44 +32,44 @@ class EditProfileViewController: UIViewController {
     private var locationTextfield: UITextField!
     private var logoutButton: UIButton!
     private var activityIndicator: CustomActivityIndicator!
-    
+
     private var profileChanged: Bool = false
     private var avatarChanged: Bool = false
-    
+
     public var delegate: EditProfileDelegate?
     private var userProfile: UserProfile?
     private let db = Firestore.firestore()
-        
+
     init(userProfile: UserProfile? = nil) {
         self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
     }
-    
+
     @objc func dismissAction() {
         UIView.animate(withDuration: 0.15) {
             self.backButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } completion: { (Bool) in
+        } completion: { (_) in
             UIView.animate(withDuration: 0.15) {
                 self.backButton.transform = .identity
             }
         }
         dismiss(animated: true)
     }
-    
+
     @objc func profilePicSelectionAction() {
         Mixpanel.mainInstance().track(event: "ProfilePicSelection")
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alertController.overrideUserInterfaceStyle = .light
-        let takePicAction = UIAlertAction(title: "Take picture", style: .default) { takePic in
+        let takePicAction = UIAlertAction(title: "Take picture", style: .default) { _ in
             Mixpanel.mainInstance().track(event: "ProfilePicSelectCamera")
             let picker = UIImagePickerController()
             picker.allowsEditing = true
@@ -78,7 +78,7 @@ class EditProfileViewController: UIViewController {
             self.present(picker, animated: true)
         }
         takePicAction.titleTextColor = .black
-        let choosePicAction = UIAlertAction(title: "Choose from gallery", style: .default) { choosePic in
+        let choosePicAction = UIAlertAction(title: "Choose from gallery", style: .default) { _ in
             Mixpanel.mainInstance().track(event: "ProfilePicSelectGallery")
             let picker = UIImagePickerController()
             picker.allowsEditing = true
@@ -94,11 +94,11 @@ class EditProfileViewController: UIViewController {
         alertController.addAction(cancelAction)
         present(alertController, animated: true)
     }
-    
+
     @objc func avatarEditAction() {
         let vc = AvatarSelectionController(sentFrom: .edit)
-        //vc.delegate = self
-        vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
+        // vc.delegate = self
+        vc.modalPresentationStyle = .fullScreen // or .overFullScreen for transparency
         vc.onDoneBlock = { (avatarURL, avatarName) in
             self.avatarChanged = true
             self.avatarImage.image = UIImage(named: avatarName)
@@ -107,18 +107,18 @@ class EditProfileViewController: UIViewController {
         self.present(vc, animated: true)
         Mixpanel.mainInstance().track(event: "EditProfileAvatarSelect")
     }
-    
+
     @objc func saveAction() {
         Mixpanel.mainInstance().track(event: "EditProfileSave")
         self.activityIndicator.startAnimating()
-        
+
         userProfile!.currentLocation = locationTextfield.text ?? ""
         userProfile!.name = nameTextfield.text ?? ""
         let lowercaseName = userProfile!.name.lowercased()
         let nameKeywords = lowercaseName.getKeywordArray()
-        
+
         let userRef = db.collection("users").document(userProfile!.id!)
-        userRef.updateData(["name" : userProfile!.name, "currentLocation": userProfile!.currentLocation, "avatarURL": self.userProfile!.avatarURL as Any, "lowercaseName": lowercaseName, "nameKeywords": nameKeywords])
+        userRef.updateData(["name": userProfile!.name, "currentLocation": userProfile!.currentLocation, "avatarURL": self.userProfile!.avatarURL as Any, "lowercaseName": lowercaseName, "nameKeywords": nameKeywords])
         if profileChanged {
             updateProfileImage()
         } else {
@@ -127,10 +127,10 @@ class EditProfileViewController: UIViewController {
             self.dismiss(animated: true)
         }
     }
-    
+
     @objc func logoutAction() {
         let alert = UIAlertController(title: "Are you sure you want to log out?", message: "", preferredStyle: .alert)
-        let logoutAction = UIAlertAction(title: "Log out", style: .default) { action in
+        let logoutAction = UIAlertAction(title: "Log out", style: .default) { _ in
             Mixpanel.mainInstance().track(event: "Logout")
             do {
                 try Auth.auth().signOut()
@@ -141,36 +141,36 @@ class EditProfileViewController: UIViewController {
                         UserDataModel.shared.destroy()
                         if let landingPage = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
                             let keyWindow = UIApplication.shared.connectedScenes
-                                .filter({$0.activationState == .foregroundActive})
-                                .map({$0 as? UIWindowScene})
-                                .compactMap({$0})
+                                .filter({ $0.activationState == .foregroundActive })
+                                .map({ $0 as? UIWindowScene })
+                                .compactMap({ $0 })
                                 .first?.windows
-                                .filter({$0.isKeyWindow}).first
+                                .filter({ $0.isKeyWindow }).first
                             keyWindow?.rootViewController = landingPage
                         }
                     })
                 }
             } catch let signOutError as NSError {
-                print ("Error signing out: %@", signOutError)
+                print("Error signing out: %@", signOutError)
             }
         }
-        
+
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
         alert.addAction(cancelAction)
         alert.addAction(logoutAction)
         present(alert, animated: true)
     }
-    
-    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController){
+
+    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
         print("dismissed sheet")
     }
-    
+
 }
 
 extension EditProfileViewController {
     private func viewSetup() {
         view.backgroundColor = .white
-        
+
         editLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.text = "Edit profile"
@@ -182,7 +182,7 @@ extension EditProfileViewController {
             $0.top.equalToSuperview().offset(55)
             $0.leading.trailing.equalToSuperview()
         }
-        
+
         backButton = UIButton {
             $0.setTitle("Cancel", for: .normal)
             $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
@@ -194,7 +194,7 @@ extension EditProfileViewController {
             $0.leading.equalToSuperview().offset(22)
             $0.top.equalTo(editLabel)
         }
-        
+
         doneButton = UIButton {
             $0.setTitle("Done", for: .normal)
             $0.setTitleColor(.black, for: .normal)
@@ -210,7 +210,7 @@ extension EditProfileViewController {
             $0.centerY.equalTo(editLabel)
             $0.trailing.equalToSuperview().inset(20)
         }
-        
+
         profileImage = UIImageView {
             $0.layer.cornerRadius = 51.5
             $0.layer.masksToBounds = true
@@ -222,7 +222,7 @@ extension EditProfileViewController {
             $0.top.equalTo(editLabel.snp.bottom).offset(21)
             $0.centerX.equalToSuperview()
         }
-        
+
         profilePicSelectionButton = UIButton {
             $0.setImage(UIImage(named: "EditProfilePicture"), for: .normal)
             $0.setTitle("", for: .normal)
@@ -234,7 +234,7 @@ extension EditProfileViewController {
             $0.trailing.equalTo(profileImage).offset(5)
             $0.bottom.equalTo(profileImage).offset(3)
         }
-        
+
         avatarLabel = UILabel {
             $0.text = "Avatar"
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
@@ -245,7 +245,7 @@ extension EditProfileViewController {
             $0.top.equalTo(profileImage.snp.bottom).offset(6)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
-        
+
         avatarImage = UIImageView {
             $0.contentMode = .scaleAspectFit
             view.addSubview($0)
@@ -257,7 +257,7 @@ extension EditProfileViewController {
             $0.width.equalTo(26)
             $0.height.equalTo(37.5)
         }
-        
+
         avatarEditButton = UIButton {
             $0.setImage(UIImage(named: "EditAvatar"), for: .normal)
             $0.setTitle("", for: .normal)
@@ -269,7 +269,7 @@ extension EditProfileViewController {
             $0.centerY.equalTo(avatarImage)
             $0.width.height.equalTo(22)
         }
-        
+
         nameLabel = UILabel {
             $0.text = "Name"
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
@@ -280,7 +280,7 @@ extension EditProfileViewController {
             $0.top.equalTo(avatarImage.snp.bottom).offset(18.56)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
-        
+
         nameTextfield = UITextField {
             $0.text = userProfile!.name
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
@@ -299,7 +299,7 @@ extension EditProfileViewController {
             $0.trailing.equalToSuperview().inset(63)
             $0.height.equalTo(36)
         }
-        
+
         locationLabel = UILabel {
             $0.text = "Location"
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
@@ -310,7 +310,7 @@ extension EditProfileViewController {
             $0.top.equalTo(nameTextfield.snp.bottom).offset(18)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
-        
+
         locationTextfield = UITextField {
             $0.text = userProfile!.currentLocation
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
@@ -329,7 +329,7 @@ extension EditProfileViewController {
             $0.trailing.equalToSuperview().inset(63)
             $0.height.equalTo(36)
         }
-        
+
         logoutButton = UIButton {
             $0.setTitle("Log out", for: .normal)
             $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
@@ -341,44 +341,44 @@ extension EditProfileViewController {
             $0.bottom.equalToSuperview().inset(73)
             $0.centerX.equalToSuperview()
         }
-        
+
         activityIndicator = CustomActivityIndicator {
             $0.isHidden = true
             view.addSubview($0)
         }
-        activityIndicator.snp.makeConstraints{
+        activityIndicator.snp.makeConstraints {
             $0.bottom.equalToSuperview().inset(150)
             $0.centerX.equalToSuperview()
             $0.width.height.equalTo(30)
         }
     }
-    
-    private func updateProfileImage(){
+
+    private func updateProfileImage() {
         let imageId = UUID().uuidString
         let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageId)")
         let image = profileImage.image
         guard var imageData = image!.jpegData(compressionQuality: 0.5) else {return}
-        
-        if imageData.count > 1000000 {
+
+        if imageData.count > 1_000_000 {
             imageData = image!.jpegData(compressionQuality: 0.3)!
         }
-        
+
         var urlStr: String = ""
         let metadata = StorageMetadata()
         metadata.contentType = "image/jpeg"
-        
-        storageRef.putData(imageData, metadata: metadata){metadata, error in
-            
+
+        storageRef.putData(imageData, metadata: metadata) {metadata, error in
+
             if error == nil, metadata != nil {
-                //get download url
+                // get download url
                 storageRef.downloadURL(completion: { [weak self] url, error in
-                    if let error = error{
+                    if let error = error {
                         print("\(error.localizedDescription)")
                     }
-                    
+
                     urlStr = (url?.absoluteString)!
                     guard let self = self else { return }
-                    
+
                     self.userProfile!.imageURL = urlStr
                     self.userProfile!.profilePic = image ?? UIImage()
 
@@ -395,7 +395,7 @@ extension EditProfileViewController {
 }
 
 extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         guard let image = info[.editedImage] as? UIImage else { return }
         profileImage.image = image
         profileChanged = true

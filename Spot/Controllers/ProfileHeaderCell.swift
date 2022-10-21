@@ -6,11 +6,11 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import UIKit
-import SnapKit
 import Firebase
-import Mixpanel
 import FirebaseUI
+import Mixpanel
+import SnapKit
+import UIKit
 
 enum ProfileRelation {
     case myself
@@ -21,7 +21,7 @@ enum ProfileRelation {
 }
 
 class ProfileHeaderCell: UICollectionViewCell {
-    
+
     private var profileImage: UIImageView!
     private var profileAvatar: UIImageView!
     private var profileName: UILabel!
@@ -32,23 +32,23 @@ class ProfileHeaderCell: UICollectionViewCell {
     private var profile: UserProfile!
     private var relation: ProfileRelation!
     private var pendingFriendNotiID: String?
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func prepareForReuse() {
-        
+
     }
-    
+
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
         self.profile = userProfile
-        
+
         let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
         profileImage.sd_setImage(with: URL(string: userProfile.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
@@ -65,7 +65,7 @@ class ProfileHeaderCell: UICollectionViewCell {
             }
         }
         friendListButton.setTitle("\(userProfile.friendIDs.count) friends", for: .normal)
-        
+
         self.relation = relation
         switch relation {
         case .myself:
@@ -95,7 +95,7 @@ class ProfileHeaderCell: UICollectionViewCell {
 extension ProfileHeaderCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
-        
+
         profileImage = UIImageView {
             $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
@@ -121,7 +121,7 @@ extension ProfileHeaderCell {
             $0.height.equalTo(47.25)
             $0.width.equalTo(36)
         }
-        
+
         profileName = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
@@ -135,7 +135,7 @@ extension ProfileHeaderCell {
             $0.height.equalTo(23)
             $0.trailing.equalToSuperview().inset(29)
         }
-        
+
         profileAccount = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
@@ -198,7 +198,7 @@ extension ProfileHeaderCell {
         }
         actionButton.layer.cornerRadius = 37 / 2
     }
-    
+
     @objc func actionButtonAction() {
         switch relation {
         case .myself:
@@ -212,7 +212,7 @@ extension ProfileHeaderCell {
                 Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendTap")
                 let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
                 alert.overrideUserInterfaceStyle = .light
-                let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
+                let removeAction = UIAlertAction(title: "Remove", style: .default) { _ in
                     Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
                     self.getNotiIDAndRemoveFriendRequest()
                     self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
@@ -222,7 +222,7 @@ extension ProfileHeaderCell {
                 let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
                 alert.addAction(cancelAction)
                 alert.addAction(removeAction)
-                let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+                let containerVC = UIApplication.shared.windows.filter { $0.isKeyWindow }.first?.rootViewController ?? UIViewController()
                 containerVC.present(alert, animated: true)
             } else {
                 Mixpanel.mainInstance().track(event: "ProfileHeaderAcceptTap")
@@ -246,22 +246,22 @@ extension ProfileHeaderCell {
         }
         UIView.animate(withDuration: 0.15) {
             self.actionButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } completion: { (Bool) in
+        } completion: { (_) in
             UIView.animate(withDuration: 0.15) {
                 self.actionButton.transform = .identity
             }
         }
     }
-    
+
     @objc func locationButtonAction() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderLocationTap")
     }
-    
+
     private func getNotiIDAndAcceptFriendRequest() {
         let db = Firestore.firestore()
         let query = db.collection("users").document(UserDataModel.shared.uid).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
         query.getDocuments { (snap, err) in
-            if err != nil  { return }
+            if err != nil { return }
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: UserNotification.self)
@@ -269,8 +269,8 @@ extension ProfileHeaderCell {
                     if notification.senderID == self.profile!.id {
                         self.pendingFriendNotiID = notification.id
                         self.acceptFriendRequest(friend: self.profile, notificationID: self.pendingFriendNotiID!)
-                        let notiID:[String: String?] = ["notiID": self.pendingFriendNotiID]
-                        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: notiID as [AnyHashable : Any])
+                        let notiID: [String: String?] = ["notiID": self.pendingFriendNotiID]
+                        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: notiID as [AnyHashable: Any])
                         break
                     }
                 } catch let parseError {
@@ -279,12 +279,12 @@ extension ProfileHeaderCell {
             }
         }
     }
-    
+
     private func getNotiIDAndRemoveFriendRequest() {
         let db = Firestore.firestore()
         let query = db.collection("users").document(UserDataModel.shared.uid).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
         query.getDocuments { (snap, err) in
-            if err != nil  { return }
+            if err != nil { return }
             for doc in snap!.documents {
                 do {
                     let unwrappedInfo = try doc.data(as: UserNotification.self)

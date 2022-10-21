@@ -25,20 +25,20 @@ class ProfileMyMapCell: UICollectionViewCell {
             mapImageCollectionView.reloadData()
         }
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func prepareForReuse() {
-        
+
     }
-    
+
     public func cellSetup(userAccount: String, posts: [MapPost], relation: ProfileRelation) {
         self.posts = posts
         mapName.text = "@\(userAccount)'s map"
@@ -66,19 +66,19 @@ extension ProfileMyMapCell {
         contentView.addSubview(mapImageCollectionView)
         mapImageCollectionView.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
-            $0.height.equalTo(contentView.frame.width).multipliedBy(182/195)
+            $0.height.equalTo(contentView.frame.width).multipliedBy(182 / 195)
         }
-        
+
         mapPrivateBlurView = {
             let blurEffect = UIBlurEffect(style: .systemUltraThinMaterialLight)
             let blurEffectView = UIVisualEffectView(effect: blurEffect)
             blurEffectView.clipsToBounds = true
-            blurEffectView.frame = CGRect(x: 0, y: 0, width: contentView.frame.width, height: contentView.frame.width * 182/195)
+            blurEffectView.frame = CGRect(x: 0, y: 0, width: contentView.frame.width, height: contentView.frame.width * 182 / 195)
             blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             return blurEffectView
         }()
         mapImageCollectionView.addSubview(mapPrivateBlurView)
-        
+
         mapPrivateIcon = UIImageView {
             $0.image = UIImage(named: "UsersMapNotFriends")
             mapImageCollectionView.addSubview($0)
@@ -86,7 +86,7 @@ extension ProfileMyMapCell {
         mapPrivateIcon.snp.makeConstraints {
             $0.center.equalToSuperview()
         }
-        
+
         mapName = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
@@ -104,33 +104,32 @@ extension ProfileMyMapCell: UICollectionViewDataSource, UICollectionViewDelegate
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 1
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return posts.count
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProfileMyMapImageCollectionViewCell", for: indexPath) as! ProfileMyMapImageCollectionViewCell
         cell.count = posts.count
         cell.imageURL = posts[indexPath.row].imageURLs.first ?? ""
         return cell
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
         return UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let seperateLineWidth = 2 * (sqrt(CGFloat(posts.count)) - 1)
-        return CGSize(width: (collectionView.frame.width - seperateLineWidth) / sqrt(CGFloat(posts.count)) , height: (collectionView.frame.height - seperateLineWidth) / sqrt(CGFloat(posts.count)))
+        return CGSize(width: (collectionView.frame.width - seperateLineWidth) / sqrt(CGFloat(posts.count)), height: (collectionView.frame.height - seperateLineWidth) / sqrt(CGFloat(posts.count)))
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         return 0
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 2
     }
 }
-

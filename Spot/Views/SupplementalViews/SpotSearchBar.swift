@@ -13,7 +13,7 @@ class SpotSearchBar: UISearchBar {
     /// set placeholder + delegate
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
+
         searchBarStyle = .default
         tintColor = UIColor(named: "SpotGreen")
         barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
@@ -33,7 +33,7 @@ class SpotSearchBar: UISearchBar {
         returnKeyType = .done
         enablesReturnKeyAutomatically = false
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

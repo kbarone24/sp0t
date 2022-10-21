@@ -7,35 +7,35 @@
 //
 
 import Foundation
-import UIKit
 import Photos
+import UIKit
 
 class CameraAccessView: UIView {
     var cancelButton: UIButton!
     var label: UILabel!
-    
+
     var cameraAccessButton: AccessButton!
     var galleryAccessButton: AccessButton!
     var locationAccessButton: AccessButton!
-    
+
     var cameraAccess = false {
         didSet {
             cameraAccessButton.access = cameraAccess
         }
     }
-    
+
     var galleryAccess = false {
         didSet {
             galleryAccessButton.access = galleryAccess
         }
     }
-    
+
     var locationAccess = false {
         didSet {
             if locationAccessButton != nil { locationAccessButton!.access = locationAccess }
         }
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = true
@@ -55,7 +55,7 @@ class CameraAccessView: UIView {
             $0.top.equalTo(44)
             $0.width.height.equalTo(50)
         }
-        
+
         label = UILabel {
             $0.text = "Enable access to share on sp0t"
             $0.textColor = .black
@@ -67,7 +67,7 @@ class CameraAccessView: UIView {
             $0.centerX.equalToSuperview()
             $0.centerY.equalToSuperview().offset(-150)
         }
-        
+
         cameraAccessButton = AccessButton {
             $0.setUp(type: .camera, enabled: cameraAccess)
             $0.addTarget(self, action: #selector(cameraAccessTap), for: .touchUpInside)
@@ -77,9 +77,9 @@ class CameraAccessView: UIView {
             $0.top.equalTo(label.snp.bottom).offset(30)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
-        
+
         galleryAccessButton = AccessButton {
-            $0.setUp(type:  .gallery, enabled: galleryAccess)
+            $0.setUp(type: .gallery, enabled: galleryAccess)
             $0.addTarget(self, action: #selector(galleryAccessTap), for: .touchUpInside)
             addSubview($0)
         }
@@ -98,31 +98,31 @@ class CameraAccessView: UIView {
             $0.leading.trailing.equalToSuperview().inset(20)
         }
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
- 
+
     func setUp(cameraAccess: Bool, galleryAccess: Bool, locationAccess: Bool) {
         self.cameraAccess = cameraAccess
         self.galleryAccess = galleryAccess
         self.locationAccess = locationAccess
         locationAccessButton.isHidden = locationAccess
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     @objc func cancelTap(_ sender: UIButton) {
         guard let camera = viewContainingController() as? AVCameraController else { return }
         camera.cancelTap()
     }
-    
+
     @objc func cameraAccessTap() {
         askForCameraAccess(first: true)
     }
-    
+
     func checkForRemove() {
         /// remove mask and return to camera if user has authorized camera + gallery
         if UploadPostModel.shared.allAuths() {
@@ -134,11 +134,11 @@ class CameraAccessView: UIView {
             }
         }
     }
-    
+
     func askForCameraAccess(first: Bool) {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { response in
+            AVCaptureDevice.requestAccess(for: .video) { _ in
                 DispatchQueue.main.async { // 4
                     self.askForCameraAccess(first: false)
                 }
@@ -152,11 +152,11 @@ class CameraAccessView: UIView {
         default: return
         }
     }
-        
+
     @objc func galleryAccessTap() {
         askForGallery(first: true)
     }
-    
+
     func askForGallery(first: Bool) {
         switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
         case .notDetermined:
@@ -170,11 +170,11 @@ class CameraAccessView: UIView {
         default: return
         }
     }
-    
+
     @objc func locationAccessTap() {
         DispatchQueue.main.async { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ) }
     }
-    
+
     @objc func notifyLocationAccess() {
         locationAccess = true
         checkForRemove()
@@ -185,7 +185,7 @@ class AccessButton: UIButton {
     var icon: UIImageView!
     var label: UILabel!
     var checkBox: UIImageView!
-    
+
     var access = false {
         didSet {
             DispatchQueue.main.async {
@@ -195,13 +195,13 @@ class AccessButton: UIButton {
             }
         }
     }
-    
+
     enum AccessButtonType {
         case camera
         case gallery
         case location
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         icon = UIImageView {
@@ -217,7 +217,7 @@ class AccessButton: UIButton {
             $0.leading.equalTo(69)
             $0.centerY.equalToSuperview()
         }
-        
+
         checkBox = UIImageView {
             addSubview($0)
         }
@@ -227,7 +227,7 @@ class AccessButton: UIButton {
             $0.height.width.equalTo(33)
         }
     }
-    
+
     func setUp(type: AccessButtonType, enabled: Bool) {
         switch type {
         case .camera:
@@ -259,9 +259,9 @@ class AccessButton: UIButton {
             }
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
 }

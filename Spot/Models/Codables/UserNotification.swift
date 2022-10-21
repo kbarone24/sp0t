@@ -6,11 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
 import FirebaseFirestoreSwift
-
+import Foundation
+import UIKit
 
 struct UserNotification: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
@@ -28,7 +27,7 @@ struct UserNotification: Identifiable, Codable, Hashable {
     var postID: String?
     var senderUsername: String?
     var status: String?
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case seen

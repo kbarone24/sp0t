@@ -6,16 +6,16 @@
 //  Copyright © 2020 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
+import CoreLocation
 import Firebase
 import FirebaseFirestoreSwift
-import CoreLocation
+import Foundation
+import UIKit
 
 struct MapPost: Identifiable, Codable, Hashable {
-    
+
     @DocumentID var id: String?
-    
+
     var addedUsers: [String]? = []
     var aspectRatios: [CGFloat]? = []
     var caption: String
@@ -53,17 +53,17 @@ struct MapPost: Identifiable, Codable, Hashable {
     var mapInfo: CustomMap?
     var commentList: [MapComment] = []
     var postImage: [UIImage] = []
-    
+
     var postScore: Double? = 0
     var selectedImageIndex: Int? = 0
     var imageHeight: CGFloat? = 0
     var captionHeight: CGFloat? = 0
     var cellHeight: CGFloat? = 0
     var commentsHeight: CGFloat? = 0
-    
+
     var setImageLocation = false
     var seen: Bool {
-        let twoWeeks = Date().timeIntervalSince1970 - 86400 * 14
+        let twoWeeks = Date().timeIntervalSince1970 - 86_400 * 14
         return (seenList?.contains(UserDataModel.shared.uid) ?? true) || timestamp.seconds < Int64(twoWeeks)
     }
     var seconds: Int64 {
@@ -72,7 +72,7 @@ struct MapPost: Identifiable, Codable, Hashable {
     var coordinate: CLLocationCoordinate2D {
         return spotID ?? "" == "" ? CLLocationCoordinate2D(latitude: postLat, longitude: postLong) : CLLocationCoordinate2D(latitude: spotLat ?? postLat, longitude: spotLong ?? postLong)
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case addedUsers

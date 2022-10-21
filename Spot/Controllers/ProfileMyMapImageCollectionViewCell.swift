@@ -6,8 +6,8 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import UIKit
 import FirebaseUI
+import UIKit
 
 class ProfileMyMapImageCollectionViewCell: UICollectionViewCell {
     var mapImageView: UIImageView!
@@ -19,16 +19,16 @@ class ProfileMyMapImageCollectionViewCell: UICollectionViewCell {
             if mapImageView != nil { mapImageView.sd_setImage(with: URL(string: imageURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer]) }
         }
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func prepareForReuse() {
         mapImageView.sd_cancelCurrentImageLoad()
     }
