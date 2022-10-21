@@ -655,17 +655,24 @@ extension UIViewController {
     }
         
     func removeFriend(friendID: String) {
-        print("remove friend")
+        UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == friendID})
+        UserDataModel.shared.userInfo.friendsList.removeAll(where: {$0.id == friendID})
+        UserDataModel.shared.userInfo.topFriends?.removeValue(forKey: friendID)
+        UserDataModel.shared.deletedFriendIDs.append(friendID)
+        
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         
         removeFriendFromFriendsList(userID: uid, friendID: friendID)
         removeFriendFromFriendsList(userID: friendID, friendID: uid)
+
         /// firebase function broken
-/*
-        let functions = Functions.functions()
-        functions.httpsCallable("removeFriend").call(["userID": uid, "friendID": friendID]) { result, error in
-            print(result?.data as Any, error as Any)
-        } */
+        DispatchQueue.global().async {
+            self.removeFriendFromPosts(userID: uid, friendID: friendID)
+            self.removeFriendFromPosts(userID: friendID, friendID: uid)
+        
+            self.removeFriendFromNotis(userID: uid, friendID: friendID)
+            self.removeFriendFromNotis(userID: friendID, friendID: uid)
+        }
     }
     
     func removeFriendFromFriendsList(userID: String, friendID: String) {
@@ -677,6 +684,26 @@ extension UIViewController {
         ])
     }
 
+    func removeFriendFromPosts(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
+        db.collection("posts").whereField("posterID", isEqualTo: friendID).getDocuments { snap, err in
+            guard let docs = snap?.documents else { return }
+            for doc in docs {
+                doc.reference.updateData(["friendsList" : FieldValue.arrayRemove([userID])])
+            }
+        }
+    }
+    
+    func removeFriendFromNotis(userID: String, friendID: String) {
+        let db: Firestore = Firestore.firestore()
+        db.collection("users").document(userID).collection("notifications").whereField("senderID", isEqualTo: friendID).whereField("type", isEqualTo: "friendRequest").getDocuments { snap, err in
+            guard let docs = snap?.documents else { return }
+            for doc in docs {
+                doc.reference.delete()
+            }
+        }
+    }
+    
     
     func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
         var queriedUsers: [UserProfile] = []
@@ -1079,11 +1106,7 @@ extension NSObject {
     }
 
     func acceptFriendRequest(friend: UserProfile, notificationID: String) {
-        /// add friend to user info
-        UserDataModel.shared.userInfo.friendsList.append(friend)
-        UserDataModel.shared.userInfo.friendIDs.append(friend.id!)
-        
-        /// adjust in firebase
+        /// adjust in firebase -> listener will find change for
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         addFriendToFriendsList(userID: uid, friendID: friend.id!)
         addFriendToFriendsList(userID: friend.id!, friendID: uid)
@@ -1105,6 +1128,14 @@ extension NSObject {
 
         db.collection("users").document(friendID).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([uid])])
         db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
+    }
+    
+    func revokeFriendRequest(friendID: String, notificationID: String) {
+        let db: Firestore = Firestore.firestore()
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+        db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([friendID])])
+        db.collection("users").document(friendID).collection("notifications").document(notificationID).delete()
     }
     
     func addFriendToFriendsList(userID: String, friendID: String) {
@@ -1144,6 +1175,7 @@ extension NSObject {
                 if !hideFromFeed && privacyLevel != "invite" {
                     doc.reference.updateData(["friendsList" : FieldValue.arrayUnion([userID])])
                 }
+                print("update friends list")
             }
             completion?(true)
         }
