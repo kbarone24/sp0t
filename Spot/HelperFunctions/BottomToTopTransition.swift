@@ -9,7 +9,7 @@
 import Foundation
 
 class BottomToTopTransition: NSObject {
-    
+
     enum BottomToTopTransitionMode {
         case present
         case dismiss
@@ -24,7 +24,7 @@ extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
     func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
         return 0.25
     }
-    
+
     func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
         if transitionMode == .present {
             if let presentedView = transitionContext.view(forKey: UITransitionContextViewKey.to) {

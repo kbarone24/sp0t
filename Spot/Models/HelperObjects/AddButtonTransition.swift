@@ -17,7 +17,7 @@ class AddButtonTransition: CATransition {
         type = CATransitionType.push
         subtype = CATransitionSubtype.fromTop
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

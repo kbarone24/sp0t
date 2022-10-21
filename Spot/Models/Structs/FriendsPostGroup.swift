@@ -6,9 +6,9 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
+import Firebase
 import Foundation
 import UIKit
-import Firebase
 
 struct FriendsPostGroup {
     var posterID: String

@@ -7,14 +7,14 @@
 //
 
 import Foundation
-import UIKit
 import MapKit
+import UIKit
 
 class SpotNameAnnotationView: MKAnnotationView {
     var id = ""
     var spotName = ""
     unowned var mapView: MKMapView?
-    
+
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         collisionMode = .rectangle
@@ -23,17 +23,17 @@ class SpotNameAnnotationView: MKAnnotationView {
         displayPriority = .defaultHigh
         alpha = 1.0
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     func setUp(spotID: String, spotName: String, priority: Float) {
         self.id = spotID
         self.spotName = spotName
         self.displayPriority = .init(rawValue: priority)
         let infoWindow = SpotNameView.instanceFromNib() as! SpotNameView
-        let attributes: [NSAttributedString.Key : Any] = [
+        let attributes: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key.strokeColor: UIColor.white,
             NSAttributedString.Key.foregroundColor: UIColor.black,
             NSAttributedString.Key.strokeWidth: -3,
@@ -45,7 +45,7 @@ class SpotNameAnnotationView: MKAnnotationView {
 
         image = infoWindow.asImage()
     }
-    
+
     func addTap() {
         /// prevent map lag on selection
         let tap = UITapGestureRecognizer()
@@ -55,8 +55,7 @@ class SpotNameAnnotationView: MKAnnotationView {
         tap.delegate = self
         addGestureRecognizer(tap)
     }
-    
-    
+
 }
 
 extension SpotNameAnnotationView: UIGestureRecognizerDelegate {

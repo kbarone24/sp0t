@@ -10,6 +10,5 @@ import Foundation
 import UIKit
 
 class EditSpotController: UIViewController {
-    
-}
 
+}

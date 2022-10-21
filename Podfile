@@ -1,5 +1,8 @@
 platform :ios, '14.0'
 
+# ignore all warnings from all pods
+inhibit_all_warnings!
+
 target 'Spot' do
 project 'Spot.xcodeproj'
 

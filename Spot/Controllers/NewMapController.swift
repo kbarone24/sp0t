@@ -6,12 +6,12 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
 import FirebaseUI
+import Foundation
 import IQKeyboardManagerSwift
 import Mixpanel
+import UIKit
 
 protocol NewMapDelegate {
     func finishPassing(map: CustomMap)
@@ -19,7 +19,7 @@ protocol NewMapDelegate {
 
 class NewMapController: UIViewController {
     var delegate: NewMapDelegate?
-    
+
     var exitButton: UIButton?
     var nameField: UITextField!
     var collaboratorLabel: UILabel!
@@ -27,17 +27,17 @@ class NewMapController: UIViewController {
     var secretLabel: UILabel!
     var secretSublabel: UILabel!
     var secretToggle: UIButton!
-    
+
     var nextButton: UIButton?
     var createButton: UIButton?
-    
+
     var keyboardPan: UIPanGestureRecognizer!
     var readyToDismiss = true
-    
+
     let uid: String = UserDataModel.shared.uid
     var mapObject: CustomMap!
     var presentedModally = false
-    
+
     let margin: CGFloat = 18
     var actionButton: UIButton {
         return presentedModally ? nextButton ?? UIButton() : createButton ?? UIButton()
@@ -49,33 +49,33 @@ class NewMapController: UIViewController {
         setUpView()
         presentationController?.delegate = self
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if presentedModally { setUpNavBar() }
         enableKeyboardMethods()
     }
-    
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         if nameField != nil { nameField.becomeFirstResponder() }
         self.navigationController?.setNavigationBarHidden(false, animated: true)
     }
-    
+
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         disableKeyboardMethods()
     }
-    
+
     func addMapObject() {
         let post = UploadPostModel.shared.postObject!
-        mapObject = CustomMap(id: UUID().uuidString, founderID: uid, imageURL: "", likers: [uid], mapName: "", memberIDs: [uid], posterDictionary: [post.id! : [uid]], posterIDs: [uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: [], postLocations: [["lat": post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: UIImage())
+        mapObject = CustomMap(id: UUID().uuidString, founderID: uid, imageURL: "", likers: [uid], mapName: "", memberIDs: [uid], posterDictionary: [post.id!: [uid]], posterIDs: [uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: [], postLocations: [["lat": post.postLat, "long": post.postLong]], postTimestamps: [], secret: false, spotIDs: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: UIImage())
         if !(post.addedUsers?.isEmpty ?? true) { mapObject.memberIDs.append(contentsOf: post.addedUsers!); mapObject.likers.append(contentsOf: post.addedUsers!); mapObject.memberProfiles!.append(contentsOf: post.addedUserProfiles!); mapObject.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!) }
     }
-    
+
     func setUpView() {
         view.backgroundColor = .white
-        
+
         /// back button will show if pushed directly on map
         if !presentedModally {
             exitButton = UIButton {
@@ -90,7 +90,7 @@ class NewMapController: UIViewController {
                 $0.height.width.equalTo(35)
             }
         }
-        
+
         nameField = PaddedTextField {
             $0.text = mapObject.mapName
             $0.textColor = UIColor.black.withAlphaComponent(0.8)
@@ -114,7 +114,7 @@ class NewMapController: UIViewController {
             $0.top.equalTo(topOffset)
             $0.height.equalTo(50)
         }
-        
+
         collaboratorLabel = UILabel {
             $0.text = "Add friends"
             $0.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
@@ -126,7 +126,7 @@ class NewMapController: UIViewController {
             $0.top.equalTo(nameField.snp.bottom).offset(31)
             $0.height.equalTo(18)
         }
-        
+
         let layout = UICollectionViewFlowLayout {
             $0.scrollDirection = .horizontal
             $0.minimumInteritemSpacing = 18
@@ -147,7 +147,7 @@ class NewMapController: UIViewController {
             $0.top.equalTo(collaboratorLabel.snp.bottom).offset(8)
             $0.height.equalTo(90)
         }
-        
+
         secretLabel = UILabel {
             $0.text = "Make this map secret"
             $0.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
@@ -159,7 +159,7 @@ class NewMapController: UIViewController {
             $0.top.equalTo(collaboratorsCollection.snp.bottomMargin).offset(35)
             $0.height.equalTo(18)
         }
-        
+
         secretSublabel = UILabel {
             $0.text = "Only invited friends will see this map"
             $0.textColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
@@ -171,7 +171,7 @@ class NewMapController: UIViewController {
             $0.top.equalTo(secretLabel.snp.bottom).offset(2)
             $0.height.equalTo(18)
         }
-        
+
         secretToggle = UIButton {
             let tag = mapObject.secret ? 1 : 0
             let image = tag == 1 ? UIImage(named: "PrivateMapOn") : UIImage(named: "PrivateMapOff")
@@ -187,7 +187,7 @@ class NewMapController: UIViewController {
             $0.width.equalTo(68)
             $0.height.equalTo(38)
         }
-        
+
         if presentedModally {
             nextButton = NextButton {
                 $0.addTarget(self, action: #selector(nextTapped), for: .touchUpInside)
@@ -200,7 +200,7 @@ class NewMapController: UIViewController {
                 $0.height.equalTo(51)
                 $0.centerX.equalToSuperview()
             }
-            
+
         } else {
             createButton = CreateMapButton {
                 $0.addTarget(self, action: #selector(createTapped), for: .touchUpInside)
@@ -214,40 +214,40 @@ class NewMapController: UIViewController {
                 $0.centerX.equalToSuperview()
             }
         }
-        
+
         keyboardPan = UIPanGestureRecognizer(target: self, action: #selector(keyboardPan(_:)))
         keyboardPan!.isEnabled = false
         view.addGestureRecognizer(keyboardPan!)
     }
-    
+
     func setUpNavBar() {
         title = "Create a map"
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.tintColor = .black
         navigationController?.navigationBar.addWhiteBackground()
-        
+
         let barButtonItem = UIBarButtonItem(image: UIImage(named: "BackArrowDark"), style: .plain, target: self, action: #selector(backTapped))
         navigationItem.leftBarButtonItem = barButtonItem
-        
+
         if let mapNav = navigationController as? MapNavigationController {
             mapNav.requiredStatusBarStyle = .darkContent
         }
     }
-    
+
     func enableKeyboardMethods() {
         IQKeyboardManager.shared.enableAutoToolbar = false
         IQKeyboardManager.shared.enable = false
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
     }
-    
+
     func disableKeyboardMethods() {
         IQKeyboardManager.shared.enableAutoToolbar = true
         IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }
-    
+
     @objc func togglePrivacy(_ sender: UIButton) {
         HapticGenerator.shared.play(.light)
         switch sender.tag {
@@ -264,7 +264,7 @@ class NewMapController: UIViewController {
         default: return
         }
     }
-    
+
     func setFinalMapValues() {
         var text = nameField.text ?? ""
         while text.last?.isWhitespace ?? false { text = String(text.dropLast()) }
@@ -274,44 +274,44 @@ class NewMapController: UIViewController {
         mapObject.coverImage = UploadPostModel.shared.postObject.postImage.first ?? UIImage()
         if presentedModally { UploadPostModel.shared.postObject.hideFromFeed = mapObject.secret }
     }
-    
+
     @objc func nextTapped() {
         Mixpanel.mainInstance().track(event: "NewMapNextTap")
         setFinalMapValues()
         UploadPostModel.shared.setMapValues(map: mapObject)
         DispatchQueue.main.async {
             if let vc = self.storyboard?.instantiateViewController(withIdentifier: "AVCameraController") as? AVCameraController {
-                vc.newMapMode = true 
+                vc.newMapMode = true
                 self.navigationController?.pushViewController(vc, animated: true)
             }
         }
     }
-    
+
     @objc func createTapped() {
         Mixpanel.mainInstance().track(event: "NewMapCreateTap")
         setFinalMapValues()
         delegate?.finishPassing(map: mapObject)
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
-    
+
     @objc func backTapped() {
         /// destroy on return to map
         UploadPostModel.shared.destroy()
         DispatchQueue.main.async { self.navigationController?.popViewController(animated: true) }
     }
-    
+
     @objc func cancelTapped() {
         Mixpanel.mainInstance().track(event: "NewMapCancelTap")
         if let mapVC = navigationController?.viewControllers.first as? MapController { mapVC.uploadMapReset() }
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
-    
+
     @objc func keyboardPan(_ sender: UIPanGestureRecognizer) {
         if abs(sender.translation(in: view).y) > abs(sender.translation(in: view).x) {
             nameField.resignFirstResponder()
         }
     }
-    
+
     @objc func keyboardWillShow(_ notification: NSNotification) {
         animateWithKeyboard(notification: notification) { keyboardFrame in
             self.actionButton.snp.removeConstraints()
@@ -323,9 +323,9 @@ class NewMapController: UIViewController {
             }
         }
     }
-    
+
     @objc func keyboardWillHide(_ notification: NSNotification) {
-        animateWithKeyboard(notification: notification) { keyboardFrame in
+        animateWithKeyboard(notification: notification) { _ in
             self.actionButton.snp.removeConstraints()
             self.actionButton.snp.makeConstraints {
                 $0.bottom.equalToSuperview().offset(-60)
@@ -344,18 +344,18 @@ extension NewMapController: UITextFieldDelegate {
         let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
         return updatedText.count <= 50
     }
-     
+
     func textFieldDidChangeSelection(_ textField: UITextField) {
         createButton?.isEnabled = textField.text?.trimmingCharacters(in: .whitespaces).count ?? 0 > 0
         nextButton?.isEnabled = textField.text?.trimmingCharacters(in: .whitespaces).count ?? 0 > 0
      //   textField.attributedText = NSAttributedString(string: textField.text ?? "")
     }
-    
+
     func textFieldDidBeginEditing(_ textField: UITextField) {
         keyboardPan.isEnabled = true
         readyToDismiss = false
     }
-    
+
     func textFieldDidEndEditing(_ textField: UITextField) {
         keyboardPan.isEnabled = false
         readyToDismiss = true
@@ -366,7 +366,7 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return mapObject.memberIDs.count + 1
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapMemberCell", for: indexPath) as! MapMemberCell
         if indexPath.row == 0 {
@@ -378,7 +378,7 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
         }
         return cell
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: mapObject.memberIDs)
         let vc = FriendsListController(fromVC: self, allowsSelection: true, showsSearchBar: true, friendIDs: UserDataModel.shared.userInfo.friendIDs, friendsList: friendsList, confirmedIDs: UploadPostModel.shared.postObject.addedUsers!, sentFrom: .NewMap)
@@ -397,7 +397,7 @@ extension NewMapController: FriendsListDelegate {
     func finishPassing(selectedUsers: [UserProfile]) {
         var members = selectedUsers
         members.append(UserDataModel.shared.userInfo)
-        mapObject.memberIDs = members.map({$0.id!})
+        mapObject.memberIDs = members.map({ $0.id! })
         mapObject.likers = mapObject.memberIDs
         mapObject.memberProfiles = members
         DispatchQueue.main.async { self.collaboratorsCollection.reloadData() }
@@ -406,18 +406,18 @@ extension NewMapController: FriendsListDelegate {
 
 class NextButton: UIButton {
     var label: UILabel!
-    
+
     override var isEnabled: Bool {
         didSet {
             alpha = isEnabled ? 1.0 : 0.4
         }
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
         layer.cornerRadius = 9
-     
+
         label = UILabel {
             $0.text = "Next"
             $0.textColor = .black
@@ -428,7 +428,7 @@ class NextButton: UIButton {
             $0.centerX.centerY.equalToSuperview()
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -436,18 +436,18 @@ class NextButton: UIButton {
 
 class CreateMapButton: UIButton {
     var chooseLabel: UILabel!
-    
+
     override var isEnabled: Bool {
         didSet {
             alpha = isEnabled ? 1.0 : 0.4
         }
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = UIColor(named: "SpotGreen")
         layer.cornerRadius = 9
-     
+
         chooseLabel = UILabel {
             $0.text = "Create Map"
             $0.textColor = .black
@@ -458,7 +458,7 @@ class CreateMapButton: UIButton {
             $0.centerX.centerY.equalToSuperview()
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

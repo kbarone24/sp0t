@@ -6,28 +6,28 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
 import FirebaseUI
+import Foundation
+import UIKit
 
 class ImageAvatarView: UIImageView {
     lazy var imageManager = SDWebImageManager()
     var backgroundView: UIView!
-        
+
     func setUp(avatarURLs: [String], annotation: Bool, completion: @escaping(_ success: Bool) -> Void) {
         backgroundColor = .clear
         layer.cornerRadius = 2
         clipsToBounds = true
         contentMode = .scaleAspectFill
-        
+
         backgroundView = UIView {
             $0.backgroundColor = .clear
             addSubview($0)
         }
         /// temporary -> just show first 5 
         let avatarURLs = avatarURLs.prefix(5)
-        
+
         /// background view will slide with even # of images to center the view
         let even = avatarURLs.count % 2 == 0
         if annotation { addBackgroundFrame(even: even) } else { makeBackgroundConstraints(even: even) }
@@ -43,10 +43,10 @@ class ImageAvatarView: UIImageView {
             }
             if annotation { imageView.addFrame(offset: offset, width: backgroundView.bounds.width) } else { imageView.makeConstraints(offset: offset) }
 
-            offset = CGFloat(i/2) * 13 + 13
+            offset = CGFloat(i / 2) * 13 + 13
             if i % 2 != 0 { offset = -offset }
-            
-            SDWebImageManager.shared.loadImage(with: URL(string: avatarURLs[i]), options: [.highPriority, .scaleDownLargeImages], context: [.imageTransformer: transformer], progress: nil) { (rawImage, data, err, cache, download, url) in
+
+            SDWebImageManager.shared.loadImage(with: URL(string: avatarURLs[i]), options: [.highPriority, .scaleDownLargeImages], context: [.imageTransformer: transformer], progress: nil) { (rawImage, _, _, _, _, _) in
                 imageView.image = rawImage ?? UIImage()
                 count += 1
                 if count == avatarURLs.count { completion(true); return }
@@ -58,12 +58,12 @@ class ImageAvatarView: UIImageView {
         super.removeFromSuperview()
         imageManager.cancelAll()
     }
-    
+
     func addBackgroundFrame(even: Bool) {
         let width = even ? 61 : 74
         backgroundView.frame = CGRect(x: 0, y: 0, width: width, height: 38)
     }
-    
+
     func makeBackgroundConstraints(even: Bool) {
         let inset: CGFloat = even ? 13 : 0
         backgroundView.snp.makeConstraints {
@@ -83,6 +83,6 @@ class AvatarImageView: UIImageView {
         }
     }
     func addFrame(offset: CGFloat, width: CGFloat) {
-        frame = CGRect(x: (width - 26)/2 + offset, y: 0, width: 26, height: 37.5)
+        frame = CGRect(x: (width - 26) / 2 + offset, y: 0, width: 26, height: 37.5)
     }
 }

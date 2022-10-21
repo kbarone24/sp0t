@@ -9,11 +9,11 @@
 import Foundation
 
 class NewUser {
-    
+
     var name: String
     var username: String
     var phone: String
-    
+
     init(name: String, username: String, phone: String) {
         self.name = name
         self.username = username

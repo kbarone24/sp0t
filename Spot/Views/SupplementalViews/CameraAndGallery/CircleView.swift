@@ -17,7 +17,7 @@ class CircleView: UIView {
             if maxSelected && !selected { self.alpha = 0.3 }
         }
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.15)
@@ -25,9 +25,8 @@ class CircleView: UIView {
         isUserInteractionEnabled = false
         layer.borderColor = UIColor(red: 1, green: 1, blue: 1, alpha: 1).cgColor
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 }
-

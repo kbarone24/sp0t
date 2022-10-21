@@ -6,9 +6,9 @@
 //  Copyright © 2021 sp0t, LLC. All rights reserved.
 //
 
+import CoreLocation
 import Foundation
 import UIKit
-import CoreLocation
 
 struct NearbyID {
     var id: String
