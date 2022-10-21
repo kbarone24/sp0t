@@ -7,15 +7,14 @@
 //
 
 import Foundation
-import UIKit
 import MapKit
+import UIKit
 
 class SinglePostAnnotation: MKPointAnnotation {
-    
+
     var id: String!
-    
+
     override init() {
         super.init()
     }
 }
-

@@ -7,8 +7,8 @@
 //
 
 import Foundation
-import UIKit
 import MapKit
+import UIKit
 
 extension CustomMapController: MKMapViewDelegate {
     @objc func notifyPostOpen(_ notification: NSNotification) {
@@ -16,38 +16,38 @@ extension CustomMapController: MKMapViewDelegate {
         guard let postID = notification.userInfo?.first?.value as? String else { return }
         guard let mapVC = mapController else { return }
         if mapData == nil { return } /// patch fix for update seen crash
-        
+
         DispatchQueue.main.async { self.mapData!.updateSeen(postID: postID) }
-        
+
         let coordinate = mapData!.postsDictionary[postID]?.coordinate
-        if coordinate != nil, let annotation = mapVC.mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: coordinate!)}) {
+        if coordinate != nil, let annotation = mapVC.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate!) }) {
             DispatchQueue.main.async {
                 mapVC.mapView.removeAnnotation(annotation)
                 mapVC.mapView.addAnnotation(annotation)
             }
         }
     }
-    
+
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
-        
+
         if let anno = annotation as? SpotAnnotation {
             /// set up spot post view with 1 post
             return mapView.getSpotAnnotation(anno: anno, selectedMap: mapData)
-            
+
         } else if let anno = annotation as? MKClusterAnnotation {
-            if anno.memberAnnotations.contains(where: {$0 is SpotAnnotation}) {
+            if anno.memberAnnotations.contains(where: { $0 is SpotAnnotation }) {
                 return mapView.getSpotClusterAnnotation(anno: anno, selectedMap: mapData)
             }
         }
         return MKAnnotationView()
     }
-    
+
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         if centeredMap && containerDrawerView?.status != .Bottom { closeDrawer() }
         guard let mapView = mapView as? SpotMapView else { return }
         // gets called too much -> just use gesture recognizer
-        if mapView.region.span.longitudeDelta < 0.0013 {
+        if mapView.region.span.longitudeDelta < 0.001_3 {
             if mapView.shouldCluster {
                 mapView.shouldCluster = false
                 let annotations = mapView.annotations
@@ -79,15 +79,15 @@ extension CustomMapController: MKMapViewDelegate {
             }
         }
     }
-    
+
     func setInitialRegion() {
-        let coordinates = postsList.map({$0.coordinate})
+        let coordinates = postsList.map({ $0.coordinate })
         let region = MKCoordinateRegion(coordinates: coordinates, overview: true)
         mapController?.mapView.setRegion(region, animated: false)
         mapController?.mapView.setOffsetRegion(region: region, offset: -200, animated: false)
         centeredMap = true
     }
-    
+
     func closeDrawer() {
         DispatchQueue.main.async { self.containerDrawerView?.present(to: .Bottom) }
     }
@@ -130,7 +130,7 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         // Need to prevent content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
         recognizer.setTranslation(.zero, in: recognizer.view)
     }
-    
+
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return true
     }
@@ -140,17 +140,17 @@ extension CustomMapController: SpotMapViewDelegate {
     func openSpotFromSpotName(view: SpotNameAnnotationView) {
         openSpot(spotID: view.id, spotName: view.spotName)
     }
-    
+
     func openPostFromSpotPost(view: SpotPostAnnotationView) {
         var posts: [MapPost] = []
         for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
         DispatchQueue.main.async { self.openPost(posts: posts, row: 0) }
     }
-    
+
     func openSpotFromSpotPost(view: SpotPostAnnotationView) {
         openSpot(spotID: view.id, spotName: view.spotName)
     }
-        
+
     func centerMapOnPostsInCluster(view: SpotPostAnnotationView) {
         closeDrawer()
 

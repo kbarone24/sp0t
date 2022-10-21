@@ -6,9 +6,9 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
+import FirebaseUI
 import Foundation
 import UIKit
-import FirebaseUI
 
 class RightAlignedAvatarView: UIView {
     lazy var imageManager = SDWebImageManager()
@@ -31,8 +31,8 @@ class RightAlignedAvatarView: UIView {
                 insertSubview($0, at: 0)
             }
             offset += 16.45
-            
-            SDWebImageManager.shared.loadImage(with: URL(string: avatarURLs[i]), options: [.highPriority, .scaleDownLargeImages], context: [.imageTransformer: transformer], progress: nil) { (rawImage, data, err, cache, download, url) in
+
+            SDWebImageManager.shared.loadImage(with: URL(string: avatarURLs[i]), options: [.highPriority, .scaleDownLargeImages], context: [.imageTransformer: transformer], progress: nil) { (rawImage, _, _, _, _, _) in
                 imageView.image = rawImage ?? UIImage()
                 count += 1
                 if count == avatarURLs.count { completion(true); return }

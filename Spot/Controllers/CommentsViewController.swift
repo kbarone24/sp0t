@@ -6,37 +6,37 @@
 //  Copyright © 2019 comp523. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
+import FirebaseUI
+import Foundation
 import IQKeyboardManagerSwift
 import Mixpanel
-import FirebaseUI
+import UIKit
 
 class CommentsController: UIViewController {
-    
+
     // var friendsList: [UserProfile] = []
     weak var postVC: PostController!
     var post: MapPost!
-    
+
     var likers: [UserProfile] = []
     var commentList: [MapComment] = []
     var taggedUserProfiles: [UserProfile] = []
-    
+
     var selectedIndex = 0 /// tableView cells are comment when 0, like when 1
     var tableView: UITableView!
-    
+
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore! = Firestore.firestore()
-    
+
     var footerOffset: UIView!
     var footerView: UIView!
     var profilePic: UIImageView!
     var postButton: UIButton!
     lazy var textView = UITextView()
-        
+
     let emptyTextString = "Comment..."
-    
+
     var panGesture: UIPanGestureRecognizer!
     var tagFriendsView: TagFriendsView?
     var cancelOnDismiss = false
@@ -45,42 +45,42 @@ class CommentsController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.98, alpha: 1)
-                
+
         addTable()
         addFooter()
-        
+
         DispatchQueue.global().async {
             self.getLikers()
         }
     }
-    
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         disableKeyboardMethods()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         enableKeyboardMethods()
-        
+
         if firstOpen {
             DispatchQueue.main.async { self.textView.becomeFirstResponder() }
             firstOpen = false
         }
     }
-        
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "CommentsOpen")
     }
-    
+
     func enableKeyboardMethods() {
         IQKeyboardManager.shared.enableAutoToolbar = false
         IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
     }
-    
+
     func disableKeyboardMethods() {
         IQKeyboardManager.shared.enable = true
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
@@ -105,12 +105,12 @@ class CommentsController: UIViewController {
         tableView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        
+
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         panGesture.isEnabled = false
         tableView.addGestureRecognizer(panGesture)
     }
-        
+
     func addFooter() {
         footerOffset = UIView {
             $0.backgroundColor = UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
@@ -129,11 +129,11 @@ class CommentsController: UIViewController {
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalTo(footerOffset.snp.top)
         }
-        
+
         profilePic = UIImageView {
             $0.image = UserDataModel.shared.userInfo.profilePic
             $0.contentMode = .scaleAspectFill
-            $0.layer.cornerRadius = 39/2
+            $0.layer.cornerRadius = 39 / 2
             $0.clipsToBounds = true
             footerView.addSubview($0)
         }
@@ -142,7 +142,7 @@ class CommentsController: UIViewController {
             $0.width.height.equalTo(39)
             $0.bottom.equalToSuperview().inset(15)
         }
-        
+
         textView = UITextView {
             $0.delegate = self
             $0.backgroundColor = UIColor(red: 0.937, green: 0.937, blue: 0.937, alpha: 1)
@@ -165,7 +165,7 @@ class CommentsController: UIViewController {
             $0.top.equalToSuperview().inset(10)
             $0.bottom.equalToSuperview().inset(12)
         }
-        
+
         postButton = UIButton {
             $0.setImage(UIImage(named: "PostCommentButton"), for: .normal)
             $0.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -179,7 +179,7 @@ class CommentsController: UIViewController {
             $0.bottom.equalTo(textView.snp.bottom).inset(6)
         }
     }
-    
+
     func getLikers() {
         var ct = 0
         for id in post.likers {
@@ -190,7 +190,7 @@ class CommentsController: UIViewController {
             }
         }
     }
-    
+
     func reloadLikers() {
         if selectedIndex == 1 { DispatchQueue.main.async { self.tableView.reloadData() } }
     }
@@ -203,36 +203,36 @@ extension CommentsController {
         likers!.append(uid)
         var comment = comment
         comment.likers = likers
-        
-        if let i = commentList.firstIndex(where: {$0.id == comment.id}) { commentList[i] = comment }
+
+        if let i = commentList.firstIndex(where: { $0.id == comment.id }) { commentList[i] = comment }
         updateParent()
         DispatchQueue.main.async { self.tableView.reloadData() }
 
         if uid == comment.commenterID { return } /// user liked their own comment
         DispatchQueue.global().async {
-            self.db.collection("posts").document(post.id!).collection("comments").document(comment.id!).updateData(["likers" : FieldValue.arrayUnion([self.uid])])
+            self.db.collection("posts").document(post.id!).collection("comments").document(comment.id!).updateData(["likers": FieldValue.arrayUnion([self.uid])])
             self.db.collection("users").document(comment.commenterID).collection("notifications").addDocument(data: [
-                "commentID" : comment.id!,
-                "imageURL" : post.imageURLs.first ?? "",
-                "postID" : post.id!,
-                "seen" : false,
-                "senderID" : self.uid,
-                "senderUsername" : UserDataModel.shared.userInfo.username,
-                "spotID" : post.spotID ?? "",
-                "timestamp" : Timestamp(date: Date()),
-                "type" : "commentLike"
+                "commentID": comment.id!,
+                "imageURL": post.imageURLs.first ?? "",
+                "postID": post.id!,
+                "seen": false,
+                "senderID": self.uid,
+                "senderUsername": UserDataModel.shared.userInfo.username,
+                "spotID": post.spotID ?? "",
+                "timestamp": Timestamp(date: Date()),
+                "type": "commentLike"
             ])
         }
     }
-    
+
     func unlikeComment(comment: MapComment, post: MapPost) {
         var comment = comment
         var likers = comment.likers == nil ? [] : comment.likers
-        likers!.removeAll(where: {$0 == uid})
+        likers!.removeAll(where: { $0 == uid })
         comment.likers = likers
         DispatchQueue.main.async { self.tableView.reloadData() }
-        
-        if let i = commentList.firstIndex(where: {$0.id == comment.id}) { commentList[i] = comment }
+
+        if let i = commentList.firstIndex(where: { $0.id == comment.id }) { commentList[i] = comment }
         updateParent()
         DispatchQueue.main.async { self.tableView.reloadData() }
 
@@ -241,22 +241,22 @@ extension CommentsController {
             print(result?.data as Any, error as Any)
         }
     }
-    
+
     func deleteComment(commentID: String) {
         Mixpanel.mainInstance().track(event: "CommentsDelete")
         let postID = post.id!
         let postsRef = self.db.collection("posts").document(postID).collection("comments").document(commentID)
                 postsRef.delete()
-        
-        db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(-1))])
+
+        db.collection("posts").document(self.post.id!).updateData(["commentCount": FieldValue.increment(Int64(-1))])
         incrementTopFriends(friendID: post.posterID, increment: -1)
         updateParent()
     }
-    
+
     @objc func postComment(_ sender: UIButton) {
         postComment()
     }
-    
+
     func postComment() {
         /// check for empty
         guard var commentText = textView.text else { return }
@@ -265,60 +265,60 @@ extension CommentsController {
             commentText = String(commentText.dropLast())
         }
         if commentText.replacingOccurrences(of: " ", with: "") == "" { return }
-        
+
         Mixpanel.mainInstance().track(event: "CommentsPost")
-        
+
         var commenterIDList = [uid]
         let suffixCount = max(commentList.count - 1, 0)
-        let excludingFirstCommenter = Array(commentList.map({$0.commenterID}).suffix(suffixCount))
+        let excludingFirstCommenter = Array(commentList.map({ $0.commenterID }).suffix(suffixCount))
         commenterIDList.append(contentsOf: excludingFirstCommenter)
-        
+
         let commentID = UUID().uuidString
         let taggedUsers = getTaggedUsers(text: commentText)
-        let taggedUsernames = taggedUsers.map({$0.username})
-        let taggedUserIDs = taggedUsers.map({$0.id ?? ""})
-        
+        let taggedUsernames = taggedUsers.map({ $0.username })
+        let taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
+
         let comment = MapComment(id: commentID, comment: commentText, commenterID: self.uid, taggedUsers: taggedUsernames, timestamp: Timestamp(date: Date()), userInfo: UserDataModel.shared.userInfo)
         commentList.append(comment)
-        
+
         DispatchQueue.main.async {
             self.resetTextView()
             self.tableView.reloadData()
             self.updateParent()
         }
-        
+
         let commentRef = db.collection("posts").document(self.post.id!).collection("comments")
         /// set additional values for notification handling
         commentRef.addDocument(data: [
-            "addedUsers" : post.addedUsers ?? [],
+            "addedUsers": post.addedUsers ?? [],
             "comment": comment.comment,
             "commenterID": comment.commenterID,
-            "commenterIDList" : commenterIDList,
-            "commenterUsername" : UserDataModel.shared.userInfo.username,
-            "imageURL" : post.imageURLs.first ?? "",
+            "commenterIDList": commenterIDList,
+            "commenterUsername": UserDataModel.shared.userInfo.username,
+            "imageURL": post.imageURLs.first ?? "",
             "likers": [],
             "posterID": post.posterID,
-            "posterUsername" : post.userInfo?.username ?? "",
+            "posterUsername": post.userInfo?.username ?? "",
             "taggedUserIDs": taggedUserIDs,
             "taggedUsers": comment.taggedUsers ?? [],
             "timestamp": comment.timestamp
         ] as [String: Any] )
         /// set extraneous values
-        self.db.collection("posts").document(self.post.id!).updateData(["commentCount" : FieldValue.increment(Int64(1))])
+        self.db.collection("posts").document(self.post.id!).updateData(["commentCount": FieldValue.increment(Int64(1))])
         self.incrementTopFriends(friendID: post.posterID, increment: 1)
-   
+
     }
-    
+
     func resetTextView() {
         textView.text = ""
         textView.resignFirstResponder()
     }
-    
+
     func updateParent() {
-        let infoPass = ["commentList": commentList, "postID": post.id as Any] as [String : Any]
+        let infoPass = ["commentList": commentList, "postID": post.id as Any] as [String: Any]
         NotificationCenter.default.post(name: Notification.Name("CommentChange"), object: nil, userInfo: infoPass)
     }
-    
+
     func openProfile(user: UserProfile) {
         postVC.openProfile(user: user, openComments: true)
         DispatchQueue.main.async { self.dismiss(animated: true) }
@@ -335,13 +335,13 @@ extension CommentsController: UITextViewDelegate {
         let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
         return updatedText.count <= 560
     }
-    
+
     func textViewDidChange(_ textView: UITextView) {
         let trimText = textView.text.trimmingCharacters(in: .whitespacesAndNewlines)
         self.postButton.isEnabled = trimText != ""
         self.textView.alpha = trimText == "" ? 0.65 : 1.0
-        
-        ///add tag table if @ used
+
+        /// add tag table if @ used
         let cursor = textView.getCursorPosition()
         let tagTuple = getTagUserString(text: textView.text ?? "", cursorPosition: cursor)
         let tagString = tagTuple.text
@@ -352,7 +352,7 @@ extension CommentsController: UITextViewDelegate {
             addTagTable(tagString: tagString)
         }
     }
-    
+
     func removeTagTable() {
         if tagFriendsView != nil {
             tagFriendsView!.removeFromSuperview()
@@ -360,7 +360,7 @@ extension CommentsController: UITextViewDelegate {
             textView.autocorrectionType = .default
         }
     }
-    
+
     func addTagTable(tagString: String) {
         if tagFriendsView == nil {
             tagFriendsView = TagFriendsView {
@@ -379,15 +379,14 @@ extension CommentsController: UITextViewDelegate {
             tagFriendsView?.searchText = tagString
         }
     }
-    
-    
+
     func textViewDidBeginEditing(_ textView: UITextView) {
         panGesture.isEnabled = true
         if textView.alpha < 0.7 {
             textView.text = nil
         }
     }
-    
+
     func textViewDidEndEditing(_ textView: UITextView) {
         panGesture.isEnabled = false
         if textView.text.isEmpty {
@@ -395,7 +394,7 @@ extension CommentsController: UITextViewDelegate {
             textView.text = emptyTextString
         }
     }
-    
+
     @objc func keyboardWillShow(_ notification: NSNotification) {
         if cancelOnDismiss { return }
         animateWithKeyboard(notification: notification) { keyboardFrame in
@@ -407,10 +406,10 @@ extension CommentsController: UITextViewDelegate {
             }
         }
     }
-    
+
     @objc func keyboardWillHide(_ notification: NSNotification) {
         if cancelOnDismiss { return }
-        animateWithKeyboard(notification: notification) { keyboardFrame in
+        animateWithKeyboard(notification: notification) { _ in
             self.footerView.snp.removeConstraints()
             self.footerView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
@@ -419,7 +418,7 @@ extension CommentsController: UITextViewDelegate {
             }
         }
     }
-    
+
     @objc func pan(_ sender: UIPanGestureRecognizer) {
         if !self.textView.isFirstResponder { return }
         let direction = sender.velocity(in: view)
@@ -435,43 +434,43 @@ extension CommentsController: TagFriendsDelegate {
 }
 
 extension CommentsController: UITableViewDelegate, UITableViewDataSource {
-    
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return selectedIndex == 0 ? commentList.count - 1 : likers.count
     }
-    
+
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return selectedIndex == 0 ? UITableView.automaticDimension : 46
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         switch selectedIndex {
         case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: "CommentCell", for: indexPath) as! CommentCell
             cell.setUp(comment: commentList[indexPath.row + 1], post: post)
             return cell
-            
+
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "LikerCell", for: indexPath) as! LikerCell
             cell.setUp(user: likers[indexPath.row])
             return cell
-            
+
         default: return UITableViewCell()
         }
     }
-    
+
     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
         guard let comment = commentList[safe: indexPath.row + 1] else { return .none }
         return comment.commenterID == self.uid ? .delete : .none
     }
-    
+
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         // swipe to delete comment
-        if (editingStyle == .delete) {
+        if editingStyle == .delete {
             let commentID = commentList[indexPath.row + 1].id!
             commentList.remove(at: indexPath.row + 1)
             deleteComment(commentID: commentID)
-            
+
             let path = IndexPath(row: indexPath.row, section: 0)
             DispatchQueue.main.async {
                 tableView.performBatchUpdates {
@@ -482,7 +481,7 @@ extension CommentsController: UITableViewDelegate, UITableViewDataSource {
             }
         }
     }
-    
+
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "CommentsControl") as? CommentsControl {
             header.selectedIndex = selectedIndex
@@ -491,27 +490,27 @@ extension CommentsController: UITableViewDelegate, UITableViewDataSource {
             return header
         } else { return UITableViewHeaderFooterView() }
     }
-    
+
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 64
     }
     ///https://stackoverflow.com/questions/37942812/turn-some-parts-of-uilabel-to-act-like-a-uibutton
-    
+
 }
 
 class CommentCell: UITableViewCell {
     var comment: MapComment!
     var post: MapPost!
-    
+
     var profilePic: UIImageView!
     var username: UILabel!
     var commentLabel: UILabel!
     var likeButton: UIButton!
     var numLikes: UILabel!
-    
+
     var tagRect: [(rect: CGRect, username: String)] = []
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-    
+
     var likeCount: Int = 0 {
         didSet {
             if likeCount > 0 {
@@ -522,8 +521,8 @@ class CommentCell: UITableViewCell {
             }
         }
     }
-    
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?){
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
         translatesAutoresizingMaskIntoConstraints = true
@@ -531,14 +530,14 @@ class CommentCell: UITableViewCell {
         tag = 30
         setUpView()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     func setUpView() {
         resetCell()
-            
+
         likeButton = UIButton {
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
             $0.contentHorizontalAlignment = .center
@@ -551,7 +550,7 @@ class CommentCell: UITableViewCell {
             $0.width.equalTo(28.8)
             $0.height.equalTo(27)
         }
-  
+
         numLikes = UILabel {
             $0.textColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 10.5)
@@ -563,10 +562,10 @@ class CommentCell: UITableViewCell {
             $0.leading.equalTo(likeButton.snp.trailing)
             $0.bottom.equalTo(likeButton.snp.bottom).inset(5)
         }
-        
+
         profilePic = UIImageView {
             $0.contentMode = .scaleAspectFill
-            $0.layer.cornerRadius = 39/2
+            $0.layer.cornerRadius = 39 / 2
             $0.clipsToBounds = true
             $0.isUserInteractionEnabled = true
             let tap = UITapGestureRecognizer(target: self, action: #selector(userTap))
@@ -592,7 +591,7 @@ class CommentCell: UITableViewCell {
             $0.top.equalTo(17)
             $0.trailing.lessThanOrEqualTo(likeButton.snp.leading).inset(5)
         }
-                
+
         commentLabel = UILabel {
             $0.lineBreakMode = .byWordWrapping
             $0.numberOfLines = 0
@@ -608,32 +607,32 @@ class CommentCell: UITableViewCell {
             $0.bottom.lessThanOrEqualToSuperview()
         }
     }
-    
+
     func setUp(comment: MapComment, post: MapPost) {
         self.comment = comment
         self.post = post
-        
+
         let commentString = NSAttributedString(string: comment.comment)
         commentLabel.attributedText = commentString
         commentLabel.sizeToFit()
         addAttString()
-        
+
         username.text = comment.userInfo?.username ?? ""
         username.sizeToFit()
-        
-        let liked = comment.likers?.contains(where: {$0 == uid}) ?? false
+
+        let liked = comment.likers?.contains(where: { $0 == uid }) ?? false
         let image = liked ? UIImage(named: "CommentLikeButtonFilled") : UIImage(named: "CommentLikeButton")?.withTintColor(UIColor(red: 0.342, green: 0.342, blue: 0.342, alpha: 1))
         likeButton.setImage(image, for: .normal)
         liked ? likeButton.addTarget(self, action: #selector(unlikeTap(_:)), for: .touchUpInside) : likeButton.addTarget(self, action: #selector(likeTap(_:)), for: .touchUpInside)
         likeCount = comment.likers?.count ?? 0
-        
+
         let url = comment.userInfo?.imageURL ?? ""
         if url != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
             profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
     }
-        
+
     func resetCell() {
         if profilePic != nil { profilePic.removeFromSuperview() }
         if username != nil { username.text = ""; username.removeFromSuperview() }
@@ -641,18 +640,18 @@ class CommentCell: UITableViewCell {
         if likeButton != nil { likeButton.removeFromSuperview() }
         if numLikes != nil { numLikes.text = ""; numLikes.removeFromSuperview() }
     }
-    
+
     override func prepareForReuse() {
         super.prepareForReuse()
         if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
     }
-    
+
     func addAttString() {
         if !(comment.taggedUsers?.isEmpty ?? true) {
             let attString = self.getAttString(caption: comment.comment, taggedFriends: comment.taggedUsers!, font: commentLabel.font, maxWidth: UIScreen.main.bounds.width - 105)
             commentLabel.attributedText = attString.0
             tagRect = attString.1
-            
+
             let tap = UITapGestureRecognizer(target: self, action: #selector(self.tappedLabel(_:)))
             commentLabel.isUserInteractionEnabled = true
             commentLabel.addGestureRecognizer(tap)
@@ -662,7 +661,7 @@ class CommentCell: UITableViewCell {
     func tagUser() {
         /// @ tapped comment's poster at the end of the active comment text
         let username = "@\(comment.userInfo?.username ?? "") "
-        
+
         guard let commentsVC = viewContainingController() as? CommentsController else { return }
         if !commentsVC.textView.isFirstResponder {
             var text = (commentsVC.textView.text ?? "")
@@ -671,28 +670,28 @@ class CommentCell: UITableViewCell {
             commentsVC.textView.text = text
         }
     }
-    
+
     @objc func likeTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "CommentsLikeComment")
         if let commentsVC = viewContainingController() as? CommentsController {
             commentsVC.likeComment(comment: comment, post: post)
         }
     }
-    
+
     @objc func unlikeTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "CommentsUnlikeComment")
         if let commentsVC = viewContainingController() as? CommentsController {
             commentsVC.unlikeComment(comment: comment, post: post)
         }
     }
-        
+
     @objc func tappedLabel(_ sender: UITapGestureRecognizer) {
         // tag tap
         for r in tagRect {
             if r.rect.contains(sender.location(in: sender.view)) {
                 Mixpanel.mainInstance().track(event: "CommentsOpenTaggedUserProfile")
                 /// open tag from friends list
-                if let friend = UserDataModel.shared.userInfo.friendsList.first(where: {$0.username == r.username}) {
+                if let friend = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == r.username }) {
                     openProfile(user: friend)
                     return
                 } else {
@@ -705,13 +704,12 @@ class CommentCell: UITableViewCell {
         Mixpanel.mainInstance().track(event: "CommentsTapTagUser")
         tagUser()
     }
-    
+
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CommentsUserTap")
         guard let user = comment.userInfo else { return }
         openProfile(user: user)
     }
-    
 
     func openProfile(user: UserProfile) {
         if let commentsVC = self.viewContainingController() as? CommentsController {
@@ -724,7 +722,7 @@ class CommentsControl: UITableViewHeaderFooterView {
     var buttonBar: UIView!
     var commentSeg: CommentSeg!
     var likeSeg: LikeSeg!
-    
+
     var selectedIndex: Int = 0 {
         didSet {
             commentSeg.index = selectedIndex
@@ -732,21 +730,21 @@ class CommentsControl: UITableViewHeaderFooterView {
             setBarConstraints()
         }
     }
-    
+
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
         isUserInteractionEnabled = true
         let backgroundView = UIView()
         backgroundView.backgroundColor = .white
         self.backgroundView = backgroundView
-        
+
         setUp()
     }
-    
+
     func setUp() {
         let segWidth: CGFloat = 125
         if commentSeg != nil { return }
-        
+
         commentSeg = CommentSeg {
             $0.addTarget(self, action: #selector(commentSegTap(_:)), for: .touchUpInside)
             addSubview($0)
@@ -766,23 +764,23 @@ class CommentsControl: UITableViewHeaderFooterView {
             $0.leading.equalTo(snp.centerX).offset(5)
             $0.width.equalTo(segWidth)
         }
-    
+
         buttonBar = UIButton {
             $0.backgroundColor = .black
             $0.layer.cornerRadius = 1
             addSubview($0)
         }
     }
-    
+
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-    
+
     @objc func commentSegTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "CommentsCommentsSegTap")
         if selectedIndex == 1 {
             switchToCommentSeg()
         }
     }
-        
+
     @objc func likeSegTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "CommentsLikeSegTap")
         if selectedIndex == 0 {
@@ -791,7 +789,7 @@ class CommentsControl: UITableViewHeaderFooterView {
             commentsVC.textView.resignFirstResponder()
         }
     }
-    
+
     func switchToLikeSeg() {
         guard let commentsVC = viewContainingController() as? CommentsController else { return }
         commentsVC.selectedIndex = 1
@@ -806,7 +804,7 @@ class CommentsControl: UITableViewHeaderFooterView {
         commentsVC.footerView.isHidden = false
         commentsVC.footerView.becomeFirstResponder()
     }
-    
+
     func setBarConstraints() {
         buttonBar.snp.removeConstraints()
         let selectedButton = selectedIndex == 0 ? commentSeg : likeSeg
@@ -817,7 +815,7 @@ class CommentsControl: UITableViewHeaderFooterView {
             $0.height.equalTo(3.5)
         }
     }
-    
+
     func animateSegmentSwitch() {
         let selectedButton = selectedIndex == 0 ? commentSeg : likeSeg
         UIView.animate(withDuration: 0.2) {
@@ -832,7 +830,7 @@ class CommentsControl: UITableViewHeaderFooterView {
 class CommentSeg: UIButton {
     var commentIcon: UIImageView!
     var commentLabel: UILabel!
-    
+
     var commentCount: Int = 0 {
         didSet {
             var commentText = "\(max(commentCount, 0)) comment"
@@ -840,7 +838,7 @@ class CommentSeg: UIButton {
             commentLabel.text = commentText
         }
     }
-    
+
     var index: Int = 0 {
         didSet {
             let selectedSeg = index == 0
@@ -849,10 +847,10 @@ class CommentSeg: UIButton {
             commentLabel.font = selectedSeg ? UIFont(name: "SFCompactText-Bold", size: 16) : UIFont(name: "SFCompactText-Semibold", size: 16)
         }
     }
-        
+
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
+
         commentIcon = UIImageView {
             $0.image = UIImage(named: "CommentSegCommentIcon")
             addSubview($0)
@@ -861,7 +859,7 @@ class CommentSeg: UIButton {
             $0.centerY.equalToSuperview()
             $0.width.height.equalTo(22.4)
         }
-        
+
         commentLabel = UILabel {
             $0.textColor = .black
             addSubview($0)
@@ -871,7 +869,7 @@ class CommentSeg: UIButton {
             $0.centerY.equalToSuperview()
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -880,7 +878,7 @@ class CommentSeg: UIButton {
 class LikeSeg: UIButton {
     var likeIcon: UIImageView!
     var likeLabel: UILabel!
-    
+
     var likeCount: Int = 0 {
         didSet {
             var likeText = "\(max(likeCount, 0)) like"
@@ -888,7 +886,7 @@ class LikeSeg: UIButton {
             likeLabel.text = likeText
         }
     }
-    
+
     var index: Int = 0 {
         didSet {
             let selectedSeg = index == 1
@@ -897,10 +895,10 @@ class LikeSeg: UIButton {
             likeLabel.font = selectedSeg ? UIFont(name: "SFCompactText-Bold", size: 16) : UIFont(name: "SFCompactText-Semibold", size: 16)
         }
     }
-        
+
     override init(frame: CGRect) {
         super.init(frame: frame)
-                
+
         likeLabel = UILabel {
             $0.textColor = .black
             addSubview($0)
@@ -909,7 +907,7 @@ class LikeSeg: UIButton {
             $0.centerX.equalToSuperview().offset(12.5)
             $0.centerY.equalToSuperview()
         }
-        
+
         likeIcon = UIImageView {
             $0.image = UIImage(named: "CommentSegLikeIcon")
             addSubview($0)
@@ -921,7 +919,7 @@ class LikeSeg: UIButton {
             $0.height.equalTo(20)
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -931,14 +929,14 @@ class LikerCell: UITableViewCell {
     var profilePic: UIImageView!
     var username: UILabel!
     var user: UserProfile!
-    
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
         contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(likerCellTap)))
-        
+
         profilePic = UIImageView {
-            $0.layer.cornerRadius = 39/2
+            $0.layer.cornerRadius = 39 / 2
             $0.clipsToBounds = true
             $0.contentMode = .scaleAspectFill
             contentView.addSubview($0)
@@ -948,7 +946,7 @@ class LikerCell: UITableViewCell {
             $0.top.equalTo(15)
             $0.width.height.equalTo(39)
         }
-      
+
         username = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
@@ -959,11 +957,11 @@ class LikerCell: UITableViewCell {
             $0.centerY.equalTo(profilePic.snp.centerY)
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     func setUp(user: UserProfile) {
         let url = user.imageURL
         if url != "" {
@@ -973,13 +971,13 @@ class LikerCell: UITableViewCell {
         username.text = user.username
         self.user = user
     }
-                                         
+
     @objc func likerCellTap() {
         Mixpanel.mainInstance().track(event: "CommentsLikerCellTap")
         guard let commentsVC = viewContainingController() as? CommentsController else { return }
         commentsVC.openProfile(user: user)
     }
-    
+
     override func prepareForReuse() {
         super.prepareForReuse()
         /// cancel image fetch when cell leaves screen

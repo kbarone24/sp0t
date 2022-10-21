@@ -15,7 +15,7 @@ class ProfileInfo {
     var profilePic: UIImage
     var city: String
     var bio: String
-    
+
     init(name: String, username: String, profilePic: UIImage, city: String, bio: String) {
         self.name = name
         self.username = username
@@ -24,4 +24,3 @@ class ProfileInfo {
         self.bio = bio
     }
 }
-

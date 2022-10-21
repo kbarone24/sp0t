@@ -6,18 +6,18 @@
 //  Copyright © 2020 sp0t, LLC. All rights reserved.
 //
 
+import FirebaseFirestoreSwift
 import Foundation
 import UIKit
-import FirebaseFirestoreSwift
 
 struct ResultUser: Identifiable, Codable, Hashable {
-    
+
     @DocumentID var id: String?
-    var imageURL : String
+    var imageURL: String
     var name: String
     var username: String
     var image: UIImage = UIImage()
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case name

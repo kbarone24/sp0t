@@ -477,5 +477,3 @@ class UploadAnnotationView: MKAnnotationView {
     }
 }
 */
-
-

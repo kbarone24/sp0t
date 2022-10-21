@@ -9,7 +9,7 @@
 import UIKit
 
 public extension UIColor {
-    
+
     convenience init(hexString: String) {
         let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int = UInt64()
@@ -27,42 +27,41 @@ public extension UIColor {
         }
         self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: CGFloat(a) / 255)
     }
-    
+
     /** Returns UIColor lighter */
-    
+
     func lighter(by percentage: CGFloat = 50.0) -> UIColor? {
         return self.adjust(by: abs(percentage) )
     }
-    
+
     /** Returns UIColor darker */
-    
+
     func darker(by percentage: CGFloat = 50.0) -> UIColor? {
         return self.adjust(by: -1 * abs(percentage) )
     }
-    
+
     func adjust(by percentage: CGFloat = 50.0) -> UIColor? {
         var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
         if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
-            return UIColor(red: min(red + percentage/100, 1.0),
-                           green: min(green + percentage/100, 1.0),
-                           blue: min(blue + percentage/100, 1.0),
+            return UIColor(red: min(red + percentage / 100, 1.0),
+                           green: min(green + percentage / 100, 1.0),
+                           blue: min(blue + percentage / 100, 1.0),
                            alpha: alpha)
         } else {
             return nil
         }
     }
-    
+
     /** Return contrast UIColor */
     func contrast() -> UIColor? {
         var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
         if self.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
             return UIColor(red: 1 - red, green: 1 - green, blue: 1 - blue, alpha: alpha)
-        }
-        else {
+        } else {
             return nil
         }
     }
-    
+
     func image(_ size: CGSize = CGSize(width: 1, height: 1)) -> UIImage {
         return UIGraphicsImageRenderer(size: size).image { rendererContext in
             self.setFill()

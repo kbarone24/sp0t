@@ -11,15 +11,15 @@ import UIKit
 
 class ProgressBar: UIView {
     var progressFill: UIView!
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
-    
+
         backgroundColor = UIColor(named: "SpotGreen")?.withAlphaComponent(0.22)
         layer.cornerRadius = 6
         layer.borderWidth = 2
         layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-        
+
         progressFill = UIView {
             $0.backgroundColor = UIColor(named: "SpotGreen")
             $0.layer.cornerRadius = 6
@@ -31,7 +31,7 @@ class ProgressBar: UIView {
             $0.height.equalTo(16)
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

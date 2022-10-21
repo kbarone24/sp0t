@@ -6,10 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import UIKit
-import Mixpanel
 import Firebase
 import FirebaseUI
+import Mixpanel
+import UIKit
 
 class EditMapController: UIViewController {
     private var editLabel: UILabel!
@@ -24,14 +24,14 @@ class EditMapController: UIViewController {
     private var privateDescriptionLabel: UILabel!
     private var privateButton: UIButton!
     private var activityIndicator: CustomActivityIndicator!
-    
+
     private var mapData: CustomMap?
     private var mapCoverChanged = false
     private var memberList: [UserProfile] = []
-    
+
     private let db = Firestore.firestore()
     public unowned var customMapVC: CustomMapController?
-    
+
     init(mapData: CustomMap) {
         self.mapData = mapData
         super.init(nibName: nil, bundle: nil)
@@ -40,28 +40,28 @@ class EditMapController: UIViewController {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         viewSetup()
     }
-    
+
     @objc func dismissAction() {
         Mixpanel.mainInstance().track(event: "EditMapCancel")
         UIView.animate(withDuration: 0.15) {
             self.backButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } completion: { (Bool) in
+        } completion: { (_) in
             UIView.animate(withDuration: 0.15) {
                 self.backButton.transform = .identity
             }
         }
         dismiss(animated: true)
     }
-    
+
     @objc func mapImageSelectionAction() {
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alertController.overrideUserInterfaceStyle = .light
-        let takePicAction = UIAlertAction(title: "Take picture", style: .default) { takePic in
+        let takePicAction = UIAlertAction(title: "Take picture", style: .default) { _ in
             let picker = UIImagePickerController()
             picker.allowsEditing = true
             picker.delegate = self
@@ -69,7 +69,7 @@ class EditMapController: UIViewController {
             self.present(picker, animated: true)
         }
         takePicAction.titleTextColor = .black
-        let choosePicAction = UIAlertAction(title: "Choose from gallery", style: .default) { choosePic in
+        let choosePicAction = UIAlertAction(title: "Choose from gallery", style: .default) { _ in
             let picker = UIImagePickerController()
             picker.allowsEditing = true
             picker.delegate = self
@@ -84,22 +84,22 @@ class EditMapController: UIViewController {
         alertController.addAction(cancelAction)
         present(alertController, animated: true)
     }
-    
+
     @objc func saveAction(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "EditMapSave")
         sender.isEnabled = false
         activityIndicator.startAnimating()
         let mapsRef = db.collection("maps").document(mapData!.id!)
-        
+
         if mapData!.mapName != mapNameTextField.text! { updateMapNameInPosts(mapID: mapData!.id!, newName: mapNameTextField.text!) }
         mapData!.mapName = mapNameTextField.text!
         mapData!.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
         mapData!.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
         mapData!.lowercaseName = mapData!.mapName.lowercased()
         mapData!.searchKeywords = mapData!.lowercaseName!.getKeywordArray()
-        
-        mapsRef.updateData(["mapName" : mapNameTextField.text!, "mapDescription": mapData!.mapDescription!, "secret": mapData!.secret, "lowercaseName": mapData!.lowercaseName!, "searchKeywords": mapData!.searchKeywords!, "updateUserID": UserDataModel.shared.uid, "updateUsername": UserDataModel.shared.userInfo.username])
-        
+
+        mapsRef.updateData(["mapName": mapNameTextField.text!, "mapDescription": mapData!.mapDescription!, "secret": mapData!.secret, "lowercaseName": mapData!.lowercaseName!, "searchKeywords": mapData!.searchKeywords!, "updateUserID": UserDataModel.shared.uid, "updateUsername": UserDataModel.shared.userInfo.username])
+
         self.updateUserInfo()
 
         if mapCoverChanged {
@@ -109,18 +109,18 @@ class EditMapController: UIViewController {
             dismiss(animated: true)
         }
     }
-        
+
     func updateUserInfo() {
         // might be better to send notification to update mapscollection with cover image change
         NotificationCenter.default.post(Notification(name: Notification.Name("EditMap"), object: nil, userInfo: ["map": mapData as Any]))
 
     }
-    
+
     @objc func privateMapSwitchAction() {
         HapticGenerator.shared.play(.light)
         privateButton.setImage(UIImage(named: privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? "PrivateMapOn" : "PrivateMapOff"), for: .normal)
     }
-    
+
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         view.endEditing(true)
     }
@@ -129,7 +129,7 @@ class EditMapController: UIViewController {
 extension EditMapController {
     private func viewSetup() {
         view.backgroundColor = .white
-        
+
         editLabel = UILabel {
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
             $0.text = "Edit map"
@@ -141,7 +141,7 @@ extension EditMapController {
             $0.top.equalToSuperview().offset(55)
             $0.leading.trailing.equalToSuperview()
         }
-        
+
         backButton = UIButton {
             $0.setTitle("Cancel", for: .normal)
             $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
@@ -153,7 +153,7 @@ extension EditMapController {
             $0.leading.equalToSuperview().offset(22)
             $0.top.equalTo(editLabel)
         }
-        
+
         doneButton = UIButton {
             $0.setTitle("Done", for: .normal)
             $0.setTitleColor(.black, for: .normal)
@@ -169,7 +169,7 @@ extension EditMapController {
             $0.centerY.equalTo(editLabel)
             $0.trailing.equalToSuperview().inset(20)
         }
-        
+
         mapCoverImage = UIImageView {
             $0.layer.cornerRadius = 22.85
             $0.layer.masksToBounds = true
@@ -182,7 +182,7 @@ extension EditMapController {
             $0.top.equalTo(editLabel.snp.bottom).offset(21)
             $0.centerX.equalToSuperview()
         }
-        
+
         mapCoverImageSelectionButton = UIButton {
             $0.setImage(UIImage(named: "EditProfilePicture"), for: .normal)
             $0.setTitle("", for: .normal)
@@ -194,7 +194,7 @@ extension EditMapController {
             $0.trailing.equalTo(mapCoverImage).offset(16)
             $0.bottom.equalTo(mapCoverImage).offset(13)
         }
-        
+
         mapNameTextField = UITextField {
             $0.text = mapData!.mapName
             $0.font = UIFont(name: "SFCompactText-Bold", size: 21)
@@ -212,7 +212,7 @@ extension EditMapController {
             $0.leading.trailing.equalToSuperview().inset(20)
             $0.height.equalTo(50)
         }
-        
+
         mapDescription = UITextView {
             $0.text = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? "Add a map bio..." : mapData!.mapDescription
             $0.delegate = self
@@ -242,7 +242,7 @@ extension EditMapController {
             $0.top.equalTo(mapDescription.snp.bottom).offset(33)
             $0.leading.equalTo(16)
         }
-        
+
         privateButton = UIButton {
             $0.setTitle("", for: .normal)
             $0.setImage(UIImage(named: mapData?.secret == false ? "PrivateMapOff" : "PrivateMapOn"), for: .normal)
@@ -255,7 +255,7 @@ extension EditMapController {
             $0.width.equalTo(68)
             $0.height.equalTo(38)
         }
-        
+
         privateDescriptionLabel = UILabel {
             $0.text = "Only invited friends will see this map"
             $0.textColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
@@ -267,38 +267,38 @@ extension EditMapController {
             $0.leading.equalTo(privateLabel)
             $0.trailing.equalTo(privateButton.snp.leading).offset(-14)
         }
-        
+
         activityIndicator = CustomActivityIndicator {
             $0.isHidden = true
             view.addSubview($0)
         }
-        activityIndicator.snp.makeConstraints{
+        activityIndicator.snp.makeConstraints {
             $0.top.equalTo(mapNameTextField.snp.bottom).offset(20)
             $0.centerX.equalToSuperview()
             $0.width.height.equalTo(30)
         }
     }
-    
-    private func updateMapCover(){
+
+    private func updateMapCover() {
         let imageId = UUID().uuidString
         let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageId)")
         let image = mapCoverImage.image
         guard var imageData = image!.jpegData(compressionQuality: 0.5) else {return}
-        
-        if imageData.count > 1000000 {
+
+        if imageData.count > 1_000_000 {
             imageData = image!.jpegData(compressionQuality: 0.3)!
         }
-        
+
         var urlStr: String = ""
         let metadata = StorageMetadata()
         metadata.contentType = "image/jpeg"
-        
-        storageRef.putData(imageData, metadata: metadata){metadata, error in
-            
+
+        storageRef.putData(imageData, metadata: metadata) {metadata, error in
+
             if error == nil, metadata != nil {
-                //get download url
+                // get download url
                 storageRef.downloadURL(completion: { [weak self] url, error in
-                    if let error = error{
+                    if let error = error {
                         print("\(error.localizedDescription)")
                     }
                     urlStr = (url?.absoluteString)!
@@ -324,11 +324,11 @@ extension EditMapController: UITextViewDelegate {
             textView.alpha = 1
         }
     }
-    
+
     func textViewDidEndEditing(_ textView: UITextView) {
         if textView.text == "" {
             textView.text = "Add a map bio..."
-            textView.textColor = UIColor(red: 165/255, green: 165/255, blue: 165/255, alpha: 1)
+            textView.textColor = UIColor(red: 165 / 255, green: 165 / 255, blue: 165 / 255, alpha: 1)
             textView.alpha = 0.4
         }
     }
@@ -349,9 +349,8 @@ extension EditMapController: UITextFieldDelegate {
     }
 }
 
-
 extension EditMapController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         guard let image = info[.editedImage] as? UIImage else { return }
         Mixpanel.mainInstance().track(event: "EditMapEditCoverImage")
         mapCoverImage.image = image

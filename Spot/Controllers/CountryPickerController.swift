@@ -7,8 +7,8 @@
 //
 
 import Foundation
-import UIKit
 import Mixpanel
+import UIKit
 
 protocol CountryPickerDelegate {
     func finishPassing(code: CountryCode)
@@ -17,7 +17,7 @@ protocol CountryPickerDelegate {
 class CountryPickerController: UIViewController {
     var delegate: CountryPickerDelegate?
     var tableView: UITableView!
-    
+
     let countries = [
             CountryCode(id: 224, code: "+1", name: "United States"),
             CountryCode(id: 0, code: "+7 840", name: "Abkhazia"),
@@ -256,10 +256,10 @@ class CountryPickerController: UIViewController {
             CountryCode(id: 234, code: "+255", name: "Zanzibar"),
             CountryCode(id: 235, code: "+263", name: "Zimbabwe")
     ]
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         tableView = UITableView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
         tableView.backgroundColor = .white
         tableView.separatorStyle = .none
@@ -273,7 +273,7 @@ class CountryPickerController: UIViewController {
         tableView.register(CountryPickerHeader.self, forHeaderFooterViewReuseIdentifier: "CountryPickerHeader")
         view.addSubview(tableView)
     }
-    
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "CountryPickerOpen")
@@ -281,32 +281,32 @@ class CountryPickerController: UIViewController {
 }
 
 extension CountryPickerController: UITableViewDelegate, UITableViewDataSource {
-    
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return countries.count
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "CountryCell") as? CountryCell {
             cell.setUp(code: countries[indexPath.row])
             return cell
         } else { return UITableViewCell() }
     }
-    
+
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "CountryPickerHeader") as? CountryPickerHeader {
             return header
         } else { return UITableViewHeaderFooterView() }
     }
-    
+
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 50
     }
-    
+
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 50
     }
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let code = countries[indexPath.row]
         delegate?.finishPassing(code: code)
@@ -319,19 +319,19 @@ class CountryCell: UITableViewCell {
     var countryName: UILabel!
     var countryCode: UILabel!
     var bottomLine: UIView!
-    
+
     var code: CountryCode! {
         didSet {
             countryName.text = code.name
             countryCode.text = code.code
         }
     }
-    
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = .white
         selectionStyle = .none
-        
+
         countryCode = UILabel {
             $0.textColor = UIColor.darkGray
             $0.font = UIFont(name: "SFCompactText-Regular", size: 16)
@@ -352,7 +352,7 @@ class CountryCell: UITableViewCell {
             $0.trailing.equalTo(countryCode.snp.leading).offset(-10)
             $0.top.equalTo(20)
         }
-            
+
         bottomLine = UIView {
             $0.backgroundColor = UIColor(red: 0.162, green: 0.162, blue: 0.162, alpha: 1)
             contentView.addSubview($0)
@@ -363,11 +363,11 @@ class CountryCell: UITableViewCell {
             $0.height.equalTo(1)
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     func setUp(code: CountryCode) {
         self.code = code
     }
@@ -376,14 +376,14 @@ class CountryCell: UITableViewCell {
 class CountryPickerHeader: UITableViewHeaderFooterView {
     var label: UILabel!
     var exitButton: UIButton!
-    
+
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
-        
+
         let backgroundView = UIView()
         backgroundView.backgroundColor = .white
         self.backgroundView = backgroundView
-        
+
         label = UILabel {
             $0.text = "Select country"
             $0.textColor = .black
@@ -395,7 +395,7 @@ class CountryPickerHeader: UITableViewHeaderFooterView {
             $0.centerX.equalToSuperview()
             $0.centerY.equalToSuperview().offset(2)
         }
-        
+
         exitButton = UIButton {
             $0.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -407,13 +407,13 @@ class CountryPickerHeader: UITableViewHeaderFooterView {
             $0.height.width.equalTo(35)
         }
     }
-    
+
     @objc func exit() {
         if let vc = viewContainingController() as? CountryPickerController {
             vc.dismiss(animated: true, completion: nil)
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

@@ -7,10 +7,10 @@
 //
 //
 
-import Foundation
 import CoreData
+import Foundation
 
 @objc(PostDraft)
 public class PostDraft: NSManagedObject {
-    
+
 }

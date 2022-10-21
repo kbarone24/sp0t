@@ -12,11 +12,11 @@ import UIKit
 class PillButtonWithImage: UIButton {
     var icon: UIImageView!
     var label: UILabel!
-    
+
     override init(frame: CGRect) {
         super.init(frame: .zero)
         backgroundColor = UIColor(named: "SpotGreen")
-        
+
         let containerView = UIView {
             $0.translatesAutoresizingMaskIntoConstraints = false
             addSubview($0)
@@ -31,7 +31,7 @@ class PillButtonWithImage: UIButton {
         icon.snp.makeConstraints {
             $0.leading.centerY.equalToSuperview()
         }
-        
+
         label = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
@@ -42,12 +42,12 @@ class PillButtonWithImage: UIButton {
             $0.centerY.trailing.equalToSuperview()
         }
     }
-    
+
     func setUp(image: UIImage, str: String) {
         icon.image = image
         label.text = str
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

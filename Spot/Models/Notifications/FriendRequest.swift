@@ -6,17 +6,17 @@
 //  Copyright © 2019 sp0t, LLC. All rights reserved.
 //
 
+import Firebase
 import Foundation
 import UIKit
-import Firebase
 
 class FriendRequest {
-    
+
     var notiID: String
     var userInfo: UserProfile
     var timestamp: Firebase.Timestamp
     var accepted: Bool
-    
+
     init(notiID: String, userInfo: UserProfile, timestamp: Firebase.Timestamp, accepted: Bool) {
         self.notiID = notiID
         self.userInfo = userInfo

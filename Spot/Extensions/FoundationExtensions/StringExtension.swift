@@ -16,8 +16,7 @@ public extension String {
 
         while searchStartIndex < self.endIndex,
             let range = self.range(of: string, range: searchStartIndex..<self.endIndex),
-            !range.isEmpty
-        {
+            !range.isEmpty {
             let index = distance(from: self.startIndex, to: range.lowerBound)
             indices.append(index)
             searchStartIndex = range.upperBound
@@ -25,32 +24,32 @@ public extension String {
 
         return indices
     }
-    
+
     func getKeywordArray() -> [String] {
         var keywords: [String] = []
-        
+
         keywords.append(contentsOf: getKeywordsFrom(index: 0))
         let atIndexes = indices(of: " ")
-        
+
         for index in atIndexes {
             if index == count - 1 { continue }
             keywords.append(contentsOf: getKeywordsFrom(index: index + 1))
         }
-        
+
         return keywords
     }
-    
+
     func getKeywordsFrom(index: Int) -> [String] {
         var keywords: [String] = []
         if index > count { return keywords }
         let subString = suffix(count - index)
-        
+
         var word = ""
         for sub in subString {
             word = word + String(sub)
             keywords.append(word)
         }
-        
+
         return keywords
     }
 
@@ -61,7 +60,7 @@ public extension String {
         newNumber = String(newNumber.suffix(numberOfDigits))
         return newNumber
     }
-    
+
     func spacesTrimmed() -> String {
         var newString = self
         while newString.last?.isWhitespace ?? false { newString = String(newString.dropLast(1))}
