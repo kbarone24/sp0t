@@ -58,6 +58,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
                 self.selectedItemIndex = index
                 self.setNewPostsButtonCount()
                 self.addMapAnnotations(index: index, reload: false)
+                if self.addFriendsView != nil { self.addFriendsView.removeFromSuperview() }
                 if index != 0 { UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle() }
             }
         }
