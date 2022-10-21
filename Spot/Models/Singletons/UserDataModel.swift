@@ -23,6 +23,7 @@ final class UserDataModel {
     var adminIDs: [String] = []
     var deletedPostIDs: [String] = []
     var deletedMapIDs: [String] = []
+    var deletedFriendIDs: [String] = []
     
     var screenSize = UIScreen.main.bounds.height < 800 ? 0 : UIScreen.main.bounds.width > 400 ? 2 : 1 /// 0 = iphone8-, 1 = iphoneX + with 375 width, 2 = iPhoneX+ with 414 width
     var largeScreen = UIScreen.main.bounds.width > 800

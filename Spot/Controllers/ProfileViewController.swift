@@ -16,7 +16,7 @@ import FirebaseFunctions
 
 class ProfileViewController: UIViewController {
     
-    private var collectionView: UICollectionView!
+    var collectionView: UICollectionView!
     private var noPostLabel: UILabel!
     
     // MARK: Fetched datas
@@ -28,7 +28,7 @@ class ProfileViewController: UIViewController {
     public lazy var maps = [CustomMap]()
     private lazy var posts = [MapPost]()
     
-    private var relation: ProfileRelation = .myself
+    var relation: ProfileRelation = .myself
     private var pendingFriendRequestNotiID: String? {
         didSet {
             DispatchQueue.main.async { self.collectionView.reloadData() }
@@ -45,13 +45,17 @@ class ProfileViewController: UIViewController {
     var postsFetched = false {
         didSet {
             noPostLabel.isHidden = mapsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+            DispatchQueue.main.async { self.activityIndicator.stopAnimating() }
         }
     }
     var mapsFetched = false {
         didSet {
             noPostLabel.isHidden = postsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+            DispatchQueue.main.async { self.activityIndicator.stopAnimating() }
         }
     }
+    
+    lazy var activityIndicator = CustomActivityIndicator()
     
     deinit {
         print("ProfileViewController(\(self) deinit")
@@ -92,42 +96,6 @@ class ProfileViewController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ProfileOpen")
     }
-    
-    @objc func editButtonAction() {
-        Mixpanel.mainInstance().track(event: "ProfileEditProfileTap")
-        let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
-        editVC.modalPresentationStyle = .fullScreen
-        editVC.delegate = self
-        present(editVC, animated: true)
-    }
-    
-    @objc func friendListButtonAction() {
-        Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
-        let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [], sentFrom: .Profile, presentedWithDrawerView: containerDrawerView!)
-        present(friendListVC, animated: true)
-    }
-    
-    @objc func popVC() {
-        if navigationController?.viewControllers.count == 1 {
-            containerDrawerView?.closeAction()
-        } else {
-            navigationController?.popViewController(animated: true)
-        }
-    }
-}
-
-extension ProfileViewController: EditProfileDelegate {
-    func finishPassing(userInfo: UserProfile) {
-        self.userProfile = userInfo
-        DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 0)]) }
-    }
-    
-    func logout() {
-        DispatchQueue.main.async { self.containerDrawerView?.closeAction() }
-    }
-}
-
-extension ProfileViewController {
     
     private func setUpNavBar() {
         navigationController!.setNavigationBarHidden(false, animated: false)
@@ -194,6 +162,7 @@ extension ProfileViewController {
     }
     
     private func runFetches() {
+        DispatchQueue.main.async { self.activityIndicator.startAnimating() }
         DispatchQueue.global(qos: .userInitiated).async {
             self.getMaps()
             self.getNinePosts()
@@ -236,6 +205,15 @@ extension ProfileViewController {
         noPostLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalToSuperview().offset(243)
+        }
+        
+        activityIndicator = CustomActivityIndicator {
+            $0.isHidden = false
+            collectionView.addSubview($0)
+        }
+        activityIndicator.snp.makeConstraints {
+            $0.width.height.equalTo(30)
+            $0.centerX.equalToSuperview().offset(-100)
         }
     }
     
@@ -307,8 +285,117 @@ extension ProfileViewController {
         mapData.createPosts(posts: posts)
         return mapData
     }
+}
+
+/// actions
+extension ProfileViewController {
+    @objc func actionButtonTap() {
+        switch relation {
+        case .myself:
+            presentEditProfile()
+        case .friend:
+            addActionSheet()
+        case .pending:
+            showRemoveFriendRequestAlert()
+        case .received:
+            acceptFriendRequest()
+        case .stranger:
+            addFriendFromProfile()
+        }
+    }
     
-    @objc func notifyPostDelete(_ notification: NSNotification) {
+    func addFriendFromProfile() {
+        Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
+        addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: userProfile!.id!)
+        relation = .pending
+        DispatchQueue.main.async { self.collectionView.reloadData() }
+    }
+    
+    func presentEditProfile() {
+        Mixpanel.mainInstance().track(event: "ProfileEditProfileTap")
+        let editVC = EditProfileViewController(userProfile: UserDataModel.shared.userInfo)
+        editVC.modalPresentationStyle = .fullScreen
+        editVC.delegate = self
+        present(editVC, animated: true)
+    }
+    
+    func showRemoveFriendRequestAlert() {
+        Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendTap")
+        let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
+        alert.overrideUserInterfaceStyle = .light
+        let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
+            self.revokePendingRequest()
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        alert.addAction(cancelAction)
+        alert.addAction(removeAction)
+        let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+        containerVC.present(alert, animated: true)
+    }
+    
+    @objc func friendsListTap() {
+        Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
+        let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [], sentFrom: .Profile, presentedWithDrawerView: containerDrawerView!)
+        present(friendListVC, animated: true)
+    }
+    
+    @objc func popVC() {
+        if navigationController?.viewControllers.count == 1 {
+            containerDrawerView?.closeAction()
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
+    }
+    
+    func acceptFriendRequest() {
+        self.relation = .friend
+        DispatchQueue.main.async { self.collectionView.reloadData() }
+        getNotiIDandRespondToRequest(accepted: true)
+    }
+    
+    func revokePendingRequest() {
+        Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
+        getNotiIDandRespondToRequest(accepted: false)
+        self.relation = .stranger
+        DispatchQueue.main.async { self.collectionView.reloadData() }
+    }
+    
+    func getNotiIDandRespondToRequest(accepted: Bool) {
+        let db = Firestore.firestore()
+        /// sender is active user if revoking, receiver is active user if accepting
+        let receiver = accepted ? UserDataModel.shared.uid : userProfile!.id!
+        let sender = accepted ? userProfile!.id! : UserDataModel.shared.uid
+        let query = db.collection("users").document(receiver).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending").whereField("senderID", isEqualTo: sender)
+        query.getDocuments { (snap, err) in
+            if let doc = snap?.documents.first {
+                if !accepted {
+                    Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
+                    self.revokeFriendRequest(friendID: self.userProfile!.id!, notificationID: doc.documentID)
+                } else {
+                    Mixpanel.mainInstance().track(event: "ProfileHeaderAcceptTap")
+                    self.acceptFriendRequest(friend: self.userProfile!, notificationID: doc.documentID)
+                    /// tableView reload handled by notification
+                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: ["notiID": doc.documentID])
+                }
+            }
+        }
+    }
+}
+
+extension ProfileViewController: EditProfileDelegate {
+    func finishPassing(userInfo: UserProfile) {
+        self.userProfile = userInfo
+        DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 0)]) }
+    }
+    
+    func logout() {
+        DispatchQueue.main.async { self.containerDrawerView?.closeAction() }
+    }
+}
+
+/// notifications
+extension ProfileViewController {
+        @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
         guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
         guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
@@ -391,7 +478,10 @@ extension ProfileViewController {
         userProfile?.friendIDs.append(UserDataModel.shared.uid)
         userProfile?.friendsList.append(UserDataModel.shared.userInfo)
         userProfile?.topFriends?[UserDataModel.shared.uid] = 0
-        DispatchQueue.main.async { self.collectionView.reloadData() }
+        DispatchQueue.main.async {
+            self.collectionView.reloadData()
+            self.activityIndicator.startAnimating()
+        }
         
         /// run get nine posts now that friendslist field has started to be updated
         DispatchQueue.global().async {
@@ -414,10 +504,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
         if let headerCell = cell as? ProfileHeaderCell {
             headerCell.cellSetup(userProfile: userProfile!, relation: relation)
-            if relation == .myself {
-                headerCell.actionButton.addTarget(self, action: #selector(editButtonAction), for: .touchUpInside)
-            }
-            headerCell.friendListButton.addTarget(self, action: #selector(friendListButtonAction), for: .touchUpInside)
+            headerCell.actionButton.addTarget(self, action: #selector(actionButtonTap), for: .touchUpInside)
+            headerCell.friendListButton.addTarget(self, action: #selector(friendsListTap), for: .touchUpInside)
             return headerCell
         } else if let mapCell = cell as? ProfileMyMapCell {
             mapCell.cellSetup(userAccount: userProfile!.username, posts: posts, relation: relation)

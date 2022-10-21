@@ -29,7 +29,7 @@ class CustomMapHeaderCell: UICollectionViewCell {
     private var addFriendsButton: UIButton!
     private var mapBio: UILabel!
     
-    private var mapData: CustomMap!
+    var mapData: CustomMap!
     private var fourMapMemberProfile: [UserProfile] = []
     
     override init(frame: CGRect) {
@@ -359,7 +359,7 @@ extension CustomMapHeaderCell {
             editVC.modalPresentationStyle = .fullScreen
             vc.present(editVC, animated: true)
         } else {
-            showUnfollowAlert()
+            addActionSheet()
         }
     }
     
@@ -384,7 +384,7 @@ extension CustomMapHeaderCell {
             }
 
         case "Following", "Joined":
-            showUnfollowAlert()
+            addActionSheet()
             
         default:
             return
@@ -402,38 +402,6 @@ extension CustomMapHeaderCell {
         addNewUsersInDB()
     }
     
-    func showUnfollowAlert() {
-        let following = actionButton.titleLabel?.text == "Following"
-        let title = following ? "Unfollow this map?" : "Leave this map?"
-        let alert = UIAlertController(title: title, message: "", preferredStyle: .alert)
-        alert.overrideUserInterfaceStyle = .light
-        
-        let actionTitle = following ? "Unfollow" : "Leave"
-        let unfollowAction = UIAlertAction(title: actionTitle, style: .destructive) { action in
-            self.unfollowMap()
-        }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        alert.addAction(unfollowAction)
-        alert.addAction(cancelAction)
-        let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
-        containerVC.present(alert, animated: true)
-    }
-    
-    func unfollowMap() {
-        Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
-        guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.uid) else { return }
-        mapData.likers.remove(at: userIndex)
-        if let memberIndex = self.mapData.memberIDs.firstIndex(of: UserDataModel.shared.uid) {
-            mapData.memberIDs.remove(at: memberIndex)
-        }
-        
-        UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == self.mapData!.id!})
-        
-        let db = Firestore.firestore()
-        let mapsRef = db.collection("maps").document(mapData!.id!)
-        mapsRef.updateData(["likers": FieldValue.arrayRemove([UserDataModel.shared.uid]), "memberIDs": FieldValue.arrayRemove([UserDataModel.shared.uid])])
-        sendEditNotification()
-    }
     
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CustomMapMembersTap")

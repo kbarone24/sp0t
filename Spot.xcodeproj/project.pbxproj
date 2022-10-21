@@ -164,6 +164,10 @@
 		8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0DCBBF25BA5FE000722D34 /* POI.swift */; };
 		8C0DCBC125BA5FE000722D34 /* POI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0DCBBF25BA5FE000722D34 /* POI.swift */; };
 		8C0DCBC225BA5FE000722D34 /* POI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0DCBBF25BA5FE000722D34 /* POI.swift */; };
+		8C12E6642901D44B00FA5BF0 /* MapHeaderActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E6632901D44B00FA5BF0 /* MapHeaderActionSheet.swift */; };
+		8C12E6662901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E6652901D61D00FA5BF0 /* ProfileActionSheet.swift */; };
+		8C12E6672901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E6652901D61D00FA5BF0 /* ProfileActionSheet.swift */; };
+		8C12E6682901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E6652901D61D00FA5BF0 /* ProfileActionSheet.swift */; };
 		8C1E4862289C54240093030D /* ProfileMyMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4861289C54240093030D /* ProfileMyMapCell.swift */; };
 		8C1E4866289C54370093030D /* FriendsListCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4865289C54370093030D /* FriendsListCell.swift */; };
 		8C1E4867289C54370093030D /* FriendsListCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4865289C54370093030D /* FriendsListCell.swift */; };
@@ -477,6 +481,8 @@
 		7A37801B22174BB1008B835A /* MapController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MapController.swift; path = Spot/Controllers/MapController.swift; sourceTree = SOURCE_ROOT; };
 		7A9A551522273F71007469C7 /* Chapel Hill.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Chapel Hill.gpx"; sourceTree = "<group>"; };
 		8C0DCBBF25BA5FE000722D34 /* POI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POI.swift; sourceTree = "<group>"; };
+		8C12E6632901D44B00FA5BF0 /* MapHeaderActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapHeaderActionSheet.swift; sourceTree = "<group>"; };
+		8C12E6652901D61D00FA5BF0 /* ProfileActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileActionSheet.swift; sourceTree = "<group>"; };
 		8C1E4861289C54240093030D /* ProfileMyMapCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProfileMyMapCell.swift; path = Spot/Controllers/ProfileMyMapCell.swift; sourceTree = SOURCE_ROOT; };
 		8C1E4865289C54370093030D /* FriendsListCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FriendsListCell.swift; path = Spot/Views/SupplementalViews/FriendsListCell.swift; sourceTree = SOURCE_ROOT; };
 		8C1E486E289C54800093030D /* MapCollectionExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapCollectionExtension.swift; sourceTree = "<group>"; };
@@ -789,6 +795,7 @@
 				416AE77A2896F1280037B8AF /* ProfileViewController.swift */,
 				413BA16228785E8B00FD80AF /* EditProfileViewController.swift */,
 				8C1E48CE289C57650093030D /* ProfileHeaderCell.swift */,
+				8C12E6652901D61D00FA5BF0 /* ProfileActionSheet.swift */,
 				8C1E4861289C54240093030D /* ProfileMyMapCell.swift */,
 				8C1E48D2289C58470093030D /* ProfileMyMapImageCollectionViewCell.swift */,
 				414CD282289EB383001F1776 /* ProfileBodyCell.swift */,
@@ -866,6 +873,7 @@
 				8C61EB4E28CBBF3600E7180A /* CustomMapFetchExtension.swift */,
 				41EA047E289428590050B791 /* EditMapController.swift */,
 				414BB49B288D314F00660AED /* CustomMapHeaderCell.swift */,
+				8C12E6632901D44B00FA5BF0 /* MapHeaderActionSheet.swift */,
 				8C1E48DF28AB38560093030D /* SimpleMapHeaderCell.swift */,
 				414BB49D288D316000660AED /* CustomMapBodyCell.swift */,
 				414CD27B2899ABDB001F1776 /* MapMemberCell.swift */,
@@ -1426,6 +1434,7 @@
 				598B700D2305E49500613AFD /* FriendRequest.swift in Sources */,
 				8C61EB4F28CBBF3600E7180A /* CustomMapFetchExtension.swift in Sources */,
 				594CE11B24C939040051516C /* MapComment.swift in Sources */,
+				8C12E6662901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				1DF6E03722089F4500BA0C36 /* NameController.swift in Sources */,
 				8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
@@ -1450,6 +1459,7 @@
 				8CA512AD28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */,
 				8C3B953A28AD546E00C06586 /* AvatarURLs.swift in Sources */,
 				8C3B955628B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
+				8C12E6642901D44B00FA5BF0 /* MapHeaderActionSheet.swift in Sources */,
 				4106ECD028A3371A00680005 /* SpotPageController.swift in Sources */,
 				8C3B955A28B2B47100C06586 /* AddSpotButton.swift in Sources */,
 				8C29879C2693A05A0071E75A /* CircleView.swift in Sources */,
@@ -1584,6 +1594,7 @@
 				8C1E4874289C54900093030D /* MapViewDelegate.swift in Sources */,
 				597072FB24291993008A481A /* AVSpotCamera.swift in Sources */,
 				8C92898826CB18F10028DB69 /* CameraAccessView.swift in Sources */,
+				8C12E6672901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11424B6A6CF0051516C /* MapPost.swift in Sources */,
 				59F6ABBE23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
@@ -1683,6 +1694,7 @@
 				8C1E4875289C54900093030D /* MapViewDelegate.swift in Sources */,
 				597072FC24291993008A481A /* AVSpotCamera.swift in Sources */,
 				8C92898926CB18F10028DB69 /* CameraAccessView.swift in Sources */,
+				8C12E6682901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11524B6A6CF0051516C /* MapPost.swift in Sources */,
 				59F6ABBF23566A3600E18AAF /* PushNotificationManager.swift in Sources */,

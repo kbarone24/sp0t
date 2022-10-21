@@ -103,11 +103,19 @@ extension MapController {
                         do {
                             let friendInfo = try friendSnap?.data(as: UserProfile.self)
                             guard let info = friendInfo else { UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == friend}); return }
-                            if !UserDataModel.shared.userInfo.friendsList.contains(where: {$0.id == friend}) {
+                            
+                            if !UserDataModel.shared.userInfo.friendsList.contains(where: {$0.id == friend}) && !UserDataModel.shared.deletedFriendIDs.contains(friend) {
                                 UserDataModel.shared.userInfo.friendsList.append(info)
+                                
                                 if UserDataModel.shared.userInfo.friendsList.count == UserDataModel.shared.userInfo.friendIDs.count {
                                     self.sortFriends() /// sort for top friends
                                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
+                                    /// if listener found a new friend, re-run home fetch
+                                    if self.friendsLoaded {
+                                        /// this is not a great solution -> trying to account for posts' friendsList property not yet being updated at the time of fetch (profile friendslist is updated first) 
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 6) { NotificationCenter.default.post(name: Notification.Name("FriendsListAdd"), object: nil) }
+                                    }
+                                    self.friendsLoaded = true
                                 }
                             }
                             
@@ -362,10 +370,10 @@ extension MapController {
                     guard let postInfo = postIn else { return }
                     /// new post has 2 separate writes, wait for post location to get set to load it in
                     if doc.get("g") as? String == nil { return }
-                    if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { return }
-                    let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
                     
+                    let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
                     if self.hasNewPostAccess(post: postInfo, map: map) {
+                        print("finish post load", postInfo.spotName)
                         self.finishNewMapPostLoad(postInfo: postInfo, map: map)
                     }
                    
@@ -378,7 +386,7 @@ extension MapController {
         
     func hasNewPostAccess(post: MapPost, map: CustomMap?) -> (Bool) {
         if map == nil {
-            return post.friendsList.contains(uid)
+            return post.friendsList.contains(uid) && !UserDataModel.shared.deletedPostIDs.contains(post.id ?? "") && !UserDataModel.shared.deletedFriendIDs.contains(post.posterID)
         }
         return true
     }
