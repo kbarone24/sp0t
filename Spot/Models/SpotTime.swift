@@ -9,10 +9,10 @@
 import Foundation
 
 class SpotTime {
-    
+
     var id: String
     var time: Int64
-    
+
     init(id: String, time: Int64) {
         self.id = id
         self.time = time

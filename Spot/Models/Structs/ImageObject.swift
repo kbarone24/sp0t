@@ -6,10 +6,10 @@
 //  Copyright © 2021 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import CoreLocation
+import Foundation
 import Photos
+import UIKit
 
 struct ImageObject {
     let id: String
@@ -23,4 +23,3 @@ struct ImageObject {
     let creationDate: Date
     var fromCamera: Bool
 }
-

@@ -6,9 +6,9 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
+import Firebase
 import Foundation
 import UIKit
-import Firebase
 
 protocol MapCodeDelegate {
     func finishPassing(newMapID: String)
@@ -18,19 +18,19 @@ class EnterMapCodeController: UIViewController {
     var textField: UITextField!
     var enterButton: UIButton!
     var errorBox: ErrorBox!
-    
+
     var delegate: MapCodeDelegate?
     let db = Firestore.firestore()
-    
+
     init() {
         super.init(nibName: nil, bundle: nil)
         setUpView()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     func setUpView() {
         view.backgroundColor = .white
         let exitButton = UIButton {
@@ -43,7 +43,7 @@ class EnterMapCodeController: UIViewController {
             $0.top.trailing.equalToSuperview().inset(4)
             $0.height.width.equalTo(46)
         }
-        
+
         let inviteLabel = UILabel {
             $0.text = "Invited to a map?"
             $0.textColor = .black
@@ -55,7 +55,7 @@ class EnterMapCodeController: UIViewController {
             $0.top.equalTo(150)
             $0.centerX.equalToSuperview()
         }
-        
+
         let subtitle = UILabel {
             $0.text = "Enter your code to join"
             $0.textColor = UIColor(red: 0.712, green: 0.712, blue: 0.712, alpha: 1)
@@ -67,7 +67,7 @@ class EnterMapCodeController: UIViewController {
             $0.top.equalTo(inviteLabel.snp.bottom).offset(4)
             $0.centerX.equalToSuperview()
         }
-        
+
         textField = UITextField {
             $0.borderStyle = .roundedRect
             $0.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
@@ -86,12 +86,12 @@ class EnterMapCodeController: UIViewController {
             $0.delegate = self
             view.addSubview($0)
         }
-        textField.snp.makeConstraints{
+        textField.snp.makeConstraints {
             $0.top.equalTo(subtitle.snp.bottom).offset(30)
             $0.leading.trailing.equalToSuperview().inset(16)
             $0.height.equalTo(50)
         }
-        
+
         enterButton = UIButton {
             $0.layer.cornerRadius = 8
             $0.backgroundColor = UIColor(named: "SpotGreen")
@@ -108,7 +108,7 @@ class EnterMapCodeController: UIViewController {
             $0.leading.trailing.equalToSuperview().inset(50)
             $0.height.equalTo(51)
         }
-        
+
         errorBox = ErrorBox {
             $0.isHidden = true
             view.addSubview($0)
@@ -119,11 +119,11 @@ class EnterMapCodeController: UIViewController {
             $0.height.equalTo(errorBox.label.snp.height).offset(12)
         }
     }
-    
+
     @objc func cancelTap() {
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
-    
+
     @objc func enterTap() {
         checkForCode(code: textField.text ?? "") { [weak self] mapID in
             guard let self = self else { return }
@@ -132,7 +132,7 @@ class EnterMapCodeController: UIViewController {
                 let uid = UserDataModel.shared.uid
                 self.db.collection("maps").document(mapID!).updateData(["memberIDs": FieldValue.arrayUnion([uid]), "likers": FieldValue.arrayUnion([uid])])
                 DispatchQueue.main.async { self.dismiss(animated: true) }
-                
+
             } else {
                 self.errorBox.isHidden = false
                 self.errorBox.message = "Invalid code"
@@ -143,9 +143,9 @@ class EnterMapCodeController: UIViewController {
             }
         }
     }
-    
+
     func checkForCode(code: String, completion: @escaping(_ mapID: String?) -> Void) {
-        db.collection("maps").whereField("joinCode", isEqualTo: code).getDocuments { snap, err in
+        db.collection("maps").whereField("joinCode", isEqualTo: code).getDocuments { snap, _ in
             if snap?.documents.count ?? 0 == 0 { completion(nil); return }
             if let doc = snap?.documents.first {
                 completion(doc.documentID)
@@ -156,11 +156,11 @@ class EnterMapCodeController: UIViewController {
 }
 
 extension EnterMapCodeController: UITextFieldDelegate {
-    
+
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         return false
     }
-    
+
     func textFieldDidChangeSelection(_ textField: UITextField) {
         let enabled = textField.text?.count ?? 0 > 2
         enterButton.isEnabled = enabled

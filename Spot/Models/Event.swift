@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 class Event {
-    
+
     var spotID: String!
     var eventID: String!
     var time: Int64!
@@ -24,8 +24,8 @@ class Event {
     var active: Bool!
     var price: Int!
     var description: String!
-    
-    init(spotID : String, eventID : String, time: Int64, date: Date, imageURL : String, eventImage: UIImage, spotName: String, eventName: String, spotLat: Double, spotLong: Double, active: Bool, price: Int, description: String) {
+
+    init(spotID: String, eventID: String, time: Int64, date: Date, imageURL: String, eventImage: UIImage, spotName: String, eventName: String, spotLat: Double, spotLong: Double, active: Bool, price: Int, description: String) {
         self.spotID = spotID
         self.eventID = eventID
         self.time = time
@@ -40,5 +40,5 @@ class Event {
         self.price = price
         self.description = description
     }
-    
+
 }

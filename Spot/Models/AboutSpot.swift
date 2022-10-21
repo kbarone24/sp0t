@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 class AboutSpot {
-    
+
     var spotImage: [UIImage]
     var spotName: String
     var userImage: UIImage
@@ -23,7 +23,7 @@ class AboutSpot {
     var labelType: String
     var founderID: String
     var spotID: String
-    
+
     init(spotImage: [UIImage], spotName: String, userImage: UIImage, username: String, description: String, tags: [String], address: String, directions: String, tips: String, labelType: String, founderID: String, spotID: String) {
         self.spotImage = spotImage
         self.spotName = spotName

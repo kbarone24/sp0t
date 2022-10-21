@@ -6,18 +6,18 @@
 //  Copyright © 2020 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
-import Firebase
-import Photos
-import CoreLocation
-import Geofirestore
-import Mixpanel
 import CoreData
-import FirebaseUI
-import MapKit
+import CoreLocation
+import Firebase
 import FirebaseFunctions
+import FirebaseUI
+import Foundation
+import Geofirestore
 import MapboxMaps
+import MapKit
+import Mixpanel
+import Photos
+import UIKit
 
 class UploadPostController: UIViewController {
        /*

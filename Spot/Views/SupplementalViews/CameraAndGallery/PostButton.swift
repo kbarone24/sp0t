@@ -17,12 +17,12 @@ class PostButton: UIButton {
             alpha = isEnabled ? 1.0 : 0.5
         }
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = UIColor(named: "SpotGreen")
         layer.cornerRadius = 9
-        
+
         postIcon = UIImageView {
             $0.image = UIImage(named: "PostIcon")
             addSubview($0)
@@ -33,7 +33,7 @@ class PostButton: UIButton {
             $0.height.equalTo(21.5)
             $0.width.equalTo(16)
         }
-        
+
         postText = UILabel {
             $0.text = "Post"
             $0.textColor = .black
@@ -45,7 +45,7 @@ class PostButton: UIButton {
             $0.centerY.equalToSuperview()
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

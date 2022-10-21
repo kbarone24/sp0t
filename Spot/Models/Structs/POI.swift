@@ -6,12 +6,12 @@
 //  Copyright © 2021 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import CoreLocation
+import Foundation
 import MapKit
 
 struct POI {
-    
+
     var id: String
     var name: String
     var coordinate: CLLocationCoordinate2D
@@ -20,7 +20,7 @@ struct POI {
     var phone: String
     var address: String = ""
     var selected: Bool = false
-    
+
     // init for nearby
     init(name: String, coordinate: CLLocationCoordinate2D, distance: CLLocationDistance, type: MKPointOfInterestCategory, phone: String) {
         self.id = UUID().uuidString
@@ -30,7 +30,7 @@ struct POI {
         self.type = type
         self.phone = phone
     }
-    
+
     // init for search
     init(name: String, coordinate: CLLocationCoordinate2D, distance: CLLocationDistance, type: MKPointOfInterestCategory, phone: String, address: String) {
         self.id = UUID().uuidString

@@ -6,32 +6,31 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
+import Foundation
 import Mixpanel
-
+import UIKit
 
 class AvatarSelectionController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
     var friendRequests: [UserNotification] = []
-    
+
     private let myCollectionViewFlowLayout = MyCollectionViewFlowLayout()
-    var collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewLayout.init())
+    var collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewLayout())
     var centerCell: AvatarCell!
-    
+
     var centerAvi = CGPoint(x: 0.0, y: 0.0)
     var sentFrom: SentFrom!
-    
+
     enum SentFrom {
         case create
         case map
         case edit
     }
-    
-    var onDoneBlock : ((String, String) -> Void)?
-    
+
+    var onDoneBlock: ((String, String) -> Void)?
+
     init(sentFrom: SentFrom) {
         super.init(nibName: nil, bundle: nil)
         self.sentFrom = sentFrom
@@ -48,65 +47,65 @@ class AvatarSelectionController: UIViewController {
             navigationItem.hidesBackButton = true
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         setUp()
-        DispatchQueue.main.async { self.collectionView.scrollToItem(at:IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false) }
+        DispatchQueue.main.async { self.collectionView.scrollToItem(at: IndexPath(item: 5, section: 0), at: .centeredHorizontally, animated: false) }
     }
-    
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         DispatchQueue.main.async {
-            if (self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell)) {
+            if self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell) {
                 if let cell = self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as? AvatarCell {
                     self.centerCell = cell
                     self.centerCell!.transformToLarge()
                 }
             }
         }
-        
+
         let layoutMargins: CGFloat = self.collectionView.layoutMargins.left + self.collectionView.layoutMargins.left
         let sideInset = (self.view.frame.width / 2) - layoutMargins
         self.collectionView.contentInset = UIEdgeInsets(top: 0, left: sideInset, bottom: 0, right: sideInset)
     }
-    
-    func setUpFriendRequests(friendRequests: [UserNotification]){
+
+    func setUpFriendRequests(friendRequests: [UserNotification]) {
         self.friendRequests = friendRequests
     }
-    
+
     func setUp() {
-        ///hardcode cell height in case its laid out before view fully appears -> hard code body height so mask stays with cell change
+        /// hardcode cell height in case its laid out before view fully appears -> hard code body height so mask stays with cell change
         resetCell()
-        
+
         let title = UILabel {
             $0.text = "Choose your avatar"
             $0.font = UIFont(name: "SFCompactText-Bold", size: 18)
             $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
             view.addSubview($0)
         }
-        title.snp.makeConstraints{
+        title.snp.makeConstraints {
             $0.top.equalToSuperview().offset(138)
             $0.centerX.equalToSuperview()
         }
-        
+
         let subTitle = UILabel {
             $0.text = "This is how you'll be displayed on the map"
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 14)
             $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
             view.addSubview($0)
         }
-        subTitle.snp.makeConstraints{
+        subTitle.snp.makeConstraints {
             $0.top.equalTo(title.snp.bottom).offset(9.05)
             $0.centerX.equalToSuperview()
         }
-        
-        //acts up if I set up the view using the other style
+
+        // acts up if I set up the view using the other style
         collectionView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 189)
         collectionView.backgroundColor = .white
         collectionView.delegate = self
@@ -118,13 +117,13 @@ class AvatarSelectionController: UIViewController {
         collectionView.register(AvatarCell.self, forCellWithReuseIdentifier: "AvatarCell")
         collectionView.translatesAutoresizingMaskIntoConstraints = true
         view.addSubview(collectionView)
-        
-        collectionView.snp.makeConstraints{
+
+        collectionView.snp.makeConstraints {
             $0.top.equalTo(subTitle.snp.bottom).offset(16)
             $0.width.equalToSuperview()
             $0.height.equalTo(95)
         }
-        
+
         let selectButton = UIButton {
             $0.layer.cornerRadius = 15
             $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
@@ -145,12 +144,12 @@ class AvatarSelectionController: UIViewController {
             $0.addTarget(self, action: #selector(selectedTap(_:)), for: .touchUpInside)
             view.addSubview($0)
         }
-        selectButton.snp.makeConstraints{
+        selectButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(78)
             $0.height.equalTo(52)
             $0.top.equalTo(collectionView.snp.bottom).offset(50)
         }
-        
+
         if sentFrom == .edit {
             let backButton = UIButton {
                 $0.setTitle("Cancel", for: .normal)
@@ -165,46 +164,46 @@ class AvatarSelectionController: UIViewController {
             }
         }
     }
-    
-    @objc func dismissAction(_ sender: UIButton){
+
+    @objc func dismissAction(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "AvatarSelectionDismiss")
-        self.presentingViewController?.dismiss(animated: false, completion:nil)
+        self.presentingViewController?.dismiss(animated: false, completion: nil)
     }
-    
+
     func resetCell() {
         collectionView.removeFromSuperview()
     }
-    
-    func scrollViewDidScroll(_ scrollView: UIScrollView){
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
         DispatchQueue.main.async {
             self.collectionView.reloadData()
             self.collectionView.layoutSubviews()
         }
-        
+
         guard scrollView is UICollectionView else {
             return}
-        ///finding cell at the center
-        //let center = self.view.convert(self.collectionView.center, to: self.collectionView)
-        
+        /// finding cell at the center
+        // let center = self.view.convert(self.collectionView.center, to: self.collectionView)
+
         DispatchQueue.main.async { [self] in
             let center = self.view.convert(self.collectionView.center, to: self.collectionView)
-            if let indexPath = self.collectionView.indexPathForItem(at: center){
+            if let indexPath = self.collectionView.indexPathForItem(at: center) {
                 Mixpanel.mainInstance().track(event: "AvatarSelectionScrollNewAvatar")
                 self.centerCell = (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)
                 self.centerCell?.transformToLarge()
             }
         }
     }
-    
-    func transformToStandard(){
+
+    func transformToStandard() {
         self.centerCell.avatarImage?.alpha = 1.0
-        self.centerCell.avatarImage?.snp.updateConstraints{
+        self.centerCell.avatarImage?.snp.updateConstraints {
             $0.height.equalTo(72.8)
             $0.width.equalTo(50)
         }
     }
-    
-    @objc func selectedTap(_ sender: UIButton){
+
+    @objc func selectedTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "AvatarSelectionSelectTap")
         let avatarURL = AvatarURLs().getURL(name: centerCell.avatar!)
         if sentFrom != .edit {
@@ -213,7 +212,7 @@ class AvatarSelectionController: UIViewController {
             let db = Firestore.firestore()
             db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
         }
-        
+
         if sentFrom == .map {
             self.navigationController!.popViewController(animated: true)
         } else if sentFrom == .create {
@@ -222,55 +221,52 @@ class AvatarSelectionController: UIViewController {
             vc.firstOpen = true
             let navController = UINavigationController(rootViewController: vc)
             navController.modalPresentationStyle = .fullScreen
-            
+
             let keyWindow = UIApplication.shared.connectedScenes
-                .filter({$0.activationState == .foregroundActive})
-                .map({$0 as? UIWindowScene})
-                .compactMap({$0})
+                .filter({ $0.activationState == .foregroundActive })
+                .map({ $0 as? UIWindowScene })
+                .compactMap({ $0 })
                 .first?.windows
-                .filter({$0.isKeyWindow}).first
+                .filter({ $0.isKeyWindow }).first
             keyWindow?.rootViewController = navController
         } else {
             onDoneBlock!(avatarURL, centerCell.avatar!)
-            self.presentingViewController?.dismiss(animated: false, completion:nil)
+            self.presentingViewController?.dismiss(animated: false, completion: nil)
         }
     }
 }
 
-
-
 // MARK: delegate and data source protocol
 extension AvatarSelectionController: UICollectionViewDelegate, UICollectionViewDataSource {
-    
+
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return 12
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AvatarCell", for: indexPath) as? AvatarCell else { return UICollectionViewCell() }
         cell.setUp(avatar: avatars[indexPath.row])
         return cell
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         Mixpanel.mainInstance().track(event: "AvatarSelectionTapNewAvatar")
         collectionView.selectItem(at: indexPath, animated: true, scrollPosition: .left)
     }
 }
 
-
 final class MyCollectionViewFlowLayout: UICollectionViewFlowLayout {
-    
+
     override func prepare() {
         super.prepare()
         scrollDirection = .horizontal
         minimumInteritemSpacing = 15
         itemSize = CGSize(width: 64, height: 91.4)
-        //sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
+        // sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
     }
-    
+
     override func targetContentOffset(forProposedContentOffset proposedContentOffset: CGPoint, withScrollingVelocity velocity: CGPoint) -> CGPoint {
-        //snap to center
+        // snap to center
         var offsetAdjustment = CGFloat.greatestFiniteMagnitude
         let horizontalOffset = proposedContentOffset.x + collectionView!.contentInset.left
         let targetRect = CGRect(x: proposedContentOffset.x, y: 0, width: collectionView!.bounds.size.width, height: collectionView!.bounds.size.height)
@@ -290,37 +286,37 @@ class AvatarCell: UICollectionViewCell {
     var avatar: String?
     var avatarImage: UIImageView!
     var scaled = false
-    
+
     // variables for activity indicator that will be used later
     lazy var activityIndicator = UIActivityIndicatorView()
     var globalRow = 0
-    
+
     var directionUp = true
     var animationIndex = 0
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
+
         avatarImage = UIImageView {
             $0.alpha = 0.5
             $0.contentMode = .scaleToFill
             contentView.addSubview($0)
         }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     func setUp(avatar: String) {
         self.avatar = avatar
         avatarImage.image = UIImage(named: avatar)
-        
+
         avatarImage.snp.removeConstraints()
         avatarImage.snp.makeConstraints {
             $0.centerY.equalToSuperview()
-            //bunny is small so need to make a little bigger
-            if(avatar == "bunny"){
+            // bunny is small so need to make a little bigger
+            if avatar == "bunny" {
                 $0.width.equalTo(55)
                 $0.height.equalTo(77.08)
             } else {
@@ -330,7 +326,7 @@ class AvatarCell: UICollectionViewCell {
             $0.centerX.equalToSuperview()
         }
     }
-    
+
     func transformToLarge() {
         scaled = true
         avatarImage.snp.removeConstraints()
@@ -342,7 +338,7 @@ class AvatarCell: UICollectionViewCell {
         }
         avatarImage.alpha = 1.0
     }
-    
+
     override func prepareForReuse() {
         if avatarImage != nil { avatarImage.alpha = 0.5 }
     }
