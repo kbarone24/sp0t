@@ -6,25 +6,25 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
+import Foundation
 import MapKit
+import UIKit
 
 extension MapController {
     func userInChapelHill() -> Bool {
-        let chapelHillLocation = CLLocation(latitude: 35.9132, longitude: -79.0558)
+        let chapelHillLocation = CLLocation(latitude: 35.913_2, longitude: -79.055_8)
         let distance = UserDataModel.shared.currentLocation.distance(from: chapelHillLocation)
         /// include users within 10km of downtown CH
-        return distance/1000 < 10
+        return distance / 1_000 < 10
     }
-    
+
     func loadAdditionalOnboarding() {
         let posts = friendsPostsDictionary.count
-         if (UserDataModel.shared.userInfo.avatarURL ?? "" == "") {
+         if UserDataModel.shared.userInfo.avatarURL ?? "" == "" {
             let avc = AvatarSelectionController(sentFrom: .map)
             self.navigationController!.pushViewController(avc, animated: true)
-            
+
         } else if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
             displayHeelsMap()
             
@@ -43,15 +43,14 @@ extension MapController {
             }
         }
     }
-    
-    
+
     func displayHeelsMap() {
         /// maps list check shouldnt be necessary anymore
-        if userInChapelHill() && !UserDataModel.shared.userInfo.mapsList.contains(where: {$0.id == heelsMapID}) {
+        if userInChapelHill() && !UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == heelsMapID }) {
             let vc = HeelsMapPopUpController()
             vc.delegate = self
             DispatchQueue.main.async { self.present(vc, animated: true) }
-            db.collection("users").document(uid).updateData(["respondedToCampusMap" : true])
+            db.collection("users").document(uid).updateData(["respondedToCampusMap": true])
         }
     }
 }

@@ -15,7 +15,7 @@ extension CLLocationCoordinate2D: Hashable {
         hasher.combine(latitude)
         hasher.combine(longitude)
     }
-    
+
     public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
         lhs.location == rhs.location
     }

@@ -12,7 +12,7 @@ struct CountryCode {
     var id: Int
     var code: String
     var name: String
-    
+
     init(id: Int, code: String, name: String) {
         self.id = id
         self.code = code

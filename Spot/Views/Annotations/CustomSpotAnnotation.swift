@@ -10,11 +10,11 @@ import Foundation
 import MapKit
 
 class CustomSpotAnnotation: MKPointAnnotation {
-    
+
     var spotInfo: MapSpot!
     var rank: CGFloat = 0
     var isHidden = true
-    
+
     override init() {
         super.init()
     }

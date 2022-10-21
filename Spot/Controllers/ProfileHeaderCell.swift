@@ -6,11 +6,11 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import UIKit
-import SnapKit
 import Firebase
-import Mixpanel
 import FirebaseUI
+import Mixpanel
+import SnapKit
+import UIKit
 
 enum ProfileRelation {
     case myself
@@ -21,7 +21,7 @@ enum ProfileRelation {
 }
 
 class ProfileHeaderCell: UICollectionViewCell {
-    
+
     private var profileImage: UIImageView!
     private var profileAvatar: UIImageView!
     private var profileName: UILabel!
@@ -32,23 +32,23 @@ class ProfileHeaderCell: UICollectionViewCell {
     private var profile: UserProfile!
     private var relation: ProfileRelation!
     private var pendingFriendNotiID: String?
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func prepareForReuse() {
-        
+
     }
-    
+
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
         self.profile = userProfile
-        
+
         let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
         profileImage.sd_setImage(with: URL(string: userProfile.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
@@ -65,7 +65,7 @@ class ProfileHeaderCell: UICollectionViewCell {
             }
         }
         friendListButton.setTitle("\(userProfile.friendIDs.count) friends", for: .normal)
-        
+
         self.relation = relation
         switch relation {
         case .myself:
@@ -94,7 +94,7 @@ class ProfileHeaderCell: UICollectionViewCell {
 extension ProfileHeaderCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
-        
+
         profileImage = UIImageView {
             $0.image = UIImage()
             $0.contentMode = .scaleAspectFill
@@ -120,7 +120,7 @@ extension ProfileHeaderCell {
             $0.height.equalTo(47.25)
             $0.width.equalTo(36)
         }
-        
+
         profileName = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
@@ -134,7 +134,7 @@ extension ProfileHeaderCell {
             $0.height.equalTo(23)
             $0.trailing.equalToSuperview().inset(29)
         }
-        
+
         profileAccount = UILabel {
             $0.textColor = .black
             $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
@@ -196,8 +196,7 @@ extension ProfileHeaderCell {
             $0.top.equalTo(profileImage.snp.bottom).offset(16)
         }
         actionButton.layer.cornerRadius = 37 / 2
-    }
-    
+    }    
     
     @objc func locationButtonAction() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderLocationTap")

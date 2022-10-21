@@ -16,12 +16,12 @@ class SimpleMapHeaderCell: UICollectionViewCell {
             mapLabel.text = mapText
         }
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         viewSetup()
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

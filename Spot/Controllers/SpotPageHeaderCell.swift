@@ -6,10 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import UIKit
-import SnapKit
 import Firebase
 import Mixpanel
+import SnapKit
+import UIKit
 
 class SpotPageHeaderCell: UICollectionViewCell {
     private var spotName: UILabel!
@@ -53,7 +53,7 @@ extension SpotPageHeaderCell {
             $0.leading.trailing.equalToSuperview().inset(17)
             $0.height.equalTo(23)
         }
-        
+
         spotInfo = UILabel {
             $0.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
             $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)

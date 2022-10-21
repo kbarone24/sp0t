@@ -7,8 +7,8 @@
 //
 
 import Foundation
-import UIKit
 import Photos
+import UIKit
 
 struct ScrollObject {
     var imageObject: ImageObject

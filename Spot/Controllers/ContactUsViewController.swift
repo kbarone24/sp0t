@@ -6,11 +6,11 @@
 //  Copyright © 2019 comp523. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
 import FirebaseFirestore
+import Foundation
+import UIKit
 
 class ContactViewController: UIViewController {
-    
+
 }

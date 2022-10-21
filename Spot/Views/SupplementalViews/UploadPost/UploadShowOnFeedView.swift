@@ -7,6 +7,5 @@
 //
 
 import Foundation
-import UIKit
 import Mixpanel
-
+import UIKit

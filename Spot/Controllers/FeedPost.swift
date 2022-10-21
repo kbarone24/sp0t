@@ -10,10 +10,10 @@ import Foundation
 import UIKit
 
 class FeedPost {
-    
+
     var spotname: String
-    var spotID : String
-    var posterID : String
+    var spotID: String
+    var posterID: String
     var founderID: String
     var caption: String
     var captionHeight: CGFloat
@@ -22,24 +22,24 @@ class FeedPost {
     var uName: String
     var profilePic: UIImage
     var likers: [String]
-    var wasLiked : Bool
+    var wasLiked: Bool
     var location: String
-    var spotLat : Double
-    var spotLong : Double
-    var time : Int64
-    var date : Date
-    var postID : String
-    var commentList : [Comment]
-    var imageHeight : Int
-    var isFirst : Bool
-    var seen : Bool
+    var spotLat: Double
+    var spotLong: Double
+    var time: Int64
+    var date: Date
+    var postID: String
+    var commentList: [Comment]
+    var imageHeight: Int
+    var isFirst: Bool
+    var seen: Bool
     var friends: Bool
     var selectedImageIndex: Int
     var privacyLevel: String
     var taggedFriends: [String]
     var GIF: Bool
-    
-    init(spotname:String, spotID: String, posterID: String, founderID: String, captionText:String, captionHeight: CGFloat, imageURL: [String], photo: [UIImage], uNameString:String, profilePic: UIImage, likers:[String], wasLiked: Bool, location: String, spotLat: Double, spotLong: Double, time: Int64, date: Date, postID: String, commentList: [Comment], imageHeight: Int, isFirst: Bool, seen: Bool, friends: Bool, selectedImageIndex: Int, privacyLevel: String, taggedFriends: [String], GIF: Bool){
+
+    init(spotname: String, spotID: String, posterID: String, founderID: String, captionText: String, captionHeight: CGFloat, imageURL: [String], photo: [UIImage], uNameString: String, profilePic: UIImage, likers: [String], wasLiked: Bool, location: String, spotLat: Double, spotLong: Double, time: Int64, date: Date, postID: String, commentList: [Comment], imageHeight: Int, isFirst: Bool, seen: Bool, friends: Bool, selectedImageIndex: Int, privacyLevel: String, taggedFriends: [String], GIF: Bool) {
         self.spotname = spotname
         self.spotID = spotID
         self.posterID = posterID
@@ -68,5 +68,5 @@ class FeedPost {
         self.taggedFriends = taggedFriends
         self.GIF = GIF
     }
-  
+
 }

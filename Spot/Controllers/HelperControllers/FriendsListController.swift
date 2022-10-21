@@ -6,23 +6,23 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
 import Firebase
 import FirebaseUI
+import Foundation
 import Mixpanel
+import UIKit
 
 protocol FriendsListDelegate {
     func finishPassing(selectedUsers: [UserProfile])
 }
 
 class FriendsListController: UIViewController {
-    
+
     let allowsSelection: Bool
     let showsSearchBar: Bool
     var readyToDismiss = true
     var queried = true
-    
+
     var doneButton: UIButton?
     var cancelButton: UIButton!
     var titleLabel: UILabel!
@@ -33,10 +33,10 @@ class FriendsListController: UIViewController {
     var friendIDs: [String]
     var friendsList: [UserProfile]
     var queriedFriends: [UserProfile] = []
-    
+
     var searchPan: UIPanGestureRecognizer?
     var delegate: FriendsListDelegate?
-    
+
     init(allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String]) {
         self.allowsSelection = allowsSelection
         self.showsSearchBar = showsSearchBar
@@ -50,7 +50,7 @@ class FriendsListController: UIViewController {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         if showsSearchBar { addSearchBar() }
@@ -62,16 +62,16 @@ class FriendsListController: UIViewController {
         }
         presentationController?.delegate = self
     }
-    
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "FriendsListOpen")
     }
-    
+
     func addTableView() {
-        
+
         view.backgroundColor = .white
-        
+
         if allowsSelection {
             doneButton = UIButton {
                 $0.setTitle("Done", for: .normal)
@@ -87,7 +87,7 @@ class FriendsListController: UIViewController {
                 $0.height.equalTo(30)
             }
         }
-        
+
         cancelButton = UIButton {
             $0.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
             $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -98,7 +98,7 @@ class FriendsListController: UIViewController {
             $0.leading.top.equalTo(7)
             $0.width.height.equalTo(40)
         }
-        
+
         titleLabel = UILabel {
             $0.text = allowsSelection ? "Select friends" : "Friends list"
             $0.textColor = .black
@@ -111,7 +111,7 @@ class FriendsListController: UIViewController {
             $0.width.equalTo(200)
             $0.centerX.equalToSuperview()
         }
-        
+
         tableView = UITableView {
             $0.backgroundColor = nil
             $0.separatorStyle = .none
@@ -132,7 +132,7 @@ class FriendsListController: UIViewController {
             $0.height.equalToSuperview().inset(inset)
         }
     }
-    
+
     func addSearchBar() {
         searchBar = UISearchBar {
             $0.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
@@ -152,19 +152,19 @@ class FriendsListController: UIViewController {
             $0.top.equalTo(60)
             $0.height.equalTo(36)
         }
-        
+
         searchPan = UIPanGestureRecognizer(target: self, action: #selector(searchPan(_:)))
         searchPan!.delegate = self
         searchPan!.isEnabled = false
         view.addGestureRecognizer(searchPan!)
     }
-    
+
     func getFriends() {
         let db: Firestore = Firestore.firestore()
         let dispatch = DispatchGroup()
         for id in friendIDs {
             dispatch.enter()
-            db.collection("users").document(id).getDocument { [weak self] snap, err in
+            db.collection("users").document(id).getDocument { [weak self] snap, _ in
                 do {
                     guard let self = self else { return }
                     let unwrappedInfo = try snap?.data(as: UserProfile.self)
@@ -176,24 +176,24 @@ class FriendsListController: UIViewController {
                 }
             }
         }
-        
+
         dispatch.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
             self.tableView.reloadData()
         }
     }
-    
+
     @objc func doneTap(_ sender: UIButton) {
         var selectedUsers: [UserProfile] = []
         for friend in friendsList { if friend.selected { selectedUsers.append(friend) }}
         delegate?.finishPassing(selectedUsers: selectedUsers)
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
-    
+
     @objc func cancelTap(_ sender: UIButton) {
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
-    
+
     @objc func searchPan(_ sender: UIPanGestureRecognizer) {
         /// remove keyboard on down swipe + vertical swipe > horizontal
         if abs(sender.translation(in: view).y) > abs(sender.translation(in: view).x) {
@@ -203,24 +203,24 @@ class FriendsListController: UIViewController {
 }
 
 extension FriendsListController: UIGestureRecognizerDelegate, UIAdaptivePresentationControllerDelegate {
-    
+
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-                
+
         if gestureRecognizer.view == view, let gesture = gestureRecognizer as? UIPanGestureRecognizer {
             return shouldRecognize(searchPan: gesture)
-            
+
         } else if otherGestureRecognizer.view == view, let gesture = gestureRecognizer as? UIPanGestureRecognizer {
             return shouldRecognize(searchPan: gesture)
         }
-        
+
         return true
     }
-    
+
     func shouldRecognize(searchPan: UIPanGestureRecognizer) -> Bool {
         /// down swipe with table not offset return true
         return tableView.contentOffset.y < 5 && searchPan.translation(in: view).y > 0
     }
-    
+
     func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
         /// dont want to recognize swipe to dismiss with keyboard active
         return readyToDismiss
@@ -228,20 +228,20 @@ extension FriendsListController: UIGestureRecognizerDelegate, UIAdaptivePresenta
 }
 
 extension FriendsListController: UISearchBarDelegate {
-    
+
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         queried = searchText != ""
         queriedFriends.removeAll()
         queriedFriends = getQueriedUsers(userList: friendsList, searchText: searchText)
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
-    
+
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
         searchPan!.isEnabled = true
         readyToDismiss = false
         queried = true
     }
-    
+
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
         searchPan!.isEnabled = false
         /// lag on ready to dismiss to avoid double tap to dismiss
@@ -252,12 +252,11 @@ extension FriendsListController: UISearchBarDelegate {
     }
 }
 
-
 extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return queried ? queriedFriends.count : friendsList.count
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "FriendsCell", for: indexPath) as? ChooseFriendsCell {
             let friend = queried ? queriedFriends[indexPath.row] : friendsList[indexPath.row]
@@ -267,18 +266,18 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
         }
         return UITableViewCell()
     }
-    
+
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 63
     }
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let id = queried ? queriedFriends[indexPath.row].id! : friendsList[indexPath.row].id!
         if confirmedIDs.contains(id) { return } /// cannot unselect confirmed ID
-        
+
         Mixpanel.mainInstance().track(event: "FriendsListSelectFriend")
-        if queried { if let i = queriedFriends.firstIndex(where: {$0.id == id}) { queriedFriends[i].selected = !queriedFriends[i].selected } }
-        if let i = friendsList.firstIndex(where: {$0.id == id}) { friendsList[i].selected = !friendsList[i].selected }
+        if queried { if let i = queriedFriends.firstIndex(where: { $0.id == id }) { queriedFriends[i].selected = !queriedFriends[i].selected } }
+        if let i = friendsList.firstIndex(where: { $0.id == id }) { friendsList[i].selected = !friendsList[i].selected }
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
 }
