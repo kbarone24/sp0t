@@ -35,15 +35,12 @@ class ProfileMyMapCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func prepareForReuse() {
-
-    }
-
     public func cellSetup(userAccount: String, posts: [MapPost], relation: ProfileRelation) {
         self.posts = posts
         mapName.text = "@\(userAccount)'s map"
         mapPrivateBlurView.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
         mapPrivateIcon.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
+        print("blur hidden", mapPrivateBlurView.isHidden, relation)
     }
 }
 

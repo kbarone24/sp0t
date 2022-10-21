@@ -86,6 +86,11 @@ extension MapController {
         guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
         /// only pass through spot ID if removing from the map
         let spotID = spotDelete || spotRemove ? post.spotID! : ""
+        removePost(post: post, spotID: spotID, mapID: mapID, mapDelete: mapDelete)
+        DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
+    }
+    
+    func removePost(post: MapPost, spotID: String, mapID: String, mapDelete: Bool) {
         /// remove from friends stuff
         friendsPostsDictionary.removeValue(forKey: post.id!)
         removeFromFriendsPostGroup(postID: post.id!, spotID: spotID)
@@ -99,11 +104,11 @@ extension MapController {
                 DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id!, spotID: spotID) }
             }
         }
-        /// remove annotation
-        if let i = mapView.annotations.firstIndex(where: { $0.coordinate.isEqualTo(coordinate: post.coordinate) }) {
-            DispatchQueue.main.async { self.mapView.removeAnnotation(self.mapView.annotations[i]) }
+        if let anno = mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: post.coordinate)}) {
+            DispatchQueue.main.async { self.mapView.removeAnnotation(anno) }
+
         }
-        DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
+        reloadMapsCollection(resort: false, newPost: false)
     }
 
     @objc func notifyCommentChange(_ notification: NSNotification) {
@@ -124,6 +129,7 @@ extension MapController {
     }
 
     @objc func notifyFriendsListAdd() {
+        print("notify friends list add")
         /// query friends posts again
         homeFetchGroup.enter()
         homeFetchGroup.notify(queue: .main) { [weak self] in
@@ -151,6 +157,16 @@ extension MapController {
             UserDataModel.shared.userInfo.mapsList[i].secret = map.secret
             DispatchQueue.main.async { self.mapsCollection.reloadItems(at: [IndexPath(item: i + 1, section: 0)]) }
         } */
+    }
+    
+    @objc func notifyFriendRemove(_ notifications: NSNotification) {
+        print("notify friend remove")
+        guard let friendID = notifications.userInfo?.first?.value as? String else { return }
+        print("friend id", friendID)
+        for post in friendsPostsDictionary {
+            print("doc id", post.value.posterID)
+            if post.value.posterID == friendID { removePost(post: post.value, spotID: post.value.spotID ?? "", mapID: "", mapDelete: false) }
+        }
     }
 
     @objc func enterForeground() {

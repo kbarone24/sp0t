@@ -87,7 +87,6 @@ class ProfileHeaderCell: UICollectionViewCell {
             actionButton.setTitle(relation == .stranger ? "Add friend" : "Accept friend request", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
         }
-        actionButton.addTarget(self, action: #selector(actionButtonAction), for: .touchUpInside)
         actionButton.setTitleColor(.black, for: .normal)
     }
 }
@@ -197,107 +196,9 @@ extension ProfileHeaderCell {
             $0.top.equalTo(profileImage.snp.bottom).offset(16)
         }
         actionButton.layer.cornerRadius = 37 / 2
-    }
-
-    @objc func actionButtonAction() {
-        switch relation {
-        case .myself:
-            // Action is set in ProfileViewController
-            Mixpanel.mainInstance().track(event: "ProfileHeaderEditTap")
-        case .friend:
-            // No Action
-            return
-        case .pending, .received:
-            if relation == .pending {
-                Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendTap")
-                let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
-                alert.overrideUserInterfaceStyle = .light
-                let removeAction = UIAlertAction(title: "Remove", style: .default) { _ in
-                    Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
-                    self.getNotiIDAndRemoveFriendRequest()
-                    self.actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-                    self.actionButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
-                    self.actionButton.setTitle("Add friend", for: .normal)
-                }
-                let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-                alert.addAction(cancelAction)
-                alert.addAction(removeAction)
-                let containerVC = UIApplication.shared.windows.filter { $0.isKeyWindow }.first?.rootViewController ?? UIViewController()
-                containerVC.present(alert, animated: true)
-            } else {
-                Mixpanel.mainInstance().track(event: "ProfileHeaderAcceptTap")
-                getNotiIDAndAcceptFriendRequest()
-                actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-                actionButton.setImage(UIImage(named: "ProfileFriendsIcon"), for: .normal)
-                actionButton.setTitle("Friends", for: .normal)
-            }
-            actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
-            actionButton.setTitleColor(.black, for: .normal)
-        case .stranger:
-            Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
-            addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: profile.id!)
-            actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
-            actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
-            actionButton.setTitle("Pending", for: .normal)
-            actionButton.setTitleColor(.black, for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-        case .none:
-            return
-        }
-        UIView.animate(withDuration: 0.15) {
-            self.actionButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } completion: { (_) in
-            UIView.animate(withDuration: 0.15) {
-                self.actionButton.transform = .identity
-            }
-        }
-    }
-
+    }    
+    
     @objc func locationButtonAction() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderLocationTap")
-    }
-
-    private func getNotiIDAndAcceptFriendRequest() {
-        let db = Firestore.firestore()
-        let query = db.collection("users").document(UserDataModel.shared.uid).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
-        query.getDocuments { (snap, err) in
-            if err != nil { return }
-            for doc in snap!.documents {
-                do {
-                    let unwrappedInfo = try doc.data(as: UserNotification.self)
-                    guard let notification = unwrappedInfo else { return }
-                    if notification.senderID == self.profile!.id {
-                        self.pendingFriendNotiID = notification.id
-                        self.acceptFriendRequest(friend: self.profile, notificationID: self.pendingFriendNotiID!)
-                        let notiID: [String: String?] = ["notiID": self.pendingFriendNotiID]
-                        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: notiID as [AnyHashable: Any])
-                        break
-                    }
-                } catch let parseError {
-                    print("JSON Error \(parseError.localizedDescription)")
-                }
-            }
-        }
-    }
-
-    private func getNotiIDAndRemoveFriendRequest() {
-        let db = Firestore.firestore()
-        let query = db.collection("users").document(UserDataModel.shared.uid).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending")
-        query.getDocuments { (snap, err) in
-            if err != nil { return }
-            for doc in snap!.documents {
-                do {
-                    let unwrappedInfo = try doc.data(as: UserNotification.self)
-                    guard let notification = unwrappedInfo else { return }
-                    if notification.senderID == self.profile!.id {
-                        self.pendingFriendNotiID = notification.id
-                        self.removeFriendRequest(friendID: self.profile.id!, notificationID: self.pendingFriendNotiID!)
-                        break
-                    }
-                } catch let parseError {
-                    print("JSON Error \(parseError.localizedDescription)")
-                }
-            }
-        }
     }
 }

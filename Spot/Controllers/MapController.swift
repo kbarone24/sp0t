@@ -49,7 +49,8 @@ class MapController: UIViewController {
     var firstTimeGettingLocation = true
     var feedLoaded = false
     var mapsLoaded = false
-
+    var friendsLoaded = false
+    
     lazy var friendsPostsDictionary = [String: MapPost]()
     lazy var postGroup: [MapPostGroup] = []
 
@@ -58,9 +59,9 @@ class MapController: UIViewController {
     var refresh: RefreshStatus = .activelyRefreshing
     var friendsRefresh: RefreshStatus = .refreshEnabled
 
-    var startTime: Int64!
+    var startTime: Int64!    
+    var addFriendsView: AddFriendsView!
 
-    var addFriends: AddFriendsView!
     var heelsMapID = "9ECABEF9-0036-4082-A06A-C8943428FFF4"
     var newMapID: String?
 
@@ -112,6 +113,7 @@ class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsListAdd), name: NSNotification.Name(("FriendsListAdd")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRemove), name: NSNotification.Name(("FriendRemove")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
@@ -237,8 +239,9 @@ class MapController: UIViewController {
 
     @objc func addTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "MapControllerAddTap")
-        if addFriends != nil { addFriends.removeFromSuperview() }
-        if navigationController!.viewControllers.contains(where: { $0 is AVCameraController }) { return } /// crash on double stack was happening here
+        if addFriendsView != nil { addFriendsView.removeFromSuperview() }
+        if navigationController!.viewControllers.contains(where: {$0 is AVCameraController}) { return } /// crash on double stack was happening here
+
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
                 let transition = AddButtonTransition()
@@ -342,8 +345,8 @@ class MapController: UIViewController {
         newPostsButton.setHidden(hidden: hidden)
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
-            if addFriends != nil {
-                self.addFriends.removeFromSuperview()
+            if addFriendsView != nil {
+                self.addFriendsView.removeFromSuperview()
             } /// remove add friends view whenever leaving home screen
         } else {
             mapView.delegate = self
