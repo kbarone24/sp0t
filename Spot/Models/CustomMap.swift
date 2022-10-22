@@ -136,29 +136,76 @@ struct CustomMap: Identifiable, Codable, Hashable {
         }
 
     mutating func updateGroup(post: MapPost) -> (group: MapPostGroup?, newGroup: Bool) {
-        if post.spotID ?? "" == "" {
+        if let spotID = post.spotID, spotID == "", let id = post.id {
             /// attach by postID
             let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
-            let newGroup = MapPostGroup(id: post.id!, coordinate: coordinate, spotName: "", postIDs: [MapPostGroup.PostID(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
+            let newGroup = MapPostGroup(
+                id: id,
+                coordinate: coordinate,
+                spotName: "",
+                postIDs: [
+                    MapPostGroup.PostID(
+                        id: id,
+                        timestamp: post.timestamp,
+                        seen: post.seen
+                    )
+                ]
+            )
+
             postGroup.append(newGroup)
             return (newGroup, true)
 
-        } else if !postGroup.contains(where: { $0.id == post.spotID! }) {
-            let coordinate = CLLocationCoordinate2D(latitude: post.spotLat!, longitude: post.spotLong!)
-            let newGroup = MapPostGroup(id: post.spotID!, coordinate: coordinate, spotName: post.spotName!, postIDs: [MapPostGroup.PostID(id: post.id!, timestamp: post.timestamp, seen: post.seen)])
+        } else if let spotID = post.spotID,
+                  let id = post.id,
+                  let spotName = post.spotName,
+                  !postGroup.contains(where: { $0.id == spotID }),
+                  let spotLatitude = post.spotLat,
+                  let spotLongitude = post.spotLong {
+
+            let coordinate = CLLocationCoordinate2D(
+                latitude: spotLatitude,
+                longitude: spotLongitude
+            )
+            let newGroup = MapPostGroup(
+                id: spotID,
+                coordinate: coordinate,
+                spotName: spotName,
+                postIDs: [
+                    MapPostGroup.PostID(
+                        id: id,
+                        timestamp: post.timestamp,
+                        seen: post.seen
+                    )
+                ]
+            )
+
             postGroup.append(newGroup)
-            spotIDs.append(post.spotID!)
-            spotLocations.append(["lat": post.spotLat ?? post.postLat, "long": post.spotLong ?? post.postLong])
-            spotNames.append(post.spotName ?? "")
+            spotIDs.append(spotID)
+
+            spotLocations.append(
+                [
+                    "lat": spotLatitude,
+                    "long": spotLongitude
+                ]
+            )
+            spotNames.append(spotName)
             return (newGroup, true)
 
-        } else if let i = postGroup.firstIndex(where: { $0.id == post.spotID }) {
-            if !postGroup[i].postIDs.contains(where: { $0.id == post.id }) {
-                postGroup[i].postIDs.append(MapPostGroup.PostID(id: post.id!, timestamp: post.timestamp, seen: post.seen))
-                postGroup[i].sortPostIDs()
-                return (postGroup[i], false)
-            }
+        } else if let i = postGroup.firstIndex(where: { $0.id == post.spotID }),
+                  let id = post.id,
+                  !postGroup[i].postIDs.contains(where: { $0.id == post.id }) {
+
+            let group = MapPostGroup.PostID(
+                id: id,
+                timestamp: post.timestamp,
+                seen: post.seen
+            )
+
+            postGroup[i].postIDs.append(group)
+            postGroup[i].sortPostIDs()
+            return (postGroup[i], false)
         }
+
         return (nil, false)
     }
 
@@ -198,33 +245,5 @@ struct CustomMap: Identifiable, Codable, Hashable {
             }
             postGroup.removeAll(where: { $0.id == spotID })
         }
-    }
-}
-
-struct MapPostGroup: Hashable {
-
-    struct PostID: Hashable {
-        var id: String
-        var timestamp: Timestamp
-        var seen: Bool
-    }
-
-    var id: String /// can be post or spotID
-    var coordinate: CLLocationCoordinate2D
-    var spotName: String
-    var postIDs: [PostID]
-
-    /// properties for sorting
-    var postsToSpot: [String] = []
-    var postTimestamps: [Timestamp] = []
-    var numberOfPosters: Int = 0
-
-    mutating func sortPostIDs() {
-        postIDs = postIDs.sorted(by: { p1, p2 in
-            guard p1.seen == p2.seen else {
-                return !p1.seen && p2.seen
-            }
-            return p1.timestamp.seconds > p2.timestamp.seconds
-        })
     }
 }
