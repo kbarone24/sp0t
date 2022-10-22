@@ -22,4 +22,5 @@ enum FireBaseCollectionFields: String {
     case friendsList
     case posterID
     case mapID
+    case timestamp
 }
