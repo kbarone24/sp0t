@@ -180,8 +180,8 @@ final class AVCameraController: UIViewController {
             /// delay so pop happens first
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) { [weak self] in
                 guard let self = self else { return }
-                self.cameraController.previewLayer?.connection?.isEnabled = true
-                self.cameraController.captureSession?.startRunning()
+                self.cameraController?.previewLayer?.connection?.isEnabled = true
+                self.cameraController?.captureSession?.startRunning()
                 self.enableButtons()
             }
         }
@@ -205,7 +205,7 @@ final class AVCameraController: UIViewController {
             /// destroy if returning to map
             if UploadPostModel.shared.mapObject == nil { UploadPostModel.shared.destroy()
             }
-
+            
             self.navigationController?.setNavigationBarHidden(false, animated: false)
         }
     }
@@ -246,7 +246,7 @@ final class AVCameraController: UIViewController {
         
         if newMapMode {
             view.addSubview(backButton)
-            backButton!.snp.makeConstraints {
+            backButton.snp.makeConstraints {
                 $0.leading.equalTo(5.5)
                 $0.top.equalTo(60)
                 $0.width.equalTo(48.6)
@@ -259,13 +259,13 @@ final class AVCameraController: UIViewController {
             
             titleView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview().inset(60)
-                $0.top.equalTo(backButton!.snp.top).offset(2)
+                $0.top.equalTo(backButton.snp.top).offset(2)
                 $0.centerX.equalToSuperview()
             }
             
         } else {
             cameraView.addSubview(cancelButton)
-            cancelButton!.snp.makeConstraints {
+            cancelButton.snp.makeConstraints {
                 $0.leading.equalToSuperview().offset(4)
                 $0.top.equalToSuperview().offset(10)
                 $0.width.height.equalTo(50)
@@ -284,8 +284,8 @@ final class AVCameraController: UIViewController {
             $0.top.leading.trailing.bottom.equalToSuperview()
         }
         
-        volumeHandler.start(true)
-
+        volumeHandler?.start(true)
+        
         view.addSubview(cameraButton)
         cameraButton.snp.makeConstraints {
             $0.bottom.equalTo(cameraView.snp.bottom).offset(-28)
@@ -322,7 +322,7 @@ final class AVCameraController: UIViewController {
             $0.top.equalToSuperview().offset(22)
             $0.width.height.equalTo(38.28)
         }
-
+        
         cameraView.addSubview(cameraRotateButton)
         cameraRotateButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(12)
@@ -407,9 +407,9 @@ final class AVCameraController: UIViewController {
         }
     }
     
+    
     func fetchFullAssets() {
-        
-        /// fetch all assets for showing when user opens photo gallery
+        // fetch all assets for showing when user opens photo gallery
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
@@ -421,160 +421,171 @@ final class AVCameraController: UIViewController {
         let indexSet = assetsFull.count > 10_000 ? IndexSet(0...9_999) : IndexSet(0..<assetsFull.count)
         UploadPostModel.shared.assetsFull = assetsFull
         
-        DispatchQueue.global(qos: .background).async { assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
-            
-            guard let self = self else { return }
-            if self.cancelOnDismiss { stop.pointee = true } /// cancel on dismiss = true when view is popped
-            
-            var location = CLLocation()
-            if let l = object.location { location = l }
-            
-            var creationDate = Date()
-            if let d = object.creationDate { creationDate = d }
-            
-            let imageObj = (
-                ImageObject(
-                    id: UUID().uuidString,
-                    asset: object,
-                    rawLocation: location,
-                    stillImage: UIImage(),
-                    animationImages: [],
-                    animationIndex: 0,
-                    directionUp: true,
-                    gifMode: false,
-                    creationDate: creationDate,
-                    fromCamera: false
-                ),
-                false
-            )
-            
-            UploadPostModel.shared.imageObjects.append(imageObj)
-            
-            if UploadPostModel.shared.imageObjects.count == assetsFull.count,
-               !(self.navigationController?.viewControllers.contains(where: { $0 is PhotoGalleryController }) ?? false
-                 { { UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected }) }
-               }
-                 }
-                 }
-                 }
-                 
-                 @objc func switchFlash(_ sender: UIButton) {
-                   
-                   if flashButton.image(for: .normal) == UIImage(named: "FlashOff")! {
-                       flashButton.setImage(UIImage(named: "FlashOn"), for: .normal)
-                       if !gifMode { cameraController.flashMode = .on }
-                   } else {
-                       flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
-                       if !gifMode { cameraController.flashMode = .off }
-                   }
-               }
-                 
-                 @objc func cameraRotateTap(_ sender: UIButton) {
-                   switchCameras()
-               }
-                 
-                 func disableButtons() {
-                   /// disable buttons while camera is capturing
-                   cameraButton.isEnabled = false
-                   backButton?.isUserInteractionEnabled = false
-                   cancelButton?.isUserInteractionEnabled = false
-                   galleryButton.isUserInteractionEnabled = false
-                   volumeHandler.stop()
-               }
-                 
-                 func enableButtons() {
-                   cameraButton.isEnabled = true
-                   backButton?.isUserInteractionEnabled = true
-                   cancelButton?.isUserInteractionEnabled = true
-                   galleryButton.isUserInteractionEnabled = true
-                   volumeHandler.start(true)
-               }
-                 
-                 @objc func captureImage(_ sender: UIButton) {
-                   // if the gif camera is enabled, capture 5 images in rapid succession
-                   capture()
-               }
-                 
-                 func capture() {
-                   
-                   disableButtons()
-                   self.captureImage()
-               }
-                 
-                 func captureImage() {
-                   /// completion from AVSpotCamera
-                   self.cameraController.captureImage { [weak self] (image, _) in
-                       
-                       guard var image = image else { return }
-                       guard let self = self else { return }
-                       
-                       let flash = self.flashButton.image(for: .normal) == UIImage(named: "FlashOn")
-                       let selfie = self.cameraController.currentCameraPosition == .front
-                       
-                       Mixpanel.mainInstance().track(event: "CameraStillCapture", properties: ["flash": flash, "selfie": selfie])
-                       
-                       if selfie {
-                           /// flip image orientation on selfie
-                           image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
-                       }
-                       
-                       let resizedImage = self.ResizeImage(with: image, scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
-                       
-                       if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
-                           
-                           let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: resizedImage, animationImages: [], animationIndex: 0, directionUp: true, gifMode: self.gifMode, creationDate: Date(), fromCamera: true)
-                           vc.cameraObject = object
-                           UploadPostModel.shared.imageFromCamera = true
-                           
-                           if let navController = self.navigationController {
-                               navController.pushViewController(vc, animated: false)
-                           }
-                       }
-                   }
-               }
-                 
-                 @objc func backTap() {
-                   self.navigationController?.popViewController(animated: true)
-               }
-                 
-                 @objc func cancelTap() {
-                   /// show view controller sliding down as transtition
-                   DispatchQueue.main.async { [weak self] in
-                       self?.navigationItem.leftBarButtonItem = UIBarButtonItem()
-                       self?.navigationItem.rightBarButtonItem = UIBarButtonItem()
-                       
-                       let transition = CATransition()
-                       transition.duration = 0.3
-                       transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-                       transition.type = CATransitionType.push
-                       transition.subtype = CATransitionSubtype.fromBottom
-                       
-                       DispatchQueue.main.async {
-                           if let mapVC = self?.navigationController?.viewControllers[(self.navigationController?.viewControllers.count ?? 2) - 2] as? MapController {
-                               mapVC.uploadMapReset()
-                           }
-                           /// add up to down transition on return to map
-                           self?.navigationController?.view.layer.add(transition, forKey: kCATransition)
-                           self?.navigationController?.popViewController(animated: false)
-                       }
-                   }
-               }
-                 
-                 @objc func setAutoExposure(_ sender: NSNotification) {
-                   self.setAutoExposure()
-               }
-                 
-                 @objc func openGallery(_ sender: UIButton) {
-                   self.openGallery()
-               }
-                 
-                 @objc func tap(_ tapGesture: UITapGestureRecognizer) {
-                   /// set focus and show cirlcle indicator at that location
-                   let position = tapGesture.location(in: cameraView)
-                   setFocus(position: position)
-               }
-                 
-                 @objc func doubleTap(_ sender: UITapGestureRecognizer) {
-                   switchCameras()
-               }
+        DispatchQueue.global(qos: .background).async {
+            assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
+                
+                guard let self = self else { return }
+                
+                if self.cancelOnDismiss {
+                    // cancel on dismiss = true when view is popped
+                    stop.pointee = true
+                }
+                
+                var location = CLLocation()
+                if let l = object.location { location = l }
+                
+                var creationDate = Date()
+                if let d = object.creationDate {
+                    creationDate = d
+                }
+                
+                let imageObj = (
+                    ImageObject(
+                        id: UUID().uuidString,
+                        asset: object,
+                        rawLocation: location,
+                        stillImage: UIImage(),
+                        animationImages: [],
+                        animationIndex: 0,
+                        directionUp: true,
+                        gifMode: false,
+                        creationDate: creationDate,
+                        fromCamera: false
+                    ),
+                    false
+                )
+                
+                UploadPostModel.shared.imageObjects.append(imageObj)
+                
+                if UploadPostModel.shared.imageObjects.count == assetsFull.count,
+                   !(self.navigationController?.viewControllers.contains(where: { $0 is PhotoGalleryController }) ?? false) {
+                    UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
+                    
+                }
             }
+        }
+    }
+    
+    
+    @objc func switchFlash(_ sender: UIButton) {
+        if flashButton.image(for: .normal) == UIImage(named: "FlashOff")! {
+            flashButton.setImage(UIImage(named: "FlashOn"), for: .normal)
+            if !gifMode {
+                cameraController?.flashMode = .on
+            }
+        } else {
+            flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
+            if !gifMode {
+                cameraController?.flashMode = .off
+            }
+        }
+    }
+    
+    @objc func cameraRotateTap(_ sender: UIButton) {
+        switchCameras()
+    }
+    
+    func disableButtons() {
+        /// disable buttons while camera is capturing
+        cameraButton.isEnabled = false
+        backButton.isUserInteractionEnabled = false
+        cancelButton.isUserInteractionEnabled = false
+        galleryButton.isUserInteractionEnabled = false
+        volumeHandler?.stop()
+    }
+    
+    func enableButtons() {
+        cameraButton.isEnabled = true
+        backButton.isUserInteractionEnabled = true
+        cancelButton.isUserInteractionEnabled = true
+        galleryButton.isUserInteractionEnabled = true
+        volumeHandler?.start(true)
+    }
+    
+    @objc func captureImage(_ sender: UIButton) {
+        // if the gif camera is enabled, capture 5 images in rapid succession
+        capture()
+    }
+    
+    func capture() {
+        disableButtons()
+        self.captureImage()
+    }
+    
+    func captureImage() {
+        /// completion from AVSpotCamera
+        self.cameraController?.captureImage { [weak self] (image, _) in
+            
+            guard var image = image else { return }
+            guard let self = self else { return }
+            
+            let flash = self.flashButton.image(for: .normal) == UIImage(named: "FlashOn")
+            let selfie = self.cameraController?.currentCameraPosition == .front
+            
+            Mixpanel.mainInstance().track(event: "CameraStillCapture", properties: ["flash": flash, "selfie": selfie])
+            
+            if selfie {
+                /// flip image orientation on selfie
+                image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
+            }
+            
+            let resizedImage = self.ResizeImage(with: image, scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
+            
+            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
+                
+                let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: resizedImage, animationImages: [], animationIndex: 0, directionUp: true, gifMode: self.gifMode, creationDate: Date(), fromCamera: true)
+                vc.cameraObject = object
+                UploadPostModel.shared.imageFromCamera = true
+                
+                if let navController = self.navigationController {
+                    navController.pushViewController(vc, animated: false)
+                }
+            }
+        }
+    }
+    
+    @objc func backTap() {
+        self.navigationController?.popViewController(animated: true)
+    }
+    
+    @objc func cancelTap() {
+        /// show view controller sliding down as transtition
+        DispatchQueue.main.async { [weak self] in
+            self?.navigationItem.leftBarButtonItem = UIBarButtonItem()
+            self?.navigationItem.rightBarButtonItem = UIBarButtonItem()
+            
+            let transition = CATransition()
+            transition.duration = 0.3
+            transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
+            transition.type = CATransitionType.push
+            transition.subtype = CATransitionSubtype.fromBottom
+            
+            DispatchQueue.main.async {
+                if let mapVC = self?.navigationController?.viewControllers[(self?.navigationController?.viewControllers.count ?? 2) - 2] as? MapController {
+                    mapVC.uploadMapReset()
+                }
+                /// add up to down transition on return to map
+                self?.navigationController?.view.layer.add(transition, forKey: kCATransition)
+                self?.navigationController?.popViewController(animated: false)
+            }
+        }
+    }
+    
+    @objc func setAutoExposure(_ sender: NSNotification) {
+        self.setAutoExposure()
+    }
+    
+    @objc func openGallery(_ sender: UIButton) {
+        self.openGallery()
+    }
+    
+    @objc func tap(_ tapGesture: UITapGestureRecognizer) {
+        /// set focus and show cirlcle indicator at that location
+        let position = tapGesture.location(in: cameraView)
+        setFocus(position: position)
+    }
+    
+    @objc func doubleTap(_ sender: UITapGestureRecognizer) {
+        switchCameras()
+    }
+}
