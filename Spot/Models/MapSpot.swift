@@ -9,7 +9,7 @@
 import CoreLocation
 import Firebase
 import FirebaseFirestoreSwift
-import Foundation
+import MapKit
 import UIKit
 
 struct MapSpot: Identifiable, Codable, Hashable {
@@ -104,7 +104,27 @@ struct MapSpot: Identifiable, Codable, Hashable {
         self.spotDescription = description
         self.spotLat = post.postLat
         self.spotLong = post.postLong
+    }
 
+    init(
+        id: String,
+        founderID: String,
+        mapItem: MKMapItem,
+        imageURL: String,
+        spotName: String,
+        privacyLevel: String
+    ) {
+        self.posterUsername = UserDataModel.shared.userInfo.username
+        self.id = id
+        self.founderID = founderID
+        self.imageURL = imageURL
+        self.privacyLevel = privacyLevel
+        self.spotName = spotName
+        self.spotDescription = mapItem.pointOfInterestCategory?.toString() ?? ""
+        self.spotLat = mapItem.placemark.coordinate.latitude
+        self.spotLong = mapItem.placemark.coordinate.longitude
+        self.poiCategory = mapItem.pointOfInterestCategory?.toString() ?? ""
+        self.phone = mapItem.phoneNumber ?? ""
     }
 
     /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score
