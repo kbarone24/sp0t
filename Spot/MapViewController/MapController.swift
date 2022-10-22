@@ -60,6 +60,8 @@ final class MapController: UIViewController {
 
     var heelsMapID = "9ECABEF9-0036-4082-A06A-C8943428FFF4"
     var newMapID: String?
+    
+    var serviceContainer: ServiceContainer?
 
     /// sheet view: Must declare outside to listen to UIEvent
     var sheetView: DrawerView? {
@@ -238,6 +240,14 @@ final class MapController: UIViewController {
     }
 
     @objc func addTap(_ sender: UIButton) {
+        guard let serviceContainer else { return }
+        
+        let vmmm = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer))
+        let transition = AddButtonTransition()
+        self.navigationController?.view.layer.add(transition, forKey: kCATransition)
+        self.navigationController?.pushViewController(vmmm, animated: false)
+        
+        return
 
         Mixpanel.mainInstance().track(event: "MapControllerAddTap")
 
