@@ -387,6 +387,8 @@
 		CDF8E986290477C200BE929F /* CustomMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E980290477C200BE929F /* CustomMapController.swift */; };
 		CDF8E988290486B000BE929F /* SimpleMapHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E987290486B000BE929F /* SimpleMapHeaderCell.swift */; };
 		CDF8E98A2904897A00BE929F /* MapMemberCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9892904897A00BE929F /* MapMemberCell.swift */; };
+		CDF8E98C29048AF900BE929F /* EditMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E98B29048AF900BE929F /* EditMapController.swift */; };
+		CDF8E98E29048C2E00BE929F /* MapHeaderActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E98D29048C2E00BE929F /* MapHeaderActionSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -603,6 +605,8 @@
 		CDF8E980290477C200BE929F /* CustomMapController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMapController.swift; sourceTree = "<group>"; };
 		CDF8E987290486B000BE929F /* SimpleMapHeaderCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimpleMapHeaderCell.swift; sourceTree = "<group>"; };
 		CDF8E9892904897A00BE929F /* MapMemberCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapMemberCell.swift; sourceTree = "<group>"; };
+		CDF8E98B29048AF900BE929F /* EditMapController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditMapController.swift; sourceTree = "<group>"; };
+		CDF8E98D29048C2E00BE929F /* MapHeaderActionSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapHeaderActionSheet.swift; sourceTree = "<group>"; };
 		F762098B71569C89C087B675 /* Pods-Spot.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.debug.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1202,6 +1206,8 @@
 				CDF8E987290486B000BE929F /* SimpleMapHeaderCell.swift */,
 				CDF8E97D290477C100BE929F /* CustomMapHeaderCell.swift */,
 				CDF8E9892904897A00BE929F /* MapMemberCell.swift */,
+				CDF8E98B29048AF900BE929F /* EditMapController.swift */,
+				CDF8E98D29048C2E00BE929F /* MapHeaderActionSheet.swift */,
 			);
 			path = CustomMapController;
 			sourceTree = "<group>";
@@ -1509,6 +1515,7 @@
 				4134867F285930DF0098B27B /* ImagePreviewController.swift in Sources */,
 				5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */,
 				CDF8E94F2903B6C500BE929F /* UIAlertActionExtension.swift in Sources */,
+				CDF8E98C29048AF900BE929F /* EditMapController.swift in Sources */,
 				8C8DBB862888BE9F00B31BFD /* TagFriendsView.swift in Sources */,
 				CDF8E9512903B7FC00BE929F /* UIViewExtension.swift in Sources */,
 				597A626E25A8F9910052C560 /* Tag.swift in Sources */,
@@ -1586,6 +1593,7 @@
 				8C1E4873289C54900093030D /* MapViewDelegate.swift in Sources */,
 				8CA512B528BEB5E100F8C1FE /* CustomMapUploadCell.swift in Sources */,
 				8CA512AD28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */,
+				CDF8E98E29048C2E00BE929F /* MapHeaderActionSheet.swift in Sources */,
 				8C3B953A28AD546E00C06586 /* AvatarURLs.swift in Sources */,
 				8C3B955628B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
 				4106ECD028A3371A00680005 /* SpotPageController.swift in Sources */,

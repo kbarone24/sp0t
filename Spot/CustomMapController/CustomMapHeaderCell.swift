@@ -12,7 +12,7 @@ import Mixpanel
 import SnapKit
 import UIKit
 
-class CustomMapHeaderCell: UICollectionViewCell {
+final class CustomMapHeaderCell: UICollectionViewCell {
     private var mapCoverImage: UIImageView!
     private var mapName: UILabel!
     private var joinedIcon: UIImageView!
