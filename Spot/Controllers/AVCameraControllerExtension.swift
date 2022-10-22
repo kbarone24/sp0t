@@ -8,12 +8,13 @@
 
 import AVFoundation
 import UIKit
+import Mixpanel
 
 extension AVCameraController {
 
     func switchCameras() {
         do {
-            try cameraController.switchCameras()
+            try cameraController?.switchCameras()
             self.resetZoom()
             self.setFocus(position: cameraView.center)
         } catch {
@@ -24,21 +25,21 @@ extension AVCameraController {
 
     func setStillFlash() {
         if flashButton.image(for: .normal) == UIImage(named: "FlashOff")! {
-            cameraController.flashMode = .off
+            cameraController?.flashMode = .off
         } else {
-            cameraController.flashMode = .on
+            cameraController?.flashMode = .on
         }
     }
 
     func setGifFlash() {
-        cameraController.flashMode = .off
+        cameraController?.flashMode = .off
     }
 
     // set up camera preview on screen if we have user permission
     func configureCameraController() {
         cameraController?.prepare(position: .rear) { [weak self] _ in
             guard let self = self else { return }
-            try? self.cameraController.displayPreview(on: self.cameraView)
+            try? self.cameraController?.displayPreview(on: self.cameraView)
             self.view.isUserInteractionEnabled = true
             self.setAutoExposure()
         }
@@ -59,41 +60,45 @@ extension AVCameraController {
     }
 
     func setAutoExposure() {
-        let device: AVCaptureDevice
-        if cameraController.currentCameraPosition == .rear {
-            device = cameraController.rearCamera
+        let device: AVCaptureDevice?
+        if cameraController?.currentCameraPosition == .rear, let rearCamera = cameraController?.rearCamera {
+            device = rearCamera
+        } else if let frontCamera = cameraController?.frontCamera {
+            device = frontCamera
         } else {
-            device = cameraController.frontCamera
+            device = nil
         }
 
-        try? device.lockForConfiguration()
-        device.isSubjectAreaChangeMonitoringEnabled = true
+        try? device?.lockForConfiguration()
+        device?.isSubjectAreaChangeMonitoringEnabled = true
 
-        if device.isFocusModeSupported(.continuousAutoFocus) {
-            device.focusMode = .continuousAutoFocus
+        if device?.isFocusModeSupported(.continuousAutoFocus) ?? false {
+            device?.focusMode = .continuousAutoFocus
         }
 
-        if device.isExposureModeSupported(.continuousAutoExposure) {
-            device.exposureMode = .continuousAutoExposure
+        if device?.isExposureModeSupported(.continuousAutoExposure) ?? false {
+            device?.exposureMode = .continuousAutoExposure
         }
 
-        device.unlockForConfiguration()
+        device?.unlockForConfiguration()
     }
 
     func resetZoom() {
         // resets the zoom level when switching between rear and front cameras
 
-        let device: AVCaptureDevice!
-        if cameraController.currentCameraPosition == .rear {
-            device = cameraController.rearCamera
+        let device: AVCaptureDevice?
+        if cameraController?.currentCameraPosition == .rear, let rearCamera = cameraController?.rearCamera {
+            device = rearCamera
+        } else if let frontCamera = cameraController?.frontCamera {
+            device = frontCamera
         } else {
-            device = cameraController.frontCamera
+            device = nil
         }
 
         do {
-            try device.lockForConfiguration()
-            defer { device.unlockForConfiguration() }
-            device.videoZoomFactor = 1.0
+            try device?.lockForConfiguration()
+            defer { device?.unlockForConfiguration() }
+            device?.videoZoomFactor = 1.0
             self.lastZoomFactor = 1.0
 
         } catch {
@@ -132,27 +137,28 @@ extension AVCameraController {
             }
         }
 
-        let device: AVCaptureDevice!
-
-        if cameraController.currentCameraPosition == .rear {
-            device = cameraController.rearCamera
+        let device: AVCaptureDevice?
+        if cameraController?.currentCameraPosition == .rear, let rearCamera = cameraController?.rearCamera {
+            device = rearCamera
+        } else if let frontCamera = cameraController?.frontCamera {
+            device = frontCamera
         } else {
-            device = cameraController.frontCamera
+            device = nil
         }
 
         do {
-            try device.lockForConfiguration()
-            if device.isFocusPointOfInterestSupported {
-                device.focusPointOfInterest = focusPoint
-                device.focusMode = .autoFocus
+            try device?.lockForConfiguration()
+            if device?.isFocusPointOfInterestSupported ?? false {
+                device?.focusPointOfInterest = focusPoint
+                device?.focusMode = .autoFocus
             }
 
-            if device.isExposurePointOfInterestSupported {
-                device.exposurePointOfInterest = focusPoint
-                device.exposureMode = .autoExpose
+            if device?.isExposurePointOfInterestSupported ?? false {
+                device?.exposurePointOfInterest = focusPoint
+                device?.exposureMode = .autoExpose
             }
 
-            device.unlockForConfiguration()
+            device?.unlockForConfiguration()
 
         } catch {
             // TODO: Handle errors here, show error alert
@@ -165,20 +171,24 @@ extension AVCameraController {
         let minimumZoom: CGFloat = 1.0
         let maximumZoom: CGFloat = 5.0
 
-        var device: AVCaptureDevice!
-        if cameraController.currentCameraPosition == .rear {
-            device = cameraController.rearCamera
+        let device: AVCaptureDevice?
+        if cameraController?.currentCameraPosition == .rear, let rearCamera = cameraController?.rearCamera {
+            device = rearCamera
+        } else if let frontCamera = cameraController?.frontCamera {
+            device = frontCamera
         } else {
-            device = cameraController.frontCamera
+            device = nil
         }
 
-        let newScaleFactor = minMaxZoom(pinch.scale * lastZoomFactor)
+        let newScaleFactor = minMaxZoom(device: device, factor: pinch.scale * lastZoomFactor, minimumZoom: minimumZoom, maximumZoom: maximumZoom)
 
         switch pinch.state {
-        case .began: fallthrough
-        case .changed: update(scale: newScaleFactor)
+        case .began:
+            fallthrough
+        case .changed:
+            update(device: device, scale: newScaleFactor)
         case .ended, .cancelled:
-            lastZoomFactor = minMaxZoom(device: device, scale: newScaleFactor)
+            lastZoomFactor = minMaxZoom(device: device, factor: newScaleFactor, minimumZoom: minimumZoom, maximumZoom: maximumZoom)
             update(device: device, scale: lastZoomFactor)
         default: break
         }
@@ -196,15 +206,16 @@ extension AVCameraController {
 }
 
 extension AVCameraController: UIGestureRecognizerDelegate {
-    func minMaxZoom(device: AVCaptureDevice, factor: CGFloat) -> CGFloat {
+    func minMaxZoom(device: AVCaptureDevice?, factor: CGFloat, minimumZoom: CGFloat, maximumZoom: CGFloat) -> CGFloat {
+        guard let device = device else { return 0.0 }
         return min(min(max(factor, minimumZoom), maximumZoom), device.activeFormat.videoMaxZoomFactor)
     }
 
-    func update(device: AVCaptureDevice, scale factor: CGFloat) {
+    func update(device: AVCaptureDevice?, scale factor: CGFloat) {
         do {
-            try device.lockForConfiguration()
-            defer { device.unlockForConfiguration() }
-            device.videoZoomFactor = factor
+            try device?.lockForConfiguration()
+            defer { device?.unlockForConfiguration() }
+            device?.videoZoomFactor = factor
         } catch {
             print("\(error.localizedDescription)")
         }
