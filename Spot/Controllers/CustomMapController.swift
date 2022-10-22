@@ -167,11 +167,11 @@ class CustomMapController: UIViewController {
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
 
-        let position: DrawerViewDetent = presentToFullScreen ? .Top : .Middle
+        let position: DrawerViewDetent = presentToFullScreen ? .top : .middle
         if position.rawValue != containerDrawerView?.status.rawValue && present {
             DispatchQueue.main.async { self.containerDrawerView?.present(to: position) }
         }
-        if position == .Top { configureFullScreen(); collectionView.contentOffset.y = offsetOnDismissal }
+        if position == .top { configureFullScreen(); collectionView.contentOffset.y = offsetOnDismissal }
         presentToFullScreen = false
     }
 

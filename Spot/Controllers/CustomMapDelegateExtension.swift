@@ -44,7 +44,7 @@ extension CustomMapController: MKMapViewDelegate {
     }
 
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
-        if centeredMap && containerDrawerView?.status != .Bottom { closeDrawer() }
+        if centeredMap && containerDrawerView?.status != .bottom { closeDrawer() }
         guard let mapView = mapView as? SpotMapView else { return }
         // gets called too much -> just use gesture recognizer
         if mapView.region.span.longitudeDelta < 0.001_3 {
@@ -89,7 +89,7 @@ extension CustomMapController: MKMapViewDelegate {
     }
 
     func closeDrawer() {
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: .Bottom) }
+        DispatchQueue.main.async { self.containerDrawerView?.present(to: .bottom) }
     }
 }
 
@@ -104,7 +104,7 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         if containerDrawerView == nil { return }
         if
             topYContentOffset != nil &&
-            containerDrawerView?.status == .Top &&
+            containerDrawerView?.status == .top &&
             collectionView.contentOffset.y <= topYContentOffset!
         {
             // Reset drawer view varaiables when user finger swipes down
@@ -118,7 +118,7 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         // Preventing the drawer view to be dragged when it's status is top but content is not on top and user finger is swiping up
         if
             topYContentOffset != nil &&
-            containerDrawerView?.status == .Top &&
+            containerDrawerView?.status == .top &&
             collectionView.contentOffset.y > topYContentOffset! &&
             yTranslation < 0
         {

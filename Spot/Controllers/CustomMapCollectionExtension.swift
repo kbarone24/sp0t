@@ -89,7 +89,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
 
     func setDrawerValuesForViewAppear() {
-        if containerDrawerView?.status == .Top { presentToFullScreen = true; offsetOnDismissal = collectionView.contentOffset.y }
+        if containerDrawerView?.status == .top { presentToFullScreen = true; offsetOnDismissal = collectionView.contentOffset.y }
         currentContainerCanDragStatus = containerDrawerView?.canDrag
     }
 }
@@ -106,7 +106,7 @@ extension CustomMapController: UIScrollViewDelegate {
         }
 
         if containerDrawerView == nil { return }
-        if topYContentOffset != nil && containerDrawerView?.status == .Top {
+        if topYContentOffset != nil && containerDrawerView?.status == .top {
             // Disable the bouncing effect when scroll view is scrolled to top
             if scrollView.contentOffset.y <= topYContentOffset! {
                 scrollView.contentOffset.y = topYContentOffset!
