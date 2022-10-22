@@ -11,22 +11,82 @@ import Foundation
 import Mixpanel
 import UIKit
 
-class UsernameController: UIViewController, UITextFieldDelegate {
-    var usernameText = ""
-    var usernameField: UITextField!
-    var nextButton: UIButton!
-    var statusIcon: UIImageView!
-    var activityIndicator: CustomActivityIndicator!
-    var statusLabel: UIButton!
+final class UsernameController: UIViewController, UITextFieldDelegate {
+    private var usernameText = ""
 
-    var newUser: NewUser!
-    var cancelOnDismiss = false
+    private lazy var usernameField: UITextField = {
+        let textField = UITextField()
+        textField.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
+        textField.textAlignment = .center
+        textField.tintColor = UIColor(named: "SpotGreen")
+        textField.textColor = .black
+
+        let placeholderText = NSMutableAttributedString(
+            string: "@sp0tb0t", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
+                NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
+            ]
+        )
+
+        textField.attributedPlaceholder = placeholderText
+        textField.autocorrectionType = .no
+        textField.autocapitalizationType = .none
+        textField.delegate = self
+        textField.textContentType = .name
+        textField.addTarget(self, action: #selector(usernameChanged(_:)), for: .editingChanged)
+
+        return textField
+    }()
+
+    private lazy var nextButton: UIButton = {
+        let button = UIButton()
+
+        button.layer.cornerRadius = 9
+        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+
+        let customButtonTitle = NSMutableAttributedString(
+            string: "Next",
+            attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
+                NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            ]
+        )
+
+        button.setAttributedTitle(customButtonTitle, for: .normal)
+        button.setImage(nil, for: .normal)
+        button.addTarget(self, action: #selector(nextTapped(_:)), for: .touchUpInside)
+        button.alpha = 0.4
+        return button
+    }()
+
+    private lazy var activityIndicator: CustomActivityIndicator = {
+        let activityIndicator = CustomActivityIndicator()
+        activityIndicator.isHidden = true
+        return activityIndicator
+    }()
+
+    private lazy var statusLabel: UIButton = {
+        let label = UIButton()
+
+        label.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
+        label.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        label.setTitleColor(UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1), for: .normal)
+        label.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        label.contentVerticalAlignment = .center
+        label.contentHorizontalAlignment = .center
+        label.isHidden = false
+
+        return label
+    }()
+
+    private var newUser: NewUser?
+    private var cancelOnDismiss = false
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "SignUpUsernameOpen")
         enableKeyboardMethods()
-        if usernameField != nil { DispatchQueue.main.async { self.usernameField.becomeFirstResponder() } }
+        self.usernameField.becomeFirstResponder()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -36,18 +96,6 @@ class UsernameController: UIViewController, UITextFieldDelegate {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         disableKeyboardMethods()
-    }
-
-    func enableKeyboardMethods() {
-        cancelOnDismiss = false
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-    }
-
-    func disableKeyboardMethods() {
-        cancelOnDismiss = true
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }
 
     override func viewDidLoad() {
@@ -83,6 +131,10 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         navigationController?.navigationBar.addWhiteBackground()
     }
 
+    func setNewUser(newUser: NewUser) {
+        self.newUser = newUser
+    }
+
     func setUpViews() {
         let usernameLabel = UILabel {
             $0.text = "Create your username"
@@ -90,29 +142,13 @@ class UsernameController: UIViewController, UITextFieldDelegate {
             $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
             view.addSubview($0)
         }
+
         usernameLabel.snp.makeConstraints {
             $0.top.equalToSuperview().offset(114)
             $0.centerX.equalToSuperview()
         }
 
-        usernameField = UITextField {
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
-            $0.textAlignment = .center
-            $0.tintColor = UIColor(named: "SpotGreen")
-            $0.textColor = .black
-            var placeholderText = NSMutableAttributedString()
-            placeholderText = NSMutableAttributedString(string: "@sp0tb0t", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
-            ])
-            $0.attributedPlaceholder = placeholderText
-            $0.autocorrectionType = .no
-            $0.autocapitalizationType = .none
-            $0.delegate = self
-            $0.textContentType = .name
-            $0.addTarget(self, action: #selector(usernameChanged(_:)), for: .editingChanged)
-            view.addSubview($0)
-        }
+        view.addSubview(usernameField)
         usernameField.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
             $0.top.equalTo(usernameLabel.snp.bottom).offset(30)
@@ -123,6 +159,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
             $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
             view.addSubview($0)
         }
+
         bottomLine.snp.makeConstraints {
             $0.height.equalTo(1.5)
             $0.width.equalTo(usernameField.snp.width)
@@ -130,35 +167,14 @@ class UsernameController: UIViewController, UITextFieldDelegate {
             $0.centerX.equalToSuperview()
         }
 
-        nextButton = UIButton {
-            $0.layer.cornerRadius = 9
-            $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
-            let customButtonTitle = NSMutableAttributedString(string: "Next", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            ])
-            $0.setAttributedTitle(customButtonTitle, for: .normal)
-            $0.setImage(nil, for: .normal)
-            $0.addTarget(self, action: #selector(nextTapped(_:)), for: .touchUpInside)
-            $0.alpha = 0.4
-            view.addSubview($0)
-        }
+        view.addSubview(nextButton)
         nextButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
             $0.height.equalTo(49)
             $0.bottom.equalToSuperview().offset(-30)
         }
 
-        statusLabel = UIButton {
-            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
-            $0.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            $0.setTitleColor(UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1), for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14)
-            $0.contentVerticalAlignment = .center
-            $0.contentHorizontalAlignment = .center
-            $0.isHidden = false
-            view.addSubview($0)
-        }
+        view.addSubview(statusLabel)
         statusLabel.snp.makeConstraints {
             $0.top.equalTo(bottomLine.snp.bottom).offset(12)
             $0.centerX.equalToSuperview()
@@ -166,10 +182,8 @@ class UsernameController: UIViewController, UITextFieldDelegate {
             $0.height.equalTo(30)
         }
 
-        activityIndicator = CustomActivityIndicator {
-            $0.isHidden = true
-            view.addSubview($0)
-        }
+        view.addSubview(activityIndicator)
+        activityIndicator.isHidden = true
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(bottomLine.snp.bottom).offset(15)
             $0.centerX.equalToSuperview()
@@ -230,6 +244,18 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         }
     }
 
+    func enableKeyboardMethods() {
+        cancelOnDismiss = false
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+
+    func disableKeyboardMethods() {
+        cancelOnDismiss = true
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+    }
+
     func textFieldDidBeginEditing(_ textField: UITextField) {
         if textField.text == "" {
             textField.text = "@"
@@ -251,10 +277,8 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         guard let text = textField.text else { return true }
 
         var remove = text.count
-        for x in text {
-            if x == "@"{
-                remove -= 1
-            }
+        for x in text where x == "@" {
+            remove -= 1
         }
 
         let currentCharacterCount = remove
@@ -308,28 +332,42 @@ class UsernameController: UIViewController, UITextFieldDelegate {
     }
 
     func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void) {
-        if !isValidUsername(username: username) { completion("Too short"); return }
+        if !isValidUsername(username: username) {
+            completion("Too short")
+            return
+        }
 
         let db = Firestore.firestore()
         let usersRef = db.collection("usernames")
         let query = usersRef.whereField("username", isEqualTo: username)
-        query.getDocuments(completion: { (snap, err) in
-            if err != nil { completion("error"); return }
-            if username != self.usernameText { completion("Taken"); return }
 
-            if (snap?.documents.count)! > 0 {
+        query.getDocuments { [weak self] snap, err in
+            guard let self, err == nil else {
+                completion("error")
+                return
+            }
+
+            if username != self.usernameText {
+                completion("Taken")
+                return
+            }
+
+            if let documents = snap?.documents, !documents.isEmpty {
                 completion("Taken")
             } else {
                 completion("")
             }
-        })
+        }
     }
 
     @objc func nextTapped(_ sender: UIButton) {
-        DispatchQueue.main.async { self.view.endEditing(true) }
+        view.endEditing(true)
         setEmpty()
 
-        guard var username = usernameField.text?.lowercased() else { return }
+        guard var username = usernameField.text?.lowercased() else {
+            return
+        }
+
         username = username.trimmingCharacters(in: .whitespaces)
         if username.count > 2 {
             username.remove(at: username.startIndex)
@@ -338,16 +376,24 @@ class UsernameController: UIViewController, UITextFieldDelegate {
         activityIndicator.startAnimating()
 
         /// check username status again on completion
-        usernameAvailable(username: username) { (errorMessage) in
-            if errorMessage != "" {
-                Mixpanel.mainInstance().track(event: "SignUpUsernameError", properties: ["error": errorMessage])
-            } else {
-                self.newUser.username = username
-                let vc = PhoneController()
-                Mixpanel.mainInstance().track(event: "UsernameContorllerSuccess")
-                vc.codeType = .newAccount
-                vc.newUser = self.newUser
-                DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
+        usernameAvailable(username: username) { [weak self] errorMessage in
+
+            guard let self, errorMessage.isEmpty else {
+                Mixpanel.mainInstance().track(
+                    event: "SignUpUsernameError",
+                    properties: ["error": errorMessage]
+                )
+
+                return
+            }
+
+            self.newUser?.username = username
+            let vc = PhoneController()
+            Mixpanel.mainInstance().track(event: "UsernameContorllerSuccess")
+            vc.codeType = .newAccount
+            vc.newUser = self.newUser
+
+            DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true)
             }
 
             sender.isEnabled = true
