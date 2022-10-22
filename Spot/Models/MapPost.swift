@@ -189,4 +189,34 @@ struct MapPost: Identifiable, Codable, Hashable {
         self.commentsHeight = 0
         self.posterID = ""
     }
+
+    init(
+        posterUsername: String,
+        caption: String,
+        privacyLevel: String,
+        longitude: Double,
+        latitude: Double,
+        timestamp: Timestamp
+    ) {
+        self.id = UUID().uuidString
+        self.posterUsername = posterUsername
+        self.posterID = UserDataModel.shared.uid
+        self.privacyLevel = privacyLevel
+        self.postLat = latitude
+        self.postLong = longitude
+        self.timestamp = timestamp
+        self.caption = caption
+        self.likers = []
+        self.imageURLs = []
+        self.mapInfo = nil
+        self.commentList = []
+        self.postImage = []
+        self.postScore = 0
+        self.selectedImageIndex = 0
+        self.imageHeight = 0
+        self.captionHeight = 0
+        self.cellHeight = 0
+        self.commentsHeight = 0
+        self.friendsList = []
+    }
 }

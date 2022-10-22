@@ -60,10 +60,16 @@ final class UploadPostModel {
 
     func createSharedInstance() {
         let coordinate = UserDataModel.shared.currentLocation.coordinate
-        postObject = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: coordinate.latitude, postLong: coordinate.longitude, posterID: UserDataModel.shared.uid, timestamp: Timestamp(date: Date()))
-        postObject.id = UUID().uuidString
-        postObject.posterUsername = UserDataModel.shared.userInfo.username
-        postObject.privacyLevel = "friends"
+
+        self.postObject = MapPost(
+            posterUsername: UserDataModel.shared.userInfo.username,
+            caption: "",
+            privacyLevel: "friends",
+            longitude: coordinate.longitude,
+            latitude: coordinate.latitude,
+            timestamp: Timestamp(date: Date())
+        )
+
         setPostCity() /// set with every location change to avoid async lag on upload
         spotObject = nil
         mapObject = nil
