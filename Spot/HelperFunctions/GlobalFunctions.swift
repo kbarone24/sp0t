@@ -654,11 +654,11 @@ extension UIViewController {
     }
 
     func removeFriend(friendID: String) {
-        UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == friendID})
-        UserDataModel.shared.userInfo.friendsList.removeAll(where: {$0.id == friendID})
+        UserDataModel.shared.userInfo.friendIDs.removeAll(where: { $0 == friendID })
+        UserDataModel.shared.userInfo.friendsList.removeAll(where: { $0.id == friendID })
         UserDataModel.shared.userInfo.topFriends?.removeValue(forKey: friendID)
         UserDataModel.shared.deletedFriendIDs.append(friendID)
-        
+
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
         removeFriendFromFriendsList(userID: uid, friendID: friendID)
@@ -668,7 +668,7 @@ extension UIViewController {
         DispatchQueue.global().async {
             self.removeFriendFromPosts(userID: uid, friendID: friendID)
             self.removeFriendFromPosts(userID: friendID, friendID: uid)
-        
+
             self.removeFriendFromNotis(userID: uid, friendID: friendID)
             self.removeFriendFromNotis(userID: friendID, friendID: uid)
         }
@@ -685,24 +685,24 @@ extension UIViewController {
 
     func removeFriendFromPosts(userID: String, friendID: String) {
         let db: Firestore = Firestore.firestore()
-        db.collection("posts").whereField("posterID", isEqualTo: friendID).getDocuments { snap, err in
+        db.collection("posts").whereField("posterID", isEqualTo: friendID).getDocuments { snap, _ in
             guard let docs = snap?.documents else { return }
             for doc in docs {
-                doc.reference.updateData(["friendsList" : FieldValue.arrayRemove([userID])])
+                doc.reference.updateData(["friendsList": FieldValue.arrayRemove([userID])])
             }
         }
     }
-    
+
     func removeFriendFromNotis(userID: String, friendID: String) {
         let db: Firestore = Firestore.firestore()
-        db.collection("users").document(userID).collection("notifications").whereField("senderID", isEqualTo: friendID).whereField("type", isEqualTo: "friendRequest").getDocuments { snap, err in
+        db.collection("users").document(userID).collection("notifications").whereField("senderID", isEqualTo: friendID).whereField("type", isEqualTo: "friendRequest").getDocuments { snap, _ in
             guard let docs = snap?.documents else { return }
             for doc in docs {
                 doc.reference.delete()
             }
         }
     }
-   
+
     func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
         var queriedUsers: [UserProfile] = []
         let usernameList = userList.map({ $0.username })
@@ -1124,15 +1124,15 @@ extension NSObject {
         db.collection("users").document(friendID).updateData(["pendingFriendRequests": FieldValue.arrayRemove([uid])])
         db.collection("users").document(uid).collection("notifications").document(notificationID).delete()
     }
-    
+
     func revokeFriendRequest(friendID: String, notificationID: String) {
         let db: Firestore = Firestore.firestore()
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
-        db.collection("users").document(uid).updateData(["pendingFriendRequests" : FieldValue.arrayRemove([friendID])])
+        db.collection("users").document(uid).updateData(["pendingFriendRequests": FieldValue.arrayRemove([friendID])])
         db.collection("users").document(friendID).collection("notifications").document(notificationID).delete()
     }
- 
+
     func addFriendToFriendsList(userID: String, friendID: String) {
         let db: Firestore = Firestore.firestore()
 

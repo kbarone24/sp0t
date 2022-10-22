@@ -89,7 +89,7 @@ extension MapController {
         removePost(post: post, spotID: spotID, mapID: mapID, mapDelete: mapDelete)
         DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
     }
-    
+
     func removePost(post: MapPost, spotID: String, mapID: String, mapDelete: Bool) {
         /// remove from friends stuff
         friendsPostsDictionary.removeValue(forKey: post.id!)
@@ -104,7 +104,7 @@ extension MapController {
                 DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id!, spotID: spotID) }
             }
         }
-        if let anno = mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: post.coordinate)}) {
+        if let anno = mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: post.coordinate) }) {
             DispatchQueue.main.async { self.mapView.removeAnnotation(anno) }
 
         }
@@ -158,7 +158,7 @@ extension MapController {
             DispatchQueue.main.async { self.mapsCollection.reloadItems(at: [IndexPath(item: i + 1, section: 0)]) }
         } */
     }
-    
+
     @objc func notifyFriendRemove(_ notifications: NSNotification) {
         print("notify friend remove")
         guard let friendID = notifications.userInfo?.first?.value as? String else { return }

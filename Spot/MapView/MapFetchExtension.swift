@@ -102,12 +102,12 @@ extension MapController {
                     self.db.collection("users").document(friend).getDocument { (friendSnap, _) in
                         do {
                             let friendInfo = try friendSnap?.data(as: UserProfile.self)
-                            guard let info = friendInfo else { UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == friend}); return }
-                            
-                            if !UserDataModel.shared.userInfo.friendsList.contains(where: {$0.id == friend}) && !UserDataModel.shared.deletedFriendIDs.contains(friend) {
+                            guard let info = friendInfo else { UserDataModel.shared.userInfo.friendIDs.removeAll(where: { $0 == friend }); return }
+
+                            if !UserDataModel.shared.userInfo.friendsList.contains(where: { $0.id == friend }) && !UserDataModel.shared.deletedFriendIDs.contains(friend) {
 
                                 UserDataModel.shared.userInfo.friendsList.append(info)
-                                
+
                                 if UserDataModel.shared.userInfo.friendsList.count == UserDataModel.shared.userInfo.friendIDs.count {
                                     self.sortFriends() /// sort for top friends
                                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
@@ -369,8 +369,8 @@ extension MapController {
                     guard let postInfo = postIn else { return }
                     /// new post has 2 separate writes, wait for post location to get set to load it in
                     if doc.get("g") as? String == nil { return }
-                    
-                    let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
+
+                    let map = UserDataModel.shared.userInfo.mapsList.first(where: { $0.id == postInfo.mapID ?? "" })
                     if self.hasNewPostAccess(post: postInfo, map: map) {
                         print("finish post load", postInfo.spotName)
                         self.finishNewMapPostLoad(postInfo: postInfo, map: map)

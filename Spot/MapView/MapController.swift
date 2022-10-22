@@ -46,7 +46,7 @@ final class MapController: UIViewController {
     var feedLoaded = false
     var mapsLoaded = false
     var friendsLoaded = false
-    
+
     lazy var friendsPostsDictionary = [String: MapPost]()
     lazy var postGroup: [MapPostGroup] = []
 
@@ -55,12 +55,12 @@ final class MapController: UIViewController {
     var refresh: RefreshStatus = .activelyRefreshing
     var friendsRefresh: RefreshStatus = .refreshEnabled
 
-    var startTime: Int64!    
+    var startTime: Int64!
     var addFriendsView: AddFriendsView!
 
     var heelsMapID = "9ECABEF9-0036-4082-A06A-C8943428FFF4"
     var newMapID: String?
-    
+
     var serviceContainer: ServiceContainer?
 
     /// sheet view: Must declare outside to listen to UIEvent
@@ -241,12 +241,12 @@ final class MapController: UIViewController {
 
     @objc func addTap(_ sender: UIButton) {
         guard let serviceContainer else { return }
-        
+
         let vmmm = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer))
         let transition = AddButtonTransition()
         self.navigationController?.view.layer.add(transition, forKey: kCATransition)
         self.navigationController?.pushViewController(vmmm, animated: false)
-        
+
         return
 
         Mixpanel.mainInstance().track(event: "MapControllerAddTap")
@@ -343,16 +343,18 @@ final class MapController: UIViewController {
     }
 
     func openSpot(spotID: String, spotName: String, mapID: String, mapName: String) {
-        if sheetView != nil { return } /// cancel on double tap
-        var emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp(date: Date()))
-        emptyPost.spotID = spotID
-        emptyPost.spotName = spotName
-        emptyPost.mapID = mapID
-        emptyPost.mapName = mapName
+        /// cancel on double tap
+        if sheetView != nil {
+            return
+        }
+
+        let emptyPost = MapPost(spotID: spotID, spotName: spotName, mapID: mapID, mapName: mapName)
+
         let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: nil)
-        sheetView = DrawerView(present: spotVC, detentsInAscending: [.bottom, .middle, .top], closeAction: {
-            self.sheetView = nil
-        })
+        sheetView = DrawerView(present: spotVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
+            self?.sheetView = nil
+        }
+
         spotVC.containerDrawerView = sheetView
         spotVC.containerDrawerView?.showCloseButton = false
         sheetView?.present(to: .top)

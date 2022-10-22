@@ -39,7 +39,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let notificationName = Notification.Name("openPush")
         NotificationCenter.default.post(name: notificationName, object: nil, userInfo: nil)
-        
+
         mapViewController.serviceContainer = appDelegate.serviceContainer
         let navController = MapNavigationController(rootViewController: mapViewController)
         window.rootViewController = navController

@@ -345,15 +345,22 @@ extension SpotPageController {
 
     @objc func addAction() {
         Mixpanel.mainInstance().track(event: "SpotPageAddTap")
-        if navigationController!.viewControllers.contains(where: { $0 is AVCameraController }) { return } /// crash on double stack was happening here
-        DispatchQueue.main.async {
-            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
-                vc.spotObject = self.spot
-                self.barView.isHidden = true
-                let transition = AddButtonTransition()
-                self.navigationController?.view.layer.add(transition, forKey: kCATransition)
-                self.navigationController?.pushViewController(vc, animated: false)
+
+        /// crash on double stack was happening here
+        if navigationController!.viewControllers.contains(where: { $0 is AVCameraController }) {
+            return
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController else {
+                return
             }
+
+            vc.spotObject = self?.spot
+            self?.barView.isHidden = true
+            let transition = AddButtonTransition()
+            self?.navigationController?.view.layer.add(transition, forKey: kCATransition)
+            self?.navigationController?.pushViewController(vc, animated: false)
         }
     }
 
@@ -371,7 +378,9 @@ extension SpotPageController {
         relatedPosts.removeAll(where: { $0.id == post.id })
         communityPosts.removeAll(where: { $0.id == post.id })
 
-        DispatchQueue.main.async { self.collectionView.reloadData() }
+        DispatchQueue.main.async { [weak self] in
+            self?.collectionView.reloadData()
+        }
     }
 }
 

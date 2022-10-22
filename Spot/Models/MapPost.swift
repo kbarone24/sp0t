@@ -62,13 +62,16 @@ struct MapPost: Identifiable, Codable, Hashable {
     var commentsHeight: CGFloat? = 0
 
     var setImageLocation = false
+
     var seen: Bool {
         let twoWeeks = Date().timeIntervalSince1970 - 86_400 * 14
         return (seenList?.contains(UserDataModel.shared.uid) ?? true) || timestamp.seconds < Int64(twoWeeks)
     }
+
     var seconds: Int64 {
         return timestamp.seconds
     }
+
     var coordinate: CLLocationCoordinate2D {
         return spotID ?? "" == "" ? CLLocationCoordinate2D(latitude: postLat, longitude: postLong) : CLLocationCoordinate2D(latitude: spotLat ?? postLat, longitude: spotLong ?? postLong)
     }
@@ -104,5 +107,86 @@ struct MapPost: Identifiable, Codable, Hashable {
         case taggedUserIDs
         case taggedUsers
         case timestamp
+    }
+
+    init(
+        id: String,
+        posterID: String,
+        postDraft: PostDraft,
+        mapInfo: CustomMap?,
+        actualTimestamp: Timestamp,
+        uploadImages: [UIImage],
+        imageURLs: [String],
+        aspectRatios: [CGFloat],
+        imageLocations: [[String: Double]] = [],
+        likers: [String]
+    ) {
+        self.id = id
+        self.addedUsers = postDraft.addedUsers
+        self.aspectRatios = aspectRatios
+        self.caption = postDraft.caption ?? ""
+        self.city = postDraft.city
+        self.createdBy = postDraft.createdBy
+        self.frameIndexes = postDraft.frameIndexes
+        self.friendsList = postDraft.friendsList ?? []
+        self.hideFromFeed = postDraft.hideFromFeed
+        self.imageLocations = imageLocations
+        self.imageURLs = imageURLs
+        self.inviteList = postDraft.inviteList ?? []
+        self.likers = likers
+        self.mapID = postDraft.mapID ?? ""
+        self.mapName = postDraft.mapName ?? ""
+        self.postLat = postDraft.postLat
+        self.postLong = postDraft.postLong
+        self.posterID = posterID
+        self.posterUsername = UserDataModel.shared.userInfo.username
+        self.privacyLevel = postDraft.privacyLevel ?? ""
+        self.seenList = []
+        self.spotID = postDraft.spotID ?? ""
+        self.spotLat = postDraft.spotLat
+        self.spotLong = postDraft.spotLong
+        self.spotName = postDraft.spotName
+        self.spotPrivacy = postDraft.spotPrivacy
+        self.tag = ""
+        self.taggedUserIDs = postDraft.taggedUserIDs ?? []
+        self.taggedUsers = postDraft.taggedUsers ?? []
+        self.timestamp = actualTimestamp
+        self.addedUserProfiles = []
+        self.userInfo = UserDataModel.shared.userInfo
+        self.mapInfo = mapInfo
+        self.commentList = []
+        self.postImage = uploadImages
+        self.postScore = 0
+        self.selectedImageIndex = 0
+        self.imageHeight = 0
+        self.captionHeight = 0
+        self.cellHeight = 0
+        self.commentsHeight = 0
+    }
+
+    init(spotID: String, spotName: String, mapID: String, mapName: String) {
+        self.posterUsername = UserDataModel.shared.userInfo.username
+        self.id = UUID().uuidString
+        self.spotID = spotID
+        self.spotName = spotName
+        self.mapID = mapID
+        self.mapName = mapName
+        self.caption = ""
+        self.friendsList = []
+        self.imageURLs = []
+        self.likers = []
+        self.postLat = 0
+        self.postLong = 0
+        self.timestamp = Timestamp(date: Date())
+        self.mapInfo = nil
+        self.commentList = []
+        self.postImage = []
+        self.postScore = 0
+        self.selectedImageIndex = 0
+        self.imageHeight = 0
+        self.captionHeight = 0
+        self.cellHeight = 0
+        self.commentsHeight = 0
+        self.posterID = ""
     }
 }

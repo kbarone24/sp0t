@@ -196,8 +196,8 @@ extension ProfileHeaderCell {
             $0.top.equalTo(profileImage.snp.bottom).offset(16)
         }
         actionButton.layer.cornerRadius = 37 / 2
-    }    
-    
+    }
+
     @objc func locationButtonAction() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderLocationTap")
     }

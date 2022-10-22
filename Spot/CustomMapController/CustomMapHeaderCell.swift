@@ -28,7 +28,7 @@ class CustomMapHeaderCell: UICollectionViewCell {
     private var editButton: UIButton!
     private var addFriendsButton: UIButton!
     private var mapBio: UILabel!
-    
+
     var mapData: CustomMap!
     private var fourMapMemberProfile: [UserProfile] = []
 
