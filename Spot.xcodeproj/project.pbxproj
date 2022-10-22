@@ -390,6 +390,8 @@
 		CDF8E95D2903C86200BE929F /* MapTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E95C2903C86200BE929F /* MapTitleView.swift */; };
 		CDF8E95F2903C8A300BE929F /* AddFriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E95E2903C8A300BE929F /* AddFriendsView.swift */; };
 		CDF8E9612903C90000BE929F /* MapNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9602903C90000BE929F /* MapNavigationController.swift */; };
+		CDF8E9642903CD7900BE929F /* ExploreMapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9632903CD7900BE929F /* ExploreMapViewController.swift */; };
+		CDF8E9662903CD8400BE929F /* ExploreMapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9652903CD8400BE929F /* ExploreMapViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -601,6 +603,8 @@
 		CDF8E95C2903C86200BE929F /* MapTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTitleView.swift; sourceTree = "<group>"; };
 		CDF8E95E2903C8A300BE929F /* AddFriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddFriendsView.swift; sourceTree = "<group>"; };
 		CDF8E9602903C90000BE929F /* MapNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapNavigationController.swift; sourceTree = "<group>"; };
+		CDF8E9632903CD7900BE929F /* ExploreMapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapViewController.swift; sourceTree = "<group>"; };
+		CDF8E9652903CD8400BE929F /* ExploreMapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapViewModel.swift; sourceTree = "<group>"; };
 		F762098B71569C89C087B675 /* Pods-Spot.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.debug.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -670,6 +674,7 @@
 				CDF8E93B2903A18000BE929F /* Services */,
 				1DF6E06622089F8D00BA0C36 /* Models */,
 				CDF8E9542903BFA800BE929F /* MapViewController */,
+				CDF8E9622903CD6200BE929F /* ExploreMap */,
 				CDF8E9572903C18700BE929F /* EnterMapCodeController */,
 				1DF6E06722089F9400BA0C36 /* Views */,
 				1DF6E06522089F8700BA0C36 /* Controllers */,
@@ -1145,6 +1150,15 @@
 			path = EnterMapCodeController;
 			sourceTree = "<group>";
 		};
+		CDF8E9622903CD6200BE929F /* ExploreMap */ = {
+			isa = PBXGroup;
+			children = (
+				CDF8E9632903CD7900BE929F /* ExploreMapViewController.swift */,
+				CDF8E9652903CD8400BE929F /* ExploreMapViewModel.swift */,
+			);
+			path = ExploreMap;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1570,6 +1584,7 @@
 				8C3420B0261273140017CB2F /* SendInvitesController.swift in Sources */,
 				8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */,
 				8C1E48D3289C58470093030D /* ProfileMyMapImageCollectionViewCell.swift in Sources */,
+				CDF8E9642903CD7900BE929F /* ExploreMapViewController.swift in Sources */,
 				8C2209F8284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				8C3B953228AD530300C06586 /* HeelsMapPopUpController.swift in Sources */,
 				41EA047F289428590050B791 /* EditMapController.swift in Sources */,
@@ -1590,6 +1605,7 @@
 				5F119A1C2869F44900D75CE8 /* ActivityCell.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				8C5AF2EA288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
+				CDF8E9662903CD8400BE929F /* ExploreMapViewModel.swift in Sources */,
 				5916A8B324A27F8500118E83 /* MapSpot.swift in Sources */,
 				CD239A1528FFD6520099513F /* UICollectionViewCellExtension.swift in Sources */,
 				59826E9F244FA078004B858F /* PhotoGalleryController.swift in Sources */,
