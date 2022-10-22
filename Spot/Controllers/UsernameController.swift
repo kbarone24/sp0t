@@ -71,7 +71,7 @@ class UsernameController: UIViewController, UITextFieldDelegate {
             $0.height.equalTo(32.9)
             $0.width.equalTo(78)
         }
-        
+
         self.navigationItem.titleView = imageView
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(

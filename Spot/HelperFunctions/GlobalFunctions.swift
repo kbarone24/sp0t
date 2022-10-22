@@ -159,7 +159,7 @@ extension UIViewController {
     // delete deleted map locations
     func fixDeleteMapLocations() {
         let db = Firestore.firestore()
-        db.collection("mapLocations").getDocuments { snap, err in
+        db.collection("mapLocations").getDocuments { snap, _ in
             for doc in snap!.documents {
                 db.collection("posts").document(doc.documentID).getDocument { snap, _ in
                     if !(snap?.exists ?? false) { doc.reference.delete() }
@@ -1160,7 +1160,7 @@ extension NSObject {
         ])
     }
 
-    func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool)->Void)?) {
+    func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool) -> Void)?) {
         let db: Firestore = Firestore.firestore()
         db.collection("posts").whereField("posterID", isEqualTo: friendID).order(by: "timestamp", descending: true).getDocuments { snap, _ in
             guard let snap = snap else { return }
