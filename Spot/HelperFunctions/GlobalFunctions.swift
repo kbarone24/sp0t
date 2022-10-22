@@ -916,7 +916,12 @@ extension NSObject {
 
     func getPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
         let db: Firestore! = Firestore.firestore()
-        let emptyPost = MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp())
+        let emptyPost = MapPost(
+            spotID: "",
+            spotName: "",
+            mapID: "",
+            mapName: ""
+        )
 
         DispatchQueue.global().async {
             db.collection("posts").document(postID).getDocument { [weak self] doc, err in

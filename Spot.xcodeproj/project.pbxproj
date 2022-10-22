@@ -386,6 +386,7 @@
 		CDF8E985290477C200BE929F /* CustomMapCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E97F290477C100BE929F /* CustomMapCollectionExtension.swift */; };
 		CDF8E986290477C200BE929F /* CustomMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E980290477C200BE929F /* CustomMapController.swift */; };
 		CDF8E988290486B000BE929F /* SimpleMapHeaderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E987290486B000BE929F /* SimpleMapHeaderCell.swift */; };
+		CDF8E98A2904897A00BE929F /* MapMemberCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9892904897A00BE929F /* MapMemberCell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -601,6 +602,7 @@
 		CDF8E97F290477C100BE929F /* CustomMapCollectionExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMapCollectionExtension.swift; sourceTree = "<group>"; };
 		CDF8E980290477C200BE929F /* CustomMapController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMapController.swift; sourceTree = "<group>"; };
 		CDF8E987290486B000BE929F /* SimpleMapHeaderCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimpleMapHeaderCell.swift; sourceTree = "<group>"; };
+		CDF8E9892904897A00BE929F /* MapMemberCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapMemberCell.swift; sourceTree = "<group>"; };
 		F762098B71569C89C087B675 /* Pods-Spot.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.debug.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1199,6 +1201,7 @@
 				CDF8E97B290477C100BE929F /* CustomMapFetchExtension.swift */,
 				CDF8E987290486B000BE929F /* SimpleMapHeaderCell.swift */,
 				CDF8E97D290477C100BE929F /* CustomMapHeaderCell.swift */,
+				CDF8E9892904897A00BE929F /* MapMemberCell.swift */,
 			);
 			path = CustomMapController;
 			sourceTree = "<group>";
@@ -1577,6 +1580,7 @@
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
 				CDF8E9452903B49B00BE929F /* FirestoreSubscription.swift in Sources */,
 				CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */,
+				CDF8E98A2904897A00BE929F /* MapMemberCell.swift in Sources */,
 				CDF8E9592903C7F200BE929F /* NotificationsButton.swift in Sources */,
 				CD239A1128FFD5AC0099513F /* PaddedTextField.swift in Sources */,
 				8C1E4873289C54900093030D /* MapViewDelegate.swift in Sources */,
