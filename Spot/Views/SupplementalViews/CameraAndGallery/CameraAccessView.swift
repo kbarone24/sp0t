@@ -126,10 +126,13 @@ class CameraAccessView: UIView {
     func checkForRemove() {
         /// remove mask and return to camera if user has authorized camera + gallery
         if UploadPostModel.shared.allAuths() {
-            guard let camera = viewContainingController() as? AVCameraController else { return }
-            DispatchQueue.main.async {
-                self.removeFromSuperview()
-                camera.accessMask = nil
+            guard let camera = viewContainingController() as? AVCameraController else {
+                return
+            }
+
+            DispatchQueue.main.async { [weak self] in
+                self?.removeFromSuperview()
+                camera.accessMask.removeFromSuperview()
                 camera.configureCameraController()
             }
         }

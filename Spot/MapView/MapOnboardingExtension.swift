@@ -27,16 +27,16 @@ extension MapController {
 
         } else if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
             displayHeelsMap()
-            
-        } else if (UserDataModel.shared.userInfo.friendIDs.count < 4 && posts == 0) {
+
+        } else if UserDataModel.shared.userInfo.friendIDs.count < 4 && posts == 0 {
             self.addFriendsView = AddFriendsView {
                 $0.layer.cornerRadius = 13
                 $0.isHidden = false
                 self.view.addSubview($0)
             }
-            
+
             self.addFriendsView.addFriendButton.addTarget(self, action: #selector(self.findFriendsTap(_:)), for: .touchUpInside)
-            self.addFriendsView.snp.makeConstraints{
+            self.addFriendsView.snp.makeConstraints {
                 $0.height.equalTo(160)
                 $0.leading.trailing.equalToSuperview().inset(16)
                 $0.centerY.equalToSuperview()

@@ -31,38 +31,46 @@ extension AVCameraController {
         let timeSort = NSSortDescriptor(key: "timestamp", ascending: false)
         postsRequest.sortDescriptors = [timeSort]
 
-        DispatchQueue.global().async {
+        DispatchQueue.global().async { [weak self] in
             do {
-
                 let failedPosts = try managedContext.fetch(postsRequest)
-                if let post = failedPosts.first {
-                    /// if add-to-spot mode, only get failed uploads that are posts to this spot
-                    if self.spotObject != nil { return }
-                    /// test for corrupted draft or old draft (pre 1.0)
-                    let timestampID = post.timestamp
+                guard let post = failedPosts.first,
+                      self?.spotObject == nil
+                else {
+                    return
+                }
 
-                    if post.images == nil { self.deletePostDraft(timestampID: timestampID) }
-                    let images = post.images! as! Set<ImageModel>
-                    let firstImageData = images.first?.imageData
+                /// test for corrupted draft or old draft (pre 1.0)
+                let timestampID = post.timestamp
 
-                    if firstImageData == nil || post.addedUsers == nil {
-                        self.deletePostDraft(timestampID: timestampID)
+                if post.images == nil {
+                    self?.deletePostDraft(timestampID: timestampID)
+                }
 
-                    } else {
-                        self.postDraft = post
-                        let postImage = UIImage(data: firstImageData! as Data) ?? UIImage()
+                guard let images = post.images as? Set<ImageModel> else {
+                    return
+                }
 
-                        DispatchQueue.main.async {
-                            self.failedPostView = FailedPostView {
-                                $0.coverImage.image = postImage
-                                self.view.addSubview($0)
-                            }
-                            self.failedPostView!.snp.makeConstraints {
-                                $0.edges.equalToSuperview()
-                            }
+                let firstImageData = images.first?.imageData
+
+                if firstImageData == nil || post.addedUsers == nil {
+                    self?.deletePostDraft(timestampID: timestampID)
+
+                } else {
+                    self?.postDraft = post
+                    let postImage = UIImage(data: firstImageData! as Data) ?? UIImage()
+
+                    DispatchQueue.main.async {
+                        self?.failedPostView = FailedPostView {
+                            $0.coverImage.image = postImage
+                            self?.view.addSubview($0)
                         }
-                        return
+
+                        self?.failedPostView!.snp.makeConstraints {
+                            $0.edges.equalToSuperview()
+                        }
                     }
+
                     return
                 }
 
@@ -81,10 +89,12 @@ extension AVCameraController {
     }
 
     func uploadPostDraft() {
-        let postDraft = postDraft!
-        let model = postDraft.images! as! Set<ImageModel>
-        let mod = model.sorted(by: { $0.position < $1.position })
+        guard let postDraft = postDraft,
+              let model = postDraft.images as? Set<ImageModel> else {
+            return
+        }
 
+        let mod = model.sorted(by: { $0.position < $1.position })
         var uploadImages: [UIImage] = []
 
         for i in 0...mod.count - 1 {
@@ -95,16 +105,28 @@ extension AVCameraController {
 
         let actualTimestamp = Timestamp(seconds: postDraft.timestamp, nanoseconds: 0)
         var aspectRatios: [CGFloat] = []
-        for ratio in postDraft.aspectRatios ?? [] { aspectRatios.append(CGFloat(ratio)) }
-        var post = MapPost(id: UUID().uuidString, addedUsers: postDraft.addedUsers, aspectRatios: aspectRatios, caption: postDraft.caption ?? "", city: postDraft.city, createdBy: postDraft.createdBy, frameIndexes: postDraft.frameIndexes, friendsList: postDraft.friendsList ?? [], hideFromFeed: postDraft.hideFromFeed, imageLocations: [], imageURLs: [], inviteList: postDraft.inviteList ?? [], likers: [], mapID: postDraft.mapID ?? "", mapName: postDraft.mapName ?? "", postLat: postDraft.postLat, postLong: postDraft.postLong, posterID: uid, posterUsername: UserDataModel.shared.userInfo.username, privacyLevel: postDraft.privacyLevel ?? "", seenList: [], spotID: postDraft.spotID ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, spotName: postDraft.spotName, spotPrivacy: postDraft.spotPrivacy, tag: "", taggedUserIDs: postDraft.taggedUserIDs ?? [], taggedUsers: postDraft.taggedUsers ?? [], timestamp: actualTimestamp, addedUserProfiles: [], userInfo: UserDataModel.shared.userInfo, mapInfo: nil, commentList: [], postImage: uploadImages, postScore: 0, selectedImageIndex: 0, imageHeight: 0, captionHeight: 0, cellHeight: 0, commentsHeight: 0)
 
-        /// set spot values
-        var spot = MapSpot(founderID: postDraft.createdBy ?? "", imageURL: "", privacyLevel: postDraft.spotPrivacy ?? "", spotDescription: postDraft.caption ?? "", spotLat: postDraft.spotLat, spotLong: postDraft.spotLong, spotName: postDraft.spotName)
-        spot.visitorList = postDraft.visitorList ?? []
-        spot.posterUsername = UserDataModel.shared.userInfo.username
-        spot.id = post.spotID ?? ""
-        spot.poiCategory = postDraft.poiCategory
-        spot.phone = postDraft.phone
+        postDraft.aspectRatios?
+            .compactMap { $0 }
+            .forEach {
+                aspectRatios.append(CGFloat($0))
+            }
+
+        var post = MapPost(
+            id: UUID().uuidString,
+            posterID: uid,
+            postDraft: postDraft,
+            mapInfo: nil,
+            actualTimestamp: actualTimestamp,
+            uploadImages: uploadImages,
+            imageURLs: [],
+            aspectRatios: aspectRatios,
+            imageLocations: [],
+            likers: []
+        )
+
+        var spot = MapSpot(post: post, postDraft: postDraft, imageURL: "")
+
         UploadPostModel.shared.postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : spot.id != "" ? .postToSpot : .none
 
         DispatchQueue.global(qos: .userInitiated).async {
@@ -162,26 +184,57 @@ extension AVCameraController {
 
     func showSuccessAlert() {
         deletePostDraft()
-        let alert = UIAlertController(title: "Post successfully uploaded!", message: "", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
-            self.cancelTap()
-        }))
+        let alert = UIAlertController(
+            title: "Post successfully uploaded!",
+            message: "",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(
+            UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+                self?.cancelTap()
+            }
+        )
         present(alert, animated: true, completion: nil)
     }
 
     func showFailAlert() {
-        let alert = UIAlertController(title: "Upload failed", message: "Post saved to your drafts", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
-            self.cancelTap()
-        }))
+        let alert = UIAlertController(
+            title: "Upload failed",
+            message: "Post saved to your drafts",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(
+            UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+                self?.cancelTap()
+            }
+        )
         present(alert, animated: true, completion: nil)
     }
 
     func getMap(mapID: String, completion: @escaping (_ map: CustomMap, _ failed: Bool) -> Void) {
-        let emptyMap = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
-        if mapID == "" { completion(emptyMap, false); return }
 
-        let db: Firestore! = Firestore.firestore()
+        let emptyMap = CustomMap(
+            founderID: "",
+            imageURL: "",
+            likers: [],
+            mapName: "",
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: []
+        )
+
+        if mapID.isEmpty {
+            completion(emptyMap, false)
+            return
+        }
+
+        let db = Firestore.firestore()
         let mapRef = db.collection("maps").document(mapID)
 
         mapRef.getDocument { (doc, _) in
@@ -196,138 +249,5 @@ extension AVCameraController {
                 return
             }
         }
-    }
-
-}
-
-class FailedPostView: UIView {
-    var contentView: UIView!
-    var retryLabel: UILabel!
-    var coverImage: UIImageView!
-    var cancelButton: UIButton!
-    var postButton: UIButton!
-
-    var progressBar: UIView!
-    var progressFill: UIView!
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        backgroundColor = UIColor.black.withAlphaComponent(0.9)
-
-        contentView = UIView {
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            $0.layer.cornerRadius = 12
-            addSubview($0)
-        }
-        contentView.snp.makeConstraints {
-            $0.height.equalTo(160)
-            $0.width.equalToSuperview().inset(30)
-            $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview().offset(-100)
-        }
-
-        coverImage = UIImageView {
-            $0.layer.cornerRadius = 8
-            $0.clipsToBounds = true
-            $0.contentMode = .scaleAspectFill
-            contentView.addSubview($0)
-        }
-        coverImage.snp.makeConstraints {
-            $0.leading.top.equalTo(12)
-            $0.height.equalTo(70)
-            $0.width.equalTo(70)
-        }
-
-        retryLabel = UILabel {
-            $0.text = "Retry failed upload?"
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 18)
-            contentView.addSubview($0)
-        }
-        retryLabel.snp.makeConstraints {
-            $0.leading.equalTo(coverImage.snp.trailing).offset(14)
-            $0.centerY.equalTo(coverImage.snp.centerY)
-        }
-
-        cancelButton = UIButton {
-            $0.backgroundColor = UIColor(red: 0.871, green: 0.871, blue: 0.871, alpha: 1)
-            $0.setTitle("Cancel", for: .normal)
-            $0.setTitleColor(.red, for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
-            $0.layer.cornerRadius = 13
-            $0.contentHorizontalAlignment = .center
-            $0.contentVerticalAlignment = .center
-            $0.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
-            contentView.addSubview($0)
-        }
-        cancelButton.snp.makeConstraints {
-            $0.trailing.equalTo(contentView.snp.centerX).offset(-15)
-            $0.bottom.equalToSuperview().inset(12)
-            $0.width.equalTo(100)
-            $0.height.equalTo(40)
-        }
-
-        postButton = UIButton {
-            $0.backgroundColor = UIColor(named: "SpotGreen")
-            $0.setTitle("Post", for: .normal)
-            $0.setTitleColor(.black, for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-            $0.layer.cornerRadius = 13
-            $0.contentVerticalAlignment = .center
-            $0.contentHorizontalAlignment = .center
-            $0.addTarget(self, action: #selector(postTap), for: .touchUpInside)
-            contentView.addSubview($0)
-        }
-        postButton.snp.makeConstraints {
-            $0.leading.equalTo(contentView.snp.centerX).offset(15)
-            $0.bottom.equalToSuperview().inset(12)
-            $0.width.equalTo(100)
-            $0.height.equalTo(40)
-        }
-
-        progressBar = UIView {
-            $0.backgroundColor = UIColor(named: "SpotGreen")?.withAlphaComponent(0.22)
-            $0.layer.cornerRadius = 6
-            $0.layer.borderWidth = 2
-            $0.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-            $0.isHidden = true
-            addSubview($0)
-        }
-        progressBar.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(50)
-            $0.top.equalTo(contentView.snp.bottom).offset(30)
-            $0.height.equalTo(18)
-        }
-
-        progressFill = UIView {
-            $0.backgroundColor = UIColor(named: "SpotGreen")
-            $0.layer.cornerRadius = 6
-            progressBar.addSubview($0)
-        }
-        progressFill.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(1)
-            $0.width.equalTo(0)
-            $0.height.equalTo(16)
-        }
-    }
-
-    @objc func cancelTap() {
-        if let cameraVC = viewContainingController() as? AVCameraController {
-            cameraVC.deletePostDraft()
-        }
-       // infoView.cancelButton.addTarget(self, action: #selector(self.deletePostDraft(_:)), for: .touchUpInside)
-    }
-
-    @objc func postTap() {
-        /// upload and delete post draft if success
-        self.isUserInteractionEnabled = false
-        if let cameraVC = viewContainingController() as? AVCameraController {
-            cameraVC.uploadPostDraft()
-            progressBar.isHidden = false
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 }

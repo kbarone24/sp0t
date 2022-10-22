@@ -71,6 +71,42 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case visitorList
     }
 
+    init(post: MapPost?, postDraft: PostDraft, imageURL: String) {
+        self.founderID = postDraft.createdBy ?? ""
+        self.imageURL = imageURL
+        self.privacyLevel = postDraft.spotPrivacy ?? ""
+        self.spotDescription = postDraft.caption ?? ""
+        self.spotLat = postDraft.spotLat
+        self.spotLong = postDraft.spotLong
+        self.spotName = postDraft.spotName
+        self.visitorList = postDraft.visitorList ?? []
+        self.posterUsername = UserDataModel.shared.userInfo.username
+        self.id = post?.spotID ?? ""
+        self.poiCategory = postDraft.poiCategory
+        self.phone = postDraft.phone
+    }
+
+    init(
+        id: String,
+        founderID: String,
+        post: MapPost,
+        imageURL: String,
+        spotName: String,
+        privacyLevel: String,
+        description: String
+    ) {
+        self.posterUsername = UserDataModel.shared.userInfo.username
+        self.id = id
+        self.founderID = founderID
+        self.imageURL = imageURL
+        self.privacyLevel = privacyLevel
+        self.spotName = spotName
+        self.spotDescription = description
+        self.spotLat = post.postLat
+        self.spotLong = post.postLong
+
+    }
+
     /// used for nearby spots in choose spot sections on Upload and LocationPicker. Similar logic as get post score
     func getSpotRank(location: CLLocation) -> Double {
 
