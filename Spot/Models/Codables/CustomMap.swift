@@ -46,16 +46,16 @@ struct CustomMap: Identifiable, Codable, Hashable {
 
     var userTimestamp: Timestamp {
         if let lastUserPostIndex = posterIDs.lastIndex(where: { $0 == UserDataModel.shared.uid }) {
-            return postTimestamps[safe: lastUserPostIndex] ?? postTimestamps.first!
+            return postTimestamps[safe: lastUserPostIndex] ?? postTimestamps.first ?? Timestamp(date: Date())
         }
-        return postTimestamps.first!
+        return postTimestamps.first ?? Timestamp(date: Date())
     }
 
     var userURL: String {
         if let lastUserPostIndex = posterIDs.lastIndex(where: { $0 == UserDataModel.shared.uid }) {
-            return postImageURLs[safe: lastUserPostIndex] ?? postImageURLs.first!
+            return postImageURLs[safe: lastUserPostIndex] ?? postImageURLs.first ?? ""
         }
-        return postImageURLs.first!
+        return postImageURLs.first ?? ""
     }
 
     var hasNewPost: Bool {
@@ -107,16 +107,31 @@ struct CustomMap: Identifiable, Codable, Hashable {
                 var postSpotTimestamps: [Timestamp] = []
                 var postersAtSpot: [String] = []
                 /// get  postSpotIDs and matching timestamps
-                for j in 0..<postSpotIDs.count {
-                    if postSpotIDs[j] == spotIDs[i] {
-                        postsToSpot.append(postSpotIDs[j])
-                        postSpotTimestamps.append(postTimestamps[safe: j] ?? Timestamp(seconds: 1, nanoseconds: 1))
-                        if !postersAtSpot.contains(posterIDs[safe: j] ?? "") { postersAtSpot.append(posterIDs[safe: j] ?? "")}
+                for j in 0..<postSpotIDs.count where postSpotIDs[j] == spotIDs[i] {
+                    postsToSpot.append(postSpotIDs[j])
+                    postSpotTimestamps.append(postTimestamps[safe: j] ?? Timestamp(seconds: 1, nanoseconds: 1))
+                    if !postersAtSpot.contains(posterIDs[safe: j] ?? "") { postersAtSpot.append(posterIDs[safe: j] ?? "")
                     }
                 }
 
-                let coordinate = CLLocationCoordinate2D(latitude: spotLocations[safe: i]?["lat"] ?? 0.0, longitude: spotLocations[safe: i]?["long"] ?? 0.0)
-                if !postGroup.contains(where: { $0.id == spotIDs[i] }) { postGroup.append(MapPostGroup(id: spotIDs[i], coordinate: coordinate, spotName: spotNames[safe: i] ?? "", postIDs: [], postsToSpot: postsToSpot, postTimestamps: postSpotTimestamps, numberOfPosters: postersAtSpot.count)) }
+                let coordinate = CLLocationCoordinate2D(
+                    latitude: spotLocations[safe: i]?["lat"] ?? 0.0,
+                    longitude: spotLocations[safe: i]?["long"] ?? 0.0
+                )
+
+                if !postGroup.contains(where: { $0.id == spotIDs[i] }) {
+                    let mapPostGroup = MapPostGroup(
+                        id: spotIDs[i],
+                        coordinate: coordinate,
+                        spotName: spotNames[safe: i] ?? "",
+                        postIDs: [],
+                        postsToSpot: postsToSpot,
+                        postTimestamps: postSpotTimestamps,
+                        numberOfPosters: postersAtSpot.count
+                    )
+
+                    postGroup.append(mapPostGroup)
+                }
             }
         }
 

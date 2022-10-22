@@ -12,6 +12,7 @@ dist/
 *.xcuserstate
 project.xcworkspace/
 xcuserdata/
+xcshareddata/
 
 *.o
 *.pyc

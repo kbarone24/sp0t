@@ -50,7 +50,7 @@ struct Tag {
         case "Bread", "Burger", "Cake", "Carrot", "Cocktail", "Coffee", "Cook", "Cream", "Donut", "Drink", "Eat", "Egg", "Fries", "Glizzy", "Honey", "Liquor", "Meat", "Pizza", "Salad", "Strawberry", "Sushi", "Taco", "Tea", "Wine":
             return 2
         // life
-        case "Alien", "Bodega", "Car", "Casino", "Castle", "Chill", "Cig", "Danger", "Gas", "Heels", "Home", "Money", "NSFW", "Pills", "Pirate", "Plane", "Reaper", "Siren", "Skyscraper",    "Smoke", "Suitcase", "Toilet", "Train", "Weird":
+        case "Alien", "Bodega", "Car", "Casino", "Castle", "Chill", "Cig", "Danger", "Gas", "Heels", "Home", "Money", "NSFW", "Pills", "Pirate", "Plane", "Reaper", "Siren", "Skyscraper",      "Smoke", "Suitcase", "Toilet", "Train", "Weird":
             return 3
         // nature
         case "Bear", "Bird", "Bug", "Cactus", "Cat", "Cityset", "Cow", "Dog", "Flower", "Leaf", "Log", "Monkey", "Moon", "Mountain", "Nature", "Park", "Rainbow", "Snake", "Snow", "Star", "Sunset", "Trail", "Tropical", "Umbrella", "Water", "Whale":
