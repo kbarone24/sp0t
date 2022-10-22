@@ -1,5 +1,6 @@
 import CoreData
 import Firebase
+import FirebaseCrashlytics
 import FirebaseMessaging
 import FirebaseUI
 import IQKeyboardManagerSwift
@@ -9,7 +10,8 @@ import UserNotifications
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-    var window: UIWindow?
+
+    let serviceContainer = ServiceContainer()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
@@ -18,6 +20,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let settings = db.settings
         settings.isPersistenceEnabled = true
         db.settings = settings
+
+        registerServices(serviceContainer: serviceContainer)
 
         /// set navigation bar appearance with gradient
         UINavigationBar.appearance().backIndicatorImage = UIImage()
@@ -35,14 +39,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .highlighted)
 
         /// search bar attributes
-        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor(red: 0.514, green: 0.518, blue: 0.537, alpha: 1), NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any]
+        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [
+            NSAttributedString.Key.foregroundColor: UIColor(red: 0.514, green: 0.518, blue: 0.537, alpha: 1),
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any
+        ]
+
         let searchBarAppearance = UISearchBar.appearance()
         searchBarAppearance.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
 
         UIView.appearance().isExclusiveTouch = true
 
         let navigationBarAppearance = UINavigationBarAppearance()
-        navigationBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 20)!]
+        navigationBarAppearance.titleTextAttributes = [
+            NSAttributedString.Key.foregroundColor: UIColor.black,
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
+        ]
+
         navigationBarAppearance.backgroundColor = .white
 
         if #available(iOS 15.0, *) {
@@ -55,14 +67,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 
-    @available(iOS 13.0, *)
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
         // Called when a new scene session is being created.
         // Use this method to select a configuration to create the new scene with.
         return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
 
-    @available(iOS 13.0, *)
     func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
         // Called when the user discards a scene session.
         // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
@@ -70,12 +80,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
-        // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
+        // Sent when the application is about to move from active to inactive state.
+        // This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message)
+        // or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
+        // Use this method to release shared resources, save user data, invalidate timers,
+        // and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
     }
 
@@ -113,6 +126,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 print("error", error)
                 return
             }
+        }
+    }
+
+    private func registerServices(serviceContainer: ServiceContainer) {
+        do {
+            let mapService = MapService()
+            try serviceContainer.register(service: mapService, for: \.mapsService)
+        } catch {
+            #if DEBUG
+            fatalError("Unable to initialize services: \(error.localizedDescription)")
+            #else
+            Crashlytics.crashlytics().record(error: error)
+            #endif
         }
     }
 }

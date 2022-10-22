@@ -376,6 +376,8 @@
 		CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1628FFD6AF0099513F /* UIImageExtension.swift */; };
 		CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */; };
 		CD239A1B28FFD9A40099513F /* UINavigationBarExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */; };
+		CDF8E93D2903A19D00BE929F /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */; };
+		CDF8E93F2903A21300BE929F /* MapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E93E2903A21300BE929F /* MapService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -569,6 +571,8 @@
 		CD239A1628FFD6AF0099513F /* UIImageExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExtension.swift; sourceTree = "<group>"; };
 		CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationItemExtension.swift; sourceTree = "<group>"; };
 		CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationBarExtension.swift; sourceTree = "<group>"; };
+		CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
+		CDF8E93E2903A21300BE929F /* MapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapService.swift; sourceTree = "<group>"; };
 		F762098B71569C89C087B675 /* Pods-Spot.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.debug.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -635,6 +639,7 @@
 				59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */,
 				598B70142314A78F00613AFD /* Spot.entitlements */,
 				1DF6E06822089FD400BA0C36 /* Resources */,
+				CDF8E93B2903A18000BE929F /* Services */,
 				1DF6E06622089F8D00BA0C36 /* Models */,
 				1DF6E06722089F9400BA0C36 /* Views */,
 				1DF6E06522089F8700BA0C36 /* Controllers */,
@@ -1111,6 +1116,15 @@
 			path = Common;
 			sourceTree = "<group>";
 		};
+		CDF8E93B2903A18000BE929F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */,
+				CDF8E93E2903A21300BE929F /* MapService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1536,6 +1550,7 @@
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C1E489A289C54CB0093030D /* FriendPostView.swift in Sources */,
 				8C61EB4B28CBBF2900E7180A /* CustomMapDelegateExtension.swift in Sources */,
+				CDF8E93F2903A21300BE929F /* MapService.swift in Sources */,
 				5F119A1C2869F44900D75CE8 /* ActivityCell.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				8C5AF2EA288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
@@ -1544,6 +1559,7 @@
 				59826E9F244FA078004B858F /* PhotoGalleryController.swift in Sources */,
 				8CFD73EA2757E4FD00CBD162 /* TagCategory.swift in Sources */,
 				59BAF9D82360FBEB00F607B7 /* CustomActivityIndicator.swift in Sources */,
+				CDF8E93D2903A19D00BE929F /* ServiceContainer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
