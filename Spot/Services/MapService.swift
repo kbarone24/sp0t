@@ -13,7 +13,7 @@ import Foundation
 
 protocol MapServiceProtocol {
     func fetchMaps() async throws -> [CustomMap]
-    func fetchMapPosts() async throws -> [MapPost]
+    func fetchMapPosts(id: String, limit: Int) async throws -> [MapPost]
 }
 
 final class MapService: MapServiceProtocol {
@@ -27,25 +27,72 @@ final class MapService: MapServiceProtocol {
     // TODO: We will have to filter for location
 
     func fetchMaps()  async throws -> [CustomMap] {
-        withUnsafeThrowingContinuation { [unowned self] _ in
+        try await withUnsafeThrowingContinuation { [unowned self] continuation in
 
             self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
                 .whereField(FireBaseCollectionFields.communityMap.rawValue, isEqualTo: true)
-                .getDocuments { (snap, _) in
-                // handle error
-                for doc in snap.documents {
-                  do {
-                      let mapIn = try doc.data(as: [CustomMap].self)
-                      guard var mapInfo = mapIn else { continue }
-                    } catch {
-                        continue
+                .getDocuments { snapshot, error in
+
+                    guard error == nil,
+                          let snapshot = snapshot,
+                          !snapshot.documents.isEmpty else {
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        }
+                        return
                     }
-                }
+
+                    var maps: [CustomMap] = []
+
+                    snapshot.documents.forEach { document in
+                        do {
+                            if let map = try document.data(as: CustomMap.self) {
+                                maps.append(map)
+                            }
+                        } catch {
+                            continuation.resume(throwing: error)
+                            return
+                        }
+                    }
+
+                    continuation.resume(returning: maps)
                 }
         }
     }
 
-    func fetchMapPosts() async throws -> [MapPost] {
+    func fetchMapPosts(id: String, limit: Int) async throws -> [MapPost] {
+        try await withUnsafeThrowingContinuation { [unowned self] continuation in
 
+            self.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                .whereField(FireBaseCollectionFields.mapID.rawValue, isEqualTo: id)
+                .order(by: FireBaseCollectionFields.timestamp.rawValue, descending: true)
+                .limit(to: limit)
+                .getDocuments { snapshot, error in
+
+                    guard error == nil,
+                          let snapshot = snapshot,
+                          !snapshot.documents.isEmpty else {
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        }
+                        return
+                    }
+
+                    var posts: [MapPost] = []
+
+                    snapshot.documents.forEach { document in
+                        do {
+                            if let post = try document.data(as: MapPost.self) {
+                                posts.append(post)
+                            }
+                        } catch {
+                            continuation.resume(throwing: error)
+                            return
+                        }
+                    }
+
+                    continuation.resume(returning: posts)
+                }
+        }
     }
 }
