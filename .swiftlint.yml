@@ -4,6 +4,7 @@ included: # paths to include during linting. `--path` is ignored if present.
 disabled_rules: # rule identifiers turned on by default to exclude from running
     - function_body_length
     - identifier_name
+    - missing_docs
 
 opt_in_rules: # some rules are turned off by default, so you need to opt-in
     - empty_count
@@ -20,7 +21,6 @@ opt_in_rules: # some rules are turned off by default, so you need to opt-in
     - force_cast
     - force_unwrapping
     - implicitly_unwrapped_optional
-    - missing_docs
     - multiline_parameters
     - multiple_empty_lines
     - nesting

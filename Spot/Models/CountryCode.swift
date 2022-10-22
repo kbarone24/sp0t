@@ -9,9 +9,9 @@
 import Foundation
 
 struct CountryCode {
-    var id: Int
-    var code: String
-    var name: String
+    let id: Int
+    let code: String
+    let name: String
 
     init(id: Int, code: String, name: String) {
         self.id = id

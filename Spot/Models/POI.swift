@@ -11,18 +11,23 @@ import Foundation
 import MapKit
 
 struct POI {
-
-    var id: String
-    var name: String
-    var coordinate: CLLocationCoordinate2D
-    var distance: CLLocationDistance
-    var type: MKPointOfInterestCategory
-    var phone: String
+    let id: String
+    let name: String
+    let coordinate: CLLocationCoordinate2D
+    let distance: CLLocationDistance
+    let type: MKPointOfInterestCategory
+    let phone: String
     var address: String = ""
     var selected: Bool = false
 
     // init for nearby
-    init(name: String, coordinate: CLLocationCoordinate2D, distance: CLLocationDistance, type: MKPointOfInterestCategory, phone: String) {
+    init(
+        name: String,
+        coordinate: CLLocationCoordinate2D,
+        distance: CLLocationDistance,
+        type: MKPointOfInterestCategory,
+        phone: String
+    ) {
         self.id = UUID().uuidString
         self.name = name
         self.coordinate = coordinate
@@ -32,7 +37,14 @@ struct POI {
     }
 
     // init for search
-    init(name: String, coordinate: CLLocationCoordinate2D, distance: CLLocationDistance, type: MKPointOfInterestCategory, phone: String, address: String) {
+    init(
+        name: String,
+        coordinate: CLLocationCoordinate2D,
+        distance: CLLocationDistance,
+        type: MKPointOfInterestCategory,
+        phone: String,
+        address: String
+    ) {
         self.id = UUID().uuidString
         self.name = name
         self.coordinate = coordinate

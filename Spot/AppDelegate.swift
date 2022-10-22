@@ -131,7 +131,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private func registerServices(serviceContainer: ServiceContainer) {
         do {
-            let mapService = MapService()
+            let fireStore = Firestore.firestore()
+
+            let mapService = MapService(fireStore: fireStore)
             try serviceContainer.register(service: mapService, for: \.mapsService)
         } catch {
             #if DEBUG
