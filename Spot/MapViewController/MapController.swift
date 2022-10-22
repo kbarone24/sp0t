@@ -251,8 +251,8 @@ final class MapController: UIViewController {
 
         Mixpanel.mainInstance().track(event: "MapControllerAddTap")
 
-        if addFriends != nil {
-            addFriends.removeFromSuperview()
+        if addFriendsView != nil {
+            addFriendsView.removeFromSuperview()
         }
 
         /// crash on double stack was happening here
@@ -263,7 +263,7 @@ final class MapController: UIViewController {
         guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController
         else { return }
 
-        let transition = AddButtonTransition()
+        // let transition = AddButtonTransition()
         self.navigationController?.view.layer.add(transition, forKey: kCATransition)
         self.navigationController?.pushViewController(vc, animated: false)
     }
