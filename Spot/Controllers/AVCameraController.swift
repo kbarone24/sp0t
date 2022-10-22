@@ -312,9 +312,14 @@ class AVCameraController: UIViewController {
 
     func addAccessMask() {
         accessMask = CameraAccessView {
-            $0.setUp(cameraAccess: UploadPostModel.shared.cameraAccess == .authorized, galleryAccess: UploadPostModel.shared.galleryAccess == .authorized, locationAccess: UploadPostModel.shared.locationAccess)
+            $0.setUp(
+                cameraAccess: UploadPostModel.shared.cameraAccess == .authorized,
+                galleryAccess: UploadPostModel.shared.galleryAccess == .authorized,
+                locationAccess: UploadPostModel.shared.locationAccess
+            )
             view.addSubview($0)
         }
+        
         accessMask.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -371,7 +376,7 @@ class AVCameraController: UIViewController {
         let indexSet = assetsFull.count > 10_000 ? IndexSet(0...9_999) : IndexSet(0..<assetsFull.count)
         UploadPostModel.shared.assetsFull = assetsFull
 
-        DispatchQueue.global(qos: .default).async { assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
+        DispatchQueue.global(qos: .background).async { assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
 
             guard let self = self else { return }
             if self.cancelOnDismiss { stop.pointee = true } /// cancel on dismiss = true when view is popped
@@ -382,7 +387,22 @@ class AVCameraController: UIViewController {
             var creationDate = Date()
             if let d = object.creationDate { creationDate = d }
 
-            let imageObj = (ImageObject(id: UUID().uuidString, asset: object, rawLocation: location, stillImage: UIImage(), animationImages: [], animationIndex: 0, directionUp: true, gifMode: false, creationDate: creationDate, fromCamera: false), false)
+            let imageObj = (
+                ImageObject(
+                    id: UUID().uuidString,
+                    asset: object,
+                    rawLocation: location,
+                    stillImage: UIImage(),
+                    animationImages: [],
+                    animationIndex: 0,
+                    directionUp: true,
+                    gifMode: false,
+                    creationDate: creationDate,
+                    fromCamera: false
+                ),
+                false
+            )
+            
             UploadPostModel.shared.imageObjects.append(imageObj)
 
             /// sort on final load
