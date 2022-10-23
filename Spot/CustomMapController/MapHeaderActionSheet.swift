@@ -6,10 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
-import UIKit
-import Mixpanel
 import Firebase
+import Foundation
+import Mixpanel
+import UIKit
 
 extension CustomMapHeaderCell {
     func addActionSheet() {
@@ -25,24 +25,24 @@ extension CustomMapHeaderCell {
         guard let vc = viewContainingController() as? CustomMapController else { return }
         vc.present(alert, animated: true)
     }
-    
+
     func showUnfollowAlert() {
         let following = actionButton.titleLabel?.text == "Following"
         let title = following ? "Unfollow this map?" : "Leave this map?"
         let alert = UIAlertController(title: title, message: "", preferredStyle: .alert)
         alert.overrideUserInterfaceStyle = .light
-        
+
         let actionTitle = following ? "Unfollow" : "Leave"
-        let unfollowAction = UIAlertAction(title: actionTitle, style: .destructive) { action in
+        let unfollowAction = UIAlertAction(title: actionTitle, style: .destructive) { _ in
             self.unfollowMap()
         }
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
         alert.addAction(unfollowAction)
         alert.addAction(cancelAction)
-        let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+        let containerVC = UIApplication.shared.windows.filter { $0.isKeyWindow }.first?.rootViewController ?? UIViewController()
         containerVC.present(alert, animated: true)
     }
-    
+
     func unfollowMap() {
         Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
         guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.uid) else { return }
@@ -50,9 +50,9 @@ extension CustomMapHeaderCell {
         if let memberIndex = self.mapData.memberIDs.firstIndex(of: UserDataModel.shared.uid) {
             mapData.memberIDs.remove(at: memberIndex)
         }
-        
-        UserDataModel.shared.userInfo.mapsList.removeAll(where: {$0.id == self.mapData!.id!})
-        
+
+        UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == self.mapData!.id! })
+
         let db = Firestore.firestore()
         let mapsRef = db.collection("maps").document(mapData!.id!)
         mapsRef.updateData(["likers": FieldValue.arrayRemove([UserDataModel.shared.uid]), "memberIDs": FieldValue.arrayRemove([UserDataModel.shared.uid])])
