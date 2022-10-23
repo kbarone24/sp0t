@@ -9,9 +9,9 @@
 import Foundation
 import UIKit
 
-class CustomActivityIndicator: UIView {
+final class CustomActivityIndicator: UIView {
 
-    let imageView = UIImageView()
+    private let imageView = UIImageView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -22,20 +22,18 @@ class CustomActivityIndicator: UIView {
         addSubview(imageView)
     }
 
+    @available(*, unavailable)
     required init(coder: NSCoder) {
-        fatalError()
+        fatalError("Has not been implemented.")
     }
 
     func startAnimating() {
         isHidden = false
         rotate()
     }
+
     func isAnimating() -> Bool {
-        if !isHidden {
-            return true
-        } else {
-            return false
-        }
+        return !isHidden
     }
 
     func stopAnimating() {
@@ -55,5 +53,4 @@ class CustomActivityIndicator: UIView {
     func removeRotation() {
         self.imageView.layer.removeAnimation(forKey: "rotationAnimation")
     }
-
 }

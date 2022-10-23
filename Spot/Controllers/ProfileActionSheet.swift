@@ -7,8 +7,8 @@
 //
 
 import Foundation
-import UIKit
 import Mixpanel
+import UIKit
 
 extension ProfileViewController {
     func addActionSheet() {
@@ -22,12 +22,12 @@ extension ProfileViewController {
         }))
         present(alert, animated: true)
     }
-    
+
     func showRemoveFriendAlert() {
         let alert = UIAlertController(title: "Remove friend?", message: "", preferredStyle: .alert)
         alert.overrideUserInterfaceStyle = .light
-        
-        let unfollowAction = UIAlertAction(title: "Remove", style: .destructive) { action in
+
+        let unfollowAction = UIAlertAction(title: "Remove", style: .destructive) { _ in
             self.removeFriend()
         }
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
@@ -35,7 +35,7 @@ extension ProfileViewController {
         alert.addAction(cancelAction)
         present(alert, animated: true)
     }
-    
+
     func removeFriend() {
         Mixpanel.mainInstance().track(event: "RemoveFriend")
         removeFriend(friendID: userProfile!.id!)

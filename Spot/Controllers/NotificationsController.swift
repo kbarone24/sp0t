@@ -80,7 +80,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
-        containerDrawerView?.present(to: .Top)
+        containerDrawerView?.present(to: .top)
     }
 
     func setUpNavBar() {
