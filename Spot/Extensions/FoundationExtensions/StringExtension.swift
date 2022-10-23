@@ -68,3 +68,20 @@ public extension String {
         return newString
     }
 }
+
+extension NSAttributedString {
+    func shrinkLineHeight() -> NSAttributedString {
+        let attributedString = NSMutableAttributedString(attributedString: self)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineBreakMode = .byTruncatingTail
+        paragraphStyle.lineHeightMultiple = 0.75
+        paragraphStyle.alignment = .center
+        attributedString.addAttribute(
+            .paragraphStyle,
+            value: paragraphStyle,
+            range: NSRange(location: 0, length: string.count)
+        )
+        
+        return NSAttributedString(attributedString: attributedString)
+    }
+}

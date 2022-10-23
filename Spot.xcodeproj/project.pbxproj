@@ -351,6 +351,13 @@
 		CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1628FFD6AF0099513F /* UIImageExtension.swift */; };
 		CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */; };
 		CD239A1B28FFD9A40099513F /* UINavigationBarExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */; };
+		CD3D8DD12904F9960062DE8D /* ExploreMapPreviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD02904F9960062DE8D /* ExploreMapPreviewCell.swift */; };
+		CD3D8DD32904FA150062DE8D /* ExploreMapTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD22904FA150062DE8D /* ExploreMapTitleView.swift */; };
+		CD3D8DD5290500A50062DE8D /* ChooseMapTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD4290500A50062DE8D /* ChooseMapTableView.swift */; };
+		CD3D8DD7290500CF0062DE8D /* FriendsMapButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD6290500CF0062DE8D /* FriendsMapButton.swift */; };
+		CD3D8DD929050A730062DE8D /* MapLoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD829050A730062DE8D /* MapLoadingCell.swift */; };
+		CD3D8DDB29050A970062DE8D /* AddMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DDA29050A970062DE8D /* AddMapCell.swift */; };
+		CD3D8DDD29050ACE0062DE8D /* MapHomeCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DDC29050ACE0062DE8D /* MapHomeCell.swift */; };
 		CDF8E93D2903A19D00BE929F /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */; };
 		CDF8E93F2903A21300BE929F /* MapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E93E2903A21300BE929F /* MapService.swift */; };
 		CDF8E9412903AC4E00BE929F /* FirebaseCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9402903AC4E00BE929F /* FirebaseCollection.swift */; };
@@ -571,6 +578,13 @@
 		CD239A1628FFD6AF0099513F /* UIImageExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExtension.swift; sourceTree = "<group>"; };
 		CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationItemExtension.swift; sourceTree = "<group>"; };
 		CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationBarExtension.swift; sourceTree = "<group>"; };
+		CD3D8DD02904F9960062DE8D /* ExploreMapPreviewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapPreviewCell.swift; sourceTree = "<group>"; };
+		CD3D8DD22904FA150062DE8D /* ExploreMapTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapTitleView.swift; sourceTree = "<group>"; };
+		CD3D8DD4290500A50062DE8D /* ChooseMapTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseMapTableView.swift; sourceTree = "<group>"; };
+		CD3D8DD6290500CF0062DE8D /* FriendsMapButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsMapButton.swift; sourceTree = "<group>"; };
+		CD3D8DD829050A730062DE8D /* MapLoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLoadingCell.swift; sourceTree = "<group>"; };
+		CD3D8DDA29050A970062DE8D /* AddMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMapCell.swift; sourceTree = "<group>"; };
+		CD3D8DDC29050ACE0062DE8D /* MapHomeCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapHomeCell.swift; sourceTree = "<group>"; };
 		CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		CDF8E93E2903A21300BE929F /* MapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapService.swift; sourceTree = "<group>"; };
 		CDF8E9402903AC4E00BE929F /* FirebaseCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseCollection.swift; sourceTree = "<group>"; };
@@ -1122,6 +1136,9 @@
 				CDF8E9552903C00000BE929F /* NewPostsButton.swift */,
 				CDF8E95C2903C86200BE929F /* MapTitleView.swift */,
 				CDF8E95E2903C8A300BE929F /* AddFriendsView.swift */,
+				CD3D8DD829050A730062DE8D /* MapLoadingCell.swift */,
+				CD3D8DDA29050A970062DE8D /* AddMapCell.swift */,
+				CD3D8DDC29050ACE0062DE8D /* MapHomeCell.swift */,
 			);
 			path = MapView;
 			sourceTree = "<group>";
@@ -1139,6 +1156,8 @@
 			children = (
 				CDF8E9632903CD7900BE929F /* ExploreMapViewController.swift */,
 				CDF8E9652903CD8400BE929F /* ExploreMapViewModel.swift */,
+				CD3D8DD02904F9960062DE8D /* ExploreMapPreviewCell.swift */,
+				CD3D8DD22904FA150062DE8D /* ExploreMapTitleView.swift */,
 			);
 			path = ExploreMap;
 			sourceTree = "<group>";
@@ -1190,6 +1209,8 @@
 				414CD27928975D64001F1776 /* ChooseMapController.swift */,
 				8CA512B428BEB5E100F8C1FE /* CustomMapUploadCell.swift */,
 				8C8DBB812888BE9300B31BFD /* NewMapController.swift */,
+				CD3D8DD4290500A50062DE8D /* ChooseMapTableView.swift */,
+				CD3D8DD6290500CF0062DE8D /* FriendsMapButton.swift */,
 			);
 			name = ChooseMap;
 			path = Controllers;
@@ -1516,6 +1537,7 @@
 				5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */,
 				CDF8E94F2903B6C500BE929F /* UIAlertActionExtension.swift in Sources */,
 				CDF8E98C29048AF900BE929F /* EditMapController.swift in Sources */,
+				CD3D8DD32904FA150062DE8D /* ExploreMapTitleView.swift in Sources */,
 				8C8DBB862888BE9F00B31BFD /* TagFriendsView.swift in Sources */,
 				CDF8E9512903B7FC00BE929F /* UIViewExtension.swift in Sources */,
 				597A626E25A8F9910052C560 /* Tag.swift in Sources */,
@@ -1526,6 +1548,7 @@
 				CDF8E95D2903C86200BE929F /* MapTitleView.swift in Sources */,
 				599371B0234E468500204F59 /* SearchContactsController.swift in Sources */,
 				59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */,
+				CD3D8DD929050A730062DE8D /* MapLoadingCell.swift in Sources */,
 				8C3B954E28AE932B00C06586 /* DeletePost.swift in Sources */,
 				CDF8E95B2903C82100BE929F /* ProfileButton.swift in Sources */,
 				CDF8E9532903B86D00BE929F /* UIImageViewExtension.swift in Sources */,
@@ -1540,12 +1563,15 @@
 				CDF8E94D2903B68200BE929F /* UITextViewExtension.swift in Sources */,
 				8C3B952628AC042B00C06586 /* PostCell.swift in Sources */,
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
+				CD3D8DD12904F9960062DE8D /* ExploreMapPreviewCell.swift in Sources */,
 				8C4FDFBF28DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,
 				8C1E4880289C54C10093030D /* SpotNameAnnotationView.swift in Sources */,
 				8C66226228EF596700BA5D05 /* ProgressBar.swift in Sources */,
+				CD3D8DDD29050ACE0062DE8D /* MapHomeCell.swift in Sources */,
 				CDF8E983290477C200BE929F /* CustomMapHeaderCell.swift in Sources */,
 				416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */,
 				CDF8E984290477C200BE929F /* CustomMapDelegateExtension.swift in Sources */,
+				CD3D8DD7290500CF0062DE8D /* FriendsMapButton.swift in Sources */,
 				8C1E48CB289C55090093030D /* MapFetchExtension.swift in Sources */,
 				CD239A0E28FFD5480099513F /* UIScrollViewExtension.swift in Sources */,
 				8C1E4866289C54370093030D /* FriendsListCell.swift in Sources */,
@@ -1598,6 +1624,7 @@
 				8C3B955628B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
 				4106ECD028A3371A00680005 /* SpotPageController.swift in Sources */,
 				8C3B955A28B2B47100C06586 /* AddSpotButton.swift in Sources */,
+				CD3D8DD5290500A50062DE8D /* ChooseMapTableView.swift in Sources */,
 				CDF8E973290463A800BE929F /* AVCameraControllerExtension.swift in Sources */,
 				8C29879C2693A05A0071E75A /* CircleView.swift in Sources */,
 				5F119A1F2869F46600D75CE8 /* FriendRequestCell.swift in Sources */,
@@ -1655,6 +1682,7 @@
 				5F119A202869F46600D75CE8 /* FriendRequestCollectionCell.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C1E48CF289C57650093030D /* ProfileHeaderCell.swift in Sources */,
+				CD3D8DDB29050A970062DE8D /* AddMapCell.swift in Sources */,
 				5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */,
 				CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */,
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
