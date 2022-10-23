@@ -223,12 +223,23 @@ extension ChooseSpotController: UISearchBarDelegate {
                     let name = item.name!.count > 60 ? String(item.name!.prefix(60)) : item.name!
 
                     /// check for spot duplicate
-                    if self.spotObjects.contains(where: { $0.spotName == name || ($0.phone ?? "" == phone && phone != "") }) { index += 1; if index == response.mapItems.count { self.endQuery() }; continue }
+                    if self.spotObjects.contains(where: { $0.spotName == name || ($0.phone ?? "" == phone && phone != "") }) {
+                        index += 1
+                        if index == response.mapItems.count {
+                            self.endQuery()
+                        }
 
-                    var spotInfo = MapSpot(founderID: "", imageURL: "", privacyLevel: "public", spotDescription: item.pointOfInterestCategory?.toString() ?? "", spotLat: item.placemark.coordinate.latitude, spotLong: item.placemark.coordinate.longitude, spotName: name)
-                    spotInfo.phone = phone
-                    spotInfo.poiCategory = item.pointOfInterestCategory?.toString() ?? ""
-                    spotInfo.id = UUID().uuidString
+                        continue
+                    }
+
+                    var spotInfo = MapSpot(
+                        id: UUID().uuidString,
+                        founderID: "",
+                        mapItem: item,
+                        imageURL: "",
+                        spotName: name,
+                        privacyLevel: "public"
+                    )
 
                     let spotLocation = CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)
                     let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
@@ -381,12 +392,24 @@ extension ChooseSpotController: UISearchBarDelegate {
                     /// spot was already appended for this POI
                     if self.querySpots.contains(where: { $0.spotName == item.name || ($0.phone ?? "" == item.phoneNumber ?? "" && item.phoneNumber ?? "" != "") }) { index += 1; if index == response.mapItems.count { self.reloadResultsTable(searchText: searchText) }; continue }
 
-                    let name = item.name!.count > 60 ? String(item.name!.prefix(60)) : item.name!
-                    var spotInfo = MapSpot(founderID: "", imageURL: "", privacyLevel: "public", spotDescription: item.pointOfInterestCategory?.toString() ?? "", spotLat: item.placemark.coordinate.latitude, spotLong: item.placemark.coordinate.longitude, spotName: name)
+                    var spotInfo: MapSpot
+                    let spotName: String
 
-                    spotInfo.phone = item.phoneNumber ?? ""
-                    spotInfo.id = UUID().uuidString
-                    spotInfo.poiCategory = item.pointOfInterestCategory?.toString() ?? ""
+                    if let name = item.name {
+                        spotName = String(name.prefix(60))
+                    } else {
+                        spotName = ""
+                    }
+
+                    spotInfo = MapSpot(
+                        id: UUID().uuidString,
+                        founderID: "",
+                        mapItem: item,
+                        imageURL: "",
+                        spotName: spotName,
+                        privacyLevel: "public"
+                    )
+
                     spotInfo.distance = self.postLocation.distance(from: CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong))
 
                     self.querySpots.append(spotInfo)
@@ -397,7 +420,6 @@ extension ChooseSpotController: UISearchBarDelegate {
                     index += 1
                     if index == response.mapItems.count { self.reloadResultsTable(searchText: searchText) }
                 }
-
             }
         }
 

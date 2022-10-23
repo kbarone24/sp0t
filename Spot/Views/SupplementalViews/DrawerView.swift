@@ -10,15 +10,15 @@ import SnapKit
 import UIKit
 
 enum DrawerViewStatus: Int {
-    case Bottom = 0
-    case Middle = 1
-    case Top = 2
-    case Close = 3
+    case bottom = 0
+    case middle = 1
+    case top = 2
+    case close = 3
 }
 enum DrawerViewDetent: Int {
-    case Bottom = 0
-    case Middle = 1
-    case Top = 2
+    case bottom = 0
+    case middle = 1
+    case top = 2
 }
 
 class DrawerView: NSObject {
@@ -32,7 +32,9 @@ class DrawerView: NSObject {
         $0.layer.shadowOpacity = 0.8
         $0.translatesAutoresizingMaskIntoConstraints = false
     }
-    public var status = DrawerViewStatus.Close
+
+    public var status: DrawerViewStatus = .close
+
     // If false remove pangesture
     public var canInteract: Bool = true {
         didSet {
@@ -72,7 +74,7 @@ class DrawerView: NSObject {
     private var topConstraints: Constraint?
     private var midConstraints: Constraint?
     private var botConstraints: Constraint?
-    private var detents: [DrawerViewDetent] = [.Bottom, .Middle, .Top]
+    private var detents: [DrawerViewDetent] = [.bottom, .middle, .top]
     private var detentsPointer = 0 {
         didSet {
             if detentsPointer > detents.count - 1 {
@@ -89,7 +91,7 @@ class DrawerView: NSObject {
     override init() {
         super.init()
     }
-    public init(present: UIViewController = UIViewController(), detentsInAscending: [DrawerViewDetent] = [.Bottom, .Middle, .Top], closeAction: (() -> Void)? = nil) {
+    public init(present: UIViewController = UIViewController(), detentsInAscending: [DrawerViewDetent] = [.bottom, .middle, .top], closeAction: (() -> Void)? = nil) {
         super.init()
         if let parent = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first?.rootViewController as? UINavigationController {
             if parent.visibleViewController != nil {
@@ -150,16 +152,16 @@ class DrawerView: NSObject {
     }
 
     // MARK: Present
-    public func present(to: DrawerViewDetent = .Middle) {
+    public func present(to: DrawerViewDetent = .middle) {
         self.topConstraints?.deactivate()
         self.midConstraints?.deactivate()
         self.botConstraints?.deactivate()
         switch to {
-        case .Top:
+        case .top:
             goTop()
-        case .Middle:
+        case .middle:
             goMid()
-        case .Bottom:
+        case .bottom:
             goBottom()
         }
         detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
@@ -177,21 +179,21 @@ class DrawerView: NSObject {
     private func goTop() {
         topConstraints?.activate()
         yPosition = 0
-        status = .Top
+        status = .top
         drawerCornerRadius = 0
         animationCompleteNotificationName = "DrawerViewToTopComplete"
     }
     private func goMid() {
         midConstraints?.activate()
         yPosition = (0.45 * parentVC.view.frame.height)
-        status = .Middle
+        status = .middle
         drawerCornerRadius = 20
         animationCompleteNotificationName = "DrawerViewToMiddleComplete"
     }
     private func goBottom() {
         botConstraints?.activate()
         yPosition = parentVC.view.frame.height - 200
-        status = .Bottom
+        status = .bottom
         drawerCornerRadius = 20
         animationCompleteNotificationName = "DrawerViewToBottomComplete"
     }
@@ -214,11 +216,11 @@ class DrawerView: NSObject {
 
             // Change status according to the position when dragging
             if slideView.frame.minY == 0 {
-                status = .Top
+                status = .top
             } else if slideView.frame.minY == (0.45 * parentVC.view.frame.height) {
-                status = .Middle
+                status = .middle
             } else if slideView.frame.minY == (parentVC.view.frame.height - 100) {
-                status = .Bottom
+                status = .bottom
             }
 
             if slideView.frame.minY <= 0.45 * slideView.frame.height {
@@ -227,7 +229,7 @@ class DrawerView: NSObject {
             }
 
             // Prevent drawer view in top position can still scroll top
-            if status == .Top && translation.y < 0 && slideView.frame.minY <= 0 {
+            if status == .top && translation.y < 0 && slideView.frame.minY <= 0 {
                 slideView.frame.origin.y = 0
             }
             recognizer.setTranslation(.zero, in: recognizer.view)
@@ -251,29 +253,29 @@ class DrawerView: NSObject {
                 recognizer.velocity(in: recognizer.view).y <= 0 ? (detentsPointer += 1) : (detentsPointer -= 1)
                 // Switch available detents set in initial and set animation duration, yPosition and status
                 switch detents[detentsPointer] {
-                case .Bottom:
+                case .bottom:
                     goBottom()
-                case .Middle:
+                case .middle:
                     goMid()
-                case .Top:
+                case .top:
                     goTop()
                 }
             } else {
                 // This is a drag
                 // Determine what area the drawer view is in and set animation duration, yPosition, status and detentsPointer to the nearest position
-                if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 && detents.contains(.Bottom) {
+                if self.slideView.frame.minY > self.parentVC.view.frame.height * 0.6 && detents.contains(.bottom) {
                     goBottom()
-                    detentsPointer = detents.firstIndex(of: .Bottom)!
-                } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 && detents.contains(.Top) {
+                    detentsPointer = detents.firstIndex(of: .bottom)!
+                } else if self.slideView.frame.minY < self.parentVC.view.frame.height * 0.28 && detents.contains(.top) {
                     goTop()
-                    detentsPointer = detents.firstIndex(of: .Top)!
-                } else if detents.contains(.Middle) {
+                    detentsPointer = detents.firstIndex(of: .top)!
+                } else if detents.contains(.middle) {
                     goMid()
-                    detentsPointer = detents.firstIndex(of: .Middle)!
+                    detentsPointer = detents.firstIndex(of: .middle)!
                 }
             }
             /* If swipeDownToDismiss is true check the slideView ending position to determine if need to pop view controller
-            if self.slideView.frame.minY > (detents.contains(.Bottom) ? (self.parentVC.view.frame.height - 100) : (self.parentVC.view.frame.height * 0.6)) && swipeDownToDismiss {
+            if self.slideView.frame.minY > (detents.contains(.bottom) ? (self.parentVC.view.frame.height - 100) : (self.parentVC.view.frame.height * 0.6)) && swipeDownToDismiss {
                 myNav.popViewController(animated: true)
             } */
 
@@ -302,7 +304,7 @@ class DrawerView: NSObject {
                 self.parentVC.view.layoutIfNeeded()
             }) { (_) in
                 if self.closeDo != nil { self.closeDo!() }
-                self.status = DrawerViewStatus.Close
+                self.status = DrawerViewStatus.close
                 self.slideView.removeFromSuperview()
                 self.myNav.removeFromParent()
                 self.swipingDownToDismiss = false

@@ -6,10 +6,9 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 
-class AddButtonTransition: CATransition {
+final class AddButtonTransition: CATransition {
     override init() {
         super.init()
         duration = 0.3
@@ -18,6 +17,7 @@ class AddButtonTransition: CATransition {
         subtype = CATransitionSubtype.fromTop
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
