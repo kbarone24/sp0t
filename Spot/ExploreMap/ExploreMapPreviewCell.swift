@@ -9,9 +9,14 @@
 import UIKit
 
 final class ExploreMapPreviewCell: UITableViewCell {
+    
+    // TODO: Build Cell UI
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        
+        backgroundColor = .white
+        contentView.backgroundColor = .white
     }
 
     @available(*, unavailable)

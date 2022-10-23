@@ -59,11 +59,15 @@ final class ExploreMapViewModel {
             .receive(on: DispatchQueue.global(qos: .background))
             .sink { [weak self] titleData, customMapData in
                 guard let self else { return }
-                self.titleData = titleData
-
-                // TODO: Convert data to snapshot data
-                print(customMapData.count)
                 
+                var snapshot = Snapshot()
+                snapshot.appendSections([.body])
+                customMapData.forEach {
+                    snapshot.appendItems([.item(data: $0)], toSection: .body)
+                }
+                
+                self.snapshot = snapshot
+                self.titleData = titleData
                 self.isLoading = false
             }
             .store(in: &subscriptions)
