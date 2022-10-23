@@ -7,8 +7,8 @@
 //
 
 import AVFoundation
-import UIKit
 import Mixpanel
+import UIKit
 
 extension AVCameraController {
 
