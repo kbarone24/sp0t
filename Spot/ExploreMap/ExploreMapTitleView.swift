@@ -30,20 +30,22 @@ final class ExploreMapTitleView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-
+        
+        backgroundColor = .white
+        
         addSubview(titleLabel)
         addSubview(descriptionLabel)
 
         titleLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(10.0)
-            make.leading.equalToSuperview().offset(25.0)
-            make.trailing.equalToSuperview().inset(25.0)
+            make.leading.equalToSuperview().offset(35.0)
+            make.trailing.equalToSuperview().inset(15.0)
         }
 
         descriptionLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(10.0)
-            make.leading.equalToSuperview().offset(25.0)
-            make.trailing.equalToSuperview().inset(25.0)
+            make.leading.equalToSuperview().offset(35.0)
+            make.trailing.equalToSuperview().inset(15.0)
             make.bottom.equalToSuperview().inset(20.0)
         }
     }
