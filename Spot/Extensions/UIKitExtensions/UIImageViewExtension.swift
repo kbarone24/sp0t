@@ -93,7 +93,7 @@ extension UIImageView {
     }
 
     func roundCornersForAspectFit(radius: CGFloat) {
-        guard let image else { return }
+        guard let image = image else { return }
 
         // calculate drawingRect
         let boundsScale = bounds.size.width / bounds.size.height

@@ -100,8 +100,7 @@ class ImagePreviewController: UIViewController {
 
     func setPostInfo() {
         newMapMode = UploadPostModel.shared.mapObject != nil
-        var post = UploadPostModel.shared.postObject ?? MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp())
-
+        var post = UploadPostModel.shared.postObject ?? MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
         var selectedImages: [UIImage] = []
         var frameCounter = 0
         var frameIndexes: [Int] = []
@@ -584,7 +583,7 @@ extension ImagePreviewController {
         Mixpanel.mainInstance().track(event: "ImagePreviewCreateNewSpot")
 
         guard let post = UploadPostModel.shared.postObject else { return }
-        let newSpot = MapSpot(
+        var newSpot = MapSpot(
             id: UUID().uuidString,
             founderID: uid,
             post: post,

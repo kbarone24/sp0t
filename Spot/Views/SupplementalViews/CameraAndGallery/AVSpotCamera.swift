@@ -247,7 +247,7 @@ extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputS
         }
 
         photoOutput = AVCapturePhotoOutput()
-        guard let photoOutput else { return }
+        guard let photoOutput = photoOutput else { return }
 
         photoOutput.setPreparedPhotoSettingsArray(
             [
