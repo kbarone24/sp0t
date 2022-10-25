@@ -2,8 +2,6 @@ import Firebase
 import Mixpanel
 import UIKit
 
-@available(iOS 13.0, *)
-
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
@@ -13,31 +11,39 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
 
-        if let windowScene = (scene as? UIWindowScene) {
-            self.window = UIWindow(windowScene: windowScene)
-
-            if Auth.auth().currentUser != nil {
-                self.animateToMap()
-            } else {
-                let sb = UIStoryboard(name: "Main", bundle: nil)
-                let vc = sb.instantiateViewController(withIdentifier: "LandingPage") as! LandingPageController
-
-                self.window!.rootViewController = vc
-                self.window!.makeKeyAndVisible()
-            }
+        guard let windowScene = (scene as? UIWindowScene) else {
+            return
         }
+
+        self.window = UIWindow(windowScene: windowScene)
+
+        guard Auth.auth().currentUser == nil,
+              case let sb = UIStoryboard(name: "Main", bundle: nil),
+              let vc = sb.instantiateViewController(withIdentifier: "LandingPage") as? LandingPageController,
+              let window = self.window
+        else {
+            animateToMap()
+            return
+        }
+
+        window.rootViewController = vc
+        window.makeKeyAndVisible()
     }
 
     func animateToMap() {
-        let sb = UIStoryboard(name: "Map", bundle: nil)
-        let vc = sb.instantiateViewController(withIdentifier: "MapVC") as! MapController
+        guard let window,
+              case let sb = UIStoryboard(name: "Map", bundle: nil),
+              let mapViewController = sb.instantiateViewController(withIdentifier: "MapVC") as? MapController,
+              let appDelegate = UIApplication.shared.delegate as? AppDelegate
+        else { return }
 
         let notificationName = Notification.Name("openPush")
         NotificationCenter.default.post(name: notificationName, object: nil, userInfo: nil)
 
-        let navController = MapNavigationController(rootViewController: vc)
-        self.window!.rootViewController = navController
-        self.window!.makeKeyAndVisible()
+        mapViewController.serviceContainer = appDelegate.serviceContainer
+        let navController = MapNavigationController(rootViewController: mapViewController)
+        window.rootViewController = navController
+        window.makeKeyAndVisible()
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
@@ -66,5 +72,4 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidEnterBackground(_ scene: UIScene) {
 
     }
-
 }

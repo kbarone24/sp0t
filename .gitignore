@@ -1,3 +1,4 @@
+.DS_Store/
 .DS_Store
 *.swp
 
@@ -12,6 +13,7 @@ dist/
 *.xcuserstate
 project.xcworkspace/
 xcuserdata/
+xcshareddata/
 
 *.o
 *.pyc

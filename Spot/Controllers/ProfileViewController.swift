@@ -96,7 +96,7 @@ class ProfileViewController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ProfileOpen")
     }
-    
+
     private func setUpNavBar() {
         navigationController?.setNavigationBarHidden(false, animated: false)
 
@@ -126,7 +126,7 @@ class ProfileViewController: UIViewController {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
-        containerDrawerView?.present(to: .Top)
+        containerDrawerView?.present(to: .top)
     }
 
     private func getUserInfo() {
@@ -206,7 +206,7 @@ class ProfileViewController: UIViewController {
             $0.centerX.equalToSuperview()
             $0.top.equalToSuperview().offset(243)
         }
-        
+
         activityIndicator = CustomActivityIndicator {
             $0.isHidden = false
             collectionView.addSubview($0)
@@ -323,22 +323,22 @@ extension ProfileViewController {
         Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendTap")
         let alert = UIAlertController(title: "Remove friend request?", message: "", preferredStyle: .alert)
         alert.overrideUserInterfaceStyle = .light
-        let removeAction = UIAlertAction(title: "Remove", style: .default) { action in
+        let removeAction = UIAlertAction(title: "Remove", style: .default) { _ in
             self.revokePendingRequest()
         }
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
         alert.addAction(cancelAction)
         alert.addAction(removeAction)
-        let containerVC = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController ?? UIViewController()
+        let containerVC = UIApplication.shared.windows.filter { $0.isKeyWindow }.first?.rootViewController ?? UIViewController()
         containerVC.present(alert, animated: true)
     }
-    
+
     @objc func friendsListTap() {
         Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
         let friendListVC = FriendsListController(fromVC: self, allowsSelection: false, showsSearchBar: false, friendIDs: userProfile!.friendIDs, friendsList: userProfile!.friendsList, confirmedIDs: [], sentFrom: .Profile, presentedWithDrawerView: containerDrawerView!)
         present(friendListVC, animated: true)
     }
-    
+
     @objc func popVC() {
         if navigationController?.viewControllers.count == 1 {
             containerDrawerView?.closeAction()
@@ -346,27 +346,27 @@ extension ProfileViewController {
             navigationController?.popViewController(animated: true)
         }
     }
-    
+
     func acceptFriendRequest() {
         self.relation = .friend
         DispatchQueue.main.async { self.collectionView.reloadData() }
         getNotiIDandRespondToRequest(accepted: true)
     }
-    
+
     func revokePendingRequest() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
         getNotiIDandRespondToRequest(accepted: false)
         self.relation = .stranger
         DispatchQueue.main.async { self.collectionView.reloadData() }
     }
-    
+
     func getNotiIDandRespondToRequest(accepted: Bool) {
         let db = Firestore.firestore()
         /// sender is active user if revoking, receiver is active user if accepting
         let receiver = accepted ? UserDataModel.shared.uid : userProfile!.id!
         let sender = accepted ? userProfile!.id! : UserDataModel.shared.uid
         let query = db.collection("users").document(receiver).collection("notifications").whereField("type", isEqualTo: "friendRequest").whereField("status", isEqualTo: "pending").whereField("senderID", isEqualTo: sender)
-        query.getDocuments { (snap, err) in
+        query.getDocuments { (snap, _) in
             if let doc = snap?.documents.first {
                 if !accepted {
                     Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
@@ -387,7 +387,7 @@ extension ProfileViewController: EditProfileDelegate {
         self.userProfile = userInfo
         DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 0)]) }
     }
-    
+
     func logout() {
         DispatchQueue.main.async { self.containerDrawerView?.closeAction() }
     }
@@ -478,12 +478,12 @@ extension ProfileViewController {
         userProfile?.friendIDs.append(UserDataModel.shared.uid)
         userProfile?.friendsList.append(UserDataModel.shared.userInfo)
         userProfile?.topFriends?[UserDataModel.shared.uid] = 0
-        
+
         DispatchQueue.main.async {
             self.collectionView.reloadData()
             self.activityIndicator.startAnimating()
         }
-        
+
         /// run get nine posts now that friendslist field has started to be updated
         DispatchQueue.global().async {
             self.getNinePosts()

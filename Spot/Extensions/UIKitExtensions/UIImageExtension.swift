@@ -8,7 +8,7 @@
 
 import UIKit
 
-public extension UIImage {
+extension UIImage {
 
     ///https://stackoverflow.com/questions/26542035/create-uiimage-with-solid-color-in-swift
 

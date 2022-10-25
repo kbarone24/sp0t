@@ -582,9 +582,17 @@ extension ImagePreviewController {
 
     func createNewSpot(spotName: String) {
         Mixpanel.mainInstance().track(event: "ImagePreviewCreateNewSpot")
-        let post = UploadPostModel.shared.postObject
-        var newSpot = MapSpot(founderID: uid, imageURL: "", privacyLevel: "friends", spotDescription: "", spotLat: post?.postLat ?? 0, spotLong: post?.postLong ?? 0, spotName: spotName)
-        newSpot.id = UUID().uuidString
+
+        guard let post = UploadPostModel.shared.postObject else { return }
+        let newSpot = MapSpot(
+            id: UUID().uuidString,
+            founderID: uid,
+            post: post,
+            imageURL: "",
+            spotName: spotName,
+            privacyLevel: "friends",
+            description: ""
+        )
         newSpot.posterUsername = UserDataModel.shared.userInfo.username
         finishPassing(spot: newSpot)
         UploadPostModel.shared.postType = .newSpot

@@ -11,7 +11,7 @@ import Foundation
 import Photos
 import UIKit
 
-class AVSpotCamera: NSObject {
+final class AVSpotCamera: NSObject {
 
     enum CameraControllerError: Swift.Error {
         case captureSessionAlreadyRunning
@@ -48,90 +48,17 @@ class AVSpotCamera: NSObject {
 
     func prepare(position: CameraPosition, completionHandler: @escaping (Error?) -> Void) {
 
-        func createCaptureSession() { captureSession = AVCaptureSession() }
-
-        func configureCaptureDevices() throws {
-
-            let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: AVMediaType.video, position: .unspecified)
-            let cameras = (session.devices.compactMap { $0 })
-            if cameras.isEmpty { throw CameraControllerError.noCamerasAvailable }
-
-            for camera in cameras {
-
-                if camera.position == .front { frontCamera = camera }
-
-                if camera.position == .back {
-                    rearCamera = camera
-
-                    try camera.lockForConfiguration()
-                    camera.focusMode = .continuousAutoFocus
-                    camera.unlockForConfiguration()
-                }
-            }
-
-        }
-
-        func configureDeviceInputs() throws {
-
-            guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
-
-            if position == .rear, let rearCamera = self.rearCamera {
-                self.rearCameraInput = try AVCaptureDeviceInput(device: rearCamera)
-
-                if captureSession.canAddInput(self.rearCameraInput!) { captureSession.addInput(self.rearCameraInput!) }
-
-                currentCameraPosition = .rear
-            } else if position == .front, let frontCamera = frontCamera {
-
-                self.frontCameraInput = try AVCaptureDeviceInput(device: frontCamera)
-
-                if captureSession.canAddInput(self.frontCameraInput!) { captureSession.addInput(self.frontCameraInput!) } else { throw CameraControllerError.inputsAreInvalid }
-
-                currentCameraPosition = .front
-            } else { throw CameraControllerError.noCamerasAvailable }
-        }
-
-        func configurePhotoOutput() throws {
-
-            guard let captureSession = captureSession else { throw CameraControllerError.captureSessionIsMissing }
-
-            photoOutput = AVCapturePhotoOutput()
-            photoOutput!.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
-
-            if captureSession.canAddOutput(photoOutput!) { captureSession.addOutput(photoOutput!) }
-
-            captureSession.startRunning()
-        }
-
-      /*  func configureVideoOutput() throws {
-            
-            guard let captureSession = captureSession else { throw CameraControllerError.captureSessionIsMissing }
-            
-            videoOutput = AVCaptureVideoDataOutput()
-            if let videoDataOutputConnection = videoOutput?.connection(with: .video), videoDataOutputConnection.isVideoStabilizationSupported {
-                videoDataOutputConnection.preferredVideoStabilizationMode = .cinematic
-                
-            }
-            
-            videoOutput!.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as String) : NSNumber(value: kCVPixelFormatType_32BGRA as UInt32)]
-            videoOutput!.alwaysDiscardsLateVideoFrames = true
-            videoOutput!.setSampleBufferDelegate(self as AVCaptureVideoDataOutputSampleBufferDelegate, queue: DispatchQueue(label: "sample buffer delegate", attributes: []))
-            
-            if captureSession.canAddOutput(videoOutput!) {  captureSession.addOutput(videoOutput!)  }
-        } */
-
-        DispatchQueue(label: "prepare").async {
+        DispatchQueue(label: "prepare").async { [weak self] in
             do {
-                createCaptureSession()
-                try configureCaptureDevices()
-                try configureDeviceInputs()
-                try configurePhotoOutput()
-           //     try configureVideoOutput()
+                self?.captureSession = AVCaptureSession()
+                try self?.configureCaptureDevices()
+                try self?.configureDeviceInputs(position: position)
+                try self?.configurePhotoOutput()
+           //     try self?.configureVideoOutput()
             } catch {
                 DispatchQueue.main.async {
                     completionHandler(error)
                 }
-
                 return
             }
 
@@ -233,6 +160,60 @@ class AVSpotCamera: NSObject {
 
 extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
 
+    func configureDeviceInputs(position: CameraPosition) throws {
+        guard let captureSession = self.captureSession else {
+            throw CameraControllerError.captureSessionIsMissing
+        }
+
+        if position == .rear, let rearCamera = self.rearCamera {
+            self.rearCameraInput = try AVCaptureDeviceInput(device: rearCamera)
+
+            if captureSession.canAddInput(self.rearCameraInput!) { captureSession.addInput(self.rearCameraInput!) }
+
+            currentCameraPosition = .rear
+
+        } else if position == .front, let frontCamera = frontCamera {
+
+            self.frontCameraInput = try AVCaptureDeviceInput(device: frontCamera)
+
+            if captureSession.canAddInput(self.frontCameraInput!) { captureSession.addInput(self.frontCameraInput!) } else { throw CameraControllerError.inputsAreInvalid }
+
+            currentCameraPosition = .front
+
+        } else {
+            throw CameraControllerError.noCamerasAvailable
+        }
+    }
+
+    func configureCaptureDevices() throws {
+        let session = AVCaptureDevice.DiscoverySession(
+            deviceTypes: [.builtInWideAngleCamera],
+            mediaType: .video,
+            position: .unspecified
+        )
+
+        let cameras = session.devices.compactMap { $0 }
+
+        if cameras.isEmpty {
+            throw CameraControllerError.noCamerasAvailable
+        }
+
+        for camera in cameras {
+
+            if camera.position == .front {
+                frontCamera = camera
+            }
+
+            if camera.position == .back {
+                rearCamera = camera
+
+                try camera.lockForConfiguration()
+                camera.focusMode = .continuousAutoFocus
+                camera.unlockForConfiguration()
+            }
+        }
+    }
+
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
 
         /// start a timer when alive capture initiated
@@ -260,10 +241,57 @@ extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputS
         }
     }
 
-    func photoOutput(_ output: AVCapturePhotoOutput,
-    didFinishProcessingPhoto photo: AVCapturePhoto,
-    error: Error?) {
-        if let error = error { self.photoCaptureCompletionBlock?(nil, error) }
+    func configurePhotoOutput() throws {
+        guard let captureSession = captureSession else {
+            throw CameraControllerError.captureSessionIsMissing
+        }
+
+        photoOutput = AVCapturePhotoOutput()
+        guard let photoOutput else { return }
+
+        photoOutput.setPreparedPhotoSettingsArray(
+            [
+                AVCapturePhotoSettings(
+                    format: [
+                        AVVideoCodecKey: AVVideoCodecType.jpeg
+                    ]
+                )
+            ],
+            completionHandler: nil
+        )
+
+        if captureSession.canAddOutput(photoOutput) { captureSession.addOutput(photoOutput)
+        }
+
+        captureSession.startRunning()
+    }
+
+    /*  func configureVideoOutput() throws {
+          
+          guard let captureSession = captureSession else { throw CameraControllerError.captureSessionIsMissing }
+          
+          videoOutput = AVCaptureVideoDataOutput()
+          if let videoDataOutputConnection = videoOutput?.connection(with: .video), videoDataOutputConnection.isVideoStabilizationSupported {
+              videoDataOutputConnection.preferredVideoStabilizationMode = .cinematic
+              
+          }
+          
+          videoOutput!.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as String) : NSNumber(value: kCVPixelFormatType_32BGRA as UInt32)]
+          videoOutput!.alwaysDiscardsLateVideoFrames = true
+          videoOutput!.setSampleBufferDelegate(self as AVCaptureVideoDataOutputSampleBufferDelegate, queue: DispatchQueue(label: "sample buffer delegate", attributes: []))
+          
+          if captureSession.canAddOutput(videoOutput!) {  captureSession.addOutput(videoOutput!)  }
+      } */
+
+    func photoOutput(
+        _ output: AVCapturePhotoOutput,
+        didFinishProcessingPhoto photo: AVCapturePhoto,
+        error: Error?
+    ) {
+        if let error = error {
+            self.photoCaptureCompletionBlock?(nil, error)
+            return
+        }
 
         let data = photo.fileDataRepresentation() ?? UIImage().pngData()
         let image = UIImage(data: data ?? Data())
@@ -302,41 +330,5 @@ extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputS
       let image = UIImage(cgImage: quartzImage!)
 
       return (image)
-
-    }
-
-}
-
-extension AVCaptureDevice {
-
-    /// toggles the device's flashlight, if possible
-    func toggleFlashlight() {
-        guard let device = AVCaptureDevice.default(for: AVMediaType.video), device.hasTorch else { return }
-        do {
-            try device.lockForConfiguration()
-            let torchOn = !device.isTorchActive
-            try device.setTorchModeOn(level: 1.0)
-            device.torchMode = torchOn ? .on : .off
-            device.unlockForConfiguration()
-        } catch {
-            print("Error toggling Flashlight: \(error)")
-        }
     }
 }
-
-/// source: https://www.appcoda.com/avfoundation-swift-guide/
-extension CMSampleBuffer {
-    func image(orientation: UIImage.Orientation,
-               scale: CGFloat = 1.0) -> UIImage? {
-        if let buffer = CMSampleBufferGetImageBuffer(self) {
-            let ciImage = CIImage(cvPixelBuffer: buffer)
-
-            return UIImage(ciImage: ciImage,
-                           scale: scale,
-                           orientation: orientation)
-        }
-
-        return nil
-    }
-}
-///https://stackoverflow.com/questions/15726761/make-an-uiimage-from-a-cmsamplebuffer
