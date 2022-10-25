@@ -100,7 +100,7 @@ class ImagePreviewController: UIViewController {
 
     func setPostInfo() {
         newMapMode = UploadPostModel.shared.mapObject != nil
-        var post = UploadPostModel.shared.postObject!
+        var post = UploadPostModel.shared.postObject ?? MapPost(caption: "", friendsList: [], imageURLs: [], likers: [], postLat: 0, postLong: 0, posterID: "", timestamp: Timestamp())
 
         var selectedImages: [UIImage] = []
         var frameCounter = 0
@@ -111,8 +111,8 @@ class ImagePreviewController: UIViewController {
 
         /// cycle through selected imageObjects and find individual sets of images / frames
         for obj in UploadPostModel.shared.selectedObjects {
-            let location = locationIsEmpty(location: obj.rawLocation) ? UserDataModel.shared.currentLocation : obj.rawLocation
-            imageLocations.append(["lat": location!.coordinate.latitude, "long": location!.coordinate.longitude])
+            let location = locationIsEmpty(location: obj.rawLocation) ? UserDataModel.shared.currentLocation ?? obj.rawLocation : obj.rawLocation
+            imageLocations.append(["lat": location.coordinate.latitude, "long": location.coordinate.longitude])
 
             let images = obj.gifMode ? obj.animationImages : [obj.stillImage]
             selectedImages.append(contentsOf: images)
@@ -148,7 +148,7 @@ class ImagePreviewController: UIViewController {
         currentImage.makeConstraints()
         currentImage.setCurrentImage()
 
-        if post.frameIndexes!.count > 1 {
+        if post.frameIndexes?.count ?? 0 > 1 {
             nextImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex! + 1)
             view.addSubview(nextImage)
             nextImage.makeConstraints()
@@ -206,12 +206,12 @@ class ImagePreviewController: UIViewController {
                 $0.isHidden = true
                 view.addSubview($0)
             }
-            progressMask!.snp.makeConstraints {
+            progressMask?.snp.makeConstraints {
                 $0.edges.equalToSuperview()
             }
 
             progressBar = ProgressBar {
-                progressMask!.addSubview($0)
+                progressMask?.addSubview($0)
             }
             progressBar!.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview().inset(50)
@@ -238,10 +238,13 @@ class ImagePreviewController: UIViewController {
         view.addGestureRecognizer(swipeToClose)
 
         tapToClose = UITapGestureRecognizer(target: self, action: #selector(tapToClose(_:)))
+        tapToClose.delegate = self
+        tapToClose.accessibilityValue = "tap_to_close"
         tapToClose.isEnabled = false
         view.addGestureRecognizer(tapToClose)
 
         let tap = UITapGestureRecognizer(target: self, action: #selector(captionTap))
+        tap.accessibilityValue = "caption_tap"
         tap.delegate = self
         view.addGestureRecognizer(tap)
     }
@@ -353,7 +356,10 @@ class ImagePreviewController: UIViewController {
             addExtraMask()
         }
     }
+}
 
+extension ImagePreviewController {
+// user actions
     @objc func imageSwipe(_ gesture: UIPanGestureRecognizer) {
         let direction = gesture.velocity(in: view)
         let translation = gesture.translation(in: view)
@@ -421,7 +427,7 @@ class ImagePreviewController: UIViewController {
     }
 
     func setImages() {
-        let selectedIndex = UploadPostModel.shared.postObject!.selectedImageIndex!
+        let selectedIndex = UploadPostModel.shared.postObject!.selectedImageIndex ?? 0
         currentImage.index = selectedIndex
         currentImage.makeConstraints()
         currentImage.setCurrentImage()
@@ -535,8 +541,9 @@ class ImagePreviewController: UIViewController {
 
     func addNewSpotView(notification: NSNotification) {
         let frameKey = UIResponder.keyboardFrameEndUserInfoKey
-        let keyboardFrameValue = notification.userInfo![frameKey] as! NSValue
-
+        guard let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue else { return }
+        if newSpotMask != nil { return }
+        
         newSpotMask = NewSpotMask {
             view.addSubview($0)
         }
@@ -569,14 +576,14 @@ class ImagePreviewController: UIViewController {
 
         newSpotNameView.isHidden = true
         postDetailView.isHidden = false
-        newSpotMask!.removeFromSuperview()
+        newSpotMask?.removeFromSuperview()
         newSpotMask = nil
     }
 
     func createNewSpot(spotName: String) {
         Mixpanel.mainInstance().track(event: "ImagePreviewCreateNewSpot")
-        guard let post = UploadPostModel.shared.postObject else { return }
 
+        guard let post = UploadPostModel.shared.postObject else { return }
         let newSpot = MapSpot(
             id: UUID().uuidString,
             founderID: uid,
@@ -586,7 +593,7 @@ class ImagePreviewController: UIViewController {
             privacyLevel: "friends",
             description: ""
         )
-
+        newSpot.posterUsername = UserDataModel.shared.userInfo.username
         finishPassing(spot: newSpot)
         UploadPostModel.shared.postType = .newSpot
     }
@@ -604,7 +611,7 @@ class ImagePreviewController: UIViewController {
 
     @objc func postTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewPostTap")
-        postButton!.isEnabled = false
+        postButton?.isEnabled = false
         setCaptionValues()
         /// upload post
         UploadPostModel.shared.setFinalPostValues()
@@ -615,7 +622,7 @@ class ImagePreviewController: UIViewController {
         let fullWidth = self.progressBar!.bounds.width - 2
 
         DispatchQueue.global(qos: .userInitiated).async {
-            self.uploadPostImage(UploadPostModel.shared.postObject.postImage, postID: UploadPostModel.shared.postObject.id!, progressFill: self.progressBar!.progressFill, fullWidth: fullWidth) { [weak self] imageURLs, failed in
+            self.uploadPostImage(images: UploadPostModel.shared.postObject.postImage, postID: UploadPostModel.shared.postObject.id!, progressFill: self.progressBar!.progressFill, fullWidth: fullWidth) { [weak self] imageURLs, failed in
                 guard let self = self else { return }
                 if imageURLs.isEmpty && failed {
                     Mixpanel.mainInstance().track(event: "FailedPostUpload")
@@ -649,7 +656,7 @@ class ImagePreviewController: UIViewController {
             case .destructive:
                 self.popToMap()
             @unknown default:
-                fatalError()
+                fatalError("Fail alert error")
             }}))
         present(alert, animated: true, completion: nil)
     }
@@ -664,8 +671,9 @@ class ImagePreviewController: UIViewController {
 
 extension ImagePreviewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        /// cancel  caption tap when textView is open
-        if gestureRecognizer.view?.tag == 2 && textView.isFirstResponder { return false }
+        /// cancel caption tap when textView is open
+        if gestureRecognizer.accessibilityValue == "caption_tap" && textView.isFirstResponder { return false }
+        if gestureRecognizer.accessibilityValue == "tap_to_close" && tagFriendsView != nil { return false }
         return true
     }
 }
@@ -747,7 +755,7 @@ extension ImagePreviewController: UITextViewDelegate {
 
     func removeTagTable() {
         if tagFriendsView != nil {
-            tagFriendsView!.removeFromSuperview()
+            tagFriendsView?.removeFromSuperview()
             tagFriendsView = nil
             spotNameButton.isHidden = false
         }
@@ -761,7 +769,7 @@ extension ImagePreviewController: UITextViewDelegate {
                 $0.searchText = tagString
                 postDetailView.addSubview($0)
             }
-            tagFriendsView!.snp.makeConstraints {
+            tagFriendsView?.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
                 $0.height.equalTo(90)
                 $0.bottom.equalTo(spotNameButton.snp.bottom)

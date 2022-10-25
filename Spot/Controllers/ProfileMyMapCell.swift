@@ -20,7 +20,7 @@ class ProfileMyMapCell: UICollectionViewCell {
             } else if posts.count >= 4 {
                 posts = Array(posts[0...3])
             } else {
-                posts = posts.count == 0 ? [] : [posts[0]]
+                posts = posts.isEmpty ? [] : [posts[0]]
             }
             mapImageCollectionView.reloadData()
         }
@@ -40,7 +40,6 @@ class ProfileMyMapCell: UICollectionViewCell {
         mapName.text = "@\(userAccount)'s map"
         mapPrivateBlurView.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
         mapPrivateIcon.isHidden = !(relation == .stranger || relation == .pending || relation == .received)
-        print("blur hidden", mapPrivateBlurView.isHidden, relation)
     }
 }
 
@@ -107,7 +106,7 @@ extension ProfileMyMapCell: UICollectionViewDataSource, UICollectionViewDelegate
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProfileMyMapImageCollectionViewCell", for: indexPath) as! ProfileMyMapImageCollectionViewCell
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProfileMyMapImageCollectionViewCell", for: indexPath) as? ProfileMyMapImageCollectionViewCell else { return UICollectionViewCell() }
         cell.count = posts.count
         cell.imageURL = posts[indexPath.row].imageURLs.first ?? ""
         return cell

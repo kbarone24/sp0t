@@ -14,23 +14,34 @@ import UIKit
 
 struct CustomMap: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
-
     var communityMap: Bool? = false
     var founderID: String
     var imageURL: String
     var likers: [String]
     var lowercaseName: String?
     var mapDescription: String?
-    var mapName: String
+    var mapName: String {
+        didSet {
+            print(mapName, "did set map name")
+        }
+    }
     var memberIDs: [String]
     var posterDictionary: [String: [String]] = [:]
-    var posterIDs: [String]
+    var posterIDs: [String] {
+        didSet {
+            print(mapName, "did set poster ids", posterIDs.count)
+        }
+    }
     var posterUsernames: [String]
     var postIDs: [String]
     var postImageURLs: [String]
     var postLocations: [[String: Double]] = []
     var postSpotIDs: [String] = []
-    var postTimestamps: [Firebase.Timestamp] = []
+    var postTimestamps: [Firebase.Timestamp] = [] {
+        didSet {
+            print(mapName, "did set post timestamps", postTimestamps.count)
+        }
+    }
     var searchKeywords: [String]? = []
     var secret: Bool
     var spotIDs: [String]
@@ -45,10 +56,11 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var postGroup: [MapPostGroup] = []
 
     var userTimestamp: Timestamp {
+        print("map", mapName, postTimestamps.count, posterIDs.count)
         if let lastUserPostIndex = posterIDs.lastIndex(where: { $0 == UserDataModel.shared.uid }) {
-            return postTimestamps[safe: lastUserPostIndex] ?? postTimestamps.first ?? Timestamp(date: Date())
+            return postTimestamps[safe: lastUserPostIndex] ?? postTimestamps.first ?? Timestamp()
         }
-        return postTimestamps.first ?? Timestamp(date: Date())
+        return postTimestamps.first ?? postTimestamps.first ?? Timestamp()
     }
 
     var userURL: String {
@@ -134,6 +146,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
                 }
             }
         }
+    }
 
     mutating func updateGroup(post: MapPost) -> (group: MapPostGroup?, newGroup: Bool) {
         if let spotID = post.spotID, spotID == "", let id = post.id {
@@ -209,9 +222,39 @@ struct CustomMap: Identifiable, Codable, Hashable {
         return (nil, false)
     }
 
+    mutating func updatePostLevelValues(post: MapPost) {
+        /// update post values on new post
+        guard let postID = post.id else { return }
+        if !postIDs.contains(postID) {
+            postIDs.append(postID)
+            postImageURLs.append(post.imageURLs.first ?? "")
+            posterIDs.append(post.posterID)
+            posterUsernames.append(post.userInfo?.username ?? "")
+            postTimestamps.append(post.timestamp)
+            postSpotIDs.append(post.spotID ?? "")
+
+            let postLocation = ["lat": post.postLat, "long": post.postLong]
+            postLocations.append(postLocation)
+
+            var posters = post.addedUsers ?? []
+            posters.append(UserDataModel.shared.uid)
+            posterDictionary[postID] = posters
+            print("update post level", posterIDs.count, postTimestamps.count)
+        }
+    }
+
+    mutating func updateSpotLevelValues(spot: MapSpot) {
+        /// update spot values on new post
+        if !spotIDs.contains(spot.id!) {
+            spotIDs.append(spot.id!)
+            spotNames.append(spot.spotName)
+            spotLocations.append(["lat": spot.spotLat, "long": spot.spotLong])
+        }
+    }
+
     mutating func createPosts(posts: [MapPost]) {
         for post in posts {
-            postsDictionary.updateValue(post, forKey: post.id!)
+            postsDictionary.updateValue(post, forKey: post.id ?? "")
             _ = updateGroup(post: post)
         }
     }
@@ -224,7 +267,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
             if let j = postGroup[i].postIDs.firstIndex(where: { $0.id == postID }) {
                 postGroup[i].postIDs.remove(at: j)
                 /// remove from post group entirely if no spot attached
-                if postGroup[i].postIDs.count == 0 && postGroup[i].spotName == "" { postGroup.remove(at: i) }
+                if postGroup[i].postIDs.isEmpty && postGroup[i].spotName == "" { postGroup.remove(at: i) }
             }
         }
         /// remove associated values
@@ -235,7 +278,8 @@ struct CustomMap: Identifiable, Codable, Hashable {
             postIDs.remove(at: i)
             postImageURLs.remove(at: i)
             postLocations.remove(at: i)
-         //   postTimestamps.remove(at: i)
+            postTimestamps.remove(at: i)
+            postSpotIDs.remove(at: i)
         }
         if spotID != "" {
             if let i = spotIDs.firstIndex(where: { $0 == spotID }) {

@@ -190,14 +190,9 @@ final class UploadPostModel {
 
     func setFinalMapValues() {
         if spotObject != nil {
-            mapObject!.postSpotIDs.append(spotObject!.id!)
-            if !mapObject!.spotIDs.contains(spotObject!.id!) {
-                mapObject!.spotIDs.append(spotObject!.id!)
-                mapObject!.spotNames.append(spotObject!.spotName)
-                mapObject!.spotLocations.append(["lat": spotObject!.spotLat, "long": spotObject!.spotLong])
-            }
+            mapObject!.updateSpotLevelValues(spot: spotObject!)
         }
-        mapObject!.postTimestamps.append(postObject.timestamp)
+        mapObject!.updatePostLevelValues(post: postObject!)
     }
 
     func saveToDrafts() {
