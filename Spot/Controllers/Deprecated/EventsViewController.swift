@@ -342,7 +342,7 @@ class EventsViewController: UIViewController, UIGestureRecognizerDelegate, UITab
     }
 
     func loadAllEvents() {
-        self.listener2 = self.db.collection("spots").addSnapshotListener({ (spotSnapshot, err) in
+        self.listener2 = self.db.collection("spots").addSnapshotListener({ (spotSnapshot, _) in
 
             docLoop: for doc in spotSnapshot!.documents {
                 if let privacyLevel = doc.get("privacyLevel") as? String {
@@ -641,7 +641,7 @@ class EventsViewController: UIViewController, UIGestureRecognizerDelegate, UITab
     }
 
     func loadPopular() {
-        self.listener4 = db.collection("spots").addSnapshotListener({ (spotSnap, err) in
+        self.listener4 = db.collection("spots").addSnapshotListener({ (spotSnap, _) in
             docLoop: for doc in spotSnap!.documents {
                 if let privacyLevel = doc.get("privacyLevel") as? String {
                     if privacyLevel == "friends" {

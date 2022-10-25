@@ -259,7 +259,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         DispatchQueue.global().async {
 
             self.db.collection("users").getDocuments { [weak self]
-                (snap, err) in
+                (snap, _) in
 
                 guard let self = self else { return }
                 var index = 0

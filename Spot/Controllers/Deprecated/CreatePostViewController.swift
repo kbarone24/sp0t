@@ -422,7 +422,7 @@ class CreatePostViewController: UIViewController, UITextFieldDelegate, UITextVie
 
         self.progressView.setProgress(0.3, animated: true)
 
-        self.listener2 = self.db.collection("users").document(self.uid).addSnapshotListener { (snapshot, userErr) in
+        self.listener2 = self.db.collection("users").document(self.uid).addSnapshotListener { (snapshot, _) in
 
             let username = snapshot?.get("username") as! String
             self.profilePicURL = snapshot?.get("imageURL") as! String
@@ -582,7 +582,7 @@ class CreatePostViewController: UIViewController, UITextFieldDelegate, UITextVie
         var token: String!
         var senderName: String!
 
-        self.db.collection("users").document(receiverID).getDocument { (tokenSnap, err) in
+        self.db.collection("users").document(receiverID).getDocument { (tokenSnap, _) in
             if tokenSnap == nil {
                 return
             } else {

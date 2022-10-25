@@ -11,22 +11,70 @@ import Firebase
 import Mixpanel
 import UIKit
 
-class NameController: UIViewController, UITextFieldDelegate {
-    var label: UILabel!
-    var nameField: UITextField!
-    var nextButton: UIButton!
+final class NameController: UIViewController, UITextFieldDelegate {
+    private lazy var label: UILabel = {
+        let label = UILabel()
+        label.text = "Welcome! What's your name?"
+        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 20)
 
-    var paddingView: UIView!
-    var submitButton: UIButton!
-    var newUser: NewUser!
+        return label
+    }()
 
-    var cancelOnDismiss = false
+    private lazy var nameField: UITextField = {
+        let textField = UITextField()
+
+        textField.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
+        textField.textAlignment = .center
+        textField.tintColor = UIColor(named: "SpotGreen")
+        textField.textColor = .black
+
+        let placeholderText = NSMutableAttributedString(
+            string: "sp0t b0tterson",
+            attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
+                NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
+            ]
+        )
+
+        textField.attributedPlaceholder = placeholderText
+        textField.autocorrectionType = .no
+        textField.autocapitalizationType = .words
+        textField.tag = 0
+        textField.delegate = self
+        textField.textContentType = .name
+        textField.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
+
+        return textField
+    }()
+
+    private lazy var nextButton: UIButton = {
+        let button = UIButton()
+
+        button.layer.cornerRadius = 9
+        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+
+        let customButtonTitle = NSMutableAttributedString(
+            string: "Next", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
+                NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            ]
+        )
+
+        button.setAttributedTitle(customButtonTitle, for: .normal)
+        button.setImage(nil, for: .normal)
+        button.addTarget(self, action: #selector(nextTapped(_:)), for: .touchUpInside)
+
+        return button
+    }()
+
+    private var cancelOnDismiss = false
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "SignUp1Open")
         enableKeyboardMethods()
-        if nameField != nil { DispatchQueue.main.async { self.nameField.becomeFirstResponder() } }
+        self.nameField.becomeFirstResponder()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -57,10 +105,10 @@ class NameController: UIViewController, UITextFieldDelegate {
     }
 
     func setUpNavBar() {
-        navigationController!.navigationBar.barTintColor = UIColor.white
-        navigationController!.navigationBar.isTranslucent = false
-        navigationController!.navigationBar.barStyle = .black
-        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
         navigationController?.navigationBar.addWhiteBackground()
 
@@ -82,38 +130,14 @@ class NameController: UIViewController, UITextFieldDelegate {
 
     func setUpViews() {
         view.backgroundColor = .white
-        newUser = NewUser(name: "", username: "", phone: "")
 
-        label = UILabel {
-            $0.text = "Welcome! What's your name?"
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
-            view.addSubview($0)
-        }
+        view.addSubview(label)
         label.snp.makeConstraints {
             $0.top.equalToSuperview().offset(114)
             $0.centerX.equalToSuperview()
         }
 
-        nameField = UITextField {
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
-            $0.textAlignment = .center
-            $0.tintColor = UIColor(named: "SpotGreen")
-            $0.textColor = .black
-            var placeholderText = NSMutableAttributedString()
-            placeholderText = NSMutableAttributedString(string: "sp0t b0tterson", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
-                    NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
-            ])
-            $0.attributedPlaceholder = placeholderText
-            $0.autocorrectionType = .no
-            $0.autocapitalizationType = .words
-            $0.tag = 0
-            $0.delegate = self
-            $0.textContentType = .name
-            $0.addTarget(self, action: #selector(textChanged(_:)), for: .editingChanged)
-            view.addSubview($0)
-        }
+        view.addSubview(nameField)
         nameField.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
             $0.top.equalTo(label.snp.bottom).offset(30)
@@ -131,18 +155,7 @@ class NameController: UIViewController, UITextFieldDelegate {
             $0.centerX.equalToSuperview()
         }
 
-        nextButton = UIButton {
-             $0.layer.cornerRadius = 9
-             $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
-             let customButtonTitle = NSMutableAttributedString(string: "Next", attributes: [
-                 NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
-                 NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-             ])
-             $0.setAttributedTitle(customButtonTitle, for: .normal)
-             $0.setImage(nil, for: .normal)
-             $0.addTarget(self, action: #selector(nextTapped(_:)), for: .touchUpInside)
-             view.addSubview($0)
-        }
+        view.addSubview(nextButton)
         nextButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
             $0.height.equalTo(49)
@@ -203,27 +216,28 @@ class NameController: UIViewController, UITextFieldDelegate {
     }
 
     @objc func backTapped(_ sender: UIButton) {
-        DispatchQueue.main.async { self.dismiss(animated: false, completion: nil) }
+        self.dismiss(animated: false, completion: nil)
     }
 
     @objc func nextTapped(_ sender: UIButton) {
-        DispatchQueue.main.async { self.view.endEditing(true) }
-        // gets the text values from the text boxes
-        guard let name = nameField.text else { return }
-        // Checks to see if there is text field without text entered into it
-        if nameFieldComplete(name: name) {
-            self.newUser.name = name
-            let vc = UsernameController()
-            vc.newUser = self.newUser
-            DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: true) }
+        self.view.endEditing(true)
 
-            Mixpanel.mainInstance().track(event: "NameControllerSuccess")
-        }
+        // gets the text values from the text boxes
+        guard let name = nameField.text,
+              // Checks to see if there is text field without text entered into it
+              nameFieldComplete(name: name)
+        else { return }
+
+        let vc = UsernameController()
+        let newUser = NewUser(name: name, username: "", phone: "")
+        vc.setNewUser(newUser: newUser)
+        self.navigationController?.pushViewController(vc, animated: true)
+        Mixpanel.mainInstance().track(event: "NameControllerSuccess")
     }
 
     // Function checks to see if text is entered into all fields
     private func nameFieldComplete(name: String) -> Bool {
-        return !name.trimmingCharacters(in: .whitespaces).isEmpty
+        return !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     func termsTap(_ sender: UIButton) {
