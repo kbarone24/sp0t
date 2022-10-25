@@ -372,7 +372,7 @@ extension UIViewController {
 /// upload post functions
 extension UIViewController {
 
-    func uploadPostImage(_ images: [UIImage], postID: String, progressFill: UIView, fullWidth: CGFloat, completion: @escaping ((_ urls: [String], _ failed: Bool) -> Void)) {
+    func uploadPostImage(images: [UIImage], postID: String, progressFill: UIView, fullWidth: CGFloat, completion: @escaping ((_ urls: [String], _ failed: Bool) -> Void)) {
 
         var failed = false
         var success = false
@@ -457,7 +457,7 @@ extension UIViewController {
     }
 
     func uploadPostToDB(newMap: Bool) {
-        let post = UploadPostModel.shared.postObject!
+        guard let post = UploadPostModel.shared.postObject else { return }
         var spot = UploadPostModel.shared.spotObject
         var map = UploadPostModel.shared.mapObject
 
@@ -482,21 +482,24 @@ extension UIViewController {
 
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
         /// send local notification first
+        guard let postID = post.id else { return }
         var notiPost = post
-        notiPost.id = post.id!
-        let commentObject = MapComment(id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo)
+        notiPost.id = postID
+        let commentObject = MapComment(
+            id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo
+        )
         notiPost.commentList = [commentObject]
         notiPost = setSecondaryPostValues(post: notiPost)
         notiPost.userInfo = UserDataModel.shared.userInfo
-        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post": notiPost as Any, "map": map as Any]))
+        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post": notiPost as Any, "map": map as Any, "spot": spot as Any]))
 
         let db = Firestore.firestore()
-        let postRef = db.collection("posts").document(post.id!)
+        let postRef = db.collection("posts").document(postID)
         do {
             try postRef.setData(from: post)
-            self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: post.id!)
+            self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: postID)
             if !newMap { self.sendPostNotifications(post: post, map: map, spot: spot) } /// send new map notis for new map
-            let commentRef = postRef.collection("comments").document(commentObject.id!)
+            let commentRef = postRef.collection("comments").document(commentObject.id ?? "")
 
             do {
                 try commentRef.setData(from: commentObject)
@@ -618,8 +621,18 @@ extension UIViewController {
             let postLocation = ["lat": post.postLat, "long": post.postLong]
             let spotLocation = ["lat": post.spotLat ?? 0.0, "long": post.spotLong ?? 0.0]
             var posters = [UserDataModel.shared.uid]
-            if !(post.addedUsers?.isEmpty ?? true) { posters.append(contentsOf: post.addedUsers!) }
-            functions.httpsCallable("runMapTransactions").call(["mapID": map.id!, "uid": UserDataModel.shared.uid, "postID": post.id!, "postImageURL": post.imageURLs.first ?? "", "postLocation": postLocation, "posters": posters, "posterUsername": UserDataModel.shared.userInfo.username, "spotID": post.spotID ?? "", "spotName": post.spotName ?? "", "spotLocation": spotLocation]) { result, error in
+            if !(post.addedUsers?.isEmpty ?? true) { posters.append(contentsOf: post.addedUsers ?? []) }
+            functions.httpsCallable("runMapTransactions").call(
+                ["mapID": map.id!,
+                 "uid": UserDataModel.shared.uid,
+                 "postID": post.id!,
+                 "postImageURL": post.imageURLs.first ?? "",
+                 "postLocation": postLocation,
+                 "posters": posters,
+                 "posterUsername": UserDataModel.shared.userInfo.username,
+                 "spotID": post.spotID ?? "", "spotName": post.spotName ?? "",
+                 "spotLocation": spotLocation]
+            ) { result, error in
                 print(result?.data as Any, error as Any)
             }
         }

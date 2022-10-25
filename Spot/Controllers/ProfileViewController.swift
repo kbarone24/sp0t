@@ -43,13 +43,13 @@ class ProfileViewController: UIViewController {
 
     var postsFetched = false {
         didSet {
-            noPostLabel.isHidden = mapsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+            noPostLabel.isHidden = mapsFetched && (maps.isEmpty && posts.isEmpty) ? false : true
             DispatchQueue.main.async { self.activityIndicator.stopAnimating() }
         }
     }
     var mapsFetched = false {
         didSet {
-            noPostLabel.isHidden = postsFetched && (maps.count == 0 && posts.count == 0) ? false : true
+            noPostLabel.isHidden = postsFetched && (maps.isEmpty && posts.isEmpty) ? false : true
             DispatchQueue.main.async { self.activityIndicator.stopAnimating() }
         }
     }
@@ -87,6 +87,7 @@ class ProfileViewController: UIViewController {
     }
 
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         setUpNavBar()
         configureDrawerView()
     }
@@ -97,20 +98,20 @@ class ProfileViewController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController!.setNavigationBarHidden(false, animated: false)
+        navigationController?.setNavigationBarHidden(false, animated: false)
 
         // Hacky way to avoid the nav bar get pushed up, when user go to custom map and drag the drawer to top, to middle and go back to profile
         navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 47.0)
 
-        navigationController!.navigationBar.barTintColor = UIColor.white
-        navigationController!.navigationBar.isTranslucent = true
-        navigationController!.navigationBar.barStyle = .black
-        navigationController!.navigationBar.tintColor = UIColor.black
-        navigationController!.view.backgroundColor = .white
+        navigationController?.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.isTranslucent = true
+        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.tintColor = UIColor.black
+        navigationController?.view.backgroundColor = .white
 
-        navigationController!.navigationBar.titleTextAttributes = [
+        navigationController?.navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-            .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
+            .font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
         ]
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(
@@ -129,9 +130,9 @@ class ProfileViewController: UIViewController {
     }
 
     private func getUserInfo() {
-        if userProfile?.username ?? "" == "" { return }
+        guard let username = userProfile?.username else { return }
         /// username passed through for tagged user not in friends list
-        getUserFromUsername(username: userProfile!.username) { [weak self] user in
+        getUserFromUsername(username: username) { [weak self] user in
             guard let self = self else { return }
             self.userProfile = user
             self.getUserRelation()
@@ -151,9 +152,9 @@ class ProfileViewController: UIViewController {
             user == userProfile?.id
         }) {
             relation = .pending
-        } else if self.userProfile!.pendingFriendRequests.contains(where: { user in
+        } else if ((self.userProfile?.pendingFriendRequests.contains(where: { user in
             user == UserDataModel.shared.uid
-        }) {
+        })) != nil) {
             relation = .received
         } else {
             relation = .stranger
@@ -305,7 +306,7 @@ extension ProfileViewController {
 
     func addFriendFromProfile() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
-        addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: userProfile!.id!)
+        addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: userProfile?.id ?? "")
         relation = .pending
         DispatchQueue.main.async { self.collectionView.reloadData() }
     }
