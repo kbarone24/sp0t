@@ -61,6 +61,7 @@ class AvatarSelectionController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        Mixpanel.mainInstance().track(event: "AvatarSelectionAppeared")
         DispatchQueue.main.async {
             if self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell) {
                 if let cell = self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as? AvatarCell {

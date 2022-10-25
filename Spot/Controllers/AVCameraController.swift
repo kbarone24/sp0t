@@ -16,7 +16,6 @@ import Photos
 import UIKit
 
 class AVCameraController: UIViewController {
-
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
     }

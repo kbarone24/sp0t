@@ -60,7 +60,6 @@ class ChooseMapController: UIViewController {
 
     func setUpNavBar() {
         navigationItem.title = "Post to maps"
-
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.tintColor = .black
         navigationController?.navigationBar.addWhiteBackground()
@@ -127,7 +126,7 @@ class ChooseMapController: UIViewController {
         customMaps = UserDataModel.shared.userInfo.mapsList.filter({ $0.memberIDs.contains(UserDataModel.shared.uid) }).sorted(by: { $0.userTimestamp.seconds > $1.userTimestamp.seconds })
 
         if newMap != nil {
-            newMap!.coverImage = UploadPostModel.shared.postObject.postImage.first ?? UIImage() /// new map image not set when going through new map flow
+            newMap?.coverImage = UploadPostModel.shared.postObject.postImage.first ?? UIImage() /// new map image not set when going through new map flow
             customMaps.insert(newMap!, at: 0)
             if newMap!.secret { toggleFriendsMap() }
         }
@@ -177,7 +176,6 @@ class ChooseMapController: UIViewController {
 
         /// make sure all post values are set for upload
         /// make sure there is a spot object attached to this post if posting to a spot
-        /// need to enable create new spot
         UploadPostModel.shared.setFinalPostValues()
         if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
         let newMap = self.newMap != nil
@@ -187,7 +185,12 @@ class ChooseMapController: UIViewController {
         let fullWidth = self.progressBar.bounds.width - 2
 
         DispatchQueue.global(qos: .userInitiated).async {
-            self.uploadPostImage(UploadPostModel.shared.postObject.postImage, postID: UploadPostModel.shared.postObject.id!, progressFill: self.progressBar.progressFill, fullWidth: fullWidth) { [weak self] imageURLs, failed in
+            self.uploadPostImage(
+                images: UploadPostModel.shared.postObject.postImage,
+                postID: UploadPostModel.shared.postObject.id ?? "",
+                progressFill: self.progressBar.progressFill,
+                fullWidth: fullWidth) { [weak self] imageURLs, failed in
+                    
                 guard let self = self else { return }
                 if imageURLs.isEmpty && failed {
                     Mixpanel.mainInstance().track(event: "FailedPostUpload")
@@ -221,7 +224,7 @@ class ChooseMapController: UIViewController {
             case .destructive:
                 self.popToMap()
             @unknown default:
-                fatalError()
+                fatalError("unknown alert action")
             }}))
         present(alert, animated: true, completion: nil)
     }
@@ -297,13 +300,16 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let index = indexPath.row - 1
         let map = customMaps[safe: index]
-        if map == nil, let newMapVC = storyboard?.instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
+        if let map = map {
+            if map.id == UploadPostModel.shared.postObject.mapID {
+                deselectMap(map: map)
+            } else { selectMap(map: map) }
+            HapticGenerator.shared.play(.light)
+
+        } else if map == nil, let newMapVC = storyboard?.instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
             newMapVC.delegate = self
             newMapVC.mapObject = newMap
             DispatchQueue.main.async { self.present(newMapVC, animated: true) }
-        } else {
-            map!.id == UploadPostModel.shared.postObject.mapID ? deselectMap(map: map!) : selectMap(map: map!)
-            HapticGenerator.shared.play(.light)
         }
     }
 

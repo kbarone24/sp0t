@@ -110,7 +110,7 @@ extension AVCameraController {
         DispatchQueue.global(qos: .userInitiated).async {
             self.getMap(mapID: post.mapID ?? "") { map, failed in
                 var map = map
-                self.uploadPostImage(post.postImage, postID: post.id!, progressFill: self.failedPostView!.progressFill, fullWidth: UIScreen.main.bounds.width - 100) { [weak self] imageURLs, failed in
+                self.uploadPostImage(images: post.postImage, postID: post.id!, progressFill: self.failedPostView!.progressFill, fullWidth: UIScreen.main.bounds.width - 100) { [weak self] imageURLs, failed in
                     guard let self = self else { return }
 
                     if imageURLs.isEmpty && failed {
