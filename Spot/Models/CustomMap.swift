@@ -111,43 +111,42 @@ struct CustomMap: Identifiable, Codable, Hashable {
             }
         }
     }
-
+    
     mutating func addSpotGroups() {
         /// append spots to show on map even if there's no post attached
-            for i in 0..<spotIDs.count {
-                var postsToSpot: [String] = []
-                var postSpotTimestamps: [Timestamp] = []
-                var postersAtSpot: [String] = []
-                /// get  postSpotIDs and matching timestamps
-                for j in 0..<postSpotIDs.count where postSpotIDs[j] == spotIDs[i] {
-                    postsToSpot.append(postSpotIDs[j])
-                    postSpotTimestamps.append(postTimestamps[safe: j] ?? Timestamp(seconds: 1, nanoseconds: 1))
-                    if !postersAtSpot.contains(posterIDs[safe: j] ?? "") { postersAtSpot.append(posterIDs[safe: j] ?? "")
-                    }
+        for i in 0..<spotIDs.count {
+            var postsToSpot: [String] = []
+            var postSpotTimestamps: [Timestamp] = []
+            var postersAtSpot: [String] = []
+            /// get  postSpotIDs and matching timestamps
+            for j in 0..<postSpotIDs.count where postSpotIDs[j] == spotIDs[i] {
+                postsToSpot.append(postSpotIDs[j])
+                postSpotTimestamps.append(postTimestamps[safe: j] ?? Timestamp(seconds: 1, nanoseconds: 1))
+                if !postersAtSpot.contains(posterIDs[safe: j] ?? "") { postersAtSpot.append(posterIDs[safe: j] ?? "")
                 }
-
-                let coordinate = CLLocationCoordinate2D(
-                    latitude: spotLocations[safe: i]?["lat"] ?? 0.0,
-                    longitude: spotLocations[safe: i]?["long"] ?? 0.0
+            }
+            
+            let coordinate = CLLocationCoordinate2D(
+                latitude: spotLocations[safe: i]?["lat"] ?? 0.0,
+                longitude: spotLocations[safe: i]?["long"] ?? 0.0
+            )
+            
+            if !postGroup.contains(where: { $0.id == spotIDs[i] }) {
+                let mapPostGroup = MapPostGroup(
+                    id: spotIDs[i],
+                    coordinate: coordinate,
+                    spotName: spotNames[safe: i] ?? "",
+                    postIDs: [],
+                    postsToSpot: postsToSpot,
+                    postTimestamps: postSpotTimestamps,
+                    numberOfPosters: postersAtSpot.count
                 )
-
-                if !postGroup.contains(where: { $0.id == spotIDs[i] }) {
-                    let mapPostGroup = MapPostGroup(
-                        id: spotIDs[i],
-                        coordinate: coordinate,
-                        spotName: spotNames[safe: i] ?? "",
-                        postIDs: [],
-                        postsToSpot: postsToSpot,
-                        postTimestamps: postSpotTimestamps,
-                        numberOfPosters: postersAtSpot.count
-                    )
-
-                    postGroup.append(mapPostGroup)
-                }
+                
+                postGroup.append(mapPostGroup)
             }
         }
     }
-
+    
     mutating func updateGroup(post: MapPost) -> (group: MapPostGroup?, newGroup: Bool) {
         if let spotID = post.spotID, spotID == "", let id = post.id {
             /// attach by postID

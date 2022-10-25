@@ -342,7 +342,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         let query = usersRef.whereField("username", isEqualTo: username)
 
         query.getDocuments { [weak self] snap, err in
-            guard let self, err == nil else {
+            guard let self = self, err == nil else {
                 completion("error")
                 return
             }
@@ -378,7 +378,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         /// check username status again on completion
         usernameAvailable(username: username) { [weak self] errorMessage in
 
-            guard let self, errorMessage.isEmpty else {
+            guard let self = self, errorMessage.isEmpty else {
                 Mixpanel.mainInstance().track(
                     event: "SignUpUsernameError",
                     properties: ["error": errorMessage]
