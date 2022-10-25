@@ -103,11 +103,11 @@ extension MapController {
                         do {
                             let friendInfo = try friendSnap?.data(as: UserProfile.self)
                             guard let info = friendInfo else { UserDataModel.shared.userInfo.friendIDs.removeAll(where: {$0 == friend}); return }
-                            
-                            if !UserDataModel.shared.userInfo.friendsList.contains(where: {$0.id == friend}) && !UserDataModel.shared.deletedFriendIDs.contains(friend) {
+
+                            if !UserDataModel.shared.userInfo.friendsList.contains(where: { $0.id == friend }) && !UserDataModel.shared.deletedFriendIDs.contains(friend) {
 
                                 UserDataModel.shared.userInfo.friendsList.append(info)
-                                
+
                                 if UserDataModel.shared.userInfo.friendsList.count == UserDataModel.shared.userInfo.friendIDs.count {
                                     self.sortFriends() /// sort for top friends
                                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
@@ -369,10 +369,8 @@ extension MapController {
                     guard let postInfo = postIn else { return }
                     /// new post has 2 separate writes, wait for post location to get set to load it in
                     if doc.get("g") as? String == nil { return }
-                    
                     let map = UserDataModel.shared.userInfo.mapsList.first(where: {$0.id == postInfo.mapID ?? ""})
                     if self.hasNewPostAccess(post: postInfo, map: map) {
-                        print("finish post load", postInfo.spotName)
                         self.finishNewMapPostLoad(postInfo: postInfo, map: map)
                     }
 
@@ -390,31 +388,18 @@ extension MapController {
         return true
     }
 
-    /*
-    func loadNewMap(post: MapPost) {
-        db.collection("maps").document(post.mapID!).getDocument { doc, err in
-            guard let doc = doc else { return }
-            do {
-                let mapIn = try doc.data(as: CustomMap.self)
-                guard var mapInfo = mapIn else { return }
-                mapInfo.addSpotGroups()
-                UserDataModel.shared.userInfo.mapsList.insert(mapInfo, at: 0)
-                self.finishNewMapPostLoad(postInfo: post, map: mapInfo)
-            } catch {
-                return
-            }
-        }
-    } */
-
     func finishNewMapPostLoad(postInfo: MapPost, map: CustomMap?) {
         /// check map dictionary for add
-        if !self.postsContains(postID: postInfo.id!, mapID: postInfo.mapID ?? "", newPost: true) {
+        if !self.postsContains(postID: postInfo.id ?? "", mapID: postInfo.mapID ?? "", newPost: true) {
             self.setPostDetails(post: postInfo) { [weak self] post in
                 guard let self = self else { return }
                 if !self.postsContains(postID: post.id!, mapID: post.mapID ?? "", newPost: true) {
                     DispatchQueue.main.async {
+                        /// update map values for newly added post
+                        if map != nil, let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == map?.id ?? "" }) {
+                            UserDataModel.shared.userInfo.mapsList[i].updatePostLevelValues(post: postInfo)
+                        }
                         self.addPostToDictionary(post: post, map: map, newPost: true, index: self.selectedItemIndex)
-                  ///      let resort = self.selectedItemIndex == 0 /// patch fix for selected index getting messed up on resort if index > 0
                         self.reloadMapsCollection(resort: true, newPost: true)
                     }
                 }

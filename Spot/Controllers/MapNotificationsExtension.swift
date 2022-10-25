@@ -50,12 +50,22 @@ extension MapController {
         mapView.shouldCluster = false
         mapView.lockClusterOnUpload = true
         /// add new map to mapsList if applicable
-        var map = notification.userInfo?["map"] as? CustomMap
+        let map = notification.userInfo?["map"] as? CustomMap
+        let spot = notification.userInfo?["spot"] as? MapSpot
         let emptyMap = map == nil || map?.id ?? "" == ""
-        if !emptyMap && !(UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == map!.id! })) {
-            map!.addSpotGroups()
-            UserDataModel.shared.userInfo.mapsList.append(map!)
+        if !emptyMap {
+            /// update post/spot values for existing map
+            if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == map?.id ?? "" }) {
+                UserDataModel.shared.userInfo.mapsList[i].updatePostLevelValues(post: post)
+                if let spot = spot { UserDataModel.shared.userInfo.mapsList[i].updateSpotLevelValues(spot: spot) }
+
+            } else if var map = map {
+                /// finish creating new map object
+                map.addSpotGroups()
+                UserDataModel.shared.userInfo.mapsList.append(map)
+            }
         }
+
         let mapIndex = post.mapID == "" ? 0 : 1
         let dictionaryIndex = post.mapID == "" ? 0 : -1
         DispatchQueue.main.async {
@@ -89,22 +99,22 @@ extension MapController {
         removePost(post: post, spotID: spotID, mapID: mapID, mapDelete: mapDelete)
         DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
     }
-    
+
     func removePost(post: MapPost, spotID: String, mapID: String, mapDelete: Bool) {
         /// remove from friends stuff
         friendsPostsDictionary.removeValue(forKey: post.id!)
         removeFromFriendsPostGroup(postID: post.id!, spotID: spotID)
-        UserDataModel.shared.deletedPostIDs.append(post.id!)
+        UserDataModel.shared.deletedPostIDs.append(post.id ?? "")
         /// remove from map
         if mapID != "" {
             if mapDelete {
                 selectedItemIndex = 0 /// reset to avoid index out of bounds
                 UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == mapID })
             } else if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) {
-                DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id!, spotID: spotID) }
+                DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id ?? "", spotID: spotID) }
             }
         }
-        if let anno = mapView.annotations.first(where: {$0.coordinate.isEqualTo(coordinate: post.coordinate)}) {
+        if let anno = mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: post.coordinate) }) {
             DispatchQueue.main.async { self.mapView.removeAnnotation(anno) }
 
         }
@@ -129,7 +139,6 @@ extension MapController {
     }
 
     @objc func notifyFriendsListAdd() {
-        print("notify friends list add")
         /// query friends posts again
         homeFetchGroup.enter()
         homeFetchGroup.notify(queue: .main) { [weak self] in
@@ -143,7 +152,6 @@ extension MapController {
     }
 
     @objc func notifyEditMap(_ notification: NSNotification) {
-        print("notify edit", UserDataModel.shared.userInfo.mapsList.map({ $0.mapName }))
         reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
         /// update should happen by listener
       /*  guard let map = notification.userInfo?["map"] as? CustomMap else { return }
@@ -158,13 +166,10 @@ extension MapController {
             DispatchQueue.main.async { self.mapsCollection.reloadItems(at: [IndexPath(item: i + 1, section: 0)]) }
         } */
     }
-    
+
     @objc func notifyFriendRemove(_ notifications: NSNotification) {
-        print("notify friend remove")
         guard let friendID = notifications.userInfo?.first?.value as? String else { return }
-        print("friend id", friendID)
         for post in friendsPostsDictionary {
-            print("doc id", post.value.posterID)
             if post.value.posterID == friendID { removePost(post: post.value, spotID: post.value.spotID ?? "", mapID: "", mapDelete: false) }
         }
     }

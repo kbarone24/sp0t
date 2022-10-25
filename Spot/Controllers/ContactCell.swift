@@ -68,7 +68,7 @@ class ContactCell: UITableViewCell {
                 $0.isHidden = false
                 $0.translatesAutoresizingMaskIntoConstraints = true
                 profilePicButton.addSubview($0)
-                let url = contact!.imageURL
+                let url = contact?.imageURL ?? ""
                 if url != "" {
                     let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
                     $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer]) } else {print("profilePic not found")}
@@ -88,16 +88,15 @@ class ContactCell: UITableViewCell {
             $0.height.width.equalTo(50)
         }
 
-        if (contact?.avatarURL ?? "") != "" {
+        let url = contact?.avatarURL ?? ""
+        if url != "" {
             userAvatar = UIImageView {
                 $0.layer.masksToBounds = false
                 $0.contentMode = UIView.ContentMode.scaleAspectFill
                 $0.isHidden = false
-                let url = contact?.avatarURL!
-                if url != "" {
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 50.24, height: 66), scaleMode: .aspectFit)
-                    $0.sd_setImage(with: URL(string: url!), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-                } else { print("Avatar not found") }
+                let url = contact?.avatarURL ?? ""
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 50.24, height: 66), scaleMode: .aspectFit)
+                $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
                 $0.translatesAutoresizingMaskIntoConstraints = false
                 contentView.addSubview($0)
             }
@@ -146,17 +145,18 @@ class ContactCell: UITableViewCell {
         }
 
         // cell details and adding targets that depend on contact type
-        if contact != nil {
-            name.text = contact!.name
-            detail.text = contact!.username
+        if let contact = contact {
+            name.text = contact.name
+            detail.text = contact.username
             if friend == .none {
                 statusButton.addTarget(self, action: #selector(addFriend(_:)), for: .touchUpInside)
             }
         } else {
-            name.text = inviteContact!.givenName + " " + inviteContact!.familyName
-            let rawNumber = inviteContact!.phoneNumbers.first?.value
-            number = rawNumber?.stringValue ?? ""
-            detail.text = number
+            name.text = inviteContact!.givenName + " " + (inviteContact?.familyName ?? "")
+            if let rawNumber = inviteContact?.phoneNumbers.first?.value.stringValue {
+                number = rawNumber
+                detail.text = rawNumber
+            }
             if invited == .none {
                 statusButton.addTarget(self, action: #selector(inviteFriend(_:)), for: .touchUpInside)
             }
@@ -181,8 +181,8 @@ class ContactCell: UITableViewCell {
     }
 
     @objc func addFriend(_ sender: Any) {
+        guard let receiverID = contact.id else { return }
         Mixpanel.mainInstance().track(event: "ContactCellAddFriend")
-        let receiverID = contact.id!
         NotificationCenter.default.post(name: NSNotification.Name("ContactCellAddFriend"), object: nil, userInfo: ["receiverID": receiverID])
 
         addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: receiverID)
@@ -219,7 +219,7 @@ class StatusButton: UIButton {
 
     func setUpButton(contact: UserProfile?, inviteContact: CNContact?, friend: FriendStatus, invited: InviteStatus) {
         self.layer.cornerRadius = 14
-        /// setting up different buttons
+        // setting up different buttons
         if contact != nil {
             switch friend {
             case .none:
