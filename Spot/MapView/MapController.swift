@@ -76,6 +76,7 @@ final class MapController: UIViewController {
     }
 
     override func viewDidLoad() {
+        super.viewDidLoad()
         setUpViews()
         checkLocationAuth()
         getAdmins() /// get admin users to exclude from analytics

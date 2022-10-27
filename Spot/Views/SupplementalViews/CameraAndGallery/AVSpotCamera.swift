@@ -216,9 +216,9 @@ extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputS
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
 
-        /// start a timer when alive capture initiated
-        /// show if timer >  .0.12, take image as capture, pass to avcameracontroller, reset timer
-        /// stop timer on 10th capture
+        // start a timer when alive capture initiated
+        // show if timer >  .0.12, take image as capture, pass to avcameracontroller, reset timer
+        // stop timer on 10th capture
 
         if start != nil {
 
