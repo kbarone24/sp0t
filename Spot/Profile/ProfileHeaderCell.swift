@@ -22,16 +22,75 @@ enum ProfileRelation {
 
 class ProfileHeaderCell: UICollectionViewCell {
 
-    private var profileImage: UIImageView!
-    private var profileAvatar: UIImageView!
-    private var profileName: UILabel!
-    private var profileAccount: UILabel!
-    private var locationButton: UIButton!
-    public var friendListButton: UIButton!
-    public var actionButton: UIButton!
-    private var profile: UserProfile!
-    private var relation: ProfileRelation!
-    private var pendingFriendNotiID: String?
+    private var profile: UserProfile?
+    private var relation: ProfileRelation = .stranger
+
+    private lazy var profileImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage()
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.masksToBounds = true
+        imageView.clipsToBounds = true
+        return imageView
+    }()
+
+    private lazy var profileAvatar: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        return imageView
+    }()
+
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.text = ""
+        label.adjustsFontSizeToFitWidth = true
+        return label
+    }()
+
+    private lazy var usernameLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
+        label.text = ""
+        label.adjustsFontSizeToFitWidth = true
+        return label
+    }()
+
+    private lazy var locationButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "ProfileLocation"), for: .normal)
+        button.setTitle("", for: .normal)
+        button.titleLabel?.adjustsFontSizeToFitWidth = true
+        button.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
+        button.addTarget(self, action: #selector(locationButtonAction), for: .touchUpInside)
+        button.snp.contentCompressionResistanceHorizontalPriority = 700
+        return button
+    }()
+
+    public lazy var friendListButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "FriendsIcon"), for: .normal)
+        button.setTitle("", for: .normal)
+        button.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
+        button.titleLabel?.adjustsFontSizeToFitWidth = false
+        return button
+    }()
+
+    public lazy var actionButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("Edit profile", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+        button.layer.cornerRadius = 37 / 2
+        return button
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -40,10 +99,6 @@ class ProfileHeaderCell: UICollectionViewCell {
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    override func prepareForReuse() {
-
     }
 
     public func cellSetup(userProfile: UserProfile, relation: ProfileRelation) {
@@ -55,8 +110,8 @@ class ProfileHeaderCell: UICollectionViewCell {
         let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
         profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
 
-        profileName.text = userProfile.name
-        profileAccount.text = userProfile.username
+        nameLabel.text = userProfile.name
+        usernameLabel.text = userProfile.username
         locationButton.setTitle(userProfile.currentLocation, for: .normal)
         if userProfile.currentLocation == "" {
             locationButton.setImage(UIImage(), for: .normal)
@@ -95,13 +150,7 @@ extension ProfileHeaderCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
 
-        profileImage = UIImageView {
-            $0.image = UIImage()
-            $0.contentMode = .scaleAspectFill
-            $0.layer.masksToBounds = true
-            $0.clipsToBounds = true
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(profileImage)
         profileImage.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.leading.equalToSuperview().offset(28)
@@ -109,11 +158,7 @@ extension ProfileHeaderCell {
         }
         profileImage.layer.cornerRadius = 84 / 2
 
-        profileAvatar = UIImageView {
-            $0.image = UIImage()
-            $0.contentMode = .scaleAspectFit
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(profileAvatar)
         profileAvatar.snp.makeConstraints {
             $0.leading.equalTo(profileImage).inset(-14)
             $0.bottom.equalTo(profileImage).inset(-8.24)
@@ -121,61 +166,32 @@ extension ProfileHeaderCell {
             $0.width.equalTo(36)
         }
 
-        profileName = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.text = ""
-            $0.adjustsFontSizeToFitWidth = true
-            contentView.addSubview($0)
-        }
-        profileName.snp.makeConstraints {
+        contentView.addSubview(nameLabel)
+        nameLabel.snp.makeConstraints {
             $0.leading.equalTo(profileImage.snp.trailing).offset(15)
             $0.top.equalTo(profileImage).offset(7)
             $0.height.equalTo(23)
             $0.trailing.equalToSuperview().inset(29)
         }
 
-        profileAccount = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
-            $0.text = ""
-            $0.adjustsFontSizeToFitWidth = true
-            contentView.addSubview($0)
-        }
-        profileAccount.snp.makeConstraints {
-            $0.leading.equalTo(profileName).offset(2)
-            $0.top.equalTo(profileName.snp.bottom).offset(2)
+        contentView.addSubview(usernameLabel)
+        usernameLabel.snp.makeConstraints {
+            $0.leading.equalTo(nameLabel).offset(2)
+            $0.top.equalTo(nameLabel.snp.bottom).offset(2)
             $0.height.equalTo(19)
             $0.width.equalTo(113)
         }
-        /// location button will truncate if overflow
-        locationButton = UIButton {
-            $0.setImage(UIImage(named: "ProfileLocation"), for: .normal)
-            $0.setTitle("", for: .normal)
-            $0.titleLabel?.adjustsFontSizeToFitWidth = true
-            $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
-            $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
-            $0.addTarget(self, action: #selector(locationButtonAction), for: .touchUpInside)
-            $0.snp.contentCompressionResistanceHorizontalPriority = 700
-            contentView.addSubview($0)
-        }
+
+        // location button will truncate if overflow
+        contentView.addSubview(locationButton)
         locationButton.snp.makeConstraints {
-            $0.top.equalTo(profileAccount.snp.bottom).offset(1)
+            $0.top.equalTo(usernameLabel.snp.bottom).offset(1)
             $0.height.equalTo(38)
             $0.leading.equalTo(profileImage.snp.trailing).offset(15)
         }
 
-        /// friends list button always shows in its entirety
-        friendListButton = UIButton {
-            $0.setImage(UIImage(named: "FriendsIcon"), for: .normal)
-            $0.setTitle("", for: .normal)
-            $0.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
-            $0.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
-            $0.titleLabel?.adjustsFontSizeToFitWidth = false
-            contentView.addSubview($0)
-        }
+        // friends list button always shows in its entirety
+        contentView.addSubview(friendListButton)
         friendListButton.snp.makeConstraints {
             $0.top.equalTo(locationButton)
             $0.leading.equalTo(locationButton.snp.trailing).offset(15)
@@ -183,19 +199,12 @@ extension ProfileHeaderCell {
             $0.height.equalTo(38)
         }
 
-        actionButton = UIButton {
-            $0.setTitle("Edit profile", for: .normal)
-            $0.setTitleColor(.black, for: .normal)
-            $0.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(actionButton)
         actionButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(14)
             $0.height.equalTo(37)
             $0.top.equalTo(profileImage.snp.bottom).offset(16)
         }
-        actionButton.layer.cornerRadius = 37 / 2
     }
 
     @objc func locationButtonAction() {
