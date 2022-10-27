@@ -358,6 +358,8 @@
 		CD3D8DD929050A730062DE8D /* MapLoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD829050A730062DE8D /* MapLoadingCell.swift */; };
 		CD3D8DDB29050A970062DE8D /* AddMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DDA29050A970062DE8D /* AddMapCell.swift */; };
 		CD3D8DDD29050ACE0062DE8D /* MapHomeCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DDC29050ACE0062DE8D /* MapHomeCell.swift */; };
+		CDAE20D9290A153900EB1F75 /* MapPostBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDAE20D8290A153900EB1F75 /* MapPostBody.swift */; };
+		CDC59829290A197D00E021AE /* MapPhotosCollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */; };
 		CDF8E93D2903A19D00BE929F /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */; };
 		CDF8E93F2903A21300BE929F /* MapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E93E2903A21300BE929F /* MapService.swift */; };
 		CDF8E9412903AC4E00BE929F /* FirebaseCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9402903AC4E00BE929F /* FirebaseCollection.swift */; };
@@ -585,6 +587,8 @@
 		CD3D8DD829050A730062DE8D /* MapLoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLoadingCell.swift; sourceTree = "<group>"; };
 		CD3D8DDA29050A970062DE8D /* AddMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMapCell.swift; sourceTree = "<group>"; };
 		CD3D8DDC29050ACE0062DE8D /* MapHomeCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapHomeCell.swift; sourceTree = "<group>"; };
+		CDAE20D8290A153900EB1F75 /* MapPostBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostBody.swift; sourceTree = "<group>"; };
+		CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPhotosCollectionView.swift; sourceTree = "<group>"; };
 		CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		CDF8E93E2903A21300BE929F /* MapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapService.swift; sourceTree = "<group>"; };
 		CDF8E9402903AC4E00BE929F /* FirebaseCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseCollection.swift; sourceTree = "<group>"; };
@@ -779,6 +783,7 @@
 				8C1E4879289C54C10093030D /* SpotNameAnnotationView.swift */,
 				CDF8E9582903C7F200BE929F /* NotificationsButton.swift */,
 				CDF8E95A2903C82100BE929F /* ProfileButton.swift */,
+				CDAE20D8290A153900EB1F75 /* MapPostBody.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -1158,6 +1163,7 @@
 				CDF8E9652903CD8400BE929F /* ExploreMapViewModel.swift */,
 				CD3D8DD02904F9960062DE8D /* ExploreMapPreviewCell.swift */,
 				CD3D8DD22904FA150062DE8D /* ExploreMapTitleView.swift */,
+				CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */,
 			);
 			path = ExploreMap;
 			sourceTree = "<group>";
@@ -1535,6 +1541,7 @@
 				8C99B11A2863A44E00C98A32 /* RefreshStatus.swift in Sources */,
 				4134867F285930DF0098B27B /* ImagePreviewController.swift in Sources */,
 				5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */,
+				CDAE20D9290A153900EB1F75 /* MapPostBody.swift in Sources */,
 				CDF8E94F2903B6C500BE929F /* UIAlertActionExtension.swift in Sources */,
 				CDF8E98C29048AF900BE929F /* EditMapController.swift in Sources */,
 				CD3D8DD32904FA150062DE8D /* ExploreMapTitleView.swift in Sources */,
@@ -1578,6 +1585,7 @@
 				8C1E4862289C54240093030D /* ProfileMyMapCell.swift in Sources */,
 				8C1E487A289C54C10093030D /* SpotPostAnnotationView.swift in Sources */,
 				594CE11324B6A6CF0051516C /* MapPost.swift in Sources */,
+				CDC59829290A197D00E021AE /* MapPhotosCollectionView.swift in Sources */,
 				59FCF5B224734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
 				CDF8E9712904634E00BE929F /* CameraButton.swift in Sources */,
 				593AC549243F898300C08237 /* UsernameController.swift in Sources */,

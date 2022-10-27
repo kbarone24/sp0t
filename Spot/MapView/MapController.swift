@@ -236,14 +236,14 @@ final class MapController: UIViewController {
     }
 
     @objc func addTap(_ sender: UIButton) {
-        guard let serviceContainer else { return }
-
-        let vmmm = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer))
-        let transition = AddButtonTransition()
-        self.navigationController?.view.layer.add(transition, forKey: kCATransition)
-        self.navigationController?.pushViewController(vmmm, animated: false)
-
-        return
+//        guard let serviceContainer else { return }
+//
+//        let vmmm = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer))
+//        let transition = AddButtonTransition()
+//        self.navigationController?.view.layer.add(transition, forKey: kCATransition)
+//        self.navigationController?.pushViewController(vmmm, animated: false)
+//
+//        return
 
         Mixpanel.mainInstance().track(event: "MapControllerAddTap")
 

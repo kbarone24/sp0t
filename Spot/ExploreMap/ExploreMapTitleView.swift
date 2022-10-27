@@ -8,7 +8,7 @@
 
 import UIKit
 
-final class ExploreMapTitleView: UIView {
+final class ExploreMapTitleView: UITableViewHeaderFooterView {
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -27,10 +27,9 @@ final class ExploreMapTitleView: UIView {
         label.textAlignment = .center
         return label
     }()
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
+    
+    override init(reuseIdentifier: String?) {
+        super.init(reuseIdentifier: reuseIdentifier)
         backgroundColor = .white
         
         addSubview(titleLabel)
@@ -38,14 +37,14 @@ final class ExploreMapTitleView: UIView {
 
         titleLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(10.0)
-            make.leading.equalToSuperview().offset(35.0)
-            make.trailing.equalToSuperview().inset(15.0)
+            make.leading.equalToSuperview().offset(25.0)
+            make.trailing.equalToSuperview().inset(25.0)
         }
 
         descriptionLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(10.0)
-            make.leading.equalToSuperview().offset(35.0)
-            make.trailing.equalToSuperview().inset(15.0)
+            make.leading.equalToSuperview().offset(25.0)
+            make.trailing.equalToSuperview().inset(25.0)
             make.bottom.equalToSuperview().inset(20.0)
         }
     }
