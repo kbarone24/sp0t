@@ -10,8 +10,20 @@ import FirebaseUI
 import UIKit
 
 class ProfileBodyCell: UICollectionViewCell {
-    private var mapImage: UIImageView!
-    private var mapName: UILabel!
+    private lazy var mapImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.masksToBounds = true
+        imageView.layer.cornerRadius = 14
+        return imageView
+    }()
+
+    private lazy var mapName: UILabel = {
+        let label = UILabel()
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+        return label
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -23,7 +35,8 @@ class ProfileBodyCell: UICollectionViewCell {
     }
 
     override func prepareForReuse() {
-        if mapImage != nil { mapImage.sd_cancelCurrentImageLoad() }
+        super.prepareForReuse()
+        mapImage.sd_cancelCurrentImageLoad()
     }
 
     public func cellSetup(mapData: CustomMap, userID: String) {
@@ -37,7 +50,7 @@ class ProfileBodyCell: UICollectionViewCell {
         if mapData.secret {
             let imageAttachment = NSTextAttachment()
             imageAttachment.image = UIImage(named: "SecretMap")
-            imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
+            imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
             let attachmentString = NSAttributedString(attachment: imageAttachment)
             let completeText = NSMutableAttributedString(string: "")
             completeText.append(attachmentString)
@@ -53,23 +66,13 @@ extension ProfileBodyCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
 
-        mapImage = UIImageView {
-            $0.contentMode = .scaleAspectFill
-            $0.layer.masksToBounds = true
-            $0.layer.cornerRadius = 14
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(mapImage)
         mapImage.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
             $0.height.equalTo(contentView.frame.width).multipliedBy(182 / 195)
         }
 
-        mapName = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-            $0.text = ""
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(mapName)
         mapName.snp.makeConstraints {
             $0.leading.trailing.equalTo(mapImage)
             $0.top.equalTo(mapImage.snp.bottom).offset(6)

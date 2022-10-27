@@ -133,12 +133,18 @@ extension MapController {
 
     func updateUserInfo(user: UserProfile) {
         /// only reload if a visible value changed
-        let runReload = UserDataModel.shared.userInfo.avatarURL != user.avatarURL || UserDataModel.shared.userInfo.currentLocation != user.currentLocation || UserDataModel.shared.userInfo.imageURL != user.imageURL || UserDataModel.shared.userInfo.name != user.name || UserDataModel.shared.userInfo.username != user.username
+        let runReload = UserDataModel.shared.userInfo.avatarURL != user.avatarURL ||
+        UserDataModel.shared.userInfo.currentLocation != user.currentLocation ||
+        UserDataModel.shared.userInfo.imageURL != user.imageURL ||
+        UserDataModel.shared.userInfo.name != user.name ||
+        UserDataModel.shared.userInfo.username != user.username
+
         // update user info fields to avoid overwriting map values
         UserDataModel.shared.userInfo.avatarURL = user.avatarURL
         UserDataModel.shared.userInfo.currentLocation = user.currentLocation
         UserDataModel.shared.userInfo.imageURL = user.imageURL
         UserDataModel.shared.userInfo.name = user.name
+        UserDataModel.shared.userInfo.hiddenUsers = user.hiddenUsers
         UserDataModel.shared.userInfo.pendingFriendRequests = user.pendingFriendRequests
         UserDataModel.shared.userInfo.spotScore = user.spotScore
         UserDataModel.shared.userInfo.topFriends = user.topFriends
@@ -315,7 +321,6 @@ extension MapController {
                         self.updateMap(map: mapInfo, index: i)
                         continue
                     }
-
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
                     self.homeFetchGroup.enter()

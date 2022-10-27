@@ -157,7 +157,10 @@ class FriendsListController: UIViewController {
 
     func addSearchBar() {
         searchBar = SpotSearchBar {
-            $0.placeholder = " Search friends"
+            $0.searchTextField.attributedPlaceholder = NSAttributedString(
+                string: "Search friends",
+                attributes: [NSAttributedString.Key.foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)]
+                )
             $0.delegate = self
             $0.keyboardDistanceFromTextField = 250
             view.addSubview($0)

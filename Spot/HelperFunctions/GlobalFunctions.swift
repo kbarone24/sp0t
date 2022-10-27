@@ -180,19 +180,14 @@ extension UIViewController {
     }
 
     func addToCityList(city: String) {
-        /// this should be a backend func but didnt feel like doing all the geocoding nonsense
         let db = Firestore.firestore()
         let query = db.collection("cities").whereField("cityName", isEqualTo: city)
 
         query.getDocuments { [weak self] (cityDocs, _) in
-
             guard let self = self else { return }
             if cityDocs?.documents.count ?? 0 == 0 {
-
                 self.getCoordinateFrom(address: city) { coordinate, error in
-
                     guard let coordinate = coordinate, error == nil else { return }
-
                     let id = UUID().uuidString
                     db.collection("cities").document(id).setData(["cityName": city])
                     GeoFirestore(collectionRef: db.collection("cities")).setLocation(location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude), forDocumentWithID: id) { (_) in
@@ -769,69 +764,6 @@ extension UIViewController {
     }
 }
 
-extension CLPlacemark {
-
-    func addressFormatter(number: Bool) -> String {
-
-        var addressString = ""
-
-        /// add number if locationPicker
-        if number && subThoroughfare != nil {
-            addressString = addressString + subThoroughfare! + " "
-        }
-
-        if thoroughfare != nil {
-            addressString = addressString + thoroughfare!
-        }
-
-        if locality != nil {
-            if addressString != "" {
-                addressString = addressString + ", "
-            }
-            addressString = addressString + locality!
-        }
-
-        if country != nil {
-
-            /// add state name for US
-            if country! == "United States" {
-                if administrativeArea != nil {
-
-                    if addressString != "" { addressString = addressString + ", " }
-                    addressString = addressString + administrativeArea!
-                }
-            }
-
-            if addressString != "" { addressString = addressString + ", " }
-            addressString = addressString + country!
-        }
-
-        return addressString
-    }
-}
-
-extension CLLocationDistance {
-
-    func getLocationString() -> String {
-        let feet = inFeet()
-        if feet > 528 {
-            let miles = inMiles()
-            let milesString = String(format: "%.2f", miles)
-            return milesString + " mi"
-        } else {
-            let feetString = String(Int(feet))
-            return feetString + " ft"
-        }
-    }
-
-    func inFeet() -> CLLocationDistance {
-        return self * 3.280_84
-    }
-
-    func inMiles() -> CLLocationDistance {
-        return self * 0.000_621_37
-    }
-}
 
 // THIS IS NOT GOOD
 // TODO: Each returned value should be in a separate extension of it's file type.
@@ -1295,15 +1227,3 @@ extension NSObject {
     }
 }
 
-extension UITextField {
-    func setLeftPaddingPoints(_ amount: CGFloat) {
-        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: amount, height: self.frame.size.height))
-        self.leftView = paddingView
-        self.leftViewMode = .always
-    }
-    func setRightPaddingPoints(_ amount: CGFloat) {
-        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: amount, height: self.frame.size.height))
-        self.rightView = paddingView
-        self.rightViewMode = .always
-    }
-}
