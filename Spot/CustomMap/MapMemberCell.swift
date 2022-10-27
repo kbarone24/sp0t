@@ -10,8 +10,21 @@ import FirebaseUI
 import UIKit
 
 final class MapMemberCell: UICollectionViewCell {
-    private var userImageView: UIImageView!
-    private var userNameLabel: UILabel!
+    private lazy var userImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.cornerRadius = 31
+        imageView.clipsToBounds = true
+        return imageView
+    }()
+
+    private lazy var usernameLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
+        label.textAlignment = .center
+        return label
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -26,12 +39,16 @@ final class MapMemberCell: UICollectionViewCell {
     func cellSetUp(user: UserProfile) {
         if user.imageURL != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            userImageView.sd_setImage(with: URL(string: user.imageURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
+            userImageView.sd_setImage(
+                with: URL(string: user.imageURL),
+                placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .white),
+                options: .highPriority,
+                context: [.imageTransformer: transformer])
         } else {
             userImageView.image = UIImage(named: "AddMembers")
         }
 
-        userNameLabel.text = user.username
+        usernameLabel.text = user.username
     }
 
     override func prepareForReuse() {
@@ -44,25 +61,14 @@ extension MapMemberCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
 
-        userImageView = UIImageView {
-            $0.image = UIImage()
-            $0.contentMode = .scaleAspectFill
-            $0.layer.cornerRadius = 31
-            $0.clipsToBounds = true
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(userImageView)
         userImageView.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.width.height.equalTo(62)
         }
 
-        userNameLabel = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14)
-            $0.textAlignment = .center
-            contentView.addSubview($0)
-        }
-        userNameLabel.snp.makeConstraints {
+        contentView.addSubview(usernameLabel)
+        usernameLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(userImageView.snp.bottom).offset(6)
             $0.height.equalTo(17)

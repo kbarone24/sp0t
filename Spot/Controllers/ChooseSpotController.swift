@@ -91,7 +91,10 @@ class ChooseSpotController: UIViewController {
         }
 
         searchBar = SpotSearchBar {
-            $0.placeholder = " Search spots"
+            $0.searchTextField.attributedPlaceholder = NSAttributedString(
+                string: "Search spots",
+                attributes: [NSAttributedString.Key.foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)]
+                )
             $0.delegate = self
             $0.keyboardDistanceFromTextField = 250
             searchBarContainer.addSubview($0)

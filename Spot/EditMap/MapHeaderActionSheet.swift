@@ -36,10 +36,10 @@ extension CustomMapHeaderCell {
         let unfollowAction = UIAlertAction(title: actionTitle, style: .destructive) { _ in
             self.unfollowMap()
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
         alert.addAction(unfollowAction)
         alert.addAction(cancelAction)
-        let containerVC = UIApplication.shared.windows.filter { $0.isKeyWindow }.first?.rootViewController ?? UIViewController()
+        let containerVC = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
         containerVC.present(alert, animated: true)
     }
 
@@ -51,10 +51,10 @@ extension CustomMapHeaderCell {
             mapData.memberIDs.remove(at: memberIndex)
         }
 
-        UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == self.mapData!.id! })
+        UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == self.mapData?.id ?? "_" })
 
         let db = Firestore.firestore()
-        let mapsRef = db.collection("maps").document(mapData!.id!)
+        let mapsRef = db.collection("maps").document(mapData?.id ?? "")
         mapsRef.updateData(["likers": FieldValue.arrayRemove([UserDataModel.shared.uid]), "memberIDs": FieldValue.arrayRemove([UserDataModel.shared.uid])])
         sendEditNotification()
     }

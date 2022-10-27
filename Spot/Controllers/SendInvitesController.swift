@@ -365,13 +365,13 @@ extension SendInvitesController: UITableViewDelegate, UITableViewDataSource {
 
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell") as? ContactCell else { return UITableViewCell() }
 
-        if tableView.tag == 1 { let contact = queryContacts[indexPath.row]; cell.set(contact: nil, inviteContact: contact.0, friend: .none, invited: contact.1); return cell }
+      //  if tableView.tag == 1 { let contact = queryContacts[indexPath.row]; cell.set(contact: nil, inviteContact: contact.0, friend: .none, invited: contact.1); return cell }
 
         let head = sectionTitles[indexPath.section]
         /// get first contact starting with this section letter and count from there
         guard let firstIndex = contacts.firstIndex(where: { $0.contact.familyName.isEmpty ? $0.contact.givenName.prefix(1) == head : $0.contact.familyName.prefix(1) == head }) else { return cell }
         guard let contact = contacts[safe: firstIndex + indexPath.row] else { return cell }
-        cell.set(contact: nil, inviteContact: contact.0, friend: .none, invited: contact.1)
+     //   cell.set(contact: nil, inviteContact: contact.0, friend: .none, invited: contact.1)
         return cell
     }
 
@@ -520,7 +520,7 @@ extension SendInvitesController: MFMessageComposeViewControllerDelegate {
             let controller = MFMessageComposeViewController()
             let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
 
-            let betaString = build == "25" ? "https://testflight.apple.com/join/D22GVBSJ" : "https://testflight.apple.com/join/ewgGbjkR"
+            let betaString = "https://testflight.apple.com/join/ewgGbjkR"
 
             controller.body = "Here’s a link to download the sp0t app 🌎🦦👀 \(betaString)"
             controller.recipients = [number]

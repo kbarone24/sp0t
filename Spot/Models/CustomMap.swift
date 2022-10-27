@@ -17,31 +17,20 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var communityMap: Bool? = false
     var founderID: String
     var imageURL: String
+    var hiddenUsers: [String]? = []
     var likers: [String]
     var lowercaseName: String?
     var mapDescription: String?
-    var mapName: String {
-        didSet {
-            print(mapName, "did set map name")
-        }
-    }
+    var mapName: String
     var memberIDs: [String]
     var posterDictionary: [String: [String]] = [:]
-    var posterIDs: [String] {
-        didSet {
-            print(mapName, "did set poster ids", posterIDs.count)
-        }
-    }
+    var posterIDs: [String]
     var posterUsernames: [String]
     var postIDs: [String]
     var postImageURLs: [String]
     var postLocations: [[String: Double]] = []
     var postSpotIDs: [String] = []
-    var postTimestamps: [Firebase.Timestamp] = [] {
-        didSet {
-            print(mapName, "did set post timestamps", postTimestamps.count)
-        }
-    }
+    var postTimestamps: [Firebase.Timestamp] = []
     var searchKeywords: [String]? = []
     var secret: Bool
     var spotIDs: [String]
@@ -56,7 +45,6 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var postGroup: [MapPostGroup] = []
 
     var userTimestamp: Timestamp {
-        print("map", mapName, postTimestamps.count, posterIDs.count)
         if let lastUserPostIndex = posterIDs.lastIndex(where: { $0 == UserDataModel.shared.uid }) {
             return postTimestamps[safe: lastUserPostIndex] ?? postTimestamps.first ?? Timestamp()
         }
@@ -78,6 +66,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case id
         case communityMap
         case founderID
+        case hiddenUsers
         case imageURL
         case lowercaseName
         case likers
@@ -238,7 +227,6 @@ struct CustomMap: Identifiable, Codable, Hashable {
             var posters = post.addedUsers ?? []
             posters.append(UserDataModel.shared.uid)
             posterDictionary[postID] = posters
-            print("update post level", posterIDs.count, postTimestamps.count)
         }
     }
 

@@ -19,15 +19,8 @@ class CustomMapController: UIViewController {
 
     let db: Firestore! = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    var endDocument: DocumentSnapshot!
+    var endDocument: DocumentSnapshot?
     var refresh: RefreshStatus = .activelyRefreshing
-
-    var collectionView: UICollectionView!
-    var floatBackButton: UIButton!
-    var barView: UIView!
-    var titleLabel: UILabel!
-    var barBackButton: UIButton!
-  //  private var addButton: UIButton!
 
     var userProfile: UserProfile?
     public var mapData: CustomMap?
@@ -47,13 +40,60 @@ class CustomMapController: UIViewController {
     var presentToFullScreen = false
     var offsetOnDismissal: CGFloat = 0
 
-    var mapType: MapType!
+    var mapType: MapType = .customMap
     var centeredMap = false
     var ranSetUp = false
 
     var circleQuery: GFSCircleQuery?
     let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("posts"))
     lazy var geoFetchGroup = DispatchGroup()
+
+    lazy var collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.delegate = self
+        view.dataSource = self
+        view.backgroundColor = .clear
+        view.register(CustomMapHeaderCell.self, forCellWithReuseIdentifier: "CustomMapHeaderCell")
+        view.register(CustomMapBodyCell.self, forCellWithReuseIdentifier: "CustomMapBodyCell")
+        view.register(SimpleMapHeaderCell.self, forCellWithReuseIdentifier: "SimpleMapHeaderCell")
+        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
+        return view
+    }()
+
+    private lazy var floatBackButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "BackArrowDark"), for: .normal)
+        button.backgroundColor = .white
+        button.setTitle("", for: .normal)
+        button.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
+        button.layer.cornerRadius = 19
+        return button
+    }()
+
+    lazy var barView = UIView()
+
+    lazy var barBackButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "BackArrowDark"), for: .normal)
+        button.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
+        return button
+    }()
+
+    lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.text = ""
+        label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+        label.textAlignment = .center
+        label.lineBreakMode = .byTruncatingTail
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.75
+        label.numberOfLines = 1
+        label.clipsToBounds = true
+        return label
+    }()
 
     init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], presentedDrawerView: DrawerView?, mapType: MapType) {
         super.init(nibName: nil, bundle: nil)
@@ -70,14 +110,15 @@ class CustomMapController: UIViewController {
 
     deinit {
         print("CustomMapController(\(self) deinit")
-        if floatBackButton != nil { floatBackButton.removeFromSuperview() }
-        if barView != nil { barView.removeFromSuperview() }
+        NotificationCenter.default.removeObserver(self)
+        floatBackButton.removeFromSuperview()
+        barView.removeFromSuperview()
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let window = UIApplication.shared.windows.filter { $0.isKeyWindow }.first?.rootViewController ?? UIViewController()
+        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
         if let mapNav = window as? UINavigationController {
             guard let mapVC = mapNav.viewControllers[0] as? MapController else { return }
             mapController = mapVC
@@ -88,10 +129,8 @@ class CustomMapController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView(present: !isMovingToParent) /// only present when view reappears
-        if barView != nil {
-            barView.isHidden = false
-        }
+        configureDrawerView(present: !isMovingToParent) // only present when view reappears
+        barView.isHidden = false
 
         mapController?.mapView.delegate = self
         mapController?.mapView.spotMapDelegate = self
@@ -99,8 +138,10 @@ class CustomMapController: UIViewController {
     }
 
     override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "CustomMapOpen")
-        /// only shouldn't be empty if another CustomMapController was stacked. use centered map variable to see if fetch ran yet for stacked VC
+        // only shouldn't be empty if another CustomMapController was stacked
+        // Use centered map variable to see if fetch ran yet for stacked VC
         if (mapController?.mapView.annotations.isEmpty ?? true) || !centeredMap {
             DispatchQueue.main.async { self.addInitialAnnotations() }
         }
@@ -108,7 +149,7 @@ class CustomMapController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        if barView != nil { barView.isHidden = true }
+        barView.isHidden = true
     }
 
     private func runInitialFetches() {
@@ -123,18 +164,18 @@ class CustomMapController: UIViewController {
         case .myMap:
             viewSetup()
             getPosts()
-        default: return
         }
     }
 
     private func getMapInfo() {
-        /// map passed through
+        // map passed through
         if mapData?.founderID ?? "" != "" {
             runMapSetup()
             return
         }
         DispatchQueue.global(qos: .userInitiated).async {
-            self.getMap(mapID: self.mapData!.id!) { [weak self] map in
+            guard let mapID = self.mapData?.id else { return }
+            self.getMap(mapID: mapID) { [weak self] map in
                 guard let self = self else { return }
                 self.mapData = map
                 self.runMapSetup()
@@ -145,7 +186,7 @@ class CustomMapController: UIViewController {
 
     private func runMapSetup() {
         if mapData == nil { return }
-        mapData!.addSpotGroups()
+        mapData?.addSpotGroups()
         DispatchQueue.global(qos: .userInitiated).async {
             self.getMapMembers()
             self.getPosts()
@@ -154,12 +195,12 @@ class CustomMapController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController!.setNavigationBarHidden(false, animated: true)
-        navigationController!.navigationBar.isTranslucent = true
+        guard let navigationController = navigationController else { return }
+        navigationController.setNavigationBarHidden(false, animated: true)
+        navigationController.navigationBar.isTranslucent = true
     }
 
     private func configureDrawerView(present: Bool) {
-        print("configure drawer view")
         if containerDrawerView == nil { return }
         containerDrawerView?.canInteract = true
         containerDrawerView?.canDrag = currentContainerCanDragStatus ?? true
@@ -187,19 +228,6 @@ class CustomMapController: UIViewController {
         view.backgroundColor = .white
         navigationItem.setHidesBackButton(true, animated: true)
 
-        collectionView = {
-            let layout = UICollectionViewFlowLayout()
-            layout.scrollDirection = .vertical
-            let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-            view.delegate = self
-            view.dataSource = self
-            view.backgroundColor = .clear
-            view.register(CustomMapHeaderCell.self, forCellWithReuseIdentifier: "CustomMapHeaderCell")
-            view.register(CustomMapBodyCell.self, forCellWithReuseIdentifier: "CustomMapBodyCell")
-            view.register(SimpleMapHeaderCell.self, forCellWithReuseIdentifier: "SimpleMapHeaderCell")
-            view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
-            return view
-        }()
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -210,35 +238,22 @@ class CustomMapController: UIViewController {
         collectionView.addGestureRecognizer(scrollViewPanGesture)
         collectionView.isScrollEnabled = false
 
-        floatBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
-            $0.backgroundColor = .white
-            $0.setTitle("", for: .normal)
-            $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
-            $0.layer.cornerRadius = 19
-            mapController?.view.insertSubview($0, belowSubview: containerDrawerView!.slideView)
-        }
+        guard let container = containerDrawerView else { return }
+        mapController?.view.insertSubview(floatBackButton, belowSubview: container.slideView)
         floatBackButton.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(15)
             $0.top.equalToSuperview().offset(49)
             $0.height.width.equalTo(38)
         }
 
-        barView = UIView {
-      ///      $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 90)
-            containerDrawerView?.slideView.addSubview($0)
-        }
+        containerDrawerView?.slideView.addSubview(barView)
         let height: CGFloat = UserDataModel.shared.screenSize == 0 ? 65 : 90
         barView.snp.makeConstraints {
             $0.leading.top.width.equalToSuperview()
             $0.height.equalTo(height)
         }
 
-        barBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
-            $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
-            barView.addSubview($0)
-        }
+        barView.addSubview(barBackButton)
         barBackButton.snp.makeConstraints {
             $0.leading.equalTo(22)
             $0.bottom.equalTo(-12)
@@ -246,18 +261,7 @@ class CustomMapController: UIViewController {
             $0.width.equalTo(30)
         }
 
-        titleLabel = UILabel {
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.text = ""
-            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            $0.textAlignment = .center
-            $0.lineBreakMode = .byTruncatingTail
-            $0.adjustsFontSizeToFitWidth = true
-            $0.minimumScaleFactor = 0.75
-            $0.numberOfLines = 1
-            $0.clipsToBounds = true
-            barView.addSubview($0)
-        }
+        barView.addSubview(titleLabel)
         titleLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(60)
             $0.bottom.equalTo(barBackButton)
@@ -328,13 +332,13 @@ class CustomMapController: UIViewController {
       //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
 
         postsList.removeAll(where: { $0.id == post.id })
-        mapData?.removePost(postID: post.id!, spotID: spotDelete ? post.spotID! : "")
+        mapData?.removePost(postID: post.id ?? "", spotID: spotDelete ? post.spotID ?? "" : "")
         DispatchQueue.main.async { self.collectionView.reloadData() }
     }
 
     @objc func notifyEditMap(_ notification: NSNotification) {
         guard let map = notification.userInfo?["map"] as? CustomMap else { return }
-        if map.id == mapData!.id {
+        if map.id == mapData?.id ?? "" {
             mapData = map
             DispatchQueue.main.async { self.collectionView.reloadData() }
             DispatchQueue.global().async { self.getMapMembers() }
@@ -342,11 +346,14 @@ class CustomMapController: UIViewController {
     }
 
     @objc func backButtonAction() {
-        centeredMap = false /// will prevent drawer to close on map move
+        centeredMap = false // will prevent drawer to close on map move
         Mixpanel.mainInstance().track(event: "CustomMapBackTap")
         barBackButton.isHidden = true
         floatBackButton.isHidden = true
-        NotificationCenter.default.removeObserver(self) /// remove observer to cancel drawer methods before sheetView is set to nil on mapVC
+        // remove observer to cancel drawer methods before sheetView is set to nil on mapVC (remove remaining observers on deinit)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
 
         DispatchQueue.main.async {
             self.mapController?.mapView.removeAllAnnos()
@@ -359,7 +366,8 @@ class CustomMapController: UIViewController {
 
     @objc func addAction() {
         Mixpanel.mainInstance().track(event: "CustomMapAddTap")
-        if navigationController!.viewControllers.contains(where: { $0 is AVCameraController }) { return } /// crash on double stack was happening here
+        // crash on double stack was happening here
+        if navigationController?.viewControllers.contains(where: { $0 is AVCameraController }) ?? false { return }
         DispatchQueue.main.async {
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
                 vc.mapObject = self.mapData

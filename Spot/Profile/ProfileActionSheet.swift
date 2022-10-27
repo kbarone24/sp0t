@@ -38,8 +38,9 @@ extension ProfileViewController {
 
     func removeFriend() {
         Mixpanel.mainInstance().track(event: "RemoveFriend")
-        removeFriend(friendID: userProfile!.id!)
-        NotificationCenter.default.post(name: NSNotification.Name("FriendRemove"), object: nil, userInfo: ["userID": userProfile!.id!])
+        guard let userID = userProfile?.id else { return }
+        removeFriend(friendID: userID)
+        NotificationCenter.default.post(name: NSNotification.Name("FriendRemove"), object: nil, userInfo: ["userID": userID])
         relation = .stranger
         DispatchQueue.main.async { self.collectionView.reloadData() }
     }

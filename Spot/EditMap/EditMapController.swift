@@ -12,25 +12,113 @@ import Mixpanel
 import UIKit
 
 class EditMapController: UIViewController {
-    private var editLabel: UILabel!
-    private var backButton: UIButton!
-    private var doneButton: UIButton!
-    private var mapCoverImage: UIImageView!
-    private var mapCoverImageSelectionButton: UIButton!
-    private var mapNameTextField: UITextField!
-    private var locationTextfield: UITextField!
-    private var mapDescription: UITextView!
-    private var privateLabel: UILabel!
-    private var privateDescriptionLabel: UILabel!
-    private var privateButton: UIButton!
-    private var activityIndicator: CustomActivityIndicator!
-
     private var mapData: CustomMap?
     private var mapCoverChanged = false
     private var memberList: [UserProfile] = []
 
     private let db = Firestore.firestore()
     public unowned var customMapVC: CustomMapController?
+
+    private lazy var editLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.text = "Edit map"
+        label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var backButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("Cancel", for: .normal)
+        button.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Medium", size: 14)
+        button.addTarget(self, action: #selector(dismissAction), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var doneButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("Done", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+        button.contentEdgeInsets = UIEdgeInsets(top: 9, left: 18, bottom: 9, right: 18)
+        button.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+        button.clipsToBounds = true
+        button.layer.cornerRadius = 37 / 2
+        button.addTarget(self, action: #selector(saveAction(_:)), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var mapCoverImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.layer.cornerRadius = 22.85
+        imageView.layer.masksToBounds = true
+        return imageView
+    }()
+
+    private lazy var coverImageButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "EditProfilePicture"), for: .normal)
+        button.setTitle("", for: .normal)
+        button.addTarget(self, action: #selector(mapImageSelectionAction), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var mapNameTextField: UITextField = {
+        let textField = UITextField()
+        textField.font = UIFont(name: "SFCompactText-Bold", size: 21)
+        textField.textColor = .black
+        textField.delegate = self
+        textField.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+        textField.layer.cornerRadius = 5
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor(red: 0.929, green: 0.929, blue: 0.929, alpha: 1).cgColor
+        textField.textAlignment = .center
+        return textField
+    }()
+
+    private lazy var mapDescription: UITextView = {
+        let textView = UITextView()
+        textView.delegate = self
+        textView.textAlignment = .center
+        textView.backgroundColor = .white
+        textView.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
+        textView.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
+        textView.isScrollEnabled = false
+        textView.textContainer.maximumNumberOfLines = 3
+        textView.textContainer.lineBreakMode = .byTruncatingHead
+        return textView
+    }()
+
+    private lazy var privateLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Make this map secret"
+        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        label.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
+        return label
+    }()
+
+    private lazy var privateDescriptionLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Only invited friends will see this map"
+        label.textColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
+        return label
+    }()
+
+    private var privateButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("", for: .normal)
+        button.addTarget(EditMapController.self, action: #selector(privateMapSwitchAction), for: .touchUpInside)
+        return button
+    }()
+
+    private var activityIndicator: CustomActivityIndicator = {
+        let indicator = CustomActivityIndicator()
+        indicator.isHidden = true
+        return indicator
+    }()
 
     init(mapData: CustomMap) {
         self.mapData = mapData
@@ -86,19 +174,30 @@ class EditMapController: UIViewController {
     }
 
     @objc func saveAction(_ sender: UIButton) {
+        guard let mapID = mapData?.id else { return }
         Mixpanel.mainInstance().track(event: "EditMapSave")
+
         sender.isEnabled = false
         activityIndicator.startAnimating()
-        let mapsRef = db.collection("maps").document(mapData!.id!)
 
-        if mapData!.mapName != mapNameTextField.text! { updateMapNameInPosts(mapID: mapData!.id!, newName: mapNameTextField.text!) }
-        mapData!.mapName = mapNameTextField.text!
-        mapData!.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
-        mapData!.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
-        mapData!.lowercaseName = mapData!.mapName.lowercased()
-        mapData!.searchKeywords = mapData!.lowercaseName!.getKeywordArray()
+        let mapsRef = db.collection("maps").document(mapID)
+        if mapData?.mapName != mapNameTextField.text { updateMapNameInPosts(mapID: mapID, newName: mapNameTextField.text ?? "") }
+        mapData?.mapName = mapNameTextField.text ?? ""
+        mapData?.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
+        mapData?.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
+        mapData?.lowercaseName = mapData?.mapName.lowercased() ?? ""
+        mapData?.searchKeywords = mapData?.lowercaseName?.getKeywordArray() ?? []
 
-        mapsRef.updateData(["mapName": mapNameTextField.text!, "mapDescription": mapData!.mapDescription!, "secret": mapData!.secret, "lowercaseName": mapData!.lowercaseName!, "searchKeywords": mapData!.searchKeywords!, "updateUserID": UserDataModel.shared.uid, "updateUsername": UserDataModel.shared.userInfo.username])
+        guard let mapData = mapData else { return }
+        mapsRef.updateData([
+            "mapName": mapData.mapName,
+            "mapDescription": (mapData.mapDescription ?? "") as Any,
+            "secret": mapData.secret,
+            "lowercaseName": (mapData.lowercaseName ?? "") as Any,
+            "searchKeywords": (mapData.searchKeywords ?? []) as Any,
+            "updateUserID": UserDataModel.shared.uid,
+            "updateUsername": UserDataModel.shared.userInfo.username
+        ])
 
         self.updateUserInfo()
 
@@ -130,125 +229,77 @@ extension EditMapController {
     private func viewSetup() {
         view.backgroundColor = .white
 
-        editLabel = UILabel {
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.text = "Edit map"
-            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            $0.textAlignment = .center
-            view.addSubview($0)
-        }
+        view.addSubview(editLabel)
         editLabel.snp.makeConstraints {
             $0.top.equalToSuperview().offset(55)
             $0.leading.trailing.equalToSuperview()
         }
 
-        backButton = UIButton {
-            $0.setTitle("Cancel", for: .normal)
-            $0.setTitleColor(UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1), for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Medium", size: 14)
-            $0.addTarget(self, action: #selector(dismissAction), for: .touchUpInside)
-            view.addSubview($0)
-        }
+        view.addSubview(backButton)
         backButton.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(22)
             $0.top.equalTo(editLabel)
         }
 
-        doneButton = UIButton {
-            $0.setTitle("Done", for: .normal)
-            $0.setTitleColor(.black, for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-            $0.contentEdgeInsets = UIEdgeInsets(top: 9, left: 18, bottom: 9, right: 18)
-            $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-            $0.clipsToBounds = true
-            $0.layer.cornerRadius = 37 / 2
-            $0.addTarget(self, action: #selector(saveAction(_:)), for: .touchUpInside)
-            view.addSubview($0)
-        }
+        view.addSubview(doneButton)
         doneButton.snp.makeConstraints {
             $0.centerY.equalTo(editLabel)
             $0.trailing.equalToSuperview().inset(20)
         }
 
-        mapCoverImage = UIImageView {
-            $0.layer.cornerRadius = 22.85
-            $0.layer.masksToBounds = true
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
-            $0.sd_setImage(with: URL(string: mapData!.imageURL), placeholderImage: UIImage(color: UIColor(named: "BlankImage")!), options: .highPriority, context: [.imageTransformer: transformer])
-            view.addSubview($0)
-        }
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 150, height: 150), scaleMode: .aspectFill)
+        mapCoverImage.sd_setImage(
+            with: URL(string: mapData?.imageURL ?? ""),
+            placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .white),
+            options: .highPriority,
+            context: [.imageTransformer: transformer])
+        view.addSubview(mapCoverImage)
         mapCoverImage.snp.makeConstraints {
             $0.width.height.equalTo(107)
             $0.top.equalTo(editLabel.snp.bottom).offset(21)
             $0.centerX.equalToSuperview()
         }
 
-        mapCoverImageSelectionButton = UIButton {
-            $0.setImage(UIImage(named: "EditProfilePicture"), for: .normal)
-            $0.setTitle("", for: .normal)
-            $0.addTarget(self, action: #selector(mapImageSelectionAction), for: .touchUpInside)
-            view.addSubview($0)
-        }
-        mapCoverImageSelectionButton.snp.makeConstraints {
+        view.addSubview(coverImageButton)
+        coverImageButton.snp.makeConstraints {
             $0.width.height.equalTo(42)
             $0.trailing.equalTo(mapCoverImage).offset(16)
             $0.bottom.equalTo(mapCoverImage).offset(13)
         }
 
-        mapNameTextField = UITextField {
-            $0.text = mapData!.mapName
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 21)
-            $0.textColor = .black
-            $0.delegate = self
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            $0.layer.cornerRadius = 5
-            $0.layer.borderWidth = 1
-            $0.layer.borderColor = UIColor(red: 0.929, green: 0.929, blue: 0.929, alpha: 1).cgColor
-            $0.textAlignment = .center
-            view.addSubview($0)
-        }
+        mapNameTextField.text = mapData?.mapName ?? ""
+        view.addSubview(mapNameTextField)
         mapNameTextField.snp.makeConstraints {
             $0.top.equalTo(mapCoverImage.snp.bottom).offset(31)
             $0.leading.trailing.equalToSuperview().inset(20)
             $0.height.equalTo(50)
         }
 
-        mapDescription = UITextView {
-            $0.text = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? "Add a map bio..." : mapData!.mapDescription
-            $0.delegate = self
-            $0.textAlignment = .center
-            $0.backgroundColor = .white
-            $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
-            $0.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
-            $0.alpha = (mapData!.mapDescription == "" || mapData!.mapDescription == nil) ? 0.6 : 1
-            $0.isScrollEnabled = false
-            $0.textContainer.maximumNumberOfLines = 3
-            $0.textContainer.lineBreakMode = .byTruncatingHead
-            view.addSubview($0)
-        }
+        let bio = mapData?.mapDescription ?? ""
+        mapDescription.text = bio == "" ? "Add a map bio..." : bio
+        mapDescription.alpha = bio == "" ? 0.6 : 1
+        view.addSubview(mapDescription)
         mapDescription.snp.makeConstraints {
             $0.top.equalTo(mapNameTextField.snp.bottom).offset(21)
             $0.leading.trailing.equalToSuperview().inset(29)
             $0.height.equalTo(70)
         }
 
-        privateLabel = UILabel {
-            $0.text = "Make this map secret"
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
-            $0.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
-            view.addSubview($0)
-        }
+        view.addSubview(privateLabel)
         privateLabel.snp.makeConstraints {
             $0.top.equalTo(mapDescription.snp.bottom).offset(33)
             $0.leading.equalTo(16)
         }
 
-        privateButton = UIButton {
-            $0.setTitle("", for: .normal)
-            $0.setImage(UIImage(named: mapData?.secret == false ? "PrivateMapOff" : "PrivateMapOn"), for: .normal)
-            $0.addTarget(self, action: #selector(privateMapSwitchAction), for: .touchUpInside)
-            view.addSubview($0)
+        view.addSubview(privateDescriptionLabel)
+        privateDescriptionLabel.snp.makeConstraints {
+            $0.top.equalTo(privateLabel.snp.bottom).offset(1)
+            $0.leading.equalTo(privateLabel)
+            $0.trailing.equalTo(privateButton.snp.leading).offset(-14)
         }
+
+        privateButton.setImage(UIImage(named: mapData?.secret == false ? "PrivateMapOff" : "PrivateMapOn"), for: .normal)
+        view.addSubview(privateButton)
         privateButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(17)
             $0.top.equalTo(privateLabel)
@@ -256,22 +307,7 @@ extension EditMapController {
             $0.height.equalTo(38)
         }
 
-        privateDescriptionLabel = UILabel {
-            $0.text = "Only invited friends will see this map"
-            $0.textColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 12.5)
-            view.addSubview($0)
-        }
-        privateDescriptionLabel.snp.makeConstraints {
-            $0.top.equalTo(privateLabel.snp.bottom).offset(1)
-            $0.leading.equalTo(privateLabel)
-            $0.trailing.equalTo(privateButton.snp.leading).offset(-14)
-        }
-
-        activityIndicator = CustomActivityIndicator {
-            $0.isHidden = true
-            view.addSubview($0)
-        }
+        view.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(mapNameTextField.snp.bottom).offset(20)
             $0.centerX.equalToSuperview()
@@ -283,10 +319,10 @@ extension EditMapController {
         let imageId = UUID().uuidString
         let storageRef = Storage.storage().reference().child("spotPics-dev").child("\(imageId)")
         let image = mapCoverImage.image
-        guard var imageData = image!.jpegData(compressionQuality: 0.5) else {return}
+        guard var imageData = image?.jpegData(compressionQuality: 0.5) else { return }
 
         if imageData.count > 1_000_000 {
-            imageData = image!.jpegData(compressionQuality: 0.3)!
+            imageData = image?.jpegData(compressionQuality: 0.3) ?? Data()
         }
 
         var urlStr: String = ""
@@ -301,10 +337,10 @@ extension EditMapController {
                     if let error = error {
                         print("\(error.localizedDescription)")
                     }
-                    urlStr = (url?.absoluteString)!
+                    urlStr = (url?.absoluteString) ?? ""
                     guard let self = self else { return }
                     let values = ["imageURL": urlStr]
-                    self.db.collection("maps").document(self.mapData!.id!).setData(values, merge: true)
+                    self.db.collection("maps").document(self.mapData?.id ?? "").setData(values, merge: true)
                     self.mapData?.imageURL = urlStr
                     self.updateUserInfo()
                     self.activityIndicator.stopAnimating()

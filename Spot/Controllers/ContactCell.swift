@@ -18,20 +18,134 @@ import Mixpanel
 import UIKit
 
 class ContactCell: UITableViewCell {
+    var contact: UserProfile?
+    lazy var status: FriendStatus = .none {
+        didSet {
+            switch status {
+            case .none:
+                statusButton.backgroundColor = UIColor(named: "SpotGreen")
+                statusButton.setTitle("Add", for: .normal)
+                statusButton.addTarget(self, action: #selector(addTap), for: .touchUpInside)
+                removeButton.isHidden = false
+            case .friends:
+                statusButton.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+                statusButton.setTitle("Friends", for: .normal)
+                statusButton.removeTarget(self, action: #selector(addTap), for: .touchUpInside)
+                removeButton.isHidden = true
+            case .pending:
+                statusButton.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+                statusButton.setTitle("Pending", for: .normal)
+                statusButton.removeTarget(self, action: #selector(addTap), for: .touchUpInside)
+                removeButton.isHidden = true
+            }
+            setStatusConstraints()
+        }
+    }
 
-    weak var notificationControllerDelegate: notificationDelegateProtocol?
-    var username: UILabel!
-    var name: UILabel!
-    var detail: UILabel!
-    var profilePicButton: UIButton!
-    var profilePic: UIImageView!
-    var userAvatar: UIImageView!
-    var statusButton: StatusButton!
-    var contact: UserProfile!
-    var number: String = ""
+    lazy var cellType: CellType = .contact
+
+    private lazy var profileImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.layer.cornerRadius = 56 / 2
+        imageView.clipsToBounds = true
+        imageView.contentMode = .scaleAspectFill
+        return imageView
+    }()
+
+    private lazy var avatarImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.isHidden = false
+        return imageView
+    }()
+
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.isUserInteractionEnabled = false
+        label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+        label.lineBreakMode = .byTruncatingTail
+        return label
+    }()
+
+    private lazy var usernameLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
+        label.textColor = UIColor(red: 0.683, green: 0.683, blue: 0.683, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
+        return label
+    }()
+
+    private lazy var statusButton: UIButton = {
+        let button = UIButton()
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
+        button.layer.cornerRadius = 17
+        button.contentHorizontalAlignment = .center
+        button.contentVerticalAlignment = .center
+        return button
+    }()
+
+    private lazy var removeButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "FindFriendsCancelButton"), for: .normal)
+        button.addTarget(self, action: #selector(removeSuggestion), for: .touchUpInside)
+        button.imageEdgeInsets = UIEdgeInsets(top: 2.5, left: 2.5, bottom: 2.5, right: 2.5)
+        return button
+    }()
+
+    enum CellType {
+        case contact
+        case suggested
+        case search
+    }
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        backgroundColor = .white
+        isUserInteractionEnabled = true
+
+        contentView.addSubview(profileImage)
+        profileImage.snp.makeConstraints {
+            $0.leading.equalTo(18)
+            $0.height.width.equalTo(56)
+            $0.top.equalToSuperview()
+        }
+
+        contentView.addSubview(avatarImage)
+        avatarImage.snp.makeConstraints {
+            $0.leading.equalTo(profileImage).inset(-12)
+            $0.bottom.equalTo(profileImage).inset(-2)
+            $0.height.equalTo(33.9)
+            $0.width.equalTo(33)
+        }
+
+        contentView.addSubview(removeButton)
+        removeButton.snp.makeConstraints {
+            $0.centerY.equalTo(profileImage.snp.centerY)
+            $0.trailing.equalTo(-17.5)
+            $0.height.width.equalTo(30)
+        }
+
+        contentView.addSubview(statusButton)
+
+        contentView.addSubview(nameLabel)
+        nameLabel.snp.makeConstraints {
+            $0.leading.equalTo(profileImage.snp.trailing).offset(9)
+            $0.top.equalTo(profileImage).offset(11)
+            $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).inset(8)
+        }
+
+        contentView.addSubview(usernameLabel)
+        usernameLabel.snp.makeConstraints {
+            $0.leading.trailing.equalTo(nameLabel)
+            $0.top.equalTo(nameLabel.snp.bottom).offset(2)
+        }
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(openProfile))
+        tap.delegate = self
+        contentView.addGestureRecognizer(tap)
     }
 
     required init?(coder: NSCoder) {
@@ -39,258 +153,72 @@ class ContactCell: UITableViewCell {
     }
 
     // MARK: setting up views
-    func set(contact: UserProfile?, inviteContact: CNContact?, friend: FriendStatus, invited: InviteStatus) {
-
-        self.resetCell()
-
+    func setUp(contact: UserProfile, friendStatus: FriendStatus, cellType: CellType) {
         self.contact = contact
+        self.cellType = cellType
+        self.status = friendStatus
 
-        self.backgroundColor = .white
+        nameLabel.text = contact.name
+        usernameLabel.text = contact.username
 
-        self.contentView.isUserInteractionEnabled = true
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+        profileImage.sd_setImage(with: URL(string: contact.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
-        // keeping them buttons in case we wanna click into profiles in the future
-        let profilePicButton = UIButton()
-        contentView.addSubview(profilePicButton)
-
-        profilePicButton.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            $0.leading.equalToSuperview().offset(16)
-            $0.height.width.equalTo(50)
+        avatarImage.image = UIImage()
+        if let avatarURL = contact.avatarURL, avatarURL != "" {
+            let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
+            avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
         }
+    }
 
-        if contact != nil {
-            profilePic = UIImageView {
-                $0.layer.masksToBounds = false
-                $0.layer.cornerRadius = 25
-                $0.clipsToBounds = true
-                $0.contentMode = UIView.ContentMode.scaleAspectFill
-                $0.isHidden = false
-                $0.translatesAutoresizingMaskIntoConstraints = true
-                profilePicButton.addSubview($0)
-                let url = contact?.imageURL ?? ""
-                if url != "" {
-                    let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                    $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer]) } else {print("profilePic not found")}
-            } } else {
-                if profilePic != nil { profilePic.image = UIImage() }
-                profilePic = UIImageView(frame: CGRect(x: 14, y: 8.5, width: 44, height: 44))
-                profilePic.layer.cornerRadius = profilePic.bounds.width / 2
-                profilePic.clipsToBounds = true
-                profilePic.contentMode = .scaleAspectFill
-                profilePic.image = UIImage(data: inviteContact?.imageData ?? Data()) ?? UIImage(named: "BlankContact")
-                profilePicButton.addSubview(profilePic)
-            }
-
-        profilePic.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            $0.centerX.equalToSuperview()
-            $0.height.width.equalTo(50)
-        }
-
-        let url = contact?.avatarURL ?? ""
-        if url != "" {
-            userAvatar = UIImageView {
-                $0.layer.masksToBounds = false
-                $0.contentMode = UIView.ContentMode.scaleAspectFill
-                $0.isHidden = false
-                let url = contact?.avatarURL ?? ""
-                let transformer = SDImageResizingTransformer(size: CGSize(width: 50.24, height: 66), scaleMode: .aspectFit)
-                $0.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-                $0.translatesAutoresizingMaskIntoConstraints = false
-                contentView.addSubview($0)
-            }
-
-            userAvatar.snp.makeConstraints {
-                $0.leading.equalTo(profilePic.snp.leading).offset(-3)
-                $0.bottom.equalTo(profilePic.snp.bottom).offset(3)
-                $0.height.equalTo(33)
-                $0.width.equalTo(25.14)
-            }
-        }
-
-        name = UILabel {
-            // $0.text = contact?.name
-            $0.isUserInteractionEnabled = false
-            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-            $0.adjustsFontSizeToFitWidth = false
-            $0.lineBreakMode = .byTruncatingTail
-            contentView.addSubview($0)
-        }
-        name.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
-            $0.centerY.equalToSuperview().offset(-10)
-            $0.trailing.equalToSuperview().offset(-120)
-        }
-
-        detail = UILabel {
-            // $0.text = contact?.username
-            $0.numberOfLines = 0
-            $0.lineBreakMode = NSLineBreakMode.byWordWrapping
-            $0.textColor = UIColor(red: 0.683, green: 0.683, blue: 0.683, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
-        }
-        detail.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.trailing).offset(8)
-            $0.top.equalTo(name.snp.bottom)
-        }
-
-        statusButton = StatusButton {
-            $0.setUpButton(contact: contact, inviteContact: inviteContact, friend: friend, invited: invited)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            $0.isHidden = false
-        }
-
-        // cell details and adding targets that depend on contact type
-        if let contact = contact {
-            name.text = contact.name
-            detail.text = contact.username
-            if friend == .none {
-                statusButton.addTarget(self, action: #selector(addFriend(_:)), for: .touchUpInside)
-            }
-        } else {
-            name.text = inviteContact!.givenName + " " + (inviteContact?.familyName ?? "")
-            if let rawNumber = inviteContact?.phoneNumbers.first?.value.stringValue {
-                number = rawNumber
-                detail.text = rawNumber
-            }
-            if invited == .none {
-                statusButton.addTarget(self, action: #selector(inviteFriend(_:)), for: .touchUpInside)
-            }
-        }
-
-        contentView.addSubview(statusButton)
-
+    func setStatusConstraints() {
+        statusButton.snp.removeConstraints()
         statusButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-18)
-            $0.centerY.equalToSuperview()
-            $0.height.equalTo(39)
-            $0.width.equalTo(88)
-        }
-
-    }
-
-    @objc func inviteFriend(_ sender: Any) {
-        Mixpanel.mainInstance().track(event: "ContactCellInviteFriend")
-        if let vc = viewContainingController() as? SendInvitesController {
-            vc.sendInvite(number: number)
+            $0.centerY.equalTo(profileImage.snp.centerY)
+            $0.height.equalTo(35)
+            if status == .none && cellType != .search {
+                $0.trailing.equalTo(removeButton.snp.leading).offset(-15)
+                $0.width.equalTo(62)
+            } else {
+                $0.trailing.equalTo(-20)
+                $0.width.equalTo(106)
+            }
         }
     }
 
-    @objc func addFriend(_ sender: Any) {
-        guard let receiverID = contact.id else { return }
+    @objc func addTap() {
+        guard let receiverID = contact?.id else { return }
         Mixpanel.mainInstance().track(event: "ContactCellAddFriend")
         NotificationCenter.default.post(name: NSNotification.Name("ContactCellAddFriend"), object: nil, userInfo: ["receiverID": receiverID])
 
-        addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: receiverID)
-        let title = NSMutableAttributedString(string: "Pending", attributes: [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-            NSAttributedString.Key.foregroundColor: UIColor.black
-        ])
-        statusButton.setAttributedTitle(title, for: .normal)
-        statusButton.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
-        statusButton.removeTarget(self, action: #selector(addFriend(_:)), for: .touchUpInside)
-        statusButton.setImage(nil, for: .normal)
+       addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: receiverID)
     }
 
-    func resetCell() {
-        if self.contentView.subviews.isEmpty == false {
-            for subview in self.contentView.subviews {
-                subview.removeFromSuperview()
-            }
-        }
+    @objc func removeSuggestion() {
+        guard let receiverID = contact?.id else { return }
+        Mixpanel.mainInstance().track(event: "ContactCellHideUser")
+        NotificationCenter.default.post(name: NSNotification.Name("ContactCellHideUser"), object: nil, userInfo: ["receiverID": receiverID])
 
+        let db = Firestore.firestore()
+        db.collection("users").document(UserDataModel.shared.uid).updateData(["hiddenUsers": FieldValue.arrayUnion([receiverID])])
+    }
+
+    @objc func openProfile() {
+        print("open profile")
+        if let vc = viewContainingController() as? FindFriendsController, let contact {
+            vc.openProfile(user: contact)
+        }
+    }
+
+    override func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        print("should receive", touch.location(in: self).x, UIScreen.main.bounds.width - 90)
+        // ignore touch area around action button
+        return touch.location(in: self).x < UIScreen.main.bounds.width - 90
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
-        if userAvatar != nil { userAvatar.sd_cancelCurrentImageLoad() }
-        self.isUserInteractionEnabled = true
-        // Remove Subviews Or Layers That Were Added Just For This Cell
+        profileImage.sd_cancelCurrentImageLoad()
+        avatarImage.sd_cancelCurrentImageLoad()
     }
-
-}
-
-class StatusButton: UIButton {
-
-    func setUpButton(contact: UserProfile?, inviteContact: CNContact?, friend: FriendStatus, invited: InviteStatus) {
-        self.layer.cornerRadius = 14
-        // setting up different buttons
-        if contact != nil {
-            switch friend {
-            case .none:
-                self.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-                self.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
-                self.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
-
-                let customButtonTitle = NSMutableAttributedString(string: "Add", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-                    NSAttributedString.Key.foregroundColor: UIColor.black
-                ])
-                self.setAttributedTitle(customButtonTitle, for: .normal)
-            case .pending:
-                self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
-                let customButtonTitle = NSMutableAttributedString(string: "Pending", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-                    NSAttributedString.Key.foregroundColor: UIColor.black
-                ])
-                self.setAttributedTitle(customButtonTitle, for: .normal)
-                self.setImage(nil, for: .normal)
-
-            case .friends:
-                self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
-                let customButtonTitle = NSMutableAttributedString(string: "Friends", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-                    NSAttributedString.Key.foregroundColor: UIColor.black
-                ])
-                self.setAttributedTitle(customButtonTitle, for: .normal)
-                self.setImage(nil, for: .normal)
-            }
-        } else {
-
-            switch invited {
-            case .joined:
-                self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
-                let customButtonTitle = NSMutableAttributedString(string: "Joined", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-                    NSAttributedString.Key.foregroundColor: UIColor.black
-                ])
-                self.setAttributedTitle(customButtonTitle, for: .normal)
-                self.setImage(nil, for: .normal)
-            case .invited:
-                self.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
-                let customButtonTitle = NSMutableAttributedString(string: "Invited", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-                    NSAttributedString.Key.foregroundColor: UIColor.black
-                ])
-                self.setAttributedTitle(customButtonTitle, for: .normal)
-                self.setImage(nil, for: .normal)
-            case .none:
-                self.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-                self.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
-
-                let customButtonTitle = NSMutableAttributedString(string: "Invite", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-                    NSAttributedString.Key.foregroundColor: UIColor.black
-                ])
-                self.setAttributedTitle(customButtonTitle, for: .normal)
-                self.setImage(nil, for: .normal)
-            }
-        }
-
-    }
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        backgroundColor = nil
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
 }
