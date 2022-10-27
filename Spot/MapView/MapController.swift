@@ -259,7 +259,7 @@ final class MapController: UIViewController {
         guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController
         else { return }
 
-        // let transition = AddButtonTransition()
+        let transition = AddButtonTransition()
         self.navigationController?.view.layer.add(transition, forKey: kCATransition)
         self.navigationController?.pushViewController(vc, animated: false)
     }
