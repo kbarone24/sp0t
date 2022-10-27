@@ -25,11 +25,11 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
-            headerCell.cellSetup(mapData: mapData, fourMapMemberProfile: firstMaxFourMapMemberList)
+            headerCell.cellSetup(mapData: mapData, memberProfiles: firstMaxFourMapMemberList)
             return headerCell
 
         } else if let headerCell = cell as? SimpleMapHeaderCell {
-            let text = mapType == .friendsMap ? "Friends map" : "@\(userProfile!.username)'s posts"
+            let text = mapType == .friendsMap ? "Friends map" : "@\(userProfile?.username ?? "")'s posts"
             headerCell.mapText = text
             return headerCell
 
@@ -41,7 +41,13 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return indexPath.section == 0 && mapType == .customMap ? CGSize(width: UIScreen.main.bounds.width, height: getHeaderHeight()) : indexPath.section == 0 ? CGSize(width: view.frame.width, height: 35) : CGSize(width: UIScreen.main.bounds.width / 2 - 0.5, height: (UIScreen.main.bounds.width / 2 - 0.5) * 267 / 194.5)
+        if indexPath.section == 0 {
+            if mapType == .customMap {
+                return CGSize(width: UIScreen.main.bounds.width, height: getHeaderHeight())
+            }
+            return CGSize(width: view.frame.width, height: 35)
+        }
+        return CGSize(width: UIScreen.main.bounds.width / 2 - 0.5, height: (UIScreen.main.bounds.width / 2 - 0.5) * 267 / 194.5)
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -61,7 +67,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     func getHeaderHeight() -> CGFloat {
         let temp = UILabel(frame: CGRect(x: 19, y: 0, width: UIScreen.main.bounds.width - 38, height: 0))
         temp.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-        temp.text = mapData!.mapDescription ?? ""
+        temp.text = mapData?.mapDescription ?? ""
         temp.numberOfLines = 0
         temp.lineBreakMode = .byWordWrapping
         temp.sizeToFit()
@@ -70,12 +76,12 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func openPost(posts: [MapPost], row: Int) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
-        if navigationController!.viewControllers.last is PostController { return } // double stack happening here
+        if navigationController?.viewControllers.last is PostController { return } // double stack happening here
         setDrawerValuesForViewAppear()
         postVC.postsList = posts
         postVC.selectedPostIndex = row
         postVC.containerDrawerView = containerDrawerView
-        DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
+        DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
     }
 
     func openSpot(spotID: String, spotName: String) {
@@ -108,33 +114,31 @@ extension CustomMapController: UIScrollViewDelegate {
         }
 
         if containerDrawerView == nil { return }
-        if topYContentOffset != nil && containerDrawerView?.status == .top {
-            // Disable the bouncing effect when scroll view is scrolled to top
-            if scrollView.contentOffset.y <= topYContentOffset! {
-                scrollView.contentOffset.y = topYContentOffset!
-            }
-            // Show navigation bar + adjust offset for small header
-            if scrollView.contentOffset.y > topYContentOffset! {
-                UIView.animate(withDuration: 0.3) {
-                    self.barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
+        if let topY = topYContentOffset {
+            if containerDrawerView?.status == .top {
+                // Disable the bouncing effect when scroll view is scrolled to top
+                if scrollView.contentOffset.y <= topY {
+                    scrollView.contentOffset.y = topY
                 }
-                var titleText = ""
-                if scrollView.contentOffset.y > 0 {
-                    titleText = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile!.username)'s posts" : mapData?.mapName ?? ""
+                // Show navigation bar + adjust offset for small header
+                if scrollView.contentOffset.y > topY {
+                    UIView.animate(withDuration: 0.3) {
+                        self.barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
+                    }
+                    var titleText = ""
+                    if scrollView.contentOffset.y > 0 {
+                        titleText = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s posts" : mapData?.mapName ?? ""
+                    }
+                    titleLabel.text = titleText
+                    titleLabel.sizeToFit()
                 }
-                titleLabel.text = titleText
-                titleLabel.sizeToFit()
             }
-        }
 
-        // Set scroll view content offset when in transition
-        if
-            middleYContentOffset != nil &&
-            topYContentOffset != nil &&
-            scrollView.contentOffset.y <= middleYContentOffset! &&
-            containerDrawerView!.slideView.frame.minY >= (middleYContentOffset! - topYContentOffset!)
-        {
-            scrollView.contentOffset.y = middleYContentOffset!
+            // Set scroll view content offset when in transition
+            guard let container = containerDrawerView else { return }
+            if let middleY = middleYContentOffset, scrollView.contentOffset.y <= middleY && container.slideView.frame.minY >= (middleY - topY) {
+                scrollView.contentOffset.y = middleY
+            }
         }
     }
 }
