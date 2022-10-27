@@ -31,7 +31,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func animateToMap() {
-        guard let window = window,
+        guard let window,
               case let sb = UIStoryboard(name: "Map", bundle: nil),
               let mapViewController = sb.instantiateViewController(withIdentifier: "MapVC") as? MapController,
               let appDelegate = UIApplication.shared.delegate as? AppDelegate
