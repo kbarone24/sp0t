@@ -17,6 +17,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
     var avatarURL: String? = ""
     var currentLocation: String
     var friendIDs: [String] = []
+    var hiddenUsers: [String]? = []
     var imageURL: String
     var name: String
     var pendingFriendRequests: [String] = []
@@ -33,7 +34,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
 
     var spotsList: [String] = []
     var friendsList: [UserProfile] = []
-    var mutualFriends: Int = 0
+    var mutualFriendsScore: Int = 0
     var selected: Bool = false
     var mapsList: [CustomMap] = []
 
@@ -46,6 +47,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
         case avatarURL
         case currentLocation
         case friendIDs = "friendsList"
+        case hiddenUsers
         case imageURL
         case name
         case pendingFriendRequests
@@ -59,7 +61,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
     }
 
     mutating func sortMaps() {
-        /// sort first by maps that have an unseen post, then by most recent post timestamp
+        // sort first by maps that have an unseen post, then by most recent post timestamp
         mapsList = mapsList.sorted(by: { m1, m2 in
             guard m1.hasNewPost == m2.hasNewPost else {
                 return m1.hasNewPost && !m2.hasNewPost
