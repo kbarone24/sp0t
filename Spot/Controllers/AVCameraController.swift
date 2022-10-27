@@ -81,29 +81,26 @@ final class AVCameraController: UIViewController {
         button.contentVerticalAlignment = .fill
         button.setImage(UIImage(named: "CancelButton"), for: .normal)
         button.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
-
         return button
     }()
 
-    private(set) var backButton: UIButton = {
+    private(set) lazy var backButton: UIButton = {
         let button = UIButton()
         button.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         button.contentHorizontalAlignment = .fill
         button.contentVerticalAlignment = .fill
         button.setImage(UIImage(named: "BackArrow"), for: .normal)
         button.addTarget(self, action: #selector(backTap), for: .touchUpInside)
-
         return button
     }()
 
-    private(set) var cameraRotateButton: UIButton = {
+    private(set) lazy var cameraRotateButton: UIButton = {
         let button = UIButton()
         button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         button.contentHorizontalAlignment = .fill
         button.contentVerticalAlignment = .fill
         button.setImage(UIImage(named: "CameraRotateAlt"), for: .normal)
         button.addTarget(self, action: #selector(cameraRotateTap(_:)), for: .touchUpInside)
-
         return button
     }()
 
@@ -119,7 +116,7 @@ final class AVCameraController: UIViewController {
     }()
 
     var failedPostView: FailedPostView?
-    var beginPan: CGPoint!
+    lazy var beginPan: CGPoint = .zero
 
     /// show focus circle when user taps screen
     private(set) lazy var tapIndicator: UIImageView = {
@@ -140,7 +137,7 @@ final class AVCameraController: UIViewController {
     private(set) lazy var animationImages: [UIImage] = []
 
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    let db: Firestore! = Firestore.firestore()
+    let db: Firestore = Firestore.firestore()
 
     var lastZoomFactor: CGFloat = 1.0 /// use with pinch-to-zoom
     var initialBrightness: CGFloat = 0.0 /// use with front-facing flash
@@ -456,17 +453,23 @@ final class AVCameraController: UIViewController {
 
                 UploadPostModel.shared.imageObjects.append(imageObj)
 
-                if UploadPostModel.shared.imageObjects.count == assetsFull.count,
-                   !(self.navigationController?.viewControllers.contains(where: { $0 is PhotoGalleryController }) ?? false) {
-                    UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
-
+                DispatchQueue.main.async {
+                    if UploadPostModel.shared.imageObjects.count == assetsFull.count,
+                       !(self.navigationController?.viewControllers.contains(where: { $0 is PhotoGalleryController }) ?? false) {
+                        DispatchQueue.global().async {
+                            UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
+                        }
+                    }
                 }
             }
         }
     }
+}
 
+extension AVCameraController {
+    // actions
     @objc func switchFlash(_ sender: UIButton) {
-        if flashButton.image(for: .normal) == UIImage(named: "FlashOff")! {
+        if flashButton.image(for: .normal) == UIImage(named: "FlashOff") {
             flashButton.setImage(UIImage(named: "FlashOn"), for: .normal)
             if !gifMode {
                 cameraController?.flashMode = .on
@@ -524,14 +527,26 @@ final class AVCameraController: UIViewController {
 
             if selfie {
                 /// flip image orientation on selfie
-                image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
+                guard let cgImage = image.cgImage else { return }
+                image = UIImage(cgImage: cgImage, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
             }
 
-            let resizedImage = self.ResizeImage(with: image, scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight))!
+            let resizedImage = self.ResizeImage(with: image, scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight)) ?? UIImage()
 
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
 
-                let object = ImageObject(id: UUID().uuidString, asset: PHAsset(), rawLocation: UserDataModel.shared.currentLocation, stillImage: resizedImage, animationImages: [], animationIndex: 0, directionUp: true, gifMode: self.gifMode, creationDate: Date(), fromCamera: true)
+                let object = ImageObject(
+                    id: UUID().uuidString,
+                    asset: PHAsset(),
+                    rawLocation: UserDataModel.shared.currentLocation,
+                    stillImage: resizedImage,
+                    animationImages: [],
+                    animationIndex: 0,
+                    directionUp: true,
+                    gifMode: self.gifMode,
+                    creationDate: Date(),
+                    fromCamera: true)
+
                 vc.cameraObject = object
                 UploadPostModel.shared.imageFromCamera = true
 

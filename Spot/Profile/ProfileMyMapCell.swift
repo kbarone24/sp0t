@@ -9,10 +9,6 @@
 import UIKit
 
 class ProfileMyMapCell: UICollectionViewCell {
-    private var mapImageCollectionView: UICollectionView!
-    private var mapPrivateBlurView: UIVisualEffectView!
-    private var mapPrivateIcon: UIImageView!
-    private var mapName: UILabel!
     private var posts: [MapPost] = [] {
         didSet {
             if posts.count >= 9 {
@@ -22,9 +18,40 @@ class ProfileMyMapCell: UICollectionViewCell {
             } else {
                 posts = posts.isEmpty ? [] : [posts[0]]
             }
-            mapImageCollectionView.reloadData()
+            DispatchQueue.main.async { self.mapImageCollectionView.reloadData() }
         }
     }
+
+    private lazy var mapImageCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.backgroundColor = UIColor(named: "BlankImage")
+        view.layer.masksToBounds = true
+        view.layer.cornerRadius = 14
+        view.isUserInteractionEnabled = false
+        view.register(ProfileMyMapImageCollectionViewCell.self, forCellWithReuseIdentifier: "ProfileMyMapImageCollectionViewCell")
+        return view
+    }()
+
+    private lazy var mapPrivateBlurView: UIVisualEffectView = {
+        let blurEffect = UIBlurEffect(style: .systemUltraThinMaterialLight)
+        let blurEffectView = UIVisualEffectView(effect: blurEffect)
+        blurEffectView.clipsToBounds = true
+        blurEffectView.frame = CGRect(x: 0, y: 0, width: contentView.frame.width, height: contentView.frame.width * 182 / 195)
+        blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        return blurEffectView
+    }()
+
+    private lazy var mapPrivateIcon = UIImageView(image: UIImage(named: "UsersMapNotFriends"))
+
+    private lazy var mapName: UILabel = {
+        let label = UILabel()
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
+        label.text = "@\(UserDataModel.shared.userInfo.username)'s map"
+        return label
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -46,49 +73,23 @@ class ProfileMyMapCell: UICollectionViewCell {
 extension ProfileMyMapCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
-        mapImageCollectionView = {
-            let layout = UICollectionViewFlowLayout()
-            layout.scrollDirection = .vertical
-            let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-            view.delegate = self
-            view.dataSource = self
-            view.backgroundColor = UIColor(named: "BlankImage")
-            view.layer.masksToBounds = true
-            view.layer.cornerRadius = 14
-            view.isUserInteractionEnabled = false
-            view.register(ProfileMyMapImageCollectionViewCell.self, forCellWithReuseIdentifier: "ProfileMyMapImageCollectionViewCell")
-            return view
-        }()
+
+        mapImageCollectionView.delegate = self
+        mapImageCollectionView.dataSource = self
         contentView.addSubview(mapImageCollectionView)
         mapImageCollectionView.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
             $0.height.equalTo(contentView.frame.width).multipliedBy(182 / 195)
         }
 
-        mapPrivateBlurView = {
-            let blurEffect = UIBlurEffect(style: .systemUltraThinMaterialLight)
-            let blurEffectView = UIVisualEffectView(effect: blurEffect)
-            blurEffectView.clipsToBounds = true
-            blurEffectView.frame = CGRect(x: 0, y: 0, width: contentView.frame.width, height: contentView.frame.width * 182 / 195)
-            blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            return blurEffectView
-        }()
         mapImageCollectionView.addSubview(mapPrivateBlurView)
 
-        mapPrivateIcon = UIImageView {
-            $0.image = UIImage(named: "UsersMapNotFriends")
-            mapImageCollectionView.addSubview($0)
-        }
+        mapImageCollectionView.addSubview(mapPrivateIcon)
         mapPrivateIcon.snp.makeConstraints {
             $0.center.equalToSuperview()
         }
 
-        mapName = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-            $0.text = "@\(UserDataModel.shared.userInfo.username)'s map"
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(mapName)
         mapName.snp.makeConstraints {
             $0.leading.trailing.equalTo(mapImageCollectionView)
             $0.top.equalTo(mapImageCollectionView.snp.bottom).offset(6)
@@ -106,7 +107,8 @@ extension ProfileMyMapCell: UICollectionViewDataSource, UICollectionViewDelegate
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProfileMyMapImageCollectionViewCell", for: indexPath) as? ProfileMyMapImageCollectionViewCell else { return UICollectionViewCell() }
+        let reuseID = "ProfileMyMapImageCollectionViewCell"
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseID, for: indexPath) as? ProfileMyMapImageCollectionViewCell else { return UICollectionViewCell() }
         cell.count = posts.count
         cell.imageURL = posts[indexPath.row].imageURLs.first ?? ""
         return cell
