@@ -307,7 +307,7 @@ final class MapController: UIViewController {
         sheetView?.swipeDownToDismiss = false
         sheetView?.canInteract = false
         sheetView?.present(to: .top)
-        ffvc.contentDrawer = sheetView
+        ffvc.containerDrawerView = sheetView
     }
 
     func openPost(posts: [MapPost]) {

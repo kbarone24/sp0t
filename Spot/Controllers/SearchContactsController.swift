@@ -130,7 +130,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
             return cell
         }
 
-        cell.set(contact: self.contacts[indexPath.row], inviteContact: nil, friend: self.contacts[indexPath.row].friend! ? .friends : self.contacts[indexPath.row].pending! ? .pending : .none, invited: .none)
+       // cell.set(contact: self.contacts[indexPath.row], inviteContact: nil, friend: self.contacts[indexPath.row].friend! ? .friends : self.contacts[indexPath.row].pending! ? .pending : .none, invited: .none)
 
         return cell
     }
@@ -209,10 +209,8 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
 
         // get all of a users contact's phone numbers
         let store = CNContactStore()
-
         let keys = [CNContactPhoneNumbersKey as CNKeyDescriptor]
         var message = ""
-
         do {
 
             try store.enumerateContacts(with: CNContactFetchRequest(keysToFetch: keys)) {
@@ -335,11 +333,11 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     }
 
     func setUpEmptyState() {
-
+/*
         self.activityIndicatorView.stopAnimating()
 
-        sendInvitesView = SendInvitesView {
-            $0.setUp(sentInvites: UserDataModel.shared.userInfo.sentInvites.count)
+        sendInvitesView = InviteFriendsOutletView {
+        //    $0.setUp(sentInvites: UserDataModel.shared.userInfo.sentInvites.count)
             $0.isUserInteractionEnabled = true
             $0.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentSendInvites(_:))))
             $0.isHidden = false
@@ -365,7 +363,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
             $0.height.equalTo(60)
             $0.top.equalTo(noContactsLabel.snp.bottom).offset(16)
         }
-
+*/
     }
 
     @objc func inviteFriendsTap(_ sender: UIButton) {
@@ -375,9 +373,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
 }
 
 class ContactHeader: UITableViewHeaderFooterView {
-
     var titleLabel: UILabel!
-
     func setUp(contactsCount: Int) {
 
         let backgroundView = UIView()

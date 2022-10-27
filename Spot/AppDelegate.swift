@@ -62,7 +62,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         FirebaseConfiguration.shared.setLoggerLevel(.min)
-        Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33")
+        Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33", trackAutomaticEvents: true)
 
         return true
     }

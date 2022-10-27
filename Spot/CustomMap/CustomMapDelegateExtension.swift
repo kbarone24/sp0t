@@ -12,15 +12,15 @@ import UIKit
 
 extension CustomMapController: MKMapViewDelegate {
     @objc func notifyPostOpen(_ notification: NSNotification) {
-        /// update post annotation as seen
+        // update post annotation as seen
         guard let postID = notification.userInfo?.first?.value as? String else { return }
         guard let mapVC = mapController else { return }
-        if mapData == nil { return } /// patch fix for update seen crash
+        if mapData == nil { return } // patch fix for update seen crash
 
-        DispatchQueue.main.async { self.mapData!.updateSeen(postID: postID) }
+        DispatchQueue.main.async { self.mapData?.updateSeen(postID: postID) }
 
-        let coordinate = mapData!.postsDictionary[postID]?.coordinate
-        if coordinate != nil, let annotation = mapVC.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate!) }) {
+        if let coordinate = mapData?.postsDictionary[postID]?.coordinate,
+            let annotation = mapVC.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate) }) {
             DispatchQueue.main.async {
                 mapVC.mapView.removeAnnotation(annotation)
                 mapVC.mapView.addAnnotation(annotation)
@@ -32,7 +32,7 @@ extension CustomMapController: MKMapViewDelegate {
         guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
 
         if let anno = annotation as? SpotAnnotation {
-            /// set up spot post view with 1 post
+            // set up spot post view with 1 post
             return mapView.getSpotAnnotation(anno: anno, selectedMap: mapData)
 
         } else if let anno = annotation as? MKClusterAnnotation {
@@ -65,7 +65,7 @@ extension CustomMapController: MKMapViewDelegate {
                     mapView.addAnnotations(annotations)
                 }
             }
-            /// see if should add/remove spot annos
+            // see if should add/remove spot annos
             if mapView.region.span.longitudeDelta < 0.2 {
                 if !mapView.shouldShowSpots {
                     mapView.shouldShowSpots = true
@@ -102,29 +102,26 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user finger swipe direction
         // Status is top and content is top
         if containerDrawerView == nil { return }
-        if
-            topYContentOffset != nil &&
-            containerDrawerView?.status == .top &&
-            collectionView.contentOffset.y <= topYContentOffset!
-        {
-            // Reset drawer view varaiables when user finger swipes down
-            if yTranslation > 0 {
-                containerDrawerView?.canDrag = true
-                barBackButton.isHidden = true
-                containerDrawerView?.swipeToNextState = true
+        if let topY = topYContentOffset {
+                if containerDrawerView?.status == .top && collectionView.contentOffset.y <= topY {
+                // Reset drawer view varaiables when user finger swipes down
+                if yTranslation > 0 {
+                    containerDrawerView?.canDrag = true
+                    barBackButton.isHidden = true
+                    containerDrawerView?.swipeToNextState = true
+                }
             }
-        }
 
-        // Preventing the drawer view to be dragged when it's status is top but content is not on top and user finger is swiping up
-        if
-            topYContentOffset != nil &&
-            containerDrawerView?.status == .top &&
-            collectionView.contentOffset.y > topYContentOffset! &&
-            yTranslation < 0
-        {
-            containerDrawerView?.canDrag = false
-            containerDrawerView?.swipeToNextState = false
-            containerDrawerView?.slideView.frame.origin.y = 0
+            // Preventing the drawer view to be dragged when it's status is top but content is not on top and user finger is swiping up
+            if
+                containerDrawerView?.status == .top &&
+                collectionView.contentOffset.y > topY &&
+                yTranslation < 0
+            {
+                containerDrawerView?.canDrag = false
+                containerDrawerView?.swipeToNextState = false
+                containerDrawerView?.slideView.frame.origin.y = 0
+            }
         }
 
         // Need to prevent content in collection view being scrolled when the status of drawer view is top but frame.minY is not 0
@@ -143,7 +140,9 @@ extension CustomMapController: SpotMapViewDelegate {
 
     func openPostFromSpotPost(view: SpotPostAnnotationView) {
         var posts: [MapPost] = []
-        for id in view.postIDs { posts.append(mapData!.postsDictionary[id]!) }
+        for id in view.postIDs {
+            if let post = mapData?.postsDictionary[id] { posts.append(post) }
+        }
         DispatchQueue.main.async { self.openPost(posts: posts, row: 0) }
     }
 
@@ -156,7 +155,7 @@ extension CustomMapController: SpotMapViewDelegate {
 
         var coordinates: [CLLocationCoordinate2D] = []
         for id in view.postIDs {
-            if let post = mapData!.postsDictionary[id] { coordinates.append(post.coordinate) }
+            if let post = mapData?.postsDictionary[id] { coordinates.append(post.coordinate) }
         }
         let region = MKCoordinateRegion(coordinates: coordinates, overview: false)
         DispatchQueue.main.async {

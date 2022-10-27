@@ -10,7 +10,15 @@ import Foundation
 import UIKit
 
 final class SimpleMapHeaderCell: UICollectionViewCell {
-    var mapLabel: UILabel!
+    private lazy var mapLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.adjustsFontSizeToFitWidth = true
+        label.text = ""
+        return label
+    }()
+
     var mapText: String = "" {
         didSet {
             mapLabel.text = mapText
@@ -28,13 +36,7 @@ final class SimpleMapHeaderCell: UICollectionViewCell {
     }
 
     func viewSetup() {
-        mapLabel = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.adjustsFontSizeToFitWidth = true
-            $0.text = ""
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(mapLabel)
         mapLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(20)
             $0.top.equalToSuperview().inset(-5)
