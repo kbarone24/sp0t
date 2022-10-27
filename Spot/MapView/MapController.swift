@@ -76,6 +76,7 @@ final class MapController: UIViewController {
     }
 
     override func viewDidLoad() {
+        super.viewDidLoad()
         setUpViews()
         checkLocationAuth()
         getAdmins() /// get admin users to exclude from analytics
@@ -83,14 +84,6 @@ final class MapController: UIViewController {
         runMapFetches()
         setUpNavBar()
         locationManager.delegate = self
-    }
-
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -229,12 +222,15 @@ final class MapController: UIViewController {
 
     func openNewMap() {
         Mixpanel.mainInstance().track(event: "MapControllerNewMapTap")
-        if navigationController!.viewControllers.contains(where: { $0 is NewMapController }) { return }
-        DispatchQueue.main.async {
+        if navigationController?.viewControllers.contains(where: { $0 is NewMapController }) ?? false {
+            return
+        }
+
+        DispatchQueue.main.async { [weak self] in
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
                 UploadPostModel.shared.createSharedInstance()
                 vc.presentedModally = true
-                self.navigationController?.pushViewController(vc, animated: true)
+                self?.navigationController?.pushViewController(vc, animated: true)
             }
         }
     }
@@ -263,7 +259,7 @@ final class MapController: UIViewController {
         guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController
         else { return }
 
-        let transition = AddButtonTransition()
+        // let transition = AddButtonTransition()
         self.navigationController?.view.layer.add(transition, forKey: kCATransition)
         self.navigationController?.pushViewController(vc, animated: false)
     }
@@ -304,9 +300,10 @@ final class MapController: UIViewController {
     func openFindFriends() {
         if sheetView != nil { return } /// cancel on double tap
         let ffvc = FindFriendsController()
-        sheetView = DrawerView(present: ffvc, detentsInAscending: [.top], closeAction: {
-            self.sheetView = nil
-        })
+        sheetView = DrawerView(present: ffvc, detentsInAscending: [.top]) { [weak self] in
+            self?.sheetView = nil
+        }
+
         sheetView?.swipeDownToDismiss = false
         sheetView?.canInteract = false
         sheetView?.present(to: .top)
@@ -317,9 +314,9 @@ final class MapController: UIViewController {
         if sheetView != nil { return } /// cancel on double tap
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = posts
-        sheetView = DrawerView(present: postVC, detentsInAscending: [.bottom, .middle, .top], closeAction: {
-            self.sheetView = nil
-        })
+        sheetView = DrawerView(present: postVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
+            self?.sheetView = nil
+        }
         postVC.containerDrawerView = sheetView
         sheetView?.present(to: .top)
     }
@@ -334,9 +331,10 @@ final class MapController: UIViewController {
         if map == nil { map = getFriendsMapObject() }
 
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: posts, presentedDrawerView: nil, mapType: mapType)
-        sheetView = DrawerView(present: customMapVC, detentsInAscending: [.bottom, .middle, .top], closeAction: {
-            self.sheetView = nil
-        })
+
+        sheetView = DrawerView(present: customMapVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
+            self?.sheetView = nil
+        }
 
         customMapVC.containerDrawerView = sheetView
         sheetView?.present(to: .top)
@@ -430,7 +428,6 @@ extension MapController: CLLocationManagerDelegate {
 
         case .restricted, .denied:
             presentLocationAlert()
-            break
 
         case .authorizedWhenInUse, .authorizedAlways:
             UploadPostModel.shared.locationAccess = true
