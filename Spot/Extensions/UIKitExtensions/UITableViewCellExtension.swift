@@ -13,3 +13,9 @@ extension UITableViewCell {
         "\(Self.self)"
     }
 }
+
+extension UITableViewHeaderFooterView {
+    static var reuseID: String {
+        "\(Self.self)"
+    }
+}

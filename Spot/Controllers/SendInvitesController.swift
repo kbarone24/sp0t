@@ -177,7 +177,7 @@ class SendInvitesController: UIViewController {
     }
 
     @objc func cancelTap(_ sender: UIButton) {
-        navigationController!.popViewController(animated: true)
+        navigationController?.popViewController(animated: true)
     }
 
     func checkAuth() {
