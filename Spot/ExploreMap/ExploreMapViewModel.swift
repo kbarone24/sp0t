@@ -21,13 +21,17 @@ final class ExploreMapViewModel {
     }
 
     struct Input {
-        let refresh: PassthroughSubject<Void, Never>
+        let refresh: PassthroughSubject<Bool, Never>
     }
 
     private let service: MapServiceProtocol
     @Published private(set) var snapshot = Snapshot()
     @Published private(set) var titleData = TitleData(title: "", description: "")
     @Published private(set) var isLoading = true
+    @Published private(set) var selectedIds: [String] = []
+    
+    private var cachedMaps: [CustomMap] = []
+    private var cachedTitleData = TitleData(title: "", description: "")
     private var subscriptions = Set<AnyCancellable>()
 
     init(serviceContainer: ServiceContainer) {
@@ -49,8 +53,8 @@ final class ExploreMapViewModel {
         subscriptions.removeAll()
 
         let request = input.refresh
-            .flatMap { [unowned self] in
-                self.fetchMaps()
+            .flatMap { [unowned self] forced in
+                self.fetchMaps(forced: forced)
             }
             .map { $0 }
             .share()
@@ -63,22 +67,41 @@ final class ExploreMapViewModel {
                 var snapshot = Snapshot()
                 snapshot.appendSections([.body])
                 customMapData.forEach {
-                    snapshot.appendItems([.item(data: $0)], toSection: .body)
+                    let isSelected = self.selectedIds.contains($0.id ?? "")
+                    snapshot.appendItems([.item(data: $0, isSelected: isSelected)], toSection: .body)
                 }
                 
-                self.snapshot = snapshot
                 self.titleData = titleData
                 self.isLoading = false
+                self.snapshot = snapshot
             }
             .store(in: &subscriptions)
     }
+    
+    func selectMap(with id: String) {
+        if selectedIds.contains(id) {
+            selectedIds.removeAll(where: { $0 == id })
+        } else {
+            selectedIds.append(id)
+        }
+    }
+    
+    func joinMap() {
+        // TODO: function to join map
+    }
 
-    private func fetchMaps() -> AnyPublisher<(TitleData, [CustomMap]), Never> {
+    private func fetchMaps(forced: Bool) -> AnyPublisher<(TitleData, [CustomMap]), Never> {
         Deferred {
             Future { [weak self] promise in
                 guard let self else {
                     return
                 }
+                
+                guard forced else {
+                    promise(.success((self.cachedTitleData, self.cachedMaps)))
+                    return
+                }
+                
                 // TODO: This will be fetched from the service eventually
                 let titleData = TitleData(
                     title: "UNC Maps",
@@ -90,6 +113,8 @@ final class ExploreMapViewModel {
                 Task {
                     do {
                         let customMaps = try await self.service.fetchMaps()
+                        self.cachedMaps = customMaps
+                        self.cachedTitleData = titleData
                         promise(.success((titleData, customMaps)))
                     } catch {
                         print(error.localizedDescription)

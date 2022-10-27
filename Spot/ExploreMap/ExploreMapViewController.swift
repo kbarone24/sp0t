@@ -19,7 +19,7 @@ final class ExploreMapViewController: UIViewController {
     }
 
     enum Item: Hashable {
-        case item(data: CustomMap)
+        case item(data: CustomMap, isSelected: Bool)
     }
 
     private lazy var tableView: UITableView = {
@@ -32,8 +32,11 @@ final class ExploreMapViewController: UIViewController {
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120.0
+        tableView.backgroundView?.backgroundColor = .white
+        tableView.backgroundColor = .white
 
         tableView.register(ExploreMapPreviewCell.self, forCellReuseIdentifier: ExploreMapPreviewCell.reuseID)
+        tableView.register(ExploreMapTitleView.self, forHeaderFooterViewReuseIdentifier: ExploreMapTitleView.reuseID)
 
         if #available(iOS 15.0, *) {
             tableView.sectionHeaderTopPadding = 0.0
@@ -41,10 +44,11 @@ final class ExploreMapViewController: UIViewController {
 
         return tableView
     }()
-
-    private lazy var titleView: ExploreMapTitleView = {
-        let view = ExploreMapTitleView()
-        return view
+    
+    private lazy var refreshControl: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(forceRefresh), for: .valueChanged)
+        return refreshControl
     }()
     
     private lazy var activityIndicator: CustomActivityIndicator = {
@@ -52,14 +56,29 @@ final class ExploreMapViewController: UIViewController {
         activityIndictor.startAnimating()
         return activityIndictor
     }()
+    
+    private lazy var joinButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = UIColor(hexString: "39F3FF")
+        button.layer.cornerRadius = 10.0
+        button.clipsToBounds = true
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Heavy", size: 16.0)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.textAlignment = .center
+        button.setTitle("Join 0 maps", for: .normal)
+        button.addTarget(self, action: #selector(joinButtonTapped), for: .touchUpInside)
+        
+        return button
+    }()
 
     private lazy var dataSource: DataSource = {
         let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
 
             switch item {
-            case .item(let data):
+            case .item(let data, let isSelected):
                 let cell = tableView.dequeueReusableCell(withIdentifier: ExploreMapPreviewCell.reuseID, for: indexPath) as? ExploreMapPreviewCell
-                cell?.configure(data: data)
+                
+                cell?.configure(data: data, isSelected: isSelected, delegate: self)
                 return cell
             }
         }
@@ -68,8 +87,9 @@ final class ExploreMapViewController: UIViewController {
     }()
 
     private let viewModel: ExploreMapViewModel
-    private let refresh = PassthroughSubject<Void, Never>()
+    private let refresh = PassthroughSubject<Bool, Never>()
     private var subscriptions = Set<AnyCancellable>()
+    private var titleData: ExploreMapViewModel.TitleData?
 
     init(viewModel: ExploreMapViewModel) {
         self.viewModel = viewModel
@@ -103,10 +123,19 @@ final class ExploreMapViewController: UIViewController {
         self.navigationItem.leftBarButtonItem?.tintColor = nil
 
         view.addSubview(tableView)
+        view.addSubview(joinButton)
         view.addSubview(activityIndicator)
+        
+        tableView.refreshControl = refreshControl
 
         tableView.snp.makeConstraints { make in
             make.top.bottom.leading.trailing.equalToSuperview()
+        }
+        
+        joinButton.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(22.0)
+            make.bottom.trailing.equalToSuperview().inset(22.0)
+            make.height.equalTo(50.0)
         }
         
         activityIndicator.snp.makeConstraints { make in
@@ -114,8 +143,6 @@ final class ExploreMapViewController: UIViewController {
             make.centerY.equalToSuperview()
             make.width.height.equalTo(60)
         }
-        
-        navigationItem.titleView = titleView
         
         activityIndicator.startAnimating()
         let input = Input(refresh: refresh)
@@ -131,7 +158,7 @@ final class ExploreMapViewController: UIViewController {
         viewModel.$titleData
             .receive(on: DispatchQueue.main)
             .sink { [weak self] titleData in
-                self?.titleView.configure(title: titleData.title, description: titleData.description)
+                self?.titleData = titleData
             }
             .store(in: &subscriptions)
         
@@ -140,13 +167,24 @@ final class ExploreMapViewController: UIViewController {
             .sink { [weak self] isLoading in
                 if isLoading {
                     self?.activityIndicator.startAnimating()
+                    self?.refreshControl.beginRefreshing()
                 } else {
                     self?.activityIndicator.stopAnimating()
+                    self?.refreshControl.endRefreshing()
                 }
             }
             .store(in: &subscriptions)
         
-        refresh.send()
+        viewModel.$selectedIds
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] selectedIds in
+                let count = selectedIds.count
+                let title = count == 1 ? "Join 1 map" : "Join \(count) maps"
+                self?.joinButton.setTitle(title, for: .normal)
+            }
+            .store(in: &subscriptions)
+        
+        refresh.send(true)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -166,7 +204,16 @@ final class ExploreMapViewController: UIViewController {
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .darkContent
     }
-
+    
+    @objc private func forceRefresh() {
+        refreshControl.beginRefreshing()
+        refresh.send(true)
+    }
+    
+    @objc private func joinButtonTapped() {
+        viewModel.joinMap()
+    }
+    
     @objc private func close() {
         navigationController?.popViewController(animated: true)
     }
@@ -174,10 +221,24 @@ final class ExploreMapViewController: UIViewController {
 
 extension ExploreMapViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        return titleView
+        guard let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: ExploreMapTitleView.reuseID) as? ExploreMapTitleView,
+              let titleData
+        else {
+            return nil
+        }
+        
+        header.configure(title: titleData.title, description: titleData.description)
+        return header
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return UITableView.automaticDimension
+    }
+}
+
+extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
+    func cellTapped(id: String) {
+        viewModel.selectMap(with: id)
+        refresh.send(false)
     }
 }
