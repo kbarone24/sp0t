@@ -172,13 +172,12 @@ class ProfileViewController: UIViewController {
             user == userProfile?.id
         }) {
             relation = .pending
-        } else if ((self.userProfile?.pendingFriendRequests.contains(where: { user in
-            user == UserDataModel.shared.uid
-        })) != nil) {
+        } else if (userProfile?.pendingFriendRequests.contains(where: { $0 == UserDataModel.shared.uid }) ?? false) {
             relation = .received
         } else {
             relation = .stranger
         }
+        print("relation", relation)
     }
 
     func runFetches() {
@@ -217,7 +216,8 @@ class ProfileViewController: UIViewController {
         }
         activityIndicator.snp.makeConstraints {
             $0.width.height.equalTo(30)
-            $0.centerX.equalToSuperview().offset(-100)
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(-100)
         }
     }
 
@@ -312,6 +312,7 @@ extension ProfileViewController {
 
     func addFriendFromProfile() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SendFriendRequest"), object: nil, userInfo: ["userID": userProfile?.id ?? ""])
         addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: userProfile?.id ?? "")
         relation = .pending
         DispatchQueue.main.async { self.collectionView.reloadData() }
