@@ -252,7 +252,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
             let duration = self.animateFromFooter && !self.maskImage.selected ? 0.0 : 0.25
             /// main animation -> cancel if deselected from footer (weird animation)
             UIView.animate(withDuration: duration) {
-                self.backgroundColor = UIColor(named: "SpotBlack")!.withAlphaComponent(0.0)
+                self.backgroundColor = UIColor(named: "SpotBlack")?.withAlphaComponent(0.0)
                 self.maskImage.frame = endFrame
                 if !self.animateFromFooter {
                     self.maskImage.galleryCircle.alpha = 1.0
@@ -260,7 +260,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
                     self.maskImage.liveIndicator.alpha = 1.0
                     self.maskImage.liveIndicator.frame = CGRect(x: endFrame.width / 2 - 9, y: endFrame.height / 2 - 9, width: 18, height: 18)
                     self.maskImage.galleryMask.alpha = 1.0
-                    self.maskImage.layer.borderColor = UIColor(named: "SpotBlack")!.cgColor
+                    self.maskImage.layer.borderColor = UIColor(named: "SpotBlack")?.cgColor
                     self.maskImage.layer.borderWidth = 1
                 }
             } completion: { [weak self] _ in
@@ -276,11 +276,11 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        return !touch.view!.isKind(of: UIButton.self)
+        return !(touch.view?.isKind(of: UIButton.self) ?? true)
     }
 }
 
-class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
+final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
 
     var contentView: UIView!
     var aliveToggle: UIButton!

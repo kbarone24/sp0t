@@ -215,7 +215,7 @@ class AvatarSelectionController: UIViewController {
         }
 
         if sentFrom == .map {
-            self.navigationController!.popViewController(animated: true)
+            self.navigationController?.popViewController(animated: true)
         } else if sentFrom == .create {
             let storyboard = UIStoryboard(name: "Map", bundle: nil)
             let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController

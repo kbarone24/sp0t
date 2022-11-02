@@ -42,13 +42,13 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
         self.title = "Add Contacts"
         navigationItem.backButtonTitle = ""
 
-        navigationController!.navigationBar.barTintColor = UIColor.white
-        navigationController!.navigationBar.isTranslucent = false
-        navigationController!.navigationBar.barStyle = .black
-        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
 
-        navigationController!.navigationBar.titleTextAttributes = [
+        navigationController?.navigationBar.titleTextAttributes = [
                 .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
                 .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
         ]
@@ -96,7 +96,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
 
     @objc func presentSendInvites(_ sender: UITapGestureRecognizer) {
         let sendInvitesVC = SendInvitesController()
-        navigationController!.pushViewController(sendInvitesVC, animated: true)
+        navigationController?.pushViewController(sendInvitesVC, animated: true)
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
@@ -140,7 +140,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
     }
 
     @objc func cancelTap(_ sender: UIButton) {
-        navigationController!.popViewController(animated: true)
+        navigationController?.popViewController(animated: true)
     }
 
     func checkAuth() {
@@ -368,7 +368,7 @@ class SearchContactsController: UIViewController, UITableViewDelegate, UITableVi
 
     @objc func inviteFriendsTap(_ sender: UIButton) {
         let sendInvitesVC = SendInvitesController()
-        navigationController!.pushViewController(sendInvitesVC, animated: true)
+        navigationController?.pushViewController(sendInvitesVC, animated: true)
     }
 }
 

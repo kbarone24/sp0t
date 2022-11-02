@@ -347,7 +347,7 @@ extension SpotPageController {
         Mixpanel.mainInstance().track(event: "SpotPageAddTap")
 
         /// crash on double stack was happening here
-        if navigationController!.viewControllers.contains(where: { $0 is AVCameraController }) {
+        if navigationController?.viewControllers.contains(where: { $0 is AVCameraController }) ?? false {
             return
         }
 
@@ -479,7 +479,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             postVC.selectedPostIndex = indexPath.item
             postVC.containerDrawerView = containerDrawerView
             barView.isHidden = true
-            self.navigationController!.pushViewController(postVC, animated: true)
+            self.navigationController?.pushViewController(postVC, animated: true)
         }
     }
 }

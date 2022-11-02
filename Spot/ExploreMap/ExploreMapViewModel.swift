@@ -9,6 +9,7 @@
 import Combine
 import Firebase
 import Foundation
+import Mixpanel
 
 final class ExploreMapViewModel {
     typealias Section = ExploreMapViewController.Section
@@ -81,13 +82,16 @@ final class ExploreMapViewModel {
     func selectMap(with id: String) {
         if selectedIds.contains(id) {
             selectedIds.removeAll(where: { $0 == id })
+            Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": false])
         } else {
             selectedIds.append(id)
+            Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": true])
         }
     }
     
     func joinMap() {
         // TODO: function to join map
+        Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": selectedIds.count])
     }
 
     private func fetchMaps(forced: Bool) -> AnyPublisher<(TitleData, [CustomMap]), Never> {
