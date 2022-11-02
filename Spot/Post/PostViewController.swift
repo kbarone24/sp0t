@@ -180,7 +180,7 @@ class PostController: UIViewController {
     func openProfile(user: UserProfile, openComments: Bool) {
         let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
         self.openComments = openComments
-        DispatchQueue.main.async { self.navigationController!.pushViewController(profileVC, animated: true) }
+        DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
     }
 
     func openMap(mapID: String) {

@@ -130,7 +130,7 @@ class EventsOverviewController: UIViewController {
 
         vc.navigationItem.backBarButtonItem?.title = ""
 
-        self.navigationController!.pushViewController(vc, animated: true)
+        self.navigationController?.pushViewController(vc, animated: true)
 
     }
 }

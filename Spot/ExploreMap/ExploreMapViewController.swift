@@ -9,6 +9,7 @@
 import Combine
 import Firebase
 import UIKit
+import Mixpanel
 
 final class ExploreMapViewController: UIViewController {
     typealias Input = ExploreMapViewModel.Input
@@ -189,6 +190,8 @@ final class ExploreMapViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
+        Mixpanel.mainInstance().track(event: "ExploreMapsOpen")
     }
 
     override func viewWillDisappear(_ animated: Bool) {
