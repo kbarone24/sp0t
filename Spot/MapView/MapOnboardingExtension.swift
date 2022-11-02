@@ -23,7 +23,7 @@ extension MapController {
         let posts = friendsPostsDictionary.count
          if UserDataModel.shared.userInfo.avatarURL ?? "" == "" {
             let avc = AvatarSelectionController(sentFrom: .map)
-            self.navigationController!.pushViewController(avc, animated: true)
+            self.navigationController?.pushViewController(avc, animated: true)
 
         } else if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
             displayHeelsMap()

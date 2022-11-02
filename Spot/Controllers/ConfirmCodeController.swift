@@ -62,10 +62,10 @@ class ConfirmCodeController: UIViewController {
     }
 
     func setUpNavBar() {
-        navigationController!.navigationBar.barTintColor = UIColor.white
-        navigationController!.navigationBar.isTranslucent = false
-        navigationController!.navigationBar.barStyle = .black
-        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
         navigationController?.navigationBar.addWhiteBackground()
 
@@ -315,7 +315,7 @@ class ConfirmCodeController: UIViewController {
         DispatchQueue.main.async {
             self.view.endEditing(true)
             self.activityIndicator.stopAnimating()
-            self.navigationController!.pushViewController(avi, animated: true)
+            self.navigationController?.pushViewController(avi, animated: true)
         }
     }
 
