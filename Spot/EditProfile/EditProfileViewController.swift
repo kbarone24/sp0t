@@ -11,7 +11,7 @@ import FirebaseFunctions
 import Mixpanel
 import UIKit
 
-protocol EditProfileDelegate {
+protocol EditProfileDelegate: AnyObject {
     func finishPassing(userInfo: UserProfile)
     func logout()
 }

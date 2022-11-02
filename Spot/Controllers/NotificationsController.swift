@@ -88,14 +88,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         navigationController?.setNavigationBarHidden(false, animated: false)
         navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 47.0)
         navigationItem.backButtonTitle = ""
-        navigationController!.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.barTintColor = UIColor.white
         // Nav bar shouldn't be translucent, however we need it to be here to avoid nav bar jumping. will set it back to false in viewDidAppear
-        navigationController!.navigationBar.isTranslucent = true
-        navigationController!.navigationBar.barStyle = .black
-        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.navigationBar.isTranslucent = true
+        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
 
-        navigationController!.navigationBar.titleTextAttributes = [
+        navigationController?.navigationBar.titleTextAttributes = [
                 .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
                 .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
         ]
@@ -512,7 +512,7 @@ extension NotificationsController: notificationDelegateProtocol {
 extension NotificationsController {
     func openProfile(user: UserProfile) {
         let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
-        DispatchQueue.main.async { self.navigationController!.pushViewController(profileVC, animated: true) }
+        DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
     }
 
     func openPost(post: MapPost, commentNoti: Bool) {
@@ -520,7 +520,7 @@ extension NotificationsController {
         postVC.postsList = [post]
         postVC.containerDrawerView = containerDrawerView
         postVC.openComments = commentNoti
-        DispatchQueue.main.async { self.navigationController!.pushViewController(postVC, animated: true) }
+        DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
     }
 
     func openMap(mapID: String) {
