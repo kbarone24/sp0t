@@ -16,7 +16,6 @@ final class UserDataModel {
     var uid: String { Auth.auth().currentUser?.uid ?? "invalid user" }
     static let shared = UserDataModel()
 
-    var userInfo: UserProfile!
     var userSpots: [String] = []
     var userCity: String = ""
 
@@ -32,7 +31,8 @@ final class UserDataModel {
         return screenSize == 0 ? 1.7 : screenSize == 1 ? 1.75 : 1.78
     }
 
-    var currentLocation: CLLocation!
+    var userInfo: UserProfile
+    var currentLocation: CLLocation
 
     private init() {
         userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
@@ -41,7 +41,6 @@ final class UserDataModel {
     }
 
     func destroy() {
-        userInfo = nil
         userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
         userInfo.id = ""
 

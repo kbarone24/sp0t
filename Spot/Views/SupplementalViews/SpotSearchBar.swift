@@ -19,6 +19,7 @@ class SpotSearchBar: UISearchBar {
         barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
         searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
         searchTextField.leftView?.tintColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        searchTextField.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
         autocapitalizationType = .none
         autocorrectionType = .no
         searchTextField.font = UIFont(name: "SFCompactText-Medium", size: 15)

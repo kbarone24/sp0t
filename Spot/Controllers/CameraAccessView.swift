@@ -126,12 +126,10 @@ class CameraAccessView: UIView {
     func checkForRemove() {
         /// remove mask and return to camera if user has authorized camera + gallery
         if UploadPostModel.shared.allAuths() {
-            guard let camera = viewContainingController() as? AVCameraController else {
-                return
-            }
-
             DispatchQueue.main.async { [weak self] in
-                self?.removeFromSuperview()
+                guard let self = self else { return }
+                guard let camera = self.viewContainingController() as? AVCameraController else { return }
+                self.removeFromSuperview()
                 camera.accessMask.removeFromSuperview()
                 camera.configureCameraController()
             }
@@ -147,7 +145,7 @@ class CameraAccessView: UIView {
                 }
             }
         case .denied, .restricted:
-            /// open settings immediately if user had already rejected
+            // open settings immediately if user had already rejected
             if first { DispatchQueue.main.async { UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)! as URL, options: [:], completionHandler: nil ); return } }
         case .authorized:
             cameraAccess = true

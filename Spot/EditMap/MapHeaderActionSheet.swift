@@ -36,7 +36,7 @@ extension CustomMapHeaderCell {
         let unfollowAction = UIAlertAction(title: actionTitle, style: .destructive) { _ in
             self.unfollowMap()
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
         alert.addAction(unfollowAction)
         alert.addAction(cancelAction)
         let containerVC = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
