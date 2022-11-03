@@ -281,6 +281,7 @@ class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
 }
 
 final class ImagePreview: UIImageView, UIGestureRecognizerDelegate {
+
     var contentView: UIView!
     var aliveToggle: UIButton!
     var circleView: CircleView!

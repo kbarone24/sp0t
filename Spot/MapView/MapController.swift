@@ -300,9 +300,13 @@ final class MapController: UIViewController {
     func openFindFriends() {
         if sheetView != nil { return } /// cancel on double tap
         let ffvc = FindFriendsController()
-        sheetView = DrawerView(present: ffvc, detentsInAscending: [.top, .middle, .bottom]) { [weak self] in
+        sheetView = DrawerView(present: ffvc, detentsInAscending: [.top]) { [weak self] in
             self?.sheetView = nil
         }
+
+        sheetView?.swipeDownToDismiss = false
+        sheetView?.canInteract = false
+        sheetView?.present(to: .top)
         ffvc.containerDrawerView = sheetView
     }
 
@@ -350,6 +354,7 @@ final class MapController: UIViewController {
         }
 
         spotVC.containerDrawerView = sheetView
+        spotVC.containerDrawerView?.showCloseButton = false
         sheetView?.present(to: .top)
     }
 

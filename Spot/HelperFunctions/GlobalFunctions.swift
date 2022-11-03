@@ -18,6 +18,7 @@ import Photos
 import UIKit
 
 extension UIViewController {
+
     func isValidUsername(username: String) -> Bool {
         let regEx = "^[a-zA-Z0-9_.]*$"
         let pred = NSPredicate(format: "SELF MATCHES %@", regEx)
@@ -514,7 +515,7 @@ extension UIViewController {
              "mapID": map?.id ?? "",
              "mapMembers": map?.memberIDs ?? [],
              "mapName": map?.mapName ?? "",
-             "postID": post.id ?? "",
+             "postID": post.id!,
              "posterID": UserDataModel.shared.uid,
              "posterUsername": UserDataModel.shared.userInfo.username,
              "privacyLevel": post.privacyLevel ?? "friends",
@@ -624,8 +625,7 @@ extension UIViewController {
                  "postLocation": postLocation,
                  "posters": posters,
                  "posterUsername": UserDataModel.shared.userInfo.username,
-                 "spotID": post.spotID ?? "",
-                 "spotName": post.spotName ?? "",
+                 "spotID": post.spotID ?? "", "spotName": post.spotName ?? "",
                  "spotLocation": spotLocation]
             ) { result, error in
                 print(result?.data as Any, error as Any)

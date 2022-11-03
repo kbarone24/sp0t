@@ -110,6 +110,7 @@ class EditMapController: UIViewController {
     private var privateButton: UIButton = {
         let button = UIButton()
         button.setTitle("", for: .normal)
+        button.addTarget(EditMapController.self, action: #selector(privateMapSwitchAction), for: .touchUpInside)
         return button
     }()
 
@@ -290,21 +291,20 @@ extension EditMapController {
             $0.leading.equalTo(16)
         }
 
+        view.addSubview(privateDescriptionLabel)
+        privateDescriptionLabel.snp.makeConstraints {
+            $0.top.equalTo(privateLabel.snp.bottom).offset(1)
+            $0.leading.equalTo(privateLabel)
+            $0.trailing.equalTo(privateButton.snp.leading).offset(-14)
+        }
+
         privateButton.setImage(UIImage(named: mapData?.secret == false ? "PrivateMapOff" : "PrivateMapOn"), for: .normal)
-        privateButton.addTarget(self, action: #selector(privateMapSwitchAction), for: .touchUpInside)
         view.addSubview(privateButton)
         privateButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(17)
             $0.top.equalTo(privateLabel)
             $0.width.equalTo(68)
             $0.height.equalTo(38)
-        }
-
-        view.addSubview(privateDescriptionLabel)
-        privateDescriptionLabel.snp.makeConstraints {
-            $0.top.equalTo(privateLabel.snp.bottom).offset(1)
-            $0.leading.equalTo(privateLabel)
-            $0.trailing.equalTo(privateButton.snp.leading).offset(-14)
         }
 
         view.addSubview(activityIndicator)
