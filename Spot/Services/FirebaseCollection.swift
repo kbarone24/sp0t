@@ -23,4 +23,6 @@ enum FireBaseCollectionFields: String {
     case posterID
     case mapID
     case timestamp
+    case likers
+    case memberIDs
 }

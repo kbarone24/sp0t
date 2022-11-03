@@ -20,7 +20,7 @@ final class ExploreMapViewController: UIViewController {
     }
 
     enum Item: Hashable {
-        case item(data: CustomMap, isSelected: Bool)
+        case item(customMap: CustomMap, data: [MapPost], isSelected: Bool)
     }
 
     private lazy var tableView: UITableView = {
@@ -76,10 +76,10 @@ final class ExploreMapViewController: UIViewController {
         let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
 
             switch item {
-            case .item(let data, let isSelected):
+            case .item(let customMap, let data, let isSelected):
                 let cell = tableView.dequeueReusableCell(withIdentifier: ExploreMapPreviewCell.reuseID, for: indexPath) as? ExploreMapPreviewCell
                 
-                cell?.configure(data: data, isSelected: isSelected, delegate: self)
+                cell?.configure(customMap: customMap, data: data, isSelected: isSelected, delegate: self)
                 return cell
             }
         }
@@ -176,11 +176,12 @@ final class ExploreMapViewController: UIViewController {
             }
             .store(in: &subscriptions)
         
-        viewModel.$selectedIds
+        viewModel.$selectedMaps
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] selectedIds in
-                let count = selectedIds.count
+            .sink { [weak self] selectedMaps in
+                let count = selectedMaps.count
                 let title = count == 1 ? "Join 1 map" : "Join \(count) maps"
+                self?.joinButton.isEnabled = !selectedMaps.isEmpty
                 self?.joinButton.setTitle(title, for: .normal)
             }
             .store(in: &subscriptions)
@@ -214,7 +215,10 @@ final class ExploreMapViewController: UIViewController {
     }
     
     @objc private func joinButtonTapped() {
-        viewModel.joinMap()
+        viewModel.joinMap { [weak self] in
+            // Refresh or dismiss?
+            self?.refresh.send(true)
+        }
     }
     
     @objc private func close() {
@@ -240,8 +244,8 @@ extension ExploreMapViewController: UITableViewDelegate {
 }
 
 extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
-    func cellTapped(id: String) {
-        viewModel.selectMap(with: id)
+    func cellTapped(data: CustomMap) {
+        viewModel.selectMap(with: data)
         refresh.send(false)
     }
 }

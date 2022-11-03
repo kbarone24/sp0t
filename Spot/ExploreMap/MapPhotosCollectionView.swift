@@ -13,11 +13,12 @@ final class MapPhotosCollectionView: UICollectionView {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     
     enum Section: Hashable {
-        case main
+        case main(CustomMap)
     }
     
     enum Item: Hashable {
         case item(MapPost)
+        case extra(Int)
     }
     
     private lazy var datasource: DataSource = {
@@ -26,7 +27,12 @@ final class MapPhotosCollectionView: UICollectionView {
             switch item {
             case .item(let mapPost):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomMapBodyCell.reuseID, for: indexPath) as? CustomMapBodyCell
-                cell?.cellSetup(postData: mapPost)
+                cell?.cellSetup(postData: mapPost, transform: false)
+                return cell
+                
+            case .extra(let count):
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ExtraCountCell.reuseID, for: indexPath) as? ExtraCountCell
+                cell?.configure(text: "\(count) more")
                 return cell
             }
         }
@@ -38,7 +44,9 @@ final class MapPhotosCollectionView: UICollectionView {
         super.init(frame: frame, collectionViewLayout: layout)
         allowsSelection = false
         backgroundColor = .white
+        delegate = self
         register(CustomMapBodyCell.self, forCellWithReuseIdentifier: CustomMapBodyCell.reuseID)
+        register(ExtraCountCell.self, forCellWithReuseIdentifier: ExtraCountCell.reuseID)
     }
     
     @available(*, unavailable)
@@ -47,7 +55,18 @@ final class MapPhotosCollectionView: UICollectionView {
     }
     
     func configure(snapshot: Snapshot) {
-        datasource.apply(snapshot, animatingDifferences: false)
+        if #available(iOS 15.0, *) {
+            datasource.applySnapshotUsingReloadData(snapshot)
+        } else {
+            datasource.apply(snapshot, animatingDifferences: false)
+        }
+        
         layoutIfNeeded()
+    }
+}
+
+extension MapPhotosCollectionView: UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        CGSize(width: 130, height: 475)
     }
 }
