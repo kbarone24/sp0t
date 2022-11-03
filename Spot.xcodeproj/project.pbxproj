@@ -638,7 +638,7 @@
 		8CA10A3E2912F16700DD50EB /* SpotNameButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotNameButton.swift; sourceTree = "<group>"; };
 		8CA10A422912F19D00DD50EB /* ImagePreviewActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewActions.swift; sourceTree = "<group>"; };
 		8CA10A472912FBDD00DD50EB /* CreateMapButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMapButton.swift; sourceTree = "<group>"; };
-		8CA10A4B2912FC0300DD50EB /* NextButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextButton.swift; sourceTree = "<group>"; }
+		8CA10A4B2912FC0300DD50EB /* NextButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextButton.swift; sourceTree = "<group>"; };
 		8CA512A428BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-SemiboldItalic.otf"; sourceTree = "<group>"; };
 		8CA512A628BC056900F8C1FE /* HapticGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticGenerator.swift; sourceTree = "<group>"; };
 		8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapNotificationsExtension.swift; sourceTree = "<group>"; };
