@@ -458,7 +458,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             postVC.selectedPostIndex = indexPath.item
             postVC.containerDrawerView = containerDrawerView
             barView.isHidden = true
-            self.navigationController!.pushViewController(postVC, animated: true)
+            self.navigationController?.pushViewController(postVC, animated: true)
         }
     }
 }

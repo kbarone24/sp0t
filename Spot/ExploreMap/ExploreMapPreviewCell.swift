@@ -9,7 +9,7 @@
 import UIKit
 
 protocol ExploreMapPreviewCellDelegate: AnyObject {
-    func cellTapped(id: String)
+    func cellTapped(data: CustomMap)
 }
 
 final class ExploreMapPreviewCell: UITableViewCell {
@@ -49,11 +49,13 @@ final class ExploreMapPreviewCell: UITableViewCell {
     private lazy var photosCollectionView: MapPhotosCollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
-        layout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
-        layout.minimumInteritemSpacing = 24.0
+        layout.sectionInsetReference = .fromContentInset
+        layout.minimumInteritemSpacing = 10
+        layout.minimumLineSpacing = 10
         
         let collectionView = MapPhotosCollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.isScrollEnabled = true
+        collectionView.contentInsetAdjustmentBehavior = .always
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = false
         
@@ -83,10 +85,37 @@ final class ExploreMapPreviewCell: UITableViewCell {
             $0.top.leading.trailing.equalToSuperview()
         }
         
+        iconView.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(10.0)
+            $0.height.equalTo(64.0)
+            $0.width.equalTo(60.0)
+            $0.leading.equalToSuperview().offset(18.0)
+            $0.bottom.equalToSuperview().inset(10.0)
+        }
+        
+        titleLabel.snp.makeConstraints {
+            $0.bottom.equalTo(headerView.snp.centerY).inset(2.5)
+            $0.leading.equalTo(iconView.snp.trailing).offset(10.0)
+            $0.trailing.equalToSuperview().inset(55.0)
+        }
+        
+        subTitleLabel.snp.makeConstraints {
+            $0.top.equalTo(headerView.snp.centerY).offset(2.5)
+            $0.leading.equalTo(titleLabel.snp.leading)
+            $0.trailing.equalToSuperview().inset(55.0)
+        }
+        
+        checkMark.snp.makeConstraints {
+            $0.centerY.equalToSuperview()
+            $0.trailing.equalToSuperview().inset(10.0)
+            $0.height.width.equalTo(40.0)
+        }
+        
         photosCollectionView.snp.makeConstraints {
             $0.top.equalTo(headerView.snp.bottom).offset(10.0)
-            $0.bottom.leading.trailing.equalToSuperview()
-            $0.height.greaterThanOrEqualTo(120.0)
+            $0.bottom.trailing.equalToSuperview().inset(18.0)
+            $0.leading.equalToSuperview().offset(18.0)
+            $0.height.greaterThanOrEqualTo(180.0)
         }
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapped))
@@ -102,22 +131,37 @@ final class ExploreMapPreviewCell: UITableViewCell {
         super.prepareForReuse()
         titleLabel.text = ""
         subTitleLabel.text = ""
+        subTitleLabel.attributedText = nil
         iconView.image = nil
+        iconView.sd_cancelCurrentImageLoad()
         checkMark.image = UIImage(named: "MapToggleOff")
         onTap = nil
     }
     
-    func configure(data: CustomMap, isSelected: Bool, delegate: ExploreMapPreviewCellDelegate?) {
+    func configure(customMap: CustomMap, data: [MapPost], isSelected: Bool, delegate: ExploreMapPreviewCellDelegate?) {
         self.delegate = delegate
         
-        guard case let posts = data.postsDictionary.compactMap({ $0.value }),
-              !posts.isEmpty
-        else { return }
-        
         self.onTap = { [weak self] in
-            guard let id = data.id else { return }
-            self?.delegate?.cellTapped(id: id)
+            self?.delegate?.cellTapped(data: customMap)
         }
+        
+        titleLabel.text = customMap.mapName
+        
+        iconView.sd_setImage(
+            with: URL(string: customMap.imageURL),
+            placeholderImage: nil,
+            options: .highPriority
+        )
+        
+        let attachment = NSTextAttachment()
+        attachment.image = UIImage(named: "FriendsIcon")
+        let attachmentString = NSAttributedString(attachment: attachment)
+        let myString = NSMutableAttributedString()
+        myString.append(attachmentString)
+        myString.append(
+            NSMutableAttributedString(string: " \(customMap.memberIDs.count)")
+        )
+        subTitleLabel.attributedText = myString
         
         if isSelected {
             checkMark.image = UIImage(named: "MapToggleOn")
@@ -126,8 +170,16 @@ final class ExploreMapPreviewCell: UITableViewCell {
         }
         
         var snapshot = Snapshot()
-        snapshot.appendSections([.main])
-        posts.forEach { snapshot.appendItems([.item($0)], toSection: .main) }
+        snapshot.appendSections([.main(customMap)])
+        data.forEach {
+            snapshot.appendItems([.item($0)], toSection: .main(customMap))
+        }
+        
+        let remainder = customMap.postIDs.count - 7
+        if remainder > 0 {
+            snapshot.appendItems([.extra(remainder)], toSection: .main(customMap))
+        }
+        
         photosCollectionView.configure(snapshot: snapshot)
         
         layoutIfNeeded()

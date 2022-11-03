@@ -206,7 +206,7 @@ class AvatarSelectionController: UIViewController {
 
     @objc func selectedTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "AvatarSelectionSelectTap")
-        let avatarURL = AvatarURLs().getURL(name: centerCell.avatar!)
+        let avatarURL = AvatarURLs.shared.getURL(name: centerCell.avatar!)
         if sentFrom != .edit {
             UserDataModel.shared.userInfo.avatarURL = avatarURL
             UserDataModel.shared.userInfo.avatarPic = UIImage(named: centerCell.avatar!)!
@@ -215,7 +215,7 @@ class AvatarSelectionController: UIViewController {
         }
 
         if sentFrom == .map {
-            self.navigationController!.popViewController(animated: true)
+            self.navigationController?.popViewController(animated: true)
         } else if sentFrom == .create {
             let storyboard = UIStoryboard(name: "Map", bundle: nil)
             let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController

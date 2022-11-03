@@ -155,8 +155,6 @@ class FindFriendsController: UIViewController {
             $0.top.equalTo(20)
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
-        }
-    }
 
     private func loadTableView() {
         tableView.delegate = self
@@ -166,14 +164,13 @@ class FindFriendsController: UIViewController {
             $0.leading.trailing.bottom.equalToSuperview()
             $0.top.equalTo(searchBarContainer.snp.bottom).offset(10)
         }
-
+        
         tableView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.top.equalToSuperview().offset(180)
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
         }
-
         DispatchQueue.main.async { self.activityIndicator.startAnimating() }
     }
 
@@ -259,7 +256,6 @@ class FindFriendsController: UIViewController {
         let items = [url, "Join the global chill and add me on sp0t 🌎🦦👯"] as [Any]
         let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
         DispatchQueue.main.async { self.present(activityView, animated: true) }
-
         activityView.completionWithItemsHandler = { activityType, completed, _, _ in
             if completed {
                 Mixpanel.mainInstance().track(event: "FindFriendsInviteSent", properties: ["type": activityType?.rawValue ?? ""])

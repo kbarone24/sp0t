@@ -50,13 +50,13 @@ class SendInvitesController: UIViewController {
         self.title = "Invite Friends"
         navigationItem.backButtonTitle = ""
 
-        navigationController!.navigationBar.barTintColor = UIColor.white
-        navigationController!.navigationBar.isTranslucent = false
-        navigationController!.navigationBar.barStyle = .black
-        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
 
-        navigationController!.navigationBar.titleTextAttributes = [
+        navigationController?.navigationBar.titleTextAttributes = [
                 .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
                 .font: UIFont(name: "SFCompactText-Heavy", size: 20)!
         ]
