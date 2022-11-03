@@ -17,12 +17,12 @@ import UIKit
 
 final class AVCameraController: UIViewController {
     var cameraController: AVSpotCamera?
-    var spotObject: MapSpot?
     var mapObject: CustomMap?
     var postDraft: PostDraft?
 
-    /// capture image on volume button tap
-    private lazy var volumeHandler: JPSVolumeButtonHandler? = {
+    private lazy var askedForCamera: Bool = false
+
+    lazy var volumeHandler: JPSVolumeButtonHandler? = {
         let handler = JPSVolumeButtonHandler(
             up: { [weak self] in
                 self?.capture()
@@ -44,13 +44,13 @@ final class AVCameraController: UIViewController {
 
     private(set) lazy var cameraButton: CameraButton = {
         let button = CameraButton()
+        button.isEnabled = false
         button.addTarget(self, action: #selector(captureImage(_:)), for: .touchUpInside)
         return button
     }()
 
     private(set) lazy var galleryButton: UIButton = {
         let button = UIButton()
-
         button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         button.setImage(UIImage(named: "PhotoGalleryButton"), for: .normal)
         button.imageView?.contentMode = .scaleAspectFill
@@ -58,19 +58,18 @@ final class AVCameraController: UIViewController {
         button.layer.cornerRadius = 8
         button.layer.masksToBounds = true
         button.clipsToBounds = true
-        button.addTarget(self, action: #selector(openGallery(_:)), for: .touchUpInside)
-
+        button.addTarget(self, action: #selector(galleryTap(_:)), for: .touchUpInside)
         return button
     }()
 
     private(set) lazy var flashButton: UIButton = {
         let button = UIButton()
+        button.isEnabled = false
         button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         button.contentHorizontalAlignment = .fill
         button.contentVerticalAlignment = .fill
         button.setImage(UIImage(named: "FlashOff"), for: .normal)
         button.addTarget(self, action: #selector(switchFlash(_:)), for: .touchUpInside)
-
         return button
     }()
 
@@ -96,23 +95,13 @@ final class AVCameraController: UIViewController {
 
     private(set) lazy var cameraRotateButton: UIButton = {
         let button = UIButton()
+        button.isEnabled = false
         button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         button.contentHorizontalAlignment = .fill
         button.contentVerticalAlignment = .fill
         button.setImage(UIImage(named: "CameraRotateAlt"), for: .normal)
         button.addTarget(self, action: #selector(cameraRotateTap(_:)), for: .touchUpInside)
         return button
-    }()
-
-    private(set) lazy var accessMask: CameraAccessView = {
-        let mask = CameraAccessView()
-        mask.setUp(
-            cameraAccess: UploadPostModel.shared.cameraAccess == .authorized,
-            galleryAccess: UploadPostModel.shared.galleryAccess == .authorized,
-            locationAccess: UploadPostModel.shared.locationAccess
-        )
-
-        return mask
     }()
 
     var failedPostView: FailedPostView?
@@ -159,35 +148,18 @@ final class AVCameraController: UIViewController {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(true, animated: true)
 
-        /// set up camera view if not already loaded
+        // set up camera view if not already loaded
         if self.cameraController == nil {
-            cameraController = AVSpotCamera()
-            /// else show preview
-            DispatchQueue.main.async { [weak self] in
-                if UploadPostModel.shared.allAuths() {
-                    self?.configureCameraController()
-                } else {
-                    /// ask user for camera/gallery access if not granted
-                    self?.view.isUserInteractionEnabled = true
-                    self?.addAccessMask()
-                }
-            }
-
+            setUpInitialCaptureSession()
         } else {
-            /// delay so pop happens first
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) { [weak self] in
-                guard let self = self else { return }
-                self.cameraController?.previewLayer?.connection?.isEnabled = true
-                self.cameraController?.captureSession?.startRunning()
-                self.enableButtons()
-            }
+            restartCaptureSession()
         }
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "CameraOpen")
-        UploadPostModel.shared.imageFromCamera = false /// reset when camera reappears
+        UploadPostModel.shared.imageFromCamera = false // reset when camera reappears
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -215,17 +187,33 @@ final class AVCameraController: UIViewController {
         return .lightContent
     }
 
-    func setUpView() {
+    private func setUpView() {
         setUpPost() /// set up main mapPost object
         addCameraView() /// add main camera
         fetchAssets() /// fetch gallery assets
         getFailedUploads()
     }
 
-    func addCameraView() {
-        view.backgroundColor = UIColor.black
-        view.isUserInteractionEnabled = false
+    func setUpInitialCaptureSession() {
+        galleryButton.isEnabled = true
+        backButton.isEnabled = true
+        cancelButton.isEnabled = true
+        DispatchQueue.main.async {
+            if UploadPostModel.shared.cameraEnabled {
+                self.cameraController = AVSpotCamera()
+                self.configureCameraController()
+            } else {
+                if !UploadPostModel.shared.locationAccess {
+                    self.askForLocationAccess()
+                } else {
+                    self.askForCameraAccess()
+                }
+            }
+        }
+    }
 
+    private func addCameraView() {
+        view.backgroundColor = UIColor.black
         let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
 
@@ -305,7 +293,6 @@ final class AVCameraController: UIViewController {
             $0.text = "GALLERY"
             view.addSubview($0)
         }
-
         galleryText.snp.makeConstraints {
             $0.leading.equalTo(galleryButton.snp.leading).offset(-10)
             $0.top.equalTo(galleryButton.snp.bottom).offset(1)
@@ -348,22 +335,7 @@ final class AVCameraController: UIViewController {
             name: NSNotification.Name.AVCaptureDeviceSubjectAreaDidChange,
             object: nil
         )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(galleryAuthorized(_:)),
-            name: NSNotification.Name(rawValue: "GalleryAuthorized"),
-            object: nil
-        )
-
         addTop()
-    }
-
-    func addAccessMask() {
-        view.addSubview(accessMask)
-        accessMask.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-        }
     }
 
     func addTop() {
@@ -393,212 +365,17 @@ final class AVCameraController: UIViewController {
         if !newMapMode { UploadPostModel.shared.createSharedInstance() }
     }
 
-    /// authorized gallery access for the first time
-    @objc func galleryAuthorized(_ sender: NSNotification) {
-        fetchAssets()
-    }
-
     func fetchAssets() {
         if UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited {
-            fetchFullAssets()
-        }
-    }
-
-    func fetchFullAssets() {
-        // fetch all assets for showing when user opens photo gallery
-        let fetchOptions = PHFetchOptions()
-        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
-        fetchOptions.fetchLimit = 10_000
-
-        guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
-
-        let assetsFull = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions)
-        let indexSet = assetsFull.count > 10_000 ? IndexSet(0...9_999) : IndexSet(0..<assetsFull.count)
-        UploadPostModel.shared.assetsFull = assetsFull
-
-        DispatchQueue.global(qos: .background).async {
-            assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
-
+            UploadPostModel.shared.fetchAssets { [weak self] _ in
                 guard let self = self else { return }
-
-                if self.cancelOnDismiss {
-                    // cancel on dismiss = true when view is popped
-                    stop.pointee = true
-                }
-
-                var location = CLLocation()
-                if let l = object.location { location = l }
-
-                var creationDate = Date()
-                if let d = object.creationDate {
-                    creationDate = d
-                }
-
-                let imageObj = (
-                    ImageObject(
-                        id: UUID().uuidString,
-                        asset: object,
-                        rawLocation: location,
-                        stillImage: UIImage(),
-                        animationImages: [],
-                        animationIndex: 0,
-                        directionUp: true,
-                        gifMode: false,
-                        creationDate: creationDate,
-                        fromCamera: false
-                    ),
-                    false
-                )
-
-                UploadPostModel.shared.imageObjects.append(imageObj)
-
                 DispatchQueue.main.async {
-                    if UploadPostModel.shared.imageObjects.count == assetsFull.count,
-                       !(self.navigationController?.viewControllers.contains(where: { $0 is PhotoGalleryController }) ?? false) {
-                        DispatchQueue.global().async {
-                            UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
-                        }
+                    if let galleryVC = self.navigationController?.viewControllers.first(where: { $0 is PhotoGalleryController }) as? PhotoGalleryController {
+                        print("reload data")
+                        galleryVC.collectionView.reloadData()
                     }
                 }
             }
         }
-    }
-}
-
-extension AVCameraController {
-    // actions
-    @objc func switchFlash(_ sender: UIButton) {
-        if flashButton.image(for: .normal) == UIImage(named: "FlashOff") {
-            flashButton.setImage(UIImage(named: "FlashOn"), for: .normal)
-            if !gifMode {
-                cameraController?.flashMode = .on
-            }
-        } else {
-            flashButton.setImage(UIImage(named: "FlashOff"), for: .normal)
-            if !gifMode {
-                cameraController?.flashMode = .off
-            }
-        }
-    }
-
-    @objc func cameraRotateTap(_ sender: UIButton) {
-        switchCameras()
-    }
-
-    func disableButtons() {
-        /// disable buttons while camera is capturing
-        cameraButton.isEnabled = false
-        backButton.isUserInteractionEnabled = false
-        cancelButton.isUserInteractionEnabled = false
-        galleryButton.isUserInteractionEnabled = false
-        volumeHandler?.stop()
-    }
-
-    func enableButtons() {
-        cameraButton.isEnabled = true
-        backButton.isUserInteractionEnabled = true
-        cancelButton.isUserInteractionEnabled = true
-        galleryButton.isUserInteractionEnabled = true
-        volumeHandler?.start(true)
-    }
-
-    @objc func captureImage(_ sender: UIButton) {
-        // if the gif camera is enabled, capture 5 images in rapid succession
-        capture()
-    }
-
-    func capture() {
-        disableButtons()
-        self.captureImage()
-    }
-
-    func captureImage() {
-        /// completion from AVSpotCamera
-        self.cameraController?.captureImage { [weak self] (image, _) in
-
-            guard var image = image else { return }
-            guard let self = self else { return }
-
-            let flash = self.flashButton.image(for: .normal) == UIImage(named: "FlashOn")
-            let selfie = self.cameraController?.currentCameraPosition == .front
-
-            Mixpanel.mainInstance().track(event: "CameraStillCapture", properties: ["flash": flash, "selfie": selfie])
-
-            if selfie {
-                /// flip image orientation on selfie
-                guard let cgImage = image.cgImage else { return }
-                image = UIImage(cgImage: cgImage, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
-            }
-
-            let resizedImage = self.ResizeImage(with: image, scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight)) ?? UIImage()
-
-            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
-
-                let object = ImageObject(
-                    id: UUID().uuidString,
-                    asset: PHAsset(),
-                    rawLocation: UserDataModel.shared.currentLocation,
-                    stillImage: resizedImage,
-                    animationImages: [],
-                    animationIndex: 0,
-                    directionUp: true,
-                    gifMode: self.gifMode,
-                    creationDate: Date(),
-                    fromCamera: true)
-
-                vc.cameraObject = object
-                UploadPostModel.shared.imageFromCamera = true
-
-                if let navController = self.navigationController {
-                    navController.pushViewController(vc, animated: false)
-                }
-            }
-        }
-    }
-
-    @objc func backTap() {
-        self.navigationController?.popViewController(animated: true)
-    }
-
-    @objc func cancelTap() {
-        /// show view controller sliding down as transtition
-        DispatchQueue.main.async { [weak self] in
-            self?.navigationItem.leftBarButtonItem = UIBarButtonItem()
-            self?.navigationItem.rightBarButtonItem = UIBarButtonItem()
-
-            let transition = CATransition()
-            transition.duration = 0.3
-            transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-            transition.type = CATransitionType.push
-            transition.subtype = CATransitionSubtype.fromBottom
-
-            DispatchQueue.main.async {
-                if let mapVC = self?.navigationController?.viewControllers[(self?.navigationController?.viewControllers.count ?? 2) - 2] as? MapController {
-                    mapVC.uploadMapReset()
-                }
-                /// add up to down transition on return to map
-                self?.navigationController?.view.layer.add(transition, forKey: kCATransition)
-                self?.navigationController?.popViewController(animated: false)
-            }
-        }
-    }
-
-    @objc func setAutoExposure(_ sender: NSNotification) {
-        self.setAutoExposure()
-    }
-
-    @objc func openGallery(_ sender: UIButton) {
-        self.openGallery()
-    }
-
-    @objc func tap(_ tapGesture: UITapGestureRecognizer) {
-        /// set focus and show cirlcle indicator at that location
-        let position = tapGesture.location(in: cameraView)
-        setFocus(position: position)
-    }
-
-    @objc func doubleTap(_ sender: UITapGestureRecognizer) {
-        switchCameras()
     }
 }

@@ -135,7 +135,7 @@ class ChooseSpotController: UIViewController {
     }
 
     func setInitialValues() {
-        postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
+        postLocation = CLLocation(latitude: UploadPostModel.shared.postObject?.postLat ?? 0, longitude: UploadPostModel.shared.postObject?.postLong ?? 0)
         if UploadPostModel.shared.spotObject != nil { spotObjects.append(UploadPostModel.shared.spotObject!) }
     }
 
@@ -184,7 +184,7 @@ extension ChooseSpotController: UISearchBarDelegate {
     func getNearbyPOIs() {
 
         if search != nil { search.cancel() }
-        let searchRequest = MKLocalPointsOfInterestRequest(center: CLLocationCoordinate2D(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong), radius: 200)
+        let searchRequest = MKLocalPointsOfInterestRequest(center: CLLocationCoordinate2D(latitude: UploadPostModel.shared.postObject?.postLat ?? 0, longitude: UploadPostModel.shared.postObject?.postLong ?? 0), radius: 200)
 
         /// these filters will omit POI's with nil as their category. This can occasionally exclude some desirable POI's but primarily excludes junk
         let filters = MKPointOfInterestFilter(including: searchFilters)
@@ -203,7 +203,7 @@ extension ChooseSpotController: UISearchBarDelegate {
             guard let self = self else { return }
             if self.cancelOnDismiss { return }
 
-            let newRequest = MKLocalPointsOfInterestRequest(center: CLLocationCoordinate2D(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong), radius: request.radius * 2)
+            let newRequest = MKLocalPointsOfInterestRequest(center: CLLocationCoordinate2D(latitude: UploadPostModel.shared.postObject?.postLat ?? 0, longitude: UploadPostModel.shared.postObject?.postLong ?? 0), radius: request.radius * 2)
             newRequest.pointOfInterestFilter = request.pointOfInterestFilter
 
             /// if the new radius won't be greater than about 1.5 miles then run poi fetch to get more nearby stuff
@@ -245,7 +245,7 @@ extension ChooseSpotController: UISearchBarDelegate {
                     )
 
                     let spotLocation = CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)
-                    let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
+                    let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject?.postLat ?? 0, longitude: UploadPostModel.shared.postObject?.postLong ?? 0)
 
                     spotInfo.distance = postLocation.distance(from: spotLocation)
                     spotInfo.spotScore = spotInfo.getSpotRank(location: postLocation)
@@ -263,7 +263,7 @@ extension ChooseSpotController: UISearchBarDelegate {
 
     func getNearbySpots() {
 
-        let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
+        let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject?.postLat ?? 0, longitude: UploadPostModel.shared.postObject?.postLong ?? 0)
 
         circleQuery = geoFirestore.query(withCenter: postLocation, radius: 0.5)
         _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
@@ -295,7 +295,7 @@ extension ChooseSpotController: UISearchBarDelegate {
             var spotInfo = spot!
 
             if self.hasPOILevelAccess(creatorID: spotInfo.founderID, privacyLevel: spotInfo.privacyLevel, inviteList: spotInfo.inviteList ?? []) {
-                let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject.postLat, longitude: UploadPostModel.shared.postObject.postLong)
+                let postLocation = CLLocation(latitude: UploadPostModel.shared.postObject?.postLat ?? 0, longitude: UploadPostModel.shared.postObject?.postLong ?? 0)
                 let spotLocation = CLLocation(latitude: spotInfo.spotLat, longitude: spotInfo.spotLong)
 
                 spotInfo.distance = spotLocation.distance(from: postLocation)

@@ -13,29 +13,32 @@ import Photos
 import UIKit
 
 final class UploadPostModel {
-    var assetsFull: PHFetchResult<PHAsset>!
+    var assetsFull: PHFetchResult<PHAsset>?
     var selectedObjects: [ImageObject] = []
     var imageObjects: [(image: ImageObject, selected: Bool)] = []
     var imageFromCamera = false
+    var cancelOnDismiss = false // stop assets fetch on dismiss
+    var galleryOpen = false // don't sort imageObjects when gallery visible
 
-    var postObject: MapPost!
+    var postObject: MapPost?
     var spotObject: MapSpot?
     var mapObject: CustomMap?
 
-    var postType: PostType = .none
+    lazy var postType: PostType = .none
 
-    var nearbySpots: [MapSpot] = []
-    var friendObjects: [UserProfile] = []
+    lazy var nearbySpots: [MapSpot] = []
+    lazy var friendObjects: [UserProfile] = []
 
+    lazy var locationAccess: Bool = false
     var cameraAccess: AVAuthorizationStatus {
         return AVCaptureDevice.authorizationStatus(for: .video)
     }
-
     var galleryAccess: PHAuthorizationStatus {
         return PHPhotoLibrary.authorizationStatus(for: .readWrite)
     }
-
-    var locationAccess: Bool = false
+    var cameraEnabled: Bool {
+        return cameraAccess == .authorized && locationAccess
+    }
 
     static let shared = UploadPostModel()
 
@@ -59,6 +62,7 @@ final class UploadPostModel {
     }
 
     func createSharedInstance() {
+        cancelOnDismiss = false
         let coordinate = UserDataModel.shared.currentLocation.coordinate
 
         self.postObject = MapPost(
@@ -70,58 +74,58 @@ final class UploadPostModel {
             timestamp: Timestamp(date: Date())
         )
 
-        setPostCity() /// set with every location change to avoid async lag on upload
+        setPostCity() // set with every location change to avoid async lag on upload
         spotObject = nil
         mapObject = nil
     }
 
     func setSpotValues(spot: MapSpot?) {
         spotObject = spot
-        if spot != nil { spotObject!.selected = true }
-        postType = spot == nil ? .none : spot!.founderID == "" ? .postToPOI : .postToSpot
+        if spot != nil { spotObject?.selected = true }
+        postType = spot == nil ? .none : spot?.founderID ?? "" == "" ? .postToPOI : .postToSpot
 
-        postObject.createdBy = spot?.founderID ?? ""
-        postObject.spotID = spot?.id ?? ""
-        postObject.spotLat = spot?.spotLat ?? 0.0
-        postObject.spotLong = spot?.spotLong ?? 0.0
-        postObject.spotName = spot?.spotName ?? ""
-        postObject.spotPrivacy = spot?.privacyLevel ?? ""
+        postObject?.createdBy = spot?.founderID ?? ""
+        postObject?.spotID = spot?.id ?? ""
+        postObject?.spotLat = spot?.spotLat ?? 0.0
+        postObject?.spotLong = spot?.spotLong ?? 0.0
+        postObject?.spotName = spot?.spotName ?? ""
+        postObject?.spotPrivacy = spot?.privacyLevel ?? ""
 
-        /// if post with no location, use spot location
-        if !postObject.setImageLocation && spot != nil {
-            postObject.postLat = spot!.spotLat
-            postObject.postLong = spot!.spotLong
+        // if post with no location, use spot location
+        if !(postObject?.setImageLocation ?? false), let spot {
+            postObject?.postLat = spot.spotLat
+            postObject?.postLong = spot.spotLong
             setPostCity()
         }
     }
 
     func setMapValues(map: CustomMap?) {
         mapObject = map
-        postObject.mapID = map?.id ?? ""
-        postObject.mapName = map?.mapName ?? ""
+        postObject?.mapID = map?.id ?? ""
+        postObject?.mapName = map?.mapName ?? ""
     }
 
     func setPostCity() {
         reverseGeocodeFromCoordinate { [weak self] (city) in
             guard let self = self else { return }
             guard self.postObject != nil else { return }
-            self.postObject.city = city
+            self.postObject?.city = city
         }
     }
 
     func setTaggedUsers() {
-        let taggedUsers = getTaggedUsers(text: postObject.caption)
+        let taggedUsers = getTaggedUsers(text: postObject?.caption ?? "")
         let usernames = taggedUsers.map({ $0.username })
-        postObject.taggedUsers = usernames
-        postObject.addedUsers = taggedUsers.map({ $0.id! })
-        postObject.taggedUserIDs = taggedUsers.map({ $0.id! })
+        postObject?.taggedUsers = usernames
+        postObject?.addedUsers = taggedUsers.map({ $0.id ?? "" })
+        postObject?.taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
     }
 
     func getTaggedUsers(text: String) -> [UserProfile] {
         var selectedUsers: [UserProfile] = []
         let words = text.components(separatedBy: .whitespacesAndNewlines)
         for w in words {
-            if w.count == 0 { continue }
+            if w.isEmpty { continue }
             let username = String(w.dropFirst())
             if w.hasPrefix("@") {
                 if let f = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == username }) {
@@ -135,41 +139,37 @@ final class UploadPostModel {
     func reverseGeocodeFromCoordinate(completion: @escaping (_ address: String) -> Void) {
 
         var addressString = ""
-        let location = CLLocation(latitude: postObject.postLat, longitude: postObject.postLong)
+        let location = CLLocation(latitude: postObject?.postLat ?? 0, longitude: postObject?.postLong ?? 0)
 
         let locale = Locale(identifier: "en")
         CLGeocoder().reverseGeocodeLocation(location, preferredLocale: locale) { [weak self] placemarks, _ in // 6
 
             if self == nil { completion(""); return }
+            guard let placemark = placemarks?.first else { completion(""); return }
 
-            guard let placemark = placemarks?.first else {
-                print("placemark broke")
-                return
-            }
-
-            if placemark.locality != nil {
-                if addressString != "" {
-                    addressString = addressString + ", "
+            if let locality = placemark.locality {
+                if !addressString.isEmpty {
+                    addressString = "\(addressString) "
                 }
-                addressString = addressString + placemark.locality!
+                addressString = "\(addressString)\(locality)"
             }
 
-            if placemark.country != nil {
-                if placemark.country! == "United States" {
-                    if placemark.administrativeArea != nil {
-                        if addressString != "" {
-                            addressString = addressString + ", "
+            if let country = placemark.country {
+                if country == "United States" {
+                    if let administrativeArea = placemark.administrativeArea {
+                        if !addressString.isEmpty {
+                            addressString = "\(addressString) "
                         }
-                        addressString = addressString + placemark.administrativeArea!
+                        addressString = "\(addressString)\(administrativeArea)"
                         completion(addressString)
                     } else {
                         completion(addressString)
                     }
                 } else {
-                    if addressString != "" {
-                        addressString = addressString + ", "
+                    if !addressString.isEmpty {
+                        addressString = "\(addressString) "
                     }
-                    addressString = addressString + placemark.country!
+                    addressString = "\(addressString)\(country)"
                     completion(addressString)
                 }
             } else {
@@ -179,24 +179,26 @@ final class UploadPostModel {
     }
 
     func setFinalPostValues() {
-        var postFriends = postObject.hideFromFeed! ? [] : UserDataModel.shared.userInfo.friendIDs
-        /// if map selected && mymap selected, add friendsList
-        if mapObject != nil { postObject.inviteList = mapObject!.likers }
-        if !postFriends.contains(UserDataModel.shared.uid) && !postObject.hideFromFeed! { postFriends.append(UserDataModel.shared.uid) }
-        postObject.friendsList = postFriends
-        postObject.privacyLevel = mapObject != nil && mapObject!.secret ? "invite" : mapObject != nil && (mapObject!.communityMap ?? false) ? "public" : "friends"
-        postObject.timestamp = Firebase.Timestamp(date: Date())
+        var postFriends = (postObject?.hideFromFeed ?? false) ? [] : UserDataModel.shared.userInfo.friendIDs
+        if let mapObject { postObject?.inviteList = mapObject.likers }
+
+        // if map selected && mymap selected, add friendsList
+        if !postFriends.contains(UserDataModel.shared.uid) && !(postObject?.hideFromFeed ?? false) { postFriends.append(UserDataModel.shared.uid) }
+        postObject?.friendsList = postFriends
+        postObject?.privacyLevel = mapObject != nil && (mapObject?.secret ?? false) ? "invite" : mapObject != nil && (mapObject?.communityMap ?? false) ? "public" : "friends"
+        postObject?.timestamp = Firebase.Timestamp(date: Date())
+        postObject?.userInfo = UserDataModel.shared.userInfo
     }
 
     func setFinalMapValues() {
-        if spotObject != nil {
-            mapObject!.updateSpotLevelValues(spot: spotObject!)
+        if let spotObject {
+            mapObject?.updateSpotLevelValues(spot: spotObject)
         }
-        mapObject!.updatePostLevelValues(post: postObject!)
+        mapObject?.updatePostLevelValues(post: postObject)
     }
 
     func saveToDrafts() {
-        let post = postObject!
+        guard let post = postObject else { return }
         let spot = spotObject
         let map = mapObject
 
@@ -264,10 +266,62 @@ final class UploadPostModel {
         }
     }
 
-    func allAuths() -> Bool {
-        return cameraAccess == .authorized && (galleryAccess == .authorized || galleryAccess == .limited) && locationAccess
-    }
+    func fetchAssets(completion: @escaping(_ complete: Bool) -> Void) {
+        print("fetch assets")
+        // fetch all assets for showing when user opens photo gallery
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
+        fetchOptions.fetchLimit = 10_000
 
+        guard let userLibrary = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .smartAlbumUserLibrary, options: nil).firstObject else { return }
+
+        let assetsFull = PHAsset.fetchAssets(in: userLibrary, options: fetchOptions)
+        let indexSet = assetsFull.count > 10_000 ? IndexSet(0...9_999) : IndexSet(0..<assetsFull.count)
+        self.assetsFull = assetsFull
+
+        DispatchQueue.global().async {
+            assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
+                guard let self = self else { return }
+                if self.cancelOnDismiss { stop.pointee = true }
+
+                var location = CLLocation()
+                if let l = object.location { location = l }
+
+                var creationDate = Date()
+                if let d = object.creationDate {
+                    creationDate = d
+                }
+
+                let imageObj = (
+                    ImageObject(
+                        id: UUID().uuidString,
+                        asset: object,
+                        rawLocation: location,
+                        stillImage: UIImage(),
+                        animationImages: [],
+                        animationIndex: 0,
+                        directionUp: true,
+                        gifMode: false,
+                        creationDate: creationDate,
+                        fromCamera: false
+                    ),
+                    false
+                )
+
+                UploadPostModel.shared.imageObjects.append(imageObj)
+
+                if self.imageObjects.count == assetsFull.count {
+                    DispatchQueue.global().async {
+                        UploadPostModel.shared.imageObjects.sort(by: { !$0.selected && !$1.selected ? $0.0.creationDate > $1.0.creationDate : $0.selected && !$1.selected })
+                    }
+                    completion(true)
+                    return
+                }
+            }
+        }
+    }
+    
     func destroy() {
         selectedObjects.removeAll()
         imageObjects.removeAll()
@@ -279,5 +333,6 @@ final class UploadPostModel {
         spotObject = nil
         mapObject = nil
         imageFromCamera = false
+        cancelOnDismiss = false
     }
 }
