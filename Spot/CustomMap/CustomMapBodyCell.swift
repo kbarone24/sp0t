@@ -36,6 +36,7 @@ class CustomMapBodyCell: UICollectionViewCell {
         viewSetup()
     }
 
+    @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -47,17 +48,26 @@ class CustomMapBodyCell: UICollectionViewCell {
         postLocation.text = ""
     }
 
-    public func cellSetup(postData: MapPost) {
+    public func cellSetup(postData: MapPost, transform: Bool = true) {
         self.postData = postData
-
-        let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2 / 3, height: (UIScreen.main.bounds.width * 2 / 3) * 1.5), scaleMode: .aspectFill)
+        
         postImage.sd_cancelCurrentImageLoad()
-        postImage.sd_setImage(
-            with: URL(string: postData.imageURLs.first ?? ""),
-            placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)),
-            options: .highPriority,
-            context: [.imageTransformer: transformer]
-        )
+        if transform {
+            let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2 / 3, height: (UIScreen.main.bounds.width * 2 / 3) * 1.5), scaleMode: .aspectFill)
+            
+            postImage.sd_setImage(
+                with: URL(string: postData.imageURLs.first ?? ""),
+                placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)),
+                options: .highPriority,
+                context: [.imageTransformer: transformer]
+            )
+        } else {
+            postImage.sd_setImage(
+                with: URL(string: postData.imageURLs.first ?? ""),
+                placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)),
+                options: .highPriority
+                )
+        }
 
         if postData.spotName != "" {
             let imageAttachment = NSTextAttachment()
@@ -79,7 +89,7 @@ extension CustomMapBodyCell {
 
         contentView.addSubview(postImage)
         postImage.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.leading.trailing.top.bottom.equalToSuperview()
         }
 
         contentView.addSubview(postLocation)
