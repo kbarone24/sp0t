@@ -93,8 +93,9 @@ final class ExploreMapViewModel {
         Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": selectedMaps.count])
         
         for map in selectedMaps {
-            service.joinMap(customMap: map) { [weak self] error in
+            service.joinMap(customMap: map) { [weak self] _ in
                 if map == self?.selectedMaps.last {
+                    self?.selectedMaps.removeAll()
                     completion()
                 }
             }
