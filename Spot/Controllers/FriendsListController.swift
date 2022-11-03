@@ -311,7 +311,7 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
         } else {
             /// should move this to a delegate to avoid unnecessary inheritance
             let profileVC = ProfileViewController(userProfile: self.friendsList[indexPath.row], presentedDrawerView: drawerView)
-            self.previousVC?.navigationController!.pushViewController(profileVC, animated: true)
+            self.previousVC?.navigationController?.pushViewController(profileVC, animated: true)
             dismiss(animated: true)
             return
         }

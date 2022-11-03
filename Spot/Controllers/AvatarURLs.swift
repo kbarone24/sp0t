@@ -10,7 +10,24 @@ import Foundation
 import MapKit
 import UIKit
 
-class AvatarURLs {
+enum AvatarNames: String, CaseIterable {
+    case bear = "Bear"
+    case bunny = "Bunny"
+    case cow = "Cow"
+    case deer = "Deer"
+    case dog = "Dog"
+    case elephant = "Elephant"
+    case giraffe = "Giraffe"
+    case lion = "Lion"
+    case monkey = "Monkey"
+    case panda = "Panda"
+    case pig = "Pig"
+    case tiger = "Tiger"
+}
+
+final class AvatarURLs {
+    private init() {}
+    
     static let shared = AvatarURLs()
 
     var bear = ("Bear",                    "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F000000animals%2FBear.png?alt=media&token=8d804927-bdb9-455d-8196-b83c78d02bd3")
@@ -65,5 +82,9 @@ class AvatarURLs {
         }
 
         return "no avatarURL found"
+    }
+    
+    func randomAvatar() -> String {
+        getURL(name: AvatarNames.allCases.randomElement()?.rawValue ?? "")
     }
 }

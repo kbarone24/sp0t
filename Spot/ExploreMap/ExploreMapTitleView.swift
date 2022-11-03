@@ -31,6 +31,7 @@ final class ExploreMapTitleView: UITableViewHeaderFooterView {
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
         backgroundColor = .white
+        contentView.backgroundColor = .white
         
         addSubview(titleLabel)
         addSubview(descriptionLabel)

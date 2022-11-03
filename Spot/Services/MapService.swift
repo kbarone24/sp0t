@@ -14,25 +14,24 @@ import Foundation
 protocol MapServiceProtocol {
     func fetchMaps() async throws -> [CustomMap]
     func fetchMapPosts(id: String, limit: Int) async throws -> [MapPost]
+    func joinMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
 }
 
 final class MapService: MapServiceProtocol {
-
+    
     private let fireStore: Firestore
-
+    
     init(fireStore: Firestore) {
         self.fireStore = fireStore
     }
-
-    // TODO: We will have to filter for location
-
+    
     func fetchMaps()  async throws -> [CustomMap] {
         try await withUnsafeThrowingContinuation { [unowned self] continuation in
-
+            
             self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
                 .whereField(FireBaseCollectionFields.communityMap.rawValue, isEqualTo: true)
                 .getDocuments { snapshot, error in
-
+                    
                     guard error == nil,
                           let snapshot = snapshot,
                           !snapshot.documents.isEmpty else {
@@ -41,9 +40,9 @@ final class MapService: MapServiceProtocol {
                         }
                         return
                     }
-
+                    
                     var maps: [CustomMap] = []
-
+                    
                     snapshot.documents.forEach { document in
                         do {
                             if let map = try document.data(as: CustomMap.self) {
@@ -54,21 +53,21 @@ final class MapService: MapServiceProtocol {
                             return
                         }
                     }
-
+                    
                     continuation.resume(returning: maps)
                 }
         }
     }
-
+    
     func fetchMapPosts(id: String, limit: Int) async throws -> [MapPost] {
         try await withUnsafeThrowingContinuation { [unowned self] continuation in
-
+            
             self.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
                 .whereField(FireBaseCollectionFields.mapID.rawValue, isEqualTo: id)
                 .order(by: FireBaseCollectionFields.timestamp.rawValue, descending: true)
                 .limit(to: limit)
                 .getDocuments { snapshot, error in
-
+                    
                     guard error == nil,
                           let snapshot = snapshot,
                           !snapshot.documents.isEmpty else {
@@ -77,9 +76,9 @@ final class MapService: MapServiceProtocol {
                         }
                         return
                     }
-
+                    
                     var posts: [MapPost] = []
-
+                    
                     snapshot.documents.forEach { document in
                         do {
                             if let post = try document.data(as: MapPost.self) {
@@ -90,9 +89,26 @@ final class MapService: MapServiceProtocol {
                             return
                         }
                     }
-
+                    
                     continuation.resume(returning: posts)
                 }
         }
+    }
+    
+    func joinMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void)) {
+        guard let mapID = customMap.id,
+              case let userId = UserDataModel.shared.uid
+        else { return }
+        
+        self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
+            .document(mapID)
+            .updateData(
+                [
+                    FireBaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([userId]),
+                    FireBaseCollectionFields.memberIDs.rawValue: FieldValue.arrayUnion([userId])
+                ]
+            ) { error in
+                completion(error)
+            }
     }
 }

@@ -20,9 +20,9 @@ extension UIImageView {
         /// for smooth animations on likes / other table reloads
         
         if directionUp {
-            if counter == animationImages!.count - 1 {
+            if counter == (animationImages?.count ?? 0) - 1 {
                 newDirection = false
-                newCount = animationImages!.count - 2
+                newCount = (animationImages?.count ?? 0) - 2
             } else {
                 newCount += 1
             }
@@ -39,8 +39,13 @@ extension UIImageView {
         
         UIView.transition(with: self, duration: duration, options: [.allowUserInteraction, .beginFromCurrentState]) { [weak self] in
             guard let self else { return }
-            if self.animationImages?.isEmpty ?? true || counter >= self.animationImages?.count ?? 0 { self.stopPostAnimation(); return }
-            self.image = self.animationImages![counter]
+            
+            if self.animationImages?.isEmpty ?? true || counter >= self.animationImages?.count ?? 0 {
+                self.stopPostAnimation()
+                return
+            }
+            
+            self.image = self.animationImages?[counter]
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.005) { [weak self] in
@@ -80,11 +85,17 @@ extension UIImageView {
         
         UIView.transition(with: self, duration: 0.08, options: [.allowUserInteraction, .beginFromCurrentState]) { [weak self] in
             guard let self = self else { return }
-            if self.animationImages?.isEmpty ?? true { return }
-            if counter >= self.animationImages?.count ?? 0 { return }
-            self.image = self.animationImages![counter]
+            
+            if self.animationImages?.isEmpty ?? true {
+                return
+            }
+            
+            if counter >= self.animationImages?.count ?? 0 {
+                return
+            }
+            
+            self.image = self.animationImages?[counter]
         }
-        
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.085) { [weak self] in
             guard let self = self else { return }

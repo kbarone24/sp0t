@@ -71,10 +71,10 @@ class PhoneController: UIViewController, UITextFieldDelegate {
     }
 
     func setUpNavBar() {
-        navigationController!.navigationBar.barTintColor = UIColor.white
-        navigationController!.navigationBar.isTranslucent = false
-        navigationController!.navigationBar.barStyle = .black
-        navigationController!.navigationBar.tintColor = UIColor.black
+        navigationController?.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
         navigationController?.navigationBar.addWhiteBackground()
 

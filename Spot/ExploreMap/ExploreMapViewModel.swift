@@ -9,6 +9,7 @@
 import Combine
 import Firebase
 import Foundation
+import Mixpanel
 
 final class ExploreMapViewModel {
     typealias Section = ExploreMapViewController.Section
@@ -28,9 +29,9 @@ final class ExploreMapViewModel {
     @Published private(set) var snapshot = Snapshot()
     @Published private(set) var titleData = TitleData(title: "", description: "")
     @Published private(set) var isLoading = true
-    @Published private(set) var selectedIds: [String] = []
+    @Published private(set) var selectedMaps: [CustomMap] = []
     
-    private var cachedMaps: [CustomMap] = []
+    private var cachedMaps: [CustomMap: [MapPost]] = [:]
     private var cachedTitleData = TitleData(title: "", description: "")
     private var subscriptions = Set<AnyCancellable>()
 
@@ -66,9 +67,9 @@ final class ExploreMapViewModel {
                 
                 var snapshot = Snapshot()
                 snapshot.appendSections([.body])
-                customMapData.forEach {
-                    let isSelected = self.selectedIds.contains($0.id ?? "")
-                    snapshot.appendItems([.item(data: $0, isSelected: isSelected)], toSection: .body)
+                customMapData.forEach { data in
+                    let isSelected = self.selectedMaps.contains(data.key)
+                    snapshot.appendItems([.item(customMap: data.key, data: data.value, isSelected: isSelected)], toSection: .body)
                 }
                 
                 self.titleData = titleData
@@ -78,19 +79,30 @@ final class ExploreMapViewModel {
             .store(in: &subscriptions)
     }
     
-    func selectMap(with id: String) {
-        if selectedIds.contains(id) {
-            selectedIds.removeAll(where: { $0 == id })
+    func selectMap(with customMap: CustomMap) {
+        if selectedMaps.contains(customMap) {
+            selectedMaps.removeAll(where: { $0 == customMap })
+            Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": false])
         } else {
-            selectedIds.append(id)
+            selectedMaps.append(customMap)
+            Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": true])
         }
     }
     
-    func joinMap() {
-        // TODO: function to join map
+    func joinMap(completion: @escaping (() -> Void)) {
+        Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": selectedMaps.count])
+        
+        for map in selectedMaps {
+            service.joinMap(customMap: map) { [weak self] _ in
+                if map == self?.selectedMaps.last {
+                    self?.selectedMaps.removeAll()
+                    completion()
+                }
+            }
+        }
     }
 
-    private func fetchMaps(forced: Bool) -> AnyPublisher<(TitleData, [CustomMap]), Never> {
+    private func fetchMaps(forced: Bool) -> AnyPublisher<(TitleData, [CustomMap: [MapPost]]), Never> {
         Deferred {
             Future { [weak self] promise in
                 guard let self else {
@@ -112,13 +124,20 @@ final class ExploreMapViewModel {
 
                 Task {
                     do {
+                        var mapData: [CustomMap: [MapPost]] = [:]
                         let customMaps = try await self.service.fetchMaps()
-                        self.cachedMaps = customMaps
+                        
+                        for map in customMaps {
+                            guard let id = map.id else { return }
+                            mapData[map] = try await self.service.fetchMapPosts(id: id, limit: 7)
+                        }
+                        
+                        self.cachedMaps = mapData
                         self.cachedTitleData = titleData
-                        promise(.success((titleData, customMaps)))
+                        promise(.success((titleData, mapData)))
                     } catch {
                         print(error.localizedDescription)
-                        promise(.success((titleData, [])))
+                        promise(.success((titleData, [:])))
                     }
                 }
             }
