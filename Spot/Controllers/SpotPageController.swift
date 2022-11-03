@@ -343,6 +343,27 @@ extension SpotPageController {
         return true
     }
 
+    @objc func addAction() {
+        Mixpanel.mainInstance().track(event: "SpotPageAddTap")
+
+        /// crash on double stack was happening here
+        if navigationController?.viewControllers.contains(where: { $0 is AVCameraController }) ?? false {
+            return
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController else {
+                return
+            }
+
+            vc.spotObject = self?.spot
+            self?.barView.isHidden = true
+            let transition = AddButtonTransition()
+            self?.navigationController?.view.layer.add(transition, forKey: kCATransition)
+            self?.navigationController?.pushViewController(vc, animated: false)
+        }
+    }
+
     @objc func backButtonAction() {
         Mixpanel.mainInstance().track(event: "SpotPageBackTap")
         containerDrawerView?.closeAction()

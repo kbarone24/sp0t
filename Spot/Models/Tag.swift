@@ -27,6 +27,7 @@ struct Tag {
 
     // download image from firebase if user doesn't have this tag stored locally (probably doesn't have most recent version)
     func getImageURL(completion: @escaping (_ URL: String) -> Void) {
+
         var imageURL = ""
         let db = Firestore.firestore()
         db.collection("tags").whereField("tagName", isEqualTo: name).getDocuments { snap, err in

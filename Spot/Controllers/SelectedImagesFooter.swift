@@ -11,48 +11,16 @@ import Mixpanel
 import UIKit
 
 class SelectedImagesFooter: UICollectionReusableView {
-    private lazy var collectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout {
-            $0.itemSize = CGSize(width: 67, height: 79)
-            $0.minimumInteritemSpacing = 12
-            $0.scrollDirection = .horizontal
-        }
-        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        view.backgroundColor = nil
-        view.showsHorizontalScrollIndicator = false
-        view.register(SelectedImageCell.self, forCellWithReuseIdentifier: "ImageCell")
-        view.contentInset = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
-        view.delegate = self
-        view.dataSource = self
-        view.dragInteractionEnabled = true
-        return view
-    }()
 
-    private lazy var separatorLine: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
-        return view
-    }()
+    var collectionView: UICollectionView?
+    var separatorLine: UIView!
+    var detailView: UIView!
+    var detailLabel: UILabel!
+    var nextButton: UIButton!
 
-    private lazy var detailView = UIView()
-
-    private lazy var detailLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = UIColor(red: 0.575, green: 0.575, blue: 0.575, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Medium", size: 14)
-        return label
-    }()
-
-    private lazy var nextButton: FooterNextButton = {
-        let button = FooterNextButton()
-        button.addTarget(self, action: #selector(nextTap(_:)), for: .touchUpInside)
-        return button
-    }()
-
-    lazy var imageCount: Int = 0 {
+    var imageCount = 0 {
         didSet {
             detailLabel.text = imageCount > 1 ? "Drag and drop to reorder" : "Select up to 5 photos"
-            nextButton.isEnabled = imageCount > 0
         }
     }
 
@@ -63,71 +31,97 @@ class SelectedImagesFooter: UICollectionReusableView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .black
-        addInitialViews()
-    }
-
-    func addInitialViews() {
-        addSubview(detailView)
-        detailView.snp.updateConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(12)
-            $0.height.equalTo(100)
-        }
-
-        detailView.addSubview(detailLabel)
-        detailLabel.snp.makeConstraints {
-            $0.leading.equalTo(15)
-            $0.top.equalTo(7)
-            $0.height.equalTo(18)
-        }
-
-        nextButton.isEnabled = false
-        detailView.addSubview(nextButton)
-        nextButton.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(2)
-            $0.trailing.equalToSuperview().inset(15)
-            $0.width.equalTo(94)
-            $0.height.equalTo(40)
-        }
+        setUp()
     }
 
     func setUp() {
-        let imageSelected = !UploadPostModel.shared.selectedObjects.isEmpty
-        let removing = !imageSelected && collectionView.superview != nil
-        let adding = imageSelected && collectionView.superview == nil
+        let imageSelected = UploadPostModel.shared.selectedObjects.count > 0
+        let removing = !imageSelected && collectionView != nil && collectionView?.superview != nil
+        let adding = imageSelected && (collectionView == nil || collectionView?.superview == nil)
 
-        collectionView.removeFromSuperview()
-        separatorLine.removeFromSuperview()
-
+        if collectionView != nil { collectionView!.removeFromSuperview() }
+        if separatorLine != nil { separatorLine.removeFromSuperview() }
         if imageSelected {
-            collectionView.dragDelegate = self
-            collectionView.dropDelegate = self
-            addSubview(collectionView)
-            collectionView.snp.makeConstraints {
+            let layout = UICollectionViewFlowLayout {
+                $0.itemSize = CGSize(width: 67, height: 79)
+                $0.minimumInteritemSpacing = 12
+                $0.scrollDirection = .horizontal
+            }
+            collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+            collectionView!.backgroundColor = nil
+            collectionView!.showsHorizontalScrollIndicator = false
+            collectionView!.register(SelectedImageCell.self, forCellWithReuseIdentifier: "ImageCell")
+            collectionView!.contentInset = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
+            collectionView!.delegate = self
+            collectionView!.dataSource = self
+            collectionView!.dragInteractionEnabled = true
+            collectionView!.dragDelegate = self
+            collectionView!.dropDelegate = self
+            addSubview(collectionView!)
+            collectionView!.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
                 $0.top.equalTo(11)
                 $0.height.equalTo(79)
             }
-            collectionView.reloadData()
 
-            addSubview(separatorLine)
+            separatorLine = UIView {
+                $0.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
+                addSubview($0)
+            }
             separatorLine.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
-                $0.top.equalTo(collectionView.snp.bottom).offset(11)
+                $0.top.equalTo(collectionView!.snp.bottom).offset(11)
                 $0.height.equalTo(1)
             }
         }
 
         let detailY = imageSelected ? 112 : 12
         // animate view change when adding or removing the collection
-        if removing || adding {
+        if (removing || adding) && detailView != nil {
             UIView.animate(withDuration: 0.3) {
                 self.detailView.snp.updateConstraints { $0.top.equalTo(detailY) }
                 self.layoutIfNeeded()
             }
+            nextButton.isEnabled = imageSelected
+            return
+        } else if detailView != nil {
+            imageCount = UploadPostModel.shared.selectedObjects.count
+            return
         }
 
+        detailView = UIView {
+            $0.backgroundColor = nil
+            addSubview($0)
+        }
+        detailView.snp.updateConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(detailY)
+            $0.height.equalTo(100)
+        }
+
+        detailLabel = UILabel {
+            $0.textColor = UIColor(red: 0.575, green: 0.575, blue: 0.575, alpha: 1)
+            $0.font = UIFont(name: "SFCompactText-Medium", size: 14)
+            detailView.addSubview($0)
+        }
+        detailLabel.snp.makeConstraints {
+            $0.leading.equalTo(15)
+            $0.top.equalTo(7)
+            $0.height.equalTo(18)
+        }
         imageCount = UploadPostModel.shared.selectedObjects.count
+
+        nextButton = FooterNextButton {
+            $0.isEnabled = imageSelected
+            $0.addTarget(self, action: #selector(nextTap(_:)), for: .touchUpInside)
+            detailView.addSubview($0)
+        }
+        nextButton.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(2)
+            $0.trailing.equalToSuperview().inset(15)
+            $0.width.equalTo(94)
+            $0.height.equalTo(40)
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -149,7 +143,7 @@ extension SelectedImagesFooter: UICollectionViewDelegate, UICollectionViewDataSo
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as? SelectedImageCell else { return UICollectionViewCell() }
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as! SelectedImageCell
         cell.setImageValues(object: UploadPostModel.shared.selectedObjects[indexPath.row])
         return cell
     }
@@ -200,17 +194,17 @@ extension SelectedImagesFooter: UICollectionViewDelegate, UICollectionViewDataSo
         imagePreview.delegate = self
         imagePreview.animateFromFooter = true
 
-        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }), let object {
-            window.addSubview(imagePreview)
-            let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
-            imagePreview.imageExpand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])
-        }
+        let window = UIApplication.shared.windows.filter { $0.isKeyWindow }.first
+        window?.addSubview(imagePreview)
+
+        let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
+        imagePreview.imageExpand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object!])
     }
 
     private func reorderItems(coordinator: UICollectionViewDropCoordinator, destinationIndexPath: IndexPath, collectionView: UICollectionView) {
         if let item = coordinator.items.first, let sourceIndexPath = item.sourceIndexPath {
             let selectedCount = UploadPostModel.shared.selectedObjects.count
-            // check that index is in bounds and execute drag and drop
+            /// check that index is in bounds and execute drag and drop
             if (sourceIndexPath.item >= 0 && sourceIndexPath.item < selectedCount) && (destinationIndexPath.item >= 0 && destinationIndexPath.item < selectedCount) {
                 Mixpanel.mainInstance().track(event: "GalleryDragAndDrop")
                 collectionView.performBatchUpdates {
@@ -241,33 +235,33 @@ extension SelectedImagesFooter: ImagePreviewDelegate {
 }
 
 class SelectedImageCell: UICollectionViewCell {
-    private lazy var imageView: UIImageView = {
-        let view = UIImageView()
-        view.clipsToBounds = true
-        view.contentMode = .scaleAspectFill
-        view.layer.cornerRadius = 1
-        contentView.addSubview(view)
-        return view
-    }()
-    private lazy var cancelButton: UIButton = {
-        let button = UIButton()
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        button.setImage(UIImage(named: "CancelButton"), for: .normal)
-        button.layer.cornerRadius = 1
-        button.imageEdgeInsets = UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2)
-        button.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
-        return button
-    }()
-    lazy var assetID: String = ""
+    var cancelButton: UIButton!
+    var imageView: UIImageView!
+    var assetID: String!
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        contentView.addSubview(imageView)
+
+        if imageView != nil { imageView.image = UIImage(); imageView.removeFromSuperview() }
+        imageView = UIImageView {
+            $0.clipsToBounds = true
+            $0.contentMode = .scaleAspectFill
+            $0.layer.cornerRadius = 1
+            contentView.addSubview($0)
+        }
         imageView.snp.makeConstraints {
             $0.leading.trailing.top.bottom.equalToSuperview()
         }
 
-        contentView.addSubview(cancelButton)
+        if cancelButton != nil { cancelButton.removeFromSuperview() }
+        cancelButton = UIButton {
+            $0.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+            $0.setImage(UIImage(named: "CancelButton"), for: .normal)
+            $0.layer.cornerRadius = 1
+            $0.imageEdgeInsets = UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2)
+            $0.addTarget(self, action: #selector(cancelTap(_:)), for: .touchUpInside)
+            contentView.addSubview($0)
+        }
         cancelButton.snp.makeConstraints {
             $0.top.trailing.equalToSuperview()
             $0.height.width.equalTo(23)
