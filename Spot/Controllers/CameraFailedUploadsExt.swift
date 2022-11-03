@@ -34,9 +34,13 @@ extension AVCameraController {
         DispatchQueue.global().async { [weak self] in
             do {
                 let failedPosts = try managedContext.fetch(postsRequest)
-                guard let post = failedPosts.first else { return }
+                guard let post = failedPosts.first,
+                      self?.spotObject == nil
+                else {
+                    return
+                }
 
-                // test for corrupted draft or old draft (pre 1.0)
+                /// test for corrupted draft or old draft (pre 1.0)
                 let timestampID = post.timestamp
 
                 if post.images == nil {

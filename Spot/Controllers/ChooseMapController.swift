@@ -20,17 +20,14 @@ final class ChooseMapController: UIViewController {
     var newMap: CustomMap?
     private lazy var customMaps: [CustomMap] = []
 
-    private lazy var postButton: PostButton = {
-        let button = PostButton()
-        button.addTarget(self, action: #selector(postTap), for: .touchUpInside)
-        return button
-    }()
-    private lazy var friendsMapButton = FriendsMapButton()
-    private lazy var tableView = ChooseMapTableView()
-    private lazy var bottomMask = UIView()
-    private lazy var progressBar = ProgressBar()
-
+    private var buttonView: UIView!
+    private var postButton: UIButton!
+    private var friendsMapButton: FriendsMapButton!
+    private var tableView: ChooseMapTableView!
+    private var bottomMask: UIView!
     private var heightConstraint: Constraint?
+
+    private var progressBar: ProgressBar!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -77,8 +74,11 @@ final class ChooseMapController: UIViewController {
     }
 
     func addButtons() {
-        // work bottom to top laying out views
-        view.addSubview(postButton)
+        /// work bottom to top laying out views
+        postButton = PostButton {
+            $0.addTarget(self, action: #selector(postTap), for: .touchUpInside)
+            view.addSubview($0)
+        }
         postButton.snp.makeConstraints {
             $0.bottom.equalToSuperview().offset(-48)
             $0.leading.trailing.equalToSuperview().inset(49)
@@ -97,9 +97,11 @@ final class ChooseMapController: UIViewController {
     }
 
     func addTableView() {
-        tableView.dataSource = self
-        tableView.delegate = self
-        view.addSubview(tableView)
+        tableView = ChooseMapTableView {
+            $0.dataSource = self
+            $0.delegate = self
+            view.addSubview($0)
+        }
         tableView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(friendsMapButton.snp.bottom).offset(38)
@@ -108,8 +110,10 @@ final class ChooseMapController: UIViewController {
     }
 
     func addProgressBar() {
-        progressBar.isHidden = true
-        view.addSubview(progressBar)
+        progressBar = ProgressBar {
+            $0.isHidden = true
+            view.addSubview($0)
+        }
         progressBar.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(50)
             $0.bottom.equalTo(postButton.snp.top).offset(-20)
@@ -121,17 +125,17 @@ final class ChooseMapController: UIViewController {
         newMap = UploadPostModel.shared.mapObject
         customMaps = UserDataModel.shared.userInfo.mapsList.filter({ $0.memberIDs.contains(UserDataModel.shared.uid) }).sorted(by: { $0.userTimestamp.seconds > $1.userTimestamp.seconds })
 
-        if var newMap {
-            newMap.coverImage = UploadPostModel.shared.postObject?.postImage.first ?? UIImage() /// new map image not set when going through new map flow
-            customMaps.insert(newMap, at: 0)
-            if newMap.secret { toggleFriendsMap() }
+        if newMap != nil {
+            newMap?.coverImage = UploadPostModel.shared.postObject.postImage.first ?? UIImage() /// new map image not set when going through new map flow
+            customMaps.insert(newMap!, at: 0)
+            if newMap!.secret { toggleFriendsMap() }
         }
 
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
 
     func enablePostButton() {
-        postButton.isEnabled = friendsMapButton.buttonSelected || UploadPostModel.shared.postObject?.mapID != ""
+        postButton.isEnabled = friendsMapButton.buttonSelected || UploadPostModel.shared.postObject.mapID != ""
     }
 
     @objc func friendsMapTap() {
@@ -141,15 +145,18 @@ final class ChooseMapController: UIViewController {
 
     func toggleFriendsMap() {
         friendsMapButton.buttonSelected.toggle()
-        UploadPostModel.shared.postObject?.hideFromFeed = !friendsMapButton.buttonSelected
+        UploadPostModel.shared.postObject.hideFromFeed = !friendsMapButton.buttonSelected
         enablePostButton()
     }
 
     func addBottomMask() {
-        bottomMask.isUserInteractionEnabled = false
-        view.addSubview(bottomMask)
+        if bottomMask != nil { return }
+        bottomMask = UIView {
+            $0.backgroundColor = nil
+            $0.isUserInteractionEnabled = false
+            view.addSubview($0)
+        }
         view.bringSubviewToFront(postButton)
-        view.bringSubviewToFront(progressBar)
         _ = CAGradientLayer {
             $0.frame = CGRect(x: 0, y: postButton.frame.minY - 120, width: UIScreen.main.bounds.width, height: 120)
             $0.colors = [
@@ -179,8 +186,8 @@ final class ChooseMapController: UIViewController {
 
         DispatchQueue.global(qos: .userInitiated).async {
             self.uploadPostImage(
-                images: UploadPostModel.shared.postObject?.postImage ?? [],
-                postID: UploadPostModel.shared.postObject?.id ?? "",
+                images: UploadPostModel.shared.postObject.postImage,
+                postID: UploadPostModel.shared.postObject.id ?? "",
                 progressFill: self.progressBar.progressFill,
                 fullWidth: fullWidth) { [weak self] imageURLs, failed in
                     
@@ -190,7 +197,7 @@ final class ChooseMapController: UIViewController {
                     self.runFailedUpload()
                     return
                 }
-                UploadPostModel.shared.postObject?.imageURLs = imageURLs
+                UploadPostModel.shared.postObject.imageURLs = imageURLs
                 self.uploadPostToDB(newMap: newMap)
                 /// enable upload animation to finish
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -239,7 +246,7 @@ final class ChooseMapController: UIViewController {
 extension ChooseMapController: NewMapDelegate {
     func finishPassing(map: CustomMap) {
         Mixpanel.mainInstance().track(event: "ChooseMapCreateNew")
-        // only select if map was just created, update on edit
+        /// only select if map was just created, update on edit
         if newMap == nil {
             customMaps.insert(map, at: 0)
         } else {
@@ -279,7 +286,7 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
             let index = newMap != nil ? indexPath.row : indexPath.row - 1
             /// map will be nil for row "-1" which represents the add spot row
             let map = customMaps[safe: index]
-            let selected = UploadPostModel.shared.postObject?.mapID == map?.id ?? "_"
+            let selected = UploadPostModel.shared.postObject.mapID == map?.id ?? "_"
             cell.setUp(map: map, selected: selected, newMap: newMap != nil)
             return cell
         }
@@ -294,7 +301,7 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
         let index = indexPath.row - 1
         let map = customMaps[safe: index]
         if let map = map {
-            if map.id == UploadPostModel.shared.postObject?.mapID ?? "" {
+            if map.id == UploadPostModel.shared.postObject.mapID {
                 deselectMap(map: map)
             } else { selectMap(map: map) }
             HapticGenerator.shared.play(.light)
