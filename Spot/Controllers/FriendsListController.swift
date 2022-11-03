@@ -208,11 +208,9 @@ class FriendsListController: UIViewController {
     @objc func doneTap(_ sender: UIButton) {
         var selectedUsers: [UserProfile] = []
         for friend in friendsList { if friend.selected { selectedUsers.append(friend) }}
+        delegate?.finishPassing(selectedUsers: selectedUsers)
         Mixpanel.mainInstance().track(event: "FriendsListDoneTap", properties: ["selectedCount": selectedUsers.count])
-        DispatchQueue.main.async {
-            self.delegate?.finishPassing(selectedUsers: selectedUsers)
-            self.dismiss(animated: true)
-        }
+        DispatchQueue.main.async { self.dismiss(animated: true) }
     }
 
     @objc func cancelTap(_ sender: UIButton) {
