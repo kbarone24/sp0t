@@ -17,7 +17,6 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var communityMap: Bool? = false
     var founderID: String
     var imageURL: String
-    var hiddenUsers: [String]? = []
     var likers: [String]
     var lowercaseName: String?
     var mapDescription: String?
@@ -66,7 +65,6 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case id
         case communityMap
         case founderID
-        case hiddenUsers
         case imageURL
         case lowercaseName
         case likers
@@ -210,21 +208,22 @@ struct CustomMap: Identifiable, Codable, Hashable {
         return (nil, false)
     }
 
-    mutating func updatePostLevelValues(post: MapPost) {
+    mutating func updatePostLevelValues(post: MapPost?) {
         /// update post values on new post
-        guard let postID = post.id else { return }
+        guard let postID = post?.id else { return }
         if !postIDs.contains(postID) {
             postIDs.append(postID)
-            postImageURLs.append(post.imageURLs.first ?? "")
-            posterIDs.append(post.posterID)
-            posterUsernames.append(post.userInfo?.username ?? "")
-            postTimestamps.append(post.timestamp)
-            postSpotIDs.append(post.spotID ?? "")
+            posterIDs.append(post?.posterID ?? "")
+            posterUsernames.append(post?.userInfo?.username ?? "")
+            postTimestamps.append(post?.timestamp ?? Timestamp())
+            postSpotIDs.append(post?.spotID ?? "")
 
-            let postLocation = ["lat": post.postLat, "long": post.postLong]
+            if !(post?.imageURLs.isEmpty ?? true) { postImageURLs.append(post?.imageURLs.first ?? "") }
+
+            let postLocation = ["lat": post?.postLat ?? 0, "long": post?.postLong ?? 0]
             postLocations.append(postLocation)
 
-            var posters = post.addedUsers ?? []
+            var posters = post?.addedUsers ?? []
             posters.append(UserDataModel.shared.uid)
             posterDictionary[postID] = posters
         }
@@ -232,8 +231,8 @@ struct CustomMap: Identifiable, Codable, Hashable {
 
     mutating func updateSpotLevelValues(spot: MapSpot) {
         /// update spot values on new post
-        if !spotIDs.contains(spot.id!) {
-            spotIDs.append(spot.id!)
+        if !spotIDs.contains(spot.id ?? "") {
+            spotIDs.append(spot.id ?? "")
             spotNames.append(spot.spotName)
             spotLocations.append(["lat": spot.spotLat, "long": spot.spotLong])
         }
