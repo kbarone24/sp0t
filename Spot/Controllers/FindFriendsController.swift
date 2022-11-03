@@ -128,33 +128,35 @@ class FindFriendsController: UIViewController {
             $0.width.equalToSuperview()
             $0.height.equalTo(50)
         }
-
+        
         searchBar.delegate = self
         searchBar.searchTextField.attributedPlaceholder = NSAttributedString(
             string: "Search users",
             attributes: [NSAttributedString.Key.foregroundColor: UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)]
         )
-
+        
         searchBarContainer.addSubview(searchBar)
         searchBar.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(16)
             $0.trailing.equalToSuperview().offset(-16)
             $0.top.bottom.equalToSuperview()
         }
-
+        
         cancelButton.addTarget(self, action: #selector(searchCancelTap(_:)), for: .touchUpInside)
         searchBarContainer.addSubview(cancelButton)
         cancelButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().offset(-16)
             $0.centerY.equalTo(searchBar.snp.centerY)
         }
-
+        
         searchIndicator.isHidden = true
         tableView.addSubview(searchIndicator)
         searchIndicator.snp.makeConstraints {
             $0.top.equalTo(20)
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
+        }
+    }
 
     private func loadTableView() {
         tableView.delegate = self
