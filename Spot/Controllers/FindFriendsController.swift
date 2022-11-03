@@ -83,13 +83,14 @@ class FindFriendsController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyProfileAddFriend(_:)), name: NSNotification.Name("SendFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         setUpNavBar()
+        configureDrawerView()
     }
 
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
 
-    func setUpNavBar() {
+    private func setUpNavBar() {
         title = "Find Friends"
         navigationItem.backButtonTitle = ""
 
@@ -112,7 +113,14 @@ class FindFriendsController: UIViewController {
         )
     }
 
-    func loadSearchBar() {
+    private func configureDrawerView() {
+        containerDrawerView?.canInteract = false
+        containerDrawerView?.swipeDownToDismiss = false
+        containerDrawerView?.showCloseButton = false
+        containerDrawerView?.present(to: .top)
+    }
+
+    private func loadSearchBar() {
         view.addSubview(searchBarContainer)
         searchBarContainer.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
@@ -147,10 +155,8 @@ class FindFriendsController: UIViewController {
             $0.top.equalTo(20)
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
-        }
-    }
 
-    func loadTableView() {
+    private func loadTableView() {
         tableView.delegate = self
         tableView.dataSource = self
         view.addSubview(tableView)
@@ -158,14 +164,13 @@ class FindFriendsController: UIViewController {
             $0.leading.trailing.bottom.equalToSuperview()
             $0.top.equalTo(searchBarContainer.snp.bottom).offset(10)
         }
-
+        
         tableView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.top.equalToSuperview().offset(180)
             $0.centerX.equalToSuperview()
             $0.height.width.equalTo(30)
         }
-
         DispatchQueue.main.async { self.activityIndicator.startAnimating() }
     }
 
@@ -245,11 +250,19 @@ class FindFriendsController: UIViewController {
     }
 
     @objc func inviteFriendsTap() {
+        Mixpanel.mainInstance().track(event: "FindFriendsInviteFriendsTap")
         // will update with app store link when accepted
         guard let url = URL(string: "https://testflight.apple.com/join/ewgGbjkR") else { return }
         let items = [url, "Join the global chill and add me on sp0t 🌎🦦👯"] as [Any]
         let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
         DispatchQueue.main.async { self.present(activityView, animated: true) }
+        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+            if completed {
+                Mixpanel.mainInstance().track(event: "FindFriendsInviteSent", properties: ["type": activityType?.rawValue ?? ""])
+            } else {
+                Mixpanel.mainInstance().track(event: "FindFriendsInviteCancelled")
+            }
+        }
     }
 
     func openProfile(user: UserProfile) {
@@ -275,13 +288,14 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        let maxRows = UserDataModel.shared.screenSize == 0 ? 3 : UserDataModel.shared.screenSize == 1 ? 4 : 5
-        if activeSearch { return min(maxRows, queryUsers.count) }
+        let maxRowsSearch = UserDataModel.shared.screenSize == 0 ? 3 : UserDataModel.shared.screenSize == 1 ? 4 : 5
+        if activeSearch { return min(maxRowsSearch, queryUsers.count) }
+        let suggestedRows = min(5, suggestedUsers.count)
 
         switch section {
         case 0: return 1
-        case 1: return contactsHidden ? suggestedUsers.count : contactsAuth == .authorized ? contacts.count : 1
-        case 2: return suggestedUsers.count
+        case 1: return contactsHidden ? suggestedRows : contactsAuth == .authorized ? contacts.count : 1
+        case 2: return suggestedRows
         default: return 0
         }
     }

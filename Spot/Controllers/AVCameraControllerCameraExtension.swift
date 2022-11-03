@@ -9,30 +9,68 @@
 import AVFoundation
 import Mixpanel
 import UIKit
+import Photos
+
+// permissions
+extension AVCameraController {
+    func askForLocationAccess() {
+        showSettingsAlert(title: "Allow location access in Settings to post on sp0t", message: "sp0t needs your location to pin your posts on the map", location: true)
+    }
+
+    func askForCameraAccess() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { access in
+                if access {
+                    self.setUpInitialCaptureSession()
+                } else {
+                    self.removeCamera()
+                }
+            }
+        case .denied, .restricted:
+            // prompt to open settings if user had already rejected
+            showSettingsAlert(title: "Allow camera access in Settings to post on sp0t", message: nil, location: false)
+        default: return
+        }
+    }
+
+    private func showSettingsAlert(title: String, message: String?, location: Bool) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Open settings", style: .default, handler: { _ in
+            guard let settingsString = URL(string: UIApplication.openSettingsURLString) else { return }
+            UIApplication.shared.open(settingsString, options: [:], completionHandler: nil)
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: {_ in
+            if location { self.removeCamera() }
+        }))
+        DispatchQueue.main.async { self.present(alert, animated: true) }
+    }
+
+    func askForGalleryAccess() {
+        switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
+        case .notDetermined:
+            PHPhotoLibrary.requestAuthorization { access in
+                if access == .authorized || access == .limited {
+                    self.openGallery(assetsFetched: false)
+                }
+            }
+        case .restricted, .denied:
+            // prompt to open settings if user had already rejected
+            showSettingsAlert(title: "Allow gallery access in Settings to post a photo from your gallery", message: nil, location: false)
+        default: return
+        }
+    }
+}
 
 extension AVCameraController {
-
-    func switchCameras() {
-        do {
-            try cameraController?.switchCameras()
-            self.resetZoom()
-            self.setFocus(position: cameraView.center)
-        } catch {
-            // TODO: Handle errors here, show error alert
-            print(error)
+    func restartCaptureSession() {
+        DispatchQueue.main.async {
+            self.cameraController?.previewLayer?.connection?.isEnabled = true
+            self.enableButtons()
         }
-    }
-
-    func setStillFlash() {
-        if flashButton.image(for: .normal) == UIImage(named: "FlashOff")! {
-            cameraController?.flashMode = .off
-        } else {
-            cameraController?.flashMode = .on
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.cameraController?.captureSession?.startRunning()
         }
-    }
-
-    func setGifFlash() {
-        cameraController?.flashMode = .off
     }
 
     // set up camera preview on screen if we have user permission
@@ -40,22 +78,8 @@ extension AVCameraController {
         cameraController?.prepare(position: .rear) { [weak self] _ in
             guard let self = self else { return }
             try? self.cameraController?.displayPreview(on: self.cameraView)
-            self.view.isUserInteractionEnabled = true
+            self.enableButtons()
             self.setAutoExposure()
-        }
-    }
-
-    func openGallery() {
-        guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "PhotoGallery") as? PhotoGalleryController else {
-            return
-        }
-
-        DispatchQueue.main.async { [weak self] in
-            if self?.navigationController?.viewControllers.contains(where: { $0 is PhotoGalleryController }) ?? false {
-                return
-            }
-
-            self?.navigationController?.pushViewController(vc, animated: true)
         }
     }
 
@@ -166,38 +190,9 @@ extension AVCameraController {
         }
     }
 
-    @objc func pinch(_ pinch: UIPinchGestureRecognizer) {
-        /// pinch to adjust zoomLevel
-        let minimumZoom: CGFloat = 1.0
-        let maximumZoom: CGFloat = 5.0
-
-        let device: AVCaptureDevice?
-        if cameraController?.currentCameraPosition == .rear, let rearCamera = cameraController?.rearCamera {
-            device = rearCamera
-        } else if let frontCamera = cameraController?.frontCamera {
-            device = frontCamera
-        } else {
-            device = nil
-        }
-
-        let newScaleFactor = minMaxZoom(device: device, factor: pinch.scale * lastZoomFactor, minimumZoom: minimumZoom, maximumZoom: maximumZoom)
-
-        switch pinch.state {
-        case .began:
-            fallthrough
-        case .changed:
-            update(device: device, scale: newScaleFactor)
-        case .ended, .cancelled:
-            lastZoomFactor = minMaxZoom(device: device, factor: newScaleFactor, minimumZoom: minimumZoom, maximumZoom: maximumZoom)
-            update(device: device, scale: lastZoomFactor)
-        default: break
-        }
-    }
-
     func cancelFromGallery() {
         Mixpanel.mainInstance().track(event: "UploadCancelFromGallery", properties: nil)
-
-        /// reset selectedImages and imageObjects
+        // reset selectedImages and imageObjects
         UploadPostModel.shared.selectedObjects.removeAll()
         while let i = UploadPostModel.shared.imageObjects.firstIndex(where: { $0.selected }) {
             UploadPostModel.shared.imageObjects[i].selected = false
