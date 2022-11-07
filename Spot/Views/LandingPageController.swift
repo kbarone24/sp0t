@@ -124,6 +124,8 @@ class LandingPageController: UIViewController {
             $0.centerX.equalToSuperview().offset(5)
         }
 
+        privacyLinks.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(termsTap)))
+
         addEmailLogin()
     }
 
@@ -166,6 +168,13 @@ class LandingPageController: UIViewController {
             let navController = UINavigationController(rootViewController: vc)
             navController.modalPresentationStyle = .fullScreen
             self.present(navController, animated: false, completion: nil)
+        }
+    }
+
+    @objc func termsTap() {
+        Mixpanel.mainInstance().track(event: "LandingPageTermsTap")
+        if let url = URL(string: "https://www.sp0t.app/privacy") {
+            UIApplication.shared.open(url)
         }
     }
 }
