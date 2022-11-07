@@ -239,11 +239,4 @@ final class NameController: UIViewController, UITextFieldDelegate {
     private func nameFieldComplete(name: String) -> Bool {
         return !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
-
-    func termsTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "SignUp1TermsTap")
-        if let url = URL(string: "https://www.sp0t.app/legal") {
-            UIApplication.shared.open(url)
-        }
-    }
 }
