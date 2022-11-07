@@ -17,10 +17,6 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        print("no post hidden", noPostLabel.isHidden)
-        print("maps hidden", maps.isEmpty)
-        print("posts hidden", posts.isEmpty)
-
         // always show empty posts cell for non-friend
         let showCollectionItems = (noPostLabel.isHidden && (!maps.isEmpty || !posts.isEmpty)) || (relation != .myself && relation != .friend)
         return section == 0 ? 1 : showCollectionItems ? maps.count + 1 : 0

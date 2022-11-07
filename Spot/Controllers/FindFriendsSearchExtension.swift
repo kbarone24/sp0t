@@ -9,9 +9,11 @@
 import Foundation
 import UIKit
 import Firebase
+import Mixpanel
 
 extension FindFriendsController: UISearchBarDelegate {
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        Mixpanel.mainInstance().track(event: "FindFriendsUserClickedSearchBar")
         UIView.animate(withDuration: 0.1) {
             searchBar.snp.updateConstraints {
                 $0.trailing.equalToSuperview().offset(-60)

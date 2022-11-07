@@ -42,13 +42,13 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Allow sp0t to access your camera</string>
+	<string>Use your camera to take pictures to share on sp0t!</string>
 	<key>NSContactsUsageDescription</key>
-	<string>Import your contacts to find friends</string>
+	<string>Import your contacts to find friends on sp0t!</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>sp0t uses your location to find spots near you!</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Allow sp0t to access your photos so you can share them</string>
+	<string>sp0t needs access to your photo library to post, save, and upload photos.</string>
 	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
 	<true/>
 	<key>UIAppFonts</key>
