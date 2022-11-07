@@ -211,7 +211,6 @@ class ContactCell: UITableViewCell {
     }
 
     override func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        print("should receive", touch.location(in: self).x, UIScreen.main.bounds.width - 90)
         // ignore touch area around action button
         return touch.location(in: self).x < UIScreen.main.bounds.width - 90
     }

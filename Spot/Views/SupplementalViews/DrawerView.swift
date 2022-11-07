@@ -67,7 +67,7 @@ class DrawerView: NSObject {
     private var drawerCornerRadius: CGFloat = 0.0
 
     private var rootVC = UIViewController()
-    private unowned var parentVC: UIViewController = UIApplication.shared.windows.filter { $0.isKeyWindow }.first?.rootViewController ?? UIViewController()
+    private unowned var parentVC: UIViewController = UIViewController()
 
     private var panRecognizer: UIPanGestureRecognizer?
     private var yPosition: CGFloat = 0
@@ -93,9 +93,9 @@ class DrawerView: NSObject {
     }
     public init(present: UIViewController = UIViewController(), detentsInAscending: [DrawerViewDetent] = [.bottom, .middle, .top], closeAction: (() -> Void)? = nil) {
         super.init()
-        if let parent = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first?.rootViewController as? UINavigationController {
+        if let parent = UIApplication.shared.windows.first(where: {$0.isKeyWindow})?.rootViewController as? UINavigationController {
             if parent.visibleViewController != nil {
-                parentVC = parent.visibleViewController!
+                parentVC = parent.visibleViewController ?? UIViewController()
             }
         }
         rootVC = present
@@ -149,6 +149,7 @@ class DrawerView: NSObject {
         }
         closeButton.addTarget(self, action: #selector(self.closeAction(_:)), for: .touchUpInside)
         closeButton.isHidden = !showCloseButton
+        print("frame", slideView.frame)
     }
 
     // MARK: Present
@@ -166,13 +167,15 @@ class DrawerView: NSObject {
         }
         detentsPointer = detents.firstIndex(of: DrawerViewDetent(rawValue: to.rawValue)!) ?? 0
 
-        UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
-            self.slideView.frame.origin.y = self.yPosition
-            self.myNav.view.layer.cornerRadius = self.drawerCornerRadius
-            self.parentVC.view.layoutIfNeeded()
-        } completion: { _ in
-            NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
-        }
+    //    DispatchQueue.main.async {
+            UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseOut) {
+                self.slideView.frame.origin.y = self.yPosition
+                self.myNav.view.layer.cornerRadius = self.drawerCornerRadius
+                self.parentVC.view.layoutIfNeeded()
+            } completion: { _ in
+                NotificationCenter.default.post(name: NSNotification.Name("\(self.animationCompleteNotificationName)"), object: nil)
+            }
+      //  }
     }
 
     // MARK: Set position functions
