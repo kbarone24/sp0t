@@ -1031,10 +1031,10 @@ extension NSObject {
         }
     }
 
-    func addFriend(senderProfile: UserProfile, receiverID: String) {
+    func addFriend(receiverID: String) {
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         let db: Firestore = Firestore.firestore()
-        let ref = db.collection("users").document(receiverID).collection("notifications").document(senderProfile.id!) /// using UID for friend rquest should make it so user cant send a double friend request
+        let ref = db.collection("users").document(receiverID).collection("notifications").document(UserDataModel.shared.uid) // using UID for friend rquest should make it so user cant send a double friend request
 
         let time = Date()
 

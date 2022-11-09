@@ -14,16 +14,24 @@ import UIKit
 extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return feedLoaded ? UserDataModel.shared.userInfo.mapsList.count + 2 : 1
+        if feedLoaded {
+         //   let extraCells = userInChapelHill() ? 3 : 2
+            let extraCells = 3
+            return UserDataModel.shared.userInfo.mapsList.count + extraCells
+        }
+        return 1
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if !feedLoaded, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapLoadingCell", for: indexPath) as? MapLoadingCell {
-            /// display loading cell
+            // display loading cell
             return cell
         }
-        if indexPath.row > UserDataModel.shared.userInfo.mapsList.count, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddMapCell", for: indexPath) as? AddMapCell {
-            /// display new map button
+        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CampusMapCell", for: indexPath) as? CampusMapCell {
+            return cell
+        }
+        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 2, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddMapCell", for: indexPath) as? AddMapCell {
+            // display new map button
             return cell
         }
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapCell", for: indexPath) as? MapHomeCell {
@@ -40,7 +48,10 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
-            /// launch new map
+            openExploreMaps()
+            return
+        } else if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 2 {
+            // launch new map
             openNewMap()
             return
         } else if indexPath.item == selectedItemIndex {
@@ -70,13 +81,23 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.7
         let itemHeight = itemWidth * 0.95
         let firstItemWidth = itemWidth * 1.15
-        return feedLoaded ? indexPath.item == 0 ? CGSize(width: firstItemWidth, height: itemHeight) : CGSize(width: itemWidth, height: itemHeight) : CGSize(width: UIScreen.main.bounds.width, height: itemHeight)
+
+        if feedLoaded {
+            if indexPath.item == 0 {
+                // friends cell
+                return CGSize(width: firstItemWidth, height: itemHeight)
+            }
+            // standard cell
+            return CGSize(width: itemWidth, height: itemHeight)
+        }
+        // loading indicator
+        return CGSize(width: UIScreen.main.bounds.width, height: itemHeight)
     }
 
     func addMapAnnotations(index: Int, reload: Bool) {
         mapView.removeAllAnnos()
         var map = getSelectedMap()
-        /// create temp map to represent friends map
+        // create temp map to represent friends map
         if map == nil { map = getFriendsMapObject() }
         for group in map!.postGroup { mapView.addSpotAnnotation(group: group, map: map!) }
 
