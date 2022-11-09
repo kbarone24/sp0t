@@ -9,12 +9,18 @@
 import Foundation
 import Mixpanel
 import UIKit
-/// uiaction methods
+import Firebase
+
 extension PostCell {
     func addActionSheet() {
         let activeUser = post.posterID == uid
-        let alertAction = activeUser ? "Delete post" : "Report post"
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        if !activeUser {
+            alert.addAction(UIAlertAction(title: "Hide post", style: .default, handler: { (_) in
+                self.hidePostFromFeed()
+            }))
+        }
+        let alertAction = activeUser ? "Delete post" : "Report post"
         alert.addAction(UIAlertAction(title: alertAction, style: .destructive, handler: { (_) in
             activeUser ? self.addDeletePostAction() : self.addReportPostAction()
         }))
@@ -31,9 +37,7 @@ extension PostCell {
         alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
             Mixpanel.mainInstance().track(event: "DeletePostCancelTap")
         }))
-        alert.addAction(UIAlertAction(title: "Delete",
-                                      style: .destructive,
-                                      handler: {(_: UIAlertAction!) in
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { (_) in
             Mixpanel.mainInstance().track(event: "DeletePostTap")
             postVC.deletePost(post: self.post)
         }))
@@ -42,30 +46,39 @@ extension PostCell {
 
     func addReportPostAction() {
         let alertController = UIAlertController(title: "Report user", message: "", preferredStyle: .alert)
-        let confirmAction = UIAlertAction(title: "Report user", style: .default) { (_) in
+        alertController.addAction(UIAlertAction(title: "Report user", style: .default, handler: { (_) in
             if let txtField = alertController.textFields?.first, let text = txtField.text {
                 Mixpanel.mainInstance().track(event: "ReportPostTap")
                 self.db.collection("feedback").addDocument(data: [
                     "feedbackText": text,
-                    "postID": self.post.id!,
+                    "postID": self.post.id ?? "",
                     "type": "reportPost",
                     "userID": self.uid
                 ])
+                self.hidePostFromFeed()
                 self.showConfirmationAction(deletePost: false)
             }
-        }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
+        }))
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { (_) in
             Mixpanel.mainInstance().track(event: "ReportPostCancelTap")
-        }
+        }))
         alertController.addTextField { (textField) in
             textField.autocorrectionType = .default
             textField.placeholder = "Why are you reporting this user?"
         }
-        alertController.addAction(confirmAction)
-        alertController.addAction(cancelAction)
 
         guard let postVC = viewContainingController() as? PostController else { return }
         postVC.present(alertController, animated: true, completion: nil)
+    }
+
+    func hidePostFromFeed() {
+        Mixpanel.mainInstance().track(event: "HidePostFromFeed")
+        guard let postVC = viewContainingController() as? PostController else { return }
+        postVC.deletePostLocally(index: postVC.selectedPostIndex)
+        postVC.sendPostDeleteNotification(post: post, mapID: post.mapID ?? "", mapDelete: false, spotDelete: false, spotRemove: false)
+
+        let db = Firestore.firestore()
+        db.collection("posts").document(post.id ?? "").updateData(["hiddenBy": FieldValue.arrayUnion([UserDataModel.shared.uid])])
     }
 
     func showConfirmationAction(deletePost: Bool) {
