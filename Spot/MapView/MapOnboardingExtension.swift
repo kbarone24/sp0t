@@ -25,7 +25,7 @@ extension MapController {
             let avc = AvatarSelectionController(sentFrom: .map)
             self.navigationController?.pushViewController(avc, animated: true)
 
-        } else if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
+        } else if userInChapelHill() {
             displayHeelsMap()
 
         } else if UserDataModel.shared.userInfo.friendIDs.count < 4 && posts == 0 {
@@ -45,12 +45,8 @@ extension MapController {
     }
 
     func displayHeelsMap() {
-        /// maps list check shouldnt be necessary anymore
-        if userInChapelHill() && !UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == heelsMapID }) {
-            let vc = HeelsMapPopUpController()
-            vc.delegate = self
-            DispatchQueue.main.async { self.present(vc, animated: true) }
-            db.collection("users").document(uid).updateData(["respondedToCampusMap": true])
+        if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
+            openExploreMaps()
         }
     }
 }

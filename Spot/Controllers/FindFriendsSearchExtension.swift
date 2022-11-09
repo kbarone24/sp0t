@@ -13,6 +13,8 @@ import Mixpanel
 
 extension FindFriendsController: UISearchBarDelegate {
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        activeSearch = true
+        DispatchQueue.main.async { self.tableView.reloadData() }
         Mixpanel.mainInstance().track(event: "FindFriendsUserClickedSearchBar")
         UIView.animate(withDuration: 0.1) {
             searchBar.snp.updateConstraints {
@@ -49,14 +51,13 @@ extension FindFriendsController: UISearchBarDelegate {
     }
 
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        activeSearch = searchText != ""
         searchTextGlobal = searchText
         emptyQueries()
 
         // reset table for new search or abandon search function
         DispatchQueue.main.async {
             self.tableView.reloadData()
-            if !self.activeSearch {
+            if !self.activeSearch || searchBar.text == "" {
                 self.searchIndicator.stopAnimating()
                 return
             } else if !self.searchIndicator.isAnimating() {

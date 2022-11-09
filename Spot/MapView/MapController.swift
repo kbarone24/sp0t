@@ -159,6 +159,7 @@ final class MapController: UIViewController {
         mapsCollection.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell")
         mapsCollection.register(MapLoadingCell.self, forCellWithReuseIdentifier: "MapLoadingCell")
         mapsCollection.register(AddMapCell.self, forCellWithReuseIdentifier: "AddMapCell")
+        mapsCollection.register(CampusMapCell.self, forCellWithReuseIdentifier: "CampusMapCell")
         view.addSubview(mapsCollection)
         mapsCollection.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.topMargin)
@@ -236,15 +237,6 @@ final class MapController: UIViewController {
     }
 
     @objc func addTap(_ sender: UIButton) {
-//        guard let serviceContainer else { return }
-//
-//        let vmmm = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer))
-//        let transition = AddButtonTransition()
-//        self.navigationController?.view.layer.add(transition, forKey: kCATransition)
-//        self.navigationController?.pushViewController(vmmm, animated: false)
-//
-//        return
-
         Mixpanel.mainInstance().track(event: "MapControllerAddTap")
 
         if addFriendsView != nil {
@@ -298,7 +290,7 @@ final class MapController: UIViewController {
     }
 
     func openFindFriends() {
-        if sheetView != nil { return } /// cancel on double tap
+        if sheetView != nil { return } // cancel on double tap
         let ffvc = FindFriendsController()
         sheetView = DrawerView(present: ffvc, detentsInAscending: [.top, .middle, .bottom]) { [weak self] in
             self?.sheetView = nil
@@ -351,6 +343,14 @@ final class MapController: UIViewController {
 
         spotVC.containerDrawerView = sheetView
         sheetView?.present(to: .top)
+    }
+
+    func openExploreMaps() {
+        guard let serviceContainer else { return }
+        let vmmm = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer))
+        let transition = AddButtonTransition()
+        self.navigationController?.view.layer.add(transition, forKey: kCATransition)
+        self.navigationController?.pushViewController(vmmm, animated: false)
     }
 
     func toggleHomeAppearance(hidden: Bool) {

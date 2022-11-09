@@ -328,7 +328,6 @@ class ChooseFriendsCell: UITableViewCell {
     var bottomLine: UIView!
 
     func setUp(user: UserProfile, allowsSelection: Bool, editable: Bool) {
-
         backgroundColor = .white
         contentView.alpha = 1.0
         selectionStyle = .none

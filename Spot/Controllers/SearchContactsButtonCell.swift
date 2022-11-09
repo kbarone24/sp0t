@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class SearchContactsCell: UITableViewCell {
+class SearchContactsButtonCell: UITableViewCell {
     private lazy var pillBackground: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)

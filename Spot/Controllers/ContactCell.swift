@@ -124,7 +124,7 @@ class ContactCell: UITableViewCell {
         contentView.addSubview(removeButton)
         removeButton.snp.makeConstraints {
             $0.centerY.equalTo(profileImage.snp.centerY)
-            $0.trailing.equalTo(-17.5)
+            $0.trailing.equalTo(-7.5)
             $0.height.width.equalTo(30)
         }
 
@@ -177,10 +177,10 @@ class ContactCell: UITableViewCell {
             $0.centerY.equalTo(profileImage.snp.centerY)
             $0.height.equalTo(35)
             if status == .none && cellType != .search {
-                $0.trailing.equalTo(removeButton.snp.leading).offset(-15)
+                $0.trailing.equalTo(removeButton.snp.leading).offset(-11)
                 $0.width.equalTo(62)
             } else {
-                $0.trailing.equalTo(-20)
+                $0.trailing.equalTo(-10)
                 $0.width.equalTo(106)
             }
         }
@@ -191,7 +191,7 @@ class ContactCell: UITableViewCell {
         Mixpanel.mainInstance().track(event: "ContactCellAddFriend")
         NotificationCenter.default.post(name: NSNotification.Name("ContactCellAddFriend"), object: nil, userInfo: ["receiverID": receiverID])
 
-       addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: receiverID)
+       addFriend(receiverID: receiverID)
     }
 
     @objc func removeSuggestion() {
@@ -211,8 +211,8 @@ class ContactCell: UITableViewCell {
     }
 
     override func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        // ignore touch area around action button
-        return touch.location(in: self).x < UIScreen.main.bounds.width - 90
+        // ignore touch area around action button + bottom touch area was being expanded off cell
+        return touch.location(in: self).x < UIScreen.main.bounds.width - 90 && touch.location(in: self).y < 60
     }
 
     override func prepareForReuse() {
