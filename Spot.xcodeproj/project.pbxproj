@@ -411,6 +411,9 @@
 		8CDFEF46284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF47284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF48284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
+		8CE4C93A291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */; };
+		8CE4C93B291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */; };
+		8CE4C93C291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */; };
 		8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
 		8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
 		8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
@@ -672,6 +675,7 @@
 		8CCE3410288A2D4400331240 /* MapsCollectionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapsCollectionExtension.swift; sourceTree = "<group>"; };
 		8CCE3414288B115000331240 /* MapFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFetchExtension.swift; sourceTree = "<group>"; };
 		8CDFEF45284D3B570038A9B8 /* Map.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Map.storyboard; sourceTree = "<group>"; };
+		8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostGroupExtension.swift; sourceTree = "<group>"; };
 		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
 		8CFD73E92757E4FD00CBD162 /* TagCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagCategory.swift; sourceTree = "<group>"; };
 		994C18FD0D847CBE77336F96 /* Pods-Spot.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.release.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.release.xcconfig"; sourceTree = "<group>"; };
@@ -1008,9 +1012,9 @@
 			children = (
 				599BD2BA23C652BD00ECB84A /* PostViewController.swift */,
 				8C3B952528AC042B00C06586 /* PostCell.swift */,
+				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 				8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */,
 				8C3B954D28AE932B00C06586 /* DeletePost.swift */,
-				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 			);
 			path = Post;
 			sourceTree = "<group>";
@@ -1296,6 +1300,7 @@
 				8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */,
 				8C1E4872289C54900093030D /* MapViewDelegate.swift */,
 				8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */,
+				8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */,
 				CDF8E9552903C00000BE929F /* NewPostsButton.swift */,
 				CDF8E95C2903C86200BE929F /* MapTitleView.swift */,
 				CDF8E95E2903C8A300BE929F /* AddFriendsView.swift */,
@@ -1891,6 +1896,7 @@
 				5F119A1C2869F44900D75CE8 /* ActivityCell.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
 				8C5AF2EA288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
+				8CE4C93A291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
 				CDF8E9662903CD8400BE929F /* ExploreMapViewModel.swift in Sources */,
 				5916A8B324A27F8500118E83 /* MapSpot.swift in Sources */,
 				CD239A1528FFD6520099513F /* UICollectionViewCellExtension.swift in Sources */,
@@ -1929,6 +1935,7 @@
 				8C51D93128C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CCE3412288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
+				8CE4C93B291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
 				59DFA25522C285CF00A59D29 /* CommentsViewController.swift in Sources */,
 				59FCF5B624734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				8CA10A282912F02300DD50EB /* ImagePreviewDelegateExtension.swift in Sources */,
@@ -2047,6 +2054,7 @@
 				8C51D93228C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CCE3413288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
+				8CE4C93C291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
 				59DFA25622C285D000A59D29 /* CommentsViewController.swift in Sources */,
 				59FCF5B724734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				8CA10A292912F02300DD50EB /* ImagePreviewDelegateExtension.swift in Sources */,
