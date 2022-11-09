@@ -67,6 +67,19 @@ public extension String {
         while newString.first?.isWhitespace ?? false { newString = String(newString.dropFirst(1))}
         return newString
     }
+
+    func getAttributedText(boldString: String, font: UIFont) -> NSAttributedString {
+        let attributedString = NSMutableAttributedString(
+            string: self,
+            attributes: [NSAttributedString.Key.font: font]
+        )
+        let boldFontAttribute: [NSAttributedString.Key: Any] = [
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: font.pointSize) as Any
+        ]
+        let range = (self as NSString).range(of: boldString)
+        attributedString.addAttributes(boldFontAttribute, range: range)
+        return attributedString
+    }
 }
 
 extension NSAttributedString {

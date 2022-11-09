@@ -74,8 +74,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
     private lazy var addFriendsButton: UIButton = {
         let button = PillButtonWithImage()
-        button.setUp(image: UIImage(named: "ProfileAddFriendsIcon") ?? UIImage(), str: "Add Friends")
-        button.layer.cornerRadius = 18
+        button.setUp(image: UIImage(named: "ProfileAddFriendsIcon") ?? UIImage(), str: "Add Friends", cornerRadius: 18)
         button.isHidden = true
         button.addTarget(self, action: #selector(addFriendsTap), for: .touchUpInside)
         return button

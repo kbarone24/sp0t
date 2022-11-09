@@ -14,7 +14,7 @@ class FindFriendsHeader: UITableViewHeaderFooterView {
     private lazy var label: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
         return label
     }()
 
@@ -22,7 +22,7 @@ class FindFriendsHeader: UITableViewHeaderFooterView {
         let button = UIButton()
         button.setImage(UIImage(named: "RefreshIcon"), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 4)
-        button.titleEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 7.5, right: 5)
         button.setTitle("Refresh", for: .normal)
         button.setTitleColor(UIColor(red: 0, green: 0, blue: 0, alpha: 1), for: .normal)
         button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14)
@@ -35,10 +35,10 @@ class FindFriendsHeader: UITableViewHeaderFooterView {
     var type: Int = 0 {
         didSet {
             if type == 0 {
-                label.text = "ADD YOUR CONTACTS"
+                label.text = "Add contacts"
                 refreshButton.isHidden = true
             } else {
-                label.text = "SUGGESTED FRIENDS"
+                label.text = "Suggested friends"
                 refreshButton.isHidden = false
             }
         }
@@ -58,9 +58,9 @@ class FindFriendsHeader: UITableViewHeaderFooterView {
 
         contentView.addSubview(refreshButton)
         refreshButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-20)
-            $0.bottom.equalToSuperview().offset(-6)
-            $0.width.equalTo(80)
+            $0.leading.equalTo(label.snp.trailing).offset(4)
+            $0.bottom.equalTo(label.snp.bottom).offset(10)
+            $0.width.equalTo(90)
             $0.height.equalTo(30)
         }
     }

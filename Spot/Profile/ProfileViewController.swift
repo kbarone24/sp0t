@@ -313,7 +313,7 @@ extension ProfileViewController {
     func addFriendFromProfile() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
         NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SendFriendRequest"), object: nil, userInfo: ["userID": userProfile?.id ?? ""])
-        addFriend(senderProfile: UserDataModel.shared.userInfo, receiverID: userProfile?.id ?? "")
+        addFriend(receiverID: userProfile?.id ?? "")
         relation = .pending
         DispatchQueue.main.async { self.collectionView.reloadData() }
     }

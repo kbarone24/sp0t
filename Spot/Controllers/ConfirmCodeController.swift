@@ -280,7 +280,8 @@ class ConfirmCodeController: UIViewController {
             topFriends[friend] = value
         }
 
-        let blankAvatarURL = "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F00000000resources%2FGroup%2021877(1).png?alt=media&token=5c102486-f5b2-41d7-83a0-96f8ffcddcbe"
+        let blankAvatarURL =
+        "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F00000000resources%2FGroup%2021877(1).png?alt=media&token=5c102486-f5b2-41d7-83a0-96f8ffcddcbe"
         let values = ["name": newUser.name,
                       "username": newUser.username,
                       "phone": newUser.phone,
@@ -303,7 +304,7 @@ class ConfirmCodeController: UIViewController {
 
         db.collection("users").document(uid).setData(values, merge: true)
 
-        let defaults = UserDefaults.standard /// save verfiied phone login to user defaults
+        let defaults = UserDefaults.standard // save verfiied phone login to user defaults
         defaults.set(newUser.phone, forKey: "phoneNumber")
 
         let docID = UUID().uuidString
@@ -328,13 +329,11 @@ class ConfirmCodeController: UIViewController {
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
 
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter({ $0.activationState == .foregroundActive })
-            .map({ $0 as? UIWindowScene })
-            .compactMap({ $0 })
-            .first?.windows
-            .filter({ $0.isKeyWindow }).first
-        keyWindow?.rootViewController = navController
+        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+        DispatchQueue.main.async {
+            self.navigationController?.popToRootViewController(animated: false)
+            window?.rootViewController = navController
+        }
     }
 }
 

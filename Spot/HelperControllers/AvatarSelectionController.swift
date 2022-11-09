@@ -216,20 +216,11 @@ class AvatarSelectionController: UIViewController {
 
         if sentFrom == .map {
             self.navigationController?.popViewController(animated: true)
-        } else if sentFrom == .create {
-            let storyboard = UIStoryboard(name: "Map", bundle: nil)
-            let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
-            vc.firstOpen = true
-            let navController = UINavigationController(rootViewController: vc)
-            navController.modalPresentationStyle = .fullScreen
 
-            let keyWindow = UIApplication.shared.connectedScenes
-                .filter({ $0.activationState == .foregroundActive })
-                .map({ $0 as? UIWindowScene })
-                .compactMap({ $0 })
-                .first?.windows
-                .filter({ $0.isKeyWindow }).first
-            keyWindow?.rootViewController = navController
+        } else if sentFrom == .create {
+            let vc = SearchContactsOverviewController()
+            self.navigationController?.pushViewController(vc, animated: true)
+
         } else {
             onDoneBlock!(avatarURL, centerCell.avatar!)
             self.presentingViewController?.dismiss(animated: false, completion: nil)
