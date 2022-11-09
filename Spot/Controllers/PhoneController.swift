@@ -16,6 +16,7 @@ enum CodeType {
     case newAccount
     case multifactor
     case logIn
+    case deleteAccount
 }
 
 class PhoneController: UIViewController, UITextFieldDelegate {
@@ -275,7 +276,10 @@ class PhoneController: UIViewController, UITextFieldDelegate {
         PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil) { (verificationID, error) in
             if let error = error {
                 print("error", error.localizedDescription)
-                let message = error.localizedDescription == "We have blocked all requests from this device due to unusual activity. Try again later." ? "You're all out of codes. Try again later." : "Please enter a valid phone number."
+                let message = error.localizedDescription ==
+                "We have blocked all requests from this device due to unusual activity. Try again later."
+                ? "You're all out of codes. Try again later."
+                : "Please enter a valid phone number."
                 Mixpanel.mainInstance().track(event: "PhoneError", properties: ["error": message])
                 self.showErrorMessage(message: message)
 
@@ -409,7 +413,16 @@ class CountryCodeView: UIButton {
 }
 
 class ErrorBox: UIView {
-    var label: UILabel!
+    var label: UILabel = {
+        let label = UILabel()
+        label.lineBreakMode = .byWordWrapping
+        label.numberOfLines = 0
+        label.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
+        label.textAlignment = .center
+        label.font = UIFont(name: "SFCompactText-Regular", size: 14)
+        return label
+    }()
+
     var message = "" {
         didSet {
             label.text = message
@@ -421,15 +434,8 @@ class ErrorBox: UIView {
         super.init(frame: frame)
         backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
 
-        label = UILabel {
-            $0.lineBreakMode = .byWordWrapping
-            $0.numberOfLines = 0
-            $0.text = message
-            $0.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
-            $0.textAlignment = .center
-            $0.font = UIFont(name: "SFCompactText-Regular", size: 14)
-            addSubview($0)
-        }
+        label.text = message
+        addSubview(label)
         label.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(20)
             $0.centerY.equalToSuperview()

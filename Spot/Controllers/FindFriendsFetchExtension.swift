@@ -56,6 +56,7 @@ extension FindFriendsController {
             for contact in contacts {
                 self.contacts.append((contact, .none))
             }
+            self.contacts.sort(by: { $0.0.name < $1.0.name })
             self.dispatch.leave()
         }
     }

@@ -14,7 +14,7 @@ import Mixpanel
 class SearchContactsOverviewController: UIViewController {
     private lazy var promptLabel: UILabel = {
         let label = UILabel()
-        label.text = "See if you have friends on sp0t alread!y"
+        label.text = "See if you have friends on sp0t already!"
         label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Bold", size: 20)
         label.textAlignment = .center
