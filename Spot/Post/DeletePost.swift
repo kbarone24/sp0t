@@ -18,13 +18,14 @@ extension PostController {
         var spotDelete = false
         var mapDelete = false
         var spotRemove = false
-        checkForSpotDelete(spotID: post.spotID ?? "", postID: post.id!) { delete in
+        guard let postID = post.id else { return }
+        checkForSpotDelete(spotID: post.spotID ?? "", postID: postID) { delete in
             spotDelete = delete
             leaveCount += 1
             if leaveCount == 3 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove) }
         }
 
-        checkForSpotRemove(spotID: post.spotID ?? "", mapID: post.mapID ?? "", postID: post.id!) { remove in
+        checkForSpotRemove(spotID: post.spotID ?? "", mapID: post.mapID ?? "", postID: postID) { remove in
             spotRemove = remove
             leaveCount += 1
             if leaveCount == 3 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove) }
@@ -58,7 +59,7 @@ extension PostController {
             var mapDelete = false
             for doc in snap?.documents ?? [] {
                 if !UserDataModel.shared.deletedPostIDs.contains(where: { $0 == doc.documentID }) { postCount += 1 }
-                if doc == snap!.documents.last { mapDelete = postCount == 1 }
+                if doc == snap?.documents.last { mapDelete = postCount == 1 }
             }
 
             if mapDelete { UserDataModel.shared.deletedMapIDs.append(mapID) }
@@ -85,7 +86,7 @@ extension PostController {
 
     func deletePostLocally(index: Int) {
         if postsList.count > 1 {
-            /// check for if == selectedPostIndex
+            // check for if == selectedPostIndex
             postsCollection.performBatchUpdates {
                 self.postsList.remove(at: index)
                 self.postsCollection.deleteItems(at: [IndexPath(item: index, section: 0)])
@@ -94,7 +95,6 @@ extension PostController {
                 self.postsCollection.reloadData()
             }
         } else {
-            print("exit posts")
             exitPosts()
         }
     }
@@ -105,11 +105,20 @@ extension PostController {
     }
 
     func deletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
-        db.collection("mapLocations").document(post.id!).delete()
+        db.collection("mapLocations").document(post.id ?? "").delete()
         var posters = [uid]
         posters.append(contentsOf: post.addedUsers ?? [])
         let functions = Functions.functions()
-        functions.httpsCallable("postDelete").call(["postIDs": [post.id], "spotID": post.spotID ?? "", "mapID": post.mapID ?? "", "uid": self.uid, "posters": posters, "spotDelete": spotDelete, "mapDelete": mapDelete, "spotRemove": spotRemove]) { result, error in
+        functions.httpsCallable("postDelete").call([
+            "postIDs": [post.id],
+            "spotID": post.spotID ?? "",
+            "mapID": post.mapID ?? "",
+            "uid": self.uid,
+            "posters": posters,
+            "spotDelete": spotDelete,
+            "mapDelete": mapDelete,
+            "spotRemove": spotRemove
+        ]) { result, error in
             print("result", result?.data as Any, error as Any)
         }
     }
