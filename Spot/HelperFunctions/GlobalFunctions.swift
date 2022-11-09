@@ -1120,7 +1120,6 @@ extension NSObject {
                 if !hideFromFeed && privacyLevel != "invite" {
                     doc.reference.updateData(["friendsList": FieldValue.arrayUnion([userID])])
                 }
-                print("update friends list")
             }
             completion?(true)
         }

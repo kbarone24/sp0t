@@ -134,7 +134,7 @@ class ContactCell: UITableViewCell {
         nameLabel.snp.makeConstraints {
             $0.leading.equalTo(profileImage.snp.trailing).offset(9)
             $0.top.equalTo(profileImage).offset(11)
-            $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).inset(8)
+            $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
         }
 
         contentView.addSubview(usernameLabel)

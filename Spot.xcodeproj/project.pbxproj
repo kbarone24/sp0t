@@ -314,6 +314,12 @@
 		8C66E111291B3A23006D29F6 /* CampusMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E110291B3A23006D29F6 /* CampusMapCell.swift */; };
 		8C66E112291B3A23006D29F6 /* CampusMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E110291B3A23006D29F6 /* CampusMapCell.swift */; };
 		8C66E113291B3A23006D29F6 /* CampusMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E110291B3A23006D29F6 /* CampusMapCell.swift */; };
+		8C66E115291C0C81006D29F6 /* EditProfileActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E114291C0C81006D29F6 /* EditProfileActions.swift */; };
+		8C66E116291C0C81006D29F6 /* EditProfileActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E114291C0C81006D29F6 /* EditProfileActions.swift */; };
+		8C66E117291C0C81006D29F6 /* EditProfileActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E114291C0C81006D29F6 /* EditProfileActions.swift */; };
+		8C66E119291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
+		8C66E11A291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
+		8C66E11B291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
 		8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
@@ -629,6 +635,8 @@
 		8C66E108291ABB80006D29F6 /* SearchContactsHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchContactsHeader.swift; sourceTree = "<group>"; };
 		8C66E10C291ABB8D006D29F6 /* SearchContactsCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchContactsCell.swift; sourceTree = "<group>"; };
 		8C66E110291B3A23006D29F6 /* CampusMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampusMapCell.swift; sourceTree = "<group>"; };
+		8C66E114291C0C81006D29F6 /* EditProfileActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileActions.swift; sourceTree = "<group>"; };
+		8C66E118291C0EE9006D29F6 /* AccountOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountOptions.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C88B0E627B46E3900DB4039 /* PostImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageModel.swift; sourceTree = "<group>"; };
 		8C8DBB712888BE5C00B31BFD /* ChooseSpotController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseSpotController.swift; sourceTree = "<group>"; };
@@ -1034,6 +1042,8 @@
 			isa = PBXGroup;
 			children = (
 				413BA16228785E8B00FD80AF /* EditProfileViewController.swift */,
+				8C66E114291C0C81006D29F6 /* EditProfileActions.swift */,
+				8C66E118291C0EE9006D29F6 /* AccountOptions.swift */,
 			);
 			path = EditProfile;
 			sourceTree = "<group>";
@@ -1792,6 +1802,7 @@
 				8C3BAF5F260CF5D000349091 /* CountryPickerController.swift in Sources */,
 				8CA10A3B2912F14600DD50EB /* PostImagePreview.swift in Sources */,
 				8CA10A482912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
+				8C66E115291C0C81006D29F6 /* EditProfileActions.swift in Sources */,
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
 				CDF8E9452903B49B00BE929F /* FirestoreSubscription.swift in Sources */,
 				CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */,
@@ -1885,6 +1896,7 @@
 				CD239A1528FFD6520099513F /* UICollectionViewCellExtension.swift in Sources */,
 				8CA10A0D290C2A5B00DD50EB /* ContactsFetcher.swift in Sources */,
 				59826E9F244FA078004B858F /* PhotoGalleryController.swift in Sources */,
+				8C66E119291C0EE9006D29F6 /* AccountOptions.swift in Sources */,
 				8C66E109291ABB80006D29F6 /* SearchContactsHeader.swift in Sources */,
 				8CA10A3F2912F16700DD50EB /* SpotNameButton.swift in Sources */,
 				8CFD73EA2757E4FD00CBD162 /* TagCategory.swift in Sources */,
@@ -1900,6 +1912,7 @@
 				8CA10A302912F10C00DD50EB /* NewSpotMask.swift in Sources */,
 				59F6ABB0234EA73500E18AAF /* Contact.swift in Sources */,
 				8C53A80B28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
+				8C66E11A291C0EE9006D29F6 /* AccountOptions.swift in Sources */,
 				8C61EB5428D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				593AC54E243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */,
@@ -1996,6 +2009,7 @@
 				8C5CD06C290AFF2C00A4AD3C /* FindFriendsSearchExtension.swift in Sources */,
 				8CC3653B26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				5916A8BC24A566F400118E83 /* ResultUser.swift in Sources */,
+				8C66E116291C0C81006D29F6 /* EditProfileActions.swift in Sources */,
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
@@ -2016,6 +2030,7 @@
 				8CA10A312912F10C00DD50EB /* NewSpotMask.swift in Sources */,
 				59F6ABB1234EA73500E18AAF /* Contact.swift in Sources */,
 				8C53A80C28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
+				8C66E11B291C0EE9006D29F6 /* AccountOptions.swift in Sources */,
 				8C61EB5528D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				593AC54F243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */,
@@ -2112,6 +2127,7 @@
 				8C5CD06D290AFF2C00A4AD3C /* FindFriendsSearchExtension.swift in Sources */,
 				8CC3653C26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				5916A8BD24A566F400118E83 /* ResultUser.swift in Sources */,
+				8C66E117291C0C81006D29F6 /* EditProfileActions.swift in Sources */,
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
