@@ -13,24 +13,58 @@ import Mixpanel
 import UIKit
 
 class ConfirmCodeController: UIViewController {
-    var newUser: NewUser!
-    var codeType: CodeType!
+    var newUser: NewUser?
+    lazy var codeType: CodeType = .logIn
 
-    var verificationID: String!
-    var label: UILabel!
-    var codeField: UITextField!
-    var confirmButton: UIButton!
+    lazy var verificationID = ""
+    private lazy var label: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 20)
+        return label
+    }()
+    private lazy var codeField: UITextField = {
+        let textField = PaddedTextField()
+        textField.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
+        textField.textAlignment = .center
+        textField.tintColor = UIColor(named: "SpotGreen")
+        textField.textColor = .black
+        var placeholderText = NSMutableAttributedString()
+        placeholderText = NSMutableAttributedString(string: "00000", attributes: [
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
+            NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
+        ])
+        textField.attributedPlaceholder = placeholderText
+        textField.keyboardType = .numberPad
+        textField.textContentType = .oneTimeCode
+        return textField
+    }()
+    private lazy var confirmButton: UIButton = {
+        let button = UIButton()
+        button.layer.cornerRadius = 9
+        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+        button.alpha = 0.4
+        return button
+    }()
+    // only shows for delete account
+    private lazy var cancelButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
+        button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        return button
+    }()
 
-    var activityIndicator: CustomActivityIndicator!
-    var errorBox: ErrorBox!
+    private lazy var activityIndicator = CustomActivityIndicator()
+    private lazy var errorBox = ErrorBox()
 
     var cancelOnDismiss = false
     let sp0tb0tID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
+    var deleteAccountDelegate: DeleteAccountDelegate?
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         enableKeyboardMethods()
-        if codeField != nil { DispatchQueue.main.async { self.codeField.becomeFirstResponder() } }
+        DispatchQueue.main.async { self.codeField.becomeFirstResponder() }
         Mixpanel.mainInstance().track(event: "ConfirmCodeOpen")
     }
 
@@ -43,7 +77,7 @@ class ConfirmCodeController: UIViewController {
     func enableKeyboardMethods() {
         cancelOnDismiss = false
         IQKeyboardManager.shared.enableAutoToolbar = false
-        IQKeyboardManager.shared.enable = false /// disable for textView sticking to keyboard
+        IQKeyboardManager.shared.enable = false // disable for textView sticking to keyboard
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
     }
@@ -83,39 +117,21 @@ class ConfirmCodeController: UIViewController {
             image: UIImage(named: "BackArrow"),
             style: .plain,
             target: self,
-            action: #selector(backTapped(_:))
+            action: #selector(backTapped)
         )
     }
     func setUpViews() {
         view.backgroundColor = .white
 
-        label = UILabel {
-            $0.text = "Enter your code"
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
-            view.addSubview($0)
-        }
+        label.text = codeType == .deleteAccount ? "Enter code to delete your account" : "Enter your code"
+        view.addSubview(label)
         label.snp.makeConstraints {
             $0.top.equalToSuperview().offset(114)
             $0.centerX.equalToSuperview()
         }
 
-        codeField = PaddedTextField {
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
-            $0.textAlignment = .center
-            $0.tintColor = UIColor(named: "SpotGreen")
-            $0.textColor = .black
-            var placeholderText = NSMutableAttributedString()
-            placeholderText = NSMutableAttributedString(string: "00000", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
-            ])
-            $0.attributedPlaceholder = placeholderText
-            $0.keyboardType = .numberPad
-            $0.textContentType = .oneTimeCode
-            $0.addTarget(self, action: #selector(codeChanged(_:)), for: .editingChanged)
-            view.addSubview($0)
-        }
+        view.addSubview(codeField)
+        codeField.addTarget(self, action: #selector(codeChanged(_:)), for: .editingChanged)
         codeField.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
             $0.top.equalTo(label.snp.bottom).offset(30)
@@ -133,49 +149,49 @@ class ConfirmCodeController: UIViewController {
             $0.centerX.equalToSuperview()
         }
 
-        confirmButton = UIButton {
-            $0.layer.cornerRadius = 9
-            $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
-            let titleString = codeType == .logIn ? "Log in" : "Next"
-            let customButtonTitle = NSMutableAttributedString(string: titleString, attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            ])
-            $0.setAttributedTitle(customButtonTitle, for: .normal)
-            $0.setImage(nil, for: .normal)
-            $0.addTarget(self, action: #selector(confirmTapped(_:)), for: .touchUpInside)
-            $0.alpha = 0.4
-            view.addSubview($0)
-        }
+        let titleString = codeType == .logIn ? "Log in" : codeType == .newAccount ? "Next" : "Delete Account"
+        let customButtonTitle = NSMutableAttributedString(string: titleString, attributes: [
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 16) as Any,
+            NSAttributedString.Key.foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+        ])
+        if codeType == .deleteAccount { confirmButton.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1) }
+        confirmButton.setAttributedTitle(customButtonTitle, for: .normal)
+        confirmButton.addTarget(self, action: #selector(confirmTapped(_:)), for: .touchUpInside)
+        view.addSubview(confirmButton)
         confirmButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
             $0.height.equalTo(49)
             $0.bottom.equalToSuperview().offset(-30)
         }
 
-        activityIndicator = CustomActivityIndicator {
-            $0.isHidden = true
-            view.addSubview($0)
-        }
+        activityIndicator.isHidden = true
+        view.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(bottomLine.snp.bottom).offset(15)
             $0.centerX.equalToSuperview()
             $0.width.height.equalTo(20)
         }
 
-        errorBox = ErrorBox {
-            $0.isHidden = true
-            view.addSubview($0)
-        }
+        errorBox.isHidden = true
+        view.addSubview(errorBox)
         errorBox.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(bottomLine.snp.bottom).offset(15)
             $0.height.equalTo(errorBox.label.snp.height).offset(12)
         }
+
+        if codeType == .deleteAccount {
+            cancelButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
+            view.addSubview(cancelButton)
+            cancelButton.snp.makeConstraints {
+                $0.top.leading.equalTo(5)
+                $0.height.width.equalTo(40)
+            }
+        }
     }
 
-    @objc func backTapped(_ sender: UIButton) {
-        self.dismiss(animated: false, completion: nil)
+    @objc func backTapped() {
+        DispatchQueue.main.async { self.dismiss(animated: false, completion: nil) }
     }
 
     @objc func codeChanged(_ sender: UITextField) {
@@ -184,7 +200,7 @@ class ConfirmCodeController: UIViewController {
 
     @objc func keyboardWillShow(_ notification: NSNotification) {
         if cancelOnDismiss { return }
-        /// new spot name view editing when textview not first responder
+        // new spot name view editing when textview not first responder
         animateWithKeyboard(notification: notification) { keyboardFrame in
             self.confirmButton.snp.removeConstraints()
             self.confirmButton.snp.makeConstraints {
@@ -196,7 +212,7 @@ class ConfirmCodeController: UIViewController {
     }
 
     @objc func keyboardWillHide(_ notification: NSNotification) {
-        /// new spot name view editing when textview not first responder
+        // new spot name view editing when textview not first responder
         if cancelOnDismiss { return }
         animateWithKeyboard(notification: notification) { _ in
             self.confirmButton.snp.removeConstraints()
@@ -220,7 +236,7 @@ class ConfirmCodeController: UIViewController {
         sender.isUserInteractionEnabled = false
 
         checkForUsername { available in
-            /// want to check to make sure no one took this username while user was authenticating
+            // want to check to make sure no one took this username while user was authenticating
             if !available { self.showError(message: "Username taken"); return }
             Auth.auth().signIn(with: phoneCredential) { (authResult, err) in
                 if err == nil && authResult != nil {
@@ -236,6 +252,11 @@ class ConfirmCodeController: UIViewController {
                             self.setInitialValues(friendIDs: friendIDs)
                             self.presentAvatarSelection()
                         }
+                    } else if self.codeType == .deleteAccount {
+                        DispatchQueue.main.async {
+                            self.dismiss(animated: true)
+                            self.deleteAccountDelegate?.finishPassing()
+                        }
                     }
                 } else {
                     Mixpanel.mainInstance().track(event: "ConfirmCodeInvalidCode")
@@ -250,7 +271,7 @@ class ConfirmCodeController: UIViewController {
         if newUser == nil { completion(true); return}
         let db = Firestore.firestore()
         let usersRef = db.collection("usernames")
-        let query = usersRef.whereField("username", isEqualTo: newUser.username)
+        let query = usersRef.whereField("username", isEqualTo: newUser?.username ?? "")
         query.getDocuments { snap, _ in
             completion(snap?.documents.count ?? 0 == 0)
         }
@@ -271,9 +292,10 @@ class ConfirmCodeController: UIViewController {
         let db = Firestore.firestore()
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
-        let lowercaseName = newUser.name.lowercased()
+        let username = newUser?.username ?? ""
+        let lowercaseName = newUser?.name.lowercased() ?? ""
         let nameKeywords = lowercaseName.getKeywordArray()
-        let usernameKeywords = newUser.username.getKeywordArray()
+        let usernameKeywords = username.getKeywordArray()
         var topFriends = [String: Any]()
         for friend in friendIDs {
             let value = friend == sp0tb0tID ? 0 : 5
@@ -282,9 +304,9 @@ class ConfirmCodeController: UIViewController {
 
         let blankAvatarURL =
         "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F00000000resources%2FGroup%2021877(1).png?alt=media&token=5c102486-f5b2-41d7-83a0-96f8ffcddcbe"
-        let values = ["name": newUser.name,
-                      "username": newUser.username,
-                      "phone": newUser.phone,
+        let values = ["name": newUser?.name ?? "",
+                      "username": newUser?.username ?? "",
+                      "phone": newUser?.phone ?? "",
                       "userBio": "",
                       "friendsList": friendIDs,
                       "spotScore": 0,
@@ -305,10 +327,10 @@ class ConfirmCodeController: UIViewController {
         db.collection("users").document(uid).setData(values, merge: true)
 
         let defaults = UserDefaults.standard // save verfiied phone login to user defaults
-        defaults.set(newUser.phone, forKey: "phoneNumber")
+        defaults.set(newUser?.phone ?? "", forKey: "phoneNumber")
 
         let docID = UUID().uuidString
-        db.collection("usernames").document(docID).setData(["username": newUser.username])
+        db.collection("usernames").document(docID).setData(["username": newUser?.username ?? ""])
     }
 
     func presentAvatarSelection() {
@@ -325,7 +347,7 @@ class ConfirmCodeController: UIViewController {
         activityIndicator.stopAnimating()
 
         let storyboard = UIStoryboard(name: "Map", bundle: nil)
-        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
+        guard let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as? MapController else { return }
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
 
@@ -341,7 +363,7 @@ extension ConfirmCodeController {
     func getInitialFriends(completion: @escaping (_ friendIDs: [String]) -> Void) {
         var initialFriends: [String] = [sp0tb0tID]
         let db = Firestore.firestore()
-        let phone = newUser.phone.formatNumber()
+        let phone = newUser?.phone.formatNumber() ?? ""
         db.collection("users").whereField("sentInvites", arrayContains: phone).getDocuments { snap, _ in
             guard let snap = snap else { completion(initialFriends); return }
             for doc in snap.documents {
@@ -363,7 +385,7 @@ extension ConfirmCodeController {
                 "status": "accepted",
                 "timestamp": timestamp,
                 "senderID": uid,
-                "senderUsername": newUser.username,
+                "senderUsername": newUser?.username ?? "",
                 "type": "friendRequest",
                 "seen": false
             ])
@@ -375,7 +397,7 @@ extension ConfirmCodeController {
                 "type": "friendRequest",
                 "seen": false
             ])
-            /// call on front end for immediate post adjust
+            // call on frontend for immediate post adjust
             if friendID != sp0tb0tID {
                 DispatchQueue.global().async {
                     self.adjustPostFriendsList(userID: uid, friendID: friendID, completion: nil)

@@ -36,7 +36,7 @@ final class MapController: UIViewController {
 
     let locationManager = CLLocationManager()
     lazy var imageManager = SDWebImageManager()
-    var userListener, mapsListener, newPostListener: ListenerRegistration!
+    var userListener, mapsListener, newPostListener: ListenerRegistration?
 
     let homeFetchGroup = DispatchGroup()
     let mapPostsGroup = DispatchGroup()
@@ -50,7 +50,7 @@ final class MapController: UIViewController {
     lazy var friendsPostsDictionary = [String: MapPost]()
     lazy var postGroup: [MapPostGroup] = []
 
-    var notiListener: ListenerRegistration!
+    var notiListener: ListenerRegistration?
 
     var refresh: RefreshStatus = .activelyRefreshing
     var friendsRefresh: RefreshStatus = .refreshEnabled
@@ -205,7 +205,7 @@ final class MapController: UIViewController {
         let query = notificationRef.whereField("seen", isEqualTo: false)
 
         /// show green bell on notifications when theres an unseen noti
-        if notiListener != nil { notiListener.remove() }
+        if notiListener != nil { notiListener?.remove() }
         notiListener = query.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
             if err != nil || snap?.metadata.isFromCache ?? false {
                 return

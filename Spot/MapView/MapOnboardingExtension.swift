@@ -15,7 +15,7 @@ extension MapController {
     func userInChapelHill() -> Bool {
         let chapelHillLocation = CLLocation(latitude: 35.913_2, longitude: -79.055_8)
         let distance = UserDataModel.shared.currentLocation.distance(from: chapelHillLocation)
-        /// include users within 10km of downtown CH
+        // include users within 10km of downtown CH
         return distance / 1_000 < 10
     }
 

@@ -183,8 +183,9 @@ extension MapController {
     }
 
     @objc func notifyLogout() {
-        userListener.remove()
-        newPostListener.remove()
-        mapsListener.remove()
+        userListener?.remove()
+        newPostListener?.remove()
+        mapsListener?.remove()
+        notiListener?.remove()
     }
 }
