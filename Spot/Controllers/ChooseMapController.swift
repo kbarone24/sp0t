@@ -146,6 +146,7 @@ final class ChooseMapController: UIViewController {
     }
 
     func addBottomMask() {
+        if bottomMask.superview != nil { return }
         bottomMask.isUserInteractionEnabled = false
         view.addSubview(bottomMask)
         view.bringSubviewToFront(postButton)

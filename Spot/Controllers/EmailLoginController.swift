@@ -153,19 +153,17 @@ class EmailLoginController: UIViewController {
         self.loginButton.isEnabled = true
         self.activityIndicator.stopAnimating()
 
-        /// animate to app if user has enabled multifactor
+        // animate to app if user has enabled multifactor
         let storyboard = UIStoryboard(name: "Map", bundle: nil)
         let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
 
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter({ $0.activationState == .foregroundActive })
-            .map({ $0 as? UIWindowScene })
-            .compactMap({ $0 })
-            .first?.windows
-            .filter({ $0.isKeyWindow }).first
-        keyWindow?.rootViewController = navController
+        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+        DispatchQueue.main.async {
+            self.navigationController?.popToRootViewController(animated: false)
+            window?.rootViewController = navController
+        }
     }
 
     private func allFieldsComplete(email: String, password: String) -> Bool {

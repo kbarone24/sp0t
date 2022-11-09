@@ -52,7 +52,7 @@ class FindFriendsController: UIViewController {
         tableView.isScrollEnabled = true
         tableView.register(ContactCell.self, forCellReuseIdentifier: "ContactCell")
         tableView.register(InviteFriendsCell.self, forCellReuseIdentifier: "InviteFriends")
-        tableView.register(SearchContactsCell.self, forCellReuseIdentifier: "SearchContacts")
+        tableView.register(SearchContactsButtonCell.self, forCellReuseIdentifier: "SearchContacts")
         tableView.register(FindFriendsHeader.self, forHeaderFooterViewReuseIdentifier: "FindFriendsHeader")
         return tableView
     }()
@@ -91,7 +91,7 @@ class FindFriendsController: UIViewController {
     }
 
     private func setUpNavBar() {
-        title = "Find Friends"
+        title = "Add friends"
         navigationItem.backButtonTitle = ""
 
         navigationController?.navigationBar.barTintColor = UIColor.white
@@ -255,14 +255,17 @@ class FindFriendsController: UIViewController {
         Mixpanel.mainInstance().track(event: "FindFriendsInviteFriendsTap")
         // will update with app store link when accepted
         guard let url = URL(string: "https://testflight.apple.com/join/ewgGbjkR") else { return }
-        let items = [url, "Join the global chill and add me on sp0t 🌎🦦👯"] as [Any]
-        let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        DispatchQueue.main.async { self.present(activityView, animated: true) }
-        activityView.completionWithItemsHandler = { activityType, completed, _, _ in
-            if completed {
-                Mixpanel.mainInstance().track(event: "FindFriendsInviteSent", properties: ["type": activityType?.rawValue ?? ""])
-            } else {
-                Mixpanel.mainInstance().track(event: "FindFriendsInviteCancelled")
+        let items = [url, "Add me on sp0t 🌎🦦"] as [Any]
+        
+        DispatchQueue.main.async {
+            let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+            self.present(activityView, animated: true)
+            activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                if completed {
+                    Mixpanel.mainInstance().track(event: "FindFriendsInviteSent", properties: ["type": activityType?.rawValue ?? ""])
+                } else {
+                    Mixpanel.mainInstance().track(event: "FindFriendsInviteCancelled")
+                }
             }
         }
     }
@@ -310,7 +313,7 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
                 return cell
             }
             // return search contacts if no contact access
-            if indexPath.section == 1, contactsAuth != .authorized, let cell = tableView.dequeueReusableCell(withIdentifier: "SearchContacts", for: indexPath) as? SearchContactsCell {
+            if indexPath.section == 1, contactsAuth != .authorized, let cell = tableView.dequeueReusableCell(withIdentifier: "SearchContacts", for: indexPath) as? SearchContactsButtonCell {
                 cell.contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(searchContactsTap)))
                 return cell
             }
@@ -367,6 +370,15 @@ extension FindFriendsController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         // no header for search results + invite friends section
-        return activeSearch ? 0 : section > 0 ? 36 : 0
+        if activeSearch {
+            return 0
+        } else if section > 0 {
+            if section == 1 && contactsAuth != .authorized {
+                // only show header when contactsw button is not showing
+                return 0
+            }
+            return 36
+        }
+        return 0
     }
 }

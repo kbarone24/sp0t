@@ -180,12 +180,14 @@ class EditMapController: UIViewController {
         activityIndicator.startAnimating()
 
         let mapsRef = db.collection("maps").document(mapID)
-        if mapData?.mapName != mapNameTextField.text { updateMapNameInPosts(mapID: mapID, newName: mapNameTextField.text ?? "") }
-        mapData?.mapName = mapNameTextField.text ?? ""
+        let mapName = mapNameTextField.text ?? ""
+        let lowercaseName = mapName.lowercased()
+        if mapData?.mapName != mapName { updateMapNameInPosts(mapID: mapID, newName: mapNameTextField.text ?? "") }
+        mapData?.mapName = mapName
         mapData?.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
         mapData?.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
-        mapData?.lowercaseName = mapData?.mapName.lowercased() ?? ""
-        mapData?.searchKeywords = mapData?.lowercaseName?.getKeywordArray() ?? []
+        mapData?.lowercaseName = lowercaseName
+        mapData?.searchKeywords = lowercaseName.getKeywordArray()
 
         guard let mapData = mapData else { return }
         mapsRef.updateData([

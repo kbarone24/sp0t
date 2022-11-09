@@ -36,7 +36,7 @@ final class AvatarURLs {
 
     var cow = ("Cow", "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F000000animals%2FCow.png?alt=media&token=c051c0a2-b4c8-4145-bc55-3ba421d87d15")
 
-    var deer = ("Deer",                    "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F000000animals%2FDeer.png?alt=media&token=cb0f40e1-9f0c-4036-bf26-d16a7568533e")
+    var deer = ("Deer",                   "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F000000animals%2FDeer.png?alt=media&token=cb0f40e1-9f0c-4036-bf26-d16a7568533e")
 
     var dog = ("Dog",                    "https://firebasestorage.googleapis.com/v0/b/sp0t-app.appspot.com/o/spotPics-dev%2F000000animals%2FDog.png?alt=media&token=8dac023f-bbf8-4f65-8f9f-c00af659d765")
 
