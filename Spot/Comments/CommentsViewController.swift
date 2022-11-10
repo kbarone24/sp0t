@@ -27,7 +27,7 @@ class CommentsController: UIViewController {
     var tableView: UITableView!
 
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-    let db: Firestore! = Firestore.firestore()
+    let db = Firestore.firestore()
 
     var footerOffset: UIView!
     var footerView: UIView!
@@ -341,9 +341,10 @@ extension CommentsController: UITextViewDelegate {
         self.postButton.isEnabled = trimText != ""
         self.textView.alpha = trimText == "" ? 0.65 : 1.0
 
-        /// add tag table if @ used
+        // add tag table if @ used
         let cursor = textView.getCursorPosition()
-        let tagTuple = getTagUserString(text: textView.text ?? "", cursorPosition: cursor)
+        let text = textView.text ?? ""
+        let tagTuple = text.getTagUserString(cursorPosition: cursor)
         let tagString = tagTuple.text
         let containsAt = tagTuple.containsAt
         if !containsAt {

@@ -224,7 +224,8 @@ extension CustomMapHeaderCell {
     private func setMapName() {
         guard let mapData = mapData else { return }
         if mapData.secret {
-            mapName.attributedText = getAttributedStringWithImage(str: mapData.mapName, image: UIImage(named: "SecretMap") ?? UIImage())
+            let str = mapData.mapName
+            mapName.attributedText = str.getAttributedStringWithImage(image: UIImage(named: "SecretMap") ?? UIImage())
         } else {
             mapName.text = mapData.mapName
             mapName.sizeToFit()

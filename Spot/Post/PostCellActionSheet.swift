@@ -45,8 +45,8 @@ extension PostCell {
     }
 
     func addReportPostAction() {
-        let alertController = UIAlertController(title: "Report user", message: "", preferredStyle: .alert)
-        alertController.addAction(UIAlertAction(title: "Report user", style: .default, handler: { (_) in
+        let alertController = UIAlertController(title: "Report post", message: nil, preferredStyle: .alert)
+        alertController.addAction(UIAlertAction(title: "Report", style: .destructive, handler: { (_) in
             if let txtField = alertController.textFields?.first, let text = txtField.text {
                 Mixpanel.mainInstance().track(event: "ReportPostTap")
                 self.db.collection("feedback").addDocument(data: [
@@ -64,7 +64,7 @@ extension PostCell {
         }))
         alertController.addTextField { (textField) in
             textField.autocorrectionType = .default
-            textField.placeholder = "Why are you reporting this user?"
+            textField.placeholder = "Why are you reporting this post?"
         }
 
         guard let postVC = viewContainingController() as? PostController else { return }

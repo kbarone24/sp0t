@@ -97,7 +97,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
 
     func setDrawerValuesForViewAppear() {
-        if containerDrawerView?.status == .top { presentToFullScreen = true; offsetOnDismissal = collectionView.contentOffset.y }
+        offsetOnDismissal = collectionView.contentOffset.y
         currentContainerCanDragStatus = containerDrawerView?.canDrag
     }
 }

@@ -17,7 +17,7 @@ class CustomMapController: UIViewController {
     var topYContentOffset: CGFloat?
     var middleYContentOffset: CGFloat?
 
-    let db: Firestore! = Firestore.firestore()
+    let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var endDocument: DocumentSnapshot?
     var refresh: RefreshStatus = .activelyRefreshing
@@ -31,13 +31,11 @@ class CustomMapController: UIViewController {
     unowned var mapController: MapController?
     unowned var containerDrawerView: DrawerView? {
         didSet {
-            configureDrawerView(present: false)
             if !ranSetUp { runInitialFetches() }
         }
     }
     var drawerViewIsDragging = false
     var currentContainerCanDragStatus: Bool?
-    var presentToFullScreen = false
     var offsetOnDismissal: CGFloat = 0
 
     var mapType: MapType = .customMap
@@ -208,12 +206,11 @@ class CustomMapController: UIViewController {
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
 
-        let position: DrawerViewDetent = presentToFullScreen ? .top : .middle
-        if position.rawValue != containerDrawerView?.status.rawValue && present {
-            DispatchQueue.main.async { self.containerDrawerView?.present(to: position) }
+        if containerDrawerView?.status.rawValue != DrawerViewDetent.top.rawValue && present {
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: .top) }
         }
-        if position == .top { configureFullScreen(); collectionView.contentOffset.y = offsetOnDismissal }
-        presentToFullScreen = false
+       // configureFullScreen()
+       // collectionView.contentOffset.y = offsetOnDismissal
     }
 
     private func viewSetup() {

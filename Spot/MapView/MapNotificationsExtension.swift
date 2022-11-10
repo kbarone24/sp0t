@@ -18,7 +18,7 @@ extension MapController {
         /// check coordinate to refresh annotation on the map
         var coordinate: CLLocationCoordinate2D?
         if var post = friendsPostsDictionary[postID] {
-            if !post.seenList!.contains(uid) { post.seenList?.append(uid) }
+            if !(post.seenList?.contains(uid) ?? false) { post.seenList?.append(uid) }
             friendsPostsDictionary.updateValue(post, forKey: postID)
             coordinate = post.coordinate
         }
@@ -33,8 +33,8 @@ extension MapController {
 
         DispatchQueue.main.async {
             self.reloadMapsCollection(resort: false, newPost: false)
-            if coordinate != nil {
-                if let annotation = self.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate!) }) {
+            if let coordinate {
+                if let annotation = self.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate) }) {
                     self.mapView.removeAnnotation(annotation)
                     self.mapView.addAnnotation(annotation)
                 }
@@ -95,15 +95,15 @@ extension MapController {
         guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
         guard let spotRemove = notification.userInfo?["spotRemove"] as? Bool else { return }
         /// only pass through spot ID if removing from the map
-        let spotID = spotDelete || spotRemove ? post.spotID! : ""
+        let spotID = spotDelete || spotRemove ? post.spotID ?? "" : ""
         removePost(post: post, spotID: spotID, mapID: mapID, mapDelete: mapDelete)
         DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
     }
 
     func removePost(post: MapPost, spotID: String, mapID: String, mapDelete: Bool) {
         /// remove from friends stuff
-        friendsPostsDictionary.removeValue(forKey: post.id!)
-        removeFromFriendsPostGroup(postID: post.id!, spotID: spotID)
+        friendsPostsDictionary.removeValue(forKey: post.id ?? "")
+        removeFromFriendsPostGroup(postID: post.id ?? "", spotID: spotID)
         UserDataModel.shared.deletedPostIDs.append(post.id ?? "")
         /// remove from map
         if mapID != "" {
@@ -126,8 +126,8 @@ extension MapController {
         guard let postID = notification.userInfo?["postID"] as? String else { return }
 
         if friendsPostsDictionary[postID] != nil {
-            friendsPostsDictionary[postID]!.commentList = commentList
-            friendsPostsDictionary[postID]!.commentCount = max(0, commentList.count - 1)
+            friendsPostsDictionary[postID]?.commentList = commentList
+            friendsPostsDictionary[postID]?.commentCount = max(0, commentList.count - 1)
         }
 
         for i in 0..<UserDataModel.shared.userInfo.mapsList.count {
@@ -167,10 +167,23 @@ extension MapController {
         } */
     }
 
-    @objc func notifyFriendRemove(_ notifications: NSNotification) {
-        guard let friendID = notifications.userInfo?.first?.value as? String else { return }
-        for post in friendsPostsDictionary {
-            if post.value.posterID == friendID { removePost(post: post.value, spotID: post.value.spotID ?? "", mapID: "", mapDelete: false) }
+    @objc func notifyFriendRemove(_ notification: NSNotification) {
+        guard let friendID = notification.userInfo?.first?.value as? String else { return }
+        for post in friendsPostsDictionary where post.value.posterID == friendID {
+            removePost(post: post.value, spotID: post.value.spotID ?? "", mapID: "", mapDelete: false)
+        }
+    }
+
+    @objc func notifyBlockUser(_ notification: NSNotification) {
+        guard let friendID = notification.userInfo?.first?.value as? String else { return }
+        for map in UserDataModel.shared.userInfo.mapsList where map.memberIDs.contains(friendID) {
+            for post in map.postsDictionary where post.value.posterID == friendID {
+                DispatchQueue.main.async {
+                    if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map.id}) {
+                        UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.key, spotID: post.value.spotID ?? "")
+                    }
+                }
+            }
         }
     }
 

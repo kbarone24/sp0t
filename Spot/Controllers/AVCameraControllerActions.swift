@@ -43,7 +43,7 @@ extension AVCameraController {
     }
 
     func setStillFlash() {
-        if flashButton.image(for: .normal) == UIImage(named: "FlashOff")! {
+        if flashButton.image(for: .normal) == UIImage(named: "FlashOff") ?? UIImage() {
             cameraController?.flashMode = .off
         } else {
             cameraController?.flashMode = .on
@@ -147,7 +147,6 @@ extension AVCameraController {
         }
     }
 
-
     @objc func tap(_ tapGesture: UITapGestureRecognizer) {
         /// set focus and show cirlcle indicator at that location
         let position = tapGesture.location(in: cameraView)
@@ -186,10 +185,9 @@ extension AVCameraController {
                 image = UIImage(cgImage: cgImage, scale: image.scale, orientation: UIImage.Orientation.leftMirrored)
             }
 
-            let resizedImage = self.ResizeImage(with: image, scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight)) ?? UIImage()
+            let resizedImage = image.resize(scaledToFill: CGSize(width: UIScreen.main.bounds.width, height: self.cameraHeight)) ?? UIImage()
 
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
-
                 let object = ImageObject(
                     id: UUID().uuidString,
                     asset: PHAsset(),
@@ -201,7 +199,6 @@ extension AVCameraController {
                     gifMode: self.gifMode,
                     creationDate: Date(),
                     fromCamera: true)
-
                 vc.cameraObject = object
                 UploadPostModel.shared.imageFromCamera = true
 

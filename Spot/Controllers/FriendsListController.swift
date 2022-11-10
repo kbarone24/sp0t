@@ -258,7 +258,7 @@ extension FriendsListController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         queried = searchText != ""
         queriedFriends.removeAll()
-        queriedFriends = getQueriedUsers(userList: friendsList, searchText: searchText)
+        queriedFriends = searchText.getQueriedUsers(userList: friendsList)
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
 

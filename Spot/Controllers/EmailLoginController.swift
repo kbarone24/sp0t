@@ -167,6 +167,6 @@ class EmailLoginController: UIViewController {
     }
 
     private func allFieldsComplete(email: String, password: String) -> Bool {
-        return isValidEmail(email: email) && password.count > 5
+        return email.isValidEmail() && password.count > 5
     }
 }

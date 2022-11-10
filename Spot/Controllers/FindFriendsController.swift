@@ -253,7 +253,7 @@ class FindFriendsController: UIViewController {
 
     @objc func inviteFriendsTap() {
         Mixpanel.mainInstance().track(event: "FindFriendsInviteFriendsTap")
-        // will update with app store link when accepted
+      //  guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
         guard let url = URL(string: "https://testflight.apple.com/join/ewgGbjkR") else { return }
         let items = [url, "Add me on sp0t 🌎🦦"] as [Any]
         

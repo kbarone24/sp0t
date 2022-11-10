@@ -80,7 +80,8 @@ extension ImagePreviewController: UITextViewDelegate {
 
     func textViewDidChange(_ textView: UITextView) {
         let cursor = textView.getCursorPosition()
-        let tagTuple = getTagUserString(text: textView.text ?? "", cursorPosition: cursor)
+        let text = textView.text ?? ""
+        let tagTuple = text.getTagUserString(cursorPosition: cursor)
         let tagString = tagTuple.text
         let containsAt = tagTuple.containsAt
         if !containsAt {

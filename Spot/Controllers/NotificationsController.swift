@@ -33,7 +33,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
 
     var tableView = UITableView(frame: .zero, style: .grouped)
 
-    let db: Firestore! = Firestore.firestore()
+    let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var endDocument: DocumentSnapshot!
 
