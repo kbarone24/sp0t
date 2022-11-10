@@ -117,7 +117,7 @@ extension MapController {
                                 UserDataModel.shared.userInfo.friendsList.append(info)
 
                                 if UserDataModel.shared.userInfo.friendsList.count == UserDataModel.shared.userInfo.friendIDs.count {
-                                    self.sortFriends() /// sort for top friends
+                                    UserDataModel.shared.userInfo.sortFriends() /// sort for top friends
                                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
                                     // if listener found a new friend, re-run home fetch
                                     if self.friendsLoaded {
@@ -233,7 +233,11 @@ extension MapController {
                     let postIn = try doc.data(as: MapPost.self)
                     /// if !contains, run query, else update with new values + update comments
                     guard let postInfo = postIn else { continue }
-                    if self.postsContains(postID: postInfo.id ?? "", mapID: map?.id ?? "", newPost: false) { self.updatePost(post: postInfo, map: map); continue }
+                    if self.postsContains(postID: postInfo.id ?? "", mapID: map?.id ?? "", newPost: false) {
+                        self.updatePost(post: postInfo, map: map)
+                        continue
+                    }
+                    if postInfo.userInfo?.id?.isBlocked() ?? false { continue }
                     if postInfo.hiddenBy?.contains(self.uid) ?? false { continue }
                     if map == nil && !UserDataModel.shared.userInfo.friendsContains(id: postInfo.posterID) { continue }
                     /// check seenList if older than 24 hours

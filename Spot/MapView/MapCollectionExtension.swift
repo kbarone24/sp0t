@@ -15,8 +15,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if feedLoaded {
-         //   let extraCells = userInChapelHill() ? 3 : 2
-            let extraCells = 3
+            let extraCells = userInChapelHill() ? 3 : 2
             return UserDataModel.shared.userInfo.mapsList.count + extraCells
         }
         return 1

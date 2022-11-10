@@ -42,7 +42,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Use your camera to take pictures to share on sp0t!</string>
+	<string>Use your camera to take pictures and share on sp0t!</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Import your contacts to find friends on sp0t!</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -82,7 +82,6 @@
 	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>location</string>
 		<string>remote-notification</string>
 	</array>
 	<key>UILaunchStoryboardName</key>

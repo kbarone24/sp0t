@@ -18,76 +18,10 @@ import Photos
 import UIKit
 
 extension UIViewController {
-    func isValidUsername(username: String) -> Bool {
-        let regEx = "^[a-zA-Z0-9_.]*$"
-        let pred = NSPredicate(format: "SELF MATCHES %@", regEx)
-        return pred.evaluate(with: username) && username.count > 1
-    }
-
-    func isValidEmail(email: String?) -> Bool {
-        guard email != nil else { return false }
-        let regEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
-        let pred = NSPredicate(format: "SELF MATCHES %@", regEx)
-        return pred.evaluate(with: email)
-    }
-
-    func getTagUserString(text: String, cursorPosition: Int) -> (text: String, containsAt: Bool) {
-
-        let atIndices = text.indices(of: "@")
-        var wordIndices = text.indices(of: " ")
-        wordIndices.append(contentsOf: text.indices(of: "\n")) /// add new lines
-        if !wordIndices.contains(0) { wordIndices.insert(0, at: 0) } /// first word not included
-        wordIndices.sort(by: { $0 < $1 })
-
-        for atIndex in atIndices {
-
-            if cursorPosition > atIndex {
-
-                var i = 0
-                for w in wordIndices {
-
-                    /// cursor is > current word, < next word, @ is 1 more than current word , < next word OR last word in string
-                    if (w <= cursorPosition && (i == wordIndices.count - 1 || cursorPosition <= wordIndices[i + 1])) && ((atIndex == 0 && i == 0 || atIndex == w + 1) && (i == wordIndices.count - 1 || cursorPosition <= wordIndices[i + 1])) {
-
-                        let start = text.index(text.startIndex, offsetBy: w)
-                        let end = text.index(text.startIndex, offsetBy: cursorPosition)
-                        let range = start..<end
-                        let currentWord = text[range].replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "@", with: "").replacingOccurrences(of: "\n", with: "") ///  remove space and @ from word
-                        return (currentWord, true)
-                    } else { i += 1; continue }
-                }
-            }
-        }
-        return ("", false)
-    }
-
     func isFriends(id: String) -> Bool {
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
         if id == uid || (UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == id }) && !(UserDataModel.shared.adminIDs.contains(id))) { return true }
         return false
-    }
-
-    func sortFriends() {
-        /// sort friends based on user's top friends
-        if UserDataModel.shared.userInfo.topFriends?.isEmpty ?? true { return }
-
-        let topFriendsDictionary = UserDataModel.shared.userInfo.topFriends
-        let sortedFriends = topFriendsDictionary!.sorted(by: { $0.value > $1.value })
-        UserDataModel.shared.userInfo.friendIDs = sortedFriends.map({ $0.key })
-
-        let topFriends = Array(sortedFriends.map({ $0.key }))
-        var friendObjects: [UserProfile] = []
-
-        for friend in topFriends {
-            if let object = UserDataModel.shared.userInfo.friendsList.first(where: { $0.id == friend }) {
-                friendObjects.append(object)
-            }
-        }
-        /// add any friend not in top friends
-        for friend in UserDataModel.shared.userInfo.friendsList {
-            if !friendObjects.contains(where: { $0.id == friend.id }) { friendObjects.append(friend) }
-        }
-        UserDataModel.shared.userInfo.friendsList = friendObjects
     }
 
     func hasPOILevelAccess(creatorID: String, privacyLevel: String, inviteList: [String]) -> Bool {
@@ -112,96 +46,12 @@ extension UIViewController {
         return true
     }
 
-    func setPostLocations(postLocation: CLLocationCoordinate2D, postID: String) {
-
-        let location = CLLocation(latitude: postLocation.latitude, longitude: postLocation.longitude)
-
-        GeoFirestore(collectionRef: Firestore.firestore().collection("posts")).setLocation(location: location, forDocumentWithID: postID) { (error) in
-            if error != nil {
-                print("An error occured: \(String(describing: error))")
-            } else {
-                print("Saved location successfully!")
-            }
-        }
-    }
-
-    func setSpotLocations(spotLocation: CLLocationCoordinate2D, spotID: String) {
-
-        let location = CLLocation(latitude: spotLocation.latitude, longitude: spotLocation.longitude)
-
-        GeoFirestore(collectionRef: Firestore.firestore().collection("spots")).setLocation(location: location, forDocumentWithID: spotID) { (error) in
-            if error != nil {
-                print("An error occured: \(String(describing: error))")
-            } else {
-                print("Saved location successfully!")
-            }
-        }
-    }
-
-    // update map locations with correct ID
-    func updateBadMapLocations() {
-        let db = Firestore.firestore()
-        db.collection("mapLocations").getDocuments { snap, _ in
-            for doc in snap!.documents {
-                let postID = doc.get("postID") as! String
-                let mapID = doc.get("mapID") as! String
-                let location = doc.get("l") as! [Double]
-                if postID != doc.documentID {
-                    db.collection("mapLocations").document(postID).setData(["postID": postID, "mapID": mapID])
-                    self.setMapLocations(mapLocation: CLLocationCoordinate2D(latitude: location[0], longitude: location[1]), documentID: postID)
-                    doc.reference.delete()
-                    print("update", postID)
-                }
-            }
-        }
-    }
-    // delete deleted map locations
-    func fixDeleteMapLocations() {
-        let db = Firestore.firestore()
-        db.collection("mapLocations").getDocuments { snap, _ in
-            for doc in snap!.documents {
-                db.collection("posts").document(doc.documentID).getDocument { snap, _ in
-                    if !(snap?.exists ?? false) { doc.reference.delete() }
-                }
-            }
-        }
-    }
-
-    func setMapLocations(mapLocation: CLLocationCoordinate2D, documentID: String) {
-        let location = CLLocation(latitude: mapLocation.latitude, longitude: mapLocation.longitude)
-        GeoFirestore(collectionRef: Firestore.firestore().collection("mapLocations")).setLocation(location: location, forDocumentWithID: documentID) { (error) in
-            if error != nil {
-                print("An error occured: \(String(describing: error))")
-            } else {
-                print("Saved location successfully!")
-            }
-        }
-    }
-
-    func addToCityList(city: String) {
-        let db = Firestore.firestore()
-        let query = db.collection("cities").whereField("cityName", isEqualTo: city)
-
-        query.getDocuments { [weak self] (cityDocs, _) in
-            guard let self = self else { return }
-            if cityDocs?.documents.count ?? 0 == 0 {
-                self.getCoordinateFrom(address: city) { coordinate, error in
-                    guard let coordinate = coordinate, error == nil else { return }
-                    let id = UUID().uuidString
-                    db.collection("cities").document(id).setData(["cityName": city])
-                    GeoFirestore(collectionRef: db.collection("cities")).setLocation(location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude), forDocumentWithID: id) { (_) in
-                        print(city, "Location:", coordinate)
-                    }
-                }
-            }
-        }
-    }
-
     func updateMapNameInPosts(mapID: String, newName: String) {
         let db = Firestore.firestore()
         DispatchQueue.global().async {
             db.collection("posts").whereField("mapID", isEqualTo: mapID).getDocuments { snap, _ in
-                for postDoc in snap!.documents {
+                guard let snap = snap else { return }
+                for postDoc in snap.documents {
                     postDoc.reference.updateData(["mapName": newName])
                 }
             }
@@ -211,116 +61,37 @@ extension UIViewController {
     func updateUsername(newUsername: String, oldUsername: String) {
         let db = Firestore.firestore()
         db.collection("maps").getDocuments { snap, _ in
-            for doc in snap!.documents {
-                var posterUsernames = doc.get("posterUsernames") as! [String]
-                for i in 0..<posterUsernames.count {
-                    if posterUsernames[i] == oldUsername {
-                        posterUsernames[i] = newUsername
-                    }
+            guard let snap = snap else { return }
+            for doc in snap.documents {
+                var posterUsernames = doc.get("posterUsernames") as? [String] ?? []
+                for i in 0..<posterUsernames.count where posterUsernames[i] == oldUsername {
+                    posterUsernames[i] = newUsername
                 }
                 doc.reference.updateData(["posterUsernames": posterUsernames])
             }
         }
         db.collection("users").whereField("username", isEqualTo: oldUsername).getDocuments { snap, _ in
-            if let doc = snap!.documents.first {
+            guard let snap = snap else { return }
+            if let doc = snap.documents.first {
                 let keywords = newUsername.getKeywordArray()
                 doc.reference.updateData(["username": newUsername, "usernameKeywords": keywords])
             }
         }
         db.collection("usernames").whereField("username", isEqualTo: oldUsername).getDocuments { snap, _ in
-            if let doc = snap!.documents.first {
+            guard let snap = snap else { return }
+            if let doc = snap.documents.first {
                 print("got 3")
                 doc.reference.updateData(["username": newUsername])
             }
         }
 
         db.collection("spots").whereField("posterUsername", isEqualTo: oldUsername).getDocuments { snap, _ in
-            if let doc = snap!.documents.first {
+            guard let snap = snap else { return }
+            if let doc = snap.documents.first {
                 print("got 4")
                 doc.reference.updateData(["posterUsername": newUsername])
             }
         }
-    }
-
-    // move to backend func
-    func updateUserTags(oldUsername: String, newUsername: String) {
-
-        let db = Firestore.firestore()
-        db.collection("posts").whereField("taggedUsers", arrayContains: oldUsername).getDocuments { [weak self] snap, err in
-
-            guard let self = self else { return }
-            if err != nil || snap?.documents.count == 0 { return }
-
-            for doc in snap!.documents {
-                guard var taggedUsers = doc.get("taggedUsers") as? [String] else { continue }
-                guard let caption = doc.get("caption") as? String else { continue }
-                taggedUsers.removeAll(where: { $0 == oldUsername })
-                taggedUsers.append(newUsername)
-                let newCaption = self.getNewCaption(oldUsername: oldUsername, newUsername: newUsername, caption: caption)
-                doc.reference.updateData(["taggedUsers": taggedUsers, "caption": newCaption])
-            }
-        }
-
-        db.collection("spots").whereField("taggedUsers", arrayContains: oldUsername).getDocuments { [weak self] snap, err in
-
-            guard let self = self else { return }
-            if err != nil || snap?.documents.count == 0 { return }
-
-            for doc in snap!.documents {
-                guard var taggedUsers = doc.get("taggedUsers") as? [String] else { continue }
-                guard let description = doc.get("description") as? String else { continue }
-                taggedUsers.removeAll(where: { $0 == oldUsername })
-                taggedUsers.append(newUsername)
-                let newDescription = self.getNewCaption(oldUsername: oldUsername, newUsername: newUsername, caption: description)
-                doc.reference.updateData(["taggedUsers": taggedUsers, "description": newDescription])
-            }
-        }
-    }
-
-    /*
-    */
-    func getNewCaption(oldUsername: String, newUsername: String, caption: String) -> String {
-
-        var newCaption = caption
-        let words = newCaption.components(separatedBy: .whitespacesAndNewlines)
-
-        for word in words {
-            let username = String(word.dropFirst())
-            if word.hasPrefix("@") && username == oldUsername {
-                let atIndexes = newCaption.indices(of: String(username))
-                let firstIndex = atIndexes[0]
-                let nsrange = NSRange(location: firstIndex, length: username.count)
-                guard let range = Range(nsrange, in: newCaption) else { continue }
-                newCaption.removeSubrange(range)
-                newCaption.insert(contentsOf: newUsername, at: newCaption.index(newCaption.startIndex, offsetBy: firstIndex))
-            }
-        }
-
-        return newCaption
-    }
-
-    func getCoordinateFrom(address: String, completion: @escaping(_ coordinate: CLLocationCoordinate2D?, _ error: Error?) -> Void ) {
-        CLGeocoder().geocodeAddressString(address) { completion($0?.first?.location?.coordinate, $1) }
-    }
-
-    func ResizeImage(with image: UIImage?, scaledToFill size: CGSize) -> UIImage? {
-
-        let scale: CGFloat = max(size.width / (image?.size.width ?? 0.0), size.height / (image?.size.height ?? 0.0))
-        let width: CGFloat = round((image?.size.width ?? 0.0) * scale)
-        let height: CGFloat = round((image?.size.height ?? 0.0) * scale)
-        let imageRect = CGRect(x: (size.width - width) / 2.0 - 1.0, y: (size.height - height) / 2.0 - 1.5, width: width + 2.0, height: height + 3.0)
-
-        /// if image rect size > image size, make them the same?
-
-        let clipSize = CGSize(width: floor(size.width), height: floor(size.height)) /// fix rounding error for images taken from camera
-        UIGraphicsBeginImageContextWithOptions(clipSize, false, 0.0)
-
-        image?.draw(in: imageRect)
-
-        let newImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return newImage
     }
 
     func locationIsEmpty(location: CLLocation) -> Bool {
@@ -333,16 +104,16 @@ extension UIViewController {
     ) {
         // Extract the duration of the keyboard animation
         let durationKey = UIResponder.keyboardAnimationDurationUserInfoKey
-        let duration = notification.userInfo![durationKey] as! Double
+        let duration = notification.userInfo?[durationKey] as? Double ?? 0
 
         // Extract the final frame of the keyboard
         let frameKey = UIResponder.keyboardFrameEndUserInfoKey
-        let keyboardFrameValue = notification.userInfo![frameKey] as! NSValue
+        let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue
 
         // Extract the curve of the iOS keyboard animation
         let curveKey = UIResponder.keyboardAnimationCurveUserInfoKey
-        let curveValue = notification.userInfo![curveKey] as! Int
-        let curve = UIView.AnimationCurve(rawValue: curveValue)!
+        let curveValue = notification.userInfo?[curveKey] as? Int ?? 0
+        let curve = UIView.AnimationCurve(rawValue: curveValue) ?? .easeIn
 
         // Create a property animator to manage the animation
         let animator = UIViewPropertyAnimator(
@@ -350,7 +121,7 @@ extension UIViewController {
             curve: curve
         ) {
             // Perform the necessary animation layout updates
-            animations?(keyboardFrameValue.cgRectValue)
+            animations?(keyboardFrameValue?.cgRectValue ?? .zero)
 
             // Required to trigger NSLayoutConstraint changes
             // to animate
@@ -365,7 +136,6 @@ extension UIViewController {
 
 /// upload post functions
 extension UIViewController {
-
     func uploadPostImage(images: [UIImage], postID: String, progressFill: UIView, fullWidth: CGFloat, completion: @escaping ((_ urls: [String], _ failed: Bool) -> Void)) {
 
         var failed = false
@@ -711,32 +481,6 @@ extension UIViewController {
         }
     }
 
-    func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
-        var queriedUsers: [UserProfile] = []
-        let usernameList = userList.map({ $0.username })
-        let nameList = userList.map({ $0.name })
-
-        let filteredUsernames = searchText.isEmpty ? usernameList : usernameList.filter({(dataString: String) -> Bool in
-            // If dataItem matches the searchText, return true to include it
-            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
-        })
-
-        let filteredNames = searchText.isEmpty ? nameList : nameList.filter({(dataString: String) -> Bool in
-            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
-        })
-
-        for username in filteredUsernames {
-            if let user = userList.first(where: { $0.username == username }) { queriedUsers.append(user) }
-        }
-
-        for name in filteredNames {
-            if let user = userList.first(where: { $0.name == name }) {
-                if !queriedUsers.contains(where: { $0.id == user.id }) { queriedUsers.append(user) }
-            }
-        }
-        return queriedUsers
-    }
-
     func deletePostDraft(timestampID: Int64) {
 
         guard let appDelegate =
@@ -760,6 +504,58 @@ extension UIViewController {
             }
         } catch let error as NSError {
             print("could not fetch. \(error)")
+        }
+    }
+
+    func setPostLocations(postLocation: CLLocationCoordinate2D, postID: String) {
+        let location = CLLocation(latitude: postLocation.latitude, longitude: postLocation.longitude)
+        GeoFirestore(collectionRef: Firestore.firestore().collection("posts")).setLocation(location: location, forDocumentWithID: postID) { (error) in
+            if error != nil {
+                print("An error occured: \(String(describing: error))")
+            } else {
+                print("Saved location successfully!")
+            }
+        }
+    }
+
+    func setSpotLocations(spotLocation: CLLocationCoordinate2D, spotID: String) {
+        let location = CLLocation(latitude: spotLocation.latitude, longitude: spotLocation.longitude)
+        GeoFirestore(collectionRef: Firestore.firestore().collection("spots")).setLocation(location: location, forDocumentWithID: spotID) { (error) in
+            if error != nil {
+                print("An error occured: \(String(describing: error))")
+            } else {
+                print("Saved location successfully!")
+            }
+        }
+    }
+
+    func setMapLocations(mapLocation: CLLocationCoordinate2D, documentID: String) {
+        let location = CLLocation(latitude: mapLocation.latitude, longitude: mapLocation.longitude)
+        GeoFirestore(collectionRef: Firestore.firestore().collection("mapLocations")).setLocation(location: location, forDocumentWithID: documentID) { (error) in
+            if error != nil {
+                print("An error occured: \(String(describing: error))")
+            } else {
+                print("Saved location successfully!")
+            }
+        }
+    }
+
+    func addToCityList(city: String) {
+        let db = Firestore.firestore()
+        let query = db.collection("cities").whereField("cityName", isEqualTo: city)
+
+        query.getDocuments { [weak self] (cityDocs, _) in
+            guard let self = self else { return }
+            if cityDocs?.documents.count ?? 0 == 0 {
+                city.getCoordinate { coordinate, error in
+                    guard let coordinate = coordinate, error == nil else { return }
+                    let id = UUID().uuidString
+                    db.collection("cities").document(id).setData(["cityName": city])
+                    GeoFirestore(collectionRef: db.collection("cities")).setLocation(location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude), forDocumentWithID: id) { (_) in
+                        print(city, "Location:", coordinate)
+                    }
+                }
+            }
         }
     }
 }
@@ -827,21 +623,20 @@ extension NSObject {
 
     func getComments(postID: String, completion: @escaping (_ comments: [MapComment]) -> Void) {
         if postID == "" { completion([]); return }
-        let db: Firestore! = Firestore.firestore()
+        let db = Firestore.firestore()
         var commentList: [MapComment] = []
 
         DispatchQueue.global().async {
-            db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, err) in
-
-                if err != nil { completion(commentList); return }
-                if commentSnap!.documents.count == 0 { completion(commentList); return }
+            db.collection("posts").document(postID).collection("comments").order(by: "timestamp", descending: true).getDocuments { [weak self] (commentSnap, _) in
+                guard let commentSnap else { completion(commentList); return }
+                if commentSnap.documents.isEmpty { completion(commentList); return }
                 guard let self = self else { return }
 
-                var index = 0
-                for doc in commentSnap!.documents {
+                for doc in commentSnap.documents {
                     do {
                         let commentInf = try doc.data(as: MapComment.self)
-                        guard var commentInfo = commentInf else { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+                        guard var commentInfo = commentInf else { continue }
+                        if commentInfo.commenterID.isBlocked() { continue }
 
                         self.getUserInfo(userID: commentInfo.commenterID) { user in
                             commentInfo.userInfo = user
@@ -849,18 +644,16 @@ extension NSObject {
                                 commentList.append(commentInfo)
                                 commentList.sort(by: { $0.seconds < $1.seconds })
                             }
-
-                            index += 1; if index == commentSnap!.documents.count { completion(commentList) }
                         }
-
-                    } catch { index += 1; if index == commentSnap!.documents.count { completion(commentList) }; continue }
+                    } catch { continue }
                 }
+                completion(commentList)
             }
         }
     }
 
     func getPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
-        let db: Firestore! = Firestore.firestore()
+        let db = Firestore.firestore()
         let emptyPost = MapPost(
             spotID: "",
             spotName: "",
@@ -896,9 +689,7 @@ extension NSObject {
     }
 
     func getUserInfo(userID: String, completion: @escaping (_ user: UserProfile) -> Void) {
-
-        let db: Firestore! = Firestore.firestore()
-
+        let db: Firestore = Firestore.firestore()
         if let user = UserDataModel.shared.userInfo.friendsList.first(where: { $0.id == userID }) {
             completion(user)
             return
@@ -936,7 +727,7 @@ extension NSObject {
         }
 
         detailGroup.enter()
-        getComments(postID: postInfo.id!) { comments in
+        getComments(postID: postInfo.id ?? "") { comments in
             postInfo.commentList = comments
             detailGroup.leave()
         }
@@ -947,7 +738,7 @@ extension NSObject {
         for userID in postInfo.taggedUserIDs ?? [] {
             taggedUserGroup.enter()
             self.getUserInfo(userID: userID) { user in
-                postInfo.addedUserProfiles!.append(user)
+                postInfo.addedUserProfiles?.append(user)
                 taggedUserGroup.leave()
             }
         }
@@ -963,7 +754,7 @@ extension NSObject {
     }
 
     func getUserFromUsername(username: String, completion: @escaping (_ user: UserProfile?) -> Void) {
-        let db: Firestore! = Firestore.firestore()
+        let db = Firestore.firestore()
         if let user = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == username }) {
             completion(user)
             return
@@ -986,7 +777,7 @@ extension NSObject {
     }
 
     func getSpot(spotID: String, completion: @escaping (_ spot: MapSpot?) -> Void) {
-        let db: Firestore! = Firestore.firestore()
+        let db = Firestore.firestore()
         let spotRef = db.collection("spots").document(spotID)
 
         DispatchQueue.global().async {
@@ -1013,7 +804,7 @@ extension NSObject {
     }
 
     func getMap(mapID: String, completion: @escaping (_ map: CustomMap?) -> Void) {
-        let db: Firestore! = Firestore.firestore()
+        let db = Firestore.firestore()
         let mapRef = db.collection("maps").document(mapID)
 
         DispatchQueue.global().async {
@@ -1201,18 +992,6 @@ extension NSObject {
         return (currentHeight, bottomConstraint)
     }
 
-    func getAttributedStringWithImage(str: String, image: UIImage) -> NSMutableAttributedString {
-        let imageAttachment = NSTextAttachment()
-        imageAttachment.image = image
-        imageAttachment.bounds = CGRect(x: 0, y: 3, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
-        let attachmentString = NSAttributedString(attachment: imageAttachment)
-        let completeText = NSMutableAttributedString(string: "")
-        completeText.append(attachmentString)
-        completeText.append(NSAttributedString(string: " "))
-        completeText.append(NSAttributedString(string: str))
-        return completeText
-    }
-
     func updatePostInviteLists(mapID: String, inviteList: [String]) {
         let db = Firestore.firestore()
         DispatchQueue.global().async {
@@ -1225,4 +1004,3 @@ extension NSObject {
         }
     }
 }
-

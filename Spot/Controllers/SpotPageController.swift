@@ -13,22 +13,73 @@ import SnapKit
 import UIKit
 
 class SpotPageController: UIViewController {
-
-    private var collectionView: UICollectionView!
-  ///  private var addButton: UIButton!
-    private var barView: UIView!
-    private var titleLabel: UILabel!
-    private var barBackButton: UIButton!
-    private var mapPostLabel: UILabel!
-    private var communityPostLabel: UILabel!
+    private lazy var collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.backgroundColor = .clear
+        view.register(SpotPageHeaderCell.self, forCellWithReuseIdentifier: "SpotPageHeaderCell")
+        view.register(SpotPageBodyCell.self, forCellWithReuseIdentifier: "SpotPageBodyCell")
+        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
+        return view
+    }()
+    private lazy var barView = UIView()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.text = ""
+        label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.sizeToFit()
+        label.adjustsFontSizeToFitWidth = true
+        return label
+    }()
+    private lazy var barBackButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "BackArrowDark"), for: .normal)
+        return button
+    }()
+    private lazy var mapPostLabel: UILabel = {
+        let label = UILabel()
+        label.text = ""
+        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        label.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+        label.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
+        label.clipsToBounds = true
+        label.layer.cornerRadius = 8
+        label.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
+        return label
+    }()
+    private lazy var communityPostLabel: UILabel = {
+        let label = UILabel()
+        let frontPadding = "    "
+        let bottomPadding = "   "
+        let imageAttachment = NSTextAttachment()
+        imageAttachment.image = UIImage(named: "CommunityGlobe")
+        imageAttachment.bounds = CGRect(x: 0, y: -2.5, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
+        let attachmentString = NSAttributedString(attachment: imageAttachment)
+        let completeText = NSMutableAttributedString(string: frontPadding)
+        completeText.append(attachmentString)
+        completeText.append(NSAttributedString(string: " "))
+        completeText.append(NSAttributedString(string: "Community Posts" + bottomPadding))
+        label.attributedText = completeText
+        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        label.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+        label.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
+        label.clipsToBounds = true
+        label.layer.cornerRadius = 8
+        label.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
+        return label
+    }()
     private lazy var imageManager = SDWebImageManager()
     public var containerDrawerView: DrawerView?
-    private var activityIndicator: CustomActivityIndicator!
+    private lazy var activityIndicator = CustomActivityIndicator()
 
     private var mapID: String?
     private var mapName: String?
-    private var spotName: String!
-    private var spotID: String!
+    private var spotName = ""
+    private var spotID = ""
     private var spot: MapSpot? {
         didSet {
             if spot == nil { return }
@@ -37,21 +88,20 @@ class SpotPageController: UIViewController {
             }
         }
     }
-
     private var relatedEndDocument: DocumentSnapshot?
     private var communityEndDocument: DocumentSnapshot?
     private var fetchRelatedPostsComplete = false
     private var fetchCommunityPostsComplete = false
-    private var fetching: RefreshStatus = .activelyRefreshing
-    private var relatedPosts: [MapPost] = []
-    private var communityPosts: [MapPost] = []
+    private lazy var fetching: RefreshStatus = .activelyRefreshing
+    private lazy var relatedPosts: [MapPost] = []
+    private lazy var communityPosts: [MapPost] = []
 
     init(mapPost: MapPost, presentedDrawerView: DrawerView? = nil) {
         super.init(nibName: nil, bundle: nil)
         self.mapID = mapPost.mapID
         self.mapName = mapPost.mapName
-        self.spotName = mapPost.spotName
-        self.spotID = mapPost.spotID
+        self.spotName = mapPost.spotName ?? ""
+        self.spotID = mapPost.spotID ?? ""
         self.containerDrawerView = presentedDrawerView
     }
 
@@ -75,11 +125,13 @@ class SpotPageController: UIViewController {
     }
 
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         setUpNavBar()
         configureDrawerView()
     }
 
     override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "SpotPageOpen")
     }
 }
@@ -101,49 +153,22 @@ extension SpotPageController {
         view.backgroundColor = .white
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
 
-        collectionView = {
-            let layout = UICollectionViewFlowLayout()
-            layout.scrollDirection = .vertical
-            let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-            view.delegate = self
-            view.dataSource = self
-            view.backgroundColor = .clear
-            view.register(SpotPageHeaderCell.self, forCellWithReuseIdentifier: "SpotPageHeaderCell")
-            view.register(SpotPageBodyCell.self, forCellWithReuseIdentifier: "SpotPageBodyCell")
-            view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
-            return view
-        }()
+        collectionView.delegate = self
+        collectionView.dataSource = self
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
 
-      /* addButton = AddButton {
-            $0.addTarget(self, action: #selector(addAction), for: .touchUpInside)
-            $0.isHidden = true
-            view.addSubview($0)
-        }
-        addButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(24)
-            $0.bottom.equalToSuperview().inset(35)
-            $0.width.height.equalTo(73)
-        } */
-
-        barView = UIView {
-            $0.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 91)
-            containerDrawerView?.slideView.addSubview($0)
-        }
+        containerDrawerView?.slideView.addSubview(barView)
         let height: CGFloat = UserDataModel.shared.screenSize == 0 ? 65 : 90
         barView.snp.makeConstraints {
             $0.leading.top.width.equalToSuperview()
             $0.height.equalTo(height)
         }
 
-        barBackButton = UIButton {
-            $0.setImage(UIImage(named: "BackArrowDark"), for: .normal)
-            $0.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
-            barView.addSubview($0)
-        }
+        barBackButton.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
+        barView.addSubview(barBackButton)
         barBackButton.snp.makeConstraints {
             $0.leading.equalTo(22)
             $0.bottom.equalTo(-12)
@@ -151,56 +176,15 @@ extension SpotPageController {
             $0.width.equalTo(30)
         }
 
-        titleLabel = UILabel {
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-            $0.text = ""
-            $0.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-            $0.textAlignment = .center
-            $0.numberOfLines = 0
-            $0.sizeToFit()
-            $0.adjustsFontSizeToFitWidth = true
-            barView.addSubview($0)
-        }
+        barView.addSubview(titleLabel)
         titleLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(60)
             $0.bottom.equalTo(barBackButton)
             $0.height.equalTo(22)
         }
 
-        mapPostLabel = UILabel {
-            $0.text = ""
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            $0.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
-            $0.clipsToBounds = true
-            $0.layer.cornerRadius = 8
-            $0.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
-        }
-
-        communityPostLabel = UILabel {
-            let frontPadding = "    "
-            let bottomPadding = "   "
-            let imageAttachment = NSTextAttachment()
-            imageAttachment.image = UIImage(named: "CommunityGlobe")
-            imageAttachment.bounds = CGRect(x: 0, y: -2.5, width: imageAttachment.image!.size.width, height: imageAttachment.image!.size.height)
-            let attachmentString = NSAttributedString(attachment: imageAttachment)
-            let completeText = NSMutableAttributedString(string: frontPadding)
-            completeText.append(attachmentString)
-            completeText.append(NSAttributedString(string: " "))
-            completeText.append(NSAttributedString(string: "Community Posts" + bottomPadding))
-            $0.attributedText = completeText
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 14)
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            $0.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
-            $0.clipsToBounds = true
-            $0.layer.cornerRadius = 8
-            $0.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
-        }
-
-        activityIndicator = CustomActivityIndicator {
-            $0.startAnimating()
-            view.addSubview($0)
-        }
+        activityIndicator.startAnimating()
+        view.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.top.equalTo(200)
             $0.centerX.equalToSuperview()
@@ -224,10 +208,10 @@ extension SpotPageController {
 
     private func fetchRelatedPosts() {
         let db: Firestore = Firestore.firestore()
-        let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
-        let conditionedQuery = (mapID == nil || mapID == "") ? baseQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid) : baseQuery.whereField("mapID", isEqualTo: mapID!)
+        let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID)
+        let conditionedQuery = (mapID == nil || mapID == "") ? baseQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid) : baseQuery.whereField("mapID", isEqualTo: mapID ?? "")
         var finalQuery = conditionedQuery.limit(to: 13).order(by: "timestamp", descending: true)
-        if relatedEndDocument != nil { finalQuery = finalQuery.start(atDocument: relatedEndDocument!)  }
+        if let relatedEndDocument { finalQuery = finalQuery.start(atDocument: relatedEndDocument) }
 
         fetching = .activelyRefreshing
         finalQuery.getDocuments { [weak self ](snap, _) in
@@ -241,6 +225,7 @@ extension SpotPageController {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { continue }
                     if self.relatedPosts.contains(where: { $0.id == postInfo.id }) { continue }
+                    if postInfo.posterID.isBlocked() { continue }
                     postGroup.enter()
                     self.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
@@ -267,24 +252,25 @@ extension SpotPageController {
 
     private func fetchCommunityPost() {
         let db: Firestore = Firestore.firestore()
-        let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID!)
+        let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID)
         var finalQuery = baseQuery.limit(to: 13).order(by: "timestamp", descending: true)
-        if communityEndDocument != nil { finalQuery = finalQuery.start(atDocument: communityEndDocument!) }
+        if let communityEndDocument { finalQuery = finalQuery.start(atDocument: communityEndDocument) }
 
         fetching = .activelyRefreshing
         finalQuery.getDocuments { [weak self] (snap, _) in
             guard let self = self else { return }
             guard let allDocs = snap?.documents else { return }
-            if allDocs.count == 0 { self.fetching = .refreshDisabled }
+            if allDocs.isEmpty { self.fetching = .refreshDisabled }
             let docs = allDocs.count == 13 ? allDocs.dropLast() : allDocs
             if docs.count < 12 { self.fetching = .refreshDisabled }
 
             let postGroup = DispatchGroup()
-            for doc in snap!.documents {
+            for doc in allDocs {
                 do {
                     let unwrappedInfo = try doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { continue }
                     if self.relatedPosts.contains(where: { $0.id == postInfo.id }) { continue }
+                    if postInfo.posterID.isBlocked() { continue }
 
                     postGroup.enter()
                     self.setPostDetails(post: postInfo) { [weak self] post in
@@ -332,7 +318,8 @@ extension SpotPageController {
     }
 
     func hasPostAccess(post: MapPost) -> Bool {
-        /// show all posts except secret map posts from secret maps. Allow friends level access for posts posted to friends feed, invite level access for posts hidden from friends feed / myMap
+        // show all posts except secret map posts from secret maps.
+        // Allow friends level access for posts posted to friends feed, invite level access for posts hidden from friends feed / myMap
         if post.privacyLevel == "invite" {
             if post.hideFromFeed ?? false {
                 return (post.inviteList?.contains(UserDataModel.shared.uid)) ?? false
@@ -350,10 +337,10 @@ extension SpotPageController {
 
     @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
-    //    guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
-      //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
+        //  guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
+        //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
 
-        /// check if post being deleted from map controllers child and update map if necessary
+        // check if post being deleted from map controllers child and update map if necessary
         relatedPosts.removeAll(where: { $0.id == post.id })
         communityPosts.removeAll(where: { $0.id == post.id })
 
@@ -391,11 +378,15 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             if indexPath == IndexPath(row: 0, section: 1) {
                 let frontPadding = "    "
                 let bottomPadding = "   "
-                mapPostLabel.text = frontPadding + ((mapName == nil || mapName == "") ? "Friends posts" : "\(mapName!)") + bottomPadding
+                if let mapName {
+                    mapPostLabel.text = frontPadding + mapName + bottomPadding
+                } else {
+                    mapPostLabel.text = frontPadding + "Friends posts" + bottomPadding
+                }
                 addHeaderView(label: mapPostLabel, cell: cell, communityEmpty: false)
             }
-            /// set up community post label
-            if communityPosts.count != 0 {
+            // set up community post label
+            if !communityPosts.isEmpty {
                 if indexPath == IndexPath(row: 0, section: 2) {
                     addHeaderView(label: communityPostLabel, cell: cell, communityEmpty: false)
                 }
@@ -472,7 +463,6 @@ extension SpotPageController: UIScrollViewDelegate {
 
         if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 500)) && fetching == .refreshEnabled {
             DispatchQueue.global(qos: .userInitiated).async {
-                print("fetch")
                 self.fetchRelatedPostsComplete ? self.fetchCommunityPost() : self.fetchRelatedPosts()
             }
         }

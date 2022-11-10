@@ -21,7 +21,7 @@ enum InviteStatus {
 
 class SendInvitesController: UIViewController {
 
-    let db: Firestore! = Firestore.firestore()
+    let db = Firestore.firestore()
     var uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
 
     var sectionTitles: [String] = []

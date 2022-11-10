@@ -11,8 +11,7 @@ import Photos
 import UIKit
 
 class ImageFetcher {
-
-    var context: PHLivePhotoEditingContext!
+    var context: PHLivePhotoEditingContext?
     var requestID: Int32 = 1
     var contentRequestID: Int = 1
 
@@ -61,7 +60,7 @@ class ImageFetcher {
                         if self.isFetching == false || self.fetchingIndex == -1 { return } /// return on canceled fetch
                         if !success || err != nil || frameImages.isEmpty { completion([], false); return }
 
-                        /// distanceBetweenFrames fixed at 2 right now, always taking the middle 16 frames of the Live often with large offsets. This number is variable though
+                        // distanceBetweenFrames fixed at 2 right now, always taking the middle 16 frames of the Live often with large offsets. This number is variable though
                         let distanceBetweenFrames: Double = 2
                         let rawFrames = Double(frameImages.count) / distanceBetweenFrames
                         let numberOfFrames: Double = rawFrames > 11 ? 9 : rawFrames > 7 ? max(7, rawFrames - 2) : rawFrames
@@ -71,7 +70,8 @@ class ImageFetcher {
                         let aspect = frameImages[0].size.height / frameImages[0].size.width
                         let size = CGSize(width: min(frameImages[0].size.width, UIScreen.main.bounds.width * 1.5), height: min(frameImages[0].size.height, aspect * UIScreen.main.bounds.width * 1.5))
 
-                        let image0 = self.ResizeImage(with: frameImages[offset], scaledToFill: size)
+                        let image = frameImages[offset]
+                        let image0 = image.resize(scaledToFill: size)
                         animationImages.append(image0 ?? UIImage())
 
                         /// add middle frames, trimming first couple and last couple
@@ -79,8 +79,9 @@ class ImageFetcher {
                         for i in 1...Int(numberOfFrames) {
                             let multiplier = offset + intMultiplier * i
                             let j = multiplier > frameImages.count - 1 ? frameImages.count - 1 : multiplier
-                            let image = self.ResizeImage(with: frameImages[j], scaledToFill: size)
-                            animationImages.append(image ?? UIImage())
+                            let image = frameImages[j]
+                            let image0 = image.resize(scaledToFill: size)
+                            animationImages.append(image0 ?? UIImage())
                         }
 
                         self.isFetching = false
@@ -121,7 +122,7 @@ class ImageFetcher {
 
                     let aspect = result.size.height / result.size.width
                     let size = CGSize(width: min(result.size.width, UIScreen.main.bounds.width * 2.0), height: min(result.size.height, aspect * UIScreen.main.bounds.width * 2.0))
-                    let resizedImage = self.ResizeImage(with: result, scaledToFill: size)
+                    let resizedImage = result.resize(scaledToFill: size)
                     self.isFetching = false
                     self.fetchingIndex = -1
 
@@ -132,30 +133,10 @@ class ImageFetcher {
         }
     }
 
-    func ResizeImage(with image: UIImage?, scaledToFill size: CGSize) -> UIImage? {
-
-        let scale: CGFloat = max(size.width / (image?.size.width ?? 0.0), size.height / (image?.size.height ?? 0.0))
-        let width: CGFloat = round((image?.size.width ?? 0.0) * scale)
-        let height: CGFloat = round((image?.size.height ?? 0.0) * scale)
-        let imageRect = CGRect(x: (size.width - width) / 2.0 - 1.0, y: (size.height - height) / 2.0 - 1.5, width: width + 2.0, height: height + 3.0)
-
-        /// if image rect size > image size, make them the same?
-
-        let clipSize = CGSize(width: floor(size.width), height: floor(size.height)) /// fix rounding error for images taken from camera
-        UIGraphicsBeginImageContextWithOptions(clipSize, false, 0.0)
-
-        image?.draw(in: imageRect)
-
-        let newImage: UIImage? = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return newImage
-    }
-
     func cancelFetchForAsset(asset: PHAsset) {
         asset.cancelContentEditingInputRequest(contentRequestID)
 
-        if context != nil { context.cancel() }
+        context?.cancel()
         imageManager.cancelImageRequest(requestID)
 
         isFetching = false
