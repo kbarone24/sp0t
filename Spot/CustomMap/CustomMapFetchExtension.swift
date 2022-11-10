@@ -148,7 +148,7 @@ extension CustomMapController {
     }
 
     func hasMapPostAccess(post: MapPost) -> Bool {
-        if UserDataModel.shared.deletedPostIDs.contains(post.id ?? "_") { return false }
+        if UserDataModel.shared.deletedPostIDs.contains(post.id ?? "_") || post.posterID.isBlocked() { return false }
         if mapType == .friendsMap || mapType == .myMap {
             /// show only friends level posts for friends map and my map,
             if post.privacyLevel == "invite" && post.hideFromFeed ?? false {
@@ -161,9 +161,9 @@ extension CustomMapController {
 
     func addAnnotation(group: MapPostGroup?, newGroup: Bool) {
         if let group = group {
-            if newGroup {
+            if newGroup, let mapData {
                 /// add new group
-                mapController?.mapView.addSpotAnnotation(group: group, map: mapData!)
+                mapController?.mapView.addSpotAnnotation(group: group, map: mapData)
             } else if let anno = mapController?.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: group.coordinate) }) {
                 /// update existing group
                     mapController?.mapView.removeAnnotation(anno)

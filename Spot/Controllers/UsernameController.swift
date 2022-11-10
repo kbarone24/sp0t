@@ -332,7 +332,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
     }
 
     func usernameAvailable(username: String, completion: @escaping(_ err: String) -> Void) {
-        if !isValidUsername(username: username) {
+        if !username.isValidUsername() {
             completion("Too short")
             return
         }

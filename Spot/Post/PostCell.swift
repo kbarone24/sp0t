@@ -20,7 +20,7 @@ class PostCell: UICollectionViewCell {
 
     var vcid: String!
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-    let db: Firestore! = Firestore.firestore()
+    let db = Firestore.firestore()
 
     var imageView: PostImageView!
 

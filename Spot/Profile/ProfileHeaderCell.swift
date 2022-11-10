@@ -18,6 +18,7 @@ enum ProfileRelation {
     case pending
     case stranger
     case received
+    case blocked
 }
 
 class ProfileHeaderCell: UICollectionViewCell {
@@ -141,6 +142,9 @@ class ProfileHeaderCell: UICollectionViewCell {
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle(relation == .stranger ? "Add friend" : "Accept friend request", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+        case .blocked:
+            actionButton.setTitle("Blocked", for: .normal)
+            actionButton.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
         }
         actionButton.setTitleColor(.black, for: .normal)
     }

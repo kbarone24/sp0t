@@ -15,6 +15,8 @@ struct UserProfile: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
 
     var avatarURL: String? = ""
+    var blockedBy: [String]?
+    var blockedUsers: [String]? = []
     var currentLocation: String
     var friendIDs: [String] = []
     var hiddenUsers: [String]? = []
@@ -44,6 +46,8 @@ struct UserProfile: Identifiable, Codable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case id
+        case blockedBy
+        case blockedUsers
         case avatarURL
         case currentLocation
         case friendIDs = "friendsList"
@@ -82,5 +86,28 @@ struct UserProfile: Identifiable, Codable, Hashable {
 
     func friendsContains(id: String) -> Bool {
         return id == self.id || friendIDs.contains(id)
+    }
+
+    mutating func sortFriends() {
+        // sort friends based on user's top friends
+        if topFriends?.isEmpty ?? true { return }
+
+        let topFriendsDictionary = topFriends ?? [:]
+        let sortedFriends = topFriendsDictionary.sorted(by: { $0.value > $1.value })
+        friendIDs = sortedFriends.map({ $0.key })
+
+        let topFriends = Array(sortedFriends.map({ $0.key }))
+        var friendObjects: [UserProfile] = []
+
+        for friend in topFriends {
+            if let object = friendsList.first(where: { $0.id == friend }) {
+                friendObjects.append(object)
+            }
+        }
+        // add any friend not in top friends
+        for friend in friendsList where !friendObjects.contains(where: { $0.id == friend.id }) {
+            friendObjects.append(friend)
+        }
+        friendsList = friendObjects
     }
 }

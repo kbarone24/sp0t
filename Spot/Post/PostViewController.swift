@@ -19,7 +19,7 @@ import UIKit
 
 class PostController: UIViewController {
 
-    let db: Firestore! = Firestore.firestore()
+    let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
     lazy var postsList: [MapPost] = []
