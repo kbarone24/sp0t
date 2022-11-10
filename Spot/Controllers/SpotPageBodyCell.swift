@@ -10,9 +10,16 @@ import SDWebImage
 import UIKit
 
 class SpotPageBodyCell: UICollectionViewCell {
+    private lazy var postImage: UIImageView = {
+        let view = UIImageView()
+        view.image = UIImage()
+        view.contentMode = .scaleAspectFill
+        view.layer.masksToBounds = true
+        view.layer.cornerRadius = 2
+        return view
+    }()
 
-    private var postImage: UIImageView!
-    private var postID: String!
+    private var postID = ""
     private var postData: MapPost?
     private lazy var fetching = false
     private lazy var imageManager = SDWebImageManager()
@@ -27,15 +34,18 @@ class SpotPageBodyCell: UICollectionViewCell {
     }
 
     override func prepareForReuse() {
-        if postImage != nil {
-            postImage.image = UIImage()
-            postImage.sd_cancelCurrentImageLoad()
-        }
+        super.prepareForReuse()
+        postImage.image = UIImage()
+        postImage.sd_cancelCurrentImageLoad()
     }
 
     public func cellSetup(mapPost: MapPost) {
         let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2 / 3, height: (UIScreen.main.bounds.width * 2 / 3) * 1.5), scaleMode: .aspectFill)
-        postImage.sd_setImage(with: URL(string: mapPost.imageURLs.first ?? ""), placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)), options: .highPriority, context: [.imageTransformer: transformer])
+        postImage.sd_setImage(
+            with: URL(string: mapPost.imageURLs.first ?? ""),
+            placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)),
+            options: .highPriority,
+            context: [.imageTransformer: transformer])
     }
 }
 
@@ -43,13 +53,7 @@ extension SpotPageBodyCell {
     private func viewSetup() {
         contentView.backgroundColor = .white
 
-        postImage = UIImageView {
-            $0.image = UIImage()
-            $0.contentMode = .scaleAspectFill
-            $0.layer.masksToBounds = true
-            $0.layer.cornerRadius = 2
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(postImage)
         postImage.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }

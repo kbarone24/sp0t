@@ -14,7 +14,6 @@ import SnapKit
 import UIKit
 
 class ProfileViewController: UIViewController {
-
     // MARK: Fetched datas
     var userProfile: UserProfile? {
         didSet {
@@ -59,7 +58,6 @@ class ProfileViewController: UIViewController {
         view.register(ProfileBodyCell.self, forCellWithReuseIdentifier: "ProfileBodyCell")
         return view
     }()
-
     lazy var noPostLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
@@ -76,8 +74,11 @@ class ProfileViewController: UIViewController {
 
     init(userProfile: UserProfile? = nil, presentedDrawerView: DrawerView? = nil) {
         super.init(nibName: nil, bundle: nil)
-        self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
         containerDrawerView = presentedDrawerView
+        if UserDataModel.shared.userInfo.blockedBy?.contains(userProfile?.id ?? "") ?? false {
+            return
+        }
+        self.userProfile = userProfile == nil ? UserDataModel.shared.userInfo : userProfile
 
         /// need to add immediately to track active user profile getting fetched
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
@@ -131,8 +132,19 @@ class ProfileViewController: UIViewController {
             image: UIImage(named: "BackArrowDark"),
             style: .plain,
             target: self,
-            action: #selector(popVC)
+            action: #selector(backTap)
         )
+
+        if relation != .myself {
+            let button = UIBarButtonItem(
+                image: UIImage(named: "Elipses"),
+                style: .plain,
+                target: self,
+                action: #selector(elipsesTap))
+            button.customView?.backgroundColor = .gray
+            button.imageInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+            navigationItem.rightBarButtonItem = button
+        }
     }
 
     private func configureDrawerView() {
@@ -162,22 +174,20 @@ class ProfileViewController: UIViewController {
     }
 
     func getUserRelation() {
-        if self.userProfile?.id == UserDataModel.shared.uid {
+        guard let userProfile else { return }
+        if userProfile.id == UserDataModel.shared.uid {
             relation = .myself
-        } else if UserDataModel.shared.userInfo.friendsList.contains(where: { user in
-            user.id == userProfile?.id
-        }) {
+        } else if UserDataModel.shared.userInfo.friendIDs.contains(userProfile.id ?? "") {
             relation = .friend
-        } else if UserDataModel.shared.userInfo.pendingFriendRequests.contains(where: { user in
-            user == userProfile?.id
-        }) {
+        } else if userProfile.blockedBy?.contains(UserDataModel.shared.uid) ?? false {
+            relation = .blocked
+        } else if UserDataModel.shared.userInfo.pendingFriendRequests.contains(userProfile.id ?? "") {
             relation = .pending
-        } else if (userProfile?.pendingFriendRequests.contains(where: { $0 == UserDataModel.shared.uid }) ?? false) {
+        } else if userProfile.pendingFriendRequests.contains(UserDataModel.shared.uid) {
             relation = .received
         } else {
             relation = .stranger
         }
-        print("relation", relation)
     }
 
     func runFetches() {
@@ -300,13 +310,15 @@ extension ProfileViewController {
         case .myself:
             presentEditProfile()
         case .friend:
-            addActionSheet()
+            addRemoveFriendActionSheet()
         case .pending:
             showRemoveFriendRequestAlert()
         case .received:
             acceptFriendRequest()
         case .stranger:
             addFriendFromProfile()
+        case .blocked:
+            addOptionsActionSheet()
         }
     }
 
@@ -355,12 +367,16 @@ extension ProfileViewController {
         present(friendListVC, animated: true)
     }
 
-    @objc func popVC() {
-        if navigationController?.viewControllers.count == 1 {
-            containerDrawerView?.closeAction()
-        } else {
-            navigationController?.popViewController(animated: true)
-        }
+    @objc func elipsesTap() {
+        addOptionsActionSheet()
+    }
+
+    @objc func backTap() {
+        popVC()
+    }
+
+    func popVC() {
+        containerDrawerView?.closeAction()
     }
 
     func acceptFriendRequest() {
