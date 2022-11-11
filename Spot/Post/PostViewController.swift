@@ -304,7 +304,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
     func setSeen(post: MapPost) {
         /// set seen on map
         db.collection("posts").document(post.id!).updateData(["seenList": FieldValue.arrayUnion([uid])])
-        NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["postID": post.id as Any]))
+        NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["post": post as Any]))
         /// show notification as seen
         updateNotifications(postID: post.id ?? "")
     }
