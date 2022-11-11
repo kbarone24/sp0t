@@ -15,6 +15,7 @@ protocol ExploreMapPreviewCellDelegate: AnyObject {
 final class ExploreMapPreviewCell: UITableViewCell {
     
     typealias Snapshot = NSDiffableDataSourceSnapshot<MapPhotosCollectionView.Section, MapPhotosCollectionView.Item>
+    typealias JoinButton = ExploreMapViewModel.JoinButtonType
     
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -39,6 +40,8 @@ final class ExploreMapPreviewCell: UITableViewCell {
         imageView.contentMode = .scaleAspectFit
         return imageView
     }()
+    
+    private lazy var headerView = UIView()
     
     private lazy var checkMark: UIImageView = {
         let imageView = UIImageView()
@@ -71,14 +74,11 @@ final class ExploreMapPreviewCell: UITableViewCell {
         backgroundColor = .white
         contentView.backgroundColor = .white
         
-        let headerView = UIView()
-        
         contentView.addSubview(headerView)
         contentView.addSubview(photosCollectionView)
         
         headerView.addSubview(titleLabel)
         headerView.addSubview(iconView)
-        headerView.addSubview(checkMark)
         headerView.addSubview(subTitleLabel)
         
         headerView.snp.makeConstraints {
@@ -103,12 +103,6 @@ final class ExploreMapPreviewCell: UITableViewCell {
             $0.top.equalTo(headerView.snp.centerY).offset(2.5)
             $0.leading.equalTo(titleLabel.snp.leading)
             $0.trailing.equalToSuperview().inset(55.0)
-        }
-        
-        checkMark.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            $0.trailing.equalToSuperview().inset(10.0)
-            $0.height.width.equalTo(40.0)
         }
         
         photosCollectionView.snp.makeConstraints {
@@ -138,7 +132,13 @@ final class ExploreMapPreviewCell: UITableViewCell {
         onTap = nil
     }
     
-    func configure(customMap: CustomMap, data: [MapPost], isSelected: Bool, delegate: ExploreMapPreviewCellDelegate?) {
+    func configure(
+        customMap: CustomMap,
+        data: [MapPost],
+        isSelected: Bool,
+        buttonType: JoinButton,
+        delegate: ExploreMapPreviewCellDelegate?
+    ) {
         self.delegate = delegate
         
         self.onTap = { [weak self] in
@@ -163,10 +163,23 @@ final class ExploreMapPreviewCell: UITableViewCell {
         )
         subTitleLabel.attributedText = myString
         
-        if isSelected {
-            checkMark.image = UIImage(named: "MapToggleOn")
-        } else {
-            checkMark.image = UIImage(named: "MapToggleOff")
+        switch buttonType {
+        case .joinedText:
+            break
+            
+        case .checkmark:
+            headerView.addSubview(checkMark)
+            checkMark.snp.makeConstraints {
+                $0.centerY.equalToSuperview()
+                $0.trailing.equalToSuperview().inset(10.0)
+                $0.height.width.equalTo(40.0)
+            }
+            
+            if isSelected {
+                checkMark.image = UIImage(named: "MapToggleOn")
+            } else {
+                checkMark.image = UIImage(named: "MapToggleOff")
+            }
         }
         
         var snapshot = Snapshot()

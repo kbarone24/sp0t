@@ -14,13 +14,15 @@ import Mixpanel
 final class ExploreMapViewController: UIViewController {
     typealias Input = ExploreMapViewModel.Input
     typealias DataSource = UITableViewDiffableDataSource<Section, Item>
+    typealias JoinButton = ExploreMapViewModel.JoinButtonType
+    typealias Title = ExploreMapViewModel.TitleData
 
     enum Section: Hashable {
-        case body
+        case body(title: Title)
     }
 
     enum Item: Hashable {
-        case item(customMap: CustomMap, data: [MapPost], isSelected: Bool)
+        case item(customMap: CustomMap, data: [MapPost], isSelected: Bool, buttonType: JoinButton)
     }
 
     private lazy var tableView: UITableView = {
@@ -76,10 +78,10 @@ final class ExploreMapViewController: UIViewController {
         let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
 
             switch item {
-            case .item(let customMap, let data, let isSelected):
+            case .item(let customMap, let data, let isSelected, let buttonType):
                 let cell = tableView.dequeueReusableCell(withIdentifier: ExploreMapPreviewCell.reuseID, for: indexPath) as? ExploreMapPreviewCell
                 
-                cell?.configure(customMap: customMap, data: data, isSelected: isSelected, delegate: self)
+                cell?.configure(customMap: customMap, data: data, isSelected: isSelected, buttonType: buttonType, delegate: self)
                 return cell
             }
         }
@@ -89,8 +91,9 @@ final class ExploreMapViewController: UIViewController {
 
     private let viewModel: ExploreMapViewModel
     private let refresh = PassthroughSubject<Bool, Never>()
+    private let loading = PassthroughSubject<Bool, Never>()
+    private let selectMap = PassthroughSubject<CustomMap?, Never>()
     private var subscriptions = Set<AnyCancellable>()
-    private var titleData: ExploreMapViewModel.TitleData?
 
     init(viewModel: ExploreMapViewModel) {
         self.viewModel = viewModel
@@ -146,24 +149,20 @@ final class ExploreMapViewController: UIViewController {
         }
         
         activityIndicator.startAnimating()
-        let input = Input(refresh: refresh)
-        viewModel.bind(to: input)
+        let input = Input(refresh: refresh, loading: loading, selectMap: selectMap)
+        let output = viewModel.bind(to: input)
 
-        viewModel.$snapshot
+        output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.dataSource.apply(snapshot, animatingDifferences: false)
+                if !snapshot.sectionIdentifiers.isEmpty {
+                    self?.loading.send(false)
+                }
             }
             .store(in: &subscriptions)
         
-        viewModel.$titleData
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] titleData in
-                self?.titleData = titleData
-            }
-            .store(in: &subscriptions)
-        
-        viewModel.$isLoading
+        output.isLoading
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isLoading in
                 if isLoading {
@@ -176,7 +175,7 @@ final class ExploreMapViewController: UIViewController {
             }
             .store(in: &subscriptions)
         
-        viewModel.$selectedMaps
+        output.selectedMaps
             .receive(on: DispatchQueue.main)
             .sink { [weak self] selectedMaps in
                 let count = selectedMaps.count
@@ -186,7 +185,16 @@ final class ExploreMapViewController: UIViewController {
             }
             .store(in: &subscriptions)
         
+        output.joinButtonIsHidden
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isHidden in
+                self?.joinButton.isHidden = isHidden
+            }
+            .store(in: &subscriptions)
+        
         refresh.send(true)
+        loading.send(true)
+        selectMap.send(nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -228,13 +236,19 @@ final class ExploreMapViewController: UIViewController {
 
 extension ExploreMapViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        guard let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: ExploreMapTitleView.reuseID) as? ExploreMapTitleView,
-              let titleData
+        guard case let snapshot = dataSource.snapshot(),
+              !snapshot.sectionIdentifiers.isEmpty,
+              case let section = snapshot.sectionIdentifiers[section],
+              let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: ExploreMapTitleView.reuseID) as? ExploreMapTitleView
         else {
             return nil
         }
         
-        header.configure(title: titleData.title, description: titleData.description)
+        switch section {
+        case .body(let title):
+            header.configure(title: title.title, description: title.description)
+        }
+        
         return header
     }
     
@@ -245,7 +259,7 @@ extension ExploreMapViewController: UITableViewDelegate {
 
 extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     func cellTapped(data: CustomMap) {
-        viewModel.selectMap(with: data)
+        selectMap.send(data)
         refresh.send(false)
     }
 }
