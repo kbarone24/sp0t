@@ -10,6 +10,7 @@ import UIKit
 
 protocol ExploreMapPreviewCellDelegate: AnyObject {
     func cellTapped(data: CustomMap)
+    func joinMap(map: CustomMap)
 }
 
 final class ExploreMapPreviewCell: UITableViewCell {
@@ -47,6 +48,12 @@ final class ExploreMapPreviewCell: UITableViewCell {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         return imageView
+    }()
+    
+    private lazy var joinButton: UIButton = {
+        let button = UIButton()
+        button.addTarget(self, action: #selector(tapped), for: .touchUpInside)
+        return button
     }()
     
     private lazy var photosCollectionView: MapPhotosCollectionView = {
@@ -111,9 +118,6 @@ final class ExploreMapPreviewCell: UITableViewCell {
             $0.leading.equalToSuperview().offset(18.0)
             $0.height.greaterThanOrEqualTo(180.0)
         }
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapped))
-        headerView.addGestureRecognizer(tapGesture)
     }
     
     @available(*, unavailable)
@@ -128,8 +132,11 @@ final class ExploreMapPreviewCell: UITableViewCell {
         subTitleLabel.attributedText = nil
         iconView.image = nil
         iconView.sd_cancelCurrentImageLoad()
-        checkMark.image = UIImage(named: "MapToggleOff")
         onTap = nil
+        checkMark.image = UIImage(named: "MapToggleOff")
+        checkMark.removeFromSuperview()
+        joinButton.removeFromSuperview()
+        headerView.gestureRecognizers?.forEach { headerView.removeGestureRecognizer($0) }
     }
     
     func configure(
@@ -140,10 +147,6 @@ final class ExploreMapPreviewCell: UITableViewCell {
         delegate: ExploreMapPreviewCellDelegate?
     ) {
         self.delegate = delegate
-        
-        self.onTap = { [weak self] in
-            self?.delegate?.cellTapped(data: customMap)
-        }
         
         titleLabel.text = customMap.mapName
         
@@ -165,9 +168,32 @@ final class ExploreMapPreviewCell: UITableViewCell {
         
         switch buttonType {
         case .joinedText:
-            break
+            self.onTap = { [weak self] in
+                self?.delegate?.joinMap(map: customMap)
+            }
+            
+            headerView.addSubview(joinButton)
+            joinButton.snp.makeConstraints {
+                $0.centerY.equalToSuperview()
+                $0.trailing.equalToSuperview().inset(15.0)
+                $0.height.equalTo(40.0)
+                $0.width.equalTo(75.0)
+            }
+            
+            if isSelected {
+                joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)
+            } else {
+                joinButton.setImage(UIImage(named: "JoinButtonImage"), for: .normal)
+            }
             
         case .checkmark:
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapped))
+            headerView.addGestureRecognizer(tapGesture)
+            
+            self.onTap = { [weak self] in
+                self?.delegate?.cellTapped(data: customMap)
+            }
+            
             headerView.addSubview(checkMark)
             checkMark.snp.makeConstraints {
                 $0.centerY.equalToSuperview()
