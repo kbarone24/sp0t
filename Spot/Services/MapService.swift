@@ -15,6 +15,7 @@ protocol MapServiceProtocol {
     func fetchMaps() async throws -> [CustomMap]
     func fetchMapPosts(id: String, limit: Int) async throws -> [MapPost]
     func joinMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
+    func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
 }
 
 final class MapService: MapServiceProtocol {
@@ -98,7 +99,10 @@ final class MapService: MapServiceProtocol {
     func joinMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void)) {
         guard let mapID = customMap.id,
               case let userId = UserDataModel.shared.uid
-        else { return }
+        else {
+            completion(nil)
+            return
+        }
         
         self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
             .document(mapID)
@@ -106,6 +110,26 @@ final class MapService: MapServiceProtocol {
                 [
                     FireBaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([userId]),
                     FireBaseCollectionFields.memberIDs.rawValue: FieldValue.arrayUnion([userId])
+                ]
+            ) { error in
+                completion(error)
+            }
+    }
+    
+    func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void)) {
+        guard let mapID = customMap.id,
+              case let userId = UserDataModel.shared.uid
+        else {
+            completion(nil)
+            return
+        }
+        
+        self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
+            .document(mapID)
+            .updateData(
+                [
+                    FireBaseCollectionFields.likers.rawValue: FieldValue.arrayRemove([userId]),
+                    FireBaseCollectionFields.memberIDs.rawValue: FieldValue.arrayRemove([userId])
                 ]
             ) { error in
                 completion(error)

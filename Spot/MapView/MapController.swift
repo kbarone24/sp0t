@@ -347,10 +347,10 @@ final class MapController: UIViewController {
 
     func openExploreMaps() {
         guard let serviceContainer else { return }
-        let vmmm = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer))
+        let viewController = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer, from: .mapController))
         let transition = AddButtonTransition()
         self.navigationController?.view.layer.add(transition, forKey: kCATransition)
-        self.navigationController?.pushViewController(vmmm, animated: false)
+        self.navigationController?.pushViewController(viewController, animated: false)
     }
 
     func toggleHomeAppearance(hidden: Bool) {
