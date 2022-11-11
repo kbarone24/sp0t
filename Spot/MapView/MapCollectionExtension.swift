@@ -15,7 +15,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if feedLoaded {
-            let extraCells = userInChapelHill() ? 3 : 2
+            let extraCells = 3
             return UserDataModel.shared.userInfo.mapsList.count + extraCells
         }
         return 1
@@ -26,10 +26,14 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             // display loading cell
             return cell
         }
-        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CampusMapCell", for: indexPath) as? CampusMapCell {
+        // if userInChapelHill(), ...
+        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1,
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CampusMapCell", for: indexPath) as? CampusMapCell {
             return cell
         }
-        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 2, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddMapCell", for: indexPath) as? AddMapCell {
+    //    let addMapIncrement = userInChapelHill() ? 2 : 1
+        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 2,
+           let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddMapCell", for: indexPath) as? AddMapCell {
             // display new map button
             return cell
         }
@@ -37,8 +41,8 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             let map = UserDataModel.shared.userInfo.mapsList[safe: indexPath.row - 1]
             var avatarURLs = map == nil ? friendsPostsDictionary.values.map({ $0.userInfo?.avatarURL ?? "" }).uniqued().prefix(5) : []
             if avatarURLs.count < 5 && !avatarURLs.contains(UserDataModel.shared.userInfo.avatarURL ?? "") { avatarURLs.append(UserDataModel.shared.userInfo.avatarURL ?? "") }
-            let postsList = map == nil ? friendsPostsDictionary.map({ $0.value }) : map!.postsDictionary.map({ $0.value })
-            cell.setUp(map: map, avatarURLs: Array(avatarURLs), postsList: postsList)
+            let postsList = map == nil ? friendsPostsDictionary.map({ $0.value }) : map?.postsDictionary.map({ $0.value })
+            cell.setUp(map: map, avatarURLs: Array(avatarURLs), postsList: postsList ?? [])
             cell.isSelected = selectedItemIndex == indexPath.row
             return cell
         }

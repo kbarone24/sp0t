@@ -13,25 +13,26 @@ import UIKit
 
 extension MapController {
     @objc func notifyPostOpen(_ notification: NSNotification) {
-        guard let postID = notification.userInfo?.first?.value as? String else { return }
-        /// check every map for post and update if necessary
-        /// check coordinate to refresh annotation on the map
+        guard let post = notification.userInfo?.first?.value as? MapPost else { return }
+        guard let postID = post.id else { return }
+        // check coordinate to refresh annotation on the map
         var coordinate: CLLocationCoordinate2D?
         if var post = friendsPostsDictionary[postID] {
             if !(post.seenList?.contains(uid) ?? false) { post.seenList?.append(uid) }
             friendsPostsDictionary.updateValue(post, forKey: postID)
             coordinate = post.coordinate
         }
-        updateFriendsPostGroupSeen(postID: postID)
-
-        for i in 0..<UserDataModel.shared.userInfo.mapsList.count {
-            UserDataModel.shared.userInfo.mapsList[i].updateSeen(postID: postID)
-            if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
-                coordinate = UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]?.coordinate
-            }
-        }
+        updateFriendsPostGroupSeen(postID: post.id ?? "")
 
         DispatchQueue.main.async {
+            // moved to main thread to try to solve memory crash
+            if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == post.mapID ?? "" }) {
+                UserDataModel.shared.userInfo.mapsList[i].updateSeen(postID: postID)
+                if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
+                    coordinate = UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]?.coordinate
+                }
+            }
+
             self.reloadMapsCollection(resort: false, newPost: false)
             if let coordinate {
                 if let annotation = self.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate) }) {
