@@ -223,7 +223,7 @@ final class ExploreMapViewController: UIViewController {
     }
     
     @objc private func joinButtonTapped() {
-        viewModel.joinMap { [weak self] in
+        viewModel.joinAllSelectedMaps { [weak self] in
             // Refresh or dismiss?
             self?.refresh.send(true)
         }
@@ -261,5 +261,12 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     func cellTapped(data: CustomMap) {
         selectMap.send(data)
         refresh.send(false)
+    }
+    
+    func joinMap(map: CustomMap) {
+        loading.send(true)
+        viewModel.joinMap(map: map) { [weak self] successful in
+            self?.refresh.send(successful)
+        }
     }
 }

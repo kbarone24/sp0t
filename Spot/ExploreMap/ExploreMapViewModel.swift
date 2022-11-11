@@ -25,12 +25,12 @@ final class ExploreMapViewModel {
         case joinedText
         case checkmark
     }
-
+    
     struct TitleData: Hashable {
         let title: String
         let description: String
     }
-
+    
     struct Input {
         let refresh: PassthroughSubject<Bool, Never>
         let loading: PassthroughSubject<Bool, Never>
@@ -43,27 +43,27 @@ final class ExploreMapViewModel {
         let selectedMaps: AnyPublisher<[CustomMap], Never>
         let joinButtonIsHidden: AnyPublisher<Bool, Never>
     }
-
+    
     private let service: MapServiceProtocol
     private let openedFrom: OpenedFrom
     
     private var selectedMaps: [CustomMap] = []
     private var cachedMaps: [CustomMap: [MapPost]] = [:]
     private var cachedTitleData = TitleData(title: "", description: "")
-
+    
     init(serviceContainer: ServiceContainer, from: OpenedFrom) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService) else {
             service = MapService(fireStore: Firestore.firestore())
             openedFrom = .onBoarding
             return
         }
-
+        
         service = mapService
         openedFrom = from
     }
-
+    
     func bind(to input: Input) -> Output {
-
+        
         let request = input.refresh
             .flatMap { [unowned self] forced in
                 self.fetchMaps(forced: forced)
@@ -79,20 +79,23 @@ final class ExploreMapViewModel {
                 
                 var snapshot = Snapshot()
                 snapshot.appendSections([.body(title: title)])
-                customMapData.forEach { data in
-                    let isSelected = self.selectedMaps.contains(data.key)
-                    let buttonType: JoinButtonType
-                    
-                    switch self.openedFrom {
-                    case .onBoarding:
-                        buttonType = .checkmark
+                customMapData
+                    .forEach { data in
+                        let isSelected: Bool
+                        let buttonType: JoinButtonType
                         
-                    case .mapController:
-                        buttonType = .joinedText
+                        switch self.openedFrom {
+                        case .onBoarding:
+                            buttonType = .checkmark
+                            isSelected = self.selectedMaps.contains(data.key)
+                            
+                        case .mapController:
+                            buttonType = .joinedText
+                            isSelected = data.key.memberIDs.contains(UserDataModel.shared.uid)
+                        }
+                        
+                        snapshot.appendItems([.item(customMap: data.key, data: data.value, isSelected: isSelected, buttonType: buttonType)], toSection: .body(title: title))
                     }
-                    
-                    snapshot.appendItems([.item(customMap: data.key, data: data.value, isSelected: isSelected, buttonType: buttonType)], toSection: .body(title: title))
-                }
                 
                 return snapshot
             }
@@ -139,7 +142,7 @@ final class ExploreMapViewModel {
         )
     }
     
-    func joinMap(completion: @escaping (() -> Void)) {
+    func joinAllSelectedMaps(completion: @escaping (() -> Void)) {
         Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": selectedMaps.count])
         
         for map in selectedMaps {
@@ -151,7 +154,33 @@ final class ExploreMapViewModel {
             }
         }
     }
-
+    
+    func joinMap(map: CustomMap, completion: @escaping ((Bool) -> Void)) {
+        if selectedMaps.contains(where: { $0 == map }) || map.memberIDs.contains(UserDataModel.shared.uid) {
+            service.leaveMap(customMap: map) { [weak self] error in
+                if error == nil {
+                    self?.selectedMaps.removeAll(where: { $0 == map })
+                    UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == map.id })
+                    completion(true)
+                } else {
+                    completion(false)
+                }
+            }
+            Mixpanel.mainInstance().track(event: "ExploreMapsLeftMap", properties: [:])
+            
+        } else {
+            service.joinMap(customMap: map) { [weak self] error in
+                if error == nil {
+                    self?.selectedMaps.append(map)
+                    completion(true)
+                } else {
+                    completion(false)
+                }
+            }
+            Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": 1])
+        }
+    }
+    
     private func fetchMaps(forced: Bool) -> AnyPublisher<(TitleData, [CustomMap: [MapPost]]), Never> {
         Deferred {
             Future { [weak self] promise in
@@ -169,11 +198,15 @@ final class ExploreMapViewModel {
                     title: "UNC Maps",
                     description: "Join community maps created by fellow Tarheels"
                 )
-
+                
                 Task {
                     do {
                         var mapData: [CustomMap: [MapPost]] = [:]
-                        let customMaps = try await self.service.fetchMaps()
+                        let allMaps = try await self.service.fetchMaps()
+                        let customMaps = allMaps.sorted {
+                            (!$0.memberIDs.contains(UserDataModel.shared.uid) && $1.memberIDs.contains(UserDataModel.shared.uid))
+                            && ($0.mapName.lowercased() < $1.mapName.lowercased())
+                        }
                         
                         for map in customMaps {
                             guard let id = map.id else { return }
