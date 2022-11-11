@@ -13,13 +13,12 @@ import UIKit
 extension CustomMapController: MKMapViewDelegate {
     @objc func notifyPostOpen(_ notification: NSNotification) {
         // update post annotation as seen
-        guard let postID = notification.userInfo?.first?.value as? String else { return }
+        guard let post = notification.userInfo?.first?.value as? MapPost else { return }
         guard let mapVC = mapController else { return }
-        if mapData == nil { return } // patch fix for update seen crash
 
-        DispatchQueue.main.async { self.mapData?.updateSeen(postID: postID) }
+        self.mapData?.updateSeen(postID: post.id ?? "")
 
-        if let coordinate = mapData?.postsDictionary[postID]?.coordinate,
+        if let coordinate = mapData?.postsDictionary[post.id ?? ""]?.coordinate,
             let annotation = mapVC.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate) }) {
             DispatchQueue.main.async {
                 mapVC.mapView.removeAnnotation(annotation)
