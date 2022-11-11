@@ -10,11 +10,13 @@ import UIKit
 
 protocol ExploreMapPreviewCellDelegate: AnyObject {
     func cellTapped(data: CustomMap)
+    func joinMap(map: CustomMap)
 }
 
 final class ExploreMapPreviewCell: UITableViewCell {
     
     typealias Snapshot = NSDiffableDataSourceSnapshot<MapPhotosCollectionView.Section, MapPhotosCollectionView.Item>
+    typealias JoinButton = ExploreMapViewModel.JoinButtonType
     
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -40,10 +42,18 @@ final class ExploreMapPreviewCell: UITableViewCell {
         return imageView
     }()
     
+    private lazy var headerView = UIView()
+    
     private lazy var checkMark: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         return imageView
+    }()
+    
+    private lazy var joinButton: UIButton = {
+        let button = UIButton()
+        button.addTarget(self, action: #selector(tapped), for: .touchUpInside)
+        return button
     }()
     
     private lazy var photosCollectionView: MapPhotosCollectionView = {
@@ -71,14 +81,11 @@ final class ExploreMapPreviewCell: UITableViewCell {
         backgroundColor = .white
         contentView.backgroundColor = .white
         
-        let headerView = UIView()
-        
         contentView.addSubview(headerView)
         contentView.addSubview(photosCollectionView)
         
         headerView.addSubview(titleLabel)
         headerView.addSubview(iconView)
-        headerView.addSubview(checkMark)
         headerView.addSubview(subTitleLabel)
         
         headerView.snp.makeConstraints {
@@ -105,21 +112,12 @@ final class ExploreMapPreviewCell: UITableViewCell {
             $0.trailing.equalToSuperview().inset(55.0)
         }
         
-        checkMark.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            $0.trailing.equalToSuperview().inset(10.0)
-            $0.height.width.equalTo(40.0)
-        }
-        
         photosCollectionView.snp.makeConstraints {
             $0.top.equalTo(headerView.snp.bottom).offset(10.0)
             $0.bottom.trailing.equalToSuperview().inset(18.0)
             $0.leading.equalToSuperview().offset(18.0)
             $0.height.greaterThanOrEqualTo(180.0)
         }
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapped))
-        headerView.addGestureRecognizer(tapGesture)
     }
     
     @available(*, unavailable)
@@ -134,16 +132,21 @@ final class ExploreMapPreviewCell: UITableViewCell {
         subTitleLabel.attributedText = nil
         iconView.image = nil
         iconView.sd_cancelCurrentImageLoad()
-        checkMark.image = UIImage(named: "MapToggleOff")
         onTap = nil
+        checkMark.image = UIImage(named: "MapToggleOff")
+        checkMark.removeFromSuperview()
+        joinButton.removeFromSuperview()
+        headerView.gestureRecognizers?.forEach { headerView.removeGestureRecognizer($0) }
     }
     
-    func configure(customMap: CustomMap, data: [MapPost], isSelected: Bool, delegate: ExploreMapPreviewCellDelegate?) {
+    func configure(
+        customMap: CustomMap,
+        data: [MapPost],
+        isSelected: Bool,
+        buttonType: JoinButton,
+        delegate: ExploreMapPreviewCellDelegate?
+    ) {
         self.delegate = delegate
-        
-        self.onTap = { [weak self] in
-            self?.delegate?.cellTapped(data: customMap)
-        }
         
         titleLabel.text = customMap.mapName
         
@@ -163,10 +166,46 @@ final class ExploreMapPreviewCell: UITableViewCell {
         )
         subTitleLabel.attributedText = myString
         
-        if isSelected {
-            checkMark.image = UIImage(named: "MapToggleOn")
-        } else {
-            checkMark.image = UIImage(named: "MapToggleOff")
+        switch buttonType {
+        case .joinedText:
+            self.onTap = { [weak self] in
+                self?.delegate?.joinMap(map: customMap)
+            }
+            
+            headerView.addSubview(joinButton)
+            joinButton.snp.makeConstraints {
+                $0.centerY.equalToSuperview()
+                $0.trailing.equalToSuperview().inset(15.0)
+                $0.height.equalTo(40.0)
+                $0.width.equalTo(75.0)
+            }
+            
+            if isSelected {
+                joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)
+            } else {
+                joinButton.setImage(UIImage(named: "JoinButtonImage"), for: .normal)
+            }
+            
+        case .checkmark:
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapped))
+            headerView.addGestureRecognizer(tapGesture)
+            
+            self.onTap = { [weak self] in
+                self?.delegate?.cellTapped(data: customMap)
+            }
+            
+            headerView.addSubview(checkMark)
+            checkMark.snp.makeConstraints {
+                $0.centerY.equalToSuperview()
+                $0.trailing.equalToSuperview().inset(10.0)
+                $0.height.width.equalTo(40.0)
+            }
+            
+            if isSelected {
+                checkMark.image = UIImage(named: "MapToggleOn")
+            } else {
+                checkMark.image = UIImage(named: "MapToggleOff")
+            }
         }
         
         var snapshot = Snapshot()

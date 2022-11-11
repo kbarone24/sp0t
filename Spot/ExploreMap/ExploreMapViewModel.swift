@@ -15,81 +15,134 @@ final class ExploreMapViewModel {
     typealias Section = ExploreMapViewController.Section
     typealias Item = ExploreMapViewController.Item
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
-
-    struct TitleData {
+    
+    enum OpenedFrom: Hashable {
+        case mapController
+        case onBoarding
+    }
+    
+    enum JoinButtonType: Hashable {
+        case joinedText
+        case checkmark
+    }
+    
+    struct TitleData: Hashable {
         let title: String
         let description: String
     }
-
+    
     struct Input {
         let refresh: PassthroughSubject<Bool, Never>
+        let loading: PassthroughSubject<Bool, Never>
+        let selectMap: PassthroughSubject<CustomMap?, Never>
     }
-
-    private let service: MapServiceProtocol
-    @Published private(set) var snapshot = Snapshot()
-    @Published private(set) var titleData = TitleData(title: "", description: "")
-    @Published private(set) var isLoading = true
-    @Published private(set) var selectedMaps: [CustomMap] = []
     
+    struct Output {
+        let snapshot: AnyPublisher<Snapshot, Never>
+        let isLoading: AnyPublisher<Bool, Never>
+        let selectedMaps: AnyPublisher<[CustomMap], Never>
+        let joinButtonIsHidden: AnyPublisher<Bool, Never>
+    }
+    
+    private let service: MapServiceProtocol
+    private let openedFrom: OpenedFrom
+    
+    private var selectedMaps: [CustomMap] = []
     private var cachedMaps: [CustomMap: [MapPost]] = [:]
     private var cachedTitleData = TitleData(title: "", description: "")
-    private var subscriptions = Set<AnyCancellable>()
-
-    init(serviceContainer: ServiceContainer) {
+    
+    init(serviceContainer: ServiceContainer, from: OpenedFrom) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService) else {
             service = MapService(fireStore: Firestore.firestore())
+            openedFrom = .onBoarding
             return
         }
-
+        
         service = mapService
+        openedFrom = from
     }
-
-    deinit {
-        subscriptions.forEach { $0.cancel() }
-        subscriptions.removeAll()
-    }
-
-    func bind(to input: Input) {
-        subscriptions.forEach { $0.cancel() }
-        subscriptions.removeAll()
-
+    
+    func bind(to input: Input) -> Output {
+        
         let request = input.refresh
             .flatMap { [unowned self] forced in
                 self.fetchMaps(forced: forced)
             }
             .map { $0 }
-            .share()
-
-        request
+        
+        let snapshot = request
             .receive(on: DispatchQueue.global(qos: .background))
-            .sink { [weak self] titleData, customMapData in
-                guard let self else { return }
-                
-                var snapshot = Snapshot()
-                snapshot.appendSections([.body])
-                customMapData.forEach { data in
-                    let isSelected = self.selectedMaps.contains(data.key)
-                    snapshot.appendItems([.item(customMap: data.key, data: data.value, isSelected: isSelected)], toSection: .body)
+            .map { [weak self] title, customMapData -> Snapshot in
+                guard let self else {
+                    return Snapshot()
                 }
                 
-                self.titleData = titleData
-                self.isLoading = false
-                self.snapshot = snapshot
+                var snapshot = Snapshot()
+                snapshot.appendSections([.body(title: title)])
+                customMapData
+                    .forEach { data in
+                        let isSelected: Bool
+                        let buttonType: JoinButtonType
+                        
+                        switch self.openedFrom {
+                        case .onBoarding:
+                            buttonType = .checkmark
+                            isSelected = self.selectedMaps.contains(data.key)
+                            
+                        case .mapController:
+                            buttonType = .joinedText
+                            isSelected = data.key.memberIDs.contains(UserDataModel.shared.uid)
+                        }
+                        
+                        snapshot.appendItems([.item(customMap: data.key, data: data.value, isSelected: isSelected, buttonType: buttonType)], toSection: .body(title: title))
+                    }
+                
+                return snapshot
             }
-            .store(in: &subscriptions)
+            .eraseToAnyPublisher()
+        
+        let isLoading = input.loading.eraseToAnyPublisher()
+        
+        let selectedMaps = input.selectMap
+            .receive(on: DispatchQueue.global(qos: .background))
+            .map { [weak self] customMap -> [CustomMap] in
+                guard let self else { return [] }
+                guard let customMap else { return self.selectedMaps }
+                
+                if self.selectedMaps.contains(customMap) {
+                    self.selectedMaps.removeAll(where: { $0 == customMap })
+                    Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": false])
+                } else {
+                    self.selectedMaps.append(customMap)
+                    Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": true])
+                }
+                
+                return self.selectedMaps
+            }
+            .eraseToAnyPublisher()
+        
+        let joinButtonIsHidden = input.refresh
+            .receive(on: DispatchQueue.global(qos: .background))
+            .map { [weak self] _ -> Bool in
+                guard let self else { return true }
+                switch self.openedFrom {
+                case .mapController:
+                    return true
+                case .onBoarding:
+                    return false
+                }
+            }
+            .eraseToAnyPublisher()
+        
+        return Output(
+            snapshot: snapshot,
+            isLoading: isLoading,
+            selectedMaps: selectedMaps,
+            joinButtonIsHidden: joinButtonIsHidden
+        )
     }
     
-    func selectMap(with customMap: CustomMap) {
-        if selectedMaps.contains(customMap) {
-            selectedMaps.removeAll(where: { $0 == customMap })
-            Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": false])
-        } else {
-            selectedMaps.append(customMap)
-            Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": true])
-        }
-    }
-    
-    func joinMap(completion: @escaping (() -> Void)) {
+    func joinAllSelectedMaps(completion: @escaping (() -> Void)) {
         Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": selectedMaps.count])
         
         for map in selectedMaps {
@@ -101,7 +154,33 @@ final class ExploreMapViewModel {
             }
         }
     }
-
+    
+    func joinMap(map: CustomMap, completion: @escaping ((Bool) -> Void)) {
+        if selectedMaps.contains(where: { $0 == map }) || map.memberIDs.contains(UserDataModel.shared.uid) {
+            service.leaveMap(customMap: map) { [weak self] error in
+                if error == nil {
+                    self?.selectedMaps.removeAll(where: { $0 == map })
+                    UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == map.id })
+                    completion(true)
+                } else {
+                    completion(false)
+                }
+            }
+            Mixpanel.mainInstance().track(event: "ExploreMapsLeftMap", properties: [:])
+            
+        } else {
+            service.joinMap(customMap: map) { [weak self] error in
+                if error == nil {
+                    self?.selectedMaps.append(map)
+                    completion(true)
+                } else {
+                    completion(false)
+                }
+            }
+            Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": 1])
+        }
+    }
+    
     private func fetchMaps(forced: Bool) -> AnyPublisher<(TitleData, [CustomMap: [MapPost]]), Never> {
         Deferred {
             Future { [weak self] promise in
@@ -120,12 +199,14 @@ final class ExploreMapViewModel {
                     description: "Join community maps created by fellow Tarheels"
                 )
                 
-                self.isLoading = true
-
                 Task {
                     do {
                         var mapData: [CustomMap: [MapPost]] = [:]
-                        let customMaps = try await self.service.fetchMaps()
+                        let allMaps = try await self.service.fetchMaps()
+                        let customMaps = allMaps.sorted {
+                            (!$0.memberIDs.contains(UserDataModel.shared.uid) && $1.memberIDs.contains(UserDataModel.shared.uid))
+                            && ($0.mapName.lowercased() < $1.mapName.lowercased())
+                        }
                         
                         for map in customMaps {
                             guard let id = map.id else { return }

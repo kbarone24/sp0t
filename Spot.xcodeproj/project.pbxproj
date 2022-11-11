@@ -404,10 +404,6 @@
 		8CC3653A26C5E9A900AC40AB /* UploadPostModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC3653926C5E9A900AC40AB /* UploadPostModel.swift */; };
 		8CC3653B26C5E9A900AC40AB /* UploadPostModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC3653926C5E9A900AC40AB /* UploadPostModel.swift */; };
 		8CC3653C26C5E9A900AC40AB /* UploadPostModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC3653926C5E9A900AC40AB /* UploadPostModel.swift */; };
-		8CCE3412288A2D4400331240 /* MapsCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3410288A2D4400331240 /* MapsCollectionExtension.swift */; };
-		8CCE3413288A2D4400331240 /* MapsCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3410288A2D4400331240 /* MapsCollectionExtension.swift */; };
-		8CCE3416288B115000331240 /* MapFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3414288B115000331240 /* MapFetchExtension.swift */; };
-		8CCE3417288B115000331240 /* MapFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE3414288B115000331240 /* MapFetchExtension.swift */; };
 		8CDFEF46284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF47284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF48284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
@@ -672,8 +668,6 @@
 		8CC2A54926BC7F99000ADA7A /* ImageObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObject.swift; sourceTree = "<group>"; };
 		8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFetcher.swift; sourceTree = "<group>"; };
 		8CC3653926C5E9A900AC40AB /* UploadPostModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPostModel.swift; sourceTree = "<group>"; };
-		8CCE3410288A2D4400331240 /* MapsCollectionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapsCollectionExtension.swift; sourceTree = "<group>"; };
-		8CCE3414288B115000331240 /* MapFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFetchExtension.swift; sourceTree = "<group>"; };
 		8CDFEF45284D3B570038A9B8 /* Map.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Map.storyboard; sourceTree = "<group>"; };
 		8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostGroupExtension.swift; sourceTree = "<group>"; };
 		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
@@ -779,7 +773,6 @@
 				1DF6E03222089F4500BA0C36 /* Products */,
 				3798F58E8B6B5A60DAE46D6E /* Pods */,
 				2B0D14FAA805AA9639AEEB04 /* Frameworks */,
-				8C1E4858289C53730093030D /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -1050,15 +1043,6 @@
 				8C66E118291C0EE9006D29F6 /* AccountOptions.swift */,
 			);
 			path = EditProfile;
-			sourceTree = "<group>";
-		};
-		8C1E4858289C53730093030D /* Recovered References */ = {
-			isa = PBXGroup;
-			children = (
-				8CCE3414288B115000331240 /* MapFetchExtension.swift */,
-				8CCE3410288A2D4400331240 /* MapsCollectionExtension.swift */,
-			);
-			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 		8C1E4883289C54CB0093030D /* NibWindows */ = {
@@ -1934,7 +1918,6 @@
 				8C8DBB772888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				8C51D93128C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
-				8CCE3412288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
 				8CE4C93B291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
 				59DFA25522C285CF00A59D29 /* CommentsViewController.swift in Sources */,
 				59FCF5B624734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
@@ -1980,7 +1963,6 @@
 				8CA10A202911B14D00DD50EB /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				CDF8E969290461CC00BE929F /* CameraFailedUploadsExt.swift in Sources */,
-				8CCE3416288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B424A27F8500118E83 /* MapSpot.swift in Sources */,
 				8C66226328EF596700BA5D05 /* ProgressBar.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
@@ -2053,7 +2035,6 @@
 				8C8DBB782888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				8C51D93228C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
-				8CCE3413288A2D4400331240 /* MapsCollectionExtension.swift in Sources */,
 				8CE4C93C291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
 				59DFA25622C285D000A59D29 /* CommentsViewController.swift in Sources */,
 				59FCF5B724734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
@@ -2099,7 +2080,6 @@
 				8CA10A212911B14D00DD50EB /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				CDF8E96A290461CC00BE929F /* CameraFailedUploadsExt.swift in Sources */,
-				8CCE3417288B115000331240 /* MapFetchExtension.swift in Sources */,
 				5916A8B524A27F8500118E83 /* MapSpot.swift in Sources */,
 				8C66226428EF596700BA5D05 /* ProgressBar.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
