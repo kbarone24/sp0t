@@ -257,6 +257,7 @@ class ProfileViewController: UIViewController {
                 }
             }
             dispatch.notify(queue: .main) { [weak self] in
+                print("notify 9 post main")
                 guard let self = self else { return }
                 self.collectionView.reloadData()
             }

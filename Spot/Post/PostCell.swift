@@ -312,7 +312,7 @@ class PostCell: UICollectionViewCell {
 
     func addCaption() {
         /// font 14.7 = 18 pt line exactly
-        let tempHeight = getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 0)
+        let tempHeight = post.caption.getCaptionHeight(fontSize: 14.5, maxCaption: 0)
         overflow = tempHeight > post.captionHeight!
 
         captionLabel = UILabel {
@@ -626,7 +626,7 @@ extension PostCell {
     }
 
     func expandCaption() {
-        let newHeight = getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 0)
+        let newHeight = post.caption.getCaptionHeight(fontSize: 14.5, maxCaption: 0)
         captionLabel.numberOfLines = 0
         captionLabel.lineBreakMode = .byWordWrapping
         captionLabel.snp.updateConstraints { $0.height.equalTo(newHeight) }
