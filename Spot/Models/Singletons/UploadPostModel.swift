@@ -114,30 +114,14 @@ final class UploadPostModel {
     }
 
     func setTaggedUsers() {
-        let taggedUsers = getTaggedUsers(text: postObject?.caption ?? "")
+        let taggedUsers = postObject?.caption.getTaggedUsers() ?? []
         let usernames = taggedUsers.map({ $0.username })
         postObject?.taggedUsers = usernames
         postObject?.addedUsers = taggedUsers.map({ $0.id ?? "" })
         postObject?.taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
     }
-
-    func getTaggedUsers(text: String) -> [UserProfile] {
-        var selectedUsers: [UserProfile] = []
-        let words = text.components(separatedBy: .whitespacesAndNewlines)
-        for w in words {
-            if w.isEmpty { continue }
-            let username = String(w.dropFirst())
-            if w.hasPrefix("@") {
-                if let f = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == username }) {
-                    selectedUsers.append(f)
-                }
-            }
-        }
-        return selectedUsers
-    }
-
+    
     func reverseGeocodeFromCoordinate(completion: @escaping (_ address: String) -> Void) {
-
         var addressString = ""
         let location = CLLocation(latitude: postObject?.postLat ?? 0, longitude: postObject?.postLong ?? 0)
 

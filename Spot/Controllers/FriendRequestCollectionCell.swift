@@ -52,8 +52,7 @@ class FriendRequestCollectionCell: UITableViewCell {
         collectionView.dataSource = self
         contentView.addSubview(collectionView)
         collectionView.snp.makeConstraints {
-            $0.leading.trailing.width.equalToSuperview()
-            $0.height.equalTo(itemHeight + 1)
+            $0.edges.equalToSuperview()
         }
     }
 
@@ -65,8 +64,8 @@ class FriendRequestCollectionCell: UITableViewCell {
         self.friendRequests = friendRequests
     }
 
-    func setUp(notifs: [UserNotification]) {
-        friendRequests = notifs
+    func setValues(notifications: [UserNotification]) {
+        friendRequests = notifications
     }
 }
 
@@ -79,7 +78,7 @@ extension FriendRequestCollectionCell: UICollectionViewDelegate, UICollectionVie
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FriendRequestCell", for: indexPath) as? FriendRequestCell else { return UICollectionViewCell() }
         cell.collectionDelegate = self
-        cell.setUp(notification: friendRequests[indexPath.row])
+        cell.setValues(notification: friendRequests[indexPath.row])
         // cell.globalRow = indexPath.row
         return cell
     }

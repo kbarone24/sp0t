@@ -247,13 +247,14 @@ extension UIViewController {
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
         /// send local notification first
         guard let postID = post.id else { return }
+        let caption = post.caption
         var notiPost = post
         notiPost.id = postID
         let commentObject = MapComment(
-            id: UUID().uuidString, comment: post.caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo
+            id: UUID().uuidString, comment: caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo
         )
         notiPost.commentList = [commentObject]
-        notiPost = setSecondaryPostValues(post: notiPost)
+        notiPost.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
         notiPost.userInfo = UserDataModel.shared.userInfo
         NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post": notiPost as Any, "map": map as Any, "spot": spot as Any]))
 
@@ -567,46 +568,6 @@ extension UIViewController {
 // Extending NSObject is overkill
 
 extension NSObject {
-
-    func getTaggedUsers(text: String) -> [UserProfile] {
-        var selectedUsers: [UserProfile] = []
-        let words = text.components(separatedBy: .whitespacesAndNewlines)
-        for w in words {
-            let username = String(w.dropFirst())
-            if w.hasPrefix("@") {
-                if let f = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == username }) {
-                    selectedUsers.append(f)
-                }
-            }
-        }
-        return selectedUsers
-    }
-
-    func setSecondaryPostValues(post: MapPost) -> MapPost {
-        var newPost = post
-        /// round to nearest line height
-        newPost.captionHeight = self.getCaptionHeight(caption: post.caption, fontSize: 14.5, maxCaption: 52)
-        return newPost
-    }
-
-    func getCaptionHeight(caption: String, fontSize: CGFloat, maxCaption: CGFloat) -> CGFloat {
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 88, height: UIScreen.main.bounds.height))
-        tempLabel.text = caption
-        tempLabel.font = UIFont(name: "SFCompactText-Medium", size: fontSize)
-        tempLabel.numberOfLines = 0
-        tempLabel.lineBreakMode = .byWordWrapping
-        tempLabel.sizeToFit()
-
-        return maxCaption != 0 ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height.rounded(.up)
-    }
-
-    func getImageHeight(aspectRatios: [CGFloat], maxAspect: CGFloat) -> CGFloat {
-        var imageAspect = min((aspectRatios.max() ?? 0.033) - 0.033, maxAspect)
-        imageAspect = getRoundedAspectRatio(aspect: imageAspect)
-        let imageHeight = UIScreen.main.bounds.width * imageAspect
-        return imageHeight
-    }
-
     func getImageHeight(aspectRatio: CGFloat, maxAspect: CGFloat) -> CGFloat {
         var imageAspect = min(aspectRatio, maxAspect)
         imageAspect = getRoundedAspectRatio(aspect: imageAspect)
@@ -669,19 +630,10 @@ extension NSObject {
                     let unwrappedInfo = try doc?.data(as: MapPost.self)
                     guard var postInfo = unwrappedInfo else { completion(emptyPost); return }
 
-                    var count = 0
-                    self.getUserInfo(userID: postInfo.posterID) { user in
-                        postInfo.userInfo = user
-                        count += 1
-                        if count == 2 { completion(postInfo); return }
+                    self.setPostDetails(post: postInfo) { post in
+                        completion(post)
+                        return
                     }
-
-                    self.getComments(postID: postID) { comments in
-                        postInfo.commentList = comments
-                        count += 1
-                        if count == 2 { completion(postInfo); return }
-                    }
-
                 } catch { completion(emptyPost); return }
             }
         }
@@ -718,16 +670,18 @@ extension NSObject {
 
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
         if post.id ?? "" == "" { completion(post); return }
-        var postInfo = setSecondaryPostValues(post: post)
+        var postInfo = post
+
+        let caption = postInfo.caption
+        postInfo.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
         // detail group tracks comments and added users fetches
         let detailGroup = DispatchGroup()
+        detailGroup.enter()
         detailGroup.enter()
         getUserInfo(userID: postInfo.posterID) { user in
             postInfo.userInfo = user
             detailGroup.leave()
         }
-
-        detailGroup.enter()
         getComments(postID: postInfo.id ?? "") { comments in
             postInfo.commentList = comments
             detailGroup.leave()

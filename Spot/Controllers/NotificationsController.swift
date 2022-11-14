@@ -153,9 +153,10 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             for i in 0...pendingFriendRequests.count - 1 {
                 if let noti = notification.userInfo?["notiID"] as? String {
                     if pendingFriendRequests[safe: i]?.id == noti {
-                    var newNotif = pendingFriendRequests.remove(at: i)
-                        newNotif.status = "accepted"
-                        notifications.append(newNotif)
+                    var newNoti = pendingFriendRequests.remove(at: i)
+                        newNoti.status = "accepted"
+                        newNoti.timestamp = Timestamp()
+                        notifications.append(newNoti)
                     }
                 }
             }
