@@ -101,8 +101,9 @@ extension ProfileViewController {
             self.activityIndicator.startAnimating()
         }
 
-        // run get nine posts now that friendslist field has started to be updated
-        DispatchQueue.global().async {
+        // run get nine posts once friendslist field has started to be updated
+        // delay is hacky but cant think of another way rn
+        DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) {
             self.getNinePosts()
         }
     }

@@ -274,7 +274,7 @@ extension CommentsController {
         commenterIDList.append(contentsOf: excludingFirstCommenter)
 
         let commentID = UUID().uuidString
-        let taggedUsers = getTaggedUsers(text: commentText)
+        let taggedUsers = commentText.getTaggedUsers()
         let taggedUsernames = taggedUsers.map({ $0.username })
         let taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
 

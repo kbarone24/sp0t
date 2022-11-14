@@ -26,7 +26,7 @@ class FriendRequestCell: UICollectionViewCell {
         view.isUserInteractionEnabled = true
         return view
     }()
-    private lazy var userAvatar: UIImageView = {
+    private lazy var avatarImage: UIImageView = {
         let view = UIImageView()
         view.layer.masksToBounds = true
         view.contentMode = UIView.ContentMode.scaleAspectFill
@@ -43,6 +43,8 @@ class FriendRequestCell: UICollectionViewCell {
 
     private lazy var senderName: UILabel = {
         let label = UILabel()
+        label.adjustsFontSizeToFitWidth = true
+        label.textAlignment = .center
         label.isUserInteractionEnabled = true
         label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
@@ -82,7 +84,14 @@ class FriendRequestCell: UICollectionViewCell {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
+        setUpView()
+    }
 
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func setUpView() {
         profilePic.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
         contentView.addSubview(profilePic)
         profilePic.snp.makeConstraints {
@@ -91,12 +100,42 @@ class FriendRequestCell: UICollectionViewCell {
             $0.height.width.equalTo(self.frame.width / 2)
         }
 
-        contentView.addSubview(userAvatar)
-        userAvatar.snp.makeConstraints {
+        contentView.addSubview(avatarImage)
+        avatarImage.snp.makeConstraints {
             $0.leading.equalTo(profilePic.snp.leading).offset(-3)
             $0.bottom.equalTo(profilePic.snp.bottom).offset(3)
             $0.width.equalTo(self.frame.width * 0.12)
             $0.height.equalTo((self.frame.width * 0.12) * 1.7)
+        }
+
+        senderName.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTap)))
+        contentView.addSubview(senderName)
+        senderName.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(8)
+            $0.top.equalTo(profilePic.snp.bottom).offset(12)
+            $0.height.lessThanOrEqualTo(18)
+        }
+
+        senderUsername.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTap)))
+        contentView.addSubview(senderUsername)
+        senderUsername.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(senderName.snp.bottom)
+            $0.height.lessThanOrEqualTo(16)
+        }
+
+        contentView.addSubview(timestamp)
+        timestamp.snp.makeConstraints {
+            $0.trailing.equalToSuperview().offset(-8)
+            $0.top.equalToSuperview().offset(10)
+        }
+
+        acceptButton.addTarget(self, action: #selector(acceptTap), for: .touchUpInside)
+        contentView.addSubview(acceptButton)
+        acceptButton.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(14)
+            $0.top.equalTo(senderUsername.snp.bottom).offset(11)
+            $0.bottom.equalToSuperview().offset(-11)
         }
 
         closeButton.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
@@ -106,41 +145,9 @@ class FriendRequestCell: UICollectionViewCell {
             $0.top.equalToSuperview()
             $0.width.height.equalTo(32)
         }
-
-        acceptButton.addTarget(self, action: #selector(acceptTap), for: .touchUpInside)
-        contentView.addSubview(acceptButton)
-        acceptButton.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(senderUsername.snp.bottom).offset(11)
-            $0.height.lessThanOrEqualTo(self.frame.height * 0.18)
-        }
-
-        senderUsername.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTap)))
-        contentView.addSubview(senderUsername)
-        senderUsername.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(senderName.snp.bottom)
-        }
-
-        senderName.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTap)))
-        contentView.addSubview(senderName)
-        senderName.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(profilePic.snp.bottom).offset(12)
-        }
-
-        contentView.addSubview(timestamp)
-        timestamp.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-8)
-            $0.top.equalToSuperview().offset(10)
-        }
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    func setUp(notification: UserNotification) {
+    func setValues(notification: UserNotification) {
         self.friendRequest = notification
         self.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         self.layer.cornerRadius = 14
@@ -149,9 +156,10 @@ class FriendRequestCell: UICollectionViewCell {
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
         profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
-        if (notification.userInfo?.avatarURL ?? "") != "" {
+        let avatarURL = notification.userInfo?.avatarURL ?? ""
+        if avatarURL != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFill)
-            userAvatar.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+            avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
         senderUsername.text = friendRequest?.userInfo?.username
         senderName.text = friendRequest?.userInfo?.name
@@ -177,7 +185,7 @@ class FriendRequestCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         profilePic.sd_cancelCurrentImageLoad()
-        userAvatar.sd_cancelCurrentImageLoad()
+        avatarImage.sd_cancelCurrentImageLoad()
     }
 
     func addActivityIndicator() {

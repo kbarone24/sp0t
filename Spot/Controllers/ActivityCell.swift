@@ -67,6 +67,14 @@ class ActivityCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         self.selectionStyle = .none
+        setUpView()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func setUpView() {
         profilePic.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(profileTap)))
         contentView.addSubview(profilePic)
         profilePic.snp.makeConstraints {
@@ -101,11 +109,7 @@ class ActivityCell: UITableViewCell {
         }
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    func set(notification: UserNotification) {
+    func setValues(notification: UserNotification) {
         self.notification = notification
         setBackgroundColor()
         setPostImage()
@@ -220,6 +224,7 @@ class ActivityCell: UITableViewCell {
             }
         }
 
+        postImage.snp.removeConstraints()
         postImage.snp.makeConstraints {
             $0.centerY.equalToSuperview()
             switch notiType {
