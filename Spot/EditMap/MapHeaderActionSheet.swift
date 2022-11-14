@@ -36,7 +36,7 @@ extension CustomMapHeaderCell {
         let unfollowAction = UIAlertAction(title: actionTitle, style: .destructive) { _ in
             self.unfollowMap()
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
+        let cancelAction = UIAlertAction(title: "Cancel", style: .default)
         alert.addAction(unfollowAction)
         alert.addAction(cancelAction)
         let containerVC = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
@@ -45,10 +45,10 @@ extension CustomMapHeaderCell {
 
     func unfollowMap() {
         Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
-        guard let userIndex = self.mapData.likers.firstIndex(of: UserDataModel.shared.uid) else { return }
-        mapData.likers.remove(at: userIndex)
-        if let memberIndex = self.mapData.memberIDs.firstIndex(of: UserDataModel.shared.uid) {
-            mapData.memberIDs.remove(at: memberIndex)
+        guard let userIndex = self.mapData?.likers.firstIndex(of: UserDataModel.shared.uid) else { return }
+        mapData?.likers.remove(at: userIndex)
+        if let memberIndex = self.mapData?.memberIDs.firstIndex(of: UserDataModel.shared.uid) {
+            mapData?.memberIDs.remove(at: memberIndex)
         }
 
         UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == self.mapData?.id ?? "_" })

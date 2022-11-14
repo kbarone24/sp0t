@@ -13,7 +13,7 @@ import SnapKit
 import UIKit
 
 final class CustomMapHeaderCell: UICollectionViewCell {
-    var mapData: CustomMap!
+    var mapData: CustomMap?
     private var memberProfiles: [UserProfile] = []
 
     private lazy var mapCoverImage: UIImageView = {
@@ -235,6 +235,7 @@ extension CustomMapHeaderCell {
     }
 
     private func setMapMemberInfo() {
+        guard let mapData = mapData else { return }
         let communityMap = mapData.communityMap ?? false
 
         if mapData.memberIDs.count < 7 && !communityMap {
@@ -272,7 +273,7 @@ extension CustomMapHeaderCell {
     private func makeMapNameConstraints() {
         mapCreatorCount.snp.removeConstraints()
         userButton.snp.removeConstraints()
-        let joinedShowing = mapData.memberIDs.count > 6 || mapData.communityMap ?? false
+        let joinedShowing = mapData?.memberIDs.count ?? 0 > 6 || mapData?.communityMap ?? false
 
         mapCreatorProfileImage1.isHidden = joinedShowing
         mapCreatorProfileImage2.isHidden = joinedShowing || memberProfiles.count < 2
@@ -372,17 +373,9 @@ extension CustomMapHeaderCell {
     @objc func actionButtonAction() {
         switch actionButton.titleLabel?.text {
         case "Follow map", "Join":
-            /// prompt user to enter email if heels map
-            let heelsMapID = "9ECABEF9-0036-4082-A06A-C8943428FFF4"
-            if mapData.id == heelsMapID {
-                presentHeelsMap()
-            } else {
-                followMap()
-            }
-
+            followMap()
         case "Following", "Joined":
             addActionSheet()
-
         default:
             return
         }
@@ -390,13 +383,13 @@ extension CustomMapHeaderCell {
 
     func followMap() {
         Mixpanel.mainInstance().track(event: "CustomMapFollowMap")
-        mapData.likers.append(UserDataModel.shared.uid)
+        mapData?.likers.append(UserDataModel.shared.uid)
         if mapData?.communityMap ?? false {
-            mapData.memberIDs.append(UserDataModel.shared.uid)
+            mapData?.memberIDs.append(UserDataModel.shared.uid)
         }
 
         if let mapData = mapData { UserDataModel.shared.userInfo.mapsList.append(mapData) }
-        addNewUsersInDB()
+        addNewUsersInDB(addedUsers: [UserDataModel.shared.uid])
     }
 
     @objc func userTap() {
@@ -407,7 +400,7 @@ extension CustomMapHeaderCell {
             fromVC: customMapVC,
             allowsSelection: false,
             showsSearchBar: false,
-            friendIDs: mapData.memberIDs,
+            friendIDs: mapData?.memberIDs ?? [],
             friendsList: [],
             confirmedIDs: [],
             sentFrom: .CustomMap,
@@ -422,12 +415,26 @@ extension CustomMapHeaderCell {
         DispatchQueue.main.async { customMapVC.present(vc, animated: true) }
     }
 
-    func addNewUsersInDB() {
+    func addNewUsersInDB(addedUsers: [String]) {
+        print("added users", addedUsers)
         guard let mapData = mapData else { return }
         let db = Firestore.firestore()
         let mapsRef = db.collection("maps").document(mapData.id ?? "")
         mapsRef.updateData(["likers": FieldValue.arrayUnion(mapData.likers), "memberIDs": FieldValue.arrayUnion(mapData.memberIDs), "updateUserID": UserDataModel.shared.uid])
         sendEditNotification()
+        // cancel on map join
+        if addedUsers.first == UserDataModel.shared.uid { return }
+        let functions = Functions.functions()
+        functions.httpsCallable("sendMapInviteNotifications").call([
+            "imageURL": mapData.imageURL,
+            "mapID": mapData.id ?? "",
+            "mapName": mapData.mapName,
+            "postID": mapData.postIDs.first ?? "",
+            "receiverIDs": addedUsers,
+            "senderID": UserDataModel.shared.uid,
+            "senderUsername": UserDataModel.shared.userInfo.username]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
     }
 
     func sendEditNotification() {
@@ -440,13 +447,15 @@ extension CustomMapHeaderCell {
 extension CustomMapHeaderCell: MapCodeDelegate, FriendsListDelegate {
     func finishPassing(selectedUsers: [UserProfile]) {
         Mixpanel.mainInstance().track(event: "CustomMapInviteFriendsComplete")
+        var addedUserIDs: [String] = []
         for user in selectedUsers {
-            if !mapData.memberIDs.contains(where: { $0 == user.id ?? "_" }) {
-                mapData.memberIDs.append(user.id ?? "")
+            if !(mapData?.memberIDs.contains(where: { $0 == user.id ?? "_" }) ?? false) {
+                mapData?.memberIDs.append(user.id ?? "")
+                addedUserIDs.append(user.id ?? "")
             }
-            if !mapData.likers.contains(where: { $0 == user.id ?? "_" }) { mapData.likers.append(user.id ?? "") }
+            if !(mapData?.likers.contains(where: { $0 == user.id ?? "_" }) ?? false) { mapData?.likers.append(user.id ?? "") }
         }
-        addNewUsersInDB()
+        addNewUsersInDB(addedUsers: addedUserIDs)
     }
 
     func finishPassing(newMapID: String) {
