@@ -10,30 +10,51 @@ import Firebase
 import Foundation
 import UIKit
 
-protocol friendRequestCollectionCellDelegate: AnyObject {
+protocol FriendRequestCollectionCellDelegate: AnyObject {
     func deleteFriendRequest(sender: AnyObject?)
     func getProfile(userProfile: UserProfile)
     func acceptFriend(sender: AnyObject?)
 }
 
 class FriendRequestCollectionCell: UITableViewCell {
-
-    weak var notificationControllerDelegate: notificationDelegateProtocol?
-
-    var itemHeight, itemWidth: CGFloat!
-
-    var friendRequests: [UserNotification] = []
-
-    var friendRequestCollection: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewLayout())
-
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
+    weak var notificationControllerDelegate: NotificationsDelegate?
+    private lazy var friendRequests: [UserNotification] = []
+
+    private lazy var itemHeight: CGFloat = 0
+    private lazy var itemWidth: CGFloat = 0
+
+    private lazy var collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.itemSize = CGSize(width: itemWidth, height: itemHeight)
+        layout.minimumInteritemSpacing = 8
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
+
+        // same as with tableView, it acts up if I set up the view using the other style
+        let collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = nil
+        collectionView.isScrollEnabled = true
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.register(FriendRequestCell.self, forCellWithReuseIdentifier: "FriendRequestCell")
+        return collectionView
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        /// re-implement this if we want it to scale dynamically:
+        self.backgroundColor = .white
+        self.selectionStyle = .none
+
         itemWidth = UIScreen.main.bounds.width / 1.89
         itemHeight = itemWidth * 1.2
-        self.backgroundColor = .white
+
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        contentView.addSubview(collectionView)
+        collectionView.snp.makeConstraints {
+            $0.leading.trailing.width.equalToSuperview()
+            $0.height.equalTo(itemHeight + 1)
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -45,44 +66,12 @@ class FriendRequestCollectionCell: UITableViewCell {
     }
 
     func setUp(notifs: [UserNotification]) {
-        /// hardcode cell height in case its laid out before view fully appears -> hard code body height so mask stays with cell change
-        resetCell()
-
-        self.backgroundColor = .white
-        self.selectionStyle = .none
-
         friendRequests = notifs
-
-        let requestLayout = UICollectionViewFlowLayout()
-        requestLayout.scrollDirection = .horizontal
-        requestLayout.itemSize = CGSize(width: itemWidth, height: itemHeight)
-        requestLayout.minimumInteritemSpacing = 8
-        requestLayout.sectionInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
-
-        // same as with tableView, it acts up if I set up the view using the other style
-        friendRequestCollection.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: itemHeight + 1)
-        friendRequestCollection.backgroundColor = nil
-        friendRequestCollection.delegate = self
-        friendRequestCollection.dataSource = self
-        friendRequestCollection.isScrollEnabled = true
-        friendRequestCollection.setCollectionViewLayout(requestLayout, animated: false)
-        friendRequestCollection.showsHorizontalScrollIndicator = false
-        friendRequestCollection.register(FriendRequestCell.self, forCellWithReuseIdentifier: "FriendRequestCell")
-        friendRequestCollection.translatesAutoresizingMaskIntoConstraints = true
-        contentView.addSubview(friendRequestCollection)
-        friendRequestCollection.topAnchor.constraint(equalTo: contentView.topAnchor).isActive = true
-        friendRequestCollection.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
-
-    }
-
-    func resetCell() {
-        friendRequestCollection.removeFromSuperview()
     }
 }
 
 // MARK: delegate and data source protocol
 extension FriendRequestCollectionCell: UICollectionViewDelegate, UICollectionViewDataSource {
-
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return friendRequests.count
     }
@@ -97,24 +86,23 @@ extension FriendRequestCollectionCell: UICollectionViewDelegate, UICollectionVie
 }
 
 // MARK: friendRequestCollectionCellDelegate
-extension FriendRequestCollectionCell: friendRequestCollectionCellDelegate {
-
+extension FriendRequestCollectionCell: FriendRequestCollectionCellDelegate {
     func deleteFriendRequest(sender: AnyObject?) {
-        self.friendRequestCollection.performBatchUpdates({
-            let cell = sender as! FriendRequestCell
-            let indexPath = friendRequestCollection.indexPath(for: cell)
-            var indexPaths: [IndexPath] = []
-            indexPaths.append(indexPath!)
+        guard let cell = sender as? FriendRequestCell,
+              let indexPath = collectionView.indexPath(for: cell),
+                let friendRequest = cell.friendRequest else { return }
+        collectionView.performBatchUpdates(({
+            var indexPaths = [indexPath]
             // match current data with that of the main view controller
-            friendRequests = notificationControllerDelegate?.deleteFriendRequest(friendRequest: cell.friendRequest) ?? []
-            friendRequestCollection.deleteItems(at: indexPaths)
-            let friendID = cell.friendRequest.userInfo!.id
-            let notifID = cell.friendRequest.id
-            self.removeFriendRequest(friendID: friendID!, notificationID: notifID!)
-        }) { (_) in
-            self.friendRequestCollection.reloadData()
+            friendRequests = notificationControllerDelegate?.deleteFriendRequest(friendRequest: friendRequest) ?? []
+            collectionView.deleteItems(at: indexPaths)
+            let friendID = friendRequest.userInfo?.id ?? ""
+            let notiID = friendRequest.id ?? ""
+            self.removeFriendRequest(friendID: friendID, notificationID: notiID)
+        }), completion: { _ in
+            self.collectionView.reloadData()
             self.notificationControllerDelegate?.reloadTable()
-        }
+        })
     }
 
     func getProfile(userProfile: UserProfile) {
@@ -122,9 +110,9 @@ extension FriendRequestCollectionCell: friendRequestCollectionCellDelegate {
     }
 
     func acceptFriend(sender: AnyObject?) {
-        let cell = sender as! FriendRequestCell
-        let friend = cell.friendRequest.userInfo!
-        let notifID = cell.friendRequest.id
-        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friend: friend, notificationID: notifID!) }
+        guard let cell = sender as? FriendRequestCell,
+              let friend = cell.friendRequest?.userInfo else { return }
+        let notiID = cell.friendRequest?.id ?? ""
+        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friend: friend, notificationID: notiID) }
     }
 }

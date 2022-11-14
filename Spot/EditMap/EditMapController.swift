@@ -196,7 +196,6 @@ class EditMapController: UIViewController {
             "secret": mapData.secret,
             "lowercaseName": (mapData.lowercaseName ?? "") as Any,
             "searchKeywords": (mapData.searchKeywords ?? []) as Any,
-            "updateUserID": UserDataModel.shared.uid,
             "updateUsername": UserDataModel.shared.userInfo.username
         ])
 

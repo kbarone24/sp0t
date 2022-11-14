@@ -399,7 +399,7 @@ class PostCell: UICollectionViewCell {
         }
 
         timestampLabel = UILabel {
-            $0.text = getTimestamp(postTime: post.timestamp)
+            $0.text = post.timestamp.toString(allowDate: false)
             $0.textColor = UIColor.white.withAlphaComponent(0.6)
             $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
             userView.addSubview($0)

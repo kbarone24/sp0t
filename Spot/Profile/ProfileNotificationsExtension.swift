@@ -101,7 +101,7 @@ extension ProfileViewController {
             self.activityIndicator.startAnimating()
         }
 
-        /// run get nine posts now that friendslist field has started to be updated
+        // run get nine posts now that friendslist field has started to be updated
         DispatchQueue.global().async {
             self.getNinePosts()
         }

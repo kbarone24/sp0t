@@ -96,28 +96,4 @@ extension UILabel {
         let lineHeight = font.lineHeight
         return Int(ceil(textHeight / lineHeight))
     }
-    
-    func toTimeString(timestamp: Firebase.Timestamp) {
-        let seconds = timestamp.seconds
-        let current = NSDate().timeIntervalSince1970
-        let currentTime = Int64(current)
-        let timeSincePost = currentTime - seconds
-        
-        if timeSincePost <= 86_400 {
-            if timeSincePost <= 3_600 {
-                if timeSincePost <= 60 {
-                    text = "\(timeSincePost)s"
-                } else {
-                    let minutes = timeSincePost / 60
-                    text = "\(minutes)m"
-                }
-            } else {
-                let hours = timeSincePost / 3_600
-                text = "\(hours)h"
-            }
-        } else {
-            let days = timeSincePost / 86_400
-            text = "\(days)d"
-        }
-    }
 }

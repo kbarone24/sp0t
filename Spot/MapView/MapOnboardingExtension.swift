@@ -46,7 +46,7 @@ extension MapController {
 
     func displayHeelsMap() {
         if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
-            openExploreMaps()
+            openExploreMaps(onboarding: true)
         }
     }
 }
