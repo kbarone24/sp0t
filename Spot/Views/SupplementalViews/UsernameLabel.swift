@@ -58,7 +58,7 @@ class UsernameLabel: UILabel {
             let newWidth = max(moreLabel.frame.width, username.frame.width) + spaceWidth
             resizeView(newWidth: newWidth)
         } else {
-            timestamp.toTimeString(timestamp: post.timestamp)
+            timestamp.text = post.timestamp.toString(allowDate: false)
             timestamp.sizeToFit()
             moreLabel.isHidden = true
 
