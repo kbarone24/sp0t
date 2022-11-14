@@ -172,6 +172,32 @@ public extension String {
         let userID = self
         return (UserDataModel.shared.userInfo.blockedBy?.contains(userID) ?? false) || (UserDataModel.shared.userInfo.blockedUsers?.contains(userID) ?? false)
     }
+
+    internal func getTaggedUsers() -> [UserProfile] {
+        var selectedUsers: [UserProfile] = []
+        let words = self.components(separatedBy: .whitespacesAndNewlines)
+        for w in words {
+            let username = String(w.dropFirst())
+            if w.hasPrefix("@") {
+                if let f = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == username }) {
+                    selectedUsers.append(f)
+                }
+            }
+        }
+        return selectedUsers
+    }
+
+    func getCaptionHeight(fontSize: CGFloat, maxCaption: CGFloat) -> CGFloat {
+        let caption = self
+        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 88, height: UIScreen.main.bounds.height))
+        tempLabel.text = caption
+        tempLabel.font = UIFont(name: "SFCompactText-Medium", size: fontSize)
+        tempLabel.numberOfLines = 0
+        tempLabel.lineBreakMode = .byWordWrapping
+        tempLabel.sizeToFit()
+
+        return maxCaption != 0 ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height.rounded(.up)
+    }
 }
 
 extension NSAttributedString {

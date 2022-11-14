@@ -33,7 +33,6 @@ extension NotificationsController {
         friendRequestQuery.getDocuments { [weak self] (snap, _) in
             guard let self = self else { return }
             guard let allDocs = snap?.documents else { self.fetchGroup.leave(); return }
-            print("ct", allDocs.isEmpty)
             // checking if all pending friend requests have been queried
             if allDocs.isEmpty || allDocs.count == self.pendingFriendRequests.count {
                 self.fetchGroup.leave()
@@ -147,5 +146,15 @@ extension NotificationsController {
         }
         if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }
         DispatchQueue.main.async { self.tableView.reloadData() }
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // tries to query more data when the user is about 5 cells from hitting the end
+        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 350)) && refresh == .refreshEnabled {
+            // reload to show activity indicator
+            DispatchQueue.main.async { self.tableView.reloadData() }
+            fetchNotifications(refresh: false)
+            refresh = .activelyRefreshing
+        }
     }
 }
