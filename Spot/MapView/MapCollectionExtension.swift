@@ -51,7 +51,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
-            openExploreMaps()
+            openExploreMaps(onboarding: false)
             return
         } else if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 2 {
             // launch new map

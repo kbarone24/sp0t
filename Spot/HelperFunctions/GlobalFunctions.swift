@@ -654,18 +654,17 @@ extension NSObject {
 
     func getPost(postID: String, completion: @escaping (_ post: MapPost) -> Void) {
         let db = Firestore.firestore()
-        let emptyPost = MapPost(
+        var emptyPost = MapPost(
             spotID: "",
             spotName: "",
             mapID: "",
             mapName: ""
         )
+        emptyPost.id = ""
 
         DispatchQueue.global().async {
-            db.collection("posts").document(postID).getDocument { [weak self] doc, err in
+            db.collection("posts").document(postID).getDocument { [weak self] doc, _ in
                 guard let self = self else { return }
-                if err != nil { completion(emptyPost); return }
-
                 do {
                     let unwrappedInfo = try doc?.data(as: MapPost.self)
                     guard var postInfo = unwrappedInfo else { completion(emptyPost); return }
@@ -689,6 +688,9 @@ extension NSObject {
     }
 
     func getUserInfo(userID: String, completion: @escaping (_ user: UserProfile) -> Void) {
+        let emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
+        if userID == "" { completion(emptyProfile); return }
+
         let db: Firestore = Firestore.firestore()
         if let user = UserDataModel.shared.userInfo.friendsList.first(where: { $0.id == userID }) {
             completion(user)
@@ -699,14 +701,13 @@ extension NSObject {
             return
 
         } else {
-            let emptyProfile = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
             DispatchQueue.global().async {
-                db.collection("users").document(userID).getDocument { (doc, err) in
-                    if err != nil { return }
+                db.collection("users").document(userID).getDocument { (doc, _) in
+                    guard let doc = doc else { return }
                     do {
-                        let userInfo = try doc!.data(as: UserProfile.self)
+                        let userInfo = try doc.data(as: UserProfile.self)
                         guard var info = userInfo else { completion(emptyProfile); return }
-                        info.id = doc!.documentID
+                        info.id = doc.documentID
                         completion(info)
                         return
                     } catch { completion(emptyProfile); return }
@@ -718,7 +719,7 @@ extension NSObject {
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
         if post.id ?? "" == "" { completion(post); return }
         var postInfo = setSecondaryPostValues(post: post)
-        /// detail group tracks comments and added users fetches
+        // detail group tracks comments and added users fetches
         let detailGroup = DispatchGroup()
         detailGroup.enter()
         getUserInfo(userID: postInfo.posterID) { user in
@@ -732,20 +733,6 @@ extension NSObject {
             detailGroup.leave()
         }
 
-        detailGroup.enter()
-        /// taggedUserGroup tracks tagged user fetch
-        let taggedUserGroup = DispatchGroup()
-        for userID in postInfo.taggedUserIDs ?? [] {
-            taggedUserGroup.enter()
-            self.getUserInfo(userID: userID) { user in
-                postInfo.addedUserProfiles?.append(user)
-                taggedUserGroup.leave()
-            }
-        }
-
-        taggedUserGroup.notify(queue: .global()) {
-            detailGroup.leave()
-        }
         detailGroup.notify(queue: .global()) { [weak self] in
             guard self != nil else { return }
             completion(postInfo)

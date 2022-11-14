@@ -345,9 +345,10 @@ final class MapController: UIViewController {
         sheetView?.present(to: .top)
     }
 
-    func openExploreMaps() {
+    func openExploreMaps(onboarding: Bool) {
         guard let serviceContainer else { return }
-        let viewController = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer, from: .mapController))
+        let fromValue: ExploreMapViewModel.OpenedFrom = onboarding ? .onBoarding : .mapController
+        let viewController = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer, from: fromValue))
         let transition = AddButtonTransition()
         self.navigationController?.view.layer.add(transition, forKey: kCATransition)
         self.navigationController?.pushViewController(viewController, animated: false)

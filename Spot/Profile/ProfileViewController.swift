@@ -410,7 +410,7 @@ extension ProfileViewController {
                     Mixpanel.mainInstance().track(event: "ProfileHeaderAcceptTap")
                     guard let user = self.userProfile else { return }
                     self.acceptFriendRequest(friend: user, notificationID: doc.documentID)
-                    /// tableView reload handled by notification
+                    // tableView reload handled by notification
                     NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: ["notiID": doc.documentID])
                 }
             }

@@ -410,6 +410,14 @@
 		8CE4C93A291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */; };
 		8CE4C93B291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */; };
 		8CE4C93C291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */; };
+		8CE4C93E2922ADDA0023FE8A /* NotificationsFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C93D2922ADDA0023FE8A /* NotificationsFetchExtension.swift */; };
+		8CE4C9412922AFBF0023FE8A /* TimestampExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */; };
+		8CE4C9432922B2150023FE8A /* NotificationsTableExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9422922B2150023FE8A /* NotificationsTableExtension.swift */; };
+		8CE4C9442922B2150023FE8A /* NotificationsTableExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9422922B2150023FE8A /* NotificationsTableExtension.swift */; };
+		8CE4C9452922B2150023FE8A /* NotificationsTableExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9422922B2150023FE8A /* NotificationsTableExtension.swift */; };
+		8CE4C9472922B2440023FE8A /* ActivityIndicatorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */; };
+		8CE4C9482922B2440023FE8A /* ActivityIndicatorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */; };
+		8CE4C9492922B2440023FE8A /* ActivityIndicatorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */; };
 		8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
 		8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
 		8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
@@ -670,6 +678,10 @@
 		8CC3653926C5E9A900AC40AB /* UploadPostModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPostModel.swift; sourceTree = "<group>"; };
 		8CDFEF45284D3B570038A9B8 /* Map.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Map.storyboard; sourceTree = "<group>"; };
 		8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostGroupExtension.swift; sourceTree = "<group>"; };
+		8CE4C93D2922ADDA0023FE8A /* NotificationsFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsFetchExtension.swift; sourceTree = "<group>"; };
+		8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampExtension.swift; sourceTree = "<group>"; };
+		8CE4C9422922B2150023FE8A /* NotificationsTableExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsTableExtension.swift; sourceTree = "<group>"; };
+		8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityIndicatorCell.swift; sourceTree = "<group>"; };
 		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
 		8CFD73E92757E4FD00CBD162 /* TagCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagCategory.swift; sourceTree = "<group>"; };
 		994C18FD0D847CBE77336F96 /* Pods-Spot.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.release.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.release.xcconfig"; sourceTree = "<group>"; };
@@ -1071,8 +1083,11 @@
 			isa = PBXGroup;
 			children = (
 				5F119A192869F3FF00D75CE8 /* NotificationsController.swift */,
+				8CE4C93D2922ADDA0023FE8A /* NotificationsFetchExtension.swift */,
+				8CE4C9422922B2150023FE8A /* NotificationsTableExtension.swift */,
 				5F119A1D2869F46500D75CE8 /* FriendRequestCell.swift */,
 				5F119A1E2869F46600D75CE8 /* FriendRequestCollectionCell.swift */,
+				8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */,
 				5F119A1B2869F44900D75CE8 /* ActivityCell.swift */,
 			);
 			name = Notifications;
@@ -1201,6 +1216,14 @@
 			path = CameraAndGallery;
 			sourceTree = "<group>";
 		};
+		8CE4C93F2922AFAD0023FE8A /* FirebaseExtensions */ = {
+			isa = PBXGroup;
+			children = (
+				8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */,
+			);
+			path = FirebaseExtensions;
+			sourceTree = "<group>";
+		};
 		8CF5A5BB26F40F6900320033 /* Singletons */ = {
 			isa = PBXGroup;
 			children = (
@@ -1223,6 +1246,7 @@
 		CD239A0428FFD3070099513F /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				8CE4C93F2922AFAD0023FE8A /* FirebaseExtensions */,
 				CD239A0628FFD33D0099513F /* FoundationExtensions */,
 				CD239A0528FFD3340099513F /* UIKitExtensions */,
 			);
@@ -1698,6 +1722,7 @@
 				5FDAF23C2857E65A001EDC57 /* Declarative.swift in Sources */,
 				CDAE20D9290A153900EB1F75 /* MapPostBody.swift in Sources */,
 				CDF8E94F2903B6C500BE929F /* UIAlertActionExtension.swift in Sources */,
+				8CE4C9412922AFBF0023FE8A /* TimestampExtension.swift in Sources */,
 				CDF8E98C29048AF900BE929F /* EditMapController.swift in Sources */,
 				8C12E689290ADA1900FA5BF0 /* InviteFriendsCell.swift in Sources */,
 				CD3D8DD32904FA150062DE8D /* ExploreMapTitleView.swift in Sources */,
@@ -1727,6 +1752,7 @@
 				8C34207A261140FA0017CB2F /* FindFriendsController.swift in Sources */,
 				8C66E111291B3A23006D29F6 /* CampusMapCell.swift in Sources */,
 				CD04F61A29134E70002A9AD1 /* ExtraCountCell.swift in Sources */,
+				8CE4C9432922B2150023FE8A /* NotificationsTableExtension.swift in Sources */,
 				CDF8E95F2903C8A300BE929F /* AddFriendsView.swift in Sources */,
 				4106ECD428A3F0B400680005 /* SpotPageBodyCell.swift in Sources */,
 				CD239A1B28FFD9A40099513F /* UINavigationBarExtension.swift in Sources */,
@@ -1786,6 +1812,7 @@
 				5F2B5A7D288EE5830006DDA6 /* ContactCell.swift in Sources */,
 				593AC54D243FAA2B00C08237 /* PhoneController.swift in Sources */,
 				8C3BAF58260C413F00349091 /* ConfirmCodeController.swift in Sources */,
+				8CE4C93E2922ADDA0023FE8A /* NotificationsFetchExtension.swift in Sources */,
 				8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				CDF8E94B2903B62400BE929F /* UILabelExtension.swift in Sources */,
 				8C3BAF5F260CF5D000349091 /* CountryPickerController.swift in Sources */,
@@ -1861,6 +1888,7 @@
 				8C1E48D3289C58470093030D /* ProfileMyMapImageCollectionViewCell.swift in Sources */,
 				CDF8E9642903CD7900BE929F /* ExploreMapViewController.swift in Sources */,
 				8C12E673290A074100FA5BF0 /* ProfileCollectionExtension.swift in Sources */,
+				8CE4C9472922B2440023FE8A /* ActivityIndicatorCell.swift in Sources */,
 				8C2209F8284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				8C3B953228AD530300C06586 /* HeelsMapPopUpController.swift in Sources */,
 				414CD283289EB383001F1776 /* ProfileBodyCell.swift in Sources */,
@@ -1915,12 +1943,14 @@
 				8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */,
 				8CA10A492912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
 				8C1E48B3289C54CB0093030D /* SpotPostView.swift in Sources */,
+				8CE4C9482922B2440023FE8A /* ActivityIndicatorCell.swift in Sources */,
 				8C8DBB772888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				8C51D93128C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CE4C93B291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
 				59DFA25522C285CF00A59D29 /* CommentsViewController.swift in Sources */,
 				59FCF5B624734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
+				8CE4C9442922B2150023FE8A /* NotificationsTableExtension.swift in Sources */,
 				8CA10A282912F02300DD50EB /* ImagePreviewDelegateExtension.swift in Sources */,
 				59FCF5BC24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				8C8DBB732888BE5C00B31BFD /* ChooseSpotController.swift in Sources */,
@@ -2032,12 +2062,14 @@
 				8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */,
 				8CA10A4A2912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
 				8C1E48B4289C54CB0093030D /* SpotPostView.swift in Sources */,
+				8CE4C9492922B2440023FE8A /* ActivityIndicatorCell.swift in Sources */,
 				8C8DBB782888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				8C51D93228C7EECB009CCD00 /* EmailLoginController.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CE4C93C291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
 				59DFA25622C285D000A59D29 /* CommentsViewController.swift in Sources */,
 				59FCF5B724734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
+				8CE4C9452922B2150023FE8A /* NotificationsTableExtension.swift in Sources */,
 				8CA10A292912F02300DD50EB /* ImagePreviewDelegateExtension.swift in Sources */,
 				59FCF5BD24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				8C8DBB742888BE5C00B31BFD /* ChooseSpotController.swift in Sources */,
@@ -2299,7 +2331,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 39;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2370,7 +2402,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 39;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
