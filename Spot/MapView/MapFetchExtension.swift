@@ -167,19 +167,20 @@ extension MapController {
         UserDataModel.shared.userInfo.topFriends = user.topFriends
         UserDataModel.shared.userInfo.friendIDs = user.friendIDs
         UserDataModel.shared.userInfo.username = user.username
+        let userInfo = UserDataModel.shared.userInfo
         /// update mapscollection + all posts to display accurate user info on profile edit
         if runReload {
             DispatchQueue.global().async {
                 for key in self.friendsPostsDictionary.keys {
                     if self.friendsPostsDictionary[key] == nil { continue }
-                    if self.friendsPostsDictionary[key]?.posterID == self.uid { self.friendsPostsDictionary[key]?.userInfo = UserDataModel.shared.userInfo }
+                    if self.friendsPostsDictionary[key]?.posterID == self.uid { self.friendsPostsDictionary[key]?.userInfo = userInfo }
                 }
                 /// update maps posts
                 for i in 0..<UserDataModel.shared.userInfo.mapsList.count {
                     for key in UserDataModel.shared.userInfo.mapsList[i].postsDictionary.keys {
                         if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[key] == nil { continue }
                         if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[key]?.posterID == self.uid {
-                            UserDataModel.shared.userInfo.mapsList[i].postsDictionary[key]?.userInfo = UserDataModel.shared.userInfo }
+                            UserDataModel.shared.userInfo.mapsList[i].postsDictionary[key]?.userInfo = userInfo }
                     }
                 }
             }
