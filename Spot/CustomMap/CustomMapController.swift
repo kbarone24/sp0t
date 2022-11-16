@@ -77,6 +77,16 @@ class CustomMapController: UIViewController {
         button.setImage(UIImage(named: "BackArrowDark"), for: .normal)
         return button
     }()
+    
+    lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
+    
+    lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
 
     lazy var titleLabel: UILabel = {
         let label = UILabel()

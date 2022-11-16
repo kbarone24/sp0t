@@ -65,6 +65,11 @@ class FindFriendsController: UIViewController {
     var contactsHidden: Bool {
         return contactsAuth == .authorized && contacts.isEmpty
     }
+    
+    lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()

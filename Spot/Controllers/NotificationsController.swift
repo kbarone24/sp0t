@@ -25,15 +25,26 @@ protocol NotificationsDelegate: AnyObject {
 }
 
 class NotificationsController: UIViewController, UITableViewDelegate {
+
     lazy var notifications: [UserNotification] = []
     lazy var pendingFriendRequests: [UserNotification] = []
-
+    
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var endDocument: DocumentSnapshot?
     lazy var fetchGroup = DispatchGroup()
     lazy var refresh: RefreshStatus = .activelyRefreshing
-
+    
+    lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
+    
+    lazy var mapService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
+    
     var containerDrawerView: DrawerView?
     private lazy var activityIndicator = CustomActivityIndicator()
     var tableView: UITableView = {
@@ -50,11 +61,12 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         return tableView
     }()
-
+    
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     override init(nibName: String?, bundle: Bundle?) {
         super.init(nibName: nibName, bundle: bundle)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -62,11 +74,11 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             self.fetchNotifications(refresh: false)
         }
     }
-
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
@@ -74,26 +86,26 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         setupView()
         askForNotifications()
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
         configureDrawerView()
     }
-
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
         navigationController?.navigationBar.isTranslucent = false
     }
-
+    
     func configureDrawerView() {
         containerDrawerView?.canInteract = false
         containerDrawerView?.swipeDownToDismiss = false
         containerDrawerView?.showCloseButton = false
         containerDrawerView?.present(to: .top)
     }
-
+    
     func setUpNavBar() {
         title = "Notifications"
         navigationController?.setNavigationBarHidden(false, animated: false)
@@ -105,12 +117,12 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         navigationController?.navigationBar.barStyle = .black
         navigationController?.navigationBar.tintColor = UIColor.black
         navigationController?.view.backgroundColor = .white
-
+        
         navigationController?.navigationBar.titleTextAttributes = [
-                .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-                .font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
+            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
+            .font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
         ]
-
+        
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(named: "BackArrowDark"),
             style: .plain,
@@ -118,41 +130,47 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             action: #selector(backTap)
         )
     }
-
+    
     func setupView() {
         tableView.dataSource = self
         tableView.delegate = self
         view.addSubview(tableView)
-
+        
         tableView.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.bottom.equalToSuperview()
             $0.leading.trailing.equalToSuperview()
         }
     }
-
+    
     func askForNotifications() {
         let pushManager = PushNotificationManager(userID: uid)
         pushManager.registerForPushNotifications()
     }
-
+    
     @objc func notifyFriendsLoad(_ notification: NSNotification) {
-        if !notifications.isEmpty {
+        guard !notifications.isEmpty else {
+            return
+        }
+        
+        Task {
             for i in 0...notifications.count - 1 {
-                self.getUserInfo(userID: self.notifications[i].senderID) { [weak self] (user) in
-                guard let self = self else { return }
-                self.notifications[i].userInfo = user
+                let notification = notifications[i]
+                guard let user = try? await userService?.getUserInfo(userID: notification.senderID) else {
+                    return
                 }
+                
+                self.notifications[i].userInfo = user
             }
         }
     }
-
+    
     @objc func notifyFriendRequestAccept(_ notification: NSNotification) {
         if !pendingFriendRequests.isEmpty {
             for i in 0...pendingFriendRequests.count - 1 {
                 if let noti = notification.userInfo?["notiID"] as? String {
                     if pendingFriendRequests[safe: i]?.id == noti {
-                    var newNoti = pendingFriendRequests.remove(at: i)
+                        var newNoti = pendingFriendRequests.remove(at: i)
                         newNoti.status = "accepted"
                         newNoti.timestamp = Timestamp()
                         notifications.append(newNoti)
@@ -162,7 +180,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         }
         self.sortAndReload()
     }
-
+    
     @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
         guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
@@ -178,18 +196,18 @@ extension NotificationsController: NotificationsDelegate {
     func getProfile(userProfile: UserProfile) {
         openProfile(user: userProfile)
     }
-
+    
     func deleteFriend(friendID: String) {
         self.removeFriend(friendID: friendID)
     }
-
+    
     func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification] {
         if let i1 = pendingFriendRequests.firstIndex(where: { $0.id == friendRequest.id }) {
             pendingFriendRequests.remove(at: i1)
         }
         return pendingFriendRequests
     }
-
+    
     func reloadTable() {
         self.tableView.reloadData()
     }
@@ -200,12 +218,12 @@ extension NotificationsController {
         Mixpanel.mainInstance().track(event: "NotificationsBackTap")
         containerDrawerView?.closeAction()
     }
-
+    
     func openProfile(user: UserProfile) {
         let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
         DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
     }
-
+    
     func openPost(post: MapPost, commentNoti: Bool) {
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = [post]
@@ -213,7 +231,7 @@ extension NotificationsController {
         postVC.openComments = commentNoti
         DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
     }
-
+    
     func openMap(mapID: String) {
         var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         map.id = mapID

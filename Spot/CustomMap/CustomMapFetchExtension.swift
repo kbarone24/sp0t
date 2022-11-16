@@ -20,7 +20,6 @@ extension CustomMapController {
             return
         }
 
-        let dispatch = DispatchGroup()
         var memberList: [UserProfile] = []
         firstMaxFourMapMemberList.removeAll()
 
@@ -29,20 +28,19 @@ extension CustomMapController {
             let member = members.remove(at: i)
             members.insert(member, at: 0)
         }
-
-        // fetch profiles for the first four map members
-        for index in 0...(members.count < 5 ? (members.count - 1) : 3) {
-            dispatch.enter()
-            getUserInfo(userID: members[index]) { user in
+        
+        Task {
+            // fetch profiles for the first four map members
+            for index in 0...(members.count < 5 ? (members.count - 1) : 3) {
+                guard let user = try? await userService?.getUserInfo(userID: members[index]) else {
+                    continue
+                }
                 memberList.insert(user, at: 0)
-                dispatch.leave()
             }
-        }
-        dispatch.notify(queue: .main) { [weak self] in
-            guard let self = self else { return }
-            self.firstMaxFourMapMemberList = memberList
-            self.firstMaxFourMapMemberList.sort(by: { $0.id == mapData.founderID && $1.id != mapData.founderID })
-            self.collectionView.reloadData()
+            
+                self.firstMaxFourMapMemberList = memberList
+                self.firstMaxFourMapMemberList.sort(by: { $0.id == mapData.founderID && $1.id != mapData.founderID })
+                self.collectionView.reloadData()
         }
     }
 
@@ -74,8 +72,7 @@ extension CustomMapController {
                         if self.postsList.contains(where: { $0.id == postInfo.id }) { continue }
                         if !self.hasMapPostAccess(post: postInfo) { continue }
                         postGroup.enter()
-                        self.setPostDetails(post: postInfo) { [weak self] post in
-                            guard let self = self else { return }
+                        self.mapPostService?.setPostDetails(post: postInfo) { post in
                             if let id = post.id, id != "", !self.postsList.contains(where: { $0.id == id }) {
                                 DispatchQueue.main.async {
                                     self.postsList.append(post)
@@ -130,19 +127,21 @@ extension CustomMapController {
         guard let key = key else { return }
         if !(mapData?.postIDs.contains(key) ?? true) { return }
         if postsList.contains(where: { $0.id == key }) { return }
-        geoFetchGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getPost(postID: key) { post in
-                if let id = post.id, id != "", !self.postsList.contains(where: { $0.id == id }) {
-                    DispatchQueue.main.async {
-                        self.postsList.append(post)
-                        self.mapData?.postsDictionary.updateValue(post, forKey: id)
-                        if let groupData = self.mapData?.updateGroup(post: post) {
-                            self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup)
-                        }
-                    }
+        
+        Task {
+            guard let post = try? await mapPostService?.getPost(postID: key),
+                  let id = post.id, !id.isEmpty,
+                  !self.postsList.contains(where: { $0.id == id })
+            else {
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.postsList.append(post)
+                self.mapData?.postsDictionary.updateValue(post, forKey: id)
+                if let groupData = self.mapData?.updateGroup(post: post) {
+                    self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup)
                 }
-                self.geoFetchGroup.leave()
             }
         }
     }

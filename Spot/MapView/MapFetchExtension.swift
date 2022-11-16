@@ -18,11 +18,10 @@ extension MapController {
             self.getActiveUser()
         }
     }
-
+    
     @objc func notifyUserLoad(_ notification: NSNotification) {
         if userLoaded { return }
         userLoaded = true
-
         DispatchQueue.global(qos: .userInitiated).async {
             self.homeFetchGroup.enter()
             self.getMaps()
@@ -57,7 +56,7 @@ extension MapController {
             UserDataModel.shared.userInfo.sortMaps()
             if let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) { selectedItemIndex = index + 1 } else { selectedItemIndex = 0 }
         }
-
+        
         let scrollPosition: UICollectionView.ScrollPosition = resort ? .left : []
         /// select new map on add from onboarding
         if newMapID != nil, let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == newMapID }) {
@@ -70,7 +69,7 @@ extension MapController {
         if resort && !newPost { centerMapOnMapPosts(animated: true) }
         setNewPostsButtonCount()
     }
-
+    
     func getAdmins() {
         self.db.collection("users").whereField("admin", isEqualTo: true).getDocuments { (snap, _) in
             guard let snap = snap else { return }
@@ -88,19 +87,24 @@ extension MapController {
             Mixpanel.mainInstance().optOutTracking()
         }
     }
-
+    
     func getActiveUser() {
         userListener = self.db.collection("users").document(self.uid).addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] (userSnap, err) in
             guard let self = self else { return }
             if userSnap?.metadata.isFromCache ?? false { return }
             if err != nil { return }
+
             do {
                 /// get current user info
                 let actUser = try userSnap?.data(as: UserProfile.self)
                 guard let activeUser = actUser else { return }
                 if userSnap?.documentID ?? "" != self.uid { return } // logout + object not being destroyed
-
-                if UserDataModel.shared.userInfo.id == "" { UserDataModel.shared.userInfo = activeUser } else { self.updateUserInfo(user: activeUser) }
+                
+                if UserDataModel.shared.userInfo.id == "" {
+                    UserDataModel.shared.userInfo = activeUser
+                } else {
+                    self.updateUserInfo(user: activeUser)
+                }
 
                 NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
@@ -108,17 +112,17 @@ extension MapController {
                     with: URL(string: UserDataModel.shared.userInfo.imageURL),
                     placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .black),
                     options: .highPriority, context: [.imageTransformer: transformer])
-
+                
                 for friend in UserDataModel.shared.userInfo.friendIDs {
                     self.db.collection("users").document(friend).getDocument { (friendSnap, _) in
                         do {
                             let friendInfo = try friendSnap?.data(as: UserProfile.self)
                             guard let info = friendInfo else { UserDataModel.shared.userInfo.friendIDs.removeAll(where: { $0 == friend }); return }
-
+                            
                             if !UserDataModel.shared.userInfo.friendsList.contains(where: { $0.id == friend }) && !UserDataModel.shared.deletedFriendIDs.contains(friend) {
-
+                                
                                 UserDataModel.shared.userInfo.friendsList.append(info)
-
+                                
                                 if UserDataModel.shared.userInfo.friendsList.count == UserDataModel.shared.userInfo.friendIDs.count {
                                     UserDataModel.shared.userInfo.sortFriends() /// sort for top friends
                                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
@@ -132,7 +136,7 @@ extension MapController {
                                     self.friendsLoaded = true
                                 }
                             }
-
+                            
                         } catch {
                             // remove broken friend object
                             UserDataModel.shared.userInfo.friendIDs.removeAll(where: { $0 == friend })
@@ -143,7 +147,7 @@ extension MapController {
             } catch {  return }
         })
     }
-
+    
     func updateUserInfo(user: UserProfile) {
         /// only reload if a visible value changed
         let runReload = UserDataModel.shared.userInfo.avatarURL != user.avatarURL ||
@@ -151,7 +155,7 @@ extension MapController {
         UserDataModel.shared.userInfo.imageURL != user.imageURL ||
         UserDataModel.shared.userInfo.name != user.name ||
         UserDataModel.shared.userInfo.username != user.username
-
+        
         // update user info fields to avoid overwriting map values
         UserDataModel.shared.userInfo.avatarURL = user.avatarURL
         UserDataModel.shared.userInfo.currentLocation = user.currentLocation
@@ -222,7 +226,7 @@ extension MapController {
                     if self.filteredFromFeed(post: postInfo, friendsMap: true) { continue }
 
                     recentGroup.enter()
-                    self.setPostDetails(post: postInfo) { [weak self] post in
+                    self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         if post.id ?? "" != "" {
                             DispatchQueue.main.async {
@@ -271,7 +275,7 @@ extension MapController {
                     if self.filteredFromFeed(post: postInfo, friendsMap: false) { continue }
 
                     recentGroup.enter()
-                    self.setPostDetails(post: postInfo) { [weak self] post in
+                    self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         if post.id ?? "" != "" {
                             DispatchQueue.main.async {
@@ -291,7 +295,7 @@ extension MapController {
             }
         }
     }
-
+    
     func postsContains(postID: String, mapID: String, newPost: Bool) -> Bool {
         if mapID == "" || newPost {
             if self.friendsPostsDictionary[postID] != nil { return true }
@@ -334,31 +338,32 @@ extension MapController {
             }
         }
     }
-
+    
     func updatePost(post: MapPost, map: CustomMap?) {
-        // use old post to only update values that CHANGE -> comments and likers
-        var oldPost = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
-        if let map, let post = map.postsDictionary[post.id ?? ""] {
-            oldPost = post
-        } else if let post = friendsPostsDictionary[post.id ?? ""] {
-            oldPost = post
-        } else {
-            return
-        }
-
-        oldPost.likers = post.likers
-        if post.commentCount != oldPost.commentCount {
-            getComments(postID: post.id ?? "") { [weak self] comments in
-                guard let self = self else { return }
+        Task {
+            // use old post to only update values that CHANGE -> comments and likers
+            var oldPost = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
+            if let map, let post = map.postsDictionary[post.id ?? ""] {
+                oldPost = post
+            } else if let post = friendsPostsDictionary[post.id ?? ""] {
+                oldPost = post
+            } else {
+                return
+            }
+            
+            oldPost.likers = post.likers
+            if post.commentCount != oldPost.commentCount {
+                let comments = try await mapPostService?.getComments(postID: post.id ?? "") ?? []
                 oldPost.commentList = comments
                 oldPost.commentCount = post.commentCount
+            }
+            
+            DispatchQueue.main.async {
                 self.updatePostDictionary(post: oldPost, mapID: map?.id ?? "")
             }
-        } else {
-            updatePostDictionary(post: oldPost, mapID: map?.id ?? "")
         }
     }
-
+    
     func updatePostDictionary(post: MapPost, mapID: String) {
         if mapID == "" {
             self.friendsPostsDictionary[post.id ?? ""] = post
@@ -405,7 +410,7 @@ extension MapController {
                 do {
                     let mapIn = try doc.data(as: CustomMap.self)
                     guard var mapInfo = mapIn else { continue }
-
+                    
                     if UserDataModel.shared.deletedMapIDs.contains(where: { $0 == mapInfo.id }) { continue }
                     if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapInfo.id }) {
                         self.updateMap(map: mapInfo, index: i)
@@ -425,12 +430,12 @@ extension MapController {
             self.getPosts()
         })
     }
-
+    
     func updateMap(map: CustomMap, index: Int) {
         /// only reload if display content changes
         let oldMap = UserDataModel.shared.userInfo.mapsList[index]
         let reload = oldMap.mapName != map.mapName || oldMap.imageURL != map.imageURL || oldMap.secret != map.secret
-
+        
         UserDataModel.shared.userInfo.mapsList[index].memberIDs = map.memberIDs
         UserDataModel.shared.userInfo.mapsList[index].likers = map.likers
         UserDataModel.shared.userInfo.mapsList[index].memberProfiles = map.memberProfiles
@@ -438,7 +443,7 @@ extension MapController {
         UserDataModel.shared.userInfo.mapsList[index].mapName = map.mapName
         UserDataModel.shared.userInfo.mapsList[index].mapDescription = map.mapDescription
         UserDataModel.shared.userInfo.mapsList[index].secret = map.secret
-
+        
         if reload {
             DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
         }
@@ -450,7 +455,7 @@ extension MapController {
         // show new posts button on friends map if the user has a friend (no real way of checking if that friend has actually posted to friends map)
         newPostsButton.totalPosts = map == nil ? UserDataModel.shared.userInfo.friendIDs.count > 1 ? 1 : 0 : map?.postIDs.count ?? 0
     }
-
+    
     func checkForActivityIndicator() -> Bool {
         /// resume frozen indicator
         if  let cell = mapsCollection.cellForItem(at: IndexPath(item: 0, section: 0)) as? MapLoadingCell {

@@ -35,6 +35,16 @@ class CommentsController: UIViewController {
     var postButton: UIButton!
     lazy var textView = UITextView()
 
+    lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
+    
+    private lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
+    
     let emptyTextString = "Comment..."
 
     var panGesture: UIPanGestureRecognizer!
@@ -188,12 +198,19 @@ class CommentsController: UIViewController {
     }
 
     func getLikers() {
-        var ct = 0
-        for id in post.likers {
-            getUserInfo(userID: id) { [weak self] user in
-                guard let self = self else { return }
+        Task {
+            var ct = 0
+            for id in post.likers {
+                guard let user = try? await userService?.getUserInfo(userID: id) else {
+                    continue
+                }
+
                 self.likers.append(user)
-                ct += 1; if ct == self.post.likers.count { self.reloadLikers()}
+                ct += 1
+                
+                if ct == self.post.likers.count {
+                    self.reloadLikers()
+                }
             }
         }
     }
@@ -256,7 +273,7 @@ extension CommentsController {
                 postsRef.delete()
 
         db.collection("posts").document(self.post.id!).updateData(["commentCount": FieldValue.increment(Int64(-1))])
-        incrementTopFriends(friendID: post.posterID, increment: -1)
+        friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
         updateParent()
     }
 
@@ -312,7 +329,7 @@ extension CommentsController {
         ] as [String: Any] )
         /// set extraneous values
         self.db.collection("posts").document(self.post.id!).updateData(["commentCount": FieldValue.increment(Int64(1))])
-        self.incrementTopFriends(friendID: post.posterID, increment: 1)
+        friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
 
     }
 
