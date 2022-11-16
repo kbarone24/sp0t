@@ -67,6 +67,22 @@ class ProfileViewController: UIViewController {
         return label
     }()
     lazy var activityIndicator = CustomActivityIndicator()
+    
+    private lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
+    
+    private lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
+    
+    
+    private lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
 
     deinit {
         print("ProfileViewController(\(self) deinit")
@@ -163,11 +179,12 @@ class ProfileViewController: UIViewController {
     }
 
     private func getUserInfo() {
-        guard let username = userProfile?.username else { return }
-        if username == "" { return }
-        // username passed through for tagged user not in friends list
-        getUserFromUsername(username: username) { [weak self] user in
-            guard let self = self else { return }
+        guard let username = userProfile?.username, !username.isEmpty else { return }
+        
+        Task {
+            guard let user = try? await userService?.getUserFromUsername(username: username) else {
+                return
+            }
             self.userProfile = user
             self.getUserRelation()
             self.viewSetup()
@@ -238,8 +255,8 @@ class ProfileViewController: UIViewController {
         let db = Firestore.firestore()
         let q0 = db.collection("posts").whereField("posterID", isEqualTo: userID)
         let query = q0.whereField("friendsList", arrayContains: UserDataModel.shared.uid).order(by: "timestamp", descending: true).limit(to: 9)
-        query.getDocuments { (snap, _) in
-            guard let snap = snap else { return }
+        query.getDocuments { [weak self] (snap, _) in
+            guard let snap, let self else { return }
             let dispatch = DispatchGroup()
             if snap.documents.isEmpty && (self.relation == .friend || self.relation == .myself) { self.postsFetched = true }
             for doc in snap.documents {
@@ -248,8 +265,7 @@ class ProfileViewController: UIViewController {
                     guard let postInfo = unwrappedInfo else { continue }
                     if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { continue }
                     dispatch.enter()
-                    self.setPostDetails(post: postInfo) { [weak self] post in
-                        guard let self = self else { return }
+                    self.mapPostService?.setPostDetails(post: postInfo) { post in
                         self.posts.append(post)
                         self.postsFetched = true
                         dispatch.leave()
@@ -327,7 +343,7 @@ extension ProfileViewController {
     func addFriendFromProfile() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
         NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SendFriendRequest"), object: nil, userInfo: ["userID": userProfile?.id ?? ""])
-        addFriend(receiverID: userProfile?.id ?? "")
+        friendService?.addFriend(receiverID: userProfile?.id ?? "", completion: nil)
         relation = .pending
         DispatchQueue.main.async { self.collectionView.reloadData() }
     }
@@ -407,11 +423,11 @@ extension ProfileViewController {
             if let doc = snap?.documents.first {
                 if !accepted {
                     Mixpanel.mainInstance().track(event: "ProfileHeaderRemoveFriendConfirm")
-                    self.revokeFriendRequest(friendID: userID, notificationID: doc.documentID)
+                    self.friendService?.revokeFriendRequest(friendID: userID, notificationID: doc.documentID, completion: nil)
                 } else {
                     Mixpanel.mainInstance().track(event: "ProfileHeaderAcceptTap")
                     guard let user = self.userProfile else { return }
-                    self.acceptFriendRequest(friend: user, notificationID: doc.documentID)
+                    self.friendService?.acceptFriendRequest(friend: user, notificationID: doc.documentID, completion: nil)
                     // tableView reload handled by notification
                     NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: ["notiID": doc.documentID])
                 }

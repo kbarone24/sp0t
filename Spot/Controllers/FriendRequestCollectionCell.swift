@@ -40,6 +40,11 @@ class FriendRequestCollectionCell: UITableViewCell {
         collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         return collectionView
     }()
+    
+    lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -100,7 +105,7 @@ extension FriendRequestCollectionCell: FriendRequestCollectionCellDelegate {
             collectionView.deleteItems(at: indexPaths)
             let friendID = friendRequest.userInfo?.id ?? ""
             let notiID = friendRequest.id ?? ""
-            self.removeFriendRequest(friendID: friendID, notificationID: notiID)
+            self.friendService?.removeFriendRequest(friendID: friendID, notificationID: notiID, completion: nil)
         }), completion: { _ in
             self.collectionView.reloadData()
             self.notificationControllerDelegate?.reloadTable()
@@ -115,6 +120,7 @@ extension FriendRequestCollectionCell: FriendRequestCollectionCellDelegate {
         guard let cell = sender as? FriendRequestCell,
               let friend = cell.friendRequest?.userInfo else { return }
         let notiID = cell.friendRequest?.id ?? ""
-        DispatchQueue.global(qos: .userInitiated).async { self.acceptFriendRequest(friend: friend, notificationID: notiID) }
+        DispatchQueue.global(qos: .userInitiated).async { self.friendService?.acceptFriendRequest(friend: friend, notificationID: notiID, completion: nil)
+        }
     }
 }

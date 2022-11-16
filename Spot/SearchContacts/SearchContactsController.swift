@@ -171,8 +171,13 @@ class SearchContactsController: UIViewController {
     }
 
     func sendFriendRequests(selectedContactIDs: [String]) {
-        for id in selectedContactIDs {
-            addFriend(receiverID: id)
+        do {
+            let friendService = try ServiceContainer.shared.service(for: \.friendsService)
+            selectedContactIDs.forEach {
+                friendService.addFriend(receiverID: $0, completion: nil)
+            }
+        } catch {
+            return
         }
     }
 

@@ -186,7 +186,10 @@ extension FindFriendsController {
     func loadPostFromDB(key: String?, location: CLLocation?) {
         nearbyEnteredCount += 1
         guard let postKey = key else { return }
-        getPost(postID: postKey) { post in
+        Task {
+            guard let post = try? await mapPostService?.getPost(postID: postKey) else {
+                return
+            }
             self.addNearbyUser(user: post.userInfo)
             self.nearbyAppendCount += 1
             if self.nearbyEnteredCount == self.nearbyAppendCount {

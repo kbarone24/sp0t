@@ -35,6 +35,12 @@ class SpotPageController: UIViewController {
         label.adjustsFontSizeToFitWidth = true
         return label
     }()
+    
+    lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
+    
     private lazy var barBackButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage(named: "BackArrowDark"), for: .normal)
@@ -227,7 +233,7 @@ extension SpotPageController {
                     if self.relatedPosts.contains(where: { $0.id == postInfo.id }) { continue }
                     if postInfo.posterID.isBlocked() { continue }
                     postGroup.enter()
-                    self.setPostDetails(post: postInfo) { [weak self] post in
+                    self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         self.addRelatedPost(postInfo: post)
                         postGroup.leave()
@@ -273,7 +279,7 @@ extension SpotPageController {
                     if postInfo.posterID.isBlocked() { continue }
 
                     postGroup.enter()
-                    self.setPostDetails(post: postInfo) { [weak self] post in
+                    self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         self.addCommunityPost(postInfo: post)
                         postGroup.leave()

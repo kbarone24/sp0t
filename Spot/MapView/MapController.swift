@@ -24,6 +24,11 @@ protocol MapControllerDelegate: AnyObject {
 final class MapController: UIViewController {
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+    
+    lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
 
     let locationManager = CLLocationManager()
     lazy var imageManager = SDWebImageManager()
@@ -46,7 +51,6 @@ final class MapController: UIViewController {
     var friendsRefresh: RefreshStatus = .refreshEnabled
 
     var newMapID: String?
-    var serviceContainer: ServiceContainer?
 
     lazy var addFriendsView: AddFriendsView = {
         let view = AddFriendsView()
@@ -340,9 +344,8 @@ final class MapController: UIViewController {
     }
 
     func openExploreMaps(onboarding: Bool) {
-        guard let serviceContainer else { return }
         let fromValue: ExploreMapViewModel.OpenedFrom = onboarding ? .onBoarding : .mapController
-        let viewController = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: serviceContainer, from: fromValue))
+        let viewController = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: ServiceContainer.shared, from: fromValue))
         let transition = AddButtonTransition()
         self.navigationController?.view.layer.add(transition, forKey: kCATransition)
         self.navigationController?.pushViewController(viewController, animated: false)
