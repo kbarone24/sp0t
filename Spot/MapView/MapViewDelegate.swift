@@ -204,11 +204,13 @@ class SpotMapView: MKMapView {
         if let group {
             if newGroup {
                 /// add new group
+                print("add new group")
                 addSpotAnnotation(group: group, map: map)
             } else {
                 /// update existing group
                 if let anno = annotations.first(where: { $0.coordinate.isEqualTo(coordinate: group.coordinate) }) {
                     removeAnnotation(anno)
+                    print("update existing group")
                     addSpotAnnotation(group: group, map: map)
                 }
             }
@@ -225,7 +227,7 @@ class SpotMapView: MKMapView {
         } else {
             spotAnnotation.coordinate = CLLocationCoordinate2D(latitude: group.coordinate.latitude, longitude: group.coordinate.longitude)
         }
-
+        print("add spot annotation", group.postIDs.map({ $0.id }))
         DispatchQueue.main.async { self.addAnnotation(spotAnnotation) }
     }
 
