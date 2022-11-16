@@ -73,16 +73,16 @@ class SearchContactsOverviewController: UIViewController {
 
         view.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
-            $0.top.equalTo(promptLabel.snp.bottom).offset(21)
+            $0.top.equalTo(promptLabel.snp.bottom).offset(6)
             $0.centerX.equalToSuperview()
-            $0.width.equalTo(265)
-            $0.height.equalTo(148.75)
+            $0.width.equalTo(214)
+            $0.height.equalTo(166)
         }
 
         view.addSubview(searchContactsButton)
         searchContactsButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
-            $0.top.equalTo(avatarImage.snp.bottom).offset(40.25)
+            $0.top.equalTo(avatarImage).offset(118)
             $0.height.equalTo(51)
         }
 

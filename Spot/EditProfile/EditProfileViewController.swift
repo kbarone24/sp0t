@@ -75,24 +75,6 @@ class EditProfileViewController: UIViewController {
         button.setTitle("", for: .normal)
         return button
     }()
-    private var nameLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Name"
-        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
-        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-        return label
-    }()
-    var nameTextfield: UITextField = {
-        let textField = UITextField()
-        textField.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-        textField.layer.cornerRadius = 11
-        textField.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-        textField.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-        textField.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-        textField.setLeftPaddingPoints(8)
-        textField.setRightPaddingPoints(8)
-        return textField
-    }()
     private var locationLabel: UILabel = {
         let label = UILabel()
         label.text = "Location"
@@ -207,25 +189,9 @@ class EditProfileViewController: UIViewController {
             $0.width.height.equalTo(22)
         }
 
-        view.addSubview(nameLabel)
-        nameLabel.snp.makeConstraints {
-            $0.top.equalTo(avatarImage.snp.bottom).offset(18.56)
-            $0.leading.trailing.equalToSuperview().inset(20)
-        }
-
-        nameTextfield.text = userProfile?.name ?? ""
-        nameTextfield.delegate = self
-        view.addSubview(nameTextfield)
-        nameTextfield.snp.makeConstraints {
-            $0.top.equalTo(nameLabel.snp.bottom).offset(1)
-            $0.leading.equalToSuperview().offset(14)
-            $0.trailing.equalToSuperview().inset(63)
-            $0.height.equalTo(36)
-        }
-
         view.addSubview(locationLabel)
         locationLabel.snp.makeConstraints {
-            $0.top.equalTo(nameTextfield.snp.bottom).offset(18)
+            $0.top.equalTo(avatarImage.snp.bottom).offset(18)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
 
