@@ -117,7 +117,6 @@ extension MapController {
         }
         if let anno = mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: post.coordinate) }) {
             DispatchQueue.main.async { self.mapView.removeAnnotation(anno) }
-
         }
         reloadMapsCollection(resort: false, newPost: false)
     }
@@ -131,25 +130,24 @@ extension MapController {
             friendsPostsDictionary[postID]?.commentCount = max(0, commentList.count - 1)
         }
 
-        for i in 0..<UserDataModel.shared.userInfo.mapsList.count {
-            if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
-                UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]!.commentList = commentList
-                UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]!.commentCount = max(0, commentList.count - 1)
-            }
+        for i in 0..<UserDataModel.shared.userInfo.mapsList.count where
+        UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
+            UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]?.commentList = commentList
+            UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]?.commentCount = max(0, commentList.count - 1)
         }
     }
 
     @objc func notifyFriendsListAdd() {
         /// query friends posts again
-        homeFetchGroup.enter()
+     /*   homeFetchGroup.enter()
         homeFetchGroup.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
             self.reloadMapsCollection(resort: false, newPost: false)
         }
 
         DispatchQueue.global().async {
-            self.getRecentPosts(map: nil)
-        }
+            self.getFriendPosts()
+        } */
     }
 
     @objc func notifyEditMap(_ notification: NSNotification) {
@@ -180,7 +178,7 @@ extension MapController {
         for map in UserDataModel.shared.userInfo.mapsList where map.memberIDs.contains(friendID) {
             for post in map.postsDictionary where post.value.posterID == friendID {
                 DispatchQueue.main.async {
-                    if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map.id}) {
+                    if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == map.id }) {
                         UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.key, spotID: post.value.spotID ?? "")
                     }
                 }
@@ -189,16 +187,17 @@ extension MapController {
     }
 
     @objc func enterForeground() {
-        /// check for activity indicator will begin animation
+        /* check for activity indicator will begin animation
         if !checkForActivityIndicator() {
             /// re-run fetch, listener might missed posts when app in background
             reRunMapFetch()
-        }
+        } */
     }
 
     @objc func notifyLogout() {
         userListener?.remove()
-        newPostListener?.remove()
+        mapsPostsListener?.remove()
+        friendsPostsListener?.remove()
         mapsListener?.remove()
         notiListener?.remove()
     }

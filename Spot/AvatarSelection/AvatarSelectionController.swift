@@ -13,23 +13,33 @@ import UIKit
 
 class AvatarSelectionController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
-    var friendRequests: [UserNotification] = []
+    private lazy var avatars: [String] = ["Bear", "Bunny", "Cow", "Deer", "Dog", "Elephant", "Giraffe", "Lion", "Monkey", "Panda", "Pig", "Tiger"].shuffled()
+    private lazy var friendRequests: [UserNotification] = []
+
+    private var centerCell: AvatarCell?
+    private lazy var centerAvi = CGPoint(x: 0.0, y: 0.0)
+    private lazy var sentFrom: SentFrom = .map
+    var onDoneBlock: ((String, String) -> Void)?
 
     private let myCollectionViewFlowLayout = MyCollectionViewFlowLayout()
-    var collectionView: UICollectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: UICollectionViewLayout())
-    var centerCell: AvatarCell!
-
-    var centerAvi = CGPoint(x: 0.0, y: 0.0)
-    var sentFrom: SentFrom!
+    private lazy var collectionView: UICollectionView = {
+        let collectionView = UICollectionView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 189), collectionViewLayout: UICollectionViewLayout())
+        collectionView.backgroundColor = .white
+        collectionView.isScrollEnabled = true
+        collectionView.allowsSelection = true
+        collectionView.collectionViewLayout = self.myCollectionViewFlowLayout
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.register(AvatarCell.self, forCellWithReuseIdentifier: "AvatarCell")
+        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
+        collectionView.translatesAutoresizingMaskIntoConstraints = true
+        return collectionView
+    }()
 
     enum SentFrom {
         case create
         case map
         case edit
     }
-
-    var onDoneBlock: ((String, String) -> Void)?
 
     init(sentFrom: SentFrom) {
         super.init(nibName: nil, bundle: nil)
@@ -63,10 +73,10 @@ class AvatarSelectionController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "AvatarSelectionAppeared")
         DispatchQueue.main.async {
-            if self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as! AvatarCell) {
+            if self.centerCell != (self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as? AvatarCell) {
                 if let cell = self.collectionView.cellForItem(at: IndexPath(item: 5, section: 0)) as? AvatarCell {
                     self.centerCell = cell
-                    self.centerCell!.transformToLarge()
+                    self.centerCell?.transformToLarge()
                 }
             }
         }
@@ -81,7 +91,8 @@ class AvatarSelectionController: UIViewController {
     }
 
     func setUp() {
-        /// hardcode cell height in case its laid out before view fully appears -> hard code body height so mask stays with cell change
+        // hardcode cell height in case its laid out before view fully appears
+        // hard code body height so mask stays with cell change
         resetCell()
 
         let title = UILabel {
@@ -106,19 +117,9 @@ class AvatarSelectionController: UIViewController {
             $0.centerX.equalToSuperview()
         }
 
-        // acts up if I set up the view using the other style
-        collectionView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 189)
-        collectionView.backgroundColor = .white
         collectionView.delegate = self
         collectionView.dataSource = self
-        collectionView.isScrollEnabled = true
-        collectionView.allowsSelection = true
-        collectionView.collectionViewLayout = self.myCollectionViewFlowLayout
-        collectionView.showsHorizontalScrollIndicator = false
-        collectionView.register(AvatarCell.self, forCellWithReuseIdentifier: "AvatarCell")
-        collectionView.translatesAutoresizingMaskIntoConstraints = true
         view.addSubview(collectionView)
-
         collectionView.snp.makeConstraints {
             $0.top.equalTo(subTitle.snp.bottom).offset(16)
             $0.width.equalToSuperview()
@@ -131,12 +132,12 @@ class AvatarSelectionController: UIViewController {
             var customButtonTitle = NSMutableAttributedString()
             if sentFrom == .create {
                 customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15)!,
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
             } else {
                 customButtonTitle = NSMutableAttributedString(string: "Select", attributes: [
-                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15)!,
+                    NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
                     NSAttributedString.Key.foregroundColor: UIColor.black
                 ])
             }
@@ -182,47 +183,43 @@ class AvatarSelectionController: UIViewController {
         }
 
         guard scrollView is UICollectionView else {
-            return}
-        /// finding cell at the center
-        // let center = self.view.convert(self.collectionView.center, to: self.collectionView)
-
+            return }
+        // finding cell at the center
         DispatchQueue.main.async { [self] in
             let center = self.view.convert(self.collectionView.center, to: self.collectionView)
             if let indexPath = self.collectionView.indexPathForItem(at: center) {
                 Mixpanel.mainInstance().track(event: "AvatarSelectionScrollNewAvatar")
-                self.centerCell = (self.collectionView.cellForItem(at: indexPath) as! AvatarCell)
-                self.centerCell?.transformToLarge()
+                if let cell = self.collectionView.cellForItem(at: indexPath) as? AvatarCell {
+                    self.centerCell = cell
+                    self.centerCell?.transformToLarge()
+                }
             }
         }
     }
 
     func transformToStandard() {
-        self.centerCell.avatarImage?.alpha = 1.0
-        self.centerCell.avatarImage?.snp.updateConstraints {
-            $0.height.equalTo(72.8)
-            $0.width.equalTo(50)
-        }
+        centerCell?.transformToStandard()
     }
 
     @objc func selectedTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "AvatarSelectionSelectTap")
-        let avatarURL = AvatarURLs.shared.getURL(name: centerCell.avatar!)
+        let avatarURL = AvatarURLs.shared.getURL(name: centerCell?.avatar ?? "")
         if sentFrom != .edit {
             UserDataModel.shared.userInfo.avatarURL = avatarURL
-            UserDataModel.shared.userInfo.avatarPic = UIImage(named: centerCell.avatar!)!
+            UserDataModel.shared.userInfo.avatarPic = UIImage(named: centerCell?.avatar ?? "") ?? UIImage()
             let db = Firestore.firestore()
             db.collection("users").document(uid).updateData(["avatarURL": avatarURL])
         }
 
-        if sentFrom == .map {
+       /* if sentFrom == .map {
             self.navigationController?.popViewController(animated: true)
 
-        } else if sentFrom == .create {
+        } else */ if sentFrom == .map {
             let vc = SearchContactsOverviewController()
             self.navigationController?.pushViewController(vc, animated: true)
 
         } else {
-            onDoneBlock!(avatarURL, centerCell.avatar!)
+            onDoneBlock?(avatarURL, centerCell?.avatar ?? "")
             self.presentingViewController?.dismiss(animated: false, completion: nil)
         }
     }
@@ -236,7 +233,9 @@ extension AvatarSelectionController: UICollectionViewDelegate, UICollectionViewD
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AvatarCell", for: indexPath) as? AvatarCell else { return UICollectionViewCell() }
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AvatarCell", for: indexPath) as? AvatarCell else {
+            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        }
         cell.setUp(avatar: avatars[indexPath.row])
         return cell
     }
@@ -248,7 +247,6 @@ extension AvatarSelectionController: UICollectionViewDelegate, UICollectionViewD
 }
 
 final class MyCollectionViewFlowLayout: UICollectionViewFlowLayout {
-
     override func prepare() {
         super.prepare()
         scrollDirection = .horizontal
@@ -260,8 +258,8 @@ final class MyCollectionViewFlowLayout: UICollectionViewFlowLayout {
     override func targetContentOffset(forProposedContentOffset proposedContentOffset: CGPoint, withScrollingVelocity velocity: CGPoint) -> CGPoint {
         // snap to center
         var offsetAdjustment = CGFloat.greatestFiniteMagnitude
-        let horizontalOffset = proposedContentOffset.x + collectionView!.contentInset.left
-        let targetRect = CGRect(x: proposedContentOffset.x, y: 0, width: collectionView!.bounds.size.width, height: collectionView!.bounds.size.height)
+        let horizontalOffset = proposedContentOffset.x + (collectionView?.contentInset.left ?? 0)
+        let targetRect = CGRect(x: proposedContentOffset.x, y: 0, width: (collectionView?.bounds.size.width ?? 0), height: (collectionView?.bounds.size.height ?? 0))
         let layoutAttributesArray = super.layoutAttributesForElements(in: targetRect)
         layoutAttributesArray?.forEach({ (layoutAttributes) in
             let itemOffset = layoutAttributes.frame.origin.x
@@ -270,68 +268,5 @@ final class MyCollectionViewFlowLayout: UICollectionViewFlowLayout {
             }
         })
         return CGPoint(x: proposedContentOffset.x + offsetAdjustment + 10, y: proposedContentOffset.y)
-    }
-}
-
-// MARK: avatar cell
-class AvatarCell: UICollectionViewCell {
-    var avatar: String?
-    var avatarImage: UIImageView!
-    var scaled = false
-
-    // variables for activity indicator that will be used later
-    lazy var activityIndicator = UIActivityIndicatorView()
-    var globalRow = 0
-
-    var directionUp = true
-    var animationIndex = 0
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-
-        avatarImage = UIImageView {
-            $0.alpha = 0.5
-            $0.contentMode = .scaleToFill
-            contentView.addSubview($0)
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    func setUp(avatar: String) {
-        self.avatar = avatar
-        avatarImage.image = UIImage(named: avatar)
-
-        avatarImage.snp.removeConstraints()
-        avatarImage.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            // bunny is small so need to make a little bigger
-            if avatar == "bunny" {
-                $0.width.equalTo(55)
-                $0.height.equalTo(77.08)
-            } else {
-                $0.width.equalTo(50)
-                $0.height.equalTo(72.08)
-            }
-            $0.centerX.equalToSuperview()
-        }
-    }
-
-    func transformToLarge() {
-        scaled = true
-        avatarImage.snp.removeConstraints()
-        UIView.animate(withDuration: 0.1) {
-            self.avatarImage.snp.makeConstraints {
-                $0.height.equalTo(89.4)
-                $0.width.equalTo(62)
-            }
-        }
-        avatarImage.alpha = 1.0
-    }
-
-    override func prepareForReuse() {
-        if avatarImage != nil { avatarImage.alpha = 0.5 }
     }
 }

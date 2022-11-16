@@ -58,6 +58,7 @@ class NewMapController: UIViewController {
         view.showsHorizontalScrollIndicator = false
         view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 100)
         view.register(MapMemberCell.self, forCellWithReuseIdentifier: "MapMemberCell")
+        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         return view
     }()
     private lazy var secretLabel: UILabel = {
@@ -401,7 +402,9 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapMemberCell", for: indexPath) as? MapMemberCell else { return UICollectionViewCell() }
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapMemberCell", for: indexPath) as? MapMemberCell else {
+            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        }
         if indexPath.row == 0 {
             let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
             cell.cellSetUp(user: user)

@@ -939,7 +939,7 @@ extension NSObject {
             db.collection("posts").whereField("mapID", isEqualTo: mapID).whereField("hideFromFeed", isEqualTo: true).getDocuments { snap, _ in
                 guard let snap = snap else { return }
                 for doc in snap.documents {
-                    doc.reference.updateData(["inviteList": inviteList])
+                    doc.reference.updateData(["inviteList": FieldValue.arrayUnion(inviteList)])
                 }
             }
         }

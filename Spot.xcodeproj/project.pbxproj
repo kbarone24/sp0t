@@ -90,9 +90,9 @@
 		599371B0234E468500204F59 /* SearchContactsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599371AF234E468500204F59 /* SearchContactsController.swift */; };
 		599371B1234E468500204F59 /* SearchContactsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599371AF234E468500204F59 /* SearchContactsController.swift */; };
 		599371B2234E468600204F59 /* SearchContactsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599371AF234E468500204F59 /* SearchContactsController.swift */; };
-		599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599BD2BA23C652BD00ECB84A /* PostViewController.swift */; };
-		599BD2BC23C652BD00ECB84A /* PostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599BD2BA23C652BD00ECB84A /* PostViewController.swift */; };
-		599BD2BD23C652BD00ECB84A /* PostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599BD2BA23C652BD00ECB84A /* PostViewController.swift */; };
+		599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599BD2BA23C652BD00ECB84A /* PostController.swift */; };
+		599BD2BC23C652BD00ECB84A /* PostController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599BD2BA23C652BD00ECB84A /* PostController.swift */; };
+		599BD2BD23C652BD00ECB84A /* PostController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599BD2BA23C652BD00ECB84A /* PostController.swift */; };
 		59A5A3CF253A873E00789B7E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */; };
 		59A5A3D0253A873E00789B7E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */; };
 		59A5A3D3253A874600789B7E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 59A5A3D1253A874600789B7E /* Info.plist */; };
@@ -418,6 +418,9 @@
 		8CE4C9472922B2440023FE8A /* ActivityIndicatorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */; };
 		8CE4C9482922B2440023FE8A /* ActivityIndicatorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */; };
 		8CE4C9492922B2440023FE8A /* ActivityIndicatorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */; };
+		8CE4C950292437600023FE8A /* AvatarCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C94F292437600023FE8A /* AvatarCell.swift */; };
+		8CE4C951292437600023FE8A /* AvatarCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C94F292437600023FE8A /* AvatarCell.swift */; };
+		8CE4C952292437600023FE8A /* AvatarCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4C94F292437600023FE8A /* AvatarCell.swift */; };
 		8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
 		8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
 		8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
@@ -549,7 +552,7 @@
 		598B700C2305E49500613AFD /* FriendRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendRequest.swift; sourceTree = "<group>"; };
 		598B70142314A78F00613AFD /* Spot.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Spot.entitlements; sourceTree = "<group>"; };
 		599371AF234E468500204F59 /* SearchContactsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchContactsController.swift; sourceTree = "<group>"; };
-		599BD2BA23C652BD00ECB84A /* PostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostViewController.swift; sourceTree = "<group>"; };
+		599BD2BA23C652BD00ECB84A /* PostController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostController.swift; sourceTree = "<group>"; };
 		59A5A3CD253A873E00789B7E /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		59A5A3D1253A874600789B7E /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		59BA812224D9C9CB00FFCDFA /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
@@ -682,6 +685,7 @@
 		8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampExtension.swift; sourceTree = "<group>"; };
 		8CE4C9422922B2150023FE8A /* NotificationsTableExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsTableExtension.swift; sourceTree = "<group>"; };
 		8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityIndicatorCell.swift; sourceTree = "<group>"; };
+		8CE4C94F292437600023FE8A /* AvatarCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarCell.swift; sourceTree = "<group>"; };
 		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
 		8CFD73E92757E4FD00CBD162 /* TagCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagCategory.swift; sourceTree = "<group>"; };
 		994C18FD0D847CBE77336F96 /* Pods-Spot.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.release.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.release.xcconfig"; sourceTree = "<group>"; };
@@ -810,6 +814,7 @@
 				1DF6E06822089FD400BA0C36 /* Resources */,
 				CDF8E93B2903A18000BE929F /* Services */,
 				1DF6E06622089F8D00BA0C36 /* Models */,
+				8CE4C94E292437310023FE8A /* AvatarSelection */,
 				CDF8E9672904617500BE929F /* AVCamera */,
 				CDF8E96C2904623600BE929F /* ChooseSpot */,
 				CDF8E96D2904627000BE929F /* ChooseMap */,
@@ -890,7 +895,17 @@
 			children = (
 				8C1E4893289C54CB0093030D /* Nibs */,
 				8C1E4883289C54CB0093030D /* NibWindows */,
-				8C298794268FAC600071E75A /* SupplementalViews */,
+				8CAC69E326FD29A500E8B04E /* CameraAndGallery */,
+				59BAF9D72360FBEB00F607B7 /* CustomActivityIndicator.swift */,
+				5FDAF23D2858FD06001EDC57 /* DrawerView.swift */,
+				8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */,
+				8C3B955928B2B47100C06586 /* AddSpotButton.swift */,
+				8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */,
+				8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */,
+				8C4FDFC228DAB2F800A3B479 /* UsernameLabel.swift */,
+				8C66226528F0AFD400BA5D05 /* SpotSearchBar.swift */,
+				8C66226728F4C05400BA5D05 /* PillButtonWithImage.swift */,
+				8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */,
 				CD239A1028FFD5AC0099513F /* PaddedTextField.swift */,
 				8C1E4877289C54C10093030D /* SpotPostAnnotationView.swift */,
 				8C1E4879289C54C10093030D /* SpotNameAnnotationView.swift */,
@@ -936,7 +951,6 @@
 		4124E7D7286362D8002543DD /* HelperControllers */ = {
 			isa = PBXGroup;
 			children = (
-				8C3B953528AD533100C06586 /* AvatarSelectionController.swift */,
 				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
 				413BA164287C917000FD80AF /* FriendsListController.swift */,
 				8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */,
@@ -1015,7 +1029,7 @@
 		8C12E66E2909C01600FA5BF0 /* Post */ = {
 			isa = PBXGroup;
 			children = (
-				599BD2BA23C652BD00ECB84A /* PostViewController.swift */,
+				599BD2BA23C652BD00ECB84A /* PostController.swift */,
 				8C3B952528AC042B00C06586 /* PostCell.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 				8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */,
@@ -1125,24 +1139,6 @@
 			path = HelperObjects;
 			sourceTree = "<group>";
 		};
-		8C298794268FAC600071E75A /* SupplementalViews */ = {
-			isa = PBXGroup;
-			children = (
-				8CAC69E326FD29A500E8B04E /* CameraAndGallery */,
-				59BAF9D72360FBEB00F607B7 /* CustomActivityIndicator.swift */,
-				5FDAF23D2858FD06001EDC57 /* DrawerView.swift */,
-				8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */,
-				8C3B955928B2B47100C06586 /* AddSpotButton.swift */,
-				8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */,
-				8C4FDFBE28DAA94300A3B479 /* RightAlignedAvatarView.swift */,
-				8C4FDFC228DAB2F800A3B479 /* UsernameLabel.swift */,
-				8C66226528F0AFD400BA5D05 /* SpotSearchBar.swift */,
-				8C66226728F4C05400BA5D05 /* PillButtonWithImage.swift */,
-				8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */,
-			);
-			path = SupplementalViews;
-			sourceTree = "<group>";
-		};
 		8C298795268FACE80071E75A /* HelperFunctions */ = {
 			isa = PBXGroup;
 			children = (
@@ -1222,6 +1218,15 @@
 				8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */,
 			);
 			path = FirebaseExtensions;
+			sourceTree = "<group>";
+		};
+		8CE4C94E292437310023FE8A /* AvatarSelection */ = {
+			isa = PBXGroup;
+			children = (
+				8C3B953528AD533100C06586 /* AvatarSelectionController.swift */,
+				8CE4C94F292437600023FE8A /* AvatarCell.swift */,
+			);
+			path = AvatarSelection;
 			sourceTree = "<group>";
 		};
 		8CF5A5BB26F40F6900320033 /* Singletons */ = {
@@ -1845,7 +1850,7 @@
 				5FDAF23E2858FD06001EDC57 /* DrawerView.swift in Sources */,
 				8C8DBB762888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				593AC545243E56D400C08237 /* LandingPageController.swift in Sources */,
-				599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */,
+				599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */,
 				CDF8E985290477C200BE929F /* CustomMapCollectionExtension.swift in Sources */,
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
 				8C8DBB822888BE9300B31BFD /* NewMapController.swift in Sources */,
@@ -1900,6 +1905,7 @@
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C1E48CF289C57650093030D /* ProfileHeaderCell.swift in Sources */,
 				CD3D8DDB29050A970062DE8D /* AddMapCell.swift in Sources */,
+				8CE4C950292437600023FE8A /* AvatarCell.swift in Sources */,
 				5F9D0CDF2853B53E007969AD /* BottomDrawerViewController.swift in Sources */,
 				CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */,
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
@@ -1971,7 +1977,7 @@
 				8C4918AE2919A9F6002D95DB /* ContactsFetcher.swift in Sources */,
 				8C66E10E291ABB8D006D29F6 /* SearchContactsCell.swift in Sources */,
 				8C1E489B289C54CB0093030D /* FriendPostView.swift in Sources */,
-				599BD2BC23C652BD00ECB84A /* PostViewController.swift in Sources */,
+				599BD2BC23C652BD00ECB84A /* PostController.swift in Sources */,
 				8C4918B22919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */,
 				59004E1522CA5CA1004E06EF /* NameController.swift in Sources */,
 				8C4FDFC428DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
@@ -2015,6 +2021,7 @@
 				8CA10A242911B20700DD50EB /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				8CA512AE28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */,
 				59826EA0244FA078004B858F /* PhotoGalleryController.swift in Sources */,
+				8CE4C951292437600023FE8A /* AvatarCell.swift in Sources */,
 				8C214BBA260C276D00E0C4FC /* NewUser.swift in Sources */,
 				597A626F25A8F9910052C560 /* Tag.swift in Sources */,
 				8C0DCBC125BA5FE000722D34 /* POI.swift in Sources */,
@@ -2090,7 +2097,7 @@
 				8C4918AF2919A9F6002D95DB /* ContactsFetcher.swift in Sources */,
 				8C66E10F291ABB8D006D29F6 /* SearchContactsCell.swift in Sources */,
 				8C1E489C289C54CB0093030D /* FriendPostView.swift in Sources */,
-				599BD2BD23C652BD00ECB84A /* PostViewController.swift in Sources */,
+				599BD2BD23C652BD00ECB84A /* PostController.swift in Sources */,
 				8C4918B32919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */,
 				59004E1622CA5CA1004E06EF /* NameController.swift in Sources */,
 				8C4FDFC528DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
@@ -2134,6 +2141,7 @@
 				8CA10A252911B20700DD50EB /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				8CA512AF28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */,
 				59826EA1244FA078004B858F /* PhotoGalleryController.swift in Sources */,
+				8CE4C952292437600023FE8A /* AvatarCell.swift in Sources */,
 				8C214BBB260C276D00E0C4FC /* NewUser.swift in Sources */,
 				597A627025A8F9910052C560 /* Tag.swift in Sources */,
 				8C0DCBC225BA5FE000722D34 /* POI.swift in Sources */,
@@ -2331,7 +2339,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 39;
+				CURRENT_PROJECT_VERSION = 40;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2402,7 +2410,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 39;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;

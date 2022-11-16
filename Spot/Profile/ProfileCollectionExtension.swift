@@ -24,7 +24,9 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
-        guard let userProfile = userProfile else { return UICollectionViewCell() }
+        guard let userProfile = userProfile else {
+            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        }
         if let headerCell = cell as? ProfileHeaderCell {
             headerCell.cellSetup(userProfile: userProfile, relation: relation)
             headerCell.actionButton.addTarget(self, action: #selector(actionButtonTap), for: .touchUpInside)

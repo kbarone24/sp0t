@@ -37,6 +37,7 @@ class FriendRequestCollectionCell: UITableViewCell {
         collectionView.isScrollEnabled = true
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.register(FriendRequestCell.self, forCellWithReuseIdentifier: "FriendRequestCell")
+        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         return collectionView
     }()
 
@@ -76,7 +77,9 @@ extension FriendRequestCollectionCell: UICollectionViewDelegate, UICollectionVie
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FriendRequestCell", for: indexPath) as? FriendRequestCell else { return UICollectionViewCell() }
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FriendRequestCell", for: indexPath) as? FriendRequestCell else {
+            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        }
         cell.collectionDelegate = self
         cell.setValues(notification: friendRequests[indexPath.row])
         // cell.globalRow = indexPath.row

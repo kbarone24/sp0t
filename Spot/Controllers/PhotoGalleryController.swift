@@ -48,6 +48,7 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         collectionView.showsVerticalScrollIndicator = false
         collectionView.register(GalleryCell.self, forCellWithReuseIdentifier: "GalleryCell")
         collectionView.register(SelectedImagesFooter.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: "SelectedFooter")
+        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: -50, right: 0)
         collectionView.isUserInteractionEnabled = true
         collectionView.allowsSelection = true
@@ -193,8 +194,9 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "GalleryCell", for: indexPath) as? GalleryCell else { return UICollectionViewCell() }
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "GalleryCell", for: indexPath) as? GalleryCell else {
+            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        }
 
         if let imageObject = UploadPostModel.shared.imageObjects[safe: indexPath.row] {
             let selected = UploadPostModel.shared.selectedObjects.contains(where: { $0.id == imageObject.0.id })

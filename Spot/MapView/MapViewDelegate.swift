@@ -14,14 +14,13 @@ import UIKit
 
 // functions for loading nearby spots in nearby view
 extension MapController: MKMapViewDelegate {
-
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
         var selectedMap = getSelectedMap()
         if selectedMap == nil { selectedMap = getFriendsMapObject() }
 
         if let anno = annotation as? SpotAnnotation {
-            /// set up spot post view with 1 post
+            // set up spot post view with 1 post
             return mapView.getSpotAnnotation(anno: anno, selectedMap: selectedMap)
 
         } else if let anno = annotation as? MKClusterAnnotation {
@@ -38,7 +37,7 @@ extension MapController: MKMapViewDelegate {
         var coordinates = getSortedCoordinates()
         /// add fist 10 post coordiates to set location for map with no new posts
         if coordinates.isEmpty && map != nil {
-            for location in map!.postLocations.prefix(10) { coordinates.append(CLLocationCoordinate2D(latitude: location["lat"] ?? 0.0, longitude: location["long"] ?? 0.0)) }
+            for location in map?.postLocations.prefix(10) ?? [] { coordinates.append(CLLocationCoordinate2D(latitude: location["lat"] ?? 0.0, longitude: location["long"] ?? 0.0)) }
         }
 
         let region = MKCoordinateRegion(coordinates: coordinates, overview: true)
@@ -93,33 +92,42 @@ extension MapController: MKMapViewDelegate {
     }
 
     func animateToMostRecentPost() {
-        var map = getSelectedMap()
-        if map == nil { map = getFriendsMapObject() }
-        let group = map!.postGroup
+        let map = getSelectedMap() ?? getFriendsMapObject()
+        let group = map.postGroup
         let coordinate = mapView.sortPostGroup(group).first?.coordinate
         animateTo(coordinate: coordinate)
     }
 
     func animateTo(coordinate: CLLocationCoordinate2D?) {
-        if coordinate != nil {
-            DispatchQueue.main.async { self.mapView.setRegion(MKCoordinateRegion(center: coordinate!, span: MKCoordinateSpan(latitudeDelta: 0.001_39, longitudeDelta: 0.001_39)), animated: true) }
+        if let coordinate {
+            DispatchQueue.main.async { self.mapView.setRegion(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.001_39, longitudeDelta: 0.001_39)), animated: true) }
         }
     }
 
     func offsetCustomMapCenter() {
         DispatchQueue.main.async { self.centerMapOnMapPosts(animated: false) }
     }
+
+    func getSortedCoordinates() -> [CLLocationCoordinate2D] {
+        let map = getSelectedMap()
+        /// filter for spots without posts
+        let group = map == nil ? postGroup.filter({ !$0.postIDs.isEmpty }) : map?.postGroup.filter({ !$0.postIDs.isEmpty })
+        guard var group else { return [] }
+
+        if group.contains(where: { $0.postIDs.contains(where: { !$0.seen }) }) { group = group.filter({ $0.postIDs.contains(where: { !$0.seen }) })}
+        group = mapView.sortPostGroup(group)
+        return group.map({ $0.coordinate })
+    }
 }
 
 extension MapController: SpotMapViewDelegate {
     func openPostFromSpotPost(view: SpotPostAnnotationView) {
-        var map = getSelectedMap()
-        if map == nil { map = getFriendsMapObject() }
+        let map = getSelectedMap() ?? getFriendsMapObject()
         var posts: [MapPost] = []
         /// patch fix for double post getting added
         for id in view.postIDs {
-            let post = map?.postsDictionary[id]
-            if !posts.contains(where: { $0.id ?? "" == post?.id ?? "" }) { posts.append(post!) }
+            guard let post = map.postsDictionary[id] else { continue }
+            if !posts.contains(where: { $0.id ?? "" == post.id ?? "" }) { posts.append(post) }
         }
         DispatchQueue.main.async { self.openPost(posts: posts) }
     }
@@ -135,19 +143,18 @@ extension MapController: SpotMapViewDelegate {
     }
 
     func centerMapOnPostsInCluster(view: SpotPostAnnotationView) {
-        var map = getSelectedMap()
-        if map == nil { map = getFriendsMapObject() }
+        let map = getSelectedMap() ?? getFriendsMapObject()
         var coordinates: [CLLocationCoordinate2D] = []
 
         for id in view.postIDs {
-            if let post = map!.postsDictionary[id] { coordinates.append(post.coordinate) }
+            if let post = map.postsDictionary[id] { coordinates.append(post.coordinate) }
         }
         let region = MKCoordinateRegion(coordinates: coordinates, overview: false)
         DispatchQueue.main.async { self.mapView.setRegion(region, animated: true) }
     }
 }
 
-protocol SpotMapViewDelegate {
+protocol SpotMapViewDelegate: AnyObject {
     func openPostFromSpotPost(view: SpotPostAnnotationView)
     func openSpotFromSpotPost(view: SpotPostAnnotationView)
     func openSpotFromSpotName(view: SpotNameAnnotationView)
@@ -194,15 +201,15 @@ class SpotMapView: MKMapView {
     }
 
     func addPostAnnotation(group: MapPostGroup?, newGroup: Bool, map: CustomMap) {
-        if group != nil {
+        if let group {
             if newGroup {
                 /// add new group
-                addSpotAnnotation(group: group!, map: map)
+                addSpotAnnotation(group: group, map: map)
             } else {
                 /// update existing group
-                if let anno = annotations.first(where: { $0.coordinate.isEqualTo(coordinate: group!.coordinate) }) {
+                if let anno = annotations.first(where: { $0.coordinate.isEqualTo(coordinate: group.coordinate) }) {
                     removeAnnotation(anno)
-                    addSpotAnnotation(group: group!, map: map)
+                    addSpotAnnotation(group: group, map: map)
                 }
             }
         }
@@ -234,9 +241,10 @@ class SpotMapView: MKMapView {
     }
 
     func addSpotAnnotationsOnZoom(map: CustomMap?) {
-        if map == nil { return }
-        for group in map!.postGroup.filter({ $0.postIDs.isEmpty }) {
-            DispatchQueue.main.async { self.addSpotAnnotation(group: group, map: map!) }
+        if let map {
+            for group in map.postGroup.filter({ $0.postIDs.isEmpty }) {
+                DispatchQueue.main.async { self.addSpotAnnotation(group: group, map: map) }
+            }
         }
     }
 
@@ -264,19 +272,22 @@ class SpotMapView: MKMapView {
     }
 
     func getSpotAnnotation(anno: SpotAnnotation, selectedMap: CustomMap?) -> MKAnnotationView {
-        guard selectedMap != nil, let group = selectedMap!.postGroup.first(where: { $0.id == anno.id }) else { return MKAnnotationView() }
+        guard let selectedMap, let group = selectedMap.postGroup.first(where: { $0.id == anno.id }) else { return MKAnnotationView() }
         var posts: [MapPost] = []
-        for id in group.postIDs.map({ $0.id }) { posts.append(selectedMap!.postsDictionary[id]!) }
+        for id in group.postIDs.map({ $0.id }) {
+            guard let post = selectedMap.postsDictionary[id] else { continue }
+            posts.append(post)
+        }
 
         return !posts.isEmpty ? getSpotPostAnnotation(anno: anno, posts: posts, group: group, cluster: false, spotCluster: false) : getSpotNameAnnotation(anno: anno, group: group)
     }
 
     func getSpotClusterAnnotation(anno: MKClusterAnnotation, selectedMap: CustomMap?) -> MKAnnotationView {
-        if selectedMap == nil { return MKAnnotationView() }
+        guard let selectedMap else { return MKAnnotationView() }
         var selectedPostGroup: [MapPostGroup] = []
         /// each member has a post group -> get all the post groups
         for annotation in anno.memberAnnotations {
-            if let member = annotation as? SpotAnnotation, let group = selectedMap!.postGroup.first(where: { $0.id == member.id }) { selectedPostGroup.append(group) }
+            if let member = annotation as? SpotAnnotation, let group = selectedMap.postGroup.first(where: { $0.id == member.id }) { selectedPostGroup.append(group) }
         }
         /// sort post groups for display and get all posts in cluster
         var posts: [MapPost] = []
@@ -284,7 +295,10 @@ class SpotMapView: MKMapView {
         guard let firstPostGroup = selectedPostGroup.first else { return MKAnnotationView() }
 
         for group in selectedPostGroup {
-            for id in group.postIDs.map({ $0.id }) { posts.append((selectedMap!.postsDictionary[id])!) }
+            for id in group.postIDs.map({ $0.id }) {
+                guard let post = selectedMap.postsDictionary[id] else { continue }
+                posts.append(post)
+            }
         }
 
         let spotCluster = selectedPostGroup.count > 1
@@ -363,133 +377,5 @@ class SpotMapView: MKMapView {
         }
         /// > 1000 = required annotation, dont want this
         return min(900, spotScore)
-    }
-}
-
-// supplementary methods for offsetCenterCoordinate
-extension CLLocationCoordinate2D {
-    var location: CLLocation {
-        return CLLocation(latitude: latitude, longitude: longitude)
-    }
-
-    private func radians(from degrees: CLLocationDegrees) -> Double {
-        return degrees * .pi / 180.0
-    }
-
-    private func degrees(from radians: Double) -> CLLocationDegrees {
-        return radians * 180.0 / .pi
-    }
-
-    func adjust(by distance: CLLocationDistance, at bearing: CLLocationDegrees) -> CLLocationCoordinate2D {
-
-        let distanceRadians = distance / 6_371.0   // 6,371 = Earth's radius in km
-        let bearingRadians = radians(from: bearing)
-        let fromLatRadians = radians(from: latitude)
-        let fromLonRadians = radians(from: longitude)
-
-        let toLatRadians = asin( sin(fromLatRadians) * cos(distanceRadians)
-                                 + cos(fromLatRadians) * sin(distanceRadians) * cos(bearingRadians) )
-
-        var toLonRadians = fromLonRadians + atan2(sin(bearingRadians)
-                                                  * sin(distanceRadians) * cos(fromLatRadians), cos(distanceRadians)
-                                                  - sin(fromLatRadians) * sin(toLatRadians))
-
-        // adjust toLonRadians to be in the range -180 to +180...
-        toLonRadians = fmod((toLonRadians + 3.0 * .pi), (2.0 * .pi)) - .pi
-
-        let result = CLLocationCoordinate2D(latitude: degrees(from: toLatRadians), longitude: degrees(from: toLonRadians))
-
-        return result
-    }
-
-    func isEqualTo(coordinate: CLLocationCoordinate2D) -> Bool {
-        return location.coordinate.latitude == coordinate.latitude && location.coordinate.longitude == coordinate.longitude
-    }
-}
-///https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
-
-// Supposed to exclude invalid geoQuery regions. Not sure how well it works
-extension MKCoordinateRegion {
-    var maxSpan: Double {
-        get {
-            return 200
-        }
-    }
-
-    init(coordinates: [CLLocationCoordinate2D], overview: Bool) {
-        self.init()
-
-        if coordinates.isEmpty {
-            self.init(center: UserDataModel.shared.currentLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15))
-            return
-        }
-        let minSpan = 0.001
-      //  let minSpan = overview ? 0.001 : 0.0001
-        var span = MKCoordinateSpan(latitudeDelta: 0.0, longitudeDelta: 0.0)
-        var minLatitude: CLLocationDegrees = coordinates.first!.latitude
-        var maxLatitude: CLLocationDegrees = coordinates.first!.latitude
-        var minLongitude: CLLocationDegrees = coordinates.first!.longitude
-        var maxLongitude: CLLocationDegrees = coordinates.first!.longitude
-
-        for coordinate in coordinates {
-            /// set local variables in case continue called before completion
-            var minLat = minLatitude
-            var maxLat = maxLatitude
-            var minLong = minLongitude
-            var maxLong = maxLongitude
-
-            let lat = Double(coordinate.latitude)
-            let long = Double(coordinate.longitude)
-            if lat < minLatitude {
-                if spanOutOfRange(span: MKCoordinateSpan(latitudeDelta: maxLatitude - lat, longitudeDelta: span.longitudeDelta).getAdjustedSpan()) { continue }
-                minLat = lat
-            }
-            if lat > maxLatitude {
-                if spanOutOfRange(span: MKCoordinateSpan(latitudeDelta: lat - minLatitude, longitudeDelta: span.longitudeDelta).getAdjustedSpan()) { continue }
-                maxLat = lat
-            }
-            if long < minLongitude {
-                if spanOutOfRange(span: MKCoordinateSpan(latitudeDelta: span.latitudeDelta, longitudeDelta: maxLongitude - long).getAdjustedSpan()) { continue }
-                minLong = long
-            }
-            if long > maxLongitude {
-                if spanOutOfRange(span: MKCoordinateSpan(latitudeDelta: span.latitudeDelta, longitudeDelta: long - minLongitude).getAdjustedSpan()) { continue }
-                maxLong = long
-            }
-
-            minLatitude = minLat
-            maxLatitude = maxLat
-            minLongitude = minLong
-            maxLongitude = maxLong
-            span = MKCoordinateSpan(latitudeDelta: max(minSpan, maxLatitude - minLatitude), longitudeDelta: max(minSpan, maxLongitude - minLongitude)).getAdjustedSpan()
-        }
-        let center = CLLocationCoordinate2DMake((minLatitude + maxLatitude) / 2, (minLongitude + maxLongitude) / 2)
-        self.init(center: center, span: span)
-    }
-
-    ///https://stackoverflow.com/questions/14374030/center-coordinate-of-a-set-of-cllocationscoordinate2d
-    func spanOutOfRange(span: MKCoordinateSpan) -> Bool {
-        let span = span.getAdjustedSpan()
-        return span.latitudeDelta > maxSpan || span.longitudeDelta > maxSpan
-    }
-}
-
-extension MKCoordinateSpan {
-    func getAdjustedSpan() -> MKCoordinateSpan {
-        return MKCoordinateSpan(latitudeDelta: latitudeDelta * 2.0, longitudeDelta: longitudeDelta * 2.0)
-    }
-}
-
-extension MKMapView {
-    /// get radius
-    func topCenterCoordinate() -> CLLocationCoordinate2D {
-        return self.convert(CGPoint(x: self.frame.size.width / 2.0, y: 0), toCoordinateFrom: self)
-    }
-
-    func currentRadius() -> Double {
-        let centerLocation = CLLocation(latitude: self.centerCoordinate.latitude, longitude: self.centerCoordinate.longitude)
-        let topCenterCoordinate = self.topCenterCoordinate()
-        let topCenterLocation = CLLocation(latitude: topCenterCoordinate.latitude, longitude: topCenterCoordinate.longitude)
-        return centerLocation.distance(from: topCenterLocation)
     }
 }
