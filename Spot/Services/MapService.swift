@@ -16,9 +16,14 @@ protocol MapServiceProtocol {
     func fetchMapPosts(id: String, limit: Int) async throws -> [MapPost]
     func joinMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
     func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
+    func getMap(mapID: String) async throws -> CustomMap
 }
 
 final class MapService: MapServiceProtocol {
+    
+    enum MapServiceError: Error {
+        case decodingError
+    }
     
     private let fireStore: Firestore
     
@@ -113,6 +118,9 @@ final class MapService: MapServiceProtocol {
             ) { error in
                 completion(error)
             }
+        
+        let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
+        mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: customMap.memberIDs, completion: nil)
     }
     
     func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void)) {
@@ -133,5 +141,32 @@ final class MapService: MapServiceProtocol {
             ) { error in
                 completion(error)
             }
+    }
+    
+    func getMap(mapID: String) async throws -> CustomMap {
+        try await withUnsafeThrowingContinuation { [weak self] continuation in
+            self?.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
+                .document(mapID)
+                .getDocument { document, error in
+                    do {
+                        guard error == nil, let document else {
+                            if let error = error {
+                                continuation.resume(throwing: error)
+                            }
+                            return
+                        }
+                        
+                        guard let data = try document.data(as: CustomMap.self) else {
+                            continuation.resume(throwing: MapServiceError.decodingError)
+                            return
+                        }
+                        
+                        continuation.resume(returning: data)
+                    } catch {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                }
+        }
     }
 }

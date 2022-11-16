@@ -23,6 +23,7 @@ class ConfirmCodeController: UIViewController {
         label.font = UIFont(name: "SFCompactText-Bold", size: 20)
         return label
     }()
+    
     private lazy var codeField: UITextField = {
         let textField = PaddedTextField()
         textField.font = UIFont(name: "SFCompactText-Semibold", size: 27.5)
@@ -60,6 +61,16 @@ class ConfirmCodeController: UIViewController {
     var cancelOnDismiss = false
     let sp0tb0tID = "T4KMLe3XlQaPBJvtZVArqXQvaNT2"
     var deleteAccountDelegate: DeleteAccountDelegate?
+    
+    private lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
+    
+    private lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -379,7 +390,7 @@ extension ConfirmCodeController {
         let timestamp = Timestamp(date: Date())
 
         for friendID in friendIDs {
-            addFriendToFriendsList(userID: friendID, friendID: uid)
+            friendService?.addFriendToFriendsList(userID: friendID, friendID: uid, completion: nil)
 
             db.collection("users").document(friendID).collection("notifications").addDocument(data: [
                 "status": "accepted",
@@ -389,6 +400,7 @@ extension ConfirmCodeController {
                 "type": "friendRequest",
                 "seen": false
             ])
+            
             db.collection("users").document(uid).collection("notifications").addDocument(data: [
                 "status": "accepted",
                 "timestamp": timestamp,
@@ -397,10 +409,11 @@ extension ConfirmCodeController {
                 "type": "friendRequest",
                 "seen": false
             ])
+            
             // call on frontend for immediate post adjust
             if friendID != sp0tb0tID {
-                DispatchQueue.global().async {
-                    self.adjustPostFriendsList(userID: uid, friendID: friendID, completion: nil)
+                DispatchQueue.global().async { [weak self] in
+                    self?.mapPostService?.adjustPostFriendsList(userID: uid, friendID: friendID, completion: nil)
                 }
             }
         }

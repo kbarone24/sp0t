@@ -21,6 +21,12 @@ final class MapPhotosCollectionView: UICollectionView {
         case extra(Int)
     }
     
+    private(set) var snapshot = Snapshot() {
+        didSet {
+            reloadData()
+        }
+    }
+    
     private lazy var datasource: DataSource = {
         let datasource = DataSource(collectionView: self) { collectionView, indexPath, item in
             
@@ -45,6 +51,7 @@ final class MapPhotosCollectionView: UICollectionView {
         allowsSelection = false
         backgroundColor = .white
         delegate = self
+        dataSource = self
         register(CustomMapBodyCell.self, forCellWithReuseIdentifier: CustomMapBodyCell.reuseID)
         register(ExtraCountCell.self, forCellWithReuseIdentifier: ExtraCountCell.reuseID)
     }
@@ -55,13 +62,37 @@ final class MapPhotosCollectionView: UICollectionView {
     }
     
     func configure(snapshot: Snapshot) {
-        if #available(iOS 15.0, *) {
-            datasource.applySnapshotUsingReloadData(snapshot)
-        } else {
-            datasource.apply(snapshot, animatingDifferences: false)
-        }
-        
+        // datasource.apply(snapshot, animatingDifferences: false)
+        self.snapshot = snapshot
         layoutIfNeeded()
+    }
+}
+
+extension MapPhotosCollectionView: UICollectionViewDataSource {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        let section = snapshot.sectionIdentifiers[section]
+        return snapshot.numberOfItems(inSection: section)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let section = snapshot.sectionIdentifiers[indexPath.section]
+        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
+        
+        switch item {
+        case .item(let mapPost):
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomMapBodyCell.reuseID, for: indexPath) as? CustomMapBodyCell else {
+                return UICollectionViewCell()
+            }
+            cell.cellSetup(postData: mapPost, transform: false)
+            return cell
+            
+        case .extra(let count):
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ExtraCountCell.reuseID, for: indexPath) as? ExtraCountCell else {
+                return UICollectionViewCell()
+            }
+            cell.configure(text: "\(count) more")
+            return cell
+        }
     }
 }
 

@@ -80,6 +80,9 @@ final class ExploreMapViewModel {
                 var snapshot = Snapshot()
                 snapshot.appendSections([.body(title: title)])
                 customMapData
+                    .sorted {
+                        $0.key.mapName.lowercased() < $1.key.mapName.lowercased()
+                    }
                     .forEach { data in
                         let isSelected: Bool
                         let buttonType: JoinButtonType
@@ -203,12 +206,8 @@ final class ExploreMapViewModel {
                     do {
                         var mapData: [CustomMap: [MapPost]] = [:]
                         let allMaps = try await self.service.fetchMaps()
-                        let customMaps = allMaps.sorted {
-                            (!$0.memberIDs.contains(UserDataModel.shared.uid) && $1.memberIDs.contains(UserDataModel.shared.uid))
-                            && ($0.mapName.lowercased() < $1.mapName.lowercased())
-                        }
                         
-                        for map in customMaps {
+                        for map in allMaps {
                             guard let id = map.id else { return }
                             mapData[map] = try await self.service.fetchMapPosts(id: id, limit: 7)
                         }

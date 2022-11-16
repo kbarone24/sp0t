@@ -77,6 +77,16 @@ class CustomMapController: UIViewController {
         button.setImage(UIImage(named: "BackArrowDark"), for: .normal)
         return button
     }()
+    
+    lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
+    
+    lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
 
     lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -170,13 +180,23 @@ class CustomMapController: UIViewController {
             runMapSetup()
             return
         }
-        DispatchQueue.global(qos: .userInitiated).async {
-            guard let mapID = self.mapData?.id else { return }
-            self.getMap(mapID: mapID) { [weak self] map in
-                guard let self = self else { return }
-                self.mapData = map
-                self.runMapSetup()
-                DispatchQueue.main.async { self.addInitialAnnotations() }
+        
+        Task { [weak self] in
+            do {
+                guard let mapID = self?.mapData?.id else {
+                    return
+                }
+                
+                let mapsService = try ServiceContainer.shared.service(for: \.mapsService)
+                let map = try await mapsService.getMap(mapID: mapID)
+                self?.mapData = map
+                self?.runMapSetup()
+                
+                DispatchQueue.main.async {
+                    self?.addInitialAnnotations()
+                }
+            } catch {
+                return
             }
         }
     }
