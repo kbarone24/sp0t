@@ -62,19 +62,12 @@ extension EditProfileViewController {
     @objc func saveAction() {
         Mixpanel.mainInstance().track(event: "EditProfileSave")
         self.activityIndicator.startAnimating()
-
         userProfile?.currentLocation = locationTextfield.text ?? ""
-        userProfile?.name = nameTextfield.text ?? ""
-        let lowercaseName = userProfile?.name.lowercased() ?? ""
-        let nameKeywords = lowercaseName.getKeywordArray()
 
         let userRef = db.collection("users").document(userProfile?.id ?? "")
         userRef.updateData([
-            "name": userProfile?.name ?? "",
             "currentLocation": userProfile?.currentLocation ?? "",
-            "avatarURL": userProfile?.avatarURL ?? "",
-            "lowercaseName": lowercaseName,
-            "nameKeywords": nameKeywords] as [String: Any])
+            "avatarURL": userProfile?.avatarURL ?? ""] as [String: Any])
 
         if profileChanged {
             updateProfileImage()

@@ -313,7 +313,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
     }
 
     @objc func backTapped(_ sender: UIButton) {
-        DispatchQueue.main.async { self.navigationController?.popViewController(animated: true) }
+        DispatchQueue.main.async { self.dismiss(animated: false, completion: nil) }
     }
 
     @objc func runUsernameQuery() {
