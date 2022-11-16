@@ -40,7 +40,7 @@ final class MapPostService: MapPostServiceProtocol {
                         return
                     }
                     for doc in snapshot.documents {
-                        doc.reference.updateData([FireBaseCollectionFields.inviteList.rawValue: inviteList])
+                        doc.reference.updateData([FireBaseCollectionFields.inviteList.rawValue: FieldValue.arrayUnion(inviteList)])
                     }
                 }
         }
