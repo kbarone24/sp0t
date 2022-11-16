@@ -25,7 +25,6 @@ protocol NotificationsDelegate: AnyObject {
 }
 
 class NotificationsController: UIViewController, UITableViewDelegate {
-
     lazy var notifications: [UserNotification] = []
     lazy var pendingFriendRequests: [UserNotification] = []
 

@@ -21,6 +21,7 @@ class SelectedImagesFooter: UICollectionReusableView {
         view.backgroundColor = nil
         view.showsHorizontalScrollIndicator = false
         view.register(SelectedImageCell.self, forCellWithReuseIdentifier: "ImageCell")
+        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         view.contentInset = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
         view.delegate = self
         view.dataSource = self
@@ -149,7 +150,9 @@ extension SelectedImagesFooter: UICollectionViewDelegate, UICollectionViewDataSo
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as? SelectedImageCell else { return UICollectionViewCell() }
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as? SelectedImageCell else {
+            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        }
         cell.setImageValues(object: UploadPostModel.shared.selectedObjects[indexPath.row])
         return cell
     }

@@ -14,7 +14,8 @@ import UIKit
 extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if feedLoaded {
+        if postsFetched {
+            // adjust for user in chapel hill
             let extraCells = 3
             return UserDataModel.shared.userInfo.mapsList.count + extraCells
         }
@@ -22,7 +23,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if !feedLoaded, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapLoadingCell", for: indexPath) as? MapLoadingCell {
+        if !userLoaded, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapLoadingCell", for: indexPath) as? MapLoadingCell {
             // display loading cell
             return cell
         }
@@ -46,7 +47,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             cell.isSelected = selectedItemIndex == indexPath.row
             return cell
         }
-        return UICollectionViewCell()
+        return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -73,7 +74,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
                 self.selectedItemIndex = index
                 self.setNewPostsButtonCount()
                 self.addMapAnnotations(index: index, reload: false)
-                if self.addFriendsView != nil { self.addFriendsView.removeFromSuperview() }
+                self.addFriendsView.removeFromSuperview()
                 if index != 0 { UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle() }
             }
         }
@@ -85,7 +86,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         let itemHeight = itemWidth * 0.95
         let firstItemWidth = itemWidth * 1.15
 
-        if feedLoaded {
+        if postsFetched {
             if indexPath.item == 0 {
                 // friends cell
                 return CGSize(width: firstItemWidth, height: itemHeight)
@@ -99,10 +100,9 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
 
     func addMapAnnotations(index: Int, reload: Bool) {
         mapView.removeAllAnnos()
-        var map = getSelectedMap()
+        let map = getSelectedMap() ?? getFriendsMapObject()
         // create temp map to represent friends map
-        if map == nil { map = getFriendsMapObject() }
-        for group in map!.postGroup { mapView.addSpotAnnotation(group: group, map: map!) }
+        for group in map.postGroup { mapView.addSpotAnnotation(group: group, map: map) }
 
         if !reload {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [weak self] in

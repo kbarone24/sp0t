@@ -131,12 +131,19 @@ class CommentsController: UIViewController {
         }
 
         profilePic = UIImageView {
-            $0.image = UserDataModel.shared.userInfo.profilePic
             $0.contentMode = .scaleAspectFill
             $0.layer.cornerRadius = 39 / 2
             $0.clipsToBounds = true
             footerView.addSubview($0)
         }
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+        profilePic.sd_setImage(
+            with: URL(string: UserDataModel.shared.userInfo.imageURL),
+            placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)),
+            options: .highPriority,
+            context: [.imageTransformer: transformer]
+        )
+
         profilePic.snp.makeConstraints {
             $0.leading.equalTo(13)
             $0.width.height.equalTo(39)

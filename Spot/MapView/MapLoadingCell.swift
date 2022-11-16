@@ -9,8 +9,15 @@
 import UIKit
 
 final class MapLoadingCell: UICollectionViewCell {
-    var activityIndicator: CustomActivityIndicator!
-    var label: UILabel!
+    lazy var activityIndicator = CustomActivityIndicator()
+    private lazy var label: UILabel = {
+        let label = UILabel()
+        label.text = "Loading maps"
+        label.textColor = .black.withAlphaComponent(0.5)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 12)
+        label.textAlignment = .center
+        return label
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -26,13 +33,7 @@ final class MapLoadingCell: UICollectionViewCell {
             $0.width.height.equalTo(30)
         }
 
-        label = UILabel {
-            $0.text = "Loading maps"
-            $0.textColor = .black.withAlphaComponent(0.5)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 12)
-            $0.textAlignment = .center
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(label)
         label.snp.makeConstraints {
             $0.top.equalTo(activityIndicator.snp.bottom).offset(5)
             $0.centerX.equalToSuperview()

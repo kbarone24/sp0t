@@ -31,6 +31,7 @@ class ProfileMyMapCell: UICollectionViewCell {
         view.layer.cornerRadius = 14
         view.isUserInteractionEnabled = false
         view.register(ProfileMyMapImageCollectionViewCell.self, forCellWithReuseIdentifier: "ProfileMyMapImageCollectionViewCell")
+        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         return view
     }()
 
@@ -108,7 +109,9 @@ extension ProfileMyMapCell: UICollectionViewDataSource, UICollectionViewDelegate
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let reuseID = "ProfileMyMapImageCollectionViewCell"
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseID, for: indexPath) as? ProfileMyMapImageCollectionViewCell else { return UICollectionViewCell() }
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseID, for: indexPath) as? ProfileMyMapImageCollectionViewCell else {
+            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        }
         cell.count = posts.count
         cell.imageURL = posts[indexPath.row].imageURLs.first ?? ""
         return cell

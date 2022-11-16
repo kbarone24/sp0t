@@ -41,6 +41,7 @@ class CustomMapController: UIViewController {
     var mapType: MapType = .customMap
     var centeredMap = false
     var ranSetUp = false
+    var cancelOnDismiss = false
 
     var circleQuery: GFSCircleQuery?
     let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("posts"))
@@ -65,7 +66,6 @@ class CustomMapController: UIViewController {
         button.setImage(UIImage(named: "BackArrowDark"), for: .normal)
         button.backgroundColor = .white
         button.setTitle("", for: .normal)
-        button.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
         button.layer.cornerRadius = 19
         return button
     }()
@@ -75,7 +75,6 @@ class CustomMapController: UIViewController {
     lazy var barBackButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage(named: "BackArrowDark"), for: .normal)
-        button.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
         return button
     }()
 
@@ -236,6 +235,7 @@ class CustomMapController: UIViewController {
         collectionView.isScrollEnabled = false
 
         guard let container = containerDrawerView else { return }
+        floatBackButton.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
         mapController?.view.insertSubview(floatBackButton, belowSubview: container.slideView)
         floatBackButton.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(15)
@@ -250,6 +250,7 @@ class CustomMapController: UIViewController {
             $0.height.equalTo(height)
         }
 
+        barBackButton.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
         barView.addSubview(barBackButton)
         barBackButton.snp.makeConstraints {
             $0.leading.equalTo(22)
@@ -343,6 +344,7 @@ class CustomMapController: UIViewController {
     }
 
     @objc func backButtonAction() {
+        cancelOnDismiss = true
         centeredMap = false // will prevent drawer to close on map move
         Mixpanel.mainInstance().track(event: "CustomMapBackTap")
         barBackButton.isHidden = true

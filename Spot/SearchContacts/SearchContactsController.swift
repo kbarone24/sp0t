@@ -84,7 +84,7 @@ class SearchContactsController: UIViewController {
         view.addSubview(actionButton)
         actionButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(18)
-            $0.bottom.equalTo(-71)
+            $0.bottom.equalTo(-48)
             $0.height.equalTo(51)
         }
 
@@ -92,7 +92,7 @@ class SearchContactsController: UIViewController {
         tableView.snp.makeConstraints {
             $0.top.equalTo(10)
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalTo(actionButton.snp.bottom)
+            $0.bottom.equalTo(actionButton.snp.top)
         }
 
         tableView.addSubview(activityIndicator)
@@ -122,10 +122,10 @@ class SearchContactsController: UIViewController {
         let contactsFetcher = ContactsFetcher()
         contactsFetcher.runFetch { contacts, err in
             if err != nil { print("err", err as Any) }
-            for contact in contacts {
+            for contact in contacts where !self.contacts.contains(contact) {
                 self.contacts.append(contact)
             }
-            self.contacts.sort(by: { $0.name < $1.name })
+            self.contacts.sort(by: { $0.username < $1.username })
             self.contactsFetched = true
             self.emptyState = self.contacts.isEmpty
             self.reloadViews(row: nil)
@@ -177,13 +177,7 @@ class SearchContactsController: UIViewController {
     }
 
     func animateToMap() {
-        let storyboard = UIStoryboard(name: "Map", bundle: nil)
-        guard let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as? MapController else { return }
-        let navController = UINavigationController(rootViewController: vc)
-        navController.modalPresentationStyle = .fullScreen
-
-        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
-        window?.rootViewController = navController
+        DispatchQueue.main.async { self.navigationController?.popToRootViewController(animated: true) }
     }
 }
 

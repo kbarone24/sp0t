@@ -103,7 +103,6 @@ final class MapService: MapServiceProtocol {
             completion(nil)
             return
         }
-        
         self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
             .document(mapID)
             .updateData(

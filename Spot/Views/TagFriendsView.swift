@@ -39,6 +39,7 @@ class TagFriendsView: UIView {
         collectionView.backgroundColor = nil
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.register(TagFriendCell.self, forCellWithReuseIdentifier: "TagFriendCell")
+        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         collectionView.contentInset = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -90,7 +91,7 @@ extension TagFriendsView: UICollectionViewDelegate, UICollectionViewDataSource, 
             cell.textColor = textColor
             return cell
         }
-        return UICollectionViewCell()
+        return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
