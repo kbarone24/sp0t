@@ -153,11 +153,12 @@ class LandingPageController: UIViewController {
 
     @objc func createAccountTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "LandingPageCreateAccountTap")
-        if let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "SignUp") as? NameController {
-            let navController = UINavigationController(rootViewController: vc)
-            navController.modalPresentationStyle = .fullScreen
-            self.present(navController, animated: false, completion: nil)
-        }
+        let vc = UsernameController()
+        let newUser = NewUser(name: "", username: "", phone: "")
+        vc.setNewUser(newUser: newUser)
+        let navController = UINavigationController(rootViewController: vc)
+        navController.modalPresentationStyle = .fullScreen
+        self.present(navController, animated: false, completion: nil)
     }
 
     @objc func loginWithPhoneTap(_ sender: UIButton) {

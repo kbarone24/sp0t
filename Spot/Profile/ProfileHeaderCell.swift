@@ -22,7 +22,6 @@ enum ProfileRelation {
 }
 
 class ProfileHeaderCell: UICollectionViewCell {
-
     private var profile: UserProfile?
     private var relation: ProfileRelation = .stranger
 
@@ -41,19 +40,10 @@ class ProfileHeaderCell: UICollectionViewCell {
         return imageView
     }()
 
-    private lazy var nameLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = .black
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-        label.text = ""
-        label.adjustsFontSizeToFitWidth = true
-        return label
-    }()
-
     private lazy var usernameLabel: UILabel = {
         let label = UILabel()
         label.textColor = .black
-        label.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
         label.text = ""
         label.adjustsFontSizeToFitWidth = true
         return label
@@ -110,8 +100,7 @@ class ProfileHeaderCell: UICollectionViewCell {
 
         let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
         profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
-
-        nameLabel.text = userProfile.name
+        print("height", usernameLabel.frame.height, usernameLabel.font.lineHeight)
         usernameLabel.text = userProfile.username
         locationButton.setTitle(userProfile.currentLocation, for: .normal)
         if userProfile.currentLocation == "" {
@@ -170,26 +159,18 @@ extension ProfileHeaderCell {
             $0.width.equalTo(36)
         }
 
-        contentView.addSubview(nameLabel)
-        nameLabel.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).offset(15)
-            $0.top.equalTo(profileImage).offset(7)
-            $0.height.equalTo(23)
-            $0.trailing.equalToSuperview().inset(29)
-        }
-
         contentView.addSubview(usernameLabel)
         usernameLabel.snp.makeConstraints {
-            $0.leading.equalTo(nameLabel).offset(2)
-            $0.top.equalTo(nameLabel.snp.bottom).offset(2)
-            $0.height.equalTo(19)
+            $0.leading.equalTo(profileImage.snp.trailing).offset(15)
+            $0.bottom.equalTo(profileImage.snp.centerY).offset(-2)
+         //   $0.height.lessThanOrEqualTo(22)
             $0.width.equalTo(113)
         }
 
         // location button will truncate if overflow
         contentView.addSubview(locationButton)
         locationButton.snp.makeConstraints {
-            $0.top.equalTo(usernameLabel.snp.bottom).offset(1)
+            $0.top.equalTo(usernameLabel.snp.bottom).offset(-4)
             $0.height.equalTo(38)
             $0.leading.equalTo(profileImage.snp.trailing).offset(15)
         }

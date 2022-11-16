@@ -21,17 +21,10 @@ class SearchContactsCell: UITableViewCell {
         return image
     }()
 
-    private lazy var name: UILabel = {
+    private lazy var username: UILabel = {
         let label = UILabel()
         label.textColor = .black
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-        return label
-    }()
-
-    private lazy var username: UILabel = {
-        let label = UILabel()
-        label.textColor = UIColor(red: 0.683, green: 0.683, blue: 0.683, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
         return label
     }()
 
@@ -40,12 +33,6 @@ class SearchContactsCell: UITableViewCell {
         view.isUserInteractionEnabled = false
         return view
     }()
-
-    var checked = false {
-        didSet {
-
-        }
-    }
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -66,16 +53,10 @@ class SearchContactsCell: UITableViewCell {
             $0.height.equalTo(33.87)
         }
 
-        contentView.addSubview(name)
-        name.snp.makeConstraints {
-            $0.top.equalTo(profileImage).offset(10)
-            $0.leading.equalTo(profileImage.snp.trailing).offset(11)
-        }
-
         contentView.addSubview(username)
         username.snp.makeConstraints {
-            $0.leading.equalTo(name)
-            $0.top.equalTo(name.snp.bottom).offset(2)
+            $0.leading.equalTo(profileImage.snp.trailing).offset(11)
+            $0.centerY.equalTo(profileImage)
         }
 
         contentView.addSubview(selectedBubble)
@@ -91,7 +72,6 @@ class SearchContactsCell: UITableViewCell {
     }
 
     func setUp(user: UserProfile) {
-        name.text = user.name
         username.text = user.username
         setBubbleImage(selected: user.selected)
 
