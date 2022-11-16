@@ -24,6 +24,11 @@ protocol MapControllerDelegate: AnyObject {
 final class MapController: UIViewController {
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+    
+    lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
 
     let locationManager = CLLocationManager()
     lazy var imageManager = SDWebImageManager()

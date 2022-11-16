@@ -15,6 +15,12 @@ import UIKit
 class PostCell: UICollectionViewCell {
 
     lazy var imageManager = SDWebImageManager()
+    
+    private lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
+    
     var globalRow = 0 /// row in table
     var post: MapPost!
 
@@ -478,7 +484,7 @@ class PostCell: UICollectionViewCell {
         imageView.animationIndex = 0
 
         let rawAspect = min(still.size.height / still.size.width, UserDataModel.shared.maxAspect)
-        let currentAspect = getRoundedAspectRatio(aspect: rawAspect)
+        let currentAspect = imageView.getRoundedAspectRatio(aspect: rawAspect)
         let currentHeight = max(currentAspect * UIScreen.main.bounds.width, 100)
         imageView.currentAspect = currentAspect
 
@@ -773,7 +779,7 @@ extension PostCell {
             db.collection("users").document(user).collection("notifications").addDocument(data: likeNotiValues)
         }
 
-        incrementTopFriends(friendID: post.posterID, increment: 1)
+        friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
     }
 
     func unlikePostDB(post: MapPost) {
@@ -782,6 +788,7 @@ extension PostCell {
         functions.httpsCallable("unlikePost").call(["postID": post.id!, "posterID": post.posterID, "likerID": self.uid]) { result, error in
             print(result?.data as Any, error as Any)
         }
-        incrementTopFriends(friendID: post.posterID, increment: -1)
+        
+        friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
     }
 }

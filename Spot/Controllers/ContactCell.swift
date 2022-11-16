@@ -41,6 +41,11 @@ class ContactCell: UITableViewCell {
             setStatusConstraints()
         }
     }
+    
+    private lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
 
     lazy var cellType: CellType = .contact
 
@@ -191,7 +196,7 @@ class ContactCell: UITableViewCell {
         Mixpanel.mainInstance().track(event: "ContactCellAddFriend")
         NotificationCenter.default.post(name: NSNotification.Name("ContactCellAddFriend"), object: nil, userInfo: ["receiverID": receiverID])
 
-       addFriend(receiverID: receiverID)
+        friendService?.addFriend(receiverID: receiverID, completion: nil)
     }
 
     @objc func removeSuggestion() {
