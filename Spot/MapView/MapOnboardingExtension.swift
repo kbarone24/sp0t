@@ -21,7 +21,7 @@ extension MapController {
 
     func loadAdditionalOnboarding() {
         let posts = friendsPostsDictionary.count
-         if UserDataModel.shared.userInfo.avatarURL ?? "" == "" {
+        if UserDataModel.shared.userInfo.avatarURL ?? "" == "" {
             let avc = AvatarSelectionController(sentFrom: .map)
             self.navigationController?.pushViewController(avc, animated: true)
 
@@ -29,14 +29,9 @@ extension MapController {
             displayHeelsMap()
 
         } else if UserDataModel.shared.userInfo.friendIDs.count < 4 && posts == 0 {
-            self.addFriendsView = AddFriendsView {
-                $0.layer.cornerRadius = 13
-                $0.isHidden = false
-                self.view.addSubview($0)
-            }
-
-            self.addFriendsView.addFriendButton.addTarget(self, action: #selector(self.findFriendsTap(_:)), for: .touchUpInside)
-            self.addFriendsView.snp.makeConstraints {
+            view.addSubview(addFriendsView)
+            addFriendsView.addFriendButton.addTarget(self, action: #selector(self.findFriendsTap(_:)), for: .touchUpInside)
+            addFriendsView.snp.makeConstraints {
                 $0.height.equalTo(160)
                 $0.leading.trailing.equalToSuperview().inset(16)
                 $0.centerY.equalToSuperview()
@@ -47,6 +42,7 @@ extension MapController {
     func displayHeelsMap() {
         if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
             openExploreMaps(onboarding: true)
+            db.collection("users").document(uid).updateData(["respondedToCampusMap": true])
         }
     }
 }

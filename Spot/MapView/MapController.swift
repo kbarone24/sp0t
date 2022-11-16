@@ -22,46 +22,59 @@ protocol MapControllerDelegate: AnyObject {
 }
 
 final class MapController: UIViewController {
-
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
-    var mapView: SpotMapView!
-    var titleView: MapTitleView!
-    var bottomMapMask: UIView!
-
-    var newPostsButton: NewPostsButton!
-    var mapsCollection: UICollectionView!
-    var selectedItemIndex = 0
-
     let locationManager = CLLocationManager()
     lazy var imageManager = SDWebImageManager()
-    var userListener, mapsListener, newPostListener: ListenerRegistration?
-
+    var friendsPostsListener, mapsListener, mapsPostsListener, notiListener, userListener: ListenerRegistration?
     let homeFetchGroup = DispatchGroup()
-    let mapPostsGroup = DispatchGroup()
 
+    var selectedItemIndex = 0
     var firstOpen = false
     var firstTimeGettingLocation = true
-    var feedLoaded = false
+    var userLoaded = false
+    var postsFetched = false
     var mapsLoaded = false
     var friendsLoaded = false
 
     lazy var friendsPostsDictionary = [String: MapPost]()
     lazy var postGroup: [MapPostGroup] = []
-
-    var notiListener: ListenerRegistration?
+    lazy var mapFetchIDs: [String] = [] // used to track for deleted posts
 
     var refresh: RefreshStatus = .activelyRefreshing
     var friendsRefresh: RefreshStatus = .refreshEnabled
 
-    var startTime: Int64!
-    var addFriendsView: AddFriendsView!
-
-    var heelsMapID = "9ECABEF9-0036-4082-A06A-C8943428FFF4"
     var newMapID: String?
-
     var serviceContainer: ServiceContainer?
+
+    lazy var addFriendsView: AddFriendsView = {
+        let view = AddFriendsView()
+        view.layer.cornerRadius = 13
+        view.isHidden = false
+        return view
+    }()
+
+    var titleView: MapTitleView?
+    lazy var mapView = SpotMapView()
+
+    lazy var newPostsButton = NewPostsButton()
+    lazy var mapsCollection: UICollectionView = {
+        let layout = UICollectionViewFlowLayout {
+            $0.minimumInteritemSpacing = 5
+            $0.scrollDirection = .horizontal
+        }
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.backgroundColor = .white
+        view.showsHorizontalScrollIndicator = false
+        view.contentInset = UIEdgeInsets(top: 5, left: 9, bottom: 0, right: 9)
+        view.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell")
+        view.register(MapLoadingCell.self, forCellWithReuseIdentifier: "MapLoadingCell")
+        view.register(AddMapCell.self, forCellWithReuseIdentifier: "AddMapCell")
+        view.register(CampusMapCell.self, forCellWithReuseIdentifier: "CampusMapCell")
+        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
+        return view
+    }()
 
     /// sheet view: Must declare outside to listen to UIEvent
     var sheetView: DrawerView? {
@@ -119,11 +132,9 @@ final class MapController: UIViewController {
     }
 
     func addMapView() {
-        mapView = SpotMapView {
-            $0.delegate = self
-            $0.spotMapDelegate = self
-            view.addSubview($0)
-        }
+        mapView.delegate = self
+        mapView.spotMapDelegate = self
+        view.addSubview(mapView)
         makeMapHomeConstraints()
 
         let addButton = AddButton {
@@ -146,20 +157,8 @@ final class MapController: UIViewController {
     }
 
     func addMapsCollection() {
-        let layout = UICollectionViewFlowLayout {
-            $0.minimumInteritemSpacing = 5
-            $0.scrollDirection = .horizontal
-        }
-        mapsCollection = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        mapsCollection.backgroundColor = .white
-        mapsCollection.showsHorizontalScrollIndicator = false
-        mapsCollection.contentInset = UIEdgeInsets(top: 5, left: 9, bottom: 0, right: 9)
         mapsCollection.delegate = self
         mapsCollection.dataSource = self
-        mapsCollection.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell")
-        mapsCollection.register(MapLoadingCell.self, forCellWithReuseIdentifier: "MapLoadingCell")
-        mapsCollection.register(AddMapCell.self, forCellWithReuseIdentifier: "AddMapCell")
-        mapsCollection.register(CampusMapCell.self, forCellWithReuseIdentifier: "CampusMapCell")
         view.addSubview(mapsCollection)
         mapsCollection.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.topMargin)
@@ -169,10 +168,8 @@ final class MapController: UIViewController {
     }
 
     func addNewPostsButton() {
-        newPostsButton = NewPostsButton {
-            $0.isHidden = true
-            view.addSubview($0)
-        }
+        newPostsButton.isHidden = true
+        view.addSubview(newPostsButton)
         newPostsButton.snp.makeConstraints {
             $0.top.equalTo(mapsCollection.snp.bottom).offset(5)
             $0.centerX.equalToSuperview()
@@ -193,7 +190,7 @@ final class MapController: UIViewController {
     }
 
     func getTitleView() -> UIView {
-        if titleView != nil { return titleView }
+        if let titleView { return titleView }
 
         titleView = MapTitleView {
             $0.searchButton.addTarget(self, action: #selector(searchTap(_:)), for: .touchUpInside)
@@ -210,15 +207,15 @@ final class MapController: UIViewController {
             if err != nil || snap?.metadata.isFromCache ?? false {
                 return
             } else {
-                if snap!.documents.count > 0 {
-                    self.titleView.notificationsButton.pendingCount = snap!.documents.count
+                if snap?.documents.isEmpty ?? true {
+                    self.titleView?.notificationsButton.pendingCount = snap?.documents.count ?? 0
                 } else {
-                    self.titleView.notificationsButton.pendingCount = 0
+                    self.titleView?.notificationsButton.pendingCount = 0
                 }
             }
         }
 
-        return titleView
+        return titleView ?? UIView()
     }
 
     func openNewMap() {
@@ -238,10 +235,7 @@ final class MapController: UIViewController {
 
     @objc func addTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "MapControllerAddTap")
-
-        if addFriendsView != nil {
-            addFriendsView.removeFromSuperview()
-        }
+        addFriendsView.removeFromSuperview()
 
         /// crash on double stack was happening here
         if navigationController?.viewControllers.contains(where: { $0 is AVCameraController }) ?? false {
@@ -312,7 +306,7 @@ final class MapController: UIViewController {
     func openSelectedMap() {
         if sheetView != nil { return } /// cancel on double tap
         var map = getSelectedMap()
-        let unsortedPosts = map == nil ? friendsPostsDictionary.map { $0.value } : map!.postsDictionary.map { $0.value }
+        let unsortedPosts = map == nil ? friendsPostsDictionary.map { $0.value } : map?.postsDictionary.map { $0.value } ?? []
         let posts = mapView.sortPosts(unsortedPosts)
         let mapType: MapType = map == nil ? .friendsMap : .customMap
         /// create map from current posts for friends map
@@ -359,9 +353,7 @@ final class MapController: UIViewController {
         newPostsButton.setHidden(hidden: hidden)
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
-            if addFriendsView != nil {
-                self.addFriendsView.removeFromSuperview()
-            } /// remove add friends view whenever leaving home screen
+            addFriendsView.removeFromSuperview()
         } else {
             mapView.delegate = self
             mapView.spotMapDelegate = self

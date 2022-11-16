@@ -100,7 +100,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
     }
     
     mutating func addSpotGroups() {
-        /// append spots to show on map even if there's no post attached
+        // append spots to show on map even if there's no post attached
         for i in 0..<spotIDs.count {
             var postsToSpot: [String] = []
             var postSpotTimestamps: [Timestamp] = []
@@ -128,7 +128,6 @@ struct CustomMap: Identifiable, Codable, Hashable {
                     postTimestamps: postSpotTimestamps,
                     numberOfPosters: postersAtSpot.count
                 )
-                
                 postGroup.append(mapPostGroup)
             }
         }

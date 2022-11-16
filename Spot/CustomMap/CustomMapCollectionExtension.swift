@@ -103,8 +103,8 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 }
 
 extension CustomMapController: UIScrollViewDelegate {
-
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if cancelOnDismiss { return }
         let itemHeight = UIScreen.main.bounds.width * 1.373
 
         // Check if need to refresh according to content position
@@ -113,7 +113,6 @@ extension CustomMapController: UIScrollViewDelegate {
             refresh = .activelyRefreshing
         }
 
-        if containerDrawerView == nil { return }
         if let topY = topYContentOffset {
             if containerDrawerView?.status == .top {
                 // Disable the bouncing effect when scroll view is scrolled to top
