@@ -40,6 +40,11 @@ final class CustomMapHeaderCell: UICollectionViewCell {
         imageView.isHidden = true
         return imageView
     }()
+    
+    lazy var mapPostService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
 
     private lazy var mapCreatorProfileImage1 = MapCreatorProfileImage()
     private lazy var mapCreatorProfileImage2 = MapCreatorProfileImage()
@@ -420,7 +425,7 @@ extension CustomMapHeaderCell {
         let db = Firestore.firestore()
         let mapsRef = db.collection("maps").document(mapData.id ?? "")
         mapsRef.updateData(["likers": FieldValue.arrayUnion(mapData.likers), "memberIDs": FieldValue.arrayUnion(mapData.memberIDs), "updateUserID": UserDataModel.shared.uid])
-        updatePostInviteLists(mapID: mapData.id ?? "", inviteList: mapData.memberIDs)
+        mapPostService?.updatePostInviteLists(mapID: mapData.id ?? "", inviteList: mapData.memberIDs, completion: nil)
         sendEditNotification()
         // cancel on map join
         if addedUsers.first == UserDataModel.shared.uid { return }
@@ -439,12 +444,11 @@ extension CustomMapHeaderCell {
 
     func sendEditNotification() {
         guard let mapData = mapData,
-              let mapID = mapData.id,
-              let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
+              let mapID = mapData.id
         else { return }
         
         if mapData.secret {
-            mapPostService.updatePostInviteLists(mapID: mapID, inviteList: mapData.memberIDs, completion: nil)
+            mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: mapData.memberIDs, completion: nil)
         }
         NotificationCenter.default.post(Notification(name: Notification.Name("EditMap"), object: nil, userInfo: ["map": mapData as Any]))
     }
