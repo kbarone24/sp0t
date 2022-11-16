@@ -416,11 +416,11 @@ extension CustomMapHeaderCell {
     }
 
     func addNewUsersInDB(addedUsers: [String]) {
-        print("added users", addedUsers)
         guard let mapData = mapData else { return }
         let db = Firestore.firestore()
         let mapsRef = db.collection("maps").document(mapData.id ?? "")
         mapsRef.updateData(["likers": FieldValue.arrayUnion(mapData.likers), "memberIDs": FieldValue.arrayUnion(mapData.memberIDs), "updateUserID": UserDataModel.shared.uid])
+        updatePostInviteLists(mapID: mapData.id ?? "", inviteList: mapData.memberIDs)
         sendEditNotification()
         // cancel on map join
         if addedUsers.first == UserDataModel.shared.uid { return }
@@ -439,7 +439,6 @@ extension CustomMapHeaderCell {
 
     func sendEditNotification() {
         guard let mapData = mapData else { return }
-        if mapData.secret { self.updatePostInviteLists(mapID: mapData.id ?? "", inviteList: mapData.memberIDs) }
         NotificationCenter.default.post(Notification(name: Notification.Name("EditMap"), object: nil, userInfo: ["map": mapData as Any]))
     }
 }

@@ -9,10 +9,18 @@
 import UIKit
 
 final class MapTitleView: UIView {
-    var spotLogo: UIImageView!
-    var profileButton: ProfileButton!
-    var notificationsButton: NotificationsButton!
-    var searchButton: UIButton!
+    private lazy var spotLogo: UIImageView = {
+        let view = UIImageView()
+        view.image = UIImage(named: "HomeLogo")
+        return view
+    }()
+    lazy var profileButton = ProfileButton()
+    lazy var notificationsButton = NotificationsButton()
+    lazy var searchButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "FindFriendsNavIcon"), for: .normal)
+        return button
+    }()
 
     override var intrinsicContentSize: CGSize {
         return UIView.layoutFittingExpandedSize
@@ -21,11 +29,7 @@ final class MapTitleView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
 
-        spotLogo = UIImageView {
-            $0.image = UIImage(named: "HomeLogo")
-            addSubview($0)
-        }
-
+        addSubview(spotLogo)
         spotLogo.snp.makeConstraints {
             $0.leading.equalTo(16)
             $0.width.equalTo(83.37)
@@ -33,29 +37,22 @@ final class MapTitleView: UIView {
             $0.centerY.equalToSuperview()
         }
 
-        profileButton = ProfileButton {
-            addSubview($0)
-        }
+        addSubview(profileButton)
         profileButton.snp.makeConstraints {
             $0.trailing.equalTo(-22)
             $0.centerY.equalToSuperview()
             $0.width.height.equalTo(39)
         }
 
-        notificationsButton = NotificationsButton {
-            addSubview($0)
-        }
+        addSubview(notificationsButton)
         notificationsButton.snp.makeConstraints {
             $0.trailing.equalTo(profileButton.snp.leading).offset(-20)
-            $0.centerY.equalToSuperview().offset(-3) /// offset for noti indicator
+            $0.centerY.equalToSuperview().offset(-3) // offset for noti indicator
             $0.height.equalTo(35)
             $0.width.equalTo(30)
         }
 
-        searchButton = UIButton {
-            $0.setImage(UIImage(named: "FindFriendsNavIcon"), for: .normal)
-            addSubview($0)
-        }
+        addSubview(searchButton)
         searchButton.snp.makeConstraints {
             $0.trailing.equalTo(notificationsButton.snp.leading).offset(-20)
             $0.centerY.equalToSuperview().offset(2.5)

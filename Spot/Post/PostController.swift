@@ -18,7 +18,6 @@ import SnapKit
 import UIKit
 
 class PostController: UIViewController {
-
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
@@ -112,6 +111,7 @@ class PostController: UIViewController {
             view.isScrollEnabled = false
             view.layer.cornerRadius = 10
             view.register(PostCell.self, forCellWithReuseIdentifier: "PostCell")
+            view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
             return view
         }()
         view.addSubview(postsCollection)
@@ -259,7 +259,9 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
     ///https://medium.com/monstar-lab-bangladesh-engineering/tableview-prefetching-datasource-3de593530c4a
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PostCell", for: indexPath) as? PostCell else { return UICollectionViewCell() }
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PostCell", for: indexPath) as? PostCell else {
+            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        }
         let post = postsList[indexPath.row]
         cell.setUp(post: post, row: indexPath.row)
         return cell

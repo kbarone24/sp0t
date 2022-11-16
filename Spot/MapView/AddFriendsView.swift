@@ -10,10 +10,34 @@ import Mixpanel
 import UIKit
 
 final class AddFriendsView: UIView {
-    var note: UILabel!
-    var profileButton: UIButton!
-    var addFriendButton: UIButton!
-    var searchButton: UIButton!
+    private lazy var note: UILabel = {
+        let label = UILabel()
+        label.text = "Add friends to your map"
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
+        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        return label
+    }()
+    private lazy var animals: UIImageView = {
+        let view = UIImageView()
+        view.contentMode = .scaleToFill
+        view.image = UIImage(named: "FriendsEmptyState")
+        return view
+    }()
+    lazy var addFriendButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+        button.layer.cornerRadius = 13
+        button.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
+        let customButtonTitle = NSMutableAttributedString(string: "Find Friends", attributes: [
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+            NSAttributedString.Key.foregroundColor: UIColor.black
+        ])
+        button.setAttributedTitle(customButtonTitle, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = false
+        return button
+    }()
 
     override var intrinsicContentSize: CGSize {
         return UIView.layoutFittingExpandedSize
@@ -24,24 +48,13 @@ final class AddFriendsView: UIView {
         self.layer.cornerRadius = 17
         self.backgroundColor = .white
 
-        note = UILabel {
-            $0.text = "Add friends to your map"
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
-            $0.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
-            addSubview($0)
-        }
-
+        addSubview(note)
         note.snp.makeConstraints {
             $0.top.equalToSuperview().offset(11)
             $0.centerX.equalToSuperview()
         }
 
-        let animals = UIImageView {
-            $0.contentMode = .scaleToFill
-            $0.image = UIImage(named: "FriendsEmptyState")
-            addSubview($0)
-        }
-
+        addSubview(animals)
         animals.snp.makeConstraints {
             $0.height.equalTo(53.12)
             $0.width.equalTo(151)
@@ -49,20 +62,7 @@ final class AddFriendsView: UIView {
             $0.centerY.equalToSuperview().offset(-10)
         }
 
-        addFriendButton = UIButton {
-            $0.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-            $0.layer.cornerRadius = 13
-            $0.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
-            $0.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
-            let customButtonTitle = NSMutableAttributedString(string: "Find Friends", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor.black
-            ])
-            $0.setAttributedTitle(customButtonTitle, for: .normal)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            $0.isHidden = false
-            addSubview($0)
-        }
+        addSubview(addFriendButton)
         addFriendButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(15)
             $0.bottom.equalToSuperview().offset(-13)

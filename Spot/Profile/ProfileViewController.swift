@@ -56,6 +56,7 @@ class ProfileViewController: UIViewController {
         view.register(ProfileHeaderCell.self, forCellWithReuseIdentifier: "ProfileHeaderCell")
         view.register(ProfileMyMapCell.self, forCellWithReuseIdentifier: "ProfileMyMapCell")
         view.register(ProfileBodyCell.self, forCellWithReuseIdentifier: "ProfileBodyCell")
+        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         return view
     }()
     lazy var noPostLabel: UILabel = {
@@ -163,7 +164,8 @@ class ProfileViewController: UIViewController {
 
     private func getUserInfo() {
         guard let username = userProfile?.username else { return }
-        /// username passed through for tagged user not in friends list
+        if username == "" { return }
+        // username passed through for tagged user not in friends list
         getUserFromUsername(username: username) { [weak self] user in
             guard let self = self else { return }
             self.userProfile = user
@@ -257,7 +259,6 @@ class ProfileViewController: UIViewController {
                 }
             }
             dispatch.notify(queue: .main) { [weak self] in
-                print("notify 9 post main")
                 guard let self = self else { return }
                 self.collectionView.reloadData()
             }

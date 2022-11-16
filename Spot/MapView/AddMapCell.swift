@@ -9,16 +9,17 @@
 import UIKit
 
 final class AddMapCell: UICollectionViewCell {
-    var newIcon: UIImageView!
+    private lazy var newIcon: UIImageView = {
+        let view = UIImageView()
+        view.image = UIImage(named: "NewMapButton")
+        return view
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
 
-        newIcon = UIImageView {
-            $0.image = UIImage(named: "NewMapButton")
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(newIcon)
         newIcon.snp.makeConstraints {
             $0.leading.equalTo(10)
             $0.centerY.equalToSuperview()
