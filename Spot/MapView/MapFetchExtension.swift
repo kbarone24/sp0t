@@ -317,8 +317,8 @@ extension MapController {
     }
 
     func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool, index: Int) {
-        // add new post to both dictionaries
-        print("add post to dictionary", map?.mapName ?? "")
+        // add new post to both dictionaries. Run post contains again in case added on async fetch
+        if postsContains(postID: post.id ?? "", mapID: map?.id ?? "", newPost: newPost) { return }
         if map == nil || map?.id ?? "" == "" || (newPost && !(post.hideFromFeed ?? false) && UserDataModel.shared.userInfo.friendsContains(id: post.posterID)) {
             friendsPostsDictionary.updateValue(post, forKey: post.id ?? "")
             let groupData = updateFriendsPostGroup(post: post)
@@ -327,14 +327,12 @@ extension MapController {
                 mapView.addPostAnnotation(group: groupData.group, newGroup: groupData.newGroup, map: map)
             }
         }
-        if let map {
-            if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == map.id ?? "" }) {
-                UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id ?? "")
-                _ = UserDataModel.shared.userInfo.mapsList[i].updateGroup(post: post)
-                if index - 1 == i && self.sheetView == nil {
-                    // remove and re-add annotation
-                    addMapAnnotations(index: index, reload: true)
-                }
+        if let map, let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == map.id ?? "" }) {
+            UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id ?? "")
+            _ = UserDataModel.shared.userInfo.mapsList[i].updateGroup(post: post)
+            if index - 1 == i && self.sheetView == nil {
+                // remove and re-add annotation
+                addMapAnnotations(index: index, reload: true)
             }
         }
     }
