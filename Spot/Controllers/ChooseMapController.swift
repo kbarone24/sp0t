@@ -25,7 +25,6 @@ final class ChooseMapController: UIViewController {
         button.addTarget(self, action: #selector(postTap), for: .touchUpInside)
         return button
     }()
-    private lazy var friendsMapButton = FriendsMapButton()
     private lazy var tableView = ChooseMapTableView()
     private lazy var bottomMask = UIView()
     private lazy var progressBar = ProgressBar()
@@ -62,7 +61,7 @@ final class ChooseMapController: UIViewController {
     }
 
     func setUpNavBar() {
-        navigationItem.title = "Post to maps"
+        navigationItem.title = "Choose a map"
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.tintColor = .black
         navigationController?.navigationBar.addWhiteBackground()
@@ -84,16 +83,7 @@ final class ChooseMapController: UIViewController {
             $0.leading.trailing.equalToSuperview().inset(49)
             $0.height.equalTo(58)
         }
-
-        friendsMapButton = FriendsMapButton {
-            $0.addTarget(self, action: #selector(friendsMapTap), for: .touchUpInside)
-            view.addSubview($0)
-        }
-        friendsMapButton.snp.makeConstraints {
-            $0.top.equalTo(45)
-            $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(62)
-        }
+        enablePostButton()
     }
 
     func addTableView() {
@@ -101,8 +91,7 @@ final class ChooseMapController: UIViewController {
         tableView.delegate = self
         view.addSubview(tableView)
         tableView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(friendsMapButton.snp.bottom).offset(38)
+            $0.top.leading.trailing.equalToSuperview()
             $0.bottom.equalTo(postButton.snp.top)
         }
     }
@@ -124,25 +113,13 @@ final class ChooseMapController: UIViewController {
         if var newMap {
             newMap.coverImage = UploadPostModel.shared.postObject?.postImage.first ?? UIImage() /// new map image not set when going through new map flow
             customMaps.insert(newMap, at: 0)
-            if newMap.secret { toggleFriendsMap() }
         }
 
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
 
     func enablePostButton() {
-        postButton.isEnabled = friendsMapButton.buttonSelected || UploadPostModel.shared.postObject?.mapID != ""
-    }
-
-    @objc func friendsMapTap() {
-        toggleFriendsMap()
-        HapticGenerator.shared.play(.light)
-    }
-
-    func toggleFriendsMap() {
-        friendsMapButton.buttonSelected.toggle()
-        UploadPostModel.shared.postObject?.hideFromFeed = !friendsMapButton.buttonSelected
-        enablePostButton()
+        postButton.isEnabled = UploadPostModel.shared.postObject?.mapID != ""
     }
 
     func addBottomMask() {
@@ -255,7 +232,6 @@ extension ChooseMapController: NewMapDelegate {
         Mixpanel.mainInstance().track(event: "ChooseMapSelectMap")
         UploadPostModel.shared.setMapValues(map: map)
         /// if private map, make sure mymapbutton is deselected, if public, make sure selected
-        if map.secret && friendsMapButton.buttonSelected { toggleFriendsMap() }
         DispatchQueue.main.async { self.tableView.reloadData() }
         enablePostButton()
     }
