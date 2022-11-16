@@ -15,6 +15,7 @@ enum FirebaseCollectionNames: String {
     case users
     case spots
     case submissions
+    case notifications
 }
 
 enum FireBaseCollectionFields: String {
@@ -25,4 +26,17 @@ enum FireBaseCollectionFields: String {
     case timestamp
     case likers
     case memberIDs
+    case hideFromFeed
+    case inviteList
+    case privacyLevel
+    case topFriends
+    case notifications
+    case status
+    case senderID
+    case senderUsername
+    case username
+    case seen
+    case type
+    case comments
+    case pendingFriendRequests
 }

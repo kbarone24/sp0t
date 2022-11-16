@@ -656,7 +656,7 @@ class CommentCell: UITableViewCell {
 
     func addAttString() {
         if !(comment.taggedUsers?.isEmpty ?? true) {
-            let attString = self.getAttString(caption: comment.comment, taggedFriends: comment.taggedUsers!, font: commentLabel.font, maxWidth: UIScreen.main.bounds.width - 105)
+            let attString = NSAttributedString.getAttString(caption: comment.comment, taggedFriends: comment.taggedUsers!, font: commentLabel.font, maxWidth: UIScreen.main.bounds.width - 105)
             commentLabel.attributedText = attString.0
             tagRect = attString.1
 
