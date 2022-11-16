@@ -438,7 +438,14 @@ extension CustomMapHeaderCell {
     }
 
     func sendEditNotification() {
-        guard let mapData = mapData else { return }
+        guard let mapData = mapData,
+              let mapID = mapData.id,
+              let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
+        else { return }
+        
+        if mapData.secret {
+            mapPostService.updatePostInviteLists(mapID: mapID, inviteList: mapData.memberIDs, completion: nil)
+        }
         NotificationCenter.default.post(Notification(name: Notification.Name("EditMap"), object: nil, userInfo: ["map": mapData as Any]))
     }
 }

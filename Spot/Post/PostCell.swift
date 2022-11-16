@@ -342,7 +342,7 @@ class PostCell: UICollectionViewCell {
 
     func addCaptionAttString() {
         if !(post.taggedUsers?.isEmpty ?? true) {
-            let attString = self.getAttString(caption: post.caption, taggedFriends: post.taggedUsers!, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 88)
+            let attString = NSAttributedString.getAttString(caption: post.caption, taggedFriends: post.taggedUsers!, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 88)
             captionLabel.attributedText = attString.0
             tagRect = attString.1
         }

@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class PostImagePreview: PostImageView {
+final class PostImagePreview: PostImageView {
     var index: Int = 0
 
     convenience init(frame: CGRect, index: Int) {
@@ -27,6 +27,7 @@ class PostImagePreview: PostImageView {
         super.init(frame: frame)
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

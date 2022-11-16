@@ -20,10 +20,18 @@ final class ServiceContainer {
     enum FetchError: Error {
         case notFound
     }
+    
+    static let shared = ServiceContainer()
+    
+    private init() {}
 
     // MARK: Network Services
 
     private(set) var mapsService: MapServiceProtocol?
+    private(set) var mapPostService: MapPostServiceProtocol?
+    private(set) var friendsService: FriendsServiceProtocol?
+    private(set) var userService: UserServiceProtocol?
+    private(set) var spotService: SpotServiceProtocol?
 
     // MARK: Interface
 

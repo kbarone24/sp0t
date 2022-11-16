@@ -11,8 +11,6 @@ import UserNotifications
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-    let serviceContainer = ServiceContainer()
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
 
@@ -21,7 +19,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         settings.isPersistenceEnabled = true
         db.settings = settings
 
-        registerServices(serviceContainer: serviceContainer)
+        registerServices()
 
         /// set navigation bar appearance with gradient
         UINavigationBar.appearance().backIndicatorImage = UIImage()
@@ -129,12 +127,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
     }
 
-    private func registerServices(serviceContainer: ServiceContainer) {
+    private func registerServices() {
         do {
             let fireStore = Firestore.firestore()
 
             let mapService = MapService(fireStore: fireStore)
-            try serviceContainer.register(service: mapService, for: \.mapsService)
+            try ServiceContainer.shared.register(service: mapService, for: \.mapsService)
+            
+            let mapPostService = MapPostService(fireStore: fireStore)
+            try ServiceContainer.shared.register(service: mapPostService, for: \.mapPostService)
+            
+            let friendsService = FriendsService(fireStore: fireStore)
+            try ServiceContainer.shared.register(service: friendsService, for: \.friendsService)
+            
+            let userService = UserService(fireStore: fireStore)
+            try ServiceContainer.shared.register(service: userService, for: \.userService)
+            
+            let spotService = SpotService(fireStore: fireStore)
+            try ServiceContainer.shared.register(service: spotService, for: \.spotService)
         } catch {
             #if DEBUG
             fatalError("Unable to initialize services: \(error.localizedDescription)")

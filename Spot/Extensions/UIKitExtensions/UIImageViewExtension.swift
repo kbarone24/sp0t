@@ -126,4 +126,30 @@ extension UIImageView {
         mask.path = path.cgPath
         layer.mask = mask
     }
+    
+    func getImageLayoutValues(imageAspect: CGFloat) -> (imageHeight: CGFloat, bottomConstraint: CGFloat) {
+        let statusHeight = getStatusHeight()
+        let maxHeight = UserDataModel.shared.maxAspect * UIScreen.main.bounds.width
+        let minY: CGFloat = UIScreen.main.bounds.height > 800 ? statusHeight : 2
+        let maxY = minY + maxHeight
+        let midY = maxY - 86
+        let currentHeight = getImageHeight(aspectRatio: imageAspect, maxAspect: UserDataModel.shared.maxAspect)
+        let imageBottom: CGFloat = imageAspect > 1.45 ? maxY : imageAspect > 1.1 ? midY : (minY + maxY + currentHeight) / 2 - 15
+        let bottomConstraint = UIScreen.main.bounds.height - imageBottom
+        return (currentHeight, bottomConstraint)
+    }
+    
+    func getImageHeight(aspectRatio: CGFloat, maxAspect: CGFloat) -> CGFloat {
+        var imageAspect = min(aspectRatio, maxAspect)
+        imageAspect = getRoundedAspectRatio(aspect: imageAspect)
+        let imageHeight = UIScreen.main.bounds.width * imageAspect
+        return imageHeight
+    }
+    
+    func getRoundedAspectRatio(aspect: CGFloat) -> CGFloat {
+        var imageAspect = aspect
+        if imageAspect > 1.1 && imageAspect < 1.45 { imageAspect = 1.333 } /// stretch iPhone vertical
+        else if imageAspect > 1.45 { imageAspect = UserDataModel.shared.maxAspect } /// round to max aspect
+        return imageAspect
+    }
 }
