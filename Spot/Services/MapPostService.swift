@@ -82,7 +82,7 @@ final class MapPostService: MapPostServiceProtocol {
                 .document(postID)
                 .collection(FireBaseCollectionFields.comments.rawValue)
                 .order(by: FireBaseCollectionFields.timestamp.rawValue, descending: true)
-                .getDocuments { snapshot, error in
+                .getDocuments { snapshot, _ in
                     guard let snapshot,
                           !snapshot.documents.isEmpty
                     else {
@@ -168,8 +168,6 @@ final class MapPostService: MapPostServiceProtocol {
             
             let caption = postInfo.caption
             postInfo.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
-            // detail group tracks comments and added users fetches
-            
             do {
                 let userService = try ServiceContainer.shared.service(for: \.userService)
                 let user = try await userService.getUserInfo(userID: post.posterID)
@@ -178,8 +176,7 @@ final class MapPostService: MapPostServiceProtocol {
                 let comments = try await getComments(postID: id)
                 postInfo.commentList = comments
                 completion(postInfo)
-            }
-            catch {
+            } catch {
                 completion(postInfo)
             }
         }

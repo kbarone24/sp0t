@@ -172,6 +172,7 @@ final class UploadPostModel {
         postObject?.privacyLevel = mapObject != nil && (mapObject?.secret ?? false) ? "invite" : mapObject != nil && (mapObject?.communityMap ?? false) ? "public" : "friends"
         postObject?.timestamp = Firebase.Timestamp(date: Date())
         postObject?.userInfo = UserDataModel.shared.userInfo
+        postObject?.selectedImageIndex = 0
     }
 
     func setFinalMapValues() {

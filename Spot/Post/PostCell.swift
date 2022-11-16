@@ -788,7 +788,6 @@ extension PostCell {
         functions.httpsCallable("unlikePost").call(["postID": post.id!, "posterID": post.posterID, "likerID": self.uid]) { result, error in
             print(result?.data as Any, error as Any)
         }
-        
         friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
     }
 }
