@@ -14,6 +14,7 @@ import Mixpanel
 final class ExploreMapViewController: UIViewController {
     typealias Input = ExploreMapViewModel.Input
     typealias DataSource = UITableViewDiffableDataSource<Section, Item>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     typealias JoinButton = ExploreMapViewModel.JoinButtonType
     typealias Title = ExploreMapViewModel.TitleData
 
@@ -33,6 +34,7 @@ final class ExploreMapViewController: UIViewController {
         tableView.separatorStyle = .none
         tableView.showsVerticalScrollIndicator = false
         tableView.delegate = self
+        tableView.dataSource = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120.0
         tableView.backgroundView?.backgroundColor = .white
@@ -73,7 +75,13 @@ final class ExploreMapViewController: UIViewController {
         
         return button
     }()
-
+    
+    private var snapshot = Snapshot() {
+        didSet {
+            tableView.reloadData()
+        }
+    }
+    
     private lazy var dataSource: DataSource = {
         let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
 
@@ -155,7 +163,8 @@ final class ExploreMapViewController: UIViewController {
         output.snapshot
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
-                self?.dataSource.apply(snapshot, animatingDifferences: false)
+                // self?.dataSource.apply(snapshot, animatingDifferences: false)
+                self?.snapshot = snapshot
                 if !snapshot.sectionIdentifiers.isEmpty {
                     self?.loading.send(false)
                 }
@@ -234,10 +243,36 @@ final class ExploreMapViewController: UIViewController {
     }
 }
 
+extension ExploreMapViewController: UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return snapshot.sectionIdentifiers.count
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        let section = snapshot.sectionIdentifiers[section]
+        return snapshot.numberOfItems(inSection: section)
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let section = snapshot.sectionIdentifiers[indexPath.section]
+        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
+        
+        switch item {
+        case .item(let customMap, let data, let isSelected, let buttonType):
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: ExploreMapPreviewCell.reuseID, for: indexPath) as? ExploreMapPreviewCell else {
+                return UITableViewCell()
+            }
+            
+            cell.configure(customMap: customMap, data: data, isSelected: isSelected, buttonType: buttonType, delegate: self)
+            return cell
+        }
+    }
+}
+
 extension ExploreMapViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        guard case let snapshot = dataSource.snapshot(),
-              !snapshot.sectionIdentifiers.isEmpty,
+        // guard case let snapshot = dataSource.snapshot(),
+        guard !snapshot.sectionIdentifiers.isEmpty,
               case let section = snapshot.sectionIdentifiers[section],
               let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: ExploreMapTitleView.reuseID) as? ExploreMapTitleView
         else {
