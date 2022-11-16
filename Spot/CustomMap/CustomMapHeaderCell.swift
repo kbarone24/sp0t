@@ -157,7 +157,7 @@ extension CustomMapHeaderCell {
             $0.trailing.equalToSuperview().inset(14)
         }
 
-        /// show when >7 users at a map
+        // show when >7 users at a map
         contentView.addSubview(joinedIcon)
         joinedIcon.snp.makeConstraints {
             $0.leading.equalTo(mapName)
@@ -268,7 +268,7 @@ extension CustomMapHeaderCell {
                 return
             }
         } else {
-            /// show joined icon if >7 members
+            // show joined icon if >7 members
             mapCreatorCount.text = "\(mapData.memberIDs.count) joined"
             joinedIcon.isHidden = false
         }
@@ -313,7 +313,7 @@ extension CustomMapHeaderCell {
     private func setActionButton() {
         guard let mapData = mapData else { return }
         if mapData.memberIDs.contains(UserDataModel.shared.uid) {
-            /// show 2 button view
+            // show 2 button view
             actionButton.isHidden = true
             editButton.isHidden = false
             editButton.tag = 0
@@ -326,7 +326,7 @@ extension CustomMapHeaderCell {
             }
 
         } else {
-            /// show singular action button
+            // show singular action button
             actionButton.isHidden = false
             editButton.isHidden = true
             addFriendsButton.isHidden = true
@@ -443,13 +443,7 @@ extension CustomMapHeaderCell {
     }
 
     func sendEditNotification() {
-        guard let mapData = mapData,
-              let mapID = mapData.id
-        else { return }
-        
-        if mapData.secret {
-            mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: mapData.memberIDs, completion: nil)
-        }
+        guard let mapData = mapData else { return }
         NotificationCenter.default.post(Notification(name: Notification.Name("EditMap"), object: nil, userInfo: ["map": mapData as Any]))
     }
 }

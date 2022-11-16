@@ -1866,7 +1866,7 @@
 				593AC545243E56D400C08237 /* LandingPageController.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */,
 				CD79D7F829249095005C93F1 /* SpotService.swift in Sources */,
-				599BD2BB23C652BD00ECB84A /* PostViewController.swift in Sources */,
+				599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */,
 				CDF8E985290477C200BE929F /* CustomMapCollectionExtension.swift in Sources */,
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
 				8C8DBB822888BE9300B31BFD /* NewMapController.swift in Sources */,
