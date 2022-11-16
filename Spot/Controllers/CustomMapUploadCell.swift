@@ -73,10 +73,12 @@ class CustomMapUploadCell: UITableViewCell {
             selectedBubble.image = UIImage()
             nameLabel.attributedText = NSAttributedString(string: "New map")
         }
-
-        let disableCell = !selected && newMap
-        contentView.alpha = disableCell ? 0.2 : 1.0
-        isUserInteractionEnabled = disableCell ? false : true
+        // lower alpha if another map selected, disable user interaction if new map
+        let notSelected = !selected && UploadPostModel.shared.mapObject != nil
+        let disabled = notSelected && newMap
+        contentView.alpha = disabled ? 0.2 : notSelected ? 0.4 : 1.0
+        isUserInteractionEnabled = disabled ? false : true
+        if disabled { selectedBubble.image = UIImage() }
     }
 
     func setUpView() {
