@@ -118,6 +118,9 @@ final class MapService: MapServiceProtocol {
             ) { error in
                 completion(error)
             }
+        
+        let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
+        mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: customMap.memberIDs, completion: nil)
     }
     
     func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void)) {
