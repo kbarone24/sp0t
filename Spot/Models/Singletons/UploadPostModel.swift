@@ -103,6 +103,7 @@ final class UploadPostModel {
         mapObject = map
         postObject?.mapID = map?.id ?? ""
         postObject?.mapName = map?.mapName ?? ""
+        postObject?.hideFromFeed = map?.secret ?? true
     }
 
     func setPostCity() {
