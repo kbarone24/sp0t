@@ -53,6 +53,7 @@
 	<true/>
 	<key>UIAppFonts</key>
 	<array>
+		<string>SF-Compact-Text-Black.otf</string>
 		<string>SF-Compact-Rounded-Black.otf</string>
 		<string>SF-Compact-Text-SemiboldItalic.otf</string>
 		<string>SF-Compact-Text-Medium.otf</string>

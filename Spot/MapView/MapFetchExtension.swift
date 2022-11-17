@@ -404,7 +404,6 @@ extension MapController {
                 do {
                     let mapIn = try doc.data(as: CustomMap.self)
                     guard var mapInfo = mapIn else { continue }
-                    
                     if UserDataModel.shared.deletedMapIDs.contains(where: { $0 == mapInfo.id }) { continue }
                     if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapInfo.id }) {
                         self.updateMap(map: mapInfo, index: i)
