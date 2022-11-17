@@ -38,7 +38,10 @@ final class ExploreMapPreviewCell: UITableViewCell {
     
     private lazy var iconView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.cornerRadius = 17.0
+        imageView.clipsToBounds = true
+        imageView.layer.masksToBounds = true
         return imageView
     }()
     
@@ -60,8 +63,8 @@ final class ExploreMapPreviewCell: UITableViewCell {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
         layout.sectionInsetReference = .fromContentInset
-        layout.minimumInteritemSpacing = 10
-        layout.minimumLineSpacing = 10
+        layout.minimumInteritemSpacing = 5
+        layout.minimumLineSpacing = 5
         
         let collectionView = MapPhotosCollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.isScrollEnabled = true
@@ -95,7 +98,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         iconView.snp.makeConstraints {
             $0.top.equalToSuperview().offset(10.0)
             $0.height.equalTo(64.0)
-            $0.width.equalTo(60.0)
+            $0.width.equalTo(64.0)
             $0.leading.equalToSuperview().offset(18.0)
             $0.bottom.equalToSuperview().inset(10.0)
         }
@@ -157,13 +160,21 @@ final class ExploreMapPreviewCell: UITableViewCell {
         )
         
         let attachment = NSTextAttachment()
-        attachment.image = UIImage(named: "FriendsIcon")
+        attachment.image = UIImage(named: "FriendsIcon")?.withTintColor(UIColor(hexString: "B6B6B6"))
         let attachmentString = NSAttributedString(attachment: attachment)
         let myString = NSMutableAttributedString()
         myString.append(attachmentString)
         myString.append(
             NSMutableAttributedString(string: " \(customMap.memberIDs.count)")
         )
+        
+        myString.addAttributes(
+            [
+                .foregroundColor: UIColor(hexString: "B6B6B6") as Any
+            ],
+            range: NSRange(location: 0, length: myString.length)
+        )
+        
         subTitleLabel.attributedText = myString
         
         switch buttonType {
