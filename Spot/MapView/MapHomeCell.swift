@@ -43,7 +43,7 @@ final class MapHomeCell: UICollectionViewCell {
         label.font = UIFont(name: "SFCompactText-Semibold", size: 15)
         label.numberOfLines = 0
         label.adjustsFontSizeToFitWidth = true
-        label.minimumScaleFactor = 0.75
+        label.minimumScaleFactor = 0.7
         label.textAlignment = .center
         label.lineBreakMode = .byTruncatingTail
         return label
@@ -75,8 +75,10 @@ final class MapHomeCell: UICollectionViewCell {
             mapCoverImage.sd_setImage(with: URL(string: map.imageURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
 
-        let textString = NSMutableAttributedString(string: map.mapName).shrinkLineHeight()
-        nameLabel.attributedText = textString
+     //   let textString = NSMutableAttributedString(string: map.mapName).shrinkLineHeight()
+      //  nameLabel.attributedText = textString
+      //  print("contains emoji", nameLabel.text?.contains(where: {$0.isASCII}))
+        nameLabel.text = map.mapName
         nameLabel.sizeToFit()
 
         lockIcon.isHidden = !map.secret
@@ -99,14 +101,14 @@ final class MapHomeCell: UICollectionViewCell {
         contentArea.addSubview(mapCoverImage)
         mapCoverImage.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview().inset(9)
-            $0.bottom.equalToSuperview().inset(30)
+            $0.bottom.equalToSuperview().inset(34)
         }
 
         contentArea.addSubview(nameLabel)
         nameLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(10)
             $0.top.equalTo(mapCoverImage.snp.bottom).offset(2)
-            $0.bottom.equalToSuperview().inset(2)
+            $0.bottom.equalToSuperview().inset(3)
         }
 
         contentView.addSubview(lockIcon)
