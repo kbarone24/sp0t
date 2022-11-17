@@ -43,7 +43,7 @@ extension CustomMapController: MKMapViewDelegate {
     }
 
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
-        if centeredMap && containerDrawerView?.status != .bottom { closeDrawer() }
+        if centeredMap && containerDrawerView?.status == .middle { closeDrawer() }
         guard let mapView = mapView as? SpotMapView else { return }
         // gets called too much -> just use gesture recognizer
         if mapView.region.span.longitudeDelta < 0.001_3 {

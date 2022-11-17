@@ -371,7 +371,6 @@ final class AVCameraController: UIViewController {
                 guard let self = self else { return }
                 DispatchQueue.main.async {
                     if let galleryVC = self.navigationController?.viewControllers.first(where: { $0 is PhotoGalleryController }) as? PhotoGalleryController {
-                        print("reload data")
                         galleryVC.collectionView.reloadData()
                     }
                 }

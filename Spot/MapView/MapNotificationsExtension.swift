@@ -71,12 +71,8 @@ extension MapController {
         let dictionaryIndex = post.mapID == "" ? 0 : -1
         DispatchQueue.main.async {
             self.addPostToDictionary(post: post, map: map, newPost: true, index: dictionaryIndex)
-            self.selectMapAt(index: 0) /// select map at 0 to reset selected index (resort might mess with selecting index 1)
+            self.selectMapAt(index: mapIndex)
             self.reloadMapsCollection(resort: true, newPost: true)
-            if mapIndex == 1 {
-                self.selectMapAt(index: mapIndex)
-                self.reloadMapsCollection(resort: false, newPost: true)
-            }
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -137,33 +133,8 @@ extension MapController {
         }
     }
 
-    @objc func notifyFriendsListAdd() {
-        /// query friends posts again
-     /*   homeFetchGroup.enter()
-        homeFetchGroup.notify(queue: .main) { [weak self] in
-            guard let self = self else { return }
-            self.reloadMapsCollection(resort: false, newPost: false)
-        }
-
-        DispatchQueue.global().async {
-            self.getFriendPosts()
-        } */
-    }
-
     @objc func notifyEditMap(_ notification: NSNotification) {
         reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
-        /// update should happen by listener
-      /*  guard let map = notification.userInfo?["map"] as? CustomMap else { return }
-        if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: {$0.id == map.id}) {
-            UserDataModel.shared.userInfo.mapsList[i].memberIDs = map.memberIDs
-            UserDataModel.shared.userInfo.mapsList[i].likers = map.likers
-            UserDataModel.shared.userInfo.mapsList[i].memberProfiles = map.memberProfiles
-            UserDataModel.shared.userInfo.mapsList[i].imageURL = map.imageURL
-            UserDataModel.shared.userInfo.mapsList[i].mapName = map.mapName
-            UserDataModel.shared.userInfo.mapsList[i].mapDescription = map.mapDescription
-            UserDataModel.shared.userInfo.mapsList[i].secret = map.secret
-            DispatchQueue.main.async { self.mapsCollection.reloadItems(at: [IndexPath(item: i + 1, section: 0)]) }
-        } */
     }
 
     @objc func notifyFriendRemove(_ notification: NSNotification) {

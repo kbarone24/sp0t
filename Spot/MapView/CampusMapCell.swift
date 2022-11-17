@@ -12,7 +12,9 @@ import UIKit
 class CampusMapCell: UICollectionViewCell {
     private lazy var contentArea: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.blue.withAlphaComponent(0.6)
+        view.backgroundColor = UIColor(hexString: "4B9CD3")
+        view.layer.borderColor = UIColor(hexString: "13294B").cgColor
+        view.layer.borderWidth = 3.5
         view.layer.cornerRadius = 16
         return view
     }()
