@@ -214,7 +214,7 @@ class AvatarSelectionController: UIViewController {
        /* if sentFrom == .map {
             self.navigationController?.popViewController(animated: true)
 
-        } else */ if sentFrom == .map {
+        } else */ if sentFrom == .map || sentFrom == .create {
             let vc = SearchContactsOverviewController()
             self.navigationController?.pushViewController(vc, animated: true)
 

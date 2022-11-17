@@ -430,6 +430,7 @@
 		8CF7BC2B29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */; };
 		8CF7BC2C29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */; };
 		8CF7BC2D29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */; };
+		8CF7BC2F2926E79200EC9074 /* CGFloatExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF7BC2E2926E79200EC9074 /* CGFloatExtension.swift */; };
 		8CFD73EA2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
 		8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
 		8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
@@ -699,6 +700,7 @@
 		8CE4C94F292437600023FE8A /* AvatarCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarCell.swift; sourceTree = "<group>"; };
 		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
 		8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Black.otf"; sourceTree = "<group>"; };
+		8CF7BC2E2926E79200EC9074 /* CGFloatExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGFloatExtension.swift; sourceTree = "<group>"; };
 		8CFD73E92757E4FD00CBD162 /* TagCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagCategory.swift; sourceTree = "<group>"; };
 		994C18FD0D847CBE77336F96 /* Pods-Spot.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.release.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.release.xcconfig"; sourceTree = "<group>"; };
 		A296FC0C74CC7D5302353491 /* Pods-SpotTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SpotTests.debug.xcconfig"; path = "Target Support Files/Pods-SpotTests/Pods-SpotTests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -1304,6 +1306,7 @@
 				8CA10A1A2911B0DD00DD50EB /* CollectionExtension.swift */,
 				CD239A0B28FFD4EE0099513F /* StringExtension.swift */,
 				CDF8E9482903B5EE00BE929F /* ArrayExtensions.swift */,
+				8CF7BC2E2926E79200EC9074 /* CGFloatExtension.swift */,
 			);
 			path = FoundationExtensions;
 			sourceTree = "<group>";
@@ -1820,6 +1823,7 @@
 				593AC549243F898300C08237 /* UsernameController.swift in Sources */,
 				8C53A80A28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
 				5916A8BB24A566F400118E83 /* ResultUser.swift in Sources */,
+				8CF7BC2F2926E79200EC9074 /* CGFloatExtension.swift in Sources */,
 				59FCF5AF24734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				5F81C1272862EFBF0088A5B0 /* UserNotification.swift in Sources */,
 				8C88B0E727B46E3900DB4039 /* PostImageModel.swift in Sources */,
@@ -2372,7 +2376,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2443,7 +2447,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;

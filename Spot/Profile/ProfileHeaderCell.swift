@@ -100,7 +100,6 @@ class ProfileHeaderCell: UICollectionViewCell {
 
         let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
         profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
-        print("height", usernameLabel.frame.height, usernameLabel.font.lineHeight)
         usernameLabel.text = userProfile.username
         locationButton.setTitle(userProfile.currentLocation, for: .normal)
         if userProfile.currentLocation == "" {
@@ -117,7 +116,7 @@ class ProfileHeaderCell: UICollectionViewCell {
             actionButton.setTitle("Edit profile", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         case .friend:
-            actionButton.setImage(UIImage(named: "ProfileFriendsIcon"), for: .normal)
+            actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Friends", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)

@@ -120,7 +120,7 @@ final class MapService: MapServiceProtocol {
             }
         
         let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
-        mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: customMap.memberIDs, completion: nil)
+        mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: [UserDataModel.shared.uid], completion: nil)
     }
     
     func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void)) {
