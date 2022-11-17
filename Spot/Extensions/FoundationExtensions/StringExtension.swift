@@ -201,16 +201,21 @@ public extension String {
 }
 
 extension NSAttributedString {
-    func shrinkLineHeight() -> NSAttributedString {
+    func shrinkLineHeight(multiple: CGFloat, kern: CGFloat) -> NSAttributedString {
         let attributedString = NSMutableAttributedString(attributedString: self)
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineBreakMode = .byTruncatingTail
-        paragraphStyle.lineHeightMultiple = 0.75
+        paragraphStyle.lineHeightMultiple = multiple
         paragraphStyle.alignment = .center
+        let range = NSRange(location: 0, length: string.count)
         attributedString.addAttribute(
             .paragraphStyle,
             value: paragraphStyle,
-            range: NSRange(location: 0, length: string.count)
+            range: range
+        )
+        attributedString.addAttribute(
+            .kern, value: kern,
+            range: range
         )
         
         return NSAttributedString(attributedString: attributedString)

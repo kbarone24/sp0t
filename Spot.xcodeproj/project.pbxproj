@@ -427,6 +427,9 @@
 		8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
 		8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
 		8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */; };
+		8CF7BC2B29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */; };
+		8CF7BC2C29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */; };
+		8CF7BC2D29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */; };
 		8CFD73EA2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
 		8CFD73EB2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
 		8CFD73EC2757E4FD00CBD162 /* TagCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFD73E92757E4FD00CBD162 /* TagCategory.swift */; };
@@ -695,6 +698,7 @@
 		8CE4C9462922B2440023FE8A /* ActivityIndicatorCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityIndicatorCell.swift; sourceTree = "<group>"; };
 		8CE4C94F292437600023FE8A /* AvatarCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarCell.swift; sourceTree = "<group>"; };
 		8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageView.swift; sourceTree = "<group>"; };
+		8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Compact-Text-Black.otf"; sourceTree = "<group>"; };
 		8CFD73E92757E4FD00CBD162 /* TagCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagCategory.swift; sourceTree = "<group>"; };
 		994C18FD0D847CBE77336F96 /* Pods-Spot.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Spot.release.xcconfig"; path = "Target Support Files/Pods-Spot/Pods-Spot.release.xcconfig"; sourceTree = "<group>"; };
 		A296FC0C74CC7D5302353491 /* Pods-SpotTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SpotTests.debug.xcconfig"; path = "Target Support Files/Pods-SpotTests/Pods-SpotTests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -974,6 +978,7 @@
 			isa = PBXGroup;
 			children = (
 				8CA512A428BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf */,
+				8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */,
 				413486832859310E0098B27B /* SF-Compact-Text-Bold.otf */,
 				413486842859310E0098B27B /* SF-Compact-Text-Heavy.otf */,
 				413486822859310E0098B27B /* SF-Compact-Text-Medium.otf */,
@@ -1586,6 +1591,7 @@
 				413486882859310E0098B27B /* SF-Compact-Text-Bold.otf in Resources */,
 				3E18C6D1226E55F3000751E6 /* Profile.storyboard in Resources */,
 				4134868A2859310E0098B27B /* SF-Compact-Text-Semibold.otf in Resources */,
+				8CF7BC2B29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */,
 				1DF6E03A22089F4500BA0C36 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1605,6 +1611,7 @@
 				59A5A3D3253A874600789B7E /* Info.plist in Resources */,
 				8CDFEF47284D3B570038A9B8 /* Map.storyboard in Resources */,
 				8C1E48C2289C54CB0093030D /* SpotPostView.xib in Resources */,
+				8CF7BC2C29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */,
 				8C1EAF84284BD08F00474879 /* Notifications.storyboard in Resources */,
 				59004DFF22C58DE9004E06EF /* Profile.storyboard in Resources */,
 			);
@@ -1625,6 +1632,7 @@
 				59A5A3D4253A874600789B7E /* Info.plist in Resources */,
 				8CDFEF48284D3B570038A9B8 /* Map.storyboard in Resources */,
 				8C1E48C3289C54CB0093030D /* SpotPostView.xib in Resources */,
+				8CF7BC2D29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */,
 				8C1EAF85284BD08F00474879 /* Notifications.storyboard in Resources */,
 				59004E0022C58DE9004E06EF /* Profile.storyboard in Resources */,
 			);
@@ -2364,7 +2372,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2435,7 +2443,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 41;
+				CURRENT_PROJECT_VERSION = 42;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;

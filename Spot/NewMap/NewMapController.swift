@@ -63,7 +63,7 @@ class NewMapController: UIViewController {
     }()
     private lazy var secretLabel: UILabel = {
         let label = UILabel()
-        label.text = "Make this map secret"
+        label.text = "Secret map"
         label.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Bold", size: 14)
         return label
@@ -80,6 +80,13 @@ class NewMapController: UIViewController {
         button.imageView?.contentMode = .scaleAspectFit
         button.addTarget(self, action: #selector(togglePrivacy(_:)), for: .touchUpInside)
         return button
+    }()
+    private lazy var secretIndicator: UILabel = {
+        let label = UILabel()
+        label.text = "OFF"
+        label.textColor = UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Black", size: 14)
+        return label
     }()
 
     private var exitButton: UIButton?
@@ -204,6 +211,12 @@ class NewMapController: UIViewController {
             $0.height.equalTo(18)
         }
 
+        view.addSubview(secretIndicator)
+        secretIndicator.snp.makeConstraints {
+            $0.leading.equalTo(secretLabel.snp.trailing).offset(4)
+            $0.centerY.equalTo(secretLabel.snp.centerY)
+        }
+
         view.addSubview(secretSublabel)
         secretSublabel.snp.makeConstraints {
             $0.leading.equalTo(margin)
@@ -211,10 +224,6 @@ class NewMapController: UIViewController {
             $0.height.equalTo(18)
         }
 
-        let tag = mapObject?.secret ?? false ? 1 : 0
-        let image = tag == 1 ? UIImage(named: "PrivateMapOn") : UIImage(named: "PrivateMapOff")
-        secretToggle.setImage(image, for: .normal)
-        secretToggle.tag = tag
         view.addSubview(secretToggle)
         secretToggle.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(17)
@@ -250,6 +259,9 @@ class NewMapController: UIViewController {
             }
         }
         view.addGestureRecognizer(keyboardPan)
+
+        let tag = mapObject?.secret ?? false ? 0 : 1
+        togglePrivacy(tag: tag)
     }
 
     func setUpNavBar() {
@@ -282,16 +294,24 @@ class NewMapController: UIViewController {
 
     @objc func togglePrivacy(_ sender: UIButton) {
         HapticGenerator.shared.play(.light)
-        switch sender.tag {
+        togglePrivacy(tag: sender.tag)
+    }
+
+    func togglePrivacy(tag: Int) {
+        switch tag {
         case 0:
             Mixpanel.mainInstance().track(event: "NewMapPrivateMapOn")
             secretToggle.setImage(UIImage(named: "PrivateMapOn"), for: .normal)
             secretToggle.tag = 1
+            secretIndicator.text = "ON"
+            secretIndicator.textColor = UIColor(red: 1, green: 0.446, blue: 0.845, alpha: 1)
             mapObject?.secret = true
         case 1:
             Mixpanel.mainInstance().track(event: "NewMapPrivateMapOff")
             secretToggle.setImage(UIImage(named: "PrivateMapOff"), for: .normal)
             secretToggle.tag = 0
+            secretIndicator.text = "OFF"
+            secretIndicator.textColor = UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
             mapObject?.secret = false
         default: return
         }

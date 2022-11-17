@@ -71,8 +71,8 @@ extension MapController {
         let dictionaryIndex = post.mapID == "" ? 0 : -1
         DispatchQueue.main.async {
             self.addPostToDictionary(post: post, map: map, newPost: true, index: dictionaryIndex)
-            self.selectMapAt(index: mapIndex)
             self.reloadMapsCollection(resort: true, newPost: true)
+            self.selectItemAt(index: mapIndex)
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
