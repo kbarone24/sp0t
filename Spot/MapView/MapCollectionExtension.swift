@@ -16,7 +16,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if postsFetched {
             // adjust for user in chapel hill
-            let extraCells = 2
+            let extraCells = userInChapelHill() ? 3 : 2
             return UserDataModel.shared.userInfo.mapsList.count + extraCells
         }
         return 1
@@ -28,12 +28,12 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             return cell
         }
         // if userInChapelHill(), ...
-       /* if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1,
+        if userInChapelHill(), indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1,
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CampusMapCell", for: indexPath) as? CampusMapCell {
             return cell
-        } */
-    //    let addMapIncrement = userInChapelHill() ? 2 : 1
-        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1,
+        }
+        let addMapIncrement = userInChapelHill() ? 2 : 1
+        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + addMapIncrement,
            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddMapCell", for: indexPath) as? AddMapCell {
             // display new map button
             return cell
@@ -58,11 +58,11 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-       /* if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
+        let addMapIncrement = userInChapelHill() ? 2 : 1
+        if userInChapelHill(), indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
             openExploreMaps(onboarding: false)
             return
-        } else */
-        if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
+        } else if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + addMapIncrement {
             // launch new map
             openNewMap()
             return
@@ -91,7 +91,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let spacing: CGFloat = 9 + 5 * 3
         let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.25
-        let itemHeight: CGFloat = 90
+        let itemHeight: CGFloat = 95
         let firstItemWidth = itemWidth * 1.05
 
         if postsFetched {
