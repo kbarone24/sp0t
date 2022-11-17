@@ -28,20 +28,18 @@ final class ExploreMapViewController: UIViewController {
 
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
-
         tableView.contentInset = .zero
         tableView.backgroundColor = .white
         tableView.separatorStyle = .none
         tableView.showsVerticalScrollIndicator = false
-        tableView.delegate = self
         tableView.dataSource = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120.0
         tableView.backgroundView?.backgroundColor = .white
         tableView.backgroundColor = .white
+        tableView.contentInset = UIEdgeInsets(top: 18, left: 0, bottom: 80, right: 0)
 
         tableView.register(ExploreMapPreviewCell.self, forCellReuseIdentifier: ExploreMapPreviewCell.reuseID)
-        tableView.register(ExploreMapTitleView.self, forHeaderFooterViewReuseIdentifier: ExploreMapTitleView.reuseID)
 
         if #available(iOS 15.0, *) {
             tableView.sectionHeaderTopPadding = 0.0
@@ -75,6 +73,8 @@ final class ExploreMapViewController: UIViewController {
         
         return button
     }()
+
+    private lazy var descriptionView = ExploreMapTitleView()
     
     private var snapshot = Snapshot() {
         didSet {
@@ -115,46 +115,37 @@ final class ExploreMapViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setUpNavBar()
 
-        view.backgroundColor = .white
-        navigationItem.backButtonTitle = ""
-
-        navigationController?.navigationBar.barTintColor = UIColor.white
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
-        navigationController?.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
-
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-            .font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
-        ]
-
-        let backButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(close))
-        navigationItem.setLeftBarButton(backButton, animated: false)
-        self.navigationItem.leftBarButtonItem?.tintColor = nil
-
+        view.addSubview(descriptionView)
         view.addSubview(tableView)
         view.addSubview(joinButton)
         view.addSubview(activityIndicator)
+
+        descriptionView.configure(title: "", description: "Community maps created by fellow Tar Heels")
+        descriptionView.snp.makeConstraints { make in
+            make.leading.trailing.top.equalToSuperview()
+            make.height.equalTo(26.0)
+        }
         
         tableView.refreshControl = refreshControl
 
         tableView.snp.makeConstraints { make in
-            make.top.leading.trailing.equalToSuperview()
+            make.top.equalTo(descriptionView.snp.bottom)
+            make.leading.trailing.equalToSuperview()
             make.bottom.equalToSuperview().inset(20.0)
         }
         
         joinButton.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(22.0)
-            make.bottom.trailing.equalToSuperview().inset(22.0)
+            make.bottom.trailing.equalToSuperview().inset(48.0)
             make.height.equalTo(50.0)
         }
         
         activityIndicator.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
-            make.centerY.equalToSuperview()
-            make.width.height.equalTo(60)
+            make.top.equalTo(80)
+            make.width.height.equalTo(30)
         }
         
         activityIndicator.startAnimating()
@@ -232,6 +223,32 @@ final class ExploreMapViewController: UIViewController {
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .darkContent
     }
+
+    private func setUpNavBar() {
+        view.backgroundColor = .white
+        navigationItem.backButtonTitle = ""
+
+        navigationController?.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.tintColor = UIColor.black
+        navigationController?.view.backgroundColor = .white
+
+        if viewModel.openedFrom == .mapController {
+            let backButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(close))
+            navigationItem.setLeftBarButton(backButton, animated: false)
+            self.navigationItem.leftBarButtonItem?.tintColor = nil
+        } else {
+            navigationItem.leftBarButtonItem = UIBarButtonItem()
+        }
+
+        title = "UNC Maps"
+        let appearance = navigationController?.navigationBar.standardAppearance
+        appearance?.titleTextAttributes = [
+            NSAttributedString.Key.foregroundColor: UIColor.black,
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 22) as Any
+        ]
+    }
     
     @objc private func forceRefresh() {
         refreshControl.beginRefreshing()
@@ -273,29 +290,6 @@ extension ExploreMapViewController: UITableViewDataSource {
             cell.configure(customMap: customMap, data: data, isSelected: isSelected, buttonType: buttonType, delegate: self)
             return cell
         }
-    }
-}
-
-extension ExploreMapViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        // guard case let snapshot = dataSource.snapshot(),
-        guard !snapshot.sectionIdentifiers.isEmpty,
-              case let section = snapshot.sectionIdentifiers[section],
-              let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: ExploreMapTitleView.reuseID) as? ExploreMapTitleView
-        else {
-            return nil
-        }
-        
-        switch section {
-        case .body(let title):
-            header.configure(title: title.title, description: title.description)
-        }
-        
-        return header
-    }
-    
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return UITableView.automaticDimension
     }
 }
 

@@ -85,7 +85,7 @@ extension UINavigationBar {
             appearance.configureWithTransparentBackground()
             appearance.backgroundColor = .white
             appearance.titleTextAttributes[.foregroundColor] = UIColor.black
-            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)!
+            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 20)!
             standardAppearance = appearance
             scrollEdgeAppearance = appearance
         } else {

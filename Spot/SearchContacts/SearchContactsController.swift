@@ -51,8 +51,7 @@ class SearchContactsController: UIViewController {
             emptyStateLabel.isHidden = !emptyState
         }
     }
-
-    override func viewDidLoad() {
+        override func viewDidLoad() {
         super.viewDidLoad()
         setUpNavBar()
         addTableView()
@@ -182,7 +181,14 @@ class SearchContactsController: UIViewController {
     }
 
     func animateToMap() {
-        DispatchQueue.main.async { self.navigationController?.popToRootViewController(animated: true) }
+        let storyboard = UIStoryboard(name: "Map", bundle: nil)
+        guard let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as? MapController else { return }
+        let navController = UINavigationController(rootViewController: vc)
+        navController.modalPresentationStyle = .fullScreen
+
+        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+        navigationController?.popToRootViewController(animated: false)
+        window?.rootViewController = navController
     }
 }
 

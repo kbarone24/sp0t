@@ -91,15 +91,15 @@ class EditMapController: UIViewController {
         return textView
     }()
 
-    private lazy var privateLabel: UILabel = {
+    private lazy var secretLabel: UILabel = {
         let label = UILabel()
-        label.text = "Make this map secret"
+        label.text = "Secret map"
         label.font = UIFont(name: "SFCompactText-Bold", size: 14)
         label.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
         return label
     }()
 
-    private lazy var privateDescriptionLabel: UILabel = {
+    private lazy var secretSublabel: UILabel = {
         let label = UILabel()
         label.text = "Only invited friends will see this map"
         label.textColor = UIColor(red: 0.658, green: 0.658, blue: 0.658, alpha: 1)
@@ -107,10 +107,18 @@ class EditMapController: UIViewController {
         return label
     }()
 
-    private var privateButton: UIButton = {
+    private var secretToggle: UIButton = {
         let button = UIButton()
         button.setTitle("", for: .normal)
         return button
+    }()
+
+    private lazy var secretIndicator: UILabel = {
+        let label = UILabel()
+        label.text = "OFF"
+        label.textColor = UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Black", size: 14)
+        return label
     }()
 
     private var activityIndicator: CustomActivityIndicator = {
@@ -185,7 +193,7 @@ class EditMapController: UIViewController {
         if mapData?.mapName != mapName { updateMapNameInPosts(mapID: mapID, newName: mapNameTextField.text ?? "") }
         mapData?.mapName = mapName
         mapData?.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
-        mapData?.secret = privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
+        mapData?.secret = secretToggle.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true
         mapData?.lowercaseName = lowercaseName
         mapData?.searchKeywords = lowercaseName.getKeywordArray()
 
@@ -215,9 +223,12 @@ class EditMapController: UIViewController {
 
     }
 
-    @objc func privateMapSwitchAction() {
+    @objc func togglePrivacy() {
         HapticGenerator.shared.play(.light)
-        privateButton.setImage(UIImage(named: privateButton.image(for: .normal) == UIImage(named: "PrivateMapOff") ? "PrivateMapOn" : "PrivateMapOff"), for: .normal)
+        let selected = secretToggle.image(for: .normal) == UIImage(named: "PrivateMapOff")
+        secretToggle.setImage(UIImage(named: selected ? "PrivateMapOn" : "PrivateMapOff"), for: .normal)
+        secretIndicator.text = selected ? "ON" : "OFF"
+        secretIndicator.textColor = selected ? UIColor(red: 1, green: 0.446, blue: 0.845, alpha: 1) : UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -285,27 +296,36 @@ extension EditMapController {
             $0.height.equalTo(70)
         }
 
-        view.addSubview(privateLabel)
-        privateLabel.snp.makeConstraints {
+        view.addSubview(secretLabel)
+        secretLabel.snp.makeConstraints {
             $0.top.equalTo(mapDescription.snp.bottom).offset(33)
             $0.leading.equalTo(16)
         }
 
-        privateButton.setImage(UIImage(named: mapData?.secret == false ? "PrivateMapOff" : "PrivateMapOn"), for: .normal)
-        privateButton.addTarget(self, action: #selector(privateMapSwitchAction), for: .touchUpInside)
-        view.addSubview(privateButton)
-        privateButton.snp.makeConstraints {
+        let secret = mapData?.secret == true
+        secretIndicator.text = secret ? "ON" : "OFF"
+        secretIndicator.textColor = secret ? UIColor(red: 1, green: 0.446, blue: 0.845, alpha: 1) : UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
+        view.addSubview(secretIndicator)
+        secretIndicator.snp.makeConstraints {
+            $0.leading.equalTo(secretLabel.snp.trailing).offset(4)
+            $0.centerY.equalTo(secretLabel)
+        }
+
+        secretToggle.setImage(UIImage(named: secret ? "PrivateMapOn" : "PrivateMapOff"), for: .normal)
+        secretToggle.addTarget(self, action: #selector(togglePrivacy), for: .touchUpInside)
+        view.addSubview(secretToggle)
+        secretToggle.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(17)
-            $0.top.equalTo(privateLabel)
+            $0.top.equalTo(secretLabel)
             $0.width.equalTo(68)
             $0.height.equalTo(38)
         }
 
-        view.addSubview(privateDescriptionLabel)
-        privateDescriptionLabel.snp.makeConstraints {
-            $0.top.equalTo(privateLabel.snp.bottom).offset(1)
-            $0.leading.equalTo(privateLabel)
-            $0.trailing.equalTo(privateButton.snp.leading).offset(-14)
+        view.addSubview(secretSublabel)
+        secretSublabel.snp.makeConstraints {
+            $0.top.equalTo(secretLabel.snp.bottom).offset(1)
+            $0.leading.equalTo(secretLabel)
+            $0.trailing.equalTo(secretToggle.snp.leading).offset(-14)
         }
 
         view.addSubview(activityIndicator)

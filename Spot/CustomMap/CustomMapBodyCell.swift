@@ -17,7 +17,6 @@ class CustomMapBodyCell: UICollectionViewCell {
         imageView.image = UIImage()
         imageView.contentMode = .scaleAspectFill
         imageView.layer.masksToBounds = true
-        imageView.layer.cornerRadius = 2
         return imageView
     }()
 
@@ -48,9 +47,10 @@ class CustomMapBodyCell: UICollectionViewCell {
         postLocation.text = ""
     }
 
-    public func cellSetup(postData: MapPost, transform: Bool = true) {
+    public func cellSetup(postData: MapPost, transform: Bool = true, cornerRadius: CGFloat = 2) {
         self.postData = postData
-        
+
+        postImage.layer.cornerRadius = cornerRadius
         postImage.sd_cancelCurrentImageLoad()
         if transform {
             let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2 / 3, height: (UIScreen.main.bounds.width * 2 / 3) * 1.5), scaleMode: .aspectFill)

@@ -328,7 +328,7 @@ class ConfirmCodeController: UIViewController {
                       "verifiedPhone": true,
                       "sentInvites": [],
                       "pendingFriendRequests": [],
-                      "shownExploreMaps": false,
+                      "respondedToCampusMap": false,
                       "usernameKeywords": usernameKeywords,
                       "nameKeywords": nameKeywords,
                       "topFriends": topFriends,

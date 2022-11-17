@@ -78,7 +78,6 @@ class NewMapController: UIViewController {
     private lazy var secretToggle: UIButton = {
         let button = UIButton()
         button.imageView?.contentMode = .scaleAspectFit
-        button.addTarget(self, action: #selector(togglePrivacy(_:)), for: .touchUpInside)
         return button
     }()
     private lazy var secretIndicator: UILabel = {
@@ -224,6 +223,7 @@ class NewMapController: UIViewController {
             $0.height.equalTo(18)
         }
 
+        secretToggle.addTarget(self, action: #selector(togglePrivacy(_:)), for: .touchUpInside)
         view.addSubview(secretToggle)
         secretToggle.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(17)

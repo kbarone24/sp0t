@@ -14,10 +14,11 @@ protocol ExploreMapPreviewCellDelegate: AnyObject {
 }
 
 final class ExploreMapPreviewCell: UITableViewCell {
-    
     typealias Snapshot = NSDiffableDataSourceSnapshot<MapPhotosCollectionView.Section, MapPhotosCollectionView.Item>
     typealias JoinButton = ExploreMapViewModel.JoinButtonType
-    
+
+    private lazy var titleContainer = UIView()
+
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "SFCompactText-Heavy", size: 18)
@@ -86,10 +87,11 @@ final class ExploreMapPreviewCell: UITableViewCell {
         
         contentView.addSubview(headerView)
         contentView.addSubview(photosCollectionView)
-        
-        headerView.addSubview(titleLabel)
+
         headerView.addSubview(iconView)
-        headerView.addSubview(subTitleLabel)
+        headerView.addSubview(titleContainer)
+        titleContainer.addSubview(titleLabel)
+        titleContainer.addSubview(subTitleLabel)
         
         headerView.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
@@ -99,27 +101,35 @@ final class ExploreMapPreviewCell: UITableViewCell {
             $0.top.equalToSuperview().offset(10.0)
             $0.height.equalTo(64.0)
             $0.width.equalTo(64.0)
-            $0.leading.equalToSuperview().offset(18.0)
+            $0.leading.equalToSuperview().offset(14.0)
             $0.bottom.equalToSuperview().inset(10.0)
+        }
+
+        // auto-sizing container to center with cover image
+        titleContainer.snp.makeConstraints {
+            $0.leading.equalTo(iconView.snp.trailing).offset(10.0)
+            $0.trailing.equalToSuperview().inset(96.0)
+            $0.centerY.equalTo(iconView)
         }
         
         titleLabel.snp.makeConstraints {
-            $0.bottom.equalTo(headerView.snp.centerY).inset(2.5)
-            $0.leading.equalTo(iconView.snp.trailing).offset(10.0)
-            $0.trailing.equalToSuperview().inset(55.0)
+            $0.top.equalToSuperview()
+            $0.leading.trailing.equalToSuperview()
         }
         
         subTitleLabel.snp.makeConstraints {
-            $0.top.equalTo(headerView.snp.centerY).offset(2.5)
-            $0.leading.equalTo(titleLabel.snp.leading)
-            $0.trailing.equalToSuperview().inset(55.0)
+            $0.top.equalTo(titleLabel.snp.bottom).offset(5)
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
-        
+
+        let itemWidth = (UIScreen.main.bounds.width - 18) / 2.3
+        let itemHeight = itemWidth * 1.25 + 2
         photosCollectionView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(headerView.snp.bottom).offset(10.0)
-            $0.bottom.trailing.equalToSuperview().inset(18.0)
-            $0.leading.equalToSuperview().offset(18.0)
-            $0.height.greaterThanOrEqualTo(180.0)
+            $0.bottom.equalToSuperview().inset(18.0)
+            $0.height.equalTo(itemHeight)
         }
     }
     
@@ -160,7 +170,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         )
         
         let attachment = NSTextAttachment()
-        attachment.image = UIImage(named: "FriendsIcon")?.withTintColor(UIColor(hexString: "B6B6B6"))
+        attachment.image = UIImage(named: "FriendsIcon")
         let attachmentString = NSAttributedString(attachment: attachment)
         let myString = NSMutableAttributedString()
         myString.append(attachmentString)
@@ -225,13 +235,13 @@ final class ExploreMapPreviewCell: UITableViewCell {
             snapshot.appendItems([.item($0)], toSection: .main(customMap))
         }
         
-        let remainder = customMap.postIDs.count - 7
-        if remainder > 0 {
-            snapshot.appendItems([.extra(remainder)], toSection: .main(customMap))
-        }
+        // let remainder = customMap.postIDs.count - 7
+        // if remainder > 0 {
+        //    snapshot.appendItems([.extra(remainder)], toSection: .main(customMap))
+        // }
         
         photosCollectionView.configure(snapshot: snapshot)
-        
+
         layoutIfNeeded()
     }
     
