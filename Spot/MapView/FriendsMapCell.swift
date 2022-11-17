@@ -59,14 +59,14 @@ class FriendsMapCell: UICollectionViewCell {
         contentArea.addSubview(friendsCoverImage)
         friendsCoverImage.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview().inset(9)
-            $0.bottom.equalToSuperview().inset(30)
+            $0.bottom.equalToSuperview().inset(34)
         }
 
         contentArea.addSubview(nameLabel)
         nameLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(10)
             $0.top.equalTo(friendsCoverImage.snp.bottom).offset(2)
-            $0.bottom.equalToSuperview().inset(2)
+            $0.bottom.equalToSuperview().inset(3)
         }
     }
 

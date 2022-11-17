@@ -167,7 +167,7 @@ final class MapController: UIViewController {
         mapsCollection.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.topMargin)
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(115)
+            $0.height.equalTo(114)
         }
     }
 
