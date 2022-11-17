@@ -33,7 +33,7 @@ final class MapPhotosCollectionView: UICollectionView {
             switch item {
             case .item(let mapPost):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomMapBodyCell.reuseID, for: indexPath) as? CustomMapBodyCell
-                cell?.cellSetup(postData: mapPost, transform: true)
+                cell?.cellSetup(postData: mapPost, transform: true, cornerRadius: 9)
                 return cell
                 
             case .extra(let count):
@@ -70,20 +70,24 @@ final class MapPhotosCollectionView: UICollectionView {
 
 extension MapPhotosCollectionView: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        let section = snapshot.sectionIdentifiers[section]
-        return snapshot.numberOfItems(inSection: section)
+       // let section = snapshot.sectionIdentifiers[section]
+       // return snapshot.numberOfItems(inSection: section)
+        return 250
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let section = snapshot.sectionIdentifiers[indexPath.section]
-        let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
+        let items = snapshot.itemIdentifiers(inSection: section)
+        let iterations = indexPath.row / items.count
+        let itemIndex = indexPath.row - iterations * items.count
+        let item = snapshot.itemIdentifiers(inSection: section)[itemIndex]
         
         switch item {
         case .item(let mapPost):
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomMapBodyCell.reuseID, for: indexPath) as? CustomMapBodyCell else {
                 return UICollectionViewCell()
             }
-            cell.cellSetup(postData: mapPost, transform: false)
+            cell.cellSetup(postData: mapPost, transform: false, cornerRadius: 9)
             return cell
             
         case .extra(let count):
@@ -98,6 +102,12 @@ extension MapPhotosCollectionView: UICollectionViewDataSource {
 
 extension MapPhotosCollectionView: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        CGSize(width: 130, height: 475)
+        let width = (UIScreen.main.bounds.width - 18) / 2.3
+        let height = width * 1.25
+        return CGSize(width: width, height: height)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        return UIEdgeInsets(top: 0, left: 13, bottom: 0, right: 13)
     }
 }

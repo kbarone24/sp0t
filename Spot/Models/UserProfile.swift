@@ -42,8 +42,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
 
     var pending: Bool?
     var friend: Bool?
-    var respondedToCampusMap: Bool? = false
-    var shownExploreMaps: Bool? = false
+    var respondedToCampusMap: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -58,7 +57,7 @@ struct UserProfile: Identifiable, Codable, Hashable {
         case pendingFriendRequests
         case phone
         case sentInvites
-        case shownExploreMaps
+        case respondedToCampusMap
         case spotScore
         case topFriends
         case userBio
