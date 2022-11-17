@@ -27,7 +27,6 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             // display loading cell
             return cell
         }
-        // if userInChapelHill(), ...
         if userInChapelHill(), indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1,
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CampusMapCell", for: indexPath) as? CampusMapCell {
             return cell
@@ -72,14 +71,20 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         }
         HapticGenerator.shared.play(.light)
         DispatchQueue.main.async {
-            collectionView.selectItem(at: indexPath, animated: true, scrollPosition: [])
-            self.selectMapAt(index: indexPath.item)
+            self.selectItemAt(index: indexPath.row)
         }
     }
 
+    func selectItemAt(index: Int) {
+        mapsCollection.selectItem(at: IndexPath(item: index, section: 0), animated: true, scrollPosition: [])
+        self.selectMapAt(index: index)
+    }
+
     func selectMapAt(index: Int) {
+        print("select map at", index)
         Mixpanel.mainInstance().track(event: "MapControllerSelectMapAt", properties: ["index": index])
         if index != self.selectedItemIndex {
+            print("select select")
             self.selectedItemIndex = index
             self.setNewPostsButtonCount()
             self.addMapAnnotations(index: index, reload: false)
