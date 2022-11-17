@@ -13,8 +13,6 @@ import Mixpanel
 import UIKit
 
 class LandingPageController: UIViewController {
-    var thumbnailImage: UIImageView! /// show preview thumbnail while video is buffering
-    var firstLoad = true /// determine whether video player has been loaded yet
     var privacyNote: UITextView!
     var privacyLinks: UITextView!
 
@@ -31,6 +29,23 @@ class LandingPageController: UIViewController {
         super.viewDidLoad()
 
         view.backgroundColor = .white
+        let createAccountButton = UIButton {
+            $0.layer.cornerRadius = 9
+            $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+            let customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
+                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 17.5) as Any,
+                NSAttributedString.Key.foregroundColor: UIColor.black
+            ])
+            $0.setAttributedTitle(customButtonTitle, for: .normal)
+            $0.setImage(nil, for: .normal)
+            $0.addTarget(self, action: #selector(createAccountTap(_:)), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        createAccountButton.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(27)
+            $0.height.equalTo(55.97)
+            $0.centerY.equalToSuperview()
+        }
 
         let loginButton = UIButton {
             $0.layer.cornerRadius = 9
@@ -47,7 +62,7 @@ class LandingPageController: UIViewController {
         loginButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(27)
             $0.height.equalTo(55.97)
-            $0.centerY.equalToSuperview()
+            $0.top.equalTo(createAccountButton.snp.bottom).offset(12)
         }
 
         let logo = UIImageView {
@@ -55,28 +70,10 @@ class LandingPageController: UIViewController {
             view.addSubview($0)
         }
         logo.snp.makeConstraints {
-            $0.bottom.equalTo(loginButton.snp.top).offset(-34)
+            $0.bottom.equalTo(createAccountButton.snp.top).offset(-34)
             $0.centerX.equalToSuperview()
             $0.height.equalTo(133)
             $0.width.equalTo(238)
-        }
-
-        let createAccountButton = UIButton {
-            $0.layer.cornerRadius = 9
-            $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
-            let customButtonTitle = NSMutableAttributedString(string: "Create account", attributes: [
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 17.5) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor.black
-            ])
-            $0.setAttributedTitle(customButtonTitle, for: .normal)
-            $0.setImage(nil, for: .normal)
-            $0.addTarget(self, action: #selector(createAccountTap(_:)), for: .touchUpInside)
-            view.addSubview($0)
-        }
-        createAccountButton.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(27)
-            $0.height.equalTo(55.97)
-            $0.top.equalTo(loginButton.snp.bottom).offset(12)
         }
 
         let privacyNote = UILabel {
@@ -86,7 +83,7 @@ class LandingPageController: UIViewController {
             view.addSubview($0)
         }
         privacyNote.snp.makeConstraints {
-            $0.top.equalTo(createAccountButton.snp.bottom).offset(20)
+            $0.top.equalTo(loginButton.snp.bottom).offset(20)
             $0.centerX.equalToSuperview()
         }
 
@@ -126,7 +123,7 @@ class LandingPageController: UIViewController {
 
         privacyLinks.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(termsTap)))
 
-        addEmailLogin()
+     //   addEmailLogin()
     }
 
     func addEmailLogin() {
@@ -134,11 +131,11 @@ class LandingPageController: UIViewController {
             $0.addTarget(self, action: #selector(emailTap), for: .touchUpInside)
             $0.setTitle("Login with email", for: .normal)
             $0.setTitleColor(UIColor.lightGray, for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 18)
+            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 12)
             view.addSubview($0)
         }
         emailButton.snp.makeConstraints {
-            $0.bottom.equalTo(-80)
+            $0.bottom.equalTo(-50)
             $0.centerX.equalToSuperview()
         }
     }

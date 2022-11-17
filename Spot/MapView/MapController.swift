@@ -72,8 +72,9 @@ final class MapController: UIViewController {
         view.backgroundColor = .white
         view.showsHorizontalScrollIndicator = false
         view.contentInset = UIEdgeInsets(top: 5, left: 9, bottom: 0, right: 9)
-        view.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell")
         view.register(MapLoadingCell.self, forCellWithReuseIdentifier: "MapLoadingCell")
+        view.register(FriendsMapCell.self, forCellWithReuseIdentifier: "FriendsCell")
+        view.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell")
         view.register(AddMapCell.self, forCellWithReuseIdentifier: "AddMapCell")
         view.register(CampusMapCell.self, forCellWithReuseIdentifier: "CampusMapCell")
         view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
@@ -124,7 +125,6 @@ final class MapController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsListAdd), name: NSNotification.Name(("FriendsListAdd")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRemove), name: NSNotification.Name(("FriendRemove")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
