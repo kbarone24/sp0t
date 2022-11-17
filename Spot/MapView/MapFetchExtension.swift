@@ -411,10 +411,15 @@ extension MapController {
                     }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
+                    print("append map")
 
                 } catch {
                     continue
                 }
+            }
+            if self.mapsLoaded {
+                DispatchQueue.main.async { self.reloadMapsCollection(resort: true, newPost: false) }
+                return
             }
             self.mapsLoaded = true
             NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))

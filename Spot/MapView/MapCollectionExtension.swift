@@ -81,10 +81,8 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
 
     func selectMapAt(index: Int) {
-        print("select map at", index)
         Mixpanel.mainInstance().track(event: "MapControllerSelectMapAt", properties: ["index": index])
         if index != self.selectedItemIndex {
-            print("select select")
             self.selectedItemIndex = index
             self.setNewPostsButtonCount()
             self.addMapAnnotations(index: index, reload: false)

@@ -45,7 +45,7 @@ final class ExploreMapViewModel {
     }
     
     private let service: MapServiceProtocol
-    private let openedFrom: OpenedFrom
+    let openedFrom: OpenedFrom
     
     private let selectMapPassthroughSubject = PassthroughSubject<CustomMap?, Never>()
     
@@ -111,7 +111,9 @@ final class ExploreMapViewModel {
                         return !mainCampusMaps.contains(where: { $0.id == data.key.id })
                     }
                     .sorted {
-                        $0.key.mapName.lowercased() < $1.key.mapName.lowercased()
+                        $0.key.memberIDs.contains(UserDataModel.shared.uid) == $1.key.memberIDs.contains(UserDataModel.shared.uid) ?
+                        $0.key.mapName.lowercased() < $1.key.mapName.lowercased() :
+                        !$0.key.memberIDs.contains(UserDataModel.shared.uid) && $1.key.memberIDs.contains(UserDataModel.shared.uid)
                     }
                     .forEach { data in
                         let isSelected: Bool
@@ -253,7 +255,6 @@ final class ExploreMapViewModel {
                     promise(.success((self.cachedTitleData, self.cachedMaps, forced)))
                     return
                 }
-                
                 // TODO: This will be fetched from the service eventually
                 let titleData = TitleData(
                     title: "UNC Maps",
@@ -267,7 +268,7 @@ final class ExploreMapViewModel {
                         
                         for map in allMaps {
                             guard let id = map.id else { return }
-                            mapData[map] = try await self.service.fetchMapPosts(id: id, limit: 7)
+                            mapData[map] = try await self.service.fetchMapPosts(id: id, limit: 12)
                         }
                         
                         self.cachedMaps = mapData

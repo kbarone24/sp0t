@@ -8,17 +8,7 @@
 
 import UIKit
 
-final class ExploreMapTitleView: UITableViewHeaderFooterView {
-
-    private lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 22)
-        label.textColor = .black
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        return label
-    }()
-
+final class ExploreMapTitleView: UIView {
     private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
@@ -28,25 +18,14 @@ final class ExploreMapTitleView: UITableViewHeaderFooterView {
         return label
     }()
     
-    override init(reuseIdentifier: String?) {
-        super.init(reuseIdentifier: reuseIdentifier)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         backgroundColor = .white
-        contentView.backgroundColor = .white
         
-        addSubview(titleLabel)
         addSubview(descriptionLabel)
-
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(10.0)
-            make.leading.equalToSuperview().offset(25.0)
-            make.trailing.equalToSuperview().inset(25.0)
-        }
-
         descriptionLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(10.0)
-            make.leading.equalToSuperview().offset(25.0)
-            make.trailing.equalToSuperview().inset(25.0)
-            make.bottom.equalToSuperview().inset(20.0)
+            make.top.equalToSuperview()
+            make.centerX.equalToSuperview()
         }
     }
 
@@ -56,9 +35,7 @@ final class ExploreMapTitleView: UITableViewHeaderFooterView {
     }
 
     func configure(title: String, description: String) {
-        self.titleLabel.text = title
         self.descriptionLabel.text = description
-        
         layoutIfNeeded()
     }
 }
