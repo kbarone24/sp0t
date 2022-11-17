@@ -282,6 +282,9 @@
 		8C53A80A28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */; };
 		8C53A80B28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */; };
 		8C53A80C28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */; };
+		8C5788C62925B63500966DBB /* FriendsMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5788C52925B63500966DBB /* FriendsMapCell.swift */; };
+		8C5788C72925B63500966DBB /* FriendsMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5788C52925B63500966DBB /* FriendsMapCell.swift */; };
+		8C5788C82925B63500966DBB /* FriendsMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5788C52925B63500966DBB /* FriendsMapCell.swift */; };
 		8C5AF2EA288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
 		8C5AF2EB288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
 		8C5AF2EC288F24C40051B3B5 /* ImageAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */; };
@@ -637,6 +640,7 @@
 		8C4FDFC228DAB2F800A3B479 /* UsernameLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameLabel.swift; sourceTree = "<group>"; };
 		8C51D92F28C7EECB009CCD00 /* EmailLoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailLoginController.swift; sourceTree = "<group>"; };
 		8C53A80928C1A5C200A0276E /* MapOnboardingExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapOnboardingExtension.swift; sourceTree = "<group>"; };
+		8C5788C52925B63500966DBB /* FriendsMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsMapCell.swift; sourceTree = "<group>"; };
 		8C5AF2E9288F24C40051B3B5 /* ImageAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAvatarView.swift; sourceTree = "<group>"; };
 		8C5CD068290AFEB800A4AD3C /* FindFriendsFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindFriendsFetchExtension.swift; sourceTree = "<group>"; };
 		8C5CD06A290AFF2C00A4AD3C /* FindFriendsSearchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindFriendsSearchExtension.swift; sourceTree = "<group>"; };
@@ -1332,6 +1336,7 @@
 				CD3D8DD829050A730062DE8D /* MapLoadingCell.swift */,
 				CD3D8DDA29050A970062DE8D /* AddMapCell.swift */,
 				CD3D8DDC29050ACE0062DE8D /* MapHomeCell.swift */,
+				8C5788C52925B63500966DBB /* FriendsMapCell.swift */,
 				8C66E110291B3A23006D29F6 /* CampusMapCell.swift */,
 			);
 			path = MapView;
@@ -1789,6 +1794,7 @@
 				CDF8E983290477C200BE929F /* CustomMapHeaderCell.swift in Sources */,
 				8CA10A232911B20700DD50EB /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */,
+				8C5788C62925B63500966DBB /* FriendsMapCell.swift in Sources */,
 				CDF8E984290477C200BE929F /* CustomMapDelegateExtension.swift in Sources */,
 				CD3D8DD7290500CF0062DE8D /* FriendsMapButton.swift in Sources */,
 				8C66E10D291ABB8D006D29F6 /* SearchContactsCell.swift in Sources */,
@@ -2054,6 +2060,7 @@
 				5916A8BC24A566F400118E83 /* ResultUser.swift in Sources */,
 				8C66E116291C0C81006D29F6 /* EditProfileActions.swift in Sources */,
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
+				8C5788C72925B63500966DBB /* FriendsMapCell.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8CA10A2C2912F0BE00DD50EB /* NewSpotNameView.swift in Sources */,
@@ -2174,6 +2181,7 @@
 				5916A8BD24A566F400118E83 /* ResultUser.swift in Sources */,
 				8C66E117291C0C81006D29F6 /* EditProfileActions.swift in Sources */,
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
+				8C5788C82925B63500966DBB /* FriendsMapCell.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8CA10A2D2912F0BE00DD50EB /* NewSpotNameView.swift in Sources */,
@@ -2356,7 +2364,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 40;
+				CURRENT_PROJECT_VERSION = 41;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2427,7 +2435,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 40;
+				CURRENT_PROJECT_VERSION = 41;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;

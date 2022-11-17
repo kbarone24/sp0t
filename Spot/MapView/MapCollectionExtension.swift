@@ -16,7 +16,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if postsFetched {
             // adjust for user in chapel hill
-            let extraCells = 3
+            let extraCells = 2
             return UserDataModel.shared.userInfo.mapsList.count + extraCells
         }
         return 1
@@ -28,22 +28,29 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             return cell
         }
         // if userInChapelHill(), ...
-        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1,
+       /* if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1,
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CampusMapCell", for: indexPath) as? CampusMapCell {
             return cell
-        }
+        } */
     //    let addMapIncrement = userInChapelHill() ? 2 : 1
-        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 2,
+        if indexPath.row == UserDataModel.shared.userInfo.mapsList.count + 1,
            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddMapCell", for: indexPath) as? AddMapCell {
             // display new map button
             return cell
         }
-        if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapCell", for: indexPath) as? MapHomeCell {
-            let map = UserDataModel.shared.userInfo.mapsList[safe: indexPath.row - 1]
-            var avatarURLs = map == nil ? friendsPostsDictionary.values.map({ $0.userInfo?.avatarURL ?? "" }).uniqued().prefix(5) : []
+
+        if indexPath.row == 0, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FriendsCell", for: indexPath) as? FriendsMapCell {
+            var avatarURLs = friendsPostsDictionary.values.map({ $0.userInfo?.avatarURL ?? "" }).uniqued().prefix(5)
             if avatarURLs.count < 5 && !avatarURLs.contains(UserDataModel.shared.userInfo.avatarURL ?? "") { avatarURLs.append(UserDataModel.shared.userInfo.avatarURL ?? "") }
-            let postsList = map == nil ? friendsPostsDictionary.map({ $0.value }) : map?.postsDictionary.map({ $0.value })
-            cell.setUp(map: map, avatarURLs: Array(avatarURLs), postsList: postsList ?? [])
+            cell.setUp(avatarURLs: Array(avatarURLs))
+            cell.isSelected = selectedItemIndex == indexPath.row
+            return cell
+        }
+
+        if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapCell", for: indexPath) as? MapHomeCell {
+            let map = UserDataModel.shared.userInfo.mapsList[indexPath.row - 1]
+            let postsList = map.postsDictionary.map({ $0.value })
+            cell.setUp(map: map, postsList: postsList)
             cell.isSelected = selectedItemIndex == indexPath.row
             return cell
         }
@@ -51,10 +58,11 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
+       /* if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
             openExploreMaps(onboarding: false)
             return
-        } else if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 2 {
+        } else */
+        if indexPath.item == UserDataModel.shared.userInfo.mapsList.count + 1 {
             // launch new map
             openNewMap()
             return
@@ -63,28 +71,28 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             return
         }
         HapticGenerator.shared.play(.light)
-        collectionView.selectItem(at: indexPath, animated: true, scrollPosition: [])
-        selectMapAt(index: indexPath.item)
+        DispatchQueue.main.async {
+            collectionView.selectItem(at: indexPath, animated: true, scrollPosition: [])
+            self.selectMapAt(index: indexPath.item)
+        }
     }
 
     func selectMapAt(index: Int) {
         Mixpanel.mainInstance().track(event: "MapControllerSelectMapAt", properties: ["index": index])
-        DispatchQueue.main.async {
-            if index != self.selectedItemIndex {
-                self.selectedItemIndex = index
-                self.setNewPostsButtonCount()
-                self.addMapAnnotations(index: index, reload: false)
-                self.addFriendsView.removeFromSuperview()
-                if index != 0 { UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle() }
-            }
+        if index != self.selectedItemIndex {
+            self.selectedItemIndex = index
+            self.setNewPostsButtonCount()
+            self.addMapAnnotations(index: index, reload: false)
+            self.addFriendsView.removeFromSuperview()
+            if index != 0 { UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle() }
         }
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let spacing: CGFloat = 9 + 5 * 3
-        let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.7
-        let itemHeight = itemWidth * 0.95
-        let firstItemWidth = itemWidth * 1.15
+        let itemWidth = (UIScreen.main.bounds.width - spacing) / 3.25
+        let itemHeight: CGFloat = 90
+        let firstItemWidth = itemWidth * 1.05
 
         if postsFetched {
             if indexPath.item == 0 {

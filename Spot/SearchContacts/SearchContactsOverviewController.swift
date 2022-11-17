@@ -73,7 +73,7 @@ class SearchContactsOverviewController: UIViewController {
 
         view.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
-            $0.top.equalTo(promptLabel.snp.bottom).offset(6)
+            $0.top.equalTo(promptLabel.snp.bottom).offset(12)
             $0.centerX.equalToSuperview()
             $0.width.equalTo(214)
             $0.height.equalTo(166)
