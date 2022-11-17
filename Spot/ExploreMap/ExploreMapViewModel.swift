@@ -47,6 +47,8 @@ final class ExploreMapViewModel {
     private let service: MapServiceProtocol
     private let openedFrom: OpenedFrom
     
+    private let selectMapPassthroughSubject = PassthroughSubject<CustomMap?, Never>()
+    
     private var selectedMaps: [CustomMap] = []
     private var cachedMaps: [CustomMap: [MapPost]] = [:]
     private var cachedTitleData = TitleData(title: "", description: "")
@@ -65,35 +67,60 @@ final class ExploreMapViewModel {
     func bind(to input: Input) -> Output {
         
         let request = input.refresh
+            .receive(on: DispatchQueue.global(qos: .background))
             .flatMap { [unowned self] forced in
-                self.fetchMaps(forced: forced)
+                (self.fetchMaps(forced: forced))
             }
             .map { $0 }
         
         let snapshot = request
             .receive(on: DispatchQueue.global(qos: .background))
-            .map { [weak self] title, customMapData -> Snapshot in
+            .map { [weak self] title, customMapData, refreshed -> Snapshot in
                 guard let self else {
                     return Snapshot()
                 }
                 
                 var snapshot = Snapshot()
                 snapshot.appendSections([.body(title: title)])
+                let mainCampusMaps: [CustomMap]
+                
+                let buttonType: JoinButtonType
+                switch self.openedFrom {
+                case .mapController:
+                    buttonType = .joinedText
+                    mainCampusMaps = []
+                    self.selectMapPassthroughSubject.send(nil)
+                    
+                case .onBoarding:
+                    buttonType = .checkmark
+                    mainCampusMaps = customMapData.keys.filter { $0.mainCampusMap == true }
+                    mainCampusMaps.forEach { map in
+                        if let mapData = customMapData[map] {
+                            let isSelected = refreshed || self.selectedMaps.contains(map)
+                            snapshot.appendItems([.item(customMap: map, data: mapData, isSelected: isSelected, buttonType: buttonType)], toSection: .body(title: title))
+                        }
+                        
+                        if refreshed {
+                            self.selectMapPassthroughSubject.send(map)
+                        }
+                    }
+                }
+                
                 customMapData
+                    .filter { data in
+                        return !mainCampusMaps.contains(where: { $0.id == data.key.id })
+                    }
                     .sorted {
                         $0.key.mapName.lowercased() < $1.key.mapName.lowercased()
                     }
                     .forEach { data in
                         let isSelected: Bool
-                        let buttonType: JoinButtonType
                         
                         switch self.openedFrom {
                         case .onBoarding:
-                            buttonType = .checkmark
                             isSelected = self.selectedMaps.contains(data.key)
                             
                         case .mapController:
-                            buttonType = .joinedText
                             isSelected = data.key.memberIDs.contains(UserDataModel.shared.uid)
                         }
                         
@@ -104,20 +131,51 @@ final class ExploreMapViewModel {
             }
             .eraseToAnyPublisher()
         
-        let isLoading = input.loading.eraseToAnyPublisher()
-        
-        let selectedMaps = input.selectMap
+        let isLoading = input.loading
             .receive(on: DispatchQueue.global(qos: .background))
-            .map { [weak self] customMap -> [CustomMap] in
+            .eraseToAnyPublisher()
+        
+        let selectedMaps = Publishers.CombineLatest(
+            input.selectMap,
+            selectMapPassthroughSubject.removeDuplicates()
+        )
+            .receive(on: DispatchQueue.global(qos: .background))
+            .map { [weak self] inputCustomMap, selectedMapPassedThrough -> [CustomMap] in
                 guard let self else { return [] }
-                guard let customMap else { return self.selectedMaps }
+                guard let inputCustomMap else {
+                    if let selectedMapPassedThrough {
+                        self.selectedMaps.append(selectedMapPassedThrough)
+                    }
+                    return self.selectedMaps
+                }
                 
-                if self.selectedMaps.contains(customMap) {
-                    self.selectedMaps.removeAll(where: { $0 == customMap })
-                    Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": false])
+                if let selectedMapPassedThrough {
+                    if self.selectedMaps.contains(inputCustomMap) {
+                        self.selectedMaps.removeAll(where: { $0 == inputCustomMap })
+                        Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": false])
+                        
+                    } else if self.selectedMaps.contains(selectedMapPassedThrough) {
+                        if inputCustomMap == selectedMapPassedThrough {
+                            self.selectedMaps.removeAll(where: { $0 == selectedMapPassedThrough })
+                            Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": false])
+                        } else {
+                            self.selectedMaps.append(inputCustomMap)
+                            Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": true])
+                        }
+                        
+                    } else {
+                        self.selectedMaps.append(inputCustomMap)
+                        Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": true])
+                    }
                 } else {
-                    self.selectedMaps.append(customMap)
-                    Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": true])
+                    if self.selectedMaps.contains(inputCustomMap) {
+                        self.selectedMaps.removeAll(where: { $0 == inputCustomMap })
+                        Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": false])
+                        
+                    } else {
+                        self.selectedMaps.append(inputCustomMap)
+                        Mixpanel.mainInstance().track(event: "ExploreMapsToggleMap", properties: ["selected": true])
+                    }
                 }
                 
                 return self.selectedMaps
@@ -184,7 +242,7 @@ final class ExploreMapViewModel {
         }
     }
     
-    private func fetchMaps(forced: Bool) -> AnyPublisher<(TitleData, [CustomMap: [MapPost]]), Never> {
+    private func fetchMaps(forced: Bool) -> AnyPublisher<(TitleData, [CustomMap: [MapPost]], Bool), Never> {
         Deferred {
             Future { [weak self] promise in
                 guard let self else {
@@ -192,7 +250,7 @@ final class ExploreMapViewModel {
                 }
                 
                 guard forced else {
-                    promise(.success((self.cachedTitleData, self.cachedMaps)))
+                    promise(.success((self.cachedTitleData, self.cachedMaps, forced)))
                     return
                 }
                 
@@ -214,10 +272,10 @@ final class ExploreMapViewModel {
                         
                         self.cachedMaps = mapData
                         self.cachedTitleData = titleData
-                        promise(.success((titleData, mapData)))
+                        promise(.success((titleData, mapData, forced)))
                     } catch {
                         print(error.localizedDescription)
-                        promise(.success((titleData, [:])))
+                        promise(.success((titleData, [:], forced)))
                     }
                 }
             }

@@ -35,6 +35,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var spotIDs: [String]
     var spotNames: [String] = []
     var spotLocations: [[String: Double]] = []
+    var mainCampusMap: Bool?
 
     var selected = false
     var memberProfiles: [UserProfile]? = []
@@ -84,6 +85,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case spotIDs
         case spotNames
         case spotLocations
+        case mainCampusMap
     }
 
     mutating func updateSeen(postID: String) {
