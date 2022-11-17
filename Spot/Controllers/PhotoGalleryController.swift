@@ -210,7 +210,12 @@ extension PhotoGalleryController: UICollectionViewDelegate, UICollectionViewData
                 cell.requestID = self.imageManager.requestImage(for: imageObject.0.asset, targetSize: self.thumbnailSize, contentMode: .aspectFill, options: self.options) { (result, info) in
                     if info?["PHImageCancelledKey"] != nil { return }
                     if row != indexPath.row { print("!="); return }
-                    DispatchQueue.main.async { if let result { cell.imageView.image = result } }
+                    DispatchQueue.main.async {
+                        if let result {
+                            cell.imageView.image = result
+                            cell.setUp(asset: asset, row: row, selected: selected, id: imageObject.0.id)
+                        }
+                    }
                 }
             }
         }

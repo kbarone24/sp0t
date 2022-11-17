@@ -12,24 +12,35 @@ import UIKit
 class CampusMapCell: UICollectionViewCell {
     private lazy var contentArea: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(hexString: "4B9CD3")
-        view.layer.borderColor = UIColor(hexString: "13294B").cgColor
-        view.layer.borderWidth = 3.5
         view.layer.cornerRadius = 16
+        view.backgroundColor = UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
         return view
     }()
 
     private lazy var label: UILabel = {
         let label = UILabel()
-        label.text = "UNC maps"
-        label.textColor = .white
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Bold", size: 20)
         label.textAlignment = .center
-        label.font = UIFont(name: "SFCompactText-Bold", size: 16)
+        label.numberOfLines = 0
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.7
+        let attString = NSAttributedString(string: "UNC Maps").shrinkLineHeight(multiple: 0.75, kern: -1.2)
+        label.attributedText = attString
         return label
+    }()
+
+    private lazy var mapCoverImage: UIImageView = {
+        let view = UIImageView(image: UIImage(named: "UNCMapsOverview"))
+        view.layer.cornerRadius = 2
+        view.clipsToBounds = true
+        view.layer.cornerRadius = 16
+        return view
     }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
+        backgroundColor = .white
 
         contentView.addSubview(contentArea)
         contentArea.snp.makeConstraints {
@@ -39,8 +50,17 @@ class CampusMapCell: UICollectionViewCell {
 
         contentArea.addSubview(label)
         label.snp.makeConstraints {
-            $0.centerX.centerY.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(32)
+            $0.centerY.equalToSuperview().offset(2)
+            $0.height.lessThanOrEqualTo(35)
         }
+
+        contentArea.addSubview(mapCoverImage)
+        mapCoverImage.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        layoutIfNeeded()
     }
 
     required init?(coder: NSCoder) {

@@ -13,6 +13,13 @@ import Mixpanel
 import UIKit
 
 class LandingPageController: UIViewController {
+    private lazy var backgroundImage: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "LandingPageBackground"))
+        imageView.contentMode = .scaleAspectFill
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+
     private lazy var createAccountButton: UIButton = {
         let button = UIButton()
         button.layer.cornerRadius = 28
@@ -85,7 +92,11 @@ class LandingPageController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor(patternImage: UIImage(named: "LandingPageBackground") ?? UIImage())
+
+        view.addSubview(backgroundImage)
+        backgroundImage.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
 
         createAccountButton.addTarget(self, action: #selector(createAccountTap(_:)), for: .touchUpInside)
         view.addSubview(createAccountButton)

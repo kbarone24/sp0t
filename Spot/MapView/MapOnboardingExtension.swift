@@ -40,9 +40,10 @@ extension MapController {
     }
 
     func displayHeelsMap() {
-        if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
+        if !(UserDataModel.shared.userInfo.shownExploreMaps ?? false) {
             openExploreMaps(onboarding: true)
-            db.collection("users").document(uid).updateData(["respondedToCampusMap": true])
+            UserDataModel.shared.userInfo.shownExploreMaps = true
+            db.collection("users").document(uid).updateData(["shownExploreMaps": true])
         }
     }
 }
