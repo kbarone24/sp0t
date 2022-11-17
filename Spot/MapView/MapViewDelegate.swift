@@ -169,7 +169,7 @@ class SpotMapView: MKMapView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        mapType = .mutedStandard
+        mapType = .standard
         overrideUserInterfaceStyle = .light
         pointOfInterestFilter = .excludingAll
         showsCompass = false

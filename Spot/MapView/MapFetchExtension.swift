@@ -31,7 +31,7 @@ extension MapController {
                 guard let self = self else { return }
                 self.postsFetched = true
                 self.newPostsButton.isHidden = self.sheetView != nil
-                self.newPostsButton.totalPosts = self.friendsPostsDictionary.count
+                self.setNewPostsButtonCount()
                 self.loadAdditionalOnboarding()
                 self.reloadMapsCollection(resort: true, newPost: false)
             }
@@ -43,7 +43,7 @@ extension MapController {
             homeFetchGroup.leave()
         } else {
             if newPost {
-                // eventually want to resort here but was causing exc_bad_access
+                print("new post")
                 DispatchQueue.main.async { self.reloadMapsCollection(resort: true, newPost: true) }
             }
         }
@@ -56,14 +56,7 @@ extension MapController {
             UserDataModel.shared.userInfo.sortMaps()
             if let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) { selectedItemIndex = index + 1 } else { selectedItemIndex = 0 }
         }
-        
         let scrollPosition: UICollectionView.ScrollPosition = resort ? .left : []
-        /// select new map on add from onboarding
-        if newMapID != nil, let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == newMapID }) {
-            selectMapAt(index: index + 1)
-            newMapID = nil
-        }
-
         mapsCollection.reloadData()
         mapsCollection.selectItem(at: IndexPath(item: selectedItemIndex, section: 0), animated: false, scrollPosition: scrollPosition)
         if resort && !newPost { centerMapOnMapPosts(animated: true) }
@@ -76,14 +69,14 @@ extension MapController {
             for doc in snap.documents { UserDataModel.shared.adminIDs.append(doc.documentID)
             }
         }
-        // opt kenny/ellie/tyler/b0t/hog/hog0 out of tracking
+        // opt kenny/tyler/b0t/hog/test/john/ella out of tracking
         if uid == "djEkPdL5GQUyJamNXiMbtjrsUYM2" ||
             uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" ||
             uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" ||
             uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" ||
-            uid == "X6CB24zc4iZFE8maYGvlxBp1mhb2" ||
-            uid == "HhDmknXyHDdWF54t6s8IEbEBlXD2" ||
-            uid == "oAKwM2NgLjTlaE2xqvKEXiIVKYu1" {
+            uid == "oAKwM2NgLjTlaE2xqvKEXiIVKYu1" ||
+            uid == "2MpKovZvUYOR4h7YvAGexGqS7Uq1" ||
+            uid == "W75L1D248ibsm6heDoV8AzlWXCx2" {
             Mixpanel.mainInstance().optOutTracking()
         }
     }
@@ -126,6 +119,8 @@ extension MapController {
                                 if UserDataModel.shared.userInfo.friendsList.count == UserDataModel.shared.userInfo.friendIDs.count {
                                     UserDataModel.shared.userInfo.sortFriends() /// sort for top friends
                                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
+                                    // show / hide new posts button if user has >1 friend
+                                    self.setNewPostsButtonCount()
                                     // if listener found a new friend, re-run home fetch
                                     if self.friendsLoaded {
                                         // this is not a great solution
