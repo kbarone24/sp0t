@@ -141,7 +141,8 @@ final class ExploreMapViewController: UIViewController {
         tableView.refreshControl = refreshControl
 
         tableView.snp.makeConstraints { make in
-            make.top.bottom.leading.trailing.equalToSuperview()
+            make.top.leading.trailing.equalToSuperview()
+            make.bottom.equalToSuperview().inset(20.0)
         }
         
         joinButton.snp.makeConstraints { make in
@@ -189,8 +190,14 @@ final class ExploreMapViewController: UIViewController {
             .sink { [weak self] selectedMaps in
                 let count = selectedMaps.count
                 let title = count == 1 ? "Join 1 map" : "Join \(count) maps"
-                self?.joinButton.isEnabled = !selectedMaps.isEmpty
+                let isEnabled = !selectedMaps.isEmpty
+                self?.joinButton.isEnabled = isEnabled
                 self?.joinButton.setTitle(title, for: .normal)
+                if isEnabled {
+                    self?.joinButton.backgroundColor = UIColor(hexString: "39F3FF")
+                } else {
+                    self?.joinButton.backgroundColor = UIColor(hexString: "39F3FF").withAlphaComponent(0.6)
+                }
             }
             .store(in: &subscriptions)
         
@@ -233,8 +240,8 @@ final class ExploreMapViewController: UIViewController {
     
     @objc private func joinButtonTapped() {
         viewModel.joinAllSelectedMaps { [weak self] in
-            // Refresh or dismiss?
             self?.refresh.send(true)
+            self?.close()
         }
     }
     

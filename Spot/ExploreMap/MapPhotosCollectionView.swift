@@ -33,7 +33,7 @@ final class MapPhotosCollectionView: UICollectionView {
             switch item {
             case .item(let mapPost):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomMapBodyCell.reuseID, for: indexPath) as? CustomMapBodyCell
-                cell?.cellSetup(postData: mapPost, transform: false)
+                cell?.cellSetup(postData: mapPost, transform: true)
                 return cell
                 
             case .extra(let count):
