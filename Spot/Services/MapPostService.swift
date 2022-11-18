@@ -176,6 +176,7 @@ final class MapPostService: MapPostServiceProtocol {
                 let comments = try await getComments(postID: id)
                 postInfo.commentList = comments
                 completion(postInfo)
+                return
             } catch {
                 completion(postInfo)
             }
