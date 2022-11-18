@@ -266,7 +266,6 @@ class ProfileViewController: UIViewController {
                     if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { continue }
                     dispatch.enter()
                     self.mapPostService?.setPostDetails(post: postInfo) { post in
-                        print("set post details", post.id ?? "")
                         self.posts.append(post)
                         self.postsFetched = true
                         dispatch.leave()

@@ -31,13 +31,14 @@ final class ExploreMapViewController: UIViewController {
         tableView.contentInset = .zero
         tableView.backgroundColor = .white
         tableView.separatorStyle = .none
+        tableView.allowsSelection = false
         tableView.showsVerticalScrollIndicator = false
         tableView.dataSource = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120.0
         tableView.backgroundView?.backgroundColor = .white
         tableView.backgroundColor = .white
-        tableView.contentInset = UIEdgeInsets(top: 18, left: 0, bottom: 80, right: 0)
+        tableView.contentInset = UIEdgeInsets(top: 4, left: 0, bottom: 80, right: 0)
 
         tableView.register(ExploreMapPreviewCell.self, forCellReuseIdentifier: ExploreMapPreviewCell.reuseID)
 
@@ -59,6 +60,13 @@ final class ExploreMapViewController: UIViewController {
         activityIndictor.startAnimating()
         return activityIndictor
     }()
+
+    private lazy var bottomMask: UIView = {
+        let view = UIView()
+        view.isUserInteractionEnabled = false
+        return view
+    }()
+    var maskLayer: CAGradientLayer?
     
     private lazy var joinButton: UIButton = {
         let button = UIButton()
@@ -113,6 +121,13 @@ final class ExploreMapViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+      //  if viewModel.openedFrom == .onBoarding {
+      //      addBottomMask()
+      //  }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpNavBar()
@@ -122,7 +137,7 @@ final class ExploreMapViewController: UIViewController {
         view.addSubview(joinButton)
         view.addSubview(activityIndicator)
 
-        descriptionView.configure(title: "", description: "Community maps created by fellow Tar Heels")
+        descriptionView.configure(title: "", description: "Maps created by fellow Tar Heels")
         descriptionView.snp.makeConstraints { make in
             make.leading.trailing.top.equalToSuperview()
             make.height.equalTo(26.0)
@@ -137,8 +152,8 @@ final class ExploreMapViewController: UIViewController {
         }
         
         joinButton.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(22.0)
-            make.bottom.trailing.equalToSuperview().inset(48.0)
+            make.leading.trailing.equalToSuperview().inset(22.0)
+            make.bottom.equalToSuperview().inset(42.0)
             make.height.equalTo(50.0)
         }
         
@@ -149,6 +164,16 @@ final class ExploreMapViewController: UIViewController {
         }
         
         activityIndicator.startAnimating()
+
+        if viewModel.openedFrom == .onBoarding {
+            view.insertSubview(bottomMask, belowSubview: joinButton)
+            bottomMask.backgroundColor = .white
+            bottomMask.snp.makeConstraints {
+                $0.leading.trailing.bottom.equalToSuperview()
+                $0.top.equalTo(joinButton.snp.top).offset(-16)
+            }
+        }
+
         let input = Input(refresh: refresh, loading: loading, selectMap: selectMap)
         let output = viewModel.bind(to: input)
 
@@ -248,6 +273,22 @@ final class ExploreMapViewController: UIViewController {
             NSAttributedString.Key.foregroundColor: UIColor.black,
             NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 22) as Any
         ]
+    }
+
+    private func addBottomMask() {
+        if maskLayer != nil { return }
+        maskLayer = CAGradientLayer {
+            $0.frame = bottomMask.bounds
+            $0.colors = [
+                UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor,
+                UIColor.white.cgColor,
+                UIColor.white.cgColor
+            ]
+            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
+            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
+            $0.locations = [0, 0.4, 1]
+            bottomMask.layer.addSublayer($0)
+        }
     }
     
     @objc private func forceRefresh() {

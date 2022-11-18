@@ -102,7 +102,7 @@ extension MapPhotosCollectionView: UICollectionViewDataSource {
 
 extension MapPhotosCollectionView: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = (UIScreen.main.bounds.width - 18) / 2.5
+        let width = (UIScreen.main.bounds.width - 18) / 2.85
         let height = width * 1.25
         return CGSize(width: width, height: height)
     }

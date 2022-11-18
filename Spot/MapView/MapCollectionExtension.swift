@@ -23,6 +23,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let defaultCell = collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
         if !userLoaded, let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapLoadingCell", for: indexPath) as? MapLoadingCell {
             // display loading cell
             return cell
@@ -47,13 +48,13 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         }
 
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapCell", for: indexPath) as? MapHomeCell {
-            let map = UserDataModel.shared.userInfo.mapsList[indexPath.row - 1]
+            guard let map = UserDataModel.shared.userInfo.mapsList[safe: indexPath.row - 1] else { return defaultCell }
             let postsList = map.postsDictionary.map({ $0.value })
             cell.setUp(map: map, postsList: postsList)
             cell.isSelected = selectedItemIndex == indexPath.row
             return cell
         }
-        return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
+        return defaultCell
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
