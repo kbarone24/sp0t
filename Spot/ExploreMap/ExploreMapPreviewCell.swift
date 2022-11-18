@@ -72,6 +72,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         collectionView.contentInsetAdjustmentBehavior = .always
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = false
+        collectionView.allowsSelection = false
         
         return collectionView
     }()
@@ -118,16 +119,16 @@ final class ExploreMapPreviewCell: UITableViewCell {
         }
         
         subTitleLabel.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(5)
+            $0.top.equalTo(titleLabel.snp.bottom).offset(5.0)
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalToSuperview()
         }
 
-        let itemWidth = (UIScreen.main.bounds.width - 18) / 2.5
+        let itemWidth = (UIScreen.main.bounds.width - 18) / 2.85
         let itemHeight = itemWidth * 1.25 + 2
         photosCollectionView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(headerView.snp.bottom).offset(6.0)
+            $0.top.equalTo(headerView.snp.bottom).offset(4.0)
             $0.bottom.equalToSuperview().inset(28.0)
             $0.height.equalTo(itemHeight)
         }
@@ -198,14 +199,16 @@ final class ExploreMapPreviewCell: UITableViewCell {
             headerView.addSubview(joinButton)
             joinButton.snp.makeConstraints {
                 $0.centerY.equalToSuperview()
-                $0.trailing.equalToSuperview().inset(15.0)
+                $0.trailing.equalToSuperview().inset(13.0)
                 $0.height.equalTo(40.0)
                 $0.width.equalTo(75.0)
             }
             
             if isSelected {
+                joinButton.isUserInteractionEnabled = false
                 joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)
             } else {
+                joinButton.isUserInteractionEnabled = true
                 joinButton.setImage(UIImage(named: "JoinButtonImage"), for: .normal)
             }
             
@@ -220,7 +223,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
             headerView.addSubview(checkMark)
             checkMark.snp.makeConstraints {
                 $0.centerY.equalToSuperview()
-                $0.trailing.equalToSuperview().inset(10.0)
+                $0.trailing.equalToSuperview().inset(15.0)
                 $0.height.width.equalTo(40.0)
             }
             

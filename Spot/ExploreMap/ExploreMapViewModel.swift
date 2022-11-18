@@ -112,7 +112,7 @@ final class ExploreMapViewModel {
                     }
                     .sorted {
                         $0.key.memberIDs.contains(UserDataModel.shared.uid) == $1.key.memberIDs.contains(UserDataModel.shared.uid) ?
-                        $0.key.mapName.lowercased() < $1.key.mapName.lowercased() :
+                        $0.key.memberIDs.count > $1.key.memberIDs.count :
                         !$0.key.memberIDs.contains(UserDataModel.shared.uid) && $1.key.memberIDs.contains(UserDataModel.shared.uid)
                     }
                     .forEach { data in
@@ -265,7 +265,7 @@ final class ExploreMapViewModel {
                 // TODO: This will be fetched from the service eventually
                 let titleData = TitleData(
                     title: "UNC Maps",
-                    description: "Join community maps created by fellow Tarheels"
+                    description: "Maps created by fellow Tarheels"
                 )
                 
                 Task {
