@@ -75,7 +75,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         
         return collectionView
     }()
-    
+
     private weak var delegate: ExploreMapPreviewCellDelegate?
     private var onTap: (() -> Void)?
     
@@ -123,12 +123,12 @@ final class ExploreMapPreviewCell: UITableViewCell {
             $0.bottom.equalToSuperview()
         }
 
-        let itemWidth = (UIScreen.main.bounds.width - 18) / 2.3
+        let itemWidth = (UIScreen.main.bounds.width - 18) / 2.5
         let itemHeight = itemWidth * 1.25 + 2
         photosCollectionView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(headerView.snp.bottom).offset(10.0)
-            $0.bottom.equalToSuperview().inset(18.0)
+            $0.top.equalTo(headerView.snp.bottom).offset(6.0)
+            $0.bottom.equalToSuperview().inset(28.0)
             $0.height.equalTo(itemHeight)
         }
     }
@@ -170,7 +170,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         )
         
         let attachment = NSTextAttachment()
-        attachment.image = UIImage(named: "FriendsIcon")
+        attachment.image = UIImage(named: "FriendsIcon")?.withRenderingMode(.alwaysTemplate).withTintColor(UIColor(hexString: "B6B6B6"))
         let attachmentString = NSAttributedString(attachment: attachment)
         let myString = NSMutableAttributedString()
         myString.append(attachmentString)
