@@ -170,7 +170,10 @@ final class ExploreMapPreviewCell: UITableViewCell {
         )
         
         let attachment = NSTextAttachment()
-        attachment.image = UIImage(named: "FriendsIcon")
+        attachment.image = UIImage(named: "FriendsIcon")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(UIColor(hexString: "B6B6B6"))
+        
         let attachmentString = NSAttributedString(attachment: attachment)
         let myString = NSMutableAttributedString()
         myString.append(attachmentString)
