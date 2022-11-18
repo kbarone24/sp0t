@@ -123,7 +123,7 @@ final class ExploreMapViewModel {
                             isSelected = self.selectedMaps.contains(data.key)
                             
                         case .mapController:
-                            isSelected = data.key.memberIDs.contains(UserDataModel.shared.uid)
+                            isSelected = data.key.memberIDs.contains(UserDataModel.shared.uid) || self.selectedMaps.contains(data.key)
                         }
                         
                         snapshot.appendItems([.item(customMap: data.key, data: data.value, isSelected: isSelected, buttonType: buttonType)], toSection: .body(title: title))
@@ -206,41 +206,48 @@ final class ExploreMapViewModel {
     }
     
     func joinAllSelectedMaps(completion: @escaping (() -> Void)) {
-        Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": selectedMaps.count])
+        let mapsToJoin = self.selectedMaps
+        let mapService = self.service
+        selectedMaps.removeAll()
+        completion()
         
-        for map in selectedMaps {
-            service.joinMap(customMap: map) { [weak self] _ in
-                if map == self?.selectedMaps.last {
-                    self?.selectedMaps.removeAll()
-                    completion()
-                }
+        DispatchQueue.global(qos: .background).async {
+            for map in mapsToJoin {
+                mapService.joinMap(customMap: map, completion: { _ in })
             }
+            
+            Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": mapsToJoin.count])
         }
     }
     
     func joinMap(map: CustomMap, completion: @escaping ((Bool) -> Void)) {
         if selectedMaps.contains(where: { $0 == map }) || map.memberIDs.contains(UserDataModel.shared.uid) {
-            service.leaveMap(customMap: map) { [weak self] error in
-                if error == nil {
-                    self?.selectedMaps.removeAll(where: { $0 == map })
-                    UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == map.id })
-                    completion(true)
-                } else {
-                    completion(false)
+            selectedMaps.removeAll(where: { $0 == map })
+            completion(true)
+            
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                self?.service.leaveMap(customMap: map) { error in
+                    if error == nil {
+                        UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == map.id })
+                    } else {
+                        completion(false)
+                    }
                 }
+                Mixpanel.mainInstance().track(event: "ExploreMapsLeftMap", properties: [:])
             }
-            Mixpanel.mainInstance().track(event: "ExploreMapsLeftMap", properties: [:])
             
         } else {
-            service.joinMap(customMap: map) { [weak self] error in
-                if error == nil {
-                    self?.selectedMaps.append(map)
-                    completion(true)
-                } else {
-                    completion(false)
+            self.selectedMaps.append(map)
+            completion(true)
+            
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                self?.service.joinMap(customMap: map) { error in
+                    if error != nil {
+                        completion(false)
+                    }
                 }
+                Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": 1])
             }
-            Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": 1])
         }
     }
     
