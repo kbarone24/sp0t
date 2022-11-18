@@ -256,8 +256,8 @@ final class ExploreMapViewController: UIViewController {
     }
     
     @objc private func joinButtonTapped() {
+        loading.send(true)
         viewModel.joinAllSelectedMaps { [weak self] in
-            self?.refresh.send(true)
             self?.close()
         }
     }
@@ -302,7 +302,14 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     func joinMap(map: CustomMap) {
         loading.send(true)
         viewModel.joinMap(map: map) { [weak self] successful in
-            self?.refresh.send(successful)
+            // If there's an error that get returned after the UI is updated...
+            // Then synchronize again the the database.
+            // Or else, continue with the client's version
+            if successful {
+                self?.refresh.send(false)
+            } else {
+                self?.refresh.send(true)
+            }
         }
     }
 }
