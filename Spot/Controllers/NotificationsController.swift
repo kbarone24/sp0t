@@ -132,14 +132,14 @@ class NotificationsController: UIViewController, UITableViewDelegate {
     }
     
     func setupView() {
+        view.backgroundColor = .white
+        
         tableView.dataSource = self
         tableView.delegate = self
         view.addSubview(tableView)
         
         tableView.snp.makeConstraints {
-            $0.top.equalToSuperview()
-            $0.bottom.equalToSuperview()
-            $0.leading.trailing.equalToSuperview()
+            $0.edges.equalToSuperview()
         }
     }
     

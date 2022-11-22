@@ -256,7 +256,7 @@ extension UIViewController {
         notiPost.commentList = [commentObject]
         notiPost.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
         notiPost.userInfo = UserDataModel.shared.userInfo
-        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post": notiPost as Any, "map": map as Any, "spot": spot as Any]))
+        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post": notiPost as Any, "map": map as Any, "spot": spot as Any, "newMap": newMap]))
 
         let db = Firestore.firestore()
         let postRef = db.collection("posts").document(postID)
