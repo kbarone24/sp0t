@@ -33,30 +33,30 @@ extension MapController {
                 self.newPostsButton.isHidden = self.sheetView != nil
                 self.setNewPostsButtonCount()
                 self.loadAdditionalOnboarding()
-                self.reloadMapsCollection(resort: true, newPost: false)
+                self.reloadMapsCollection(resort: true, newPost: false, upload: false)
             }
         }
     }
 
     func leaveHomeFetchGroup(newPost: Bool) {
-        if !postsFetched {
+        if homeFetchLeaveCount < 2 {
+            homeFetchLeaveCount += 1
             homeFetchGroup.leave()
         } else {
             if newPost {
-                print("new post")
-                DispatchQueue.main.async { self.reloadMapsCollection(resort: true, newPost: true) }
+                DispatchQueue.main.async { self.reloadMapsCollection(resort: true, newPost: true, upload: false) }
             }
         }
     }
 
-    func reloadMapsCollection(resort: Bool, newPost: Bool) {
+    func reloadMapsCollection(resort: Bool, newPost: Bool, upload: Bool) {
         if resort {
             /// reset selected item index on resort in case the position of the selected map changed
             let mapID = UserDataModel.shared.userInfo.mapsList[safe: selectedItemIndex - 1]?.id ?? ""
             UserDataModel.shared.userInfo.sortMaps()
             if let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) { selectedItemIndex = index + 1 } else { selectedItemIndex = 0 }
         }
-        let scrollPosition: UICollectionView.ScrollPosition = resort ? .left : []
+        let scrollPosition: UICollectionView.ScrollPosition = upload ? .left : []
         mapsCollection.reloadData()
         mapsCollection.selectItem(at: IndexPath(item: selectedItemIndex, section: 0), animated: false, scrollPosition: scrollPosition)
         if resort && !newPost { centerMapOnMapPosts(animated: true) }
@@ -180,7 +180,7 @@ extension MapController {
                 }
             }
             // reload to update avatar
-            DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
+            DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false, upload: false) }
         }
     }
 
@@ -411,16 +411,12 @@ extension MapController {
                     }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
-                    print("append map")
 
                 } catch {
                     continue
                 }
             }
-            if self.mapsLoaded {
-                DispatchQueue.main.async { self.reloadMapsCollection(resort: true, newPost: false) }
-                return
-            }
+            if self.mapsLoaded { return }
             self.mapsLoaded = true
             NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
             // fetch group aleady entered before getMaps call
@@ -433,17 +429,17 @@ extension MapController {
         /// only reload if display content changes
         let oldMap = UserDataModel.shared.userInfo.mapsList[index]
         let reload = oldMap.mapName != map.mapName || oldMap.imageURL != map.imageURL || oldMap.secret != map.secret
-        
-        UserDataModel.shared.userInfo.mapsList[index].memberIDs = map.memberIDs
+        UserDataModel.shared.userInfo.mapsList[index] = map
+      /*  UserDataModel.shared.userInfo.mapsList[index].memberIDs = map.memberIDs
         UserDataModel.shared.userInfo.mapsList[index].likers = map.likers
         UserDataModel.shared.userInfo.mapsList[index].memberProfiles = map.memberProfiles
         UserDataModel.shared.userInfo.mapsList[index].imageURL = map.imageURL
         UserDataModel.shared.userInfo.mapsList[index].mapName = map.mapName
         UserDataModel.shared.userInfo.mapsList[index].mapDescription = map.mapDescription
-        UserDataModel.shared.userInfo.mapsList[index].secret = map.secret
+        UserDataModel.shared.userInfo.mapsList[index].secret = map.secret */
         
         if reload {
-            DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
+            DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false, upload: false) }
         }
     }
 

@@ -42,10 +42,10 @@ class PostController: UIViewController {
     
     var selectedPostIndex = 0 {
         didSet {
-            let post = postsList[selectedPostIndex]
+            guard let post = postsList[safe: selectedPostIndex] else { return }
             DispatchQueue.global().async {
-                self.setSeen(post: self.postsList[self.selectedPostIndex])
-                self.checkForUpdates(postID: post.id!, index: self.selectedPostIndex)
+                self.setSeen(post: post)
+                self.checkForUpdates(postID: post.id ?? "", index: self.selectedPostIndex)
             }
         }
     }

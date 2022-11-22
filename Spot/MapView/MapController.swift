@@ -42,6 +42,7 @@ final class MapController: UIViewController {
     var postsFetched = false
     var mapsLoaded = false
     var friendsLoaded = false
+    var homeFetchLeaveCount = 0
 
     lazy var friendsPostsDictionary = [String: MapPost]()
     lazy var postGroup: [MapPostGroup] = []
@@ -207,11 +208,12 @@ final class MapController: UIViewController {
 
         /// show green bell on notifications when theres an unseen noti
         if notiListener != nil { notiListener?.remove() }
+        print("add noti listener")
         notiListener = query.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
             if err != nil || snap?.metadata.isFromCache ?? false {
                 return
             } else {
-                if snap?.documents.isEmpty ?? true {
+                if !(snap?.documents.isEmpty ?? true) {
                     self.titleView?.notificationsButton.pendingCount = snap?.documents.count ?? 0
                 } else {
                     self.titleView?.notificationsButton.pendingCount = 0
