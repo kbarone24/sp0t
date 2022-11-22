@@ -72,6 +72,26 @@ class FriendRequestCell: UICollectionViewCell {
         return button
     }()
 
+    private lazy var confirmButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 1)
+        button.layer.cornerRadius = 14
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1).cgColor
+        button.setImage(UIImage(named: "ProfileFriendsIcon"), for: .normal)
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
+
+        let customButtonTitle = NSMutableAttributedString(string: "Confirmed", attributes: [
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+            // NSAttributedString.Key.backgroundColor: UIColor.red,
+            NSAttributedString.Key.foregroundColor: UIColor.black
+        ])
+        button.setAttributedTitle(customButtonTitle, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true
+        return button
+    }()
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setUpView()
@@ -120,6 +140,11 @@ class FriendRequestCell: UICollectionViewCell {
             $0.bottom.equalToSuperview().offset(-11)
         }
 
+        contentView.addSubview(confirmButton)
+        confirmButton.snp.makeConstraints {
+            $0.edges.equalTo(acceptButton)
+        }
+
         closeButton.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
         contentView.addSubview(closeButton)
         closeButton.snp.makeConstraints {
@@ -160,6 +185,7 @@ class FriendRequestCell: UICollectionViewCell {
     @objc func acceptTap() {
         Mixpanel.mainInstance().track(event: "NotificationsFriendRequestAccepted")
         acceptButton.isHidden = true
+        confirmButton.isHidden = false
         collectionDelegate?.acceptFriend(sender: self)
     }
 

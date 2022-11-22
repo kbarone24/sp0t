@@ -33,7 +33,7 @@ extension MapController {
                 }
             }
 
-            self.reloadMapsCollection(resort: false, newPost: false)
+            self.reloadMapsCollection(resort: false, newPost: false, upload: false)
             if let coordinate {
                 if let annotation = self.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate) }) {
                     self.mapView.removeAnnotation(annotation)
@@ -55,11 +55,10 @@ extension MapController {
         let spot = notification.userInfo?["spot"] as? MapSpot
         let emptyMap = map == nil || map?.id ?? "" == ""
         if !emptyMap {
-            /// update post/spot values for existing map
+            // update post/spot values for existing map
             if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == map?.id ?? "" }) {
                 UserDataModel.shared.userInfo.mapsList[i].updatePostLevelValues(post: post)
                 if let spot = spot { UserDataModel.shared.userInfo.mapsList[i].updateSpotLevelValues(spot: spot) }
-
             } else if var map = map {
                 /// finish creating new map object
                 map.addSpotGroups()
@@ -71,7 +70,7 @@ extension MapController {
         let dictionaryIndex = post.mapID == "" ? 0 : -1
         DispatchQueue.main.async {
             self.addPostToDictionary(post: post, map: map, newPost: true, index: dictionaryIndex)
-            self.reloadMapsCollection(resort: true, newPost: true)
+            self.reloadMapsCollection(resort: true, newPost: true, upload: true)
             self.selectItemAt(index: mapIndex)
         }
 
@@ -94,10 +93,11 @@ extension MapController {
         /// only pass through spot ID if removing from the map
         let spotID = spotDelete || spotRemove ? post.spotID ?? "" : ""
         removePost(post: post, spotID: spotID, mapID: mapID, mapDelete: mapDelete)
-        DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false) }
+        DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false, upload: false) }
     }
 
     func removePost(post: MapPost, spotID: String, mapID: String, mapDelete: Bool) {
+        print("remove post")
         /// remove from friends stuff
         friendsPostsDictionary.removeValue(forKey: post.id ?? "")
         removeFromFriendsPostGroup(postID: post.id ?? "", spotID: spotID)
@@ -114,7 +114,7 @@ extension MapController {
         if let anno = mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: post.coordinate) }) {
             DispatchQueue.main.async { self.mapView.removeAnnotation(anno) }
         }
-        reloadMapsCollection(resort: false, newPost: false)
+        reloadMapsCollection(resort: false, newPost: false, upload: false)
     }
 
     @objc func notifyCommentChange(_ notification: NSNotification) {
@@ -134,7 +134,7 @@ extension MapController {
     }
 
     @objc func notifyEditMap(_ notification: NSNotification) {
-        reloadMapsCollection(resort: true, newPost: true) /// set newPost to true to avoid map centering
+        reloadMapsCollection(resort: true, newPost: true, upload: false) /// set newPost to true to avoid map centering
     }
 
     @objc func notifyFriendRemove(_ notification: NSNotification) {
