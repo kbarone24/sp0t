@@ -19,19 +19,22 @@ extension PostController {
         var mapDelete = false
         var spotRemove = false
         guard let postID = post.id else { return }
-        checkForSpotDelete(spotID: post.spotID ?? "", postID: postID) { delete in
+        checkForSpotDelete(spotID: post.spotID ?? "", postID: postID) { [weak self] delete in
+            guard let self else { return }
             spotDelete = delete
             leaveCount += 1
             if leaveCount == 3 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove) }
         }
 
-        checkForSpotRemove(spotID: post.spotID ?? "", mapID: post.mapID ?? "", postID: postID) { remove in
+        checkForSpotRemove(spotID: post.spotID ?? "", mapID: post.mapID ?? "", postID: postID) { [weak self] remove in
+            guard let self else { return }
             spotRemove = remove
             leaveCount += 1
             if leaveCount == 3 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove) }
         }
 
-        checkForMapDelete(mapID: post.mapID ?? "") { delete in
+        checkForMapDelete(mapID: post.mapID ?? "") { [weak self] delete in
+            guard let self else { return }
             mapDelete = delete
             leaveCount += 1
             if leaveCount == 3 { self.runDeletes(post: post, spotDelete: spotDelete, mapDelete: mapDelete, spotRemove: spotRemove) }

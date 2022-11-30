@@ -12,6 +12,25 @@ import MapKit
 import UIKit
 
 extension MapController {
+    @objc func notifyUserLoad(_ notification: NSNotification) {
+        if userLoaded { return }
+        userLoaded = true
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.homeFetchGroup.enter()
+            self.getMaps()
+
+            // home fetch group once here and once for maps posts
+            self.homeFetchGroup.notify(queue: .main) { [weak self] in
+                guard let self = self else { return }
+                self.postsFetched = true
+                self.newPostsButton.isHidden = self.sheetView != nil
+                self.setNewPostsButtonCount()
+                self.loadAdditionalOnboarding()
+                self.reloadMapsCollection(resort: true, newPost: false, upload: false)
+            }
+        }
+    }
+
     @objc func notifyPostOpen(_ notification: NSNotification) {
         guard let post = notification.userInfo?.first?.value as? MapPost else { return }
         guard let postID = post.id else { return }
@@ -158,6 +177,7 @@ extension MapController {
     }
 
     @objc func enterForeground() {
+        let _ = checkForActivityIndicator()
         /* check for activity indicator will begin animation
         if !checkForActivityIndicator() {
             /// re-run fetch, listener might missed posts when app in background

@@ -27,6 +27,8 @@ struct MapPostGroup: Hashable {
     var postTimestamps: [Timestamp] = []
     var numberOfPosters: Int = 0
 
+    var poiCategory: POICategory?
+
     mutating func sortPostIDs() {
         postIDs = postIDs.sorted { p1, p2 in
             guard p1.seen == p2.seen else {

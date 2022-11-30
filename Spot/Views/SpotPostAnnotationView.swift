@@ -40,31 +40,33 @@ class SpotPostAnnotationView: MKAnnotationView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func updateImage(posts: [MapPost], spotName: String, id: String, spotCluster: Bool) {
+    func updateImage(posts: [MapPost], spotName: String, id: String, poiCategory: POICategory?, spotCluster: Bool) {
         self.id = id
         self.spotName = spotName
         /// only include unseen posts in cluster
         self.unseenPost = posts.contains(where: { !$0.seen })
         self.spotCluster = spotCluster
-        self.postIDs = unseenPost ? posts.filter({ !$0.seen }).map { $0.id! } : posts.map({ $0.id! })
+        self.postIDs = unseenPost ? posts.filter({ !$0.seen }).map { $0.id ?? "" } : posts.map({ $0.id ?? "" })
         let postCount = postIDs.count
 
         let post = posts.first
-        if post != nil {
+        if let post {
             /// load friend view if multiple spots in the cluster
-            let nibView = spotCluster ? loadClusterNib(post: post!, postCount: postCount, moreText: getMoreText(posts: posts)) : loadPostNib(post: post!, spotName: spotName, postCount: postCount, moreText: getMoreText(posts: posts))
-            self.image = nibView.asImage()
+            let nibView = spotCluster ? loadClusterNib(post: post, postCount: postCount, moreText: getMoreText(posts: posts)) :
+            loadPostNib(post: post, spotName: spotName, poiCategory: poiCategory, postCount: postCount, moreText: getMoreText(posts: posts))
+            if let nibView {
+                self.image = nibView.asImage()
 
-            guard let url = URL(string: post!.imageURLs.first ?? "") else { image = nibView.asImage(); return }
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            self.imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, _, _, _, _, _) in
-                guard let self = self else { return }
-                self.setPostImage(nibView: nibView, image: image ?? UIImage())
+                guard let url = URL(string: post.imageURLs.first ?? "") else { image = nibView.asImage(); return }
+                let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+                self.imageManager.loadImage(with: url, options: .highPriority, context: [.imageTransformer: transformer], progress: nil) { [weak self] (image, _, _, _, _, _) in
+                    guard let self = self else { return }
+                    self.setPostImage(nibView: nibView, image: image ?? UIImage())
+                }
+
+                loadAvatarView(nibView: nibView, posts: posts)
             }
-
-            loadAvatarView(nibView: nibView, posts: posts)
         }
-
     }
 
     func loadAvatarView(nibView: UIView, posts: [MapPost]) {
@@ -75,13 +77,11 @@ class SpotPostAnnotationView: MKAnnotationView {
             if !avatarURLs.contains(url) { avatarURLs.append(posts[i].userInfo?.avatarURL ?? "") }
         }
         if let nibView = nibView as? FriendPostView {
-            nibView.avatarView.setUp(avatarURLs: avatarURLs, annotation: true) { _ in
-                nibView.bringSubviewToFront(nibView.avatarView)
+            nibView.setAvatarView(avatarURLs: avatarURLs) { _ in
                 self.image = nibView.asImage()
             }
         } else if let nibView = nibView as? SpotPostView {
-            nibView.avatarView.setUp(avatarURLs: avatarURLs, annotation: true) { _ in
-                nibView.bringSubviewToFront(nibView.avatarView)
+            nibView.setAvatarView(avatarURLs: avatarURLs) { _ in
                 self.image = nibView.asImage()
             }
         }
@@ -89,77 +89,25 @@ class SpotPostAnnotationView: MKAnnotationView {
 
     func setPostImage(nibView: UIView, image: UIImage) {
         if let nibView = nibView as? SpotPostView {
-            nibView.postImage.image = image
+            nibView.setPostImage(image: image)
         } else if let nibView = nibView as? FriendPostView {
-            nibView.postImage.image = image
+            nibView.setPostImage(image: image)
         }
         self.image = nibView.asImage()
         self.centerOffset = CGPoint(x: 0, y: -20)
     }
 
-    func loadPostNib(post: MapPost, spotName: String, postCount: Int, moreText: String) -> SpotPostView {
-        let infoWindow = SpotPostView.instanceFromNib() as! SpotPostView
-        infoWindow.clipsToBounds = false
-        infoWindow.backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
-        infoWindow.postImage.layer.cornerRadius = post.seen ? 67 / 2 : 75 / 2
-
-        infoWindow.imageMask.layer.cornerRadius = 67 / 2
-        infoWindow.imageMask.isHidden = !post.seen
-        infoWindow.replayIcon.isHidden = !post.seen
-
-        if postCount > 1 {
-            infoWindow.postCount.backgroundColor = post.seen ? .white : UIColor(named: "SpotGreen")
-            infoWindow.postCount.layer.cornerRadius = 10
-            infoWindow.postCount.font = UIFont(name: "SFCompactText-Heavy", size: 12.5)
-            infoWindow.postCount.text = String(postCount)
-        } else {
-            infoWindow.postCount.isHidden = true
-        }
-
-        if spotName != "" {
-            /// bordered text
-            let attributes: [NSAttributedString.Key: Any] = [
-                NSAttributedString.Key.strokeColor: UIColor.white,
-                NSAttributedString.Key.foregroundColor: UIColor.black,
-                NSAttributedString.Key.strokeWidth: -3,
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 13.5)!
-            ]
-            infoWindow.spotLabel.attributedText = NSAttributedString(string: spotName, attributes: attributes)
-            infoWindow.spotLabel.sizeToFit()
-
-        } else {
-            /// no spot attached to this post
-            infoWindow.spotLabel.isHidden = true
-            infoWindow.spotIcon.isHidden = true
-        }
-
-        infoWindow.usernameLabel.setUp(post: post, moreText: moreText, spotAnnotation: true)
-        infoWindow.resizeView(seen: post.seen)
+    func loadPostNib(post: MapPost, spotName: String, poiCategory: POICategory?, postCount: Int, moreText: String) -> SpotPostView? {
+        let infoWindow = SpotPostView.instanceFromNib() as? SpotPostView
+        infoWindow?.setValues(post: post, spotName: spotName, poiCategory: poiCategory, count: postCount, moreText: moreText)
+        infoWindow?.clipsToBounds = false
         return infoWindow
     }
 
-    func loadClusterNib(post: MapPost, postCount: Int, moreText: String) -> FriendPostView {
-        let infoWindow = FriendPostView.instanceFromNib() as! FriendPostView
-        infoWindow.clipsToBounds = false
-
-        infoWindow.backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
-        infoWindow.postImage.layer.cornerRadius = post.seen ? 67 / 2 : 75 / 2
-
-        infoWindow.imageMask.layer.cornerRadius = 67 / 2
-        infoWindow.imageMask.isHidden = !post.seen
-        infoWindow.replayIcon.isHidden = !post.seen
-
-        if postCount > 1 {
-            infoWindow.postCount.backgroundColor = post.seen ? .white : UIColor(named: "SpotGreen")
-            infoWindow.postCount.layer.cornerRadius = 10
-            infoWindow.postCount.font = UIFont(name: "SFCompactText-Heavy", size: 12.5)
-            infoWindow.postCount.text = String(postCount)
-        } else {
-            infoWindow.postCount.isHidden = true
-        }
-
-        infoWindow.usernameLabel.setUp(post: post, moreText: moreText, spotAnnotation: false)
-        infoWindow.resizeView(seen: post.seen)
+    func loadClusterNib(post: MapPost, postCount: Int, moreText: String) -> FriendPostView? {
+        let infoWindow = FriendPostView.instanceFromNib() as? FriendPostView
+        infoWindow?.clipsToBounds = false
+        infoWindow?.setValues(post: post, count: postCount, moreText: moreText)
         return infoWindow
     }
 
@@ -207,8 +155,8 @@ extension SpotPostAnnotationView: UIGestureRecognizerDelegate {
 }
 
 class SpotAnnotation: MKPointAnnotation {
-    var id = ""
-    var type: AnnotationType!
+    lazy var id = ""
+    lazy var type: AnnotationType = .name
     enum AnnotationType {
         case post
         case name

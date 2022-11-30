@@ -40,7 +40,7 @@ extension MapController {
     }
 
     func displayHeelsMap() {
-        if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) {
+        if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) && userInChapelHill() {
             openExploreMaps(onboarding: true)
             UserDataModel.shared.userInfo.respondedToCampusMap = true
             db.collection("users").document(uid).updateData(["respondedToCampusMap": true])

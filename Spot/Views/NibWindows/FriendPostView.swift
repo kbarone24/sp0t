@@ -10,17 +10,50 @@ import Foundation
 import UIKit
 
 class FriendPostView: UIView {
-    @IBOutlet weak var backgroundImage: UIImageView!
-    @IBOutlet weak var postImage: UIImageView!
-    @IBOutlet weak var imageMask: UIView!
-    @IBOutlet weak var replayIcon: UIImageView!
-    @IBOutlet weak var postCount: UILabel!
+    @IBOutlet private weak var backgroundImage: UIImageView!
+    @IBOutlet private weak var postImage: UIImageView!
+    @IBOutlet private weak var imageMask: UIView!
+    @IBOutlet private weak var replayIcon: UIImageView!
+    @IBOutlet private weak var postCount: UILabel!
 
-    @IBOutlet weak var avatarView: ImageAvatarView!
-    @IBOutlet weak var usernameLabel: UsernameLabel!
+    @IBOutlet private weak var avatarView: ImageAvatarView!
+    @IBOutlet private weak var usernameLabel: UsernameLabel!
 
     class func instanceFromNib() -> UIView {
-        return UINib(nibName: "FriendPostView", bundle: nil).instantiate(withOwner: self, options: nil).first as! UIView
+        return UINib(nibName: "FriendPostView", bundle: nil).instantiate(withOwner: self, options: nil).first as? UIView ?? UIView()
+    }
+
+    func setValues(post: MapPost, count: Int, moreText: String) {
+        backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
+        postImage.layer.cornerRadius = post.seen ? 67 / 2 : 75 / 2
+
+        imageMask.layer.cornerRadius = 67 / 2
+        imageMask.isHidden = !post.seen
+        replayIcon.isHidden = !post.seen
+
+        if count > 1 {
+            postCount.backgroundColor = post.seen ? .white : UIColor(named: "SpotGreen")
+            postCount.layer.cornerRadius = 10
+            postCount.font = UIFont(name: "SFCompactText-Heavy", size: 12.5)
+            postCount.text = String(count)
+        } else {
+            postCount.isHidden = true
+        }
+
+        usernameLabel.setUp(post: post, moreText: moreText, spotAnnotation: false)
+        resizeView(seen: post.seen)
+    }
+
+    func setAvatarView(avatarURLs: [String], completion: @escaping(_ success: Bool) -> Void) {
+        avatarView.setUp(avatarURLs: avatarURLs, annotation: true) { _ in
+            self.bringSubviewToFront(self.avatarView)
+            completion(true)
+            return
+        }
+    }
+
+    func setPostImage(image: UIImage) {
+        postImage.image = image
     }
 
     func resizeView(seen: Bool) {
@@ -38,7 +71,7 @@ class FriendPostView: UIView {
         replayIcon.frame = CGRect(x: postImage.frame.midX - 27.7 / 2, y: postImage.frame.midY - 15.5, width: 27.7, height: 31)
         postCount.frame = CGRect(x: backgroundImage.frame.minX + 49, y: postCount.frame.minY, width: postCount.frame.width, height: postCount.frame.height)
 
-        ///  need to slide up avatar view in case post already seen (smaller post frame)
+        //  need to slide up avatar view in case post already seen (smaller post frame)
         avatarView.frame = CGRect(x: (bounds.width - avatarView.bounds.width) / 2, y: backgroundImage.frame.maxY - 2, width: avatarView.bounds.width, height: avatarView.frame.height)
         usernameLabel.repositionSubviews(minX: (viewWidth - usernameLabel.bounds.width) / 2, minY: avatarView.frame.maxY - 5)
     }

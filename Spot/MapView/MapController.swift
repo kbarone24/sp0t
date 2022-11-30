@@ -6,15 +6,9 @@
 //   Copyright © 2019 sp0t, LLC. All rights reserved.
 //
 import Firebase
-import FirebaseAuth
-import FirebaseFirestore
-import FirebaseFirestoreSwift
-import FirebaseMessaging
-import FirebaseUI
 import Geofirestore
 import MapKit
 import Mixpanel
-import Photos
 import UIKit
 
 protocol MapControllerDelegate: AnyObject {
@@ -30,10 +24,16 @@ final class MapController: UIViewController {
         return service
     }()
 
+    lazy var spotService: SpotServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.spotService)
+        return service
+    }()
+
     let locationManager = CLLocationManager()
-    lazy var imageManager = SDWebImageManager()
     var friendsPostsListener, mapsListener, mapsPostsListener, notiListener, userListener: ListenerRegistration?
     let homeFetchGroup = DispatchGroup()
+    var circleQuery: GFSCircleQuery?
+    let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("spots"))
 
     var selectedItemIndex = 0
     var firstOpen = false
@@ -393,6 +393,9 @@ extension MapController: CLLocationManagerDelegate {
             UploadPostModel.shared.locationAccess = true
             locationManager.startUpdatingLocation()
         }
+        // ask for notifications access immediately after location access
+        let pushManager = PushNotificationManager(userID: uid)
+        pushManager.registerForPushNotifications()
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

@@ -27,14 +27,17 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         guard let userProfile = userProfile else {
             return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
         }
+
         if let headerCell = cell as? ProfileHeaderCell {
             headerCell.cellSetup(userProfile: userProfile, relation: relation)
             headerCell.actionButton.addTarget(self, action: #selector(actionButtonTap), for: .touchUpInside)
             headerCell.friendListButton.addTarget(self, action: #selector(friendsListTap), for: .touchUpInside)
             return headerCell
+
         } else if let mapCell = cell as? ProfileMyMapCell {
             mapCell.cellSetup(userAccount: userProfile.username, posts: posts, relation: relation)
             return mapCell
+
         } else if let bodyCell = cell as? ProfileBodyCell {
             bodyCell.cellSetup(mapData: maps[indexPath.row - 1], userID: userProfile.id ?? "")
             return bodyCell
@@ -96,6 +99,12 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
                 collectionCell?.transform = .identity
             }
         }
+    }
+
+    func getMyMap() -> CustomMap {
+        var mapData = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
+        mapData.createPosts(posts: posts)
+        return mapData
     }
 }
 
