@@ -60,10 +60,9 @@ extension CLPlacemark {
         if let country {
             // add state name for US
             if country == "United States" {
-                if administrativeArea != nil {
-
+                if let administrativeArea {
                     if addressString != "" { addressString = addressString + ", " }
-                    addressString = addressString + administrativeArea!
+                    addressString = addressString + administrativeArea
                 }
             }
             if addressString != "" { addressString = addressString + ", " }
@@ -213,7 +212,7 @@ extension MKMapView {
     func topCenterCoordinate() -> CLLocationCoordinate2D {
         return self.convert(CGPoint(x: self.frame.size.width / 2.0, y: 0), toCoordinateFrom: self)
     }
-
+    // return radius in meters
     func currentRadius() -> Double {
         let centerLocation = CLLocation(latitude: self.centerCoordinate.latitude, longitude: self.centerCoordinate.longitude)
         let topCenterCoordinate = self.topCenterCoordinate()

@@ -213,6 +213,7 @@ extension SpotPageController {
     }
 
     private func fetchRelatedPosts() {
+        print("fetch related posts")
         let db: Firestore = Firestore.firestore()
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID)
         let conditionedQuery = (mapID == nil || mapID == "") ? baseQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid) : baseQuery.whereField("mapID", isEqualTo: mapID ?? "")
@@ -244,6 +245,7 @@ extension SpotPageController {
             }
 
             postGroup.notify(queue: .main) {
+                print("notify main 0", self.relatedPosts.count)
                 self.activityIndicator.stopAnimating()
                 self.relatedEndDocument = allDocs.last
                 self.fetchRelatedPostsComplete = docs.count < 12
@@ -290,6 +292,8 @@ extension SpotPageController {
             }
 
             postGroup.notify(queue: .main) {
+                print("notify main 1", self.communityPosts.count)
+
                 self.activityIndicator.stopAnimating()
                 if self.fetching == .refreshDisabled {
                     self.fetchCommunityPostsComplete = true
@@ -384,7 +388,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             if indexPath == IndexPath(row: 0, section: 1) {
                 let frontPadding = "    "
                 let bottomPadding = "   "
-                if let mapName {
+                if let mapName, mapName != "" {
                     mapPostLabel.text = frontPadding + mapName + bottomPadding
                 } else {
                     mapPostLabel.text = frontPadding + "Friends posts" + bottomPadding

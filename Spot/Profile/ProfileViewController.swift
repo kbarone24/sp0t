@@ -78,7 +78,6 @@ class ProfileViewController: UIViewController {
         return service
     }()
     
-    
     private lazy var userService: UserServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.userService)
         return service
@@ -266,9 +265,11 @@ class ProfileViewController: UIViewController {
                     if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { continue }
                     dispatch.enter()
                     self.mapPostService?.setPostDetails(post: postInfo) { post in
-                        self.posts.append(post)
-                        self.postsFetched = true
-                        dispatch.leave()
+                        DispatchQueue.main.async {
+                            self.posts.append(post)
+                            self.postsFetched = true
+                            dispatch.leave()
+                        }
                     }
                 } catch let parseError {
                     print("JSON Error \(parseError.localizedDescription)")
@@ -312,12 +313,6 @@ class ProfileViewController: UIViewController {
     private func sortAndReloadMaps() {
         maps.sort(by: { $0.userTimestamp.seconds > $1.userTimestamp.seconds })
         DispatchQueue.main.async { self.collectionView.reloadData() }
-    }
-
-    func getMyMap() -> CustomMap {
-        var mapData = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
-        mapData.createPosts(posts: posts)
-        return mapData
     }
 }
 

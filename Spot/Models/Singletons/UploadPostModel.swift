@@ -90,6 +90,7 @@ final class UploadPostModel {
         postObject?.spotLong = spot?.spotLong ?? 0.0
         postObject?.spotName = spot?.spotName ?? ""
         postObject?.spotPrivacy = spot?.privacyLevel ?? ""
+        postObject?.spotPOICategory = spot?.poiCategory ?? ""
 
         // if post with no location, use spot location
         if !(postObject?.setImageLocation ?? false), let spot {
@@ -177,10 +178,10 @@ final class UploadPostModel {
     }
 
     func setFinalMapValues() {
+        mapObject?.updatePostLevelValues(post: postObject)
         if let spotObject {
             mapObject?.updateSpotLevelValues(spot: spotObject)
         }
-        mapObject?.updatePostLevelValues(post: postObject)
     }
 
     func saveToDrafts() {
