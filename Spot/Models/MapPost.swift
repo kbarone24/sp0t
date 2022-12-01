@@ -42,6 +42,7 @@ struct MapPost: Identifiable, Codable, Hashable {
     var spotLat: Double? = 0.0
     var spotLong: Double? = 0.0
     var spotName: String? = ""
+    var spotPOICategory: String?
     var spotPrivacy: String? = ""
     var tag: String? = ""
     var taggedUserIDs: [String]? = []
@@ -105,6 +106,7 @@ struct MapPost: Identifiable, Codable, Hashable {
         case spotLat
         case spotLong
         case spotName
+        case spotPOICategory
         case spotPrivacy
         case taggedUserIDs
         case taggedUsers
@@ -149,6 +151,7 @@ struct MapPost: Identifiable, Codable, Hashable {
         self.spotLong = postDraft.spotLong
         self.spotName = postDraft.spotName
         self.spotPrivacy = postDraft.spotPrivacy
+        self.spotPOICategory = postDraft.poiCategory
         self.tag = ""
         self.taggedUserIDs = postDraft.taggedUserIDs ?? []
         self.taggedUsers = postDraft.taggedUsers ?? []

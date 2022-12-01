@@ -18,7 +18,6 @@ protocol ImagePreviewDelegate {
 }
 
 class ImagePreviewView: UIView, UIGestureRecognizerDelegate {
-
     var imageCloseTap: UITapGestureRecognizer!
     var maskImage: ImagePreview!
     var maskImagePrevious: ImagePreview!

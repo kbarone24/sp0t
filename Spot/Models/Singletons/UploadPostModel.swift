@@ -90,6 +90,7 @@ final class UploadPostModel {
         postObject?.spotLong = spot?.spotLong ?? 0.0
         postObject?.spotName = spot?.spotName ?? ""
         postObject?.spotPrivacy = spot?.privacyLevel ?? ""
+        postObject?.spotPOICategory = spot?.poiCategory ?? ""
 
         // if post with no location, use spot location
         if !(postObject?.setImageLocation ?? false), let spot {
@@ -103,13 +104,14 @@ final class UploadPostModel {
         mapObject = map
         postObject?.mapID = map?.id ?? ""
         postObject?.mapName = map?.mapName ?? ""
-        postObject?.hideFromFeed = map?.secret ?? true
     }
 
     func setPostCity() {
-        reverseGeocodeFromCoordinate { [weak self] (city) in
+        let location = CLLocation(latitude: postObject?.postLat ?? 0, longitude: postObject?.postLong ?? 0)
+        location.reverseGeocode(zoomLevel: 0) { [weak self] (city, err)  in
             guard let self = self else { return }
             guard self.postObject != nil else { return }
+            if city == "" && err { return }
             self.postObject?.city = city
         }
     }
@@ -122,47 +124,6 @@ final class UploadPostModel {
         postObject?.taggedUserIDs = taggedUsers.map({ $0.id ?? "" })
     }
     
-    func reverseGeocodeFromCoordinate(completion: @escaping (_ address: String) -> Void) {
-        var addressString = ""
-        let location = CLLocation(latitude: postObject?.postLat ?? 0, longitude: postObject?.postLong ?? 0)
-
-        let locale = Locale(identifier: "en")
-        CLGeocoder().reverseGeocodeLocation(location, preferredLocale: locale) { [weak self] placemarks, _ in // 6
-
-            if self == nil { completion(""); return }
-            guard let placemark = placemarks?.first else { completion(""); return }
-
-            if let locality = placemark.locality {
-                if !addressString.isEmpty {
-                    addressString = "\(addressString) "
-                }
-                addressString = "\(addressString)\(locality)"
-            }
-
-            if let country = placemark.country {
-                if country == "United States" {
-                    if let administrativeArea = placemark.administrativeArea {
-                        if !addressString.isEmpty {
-                            addressString = "\(addressString) "
-                        }
-                        addressString = "\(addressString)\(administrativeArea)"
-                        completion(addressString)
-                    } else {
-                        completion(addressString)
-                    }
-                } else {
-                    if !addressString.isEmpty {
-                        addressString = "\(addressString) "
-                    }
-                    addressString = "\(addressString)\(country)"
-                    completion(addressString)
-                }
-            } else {
-                completion(addressString)
-            }
-        }
-    }
-
     func setFinalPostValues() {
         var postFriends = (postObject?.hideFromFeed ?? false) ? [] : UserDataModel.shared.userInfo.friendIDs
         if let mapObject { postObject?.inviteList = mapObject.likers }
@@ -177,10 +138,10 @@ final class UploadPostModel {
     }
 
     func setFinalMapValues() {
+        mapObject?.updatePostLevelValues(post: postObject)
         if let spotObject {
             mapObject?.updateSpotLevelValues(spot: spotObject)
         }
-        mapObject?.updatePostLevelValues(post: postObject)
     }
 
     func saveToDrafts() {

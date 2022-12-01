@@ -25,7 +25,7 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
     }
 
     func registerForPushNotifications() {
-        updateFirestorePushTokenIfNeeded()
+        updateFirestorePushToken()
         UNUserNotificationCenter.current().getNotificationSettings { (settings) in
             if settings.authorizationStatus != .authorized {
                 // Either denied or notDetermined
@@ -35,7 +35,7 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
                         DispatchQueue.main.async {
                             Messaging.messaging().delegate = self
                             UIApplication.shared.registerForRemoteNotifications()
-                            self.updateFirestorePushTokenIfNeeded()
+                            self.updateFirestorePushToken()
                         }
                     } else { Mixpanel.mainInstance().track(event: "NotificationsAccessDenied") }
                 }
@@ -44,7 +44,7 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
         UNUserNotificationCenter.current().delegate = self
     }
 
-    func updateFirestorePushTokenIfNeeded() {
+    func updateFirestorePushToken() {
         if let token = Messaging.messaging().fcmToken {
             let usersRef = Firestore.firestore().collection("users").document(userID)
             usersRef.setData(["notificationToken": token], merge: true)
@@ -52,7 +52,7 @@ class PushNotificationManager: NSObject, MessagingDelegate, UNUserNotificationCe
     }
 
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String) {
-        updateFirestorePushTokenIfNeeded()
+        updateFirestorePushToken()
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {

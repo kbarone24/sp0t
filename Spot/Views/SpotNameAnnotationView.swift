@@ -19,7 +19,6 @@ class SpotNameAnnotationView: MKAnnotationView {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         collisionMode = .rectangle
         clusteringIdentifier = nil
-        centerOffset = CGPoint(x: 0, y: 10)
         displayPriority = .defaultHigh
         alpha = 1.0
     }
@@ -28,21 +27,12 @@ class SpotNameAnnotationView: MKAnnotationView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func setUp(spotID: String, spotName: String, priority: Float) {
+    func setUp(spotID: String, spotName: String, poiCategory: POICategory?, priority: Float) {
         self.id = spotID
         self.spotName = spotName
         self.displayPriority = .init(rawValue: priority)
-        let infoWindow = SpotNameView.instanceFromNib() as! SpotNameView
-        let attributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key.strokeColor: UIColor.white,
-            NSAttributedString.Key.foregroundColor: UIColor.black,
-            NSAttributedString.Key.strokeWidth: -3,
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 14)!
-        ]
-        infoWindow.spotLabel.attributedText = NSAttributedString(string: spotName, attributes: attributes)
-        infoWindow.spotLabel.sizeToFit()
-        infoWindow.resizeView()
-
+        guard let infoWindow = SpotNameView.instanceFromNib() as? SpotNameView else { return }
+        infoWindow.setUp(spotName: spotName, poiCategory: poiCategory)
         image = infoWindow.asImage()
     }
 

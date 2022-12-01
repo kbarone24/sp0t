@@ -64,18 +64,6 @@ extension CustomMapController: MKMapViewDelegate {
                     mapView.addAnnotations(annotations)
                 }
             }
-            // see if should add/remove spot annos
-            if mapView.region.span.longitudeDelta < 0.2 {
-                if !mapView.shouldShowSpots {
-                    mapView.shouldShowSpots = true
-                //    mapView.addSpotAnnotationsOnZoom(map: mapData!)
-                }
-            } else {
-                if mapView.shouldShowSpots {
-                    mapView.shouldShowSpots = false
-               //   mapView.removeSpotAnnotationsOnZoom(map: mapData!)
-                }
-            }
         }
     }
 

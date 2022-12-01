@@ -138,20 +138,24 @@ final class FriendsService: FriendsServiceProtocol {
             completion?(FriendError.userNotLoggedIn)
             return
         }
+
+        if friendID != "" {
+            fireStore.collection(FirebaseCollectionNames.users.rawValue)
+                .document(friendID)
+                .updateData(
+                    [
+                        FireBaseCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayRemove([uid])
+                    ]
+                )
+        }
         
-        fireStore.collection(FirebaseCollectionNames.users.rawValue)
-            .document(friendID)
-            .updateData(
-                [
-                    FireBaseCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayRemove([uid])
-                ]
-            )
-        
-        fireStore.collection(FirebaseCollectionNames.users.rawValue)
-            .document(uid)
-            .collection(FirebaseCollectionNames.notifications.rawValue)
-            .document(notificationID)
-            .delete()
+        if notificationID != "" {
+            fireStore.collection(FirebaseCollectionNames.users.rawValue)
+                .document(uid)
+                .collection(FirebaseCollectionNames.notifications.rawValue)
+                .document(notificationID)
+                .delete()
+        }
         
         completion?(nil)
     }
@@ -168,12 +172,12 @@ final class FriendsService: FriendsServiceProtocol {
         addFriendToFriendsList(userID: friendId, friendID: uid, completion: nil)
         sendFriendRequestNotis(friendID: friendId, notificationID: notificationID, completion: nil)
 
-        /// adjust individual posts "friendsList" docs
+        // adjust individual posts "friendsList" docs
         DispatchQueue.global().async {
             do {
                 let mapPostService = try ServiceContainer.shared.service(for: \.mapPostService)
                 mapPostService.adjustPostFriendsList(userID: uid, friendID: friendId) { _ in
-                    /// send notification to home to reload posts
+                    // send notification to home to reload posts
                     NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListAdd")))
                 }
                 

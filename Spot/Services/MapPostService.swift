@@ -32,8 +32,7 @@ final class MapPostService: MapPostServiceProtocol {
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
-                .whereField(FireBaseCollectionFields.mapID.rawValue, isEqualTo: mapID)
-                .whereField(FireBaseCollectionFields.hideFromFeed.rawValue, isEqualTo: true)
+                .whereField(FireBaseCollectionFields.mapID.rawValue, isEqualTo: mapID).order(by: "timestamp", descending: true)
                 .getDocuments { snapshot, error in
                     guard let snapshot, error == nil else {
                         completion?(error)

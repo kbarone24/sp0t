@@ -234,7 +234,7 @@ extension UIViewController {
         if map != nil {
             if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
             map!.postImageURLs.append(post.imageURLs.first ?? "")
-            self.uploadMap(map: map!, newMap: newMap, post: post)
+            self.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
         }
         self.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
 
@@ -371,7 +371,7 @@ extension UIViewController {
         }
     }
 
-    func uploadMap(map: CustomMap, newMap: Bool, post: MapPost) {
+    func uploadMap(map: CustomMap, newMap: Bool, post: MapPost, spot: MapSpot?) {
         let db: Firestore = Firestore.firestore()
         if newMap {
             let mapRef = db.collection("maps").document(map.id!)
@@ -390,6 +390,7 @@ extension UIViewController {
             functions.httpsCallable("runMapTransactions").call(
                 ["mapID": map.id!,
                  "uid": UserDataModel.shared.uid,
+                 "poiCategory": spot?.poiCategory ?? "",
                  "postID": post.id!,
                  "postImageURL": post.imageURLs.first ?? "",
                  "postLocation": postLocation,

@@ -32,14 +32,17 @@ extension MapController: MKMapViewDelegate {
     }
 
     func centerMapOnMapPosts(animated: Bool) {
-        /// zoom out map to show all annotations in view
+        // return before location services enabled
+        if firstTimeGettingLocation { return }
+        // zoom out map to show all annotations in view
         let map = getSelectedMap()
         var coordinates = getSortedCoordinates()
-        /// add fist 10 post coordiates to set location for map with no new posts
+        // add fist 10 post coordiates to set location for map with no new posts
         if coordinates.isEmpty && map != nil {
             for location in map?.postLocations.prefix(10) ?? [] { coordinates.append(CLLocationCoordinate2D(latitude: location["lat"] ?? 0.0, longitude: location["long"] ?? 0.0)) }
         }
 
+        mapView.enableCircleQuery = true
         let region = MKCoordinateRegion(coordinates: coordinates, overview: true)
         mapView.setRegion(region, animated: animated)
     }
@@ -76,19 +79,13 @@ extension MapController: MKMapViewDelegate {
                     self.mapView.addAnnotations(annotations)
                 }
             }
-            /// see if should add/remove spot annos
-            if mapView.region.span.longitudeDelta < 0.2 {
-                if !mapView.shouldShowSpots {
-                    mapView.shouldShowSpots = true
-                  //  mapView.addSpotAnnotationsOnZoom(map: getSelectedMap())
-                }
-            } else {
-                if mapView.shouldShowSpots {
-                    mapView.shouldShowSpots = false
-                 //   mapView.removeSpotAnnotationsOnZoom(map: getSelectedMap())
-                }
-            }
         }
+    }
+
+    func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        if shouldRunCircleQuery() { DispatchQueue.global(qos: .background).async { self.getVisibleSpots() }
+        }
+        if postsFetched { setCityLabel() }
     }
 
     func animateToMostRecentPost() {
@@ -117,6 +114,19 @@ extension MapController: MKMapViewDelegate {
         if group.contains(where: { $0.postIDs.contains(where: { !$0.seen }) }) { group = group.filter({ $0.postIDs.contains(where: { !$0.seen }) })}
         group = mapView.sortPostGroup(group)
         return group.map({ $0.coordinate })
+    }
+
+    func setCityLabel() {
+        let radius = mapView.currentRadius() / 1_000
+        let zoomLevel = radius < 60 ? 0 : radius < 800 ? 1 : 2
+        let location = mapView.centerCoordinate.location
+        location.reverseGeocode(zoomLevel: zoomLevel) { [weak self] (address, err) in
+            guard let self = self else { return }
+            if address == "" && err { return }
+            self.cityLabel.text = address
+            self.cityLabel.layoutIfNeeded()
+            self.cityLabel.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.4).cgColor, opacity: 1, radius: 2, offset: CGSize(width: 0.5, height: 0.5))
+        }
     }
 }
 
@@ -163,8 +173,8 @@ protocol SpotMapViewDelegate: AnyObject {
 
 class SpotMapView: MKMapView {
     var shouldCluster = false
-    var shouldShowSpots = false
     var lockClusterOnUpload = false
+    var enableCircleQuery = false
     var spotMapDelegate: SpotMapViewDelegate?
 
     override init(frame: CGRect) {
@@ -209,7 +219,8 @@ class SpotMapView: MKMapView {
                 /// update existing group
                 if let anno = annotations.first(where: { $0.coordinate.isEqualTo(coordinate: group.coordinate) }) {
                     removeAnnotation(anno)
-                    print("update existing group")
+                    addSpotAnnotation(group: group, map: map)
+                } else {
                     addSpotAnnotation(group: group, map: map)
                 }
             }
@@ -230,22 +241,8 @@ class SpotMapView: MKMapView {
     }
 
     func removeAllAnnos() {
+        print("remove all annos")
         removeAnnotations(annotations)
-    }
-
-    func removeSpotAnnotationsOnZoom(map: CustomMap?) {
-        if map == nil { return }
-        var annotations = annotations.filter({ $0 is SpotAnnotation }) as? [SpotAnnotation] ?? []
-        annotations = annotations.filter({ $0.type == .name })
-        DispatchQueue.main.async { self.removeAnnotations(annotations) }
-    }
-
-    func addSpotAnnotationsOnZoom(map: CustomMap?) {
-        if let map {
-            for group in map.postGroup.filter({ $0.postIDs.isEmpty }) {
-                DispatchQueue.main.async { self.addSpotAnnotation(group: group, map: map) }
-            }
-        }
     }
 
     func getSpotPostAnnotation(anno: MKAnnotation, posts: [MapPost], group: MapPostGroup, cluster: Bool, spotCluster: Bool) -> SpotPostAnnotationView {
@@ -254,7 +251,7 @@ class SpotMapView: MKMapView {
         annotationView.annotation = anno
         annotationView.mapView = self
         annotationView.clusteringIdentifier = !cluster && shouldCluster ? "SpotPostCluster" : nil
-        annotationView.updateImage(posts: posts, spotName: group.spotName, id: group.id, spotCluster: spotCluster)
+        annotationView.updateImage(posts: posts, spotName: group.spotName, id: group.id, poiCategory: group.poiCategory, spotCluster: spotCluster)
         annotationView.isSelected = posts.contains(where: { !$0.seen })
         annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotPostTap(_:))))
         return annotationView
@@ -266,7 +263,7 @@ class SpotMapView: MKMapView {
         annotationView.annotation = anno
         annotationView.mapView = self
         let priority = getSpotDisplayPriority(group: group)
-        annotationView.setUp(spotID: group.id, spotName: group.spotName, priority: priority)
+        annotationView.setUp(spotID: group.id, spotName: group.spotName, poiCategory: group.poiCategory, priority: priority)
         annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotNameTap(_:))))
         return annotationView
     }
