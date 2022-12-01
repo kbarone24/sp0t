@@ -17,8 +17,9 @@ protocol ChooseSpotDelegate: AnyObject {
     func finishPassing(spot: MapSpot?)
 }
 
-class ChooseSpotController: UIViewController {
+final class ChooseSpotController: UIViewController {
     private lazy var searchBarContainer = UIView()
+    
     private lazy var searchBar: UISearchBar = {
         let searchBar = SpotSearchBar()
         searchBar.searchTextField.attributedPlaceholder = NSAttributedString(
@@ -28,7 +29,8 @@ class ChooseSpotController: UIViewController {
         searchBar.keyboardDistanceFromTextField = 250
         return searchBar
     }()
-    lazy var tableView: UITableView = {
+    
+    private(set) lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         tableView.backgroundColor = .white
@@ -38,6 +40,7 @@ class ChooseSpotController: UIViewController {
         tableView.register(ChooseSpotLoadingCell.self, forCellReuseIdentifier: "ChooseSpotLoading")
         return tableView
     }()
+    
     private lazy var createSpotButton = CreateSpotButton()
     
     lazy var spotObjects: [MapSpot] = []
