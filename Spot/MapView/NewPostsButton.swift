@@ -10,52 +10,34 @@ import Mixpanel
 import UIKit
 
 final class NewPostsButton: UIButton {
-    private lazy var contentArea: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.white.withAlphaComponent(0.95)
-        view.layer.cornerRadius = 18
-        return view
+    private lazy var backgroundImageView = UIImageView()
+    private lazy var newPostsIndicator: UIView = {
+        let imageView = UIView()
+        imageView.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+        imageView.layer.cornerRadius = 21 / 2
+        return imageView
     }()
-
-    private lazy var textLabel: UILabel = {
+    private lazy var postCountBackground = UIImageView(image: UIImage(named: "PostCountBackground"))
+    private lazy var countLabel: UILabel = {
         let label = UILabel()
-
-        label.textColor = UIColor(red: 0.663, green: 0.663, blue: 0.663, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
-        label.clipsToBounds = true
-
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 15)
+        label.textAlignment = .center
         return label
-    }()
-
-    private lazy var newPostsIndicator: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(named: "NewPostsIcon")
-        imageView.isHidden = true
-
-        return imageView
-    }()
-
-    private lazy var carat: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(named: "SideCarat")
-        imageView.isHidden = true
-
-        return imageView
     }()
 
     var unseenPosts: Int = 0 {
         didSet {
             if unseenPosts > 0 {
-                let text = unseenPosts > 1 ? "\(unseenPosts) new posts" : "\(unseenPosts) new post"
-                textLabel.text = text
-                textLabel.snp.updateConstraints({ $0.trailing.equalToSuperview().inset(38) })
-                newPostsIndicator.isHidden = false
-                carat.isHidden = true
+                countLabel.attributedText = NSMutableAttributedString(
+                    string: String(unseenPosts),
+                    attributes: [NSAttributedString.Key.kern: -0.75]
+                )
+                postCountBackground.isHidden = false
+                backgroundImageView.image = UIImage(named: "AnimateToNewPostsIcon")
             } else {
-                textLabel.text = "See all posts"
-                textLabel.snp.updateConstraints({ $0.trailing.equalToSuperview().inset(32) })
-                newPostsIndicator.isHidden = true
-                carat.isHidden = false
+                postCountBackground.isHidden = true
+                backgroundImageView.image = UIImage(named: "SeeAllPostsIcon")
             }
         }
     }
@@ -73,34 +55,27 @@ final class NewPostsButton: UIButton {
         let tap = UITapGestureRecognizer(target: self, action: #selector(tap))
         addGestureRecognizer(tap)
 
-        addSubview(contentArea)
-        contentArea.snp.makeConstraints { $0.leading.trailing.top.bottom.equalToSuperview().inset(5)
+        addSubview(backgroundImageView)
+        backgroundImageView.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.top.equalTo(2)
         }
 
-        contentArea.addSubview(textLabel)
-        textLabel.snp.makeConstraints {
-            $0.leading.equalTo(14)
-            $0.top.equalTo(12)
-            $0.bottom.equalToSuperview().inset(11)
-            $0.trailing.equalToSuperview().inset(32)
+        addSubview(postCountBackground)
+        postCountBackground.isHidden = true
+        postCountBackground.snp.makeConstraints {
+            $0.top.equalToSuperview()
+            $0.trailing.equalTo(-2)
+            $0.width.height.equalTo(29)
         }
 
-        contentArea.addSubview(newPostsIndicator)
-        newPostsIndicator.isHidden = true
+        postCountBackground.addSubview(newPostsIndicator)
         newPostsIndicator.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(10)
-            $0.width.height.equalTo(23)
-            $0.centerY.equalToSuperview()
+            $0.edges.equalToSuperview().inset(4)
         }
 
-        contentArea.addSubview(carat)
-        carat.isHidden = true
-        carat.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(15)
-            $0.width.equalTo(8.9)
-            $0.height.equalTo(15)
-            $0.centerY.equalToSuperview()
-        }
+        newPostsIndicator.addSubview(countLabel)
+        countLabel.snp.makeConstraints { $0.edges.equalToSuperview() }
     }
 
     func setHidden(hidden: Bool) {

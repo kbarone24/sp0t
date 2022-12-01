@@ -32,15 +32,17 @@ extension MapController: MKMapViewDelegate {
     }
 
     func centerMapOnMapPosts(animated: Bool) {
-        /// zoom out map to show all annotations in view
+        // return before location services enabled
+        if firstTimeGettingLocation { return }
+        // zoom out map to show all annotations in view
         let map = getSelectedMap()
         var coordinates = getSortedCoordinates()
-        /// add fist 10 post coordiates to set location for map with no new posts
+        // add fist 10 post coordiates to set location for map with no new posts
         if coordinates.isEmpty && map != nil {
             for location in map?.postLocations.prefix(10) ?? [] { coordinates.append(CLLocationCoordinate2D(latitude: location["lat"] ?? 0.0, longitude: location["long"] ?? 0.0)) }
         }
 
-        mapView.shouldRunCircleQuery = true
+        mapView.enableCircleQuery = true
         let region = MKCoordinateRegion(coordinates: coordinates, overview: true)
         mapView.setRegion(region, animated: animated)
     }
@@ -81,8 +83,9 @@ extension MapController: MKMapViewDelegate {
     }
 
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-        guard let mapView = mapView as? SpotMapView else { return }
-        if mapView.shouldRunCircleQuery && selectedItemIndex == 0 { getVisibleSpots() }
+        if shouldRunCircleQuery() { DispatchQueue.global(qos: .background).async { self.getVisibleSpots() }
+        }
+        if postsFetched { setCityLabel() }
     }
 
     func animateToMostRecentPost() {
@@ -111,6 +114,19 @@ extension MapController: MKMapViewDelegate {
         if group.contains(where: { $0.postIDs.contains(where: { !$0.seen }) }) { group = group.filter({ $0.postIDs.contains(where: { !$0.seen }) })}
         group = mapView.sortPostGroup(group)
         return group.map({ $0.coordinate })
+    }
+
+    func setCityLabel() {
+        let radius = mapView.currentRadius() / 1_000
+        let zoomLevel = radius < 60 ? 0 : radius < 800 ? 1 : 2
+        let location = mapView.centerCoordinate.location
+        location.reverseGeocode(zoomLevel: zoomLevel) { [weak self] (address, err) in
+            guard let self = self else { return }
+            if address == "" && err { return }
+            self.cityLabel.text = address
+            self.cityLabel.layoutIfNeeded()
+            self.cityLabel.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.4).cgColor, opacity: 1, radius: 2, offset: CGSize(width: 0.5, height: 0.5))
+        }
     }
 }
 
@@ -158,7 +174,7 @@ protocol SpotMapViewDelegate: AnyObject {
 class SpotMapView: MKMapView {
     var shouldCluster = false
     var lockClusterOnUpload = false
-    var shouldRunCircleQuery = false
+    var enableCircleQuery = false
     var spotMapDelegate: SpotMapViewDelegate?
 
     override init(frame: CGRect) {

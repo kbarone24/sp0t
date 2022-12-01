@@ -34,10 +34,17 @@ final class MapController: UIViewController {
     let homeFetchGroup = DispatchGroup()
     var circleQuery: GFSCircleQuery?
     let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("spots"))
+    let chapelHillLocation = CLLocation(latitude: 35.913_2, longitude: -79.055_8)
+
+    var circleQueryEnteredCount = 0
+    var circleQueryNoAccessCount = 0
+    var circleQueryAccessCount = 0
+    var circleQueryLimit: Int = 50
 
     var selectedItemIndex = 0
     var firstOpen = false
     var firstTimeGettingLocation = true
+    var openedExploreMaps = false
     var userLoaded = false
     var postsFetched = false
     var mapsLoaded = false
@@ -62,6 +69,13 @@ final class MapController: UIViewController {
 
     var titleView: MapTitleView?
     lazy var mapView = SpotMapView()
+    lazy var cityLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.font = UIFont(name: "UniversCE-Black", size: 13)
+        label.textAlignment = .center
+        return label
+    }()
 
     lazy var newPostsButton = NewPostsButton()
     lazy var mapsCollection: UICollectionView = {
@@ -72,6 +86,7 @@ final class MapController: UIViewController {
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.backgroundColor = .white
         view.showsHorizontalScrollIndicator = false
+        view.clipsToBounds = false
         view.contentInset = UIEdgeInsets(top: 5, left: 9, bottom: 0, right: 9)
         view.register(MapLoadingCell.self, forCellWithReuseIdentifier: "MapLoadingCell")
         view.register(FriendsMapCell.self, forCellWithReuseIdentifier: "FriendsCell")
@@ -133,7 +148,7 @@ final class MapController: UIViewController {
     func setUpViews() {
         addMapView()
         addMapsCollection()
-        addNewPostsButton()
+        addSupplementalViews()
     }
 
     func addMapView() {
@@ -141,16 +156,6 @@ final class MapController: UIViewController {
         mapView.spotMapDelegate = self
         view.addSubview(mapView)
         makeMapHomeConstraints()
-
-        let addButton = AddButton {
-            $0.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
-            mapView.addSubview($0)
-        }
-        addButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(23)
-            $0.bottom.equalToSuperview().inset(110) /// offset 65 px for portion of map below fold
-            $0.height.width.equalTo(92)
-        }
     }
 
     func makeMapHomeConstraints() {
@@ -170,14 +175,34 @@ final class MapController: UIViewController {
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(114)
         }
+        mapsCollection.layoutIfNeeded()
+        mapsCollection.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.1).cgColor, opacity: 1, radius: 12, offset: CGSize(width: 0, height: 1))
     }
 
-    func addNewPostsButton() {
+    func addSupplementalViews() {
+        view.addSubview(cityLabel)
+        cityLabel.snp.makeConstraints {
+            $0.top.equalTo(mapsCollection.snp.bottom).offset(6)
+            $0.centerX.equalToSuperview()
+        }
+
+        let addButton = AddButton {
+            $0.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
+            mapView.addSubview($0)
+        }
+        addButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(23)
+            $0.bottom.equalToSuperview().inset(100) /// offset 65 px for portion of map below fold
+            $0.height.width.equalTo(109)
+        }
+
         newPostsButton.isHidden = true
         view.addSubview(newPostsButton)
         newPostsButton.snp.makeConstraints {
-            $0.top.equalTo(mapsCollection.snp.bottom).offset(5)
-            $0.centerX.equalToSuperview()
+            $0.bottom.equalTo(addButton.snp.top).offset(-1)
+            $0.trailing.equalTo(-21)
+            $0.height.equalTo(68)
+            $0.width.equalTo(66)
         }
     }
 
@@ -356,6 +381,7 @@ final class MapController: UIViewController {
     func toggleHomeAppearance(hidden: Bool) {
         mapsCollection.isHidden = hidden
         newPostsButton.setHidden(hidden: hidden)
+        cityLabel.isHidden = hidden
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
             addFriendsView.removeFromSuperview()
@@ -370,11 +396,13 @@ final class MapController: UIViewController {
         navigationController?.navigationBar.alpha = 0.0
         mapsCollection.alpha = 0.0
         newPostsButton.alpha = 0.0
+        cityLabel.alpha = 0.0
 
         UIView.animate(withDuration: 0.15) {
             self.navigationController?.navigationBar.alpha = 1
             self.mapsCollection.alpha = 1
             self.newPostsButton.alpha = 1
+            self.cityLabel.alpha = 1
         }
     }
 

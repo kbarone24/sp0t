@@ -320,6 +320,15 @@
 		8C66E119291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
 		8C66E11A291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
 		8C66E11B291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
+		8C7409742937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
+		8C7409752937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
+		8C7409762937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
+		8C74097829381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */; };
+		8C74097929381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */; };
+		8C74097A29381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */; };
+		8C74097C29381CC2006D5D0E /* CLLocationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */; };
+		8C74097D29381CC2006D5D0E /* CLLocationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */; };
+		8C74097E29381CC2006D5D0E /* CLLocationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */; };
 		8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
 		8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */; };
@@ -670,6 +679,9 @@
 		8C66E110291B3A23006D29F6 /* CampusMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampusMapCell.swift; sourceTree = "<group>"; };
 		8C66E114291C0C81006D29F6 /* EditProfileActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileActions.swift; sourceTree = "<group>"; };
 		8C66E118291C0EE9006D29F6 /* AccountOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountOptions.swift; sourceTree = "<group>"; };
+		8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-LT-85-Extra-Black.ttf"; sourceTree = "<group>"; };
+		8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-CE-75-Black.ttf"; sourceTree = "<group>"; };
+		8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationExtension.swift; sourceTree = "<group>"; };
 		8C8304BC26E98C3700EEBCFC /* UserDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModel.swift; sourceTree = "<group>"; };
 		8C88B0E627B46E3900DB4039 /* PostImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageModel.swift; sourceTree = "<group>"; };
 		8C8DBB712888BE5C00B31BFD /* ChooseSpotController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseSpotController.swift; sourceTree = "<group>"; };
@@ -993,6 +1005,8 @@
 		59056A56231DDF0300C7E753 /* fonts */ = {
 			isa = PBXGroup;
 			children = (
+				8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */,
+				8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */,
 				8CA512A428BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf */,
 				8CF7BC2A29269D3F00EC9074 /* SF-Compact-Text-Black.otf */,
 				413486832859310E0098B27B /* SF-Compact-Text-Bold.otf */,
@@ -1322,6 +1336,7 @@
 				CD239A0B28FFD4EE0099513F /* StringExtension.swift */,
 				CDF8E9482903B5EE00BE929F /* ArrayExtensions.swift */,
 				8CF7BC2E2926E79200EC9074 /* CGFloatExtension.swift */,
+				8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */,
 			);
 			path = FoundationExtensions;
 			sourceTree = "<group>";
@@ -1609,9 +1624,11 @@
 				8C1E48C1289C54CB0093030D /* SpotPostView.xib in Resources */,
 				59A5A3D5253A87EC00789B7E /* GoogleService-Info.plist in Resources */,
 				8CA512A528BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf in Resources */,
+				8C74097829381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */,
 				8CDFEF46284D3B570038A9B8 /* Map.storyboard in Resources */,
 				8C1EAF83284BD08F00474879 /* Notifications.storyboard in Resources */,
 				413486882859310E0098B27B /* SF-Compact-Text-Bold.otf in Resources */,
+				8C7409742937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */,
 				3E18C6D1226E55F3000751E6 /* Profile.storyboard in Resources */,
 				4134868A2859310E0098B27B /* SF-Compact-Text-Semibold.otf in Resources */,
 				8CF7BC2B29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */,
@@ -1623,6 +1640,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C74097929381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */,
 				59004E2722CBB1E6004E06EF /* Main.storyboard in Resources */,
 				59724E40237B728600CCBF35 /* Upload.storyboard in Resources */,
 				8C1E48C8289C54CB0093030D /* FriendPostView.xib in Resources */,
@@ -1633,6 +1651,7 @@
 				59A5A3CF253A873E00789B7E /* GoogleService-Info.plist in Resources */,
 				59A5A3D3253A874600789B7E /* Info.plist in Resources */,
 				8CDFEF47284D3B570038A9B8 /* Map.storyboard in Resources */,
+				8C7409752937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */,
 				8C1E48C2289C54CB0093030D /* SpotPostView.xib in Resources */,
 				8CF7BC2C29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */,
 				8C1EAF84284BD08F00474879 /* Notifications.storyboard in Resources */,
@@ -1644,6 +1663,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C74097A29381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */,
 				59004E2822CBB1E7004E06EF /* Main.storyboard in Resources */,
 				59724E41237B728600CCBF35 /* Upload.storyboard in Resources */,
 				8C1E48C9289C54CB0093030D /* FriendPostView.xib in Resources */,
@@ -1654,6 +1674,7 @@
 				59A5A3D0253A873E00789B7E /* GoogleService-Info.plist in Resources */,
 				59A5A3D4253A874600789B7E /* Info.plist in Resources */,
 				8CDFEF48284D3B570038A9B8 /* Map.storyboard in Resources */,
+				8C7409762937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */,
 				8C1E48C3289C54CB0093030D /* SpotPostView.xib in Resources */,
 				8CF7BC2D29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */,
 				8C1EAF85284BD08F00474879 /* Notifications.storyboard in Resources */,
@@ -1904,6 +1925,7 @@
 				8C8DBB762888BE7400B31BFD /* SelectedImagesFooter.swift in Sources */,
 				593AC545243E56D400C08237 /* LandingPageController.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */,
+				8C74097C29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				CD79D7F829249095005C93F1 /* SpotService.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */,
 				CDF8E985290477C200BE929F /* CustomMapCollectionExtension.swift in Sources */,
@@ -2071,6 +2093,7 @@
 				8C1E4874289C54900093030D /* MapViewDelegate.swift in Sources */,
 				597072FB24291993008A481A /* AVSpotCamera.swift in Sources */,
 				8C12E6672901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
+				8C74097D29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				8CA10A1429119A2300DD50EB /* AVCameraControllerActions.swift in Sources */,
 				8CA10A382912F13B00DD50EB /* PostDetailView.swift in Sources */,
 				8CA10A402912F16700DD50EB /* SpotNameButton.swift in Sources */,
@@ -2196,6 +2219,7 @@
 				8C1E4875289C54900093030D /* MapViewDelegate.swift in Sources */,
 				597072FC24291993008A481A /* AVSpotCamera.swift in Sources */,
 				8C12E6682901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
+				8C74097E29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				8CA10A1529119A2300DD50EB /* AVCameraControllerActions.swift in Sources */,
 				8CA10A392912F13B00DD50EB /* PostDetailView.swift in Sources */,
 				8CA10A412912F16700DD50EB /* SpotNameButton.swift in Sources */,
@@ -2408,7 +2432,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2479,7 +2503,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;

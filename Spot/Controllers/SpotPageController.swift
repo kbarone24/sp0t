@@ -213,7 +213,6 @@ extension SpotPageController {
     }
 
     private func fetchRelatedPosts() {
-        print("fetch related posts")
         let db: Firestore = Firestore.firestore()
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID)
         let conditionedQuery = (mapID == nil || mapID == "") ? baseQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid) : baseQuery.whereField("mapID", isEqualTo: mapID ?? "")
@@ -234,6 +233,7 @@ extension SpotPageController {
                     if self.relatedPosts.contains(where: { $0.id == postInfo.id }) { continue }
                     if postInfo.posterID.isBlocked() { continue }
                     postGroup.enter()
+                    print("friendids contains", postInfo.friendsList.contains(UserDataModel.shared.uid))
                     self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         self.addRelatedPost(postInfo: post)
@@ -245,7 +245,6 @@ extension SpotPageController {
             }
 
             postGroup.notify(queue: .main) {
-                print("notify main 0", self.relatedPosts.count)
                 self.activityIndicator.stopAnimating()
                 self.relatedEndDocument = allDocs.last
                 self.fetchRelatedPostsComplete = docs.count < 12
@@ -292,7 +291,6 @@ extension SpotPageController {
             }
 
             postGroup.notify(queue: .main) {
-                print("notify main 1", self.communityPosts.count)
 
                 self.activityIndicator.stopAnimating()
                 if self.fetching == .refreshDisabled {
@@ -304,6 +302,7 @@ extension SpotPageController {
                 self.communityEndDocument = allDocs.last
                 self.relatedPosts.sort(by: { $0.seconds > $1.seconds })
                 self.communityPosts.sort(by: { $0.seconds > $1.seconds })
+                print("notify main 1", self.communityPosts.count, self.relatedPosts.count)
                 self.collectionView.reloadData()
             }
         }
@@ -320,7 +319,7 @@ extension SpotPageController {
         // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
         if mapID != "" && postInfo.mapID == mapID {
             if !relatedPosts.contains(where: { $0.id == postInfo.id }) { relatedPosts.append(postInfo) }
-        } else if mapID == "" {
+        } else if mapID == "" && (UserDataModel.shared.userInfo.friendIDs.contains(postInfo.posterID) || UserDataModel.shared.uid == postInfo.posterID) {
             if !relatedPosts.contains(where: { $0.id == postInfo.id }) { relatedPosts.append(postInfo) }
         } else {
             if !communityPosts.contains(where: { $0.id == postInfo.id }) { communityPosts.append(postInfo) }

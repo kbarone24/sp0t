@@ -90,7 +90,7 @@ extension MapController {
         DispatchQueue.main.async {
             self.addPostToDictionary(post: post, map: map, newPost: true, index: dictionaryIndex)
             self.reloadMapsCollection(resort: true, newPost: true, upload: true)
-            self.selectItemAt(index: mapIndex)
+            self.selectItemAt(index: mapIndex, upload: true)
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {

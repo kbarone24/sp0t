@@ -72,13 +72,16 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         }
         HapticGenerator.shared.play(.light)
         DispatchQueue.main.async {
-            self.selectItemAt(index: indexPath.row)
+            self.selectItemAt(index: indexPath.row, upload: false)
         }
     }
 
-    func selectItemAt(index: Int) {
-        mapsCollection.selectItem(at: IndexPath(item: index, section: 0), animated: true, scrollPosition: [])
-        DispatchQueue.main.async { self.selectMapAt(index: index) }
+    func selectItemAt(index: Int, upload: Bool) {
+        let scrollPosition: UICollectionView.ScrollPosition = upload ? .left : []
+        DispatchQueue.main.async {
+            self.mapsCollection.selectItem(at: IndexPath(item: index, section: 0), animated: true, scrollPosition: scrollPosition)
+            self.selectMapAt(index: index)
+        }
     }
 
     func selectMapAt(index: Int) {

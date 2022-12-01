@@ -132,6 +132,10 @@ extension CLLocationCoordinate2D {
     func isEqualTo(coordinate: CLLocationCoordinate2D) -> Bool {
         return location.coordinate.latitude == coordinate.latitude && location.coordinate.longitude == coordinate.longitude
     }
+
+    func isEmpty() -> Bool {
+        return latitude == 0.0 && longitude == 0.0
+    }
 }
 ///https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
 
