@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class CreateSpotButton: UIButton {
+final class CreateSpotButton: UIButton {
     private lazy var createLabel: UILabel = {
         let label = UILabel()
         label.text = "Create spot"
@@ -39,6 +39,7 @@ class CreateSpotButton: UIButton {
         }
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

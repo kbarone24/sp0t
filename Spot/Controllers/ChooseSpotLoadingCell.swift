@@ -9,12 +9,8 @@
 import Foundation
 import UIKit
 
-class ChooseSpotLoadingCell: UITableViewCell {
-    lazy var activityIndicator = CustomActivityIndicator()
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+final class ChooseSpotLoadingCell: UITableViewCell {
+    private(set) lazy var activityIndicator = CustomActivityIndicator()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -26,5 +22,10 @@ class ChooseSpotLoadingCell: UITableViewCell {
             $0.top.equalTo(10)
             $0.width.height.equalTo(30)
         }
+    }
+    
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
