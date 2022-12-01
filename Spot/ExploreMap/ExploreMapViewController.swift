@@ -23,7 +23,7 @@ final class ExploreMapViewController: UIViewController {
     }
 
     enum Item: Hashable {
-        case item(customMap: CustomMap, data: [MapPost], isSelected: Bool, buttonType: JoinButton)
+        case item(customMap: CustomMap, data: [MapPost], isSelected: Bool, buttonType: JoinButton, offSetBy: CGPoint)
     }
 
     private lazy var tableView: UITableView = {
@@ -94,10 +94,10 @@ final class ExploreMapViewController: UIViewController {
         let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
 
             switch item {
-            case .item(let customMap, let data, let isSelected, let buttonType):
+            case .item(let customMap, let data, let isSelected, let buttonType, let position):
                 let cell = tableView.dequeueReusableCell(withIdentifier: ExploreMapPreviewCell.reuseID, for: indexPath) as? ExploreMapPreviewCell
                 
-                cell?.configure(customMap: customMap, data: data, isSelected: isSelected, buttonType: buttonType, delegate: self)
+                cell?.configure(customMap: customMap, data: data, isSelected: isSelected, buttonType: buttonType, delegate: self, position: position)
                 return cell
             }
         }
@@ -323,12 +323,12 @@ extension ExploreMapViewController: UITableViewDataSource {
         let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
         
         switch item {
-        case .item(let customMap, let data, let isSelected, let buttonType):
+        case .item(let customMap, let data, let isSelected, let buttonType, let position):
             guard let cell = tableView.dequeueReusableCell(withIdentifier: ExploreMapPreviewCell.reuseID, for: indexPath) as? ExploreMapPreviewCell else {
                 return UITableViewCell()
             }
             
-            cell.configure(customMap: customMap, data: data, isSelected: isSelected, buttonType: buttonType, delegate: self)
+            cell.configure(customMap: customMap, data: data, isSelected: isSelected, buttonType: buttonType, delegate: self, position: position)
             return cell
         }
     }
@@ -352,5 +352,9 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
                 self?.refresh.send(true)
             }
         }
+    }
+    
+    func cacheScrollPosition(map: CustomMap, position: CGPoint) {
+        viewModel.cacheScrollPosition(map: map, position: position)
     }
 }

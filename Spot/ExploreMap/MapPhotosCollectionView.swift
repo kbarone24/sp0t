@@ -46,6 +46,8 @@ final class MapPhotosCollectionView: UICollectionView {
         return datasource
     }()
     
+    private weak var exploreMapDelegate: ExploreMapPreviewCellDelegate?
+    
     override init(frame: CGRect, collectionViewLayout layout: UICollectionViewLayout) {
         super.init(frame: frame, collectionViewLayout: layout)
         allowsSelection = false
@@ -61,10 +63,11 @@ final class MapPhotosCollectionView: UICollectionView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(snapshot: Snapshot) {
+    func configure(snapshot: Snapshot, delegate: ExploreMapPreviewCellDelegate?, position: CGPoint) {
         // datasource.apply(snapshot, animatingDifferences: false)
         self.snapshot = snapshot
-        layoutIfNeeded()
+        self.exploreMapDelegate = delegate
+        contentOffset = position
     }
 }
 
@@ -96,6 +99,14 @@ extension MapPhotosCollectionView: UICollectionViewDataSource {
             }
             cell.configure(text: "\(count) more")
             return cell
+        }
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let section = snapshot.sectionIdentifiers[0]
+        switch section {
+        case .main(let map):
+            exploreMapDelegate?.cacheScrollPosition(map: map, position: scrollView.contentOffset)
         }
     }
 }

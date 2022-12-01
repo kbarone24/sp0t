@@ -467,6 +467,9 @@
 		CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1628FFD6AF0099513F /* UIImageExtension.swift */; };
 		CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */; };
 		CD239A1B28FFD9A40099513F /* UINavigationBarExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */; };
+		CD24994B29389F9B008D1282 /* ChooseSpotLoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24994A29389F9B008D1282 /* ChooseSpotLoadingCell.swift */; };
+		CD24994D29389FF7008D1282 /* CreateSpotButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24994C29389FF7008D1282 /* CreateSpotButton.swift */; };
+		CD24994F2938A083008D1282 /* ChooseSpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24994E2938A083008D1282 /* ChooseSpotCell.swift */; };
 		CD3D8DD12904F9960062DE8D /* ExploreMapPreviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD02904F9960062DE8D /* ExploreMapPreviewCell.swift */; };
 		CD3D8DD32904FA150062DE8D /* ExploreMapTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD22904FA150062DE8D /* ExploreMapTitleView.swift */; };
 		CD3D8DD5290500A50062DE8D /* ChooseMapTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3D8DD4290500A50062DE8D /* ChooseMapTableView.swift */; };
@@ -478,6 +481,7 @@
 		CD79D7F429247C76005C93F1 /* FriendsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F329247C76005C93F1 /* FriendsService.swift */; };
 		CD79D7F62924837B005C93F1 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F52924837B005C93F1 /* UserService.swift */; };
 		CD79D7F829249095005C93F1 /* SpotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F729249095005C93F1 /* SpotService.swift */; };
+		CD79D7FA293896FF005C93F1 /* CGPointExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */; };
 		CDAE20D9290A153900EB1F75 /* MapPostBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDAE20D8290A153900EB1F75 /* MapPostBody.swift */; };
 		CDC59829290A197D00E021AE /* MapPhotosCollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */; };
 		CDF8E93D2903A19D00BE929F /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */; };
@@ -744,6 +748,9 @@
 		CD239A1628FFD6AF0099513F /* UIImageExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExtension.swift; sourceTree = "<group>"; };
 		CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationItemExtension.swift; sourceTree = "<group>"; };
 		CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationBarExtension.swift; sourceTree = "<group>"; };
+		CD24994A29389F9B008D1282 /* ChooseSpotLoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseSpotLoadingCell.swift; sourceTree = "<group>"; };
+		CD24994C29389FF7008D1282 /* CreateSpotButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSpotButton.swift; sourceTree = "<group>"; };
+		CD24994E2938A083008D1282 /* ChooseSpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseSpotCell.swift; sourceTree = "<group>"; };
 		CD3D8DD02904F9960062DE8D /* ExploreMapPreviewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapPreviewCell.swift; sourceTree = "<group>"; };
 		CD3D8DD22904FA150062DE8D /* ExploreMapTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapTitleView.swift; sourceTree = "<group>"; };
 		CD3D8DD4290500A50062DE8D /* ChooseMapTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseMapTableView.swift; sourceTree = "<group>"; };
@@ -755,6 +762,7 @@
 		CD79D7F329247C76005C93F1 /* FriendsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsService.swift; sourceTree = "<group>"; };
 		CD79D7F52924837B005C93F1 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		CD79D7F729249095005C93F1 /* SpotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotService.swift; sourceTree = "<group>"; };
+		CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGPointExtension.swift; sourceTree = "<group>"; };
 		CDAE20D8290A153900EB1F75 /* MapPostBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostBody.swift; sourceTree = "<group>"; };
 		CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPhotosCollectionView.swift; sourceTree = "<group>"; };
 		CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
@@ -1337,6 +1345,7 @@
 				CDF8E9482903B5EE00BE929F /* ArrayExtensions.swift */,
 				8CF7BC2E2926E79200EC9074 /* CGFloatExtension.swift */,
 				8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */,
+				CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */,
 			);
 			path = FoundationExtensions;
 			sourceTree = "<group>";
@@ -1808,6 +1817,7 @@
 				8C4FDFC328DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
 				8CA10A4C2912FC0300DD50EB /* NextButton.swift in Sources */,
 				59F6ABAF234EA73500E18AAF /* Contact.swift in Sources */,
+				CD24994D29389FF7008D1282 /* CreateSpotButton.swift in Sources */,
 				5916A8B724A5542800118E83 /* ResultSpot.swift in Sources */,
 				CDF8E95D2903C86200BE929F /* MapTitleView.swift in Sources */,
 				599371B0234E468500204F59 /* SearchContactsController.swift in Sources */,
@@ -1844,6 +1854,7 @@
 				CD3D8DDD29050ACE0062DE8D /* MapHomeCell.swift in Sources */,
 				8C12E685290AD91E00FA5BF0 /* SearchContactsButtonCell.swift in Sources */,
 				8CA10A272912F02300DD50EB /* ImagePreviewDelegateExtension.swift in Sources */,
+				CD79D7FA293896FF005C93F1 /* CGPointExtension.swift in Sources */,
 				CDF8E983290477C200BE929F /* CustomMapHeaderCell.swift in Sources */,
 				8CA10A232911B20700DD50EB /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */,
@@ -1965,6 +1976,7 @@
 				8C1E4897289C54CB0093030D /* SpotNameView.swift in Sources */,
 				CDF8E975290464F600BE929F /* AVCaptureDeviceExtension.swift in Sources */,
 				416AE77B2896F1280037B8AF /* ProfileViewController.swift in Sources */,
+				CD24994B29389F9B008D1282 /* ChooseSpotLoadingCell.swift in Sources */,
 				59FCF5B824734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				8C3420B0261273140017CB2F /* SendInvitesController.swift in Sources */,
 				8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */,
@@ -1990,6 +2002,7 @@
 				CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */,
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C1E489A289C54CB0093030D /* FriendPostView.swift in Sources */,
+				CD24994F2938A083008D1282 /* ChooseSpotCell.swift in Sources */,
 				CDF8E93F2903A21300BE929F /* MapService.swift in Sources */,
 				CD79D7F62924837B005C93F1 /* UserService.swift in Sources */,
 				5F119A1C2869F44900D75CE8 /* ActivityCell.swift in Sources */,

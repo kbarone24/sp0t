@@ -9,12 +9,13 @@
 import Foundation
 import UIKit
 
-class ChooseSpotCell: UITableViewCell {
+final class ChooseSpotCell: UITableViewCell {
     private lazy var topLine: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         return view
     }()
+    
     private lazy var distanceLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .right
@@ -23,6 +24,7 @@ class ChooseSpotCell: UITableViewCell {
         label.sizeToFit()
         return label
     }()
+    
     private lazy var spotName: UILabel = {
         let label = UILabel()
         label.lineBreakMode = .byTruncatingTail
@@ -30,6 +32,7 @@ class ChooseSpotCell: UITableViewCell {
         label.textColor = .black
         return label
     }()
+    
     private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
@@ -37,11 +40,13 @@ class ChooseSpotCell: UITableViewCell {
         label.lineBreakMode = .byTruncatingTail
         return label
     }()
+    
     private lazy var separatorView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor(red: 0.839, green: 0.839, blue: 0.839, alpha: 1)
         return view
     }()
+    
     private var postsLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
@@ -56,6 +61,7 @@ class ChooseSpotCell: UITableViewCell {
         setUpView()
     }
     
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

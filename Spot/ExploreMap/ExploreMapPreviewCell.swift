@@ -11,6 +11,7 @@ import UIKit
 protocol ExploreMapPreviewCellDelegate: AnyObject {
     func cellTapped(data: CustomMap)
     func joinMap(map: CustomMap)
+    func cacheScrollPosition(map: CustomMap, position: CGPoint)
 }
 
 final class ExploreMapPreviewCell: UITableViewCell {
@@ -158,7 +159,8 @@ final class ExploreMapPreviewCell: UITableViewCell {
         data: [MapPost],
         isSelected: Bool,
         buttonType: JoinButton,
-        delegate: ExploreMapPreviewCellDelegate?
+        delegate: ExploreMapPreviewCellDelegate?,
+        position: CGPoint
     ) {
         self.delegate = delegate
         
@@ -245,7 +247,7 @@ final class ExploreMapPreviewCell: UITableViewCell {
         //    snapshot.appendItems([.extra(remainder)], toSection: .main(customMap))
         // }
         
-        photosCollectionView.configure(snapshot: snapshot)
+        photosCollectionView.configure(snapshot: snapshot, delegate: delegate, position: position)
 
         layoutIfNeeded()
     }

@@ -18,12 +18,6 @@ import Photos
 import UIKit
 
 extension UIViewController {
-    func isFriends(id: String) -> Bool {
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-        if id == uid || (UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == id }) && !(UserDataModel.shared.adminIDs.contains(id))) { return true }
-        return false
-    }
-
     func hasPOILevelAccess(creatorID: String, privacyLevel: String, inviteList: [String]) -> Bool {
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 

@@ -52,6 +52,7 @@ final class ExploreMapViewModel {
     private var selectedMaps: [CustomMap] = []
     private var cachedMaps: [CustomMap: [MapPost]] = [:]
     private var cachedTitleData = TitleData(title: "", description: "")
+    private var cachedOffsets: [AnyHashable: CGPoint] = [:]
     
     init(serviceContainer: ServiceContainer, from: OpenedFrom) {
         guard let mapService = try? serviceContainer.service(for: \.mapsService) else {
@@ -97,7 +98,16 @@ final class ExploreMapViewModel {
                     mainCampusMaps.forEach { map in
                         if let mapData = customMapData[map] {
                             let isSelected = refreshed || self.selectedMaps.contains(map)
-                            snapshot.appendItems([.item(customMap: map, data: mapData, isSelected: isSelected, buttonType: buttonType)], toSection: .body(title: title))
+                            snapshot.appendItems(
+                                [.item(
+                                    customMap: map,
+                                    data: mapData,
+                                    isSelected: isSelected,
+                                    buttonType: buttonType,
+                                    offSetBy: self.cachedOffsets[map] ?? .zero
+                                )
+                                ], toSection: .body(title: title)
+                            )
                         }
                         
                         if refreshed {
@@ -117,6 +127,7 @@ final class ExploreMapViewModel {
                     }
                     .forEach { data in
                         let isSelected: Bool
+                        let offsSet: CGPoint = self.cachedOffsets[data.key] ?? .zero
                         
                         switch self.openedFrom {
                         case .onBoarding:
@@ -126,7 +137,16 @@ final class ExploreMapViewModel {
                             isSelected = data.key.memberIDs.contains(UserDataModel.shared.uid) || self.selectedMaps.contains(data.key)
                         }
                         
-                        snapshot.appendItems([.item(customMap: data.key, data: data.value, isSelected: isSelected, buttonType: buttonType)], toSection: .body(title: title))
+                        snapshot.appendItems(
+                            [.item(
+                                customMap: data.key,
+                                data: data.value,
+                                isSelected: isSelected,
+                                buttonType: buttonType,
+                                offSetBy: offsSet
+                            )
+                            ], toSection: .body(title: title)
+                        )
                     }
                 
                 return snapshot
@@ -249,6 +269,10 @@ final class ExploreMapViewModel {
                 Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": 1])
             }
         }
+    }
+    
+    func cacheScrollPosition(map: CustomMap, position: CGPoint) {
+        cachedOffsets[map] = position
     }
     
     private func fetchMaps(forced: Bool) -> AnyPublisher<(TitleData, [CustomMap: [MapPost]], Bool), Never> {
