@@ -47,8 +47,8 @@ class SpotPostView: UIView {
             let attributes: [NSAttributedString.Key: Any] = [
                 NSAttributedString.Key.strokeColor: UIColor.white,
                 NSAttributedString.Key.foregroundColor: UIColor.black,
-                NSAttributedString.Key.strokeWidth: -3,
-                NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 13.5) as Any
+                NSAttributedString.Key.strokeWidth: -3.8,
+                NSAttributedString.Key.font: UIFont(name: "UniversLT-ExtraBlack", size: 13) as Any
             ]
             spotLabel.attributedText = NSAttributedString(string: spotName, attributes: attributes)
             spotLabel.sizeToFit()
@@ -83,23 +83,23 @@ class SpotPostView: UIView {
 
     func resizeView(seen: Bool) {
         if seen {
-            backgroundImage.frame = CGRect(x: backgroundImage.frame.minX, y: backgroundImage.frame.minY, width: backgroundImage.frame.width - 8, height: backgroundImage.frame.height - 8)
-            postImage.frame = CGRect(x: postImage.frame.minX, y: postImage.frame.minY, width: postImage.frame.width - 8, height: postImage.frame.height - 8)
+            backgroundImage.frame = CGRect(x: backgroundImage.frame.minX, y: backgroundImage.frame.minY, width: backgroundImage.frame.width - 12, height: backgroundImage.frame.height - 12)
+            postImage.frame = CGRect(x: postImage.frame.minX, y: postImage.frame.minY, width: postImage.frame.width - 12, height: postImage.frame.height - 12)
         }
         let iconWidth: CGFloat = spotIcon.isHidden || spotIcon.image == UIImage() ? 0 : 17
-        let iconWithSpacing = iconWidth == 0 ? 0 : iconWidth + 4
+        let iconWithSpacing = iconWidth == 0 ? 0 : iconWidth + 3.5
         let viewWidth = max(spotLabel.bounds.width + iconWithSpacing, backgroundImage.bounds.width, (usernameLabel.bounds.width + 24.5) * 2)
         frame = CGRect(x: 0, y: 0, width: viewWidth, height: bounds.height)
 
-        backgroundImage.frame = CGRect(x: (bounds.width - backgroundImage.bounds.width) / 2, y: backgroundImage.frame.minY, width: backgroundImage.bounds.width, height: backgroundImage.bounds.height)
-        postImage.frame = CGRect(x: (bounds.width - postImage.bounds.width) / 2, y: postImage.frame.minY, width: postImage.bounds.width, height: postImage.bounds.height)
+        backgroundImage.frame = CGRect(x: (bounds.width - backgroundImage.bounds.width) / 2, y: 0, width: backgroundImage.bounds.width, height: backgroundImage.bounds.height)
+        postImage.frame = CGRect(x: (bounds.width - postImage.bounds.width) / 2, y: 1, width: postImage.bounds.width, height: postImage.bounds.height)
         imageMask.frame = postImage.frame
         replayIcon.frame = CGRect(x: postImage.frame.midX - 27.7 / 2, y: postImage.frame.midY - 31 / 2, width: 27.7, height: 31)
-        postCount.frame = CGRect(x: backgroundImage.frame.minX + 49, y: postCount.frame.minY, width: postCount.frame.width, height: postCount.frame.height)
+        postCount.frame = CGRect(x: backgroundImage.frame.minX + 49, y: 0, width: postCount.frame.width, height: postCount.frame.height)
 
         let spotY = backgroundImage.frame.maxY + 4
         spotIcon.frame = CGRect(x: (bounds.width - spotLabel.bounds.width - iconWithSpacing) / 2, y: spotY, width: iconWidth, height: iconWidth)
-        spotLabel.frame = CGRect(x: spotIcon.frame.maxX + 4, y: spotY + 2, width: spotLabel.bounds.width, height: spotLabel.bounds.height)
+        spotLabel.frame = CGRect(x: spotIcon.frame.minX + iconWithSpacing, y: spotY + 1.5, width: spotLabel.bounds.width, height: spotLabel.bounds.height)
         avatarView.frame = CGRect(x: (backgroundImage.frame.midX + 32) - avatarView.frame.width, y: backgroundImage.frame.maxY - 34, width: avatarView.frame.width, height: avatarView.frame.height)
         usernameLabel.repositionSubviews(minX: avatarView.frame.maxX - 12, minY: avatarView.frame.minY + 9)
     }

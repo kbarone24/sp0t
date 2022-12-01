@@ -10,7 +10,6 @@ import Firebase
 import UIKit
 
 extension UIView {
-
     func asImage() -> UIImage {
         let renderer = UIGraphicsImageRenderer(bounds: bounds)
         return renderer.image { rendererContext in
@@ -19,8 +18,15 @@ extension UIView {
     }
     
     func getStatusHeight() -> CGFloat {
-        let window = UIApplication.shared.windows.filter { $0.isKeyWindow }.first
+        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
         return statusHeight
+    }
+
+    func addShadow(shadowColor: CGColor, opacity: Float, radius: CGFloat, offset: CGSize) {
+        layer.shadowColor = shadowColor
+        layer.shadowOpacity = opacity
+        layer.shadowRadius = radius
+        layer.shadowOffset = offset
     }
 }

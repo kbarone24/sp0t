@@ -37,9 +37,8 @@ extension MapController {
             UserDataModel.shared.userInfo.sortMaps()
             if let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) { selectedItemIndex = index + 1 } else { selectedItemIndex = 0 }
         }
-        let scrollPosition: UICollectionView.ScrollPosition = upload ? .left : []
         mapsCollection.reloadData()
-        mapsCollection.selectItem(at: IndexPath(item: selectedItemIndex, section: 0), animated: false, scrollPosition: scrollPosition)
+        mapsCollection.selectItem(at: IndexPath(item: selectedItemIndex, section: 0), animated: false, scrollPosition: [])
         if resort && !newPost { centerMapOnMapPosts(animated: true) }
         setNewPostsButtonCount()
     }
@@ -381,6 +380,7 @@ extension MapController {
             guard let self = self else { return }
             guard let snap = snap else { return }
             if snap.metadata.isFromCache { return }
+            var appendedMap = false
             for doc in snap.documents {
                 do {
                     let mapIn = try doc.data(as: CustomMap.self)
@@ -392,12 +392,19 @@ extension MapController {
                     }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
-
+                    appendedMap = true
                 } catch {
                     continue
                 }
             }
-            if self.mapsLoaded { return }
+            if self.mapsLoaded {
+                if appendedMap {
+                    print("appended map")
+                    self.reloadMapsCollection(resort: true, newPost: false, upload: false)
+                    self.checkForCampusMap()
+                }
+                return
+            }
             self.mapsLoaded = true
             NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
             // fetch group aleady entered before getMaps call
@@ -405,7 +412,7 @@ extension MapController {
             self.getPosts()
         })
     }
-    
+
     func updateMap(map: CustomMap, index: Int) {
         /// only reload if display content changes
         let oldMap = UserDataModel.shared.userInfo.mapsList[index]
@@ -417,6 +424,15 @@ extension MapController {
         UserDataModel.shared.userInfo.mapsList[index] = newMap
         if reload {
             DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false, upload: false) }
+        }
+    }
+
+    func checkForCampusMap() {
+        print("opened explore")
+        if openedExploreMaps, let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.mainCampusMap ?? false }) {
+            print("select at")
+            openedExploreMaps = false
+            selectMapAt(index: index + 1)
         }
     }
 

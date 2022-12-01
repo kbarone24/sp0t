@@ -19,7 +19,6 @@ class SpotNameAnnotationView: MKAnnotationView {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
         collisionMode = .rectangle
         clusteringIdentifier = nil
-        centerOffset = CGPoint(x: 0, y: 10)
         displayPriority = .defaultHigh
         alpha = 1.0
     }

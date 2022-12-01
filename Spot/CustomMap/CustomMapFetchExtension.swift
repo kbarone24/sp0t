@@ -99,53 +99,6 @@ extension CustomMapController {
         }
     }
 
-    func getNearbyPosts() {
-        let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("mapLocations"))
-        guard let center = mapController?.mapView.centerCoordinate.location else { return }
-        /// get radius in KM
-        let radius = mapController?.mapView.currentRadius() ?? 0 / 1_000
-
-        if circleQuery != nil {
-            circleQuery?.center = center
-            circleQuery?.radius = radius
-            return
-        }
-
-        circleQuery = geoFirestore.query(withCenter: center, radius: radius)
-        circleQuery?.searchLimit = 30
-        _ = self.circleQuery?.observe(.documentEntered, with: loadPostFromDB)
-
-        geoFetchGroup.notify(queue: .main) {
-            self.postsList.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
-            self.collectionView.reloadData()
-            if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }
-            if !self.centeredMap { self.setInitialRegion() }
-        }
-    }
-
-    func loadPostFromDB(key: String?, location: CLLocation?) {
-        guard let key = key else { return }
-        if !(mapData?.postIDs.contains(key) ?? true) { return }
-        if postsList.contains(where: { $0.id == key }) { return }
-        
-        Task {
-            guard let post = try? await mapPostService?.getPost(postID: key),
-                  let id = post.id, !id.isEmpty,
-                  !self.postsList.contains(where: { $0.id == id })
-            else {
-                return
-            }
-            
-            DispatchQueue.main.async {
-                self.postsList.append(post)
-                self.mapData?.postsDictionary.updateValue(post, forKey: id)
-                if let groupData = self.mapData?.updateGroup(post: post) {
-                    self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup)
-                }
-            }
-        }
-    }
-
     func hasMapPostAccess(post: MapPost) -> Bool {
         if UserDataModel.shared.deletedPostIDs.contains(post.id ?? "_") || post.posterID.isBlocked() { return false }
         if mapType == .friendsMap || mapType == .myMap {
@@ -161,10 +114,10 @@ extension CustomMapController {
     func addAnnotation(group: MapPostGroup?, newGroup: Bool) {
         if let group = group {
             if newGroup, let mapData {
-                /// add new group
+                // add new group
                 mapController?.mapView.addSpotAnnotation(group: group, map: mapData)
             } else if let anno = mapController?.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: group.coordinate) }) {
-                /// update existing group
+                // update existing group
                     mapController?.mapView.removeAnnotation(anno)
                 if let mapData = mapData { mapController?.mapView.addSpotAnnotation(group: group, map: mapData) }
             }

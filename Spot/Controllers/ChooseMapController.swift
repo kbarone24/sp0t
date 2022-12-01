@@ -25,6 +25,7 @@ final class ChooseMapController: UIViewController {
         button.addTarget(self, action: #selector(postTap), for: .touchUpInside)
         return button
     }()
+    private lazy var friendsMapButton = FriendsMapButton()
     private lazy var tableView = ChooseMapTableView()
     private lazy var bottomMask = UIView()
     private lazy var progressBar = ProgressBar()
@@ -83,7 +84,16 @@ final class ChooseMapController: UIViewController {
             $0.leading.trailing.equalToSuperview().inset(49)
             $0.height.equalTo(58)
         }
-        enablePostButton()
+
+        friendsMapButton = FriendsMapButton {
+            $0.addTarget(self, action: #selector(friendsMapTap), for: .touchUpInside)
+            view.addSubview($0)
+        }
+        friendsMapButton.snp.makeConstraints {
+            $0.top.equalTo(45)
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(62)
+        }
     }
 
     func addTableView() {
@@ -91,7 +101,8 @@ final class ChooseMapController: UIViewController {
         tableView.delegate = self
         view.addSubview(tableView)
         tableView.snp.makeConstraints {
-            $0.top.leading.trailing.equalToSuperview()
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(friendsMapButton.snp.bottom).offset(38)
             $0.bottom.equalTo(postButton.snp.top)
         }
     }
@@ -119,7 +130,18 @@ final class ChooseMapController: UIViewController {
     }
 
     func enablePostButton() {
-        postButton.isEnabled = UploadPostModel.shared.postObject?.mapID != ""
+        postButton.isEnabled = friendsMapButton.buttonSelected || UploadPostModel.shared.postObject?.mapID != ""
+    }
+
+    @objc func friendsMapTap() {
+        toggleFriendsMap()
+        HapticGenerator.shared.play(.light)
+    }
+
+    func toggleFriendsMap() {
+        friendsMapButton.buttonSelected.toggle()
+        UploadPostModel.shared.postObject?.hideFromFeed = !friendsMapButton.buttonSelected
+        enablePostButton()
     }
 
     func addBottomMask() {
@@ -232,6 +254,7 @@ extension ChooseMapController: NewMapDelegate {
         Mixpanel.mainInstance().track(event: "ChooseMapSelectMap")
         UploadPostModel.shared.setMapValues(map: map)
         /// if private map, make sure mymapbutton is deselected, if public, make sure selected
+        if map.secret && friendsMapButton.buttonSelected { toggleFriendsMap() }
         DispatchQueue.main.async { self.tableView.reloadData() }
         enablePostButton()
     }

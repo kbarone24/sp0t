@@ -13,21 +13,25 @@ import MapKit
 import Geofirestore
 
 extension MapController {
-    func getVisibleSpots() {
-        mapView.shouldRunCircleQuery = false
+    func getVisibleSpots(searchLimit: Int? = 50) {
+        circleQueryEnteredCount = 0 // total spots entered the query
+        circleQueryAccessCount = 0 // spots shown on users map from this search
+        circleQueryNoAccessCount = 0 // spots not shown on users map from this search
+        circleQueryLimit = searchLimit ?? 50
+        // cancel previous queries if location updates
+        circleQuery?.removeAllObservers()
+        mapView.enableCircleQuery = false
+
         let center = mapView.centerCoordinate.location
-        let radius = min(mapView.currentRadius() / 1_000, 100)
+        let radius = min(mapView.currentRadius() / 2_000, 2_500)
         circleQuery = geoFirestore.query(withCenter: center, radius: radius)
-        circleQuery?.searchLimit = 100
+        circleQuery?.searchLimit = searchLimit
 
-        print("get visible spots")
-        DispatchQueue.global(qos: .background).async {
-            _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
-
-            _ = self.circleQuery?.observeReady { [weak self] in
-                guard let self = self else { return }
-                self.mapView.shouldRunCircleQuery = self.selectedItemIndex == 0
-            }
+        _ = self.circleQuery?.observe(.documentEntered, with: self.loadSpotFromDB)
+        _ = self.circleQuery?.observeReady { [weak self] in
+            guard let self = self else { return }
+            self.mapView.enableCircleQuery = true
+            self.circleQueryEscape()
         }
     }
 
@@ -35,17 +39,40 @@ extension MapController {
         circleQuery?.removeAllObservers()
     }
 
+    func circleQueryEscape() {
+        // re-run query if < 5 spots and limit is below max
+        if circleQueryEnteredCount == circleQueryAccessCount + circleQueryNoAccessCount {
+            if circleQueryAccessCount < 5 &&
+                circleQueryEnteredCount >= circleQueryLimit &&
+                circleQueryLimit < 800 &&
+                shouldRunCircleQuery() {
+                DispatchQueue.global(qos: .background).async { self.getVisibleSpots(searchLimit: self.circleQueryLimit * 2) }
+            } else {
+                self.mapView.enableCircleQuery = true
+            }
+        }
+    }
+
+    func shouldRunCircleQuery() -> Bool {
+        return mapView.enableCircleQuery && selectedItemIndex == 0 && sheetView == nil
+    }
+
     func loadSpotFromDB(key: String?, location: CLLocation?) {
         Task {
             guard let key else { return }
-            if self.postGroup.contains(where: { $0.id == key }) { return }
-            guard let spotInfo = try? await self.spotService?.getSpot(spotID: key) else { return }
+            self.circleQueryEnteredCount += 1
+            if self.postGroup.contains(where: { $0.id == key }) { self.circleQueryAccessCount += 1; return }
+            guard let spotInfo = try? await self.spotService?.getSpot(spotID: key) else { self.circleQueryNoAccessCount += 1; return }
             if self.showSpotOnMap(spot: spotInfo) {
+                self.circleQueryAccessCount += 1
                 let groupInfo = self.updateFriendsPostGroup(post: nil, spot: spotInfo)
                 if groupInfo.newGroup && self.selectedItemIndex == 0 {
                     self.mapView.addPostAnnotation(group: groupInfo.group, newGroup: true, map: self.getFriendsMapObject())
                 }
+            } else {
+                self.circleQueryNoAccessCount += 1
             }
+            self.circleQueryEscape()
         }
     }
 

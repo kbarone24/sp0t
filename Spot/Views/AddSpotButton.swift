@@ -16,7 +16,7 @@ class AddButton: UIButton {
         layer.shadowOpacity = 1
         layer.shadowRadius = 8
         layer.shadowOffset = CGSize(width: 0, height: 0.5)
-        setImage(UIImage(named: "AddToSpotButton"), for: .normal)
+        setImage(UIImage(named: "CreateButton"), for: .normal)
     }
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
