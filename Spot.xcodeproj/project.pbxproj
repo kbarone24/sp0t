@@ -455,9 +455,6 @@
 		CD239A1728FFD6AF0099513F /* UIImageExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1628FFD6AF0099513F /* UIImageExtension.swift */; };
 		CD239A1928FFD7300099513F /* UINavigationItemExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */; };
 		CD239A1B28FFD9A40099513F /* UINavigationBarExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */; };
-		CD24994B29389F9B008D1282 /* ChooseSpotLoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24994A29389F9B008D1282 /* ChooseSpotLoadingCell.swift */; };
-		CD24994D29389FF7008D1282 /* CreateSpotButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24994C29389FF7008D1282 /* CreateSpotButton.swift */; };
-		CD24994F2938A083008D1282 /* ChooseSpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24994E2938A083008D1282 /* ChooseSpotCell.swift */; };
 		CD24996E2938A4CD008D1282 /* ChooseSpotFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24996A2938A4CC008D1282 /* ChooseSpotFetchExtension.swift */; };
 		CD24996F2938A4CD008D1282 /* ChooseSpotLoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24996B2938A4CD008D1282 /* ChooseSpotLoadingCell.swift */; };
 		CD2499702938A4CD008D1282 /* ChooseSpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24996C2938A4CD008D1282 /* ChooseSpotCell.swift */; };
@@ -736,9 +733,6 @@
 		CD239A1628FFD6AF0099513F /* UIImageExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageExtension.swift; sourceTree = "<group>"; };
 		CD239A1828FFD7300099513F /* UINavigationItemExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationItemExtension.swift; sourceTree = "<group>"; };
 		CD239A1A28FFD9A40099513F /* UINavigationBarExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UINavigationBarExtension.swift; sourceTree = "<group>"; };
-		CD24994A29389F9B008D1282 /* ChooseSpotLoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseSpotLoadingCell.swift; sourceTree = "<group>"; };
-		CD24994C29389FF7008D1282 /* CreateSpotButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSpotButton.swift; sourceTree = "<group>"; };
-		CD24994E2938A083008D1282 /* ChooseSpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseSpotCell.swift; sourceTree = "<group>"; };
 		CD24996A2938A4CC008D1282 /* ChooseSpotFetchExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseSpotFetchExtension.swift; sourceTree = "<group>"; };
 		CD24996B2938A4CD008D1282 /* ChooseSpotLoadingCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseSpotLoadingCell.swift; sourceTree = "<group>"; };
 		CD24996C2938A4CD008D1282 /* ChooseSpotCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseSpotCell.swift; sourceTree = "<group>"; };

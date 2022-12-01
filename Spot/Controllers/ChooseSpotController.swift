@@ -30,7 +30,7 @@ final class ChooseSpotController: UIViewController {
         return searchBar
     }()
     
-    private lazy var tableView: UITableView = {
+    private(set) lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         tableView.backgroundColor = .white
@@ -40,6 +40,7 @@ final class ChooseSpotController: UIViewController {
         tableView.register(ChooseSpotLoadingCell.self, forCellReuseIdentifier: "ChooseSpotLoading")
         return tableView
     }()
+    
     private lazy var createSpotButton = CreateSpotButton()
     
     lazy var spotObjects: [MapSpot] = []
