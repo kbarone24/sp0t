@@ -233,6 +233,7 @@ extension SpotPageController {
                     if self.relatedPosts.contains(where: { $0.id == postInfo.id }) { continue }
                     if postInfo.posterID.isBlocked() { continue }
                     postGroup.enter()
+                    print("friendids contains", postInfo.friendsList.contains(UserDataModel.shared.uid))
                     self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
                         self.addRelatedPost(postInfo: post)
@@ -290,6 +291,7 @@ extension SpotPageController {
             }
 
             postGroup.notify(queue: .main) {
+
                 self.activityIndicator.stopAnimating()
                 if self.fetching == .refreshDisabled {
                     self.fetchCommunityPostsComplete = true
@@ -300,6 +302,7 @@ extension SpotPageController {
                 self.communityEndDocument = allDocs.last
                 self.relatedPosts.sort(by: { $0.seconds > $1.seconds })
                 self.communityPosts.sort(by: { $0.seconds > $1.seconds })
+                print("notify main 1", self.communityPosts.count, self.relatedPosts.count)
                 self.collectionView.reloadData()
             }
         }
@@ -316,7 +319,7 @@ extension SpotPageController {
         // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
         if mapID != "" && postInfo.mapID == mapID {
             if !relatedPosts.contains(where: { $0.id == postInfo.id }) { relatedPosts.append(postInfo) }
-        } else if mapID == "" {
+        } else if mapID == "" && (UserDataModel.shared.userInfo.friendIDs.contains(postInfo.posterID) || UserDataModel.shared.uid == postInfo.posterID) {
             if !relatedPosts.contains(where: { $0.id == postInfo.id }) { relatedPosts.append(postInfo) }
         } else {
             if !communityPosts.contains(where: { $0.id == postInfo.id }) { communityPosts.append(postInfo) }
@@ -384,7 +387,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             if indexPath == IndexPath(row: 0, section: 1) {
                 let frontPadding = "    "
                 let bottomPadding = "   "
-                if let mapName {
+                if let mapName, mapName != "" {
                     mapPostLabel.text = frontPadding + mapName + bottomPadding
                 } else {
                     mapPostLabel.text = frontPadding + "Friends posts" + bottomPadding

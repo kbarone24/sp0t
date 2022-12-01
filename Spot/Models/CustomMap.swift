@@ -36,6 +36,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var spotIDs: [String]
     var spotNames: [String] = []
     var spotLocations: [[String: Double]] = []
+    var spotPOICategories: [String] = []
 
     var selected = false
     var memberProfiles: [UserProfile]? = []
@@ -86,6 +87,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case spotIDs
         case spotNames
         case spotLocations
+        case spotPOICategories
     }
 
     mutating func updateSeen(postID: String) {
@@ -121,7 +123,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
             )
             
             if !postGroup.contains(where: { $0.id == spotIDs[i] }) {
-                let mapPostGroup = MapPostGroup(
+                var mapPostGroup = MapPostGroup(
                     id: spotIDs[i],
                     coordinate: coordinate,
                     spotName: spotNames[safe: i] ?? "",
@@ -130,6 +132,9 @@ struct CustomMap: Identifiable, Codable, Hashable {
                     postTimestamps: postSpotTimestamps,
                     numberOfPosters: postersAtSpot.count
                 )
+                if let poiCategory = POICategory(rawValue: spotPOICategories[safe: i] ?? "") {
+                    mapPostGroup.poiCategory = poiCategory
+                }
                 postGroup.append(mapPostGroup)
             }
         }
@@ -236,6 +241,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
             spotIDs.append(spot.id ?? "")
             spotNames.append(spot.spotName)
             spotLocations.append(["lat": spot.spotLat, "long": spot.spotLong])
+            spotPOICategories.append(spot.poiCategory ?? "")
         }
     }
 
@@ -265,14 +271,15 @@ struct CustomMap: Identifiable, Codable, Hashable {
             postIDs.remove(at: i)
             postImageURLs.remove(at: i)
             postLocations.remove(at: i)
-            postTimestamps.remove(at: i)
             postSpotIDs.remove(at: i)
+            postTimestamps.remove(at: i)
         }
         if spotID != "" {
             if let i = spotIDs.firstIndex(where: { $0 == spotID }) {
                 spotIDs.remove(at: i)
                 spotNames.remove(at: i)
                 spotLocations.remove(at: i)
+                spotPOICategories.remove(at: i)
             }
             postGroup.removeAll(where: { $0.id == spotID })
         }

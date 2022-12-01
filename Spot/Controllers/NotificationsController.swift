@@ -84,9 +84,8 @@ class NotificationsController: UIViewController, UITableViewDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(rawValue: "DeletePost"), object: nil)
         setupView()
-        askForNotifications()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
@@ -142,12 +141,7 @@ class NotificationsController: UIViewController, UITableViewDelegate {
             $0.edges.equalToSuperview()
         }
     }
-    
-    func askForNotifications() {
-        let pushManager = PushNotificationManager(userID: uid)
-        pushManager.registerForPushNotifications()
-    }
-    
+
     @objc func notifyFriendsLoad(_ notification: NSNotification) {
         guard !notifications.isEmpty else {
             return

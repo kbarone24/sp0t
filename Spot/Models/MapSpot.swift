@@ -46,6 +46,10 @@ struct MapSpot: Identifiable, Codable, Hashable {
     var spotImage: UIImage = UIImage()
     var spotScore: Double = 0
 
+    var location: CLLocation {
+        return CLLocation(latitude: spotLat, longitude: spotLong)
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case city
@@ -133,8 +137,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
         var scoreMultiplier = postIDs.isEmpty ? 10.0 : 50.0 /// 5x boost to any spot that has posts at it
         let distance = max(CLLocation(latitude: spotLat, longitude: spotLong).distance(from: location), 1)
 
-        if postIDs.count > 0 { for i in 0 ... postIDs.count - 1 {
-
+        for i in 0..<postIDs.count {
             var postScore: Double = 10
 
             /// increment for each friend post
@@ -155,7 +158,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
 
             postScore *= factor
             scoreMultiplier += postScore
-        } }
+        }
 
         let finalScore = scoreMultiplier / pow(distance, 1.7)
         return finalScore

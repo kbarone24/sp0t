@@ -19,25 +19,6 @@ extension MapController {
         }
     }
     
-    @objc func notifyUserLoad(_ notification: NSNotification) {
-        if userLoaded { return }
-        userLoaded = true
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.homeFetchGroup.enter()
-            self.getMaps()
-
-            // home fetch group once here and once for maps posts
-            self.homeFetchGroup.notify(queue: .main) { [weak self] in
-                guard let self = self else { return }
-                self.postsFetched = true
-                self.newPostsButton.isHidden = self.sheetView != nil
-                self.setNewPostsButtonCount()
-                self.loadAdditionalOnboarding()
-                self.reloadMapsCollection(resort: true, newPost: false, upload: false)
-            }
-        }
-    }
-
     func leaveHomeFetchGroup(newPost: Bool) {
         if homeFetchLeaveCount < 2 {
             homeFetchLeaveCount += 1
@@ -56,9 +37,8 @@ extension MapController {
             UserDataModel.shared.userInfo.sortMaps()
             if let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) { selectedItemIndex = index + 1 } else { selectedItemIndex = 0 }
         }
-        let scrollPosition: UICollectionView.ScrollPosition = upload ? .left : []
         mapsCollection.reloadData()
-        mapsCollection.selectItem(at: IndexPath(item: selectedItemIndex, section: 0), animated: false, scrollPosition: scrollPosition)
+        mapsCollection.selectItem(at: IndexPath(item: selectedItemIndex, section: 0), animated: false, scrollPosition: [])
         if resort && !newPost { centerMapOnMapPosts(animated: true) }
         setNewPostsButtonCount()
     }
@@ -317,7 +297,7 @@ extension MapController {
         if postsContains(postID: post.id ?? "", mapID: map?.id ?? "", newPost: newPost) { return }
         if map == nil || map?.id ?? "" == "" || (newPost && !(post.hideFromFeed ?? false) && UserDataModel.shared.userInfo.friendsContains(id: post.posterID)) {
             friendsPostsDictionary.updateValue(post, forKey: post.id ?? "")
-            let groupData = updateFriendsPostGroup(post: post)
+            let groupData = updateFriendsPostGroup(post: post, spot: nil)
             if index == 0 {
                 let map = getFriendsMapObject()
                 mapView.addPostAnnotation(group: groupData.group, newGroup: groupData.newGroup, map: map)
@@ -327,7 +307,7 @@ extension MapController {
             UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id ?? "")
             _ = UserDataModel.shared.userInfo.mapsList[i].updateGroup(post: post)
             if index - 1 == i && self.sheetView == nil {
-                // remove and re-add annotation
+                // need to add/remove all for cluster anno handling
                 addMapAnnotations(index: index, reload: true)
             }
         }
@@ -400,6 +380,7 @@ extension MapController {
             guard let self = self else { return }
             guard let snap = snap else { return }
             if snap.metadata.isFromCache { return }
+            var appendedMap = false
             for doc in snap.documents {
                 do {
                     let mapIn = try doc.data(as: CustomMap.self)
@@ -411,12 +392,19 @@ extension MapController {
                     }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
-
+                    appendedMap = true
                 } catch {
                     continue
                 }
             }
-            if self.mapsLoaded { return }
+            if self.mapsLoaded {
+                if appendedMap {
+                    print("appended map")
+                    self.reloadMapsCollection(resort: true, newPost: false, upload: false)
+                    self.checkForCampusMap()
+                }
+                return
+            }
             self.mapsLoaded = true
             NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
             // fetch group aleady entered before getMaps call
@@ -424,22 +412,27 @@ extension MapController {
             self.getPosts()
         })
     }
-    
+
     func updateMap(map: CustomMap, index: Int) {
         /// only reload if display content changes
         let oldMap = UserDataModel.shared.userInfo.mapsList[index]
-        let reload = oldMap.mapName != map.mapName || oldMap.imageURL != map.imageURL || oldMap.secret != map.secret
-        UserDataModel.shared.userInfo.mapsList[index] = map
-      /*  UserDataModel.shared.userInfo.mapsList[index].memberIDs = map.memberIDs
-        UserDataModel.shared.userInfo.mapsList[index].likers = map.likers
-        UserDataModel.shared.userInfo.mapsList[index].memberProfiles = map.memberProfiles
-        UserDataModel.shared.userInfo.mapsList[index].imageURL = map.imageURL
-        UserDataModel.shared.userInfo.mapsList[index].mapName = map.mapName
-        UserDataModel.shared.userInfo.mapsList[index].mapDescription = map.mapDescription
-        UserDataModel.shared.userInfo.mapsList[index].secret = map.secret */
-        
+        var newMap = map
+        newMap.postsDictionary = oldMap.postsDictionary
+        newMap.postGroup = oldMap.postGroup
+
+        let reload = oldMap.mapName != newMap.mapName || oldMap.imageURL != newMap.imageURL || oldMap.secret != newMap.secret
+        UserDataModel.shared.userInfo.mapsList[index] = newMap
         if reload {
             DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false, upload: false) }
+        }
+    }
+
+    func checkForCampusMap() {
+        print("opened explore")
+        if openedExploreMaps, let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.mainCampusMap ?? false }) {
+            print("select at")
+            openedExploreMaps = false
+            selectMapAt(index: index + 1)
         }
     }
 

@@ -11,34 +11,53 @@ import UIKit
 import CoreLocation
 
 extension MapController {
-    func updateFriendsPostGroup(post: MapPost) -> (group: MapPostGroup?, newGroup: Bool) {
-        if post.spotID ?? "" == "" {
-            /// attach by postID
-            let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
-            let newGroup = MapPostGroup(
-                id: post.id ?? "",
-                coordinate: coordinate,
-                spotName: "",
-                postIDs: [MapPostGroup.PostID(id: post.id ?? "", timestamp: post.timestamp, seen: post.seen)])
-            postGroup.append(newGroup)
-            return (newGroup, true)
+    func updateFriendsPostGroup(post: MapPost?, spot: MapSpot?) -> (group: MapPostGroup?, newGroup: Bool) {
+        if let post {
+            if post.spotID ?? "" == "" {
+                /// attach by postID
+                let coordinate = CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong)
+                let newGroup = MapPostGroup(
+                    id: post.id ?? "",
+                    coordinate: coordinate,
+                    spotName: "",
+                    postIDs: [MapPostGroup.PostID(id: post.id ?? "", timestamp: post.timestamp, seen: post.seen)])
+                postGroup.append(newGroup)
+                return (newGroup, true)
 
-        } else if !postGroup.contains(where: { $0.id == post.spotID ?? "" }) {
-            let coordinate = CLLocationCoordinate2D(latitude: post.spotLat ?? 0, longitude: post.spotLong ?? 0)
-            let newGroup = MapPostGroup(
-                id: post.spotID ?? "",
-                coordinate: coordinate,
-                spotName: post.spotName ?? "",
-                postIDs: [MapPostGroup.PostID(id: post.id ?? "", timestamp: post.timestamp, seen: post.seen)])
-            postGroup.append(newGroup)
-            return (newGroup, true)
+            } else if !postGroup.contains(where: { $0.id == post.spotID ?? "" }) {
+                let coordinate = CLLocationCoordinate2D(latitude: post.spotLat ?? 0, longitude: post.spotLong ?? 0)
+                var newGroup = MapPostGroup(
+                    id: post.spotID ?? "",
+                    coordinate: coordinate,
+                    spotName: post.spotName ?? "",
+                    postIDs: [MapPostGroup.PostID(id: post.id ?? "", timestamp: post.timestamp, seen: post.seen)])
+                postGroup.append(newGroup)
+                return (newGroup, true)
 
-        } else if let i = postGroup.firstIndex(where: { $0.id == post.spotID }) {
-            if !postGroup[i].postIDs.contains(where: { $0.id == post.id }) {
-                postGroup[i].postIDs.append(MapPostGroup.PostID(id: post.id ?? "", timestamp: post.timestamp, seen: post.seen))
-                postGroup[i].sortPostIDs()
-                return (postGroup[i], false)
+            } else if let i = postGroup.firstIndex(where: { $0.id == post.spotID }) {
+                if !postGroup[i].postIDs.contains(where: { $0.id == post.id }) {
+                    postGroup[i].postIDs.append(MapPostGroup.PostID(id: post.id ?? "", timestamp: post.timestamp, seen: post.seen))
+                    postGroup[i].sortPostIDs()
+                    return (postGroup[i], false)
+                }
             }
+        } else if let spot, !postGroup.contains(where: { $0.id == spot.id }) {
+            let coordinate = CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong)
+            // add spot group with no postIDs -> include extra values for setting display priority
+            var newGroup = MapPostGroup(
+                id: spot.id ?? "",
+                coordinate: coordinate,
+                spotName: spot.spotName,
+                postIDs: [],
+                postsToSpot: spot.postIDs,
+                postTimestamps: spot.postTimestamps,
+                numberOfPosters: spot.posterIDs.uniqued().count
+            )
+            if let category = spot.poiCategory, let poiCategory = POICategory(rawValue: category) {
+                newGroup.poiCategory = poiCategory
+            }
+            postGroup.append(newGroup)
+            return (newGroup, true)
         }
         return (nil, false)
     }

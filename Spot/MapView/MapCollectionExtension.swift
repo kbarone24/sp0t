@@ -72,23 +72,32 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         }
         HapticGenerator.shared.play(.light)
         DispatchQueue.main.async {
-            self.selectItemAt(index: indexPath.row)
+            self.selectItemAt(index: indexPath.row, upload: false)
         }
     }
 
-    func selectItemAt(index: Int) {
-        mapsCollection.selectItem(at: IndexPath(item: index, section: 0), animated: true, scrollPosition: [])
-        self.selectMapAt(index: index)
+    func selectItemAt(index: Int, upload: Bool) {
+        let scrollPosition: UICollectionView.ScrollPosition = upload ? .left : []
+        DispatchQueue.main.async {
+            self.mapsCollection.selectItem(at: IndexPath(item: index, section: 0), animated: true, scrollPosition: scrollPosition)
+            self.selectMapAt(index: index)
+        }
     }
 
     func selectMapAt(index: Int) {
         Mixpanel.mainInstance().track(event: "MapControllerSelectMapAt", properties: ["index": index])
-        if index != self.selectedItemIndex {
-            self.selectedItemIndex = index
-            self.setNewPostsButtonCount()
-            self.addMapAnnotations(index: index, reload: false)
-            self.addFriendsView.removeFromSuperview()
-            if index != 0 { UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle() }
+        if index != selectedItemIndex {
+            selectedItemIndex = index
+            setNewPostsButtonCount()
+            addFriendsView.removeFromSuperview()
+            
+            if index != 0 {
+                UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle()
+            } else {
+                removeCircleQuery()
+            }
+
+            addMapAnnotations(index: index, reload: false)
         }
     }
 
@@ -114,6 +123,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
         mapView.removeAllAnnos()
         let map = getSelectedMap() ?? getFriendsMapObject()
         // create temp map to represent friends map
+        print("ct", map.postGroup.count)
         for group in map.postGroup { mapView.addSpotAnnotation(group: group, map: map) }
 
         if !reload {

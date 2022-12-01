@@ -413,13 +413,6 @@ extension CustomMapHeaderCell {
         customMapVC.present(friendListVC, animated: true)
     }
 
-    func presentHeelsMap() {
-        guard let customMapVC = viewContainingController() as? CustomMapController else { return }
-        let vc = HeelsMapPopUpController()
-        vc.delegate = self
-        DispatchQueue.main.async { customMapVC.present(vc, animated: true) }
-    }
-
     func addNewUsersInDB(addedUsers: [String]) {
         guard let mapData = mapData else { return }
         let db = Firestore.firestore()

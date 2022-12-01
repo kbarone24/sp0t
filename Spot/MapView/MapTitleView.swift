@@ -32,8 +32,8 @@ final class MapTitleView: UIView {
         addSubview(spotLogo)
         spotLogo.snp.makeConstraints {
             $0.leading.equalTo(16)
-            $0.width.equalTo(83.37)
-            $0.height.equalTo(36)
+            $0.width.equalTo(83)
+            $0.height.equalTo(27)
             $0.centerY.equalToSuperview()
         }
 
@@ -46,7 +46,7 @@ final class MapTitleView: UIView {
 
         addSubview(notificationsButton)
         notificationsButton.snp.makeConstraints {
-            $0.trailing.equalTo(profileButton.snp.leading).offset(-20)
+            $0.trailing.equalTo(profileButton.snp.leading).offset(-22)
             $0.centerY.equalToSuperview().offset(-3) // offset for noti indicator
             $0.height.equalTo(35)
             $0.width.equalTo(30)
@@ -54,7 +54,7 @@ final class MapTitleView: UIView {
 
         addSubview(searchButton)
         searchButton.snp.makeConstraints {
-            $0.trailing.equalTo(notificationsButton.snp.leading).offset(-20)
+            $0.trailing.equalTo(notificationsButton.snp.leading).offset(-22)
             $0.centerY.equalToSuperview().offset(2.5)
             $0.width.equalTo(45)
             $0.height.equalTo(33.75)
