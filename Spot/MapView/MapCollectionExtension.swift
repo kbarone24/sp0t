@@ -93,10 +93,7 @@ extension MapController: UICollectionViewDelegate, UICollectionViewDataSource, U
             
             if index != 0 {
                 UserDataModel.shared.userInfo.mapsList[index - 1].selected.toggle()
-            } else {
-                removeCircleQuery()
             }
-
             addMapAnnotations(index: index, reload: false)
         }
     }

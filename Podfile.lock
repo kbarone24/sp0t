@@ -218,8 +218,6 @@ PODS:
   - BoringSSL-GRPC/Implementation (0.0.7):
     - BoringSSL-GRPC/Interface (= 0.0.7)
   - BoringSSL-GRPC/Interface (0.0.7)
-  - Firebase (6.34.0):
-    - Firebase/Core (= 6.34.0)
   - Firebase/Analytics (6.34.0):
     - Firebase/Core
   - Firebase/Auth (6.34.0):
@@ -344,16 +342,7 @@ PODS:
   - FirebaseUI/Storage (10.0.2):
     - Firebase/Storage
     - SDWebImage (~> 5.6)
-  - GeoFire (4.1.0):
-    - Firebase/Database (~> 6.0)
-    - GeoFire/Utils (= 4.1.0)
-  - GeoFire/Utils (4.1.0):
-    - Firebase/Database (~> 6.0)
-  - Geofirestore (1.0.1):
-    - Firebase
-    - FirebaseCore
-    - FirebaseFirestore
-    - GeoFire
+  - GeoFire/Utils (4.3.0)
   - GoogleAppMeasurement (6.9.0):
     - GoogleUtilities/AppDelegateSwizzler (~> 6.7)
     - GoogleUtilities/MethodSwizzler (~> 6.7)
@@ -424,16 +413,14 @@ PODS:
   - nanopb/decode (1.30906.0)
   - nanopb/encode (1.30906.0)
   - PromisesObjC (1.2.12)
-  - Protobuf (3.21.9)
-  - R.swift (6.1.0):
-    - R.swift.Library (~> 5.3.0)
-  - R.swift.Library (5.3.0)
+  - Protobuf (3.21.11)
+  - R.swift (7.2.4)
   - RSKImageCropper (4.0.0)
-  - SDWebImage (5.13.4):
-    - SDWebImage/Core (= 5.13.4)
-  - SDWebImage/Core (5.13.4)
+  - SDWebImage (5.14.2):
+    - SDWebImage/Core (= 5.14.2)
+  - SDWebImage/Core (5.14.2)
   - SnapKit (5.6.0)
-  - SwiftLint (0.49.1)
+  - SwiftLint (0.50.3)
 
 DEPENDENCIES:
   - Firebase/Analytics
@@ -447,7 +434,7 @@ DEPENDENCIES:
   - Firebase/Storage
   - FirebaseFirestoreSwift
   - FirebaseUI/Storage
-  - Geofirestore (from `https://github.com/imperiumlabs/GeoFirestore-iOS.git`)
+  - GeoFire/Utils
   - IQKeyboardManagerSwift
   - JPSVolumeButtonHandler
   - Mixpanel-swift
@@ -494,20 +481,10 @@ SPEC REPOS:
     - PromisesObjC
     - Protobuf
     - R.swift
-    - R.swift.Library
     - RSKImageCropper
     - SDWebImage
     - SnapKit
     - SwiftLint
-
-EXTERNAL SOURCES:
-  Geofirestore:
-    :git: https://github.com/imperiumlabs/GeoFirestore-iOS.git
-
-CHECKOUT OPTIONS:
-  Geofirestore:
-    :commit: fe7bec6c754686da10aace26511b3da47264f906
-    :git: https://github.com/imperiumlabs/GeoFirestore-iOS.git
 
 SPEC CHECKSUMS:
   abseil: 6c8eb7892aefa08d929b39f9bb108e5367e3228f
@@ -530,8 +507,7 @@ SPEC CHECKSUMS:
   FirebaseRemoteConfig: 35a729305f254fb15a2e541d4b36f3a379da7fdc
   FirebaseStorage: 15e0f15ef3c7fec3d1899d68623e47d4447066b4
   FirebaseUI: 59db3d833773f985550897d54ceb811ba37fb9a5
-  GeoFire: 8372fdf980b5ef1df6767dba7ff79288fad34612
-  Geofirestore: 46c079cf1ceeb03e77e7b2e4a3e65530527b6f95
+  GeoFire: c34927b5c81ab614f611c79aa8d074cfa9780f07
   GoogleAppMeasurement: a6a3a066369828db64eda428cb2856dc1cdc7c4e
   GoogleDataTransport: f56af7caa4ed338dc8e138a5d7c5973e66440833
   GoogleToolboxForMac: 8bef7c7c5cf7291c687cf5354f39f9db6399ad34
@@ -545,14 +521,13 @@ SPEC CHECKSUMS:
   Mixpanel-swift: 91fc28834402720682f4cce760e95571fbb388c3
   nanopb: 59317e09cf1f1a0af72f12af412d54edf52603fc
   PromisesObjC: 3113f7f76903778cf4a0586bd1ab89329a0b7b97
-  Protobuf: 02524ec14183fe08fb259741659e79683788158b
-  R.swift: ec98ff71c4ab2f6fd01dd077e5afd15e63a4834c
-  R.swift.Library: 0fc583cb55a99e28901299cc451614cad1161962
+  Protobuf: 3acb308a1e208605afd50866b98ec220141bcb8c
+  R.swift: 681bb9135f482e7a81d9d27445b837fef5467e11
   RSKImageCropper: 90dfe482402fb8a40cabd5fea65186d9102cc425
-  SDWebImage: e5cc87bf736e60f49592f307bdf9e157189298a3
+  SDWebImage: b9a731e1d6307f44ca703b3976d18c24ca561e84
   SnapKit: e01d52ebb8ddbc333eefe2132acf85c8227d9c25
-  SwiftLint: 32ee33ded0636d0905ef6911b2b67bbaeeedafa5
+  SwiftLint: 77f7cb2b9bb81ab4a12fcc86448ba3f11afa50c6
 
-PODFILE CHECKSUM: 311daec1c4045bf613a8f4757569e8069fda9351
+PODFILE CHECKSUM: 76b33586df8409f1139351558554baf6437b8c7e
 
 COCOAPODS: 1.11.3

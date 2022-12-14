@@ -266,20 +266,23 @@ struct CustomMap: Identifiable, Codable, Hashable {
         /// remove associated values
         posterDictionary.removeValue(forKey: postID)
         if let i = postIDs.firstIndex(where: { $0 == postID }) {
-            posterIDs.remove(at: i)
-            posterUsernames.remove(at: i)
             postIDs.remove(at: i)
-            postImageURLs.remove(at: i)
-            postLocations.remove(at: i)
-            postSpotIDs.remove(at: i)
-            postTimestamps.remove(at: i)
+            // check to make sure all of these values were consistently updated along postIDs
+            if posterIDs.count == postIDs.count { posterIDs.remove(at: i) }
+            if posterUsernames.count == postIDs.count { posterUsernames.remove(at: i) }
+            if postImageURLs.count == postIDs.count { postImageURLs.remove(at: i) }
+            if postLocations.count == postIDs.count { postLocations.remove(at: i) }
+            if postSpotIDs.count == postIDs.count { postSpotIDs.remove(at: i) }
+            if postTimestamps.count == postIDs.count { postTimestamps.remove(at: i) }
         }
         if spotID != "" {
             if let i = spotIDs.firstIndex(where: { $0 == spotID }) {
                 spotIDs.remove(at: i)
-                spotNames.remove(at: i)
-                spotLocations.remove(at: i)
-                spotPOICategories.remove(at: i)
+                // check to make sure all of these values were consistently updated along spotIDs
+                // crash was happening due to poi categories not existing on old maps
+                if spotNames.count == spotIDs.count { spotNames.remove(at: i) }
+                if spotLocations.count == spotIDs.count { spotLocations.remove(at: i) }
+                if spotPOICategories.count == spotIDs.count { spotPOICategories.remove(at: i) }
             }
             postGroup.removeAll(where: { $0.id == spotID })
         }

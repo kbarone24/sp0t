@@ -42,7 +42,7 @@ extension MapController: MKMapViewDelegate {
             for location in map?.postLocations.prefix(10) ?? [] { coordinates.append(CLLocationCoordinate2D(latitude: location["lat"] ?? 0.0, longitude: location["long"] ?? 0.0)) }
         }
 
-        mapView.enableCircleQuery = true
+        mapView.enableGeoQuery = true
         let region = MKCoordinateRegion(coordinates: coordinates, overview: true)
         mapView.setRegion(region, animated: animated)
     }
@@ -61,7 +61,7 @@ extension MapController: MKMapViewDelegate {
         guard let mapView = mapView as? SpotMapView else { return }
         if mapView.lockClusterOnUpload { return }
 
-        if mapView.region.span.longitudeDelta < 0.001_4 {
+        if mapView.region.span.longitudeDelta < 0.0014 {
             if mapView.shouldCluster {
                 mapView.shouldCluster = false
                 let annotations = mapView.annotations
@@ -83,7 +83,7 @@ extension MapController: MKMapViewDelegate {
     }
 
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-        if shouldRunCircleQuery() { DispatchQueue.global(qos: .background).async { self.getVisibleSpots() }
+        if shouldRunGeoQuery() { DispatchQueue.global().async { self.getVisibleSpots() }
         }
         if postsFetched { setCityLabel() }
     }
@@ -97,7 +97,7 @@ extension MapController: MKMapViewDelegate {
 
     func animateTo(coordinate: CLLocationCoordinate2D?) {
         if let coordinate {
-            DispatchQueue.main.async { self.mapView.setRegion(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.001_39, longitudeDelta: 0.001_39)), animated: true) }
+            DispatchQueue.main.async { self.mapView.setRegion(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.00139, longitudeDelta: 0.00139)), animated: true) }
         }
     }
 
@@ -174,7 +174,7 @@ protocol SpotMapViewDelegate: AnyObject {
 class SpotMapView: MKMapView {
     var shouldCluster = false
     var lockClusterOnUpload = false
-    var enableCircleQuery = false
+    var enableGeoQuery = false
     var spotMapDelegate: SpotMapViewDelegate?
 
     override init(frame: CGRect) {
