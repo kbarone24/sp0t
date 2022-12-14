@@ -38,32 +38,29 @@ extension NotificationsController {
                 self.fetchGroup.leave()
                 return
             }
+            
+            Task {
+                for doc in allDocs {
+                    do {
+                        let unwrappedNotification = try doc.data(as: UserNotification.self)
+                        guard var notification = unwrappedNotification else { continue }
+                        notification.id = doc.documentID
 
-            let friendRequestGroup = DispatchGroup()
-            for doc in allDocs {
-                friendRequestGroup.enter()
-                do {
-                    let unwrappedNotification = try doc.data(as: UserNotification.self)
-                    guard var notification = unwrappedNotification else { friendRequestGroup.leave(); continue }
-                    notification.id = doc.documentID
-
-                    if !notification.seen {
-                        doc.reference.updateData(["seen": true])
-                    }
-                    self.getUserInfo(userID: notification.senderID) { [weak self] (user) in
-                        guard let self = self else { return }
-                        if user.id != "" {
+                        if !notification.seen {
+                            try await doc.reference.updateData(["seen": true])
+                        }
+                        
+                        let user = try await self.userService?.getUserInfo(userID: notification.senderID)
+                        if user?.id != "" {
                             notification.userInfo = user
                             self.pendingFriendRequests.append(notification)
                         }
-                        friendRequestGroup.leave()
-                    }
 
-                } catch {
-                    friendRequestGroup.leave() }
-            }
-            // leave friend request group once all friend requests are appended
-            friendRequestGroup.notify(queue: .main) {
+                    } catch {
+                        self.fetchGroup.leave()
+                    }
+                }
+                
                 self.fetchGroup.leave()
             }
         }
@@ -90,48 +87,39 @@ extension NotificationsController {
             self.endDocument = allDocs.last
             let docs = self.refresh == .refreshDisabled ? allDocs : allDocs.dropLast()
 
-            let notiGroup = DispatchGroup()
-            for doc in docs {
-                notiGroup.enter()
-                do {
-                    let notif = try doc.data(as: UserNotification.self)
-                    guard var notification = notif else { notiGroup.leave(); continue }
-                    notification.id = doc.documentID
+            Task {
+                for doc in docs {
+                    do {
+                        let notif = try doc.data(as: UserNotification.self)
+                        guard var notification = notif else { continue }
+                        notification.id = doc.documentID
 
-                    if !notification.seen {
-                        doc.reference.updateData(["seen": true])
-                    }
-
-                    if notification.status == "pending" {
-                        notiGroup.leave(); continue }
-
-                    // enter user group to ensure that both getUserInfo and getPost have both returned before appending the new notification
-                    let userGroup = DispatchGroup()
-                    userGroup.enter()
-                    self.getUserInfo(userID: notification.senderID) { user in
-                        notification.userInfo = user
-                        userGroup.leave()
-                    }
-
-                    var brokenPost = false
-                    if notification.type != "friendRequest" {
-                        userGroup.enter()
-                        let postID = notification.postID ?? ""
-                        self.getPost(postID: postID) { post in
-                            brokenPost = (post.id ?? "") == ""
-                            notification.postInfo = post
-                            userGroup.leave()
+                        if !notification.seen {
+                            try await doc.reference.updateData(["seen": true])
                         }
-                    }
 
-                    userGroup.notify(queue: .main) { [weak self] in
-                        guard let self = self else { return }
-                        if !brokenPost { self.notifications.append(notification) }
-                        notiGroup.leave()
-                    }
-                } catch { notiGroup.leave() }
-            }
-            notiGroup.notify(queue: .main) {
+                        if notification.status == "pending" {
+                            continue
+                        }
+                        
+                        let user = try await self.userService?.getUserInfo(userID: notification.senderID)
+                        notification.userInfo = user
+
+                        var brokenPost = false
+                        if notification.type != "friendRequest" {
+                            let postID = notification.postID ?? ""
+                            let post = try await self.mapService?.getPost(postID: postID)
+                            brokenPost = (post?.id ?? "") == ""
+                            notification.postInfo = post
+                        }
+
+                            if !brokenPost {
+                                self.notifications.append(notification)
+                            }
+                        
+                    } catch {}
+                }
+                
                 self.fetchGroup.leave()
             }
         }

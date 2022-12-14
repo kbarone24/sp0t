@@ -62,7 +62,7 @@ final class ChooseMapController: UIViewController {
     }
 
     func setUpNavBar() {
-        navigationItem.title = "Post to maps"
+        navigationItem.title = "Choose a map"
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.tintColor = .black
         navigationController?.navigationBar.addWhiteBackground()
@@ -124,7 +124,6 @@ final class ChooseMapController: UIViewController {
         if var newMap {
             newMap.coverImage = UploadPostModel.shared.postObject?.postImage.first ?? UIImage() /// new map image not set when going through new map flow
             customMaps.insert(newMap, at: 0)
-            if newMap.secret { toggleFriendsMap() }
         }
 
         DispatchQueue.main.async { self.tableView.reloadData() }
@@ -308,7 +307,7 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 30
+        return 40
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {

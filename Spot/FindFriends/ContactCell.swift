@@ -41,6 +41,11 @@ class ContactCell: UITableViewCell {
             setStatusConstraints()
         }
     }
+    
+    private lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
 
     lazy var cellType: CellType = .contact
 
@@ -59,21 +64,12 @@ class ContactCell: UITableViewCell {
         return imageView
     }()
 
-    private lazy var nameLabel: UILabel = {
-        let label = UILabel()
-        label.isUserInteractionEnabled = false
-        label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-        label.lineBreakMode = .byTruncatingTail
-        return label
-    }()
-
     private lazy var usernameLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
-        label.textColor = UIColor(red: 0.683, green: 0.683, blue: 0.683, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         return label
     }()
 
@@ -130,17 +126,11 @@ class ContactCell: UITableViewCell {
 
         contentView.addSubview(statusButton)
 
-        contentView.addSubview(nameLabel)
-        nameLabel.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).offset(9)
-            $0.top.equalTo(profileImage).offset(11)
-            $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
-        }
-
         contentView.addSubview(usernameLabel)
         usernameLabel.snp.makeConstraints {
-            $0.leading.trailing.equalTo(nameLabel)
-            $0.top.equalTo(nameLabel.snp.bottom).offset(2)
+            $0.leading.equalTo(profileImage.snp.trailing).offset(9)
+            $0.trailing.lessThanOrEqualTo(statusButton.snp.leading).offset(-8)
+            $0.centerY.equalTo(profileImage)
         }
 
         let tap = UITapGestureRecognizer(target: self, action: #selector(openProfile))
@@ -158,7 +148,6 @@ class ContactCell: UITableViewCell {
         self.cellType = cellType
         self.status = friendStatus
 
-        nameLabel.text = contact.name
         usernameLabel.text = contact.username
 
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
@@ -191,7 +180,7 @@ class ContactCell: UITableViewCell {
         Mixpanel.mainInstance().track(event: "ContactCellAddFriend")
         NotificationCenter.default.post(name: NSNotification.Name("ContactCellAddFriend"), object: nil, userInfo: ["receiverID": receiverID])
 
-       addFriend(receiverID: receiverID)
+        friendService?.addFriend(receiverID: receiverID, completion: nil)
     }
 
     @objc func removeSuggestion() {
