@@ -20,11 +20,10 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         textField.textAlignment = .center
         textField.tintColor = UIColor(named: "SpotGreen")
         textField.textColor = .black
-
         let placeholderText = NSMutableAttributedString(
             string: "@sp0tb0t", attributes: [
                 NSAttributedString.Key.font: UIFont(name: "SFCompactText-Medium", size: 27.5) as Any,
-                NSAttributedString.Key.foregroundColor: UIColor(red: 0.733, green: 0.733, blue: 0.733, alpha: 1)
+                NSAttributedString.Key.foregroundColor: UIColor.black.withAlphaComponent(0.25)
             ]
         )
 
@@ -86,7 +85,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "SignUpUsernameOpen")
         enableKeyboardMethods()
-        self.usernameField.becomeFirstResponder()
+        DispatchQueue.main.async { self.usernameField.becomeFirstResponder() }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -313,7 +312,7 @@ final class UsernameController: UIViewController, UITextFieldDelegate {
     }
 
     @objc func backTapped(_ sender: UIButton) {
-        DispatchQueue.main.async { self.navigationController?.popViewController(animated: true) }
+        DispatchQueue.main.async { self.dismiss(animated: false, completion: nil) }
     }
 
     @objc func runUsernameQuery() {

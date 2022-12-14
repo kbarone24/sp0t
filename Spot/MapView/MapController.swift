@@ -6,6 +6,7 @@
 //   Copyright © 2019 sp0t, LLC. All rights reserved.
 //
 import Firebase
+import GeoFire
 import Geofirestore
 import MapKit
 import Mixpanel
@@ -32,14 +33,9 @@ final class MapController: UIViewController {
     let locationManager = CLLocationManager()
     var friendsPostsListener, mapsListener, mapsPostsListener, notiListener, userListener: ListenerRegistration?
     let homeFetchGroup = DispatchGroup()
-    var circleQuery: GFSCircleQuery?
-    let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("spots"))
     let chapelHillLocation = CLLocation(latitude: 35.913_2, longitude: -79.055_8)
 
-    var circleQueryEnteredCount = 0
-    var circleQueryNoAccessCount = 0
-    var circleQueryAccessCount = 0
-    var circleQueryLimit: Int = 50
+    var geoQueryLimit: Int = 50
 
     var selectedItemIndex = 0
     var firstOpen = false
@@ -97,7 +93,6 @@ final class MapController: UIViewController {
         return view
     }()
 
-    /// sheet view: Must declare outside to listen to UIEvent
     var sheetView: DrawerView? {
         didSet {
             let hidden = sheetView != nil

@@ -15,7 +15,6 @@ use_frameworks!
   pod 'RSKImageCropper'
   pod 'IQKeyboardManagerSwift'
   pod 'Firebase/Messaging'
-  pod 'Geofirestore', :git => 'https://github.com/imperiumlabs/GeoFirestore-iOS.git'
   pod 'Firebase/Performance'
   pod 'Mixpanel-swift'
   pod 'FirebaseFirestoreSwift'
@@ -26,6 +25,7 @@ use_frameworks!
   pod 'SnapKit'
   pod 'R.swift'
   pod 'SwiftLint'
+  pod 'GeoFire/Utils'
 
   target 'SpotTests' do
     inherit! :search_paths
