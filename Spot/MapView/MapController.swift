@@ -7,7 +7,6 @@
 //
 import Firebase
 import GeoFire
-import Geofirestore
 import MapKit
 import Mixpanel
 import UIKit

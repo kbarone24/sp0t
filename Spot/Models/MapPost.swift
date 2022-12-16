@@ -24,6 +24,7 @@ struct MapPost: Identifiable, Codable, Hashable {
     var commentCount: Int? = 0
     var frameIndexes: [Int]? = []
     var friendsList: [String]
+    var g: String?
     var hiddenBy: [String]? = []
     var hideFromFeed: Bool? = false
     var imageLocations: [[String: Double]]? = []
@@ -88,6 +89,7 @@ struct MapPost: Identifiable, Codable, Hashable {
         case createdBy
         case frameIndexes
         case friendsList
+        case g
         case hiddenBy
         case hideFromFeed
         case imageLocations

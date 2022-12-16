@@ -7,13 +7,9 @@
 //
 import Contacts
 import Firebase
-import FirebaseAuth
 import FirebaseFirestore
-import FirebaseFirestoreSwift
-import FirebaseMessaging
 import FirebaseUI
 import Foundation
-import Geofirestore
 import Mixpanel
 import UIKit
 

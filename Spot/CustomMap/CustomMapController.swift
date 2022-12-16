@@ -1,6 +1,5 @@
 import Contacts
 import Firebase
-import Geofirestore
 import MapKit
 import Mixpanel
 import SDWebImage
@@ -42,10 +41,6 @@ class CustomMapController: UIViewController {
     var centeredMap = false
     var ranSetUp = false
     var cancelOnDismiss = false
-
-    var circleQuery: GFSCircleQuery?
-    let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("posts"))
-    lazy var geoFetchGroup = DispatchGroup()
 
     lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()

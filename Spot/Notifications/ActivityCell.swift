@@ -6,13 +6,8 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 import Firebase
-import FirebaseAuth
-import FirebaseFirestore
-import FirebaseFirestoreSwift
-import FirebaseMessaging
 import FirebaseUI
 import Foundation
-import Geofirestore
 import Mixpanel
 import UIKit
 
