@@ -9,7 +9,6 @@
 import Foundation
 import UIKit
 import Firebase
-import Geofirestore
 import MapKit
 
 extension FindFriendsController {
@@ -63,7 +62,7 @@ extension FindFriendsController {
 
     func getSuggestedFriends() {
         // get mutual friends by cycling through friends of everyone on friendsList
-        for friend in UserDataModel.shared.userInfo.friendsList {
+        for friend in UserDataModel.shared.userInfo.friendsList where !UserDataModel.shared.adminIDs.contains(friend.id ?? "") {
             for mutual in friend.topFriends ?? [:] {
                 let id = mutual.key
                 // only add non-friends + people we haven't sent a request to yet
@@ -106,9 +105,10 @@ extension FindFriendsController {
         // get "mutuals" from pending friend requests to fill up the rest of suggestions
         let pendingRequests = UserDataModel.shared.userInfo.pendingFriendRequests
         // if no pending requests either get users who have posted near user's location or just roll with mutuals we have
+        print("mutuals count", mutuals.count)
         if pendingRequests.isEmpty {
             if mutuals.count < 5 {
-                getNearbyUsers(radius: 0.5)
+                getNearbyUsers(radius: 500)
             } else {
                 getSuggestedFriendProfiles()
             }
@@ -168,44 +168,60 @@ extension FindFriendsController {
 
 // fetch nearby posts to find top users in area
 extension FindFriendsController {
-    func getNearbyUsers(radius: CGFloat) {
-        let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("posts"))
-        let circleQuery = geoFirestore.query(withCenter: UserDataModel.shared.currentLocation, radius: radius)
-        _ = circleQuery.observe(.documentEntered, with: loadPostFromDB)
-        _ = circleQuery.observeReady { [weak self] in
-            guard let self = self else { return }
-            if self.nearbyEnteredCount < 5 {
-                self.nearbyEnteredCount = 0
-                self.nearbyAppendCount = 0
-                self.getNearbyUsers(radius: radius * 2)
-            }
-            if self.nearbyEnteredCount == self.nearbyAppendCount { self.finishSuggestedLoad() }
-        }
-    }
+    func getNearbyUsers(radius: CGFloat? = 500) {
+        let center = UserDataModel.shared.currentLocation.coordinate
+        let searchLimit = 20
+        let radius = radius ?? 500
 
-    func loadPostFromDB(key: String?, location: CLLocation?) {
-        nearbyEnteredCount += 1
-        guard let postKey = key else { return }
-        Task {
-            guard let post = try? await mapPostService?.getPost(postID: postKey) else {
-                return
-            }
-            self.addNearbyUser(user: post.userInfo)
-            self.nearbyAppendCount += 1
-            if self.nearbyEnteredCount == self.nearbyAppendCount {
-                self.finishSuggestedLoad()
+        DispatchQueue.global().async {
+            Task {
+                await self.mapPostService?.getNearbyPosts(center: center, radius: radius, searchLimit: searchLimit, completion: { [weak self] posts in
+                    guard let self = self else { return }
+                    // get more posts to show more users
+                    if posts.count < 5 && radius < 16_000 {
+                        self.getNearbyUsers(radius: radius * 2)
+                    } else {
+                        self.addNearbyUsersFrom(posts: posts)
+                    }
+                })
             }
         }
     }
 
-    func addNearbyUser(user: UserProfile?) {
-        guard let user = user else { return }
-        if shouldAddToMutuals(id: user.id ?? "") {
-            if let i = suggestedUsers.firstIndex(where: { $0.0.id == user.id ?? "" }) {
-                suggestedUsers[i].0.mutualFriendsScore += 1
+    func addNearbyUsersFrom(posts: [MapPost]) {
+        var nearbyUserIDs: [(id: String, score: Int)] = []
+        for post in posts {
+            if let i = nearbyUserIDs.firstIndex(where: { $0.id == post.posterID }) {
+                nearbyUserIDs[i].score += 1
             } else {
-                suggestedUsers.append((user, .none))
+                nearbyUserIDs.append((id: post.posterID, score: 0))
             }
+        }
+        fetchNearbyUserProfiles(userIDs: nearbyUserIDs)
+    }
+
+    func fetchNearbyUserProfiles(userIDs: [(id: String, score: Int)]) {
+        // fetching individual users slowing nearby posts fetch down
+        // fetch nearby users when its actually time to add them
+        let dispatch = DispatchGroup()
+        for userID in userIDs {
+            dispatch.enter()
+            Task {
+                do {
+                    let user = try await userService?.getUserInfo(userID: userID.id)
+                    // filter out old users (no avatar set)
+                    guard var user, user.avatarURL ?? "" != "" else { dispatch.leave(); return }
+                    user.mutualFriendsScore = userID.score
+                    self.suggestedUsers.append((user, .none))
+                    dispatch.leave()
+                } catch {
+                    dispatch.leave()
+                    return
+                }
+            }
+        }
+        dispatch.notify(queue: .global()) {
+            self.finishSuggestedLoad()
         }
     }
 }

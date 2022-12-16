@@ -11,7 +11,6 @@ import Firebase
 import FirebaseFunctions
 import FirebaseUI
 import Foundation
-import Geofirestore
 import MapKit
 import Mixpanel
 import SnapKit

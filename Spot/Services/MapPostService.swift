@@ -8,6 +8,8 @@
 
 import Foundation
 import Firebase
+import CoreLocation
+import GeoFire
 
 protocol MapPostServiceProtocol {
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?)
@@ -15,6 +17,7 @@ protocol MapPostServiceProtocol {
     func getComments(postID: String) async throws -> [MapComment]
     func getPost(postID: String) async throws -> MapPost
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void)
+    func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
 }
 
 final class MapPostService: MapPostServiceProtocol {
@@ -178,6 +181,72 @@ final class MapPostService: MapPostServiceProtocol {
                 return
             } catch {
                 completion(postInfo)
+            }
+        }
+    }
+    // function does NOT fetch user info
+    func getPosts(query: Query) async throws -> [MapPost]? {
+        try await withCheckedThrowingContinuation { continuation in
+            query.getDocuments { snap, error in
+                guard error == nil, let docs = snap?.documents, !docs.isEmpty
+                else {
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: [])
+                    }
+                    return
+                }
+
+                Task {
+                    var posts: [MapPost] = []
+                    for doc in docs {
+                        defer {
+                            if doc == docs.last {
+                                continuation.resume(returning: posts)
+                            }
+                        }
+
+                        do {
+                            guard let postInfo = try doc.data(as: MapPost.self) else { continue }
+                            posts.append(postInfo)
+                        } catch {
+                            continue
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping(_ post: [MapPost]) -> Void) async {
+        let queryBounds = GFUtils.queryBounds(
+            forLocation: center,
+            withRadius: radius)
+
+        let queries = queryBounds.map { bound -> Query in
+            return fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                .order(by: "g")
+                .start(at: [bound.startValue])
+                .end(at: [bound.endValue])
+                .limit(to: searchLimit)
+        }
+
+        Task {
+            var allPosts: [MapPost] = []
+            for query in queries {
+                defer {
+                    if query == queries.last {
+                        completion(allPosts)
+                    }
+                }
+                do {
+                    let posts = try await getPosts(query: query)
+                    guard let posts else { continue }
+                    allPosts.append(contentsOf: posts)
+                } catch {
+                    continue
+                }
             }
         }
     }

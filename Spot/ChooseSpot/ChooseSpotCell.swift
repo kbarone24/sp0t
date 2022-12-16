@@ -101,10 +101,10 @@ class ChooseSpotCell: UITableViewCell {
         distanceLabel.text = spot.distance.getLocationString()
         spotName.text = spot.spotName
 
-        descriptionLabel.isHidden = spot.spotDescription == ""
+        descriptionLabel.isHidden = spot.spotDescription.isEmpty
         descriptionLabel.text = spot.spotDescription
 
-        separatorView.isHidden = spot.postIDs.isEmpty
+        separatorView.isHidden = spot.postIDs.isEmpty || spot.spotDescription.isEmpty
 
         var postsText = "\(spot.postIDs.count) post"
         if spot.postIDs.count > 1 { postsText += "s" }

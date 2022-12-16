@@ -11,35 +11,13 @@ import CoreLocation
 import Firebase
 import FirebaseFunctions
 import Foundation
-import Geofirestore
 import MapKit
 import Mixpanel
 import Photos
 import UIKit
+import GeoFire
 
 extension UIViewController {
-    func hasPOILevelAccess(creatorID: String, privacyLevel: String, inviteList: [String]) -> Bool {
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-
-        if UserDataModel.shared.adminIDs.contains(where: { $0 == creatorID }) {
-            if uid != creatorID {
-                return false
-            }
-        }
-        if privacyLevel == "friends" {
-            if !UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == creatorID }) {
-                if uid != creatorID {
-                    return false
-                }
-            }
-        } else if privacyLevel == "invite" {
-            if !inviteList.contains(where: { $0 == uid }) {
-                return false
-            }
-        }
-        return true
-    }
-
     func updateMapNameInPosts(mapID: String, newName: String) {
         let db = Firestore.firestore()
         DispatchQueue.global().async {
@@ -255,8 +233,9 @@ extension UIViewController {
         let db = Firestore.firestore()
         let postRef = db.collection("posts").document(postID)
         do {
+            var post = post
+            post.g = GFUtils.geoHash(forLocation: post.coordinate)
             try postRef.setData(from: post)
-            self.setPostLocations(postLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), postID: postID)
             if !newMap { self.sendPostNotifications(post: post, map: map, spot: spot) } /// send new map notis for new map
             let commentRef = postRef.collection("comments").document(commentObject.id ?? "")
 
@@ -294,7 +273,6 @@ extension UIViewController {
     }
 
     func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) {
-
         let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
         let db: Firestore = Firestore.firestore()
 
@@ -306,6 +284,7 @@ extension UIViewController {
 
             let lowercaseName = spot.spotName.lowercased()
             let keywords = lowercaseName.getKeywordArray()
+            let geoHash = GFUtils.geoHash(forLocation: spot.location.coordinate)
 
             let tagDictionary: [String: Any] = [:]
 
@@ -317,32 +296,32 @@ extension UIViewController {
 
             /// too many extreneous variables for spots to set with codable
             let spotValues = ["city": post.city ?? "",
-                               "spotName": spot.spotName,
-                               "lowercaseName": lowercaseName,
-                               "description": post.caption,
-                               "createdBy": uid,
-                               "posterUsername": UserDataModel.shared.userInfo.username,
-                               "visitorList": spotVisitors,
-                               "inviteList": spot.inviteList ?? [],
-                               "privacyLevel": spot.privacyLevel,
-                               "taggedUsers": post.taggedUsers ?? [],
-                               "spotLat": spot.spotLat,
-                               "spotLong": spot.spotLong,
-                               "imageURL": post.imageURLs.first ?? "",
-                               "phone": spot.phone ?? "",
-                               "poiCategory": spot.poiCategory ?? "",
-                               "postIDs": [post.id!],
-                               "postTimestamps": [timestamp],
-                               "posterIDs": [uid],
-                               "postPrivacies": [post.privacyLevel!],
-                               "searchKeywords": keywords,
-                               "tagDictionary": tagDictionary,
-                               "posterDictionary": posterDictionary] as [String: Any]
+                              "spotName": spot.spotName,
+                              "lowercaseName": lowercaseName,
+                              "description": post.caption,
+                              "createdBy": uid,
+                              "posterUsername": UserDataModel.shared.userInfo.username,
+                              "visitorList": spotVisitors,
+                              "inviteList": spot.inviteList ?? [],
+                              "privacyLevel": spot.privacyLevel,
+                              "taggedUsers": post.taggedUsers ?? [],
+                              "spotLat": spot.spotLat,
+                              "spotLong": spot.spotLong,
+                              "g" : geoHash,
+                              "imageURL": post.imageURLs.first ?? "",
+                              "phone": spot.phone ?? "",
+                              "poiCategory": spot.poiCategory ?? "",
+                              "postIDs": [post.id!],
+                              "postTimestamps": [timestamp],
+                              "posterIDs": [uid],
+                              "postPrivacies": [post.privacyLevel!],
+                              "searchKeywords": keywords,
+                              "tagDictionary": tagDictionary,
+                              "posterDictionary": posterDictionary] as [String: Any]
 
             db.collection("spots").document(spot.id!).setData(spotValues, merge: true)
 
             if submitPublic { db.collection("submissions").document(spot.id!).setData(["spotID": spot.id!])}
-            self.setSpotLocations(spotLocation: CLLocationCoordinate2D(latitude: spot.spotLat, longitude: spot.spotLong), spotID: spot.id!)
 
             var notiSpot = spot
             notiSpot.checkInTime = Int64(interval)
@@ -398,7 +377,6 @@ extension UIViewController {
             }
         }
         db.collection("mapLocations").document(post.id!).setData(["mapID": map.id!, "postID": post.id!])
-        setMapLocations(mapLocation: CLLocationCoordinate2D(latitude: post.postLat, longitude: post.postLong), documentID: post.id!)
     }
 
     func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String) {
@@ -508,53 +486,17 @@ extension UIViewController {
         }
     }
 
-    func setPostLocations(postLocation: CLLocationCoordinate2D, postID: String) {
-        let location = CLLocation(latitude: postLocation.latitude, longitude: postLocation.longitude)
-        GeoFirestore(collectionRef: Firestore.firestore().collection("posts")).setLocation(location: location, forDocumentWithID: postID) { (error) in
-            if error != nil {
-                print("An error occured: \(String(describing: error))")
-            } else {
-                print("Saved location successfully!")
-            }
-        }
-    }
-
-    func setSpotLocations(spotLocation: CLLocationCoordinate2D, spotID: String) {
-        let location = CLLocation(latitude: spotLocation.latitude, longitude: spotLocation.longitude)
-        GeoFirestore(collectionRef: Firestore.firestore().collection("spots")).setLocation(location: location, forDocumentWithID: spotID) { (error) in
-            if error != nil {
-                print("An error occured: \(String(describing: error))")
-            } else {
-                print("Saved location successfully!")
-            }
-        }
-    }
-
-    func setMapLocations(mapLocation: CLLocationCoordinate2D, documentID: String) {
-        let location = CLLocation(latitude: mapLocation.latitude, longitude: mapLocation.longitude)
-        GeoFirestore(collectionRef: Firestore.firestore().collection("mapLocations")).setLocation(location: location, forDocumentWithID: documentID) { (error) in
-            if error != nil {
-                print("An error occured: \(String(describing: error))")
-            } else {
-                print("Saved location successfully!")
-            }
-        }
-    }
-
     func addToCityList(city: String) {
         let db = Firestore.firestore()
         let query = db.collection("cities").whereField("cityName", isEqualTo: city)
 
         query.getDocuments { [weak self] (cityDocs, _) in
-            guard let self = self else { return }
             if cityDocs?.documents.count ?? 0 == 0 {
                 city.getCoordinate { coordinate, error in
                     guard let coordinate = coordinate, error == nil else { return }
                     let id = UUID().uuidString
-                    db.collection("cities").document(id).setData(["cityName": city])
-                    GeoFirestore(collectionRef: db.collection("cities")).setLocation(location: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude), forDocumentWithID: id) { (_) in
-                        print(city, "Location:", coordinate)
-                    }
+                    let g = GFUtils.geoHash(forLocation: coordinate)
+                    db.collection("cities").document(id).setData(["cityName": city, "g": g])
                 }
             }
         }

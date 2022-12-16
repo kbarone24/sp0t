@@ -214,7 +214,6 @@ final class UploadPostModel {
     }
 
     func fetchAssets(completion: @escaping(_ complete: Bool) -> Void) {
-        print("fetch assets")
         // fetch all assets for showing when user opens photo gallery
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
@@ -228,7 +227,7 @@ final class UploadPostModel {
         self.assetsFull = assetsFull
 
         DispatchQueue.global().async {
-            assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, count, stop) in
+            assetsFull.enumerateObjects(at: indexSet, options: NSEnumerationOptions()) { [weak self] (object, _, stop) in
                 guard let self = self else { return }
                 if self.cancelOnDismiss { stop.pointee = true }
 

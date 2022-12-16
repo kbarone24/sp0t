@@ -9,7 +9,6 @@
 import CoreLocation
 import Firebase
 import Foundation
-import Geofirestore
 
 extension CustomMapController {
     func getMapMembers() {
