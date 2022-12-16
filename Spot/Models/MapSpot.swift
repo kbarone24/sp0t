@@ -169,4 +169,32 @@ struct MapSpot: Identifiable, Codable, Hashable {
         if id == uid || (UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == id }) && !(UserDataModel.shared.adminIDs.contains(id))) { return true }
         return false
     }
+
+    func showSpotOnMap() -> Bool {
+        // if theres a friends post to this spot (not to secret map), return true
+        for i in 0..<postIDs.count {
+            if postPrivacies[safe: i] != "invite" &&
+                (UserDataModel.shared.userInfo.friendIDs.contains(posterIDs[safe: i] ?? "") || posterIDs[safe: i] == UserDataModel.shared.uid) {
+                return true
+            }
+        }
+        return false
+    }
+
+    func hasPOILevelAccess() -> Bool {
+        let uid = UserDataModel.shared.uid
+
+        if UserDataModel.shared.adminIDs.contains(where: { $0 == founderID }) {
+            return uid == founderID
+        }
+
+        if privacyLevel == "friends", !UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == founderID }) {
+            return uid == founderID
+
+        } else if privacyLevel == "invite" {
+            return inviteList?.contains(where: { $0 == uid }) ?? false
+        }
+
+        return true
+    }
 }

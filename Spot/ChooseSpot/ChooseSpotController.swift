@@ -8,7 +8,6 @@
 
 import Firebase
 import Foundation
-import Geofirestore
 import MapKit
 import Mixpanel
 import UIKit
@@ -60,9 +59,6 @@ final class ChooseSpotController: UIViewController {
 
     /// nearby spot fetch variables
     let db = Firestore.firestore()
-    let geoFirestore = GeoFirestore(collectionRef: Firestore.firestore().collection("spots"))
-
-    var circleQuery: GFSCircleQuery?
     var search: MKLocalSearch?
     let searchFilters: [MKPointOfInterestCategory] = [
         .airport,
@@ -90,10 +86,7 @@ final class ChooseSpotController: UIViewController {
         .winery,
         .zoo
     ]
-    lazy var nearbyEnteredCount = 0
-    lazy var noAccessCount = 0
     lazy var nearbyRefreshCount = 0
-    lazy var appendCount = 0
 
     lazy var postLocation = CLLocation()
     var delegate: ChooseSpotDelegate?
