@@ -10,7 +10,6 @@ import CoreLocation
 import Firebase
 import FirebaseUI
 import Foundation
-import Geofirestore
 import Mixpanel
 import UIKit
 import Contacts
@@ -33,8 +32,6 @@ class FindFriendsController: UIViewController {
     lazy var queryUsers: [(UserProfile, FriendStatus)] = []
     lazy var searchRefreshCount = 0
     lazy var searchTextGlobal = ""
-    lazy var nearbyEnteredCount = 0
-    lazy var nearbyAppendCount = 0
 
     lazy var searchBarContainer = UIView()
     lazy var searchBar = SpotSearchBar()
@@ -68,6 +65,11 @@ class FindFriendsController: UIViewController {
 
     lazy var mapPostService: MapPostServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
+
+    lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
         return service
     }()
 
