@@ -438,13 +438,13 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: mapObject?.memberIDs ?? [])
         let vc = FriendsListController(
-            fromVC: self,
             allowsSelection: true,
             showsSearchBar: true,
             friendIDs: UserDataModel.shared.userInfo.friendIDs,
             friendsList: friendsList,
-            confirmedIDs: UploadPostModel.shared.postObject?.addedUsers ?? [],
-            sentFrom: .NewMap)
+            confirmedIDs: UploadPostModel.shared.postObject?.addedUsers ?? []
+        )
+        
         vc.delegate = self
         present(vc, animated: true)
     }

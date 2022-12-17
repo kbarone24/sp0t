@@ -16,7 +16,7 @@ protocol FriendsListDelegate {
     func finishPassing(selectedUsers: [UserProfile])
 }
 
-class FriendsListController: UIViewController {
+final class FriendsListController: UIViewController {
 
     let allowsSelection: Bool
     let showsSearchBar: Bool
@@ -147,6 +147,7 @@ class FriendsListController: UIViewController {
             $0.keyboardDistanceFromTextField = 250
             view.addSubview($0)
         }
+        
         searchBar!.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(16)
             $0.top.equalTo(60)
@@ -279,5 +280,34 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
         if queried { if let i = queriedFriends.firstIndex(where: { $0.id == id }) { queriedFriends[i].selected = !queriedFriends[i].selected } }
         if let i = friendsList.firstIndex(where: { $0.id == id }) { friendsList[i].selected = !friendsList[i].selected }
         DispatchQueue.main.async { self.tableView.reloadData() }
+    }
+}
+
+extension FriendsListController {
+    
+    func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
+        var queriedUsers: [UserProfile] = []
+        let usernameList = userList.map({ $0.username })
+        let nameList = userList.map({ $0.name })
+
+        let filteredUsernames = searchText.isEmpty ? usernameList : usernameList.filter({(dataString: String) -> Bool in
+            // If dataItem matches the searchText, return true to include it
+            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
+        })
+
+        let filteredNames = searchText.isEmpty ? nameList : nameList.filter({(dataString: String) -> Bool in
+            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
+        })
+
+        for username in filteredUsernames {
+            if let user = userList.first(where: { $0.username == username }) { queriedUsers.append(user) }
+        }
+
+        for name in filteredNames {
+            if let user = userList.first(where: { $0.name == name }) {
+                if !queriedUsers.contains(where: { $0.id == user.id }) { queriedUsers.append(user) }
+            }
+        }
+        return queriedUsers
     }
 }

@@ -367,16 +367,13 @@ extension ProfileViewController {
 
     @objc func friendsListTap() {
         Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
-        guard let container = containerDrawerView else { return }
         let friendListVC = FriendsListController(
-            fromVC: self,
             allowsSelection: false,
             showsSearchBar: false,
             friendIDs: userProfile?.friendIDs ?? [],
             friendsList: userProfile?.friendsList ?? [],
-            confirmedIDs: [],
-            sentFrom: .Profile,
-            presentedWithDrawerView: container)
+            confirmedIDs: []
+        )
         present(friendListVC, animated: true)
     }
 
