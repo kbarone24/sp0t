@@ -18,6 +18,7 @@ protocol MapPostServiceProtocol {
     func getPost(postID: String) async throws -> MapPost
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void)
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
+    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) async
 }
 
 final class MapPostService: MapPostServiceProtocol {
@@ -197,7 +198,7 @@ final class MapPostService: MapPostServiceProtocol {
                     }
                     return
                 }
-
+                
                 Task {
                     var posts: [MapPost] = []
                     for doc in docs {
@@ -206,7 +207,7 @@ final class MapPostService: MapPostServiceProtocol {
                                 continuation.resume(returning: posts)
                             }
                         }
-
+                        
                         do {
                             guard let postInfo = try doc.data(as: MapPost.self) else { continue }
                             posts.append(postInfo)
@@ -218,21 +219,22 @@ final class MapPostService: MapPostServiceProtocol {
             }
         }
     }
-
+    
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping(_ post: [MapPost]) -> Void) async {
-        let queryBounds = GFUtils.queryBounds(
-            forLocation: center,
-            withRadius: radius)
-
-        let queries = queryBounds.map { bound -> Query in
-            return fireStore.collection(FirebaseCollectionNames.posts.rawValue)
-                .order(by: "g")
-                .start(at: [bound.startValue])
-                .end(at: [bound.endValue])
-                .limit(to: searchLimit)
-        }
-
+        
         Task {
+            let queryBounds = GFUtils.queryBounds(
+                forLocation: center,
+                withRadius: radius)
+            
+            let queries = queryBounds.map { bound -> Query in
+                return fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                    .order(by: "g")
+                    .start(at: [bound.startValue])
+                    .end(at: [bound.endValue])
+                    .limit(to: searchLimit)
+            }
+            
             var allPosts: [MapPost] = []
             for query in queries {
                 defer {
@@ -249,5 +251,80 @@ final class MapPostService: MapPostServiceProtocol {
                 }
             }
         }
+    }
+    
+    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) async {
+        /// send local notification first
+        guard let postID = post.id else { return }
+        
+        Task {
+            let caption = post.caption
+            var notiPost = post
+            notiPost.id = postID
+            
+            let commentObject = MapComment(
+                id: UUID().uuidString,
+                comment: caption,
+                commenterID: post.posterID,
+                taggedUsers: post.taggedUsers,
+                timestamp: post.timestamp,
+                userInfo: UserDataModel.shared.userInfo
+            )
+            
+            notiPost.commentList = [commentObject]
+            notiPost.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
+            notiPost.userInfo = UserDataModel.shared.userInfo
+            
+            NotificationCenter.default.post(
+                Notification(
+                    name: Notification.Name("NewPost"),
+                    object: nil,
+                    userInfo: [
+                        "post": notiPost as Any,
+                        "map": map as Any,
+                        "spot": spot as Any,
+                        "newMap": newMap
+                    ]
+                )
+            )
+            
+            let postRef = fireStore.collection("posts").document(postID)
+            do {
+                var post = post
+                post.g = GFUtils.geoHash(forLocation: post.coordinate)
+                try postRef.setData(from: post)
+                if !newMap {
+                    /// send new map notis for new map
+                    self.sendPostNotifications(post: post, map: map, spot: spot)
+                }
+                
+                let commentRef = postRef.collection("comments").document(commentObject.id ?? "")
+                
+                try commentRef.setData(from: commentObject)
+                
+            } catch {}
+        }
+    }
+    
+    private func sendPostNotifications(post: MapPost, map: CustomMap?, spot: MapSpot?) {
+        let functions = Functions.functions()
+        let notiValues: [String: Any] = [
+            "communityMap": map?.communityMap ?? false,
+            "friendIDs": UserDataModel.shared.userInfo.friendIDs,
+            "imageURLs": post.imageURLs,
+            "mapID": map?.id ?? "",
+            "mapMembers": map?.memberIDs ?? [],
+            "mapName": map?.mapName ?? "",
+            "postID": post.id ?? "",
+            "posterID": UserDataModel.shared.uid,
+            "posterUsername": UserDataModel.shared.userInfo.username,
+            "privacyLevel": post.privacyLevel ?? "friends",
+            "spotID": spot?.id ?? "",
+            "spotName": spot?.spotName ?? "",
+            "spotVisitors": spot?.visitorList ?? [],
+            "taggedUserIDs": post.taggedUserIDs ?? []
+        ]
+        
+        functions.httpsCallable("sendPostNotification").call(notiValues, completion: {_,_ in })
     }
 }

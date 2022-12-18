@@ -14,7 +14,6 @@ import Mixpanel
 extension AVCameraController {
 
     func getFailedUploads() {
-
         guard let appDelegate =
                 UIApplication.shared.delegate as? AppDelegate else {
             return
@@ -86,7 +85,10 @@ extension AVCameraController {
 
     func uploadPostDraft() {
         guard let postDraft = postDraft,
-              let model = postDraft.images as? Set<ImageModel> else {
+              let model = postDraft.images as? Set<ImageModel>,
+              let spotService = try? ServiceContainer.shared.service(for: \.spotService),
+              let postService = try? ServiceContainer.shared.service(for: \.mapPostService)
+        else {
             return
         }
 
@@ -125,11 +127,18 @@ extension AVCameraController {
 
         UploadPostModel.shared.postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : spot.id != "" ? .postToSpot : .none
 
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+            
             self.getMap(mapID: post.mapID ?? "") { map, failed in
                 var map = map
-                self.uploadPostImage(images: post.postImage, postID: post.id!, progressFill: self.failedPostView!.progressFill, fullWidth: UIScreen.main.bounds.width - 100) { [weak self] imageURLs, failed in
-                    guard let self = self else { return }
+                
+                self.uploadPostImage(
+                    images: post.postImage,
+                    postID: post.id!,
+                    progressFill: self.failedPostView!.progressFill,
+                    fullWidth: UIScreen.main.bounds.width - 100
+                ) { imageURLs, failed in
 
                     if imageURLs.isEmpty && failed {
                         Mixpanel.mainInstance().track(event: "FailedPostUpload")
@@ -142,12 +151,41 @@ extension AVCameraController {
 
                     let newMap = post.mapID ?? "" != "" && map.id ?? "" == ""
                     if newMap {
-                        map = CustomMap(id: post.mapID!, founderID: self.uid, imageURL: imageURLs.first!, likers: [self.uid], mapName: post.mapName ?? "", memberIDs: [self.uid], posterDictionary: [post.id!: [self.uid]], posterIDs: [self.uid], posterUsernames: [UserDataModel.shared.userInfo.username], postIDs: [post.id!], postImageURLs: post.imageURLs, postLocations: [["lat": post.postLat, "long": post.postLong]], postSpotIDs: [], postTimestamps: [post.timestamp], secret: false, spotIDs: [], spotNames: [], spotLocations: [], memberProfiles: [UserDataModel.shared.userInfo], coverImage: uploadImages.first!)
+                        map = CustomMap(
+                            id: post.mapID!,
+                            founderID: self.uid,
+                            imageURL: imageURLs.first!,
+                            likers: [self.uid],
+                            mapName: post.mapName ?? "",
+                            memberIDs: [self.uid],
+                            posterDictionary: [post.id!: [self.uid]],
+                            posterIDs: [self.uid],
+                            posterUsernames: [UserDataModel.shared.userInfo.username],
+                            postIDs: [post.id!],
+                            postImageURLs: post.imageURLs,
+                            postLocations: [
+                                [
+                                    "lat": post.postLat,
+                                    "long": post.postLong
+                                ]
+                            ], postSpotIDs: [],
+                            postTimestamps: [post.timestamp],
+                            secret: false,
+                            spotIDs: [],
+                            spotNames: [],
+                            spotLocations: [],
+                            memberProfiles: [UserDataModel.shared.userInfo],
+                            coverImage: uploadImages.first!
+                        )
+                        
                         let lowercaseName = (post.mapName ?? "").lowercased()
                         map.lowercaseName = lowercaseName
                         map.searchKeywords = lowercaseName.getKeywordArray()
+                        
                         /// add added users
-                        if !(post.addedUsers?.isEmpty ?? true) { map.memberIDs.append(contentsOf: post.addedUsers!); map.likers.append(contentsOf: post.addedUsers!); map.memberProfiles!.append(contentsOf: post.addedUserProfiles!); map.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!) }
+                        if !(post.addedUsers?.isEmpty ?? true) { map.memberIDs.append(contentsOf: post.addedUsers!); map.likers.append(contentsOf: post.addedUsers!); map.memberProfiles!.append(contentsOf: post.addedUserProfiles!); map.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!)
+                        }
+                        
                         if spot.id != "" {
                             map.postSpotIDs.append(spot.id!)
                             map.spotIDs.append(spot.id!)
@@ -158,7 +196,9 @@ extension AVCameraController {
 
                     if spot.id != "" {
                         spot.imageURL = imageURLs.first ?? ""
-                        self.uploadSpot(post: post, spot: spot, submitPublic: false)
+                        Task {
+                            await spotService.uploadSpot(post: post, spot: spot, submitPublic: false)
+                        }
                     }
 
                     if map.id ?? "" != "" {
@@ -166,7 +206,10 @@ extension AVCameraController {
                         self.uploadMap(map: map, newMap: newMap, post: post, spot: spot)
                     }
 
-                    self.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+                    Task {
+                        await postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+                    }
+                    
                     let visitorList = spot.visitorList
                     self.setUserValues(poster: self.uid, post: post, spotID: spot.id ?? "", visitorList: visitorList, mapID: map.id ?? "")
 
