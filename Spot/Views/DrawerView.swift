@@ -92,6 +92,7 @@ class DrawerView: NSObject {
     override init() {
         super.init()
     }
+    
     public init(present: UIViewController = UIViewController(), detentsInAscending: [DrawerViewDetent] = [.bottom, .middle, .top], closeAction: (() -> Void)? = nil) {
         super.init()
         if let parent = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController as? UINavigationController {
