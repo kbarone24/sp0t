@@ -103,6 +103,14 @@ final class AVCameraController: UIViewController {
         button.addTarget(self, action: #selector(cameraRotateTap(_:)), for: .touchUpInside)
         return button
     }()
+    
+    private(set) lazy var instructionsLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(hexString: "35E0EC")
+        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
+        label.text = "Press & hold to shoot video"
+        return label
+    }()
 
     private(set) lazy var failedPostView = FailedPostView(frame: .zero)
     lazy var beginPan: CGPoint = .zero
@@ -267,8 +275,15 @@ final class AVCameraController: UIViewController {
         }
 
         volumeHandler?.start(true)
-
+        
+        view.addSubview(instructionsLabel)
         view.addSubview(cameraButton)
+        
+        instructionsLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalTo(cameraButton.snp.top).offset(-15.0)
+        }
+        
         cameraButton.snp.makeConstraints {
             $0.bottom.equalTo(cameraView.snp.bottom).offset(-28)
             $0.width.height.equalTo(76)
@@ -368,7 +383,6 @@ final class AVCameraController: UIViewController {
                 guard let self = self else { return }
                 DispatchQueue.main.async {
                     if let galleryVC = self.navigationController?.viewControllers.first(where: { $0 is PhotoGalleryController }) as? PhotoGalleryController {
-                        print("reload data")
                         galleryVC.collectionView.reloadData()
                     }
                 }
