@@ -7,12 +7,11 @@
 //
 
 import Firebase
-import FirebaseUI
-import Foundation
 import Mixpanel
 import UIKit
+import SDWebImage
 
-class PostCell: UICollectionViewCell {
+final class PostCell: UICollectionViewCell {
 
     lazy var imageManager = SDWebImageManager()
     
@@ -28,13 +27,29 @@ class PostCell: UICollectionViewCell {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db = Firestore.firestore()
 
-    var imageView: PostImageView!
+    private(set) lazy var imageView: PostImageView = {
+        let view = PostImageView(frame: .zero)
+        view.layer.cornerRadius = 5
+        return view
+    }()
 
     var detailView: UIView!
-    var mapIcon: UIImageView!
+
+    private(set) lazy var mapIcon: UIImageView = {
+        let icon = UIImageView()
+        icon.image = UIImage(named: "FeedMapIcon")
+        return icon
+    }()
+    
     var mapName: UILabel!
     var separatorLine: UIView!
-    var spotIcon: UIImageView!
+    
+    private(set) lazy var spotIcon: UIImageView = {
+        let icon = UIImageView()
+        icon.image = UIImage(named: "FeedSpotIcon")
+        return icon
+    }()
+    
     var spotLabel: UILabel!
     var cityLabel: UILabel!
 
@@ -101,10 +116,7 @@ class PostCell: UICollectionViewCell {
     }
 
     func addImageView() {
-        imageView = PostImageView {
-            $0.layer.cornerRadius = 5
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(imageView)
     }
 
     func addButtonView() {
@@ -182,10 +194,7 @@ class PostCell: UICollectionViewCell {
         /// need to run fetch here for secret maps to see if user has access
         let access = hasMapAccess(post: post)
         if access {
-            self.mapIcon = UIImageView {
-                $0.image = UIImage(named: "FeedMapIcon")
-                self.detailView.addSubview($0)
-            }
+            self.detailView.addSubview(mapIcon)
             self.mapIcon.snp.makeConstraints {
                 $0.leading.equalTo(13)
                 $0.bottom.equalToSuperview().inset(1)
@@ -231,10 +240,7 @@ class PostCell: UICollectionViewCell {
         }
 
         if self.post.spotID ?? "" != "" {
-            self.spotIcon = UIImageView {
-                $0.image = UIImage(named: "FeedSpotIcon")
-                self.detailView.addSubview($0)
-            }
+            self.detailView.addSubview(spotIcon)
             self.spotIcon.snp.makeConstraints {
                 $0.bottom.equalToSuperview().inset(1)
                 $0.width.equalTo(12.8)

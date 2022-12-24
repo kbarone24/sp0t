@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class UsernameLabel: UILabel {
+final class UsernameLabel: UILabel {
     var username: UILabel!
     var timestamp: UILabel!
     var moreLabel: UILabel!
@@ -20,7 +20,7 @@ class UsernameLabel: UILabel {
         layer.cornerRadius = 6
         layer.cornerCurve = .continuous
         layer.masksToBounds = true
-
+        
         username = UILabel {
             let minX: CGFloat = spotAnnotation ? 8 : 4
             $0.frame = CGRect(x: minX, y: 5, width: 42, height: 12)

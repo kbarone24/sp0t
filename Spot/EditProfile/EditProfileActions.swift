@@ -130,7 +130,7 @@ extension EditProfileViewController {
             if let landingPage = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
                 //    self.navigationController?.popToRootViewController(animated: false)
                 self.navigationController?.dismiss(animated: false)
-                let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+                let window = UIApplication.shared.keyWindow
                 window?.rootViewController = landingPage
             }
         })

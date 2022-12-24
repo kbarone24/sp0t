@@ -6,8 +6,8 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import FirebaseUI
 import UIKit
+import SDWebImage
 
 class ProfileBodyCell: UICollectionViewCell {
     private lazy var mapImage: UIImageView = {

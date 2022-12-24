@@ -9,7 +9,12 @@
 import UIKit
 
 final class NotificationsButton: UIButton {
-    var bellView: UIImageView!
+    private(set) lazy var bellView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "NotificationsNavIcon")
+        return imageView
+    }()
+    
     var bubbleIcon: UIView!
     var countLabel: UILabel!
 
@@ -22,11 +27,7 @@ final class NotificationsButton: UIButton {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-
-        bellView = UIImageView {
-            $0.image = UIImage(named: "NotificationsNavIcon")
-            addSubview($0)
-        }
+        addSubview(bellView)
         bellView.snp.makeConstraints {
             $0.leading.bottom.equalToSuperview()
             $0.width.equalTo(26.5)

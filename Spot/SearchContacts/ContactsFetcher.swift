@@ -78,7 +78,7 @@ class ContactsFetcher {
             guard let snap = snap else { return }
             for document in snap.documents {
                 do {
-                    let unwrappedInfo = try document.data(as: UserProfile.self)
+                    let unwrappedInfo = try? document.data(as: UserProfile.self)
                     guard var userInfo = unwrappedInfo else { continue }
                     if userInfo.id == UserDataModel.shared.uid { continue }
 

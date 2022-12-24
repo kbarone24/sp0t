@@ -9,8 +9,6 @@
 import Contacts
 import CoreLocation
 import Firebase
-import FirebaseUI
-import Foundation
 import Mixpanel
 import UIKit
 
@@ -186,7 +184,7 @@ class SearchContactsController: UIViewController {
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
 
-        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+        let window = UIApplication.shared.keyWindow
         navigationController?.popToRootViewController(animated: false)
         window?.rootViewController = navController
     }

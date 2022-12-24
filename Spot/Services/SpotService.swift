@@ -38,7 +38,7 @@ final class SpotService: SpotServiceProtocol {
                     }
                     
                     do {
-                        guard var spotInfo = try doc.data(as: MapSpot.self) else {
+                        guard var spotInfo = try? doc.data(as: MapSpot.self) else {
                             continuation.resume(returning: nil)
                             return
                         }
@@ -78,7 +78,7 @@ final class SpotService: SpotServiceProtocol {
                     }
                     
                     do {
-                        guard let spotInfo = try doc.data(as: MapSpot.self) else { continue }
+                        guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
                         spots.append(spotInfo)
                     } catch {
                         continue

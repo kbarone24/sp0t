@@ -159,7 +159,7 @@ class EmailLoginController: UIViewController {
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .fullScreen
 
-        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+        let window = UIApplication.shared.keyWindow
         DispatchQueue.main.async {
             self.navigationController?.popToRootViewController(animated: false)
             window?.rootViewController = navController

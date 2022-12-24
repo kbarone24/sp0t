@@ -228,7 +228,7 @@ extension SpotPageController {
             let postGroup = DispatchGroup()
             for doc in docs {
                 do {
-                    let unwrappedInfo = try doc.data(as: MapPost.self)
+                    let unwrappedInfo = try? doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { continue }
                     if self.relatedPosts.contains(where: { $0.id == postInfo.id }) { continue }
                     if postInfo.posterID.isBlocked() { continue }
@@ -274,7 +274,7 @@ extension SpotPageController {
             let postGroup = DispatchGroup()
             for doc in allDocs {
                 do {
-                    let unwrappedInfo = try doc.data(as: MapPost.self)
+                    let unwrappedInfo = try? doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { continue }
                     if self.relatedPosts.contains(where: { $0.id == postInfo.id }) { continue }
                     if postInfo.posterID.isBlocked() { continue }

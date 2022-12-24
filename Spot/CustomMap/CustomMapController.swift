@@ -120,7 +120,7 @@ class CustomMapController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
+        let window = UIApplication.shared.keyWindow?.rootViewController ?? UIViewController()
         if let mapNav = window as? UINavigationController {
             guard let mapVC = mapNav.viewControllers[0] as? MapController else { return }
             mapController = mapVC

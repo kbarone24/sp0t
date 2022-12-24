@@ -95,7 +95,7 @@ class DrawerView: NSObject {
     
     public init(present: UIViewController = UIViewController(), detentsInAscending: [DrawerViewDetent] = [.bottom, .middle, .top], closeAction: (() -> Void)? = nil) {
         super.init()
-        if let parent = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController as? UINavigationController {
+        if let parent = UIApplication.shared.keyWindow?.rootViewController as? UINavigationController {
             if parent.visibleViewController != nil {
                 parentVC = parent.visibleViewController ?? UIViewController()
             }

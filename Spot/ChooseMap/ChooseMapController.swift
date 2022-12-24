@@ -7,8 +7,6 @@
 //
 
 import Firebase
-import FirebaseUI
-import Foundation
 import Mixpanel
 import SnapKit
 import UIKit
