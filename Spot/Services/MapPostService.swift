@@ -309,22 +309,26 @@ final class MapPostService: MapPostServiceProtocol {
     private func sendPostNotifications(post: MapPost, map: CustomMap?, spot: MapSpot?) {
         let functions = Functions.functions()
         let notiValues: [String: Any] = [
-            "communityMap": map?.communityMap ?? false,
-            "friendIDs": UserDataModel.shared.userInfo.friendIDs,
-            "imageURLs": post.imageURLs,
-            "mapID": map?.id ?? "",
-            "mapMembers": map?.memberIDs ?? [],
-            "mapName": map?.mapName ?? "",
-            "postID": post.id ?? "",
-            "posterID": UserDataModel.shared.uid,
-            "posterUsername": UserDataModel.shared.userInfo.username,
-            "privacyLevel": post.privacyLevel ?? "friends",
-            "spotID": spot?.id ?? "",
-            "spotName": spot?.spotName ?? "",
-            "spotVisitors": spot?.visitorList ?? [],
-            "taggedUserIDs": post.taggedUserIDs ?? []
+            FireBaseCollectionFields.communityMap.rawValue: map?.communityMap ?? false,
+            FireBaseCollectionFields.friendIDs.rawValue: UserDataModel.shared.userInfo.friendIDs,
+            FireBaseCollectionFields.imageURLs.rawValue: post.imageURLs,
+            FireBaseCollectionFields.mapID.rawValue: map?.id ?? "",
+            FireBaseCollectionFields.mapMembers.rawValue: map?.memberIDs ?? [],
+            FireBaseCollectionFields.mapName.rawValue: map?.mapName ?? "",
+            FireBaseCollectionFields.postID.rawValue: post.id ?? "",
+            FireBaseCollectionFields.posterID.rawValue: UserDataModel.shared.uid,
+            FireBaseCollectionFields.posterUsername.rawValue: UserDataModel.shared.userInfo.username,
+            FireBaseCollectionFields.privacyLevel.rawValue: post.privacyLevel ?? "friends",
+            FireBaseCollectionFields.spotID.rawValue: spot?.id ?? "",
+            FireBaseCollectionFields.spotName.rawValue: spot?.spotName ?? "",
+            FireBaseCollectionFields.spotVisitors.rawValue: spot?.visitorList ?? [],
+            FireBaseCollectionFields.taggedUserIDs.rawValue: post.taggedUserIDs ?? []
         ]
         
-        functions.httpsCallable("sendPostNotification").call(notiValues, completion: {_,_ in })
+        functions.httpsCallable(FuctionsHttpsCall.sendPostNotification.rawValue)
+            .call(
+                notiValues,
+                completion: {_, _ in }
+            )
     }
 }
