@@ -7,10 +7,10 @@
 //
 
 import Firebase
-import FirebaseUI
 import Mixpanel
 import SnapKit
 import UIKit
+import SDWebImage
 
 enum ProfileRelation {
     case myself

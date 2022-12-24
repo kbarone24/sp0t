@@ -7,8 +7,6 @@
 //
 
 import Firebase
-import FirebaseUI
-import Foundation
 import Mixpanel
 import UIKit
 
@@ -27,7 +25,22 @@ final class FriendsListController: UIViewController {
     var cancelButton: UIButton!
     var titleLabel: UILabel!
     var tableView: UITableView!
-    var searchBar: UISearchBar?
+    
+    private(set) lazy var searchBar: UISearchBar = {
+        let searchBar = UISearchBar()
+        searchBar.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
+        searchBar.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
+        searchBar.searchTextField.leftView?.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
+        searchBar.delegate = self
+        searchBar.autocapitalizationType = .none
+        searchBar.autocorrectionType = .no
+        searchBar.placeholder = " Search"
+        searchBar.clipsToBounds = true
+        searchBar.layer.cornerRadius = 3
+        searchBar.keyboardDistanceFromTextField = 250
+        
+        return searchBar
+    }()
 
     var confirmedIDs: [String] /// users who cannot be unselected
     var friendIDs: [String]
@@ -134,21 +147,8 @@ final class FriendsListController: UIViewController {
     }
 
     func addSearchBar() {
-        searchBar = UISearchBar {
-            $0.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
-            $0.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-            $0.searchTextField.leftView?.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
-            $0.delegate = self
-            $0.autocapitalizationType = .none
-            $0.autocorrectionType = .no
-            $0.placeholder = " Search"
-            $0.clipsToBounds = true
-            $0.layer.cornerRadius = 3
-            $0.keyboardDistanceFromTextField = 250
-            view.addSubview($0)
-        }
-        
-        searchBar!.snp.makeConstraints {
+        view.addSubview(searchBar)
+        searchBar.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(16)
             $0.top.equalTo(60)
             $0.height.equalTo(36)
@@ -198,7 +198,7 @@ final class FriendsListController: UIViewController {
     @objc func searchPan(_ sender: UIPanGestureRecognizer) {
         /// remove keyboard on down swipe + vertical swipe > horizontal
         if abs(sender.translation(in: view).y) > abs(sender.translation(in: view).x) {
-            searchBar!.resignFirstResponder()
+            searchBar.resignFirstResponder()
         }
     }
 }

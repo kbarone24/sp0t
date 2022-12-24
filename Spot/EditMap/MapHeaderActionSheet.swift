@@ -39,7 +39,7 @@ extension CustomMapHeaderCell {
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
         alert.addAction(cancelAction)
         alert.addAction(unfollowAction)
-        let containerVC = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
+        let containerVC = UIApplication.shared.keyWindow?.rootViewController ?? UIViewController()
         containerVC.present(alert, animated: true)
     }
 

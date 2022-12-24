@@ -7,9 +7,9 @@
 //
 
 import Firebase
-import FirebaseUI
 import Mixpanel
 import UIKit
+import SDWebImage
 
 class EditMapController: UIViewController {
     private var mapData: CustomMap?

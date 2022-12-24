@@ -9,8 +9,14 @@
 import Foundation
 import UIKit
 
-class PostButton: UIButton {
-    var postIcon: UIImageView!
+final class PostButton: UIButton {
+    
+    private(set) lazy var postIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "PostIcon")
+        return imageView
+    }()
+    
     var postText: UILabel!
     override var isEnabled: Bool {
         didSet {
@@ -23,10 +29,7 @@ class PostButton: UIButton {
         backgroundColor = UIColor(named: "SpotGreen")
         layer.cornerRadius = 9
 
-        postIcon = UIImageView {
-            $0.image = UIImage(named: "PostIcon")
-            addSubview($0)
-        }
+        addSubview(postIcon)
         postIcon.snp.makeConstraints {
             $0.leading.equalTo(self.snp.centerX).offset(-30)
             $0.centerY.equalToSuperview().offset(-1)
@@ -46,6 +49,7 @@ class PostButton: UIButton {
         }
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

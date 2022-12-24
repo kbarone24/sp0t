@@ -62,7 +62,15 @@ final class MapController: UIViewController {
         return view
     }()
 
-    var titleView: MapTitleView?
+    private(set) lazy var titleView: MapTitleView = {
+        let view = MapTitleView()
+        view.searchButton.addTarget(self, action: #selector(searchTap(_:)), for: .touchUpInside)
+        view.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
+        view.notificationsButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
+        
+        return view
+    }()
+    
     lazy var mapView = SpotMapView()
     lazy var cityLabel: UILabel = {
         let label = UILabel()
@@ -214,33 +222,25 @@ final class MapController: UIViewController {
     }
 
     func getTitleView() -> UIView {
-        if let titleView { return titleView }
-
-        titleView = MapTitleView {
-            $0.searchButton.addTarget(self, action: #selector(searchTap(_:)), for: .touchUpInside)
-            $0.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
-            $0.notificationsButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
-        }
-
         let notificationRef = self.db.collection("users").document(self.uid).collection("notifications")
         let query = notificationRef.whereField("seen", isEqualTo: false)
 
         /// show green bell on notifications when theres an unseen noti
         if notiListener != nil { notiListener?.remove() }
-        print("add noti listener")
-        notiListener = query.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
+
+        notiListener = query.addSnapshotListener(includeMetadataChanges: true) { [weak self] (snap, err) in
             if err != nil || snap?.metadata.isFromCache ?? false {
                 return
             } else {
                 if !(snap?.documents.isEmpty ?? true) {
-                    self.titleView?.notificationsButton.pendingCount = snap?.documents.count ?? 0
+                    self?.titleView.notificationsButton.pendingCount = snap?.documents.count ?? 0
                 } else {
-                    self.titleView?.notificationsButton.pendingCount = 0
+                    self?.titleView.notificationsButton.pendingCount = 0
                 }
             }
         }
 
-        return titleView ?? UIView()
+        return titleView
     }
 
     func openNewMap() {

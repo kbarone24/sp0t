@@ -6,10 +6,9 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import FirebaseUI
-import Foundation
 import MapKit
 import UIKit
+import SDWebImage
 
 class SpotPostAnnotationView: MKAnnotationView {
     var id = ""

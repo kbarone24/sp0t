@@ -95,7 +95,7 @@ extension ChooseSpotController {
             for doc in docs {
                 do {
                     /// get all spots that match query and order by distance
-                    let info = try doc.data(as: MapSpot.self)
+                    let info = try? doc.data(as: MapSpot.self)
                     guard let spotInfo = info else { return }
                     if spotInfo.hasPOILevelAccess() {
                         self.addSpot(spot: spotInfo, query: true)

@@ -66,7 +66,7 @@ extension CustomMapController {
                 let postGroup = DispatchGroup()
                 for doc in docs {
                     do {
-                        let unwrappedInfo = try doc.data(as: MapPost.self)
+                        let unwrappedInfo = try? doc.data(as: MapPost.self)
                         guard let postInfo = unwrappedInfo else { return }
                         if self.postsList.contains(where: { $0.id == postInfo.id }) { continue }
                         if !self.hasMapPostAccess(post: postInfo) { continue }

@@ -6,8 +6,6 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import FirebaseUI
-import Foundation
 import Mixpanel
 import UIKit
 

@@ -106,7 +106,7 @@ final class MapPostService: MapPostServiceProtocol {
                             
                             do {
                                 let userService = try ServiceContainer.shared.service(for: \.userService)
-                                guard var commentInfo = try doc.data(as: MapComment.self) else {
+                                guard var commentInfo = try? doc.data(as: MapComment.self) else {
                                     continue
                                 }
                                 
@@ -209,7 +209,7 @@ final class MapPostService: MapPostServiceProtocol {
                         }
                         
                         do {
-                            guard let postInfo = try doc.data(as: MapPost.self) else { continue }
+                            guard let postInfo = try? doc.data(as: MapPost.self) else { continue }
                             posts.append(postInfo)
                         } catch {
                             continue

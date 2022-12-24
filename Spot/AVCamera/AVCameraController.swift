@@ -104,7 +104,7 @@ final class AVCameraController: UIViewController {
         return button
     }()
 
-    var failedPostView: FailedPostView?
+    private(set) lazy var failedPostView = FailedPostView(frame: .zero)
     lazy var beginPan: CGPoint = .zero
 
     /// show focus circle when user taps screen
@@ -214,7 +214,7 @@ final class AVCameraController: UIViewController {
 
     private func addCameraView() {
         view.backgroundColor = UIColor.black
-        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+        let window = UIApplication.shared.keyWindow
         let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
 
         /// start camera area below notch on iPhone X+
@@ -347,6 +347,7 @@ final class AVCameraController: UIViewController {
             $0.leading.trailing.top.equalToSuperview()
             $0.height.equalTo(150)
         }
+        
         _ = CAGradientLayer {
             $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 100)
             $0.colors = [

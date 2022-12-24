@@ -7,13 +7,13 @@
 //
 
 import Firebase
-import FirebaseUI
 import Foundation
 import IQKeyboardManagerSwift
 import Mixpanel
 import UIKit
+import SDWebImage
 
-class CommentsController: UIViewController {
+final class CommentsController: UIViewController {
 
     // var friendsList: [UserProfile] = []
     weak var postVC: PostController!
@@ -33,7 +33,27 @@ class CommentsController: UIViewController {
     var footerView: UIView!
     var profilePic: UIImageView!
     var postButton: UIButton!
-    lazy var textView = UITextView()
+    
+    
+    private(set) lazy var textView: UITextView = {
+        let textView = UITextView()
+        
+        textView.delegate = self
+        textView.backgroundColor = UIColor(red: 0.937, green: 0.937, blue: 0.937, alpha: 1)
+        textView.textColor = UIColor(red: 0.267, green: 0.267, blue: 0.267, alpha: 1)
+        textView.font = UIFont(name: "SFCompactText-Semibold", size: 17)
+        textView.alpha = 0.65
+        textView.text = emptyTextString
+        textView.textContainerInset = UIEdgeInsets(top: 11, left: 12, bottom: 11, right: 60)
+        textView.isScrollEnabled = false
+        textView.returnKeyType = .send
+        textView.textContainer.maximumNumberOfLines = 6
+        textView.textContainer.lineBreakMode = .byTruncatingHead
+        textView.delegate = self
+        textView.layer.cornerRadius = 11
+        
+        return textView
+    }()
 
     lazy var friendService: FriendsServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.friendsService)
@@ -48,7 +68,15 @@ class CommentsController: UIViewController {
     let emptyTextString = "Comment..."
 
     var panGesture: UIPanGestureRecognizer!
-    var tagFriendsView: TagFriendsView?
+    
+    private(set) lazy var tagFriendsView: TagFriendsView = {
+        let view = TagFriendsView()
+        view.delegate = self
+        view.textColor = .black
+        
+        return view
+    }()
+    
     var cancelOnDismiss = false
     var firstOpen = true
 
@@ -160,22 +188,7 @@ class CommentsController: UIViewController {
             $0.bottom.equalToSuperview().inset(15)
         }
 
-        textView = UITextView {
-            $0.delegate = self
-            $0.backgroundColor = UIColor(red: 0.937, green: 0.937, blue: 0.937, alpha: 1)
-            $0.textColor = UIColor(red: 0.267, green: 0.267, blue: 0.267, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 17)
-            $0.alpha = 0.65
-            $0.text = emptyTextString
-            $0.textContainerInset = UIEdgeInsets(top: 11, left: 12, bottom: 11, right: 60)
-            $0.isScrollEnabled = false
-            $0.returnKeyType = .send
-            $0.textContainer.maximumNumberOfLines = 6
-            $0.textContainer.lineBreakMode = .byTruncatingHead
-            $0.delegate = self
-            $0.layer.cornerRadius = 11
-            footerView.addSubview($0)
-        }
+        footerView.addSubview(textView)
         textView.snp.makeConstraints {
             $0.leading.equalTo(profilePic.snp.trailing).offset(15)
             $0.trailing.equalToSuperview().inset(17)
@@ -379,30 +392,20 @@ extension CommentsController: UITextViewDelegate {
     }
 
     func removeTagTable() {
-        if tagFriendsView != nil {
-            tagFriendsView!.removeFromSuperview()
-            tagFriendsView = nil
-            textView.autocorrectionType = .default
-        }
+        tagFriendsView.removeFromSuperview()
+        textView.autocorrectionType = .default
     }
 
     func addTagTable(tagString: String) {
-        if tagFriendsView == nil {
-            tagFriendsView = TagFriendsView {
-                $0.delegate = self
-                $0.textColor = .black
-                $0.searchText = tagString
-                view.addSubview($0)
-            }
-            tagFriendsView!.snp.makeConstraints {
-                $0.leading.trailing.equalToSuperview()
-                $0.height.equalTo(90)
-                $0.bottom.equalTo(footerView.snp.top)
-            }
-            textView.autocorrectionType = .no
-        } else {
-            tagFriendsView?.searchText = tagString
+        view.addSubview(tagFriendsView)
+        tagFriendsView.searchText = tagString
+        tagFriendsView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(90)
+            $0.bottom.equalTo(footerView.snp.top)
         }
+
+        textView.autocorrectionType = .no
     }
 
     func textViewDidBeginEditing(_ textView: UITextView) {
@@ -521,491 +524,4 @@ extension CommentsController: UITableViewDelegate, UITableViewDataSource {
     }
     ///https://stackoverflow.com/questions/37942812/turn-some-parts-of-uilabel-to-act-like-a-uibutton
 
-}
-
-class CommentCell: UITableViewCell {
-    var comment: MapComment!
-    var post: MapPost!
-
-    var profilePic: UIImageView!
-    var username: UILabel!
-    var commentLabel: UILabel!
-    var likeButton: UIButton!
-    var numLikes: UILabel!
-
-    var tagRect: [(rect: CGRect, username: String)] = []
-    let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-
-    var likeCount: Int = 0 {
-        didSet {
-            if likeCount > 0 {
-                numLikes.isHidden = false
-                numLikes.text = String(likeCount)
-            } else {
-                numLikes.isHidden = true
-            }
-        }
-    }
-
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        selectionStyle = .none
-        translatesAutoresizingMaskIntoConstraints = true
-        backgroundColor = UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
-        tag = 30
-        setUpView()
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    func setUpView() {
-        resetCell()
-
-        likeButton = UIButton {
-            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            $0.contentHorizontalAlignment = .center
-            $0.contentVerticalAlignment = .center
-            contentView.addSubview($0)
-        }
-        likeButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(20)
-            $0.top.equalTo(21)
-            $0.width.equalTo(28.8)
-            $0.height.equalTo(27)
-        }
-
-        numLikes = UILabel {
-            $0.textColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 10.5)
-            $0.textAlignment = .center
-            $0.isHidden = false
-            contentView.addSubview($0)
-        }
-        numLikes.snp.makeConstraints {
-            $0.leading.equalTo(likeButton.snp.trailing)
-            $0.bottom.equalTo(likeButton.snp.bottom).inset(5)
-        }
-
-        profilePic = UIImageView {
-            $0.contentMode = .scaleAspectFill
-            $0.layer.cornerRadius = 39 / 2
-            $0.clipsToBounds = true
-            $0.isUserInteractionEnabled = true
-            let tap = UITapGestureRecognizer(target: self, action: #selector(userTap))
-            $0.addGestureRecognizer(tap)
-            contentView.addSubview($0)
-        }
-        profilePic.snp.makeConstraints {
-            $0.leading.equalTo(13)
-            $0.top.equalTo(15)
-            $0.width.height.equalTo(39)
-        }
-
-        username = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
-            $0.isUserInteractionEnabled = true
-            let tap = UITapGestureRecognizer(target: self, action: #selector(userTap))
-            $0.addGestureRecognizer(tap)
-            contentView.addSubview($0)
-        }
-        username.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.trailing).offset(9)
-            $0.top.equalTo(17)
-            $0.trailing.lessThanOrEqualTo(likeButton.snp.leading).inset(5)
-        }
-
-        commentLabel = UILabel {
-            $0.lineBreakMode = .byWordWrapping
-            $0.numberOfLines = 0
-            $0.textColor = UIColor(red: 0.562, green: 0.562, blue: 0.562, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
-            $0.isUserInteractionEnabled = true
-            contentView.addSubview($0)
-        }
-        commentLabel.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.trailing).offset(9)
-            $0.trailing.lessThanOrEqualTo(likeButton.snp.leading).offset(-8)
-            $0.top.equalTo(username.snp.bottom).offset(1)
-            $0.bottom.lessThanOrEqualToSuperview()
-        }
-    }
-
-    func setUp(comment: MapComment, post: MapPost) {
-        self.comment = comment
-        self.post = post
-
-        let commentString = NSAttributedString(string: comment.comment)
-        commentLabel.attributedText = commentString
-        commentLabel.sizeToFit()
-        addAttString()
-
-        username.text = comment.userInfo?.username ?? ""
-        username.sizeToFit()
-
-        let liked = comment.likers?.contains(where: { $0 == uid }) ?? false
-        let image = liked ? UIImage(named: "CommentLikeButtonFilled") : UIImage(named: "CommentLikeButton")?.withTintColor(UIColor(red: 0.342, green: 0.342, blue: 0.342, alpha: 1))
-        likeButton.setImage(image, for: .normal)
-        liked ? likeButton.addTarget(self, action: #selector(unlikeTap(_:)), for: .touchUpInside) : likeButton.addTarget(self, action: #selector(likeTap(_:)), for: .touchUpInside)
-        likeCount = comment.likers?.count ?? 0
-
-        let url = comment.userInfo?.imageURL ?? ""
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-        }
-    }
-
-    func resetCell() {
-        if profilePic != nil { profilePic.removeFromSuperview() }
-        if username != nil { username.text = ""; username.removeFromSuperview() }
-        if commentLabel != nil { commentLabel.text = ""; commentLabel.attributedText = nil; commentLabel.removeFromSuperview() }
-        if likeButton != nil { likeButton.removeFromSuperview() }
-        if numLikes != nil { numLikes.text = ""; numLikes.removeFromSuperview() }
-    }
-
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
-    }
-
-    func addAttString() {
-        if !(comment.taggedUsers?.isEmpty ?? true) {
-            let attString = NSAttributedString.getAttString(caption: comment.comment, taggedFriends: comment.taggedUsers!, font: commentLabel.font, maxWidth: UIScreen.main.bounds.width - 105)
-            commentLabel.attributedText = attString.0
-            tagRect = attString.1
-
-            let tap = UITapGestureRecognizer(target: self, action: #selector(self.tappedLabel(_:)))
-            commentLabel.isUserInteractionEnabled = true
-            commentLabel.addGestureRecognizer(tap)
-        }
-    }
-
-    func tagUser() {
-        /// @ tapped comment's poster at the end of the active comment text
-        let username = "@\(comment.userInfo?.username ?? "") "
-
-        guard let commentsVC = viewContainingController() as? CommentsController else { return }
-        if !commentsVC.textView.isFirstResponder {
-            var text = (commentsVC.textView.text ?? "")
-            if text == commentsVC.emptyTextString { text = ""; commentsVC.textView.alpha = 1.0; commentsVC.postButton.isEnabled = true } /// have to enable manually because the textView didn't technically "edit"
-            text.insert(contentsOf: username, at: text.startIndex)
-            commentsVC.textView.text = text
-        }
-    }
-
-    @objc func likeTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "CommentsLikeComment")
-        if let commentsVC = viewContainingController() as? CommentsController {
-            commentsVC.likeComment(comment: comment, post: post)
-        }
-    }
-
-    @objc func unlikeTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "CommentsUnlikeComment")
-        if let commentsVC = viewContainingController() as? CommentsController {
-            commentsVC.unlikeComment(comment: comment, post: post)
-        }
-    }
-
-    @objc func tappedLabel(_ sender: UITapGestureRecognizer) {
-        // tag tap
-        for r in tagRect {
-            if r.rect.contains(sender.location(in: sender.view)) {
-                Mixpanel.mainInstance().track(event: "CommentsOpenTaggedUserProfile")
-                /// open tag from friends list
-                if let friend = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == r.username }) {
-                    openProfile(user: friend)
-                    return
-                } else {
-                    /// pass blank user object to open func, run get user func on profile load
-                    let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: r.username)
-                    self.openProfile(user: user)
-                }
-            }
-        }
-        Mixpanel.mainInstance().track(event: "CommentsTapTagUser")
-        tagUser()
-    }
-
-    @objc func userTap() {
-        Mixpanel.mainInstance().track(event: "CommentsUserTap")
-        guard let user = comment.userInfo else { return }
-        openProfile(user: user)
-    }
-
-    func openProfile(user: UserProfile) {
-        if let commentsVC = self.viewContainingController() as? CommentsController {
-            commentsVC.openProfile(user: user)
-        }
-    }
-}
-
-class CommentsControl: UITableViewHeaderFooterView {
-    var buttonBar: UIView!
-    var commentSeg: CommentSeg!
-    var likeSeg: LikeSeg!
-
-    var selectedIndex: Int = 0 {
-        didSet {
-            commentSeg.index = selectedIndex
-            likeSeg.index = selectedIndex
-            setBarConstraints()
-        }
-    }
-
-    override init(reuseIdentifier: String?) {
-        super.init(reuseIdentifier: reuseIdentifier)
-        isUserInteractionEnabled = true
-        let backgroundView = UIView()
-        backgroundView.backgroundColor = .white
-        self.backgroundView = backgroundView
-
-        setUp()
-    }
-
-    func setUp() {
-        let segWidth: CGFloat = 125
-        if commentSeg != nil { return }
-
-        commentSeg = CommentSeg {
-            $0.addTarget(self, action: #selector(commentSegTap(_:)), for: .touchUpInside)
-            addSubview($0)
-        }
-        commentSeg.snp.makeConstraints {
-            $0.bottom.equalToSuperview().offset(-3.5)
-            $0.trailing.equalTo(snp.centerX).offset(-5)
-            $0.width.equalTo(segWidth)
-        }
-
-        likeSeg = LikeSeg {
-            $0.addTarget(self, action: #selector(likeSegTap(_:)), for: .touchUpInside)
-            addSubview($0)
-        }
-        likeSeg.snp.makeConstraints {
-            $0.bottom.equalToSuperview().offset(-3.5)
-            $0.leading.equalTo(snp.centerX).offset(5)
-            $0.width.equalTo(segWidth)
-        }
-
-        buttonBar = UIButton {
-            $0.backgroundColor = .black
-            $0.layer.cornerRadius = 1
-            addSubview($0)
-        }
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    @objc func commentSegTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "CommentsCommentsSegTap")
-        if selectedIndex == 1 {
-            switchToCommentSeg()
-        }
-    }
-
-    @objc func likeSegTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "CommentsLikeSegTap")
-        if selectedIndex == 0 {
-            switchToLikeSeg()
-            guard let commentsVC = viewContainingController() as? CommentsController else { return }
-            commentsVC.textView.resignFirstResponder()
-        }
-    }
-
-    func switchToLikeSeg() {
-        guard let commentsVC = viewContainingController() as? CommentsController else { return }
-        commentsVC.selectedIndex = 1
-        commentsVC.tableView.reloadData()
-        commentsVC.footerView.isHidden = true
-    }
-
-    func switchToCommentSeg() {
-        guard let commentsVC = viewContainingController() as? CommentsController else { return }
-        commentsVC.selectedIndex = 0
-        commentsVC.tableView.reloadData()
-        commentsVC.footerView.isHidden = false
-        commentsVC.footerView.becomeFirstResponder()
-    }
-
-    func setBarConstraints() {
-        buttonBar.snp.removeConstraints()
-        let selectedButton = selectedIndex == 0 ? commentSeg : likeSeg
-        buttonBar.snp.makeConstraints {
-            $0.leading.equalTo(selectedButton!.snp.leading)
-            $0.top.equalTo(selectedButton!.snp.bottom)
-            $0.width.equalTo(selectedButton!.snp.width)
-            $0.height.equalTo(3.5)
-        }
-    }
-
-    func animateSegmentSwitch() {
-        let selectedButton = selectedIndex == 0 ? commentSeg : likeSeg
-        UIView.animate(withDuration: 0.2) {
-            self.buttonBar.snp.updateConstraints {
-                $0.leading.equalTo(selectedButton!.snp.leading)
-            }
-            self.buttonBar.layoutIfNeeded()
-        }
-    }
-}
-
-class CommentSeg: UIButton {
-    var commentIcon: UIImageView!
-    var commentLabel: UILabel!
-
-    var commentCount: Int = 0 {
-        didSet {
-            var commentText = "\(max(commentCount, 0)) comment"
-            if commentCount - 1 != 1 { commentText += "s" }
-            commentLabel.text = commentText
-        }
-    }
-
-    var index: Int = 0 {
-        didSet {
-            let selectedSeg = index == 0
-            commentIcon.alpha = selectedSeg ? 1.0 : 0.6
-            commentLabel.alpha = selectedSeg ? 1.0 : 0.6
-            commentLabel.font = selectedSeg ? UIFont(name: "SFCompactText-Bold", size: 16) : UIFont(name: "SFCompactText-Semibold", size: 16)
-        }
-    }
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-
-        commentIcon = UIImageView {
-            $0.image = UIImage(named: "CommentSegCommentIcon")
-            addSubview($0)
-        }
-        commentIcon.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(22.4)
-        }
-
-        commentLabel = UILabel {
-            $0.textColor = .black
-            addSubview($0)
-        }
-        commentLabel.snp.makeConstraints {
-            $0.leading.equalTo(commentIcon.snp.trailing).offset(5)
-            $0.centerY.equalToSuperview()
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class LikeSeg: UIButton {
-    var likeIcon: UIImageView!
-    var likeLabel: UILabel!
-
-    var likeCount: Int = 0 {
-        didSet {
-            var likeText = "\(max(likeCount, 0)) like"
-            if likeCount - 1 != 1 { likeText += "s" }
-            likeLabel.text = likeText
-        }
-    }
-
-    var index: Int = 0 {
-        didSet {
-            let selectedSeg = index == 1
-            likeIcon.alpha = selectedSeg ? 1.0 : 0.6
-            likeLabel.alpha = selectedSeg ? 1.0 : 0.6
-            likeLabel.font = selectedSeg ? UIFont(name: "SFCompactText-Bold", size: 16) : UIFont(name: "SFCompactText-Semibold", size: 16)
-        }
-    }
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-
-        likeLabel = UILabel {
-            $0.textColor = .black
-            addSubview($0)
-        }
-        likeLabel.snp.makeConstraints {
-            $0.centerX.equalToSuperview().offset(12.5)
-            $0.centerY.equalToSuperview()
-        }
-
-        likeIcon = UIImageView {
-            $0.image = UIImage(named: "CommentSegLikeIcon")
-            addSubview($0)
-        }
-        likeIcon.snp.makeConstraints {
-            $0.trailing.equalTo(likeLabel.snp.leading).offset(-5)
-            $0.centerY.equalToSuperview()
-            $0.width.equalTo(22.5)
-            $0.height.equalTo(20)
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class LikerCell: UITableViewCell {
-    var profilePic: UIImageView!
-    var username: UILabel!
-    var user: UserProfile!
-
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = UIColor(red: 0.973, green: 0.973, blue: 0.973, alpha: 1)
-        contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(likerCellTap)))
-
-        profilePic = UIImageView {
-            $0.layer.cornerRadius = 39 / 2
-            $0.clipsToBounds = true
-            $0.contentMode = .scaleAspectFill
-            contentView.addSubview($0)
-        }
-        profilePic.snp.makeConstraints {
-            $0.leading.equalTo(9)
-            $0.top.equalTo(15)
-            $0.width.height.equalTo(39)
-        }
-
-        username = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
-            contentView.addSubview($0)
-        }
-        username.snp.makeConstraints {
-            $0.leading.equalTo(profilePic.snp.trailing).offset(9)
-            $0.centerY.equalTo(profilePic.snp.centerY)
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    func setUp(user: UserProfile) {
-        let url = user.imageURL
-        if url != "" {
-            let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            profilePic.sd_setImage(with: URL(string: url), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
-        }
-        username.text = user.username
-        self.user = user
-    }
-
-    @objc func likerCellTap() {
-        Mixpanel.mainInstance().track(event: "CommentsLikerCellTap")
-        guard let commentsVC = viewContainingController() as? CommentsController else { return }
-        commentsVC.openProfile(user: user)
-    }
-
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        /// cancel image fetch when cell leaves screen
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
-    }
 }

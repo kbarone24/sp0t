@@ -12,8 +12,14 @@ import UIKit
 extension ImagePreviewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         // cancel caption tap when textView is open
-        if gestureRecognizer.accessibilityValue == "caption_tap" && textView.isFirstResponder { return false }
-        if gestureRecognizer.accessibilityValue == "tap_to_close" && tagFriendsView != nil { return false }
+        if gestureRecognizer.accessibilityValue == "caption_tap" && textView.isFirstResponder {
+            return false
+        }
+        
+        if gestureRecognizer.accessibilityValue == "tap_to_close" {
+            return false
+        }
+        
         return true
     }
 }
@@ -94,30 +100,21 @@ extension ImagePreviewController: UITextViewDelegate {
     }
 
     func removeTagTable() {
-        if tagFriendsView != nil {
-            tagFriendsView?.removeFromSuperview()
-            tagFriendsView = nil
-            spotNameButton.isHidden = false
-        }
+        tagFriendsView.removeFromSuperview()
+        spotNameButton.isHidden = false
     }
 
     func addTagTable(tagString: String) {
-        if tagFriendsView == nil {
-            tagFriendsView = TagFriendsView {
-                $0.delegate = self
-                $0.textColor = .white
-                $0.searchText = tagString
-                postDetailView.addSubview($0)
-            }
-            tagFriendsView?.snp.makeConstraints {
-                $0.leading.trailing.equalToSuperview()
-                $0.height.equalTo(90)
-                $0.bottom.equalTo(spotNameButton.snp.bottom)
-            }
-            spotNameButton.isHidden = true
-        } else {
-            tagFriendsView?.searchText = tagString
+        tagFriendsView.searchText = tagString
+        
+        postDetailView.addSubview(tagFriendsView)
+        tagFriendsView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(90)
+            $0.bottom.equalTo(spotNameButton.snp.bottom)
         }
+        
+        spotNameButton.isHidden = true
     }
 
     func getCaptionHeight(text: String) -> CGFloat {

@@ -2,7 +2,6 @@ import CoreData
 import Firebase
 import FirebaseCrashlytics
 import FirebaseMessaging
-import FirebaseUI
 import IQKeyboardManagerSwift
 import Mixpanel
 import UIKit

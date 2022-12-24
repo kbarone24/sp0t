@@ -9,6 +9,7 @@
 import Foundation
 
 extension UIImageView {
+    
     func animateGIF(directionUp: Bool, counter: Int) {
         
         if superview == nil || isHidden || animationImages?.isEmpty ?? true { self.stopPostAnimation(); return }

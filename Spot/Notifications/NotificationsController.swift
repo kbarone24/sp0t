@@ -6,7 +6,7 @@
 //  Copyright © 2019 sp0t, LLC. All rights reserved.
 //
 import Firebase
-import FirebaseUI
+
 import Foundation
 import Mixpanel
 import UIKit

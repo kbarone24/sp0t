@@ -6,11 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 import Firebase
-import FirebaseUI
-import Foundation
 import MapKit
 import Mixpanel
 import UIKit
+import SDWebImage
 
 extension MapController {
     func runMapFetches() {
@@ -81,7 +80,7 @@ extension MapController {
 
                 NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-                self.titleView?.profileButton.profileImage.sd_setImage(
+                self.titleView.profileButton.profileImage.sd_setImage(
                     with: URL(string: UserDataModel.shared.userInfo.imageURL),
                     placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .black),
                     options: .highPriority, context: [.imageTransformer: transformer])
@@ -190,7 +189,7 @@ extension MapController {
             let recentGroup = DispatchGroup()
             for doc in snap.documents {
                 do {
-                    let postIn = try doc.data(as: MapPost.self)
+                    let postIn = try? doc.data(as: MapPost.self)
                     /// filter new post on initial db write
                     if doc.get("g") as? String == nil { continue }
                     /// if !contains, run query, else update with new values + update comments
@@ -238,7 +237,7 @@ extension MapController {
             let recentGroup = DispatchGroup()
             for doc in snap.documents {
                 do {
-                    let postIn = try doc.data(as: MapPost.self)
+                    let postIn = try? doc.data(as: MapPost.self)
                     /// filter new post on initial db write
                     if doc.get("g") as? String == nil { continue }
                     /// if !contains, run query, else update with new values + update comments
@@ -383,7 +382,7 @@ extension MapController {
             var appendedMap = false
             for doc in snap.documents {
                 do {
-                    let mapIn = try doc.data(as: CustomMap.self)
+                    let mapIn = try? doc.data(as: CustomMap.self)
                     guard var mapInfo = mapIn else { continue }
                     if UserDataModel.shared.deletedMapIDs.contains(where: { $0 == mapInfo.id }) { continue }
                     if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapInfo.id }) {

@@ -6,11 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
-import FirebaseUI
+import SDWebImage
 
-class SearchContactsCell: UITableViewCell {
+final class SearchContactsCell: UITableViewCell {
     private lazy var avatarImage = UIImageView()
 
     private lazy var profileImage: UIImageView = {

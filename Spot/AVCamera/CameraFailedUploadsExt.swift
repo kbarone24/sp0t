@@ -32,14 +32,17 @@ extension AVCameraController {
 
         DispatchQueue.global().async { [weak self] in
             do {
-                let failedPosts = try managedContext.fetch(postsRequest)
-                guard let post = failedPosts.first else { return }
+                guard let self,
+                      let failedPosts = try? managedContext.fetch(postsRequest),
+                      let post = failedPosts.first else {
+                    return
+                }
 
                 // test for corrupted draft or old draft (pre 1.0)
                 let timestampID = post.timestamp
 
                 if post.images == nil {
-                    self?.deletePostDraft(timestampID: timestampID)
+                    self.deletePostDraft(timestampID: timestampID)
                 }
 
                 guard let images = post.images as? Set<ImageModel> else {
@@ -49,19 +52,16 @@ extension AVCameraController {
                 let firstImageData = images.first?.imageData
 
                 if firstImageData == nil || post.addedUsers == nil {
-                    self?.deletePostDraft(timestampID: timestampID)
+                    self.deletePostDraft(timestampID: timestampID)
 
                 } else {
-                    self?.postDraft = post
+                    self.postDraft = post
                     let postImage = UIImage(data: firstImageData! as Data) ?? UIImage()
 
                     DispatchQueue.main.async {
-                        self?.failedPostView = FailedPostView {
-                            $0.coverImage.image = postImage
-                            self?.view.addSubview($0)
-                        }
-
-                        self?.failedPostView!.snp.makeConstraints {
+                        self.failedPostView.coverImage.image = postImage
+                        self.view.addSubview(self.failedPostView)
+                        self.failedPostView.snp.makeConstraints {
                             $0.edges.equalToSuperview()
                         }
                     }
@@ -79,8 +79,7 @@ extension AVCameraController {
         Mixpanel.mainInstance().track(event: "CameraDeletePostDraft", properties: nil)
         deletePostDraft(timestampID: postDraft!.timestamp)
 
-        failedPostView!.removeFromSuperview()
-        failedPostView = nil
+        failedPostView.removeFromSuperview()
     }
 
     func uploadPostDraft() {
@@ -136,7 +135,7 @@ extension AVCameraController {
                 self.uploadPostImage(
                     images: post.postImage,
                     postID: post.id!,
-                    progressFill: self.failedPostView!.progressFill,
+                    progressFill: self.failedPostView.progressFill,
                     fullWidth: UIScreen.main.bounds.width - 100
                 ) { imageURLs, failed in
 
