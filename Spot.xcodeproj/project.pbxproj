@@ -117,8 +117,6 @@
 		8C0DCBC125BA5FE000722D34 /* POI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0DCBBF25BA5FE000722D34 /* POI.swift */; };
 		8C0DCBC225BA5FE000722D34 /* POI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0DCBBF25BA5FE000722D34 /* POI.swift */; };
 		8C121D562949344A00CD4E07 /* CameraFailedUploadsExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121D4F2949344A00CD4E07 /* CameraFailedUploadsExt.swift */; };
-		8C121D572949344A00CD4E07 /* CameraFailedUploadsExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121D4F2949344A00CD4E07 /* CameraFailedUploadsExt.swift */; };
-		8C121D582949344A00CD4E07 /* CameraFailedUploadsExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121D4F2949344A00CD4E07 /* CameraFailedUploadsExt.swift */; };
 		8C121D592949344A00CD4E07 /* AVSpotCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121D502949344A00CD4E07 /* AVSpotCamera.swift */; };
 		8C121D5A2949344A00CD4E07 /* AVSpotCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121D502949344A00CD4E07 /* AVSpotCamera.swift */; };
 		8C121D5B2949344A00CD4E07 /* AVSpotCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121D502949344A00CD4E07 /* AVSpotCamera.swift */; };
@@ -1129,8 +1127,8 @@
 				8C121D502949344A00CD4E07 /* AVSpotCamera.swift */,
 				8C121D512949344A00CD4E07 /* AVCameraController.swift */,
 				8C121D522949344A00CD4E07 /* AVCameraControllerActions.swift */,
-				8C121D532949344A00CD4E07 /* CameraButton.swift */,
 				8C121D542949344A00CD4E07 /* AVCameraControllerCameraExtension.swift */,
+				8C121D532949344A00CD4E07 /* CameraButton.swift */,
 				8C121D552949344A00CD4E07 /* FailedPostView.swift */,
 			);
 			path = AVCamera;
@@ -2183,7 +2181,6 @@
 				8C66E10E291ABB8D006D29F6 /* SearchContactsCell.swift in Sources */,
 				8C121D992949351600CD4E07 /* InviteFriendsCell.swift in Sources */,
 				8C121DC42949352400CD4E07 /* ImagePreviewDelegateExtension.swift in Sources */,
-				8C121D572949344A00CD4E07 /* CameraFailedUploadsExt.swift in Sources */,
 				8C1E489B289C54CB0093030D /* FriendPostView.swift in Sources */,
 				8C121E3E294939F900CD4E07 /* AvatarURLs.swift in Sources */,
 				8C121DEC2949361500CD4E07 /* ImagePreviewView.swift in Sources */,
@@ -2342,7 +2339,6 @@
 				8C66E10F291ABB8D006D29F6 /* SearchContactsCell.swift in Sources */,
 				8C121D9A2949351600CD4E07 /* InviteFriendsCell.swift in Sources */,
 				8C121DC52949352400CD4E07 /* ImagePreviewDelegateExtension.swift in Sources */,
-				8C121D582949344A00CD4E07 /* CameraFailedUploadsExt.swift in Sources */,
 				8C1E489C289C54CB0093030D /* FriendPostView.swift in Sources */,
 				8C121E3F294939F900CD4E07 /* AvatarURLs.swift in Sources */,
 				8C121DED2949361500CD4E07 /* ImagePreviewView.swift in Sources */,

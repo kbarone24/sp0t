@@ -10,7 +10,6 @@ import UIKit
 import Mixpanel
 import SDWebImage
 
-
 final class LikerCell: UITableViewCell {
     var profilePic: UIImageView!
     var username: UILabel!
@@ -71,4 +70,3 @@ final class LikerCell: UITableViewCell {
         if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
     }
 }
-

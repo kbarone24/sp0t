@@ -292,7 +292,7 @@ extension ImagePreviewController {
                         HapticGenerator.shared.play(.soft)
                         self.popToMap()
                     }
-                }
+            }
         }
     }
     

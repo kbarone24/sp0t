@@ -161,7 +161,7 @@ final class SpotService: SpotServiceProtocol {
                     "taggedUsers": post.taggedUsers ?? [],
                     "spotLat": spot.spotLat,
                     "spotLong": spot.spotLong,
-                    "g" : geoHash,
+                    "g": geoHash,
                     "imageURL": post.imageURLs.first ?? "",
                     "phone": spot.phone ?? "",
                     "poiCategory": spot.poiCategory ?? "",
@@ -186,7 +186,6 @@ final class SpotService: SpotServiceProtocol {
                             .setData(["spotID": spotID])
                     }
                 } catch {}
-                
                 
                 var notiSpot = spot
                 notiSpot.checkInTime = Int64(interval)

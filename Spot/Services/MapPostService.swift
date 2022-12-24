@@ -166,11 +166,12 @@ final class MapPostService: MapPostServiceProtocol {
             return
         }
         
+        let captionHeight = post.caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
+        
         Task {
             var postInfo = post
+            postInfo.captionHeight = captionHeight
             
-            let caption = postInfo.caption
-            postInfo.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
             do {
                 let userService = try ServiceContainer.shared.service(for: \.userService)
                 let user = try await userService.getUserInfo(userID: post.posterID)
@@ -328,7 +329,7 @@ final class MapPostService: MapPostServiceProtocol {
         functions.httpsCallable(FuctionsHttpsCall.sendPostNotification.rawValue)
             .call(
                 notiValues,
-                completion: {_, _ in }
+                completion: { _, _ in }
             )
     }
 }

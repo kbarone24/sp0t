@@ -15,7 +15,9 @@ extension AVCameraController {
 
     func getFailedUploads() {
         guard let appDelegate =
-                UIApplication.shared.delegate as? AppDelegate else {
+                UIApplication.shared.delegate as? AppDelegate,
+              let uid = Auth.auth().currentUser?.uid
+        else {
             return
         }
 
@@ -26,7 +28,7 @@ extension AVCameraController {
 
         postsRequest.relationshipKeyPathsForPrefetching = ["images"]
         postsRequest.returnsObjectsAsFaults = false
-        postsRequest.predicate = NSPredicate(format: "uid == %@", self.uid)
+        postsRequest.predicate = NSPredicate(format: "uid == %@", uid)
         let timeSort = NSSortDescriptor(key: "timestamp", ascending: false)
         postsRequest.sortDescriptors = [timeSort]
 
@@ -86,7 +88,8 @@ extension AVCameraController {
         guard let postDraft = postDraft,
               let model = postDraft.images as? Set<ImageModel>,
               let spotService = try? ServiceContainer.shared.service(for: \.spotService),
-              let postService = try? ServiceContainer.shared.service(for: \.mapPostService)
+              let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
+              let uid = Auth.auth().currentUser?.uid
         else {
             return
         }
@@ -152,13 +155,13 @@ extension AVCameraController {
                     if newMap {
                         map = CustomMap(
                             id: post.mapID!,
-                            founderID: self.uid,
+                            founderID: uid,
                             imageURL: imageURLs.first!,
-                            likers: [self.uid],
+                            likers: [uid],
                             mapName: post.mapName ?? "",
-                            memberIDs: [self.uid],
-                            posterDictionary: [post.id!: [self.uid]],
-                            posterIDs: [self.uid],
+                            memberIDs: [uid],
+                            posterDictionary: [post.id!: [uid]],
+                            posterIDs: [uid],
                             posterUsernames: [UserDataModel.shared.userInfo.username],
                             postIDs: [post.id!],
                             postImageURLs: post.imageURLs,
@@ -210,7 +213,7 @@ extension AVCameraController {
                     }
                     
                     let visitorList = spot.visitorList
-                    self.setUserValues(poster: self.uid, post: post, spotID: spot.id ?? "", visitorList: visitorList, mapID: map.id ?? "")
+                    self.setUserValues(poster: uid, post: post, spotID: spot.id ?? "", visitorList: visitorList, mapID: map.id ?? "")
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                         self.showSuccessAlert()

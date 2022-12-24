@@ -125,9 +125,6 @@ final class AVCameraController: UIViewController {
 
     private(set) lazy var animationImages: [UIImage] = []
 
-    let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
-    let db: Firestore = Firestore.firestore()
-
     var lastZoomFactor: CGFloat = 1.0 /// use with pinch-to-zoom
     var initialBrightness: CGFloat = 0.0 /// use with front-facing flash
 

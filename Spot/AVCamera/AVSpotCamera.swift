@@ -299,7 +299,8 @@ extension AVSpotCamera: AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputS
             completionHandler: nil
         )
         
-        if captureSession.canAddOutput(photoOutput) { captureSession.addOutput(photoOutput)
+        if captureSession.canAddOutput(photoOutput) {
+            captureSession.addOutput(photoOutput)
         }
         
         captureSession.startRunning()

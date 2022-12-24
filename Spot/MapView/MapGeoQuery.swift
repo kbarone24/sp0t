@@ -22,8 +22,8 @@ extension MapController {
         let radius = min(mapView.currentRadius() / 2, maxRadius)
 
         Task {
-            await spotService?.getNearbySpots(center: center, radius: radius, searchLimit: searchLimit ?? 50, completion: { spots in
-
+            await spotService?.getNearbySpots(center: center, radius: radius, searchLimit: searchLimit ?? 50, completion: { [weak self] spots in
+                guard let self else { return }
                 let spotsAddedToMap = self.addSpotsToMap(nearbySpots: spots)
                 self.mapView.enableGeoQuery = true
 
@@ -35,7 +35,9 @@ extension MapController {
 
                 } else {
                     // activity indicator will only be animating after explore maps join
-                    DispatchQueue.main.async { self.mapActivityIndicator.stopAnimating() }
+                    DispatchQueue.main.async {
+                        self.mapActivityIndicator.stopAnimating()
+                    }
                 }
             })
         }

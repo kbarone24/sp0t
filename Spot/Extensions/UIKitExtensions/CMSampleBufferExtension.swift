@@ -24,4 +24,4 @@ extension CMSampleBuffer {
         )
     }
 }
-///https://stackoverflow.com/questions/15726761/make-an-uiimage-from-a-cmsamplebuffer
+/// https://stackoverflow.com/questions/15726761/make-an-uiimage-from-a-cmsamplebuffer

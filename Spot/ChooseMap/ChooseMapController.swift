@@ -192,7 +192,7 @@ final class ChooseMapController: UIViewController {
                         HapticGenerator.shared.play(.soft)
                         self.popToMap()
                     }
-                }
+            }
         }
     }
     

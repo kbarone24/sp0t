@@ -1,4 +1,5 @@
 import CoreData
+import SDWebImage
 import Firebase
 import FirebaseCrashlytics
 import FirebaseMessaging
@@ -7,7 +8,7 @@ import Mixpanel
 import UIKit
 import UserNotifications
 
-@UIApplicationMain
+@main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -62,6 +63,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33", trackAutomaticEvents: true)
 
         IQKeyboardManager.shared.enableAutoToolbar = false
+        
+        SDImageCache.shared.deleteOldFiles()
+        
+        // Setting disk cache
+        SDImageCache.shared.config.maxDiskSize = 1_000_000 * 200 // 200 MB
+
+        // Setting memory cache
+        SDImageCache.shared.config.maxMemoryCost = 25 * 1_024 * 1_024
+        
+        // Setting cache expiry date
+        SDImageCache.shared.config.maxDiskAge = 60 * 5 // 5 minutes
 
         return true
     }

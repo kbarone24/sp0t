@@ -34,7 +34,6 @@ final class CommentsController: UIViewController {
     var profilePic: UIImageView!
     var postButton: UIButton!
     
-    
     private(set) lazy var textView: UITextView = {
         let textView = UITextView()
         
@@ -522,6 +521,6 @@ extension CommentsController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 64
     }
-    ///https://stackoverflow.com/questions/37942812/turn-some-parts-of-uilabel-to-act-like-a-uibutton
+    /// https://stackoverflow.com/questions/37942812/turn-some-parts-of-uilabel-to-act-like-a-uibutton
 
 }
