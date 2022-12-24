@@ -161,6 +161,24 @@ extension AVCameraController {
         // if the gif camera is enabled, capture 5 images in rapid succession
         capture()
     }
+    
+    @objc func recordVideo(_ gestureRecognizer: UILongPressGestureRecognizer) {
+        if gestureRecognizer.state == .began {
+            startRecording()
+        }
+        
+        else if gestureRecognizer.state == .ended {
+            endRecording()
+        }
+    }
+    
+    private func startRecording() {
+        cameraController?.startRecordingVideo()
+    }
+    
+    private func endRecording() {
+        cameraController?.endRecordingVideo()
+    }
 
     func capture() {
         disableButtons()

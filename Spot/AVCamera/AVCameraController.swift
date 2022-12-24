@@ -46,6 +46,10 @@ final class AVCameraController: UIViewController {
         let button = CameraButton()
         button.isEnabled = false
         button.addTarget(self, action: #selector(captureImage(_:)), for: .touchUpInside)
+        
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(recordVideo(_:)))
+        button.addGestureRecognizer(longPressGesture)
+        
         return button
     }()
 
