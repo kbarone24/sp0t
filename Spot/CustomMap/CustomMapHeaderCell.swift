@@ -363,15 +363,12 @@ extension CustomMapHeaderCell {
         guard let mapData = mapData else { return }
         let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: mapData.memberIDs)
         let friendsVC = FriendsListController(
-            fromVC: nil,
             allowsSelection: true,
             showsSearchBar: true,
             friendIDs: UserDataModel.shared.userInfo.friendIDs,
             friendsList: friendsList,
-            confirmedIDs: mapData.memberIDs,
-            sentFrom: .EditMap)
+            confirmedIDs: [])
         friendsVC.delegate = self
-        friendsVC.sentFrom = .EditMap
         vc.present(friendsVC, animated: true)
     }
 
@@ -402,14 +399,11 @@ extension CustomMapHeaderCell {
         guard let customMapVC = viewContainingController() as? CustomMapController else { return }
         guard let container = customMapVC.containerDrawerView else { return }
         let friendListVC = FriendsListController(
-            fromVC: customMapVC,
             allowsSelection: false,
             showsSearchBar: false,
             friendIDs: mapData?.memberIDs ?? [],
             friendsList: [],
-            confirmedIDs: [],
-            sentFrom: .CustomMap,
-            presentedWithDrawerView: container)
+            confirmedIDs: [])
         customMapVC.present(friendListVC, animated: true)
     }
 
