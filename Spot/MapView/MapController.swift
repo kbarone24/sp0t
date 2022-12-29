@@ -32,23 +32,26 @@ final class MapController: UIViewController {
     let locationManager = CLLocationManager()
     var friendsPostsListener, mapsListener, mapsPostsListener, notiListener, userListener: ListenerRegistration?
     let homeFetchGroup = DispatchGroup()
-    let chapelHillLocation = CLLocation(latitude: 35.913_2, longitude: -79.055_8)
+    let chapelHillLocation = CLLocation(latitude: 35.9132, longitude: -79.0558)
 
     var geoQueryLimit: Int = 50
 
-    var selectedItemIndex = 0
     var firstOpen = false
     var firstTimeGettingLocation = true
-    var openedExploreMaps = false
     var userLoaded = false
-    var postsFetched = false
     var mapsLoaded = false
     var friendsLoaded = false
     var homeFetchLeaveCount = 0
+    var postsFetched: Bool = false {
+        didSet {
+            DispatchQueue.main.async { self.mapActivityIndicator.stopAnimating() }
+        }
+    }
 
-    lazy var friendsPostsDictionary = [String: MapPost]()
+    lazy var postDictionary = [String: MapPost]()
     lazy var postGroup: [MapPostGroup] = []
     lazy var mapFetchIDs: [String] = [] // used to track for deleted posts
+    lazy var friendsFetchIDs: [String] = [] // used to track for deleted posts
 
     var refresh: RefreshStatus = .activelyRefreshing
     var friendsRefresh: RefreshStatus = .refreshEnabled
@@ -67,28 +70,26 @@ final class MapController: UIViewController {
     lazy var cityLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = UIFont(name: "UniversCE-Black", size: 13)
+        label.font = UIFont(name: "UniversCE-Black", size: 16.5)
         label.textAlignment = .center
         return label
     }()
 
+    lazy var mapActivityIndicator = CustomActivityIndicator()
     lazy var newPostsButton = NewPostsButton()
-    lazy var mapsCollection: UICollectionView = {
-        let layout = UICollectionViewFlowLayout {
-            $0.minimumInteritemSpacing = 5
-            $0.scrollDirection = .horizontal
-        }
-        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+    lazy var currentLocationButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "CurrentLocationButton"), for: .normal)
+        return button
+    }()
+    lazy var inviteFriendsButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "MapInviteFriendsButton"), for: .normal)
+        return button
+    }()
+    lazy var navBarExtender: UIView = {
+        let view = UIView()
         view.backgroundColor = .white
-        view.showsHorizontalScrollIndicator = false
-        view.clipsToBounds = false
-        view.contentInset = UIEdgeInsets(top: 5, left: 9, bottom: 0, right: 9)
-        view.register(MapLoadingCell.self, forCellWithReuseIdentifier: "MapLoadingCell")
-        view.register(FriendsMapCell.self, forCellWithReuseIdentifier: "FriendsCell")
-        view.register(MapHomeCell.self, forCellWithReuseIdentifier: "MapCell")
-        view.register(AddMapCell.self, forCellWithReuseIdentifier: "AddMapCell")
-        view.register(CampusMapCell.self, forCellWithReuseIdentifier: "CampusMapCell")
-        view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         return view
     }()
 
@@ -141,42 +142,32 @@ final class MapController: UIViewController {
 
     func setUpViews() {
         addMapView()
-        addMapsCollection()
         addSupplementalViews()
     }
 
     func addMapView() {
         mapView.delegate = self
         mapView.spotMapDelegate = self
-        view.addSubview(mapView)
-        makeMapHomeConstraints()
-    }
 
-    func makeMapHomeConstraints() {
+        view.addSubview(mapView)
         mapView.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
-         //   $0.top.equalTo(mapsCollection.snp.bottom)
             $0.bottom.equalToSuperview().offset(65)
         }
-    }
-
-    func addMapsCollection() {
-        mapsCollection.delegate = self
-        mapsCollection.dataSource = self
-        view.addSubview(mapsCollection)
-        mapsCollection.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide.snp.topMargin)
-            $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(114)
-        }
-        mapsCollection.layoutIfNeeded()
-        mapsCollection.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.1).cgColor, opacity: 1, radius: 12, offset: CGSize(width: 0, height: 1))
     }
 
     func addSupplementalViews() {
         view.addSubview(cityLabel)
         cityLabel.snp.makeConstraints {
-            $0.top.equalTo(mapsCollection.snp.bottom).offset(6)
+            $0.top.equalTo(8)
+            $0.centerX.equalToSuperview()
+        }
+
+        view.addSubview(mapActivityIndicator)
+        mapActivityIndicator.startAnimating()
+        mapActivityIndicator.snp.makeConstraints {
+            $0.top.equalTo(cityLabel.snp.bottom)
+            $0.height.width.equalTo(40)
             $0.centerX.equalToSuperview()
         }
 
@@ -197,6 +188,25 @@ final class MapController: UIViewController {
             $0.trailing.equalTo(-21)
             $0.height.equalTo(68)
             $0.width.equalTo(66)
+        }
+
+        currentLocationButton.isHidden = true
+        currentLocationButton.addTarget(self, action: #selector(currentLocationTap), for: .touchUpInside)
+        view.addSubview(currentLocationButton)
+        currentLocationButton.snp.makeConstraints {
+            $0.leading.equalTo(addButton).offset(-15)
+            $0.bottom.equalTo(addButton.snp.top).offset(8)
+            $0.height.width.equalTo(58)
+        }
+
+        inviteFriendsButton.isHidden = true
+        inviteFriendsButton.addTarget(self, action: #selector(inviteFriendsTap), for: .touchUpInside)
+        view.addSubview(inviteFriendsButton)
+        inviteFriendsButton.snp.makeConstraints {
+            $0.leading.equalTo(11)
+            $0.bottom.equalTo(-37)
+            $0.width.equalTo(231)
+            $0.height.equalTo(83)
         }
     }
 
@@ -254,6 +264,28 @@ final class MapController: UIViewController {
                 UploadPostModel.shared.createSharedInstance()
                 vc.presentedModally = true
                 self?.navigationController?.pushViewController(vc, animated: true)
+            }
+        }
+    }
+
+    @objc func currentLocationTap() {
+        animateToCurrentLocation()
+    }
+
+    @objc func inviteFriendsTap() {
+        Mixpanel.mainInstance().track(event: "MapInviteFriendsTap")
+        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
+        let items = [url, "Add me on sp0t 🌎🦦"] as [Any]
+
+        DispatchQueue.main.async {
+            let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
+            self.present(activityView, animated: true)
+            activityView.completionWithItemsHandler = { activityType, completed, _, _ in
+                if completed {
+                    Mixpanel.mainInstance().track(event: "MapInviteSent", properties: ["type": activityType?.rawValue ?? ""])
+                } else {
+                    Mixpanel.mainInstance().track(event: "MapInviteCancelled")
+                }
             }
         }
     }
@@ -329,13 +361,13 @@ final class MapController: UIViewController {
     }
 
     func openSelectedMap() {
+        // TODO: amend or remove this function - can you open friends map in gallery"
         if sheetView != nil { return } /// cancel on double tap
-        var map = getSelectedMap()
-        let unsortedPosts = map == nil ? friendsPostsDictionary.map { $0.value } : map?.postsDictionary.map { $0.value } ?? []
+        let unsortedPosts = postDictionary.map { $0.value }
         let posts = mapView.sortPosts(unsortedPosts)
-        let mapType: MapType = map == nil ? .friendsMap : .customMap
+        let mapType: MapType = .friendsMap
         /// create map from current posts for friends map
-        if map == nil { map = getFriendsMapObject() }
+        let map = getFriendsMapObject()
 
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: posts, presentedDrawerView: nil, mapType: mapType)
 
@@ -373,8 +405,9 @@ final class MapController: UIViewController {
     }
 
     func toggleHomeAppearance(hidden: Bool) {
-        mapsCollection.isHidden = hidden
         newPostsButton.setHidden(hidden: hidden)
+        currentLocationButton.isHidden = hidden
+        inviteFriendsButton.isHidden = hidden
         cityLabel.isHidden = hidden
         /// if hidden, remove annotations, else reset with selected annotations
         if hidden {
@@ -382,20 +415,22 @@ final class MapController: UIViewController {
         } else {
             mapView.delegate = self
             mapView.spotMapDelegate = self
-            DispatchQueue.main.async { self.addMapAnnotations(index: self.selectedItemIndex, reload: true) }
+            DispatchQueue.main.async { self.addMapAnnotations() }
         }
     }
 
     func animateHomeAlphas() {
         navigationController?.navigationBar.alpha = 0.0
-        mapsCollection.alpha = 0.0
         newPostsButton.alpha = 0.0
+        currentLocationButton.alpha = 0.0
+        inviteFriendsButton.alpha = 0.0
         cityLabel.alpha = 0.0
 
         UIView.animate(withDuration: 0.15) {
             self.navigationController?.navigationBar.alpha = 1
-            self.mapsCollection.alpha = 1
             self.newPostsButton.alpha = 1
+            self.currentLocationButton.alpha = 1
+            self.inviteFriendsButton.alpha = 1
             self.cityLabel.alpha = 1
         }
     }
@@ -406,86 +441,8 @@ final class MapController: UIViewController {
     }
 }
 
-extension MapController: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        if status == .denied || status == .restricted {
-            Mixpanel.mainInstance().track(event: "LocationServicesDenied")
-        } else if status == .authorizedWhenInUse || status == .authorizedWhenInUse {
-            Mixpanel.mainInstance().track(event: "LocationServicesAllowed")
-            UploadPostModel.shared.locationAccess = true
-            locationManager.startUpdatingLocation()
-        }
-        // ask for notifications access immediately after location access
-        let pushManager = PushNotificationManager(userID: uid)
-        pushManager.registerForPushNotifications()
-    }
-
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-        UserDataModel.shared.currentLocation = location
-        if firstTimeGettingLocation {
-            if manager.accuracyAuthorization == .reducedAccuracy { Mixpanel.mainInstance().track(event: "PreciseLocationOff") }
-            /// set current location to show while feed loads
-            firstTimeGettingLocation = false
-            NotificationCenter.default.post(name: Notification.Name("UpdateLocation"), object: nil)
-
-            /// map might load before user accepts location services
-            if self.mapsLoaded {
-                self.displayHeelsMap()
-            } else {
-                self.mapView.setRegion(MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 400_000, longitudinalMeters: 400_000), animated: false)
-            }
-        }
-    }
-
-    func checkLocationAuth() {
-        switch locationManager.authorizationStatus {
-        case .notDetermined:
-            locationManager.requestWhenInUseAuthorization()
-            // prompt user to open their settings if they havent allowed location services
-
-        case .restricted, .denied:
-            presentLocationAlert()
-
-        case .authorizedWhenInUse, .authorizedAlways:
-            UploadPostModel.shared.locationAccess = true
-            locationManager.startUpdatingLocation()
-
-        @unknown default:
-            return
-        }
-    }
-
-    func presentLocationAlert() {
-        let alert = UIAlertController(
-            title: "Spot needs your location to find spots near you",
-            message: nil,
-            preferredStyle: .alert
-        )
-
-        alert.addAction(
-            UIAlertAction(title: "Settings", style: .default) { _ in
-                Mixpanel.mainInstance().track(event: "LocationServicesSettingsOpen")
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(url, options: [:])
-                }
-            }
-        )
-
-        alert.addAction(
-            UIAlertAction(title: "Cancel", style: .cancel) { _ in
-            }
-        )
-
-        self.present(alert, animated: true, completion: nil)
-    }
-}
-
 extension MapController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-      /*  if otherGestureRecognizer.view?.tag == 16 || otherGestureRecognizer.view?.tag == 23 || otherGestureRecognizer.view?.tag == 30 {
-            return false
-        } */
         return true
     }
 }

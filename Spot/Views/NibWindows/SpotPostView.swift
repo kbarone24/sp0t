@@ -26,7 +26,11 @@ class SpotPostView: UIView {
     }
 
     func setValues(post: MapPost, spotName: String, poiCategory: POICategory?, count: Int, moreText: String) {
-        backgroundImage.image = post.seen ? UIImage(named: "SeenPostBackground") : UIImage(named: "NewPostBackground")
+        backgroundImage.image =
+        post.seen ? UIImage(named: "SeenPostBackground") :
+        post.privacyLevel == "invite" ? UIImage(named: "SecretPostBackground") :
+        UIImage(named: "FriendsPostBackground")
+
         postImage.layer.cornerRadius = post.seen ? 67 / 2 : 75 / 2
 
         imageMask.layer.cornerRadius = 67 / 2
@@ -34,7 +38,11 @@ class SpotPostView: UIView {
         replayIcon.isHidden = !post.seen
 
         if count > 1 {
-            postCount.backgroundColor = post.seen ? .white : UIColor(named: "SpotGreen")
+            postCount.backgroundColor =
+            post.seen ? .white :
+            post.privacyLevel == "invite" ? UIColor(named: "SpotPink") :
+            UIColor(named: "SpotGreen")
+
             postCount.layer.cornerRadius = 10
             postCount.font = UIFont(name: "SFCompactText-Heavy", size: 12.5)
             postCount.text = String(count)
@@ -92,7 +100,7 @@ class SpotPostView: UIView {
         frame = CGRect(x: 0, y: 0, width: viewWidth, height: bounds.height)
 
         backgroundImage.frame = CGRect(x: (bounds.width - backgroundImage.bounds.width) / 2, y: 0, width: backgroundImage.bounds.width, height: backgroundImage.bounds.height)
-        postImage.frame = CGRect(x: (bounds.width - postImage.bounds.width) / 2, y: 1, width: postImage.bounds.width, height: postImage.bounds.height)
+        postImage.frame = CGRect(x: (bounds.width - postImage.bounds.width) / 2, y: 1.5, width: postImage.bounds.width, height: postImage.bounds.height)
         imageMask.frame = postImage.frame
         replayIcon.frame = CGRect(x: postImage.frame.midX - 27.7 / 2, y: postImage.frame.midY - 31 / 2, width: 27.7, height: 31)
         postCount.frame = CGRect(x: backgroundImage.frame.minX + 49, y: 0, width: postCount.frame.width, height: postCount.frame.height)

@@ -310,9 +310,6 @@
 		8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */; };
 		8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */; };
 		8C1E4862289C54240093030D /* ProfileMyMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4861289C54240093030D /* ProfileMyMapCell.swift */; };
-		8C1E486F289C54800093030D /* MapCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E486E289C54800093030D /* MapCollectionExtension.swift */; };
-		8C1E4870289C54800093030D /* MapCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E486E289C54800093030D /* MapCollectionExtension.swift */; };
-		8C1E4871289C54800093030D /* MapCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E486E289C54800093030D /* MapCollectionExtension.swift */; };
 		8C1E4873289C54900093030D /* MapViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4872289C54900093030D /* MapViewDelegate.swift */; };
 		8C1E4874289C54900093030D /* MapViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4872289C54900093030D /* MapViewDelegate.swift */; };
 		8C1E4875289C54900093030D /* MapViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4872289C54900093030D /* MapViewDelegate.swift */; };
@@ -432,6 +429,15 @@
 		8C66E119291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
 		8C66E11A291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
 		8C66E11B291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
+		8C66FAB2295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAB1295CD2C3007A347D /* MapControllerLocationManager.swift */; };
+		8C66FAB3295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAB1295CD2C3007A347D /* MapControllerLocationManager.swift */; };
+		8C66FAB4295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAB1295CD2C3007A347D /* MapControllerLocationManager.swift */; };
+		8C66FABB295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FABA295E0B3F007A347D /* HomeScreenContainerController.swift */; };
+		8C66FABC295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FABA295E0B3F007A347D /* HomeScreenContainerController.swift */; };
+		8C66FABD295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FABA295E0B3F007A347D /* HomeScreenContainerController.swift */; };
+		8C66FABF295E0D2C007A347D /* MapSideBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FABE295E0D2C007A347D /* MapSideBarController.swift */; };
+		8C66FAC0295E0D2C007A347D /* MapSideBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FABE295E0D2C007A347D /* MapSideBarController.swift */; };
+		8C66FAC1295E0D2C007A347D /* MapSideBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FABE295E0D2C007A347D /* MapSideBarController.swift */; };
 		8C7409742937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
 		8C7409752937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
 		8C7409762937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
@@ -702,7 +708,6 @@
 		8C12E676290A088C00FA5BF0 /* ProfileNotificationsExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileNotificationsExtension.swift; sourceTree = "<group>"; };
 		8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextCancelButton.swift; sourceTree = "<group>"; };
 		8C1E4861289C54240093030D /* ProfileMyMapCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProfileMyMapCell.swift; path = Spot/Profile/ProfileMyMapCell.swift; sourceTree = SOURCE_ROOT; };
-		8C1E486E289C54800093030D /* MapCollectionExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapCollectionExtension.swift; sourceTree = "<group>"; };
 		8C1E4872289C54900093030D /* MapViewDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapViewDelegate.swift; sourceTree = "<group>"; };
 		8C1E4877289C54C10093030D /* SpotPostAnnotationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpotPostAnnotationView.swift; sourceTree = "<group>"; };
 		8C1E4879289C54C10093030D /* SpotNameAnnotationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpotNameAnnotationView.swift; sourceTree = "<group>"; };
@@ -748,6 +753,9 @@
 		8C66E110291B3A23006D29F6 /* CampusMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampusMapCell.swift; sourceTree = "<group>"; };
 		8C66E114291C0C81006D29F6 /* EditProfileActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileActions.swift; sourceTree = "<group>"; };
 		8C66E118291C0EE9006D29F6 /* AccountOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountOptions.swift; sourceTree = "<group>"; };
+		8C66FAB1295CD2C3007A347D /* MapControllerLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapControllerLocationManager.swift; sourceTree = "<group>"; };
+		8C66FABA295E0B3F007A347D /* HomeScreenContainerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenContainerController.swift; sourceTree = "<group>"; };
+		8C66FABE295E0D2C007A347D /* MapSideBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSideBarController.swift; sourceTree = "<group>"; };
 		8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-LT-85-Extra-Black.ttf"; sourceTree = "<group>"; };
 		8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-CE-75-Black.ttf"; sourceTree = "<group>"; };
 		8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationExtension.swift; sourceTree = "<group>"; };
@@ -914,6 +922,7 @@
 				CDF8E9572903C18700BE929F /* EnterMapCode */,
 				CDF8E9622903CD6200BE929F /* ExploreMap */,
 				8C121D802949351600CD4E07 /* FindFriends */,
+				8C66FAB9295E0B22007A347D /* HomeScreen */,
 				8C121DA12949352400CD4E07 /* ImagePreview */,
 				CDF8E9542903BFA800BE929F /* MapView */,
 				8CA10A462912FBCB00DD50EB /* NewMap */,
@@ -1134,13 +1143,13 @@
 		8C121DC6294935EF00CD4E07 /* Notifications */ = {
 			isa = PBXGroup;
 			children = (
-				8C121DC7294935EF00CD4E07 /* FriendRequestCollectionCell.swift */,
+				8C121DCB294935EF00CD4E07 /* NotificationsController.swift */,
 				8C121DC8294935EF00CD4E07 /* NotificationsFetchExtension.swift */,
 				8C121DC9294935EF00CD4E07 /* NotificationsTableExtension.swift */,
-				8C121DCA294935EF00CD4E07 /* FriendRequestCell.swift */,
-				8C121DCB294935EF00CD4E07 /* NotificationsController.swift */,
-				8C121DCC294935EF00CD4E07 /* ActivityIndicatorCell.swift */,
 				8C121DCD294935EF00CD4E07 /* ActivityCell.swift */,
+				8C121DC7294935EF00CD4E07 /* FriendRequestCollectionCell.swift */,
+				8C121DCA294935EF00CD4E07 /* FriendRequestCell.swift */,
+				8C121DCC294935EF00CD4E07 /* ActivityIndicatorCell.swift */,
 			);
 			path = Notifications;
 			sourceTree = "<group>";
@@ -1354,6 +1363,15 @@
 			path = SearchContacts;
 			sourceTree = "<group>";
 		};
+		8C66FAB9295E0B22007A347D /* HomeScreen */ = {
+			isa = PBXGroup;
+			children = (
+				8C66FABA295E0B3F007A347D /* HomeScreenContainerController.swift */,
+				8C66FABE295E0D2C007A347D /* MapSideBarController.swift */,
+			);
+			path = HomeScreen;
+			sourceTree = "<group>";
+		};
 		8CA10A462912FBCB00DD50EB /* NewMap */ = {
 			isa = PBXGroup;
 			children = (
@@ -1475,7 +1493,6 @@
 			children = (
 				CDF8E96E290462FE00BE929F /* MapController.swift */,
 				CDF8E9602903C90000BE929F /* MapNavigationController.swift */,
-				8C1E486E289C54800093030D /* MapCollectionExtension.swift */,
 				8C1E48CA289C55090093030D /* MapFetchExtension.swift */,
 				8CA512AC28BE52D700F8C1FE /* MapNotificationsExtension.swift */,
 				8CD1BE60292D609800367220 /* MapGeoQuery.swift */,
@@ -1490,6 +1507,7 @@
 				CD3D8DDC29050ACE0062DE8D /* MapHomeCell.swift */,
 				8C5788C52925B63500966DBB /* FriendsMapCell.swift */,
 				8C66E110291B3A23006D29F6 /* CampusMapCell.swift */,
+				8C66FAB1295CD2C3007A347D /* MapControllerLocationManager.swift */,
 			);
 			path = MapView;
 			sourceTree = "<group>";
@@ -1852,6 +1870,7 @@
 				8CA10A4C2912FC0300DD50EB /* NextButton.swift in Sources */,
 				59F6ABAF234EA73500E18AAF /* Contact.swift in Sources */,
 				8C121D9E2949351600CD4E07 /* SearchContactsButtonCell.swift in Sources */,
+				8C66FABB295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */,
 				5916A8B724A5542800118E83 /* ResultSpot.swift in Sources */,
 				CDF8E95D2903C86200BE929F /* MapTitleView.swift in Sources */,
 				8C121E5A294951D300CD4E07 /* PhoneController.swift in Sources */,
@@ -1898,6 +1917,7 @@
 				8C66E10D291ABB8D006D29F6 /* SearchContactsCell.swift in Sources */,
 				8C1E48CB289C55090093030D /* MapFetchExtension.swift in Sources */,
 				8CA10A1B2911B0DD00DD50EB /* CollectionExtension.swift in Sources */,
+				8C66FAB2295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */,
 				8C121DF42949361500CD4E07 /* CircleView.swift in Sources */,
 				8C121DFA2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				CD239A0E28FFD5480099513F /* UIScrollViewExtension.swift in Sources */,
@@ -1985,7 +2005,6 @@
 				8C121E4C2949519700CD4E07 /* ChooseMapTableView.swift in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				CDF8E9772904653B00BE929F /* CMSampleBufferExtension.swift in Sources */,
-				8C1E486F289C54800093030D /* MapCollectionExtension.swift in Sources */,
 				CDF8E9472903B4F200BE929F /* FirestoreDecoder.swift in Sources */,
 				412555C4285AEA0300C071A4 /* BottomToTopTransition.swift in Sources */,
 				8CC3653A26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
@@ -1999,6 +2018,7 @@
 				8C66226828F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
 				59FCF5B524734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
 				8C66226628F0AFD400BA5D05 /* SpotSearchBar.swift in Sources */,
+				8C66FABF295E0D2C007A347D /* MapSideBarController.swift in Sources */,
 				59FCF5AC24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				CDF8E988290486B000BE929F /* SimpleMapHeaderCell.swift in Sources */,
 				8C121D562949344A00CD4E07 /* CameraFailedUploadsExt.swift in Sources */,
@@ -2082,7 +2102,6 @@
 				8C121E502949519700CD4E07 /* ChooseMapController.swift in Sources */,
 				8C121D662949344A00CD4E07 /* AVCameraControllerCameraExtension.swift in Sources */,
 				59FCF5BC24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
-				8C1E4870289C54800093030D /* MapCollectionExtension.swift in Sources */,
 				8C66225F28EF4B6800BA5D05 /* PostButton.swift in Sources */,
 				8C8DBB832888BE9300B31BFD /* NewMapController.swift in Sources */,
 				8C121D602949344A00CD4E07 /* AVCameraControllerActions.swift in Sources */,
@@ -2115,6 +2134,7 @@
 				8C4FDFC428DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
 				8C3B955B28B2B47100C06586 /* AddSpotButton.swift in Sources */,
 				8C121D7E294934BC00CD4E07 /* ChooseSpotFetchExtension.swift in Sources */,
+				8C66FABC295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */,
 				8C121DBB2949352400CD4E07 /* ImagePreviewActions.swift in Sources */,
 				8C121D932949351600CD4E07 /* ContactCell.swift in Sources */,
 				59056A5423197E4B00C7E753 /* PostNotification.swift in Sources */,
@@ -2128,6 +2148,7 @@
 				8C121E4D2949519700CD4E07 /* ChooseMapTableView.swift in Sources */,
 				59E2354A246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				59FCF5B024734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
+				8C66FAB3295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */,
 				8C2074CD25CB38440040036B /* City.swift in Sources */,
 				8C121D72294934BC00CD4E07 /* ChooseSpotLoadingCell.swift in Sources */,
 				8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */,
@@ -2140,6 +2161,7 @@
 				8C121E64294951D300CD4E07 /* EmailLoginController.swift in Sources */,
 				594CE11C24C939050051516C /* MapComment.swift in Sources */,
 				5916A8B824A5542900118E83 /* ResultSpot.swift in Sources */,
+				8C66FAC0295E0D2C007A347D /* MapSideBarController.swift in Sources */,
 				8C121E80294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
 				8C121DFB2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C121DB82949352400CD4E07 /* NewSpotNameView.swift in Sources */,
@@ -2228,7 +2250,6 @@
 				8C121E512949519700CD4E07 /* ChooseMapController.swift in Sources */,
 				8C121D672949344A00CD4E07 /* AVCameraControllerCameraExtension.swift in Sources */,
 				59FCF5BD24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
-				8C1E4871289C54800093030D /* MapCollectionExtension.swift in Sources */,
 				8C66226028EF4B6800BA5D05 /* PostButton.swift in Sources */,
 				8C8DBB842888BE9300B31BFD /* NewMapController.swift in Sources */,
 				8C121D612949344A00CD4E07 /* AVCameraControllerActions.swift in Sources */,
@@ -2261,6 +2282,7 @@
 				8C4FDFC528DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
 				8C3B955C28B2B47100C06586 /* AddSpotButton.swift in Sources */,
 				8C121D7F294934BC00CD4E07 /* ChooseSpotFetchExtension.swift in Sources */,
+				8C66FABD295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */,
 				8C121DBC2949352400CD4E07 /* ImagePreviewActions.swift in Sources */,
 				8C121D942949351600CD4E07 /* ContactCell.swift in Sources */,
 				59056A5523197E4B00C7E753 /* PostNotification.swift in Sources */,
@@ -2274,6 +2296,7 @@
 				8C121E4E2949519700CD4E07 /* ChooseMapTableView.swift in Sources */,
 				59E2354B246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
 				59FCF5B124734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
+				8C66FAB4295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */,
 				8C2074CE25CB38440040036B /* City.swift in Sources */,
 				8C121D73294934BC00CD4E07 /* ChooseSpotLoadingCell.swift in Sources */,
 				8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */,
@@ -2286,6 +2309,7 @@
 				8C121E65294951D300CD4E07 /* EmailLoginController.swift in Sources */,
 				594CE11D24C939050051516C /* MapComment.swift in Sources */,
 				5916A8B924A5542900118E83 /* ResultSpot.swift in Sources */,
+				8C66FAC1295E0D2C007A347D /* MapSideBarController.swift in Sources */,
 				8C121E81294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
 				8C121DFC2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C121DB92949352400CD4E07 /* NewSpotNameView.swift in Sources */,
@@ -2514,7 +2538,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2587,7 +2611,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
