@@ -246,9 +246,6 @@
 		8C121DFD2949361500CD4E07 /* GalleryCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DEA2949361500CD4E07 /* GalleryCell.swift */; };
 		8C121DFE2949361500CD4E07 /* GalleryCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DEA2949361500CD4E07 /* GalleryCell.swift */; };
 		8C121DFF2949361500CD4E07 /* GalleryCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DEA2949361500CD4E07 /* GalleryCell.swift */; };
-		8C121E39294939A900CD4E07 /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E38294939A900CD4E07 /* FriendsListController.swift */; };
-		8C121E3A294939A900CD4E07 /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E38294939A900CD4E07 /* FriendsListController.swift */; };
-		8C121E3B294939A900CD4E07 /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E38294939A900CD4E07 /* FriendsListController.swift */; };
 		8C121E3D294939F900CD4E07 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E3C294939F900CD4E07 /* AvatarURLs.swift */; };
 		8C121E3E294939F900CD4E07 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E3C294939F900CD4E07 /* AvatarURLs.swift */; };
 		8C121E3F294939F900CD4E07 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E3C294939F900CD4E07 /* AvatarURLs.swift */; };
@@ -438,6 +435,12 @@
 		8C66FABF295E0D2C007A347D /* MapSideBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FABE295E0D2C007A347D /* MapSideBarController.swift */; };
 		8C66FAC0295E0D2C007A347D /* MapSideBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FABE295E0D2C007A347D /* MapSideBarController.swift */; };
 		8C66FAC1295E0D2C007A347D /* MapSideBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FABE295E0D2C007A347D /* MapSideBarController.swift */; };
+		8C66FAC4295E200F007A347D /* ChooseFriendsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAC3295E200F007A347D /* ChooseFriendsCell.swift */; };
+		8C66FAC5295E200F007A347D /* ChooseFriendsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAC3295E200F007A347D /* ChooseFriendsCell.swift */; };
+		8C66FAC6295E200F007A347D /* ChooseFriendsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAC3295E200F007A347D /* ChooseFriendsCell.swift */; };
+		8C66FAD4295E2632007A347D /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAD3295E2632007A347D /* FriendsListController.swift */; };
+		8C66FAD5295E2632007A347D /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAD3295E2632007A347D /* FriendsListController.swift */; };
+		8C66FAD6295E2632007A347D /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAD3295E2632007A347D /* FriendsListController.swift */; };
 		8C7409742937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
 		8C7409752937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
 		8C7409762937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
@@ -685,7 +688,6 @@
 		8C121DE82949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoGalleryLimitedAccessExtension.swift; sourceTree = "<group>"; };
 		8C121DE92949361500CD4E07 /* SelectedImagesFooter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectedImagesFooter.swift; sourceTree = "<group>"; };
 		8C121DEA2949361500CD4E07 /* GalleryCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GalleryCell.swift; sourceTree = "<group>"; };
-		8C121E38294939A900CD4E07 /* FriendsListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendsListController.swift; sourceTree = "<group>"; };
 		8C121E3C294939F900CD4E07 /* AvatarURLs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AvatarURLs.swift; sourceTree = "<group>"; };
 		8C121E422949519700CD4E07 /* FriendsMapButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendsMapButton.swift; sourceTree = "<group>"; };
 		8C121E432949519700CD4E07 /* CustomMapUploadCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMapUploadCell.swift; sourceTree = "<group>"; };
@@ -756,6 +758,8 @@
 		8C66FAB1295CD2C3007A347D /* MapControllerLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapControllerLocationManager.swift; sourceTree = "<group>"; };
 		8C66FABA295E0B3F007A347D /* HomeScreenContainerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenContainerController.swift; sourceTree = "<group>"; };
 		8C66FABE295E0D2C007A347D /* MapSideBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSideBarController.swift; sourceTree = "<group>"; };
+		8C66FAC3295E200F007A347D /* ChooseFriendsCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChooseFriendsCell.swift; sourceTree = "<group>"; };
+		8C66FAD3295E2632007A347D /* FriendsListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendsListController.swift; sourceTree = "<group>"; };
 		8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-LT-85-Extra-Black.ttf"; sourceTree = "<group>"; };
 		8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-CE-75-Black.ttf"; sourceTree = "<group>"; };
 		8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationExtension.swift; sourceTree = "<group>"; };
@@ -922,6 +926,7 @@
 				CDF8E9572903C18700BE929F /* EnterMapCode */,
 				CDF8E9622903CD6200BE929F /* ExploreMap */,
 				8C121D802949351600CD4E07 /* FindFriends */,
+				8C66FAC2295E1FF9007A347D /* FriendsList */,
 				8C66FAB9295E0B22007A347D /* HomeScreen */,
 				8C121DA12949352400CD4E07 /* ImagePreview */,
 				CDF8E9542903BFA800BE929F /* MapView */,
@@ -1048,7 +1053,6 @@
 			children = (
 				5F9D0CDE2853B53E007969AD /* BottomDrawerViewController.swift */,
 				8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */,
-				8C121E38294939A900CD4E07 /* FriendsListController.swift */,
 			);
 			path = HelperControllers;
 			sourceTree = "<group>";
@@ -1370,6 +1374,15 @@
 				8C66FABE295E0D2C007A347D /* MapSideBarController.swift */,
 			);
 			path = HomeScreen;
+			sourceTree = "<group>";
+		};
+		8C66FAC2295E1FF9007A347D /* FriendsList */ = {
+			isa = PBXGroup;
+			children = (
+				8C66FAD3295E2632007A347D /* FriendsListController.swift */,
+				8C66FAC3295E200F007A347D /* ChooseFriendsCell.swift */,
+			);
+			path = FriendsList;
 			sourceTree = "<group>";
 		};
 		8CA10A462912FBCB00DD50EB /* NewMap */ = {
@@ -1965,6 +1978,7 @@
 				8C121D892949351600CD4E07 /* FindFriendsFetchExtension.swift in Sources */,
 				CDF8E94B2903B62400BE929F /* UILabelExtension.swift in Sources */,
 				8C121D71294934BC00CD4E07 /* ChooseSpotLoadingCell.swift in Sources */,
+				8C66FAD4295E2632007A347D /* FriendsListController.swift in Sources */,
 				8CA10A482912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
 				8C66E115291C0C81006D29F6 /* EditProfileActions.swift in Sources */,
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
@@ -1997,6 +2011,7 @@
 				8C121E462949519700CD4E07 /* FriendsMapButton.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */,
 				CDF8E985290477C200BE929F /* CustomMapCollectionExtension.swift in Sources */,
+				8C66FAC4295E200F007A347D /* ChooseFriendsCell.swift in Sources */,
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
 				8C8DBB822888BE9300B31BFD /* NewMapController.swift in Sources */,
 				1DF6E03522089F4500BA0C36 /* AppDelegate.swift in Sources */,
@@ -2052,7 +2067,6 @@
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C1E489A289C54CB0093030D /* FriendPostView.swift in Sources */,
 				CDF8E93F2903A21300BE929F /* MapService.swift in Sources */,
-				8C121E39294939A900CD4E07 /* FriendsListController.swift in Sources */,
 				CD79D7F62924837B005C93F1 /* UserService.swift in Sources */,
 				8C121E492949519700CD4E07 /* CustomMapUploadCell.swift in Sources */,
 				59F4701E2368933C00BB79CC /* SceneDelegate.swift in Sources */,
@@ -2123,7 +2137,6 @@
 				8C121D572949344A00CD4E07 /* CameraFailedUploadsExt.swift in Sources */,
 				8C1E489B289C54CB0093030D /* FriendPostView.swift in Sources */,
 				8C121E3E294939F900CD4E07 /* AvatarURLs.swift in Sources */,
-				8C121E3A294939A900CD4E07 /* FriendsListController.swift in Sources */,
 				8C121DEC2949361500CD4E07 /* ImagePreviewView.swift in Sources */,
 				8C121D9C2949351600CD4E07 /* FindFriendsSearchExtension.swift in Sources */,
 				599BD2BC23C652BD00ECB84A /* PostController.swift in Sources */,
@@ -2150,6 +2163,7 @@
 				59FCF5B024734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C66FAB3295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */,
 				8C2074CD25CB38440040036B /* City.swift in Sources */,
+				8C66FAC5295E200F007A347D /* ChooseFriendsCell.swift in Sources */,
 				8C121D72294934BC00CD4E07 /* ChooseSpotLoadingCell.swift in Sources */,
 				8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8C121D5D2949344A00CD4E07 /* AVCameraController.swift in Sources */,
@@ -2207,6 +2221,7 @@
 				8C121D5A2949344A00CD4E07 /* AVSpotCamera.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8C121DDB294935EF00CD4E07 /* NotificationsController.swift in Sources */,
+				8C66FAD5295E2632007A347D /* FriendsListController.swift in Sources */,
 				8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8C121DF82949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C121E4A2949519700CD4E07 /* CustomMapUploadCell.swift in Sources */,
@@ -2271,7 +2286,6 @@
 				8C121D582949344A00CD4E07 /* CameraFailedUploadsExt.swift in Sources */,
 				8C1E489C289C54CB0093030D /* FriendPostView.swift in Sources */,
 				8C121E3F294939F900CD4E07 /* AvatarURLs.swift in Sources */,
-				8C121E3B294939A900CD4E07 /* FriendsListController.swift in Sources */,
 				8C121DED2949361500CD4E07 /* ImagePreviewView.swift in Sources */,
 				8C121D9D2949351600CD4E07 /* FindFriendsSearchExtension.swift in Sources */,
 				599BD2BD23C652BD00ECB84A /* PostController.swift in Sources */,
@@ -2298,6 +2312,7 @@
 				59FCF5B124734A1C0012207D /* PostDraft+CoreDataProperties.swift in Sources */,
 				8C66FAB4295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */,
 				8C2074CE25CB38440040036B /* City.swift in Sources */,
+				8C66FAC6295E200F007A347D /* ChooseFriendsCell.swift in Sources */,
 				8C121D73294934BC00CD4E07 /* ChooseSpotLoadingCell.swift in Sources */,
 				8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8C121D5E2949344A00CD4E07 /* AVCameraController.swift in Sources */,
@@ -2355,6 +2370,7 @@
 				8C121D5B2949344A00CD4E07 /* AVSpotCamera.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8C121DDC294935EF00CD4E07 /* NotificationsController.swift in Sources */,
+				8C66FAD6295E2632007A347D /* FriendsListController.swift in Sources */,
 				8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8C121DF92949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C121E4B2949519700CD4E07 /* CustomMapUploadCell.swift in Sources */,
