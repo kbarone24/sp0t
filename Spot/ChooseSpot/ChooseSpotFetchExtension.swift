@@ -154,7 +154,7 @@ extension ChooseSpotController {
             spot.spotDescription = spot.poiCategory ?? ""
         }
 
-        // replace POI with spot that's already been created
+        // replace POI with spot that's already been created (search)
         if query {
             if let i = self.querySpots.firstIndex(where: {
                 $0.spotName == spot.spotName ||
@@ -165,7 +165,7 @@ extension ChooseSpotController {
                 // append new spot
                 querySpots.append(spot)
             }
-
+        // replace POI with spot that's already been created (nearby fetch)
         } else {
             if let i = spotObjects.firstIndex(where: {
                 $0.spotName == spot.spotName ||

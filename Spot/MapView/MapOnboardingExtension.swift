@@ -19,7 +19,7 @@ extension MapController {
     }
 
     func loadAdditionalOnboarding() {
-        let posts = friendsPostsDictionary.count
+        let posts = postDictionary.count
         if UserDataModel.shared.userInfo.avatarURL ?? "" == "" {
             let avc = AvatarSelectionController(sentFrom: .map)
             self.navigationController?.pushViewController(avc, animated: true)
@@ -43,7 +43,6 @@ extension MapController {
             openExploreMaps(onboarding: true)
             UserDataModel.shared.userInfo.respondedToCampusMap = true
             db.collection("users").document(uid).updateData(["respondedToCampusMap": true])
-            self.openedExploreMaps = true
         }
     }
 }

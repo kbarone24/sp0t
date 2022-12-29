@@ -10,7 +10,7 @@ import Mixpanel
 import UIKit
 
 final class NewPostsButton: UIButton {
-    private lazy var backgroundImageView = UIImageView()
+    private lazy var backgroundImageView = UIImageView(image: UIImage(named: "AnimateToNewPostsIcon"))
     private lazy var newPostsIndicator: UIView = {
         let imageView = UIView()
         imageView.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
@@ -34,10 +34,10 @@ final class NewPostsButton: UIButton {
                     attributes: [NSAttributedString.Key.kern: -0.75]
                 )
                 postCountBackground.isHidden = false
-                backgroundImageView.image = UIImage(named: "AnimateToNewPostsIcon")
+                backgroundImageView.alpha = 1.0
             } else {
                 postCountBackground.isHidden = true
-                backgroundImageView.image = UIImage(named: "SeeAllPostsIcon")
+                backgroundImageView.alpha = 0.8
             }
         }
     }
@@ -87,16 +87,13 @@ final class NewPostsButton: UIButton {
     }
 
     @objc func tap() {
-        guard let mapVC = viewContainingController() as? MapController else {
-            return
-        }
+        guard let mapVC = viewContainingController() as? MapController else { return }
+        Mixpanel.mainInstance().track(event: "MapControllerAnimateToMostRecentPost")
 
         if unseenPosts > 0 {
-            Mixpanel.mainInstance().track(event: "MapControllerAnimateToMostRecentPost")
             mapVC.animateToMostRecentPost()
         } else {
-            Mixpanel.mainInstance().track(event: "MapControllerOpenSelectedMap")
-            mapVC.openSelectedMap()
+            mapVC.centerMapOnMapPosts(animated: true, includeSeen: true)
         }
     }
 
