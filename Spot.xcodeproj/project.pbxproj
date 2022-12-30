@@ -447,6 +447,9 @@
 		8C66FAE5295F67AD007A347D /* NSAttributedStringExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAE4295F67AD007A347D /* NSAttributedStringExtension.swift */; };
 		8C66FAE6295F67AD007A347D /* NSAttributedStringExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAE4295F67AD007A347D /* NSAttributedStringExtension.swift */; };
 		8C66FAE7295F67AD007A347D /* NSAttributedStringExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAE4295F67AD007A347D /* NSAttributedStringExtension.swift */; };
+		8C66FAE9295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAE8295F9EF5007A347D /* HomeScreenDelegate.swift */; };
+		8C66FAEA295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAE8295F9EF5007A347D /* HomeScreenDelegate.swift */; };
+		8C66FAEB295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAE8295F9EF5007A347D /* HomeScreenDelegate.swift */; };
 		8C7409742937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
 		8C7409752937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
 		8C7409762937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
@@ -766,6 +769,7 @@
 		8C66FADB295F396A007A347D /* SideBarCustomMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideBarCustomMapCell.swift; sourceTree = "<group>"; };
 		8C66FAE0295F6108007A347D /* SideBarNewMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideBarNewMapCell.swift; sourceTree = "<group>"; };
 		8C66FAE4295F67AD007A347D /* NSAttributedStringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSAttributedStringExtension.swift; sourceTree = "<group>"; };
+		8C66FAE8295F9EF5007A347D /* HomeScreenDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenDelegate.swift; sourceTree = "<group>"; };
 		8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-LT-85-Extra-Black.ttf"; sourceTree = "<group>"; };
 		8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-CE-75-Black.ttf"; sourceTree = "<group>"; };
 		8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationExtension.swift; sourceTree = "<group>"; };
@@ -1376,6 +1380,7 @@
 			isa = PBXGroup;
 			children = (
 				8C66FABA295E0B3F007A347D /* HomeScreenContainerController.swift */,
+				8C66FAE8295F9EF5007A347D /* HomeScreenDelegate.swift */,
 			);
 			path = HomeScreen;
 			sourceTree = "<group>";
@@ -1917,6 +1922,7 @@
 				8C121E7F294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
 				8C3B955228AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				CDF8E94D2903B68200BE929F /* UITextViewExtension.swift in Sources */,
+				8C66FAE9295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */,
 				8C121D7D294934BC00CD4E07 /* ChooseSpotFetchExtension.swift in Sources */,
 				8C3B952628AC042B00C06586 /* PostCell.swift in Sources */,
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
@@ -2238,6 +2244,7 @@
 				8C66FAD5295E2632007A347D /* FriendsListController.swift in Sources */,
 				8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8C121DF82949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
+				8C66FAEA295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */,
 				8C121E4A2949519700CD4E07 /* CustomMapUploadCell.swift in Sources */,
 				8C12E674290A074100FA5BF0 /* ProfileCollectionExtension.swift in Sources */,
 				8C121E7A294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,
@@ -2389,6 +2396,7 @@
 				8C66FAD6295E2632007A347D /* FriendsListController.swift in Sources */,
 				8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8C121DF92949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
+				8C66FAEB295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */,
 				8C121E4B2949519700CD4E07 /* CustomMapUploadCell.swift in Sources */,
 				8C12E675290A074100FA5BF0 /* ProfileCollectionExtension.swift in Sources */,
 				8C121E7B294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,
