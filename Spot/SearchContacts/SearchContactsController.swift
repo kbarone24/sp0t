@@ -181,14 +181,11 @@ class SearchContactsController: UIViewController {
     }
 
     func animateToMap() {
-        let storyboard = UIStoryboard(name: "Map", bundle: nil)
-        guard let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as? MapController else { return }
-        let navController = UINavigationController(rootViewController: vc)
-        navController.modalPresentationStyle = .fullScreen
-
-        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+        guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+        let homeScreenController = HomeScreenContainerController()
         navigationController?.popToRootViewController(animated: false)
-        window?.rootViewController = navController
+        window.rootViewController = homeScreenController
+        window.makeKeyAndVisible()
     }
 }
 

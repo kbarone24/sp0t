@@ -149,20 +149,15 @@ class EmailLoginController: UIViewController {
     }
 
     func animateToMap() {
-
         self.loginButton.isEnabled = true
         self.activityIndicator.stopAnimating()
-
-        // animate to app if user has enabled multifactor
-        let storyboard = UIStoryboard(name: "Map", bundle: nil)
-        let vc = storyboard.instantiateViewController(withIdentifier: "MapVC") as! MapController
-        let navController = UINavigationController(rootViewController: vc)
-        navController.modalPresentationStyle = .fullScreen
-
-        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+        
         DispatchQueue.main.async {
+            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+            let homeScreenController = HomeScreenContainerController()
             self.navigationController?.popToRootViewController(animated: false)
-            window?.rootViewController = navController
+            window.rootViewController = homeScreenController
+            window.makeKeyAndVisible()
         }
     }
 

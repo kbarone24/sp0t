@@ -26,7 +26,7 @@ extension MapController {
                 self.setNewPostsButtonCount()
                 self.loadAdditionalOnboarding()
 
-                if self.sheetView == nil {
+                if !(self.homeScreenDelegate?.drawerOpen() ?? false) {
                     // unhide supplemental buttons + add annotations
                     self.toggleHomeAppearance(hidden: false)
                 }

@@ -18,6 +18,7 @@ protocol MapControllerDelegate: AnyObject {
 final class MapController: UIViewController {
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+    weak var homeScreenDelegate: HomeScreenDelegate?
     
     lazy var mapPostService: MapPostServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
@@ -93,17 +94,6 @@ final class MapController: UIViewController {
         return view
     }()
 
-    var sheetView: DrawerView? {
-        didSet {
-            let hidden = sheetView != nil
-            DispatchQueue.main.async {
-                self.toggleHomeAppearance(hidden: hidden)
-                if !hidden { self.animateHomeAlphas() }
-                self.navigationController?.setNavigationBarHidden(hidden, animated: false)
-            }
-        }
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpViews()
@@ -172,7 +162,7 @@ final class MapController: UIViewController {
         }
 
         let addButton = AddButton {
-            $0.addTarget(self, action: #selector(addTap(_:)), for: .touchUpInside)
+            $0.addTarget(self, action: #selector(addTap), for: .touchUpInside)
             mapView.addSubview($0)
         }
         addButton.snp.makeConstraints {
@@ -227,17 +217,17 @@ final class MapController: UIViewController {
         if let titleView { return titleView }
 
         titleView = MapTitleView {
-            $0.searchButton.addTarget(self, action: #selector(searchTap(_:)), for: .touchUpInside)
-            $0.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
-            $0.notificationsButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
+            $0.searchButton.addTarget(self, action: #selector(searchTap), for: .touchUpInside)
+            $0.profileButton.addTarget(self, action: #selector(profileTap), for: .touchUpInside)
+            $0.notificationsButton.addTarget(self, action: #selector(notificationsTap), for: .touchUpInside)
+            $0.hamburgerMenu.addTarget(self, action: #selector(hamburgerTap), for: .touchUpInside)
         }
 
         let notificationRef = self.db.collection("users").document(self.uid).collection("notifications")
         let query = notificationRef.whereField("seen", isEqualTo: false)
 
-        /// show green bell on notifications when theres an unseen noti
+        // show green bell on notifications when theres an unseen noti
         if notiListener != nil { notiListener?.remove() }
-        print("add noti listener")
         notiListener = query.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
             if err != nil || snap?.metadata.isFromCache ?? false {
                 return
@@ -251,188 +241,6 @@ final class MapController: UIViewController {
         }
 
         return titleView ?? UIView()
-    }
-
-    func openNewMap() {
-        Mixpanel.mainInstance().track(event: "MapControllerNewMapTap")
-        if navigationController?.viewControllers.contains(where: { $0 is NewMapController }) ?? false {
-            return
-        }
-
-        DispatchQueue.main.async { [weak self] in
-            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
-                UploadPostModel.shared.createSharedInstance()
-                vc.presentedModally = true
-                self?.navigationController?.pushViewController(vc, animated: true)
-            }
-        }
-    }
-
-    @objc func currentLocationTap() {
-        animateToCurrentLocation()
-    }
-
-    @objc func inviteFriendsTap() {
-        Mixpanel.mainInstance().track(event: "MapInviteFriendsTap")
-        guard let url = URL(string: "https://apps.apple.com/app/id1477764252") else { return }
-        let items = [url, "Add me on sp0t 🌎🦦"] as [Any]
-
-        DispatchQueue.main.async {
-            let activityView = UIActivityViewController(activityItems: items, applicationActivities: nil)
-            self.present(activityView, animated: true)
-            activityView.completionWithItemsHandler = { activityType, completed, _, _ in
-                if completed {
-                    Mixpanel.mainInstance().track(event: "MapInviteSent", properties: ["type": activityType?.rawValue ?? ""])
-                } else {
-                    Mixpanel.mainInstance().track(event: "MapInviteCancelled")
-                }
-            }
-        }
-    }
-
-    @objc func addTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "MapControllerAddTap")
-        addFriendsView.removeFromSuperview()
-
-        /// crash on double stack was happening here
-        if navigationController?.viewControllers.contains(where: { $0 is AVCameraController }) ?? false {
-            return
-        }
-
-        guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController
-        else { return }
-
-        let transition = AddButtonTransition()
-        self.navigationController?.view.layer.add(transition, forKey: kCATransition)
-        self.navigationController?.pushViewController(vc, animated: false)
-    }
-
-    @objc func profileTap(_ sender: Any) {
-        if sheetView != nil { return } /// cancel on double tap
-        Mixpanel.mainInstance().track(event: "MapControllerProfileTap")
-        let profileVC = ProfileViewController(userProfile: nil)
-
-        sheetView = DrawerView(present: profileVC, detentsInAscending: [.bottom, .middle, .top], closeAction: { [weak self] in
-            self?.sheetView = nil
-        })
-        profileVC.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
-    }
-
-    @objc func openNotis(_ sender: UIButton) {
-        if sheetView != nil { return } /// cancel on double tap
-        Mixpanel.mainInstance().track(event: "MapControllerNotificationsTap")
-        let notifVC = NotificationsController()
-        sheetView = DrawerView(present: notifVC, detentsInAscending: [.bottom, .middle, .top], closeAction: { [weak self] in
-            self?.sheetView = nil
-        })
-        notifVC.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
-    }
-
-    @objc func searchTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "MapControllerSearchTap")
-        openFindFriends()
-    }
-
-    @objc func findFriendsTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "MapControllerFindFriendsTap")
-        openFindFriends()
-    }
-
-    func openFindFriends() {
-        if sheetView != nil { return } // cancel on double tap
-        let ffvc = FindFriendsController()
-        sheetView = DrawerView(present: ffvc, detentsInAscending: [.top, .middle, .bottom]) { [weak self] in
-            self?.sheetView = nil
-        }
-        ffvc.containerDrawerView = sheetView
-    }
-
-    func openPost(posts: [MapPost]) {
-        if sheetView != nil { return } /// cancel on double tap
-        guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
-        postVC.postsList = posts
-        sheetView = DrawerView(present: postVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
-            self?.sheetView = nil
-        }
-        postVC.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
-    }
-
-    func openSelectedMap() {
-        // TODO: amend or remove this function - can you open friends map in gallery"
-        if sheetView != nil { return } /// cancel on double tap
-        let unsortedPosts = postDictionary.map { $0.value }
-        let posts = mapView.sortPosts(unsortedPosts)
-        let mapType: MapType = .friendsMap
-        /// create map from current posts for friends map
-        let map = getFriendsMapObject()
-
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: posts, presentedDrawerView: nil, mapType: mapType)
-
-        sheetView = DrawerView(present: customMapVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
-            self?.sheetView = nil
-        }
-
-        customMapVC.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
-    }
-
-    func openSpot(spotID: String, spotName: String, mapID: String, mapName: String) {
-        /// cancel on double tap
-        if sheetView != nil {
-            return
-        }
-
-        let emptyPost = MapPost(spotID: spotID, spotName: spotName, mapID: mapID, mapName: mapName)
-
-        let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: nil)
-        sheetView = DrawerView(present: spotVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
-            self?.sheetView = nil
-        }
-
-        spotVC.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
-    }
-
-    func openExploreMaps(onboarding: Bool) {
-        let fromValue: ExploreMapViewModel.OpenedFrom = onboarding ? .onBoarding : .mapController
-        let viewController = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: ServiceContainer.shared, from: fromValue))
-        let transition = AddButtonTransition()
-        self.navigationController?.view.layer.add(transition, forKey: kCATransition)
-        self.navigationController?.pushViewController(viewController, animated: false)
-    }
-
-    func toggleHomeAppearance(hidden: Bool) {
-        newPostsButton.setHidden(hidden: hidden)
-        currentLocationButton.isHidden = hidden
-        inviteFriendsButton.isHidden = hidden
-        cityLabel.isHidden = hidden
-        /// if hidden, remove annotations, else reset with selected annotations
-        if hidden {
-            addFriendsView.removeFromSuperview()
-        } else {
-            mapView.delegate = self
-            mapView.spotMapDelegate = self
-            DispatchQueue.main.async { self.addMapAnnotations() }
-        }
-    }
-
-    func animateHomeAlphas() {
-        navigationController?.navigationBar.alpha = 0.0
-        newPostsButton.alpha = 0.0
-        currentLocationButton.alpha = 0.0
-        inviteFriendsButton.alpha = 0.0
-        cityLabel.alpha = 0.0
-
-        UIView.animate(withDuration: 0.15) {
-            self.navigationController?.navigationBar.alpha = 1
-            self.newPostsButton.alpha = 1
-            self.currentLocationButton.alpha = 1
-            self.inviteFriendsButton.alpha = 1
-            self.cityLabel.alpha = 1
-        }
     }
 
     /// custom reset nav bar (patch fix for CATransition)

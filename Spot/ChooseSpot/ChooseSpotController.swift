@@ -36,7 +36,7 @@ final class ChooseSpotController: UIViewController {
         tableView.separatorStyle = .none
         tableView.showsVerticalScrollIndicator = false
         tableView.register(ChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpot")
-        tableView.register(ChooseSpotLoadingCell.self, forCellReuseIdentifier: "ChooseSpotLoading")
+        tableView.register(TableViewLoadingCell.self, forCellReuseIdentifier: "LoadingCell")
         return tableView
     }()
 
@@ -190,7 +190,7 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
 
         } else {
             /// loading indicator for spot search
-            if let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseSpotLoading", for: indexPath) as? ChooseSpotLoadingCell {
+            if let cell = tableView.dequeueReusableCell(withIdentifier: "LoadingCell", for: indexPath) as? TableViewLoadingCell {
                 cell.activityIndicator.startAnimating()
                 return cell
             }
