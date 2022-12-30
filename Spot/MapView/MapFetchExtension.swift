@@ -180,6 +180,7 @@ extension MapController {
 
             var newPost = false
             let postIDs = snap.documents.map({ $0.documentID })
+            print("post ids", postIDs)
             if self.postsFetched { newPost = self.checkForPostDelete(postIDs: postIDs, friendsFetch: true) }
             self.friendsFetchIDs = postIDs
             if snap.documents.isEmpty { self.leaveHomeFetchGroup(newPost: false); return }
