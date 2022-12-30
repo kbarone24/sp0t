@@ -356,8 +356,9 @@ extension MapController {
                 }
             }
 
-            self.mapsLoaded = true
             NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
+            UserDataModel.shared.userInfo.sortMaps()
+
             // fetch group aleady entered before getMaps call
             self.homeFetchGroup.enter()
             self.getPosts()

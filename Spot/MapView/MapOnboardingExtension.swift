@@ -29,7 +29,7 @@ extension MapController {
 
         } else if UserDataModel.shared.userInfo.friendIDs.count < 4 && posts == 0 {
             view.addSubview(addFriendsView)
-            addFriendsView.addFriendButton.addTarget(self, action: #selector(self.findFriendsTap(_:)), for: .touchUpInside)
+            addFriendsView.addFriendButton.addTarget(self, action: #selector(findFriendsTap), for: .touchUpInside)
             addFriendsView.snp.makeConstraints {
                 $0.height.equalTo(160)
                 $0.leading.trailing.equalToSuperview().inset(16)

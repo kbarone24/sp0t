@@ -9,12 +9,14 @@
 import UIKit
 
 final class MapTitleView: UIView {
-    private lazy var hamburgerMenu: UIButton = {
+    lazy var hamburgerMenu: UIButton = {
         let button = UIButton()
+        button.contentHorizontalAlignment = .center
+        button.contentVerticalAlignment = .center
         button.setImage(UIImage(named: "HamburgerMenu"), for: .normal)
         return button
     }()
-    private lazy var homeButton: UIButton = {
+    lazy var homeButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = UIColor(red: 0.925, green: 0.925, blue: 0.925, alpha: 1)
         button.layer.cornerRadius = 9
@@ -41,15 +43,15 @@ final class MapTitleView: UIView {
         super.init(frame: frame)
         addSubview(hamburgerMenu)
         hamburgerMenu.snp.makeConstraints {
-            $0.leading.equalToSuperview()
+            $0.leading.equalToSuperview().offset(-5)
             $0.centerY.equalToSuperview()
-            $0.height.equalTo(28)
-            $0.width.equalTo(25.63)
+            $0.height.equalTo(38)
+            $0.width.equalTo(35.63)
         }
 
         addSubview(homeButton)
         homeButton.snp.makeConstraints {
-            $0.leading.equalTo(hamburgerMenu.snp.trailing).offset(12)
+            $0.leading.equalTo(hamburgerMenu.snp.trailing).offset(7)
             $0.width.equalTo(75)
             $0.height.equalTo(32)
             $0.centerY.equalToSuperview()

@@ -119,12 +119,15 @@ class CustomMapController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
         let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
-        if let mapNav = window as? UINavigationController {
-            guard let mapVC = mapNav.viewControllers[0] as? MapController else { return }
-            mapController = mapVC
+
+        if let homeController = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController as? HomeScreenContainerController {
+            if let mapNav = homeController.children.first(where: { $0 is UINavigationController }) as? UINavigationController {
+                guard let mapVC = mapNav.viewControllers[0] as? MapController else { return }
+                mapController = mapVC
+            }
         }
+
         if !ranSetUp && containerDrawerView != nil { runInitialFetches() }
     }
 
@@ -221,7 +224,7 @@ class CustomMapController: UIViewController {
         containerDrawerView?.showCloseButton = false
 
         if containerDrawerView?.status.rawValue != DrawerViewDetent.top.rawValue && present {
-            DispatchQueue.main.async { self.containerDrawerView?.present(to: .top) }
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: .middle) }
         }
        // configureFullScreen()
        // collectionView.contentOffset.y = offsetOnDismissal

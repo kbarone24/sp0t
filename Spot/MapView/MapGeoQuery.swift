@@ -42,7 +42,7 @@ extension MapController {
         var spotsAddedToMap = 0
         for spot in nearbySpots where spot.showSpotOnMap() {
             let groupInfo = self.updateFriendsPostGroup(post: nil, spot: spot)
-            if groupInfo.newGroup && self.sheetView == nil {
+            if groupInfo.newGroup && !(self.homeScreenDelegate?.drawerOpen() ?? false) {
                 // add to map if friends map showing
                 self.mapView.addPostAnnotation(group: groupInfo.group, newGroup: true, map: self.getFriendsMapObject())
                 spotsAddedToMap += 1
@@ -52,6 +52,6 @@ extension MapController {
     }
 
     func shouldRunGeoQuery() -> Bool {
-        return mapView.enableGeoQuery && sheetView == nil
+        return mapView.enableGeoQuery && !(self.homeScreenDelegate?.drawerOpen() ?? false)
     }
 }

@@ -143,16 +143,14 @@ extension MapController: SpotMapViewDelegate {
             guard let post = map.postsDictionary[id] else { continue }
             if !posts.contains(where: { $0.id ?? "" == post.id ?? "" }) { posts.append(post) }
         }
-        DispatchQueue.main.async { self.openPost(posts: posts) }
+        DispatchQueue.main.async { self.openPosts(posts: posts) }
     }
 
     func openSpotFromSpotPost(view: SpotPostAnnotationView) {
-        //TODO: pass through map here?
         openSpot(spotID: view.id, spotName: view.spotName, mapID: "", mapName: "")
     }
 
     func openSpotFromSpotName(view: SpotNameAnnotationView) {
-        //TODO: pass through map here?
         openSpot(spotID: view.id, spotName: view.spotName, mapID: "", mapName: "")
     }
 
