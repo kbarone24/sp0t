@@ -10,9 +10,9 @@ import AVFoundation
 import CoreMedia
 import Photos
 import UIKit
+import MetalKit
 
 final class AVSpotCamera: NSObject {
-    
     enum CameraControllerError: Swift.Error {
         case captureSessionAlreadyRunning
         case captureSessionIsMissing
@@ -38,14 +38,10 @@ final class AVSpotCamera: NSObject {
     var photoOutput: AVCapturePhotoOutput?
     var videoOutput: AVCaptureVideoDataOutput?
     var audioOutput: AVCaptureAudioDataOutput?
-    var previewLayer: AVCaptureVideoPreviewLayer?
-    var flashMode = AVCaptureDevice.FlashMode.off
+    
+    var flashMode: AVCaptureDevice.FlashMode = .off
     var photoCaptureCompletionBlock: ((UIImage?, Error?) -> Void)?
     var previewShown = false
-    
-    var start: CFAbsoluteTime?
-    var gifCaptureCompletionBlock: (([UIImage]) -> Void)?
-    lazy var aliveImages: [UIImage] = []
     
     var videoWriter: AVAssetWriter?
     var videoWriterInput: AVAssetWriterInput?
@@ -54,14 +50,41 @@ final class AVSpotCamera: NSObject {
     var isRecording = false
     var sessionAtSourceTime: CMTime?
     
-    func prepare(position: CameraPosition, completionHandler: @escaping (Error?) -> Void) {
+    private(set) var metalCommandQueue: MTLCommandQueue?
+    private(set) var metalDevice: MTLDevice?
+    private(set) var ciContext: CIContext?
+    var currentCIImage: CIImage?
+    var capturedImage: UIImage?
+    var takePicture = false
+    
+    let previewView: MTKView
+    
+    override init() {
+        previewView = MTKView()
+        previewView.layer.contentsGravity = .resizeAspectFill
+        previewView.layer.cornerRadius = 5.0
+        previewView.isPaused = true
+        previewView.enableSetNeedsDisplay = false
+        previewView.framebufferOnly = false
         
-        DispatchQueue(label: "prepare").async { [weak self] in
+        metalDevice = MTLCreateSystemDefaultDevice()
+        previewView.device = metalDevice
+        metalCommandQueue = metalDevice?.makeCommandQueue()
+        
+        if let metalDevice {
+            ciContext = CIContext(mtlDevice: metalDevice)
+        }
+        
+        super.init()
+        previewView.delegate = self
+    }
+    
+    func prepare(position: CameraPosition, completionHandler: @escaping (Error?) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             do {
                 self?.captureSession = AVCaptureSession()
                 try self?.configureCaptureDevices()
                 try self?.configureDeviceInputs(position: position)
-                try self?.configurePhotoOutput()
                 self?.captureSession?.startRunning()
                 try self?.configureVideoOutput()
             } catch {
@@ -78,21 +101,21 @@ final class AVSpotCamera: NSObject {
     }
     
     func displayPreview(on view: UIView) throws {
+        guard let captureSession = self.captureSession, captureSession.isRunning else {
+            throw CameraControllerError.captureSessionIsMissing
+        }
         
-        guard let captureSession = self.captureSession, captureSession.isRunning else { throw CameraControllerError.captureSessionIsMissing }
-        
-        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        
-        guard let previewLayer else { throw CameraControllerError.captureSessionIsMissing }
-        previewLayer.videoGravity = .resizeAspectFill
-        previewLayer.connection?.videoOrientation = .portrait
+        view.insertSubview(previewView, at: 0)
         
         let cameraAspect: CGFloat = UserDataModel.shared.maxAspect
         let cameraHeight = UIScreen.main.bounds.width * cameraAspect
         
-        view.layer.insertSublayer(previewLayer, at: 0)
-        previewLayer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: cameraHeight)
-        previewLayer.cornerRadius = 5
+        previewView.snp.makeConstraints { make in
+            make.top.leading.equalToSuperview()
+            make.height.equalTo(cameraHeight)
+            make.width.equalTo(UIScreen.main.bounds.width)
+        }
+        
         previewShown = true
     }
     
@@ -113,6 +136,17 @@ final class AVSpotCamera: NSObject {
             
         case .rear:
             try switchToFrontCamera()
+        }
+        
+        guard let videoOutput else {
+            captureSession.commitConfiguration()
+            return
+        }
+        
+        videoOutput.connections.first?.videoOrientation = .portrait
+        videoOutput.connections.forEach {
+            $0.automaticallyAdjustsVideoMirroring = false
+            $0.isVideoMirrored = self.currentCameraPosition == .front
         }
         
         captureSession.commitConfiguration()

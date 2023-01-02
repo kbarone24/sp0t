@@ -13,6 +13,10 @@ import Photos
 
 // permissions
 extension AVCameraController {
+    func showErrorAlert() {
+        
+    }
+    
     func askForLocationAccess() {
         showSettingsAlert(title: "Allow location access in Settings to post on sp0t", message: "sp0t needs your location to pin your posts on the map", location: true)
     }
@@ -65,9 +69,9 @@ extension AVCameraController {
 extension AVCameraController {
     func restartCaptureSession() {
         DispatchQueue.main.async {
-            self.cameraController?.previewLayer?.connection?.isEnabled = true
             self.enableButtons()
         }
+        
         DispatchQueue.global(qos: .userInitiated).async {
             self.cameraController?.captureSession?.startRunning()
         }
@@ -126,8 +130,7 @@ extension AVCameraController {
             self.lastZoomFactor = 1.0
 
         } catch {
-            // TODO: Handle errors here, show error alert
-            print("\(error.localizedDescription)")
+            showErrorAlert()
         }
     }
 
@@ -185,8 +188,7 @@ extension AVCameraController {
             device?.unlockForConfiguration()
 
         } catch {
-            // TODO: Handle errors here, show error alert
-            print("There was an error focusing the device's camera")
+            showErrorAlert()
         }
     }
 
@@ -212,7 +214,7 @@ extension AVCameraController: UIGestureRecognizerDelegate {
             defer { device?.unlockForConfiguration() }
             device?.videoZoomFactor = factor
         } catch {
-            print("\(error.localizedDescription)")
+            showErrorAlert()
         }
     }
 

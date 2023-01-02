@@ -23,8 +23,7 @@ extension AVCameraController {
             self.resetZoom()
             self.setFocus(position: cameraView.center)
         } catch {
-            // TODO: Handle errors here, show error alert
-            print(error)
+            showErrorAlert()
         }
     }
 
@@ -172,10 +171,12 @@ extension AVCameraController {
         }
     }
     
+    // TODO: Add completion for video returned
     private func startRecording() {
         cameraController?.startRecordingVideo()
     }
     
+    // TODO: Add completion for video returned
     private func endRecording() {
         cameraController?.endRecordingVideo()
     }

@@ -14,6 +14,7 @@ import JPSVolumeButtonHandler
 import Mixpanel
 import Photos
 import UIKit
+import MetalKit
 
 final class AVCameraController: UIViewController {
     var cameraController: AVSpotCamera?
@@ -117,7 +118,6 @@ final class AVCameraController: UIViewController {
     }()
 
     private(set) lazy var failedPostView = FailedPostView(frame: .zero)
-    lazy var beginPan: CGPoint = .zero
 
     /// show focus circle when user taps screen
     private(set) lazy var tapIndicator: UIImageView = {
@@ -174,7 +174,6 @@ final class AVCameraController: UIViewController {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
 
-        cameraController?.previewLayer?.connection?.isEnabled = false
         cameraController?.captureSession?.stopRunning()
         disableButtons() /// disable for deinit
 
