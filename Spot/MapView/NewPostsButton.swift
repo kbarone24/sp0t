@@ -10,7 +10,7 @@ import Mixpanel
 import UIKit
 
 final class NewPostsButton: UIButton {
-    private lazy var backgroundImageView = UIImageView(image: UIImage(named: "AnimateToNewPostsIcon"))
+    private lazy var backgroundImageView = UIImageView(image: UIImage(named: "NewPostsIcon"))
     private lazy var newPostsIndicator: UIView = {
         let imageView = UIView()
         imageView.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
@@ -26,6 +26,7 @@ final class NewPostsButton: UIButton {
         return label
     }()
 
+    var totalPosts = 0
     var unseenPosts: Int = 0 {
         didSet {
             if unseenPosts > 0 {
@@ -38,13 +39,9 @@ final class NewPostsButton: UIButton {
             } else {
                 postCountBackground.isHidden = true
                 backgroundImageView.alpha = 0.8
+                // set to new asset
             }
-        }
-    }
-
-    var totalPosts: Int = 0 {
-        didSet {
-            if totalPosts == 0 { isHidden = true }
+            backgroundImageView.image = totalPosts == 0 ? UIImage(named: "NewPostsIconGray") : UIImage(named: "NewPostsIcon")
         }
     }
 
@@ -79,11 +76,7 @@ final class NewPostsButton: UIButton {
     }
 
     func setHidden(hidden: Bool) {
-        if totalPosts == 0 {
-            isHidden = true
-        } else {
-            isHidden = hidden
-        }
+        isHidden = hidden
     }
 
     @objc func tap() {

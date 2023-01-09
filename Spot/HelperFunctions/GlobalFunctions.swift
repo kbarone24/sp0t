@@ -338,7 +338,14 @@ extension UIViewController {
             posters.append(uid)
 
             let functions = Functions.functions()
-            functions.httpsCallable("runSpotTransactions").call(["spotID": spot.id!, "postID": post.id!, "uid": uid, "postPrivacy": post.privacyLevel!, "postTag": post.tag ?? "", "posters": posters]) { result, error in
+            functions.httpsCallable("runSpotTransactions").call([
+                "spotID": spot.id ?? "",
+                "postID": post.id ?? "",
+                "postPrivacy": post.privacyLevel!,
+                "postTag": post.tag ?? "",
+                "posters": posters,
+                "uid": uid,
+                "mapID": post.mapID ?? ""]) { result, error in
                 print(result?.data as Any, error as Any)
             }
         }

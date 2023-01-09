@@ -224,7 +224,7 @@ class CustomMapController: UIViewController {
         containerDrawerView?.showCloseButton = false
 
         if containerDrawerView?.status.rawValue != DrawerViewDetent.top.rawValue && present {
-            DispatchQueue.main.async { self.containerDrawerView?.present(to: .middle) }
+            DispatchQueue.main.async { self.containerDrawerView?.present(to: .top) }
         }
        // configureFullScreen()
        // collectionView.contentOffset.y = offsetOnDismissal

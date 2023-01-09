@@ -25,6 +25,7 @@ class SpotPostAnnotationView: MKAnnotationView {
     override var clusteringIdentifier: String? {
         didSet {
             displayPriority = .required
+            isSelected = clusteringIdentifier == nil && unseenPost ? true : false
             /// get clustering id if clustering is turned off
          //   displayPriority = clusteringIdentifier != nil ? .required : unseenPost ? .required : .defaultHigh //.init(rawValue: getPostRank(unseenPost: unseenPost, spotName: spotName))
         }
@@ -70,11 +71,16 @@ class SpotPostAnnotationView: MKAnnotationView {
     }
 
     func loadAvatarView(nibView: UIView, posts: [MapPost]) {
-        /// set up avatar for cluster
+        // set up avatar for cluster. don't repeat any user URLs
+        var userIDs = [posts[0].posterID]
         var avatarURLs = [posts[0].userInfo?.avatarURL ?? ""]
         for i in 1..<posts.count {
+            let userID = posts[i].posterID
             let url = posts[i].userInfo?.avatarURL ?? ""
-            if !avatarURLs.contains(url) { avatarURLs.append(posts[i].userInfo?.avatarURL ?? "") }
+            if !userIDs.contains(userID) {
+                avatarURLs.append(url)
+                userIDs.append(userID)
+            }
         }
         if let nibView = nibView as? FriendPostView {
             nibView.setAvatarView(avatarURLs: avatarURLs) { _ in
@@ -140,7 +146,6 @@ class SpotPostAnnotationView: MKAnnotationView {
 }
 
 extension SpotPostAnnotationView: UIGestureRecognizerDelegate {
-
     func toggleZoom() {
         mapView?.isZoomEnabled = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {

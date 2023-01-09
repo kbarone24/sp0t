@@ -33,7 +33,6 @@ final class MapController: UIViewController {
     let locationManager = CLLocationManager()
     var friendsPostsListener, mapsListener, mapsPostsListener, notiListener, userListener: ListenerRegistration?
     let homeFetchGroup = DispatchGroup()
-    let chapelHillLocation = CLLocation(latitude: 35.9132, longitude: -79.0558)
 
     var geoQueryLimit: Int = 50
 
@@ -76,7 +75,8 @@ final class MapController: UIViewController {
         return label
     }()
 
-    lazy var mapActivityIndicator = CustomActivityIndicator()
+    lazy var mapActivityIndicator = CustomActivityIndicator(image: UIImage(named: "BeaconActivityIndicator") ?? UIImage())
+    lazy var addButton = AddButton()
     lazy var newPostsButton = NewPostsButton()
     lazy var currentLocationButton: UIButton = {
         let button = UIButton()
@@ -131,6 +131,7 @@ final class MapController: UIViewController {
     }
 
     func setUpViews() {
+        edgesForExtendedLayout = []
         addMapView()
         addSupplementalViews()
     }
@@ -141,7 +142,8 @@ final class MapController: UIViewController {
 
         view.addSubview(mapView)
         mapView.snp.makeConstraints {
-            $0.top.leading.trailing.equalToSuperview()
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalToSuperview().offset(-228)
             $0.bottom.equalToSuperview().offset(65)
         }
     }
@@ -154,49 +156,47 @@ final class MapController: UIViewController {
         }
 
         view.addSubview(mapActivityIndicator)
-        mapActivityIndicator.startAnimating()
+        mapActivityIndicator.startAnimating(duration: 1.5)
         mapActivityIndicator.snp.makeConstraints {
-            $0.top.equalTo(cityLabel.snp.bottom)
-            $0.height.width.equalTo(40)
+            $0.width.equalTo(423)
+            $0.height.equalTo(625)
             $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(-100)
         }
 
-        let addButton = AddButton {
-            $0.addTarget(self, action: #selector(addTap), for: .touchUpInside)
-            mapView.addSubview($0)
+        // all buttons are padded 10px
+        inviteFriendsButton.addTarget(self, action: #selector(inviteFriendsTap), for: .touchUpInside)
+        view.addSubview(inviteFriendsButton)
+        inviteFriendsButton.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(11)
+            $0.bottom.equalTo(-24)
+            $0.height.equalTo(79)
         }
+
+        addButton.addTarget(self, action: #selector(addTap), for: .touchUpInside)
+        view.addSubview(addButton)
         addButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(23)
-            $0.bottom.equalToSuperview().inset(100) /// offset 65 px for portion of map below fold
-            $0.height.width.equalTo(109)
-        }
-
-        newPostsButton.isHidden = true
-        view.addSubview(newPostsButton)
-        newPostsButton.snp.makeConstraints {
-            $0.bottom.equalTo(addButton.snp.top).offset(-1)
-            $0.trailing.equalTo(-21)
-            $0.height.equalTo(68)
-            $0.width.equalTo(66)
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalTo(inviteFriendsButton.snp.top).offset(-3)
+            $0.height.width.equalTo(107)
         }
 
         currentLocationButton.isHidden = true
         currentLocationButton.addTarget(self, action: #selector(currentLocationTap), for: .touchUpInside)
         view.addSubview(currentLocationButton)
         currentLocationButton.snp.makeConstraints {
-            $0.leading.equalTo(addButton).offset(-15)
-            $0.bottom.equalTo(addButton.snp.top).offset(8)
-            $0.height.width.equalTo(58)
+            $0.trailing.equalTo(addButton.snp.leading)
+            $0.bottom.equalTo(inviteFriendsButton.snp.top).offset(-24)
+            $0.height.width.equalTo(60)
         }
 
-        inviteFriendsButton.isHidden = true
-        inviteFriendsButton.addTarget(self, action: #selector(inviteFriendsTap), for: .touchUpInside)
-        view.addSubview(inviteFriendsButton)
-        inviteFriendsButton.snp.makeConstraints {
-            $0.leading.equalTo(11)
-            $0.bottom.equalTo(-37)
-            $0.width.equalTo(231)
-            $0.height.equalTo(83)
+        newPostsButton.isHidden = true
+        view.addSubview(newPostsButton)
+        newPostsButton.snp.makeConstraints {
+            $0.bottom.equalTo(currentLocationButton)
+            $0.leading.equalTo(addButton.snp.trailing)
+            $0.height.equalTo(62)
+            $0.width.equalTo(60)
         }
     }
 

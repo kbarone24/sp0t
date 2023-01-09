@@ -1,25 +1,19 @@
 //
-//  SideBarNewMapCell.swift
+//  SideBarCampusMapCell.swift
 //  Spot
 //
-//  Created by Kenny Barone on 12/30/22.
-//  Copyright © 2022 sp0t, LLC. All rights reserved.
+//  Created by Kenny Barone on 1/7/23.
+//  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
 import Foundation
 import UIKit
 
-class SideBarNewMapCell: UITableViewCell {
-    private lazy var newMapView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(red: 0.975, green: 0.975, blue: 0.975, alpha: 1)
-        view.layer.cornerRadius = 11
-        return view
-    }()
-    private lazy var newMapImage = UIImageView(image: UIImage(named: "NewMapButton"))
+class SideBarCampusMapCell: UITableViewCell {
+    private lazy var newMapImage = UIImageView(image: UIImage(named: "UNCMapsImage") ?? UIImage())
     private lazy var label: UILabel = {
         let label = UILabel()
-        label.text = "Create a map"
+        label.text = "UNC maps"
         label.textColor = .black
         label.font = UIFont(name: "SFCompactText-Bold", size: 17.5)
         return label
@@ -36,23 +30,18 @@ class SideBarNewMapCell: UITableViewCell {
         backgroundColor = .white
         selectionStyle = .none
 
-        contentView.addSubview(newMapView)
-        newMapView.snp.makeConstraints {
+        newMapImage.contentMode = .scaleAspectFit
+        contentView.addSubview(newMapImage)
+        newMapImage.snp.makeConstraints {
             $0.leading.equalTo(15)
             $0.centerY.equalToSuperview()
-            $0.height.width.equalTo(55)
-        }
-
-        newMapView.addSubview(newMapImage)
-        newMapImage.snp.makeConstraints {
-            $0.centerX.centerY.equalToSuperview()
-            $0.width.equalTo(35.9)
-            $0.height.equalTo(24.1)
+            $0.width.equalTo(55)
+            $0.height.equalTo(55)
         }
 
         contentView.addSubview(label)
         label.snp.makeConstraints {
-            $0.leading.equalTo(newMapView.snp.trailing).offset(10)
+            $0.leading.equalTo(newMapImage.snp.trailing).offset(10)
             $0.centerY.equalToSuperview()
         }
 
