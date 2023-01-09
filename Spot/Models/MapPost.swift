@@ -13,9 +13,7 @@ import Foundation
 import UIKit
 
 struct MapPost: Identifiable, Codable, Hashable {
-
     @DocumentID var id: String?
-
     var addedUsers: [String]? = []
     var aspectRatios: [CGFloat]? = []
     var caption: String

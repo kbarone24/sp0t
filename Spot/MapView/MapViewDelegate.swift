@@ -15,9 +15,9 @@ import UIKit
 // functions for loading nearby spots in nearby view
 extension MapController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        guard let mapView = mapView as? SpotMapView else { return MKAnnotationView() }
-        var selectedMap = getSelectedMap()
-        if selectedMap == nil { selectedMap = getFriendsMapObject() }
+        guard !annotation.isKind(of: MKUserLocation.self) else { return nil }
+        guard let mapView = mapView as? SpotMapView else { return nil }
+        let selectedMap = getFriendsMapObject()
 
         if let anno = annotation as? SpotAnnotation {
             // set up spot post view with 1 post
@@ -31,29 +31,14 @@ extension MapController: MKMapViewDelegate {
         return MKAnnotationView()
     }
 
-    func centerMapOnMapPosts(animated: Bool) {
+    func centerMapOnMapPosts(animated: Bool, includeSeen: Bool) {
         // return before location services enabled
         if firstTimeGettingLocation { return }
         // zoom out map to show all annotations in view
-        let map = getSelectedMap()
-        var coordinates = getSortedCoordinates()
-        // add fist 10 post coordiates to set location for map with no new posts
-        if coordinates.isEmpty && map != nil {
-            for location in map?.postLocations.prefix(10) ?? [] { coordinates.append(CLLocationCoordinate2D(latitude: location["lat"] ?? 0.0, longitude: location["long"] ?? 0.0)) }
-        }
-
+        let coordinates = getSortedCoordinates(includeSeen: includeSeen)
         mapView.enableGeoQuery = true
         let region = MKCoordinateRegion(coordinates: coordinates, overview: true)
         mapView.setRegion(region, animated: animated)
-    }
-
-    func isSelectedMap(mapID: String) -> Bool {
-        if mapID == "" { return selectedItemIndex == 0 }
-        return mapID == UserDataModel.shared.userInfo.mapsList[selectedItemIndex - 1].id ?? ""
-    }
-
-    func getSelectedMap() -> CustomMap? {
-        return selectedItemIndex == 0 ? nil : UserDataModel.shared.userInfo.mapsList[safe: selectedItemIndex - 1]
     }
 
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
@@ -88,10 +73,25 @@ extension MapController: MKMapViewDelegate {
         if postsFetched { setCityLabel() }
     }
 
+    func mapViewDidFinishLoadingMap(_ mapView: MKMapView) {
+        // disable user location callout
+        if let userLocationView = mapView.view(for: mapView.userLocation) {
+            userLocationView.canShowCallout = false
+        }
+    }
+
+    func animateToCurrentLocation(animationDuration: TimeInterval? = 0.6) {
+        if UserDataModel.shared.currentLocation.coordinate.isEmpty() { return }
+        DispatchQueue.main.async {
+            let camera = MKMapCamera(lookingAtCenter: UserDataModel.shared.currentLocation.coordinate, fromDistance: 2_000, pitch: 30, heading: self.mapView.camera.heading)
+            MKMapView.animate(withDuration: animationDuration ?? 0.7, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 10, options: UIView.AnimationOptions.curveEaseOut, animations: {
+                self.mapView.setCamera(camera, animated: true)
+            })
+        }
+    }
+
     func animateToMostRecentPost() {
-        let map = getSelectedMap() ?? getFriendsMapObject()
-        let group = map.postGroup
-        let coordinate = mapView.sortPostGroup(group).first?.coordinate
+        let coordinate = mapView.sortPostGroup(postGroup).first?.coordinate
         animateTo(coordinate: coordinate)
     }
 
@@ -102,16 +102,14 @@ extension MapController: MKMapViewDelegate {
     }
 
     func offsetCustomMapCenter() {
-        DispatchQueue.main.async { self.centerMapOnMapPosts(animated: false) }
+        DispatchQueue.main.async { self.centerMapOnMapPosts(animated: false, includeSeen: false) }
     }
 
-    func getSortedCoordinates() -> [CLLocationCoordinate2D] {
-        let map = getSelectedMap()
-        /// filter for spots without posts
-        let group = map == nil ? postGroup.filter({ !$0.postIDs.isEmpty }) : map?.postGroup.filter({ !$0.postIDs.isEmpty })
-        guard var group else { return [] }
-
-        if group.contains(where: { $0.postIDs.contains(where: { !$0.seen }) }) { group = group.filter({ $0.postIDs.contains(where: { !$0.seen }) })}
+    func getSortedCoordinates(includeSeen: Bool) -> [CLLocationCoordinate2D] {
+        // filter for spots without posts
+        var group = postGroup.filter({ !$0.postIDs.isEmpty })
+        // only center map on unseen posts
+        if !includeSeen { group = group.filter({ $0.postIDs.contains(where: { !$0.seen }) }) }
         group = mapView.sortPostGroup(group)
         return group.map({ $0.coordinate })
     }
@@ -128,32 +126,44 @@ extension MapController: MKMapViewDelegate {
             self.cityLabel.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.4).cgColor, opacity: 1, radius: 2, offset: CGSize(width: 0.5, height: 0.5))
         }
     }
+
+    func addMapAnnotations() {
+        mapView.removeAllAnnos()
+        let map = getFriendsMapObject()
+        // create temp map to represent friends map
+        for group in postGroup { mapView.addSpotAnnotation(group: group, map: map) }
+    }
+
+    func getFriendsMapObject() -> CustomMap {
+        var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
+        map.postsDictionary = postDictionary
+        map.postGroup = postGroup
+        return map
+    }
 }
 
 extension MapController: SpotMapViewDelegate {
     func openPostFromSpotPost(view: SpotPostAnnotationView) {
-        let map = getSelectedMap() ?? getFriendsMapObject()
+        let map = getFriendsMapObject()
         var posts: [MapPost] = []
         /// patch fix for double post getting added
         for id in view.postIDs {
             guard let post = map.postsDictionary[id] else { continue }
             if !posts.contains(where: { $0.id ?? "" == post.id ?? "" }) { posts.append(post) }
         }
-        DispatchQueue.main.async { self.openPost(posts: posts) }
+        DispatchQueue.main.async { self.openPosts(posts: posts) }
     }
 
     func openSpotFromSpotPost(view: SpotPostAnnotationView) {
-        let map = getSelectedMap()
-        openSpot(spotID: view.id, spotName: view.spotName, mapID: map?.id ?? "", mapName: map?.mapName ?? "")
+        openSpot(spotID: view.id, spotName: view.spotName, mapID: "", mapName: "")
     }
 
     func openSpotFromSpotName(view: SpotNameAnnotationView) {
-        let map = getSelectedMap()
-        openSpot(spotID: view.id, spotName: view.spotName, mapID: map?.id ?? "", mapName: map?.mapName ?? "")
+        openSpot(spotID: view.id, spotName: view.spotName, mapID: "", mapName: "")
     }
 
     func centerMapOnPostsInCluster(view: SpotPostAnnotationView) {
-        let map = getSelectedMap() ?? getFriendsMapObject()
+        let map = getFriendsMapObject()
         var coordinates: [CLLocationCoordinate2D] = []
 
         for id in view.postIDs {
@@ -176,6 +186,7 @@ class SpotMapView: MKMapView {
     var lockClusterOnUpload = false
     var enableGeoQuery = false
     var spotMapDelegate: SpotMapViewDelegate?
+    private lazy var bottomMask = UIView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -184,7 +195,7 @@ class SpotMapView: MKMapView {
         pointOfInterestFilter = .excludingAll
         showsCompass = false
         showsTraffic = false
-        showsUserLocation = false
+        showsUserLocation = true
         tag = 13
         register(SpotNameAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotName")
         register(SpotPostAnnotationView.self, forAnnotationViewWithReuseIdentifier: "SpotPost")
@@ -193,6 +204,11 @@ class SpotMapView: MKMapView {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        addBottomMask()
     }
 
     func setOffsetRegion(region: MKCoordinateRegion, offset: CGFloat, animated: Bool) {
@@ -213,16 +229,13 @@ class SpotMapView: MKMapView {
     func addPostAnnotation(group: MapPostGroup?, newGroup: Bool, map: CustomMap) {
         if let group {
             if newGroup {
-                /// add new group
+                // add new annotation
                 addSpotAnnotation(group: group, map: map)
-            } else {
-                /// update existing group
-                if let anno = annotations.first(where: { $0.coordinate.isEqualTo(coordinate: group.coordinate) }) {
-                    removeAnnotation(anno)
-                    addSpotAnnotation(group: group, map: map)
-                } else {
-                    addSpotAnnotation(group: group, map: map)
-                }
+
+            } else if let anno = annotations.first(where: { $0.coordinate.isEqualTo(coordinate: group.coordinate) }) {
+                // remove existing anno and update
+                removeAnnotation(anno)
+                addSpotAnnotation(group: group, map: map)
             }
         }
     }
@@ -253,7 +266,9 @@ class SpotMapView: MKMapView {
         annotationView.clusteringIdentifier = !cluster && shouldCluster ? "SpotPostCluster" : nil
         annotationView.updateImage(posts: posts, spotName: group.spotName, id: group.id, poiCategory: group.poiCategory, spotCluster: spotCluster)
         annotationView.isSelected = posts.contains(where: { !$0.seen })
-        annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotPostTap(_:))))
+        let tap = UITapGestureRecognizer(target: self, action: #selector(spotPostTap(_:)))
+        tap.delegate = self
+        annotationView.addGestureRecognizer(tap)
         return annotationView
     }
 
@@ -264,7 +279,11 @@ class SpotMapView: MKMapView {
         annotationView.mapView = self
         let priority = getSpotDisplayPriority(group: group)
         annotationView.setUp(spotID: group.id, spotName: group.spotName, poiCategory: group.poiCategory, priority: priority)
-        annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotNameTap(_:))))
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(spotNameTap(_:)))
+        tap.delegate = self
+        annotationView.addGestureRecognizer(tap)
+
         return annotationView
     }
 
@@ -311,6 +330,7 @@ class SpotMapView: MKMapView {
         let postFrame = CGRect(x: frame.midX - 35, y: 0, width: 70, height: 70)
 
         let usernameAvatarTouchArea = CGRect(x: frame.midX + 10, y: 42, width: frame.width / 2 - 10, height: 38)
+        print("tap location", tapLocation, postFrame, annotationView.postIDs)
         if postFrame.contains(tapLocation) {
             spotMapDelegate?.openPostFromSpotPost(view: annotationView)
 
@@ -322,7 +342,7 @@ class SpotMapView: MKMapView {
         } else if tapLocation.y > frame.maxY - 22 {
             if annotationView.spotName != "" { spotMapDelegate?.openSpotFromSpotPost(view: annotationView) }
 
-        } else if usernameAvatarTouchArea.contains(tapLocation) {
+        } else if usernameAvatarTouchArea.contains(tapLocation) && annotationView.clusteringIdentifier != nil {
             /// username / avatar tap (avatar and username are to the right of the post frame)
             spotMapDelegate?.centerMapOnPostsInCluster(view: annotationView)
         }
@@ -374,5 +394,38 @@ class SpotMapView: MKMapView {
         }
         /// > 1000 = required annotation, dont want this
         return min(900, spotScore)
+    }
+
+    func addBottomMask() {
+        if bottomMask.superview != nil { return }
+
+        bottomMask.isUserInteractionEnabled = false
+        addSubview(bottomMask)
+        bottomMask.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalToSuperview().offset(-65)
+            $0.height.equalTo(242)
+        }
+        bottomMask.layoutIfNeeded()
+
+        _ = CAGradientLayer {
+            // offset for portion of map that's offscreen
+            $0.frame = bottomMask.bounds
+            $0.colors = [
+                UIColor(red: 1, green: 1, blue: 1, alpha: 0).cgColor,
+                UIColor(red: 1, green: 1, blue: 1, alpha: 0.4).cgColor
+            ]
+            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
+            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
+            $0.locations = [0, 1]
+            bottomMask.layer.addSublayer($0)
+        }
+
+    }
+}
+
+extension SpotMapView: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return false
     }
 }

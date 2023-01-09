@@ -32,6 +32,10 @@ extension MapController {
                     radius < 400_000 &&
                     self.shouldRunGeoQuery() {
                     self.getVisibleSpots(searchLimit: self.geoQueryLimit * 2)
+
+                } else {
+                    // activity indicator will only be animating after explore maps join
+                    DispatchQueue.main.async { self.mapActivityIndicator.stopAnimating() }
                 }
             })
         }
@@ -42,7 +46,7 @@ extension MapController {
         var spotsAddedToMap = 0
         for spot in nearbySpots where spot.showSpotOnMap() {
             let groupInfo = self.updateFriendsPostGroup(post: nil, spot: spot)
-            if groupInfo.newGroup && self.selectedItemIndex == 0 && self.sheetView == nil {
+            if groupInfo.newGroup && !(self.homeScreenDelegate?.drawerOpen() ?? false) {
                 // add to map if friends map showing
                 self.mapView.addPostAnnotation(group: groupInfo.group, newGroup: true, map: self.getFriendsMapObject())
                 spotsAddedToMap += 1
@@ -52,6 +56,15 @@ extension MapController {
     }
 
     func shouldRunGeoQuery() -> Bool {
-        return mapView.enableGeoQuery && selectedItemIndex == 0 && sheetView == nil
+        return mapView.enableGeoQuery && !(self.homeScreenDelegate?.drawerOpen() ?? false)
+    }
+}
+
+extension MapController: ExploreMapDelegate {
+    func finishPassing() {
+        DispatchQueue.main.async {
+            self.mapActivityIndicator.startAnimating(duration: 1.4)
+            self.animateToCurrentLocation()
+        }
     }
 }

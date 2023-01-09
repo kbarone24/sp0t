@@ -23,10 +23,15 @@ extension MapController {
             self.homeFetchGroup.notify(queue: .main) { [weak self] in
                 guard let self = self else { return }
                 self.postsFetched = true
-                self.newPostsButton.isHidden = self.sheetView != nil
                 self.setNewPostsButtonCount()
                 self.loadAdditionalOnboarding()
-                self.reloadMapsCollection(resort: true, newPost: false, upload: false)
+
+                if !(self.homeScreenDelegate?.drawerOpen() ?? false) {
+                    // unhide supplemental buttons + add annotations
+                    self.toggleHomeAppearance(hidden: false)
+                }
+
+                self.finishPostsLoad(resort: true, newPost: false, upload: false)
             }
         }
     }
@@ -36,9 +41,9 @@ extension MapController {
         guard let postID = post.id else { return }
         // check coordinate to refresh annotation on the map
         var coordinate: CLLocationCoordinate2D?
-        if var post = friendsPostsDictionary[postID] {
+        if var post = postDictionary[postID] {
             if !(post.seenList?.contains(uid) ?? false) { post.seenList?.append(uid) }
-            friendsPostsDictionary.updateValue(post, forKey: postID)
+            postDictionary.updateValue(post, forKey: postID)
             coordinate = post.coordinate
         }
         updateFriendsPostGroupSeen(postID: post.id ?? "")
@@ -52,7 +57,7 @@ extension MapController {
                 }
             }
 
-            self.reloadMapsCollection(resort: false, newPost: false, upload: false)
+            self.finishPostsLoad(resort: false, newPost: false, upload: false)
             if let coordinate {
                 if let annotation = self.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate) }) {
                     self.mapView.removeAnnotation(annotation)
@@ -85,12 +90,9 @@ extension MapController {
             }
         }
 
-        let mapIndex = post.mapID == "" ? 0 : 1
-        let dictionaryIndex = post.mapID == "" ? 0 : -1
         DispatchQueue.main.async {
-            self.addPostToDictionary(post: post, map: map, newPost: true, index: dictionaryIndex)
-            self.reloadMapsCollection(resort: true, newPost: true, upload: true)
-            self.selectItemAt(index: mapIndex, upload: true)
+            self.addPostToDictionary(post: post, map: map, newPost: true)
+            self.finishPostsLoad(resort: true, newPost: true, upload: true)
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -112,19 +114,17 @@ extension MapController {
         /// only pass through spot ID if removing from the map
         let spotID = spotDelete || spotRemove ? post.spotID ?? "" : ""
         removePost(post: post, spotID: spotID, mapID: mapID, mapDelete: mapDelete)
-        DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false, upload: false) }
+        DispatchQueue.main.async { self.finishPostsLoad(resort: false, newPost: false, upload: false) }
     }
 
     func removePost(post: MapPost, spotID: String, mapID: String, mapDelete: Bool) {
-        print("remove post")
         /// remove from friends stuff
-        friendsPostsDictionary.removeValue(forKey: post.id ?? "")
+        postDictionary.removeValue(forKey: post.id ?? "")
         removeFromFriendsPostGroup(postID: post.id ?? "", spotID: spotID)
         UserDataModel.shared.deletedPostIDs.append(post.id ?? "")
         /// remove from map
         if mapID != "" {
             if mapDelete {
-                selectedItemIndex = 0 /// reset to avoid index out of bounds
                 UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == mapID })
             } else if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) {
                 DispatchQueue.main.async { UserDataModel.shared.userInfo.mapsList[i].removePost(postID: post.id ?? "", spotID: spotID) }
@@ -133,16 +133,16 @@ extension MapController {
         if let anno = mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: post.coordinate) }) {
             DispatchQueue.main.async { self.mapView.removeAnnotation(anno) }
         }
-        reloadMapsCollection(resort: false, newPost: false, upload: false)
+        finishPostsLoad(resort: false, newPost: false, upload: false)
     }
 
     @objc func notifyCommentChange(_ notification: NSNotification) {
         guard let commentList = notification.userInfo?["commentList"] as? [MapComment] else { return }
         guard let postID = notification.userInfo?["postID"] as? String else { return }
 
-        if friendsPostsDictionary[postID] != nil {
-            friendsPostsDictionary[postID]?.commentList = commentList
-            friendsPostsDictionary[postID]?.commentCount = max(0, commentList.count - 1)
+        if postDictionary[postID] != nil {
+            postDictionary[postID]?.commentList = commentList
+            postDictionary[postID]?.commentCount = max(0, commentList.count - 1)
         }
 
         for i in 0..<UserDataModel.shared.userInfo.mapsList.count where
@@ -153,12 +153,12 @@ extension MapController {
     }
 
     @objc func notifyEditMap(_ notification: NSNotification) {
-        reloadMapsCollection(resort: true, newPost: true, upload: false) /// set newPost to true to avoid map centering
+        finishPostsLoad(resort: true, newPost: true, upload: false) /// set newPost to true to avoid map centering
     }
 
     @objc func notifyFriendRemove(_ notification: NSNotification) {
         guard let friendID = notification.userInfo?.first?.value as? String else { return }
-        for post in friendsPostsDictionary where post.value.posterID == friendID {
+        for post in postDictionary where post.value.posterID == friendID {
             removePost(post: post.value, spotID: post.value.spotID ?? "", mapID: "", mapDelete: false)
         }
     }
@@ -177,12 +177,7 @@ extension MapController {
     }
 
     @objc func enterForeground() {
-        let _ = checkForActivityIndicator()
-        /* check for activity indicator will begin animation
-        if !checkForActivityIndicator() {
-            /// re-run fetch, listener might missed posts when app in background
-            reRunMapFetch()
-        } */
+        checkForActivityIndicator()
     }
 
     @objc func notifyLogout() {

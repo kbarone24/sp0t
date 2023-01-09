@@ -24,21 +24,17 @@ extension MapController {
             homeFetchGroup.leave()
         } else {
             if newPost {
-                DispatchQueue.main.async { self.reloadMapsCollection(resort: true, newPost: true, upload: false) }
+                DispatchQueue.main.async { self.finishPostsLoad(resort: true, newPost: true, upload: false) }
             }
         }
     }
 
-    func reloadMapsCollection(resort: Bool, newPost: Bool, upload: Bool) {
+    func finishPostsLoad(resort: Bool, newPost: Bool, upload: Bool) {
         if resort {
             /// reset selected item index on resort in case the position of the selected map changed
-            let mapID = UserDataModel.shared.userInfo.mapsList[safe: selectedItemIndex - 1]?.id ?? ""
             UserDataModel.shared.userInfo.sortMaps()
-            if let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapID }) { selectedItemIndex = index + 1 } else { selectedItemIndex = 0 }
         }
-        mapsCollection.reloadData()
-        mapsCollection.selectItem(at: IndexPath(item: selectedItemIndex, section: 0), animated: false, scrollPosition: [])
-        if resort && !newPost { centerMapOnMapPosts(animated: true) }
+        if resort && !newPost { centerMapOnMapPosts(animated: true, includeSeen: false) }
         setNewPostsButtonCount()
     }
     
@@ -145,9 +141,9 @@ extension MapController {
         /// update mapscollection + all posts to display accurate user info on profile edit
         if runReload {
             DispatchQueue.global().async {
-                for key in self.friendsPostsDictionary.keys {
-                    if self.friendsPostsDictionary[key] == nil { continue }
-                    if self.friendsPostsDictionary[key]?.posterID == self.uid { self.friendsPostsDictionary[key]?.userInfo = userInfo }
+                for key in self.postDictionary.keys {
+                    if self.postDictionary[key] == nil { continue }
+                    if self.postDictionary[key]?.posterID == self.uid { self.postDictionary[key]?.userInfo = userInfo }
                 }
                 /// update maps posts
                 for i in 0..<UserDataModel.shared.userInfo.mapsList.count {
@@ -159,7 +155,7 @@ extension MapController {
                 }
             }
             // reload to update avatar
-            DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false, upload: false) }
+            DispatchQueue.main.async { self.finishPostsLoad(resort: false, newPost: false, upload: false) }
         }
     }
 
@@ -183,18 +179,17 @@ extension MapController {
 
             var newPost = false
             let postIDs = snap.documents.map({ $0.documentID })
-            if self.postsFetched { newPost = self.checkForPostDelete(postIDs: postIDs, mapFetch: false) }
+            if self.postsFetched { newPost = self.checkForPostDelete(postIDs: postIDs, friendsFetch: true) }
+            self.friendsFetchIDs = postIDs
             if snap.documents.isEmpty { self.leaveHomeFetchGroup(newPost: false); return }
 
             let recentGroup = DispatchGroup()
             for doc in snap.documents {
                 do {
-                    let postIn = try? doc.data(as: MapPost.self)
-                    /// filter new post on initial db write
-                    if doc.get("g") as? String == nil { continue }
+                    let postIn = try doc.data(as: MapPost.self)
                     /// if !contains, run query, else update with new values + update comments
                     guard let postInfo = postIn else { continue }
-                    if self.postsContains(postID: postInfo.id ?? "", mapID: "", newPost: false) {
+                    if self.postsContains(postID: postInfo.id ?? "") {
                         self.updatePost(post: postInfo, map: nil)
                         continue
                     }
@@ -206,7 +201,7 @@ extension MapController {
                         if post.id ?? "" != "" {
                             DispatchQueue.main.async {
                                 newPost = true
-                                self.addPostToDictionary(post: post, map: nil, newPost: false, index: self.selectedItemIndex)
+                                self.addPostToDictionary(post: post, map: nil, newPost: false)
                             }
                         }
                         recentGroup.leave()
@@ -230,20 +225,18 @@ extension MapController {
 
             var newPost = false
             let postIDs = snap.documents.map({ $0.documentID })
-            if self.postsFetched { newPost = self.checkForPostDelete(postIDs: postIDs, mapFetch: true) }
+            if self.postsFetched { newPost = self.checkForPostDelete(postIDs: postIDs, friendsFetch: false) }
             self.mapFetchIDs = postIDs
             if snap.documents.isEmpty { self.leaveHomeFetchGroup(newPost: false); return }
 
             let recentGroup = DispatchGroup()
             for doc in snap.documents {
                 do {
-                    let postIn = try? doc.data(as: MapPost.self)
-                    /// filter new post on initial db write
-                    if doc.get("g") as? String == nil { continue }
+                    let postIn = try doc.data(as: MapPost.self)
                     /// if !contains, run query, else update with new values + update comments
                     guard let postInfo = postIn else { continue }
                     guard let map = UserDataModel.shared.userInfo.mapsList.first(where: { $0.id == postInfo.mapID ?? "" }) else { continue }
-                    if self.postsContains(postID: postInfo.id ?? "", mapID: map.id ?? "", newPost: false) {
+                    if self.postsContains(postID: postInfo.id ?? "") {
                         self.updatePost(post: postInfo, map: map)
                         continue
                     }
@@ -255,7 +248,7 @@ extension MapController {
                         if post.id ?? "" != "" {
                             DispatchQueue.main.async {
                                 newPost = true
-                                self.addPostToDictionary(post: post, map: map, newPost: false, index: self.selectedItemIndex)
+                                self.addPostToDictionary(post: post, map: map, newPost: false)
                             }
                         }
                         recentGroup.leave()
@@ -271,16 +264,8 @@ extension MapController {
         }
     }
     
-    func postsContains(postID: String, mapID: String, newPost: Bool) -> Bool {
-        if mapID == "" || newPost {
-            if self.friendsPostsDictionary[postID] != nil { return true }
-        }
-        if mapID != "" {
-            if let map = UserDataModel.shared.userInfo.mapsList.first(where: { $0.id == mapID }) {
-                return map.postsDictionary[postID] != nil
-            }
-        }
-        return false
+    func postsContains(postID: String) -> Bool {
+        return postDictionary[postID] != nil
     }
 
     func filteredFromFeed(post: MapPost, friendsMap: Bool) -> Bool {
@@ -291,24 +276,16 @@ extension MapController {
         (post.timestamp.seconds < Int64(yesterdaySeconds) && (post.seenList?.contains(self.uid) ?? false))
     }
 
-    func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool, index: Int) {
-        // add new post to both dictionaries. Run post contains again in case added on async fetch
-        if postsContains(postID: post.id ?? "", mapID: map?.id ?? "", newPost: newPost) { return }
-        if map == nil || map?.id ?? "" == "" || (newPost && !(post.hideFromFeed ?? false) && UserDataModel.shared.userInfo.friendsContains(id: post.posterID)) {
-            friendsPostsDictionary.updateValue(post, forKey: post.id ?? "")
-            let groupData = updateFriendsPostGroup(post: post, spot: nil)
-            if index == 0 {
-                let map = getFriendsMapObject()
-                mapView.addPostAnnotation(group: groupData.group, newGroup: groupData.newGroup, map: map)
-            }
-        }
-        if let map, let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == map.id ?? "" }) {
-            UserDataModel.shared.userInfo.mapsList[i].postsDictionary.updateValue(post, forKey: post.id ?? "")
-            _ = UserDataModel.shared.userInfo.mapsList[i].updateGroup(post: post)
-            if index - 1 == i && self.sheetView == nil {
-                // need to add/remove all for cluster anno handling
-                addMapAnnotations(index: index, reload: true)
-            }
+    func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool) {
+        // Run post contains again in case added on async fetch
+        if postsContains(postID: post.id ?? "") { return }
+        postDictionary.updateValue(post, forKey: post.id ?? "")
+        let groupData = updateFriendsPostGroup(post: post, spot: nil)
+
+        // only add annotation immediately if not initial fetch
+        if postsFetched {
+            let map = getFriendsMapObject()
+            mapView.addPostAnnotation(group: groupData.group, newGroup: groupData.newGroup, map: map)
         }
     }
     
@@ -318,7 +295,7 @@ extension MapController {
             var oldPost = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
             if let map, let post = map.postsDictionary[post.id ?? ""] {
                 oldPost = post
-            } else if let post = friendsPostsDictionary[post.id ?? ""] {
+            } else if let post = postDictionary[post.id ?? ""] {
                 oldPost = post
             } else {
                 return
@@ -330,48 +307,31 @@ extension MapController {
                 oldPost.commentList = comments
                 oldPost.commentCount = post.commentCount
             }
-            
-            DispatchQueue.main.async {
-                self.updatePostDictionary(post: oldPost, mapID: map?.id ?? "")
-            }
-        }
-    }
-    
-    func updatePostDictionary(post: MapPost, mapID: String) {
-        if mapID == "" {
-            self.friendsPostsDictionary[post.id ?? ""] = post
-        } else {
-            if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == post.id ?? "" }) {
-                UserDataModel.shared.userInfo.mapsList[i].postsDictionary[post.id ?? ""] = post
-            }
+            self.postDictionary[post.id ?? ""] = oldPost
         }
     }
 
-    func checkForPostDelete(postIDs: [String], mapFetch: Bool) -> Bool {
+    func checkForPostDelete(postIDs: [String], friendsFetch: Bool) -> Bool {
         // check which id is not included in postIDs from previous fetch
-        if mapFetch {
-            if let id = mapFetchIDs.first(where: { !postIDs.contains($0) }) {
-                UserDataModel.shared.deletedPostIDs.append(id)
-                for map in UserDataModel.shared.userInfo.mapsList {
-                    if let post = map.postsDictionary[id] {
-                        var spotID = ""
-                        // pass through spotID if this is the only post to this post group
-                        if let group = map.postGroup.first(where: { $0.id == post.spotID ?? "" }), group.postIDs.count == 1 { spotID = group.id }
-                        removePost(post: post, spotID: spotID, mapID: map.id ?? "", mapDelete: map.postIDs.count == 1 )
-                        print("remove post map")
-                        return true
-                    }
-                }
-            }
-        } else if let post = friendsPostsDictionary.first(where: { !postIDs.contains($0.key) }) {
-            UserDataModel.shared.deletedPostIDs.append(post.key)
-            var spotID = ""
-            if let group = postGroup.first(where: { $0.id == post.value.spotID ?? "" }), group.postIDs.count == 1 { spotID = group.id }
-            removePost(post: post.value, spotID: spotID, mapID: "", mapDelete: false)
-            print("remove post friends")
-            return true
+        var spotID = ""
+
+        var post = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
+        if friendsFetch, let postID = friendsFetchIDs.first(where: { !postIDs.contains($0) }) {
+            // check came from friends fetch
+            if let friendsPost = postDictionary[postID] { post = friendsPost }
+
+        } else if let postID = mapFetchIDs.first(where: { !postIDs.contains($0) }) {
+            // check came from maps fetch
+            if let mapPost = postDictionary[postID] { post = mapPost }
+
+        } else {
+            return false
         }
-        return false
+
+        UserDataModel.shared.deletedPostIDs.append(post.id ?? "")
+        if let group = postGroup.first(where: { $0.id == post.spotID ?? "" }), group.postIDs.count == 1 { spotID = group.id }
+        removePost(post: post, spotID: spotID, mapID: "", mapDelete: false)
+        return true
     }
 
     func getMaps() {
@@ -379,7 +339,6 @@ extension MapController {
             guard let self = self else { return }
             guard let snap = snap else { return }
             if snap.metadata.isFromCache { return }
-            var appendedMap = false
             for doc in snap.documents {
                 do {
                     let mapIn = try? doc.data(as: CustomMap.self)
@@ -391,21 +350,14 @@ extension MapController {
                     }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
-                    appendedMap = true
                 } catch {
                     continue
                 }
             }
-            if self.mapsLoaded {
-                if appendedMap {
-                    print("appended map")
-                    self.reloadMapsCollection(resort: true, newPost: false, upload: false)
-                    self.checkForCampusMap()
-                }
-                return
-            }
-            self.mapsLoaded = true
+
             NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
+            UserDataModel.shared.userInfo.sortMaps()
+
             // fetch group aleady entered before getMaps call
             self.homeFetchGroup.enter()
             self.getPosts()
@@ -413,41 +365,22 @@ extension MapController {
     }
 
     func updateMap(map: CustomMap, index: Int) {
-        /// only reload if display content changes
+        // might not need to update values separately on new fetch
         let oldMap = UserDataModel.shared.userInfo.mapsList[index]
         var newMap = map
         newMap.postsDictionary = oldMap.postsDictionary
         newMap.postGroup = oldMap.postGroup
-
-        let reload = oldMap.mapName != newMap.mapName || oldMap.imageURL != newMap.imageURL || oldMap.secret != newMap.secret
         UserDataModel.shared.userInfo.mapsList[index] = newMap
-        if reload {
-            DispatchQueue.main.async { self.reloadMapsCollection(resort: false, newPost: false, upload: false) }
-        }
-    }
-
-    func checkForCampusMap() {
-        print("opened explore")
-        if openedExploreMaps, let index = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.mainCampusMap ?? false }) {
-            print("select at")
-            openedExploreMaps = false
-            selectMapAt(index: index + 1)
-        }
     }
 
     func setNewPostsButtonCount() {
-        let map = getSelectedMap()
-        newPostsButton.unseenPosts = map == nil ? friendsPostsDictionary.filter { !$0.value.seen }.count : map?.postsDictionary.filter { !$0.value.seen }.count ?? 0
-        // show new posts button on friends map if the user has a friend (no real way of checking if that friend has actually posted to friends map)
-        newPostsButton.totalPosts = map == nil ? UserDataModel.shared.userInfo.friendIDs.count > 1 ? 1 : 0 : map?.postIDs.count ?? 0
+        newPostsButton.totalPosts = postDictionary.count
+        newPostsButton.unseenPosts = postDictionary.filter { !$0.value.seen }.count
     }
     
-    func checkForActivityIndicator() -> Bool {
-        /// resume frozen indicator
-        if  let cell = mapsCollection.cellForItem(at: IndexPath(item: 0, section: 0)) as? MapLoadingCell {
-            DispatchQueue.main.async { cell.activityIndicator.startAnimating() }
-            return true
+    func checkForActivityIndicator() {
+        if !postsFetched {
+            DispatchQueue.main.async { self.mapActivityIndicator.startAnimating() }
         }
-        return false
     }
 }

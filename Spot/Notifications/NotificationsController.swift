@@ -19,7 +19,7 @@ protocol NotificationsDelegate: AnyObject {
     func reloadTable()
 }
 
-class NotificationsController: UIViewController, UITableViewDelegate {
+class NotificationsController: UIViewController {
 
     lazy var notifications: [UserNotification] = []
     lazy var pendingFriendRequests: [UserNotification] = []

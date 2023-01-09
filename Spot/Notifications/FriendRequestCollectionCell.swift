@@ -21,8 +21,8 @@ class FriendRequestCollectionCell: UITableViewCell {
     weak var notificationControllerDelegate: NotificationsDelegate?
     private lazy var friendRequests: [UserNotification] = []
 
-    private lazy var itemHeight: CGFloat = 0
-    private lazy var itemWidth: CGFloat = 0
+    private let itemHeight: CGFloat = 225
+    private let itemWidth: CGFloat = 187.5
 
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -50,9 +50,6 @@ class FriendRequestCollectionCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         self.backgroundColor = .white
         self.selectionStyle = .none
-
-        itemWidth = UIScreen.main.bounds.width / 1.89
-        itemHeight = itemWidth * 1.2
 
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -98,14 +95,15 @@ extension FriendRequestCollectionCell: FriendRequestCollectionCellDelegate {
         guard let cell = sender as? FriendRequestCell,
               let indexPath = collectionView.indexPath(for: cell),
                 let friendRequest = cell.friendRequest else { return }
+
         collectionView.performBatchUpdates(({
             var indexPaths = [indexPath]
-            // match current data with that of the main view controller
             friendRequests = notificationControllerDelegate?.deleteFriendRequest(friendRequest: friendRequest) ?? []
             collectionView.deleteItems(at: indexPaths)
             let friendID = friendRequest.userInfo?.id ?? ""
             let notiID = friendRequest.id ?? ""
             self.friendService?.removeFriendRequest(friendID: friendID, notificationID: notiID, completion: nil)
+
         }), completion: { _ in
             self.collectionView.reloadData()
             self.notificationControllerDelegate?.reloadTable()

@@ -9,10 +9,23 @@
 import UIKit
 
 final class MapTitleView: UIView {
-    private lazy var spotLogo: UIImageView = {
-        let view = UIImageView()
-        view.image = UIImage(named: "HomeLogo")
-        return view
+    lazy var hamburgerMenu: UIButton = {
+        let button = UIButton()
+        button.contentHorizontalAlignment = .center
+        button.contentVerticalAlignment = .center
+        button.setImage(UIImage(named: "HamburgerMenu"), for: .normal)
+        return button
+    }()
+    lazy var homeButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = UIColor(red: 0.925, green: 0.925, blue: 0.925, alpha: 1)
+        button.layer.cornerRadius = 9
+        button.setTitle("Home", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 18.5)
+        button.contentHorizontalAlignment = .center
+        button.contentVerticalAlignment = .center
+        return button
     }()
     lazy var profileButton = ProfileButton()
     lazy var notificationsButton = NotificationsButton()
@@ -28,20 +41,27 @@ final class MapTitleView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
+        addSubview(hamburgerMenu)
+        hamburgerMenu.snp.makeConstraints {
+            $0.leading.equalToSuperview().offset(-5)
+            $0.centerY.equalToSuperview()
+            $0.height.equalTo(38)
+            $0.width.equalTo(35.63)
+        }
 
-        addSubview(spotLogo)
-        spotLogo.snp.makeConstraints {
-            $0.leading.equalTo(16)
-            $0.width.equalTo(83)
-            $0.height.equalTo(27)
+        addSubview(homeButton)
+        homeButton.snp.makeConstraints {
+            $0.leading.equalTo(hamburgerMenu.snp.trailing).offset(7)
+            $0.width.equalTo(75)
+            $0.height.equalTo(32)
             $0.centerY.equalToSuperview()
         }
 
         addSubview(profileButton)
         profileButton.snp.makeConstraints {
-            $0.trailing.equalTo(-22)
-            $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(39)
+            $0.trailing.equalToSuperview().inset(7)
+            $0.centerY.equalToSuperview().offset(-1)
+            $0.width.height.equalTo(33)
         }
 
         addSubview(notificationsButton)
@@ -55,9 +75,9 @@ final class MapTitleView: UIView {
         addSubview(searchButton)
         searchButton.snp.makeConstraints {
             $0.trailing.equalTo(notificationsButton.snp.leading).offset(-22)
-            $0.centerY.equalToSuperview().offset(2.5)
-            $0.width.equalTo(45)
-            $0.height.equalTo(33.75)
+            $0.centerY.equalToSuperview().offset(1.5)
+            $0.width.equalTo(32)
+            $0.height.equalTo(25.43)
         }
     }
 
