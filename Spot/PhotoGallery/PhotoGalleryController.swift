@@ -37,12 +37,12 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     }()
 
     lazy var collectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout {
-            $0.scrollDirection = .vertical
-            $0.minimumLineSpacing = 0.1
-            $0.minimumInteritemSpacing = 0.1
-            $0.sectionFootersPinToVisibleBounds = true
-        }
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        layout.minimumLineSpacing = 0.1
+        layout.minimumInteritemSpacing = 0.1
+        layout.sectionFootersPinToVisibleBounds = true
+
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = UIColor(named: "SpotBlack")
         collectionView.showsVerticalScrollIndicator = false

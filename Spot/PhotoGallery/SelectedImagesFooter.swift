@@ -12,11 +12,11 @@ import UIKit
 
 class SelectedImagesFooter: UICollectionReusableView {
     private lazy var collectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout {
-            $0.itemSize = CGSize(width: 67, height: 79)
-            $0.minimumInteritemSpacing = 12
-            $0.scrollDirection = .horizontal
-        }
+        let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: 67, height: 79)
+        layout.minimumInteritemSpacing = 12
+        layout.scrollDirection = .horizontal
+
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.backgroundColor = nil
         view.showsHorizontalScrollIndicator = false

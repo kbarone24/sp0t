@@ -43,12 +43,12 @@ class NewMapController: UIViewController {
         return label
     }()
     private lazy var collaboratorsCollection: UICollectionView = {
-        let layout = UICollectionViewFlowLayout {
-            $0.scrollDirection = .horizontal
-            $0.minimumInteritemSpacing = 18
-            $0.itemSize = CGSize(width: 62, height: 85)
-            $0.sectionInset = UIEdgeInsets(top: 0, left: margin, bottom: 0, right: margin)
-        }
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumInteritemSpacing = 18
+        layout.itemSize = CGSize(width: 62, height: 85)
+        layout.sectionInset = UIEdgeInsets(top: 0, left: margin, bottom: 0, right: margin)
+
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.backgroundColor = .white
         view.delegate = self

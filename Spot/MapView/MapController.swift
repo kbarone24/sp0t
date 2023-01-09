@@ -67,10 +67,10 @@ final class MapController: UIViewController {
 
     private(set) lazy var titleView: MapTitleView = {
         let view = MapTitleView()
-        view.searchButton.addTarget(self, action: #selector(searchTap(_:)), for: .touchUpInside)
-        view.profileButton.addTarget(self, action: #selector(profileTap(_:)), for: .touchUpInside)
-        view.notificationsButton.addTarget(self, action: #selector(openNotis(_:)), for: .touchUpInside)
-        
+        view.searchButton.addTarget(self, action: #selector(searchTap), for: .touchUpInside)
+        view.profileButton.addTarget(self, action: #selector(profileTap), for: .touchUpInside)
+        view.notificationsButton.addTarget(self, action: #selector(notificationsTap), for: .touchUpInside)
+        view.hamburgerMenu.addTarget(self, action: #selector(hamburgerTap), for: .touchUpInside)
         return view
     }()
     
@@ -222,21 +222,12 @@ final class MapController: UIViewController {
     }
 
     func getTitleView() -> UIView {
-        if let titleView { return titleView }
-
-        titleView = MapTitleView {
-            $0.searchButton.addTarget(self, action: #selector(searchTap), for: .touchUpInside)
-            $0.profileButton.addTarget(self, action: #selector(profileTap), for: .touchUpInside)
-            $0.notificationsButton.addTarget(self, action: #selector(notificationsTap), for: .touchUpInside)
-            $0.hamburgerMenu.addTarget(self, action: #selector(hamburgerTap), for: .touchUpInside)
-        }
-
+        if notiListener != nil { return titleView }
         let notificationRef = self.db.collection("users").document(self.uid).collection("notifications")
         let query = notificationRef.whereField("seen", isEqualTo: false)
 
         // show green bell on notifications when theres an unseen noti
-        if notiListener != nil { notiListener?.remove() }
-        notiListener = query.addSnapshotListener(includeMetadataChanges: true) { (snap, err) in
+        notiListener = query.addSnapshotListener(includeMetadataChanges: true) { [weak self] (snap, err) in
             if err != nil || snap?.metadata.isFromCache ?? false {
                 return
             } else {
