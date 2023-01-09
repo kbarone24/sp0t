@@ -6,12 +6,11 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import FirebaseUI
 import Foundation
 import UIKit
+import SDWebImage
 
 class ChooseFriendsCell: UITableViewCell {
-
     var profilePic: UIImageView!
     var username: UILabel!
     var selectedBubble: UIView!

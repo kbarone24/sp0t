@@ -22,16 +22,16 @@ enum DrawerViewDetent: Int {
 }
 
 class DrawerView: NSObject {
-
-    // MARK: Public variable
-    public lazy var slideView = UIView {
-        $0.backgroundColor = .white
-        $0.layer.cornerRadius = UserDataModel.shared.screenSize == 0 ? 0 : 20
-        $0.layer.shadowColor = UIColor.black.cgColor
-        $0.layer.shadowOffset = CGSize(width: 2, height: 2)
-        $0.layer.shadowOpacity = 0.8
-        $0.translatesAutoresizingMaskIntoConstraints = false
-    }
+    public lazy var slideView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.cornerRadius = UserDataModel.shared.screenSize == 0 ? 0 : 20
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOffset = CGSize(width: 2, height: 2)
+        view.layer.shadowOpacity = 0.8
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     public var status: DrawerViewStatus = .close
 

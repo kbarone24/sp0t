@@ -83,10 +83,8 @@ final class ChooseMapController: UIViewController {
             $0.height.equalTo(58)
         }
         
-        friendsMapButton = FriendsMapButton {
-            $0.addTarget(self, action: #selector(friendsMapTap), for: .touchUpInside)
-            view.addSubview($0)
-        }
+        friendsMapButton.addTarget(self, action: #selector(friendsMapTap), for: .touchUpInside)
+        view.addSubview(friendsMapButton)
         friendsMapButton.snp.makeConstraints {
             $0.top.equalTo(45)
             $0.leading.trailing.equalToSuperview()
@@ -148,17 +146,16 @@ final class ChooseMapController: UIViewController {
         view.addSubview(bottomMask)
         view.bringSubviewToFront(postButton)
         view.bringSubviewToFront(progressBar)
-        _ = CAGradientLayer {
-            $0.frame = CGRect(x: 0, y: postButton.frame.minY - 120, width: UIScreen.main.bounds.width, height: 120)
-            $0.colors = [
+        let layer = CAGradientLayer()
+        layer.frame = CGRect(x: 0, y: postButton.frame.minY - 120, width: UIScreen.main.bounds.width, height: 120)
+        layer.colors = [
                 UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor,
                 UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0).cgColor
             ]
-            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
-            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
-            $0.locations = [0, 1]
-            bottomMask.layer.addSublayer($0)
-        }
+        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        layer.locations = [0, 1]
+        bottomMask.layer.addSublayer(layer)
     }
     
     @objc func postTap() {

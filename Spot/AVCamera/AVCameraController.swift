@@ -347,18 +347,17 @@ final class AVCameraController: UIViewController {
             $0.leading.trailing.top.equalToSuperview()
             $0.height.equalTo(150)
         }
-        
-        _ = CAGradientLayer {
-            $0.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 100)
-            $0.colors = [
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-                UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.45).cgColor
-            ]
-            $0.startPoint = CGPoint(x: 0.5, y: 1.0)
-            $0.endPoint = CGPoint(x: 0.5, y: 0.0)
-            $0.locations = [0, 1]
-            topMask.layer.addSublayer($0)
-        }
+
+        let layer = CAGradientLayer()
+        layer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 100)
+        layer.colors = [
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+            UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.45).cgColor
+        ]
+        layer.startPoint = CGPoint(x: 0.5, y: 1.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.locations = [0, 1]
+        topMask.layer.addSublayer(layer)
     }
 
     func setUpPost() {

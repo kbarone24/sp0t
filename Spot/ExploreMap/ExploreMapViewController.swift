@@ -279,18 +279,17 @@ final class ExploreMapViewController: UIViewController {
 
     private func addBottomMask() {
         if maskLayer != nil { return }
-        maskLayer = CAGradientLayer {
-            $0.frame = bottomMask.bounds
-            $0.colors = [
+        maskLayer = CAGradientLayer()
+        maskLayer?.frame = bottomMask.bounds
+        maskLayer?.colors = [
                 UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor,
                 UIColor.white.cgColor,
                 UIColor.white.cgColor
             ]
-            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
-            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
-            $0.locations = [0, 0.4, 1]
-            bottomMask.layer.addSublayer($0)
-        }
+        maskLayer?.startPoint = CGPoint(x: 0.5, y: 0.0)
+        maskLayer?.endPoint = CGPoint(x: 0.5, y: 1.0)
+        maskLayer?.locations = [0, 0.4, 1]
+        if let maskLayer { bottomMask.layer.addSublayer(maskLayer) }
     }
     
     @objc private func forceRefresh() {

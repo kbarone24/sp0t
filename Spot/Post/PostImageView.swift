@@ -129,18 +129,17 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
         imageMask.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        _ = CAGradientLayer {
-            $0.frame = self.bounds
-            $0.colors = [
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
-                UIColor(red: 0, green: 0, blue: 0, alpha: 0.6).cgColor
-            ]
-            $0.locations = [0, 0.48, 1]
-            $0.startPoint = CGPoint(x: 0.5, y: 0)
-            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
-            imageMask.layer.addSublayer($0)
-        }
+        let layer = CAGradientLayer()
+        layer.frame = self.bounds
+        layer.colors = [
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.0).cgColor,
+            UIColor(red: 0, green: 0, blue: 0, alpha: 0.6).cgColor
+        ]
+        layer.locations = [0, 0.48, 1]
+        layer.startPoint = CGPoint(x: 0.5, y: 0)
+        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        imageMask.layer.addSublayer(layer)
     }
 }
 
