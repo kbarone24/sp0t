@@ -8,9 +8,11 @@
 
 import Foundation
 import UIKit
+import Mixpanel
 
 extension HomeScreenContainerController: HomeScreenDelegate {
     func openFindFriends() {
+        Mixpanel.mainInstance().track(event: "HomeScreenFindFriendsTap")
         if sheetView != nil { return }
         let findFriendsController = FindFriendsController()
         sheetView = DrawerView(present: findFriendsController, detentsInAscending: [.top, .middle, .bottom]) { [weak self] in
@@ -20,6 +22,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
     }
 
     func openNotifications() {
+        Mixpanel.mainInstance().track(event: "HomeScreenNotificationsTap")
         if sheetView != nil { return }
         let notificationsController = NotificationsController()
         sheetView = DrawerView(present: notificationsController, detentsInAscending: [.bottom, .middle, .top], closeAction: { [weak self] in
@@ -30,6 +33,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
     }
 
     func openProfile() {
+        Mixpanel.mainInstance().track(event: "HomeScreenProfileTap")
         if sheetView != nil { return }
         let profileVC = ProfileViewController(userProfile: nil)
         sheetView = DrawerView(present: profileVC, detentsInAscending: [.bottom, .middle, .top], closeAction: { [weak self] in
@@ -40,6 +44,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
     }
 
     func openSpot(post: MapPost) {
+        Mixpanel.mainInstance().track(event: "MapSpotTap")
         if sheetView != nil { return }
         let spotVC = SpotPageController(mapPost: post, presentedDrawerView: nil)
         sheetView = DrawerView(present: spotVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
@@ -50,6 +55,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
     }
 
     func openPosts(posts: [MapPost]) {
+        Mixpanel.mainInstance().track(event: "MapPostTap")
         if sheetView != nil { return }
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = posts
@@ -61,6 +67,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
     }
 
     func openMap(map: CustomMap) {
+        Mixpanel.mainInstance().track(event: "SideBarMapTap")
         if sheetView != nil { return }
         if selectedControllerIndex == 0 { animateSideBar() }
 
@@ -70,10 +77,11 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         }
 
         customMapVC.containerDrawerView = sheetView
-        sheetView?.present(to: .middle)
+        sheetView?.present(to: .top)
     }
 
     func openNewMap() {
+        Mixpanel.mainInstance().track(event: "SideBarNewMapTap")
         if selectedControllerIndex == 0 { animateSideBar() }
         mapController.openNewMap()
     }
@@ -96,5 +104,11 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         UIView.animate(withDuration: 0.25, delay: 0.0, options: [.curveEaseInOut]) {
             self.view.layoutIfNeeded()
         }
+    }
+
+    func openExploreMaps() {
+        Mixpanel.mainInstance().track(event: "SideBarExploreMapsTap")
+        if selectedControllerIndex == 0 { animateSideBar() }
+        mapController.openExploreMaps(onboarding: false)
     }
 }

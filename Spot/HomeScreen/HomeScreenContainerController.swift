@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import Mixpanel
 
 protocol HomeScreenDelegate: AnyObject {
     func openFindFriends()
@@ -17,6 +18,7 @@ protocol HomeScreenDelegate: AnyObject {
     func openPosts(posts: [MapPost])
     func openMap(map: CustomMap)
     func openNewMap()
+    func openExploreMaps()
     func drawerOpen() -> Bool
     func animateSideBar()
 }
@@ -33,6 +35,10 @@ class HomeScreenContainerController: UIViewController {
 
     var selectedControllerIndex = 1
     var mapGesture: UITapGestureRecognizer?
+
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .darkContent
+    }
 
     override init(nibName: String?, bundle: Bundle?) {
         super.init(nibName: nibName, bundle: bundle)
@@ -73,6 +79,7 @@ extension HomeScreenContainerController {
     }
 
     func openSideBar() {
+        Mixpanel.mainInstance().track(event: "MapOpenSideBar")
         if let mapGesture { mapNavController.view.addGestureRecognizer(mapGesture) }
         mapController.view.isUserInteractionEnabled = false
         if sideBarController.mapsLoaded { sideBarController.reloadTable() }
@@ -91,6 +98,7 @@ extension HomeScreenContainerController {
     }
 
     func closeSideBar() {
+        Mixpanel.mainInstance().track(event: "MapCloseSideBar")
         if let mapGesture { mapNavController.view.removeGestureRecognizer(mapGesture) }
         mapController.view.isUserInteractionEnabled = true
 

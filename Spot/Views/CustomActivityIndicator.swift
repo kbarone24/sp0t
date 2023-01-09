@@ -15,11 +15,12 @@ final class CustomActivityIndicator: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        imageView.frame = frame
-        imageView.image = UIImage(named: "LoadingIndicator")
-        imageView.contentMode = .scaleAspectFit
-        imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        addSubview(imageView)
+        setUpView(image: nil)
+    }
+
+    init(image: UIImage) {
+        super.init(frame: .zero)
+        setUpView(image: image)
     }
 
     @available(*, unavailable)
@@ -27,9 +28,17 @@ final class CustomActivityIndicator: UIView {
         fatalError("Has not been implemented.")
     }
 
-    func startAnimating() {
+    func setUpView(image: UIImage?) {
+        imageView.frame = frame
+        imageView.image = image == nil ? UIImage(named: "LoadingIndicator") : image
+        imageView.contentMode = .scaleAspectFit
+        imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        addSubview(imageView)
+    }
+
+    func startAnimating(duration: CFTimeInterval? = 0.7) {
         isHidden = false
-        rotate()
+        rotate(duration: duration ?? 0.7)
     }
 
     func isAnimating() -> Bool {
@@ -41,10 +50,10 @@ final class CustomActivityIndicator: UIView {
         removeRotation()
     }
 
-    func rotate() {
+    func rotate(duration: CFTimeInterval) {
         let rotation: CABasicAnimation = CABasicAnimation(keyPath: "transform.rotation.z")
         rotation.toValue = NSNumber(value: Double.pi * 2)
-        rotation.duration = 0.7
+        rotation.duration = duration
         rotation.isCumulative = true
         rotation.repeatCount = Float.greatestFiniteMagnitude
         self.imageView.layer.add(rotation, forKey: "rotationAnimation")

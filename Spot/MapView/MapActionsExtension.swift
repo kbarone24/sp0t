@@ -12,6 +12,7 @@ import Mixpanel
 
 extension MapController {
     @objc func currentLocationTap() {
+        Mixpanel.mainInstance().track(event: "MapCurrentLocationTap")
         addFriendsView.removeFromSuperview()
         animateToCurrentLocation()
     }
@@ -36,7 +37,7 @@ extension MapController {
     }
 
     @objc func addTap() {
-        Mixpanel.mainInstance().track(event: "MapControllerAddTap")
+        Mixpanel.mainInstance().track(event: "HomeScreenAddTap")
         addFriendsView.removeFromSuperview()
         if navigationController?.viewControllers.contains(where: { $0 is AVCameraController }) ?? false {
             return
@@ -52,22 +53,18 @@ extension MapController {
     }
 
     @objc func profileTap() {
-        Mixpanel.mainInstance().track(event: "MapControllerProfileTap")
         homeScreenDelegate?.openProfile()
     }
 
     @objc func notificationsTap() {
-        Mixpanel.mainInstance().track(event: "MapControllerNotificationsTap")
         homeScreenDelegate?.openNotifications()
     }
 
     @objc func searchTap() {
-        Mixpanel.mainInstance().track(event: "MapControllerSearchTap")
         openFindFriends()
     }
 
     @objc func findFriendsTap() {
-        Mixpanel.mainInstance().track(event: "MapControllerFindFriendsTap")
         openFindFriends()
     }
 
@@ -87,13 +84,13 @@ extension MapController {
     func openExploreMaps(onboarding: Bool) {
         let fromValue: ExploreMapViewModel.OpenedFrom = onboarding ? .onBoarding : .mapController
         let viewController = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: ServiceContainer.shared, from: fromValue))
+        viewController.delegate = self
         let transition = AddButtonTransition()
         self.navigationController?.view.layer.add(transition, forKey: kCATransition)
         self.navigationController?.pushViewController(viewController, animated: false)
     }
 
     func openNewMap() {
-        Mixpanel.mainInstance().track(event: "MapControllerNewMapTap")
         if navigationController?.viewControllers.contains(where: { $0 is NewMapController }) ?? false {
             return
         }
@@ -118,6 +115,7 @@ extension MapController {
 
     func toggleHomeAppearance(hidden: Bool) {
         newPostsButton.setHidden(hidden: hidden)
+        addButton.isHidden = hidden
         currentLocationButton.isHidden = hidden
         inviteFriendsButton.isHidden = hidden
         cityLabel.isHidden = hidden
@@ -133,6 +131,7 @@ extension MapController {
 
     func animateHomeAlphas() {
         navigationController?.navigationBar.alpha = 0.0
+        addButton.alpha = 0.0
         newPostsButton.alpha = 0.0
         currentLocationButton.alpha = 0.0
         inviteFriendsButton.alpha = 0.0
@@ -140,6 +139,7 @@ extension MapController {
 
         UIView.animate(withDuration: 0.15) {
             self.navigationController?.navigationBar.alpha = 1
+            self.addButton.alpha = 1
             self.newPostsButton.alpha = 1
             self.currentLocationButton.alpha = 1
             self.inviteFriendsButton.alpha = 1

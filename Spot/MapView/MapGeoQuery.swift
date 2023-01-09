@@ -32,6 +32,10 @@ extension MapController {
                     radius < 400_000 &&
                     self.shouldRunGeoQuery() {
                     self.getVisibleSpots(searchLimit: self.geoQueryLimit * 2)
+
+                } else {
+                    // activity indicator will only be animating after explore maps join
+                    DispatchQueue.main.async { self.mapActivityIndicator.stopAnimating() }
                 }
             })
         }
@@ -53,5 +57,14 @@ extension MapController {
 
     func shouldRunGeoQuery() -> Bool {
         return mapView.enableGeoQuery && !(self.homeScreenDelegate?.drawerOpen() ?? false)
+    }
+}
+
+extension MapController: ExploreMapDelegate {
+    func finishPassing() {
+        DispatchQueue.main.async {
+            self.mapActivityIndicator.startAnimating(duration: 1.4)
+            self.animateToCurrentLocation()
+        }
     }
 }

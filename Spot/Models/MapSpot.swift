@@ -24,6 +24,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
     var phone: String? = ""
     var poiCategory: String? ///  poi category is a nil value to check on uploadPost for spot v poi
     var postIDs: [String] = []
+    var postMapIDs: [String]? = []
     var postPrivacies: [String] = []
     var postTimestamps: [Firebase.Timestamp] = []
     var posterDictionary: [String: [String]] = [:]
@@ -60,6 +61,7 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case phone
         case poiCategory
         case postIDs
+        case postMapIDs
         case postPrivacies
         case postTimestamps
         case posterDictionary
@@ -175,6 +177,10 @@ struct MapSpot: Identifiable, Codable, Hashable {
         for i in 0..<postIDs.count {
             if postPrivacies[safe: i] != "invite" &&
                 (UserDataModel.shared.userInfo.friendIDs.contains(posterIDs[safe: i] ?? "") || posterIDs[safe: i] == UserDataModel.shared.uid) {
+                return true
+            }
+            // public map post to this spot that user is a part of
+            if UserDataModel.shared.userInfo.mapsList.contains(where: { $0.id == postMapIDs?[safe: i] }) {
                 return true
             }
         }

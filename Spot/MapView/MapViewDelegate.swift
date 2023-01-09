@@ -73,7 +73,15 @@ extension MapController: MKMapViewDelegate {
         if postsFetched { setCityLabel() }
     }
 
+    func mapViewDidFinishLoadingMap(_ mapView: MKMapView) {
+        // disable user location callout
+        if let userLocationView = mapView.view(for: mapView.userLocation) {
+            userLocationView.canShowCallout = false
+        }
+    }
+
     func animateToCurrentLocation(animationDuration: TimeInterval? = 0.6) {
+        if UserDataModel.shared.currentLocation.coordinate.isEmpty() { return }
         DispatchQueue.main.async {
             let camera = MKMapCamera(lookingAtCenter: UserDataModel.shared.currentLocation.coordinate, fromDistance: 2_000, pitch: 30, heading: self.mapView.camera.heading)
             MKMapView.animate(withDuration: animationDuration ?? 0.7, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 10, options: UIView.AnimationOptions.curveEaseOut, animations: {
@@ -178,6 +186,7 @@ class SpotMapView: MKMapView {
     var lockClusterOnUpload = false
     var enableGeoQuery = false
     var spotMapDelegate: SpotMapViewDelegate?
+    private lazy var bottomMask = UIView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -195,6 +204,11 @@ class SpotMapView: MKMapView {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        addBottomMask()
     }
 
     func setOffsetRegion(region: MKCoordinateRegion, offset: CGFloat, animated: Bool) {
@@ -252,7 +266,9 @@ class SpotMapView: MKMapView {
         annotationView.clusteringIdentifier = !cluster && shouldCluster ? "SpotPostCluster" : nil
         annotationView.updateImage(posts: posts, spotName: group.spotName, id: group.id, poiCategory: group.poiCategory, spotCluster: spotCluster)
         annotationView.isSelected = posts.contains(where: { !$0.seen })
-        annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotPostTap(_:))))
+        let tap = UITapGestureRecognizer(target: self, action: #selector(spotPostTap(_:)))
+        tap.delegate = self
+        annotationView.addGestureRecognizer(tap)
         return annotationView
     }
 
@@ -263,7 +279,11 @@ class SpotMapView: MKMapView {
         annotationView.mapView = self
         let priority = getSpotDisplayPriority(group: group)
         annotationView.setUp(spotID: group.id, spotName: group.spotName, poiCategory: group.poiCategory, priority: priority)
-        annotationView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(spotNameTap(_:))))
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(spotNameTap(_:)))
+        tap.delegate = self
+        annotationView.addGestureRecognizer(tap)
+
         return annotationView
     }
 
@@ -310,6 +330,7 @@ class SpotMapView: MKMapView {
         let postFrame = CGRect(x: frame.midX - 35, y: 0, width: 70, height: 70)
 
         let usernameAvatarTouchArea = CGRect(x: frame.midX + 10, y: 42, width: frame.width / 2 - 10, height: 38)
+        print("tap location", tapLocation, postFrame, annotationView.postIDs)
         if postFrame.contains(tapLocation) {
             spotMapDelegate?.openPostFromSpotPost(view: annotationView)
 
@@ -321,7 +342,7 @@ class SpotMapView: MKMapView {
         } else if tapLocation.y > frame.maxY - 22 {
             if annotationView.spotName != "" { spotMapDelegate?.openSpotFromSpotPost(view: annotationView) }
 
-        } else if usernameAvatarTouchArea.contains(tapLocation) {
+        } else if usernameAvatarTouchArea.contains(tapLocation) && annotationView.clusteringIdentifier != nil {
             /// username / avatar tap (avatar and username are to the right of the post frame)
             spotMapDelegate?.centerMapOnPostsInCluster(view: annotationView)
         }
@@ -373,5 +394,38 @@ class SpotMapView: MKMapView {
         }
         /// > 1000 = required annotation, dont want this
         return min(900, spotScore)
+    }
+
+    func addBottomMask() {
+        if bottomMask.superview != nil { return }
+
+        bottomMask.isUserInteractionEnabled = false
+        addSubview(bottomMask)
+        bottomMask.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalToSuperview().offset(-65)
+            $0.height.equalTo(242)
+        }
+        bottomMask.layoutIfNeeded()
+
+        _ = CAGradientLayer {
+            // offset for portion of map that's offscreen
+            $0.frame = bottomMask.bounds
+            $0.colors = [
+                UIColor(red: 1, green: 1, blue: 1, alpha: 0).cgColor,
+                UIColor(red: 1, green: 1, blue: 1, alpha: 0.4).cgColor
+            ]
+            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
+            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
+            $0.locations = [0, 1]
+            bottomMask.layer.addSublayer($0)
+        }
+
+    }
+}
+
+extension SpotMapView: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return false
     }
 }

@@ -104,4 +104,10 @@ extension CLLocation {
         ]
         return states[abbreviation] ?? ""
     }
+
+    func userInChapelHill() -> Bool {
+        let chapelHillLocation = CLLocation(latitude: 35.9132, longitude: -79.0558)
+        let distance = distance(from: chapelHillLocation)
+        return distance / 1_000 < 10
+    }
 }

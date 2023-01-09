@@ -90,8 +90,6 @@ extension MapController {
             }
         }
 
-        let mapIndex = post.mapID == "" ? 0 : 1
-        let dictionaryIndex = post.mapID == "" ? 0 : -1
         DispatchQueue.main.async {
             self.addPostToDictionary(post: post, map: map, newPost: true)
             self.finishPostsLoad(resort: true, newPost: true, upload: true)

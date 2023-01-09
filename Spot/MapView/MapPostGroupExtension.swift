@@ -31,6 +31,10 @@ extension MapController {
                     coordinate: coordinate,
                     spotName: post.spotName ?? "",
                     postIDs: [MapPostGroup.PostID(id: post.id ?? "", timestamp: post.timestamp, seen: post.seen)])
+                // get poi category from post data if available
+                if let category = post.spotPOICategory, let poiCategory = POICategory(rawValue: category) {
+                    newGroup.poiCategory = poiCategory
+                }
                 postGroup.append(newGroup)
                 return (newGroup, true)
 

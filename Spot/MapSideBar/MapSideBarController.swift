@@ -61,6 +61,7 @@ class MapSideBarController: UIViewController {
 
         tableView.register(TableViewLoadingCell.self, forCellReuseIdentifier: "LoadingCell")
         tableView.register(SideBarNewMapCell.self, forCellReuseIdentifier: "NewCell")
+        tableView.register(SideBarCampusMapCell.self, forCellReuseIdentifier: "CampusCell")
         tableView.register(SideBarCustomMapCell.self, forCellReuseIdentifier: "MapCell")
         tableView.delegate = self
         tableView.dataSource = self
@@ -79,11 +80,16 @@ class MapSideBarController: UIViewController {
     func reloadTable() {
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
+
+    func showExplore() -> Bool {
+        return UserDataModel.shared.currentLocation.userInChapelHill()
+    }
 }
 
 extension MapSideBarController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return mapsLoaded ? UserDataModel.shared.userInfo.mapsList.count + 1 : 1
+        let extraCells = showExplore() ? 2 : 1
+        return mapsLoaded ? UserDataModel.shared.userInfo.mapsList.count + extraCells : 1
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -97,9 +103,18 @@ extension MapSideBarController: UITableViewDelegate, UITableViewDataSource {
                 cell.activityIndicator.startAnimating()
                 return cell
             }
-        default:
+        case 1:
+            if showExplore() {
+                return tableView.dequeueReusableCell(withIdentifier: "CampusCell", for: indexPath) as? SideBarCampusMapCell ?? emptyCell
+            }
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? SideBarCustomMapCell else { return emptyCell }
             cell.setUp(map: UserDataModel.shared.userInfo.mapsList[indexPath.row - 1])
+            return cell
+
+        default:
+            let extraCells = showExplore() ? 2 : 1
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? SideBarCustomMapCell else { return emptyCell }
+            cell.setUp(map: UserDataModel.shared.userInfo.mapsList[indexPath.row - extraCells])
             return cell
         }
     }
@@ -113,8 +128,15 @@ extension MapSideBarController: UITableViewDelegate, UITableViewDataSource {
         case 0:
             if !mapsLoaded { return }
             homeScreenDelegate?.openNewMap()
+        case 1:
+            if showExplore() {
+                homeScreenDelegate?.openExploreMaps()
+            } else {
+                homeScreenDelegate?.openMap(map: UserDataModel.shared.userInfo.mapsList[indexPath.row - 1])
+            }
         default:
-            homeScreenDelegate?.openMap(map: UserDataModel.shared.userInfo.mapsList[indexPath.row - 1])
+            let extraCells = showExplore() ? 2 : 1
+            homeScreenDelegate?.openMap(map: UserDataModel.shared.userInfo.mapsList[indexPath.row - extraCells])
         }
     }
 }

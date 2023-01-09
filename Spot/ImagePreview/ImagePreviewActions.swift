@@ -244,6 +244,7 @@ extension ImagePreviewController {
             privacyLevel: "friends",
             description: ""
         )
+    
         newSpot.posterUsername = UserDataModel.shared.userInfo.username
         finishPassing(spot: newSpot)
         UploadPostModel.shared.postType = .newSpot

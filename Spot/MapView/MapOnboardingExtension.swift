@@ -12,11 +12,6 @@ import MapKit
 import UIKit
 
 extension MapController {
-    func userInChapelHill() -> Bool {
-        let distance = UserDataModel.shared.currentLocation.distance(from: chapelHillLocation)
-        // include users within 10km of downtown CH
-        return distance / 1_000 < 10
-    }
 
     func loadAdditionalOnboarding() {
         let posts = postDictionary.count
@@ -24,7 +19,7 @@ extension MapController {
             let avc = AvatarSelectionController(sentFrom: .map)
             self.navigationController?.pushViewController(avc, animated: true)
 
-        } else if userInChapelHill() {
+        } else if UserDataModel.shared.currentLocation.userInChapelHill() {
             displayHeelsMap()
 
         } else if UserDataModel.shared.userInfo.friendIDs.count < 4 && posts == 0 {
@@ -39,7 +34,7 @@ extension MapController {
     }
 
     func displayHeelsMap() {
-        if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) && userInChapelHill() {
+        if !(UserDataModel.shared.userInfo.respondedToCampusMap ?? false) && UserDataModel.shared.currentLocation.userInChapelHill() {
             openExploreMaps(onboarding: true)
             UserDataModel.shared.userInfo.respondedToCampusMap = true
             db.collection("users").document(uid).updateData(["respondedToCampusMap": true])

@@ -180,7 +180,6 @@ extension MapController {
 
             var newPost = false
             let postIDs = snap.documents.map({ $0.documentID })
-            print("post ids", postIDs)
             if self.postsFetched { newPost = self.checkForPostDelete(postIDs: postIDs, friendsFetch: true) }
             self.friendsFetchIDs = postIDs
             if snap.documents.isEmpty { self.leaveHomeFetchGroup(newPost: false); return }
@@ -376,9 +375,8 @@ extension MapController {
     }
 
     func setNewPostsButtonCount() {
+        newPostsButton.totalPosts = postDictionary.count
         newPostsButton.unseenPosts = postDictionary.filter { !$0.value.seen }.count
-        // show new posts button on friends map if the user has a friend (no real way of checking if that friend has actually posted to friends map)
-        newPostsButton.totalPosts = UserDataModel.shared.userInfo.friendIDs.count > 1 ? 1 : 0
     }
     
     func checkForActivityIndicator() {
