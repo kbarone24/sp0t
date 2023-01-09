@@ -29,12 +29,11 @@ final class TagFriendsView: UIView {
         super.init(frame: frame)
         backgroundColor = nil
 
-        let layout = UICollectionViewFlowLayout {
-            $0.itemSize = CGSize(width: 80, height: 80)
-            $0.minimumInteritemSpacing = 6
-            $0.scrollDirection = .horizontal
-        }
-        
+        let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: 80, height: 80)
+        layout.minimumInteritemSpacing = 6
+        layout.scrollDirection = .horizontal
+
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = nil
         collectionView.showsHorizontalScrollIndicator = false

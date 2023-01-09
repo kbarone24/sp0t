@@ -251,10 +251,10 @@ extension ImagePreviewController {
     }
     
     func addExtraMask() {
-        let extraMask = UIView {
-            $0.backgroundColor = UIColor.black.withAlphaComponent(0.65)
-            view.insertSubview($0, belowSubview: actionButton)
-        }
+        let extraMask = UIView()
+        extraMask.backgroundColor = UIColor.black.withAlphaComponent(0.65)
+        view.insertSubview(extraMask, at: 0)
+
         extraMask.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
             $0.top.equalTo(postDetailView.snp.bottom)

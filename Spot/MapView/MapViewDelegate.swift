@@ -408,19 +408,16 @@ class SpotMapView: MKMapView {
         }
         bottomMask.layoutIfNeeded()
 
-        _ = CAGradientLayer {
-            // offset for portion of map that's offscreen
-            $0.frame = bottomMask.bounds
-            $0.colors = [
-                UIColor(red: 1, green: 1, blue: 1, alpha: 0).cgColor,
-                UIColor(red: 1, green: 1, blue: 1, alpha: 0.4).cgColor
-            ]
-            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
-            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
-            $0.locations = [0, 1]
-            bottomMask.layer.addSublayer($0)
-        }
-
+        let layer = CAGradientLayer()
+        layer.frame = bottomMask.bounds
+        layer.colors = [
+            UIColor(red: 1, green: 1, blue: 1, alpha: 0).cgColor,
+            UIColor(red: 1, green: 1, blue: 1, alpha: 0.4).cgColor
+        ]
+        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        layer.locations = [0, 1]
+        bottomMask.layer.addSublayer(layer)
     }
 }
 
