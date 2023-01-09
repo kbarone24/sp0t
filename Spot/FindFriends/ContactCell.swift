@@ -8,10 +8,9 @@
 import Contacts
 import Firebase
 import FirebaseFirestore
-import FirebaseUI
-import Foundation
 import Mixpanel
 import UIKit
+import SDWebImage
 
 class ContactCell: UITableViewCell {
     var contact: UserProfile?

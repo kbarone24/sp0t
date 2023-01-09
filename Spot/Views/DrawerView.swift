@@ -92,6 +92,7 @@ class DrawerView: NSObject {
     override init() {
         super.init()
     }
+    
     public init(present: UIViewController = UIViewController(), detentsInAscending: [DrawerViewDetent] = [.bottom, .middle, .top], closeAction: (() -> Void)? = nil) {
         super.init()
         // cant get parent from this -> rework

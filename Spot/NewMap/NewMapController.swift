@@ -7,8 +7,6 @@
 //
 
 import Firebase
-import FirebaseUI
-import Foundation
 import IQKeyboardManagerSwift
 import Mixpanel
 import UIKit
@@ -442,7 +440,9 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
             showsSearchBar: true,
             friendIDs: UserDataModel.shared.userInfo.friendIDs,
             friendsList: friendsList,
-            confirmedIDs: [])
+            confirmedIDs: UploadPostModel.shared.postObject?.addedUsers ?? []
+        )
+        
         vc.delegate = self
         present(vc, animated: true)
     }

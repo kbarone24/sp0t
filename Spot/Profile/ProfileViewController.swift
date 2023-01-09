@@ -260,7 +260,7 @@ class ProfileViewController: UIViewController {
             if snap.documents.isEmpty && (self.relation == .friend || self.relation == .myself) { self.postsFetched = true }
             for doc in snap.documents {
                 do {
-                    let unwrappedInfo = try doc.data(as: MapPost.self)
+                    let unwrappedInfo = try? doc.data(as: MapPost.self)
                     guard let postInfo = unwrappedInfo else { continue }
                     if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { continue }
                     dispatch.enter()
@@ -296,7 +296,7 @@ class ProfileViewController: UIViewController {
             guard let snap = snap else { return }
             for doc in snap.documents {
                 do {
-                    let unwrappedInfo = try doc.data(as: CustomMap.self)
+                    let unwrappedInfo = try? doc.data(as: CustomMap.self)
                     guard let mapInfo = unwrappedInfo else { return }
                     /// friend doesn't have access to secret map
                     if mapInfo.secret && !mapInfo.memberIDs.contains(UserDataModel.shared.uid) { continue }
@@ -361,13 +361,12 @@ extension ProfileViewController {
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
         alert.addAction(cancelAction)
         alert.addAction(removeAction)
-        let containerVC = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
+        let containerVC = UIApplication.shared.keyWindow?.rootViewController ?? UIViewController()
         containerVC.present(alert, animated: true)
     }
 
     @objc func friendsListTap() {
         Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
-        guard let container = containerDrawerView else { return }
         let friendListVC = FriendsListController(
             allowsSelection: false,
             showsSearchBar: false,

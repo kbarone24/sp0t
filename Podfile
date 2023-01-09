@@ -1,4 +1,4 @@
-platform :ios, '14.0'
+platform :ios, '15.0'
 
 # ignore all warnings from all pods
 inhibit_all_warnings!
@@ -11,7 +11,9 @@ use_frameworks!
   pod 'Firebase/Auth'
   pod 'Firebase/Firestore'
   pod 'Firebase/Storage'
-  pod 'Firebase/Analytics'
+  pod 'FirebaseAnalytics'
+  pod 'Firebase/Core'
+  pod 'FirebaseUI'
   pod 'RSKImageCropper'
   pod 'IQKeyboardManagerSwift'
   pod 'Firebase/Messaging'

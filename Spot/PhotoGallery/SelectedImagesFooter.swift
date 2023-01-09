@@ -203,7 +203,7 @@ extension SelectedImagesFooter: UICollectionViewDelegate, UICollectionViewDataSo
         imagePreview.delegate = self
         imagePreview.animateFromFooter = true
 
-        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }), let object {
+        if let window = UIApplication.shared.keyWindow, let object {
             window.addSubview(imagePreview)
             let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
             imagePreview.imageExpand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])

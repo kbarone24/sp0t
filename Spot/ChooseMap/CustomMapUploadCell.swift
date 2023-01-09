@@ -6,11 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import FirebaseUI
-import Foundation
 import UIKit
+import SDWebImage
 
-class CustomMapUploadCell: UITableViewCell {
+final class CustomMapUploadCell: UITableViewCell {
     private lazy var mapImage: UIImageView = {
         let view = UIImageView()
         view.layer.cornerRadius = 9

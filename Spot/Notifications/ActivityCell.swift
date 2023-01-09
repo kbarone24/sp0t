@@ -6,10 +6,9 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 import Firebase
-import FirebaseUI
-import Foundation
 import Mixpanel
 import UIKit
+import SDWebImage
 
 class ActivityCell: UITableViewCell {
     weak var notificationControllerDelegate: NotificationsDelegate?

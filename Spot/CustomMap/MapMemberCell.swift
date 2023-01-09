@@ -6,8 +6,8 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import FirebaseUI
 import UIKit
+import SDWebImage
 
 final class MapMemberCell: UICollectionViewCell {
     private lazy var userImageView: UIImageView = {

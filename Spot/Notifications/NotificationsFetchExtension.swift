@@ -42,7 +42,7 @@ extension NotificationsController {
             Task {
                 for doc in allDocs {
                     do {
-                        let unwrappedNotification = try doc.data(as: UserNotification.self)
+                        let unwrappedNotification = try? doc.data(as: UserNotification.self)
                         guard var notification = unwrappedNotification else { continue }
                         notification.id = doc.documentID
 
@@ -90,7 +90,7 @@ extension NotificationsController {
             Task {
                 for doc in docs {
                     do {
-                        let notif = try doc.data(as: UserNotification.self)
+                        let notif = try? doc.data(as: UserNotification.self)
                         guard var notification = notif else { continue }
                         notification.id = doc.documentID
 

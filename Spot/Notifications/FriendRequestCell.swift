@@ -6,12 +6,11 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import FirebaseUI
-import Foundation
 import Mixpanel
 import UIKit
+import SDWebImage
 
-class FriendRequestCell: UICollectionViewCell {
+final class FriendRequestCell: UICollectionViewCell {
     var friendRequest: UserNotification?
     weak var collectionDelegate: FriendRequestCollectionCellDelegate?
     weak var notificationControllerDelegate: NotificationsDelegate?

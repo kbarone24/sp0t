@@ -35,7 +35,6 @@ final class NotificationsButton: UIButton {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-
         addSubview(bellView)
         bellView.snp.makeConstraints {
             $0.leading.bottom.equalToSuperview()

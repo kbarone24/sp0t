@@ -6,10 +6,10 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import FirebaseUI
 import UIKit
+import SDWebImage
 
-class ProfileMyMapImageCollectionViewCell: UICollectionViewCell {
+final class ProfileMyMapImageCollectionViewCell: UICollectionViewCell {
     var count: Int = 0
     var imageURL: String = "" {
         didSet {

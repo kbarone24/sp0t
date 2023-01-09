@@ -9,7 +9,7 @@
 import UIKit
 
 final class MapLoadingCell: UICollectionViewCell {
-    lazy var activityIndicator = CustomActivityIndicator()
+    private(set) lazy var activityIndicator = CustomActivityIndicator()
     private lazy var label: UILabel = {
         let label = UILabel()
         label.text = "Loading maps"
@@ -23,10 +23,8 @@ final class MapLoadingCell: UICollectionViewCell {
         super.init(frame: frame)
         backgroundColor = .clear
 
-        activityIndicator = CustomActivityIndicator {
-            $0.startAnimating()
-            contentView.addSubview($0)
-        }
+        activityIndicator.startAnimating()
+        contentView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.centerY.equalToSuperview().offset(-10)

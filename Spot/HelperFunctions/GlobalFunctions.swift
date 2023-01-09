@@ -312,6 +312,7 @@ extension UIViewController {
                               "phone": spot.phone ?? "",
                               "poiCategory": spot.poiCategory ?? "",
                               "postIDs": [post.id!],
+                              "postMapIDs": [post.mapID ?? ""],
                               "postTimestamps": [timestamp],
                               "posterIDs": [uid],
                               "postPrivacies": [post.privacyLevel!],
@@ -490,22 +491,6 @@ extension UIViewController {
             }
         } catch let error as NSError {
             print("could not fetch. \(error)")
-        }
-    }
-
-    func addToCityList(city: String) {
-        let db = Firestore.firestore()
-        let query = db.collection("cities").whereField("cityName", isEqualTo: city)
-
-        query.getDocuments { [weak self] (cityDocs, _) in
-            if cityDocs?.documents.count ?? 0 == 0 {
-                city.getCoordinate { coordinate, error in
-                    guard let coordinate = coordinate, error == nil else { return }
-                    let id = UUID().uuidString
-                    let g = GFUtils.geoHash(forLocation: coordinate)
-                    db.collection("cities").document(id).setData(["cityName": city, "g": g])
-                }
-            }
         }
     }
 }

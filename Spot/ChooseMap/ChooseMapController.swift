@@ -7,8 +7,6 @@
 //
 
 import Firebase
-import FirebaseUI
-import Foundation
 import Mixpanel
 import SnapKit
 import UIKit
@@ -16,10 +14,10 @@ import UIKit
 final class ChooseMapController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     let db: Firestore = Firestore.firestore()
-
+    
     var newMap: CustomMap?
     private lazy var customMaps: [CustomMap] = []
-
+    
     private lazy var postButton: PostButton = {
         let button = PostButton()
         button.addTarget(self, action: #selector(postTap), for: .touchUpInside)
@@ -29,53 +27,53 @@ final class ChooseMapController: UIViewController {
     private lazy var tableView = ChooseMapTableView()
     private lazy var bottomMask = UIView()
     private lazy var progressBar = ProgressBar()
-
+    
     private var heightConstraint: Constraint?
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         addButtons()
         addTableView()
         addProgressBar()
-
+        
         DispatchQueue.global(qos: .userInitiated).async { self.getCustomMaps() }
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         view.backgroundColor = .white
         setUpNavBar()
     }
-
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ChooseMapOpen")
     }
-
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
     }
-
+    
     override func viewDidLayoutSubviews() {
         addBottomMask()
     }
-
+    
     func setUpNavBar() {
         navigationItem.title = "Choose a map"
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.tintColor = .black
         navigationController?.navigationBar.addWhiteBackground()
-
+        
         let barButtonItem = UIBarButtonItem(image: UIImage(named: "BackArrowDark"), style: .plain, target: self, action: #selector(backTap(_:)))
         navigationItem.leftBarButtonItem = barButtonItem
-
+        
         if let mapNav = navigationController as? MapNavigationController {
             mapNav.requiredStatusBarStyle = .darkContent
         }
-
+        
     }
-
+    
     func addButtons() {
         // work bottom to top laying out views
         view.addSubview(postButton)
@@ -84,7 +82,7 @@ final class ChooseMapController: UIViewController {
             $0.leading.trailing.equalToSuperview().inset(49)
             $0.height.equalTo(58)
         }
-
+        
         friendsMapButton = FriendsMapButton {
             $0.addTarget(self, action: #selector(friendsMapTap), for: .touchUpInside)
             view.addSubview($0)
@@ -95,7 +93,7 @@ final class ChooseMapController: UIViewController {
             $0.height.equalTo(62)
         }
     }
-
+    
     func addTableView() {
         tableView.dataSource = self
         tableView.delegate = self
@@ -106,7 +104,7 @@ final class ChooseMapController: UIViewController {
             $0.bottom.equalTo(postButton.snp.top)
         }
     }
-
+    
     func addProgressBar() {
         progressBar.isHidden = true
         view.addSubview(progressBar)
@@ -116,34 +114,34 @@ final class ChooseMapController: UIViewController {
             $0.height.equalTo(18)
         }
     }
-
+    
     func getCustomMaps() {
         newMap = UploadPostModel.shared.mapObject
         customMaps = UserDataModel.shared.userInfo.mapsList.filter({ $0.memberIDs.contains(UserDataModel.shared.uid) }).sorted(by: { $0.userTimestamp.seconds > $1.userTimestamp.seconds })
-
+        
         if var newMap {
             newMap.coverImage = UploadPostModel.shared.postObject?.postImage.first ?? UIImage() /// new map image not set when going through new map flow
             customMaps.insert(newMap, at: 0)
         }
-
+        
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
-
+    
     func enablePostButton() {
         postButton.isEnabled = friendsMapButton.buttonSelected || UploadPostModel.shared.postObject?.mapID != ""
     }
-
+    
     @objc func friendsMapTap() {
         toggleFriendsMap()
         HapticGenerator.shared.play(.light)
     }
-
+    
     func toggleFriendsMap() {
         friendsMapButton.buttonSelected.toggle()
         UploadPostModel.shared.postObject?.hideFromFeed = !friendsMapButton.buttonSelected
         enablePostButton()
     }
-
+    
     func addBottomMask() {
         if bottomMask.superview != nil { return }
         bottomMask.isUserInteractionEnabled = false
@@ -162,21 +160,21 @@ final class ChooseMapController: UIViewController {
             bottomMask.layer.addSublayer($0)
         }
     }
-
+    
     @objc func postTap() {
         postButton.isEnabled = false
         navigationController?.navigationBar.isUserInteractionEnabled = false
-
+        
         /// make sure all post values are set for upload
         /// make sure there is a spot object attached to this post if posting to a spot
         UploadPostModel.shared.setFinalPostValues()
         if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
         let newMap = self.newMap != nil
-
+        
         progressBar.isHidden = false
         view.bringSubviewToFront(progressBar)
         let fullWidth = self.progressBar.bounds.width - 2
-
+        
         DispatchQueue.global(qos: .userInitiated).async {
             self.uploadPostImage(
                 images: UploadPostModel.shared.postObject?.postImage ?? [],
@@ -184,28 +182,28 @@ final class ChooseMapController: UIViewController {
                 progressFill: self.progressBar.progressFill,
                 fullWidth: fullWidth) { [weak self] imageURLs, failed in
                     
-                guard let self = self else { return }
-                if imageURLs.isEmpty && failed {
-                    Mixpanel.mainInstance().track(event: "FailedPostUpload")
-                    self.runFailedUpload()
-                    return
+                    guard let self = self else { return }
+                    if imageURLs.isEmpty && failed {
+                        Mixpanel.mainInstance().track(event: "FailedPostUpload")
+                        self.runFailedUpload()
+                        return
+                    }
+                    UploadPostModel.shared.postObject?.imageURLs = imageURLs
+                    self.uploadPostToDB(newMap: newMap)
+                    /// enable upload animation to finish
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        HapticGenerator.shared.play(.soft)
+                        self.popToMap()
+                    }
                 }
-                UploadPostModel.shared.postObject?.imageURLs = imageURLs
-                self.uploadPostToDB(newMap: newMap)
-                /// enable upload animation to finish
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    HapticGenerator.shared.play(.soft)
-                    self.popToMap()
-                }
-            }
         }
     }
-
+    
     func runFailedUpload() {
         showFailAlert()
         UploadPostModel.shared.saveToDrafts()
     }
-
+    
     func showFailAlert() {
         let alert = UIAlertController(title: "Upload failed", message: "Spot saved to your drafts", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
@@ -221,13 +219,13 @@ final class ChooseMapController: UIViewController {
             }}))
         present(alert, animated: true, completion: nil)
     }
-
+    
     @objc func backTap(_ sender: UIBarButtonItem) {
         /// reset new map object to show empty selection next time user comes through
         UploadPostModel.shared.setMapValues(map: nil)
         self.navigationController?.popViewController(animated: true)
     }
-
+    
     func popToMap() {
         UploadPostModel.shared.destroy()
         DispatchQueue.main.async {
@@ -245,11 +243,11 @@ extension ChooseMapController: NewMapDelegate {
         } else {
             customMaps[0] = map
         }
-
+        
         newMap = map
         selectMap(map: map)
     }
-
+    
     func selectMap(map: CustomMap) {
         Mixpanel.mainInstance().track(event: "ChooseMapSelectMap")
         UploadPostModel.shared.setMapValues(map: map)
@@ -258,22 +256,55 @@ extension ChooseMapController: NewMapDelegate {
         DispatchQueue.main.async { self.tableView.reloadData() }
         enablePostButton()
     }
-
+    
     func deselectMap(map: CustomMap) {
         Mixpanel.mainInstance().track(event: "ChooseMapDeselectMap")
         UploadPostModel.shared.setMapValues(map: nil)
-
+        
         DispatchQueue.main.async { self.tableView.reloadData() }
         enablePostButton()
+    }
+    
+    private func uploadPostToDB(newMap: Bool) {
+        guard let post = UploadPostModel.shared.postObject,
+              let spotService = try? ServiceContainer.shared.service(for: \.spotService),
+              let postService = try? ServiceContainer.shared.service(for: \.mapPostService)
+        else { return }
+        
+        var spot = UploadPostModel.shared.spotObject
+        var map = UploadPostModel.shared.mapObject
+        
+        if UploadPostModel.shared.imageFromCamera {
+            SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage())
+        }
+        
+        Task {
+            if spot != nil {
+                spot!.imageURL = post.imageURLs.first ?? ""
+                await spotService.uploadSpot(post: post, spot: spot!, submitPublic: false)
+            }
+            if map != nil {
+                if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
+                map!.postImageURLs.append(post.imageURLs.first ?? "")
+                self.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
+            }
+            
+            await postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+            
+            let visitorList = spot?.visitorList ?? []
+            self.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
+            
+            Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
+        }
     }
 }
 
 extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
-
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return newMap != nil ? customMaps.count : customMaps.count + 1
     }
-
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? CustomMapUploadCell {
             let index = newMap != nil ? indexPath.row : indexPath.row - 1
@@ -285,11 +316,11 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
         }
         return UITableViewCell()
     }
-
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 70
     }
-
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let index = indexPath.row - 1
         let map = customMaps[safe: index]
@@ -298,18 +329,18 @@ extension ChooseMapController: UITableViewDelegate, UITableViewDataSource {
                 deselectMap(map: map)
             } else { selectMap(map: map) }
             HapticGenerator.shared.play(.light)
-
+            
         } else if map == nil, let newMapVC = storyboard?.instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
             newMapVC.delegate = self
             newMapVC.mapObject = newMap
             DispatchQueue.main.async { self.present(newMapVC, animated: true) }
         }
     }
-
+    
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 40
     }
-
+    
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "MapsHeader") as? CustomMapsHeader else { return UIView() }
         return header
