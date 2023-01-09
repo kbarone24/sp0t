@@ -312,6 +312,7 @@ extension UIViewController {
                               "phone": spot.phone ?? "",
                               "poiCategory": spot.poiCategory ?? "",
                               "postIDs": [post.id!],
+                              "postMapIDs": [post.mapID ?? ""],
                               "postTimestamps": [timestamp],
                               "posterIDs": [uid],
                               "postPrivacies": [post.privacyLevel!],
