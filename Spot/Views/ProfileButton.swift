@@ -9,20 +9,21 @@
 import UIKit
 
 final class ProfileButton: UIButton {
-    var profileImage: UIImageView!
+    lazy var profileImage: UIImageView = {
+        let image = UIImageView()
+        image.layer.cornerRadius = 27 / 2
+        image.layer.masksToBounds = true
+        return image
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .white
-        layer.cornerRadius = 39 / 2
+        layer.cornerRadius = 33 / 2
         layer.borderColor = UIColor.black.cgColor
         layer.borderWidth = 2
 
-        profileImage = UIImageView {
-            $0.layer.cornerRadius = 33 / 2
-            $0.layer.masksToBounds = true
-            addSubview($0)
-        }
+        addSubview(profileImage)
         profileImage.snp.makeConstraints {
             $0.edges.equalToSuperview().inset(3)
         }

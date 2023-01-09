@@ -52,20 +52,8 @@ final class CustomMapUploadCell: UITableViewCell {
             }
             let buttonImage = selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
             selectedBubble.image = buttonImage
+            nameLabel.attributedText = map.mapName.getMapString(secret: map.secret)
 
-            if map.secret {
-                // show secret icon
-                let imageAttachment = NSTextAttachment()
-                imageAttachment.image = UIImage(named: "SecretMap")
-                imageAttachment.bounds = CGRect(x: 0, y: 0, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
-                let attachmentString = NSAttributedString(attachment: imageAttachment)
-                let completeText = NSMutableAttributedString(string: "")
-                completeText.append(attachmentString)
-                completeText.append(NSAttributedString(string: " \(map.mapName)"))
-                self.nameLabel.attributedText = completeText
-            } else {
-                nameLabel.attributedText = NSAttributedString(string: map.mapName)
-            }
         } else {
             // new map cell
             mapImage.image = UIImage(named: "NewMapCellImage")

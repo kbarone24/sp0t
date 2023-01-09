@@ -249,15 +249,18 @@ extension SpotPageController {
                 self.relatedEndDocument = allDocs.last
                 self.fetchRelatedPostsComplete = docs.count < 12
                 self.fetching = .refreshEnabled
-                if docs.count < 12 { self.fetchCommunityPost() }
 
                 self.relatedPosts.sort(by: { $0.seconds > $1.seconds })
                 self.collectionView.reloadData()
+
+                if docs.count < 12 {
+                    DispatchQueue.global().async { self.fetchCommunityPosts() }
+                }
             }
         }
     }
 
-    private func fetchCommunityPost() {
+    private func fetchCommunityPosts() {
         let db: Firestore = Firestore.firestore()
         let baseQuery = db.collection("posts").whereField("spotID", isEqualTo: spotID)
         var finalQuery = baseQuery.limit(to: 13).order(by: "timestamp", descending: true)
@@ -302,7 +305,6 @@ extension SpotPageController {
                 self.communityEndDocument = allDocs.last
                 self.relatedPosts.sort(by: { $0.seconds > $1.seconds })
                 self.communityPosts.sort(by: { $0.seconds > $1.seconds })
-                print("notify main 1", self.communityPosts.count, self.relatedPosts.count)
                 self.collectionView.reloadData()
             }
         }
@@ -472,7 +474,7 @@ extension SpotPageController: UIScrollViewDelegate {
 
         if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 500)) && fetching == .refreshEnabled {
             DispatchQueue.global(qos: .userInitiated).async {
-                self.fetchRelatedPostsComplete ? self.fetchCommunityPost() : self.fetchRelatedPosts()
+                self.fetchRelatedPostsComplete ? self.fetchCommunityPosts() : self.fetchRelatedPosts()
             }
         }
     }

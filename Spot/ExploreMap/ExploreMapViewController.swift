@@ -11,12 +11,17 @@ import Firebase
 import UIKit
 import Mixpanel
 
+protocol ExploreMapDelegate: AnyObject {
+    func finishPassing()
+}
+
 final class ExploreMapViewController: UIViewController {
     typealias Input = ExploreMapViewModel.Input
     typealias DataSource = UITableViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     typealias JoinButton = ExploreMapViewModel.JoinButtonType
     typealias Title = ExploreMapViewModel.TitleData
+    weak var delegate: ExploreMapDelegate?
 
     enum Section: Hashable {
         case body(title: Title)
@@ -123,9 +128,6 @@ final class ExploreMapViewController: UIViewController {
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-      //  if viewModel.openedFrom == .onBoarding {
-      //      addBottomMask()
-      //  }
     }
 
     override func viewDidLoad() {
@@ -304,6 +306,7 @@ final class ExploreMapViewController: UIViewController {
     }
     
     @objc private func close() {
+        delegate?.finishPassing()
         navigationController?.popViewController(animated: true)
     }
 }

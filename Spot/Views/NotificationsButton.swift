@@ -9,14 +9,22 @@
 import UIKit
 
 final class NotificationsButton: UIButton {
-    private(set) lazy var bellView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(named: "NotificationsNavIcon")
-        return imageView
+    private lazy var bellView = UIImageView(image: UIImage(named: "NotificationsNavIcon"))
+    private lazy var bubbleIcon: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 1, green: 0.421, blue: 0.873, alpha: 1)
+        view.layer.cornerRadius = 16 / 2
+        view.isHidden = true
+        return view
     }()
-    
-    var bubbleIcon: UIView!
-    var countLabel: UILabel!
+    var countLabel: UILabel = {
+        let label = UILabel()
+        label.text = ""
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 11.5)
+        label.textAlignment = .center
+        return label
+    }()
 
     lazy var pendingCount: Int = 0 {
         didSet {
@@ -30,28 +38,17 @@ final class NotificationsButton: UIButton {
         addSubview(bellView)
         bellView.snp.makeConstraints {
             $0.leading.bottom.equalToSuperview()
-            $0.width.equalTo(26.5)
-            $0.height.equalTo(29)
+            $0.width.equalTo(26)
+            $0.height.equalTo(27)
         }
 
-        bubbleIcon = UIView {
-            $0.backgroundColor = UIColor(red: 1, green: 0.421, blue: 0.873, alpha: 1)
-            $0.layer.cornerRadius = 16 / 2
-            $0.isHidden = true
-            addSubview($0)
-        }
+        addSubview(bubbleIcon)
         bubbleIcon.snp.makeConstraints {
             $0.trailing.top.equalToSuperview()
             $0.height.width.equalTo(16)
         }
 
-        countLabel = UILabel {
-            $0.text = ""
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 11.5)
-            $0.textAlignment = .center
-            bubbleIcon.addSubview($0)
-        }
+        bubbleIcon.addSubview(countLabel)
         countLabel.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }

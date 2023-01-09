@@ -137,7 +137,7 @@ extension CLLocationCoordinate2D {
         return latitude == 0.0 && longitude == 0.0
     }
 }
-///https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
+// https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
 
 // Supposed to exclude invalid geoQuery regions. Not sure how well it works
 extension MKCoordinateRegion {
@@ -151,7 +151,7 @@ extension MKCoordinateRegion {
         self.init()
 
         guard let firstCoordinate = coordinates.first else {
-            self.init(center: UserDataModel.shared.currentLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15))
+            self.init(center: UserDataModel.shared.currentLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
             return
         }
         let minSpan = 0.001

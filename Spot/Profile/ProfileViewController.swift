@@ -372,8 +372,7 @@ extension ProfileViewController {
             showsSearchBar: false,
             friendIDs: userProfile?.friendIDs ?? [],
             friendsList: userProfile?.friendsList ?? [],
-            confirmedIDs: []
-        )
+            confirmedIDs: [])
         present(friendListVC, animated: true)
     }
 

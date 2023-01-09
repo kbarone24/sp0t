@@ -88,8 +88,8 @@ extension AVCameraController {
             transition.subtype = CATransitionSubtype.fromBottom
 
             DispatchQueue.main.async {
-                if let mapVC = self?.navigationController?.viewControllers[(self?.navigationController?.viewControllers.count ?? 2) - 2] as? MapController {
-                    mapVC.uploadMapReset()
+                if let homeController = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController as? HomeScreenContainerController {
+                    homeController.uploadMapReset()
                 }
                 /// add up to down transition on return to map
                 self?.navigationController?.view.layer.add(transition, forKey: kCATransition)

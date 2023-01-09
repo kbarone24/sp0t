@@ -35,16 +35,7 @@ final class FriendRequestCell: UICollectionViewCell {
     private lazy var senderUsername: UILabel = {
         let label = UILabel()
         label.isUserInteractionEnabled = true
-        label.textColor = UIColor(red: 0.675, green: 0.675, blue: 0.675, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
-        return label
-    }()
-
-    private lazy var senderName: UILabel = {
-        let label = UILabel()
-        label.adjustsFontSizeToFitWidth = true
         label.textAlignment = .center
-        label.isUserInteractionEnabled = true
         label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         return label
@@ -107,19 +98,11 @@ final class FriendRequestCell: UICollectionViewCell {
             $0.height.equalTo((self.frame.width * 0.12) * 1.7)
         }
 
-        senderName.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTap)))
-        contentView.addSubview(senderName)
-        senderName.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(8)
-            $0.top.equalTo(profilePic.snp.bottom).offset(12)
-            $0.height.lessThanOrEqualTo(18)
-        }
-
         senderUsername.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTap)))
         contentView.addSubview(senderUsername)
         senderUsername.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(senderName.snp.bottom)
+            $0.top.equalTo(profilePic.snp.bottom).offset(14)
             $0.height.lessThanOrEqualTo(16)
         }
 
@@ -133,7 +116,7 @@ final class FriendRequestCell: UICollectionViewCell {
         contentView.addSubview(acceptButton)
         acceptButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(14)
-            $0.top.equalTo(senderUsername.snp.bottom).offset(11)
+            $0.top.equalTo(senderUsername.snp.bottom).offset(14)
             $0.bottom.equalToSuperview().offset(-11)
         }
 
@@ -161,7 +144,6 @@ final class FriendRequestCell: UICollectionViewCell {
             avatarImage.sd_setImage(with: URL(string: avatarURL), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
         }
         senderUsername.text = friendRequest?.userInfo?.username
-        senderName.text = friendRequest?.userInfo?.name
         timestamp.text = friendRequest?.timestamp.toString(allowDate: false) ?? ""
     }
 

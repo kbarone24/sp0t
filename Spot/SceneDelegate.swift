@@ -31,17 +31,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func animateToMap() {
-        guard let window,
-              case let sb = UIStoryboard(name: "Map", bundle: nil),
-              let mapViewController = sb.instantiateViewController(withIdentifier: "MapVC") as? MapController,
-              let appDelegate = UIApplication.shared.delegate as? AppDelegate
-        else { return }
+        guard let window else { return }
 
         let notificationName = Notification.Name("openPush")
         NotificationCenter.default.post(name: notificationName, object: nil, userInfo: nil)
 
-        let navController = MapNavigationController(rootViewController: mapViewController)
-        window.rootViewController = navController
+        let homeScreenController = HomeScreenContainerController()
+        window.rootViewController = homeScreenController
         window.makeKeyAndVisible()
     }
 

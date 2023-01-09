@@ -405,8 +405,7 @@ extension CustomMapHeaderCell {
             showsSearchBar: false,
             friendIDs: mapData?.memberIDs ?? [],
             friendsList: [],
-            confirmedIDs: []
-        )
+            confirmedIDs: [])
         customMapVC.present(friendListVC, animated: true)
     }
 

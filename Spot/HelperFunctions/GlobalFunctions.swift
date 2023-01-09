@@ -192,6 +192,166 @@ extension UIViewController {
         }
     }
 
+    func uploadPostToDB(newMap: Bool) {
+        guard let post = UploadPostModel.shared.postObject else { return }
+        var spot = UploadPostModel.shared.spotObject
+        var map = UploadPostModel.shared.mapObject
+
+        if UploadPostModel.shared.imageFromCamera { SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage()) }
+
+        if spot != nil {
+            spot!.imageURL = post.imageURLs.first ?? ""
+            self.uploadSpot(post: post, spot: spot!, submitPublic: false)
+        }
+        if map != nil {
+            if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
+            map!.postImageURLs.append(post.imageURLs.first ?? "")
+            self.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
+        }
+        self.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+
+        let visitorList = spot?.visitorList ?? []
+        self.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
+
+        Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
+    }
+
+    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
+        /// send local notification first
+        guard let postID = post.id else { return }
+        let caption = post.caption
+        var notiPost = post
+        notiPost.id = postID
+        let commentObject = MapComment(
+            id: UUID().uuidString, comment: caption, commenterID: post.posterID, taggedUsers: post.taggedUsers, timestamp: post.timestamp, userInfo: UserDataModel.shared.userInfo
+        )
+        notiPost.commentList = [commentObject]
+        notiPost.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
+        notiPost.userInfo = UserDataModel.shared.userInfo
+        NotificationCenter.default.post(Notification(name: Notification.Name("NewPost"), object: nil, userInfo: ["post": notiPost as Any, "map": map as Any, "spot": spot as Any, "newMap": newMap]))
+
+        let db = Firestore.firestore()
+        let postRef = db.collection("posts").document(postID)
+        do {
+            var post = post
+            post.g = GFUtils.geoHash(forLocation: post.coordinate)
+            try postRef.setData(from: post)
+            if !newMap { self.sendPostNotifications(post: post, map: map, spot: spot) } /// send new map notis for new map
+            let commentRef = postRef.collection("comments").document(commentObject.id ?? "")
+
+            do {
+                try commentRef.setData(from: commentObject)
+            } catch {
+                print("failed uploading comment")
+            }
+        } catch {
+            print("failed uploading post")
+        }
+    }
+
+    func sendPostNotifications(post: MapPost, map: CustomMap?, spot: MapSpot?) {
+        let functions = Functions.functions()
+        let notiValues: [String: Any] = [
+            "communityMap": map?.communityMap ?? false,
+             "friendIDs": UserDataModel.shared.userInfo.friendIDs,
+             "imageURLs": post.imageURLs,
+             "mapID": map?.id ?? "",
+             "mapMembers": map?.memberIDs ?? [],
+             "mapName": map?.mapName ?? "",
+             "postID": post.id ?? "",
+             "posterID": UserDataModel.shared.uid,
+             "posterUsername": UserDataModel.shared.userInfo.username,
+             "privacyLevel": post.privacyLevel ?? "friends",
+             "spotID": spot?.id ?? "",
+             "spotName": spot?.spotName ?? "",
+             "spotVisitors": spot?.visitorList ?? [],
+            "taggedUserIDs": post.taggedUserIDs ?? []
+        ]
+        functions.httpsCallable("sendPostNotification").call(notiValues) { result, error in
+            print(result?.data as Any, error as Any)
+        }
+    }
+
+    func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) {
+        let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
+        let db: Firestore = Firestore.firestore()
+
+        let interval = Date().timeIntervalSince1970
+        let timestamp = Date(timeIntervalSince1970: TimeInterval(interval))
+
+        switch UploadPostModel.shared.postType {
+        case .newSpot, .postToPOI:
+
+            let lowercaseName = spot.spotName.lowercased()
+            let keywords = lowercaseName.getKeywordArray()
+            let geoHash = GFUtils.geoHash(forLocation: spot.location.coordinate)
+
+            let tagDictionary: [String: Any] = [:]
+
+            var spotVisitors = [uid]
+            spotVisitors.append(contentsOf: post.addedUsers ?? [])
+
+            var posterDictionary: [String: Any] = [:]
+            posterDictionary[post.id!] = spotVisitors
+
+            /// too many extreneous variables for spots to set with codable
+            let spotValues = ["city": post.city ?? "",
+                              "spotName": spot.spotName,
+                              "lowercaseName": lowercaseName,
+                              "description": post.caption,
+                              "createdBy": uid,
+                              "posterUsername": UserDataModel.shared.userInfo.username,
+                              "visitorList": spotVisitors,
+                              "inviteList": spot.inviteList ?? [],
+                              "privacyLevel": spot.privacyLevel,
+                              "taggedUsers": post.taggedUsers ?? [],
+                              "spotLat": spot.spotLat,
+                              "spotLong": spot.spotLong,
+                              "g" : geoHash,
+                              "imageURL": post.imageURLs.first ?? "",
+                              "phone": spot.phone ?? "",
+                              "poiCategory": spot.poiCategory ?? "",
+                              "postIDs": [post.id!],
+                              "postMapIDs": [post.mapID ?? ""],
+                              "postTimestamps": [timestamp],
+                              "posterIDs": [uid],
+                              "postPrivacies": [post.privacyLevel!],
+                              "searchKeywords": keywords,
+                              "tagDictionary": tagDictionary,
+                              "posterDictionary": posterDictionary] as [String: Any]
+
+            db.collection("spots").document(spot.id!).setData(spotValues, merge: true)
+
+            if submitPublic { db.collection("submissions").document(spot.id!).setData(["spotID": spot.id!])}
+
+            var notiSpot = spot
+            notiSpot.checkInTime = Int64(interval)
+            NotificationCenter.default.post(name: NSNotification.Name("NewSpot"), object: nil, userInfo: ["spot": notiSpot])
+
+            /// add city to list of cities if this is the first post there
+            self.addToCityList(city: post.city ?? "")
+
+            /// increment users spot score by 6
+        default:
+
+            /// run spot transactions
+            var posters = post.addedUsers ?? []
+            posters.append(uid)
+
+            let functions = Functions.functions()
+            functions.httpsCallable("runSpotTransactions").call([
+                "spotID": spot.id ?? "",
+                "postID": post.id ?? "",
+                "postPrivacy": post.privacyLevel!,
+                "postTag": post.tag ?? "",
+                "posters": posters,
+                "uid": uid,
+                "mapID": post.mapID ?? ""]) { result, error in
+                print(result?.data as Any, error as Any)
+            }
+        }
+    }
+
     func uploadMap(map: CustomMap, newMap: Bool, post: MapPost, spot: MapSpot?) {
         let db: Firestore = Firestore.firestore()
         if newMap {

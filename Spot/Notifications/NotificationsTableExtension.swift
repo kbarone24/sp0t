@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-extension NotificationsController: UITableViewDataSource {
+extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView.cellForRow(at: indexPath) is ActivityCell {
             let notification = notifications[indexPath.row]
@@ -40,16 +40,10 @@ extension NotificationsController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.section == 0 && !pendingFriendRequests.isEmpty {
-            let itemWidth = UIScreen.main.bounds.width / 1.89
-            let itemHeight = itemWidth * 1.2
-            return itemHeight + 1
+            return 226
         } else {
             return 70
         }
-    }
-
-    func tableView(tableView: UITableView, estimatedHeightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        return 70
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {

@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class ChooseSpotLoadingCell: UITableViewCell {
+class TableViewLoadingCell: UITableViewCell {
     lazy var activityIndicator = CustomActivityIndicator()
 
     required init?(coder: NSCoder) {
