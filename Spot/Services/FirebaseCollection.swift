@@ -39,4 +39,18 @@ enum FireBaseCollectionFields: String {
     case type
     case comments
     case pendingFriendRequests
+    case friendIDs
+    case imageURLs
+    case mapMembers
+    case mapName
+    case postID
+    case posterUsername
+    case spotID
+    case spotName
+    case spotVisitors
+    case taggedUserIDs
+}
+
+enum FuctionsHttpsCall: String {
+    case sendPostNotification
 }

@@ -17,13 +17,13 @@ extension ImagePreviewController {
         let composite = translation.x + direction.x / 4
         let selectedIndex = UploadPostModel.shared.postObject?.selectedImageIndex ?? 0
         let imageCount = UploadPostModel.shared.postObject?.frameIndexes?.count ?? 0
-
+        
         switch gesture.state {
         case .changed:
             currentImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(translation.x) })
             nextImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width + translation.x) })
             previousImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width + translation.x) })
-
+            
         case .ended:
             if (composite < -UIScreen.main.bounds.width / 2) && (selectedIndex < imageCount - 1) {
                 animateNext()
@@ -32,17 +32,17 @@ extension ImagePreviewController {
             } else {
                 resetFrame()
             }
-
+            
         default: return
         }
-
+        
     }
-
+    
     func animateNext() {
         Mixpanel.mainInstance().track(event: "ImagePreviewNextImageSwipe")
         currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
         nextImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
-
+        
         UIView.animate(withDuration: 0.2) {
             self.view.layoutIfNeeded()
         } completion: { [weak self] _ in
@@ -52,12 +52,12 @@ extension ImagePreviewController {
             self.setImages()
         }
     }
-
+    
     func animatePrevious() {
         Mixpanel.mainInstance().track(event: "ImagePreviewPreviousImageSwipe")
         currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width) }
         previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
-
+        
         UIView.animate(withDuration: 0.2) {
             self.view.layoutIfNeeded()
         } completion: { [weak self] _ in
@@ -67,7 +67,7 @@ extension ImagePreviewController {
             self.setImages()
         }
     }
-
+    
     func resetFrame() {
         currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
         previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
@@ -78,36 +78,36 @@ extension ImagePreviewController {
             self.view.layoutIfNeeded()
         }
     }
-
+    
     func setImages() {
         let selectedIndex = UploadPostModel.shared.postObject?.selectedImageIndex ?? 0
         currentImage.index = selectedIndex
         currentImage.makeConstraints()
         currentImage.setCurrentImage()
-
+        
         previousImage.index = selectedIndex - 1
         previousImage.makeConstraints()
         previousImage.setCurrentImage()
-
+        
         nextImage.index = selectedIndex + 1
         nextImage.makeConstraints()
         nextImage.setCurrentImage()
         addDots()
     }
-
+    
     @objc func backTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "ImagePreviewBackTap")
         if cameraObject != nil { UploadPostModel.shared.selectedObjects.removeAll(where: { $0.fromCamera })} /// remove old captured image
-
+        
         let controllers = navigationController?.viewControllers
         if let camera = controllers?[safe: (controllers?.count ?? 0) - 3] as? AVCameraController {
             // reset postObject
             camera.setUpPost()
         }
-
+        
         navigationController?.popViewController(animated: false)
     }
-
+    
     @objc func atTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewTagUserTap")
         HapticGenerator.shared.play(.light)
@@ -117,29 +117,29 @@ extension ImagePreviewController {
         let textString = textView.text.isEmpty || textView.text.last == " " ? "@" : " @"
         textView.insertText(textString)
         addTagTable(tagString: "")
-
+        
     }
-
+    
     @objc func spotTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewSpotNameTap")
         if newSpotNameView.spotName != "" { newSpotNameView.textView.becomeFirstResponder(); return }
         textView.resignFirstResponder()
         launchPicker()
     }
-
+    
     @objc func captionTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewCaptionTap")
         if newSpotNameView.textView.isFirstResponder { return }
         shouldAnimateTextMask = true
         textView.becomeFirstResponder()
     }
-
+    
     func setCaptionValues() {
         let captionText = textView.text ?? ""
         UploadPostModel.shared.postObject?.caption = captionText == textViewPlaceholder ? "" : captionText
         UploadPostModel.shared.setTaggedUsers()
     }
-
+    
     @objc func chooseMapTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewChooseMapTap")
         setCaptionValues()
@@ -147,7 +147,7 @@ extension ImagePreviewController {
             navigationController?.pushViewController(vc, animated: true)
         }
     }
-
+    
     func launchPicker() {
         cancelOnDismiss = true
         if let vc = storyboard?.instantiateViewController(withIdentifier: "ChooseSpot") as? ChooseSpotController {
@@ -156,11 +156,11 @@ extension ImagePreviewController {
             DispatchQueue.main.async { self.present(vc, animated: true) }
         }
     }
-
+    
     @objc func keyboardWillShow(_ notification: NSNotification) {
         if cancelOnDismiss { return }
         if !textView.isFirstResponder { addNewSpotView(notification: notification) }
-
+        
         /// only animate mask on initial open
         if shouldAnimateTextMask { postDetailView.bottomMask.alpha = 0.0 }
         shouldAnimateTextMask = false
@@ -175,7 +175,7 @@ extension ImagePreviewController {
             }
         }
     }
-
+    
     @objc func keyboardWillHide(_ notification: NSNotification) {
         /// new spot name view editing when textview not first responder
         if cancelOnDismiss { return }
@@ -189,12 +189,12 @@ extension ImagePreviewController {
             }
         }
     }
-
+    
     func addNewSpotView(notification: NSNotification) {
         let frameKey = UIResponder.keyboardFrameEndUserInfoKey
         guard let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue else { return }
         if newSpotMask != nil { return }
-
+        
         newSpotMask = NewSpotMask {
             view.addSubview($0)
         }
@@ -203,7 +203,7 @@ extension ImagePreviewController {
             $0.top.equalTo(newSpotNameView.snp.top).offset(-200)
             $0.bottom.equalToSuperview()
         }
-
+        
         newSpotNameView.isHidden = false
         postDetailView.isHidden = true
         view.bringSubviewToFront(newSpotNameView)
@@ -214,7 +214,7 @@ extension ImagePreviewController {
             $0.height.equalTo(110)
         }
     }
-
+    
     func removeNewSpotView() {
         if newSpotMask == nil { return }
         let spotName = newSpotNameView.textView.text?.spacesTrimmed() ?? ""
@@ -224,16 +224,16 @@ extension ImagePreviewController {
         } else {
             cancelSpotSelection()
         }
-
+        
         newSpotNameView.isHidden = true
         postDetailView.isHidden = false
         newSpotMask?.removeFromSuperview()
         newSpotMask = nil
     }
-
+    
     func createNewSpot(spotName: String) {
         Mixpanel.mainInstance().track(event: "ImagePreviewCreateNewSpot")
-
+        
         guard let post = UploadPostModel.shared.postObject else { return }
         var newSpot = MapSpot(
             id: UUID().uuidString,
@@ -249,7 +249,7 @@ extension ImagePreviewController {
         finishPassing(spot: newSpot)
         UploadPostModel.shared.postType = .newSpot
     }
-
+    
     func addExtraMask() {
         let extraMask = UIView {
             $0.backgroundColor = UIColor.black.withAlphaComponent(0.65)
@@ -260,7 +260,7 @@ extension ImagePreviewController {
             $0.top.equalTo(postDetailView.snp.bottom)
         }
     }
-
+    
     @objc func postTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewPostTap")
         postButton?.isEnabled = false
@@ -268,39 +268,39 @@ extension ImagePreviewController {
         /// upload post
         UploadPostModel.shared.setFinalPostValues()
         if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
-
+        
         progressMask?.isHidden = false
         view.bringSubviewToFront(progressMask ?? UIView())
         let fullWidth = (self.progressBar?.bounds.width ?? 2) - 2
-
+        
         DispatchQueue.global(qos: .userInitiated).async {
             self.uploadPostImage(
                 images: UploadPostModel.shared.postObject?.postImage ?? [],
                 postID: UploadPostModel.shared.postObject?.id ?? "",
                 progressFill: self.progressBar?.progressFill ?? UIView(),
                 fullWidth: fullWidth) { [weak self] imageURLs, failed in
-                guard let self = self else { return }
-                if imageURLs.isEmpty && failed {
-                    Mixpanel.mainInstance().track(event: "FailedPostUpload")
-                    self.runFailedUpload()
-                    return
+                    guard let self = self else { return }
+                    if imageURLs.isEmpty && failed {
+                        Mixpanel.mainInstance().track(event: "FailedPostUpload")
+                        self.runFailedUpload()
+                        return
+                    }
+                    UploadPostModel.shared.postObject?.imageURLs = imageURLs
+                    self.uploadPostToDB(newMap: true)
+                    /// enable upload animation to finish
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        HapticGenerator.shared.play(.soft)
+                        self.popToMap()
+                    }
                 }
-                UploadPostModel.shared.postObject?.imageURLs = imageURLs
-                self.uploadPostToDB(newMap: true)
-                /// enable upload animation to finish
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    HapticGenerator.shared.play(.soft)
-                    self.popToMap()
-                }
-            }
         }
     }
-
+    
     func runFailedUpload() {
         showFailAlert()
         UploadPostModel.shared.saveToDrafts()
     }
-
+    
     func showFailAlert() {
         let alert = UIAlertController(title: "Upload failed", message: "Spot saved to your drafts", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
@@ -316,11 +316,44 @@ extension ImagePreviewController {
             }}))
         present(alert, animated: true, completion: nil)
     }
-
+    
     func popToMap() {
         UploadPostModel.shared.destroy()
         DispatchQueue.main.async {
             self.navigationController?.popToRootViewController(animated: true)
+        }
+    }
+    
+    private func uploadPostToDB(newMap: Bool) {
+        guard let post = UploadPostModel.shared.postObject,
+              let spotService = try? ServiceContainer.shared.service(for: \.spotService),
+              let postService = try? ServiceContainer.shared.service(for: \.mapPostService)
+        else { return }
+        
+        var spot = UploadPostModel.shared.spotObject
+        var map = UploadPostModel.shared.mapObject
+        
+        if UploadPostModel.shared.imageFromCamera {
+            SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage())
+        }
+        
+        Task {
+            if spot != nil {
+                spot!.imageURL = post.imageURLs.first ?? ""
+                await spotService.uploadSpot(post: post, spot: spot!, submitPublic: false)
+            }
+            if map != nil {
+                if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
+                map!.postImageURLs.append(post.imageURLs.first ?? "")
+                self.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
+            }
+            
+            await postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+            
+            let visitorList = spot?.visitorList ?? []
+            self.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
+            
+            Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
         }
     }
 }

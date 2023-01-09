@@ -9,14 +9,12 @@
 import CoreLocation
 import Firebase
 import FirebaseFunctions
-import FirebaseUI
-import Foundation
 import MapKit
 import Mixpanel
 import SnapKit
 import UIKit
 
-class PostController: UIViewController {
+final class PostController: UIViewController {
 
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"

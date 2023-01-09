@@ -7,8 +7,6 @@
 //
 
 import Firebase
-import FirebaseUI
-import Foundation
 import IQKeyboardManagerSwift
 import MapKit
 import Mixpanel
@@ -25,7 +23,13 @@ class HeelsMapPopUpController: UIViewController {
 
     lazy var searchTextGlobal = ""
 
-    var icon: UIImageView!
+    private(set) lazy var icon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "HeelsMapPopUp")
+        imageView.contentMode = .scaleAspectFit
+        return imageView
+    }()
+    
     var titleLabel: UILabel!
     var friendsJoined: UIButton!
     var subtitle: UILabel!
@@ -49,12 +53,7 @@ class HeelsMapPopUpController: UIViewController {
     }
 
     func loadInfoView() {
-        icon = UIImageView {
-            $0.image = UIImage(named: "HeelsMapPopUp")
-            $0.contentMode = .scaleAspectFit
-            view.addSubview($0)
-        }
-
+        view.addSubview(icon)
         icon.snp.makeConstraints {
             $0.top.equalToSuperview().offset(33)
             $0.centerX.equalToSuperview()

@@ -8,6 +8,7 @@
 
 import Foundation
 import CoreLocation
+import UIKit
 
 public extension String {
     func indices(of string: String) -> [Int] {
@@ -139,33 +140,6 @@ public extension String {
         completeText.append(NSAttributedString(string: " "))
         completeText.append(NSAttributedString(string: self))
         return completeText
-    }
-
-    internal func getQueriedUsers(userList: [UserProfile]) -> [UserProfile] {
-        let searchText = self
-        var queriedUsers: [UserProfile] = []
-        let usernameList = userList.map({ $0.username })
-        let nameList = userList.map({ $0.name })
-
-        let filteredUsernames = searchText.isEmpty ? usernameList : usernameList.filter({(dataString: String) -> Bool in
-            // If dataItem matches the searchText, return true to include it
-            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
-        })
-
-        let filteredNames = searchText.isEmpty ? nameList : nameList.filter({(dataString: String) -> Bool in
-            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
-        })
-
-        for username in filteredUsernames {
-            if let user = userList.first(where: { $0.username == username }) { queriedUsers.append(user) }
-        }
-
-        for name in filteredNames {
-            if let user = userList.first(where: { $0.name == name }) {
-                if !queriedUsers.contains(where: { $0.id == user.id }) { queriedUsers.append(user) }
-            }
-        }
-        return queriedUsers
     }
 
     func isBlocked() -> Bool {

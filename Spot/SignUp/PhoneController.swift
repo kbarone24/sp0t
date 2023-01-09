@@ -19,14 +19,20 @@ enum CodeType {
     case deleteAccount
 }
 
-class PhoneController: UIViewController, UITextFieldDelegate {
+final class PhoneController: UIViewController, UITextFieldDelegate {
     var root = false
     var newUser: NewUser!
     var countryCode: CountryCode!
 
     var label: UILabel!
     var phoneField: UITextField!
-    var countryCodeView: CountryCodeView!
+    
+    private(set) lazy var countryCodeView: CountryCodeView = {
+        let view = CountryCodeView()
+        view.addTarget(self, action: #selector(openCountryPicker), for: .touchUpInside)
+        return view
+    }()
+    
     var paddingView: UIView!
     var sendButton: UIButton!
 
@@ -109,16 +115,14 @@ class PhoneController: UIViewController, UITextFieldDelegate {
             $0.font = UIFont(name: "SFCompactText-Bold", size: 20)
             view.addSubview($0)
         }
+        
         label.snp.makeConstraints {
             $0.top.equalToSuperview().offset(114)
             $0.centerX.equalToSuperview()
         }
 
-        countryCodeView = CountryCodeView {
-            $0.code = countryCode.code
-            $0.addTarget(self, action: #selector(openCountryPicker), for: .touchUpInside)
-            view.addSubview($0)
-        }
+        countryCodeView.code = countryCode.code
+        view.addSubview(countryCodeView)
         countryCodeView.snp.makeConstraints {
             $0.leading.equalTo(18)
             $0.top.equalTo(label.snp.bottom).offset(30)
@@ -360,7 +364,13 @@ extension PhoneController: CountryPickerDelegate {
 
 class CountryCodeView: UIButton {
     var number: UILabel!
-    var editButton: UIImageView!
+    private(set) lazy var editButton: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "DownCarat")
+        imageView.contentMode = .scaleAspectFit
+        return imageView
+    }()
+    
     var separatorLine: UIView!
 
     var code: String = "" {
@@ -384,11 +394,7 @@ class CountryCodeView: UIButton {
             $0.top.equalTo(5)
         }
 
-        editButton = UIImageView {
-            $0.image = UIImage(named: "DownCarat")
-            $0.contentMode = .scaleAspectFit
-            addSubview($0)
-        }
+        addSubview(editButton)
         editButton.snp.makeConstraints {
             $0.leading.equalTo(number.snp.trailing).offset(3)
             $0.top.equalTo(20)

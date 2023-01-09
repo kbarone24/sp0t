@@ -6,13 +6,20 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import FirebaseUI
-import Foundation
 import UIKit
+import SDWebImage
 
-class ChooseFriendsCell: UITableViewCell {
+final class ChooseFriendsCell: UITableViewCell {
 
-    var profilePic: UIImageView!
+    private(set) lazy var profilePic: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.layer.cornerRadius = 21
+        imageView.clipsToBounds = true
+        
+        return imageView
+    }()
+    
     var username: UILabel!
     var selectedBubble: UIView!
     var bottomLine: UIView!
@@ -27,13 +34,8 @@ class ChooseFriendsCell: UITableViewCell {
         userID = friend.id!
 
         resetCell()
-
-        profilePic = UIImageView {
-            $0.contentMode = .scaleAspectFit
-            $0.layer.cornerRadius = 21
-            $0.clipsToBounds = true
-            contentView.addSubview($0)
-        }
+        
+        contentView.addSubview(profilePic)
         profilePic.snp.makeConstraints {
             $0.leading.equalTo(15)
             $0.top.equalTo(8)

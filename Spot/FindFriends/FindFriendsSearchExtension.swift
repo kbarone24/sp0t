@@ -94,7 +94,7 @@ extension FindFriendsController: UISearchBarDelegate {
             guard let docs = snap?.documents else { return }
             for doc in docs {
                 do {
-                    let unwrappedInfo = try doc.data(as: UserProfile.self)
+                    let unwrappedInfo = try? doc.data(as: UserProfile.self)
                     guard var userInfo = unwrappedInfo else { if doc == docs.last { self.reloadResultsTable() }; return }
                     userInfo.id = doc.documentID
 
@@ -118,7 +118,7 @@ extension FindFriendsController: UISearchBarDelegate {
             guard let docs = snap?.documents else { self.reloadResultsTable(); return }
             for doc in docs {
                 do {
-                    let unwrappedInfo = try doc.data(as: UserProfile.self)
+                    let unwrappedInfo = try? doc.data(as: UserProfile.self)
                     guard var userInfo = unwrappedInfo else { if doc == docs.last { self.reloadResultsTable() }; continue }
                     userInfo.id = doc.documentID
 

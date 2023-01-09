@@ -51,7 +51,7 @@ final class MapService: MapServiceProtocol {
                     
                     snapshot.documents.forEach { document in
                         do {
-                            if let map = try document.data(as: CustomMap.self) {
+                            if let map = try? document.data(as: CustomMap.self) {
                                 maps.append(map)
                             }
                         } catch {
@@ -87,7 +87,7 @@ final class MapService: MapServiceProtocol {
                     
                     snapshot.documents.forEach { document in
                         do {
-                            if let post = try document.data(as: MapPost.self) {
+                            if let post = try? document.data(as: MapPost.self) {
                                 posts.append(post)
                             }
                         } catch {
@@ -156,7 +156,7 @@ final class MapService: MapServiceProtocol {
                             return
                         }
                         
-                        guard let data = try document.data(as: CustomMap.self) else {
+                        guard let data = try? document.data(as: CustomMap.self) else {
                             continuation.resume(throwing: MapServiceError.decodingError)
                             return
                         }

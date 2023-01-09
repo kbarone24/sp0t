@@ -7,12 +7,11 @@
 //
 
 import Firebase
-import FirebaseUI
-import Foundation
 import UIKit
+import SDWebImage
 
-class ImageAvatarView: UIImageView {
-    lazy var imageManager = SDWebImageManager()
+final class ImageAvatarView: UIImageView {
+    private(set) lazy var imageManager = SDWebImageManager()
     var backgroundView: UIView!
 
     func setUp(avatarURLs: [String], annotation: Bool, completion: @escaping(_ success: Bool) -> Void) {

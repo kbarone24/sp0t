@@ -30,7 +30,7 @@ extension PhotoGalleryController {
         imagePreview.delegate = self
         imagePreview.alpha = 0
 
-        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+        if let window = UIApplication.shared.keyWindow {
             window.addSubview(imagePreview)
             let frame = cell.superview?.convert(cell.frame, to: nil) ?? CGRect()
             imagePreview.imageExpand(originalFrame: frame, selectedIndex: 0, galleryIndex: galleryIndex, imageObjects: [object])

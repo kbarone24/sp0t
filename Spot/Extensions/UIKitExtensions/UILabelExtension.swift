@@ -13,6 +13,14 @@ import UIKit
 
 extension UILabel {
     
+    // MARK: - This should be removed!!!
+    // It's not a good practive to initialize views this way with closures
+    @available(*, deprecated, message: "This initializer will be removed in the future. It's a practice")
+    convenience init(configureHandler: (Self) -> Void) {
+        self.init()
+        configureHandler(self)
+    }
+    
     func addTrailing(with trailingText: String, moreText: String, moreTextFont: UIFont, moreTextColor: UIColor) {
         
         let readMoreText: String = trailingText + moreText

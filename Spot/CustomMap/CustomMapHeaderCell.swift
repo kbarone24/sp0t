@@ -7,10 +7,10 @@
 //
 
 import Firebase
-import FirebaseUI
 import Mixpanel
 import SnapKit
 import UIKit
+import SDWebImage
 
 final class CustomMapHeaderCell: UICollectionViewCell {
     var mapData: CustomMap?
@@ -46,10 +46,10 @@ final class CustomMapHeaderCell: UICollectionViewCell {
         return service
     }()
 
-    private lazy var mapCreatorProfileImage1 = MapCreatorProfileImage()
-    private lazy var mapCreatorProfileImage2 = MapCreatorProfileImage()
-    private lazy var mapCreatorProfileImage3 = MapCreatorProfileImage()
-    private lazy var mapCreatorProfileImage4 = MapCreatorProfileImage()
+    private lazy var mapCreatorProfileImage1 = MapCreatorProfileImage(frame: .zero)
+    private lazy var mapCreatorProfileImage2 = MapCreatorProfileImage(frame: .zero)
+    private lazy var mapCreatorProfileImage3 = MapCreatorProfileImage(frame: .zero)
+    private lazy var mapCreatorProfileImage4 = MapCreatorProfileImage(frame: .zero)
 
     private lazy var mapCreatorCount: UILabel = {
         let label = UILabel()
@@ -367,7 +367,9 @@ extension CustomMapHeaderCell {
             showsSearchBar: true,
             friendIDs: UserDataModel.shared.userInfo.friendIDs,
             friendsList: friendsList,
-            confirmedIDs: [])
+            confirmedIDs: mapData.memberIDs
+        )
+        
         friendsVC.delegate = self
         vc.present(friendsVC, animated: true)
     }
@@ -397,7 +399,7 @@ extension CustomMapHeaderCell {
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CustomMapMembersTap")
         guard let customMapVC = viewContainingController() as? CustomMapController else { return }
-        guard let container = customMapVC.containerDrawerView else { return }
+        
         let friendListVC = FriendsListController(
             allowsSelection: false,
             showsSearchBar: false,
@@ -464,6 +466,7 @@ class MapCreatorProfileImage: UIImageView {
         layer.borderColor = UIColor.white.cgColor
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

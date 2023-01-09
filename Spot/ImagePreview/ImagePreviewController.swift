@@ -18,9 +18,9 @@ import UIKit
 class ImagePreviewController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
-    lazy var currentImage = PostImagePreview()
-    lazy var nextImage = PostImagePreview()
-    lazy var previousImage = PostImagePreview()
+    lazy var currentImage = PostImagePreview(frame: .zero)
+    lazy var nextImage = PostImagePreview(frame: .zero)
+    lazy var previousImage = PostImagePreview(frame: .zero)
 
     private lazy var backButton: UIButton = {
         let button = UIButton()
@@ -102,7 +102,14 @@ class ImagePreviewController: UIViewController {
     lazy var shouldAnimateTextMask = false // tells keyboardWillChange whether to reposition
     lazy var firstImageBottomConstraint: CGFloat = 0
 
-    var tagFriendsView: TagFriendsView?
+    private(set) lazy var tagFriendsView: TagFriendsView = {
+        let view = TagFriendsView()
+        view.delegate = self
+        view.textColor = .white
+        
+        return view
+    }()
+    
     var actionButton: UIButton {
         return newMapMode ? postButton ?? UIButton() : nextButton ?? UIButton()
     }

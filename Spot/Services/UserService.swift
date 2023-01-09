@@ -49,7 +49,7 @@ final class UserService: UserServiceProtocol {
                         }
                         
                         do {
-                            guard var userInfo = try document.data(as: UserProfile.self) else {
+                            guard var userInfo = try? document.data(as: UserProfile.self) else {
                                 continuation.resume(returning: emptyProfile)
                                 return
                             }
@@ -81,7 +81,7 @@ final class UserService: UserServiceProtocol {
                         }
                         
                         do {
-                            guard let userInfo = try doc.data(as: UserProfile.self) else {
+                            guard let userInfo = try? doc.data(as: UserProfile.self) else {
                                 continuation.resume(returning: nil)
                                 return
                             }

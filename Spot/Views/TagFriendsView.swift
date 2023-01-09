@@ -7,15 +7,14 @@
 //
 
 import Firebase
-import FirebaseUI
-import Foundation
 import UIKit
+import SDWebImage
 
 protocol TagFriendsDelegate {
     func finishPassing(selectedUser: UserProfile)
 }
 
-class TagFriendsView: UIView {
+final class TagFriendsView: UIView {
     var collectionView: UICollectionView!
     lazy var queryUsers: [UserProfile] = []
     var delegate: TagFriendsDelegate?
@@ -35,6 +34,7 @@ class TagFriendsView: UIView {
             $0.minimumInteritemSpacing = 6
             $0.scrollDirection = .horizontal
         }
+        
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = nil
         collectionView.showsHorizontalScrollIndicator = false
@@ -49,6 +49,7 @@ class TagFriendsView: UIView {
         }
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -104,10 +105,23 @@ extension TagFriendsView: UICollectionViewDelegate, UICollectionViewDataSource, 
     }
 }
 
-class TagFriendCell: UICollectionViewCell {
+final class TagFriendCell: UICollectionViewCell {
     var username: UILabel!
-    var profileImage: UIImageView!
-    var avatarImage: UIImageView!
+    
+    private lazy var profileImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.masksToBounds = true
+        imageView.backgroundColor = .gray
+        imageView.layer.cornerRadius = 62 / 2
+        return imageView
+    }()
+    
+    private lazy var avatarImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        return imageView
+    }()
 
     var textColor: UIColor = .black {
         didSet {
@@ -129,23 +143,14 @@ class TagFriendCell: UICollectionViewCell {
         super.init(frame: frame)
         backgroundColor = nil
 
-        profileImage = UIImageView {
-            $0.contentMode = .scaleAspectFill
-            $0.layer.masksToBounds = true
-            $0.backgroundColor = .gray
-            $0.layer.cornerRadius = 62 / 2
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(profileImage)
         profileImage.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.height.width.equalTo(62)
             $0.centerX.equalToSuperview()
         }
 
-        avatarImage = UIImageView {
-            $0.contentMode = .scaleAspectFill
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(avatarImage)
         avatarImage.snp.makeConstraints {
             $0.leading.equalTo(profileImage).inset(-10)
             $0.bottom.equalTo(profileImage).inset(-2)
