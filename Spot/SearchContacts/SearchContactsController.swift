@@ -147,17 +147,16 @@ class SearchContactsController: UIViewController {
         bottomMask.isUserInteractionEnabled = false
         view.addSubview(bottomMask)
         view.bringSubviewToFront(actionButton)
-        _ = CAGradientLayer {
-            $0.frame = CGRect(x: 0, y: actionButton.frame.minY - 120, width: UIScreen.main.bounds.width, height: 120)
-            $0.colors = [
-                UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor,
-                UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0).cgColor
-            ]
-            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
-            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
-            $0.locations = [0, 1]
-            bottomMask.layer.addSublayer($0)
-        }
+        let layer = CAGradientLayer()
+        layer.frame = CGRect(x: 0, y: actionButton.frame.minY - 120, width: UIScreen.main.bounds.width, height: 120)
+        layer.colors = [
+            UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor,
+            UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0).cgColor
+        ]
+        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        layer.locations = [0, 1]
+        bottomMask.layer.addSublayer(layer)
     }
 
     @objc func actionTap() {

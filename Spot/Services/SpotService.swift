@@ -166,6 +166,7 @@ final class SpotService: SpotServiceProtocol {
                     "phone": spot.phone ?? "",
                     "poiCategory": spot.poiCategory ?? "",
                     "postIDs": [postID],
+                    "postMapIDs": [post.mapID ?? ""],
                     "postTimestamps": [timestamp],
                     "posterIDs": [uid],
                     "postPrivacies": [post.privacyLevel!],

@@ -19,17 +19,16 @@ class PostDetailView: UIView {
         bottomMask.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        _ = CAGradientLayer {
-            $0.frame = bounds
-            $0.colors = [
-              UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
-              UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.4).cgColor,
-              UIColor(red: 0, green: 0.0, blue: 0.0, alpha: 0.65).cgColor
-            ]
-            $0.startPoint = CGPoint(x: 0.5, y: 0.0)
-            $0.endPoint = CGPoint(x: 0.5, y: 1.0)
-            $0.locations = [0, 0.5, 1]
-            bottomMask.layer.addSublayer($0)
-        }
+        let layer = CAGradientLayer()
+        layer.frame = bounds
+        layer.colors = [
+          UIColor(red: 0, green: 0, blue: 0, alpha: 0).cgColor,
+          UIColor(red: 0, green: 0, blue: 0.0, alpha: 0.4).cgColor,
+          UIColor(red: 0, green: 0.0, blue: 0.0, alpha: 0.65).cgColor
+        ]
+        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        layer.locations = [0, 0.5, 1]
+        bottomMask.layer.addSublayer(layer)
     }
 }

@@ -186,7 +186,7 @@ extension MapController {
             let recentGroup = DispatchGroup()
             for doc in snap.documents {
                 do {
-                    let postIn = try doc.data(as: MapPost.self)
+                    let postIn = try? doc.data(as: MapPost.self)
                     /// if !contains, run query, else update with new values + update comments
                     guard let postInfo = postIn else { continue }
                     if self.postsContains(postID: postInfo.id ?? "") {
@@ -232,7 +232,7 @@ extension MapController {
             let recentGroup = DispatchGroup()
             for doc in snap.documents {
                 do {
-                    let postIn = try doc.data(as: MapPost.self)
+                    let postIn = try? doc.data(as: MapPost.self)
                     /// if !contains, run query, else update with new values + update comments
                     guard let postInfo = postIn else { continue }
                     guard let map = UserDataModel.shared.userInfo.mapsList.first(where: { $0.id == postInfo.mapID ?? "" }) else { continue }
