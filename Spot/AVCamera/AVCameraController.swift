@@ -377,7 +377,9 @@ final class AVCameraController: UIViewController {
 
     func setUpPost() {
         /// new post object already created for new map mode
-        if !newMapMode { UploadPostModel.shared.createSharedInstance() }
+        if !newMapMode {
+            UploadPostModel.shared.createSharedInstance()
+        }
     }
 
     func fetchAssets() {
