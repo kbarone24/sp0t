@@ -538,7 +538,6 @@
 		CD04F61A29134E70002A9AD1 /* ExtraCountCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD04F61929134E70002A9AD1 /* ExtraCountCell.swift */; };
 		CD0E181C2962D42E00F5DBB1 /* AVSpotCameraMetalExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0E181B2962D42E00F5DBB1 /* AVSpotCameraMetalExtension.swift */; };
 		CD1EA803294E38520042A041 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1EA802294E38520042A041 /* AvatarURLs.swift */; };
-		CD1EA806294E3A020042A041 /* ChooseFriendsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1EA805294E3A020042A041 /* ChooseFriendsCell.swift */; };
 		CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0728FFD3610099513F /* MapKitExtension.swift */; };
 		CD239A0A28FFD3BB0099513F /* UIColorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0928FFD3BB0099513F /* UIColorExtension.swift */; };
 		CD239A0C28FFD4EE0099513F /* StringExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0B28FFD4EE0099513F /* StringExtension.swift */; };
@@ -557,17 +556,6 @@
 		CD79D7F62924837B005C93F1 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F52924837B005C93F1 /* UserService.swift */; };
 		CD79D7F829249095005C93F1 /* SpotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F729249095005C93F1 /* SpotService.swift */; };
 		CD79D7FA293896FF005C93F1 /* CGPointExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */; };
-		CD8228BC2956C5E10018E271 /* PostController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599BD2BA23C652BD00ECB84A /* PostController.swift */; };
-		CD8228BE2956C7430018E271 /* UIButtonExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228BD2956C7430018E271 /* UIButtonExtension.swift */; };
-		CD8228C02956C75C0018E271 /* UITableViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228BF2956C75C0018E271 /* UITableViewExtension.swift */; };
-		CD8228C22956C8110018E271 /* UICollectionViewFlowLayoutExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228C12956C8110018E271 /* UICollectionViewFlowLayoutExtension.swift */; };
-		CD8228C42956C87E0018E271 /* UIApplicationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228C32956C87E0018E271 /* UIApplicationExtension.swift */; };
-		CD8228C62956CA200018E271 /* CAGradiendLayerExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228C52956CA200018E271 /* CAGradiendLayerExtension.swift */; };
-		CD8228C82956D2C10018E271 /* LikerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228C72956D2C10018E271 /* LikerCell.swift */; };
-		CD8228CA2956D2F80018E271 /* LikeSeg.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228C92956D2F80018E271 /* LikeSeg.swift */; };
-		CD8228CC2956D31B0018E271 /* CommentSeg.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228CB2956D31B0018E271 /* CommentSeg.swift */; };
-		CD8228CE2956D3410018E271 /* CommentsControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228CD2956D3410018E271 /* CommentsControl.swift */; };
-		CD8228D02956D36A0018E271 /* CommentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228CF2956D36A0018E271 /* CommentCell.swift */; };
 		CD8228D2295708070018E271 /* AVSpotCameraConfigurations.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8228D1295708070018E271 /* AVSpotCameraConfigurations.swift */; };
 		CDAE20D9290A153900EB1F75 /* MapPostBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDAE20D8290A153900EB1F75 /* MapPostBody.swift */; };
 		CDC59829290A197D00E021AE /* MapPhotosCollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */; };
@@ -839,8 +827,6 @@
 		CD04F61929134E70002A9AD1 /* ExtraCountCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtraCountCell.swift; sourceTree = "<group>"; };
 		CD0E181B2962D42E00F5DBB1 /* AVSpotCameraMetalExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVSpotCameraMetalExtension.swift; sourceTree = "<group>"; };
 		CD1EA802294E38520042A041 /* AvatarURLs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AvatarURLs.swift; sourceTree = "<group>"; };
-		CD1EA804294E39420042A041 /* UISheetPresentationControllerDetent+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "UISheetPresentationControllerDetent+Private.h"; path = "Controllers/UISheetPresentationControllerDetent+Private.h"; sourceTree = "<group>"; };
-		CD1EA805294E3A020042A041 /* ChooseFriendsCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ChooseFriendsCell.swift; path = Spot/Controllers/ChooseFriendsCell.swift; sourceTree = SOURCE_ROOT; };
 		CD239A0728FFD3610099513F /* MapKitExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapKitExtension.swift; sourceTree = "<group>"; };
 		CD239A0928FFD3BB0099513F /* UIColorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColorExtension.swift; sourceTree = "<group>"; };
 		CD239A0B28FFD4EE0099513F /* StringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtension.swift; sourceTree = "<group>"; };
@@ -859,16 +845,6 @@
 		CD79D7F52924837B005C93F1 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		CD79D7F729249095005C93F1 /* SpotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotService.swift; sourceTree = "<group>"; };
 		CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGPointExtension.swift; sourceTree = "<group>"; };
-		CD8228BD2956C7430018E271 /* UIButtonExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIButtonExtension.swift; sourceTree = "<group>"; };
-		CD8228BF2956C75C0018E271 /* UITableViewExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITableViewExtension.swift; sourceTree = "<group>"; };
-		CD8228C12956C8110018E271 /* UICollectionViewFlowLayoutExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UICollectionViewFlowLayoutExtension.swift; sourceTree = "<group>"; };
-		CD8228C32956C87E0018E271 /* UIApplicationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIApplicationExtension.swift; sourceTree = "<group>"; };
-		CD8228C52956CA200018E271 /* CAGradiendLayerExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CAGradiendLayerExtension.swift; sourceTree = "<group>"; };
-		CD8228C72956D2C10018E271 /* LikerCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikerCell.swift; sourceTree = "<group>"; };
-		CD8228C92956D2F80018E271 /* LikeSeg.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikeSeg.swift; sourceTree = "<group>"; };
-		CD8228CB2956D31B0018E271 /* CommentSeg.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentSeg.swift; sourceTree = "<group>"; };
-		CD8228CD2956D3410018E271 /* CommentsControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsControl.swift; sourceTree = "<group>"; };
-		CD8228CF2956D36A0018E271 /* CommentCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentCell.swift; sourceTree = "<group>"; };
 		CD8228D1295708070018E271 /* AVSpotCameraConfigurations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVSpotCameraConfigurations.swift; sourceTree = "<group>"; };
 		CDAE20D8290A153900EB1F75 /* MapPostBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostBody.swift; sourceTree = "<group>"; };
 		CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPhotosCollectionView.swift; sourceTree = "<group>"; };
@@ -1551,6 +1527,7 @@
 		CD2499502938A25B008D1282 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
+				CD1EA802294E38520042A041 /* AvatarURLs.swift */,
 			);
 			name = "Recovered References";
 			sourceTree = "<group>";
@@ -2101,7 +2078,7 @@
 				CDF8E9612903C90000BE929F /* MapNavigationController.swift in Sources */,
 				8C121E3D294939F900CD4E07 /* AvatarURLs.swift in Sources */,
 				CD239A0A28FFD3BB0099513F /* UIColorExtension.swift in Sources */,
-				CD8228D2295708070018E271 /* AVSpotCameraPhotos.swift in Sources */,
+				CD8228D2295708070018E271 /* AVSpotCameraConfigurations.swift in Sources */,
 				CD1EA803294E38520042A041 /* AvatarURLs.swift in Sources */,
 				CD8228D2295708070018E271 /* AVSpotCameraConfigurations.swift in Sources */,
 				8C121D5C2949344A00CD4E07 /* AVCameraController.swift in Sources */,
@@ -2302,8 +2279,6 @@
 				8CD1BE62292D609800367220 /* MapGeoQuery.swift in Sources */,
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
 				8CC4BA0D296C78D900BEAA88 /* FriendsListController.swift in Sources */,
-				8C121D5A2949344A00CD4E07 /* AVSpotCamera.swift in Sources */,
-				8C5788C72925B63500966DBB /* FriendsMapCell.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8C121DDB294935EF00CD4E07 /* NotificationsController.swift in Sources */,
 				8CC4BA1A296C7FE400BEAA88 /* LikeSeg.swift in Sources */,
@@ -2460,8 +2435,6 @@
 				8CD1BE63292D609800367220 /* MapGeoQuery.swift in Sources */,
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
 				8CC4BA0E296C78D900BEAA88 /* FriendsListController.swift in Sources */,
-				8C121D5B2949344A00CD4E07 /* AVSpotCamera.swift in Sources */,
-				8C5788C82925B63500966DBB /* FriendsMapCell.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
 				8C121DDC294935EF00CD4E07 /* NotificationsController.swift in Sources */,
 				8CC4BA1B296C7FE400BEAA88 /* LikeSeg.swift in Sources */,
@@ -2783,7 +2756,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "sp0t distribution profile 2022";
 				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Spot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
