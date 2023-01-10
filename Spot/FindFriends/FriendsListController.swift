@@ -137,6 +137,7 @@ final class FriendsListController: UIViewController {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
+        
         tableView.snp.makeConstraints {
             let topConstraint = showsSearchBar ? 115 : 60
             let inset = showsSearchBar ? 50 : 10
