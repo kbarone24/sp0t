@@ -367,13 +367,14 @@ extension ProfileViewController {
 
     @objc func friendsListTap() {
         Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
-        let friendListVC = FriendsListController(
+        let vc = FriendsListController(
             allowsSelection: false,
             showsSearchBar: false,
             friendIDs: userProfile?.friendIDs ?? [],
             friendsList: userProfile?.friendsList ?? [],
             confirmedIDs: [])
-        present(friendListVC, animated: true)
+        vc.delegate = self
+        present(vc, animated: true)
     }
 
     @objc func elipsesTap() {
@@ -435,5 +436,16 @@ extension ProfileViewController: EditProfileDelegate {
 
     func logout() {
         DispatchQueue.main.async { self.containerDrawerView?.closeAction() }
+    }
+}
+
+extension ProfileViewController: FriendsListDelegate {
+    func finishPassing(openProfile: UserProfile) {
+        let profileVC = ProfileViewController(userProfile: openProfile, presentedDrawerView: containerDrawerView)
+        self.navigationController?.pushViewController(profileVC, animated: true)
+    }
+
+    func finishPassing(selectedUsers: [UserProfile]) {
+        return
     }
 }
