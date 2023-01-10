@@ -442,7 +442,6 @@ extension NewMapController: UICollectionViewDelegate, UICollectionViewDataSource
             friendsList: friendsList,
             confirmedIDs: UploadPostModel.shared.postObject?.addedUsers ?? []
         )
-        
         vc.delegate = self
         present(vc, animated: true)
     }
@@ -455,6 +454,10 @@ extension NewMapController: UIAdaptivePresentationControllerDelegate {
 }
 
 extension NewMapController: FriendsListDelegate {
+    func finishPassing(openProfile: UserProfile) {
+        return
+    }
+
     func finishPassing(selectedUsers: [UserProfile]) {
         var members = selectedUsers
         members.append(UserDataModel.shared.userInfo)

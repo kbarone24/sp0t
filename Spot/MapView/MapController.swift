@@ -152,7 +152,7 @@ final class MapController: UIViewController {
         mapView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalToSuperview().offset(-228)
-            $0.bottom.equalToSuperview().offset(65)
+            $0.bottom.equalToSuperview().offset(140)
         }
     }
 

@@ -399,13 +399,14 @@ extension CustomMapHeaderCell {
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CustomMapMembersTap")
         guard let customMapVC = viewContainingController() as? CustomMapController else { return }
-        
+
         let friendListVC = FriendsListController(
             allowsSelection: false,
             showsSearchBar: false,
             friendIDs: mapData?.memberIDs ?? [],
             friendsList: [],
             confirmedIDs: [])
+        friendListVC.delegate = self
         customMapVC.present(friendListVC, animated: true)
     }
 
@@ -438,6 +439,12 @@ extension CustomMapHeaderCell {
 }
 
 extension CustomMapHeaderCell: MapCodeDelegate, FriendsListDelegate {
+    func finishPassing(openProfile: UserProfile) {
+        guard let containerVC = viewContainingController() as? CustomMapController else { return }
+        let profileVC = ProfileViewController(userProfile: openProfile, presentedDrawerView: containerVC.containerDrawerView)
+        containerVC.navigationController?.pushViewController(profileVC, animated: true)
+    }
+
     func finishPassing(selectedUsers: [UserProfile]) {
         Mixpanel.mainInstance().track(event: "CustomMapInviteFriendsComplete")
         var addedUserIDs: [String] = []

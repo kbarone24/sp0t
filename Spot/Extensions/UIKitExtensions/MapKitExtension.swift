@@ -192,13 +192,17 @@ extension MKCoordinateRegion {
             maxLatitude = maxLat
             minLongitude = minLong
             maxLongitude = maxLong
-            span = MKCoordinateSpan(latitudeDelta: max(minSpan, maxLatitude - minLatitude), longitudeDelta: max(minSpan, maxLongitude - minLongitude)).getAdjustedSpan()
+
+            // for smaller map area
+            let adjustedLatSpan = (maxLatitude - minLatitude) * 1.5
+            let adjustedLongSpan = (maxLongitude - minLongitude) * 1.5
+            span = MKCoordinateSpan(latitudeDelta: max(minSpan, adjustedLatSpan), longitudeDelta: max(minSpan, adjustedLongSpan)).getAdjustedSpan()
         }
         let center = CLLocationCoordinate2DMake((minLatitude + maxLatitude) / 2, (minLongitude + maxLongitude) / 2)
         self.init(center: center, span: span)
     }
 
-    ///https://stackoverflow.com/questions/14374030/center-coordinate-of-a-set-of-cllocationscoordinate2d
+    // https://stackoverflow.com/questions/14374030/center-coordinate-of-a-set-of-cllocationscoordinate2d
     func spanOutOfRange(span: MKCoordinateSpan) -> Bool {
         let span = span.getAdjustedSpan()
         return span.latitudeDelta > maxSpan || span.longitudeDelta > maxSpan

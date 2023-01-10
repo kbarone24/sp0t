@@ -105,7 +105,14 @@ extension TagFriendsView: UICollectionViewDelegate, UICollectionViewDataSource, 
 }
 
 final class TagFriendCell: UICollectionViewCell {
-    var username: UILabel!
+    private lazy var username: UILabel = {
+        let label = UILabel()
+        label.textColor = textColor
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
+        label.textAlignment = .center
+        label.lineBreakMode = .byTruncatingTail
+        return label
+    }()
     
     private lazy var profileImage: UIImageView = {
         let imageView = UIImageView()
@@ -157,13 +164,7 @@ final class TagFriendCell: UICollectionViewCell {
             $0.width.equalTo(26)
         }
 
-        username = UILabel {
-            $0.textColor = textColor
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
-            $0.textAlignment = .center
-            $0.lineBreakMode = .byTruncatingTail
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(username)
         username.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalTo(profileImage.snp.bottom).offset(6)

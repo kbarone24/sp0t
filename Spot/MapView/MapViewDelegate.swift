@@ -403,7 +403,7 @@ class SpotMapView: MKMapView {
         addSubview(bottomMask)
         bottomMask.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalToSuperview().offset(-65)
+            $0.bottom.equalToSuperview().offset(-140)
             $0.height.equalTo(242)
         }
         bottomMask.layoutIfNeeded()
