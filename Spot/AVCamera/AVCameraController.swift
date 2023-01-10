@@ -151,6 +151,9 @@ final class AVCameraController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpView()
+        
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
+        try? AVAudioSession.sharedInstance().setActive(true)
     }
 
     override func viewWillAppear(_ animated: Bool) {

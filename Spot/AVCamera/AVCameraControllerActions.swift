@@ -164,23 +164,11 @@ extension AVCameraController {
     @objc func recordVideo(_ gestureRecognizer: UILongPressGestureRecognizer) {
         if gestureRecognizer.state == .began {
             startRecording()
-        }
-        
-        else if gestureRecognizer.state == .ended {
+        } else if gestureRecognizer.state == .ended {
             endRecording()
         }
     }
     
-    // TODO: Add completion for video returned
-    private func startRecording() {
-        cameraController?.startRecordingVideo()
-    }
-    
-    // TODO: Add completion for video returned
-    private func endRecording() {
-        cameraController?.endRecordingVideo()
-    }
-
     func capture() {
         disableButtons()
         self.captureImage()
