@@ -154,7 +154,7 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
 
     @objc func cancelTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "CalleryCancelTap")
-        if let cameraVC = navigationController?.viewControllers.first(where: { $0 is AVCameraController }) as? AVCameraController {
+        if let cameraVC = navigationController?.viewControllers.first(where: { $0 is CameraViewController }) as? CameraViewController {
             cameraVC.cancelFromGallery()
             DispatchQueue.main.async { self.navigationController?.popToViewController(cameraVC, animated: true) }
         }
@@ -163,6 +163,7 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     @objc func nextTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "GalleryNextTap")
         if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
+            vc.mode = .image
             DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: false) }
         }
     }

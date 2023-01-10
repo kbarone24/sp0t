@@ -137,6 +137,7 @@ class SelectedImagesFooter: UICollectionReusableView {
 
     @objc func nextTap(_ sender: UIButton) {
         if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
+            vc.mode = .image
             if let galleryVC = viewContainingController() as? PhotoGalleryController {
                 DispatchQueue.main.async { galleryVC.navigationController?.pushViewController(vc, animated: false) }
             }

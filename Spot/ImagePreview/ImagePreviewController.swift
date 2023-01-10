@@ -8,14 +8,19 @@
 
 import CoreLocation
 import Firebase
-import Foundation
 import IQKeyboardManagerSwift
 import Mixpanel
-import Photos
-import SnapKit
 import UIKit
+import AVKit
+import AVFoundation
 
-class ImagePreviewController: UIViewController {
+final class ImagePreviewController: UIViewController {
+    
+    enum Mode: Hashable {
+        case image
+        case video(url: URL)
+    }
+    
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
     lazy var currentImage = PostImagePreview(frame: .zero)
@@ -31,6 +36,7 @@ class ImagePreviewController: UIViewController {
         button.addTarget(self, action: #selector(backTap(_:)), for: .touchUpInside)
         return button
     }()
+    
     private lazy var dotView = UIView()
 
     private var nextButton: FooterNextButton?
@@ -38,9 +44,10 @@ class ImagePreviewController: UIViewController {
     var progressMask: UIView?
     var progressBar: ProgressBar?
 
-    lazy var postDetailView = PostDetailView()
-    lazy var spotNameButton = SpotNameButton()
-    lazy var atButton: UIButton = {
+    private(set) lazy var postDetailView = PostDetailView()
+    private(set) lazy var spotNameButton = SpotNameButton()
+    
+    private(set) lazy var atButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         button.setTitle("@", for: .normal)
@@ -55,7 +62,8 @@ class ImagePreviewController: UIViewController {
         button.clipsToBounds = false
         return button
     }()
-    lazy var newSpotNameView = NewSpotNameView()
+    
+    private(set) lazy var newSpotNameView = NewSpotNameView()
     var newSpotMask: NewSpotMask?
 
     var cancelOnDismiss = false
@@ -63,25 +71,27 @@ class ImagePreviewController: UIViewController {
     var cameraObject: ImageObject?
 
     // swipe down to close keyboard
-    lazy var swipeToClose: UIPanGestureRecognizer = {
+    private(set) lazy var swipeToClose: UIPanGestureRecognizer = {
         let gesture = UIPanGestureRecognizer(target: self, action: #selector(swipeToClose(_:)))
         gesture.isEnabled = false
         return gesture
     }()
+    
     // tap to close keyboard
-    lazy var tapToClose: UITapGestureRecognizer = {
+    private(set) lazy var tapToClose: UITapGestureRecognizer = {
         let gesture = UITapGestureRecognizer(target: self, action: #selector(tapToClose(_:)))
         gesture.accessibilityValue = "tap_to_close"
         gesture.isEnabled = false
         return gesture
     }()
-    lazy var tapCaption: UITapGestureRecognizer = {
+    
+    private(set) lazy var tapCaption: UITapGestureRecognizer = {
         let gesture = UITapGestureRecognizer(target: self, action: #selector(captionTap))
         gesture.accessibilityValue = "caption_tap"
         return gesture
     }()
 
-    lazy var textView: UITextView = {
+    private(set) lazy var textView: UITextView = {
         let view = UITextView()
         view.backgroundColor = nil
         view.textColor = .white
@@ -97,10 +107,6 @@ class ImagePreviewController: UIViewController {
         view.isUserInteractionEnabled = false
         return view
     }()
-    let textViewPlaceholder = "Write a caption..."
-
-    lazy var shouldAnimateTextMask = false // tells keyboardWillChange whether to reposition
-    lazy var firstImageBottomConstraint: CGFloat = 0
 
     private(set) lazy var tagFriendsView: TagFriendsView = {
         let view = TagFriendsView()
@@ -110,9 +116,16 @@ class ImagePreviewController: UIViewController {
         return view
     }()
     
+    private var player: AVPlayer?
+    
     var actionButton: UIButton {
         return newMapMode ? postButton ?? UIButton() : nextButton ?? UIButton()
     }
+    
+    var mode: Mode = .image // default
+    let textViewPlaceholder = "Write a caption..."
+    var shouldAnimateTextMask = false // tells keyboardWillChange whether to reposition
+    var firstImageBottomConstraint: CGFloat = 0
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -124,6 +137,10 @@ class ImagePreviewController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ImagePreviewOpen")
         enableKeyboardMethods()
+        
+        if mode != .image {
+            player?.play()
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -200,26 +217,12 @@ class ImagePreviewController: UIViewController {
         view.backgroundColor = .black
         guard let post = UploadPostModel.shared.postObject else { return }
 
-        // add initial preview view and buttons
-        currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex ?? 0)
-        view.addSubview(currentImage)
-        currentImage.makeConstraints()
-        currentImage.setCurrentImage()
-
-        if post.frameIndexes?.count ?? 0 > 1 {
-            nextImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) + 1)
-            view.addSubview(nextImage)
-            nextImage.makeConstraints()
-            nextImage.setCurrentImage()
-
-            previousImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) - 1)
-            view.addSubview(previousImage)
-            previousImage.makeConstraints()
-            previousImage.setCurrentImage()
-
-            let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
-            view.addGestureRecognizer(pan)
-            addDotView()
+        switch mode {
+        case .image:
+            addPreviewPhoto(post)
+            
+        case .video(let url):
+            addPreviewVideo(path: url)
         }
 
         view.addSubview(backButton)
@@ -288,6 +291,37 @@ class ImagePreviewController: UIViewController {
         view.addGestureRecognizer(tapToClose)
         tapCaption.delegate = self
         view.addGestureRecognizer(tapCaption)
+    }
+    
+    private func addPreviewPhoto(_ post: MapPost) {
+        // add initial preview view and buttons
+        currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex ?? 0)
+        view.addSubview(currentImage)
+        currentImage.makeConstraints()
+        currentImage.setCurrentImage()
+
+        if post.frameIndexes?.count ?? 0 > 1 {
+            nextImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) + 1)
+            view.addSubview(nextImage)
+            nextImage.makeConstraints()
+            nextImage.setCurrentImage()
+
+            previousImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) - 1)
+            view.addSubview(previousImage)
+            previousImage.makeConstraints()
+            previousImage.setCurrentImage()
+
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
+            view.addGestureRecognizer(pan)
+            addDotView()
+        }
+    }
+    
+    private func addPreviewVideo(path: URL) {
+        player = AVPlayer(url: path)
+        let playerLayer = AVPlayerLayer(player: player)
+        playerLayer.frame = self.view.bounds
+        self.view.layer.addSublayer(playerLayer)
     }
 
     func addDotView() {

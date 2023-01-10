@@ -100,7 +100,7 @@ extension ImagePreviewController {
         if cameraObject != nil { UploadPostModel.shared.selectedObjects.removeAll(where: { $0.fromCamera })} /// remove old captured image
         
         let controllers = navigationController?.viewControllers
-        if let camera = controllers?[safe: (controllers?.count ?? 0) - 3] as? AVCameraController {
+        if let camera = controllers?[safe: (controllers?.count ?? 0) - 3] as? CameraViewController {
             // reset postObject
             camera.setUpPost()
         }

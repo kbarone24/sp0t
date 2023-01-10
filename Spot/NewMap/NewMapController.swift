@@ -331,7 +331,7 @@ class NewMapController: UIViewController {
         setFinalMapValues()
         UploadPostModel.shared.setMapValues(map: mapObject)
         DispatchQueue.main.async {
-            if let vc = self.storyboard?.instantiateViewController(withIdentifier: "AVCameraController") as? AVCameraController {
+            if let vc = self.storyboard?.instantiateViewController(withIdentifier: "CameraViewController") as? CameraViewController {
                 vc.newMapMode = true
                 self.navigationController?.pushViewController(vc, animated: true)
             }
