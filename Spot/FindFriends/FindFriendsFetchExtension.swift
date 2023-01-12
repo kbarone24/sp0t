@@ -123,10 +123,10 @@ extension FindFriendsController {
                 do {
                     let unwrappedUser = try snap?.data(as: UserProfile.self)
                     guard let user = unwrappedUser else { dispatch.leave(); return }
-                    for user in user.topFriends ?? [:] {
-                        if self.shouldAddToMutuals(id: user.key) { self.addToMutuals(id: user.key, mutualValue: user.value, friendValue: 0)}
-                        dispatch.leave()
+                    for user in user.topFriends ?? [:] where self.shouldAddToMutuals(id: user.key) {
+                        self.addToMutuals(id: user.key, mutualValue: user.value, friendValue: 0)
                     }
+                    dispatch.leave()
                 } catch { dispatch.leave() }
             }
         }
