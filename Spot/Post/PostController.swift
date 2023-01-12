@@ -234,7 +234,6 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
         
         /// Try to find an existing data loader
         if let dataLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
-            
             /// Has the data already been loaded?
             if dataLoader.images.count == post.imageURLs.count {
                 guard let cell = cell as? PostCell else { return }

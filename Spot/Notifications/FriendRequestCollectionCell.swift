@@ -11,7 +11,7 @@ import Foundation
 import UIKit
 
 protocol FriendRequestCollectionCellDelegate: AnyObject {
-    func deleteFriendRequest(sender: AnyObject?)
+    func deleteFriendRequest(sender: AnyObject?, accepted: Bool)
     func getProfile(userProfile: UserProfile)
     func acceptFriend(sender: AnyObject?)
 }
@@ -91,18 +91,20 @@ extension FriendRequestCollectionCell: UICollectionViewDelegate, UICollectionVie
 
 // MARK: friendRequestCollectionCellDelegate
 extension FriendRequestCollectionCell: FriendRequestCollectionCellDelegate {
-    func deleteFriendRequest(sender: AnyObject?) {
+    func deleteFriendRequest(sender: AnyObject?, accepted: Bool) {
         guard let cell = sender as? FriendRequestCell,
               let indexPath = collectionView.indexPath(for: cell),
                 let friendRequest = cell.friendRequest else { return }
 
         collectionView.performBatchUpdates(({
-            var indexPaths = [indexPath]
+            let indexPaths = [indexPath]
             friendRequests = notificationControllerDelegate?.deleteFriendRequest(friendRequest: friendRequest) ?? []
             collectionView.deleteItems(at: indexPaths)
             let friendID = friendRequest.userInfo?.id ?? ""
             let notiID = friendRequest.id ?? ""
-            self.friendService?.removeFriendRequest(friendID: friendID, notificationID: notiID, completion: nil)
+            if !accepted {
+                self.friendService?.removeFriendRequest(friendID: friendID, notificationID: notiID, completion: nil)
+            }
 
         }), completion: { _ in
             self.collectionView.reloadData()
