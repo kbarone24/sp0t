@@ -68,7 +68,7 @@ extension MapController: MKMapViewDelegate {
     }
 
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-        if shouldRunGeoQuery() { DispatchQueue.global().async { self.getVisibleSpots() }
+        if shouldRunGeoQuery() { DispatchQueue.global(qos: .utility).async { self.getVisibleSpots() }
         }
         if postsFetched { setCityLabel() }
     }
@@ -403,7 +403,7 @@ class SpotMapView: MKMapView {
         addSubview(bottomMask)
         bottomMask.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalToSuperview().offset(-140)
+            $0.bottom.equalToSuperview().offset(-65)
             $0.height.equalTo(242)
         }
         bottomMask.layoutIfNeeded()

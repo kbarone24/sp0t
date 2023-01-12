@@ -194,8 +194,8 @@ extension MKCoordinateRegion {
             maxLongitude = maxLong
 
             // for smaller map area
-            let adjustedLatSpan = (maxLatitude - minLatitude) * 1.5
-            let adjustedLongSpan = (maxLongitude - minLongitude) * 1.5
+            let adjustedLatSpan = (maxLatitude - minLatitude) * 1.25
+            let adjustedLongSpan = (maxLongitude - minLongitude) * 1.25
             span = MKCoordinateSpan(latitudeDelta: max(minSpan, adjustedLatSpan), longitudeDelta: max(minSpan, adjustedLongSpan)).getAdjustedSpan()
         }
         let center = CLLocationCoordinate2DMake((minLatitude + maxLatitude) / 2, (minLongitude + maxLongitude) / 2)
