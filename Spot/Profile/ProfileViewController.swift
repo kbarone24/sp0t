@@ -39,11 +39,13 @@ class ProfileViewController: UIViewController {
 
     var postsFetched = false {
         didSet {
+            print("posts fetched", postsFetched)
             toggleNoPosts()
         }
     }
     var mapsFetched = false {
         didSet {
+            print("maps fetched", mapsFetched)
             toggleNoPosts()
         }
     }
@@ -297,7 +299,7 @@ class ProfileViewController: UIViewController {
             for doc in snap.documents {
                 do {
                     let unwrappedInfo = try? doc.data(as: CustomMap.self)
-                    guard let mapInfo = unwrappedInfo else { return }
+                    guard let mapInfo = unwrappedInfo else { continue }
                     /// friend doesn't have access to secret map
                     if mapInfo.secret && !mapInfo.memberIDs.contains(UserDataModel.shared.uid) { continue }
                     if !self.maps.contains(where: { $0.id == mapInfo.id }) { self.maps.append(mapInfo) }

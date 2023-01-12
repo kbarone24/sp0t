@@ -28,7 +28,6 @@ class PostImageModel {
 }
 
 class PostImageLoader: Operation {
-
     /// set of operations for loading a postImage
     var images: [UIImage] = []
     var loadingCompleteHandler: (([UIImage]?) -> Void)?
@@ -49,7 +48,6 @@ class PostImageLoader: Operation {
         }
 
         func imageEscape() {
-
             imageCount += 1
             if imageCount == post.imageURLs.count {
                 self.images = images

@@ -34,7 +34,8 @@ class HomeScreenContainerController: UIViewController {
     }
 
     var selectedControllerIndex = 1
-    var mapGesture: UITapGestureRecognizer?
+    var mapTapGesture: UITapGestureRecognizer?
+    var mapPanGesture: UIPanGestureRecognizer?
 
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .darkContent
@@ -47,7 +48,8 @@ class HomeScreenContainerController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        mapGesture = UITapGestureRecognizer(target: self, action: #selector(mapTap))
+        mapTapGesture = UITapGestureRecognizer(target: self, action: #selector(mapTap))
+        mapPanGesture = UIPanGestureRecognizer(target: self, action: #selector(mapPan(_:)))
         mapController.homeScreenDelegate = self
 
         addChild(mapNavController)
@@ -80,28 +82,38 @@ extension HomeScreenContainerController {
 
     func openSideBar() {
         Mixpanel.mainInstance().track(event: "MapOpenSideBar")
-        if let mapGesture { mapNavController.view.addGestureRecognizer(mapGesture) }
+        if let mapTapGesture { mapNavController.view.addGestureRecognizer(mapTapGesture) }
+        if let mapPanGesture { mapNavController.view.addGestureRecognizer(mapPanGesture) }
         mapController.view.isUserInteractionEnabled = false
         if sideBarController.mapsLoaded { sideBarController.reloadTable() }
 
-        sideBarController.view.snp.updateConstraints {
-            $0.leading.equalToSuperview()
+        makeSideBarOpenConstraints(offset: 0)
+    }
+
+    func closeSideBar() {
+        Mixpanel.mainInstance().track(event: "MapCloseSideBar")
+        if let mapTapGesture { mapNavController.view.removeGestureRecognizer(mapTapGesture) }
+        if let mapPanGesture { mapNavController.view.removeGestureRecognizer(mapPanGesture) }
+        mapController.view.isUserInteractionEnabled = true
+
+        makeSideBarClosedConstraints()
+    }
+
+    func makeSideBarOpenConstraints(offset: CGFloat) {
+        sideBarController.view.snp.makeConstraints {
+            $0.leading.equalToSuperview().offset(offset)
             $0.top.bottom.equalToSuperview()
-            $0.trailing.equalToSuperview().inset(70)
+            $0.trailing.equalToSuperview().offset(-70 + offset)
         }
 
-        mapNavController.view.snp.updateConstraints {
+        mapNavController.view.snp.makeConstraints {
             $0.leading.equalTo(sideBarController.view.snp.trailing)
             $0.top.bottom.equalToSuperview()
             $0.width.equalToSuperview()
         }
     }
 
-    func closeSideBar() {
-        Mixpanel.mainInstance().track(event: "MapCloseSideBar")
-        if let mapGesture { mapNavController.view.removeGestureRecognizer(mapGesture) }
-        mapController.view.isUserInteractionEnabled = true
-
+    func makeSideBarClosedConstraints() {
         mapNavController.view.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -115,5 +127,42 @@ extension HomeScreenContainerController {
 
     @objc func mapTap() {
         animateSideBar()
+    }
+
+    @objc func mapPan(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: view)
+        let velocity = gesture.velocity(in: view)
+        switch gesture.state {
+        case .began:
+            mapTapGesture?.isEnabled = false
+        case .changed:
+            offsetSideBar(offset: translation.x)
+        case .ended, .cancelled, .failed:
+            mapTapGesture?.isEnabled = true
+            finishPanGesture(translationX: translation.x, velocityX: velocity.x)
+
+        default:
+            return
+        }
+    }
+
+    func offsetSideBar(offset: CGFloat) {
+        mapNavController.view.snp.removeConstraints()
+        sideBarController.view.snp.removeConstraints()
+        makeSideBarOpenConstraints(offset: offset)
+    }
+
+    func finishPanGesture(translationX: CGFloat, velocityX: CGFloat) {
+        mapNavController.view.snp.removeConstraints()
+        sideBarController.view.snp.removeConstraints()
+        if translationX + velocityX < -100 {
+            closeSideBar()
+        } else {
+            openSideBar()
+        }
+
+        UIView.animate(withDuration: 0.25, delay: 0.0, options: [.curveEaseInOut]) {
+            self.view.layoutIfNeeded()
+        }
     }
 }

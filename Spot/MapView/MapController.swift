@@ -70,7 +70,7 @@ final class MapController: UIViewController {
         view.searchButton.addTarget(self, action: #selector(searchTap), for: .touchUpInside)
         view.profileButton.addTarget(self, action: #selector(profileTap), for: .touchUpInside)
         view.notificationsButton.addTarget(self, action: #selector(notificationsTap), for: .touchUpInside)
-        view.hamburgerMenu.addTarget(self, action: #selector(hamburgerTap), for: .touchUpInside)
+        view.homeTouchArea.addTarget(self, action: #selector(hamburgerTap), for: .touchUpInside)
         return view
     }()
     
@@ -152,7 +152,7 @@ final class MapController: UIViewController {
         mapView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
             $0.top.equalToSuperview().offset(-228)
-            $0.bottom.equalToSuperview().offset(140)
+            $0.bottom.equalToSuperview().offset(65)
         }
     }
 
@@ -169,7 +169,7 @@ final class MapController: UIViewController {
             $0.width.equalTo(423)
             $0.height.equalTo(625)
             $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview().offset(-100)
+            $0.centerY.equalToSuperview().offset(-102)
         }
 
         // all buttons are padded 10px

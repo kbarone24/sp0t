@@ -27,6 +27,7 @@ final class MapTitleView: UIView {
         button.contentVerticalAlignment = .center
         return button
     }()
+    lazy var homeTouchArea = UIButton()
     lazy var profileButton = ProfileButton()
     lazy var notificationsButton = NotificationsButton()
     lazy var searchButton: UIButton = {
@@ -55,6 +56,12 @@ final class MapTitleView: UIView {
             $0.width.equalTo(75)
             $0.height.equalTo(32)
             $0.centerY.equalToSuperview()
+        }
+
+        addSubview(homeTouchArea)
+        homeTouchArea.snp.makeConstraints {
+            $0.leading.top.bottom.equalTo(hamburgerMenu)
+            $0.trailing.equalTo(homeButton)
         }
 
         addSubview(profileButton)

@@ -14,6 +14,7 @@ final class FriendRequestCell: UICollectionViewCell {
     var friendRequest: UserNotification?
     weak var collectionDelegate: FriendRequestCollectionCellDelegate?
     weak var notificationControllerDelegate: NotificationsDelegate?
+    var accepted = false
 
     private lazy var activityIndicator = UIActivityIndicatorView()
     private lazy var profilePic: UIImageView = {
@@ -103,7 +104,7 @@ final class FriendRequestCell: UICollectionViewCell {
         senderUsername.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(profilePic.snp.bottom).offset(14)
-            $0.height.lessThanOrEqualTo(16)
+            $0.height.lessThanOrEqualTo(18)
         }
 
         contentView.addSubview(timestamp)
@@ -154,13 +155,26 @@ final class FriendRequestCell: UICollectionViewCell {
 
     @objc func cancelTap() {
         Mixpanel.mainInstance().track(event: "NotificationsFriendRequestRemoved")
-        collectionDelegate?.deleteFriendRequest(sender: self)
+        collectionDelegate?.deleteFriendRequest(sender: self, accepted: accepted)
     }
 
     @objc func acceptTap() {
         Mixpanel.mainInstance().track(event: "NotificationsFriendRequestAccepted")
-        acceptButton.isHidden = true
+        acceptButton.isEnabled = false
+        setAccepted()
         collectionDelegate?.acceptFriend(sender: self)
+    }
+
+    func setAccepted() {
+        accepted = true
+        acceptButton.backgroundColor = .white
+        acceptButton.layer.borderColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1).cgColor
+        acceptButton.setImage(UIImage(named: "AddedFriendIcon"), for: .normal)
+        let title = NSMutableAttributedString(string: "Confirmed", attributes: [
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
+            NSAttributedString.Key.foregroundColor: UIColor(red: 0.47, green: 0.47, blue: 0.47, alpha: 1.00)
+        ])
+        acceptButton.setAttributedTitle(title, for: .normal)
     }
 
     override func prepareForReuse() {
