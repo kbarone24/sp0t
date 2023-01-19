@@ -15,7 +15,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         Mixpanel.mainInstance().track(event: "HomeScreenFindFriendsTap")
         if sheetView != nil { return }
         let findFriendsController = FindFriendsController()
-        sheetView = DrawerView(present: findFriendsController, detentsInAscending: [.top, .middle, .bottom]) { [weak self] in
+        sheetView = DrawerView(present: findFriendsController, presentationDirection: .rightToLeft) { [weak self] in
             self?.sheetView = nil
         }
         findFriendsController.containerDrawerView = sheetView
@@ -25,33 +25,30 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         Mixpanel.mainInstance().track(event: "HomeScreenNotificationsTap")
         if sheetView != nil { return }
         let notificationsController = NotificationsController()
-        sheetView = DrawerView(present: notificationsController, detentsInAscending: [.bottom, .middle, .top], closeAction: { [weak self] in
+        sheetView = DrawerView(present: notificationsController, presentationDirection: .rightToLeft, closeAction: { [weak self] in
             self?.sheetView = nil
         })
         notificationsController.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
     }
 
     func openProfile() {
         Mixpanel.mainInstance().track(event: "HomeScreenProfileTap")
         if sheetView != nil { return }
         let profileVC = ProfileViewController(userProfile: nil)
-        sheetView = DrawerView(present: profileVC, detentsInAscending: [.bottom, .middle, .top], closeAction: { [weak self] in
+        sheetView = DrawerView(present: profileVC, presentationDirection: .rightToLeft, closeAction: { [weak self] in
             self?.sheetView = nil
         })
         profileVC.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
     }
 
     func openSpot(post: MapPost) {
         Mixpanel.mainInstance().track(event: "MapSpotTap")
         if sheetView != nil { return }
         let spotVC = SpotPageController(mapPost: post, presentedDrawerView: nil)
-        sheetView = DrawerView(present: spotVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
+        sheetView = DrawerView(present: spotVC, presentationDirection: .rightToLeft) { [weak self] in
             self?.sheetView = nil
         }
         spotVC.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
     }
 
     func openPosts(posts: [MapPost]) {
@@ -59,11 +56,10 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         if sheetView != nil { return }
         guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         postVC.postsList = posts
-        sheetView = DrawerView(present: postVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
+        sheetView = DrawerView(present: postVC, presentationDirection: .bottomToTop) { [weak self] in
             self?.sheetView = nil
         }
         postVC.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
     }
 
     func openMap(map: CustomMap) {
@@ -72,12 +68,11 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         if selectedControllerIndex == 0 { animateSideBar() }
 
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: nil, mapType: .customMap)
-        sheetView = DrawerView(present: customMapVC, detentsInAscending: [.bottom, .middle, .top]) { [weak self] in
+        sheetView = DrawerView(present: customMapVC, presentationDirection: .rightToLeft) { [weak self] in
             self?.sheetView = nil
         }
 
         customMapVC.containerDrawerView = sheetView
-        sheetView?.present(to: .top)
     }
 
     func openNewMap() {

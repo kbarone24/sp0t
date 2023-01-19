@@ -113,7 +113,7 @@ extension ProfileViewController: UIScrollViewDelegate {
         // Show navigation bar when user scroll pass the header section
         if scrollView.contentOffset.y > -91.0 {
             navigationController?.navigationBar.isTranslucent = false
-            if scrollView.contentOffset.y > 0 {
+            if scrollView.contentOffset.y > 35 {
                 self.title = userProfile?.name
             } else { self.title = ""}
         }

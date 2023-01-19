@@ -85,6 +85,7 @@ extension CustomMapController: UIGestureRecognizerDelegate {
         // Finger swipes up y translation < 0
         // Finger swipes down y translation > 0
         let yTranslation = recognizer.translation(in: recognizer.view).y
+     //   guard containerDrawerView?.slideView.frame.minY ?? 0 == 0 else { return }
 
         // Enter full screen then enable collection view scrolling and determine if need drawer view swipe to next state feature according to user finger swipe direction
         // Status is top and content is top
@@ -101,13 +102,13 @@ extension CustomMapController: UIGestureRecognizerDelegate {
 
             // Preventing the drawer view to be dragged when it's status is top but content is not on top and user finger is swiping up
             if
-                containerDrawerView?.status == .top &&
+                containerDrawerView?.slideView.frame.minY == 0 &&
                 collectionView.contentOffset.y > topY &&
                 yTranslation < 0
             {
                 containerDrawerView?.canDrag = false
                 containerDrawerView?.swipeToNextState = false
-                containerDrawerView?.slideView.frame.origin.y = 0
+            //    containerDrawerView?.slideView.frame.origin.y = 0
             }
         }
 

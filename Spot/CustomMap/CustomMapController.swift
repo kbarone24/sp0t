@@ -28,7 +28,7 @@ class CustomMapController: UIViewController {
     lazy var postsList: [MapPost] = []
 
     unowned var mapController: MapController?
-    unowned var containerDrawerView: DrawerView? {
+    weak var containerDrawerView: DrawerView? {
         didSet {
             if !ranSetUp { runInitialFetches() }
         }
@@ -119,7 +119,6 @@ class CustomMapController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
 
         if let homeController = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController as? HomeScreenContainerController {
             if let mapNav = homeController.children.first(where: { $0 is UINavigationController }) as? UINavigationController {
@@ -134,8 +133,8 @@ class CustomMapController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView(present: !isMovingToParent) // only present when view reappears
         barView.isHidden = false
+        containerDrawerView?.configure(canDrag: currentContainerCanDragStatus ?? true, swipeDownToDismiss: false, startingPosition: .top)
 
         mapController?.mapView.delegate = self
         mapController?.mapView.spotMapDelegate = self
@@ -149,6 +148,10 @@ class CustomMapController: UIViewController {
         // Use centered map variable to see if fetch ran yet for stacked VC
         if (mapController?.mapView.annotations.isEmpty ?? true) || !centeredMap {
             DispatchQueue.main.async { self.addInitialAnnotations() }
+        }
+
+        if containerDrawerView?.status == .top {
+            collectionView.isScrollEnabled = true
         }
     }
 
@@ -215,23 +218,9 @@ class CustomMapController: UIViewController {
         navigationController.navigationBar.isTranslucent = true
     }
 
-    private func configureDrawerView(present: Bool) {
-        if containerDrawerView == nil { return }
-        containerDrawerView?.canInteract = true
-        containerDrawerView?.canDrag = currentContainerCanDragStatus ?? true
-        currentContainerCanDragStatus = nil
-        containerDrawerView?.swipeDownToDismiss = false
-        containerDrawerView?.showCloseButton = false
-
-        if containerDrawerView?.status.rawValue != DrawerViewDetent.top.rawValue && present {
-            DispatchQueue.main.async { self.containerDrawerView?.present(to: .top) }
-        }
-       // configureFullScreen()
-       // collectionView.contentOffset.y = offsetOnDismissal
-    }
-
     private func viewSetup() {
         if containerDrawerView == nil { return }
+        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewOffset), name: NSNotification.Name("DrawerViewOffset"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
@@ -285,9 +274,13 @@ class CustomMapController: UIViewController {
         }
     }
 
+    @objc func drawerViewOffset() {
+        collectionView.isScrollEnabled = false
+    }
+
     @objc func DrawerViewToTopCompletion() {
-        guard currentContainerCanDragStatus == nil else { return }
-        if containerDrawerView == nil { return }
+      //  guard currentContainerCanDragStatus == nil else { return }
+        if containerDrawerView == nil { print("nil"); return }
         configureFullScreen()
     }
 
@@ -316,7 +309,6 @@ class CustomMapController: UIViewController {
         // This line of code move the initial load naivgation bar up so it won't block the friend list button
         navigationController?.navigationBar.frame.origin = CGPoint(x: 0, y: 0)
 
-        collectionView.isScrollEnabled = false
         containerDrawerView?.swipeToNextState = true
         barBackButton.isHidden = true
 
@@ -333,7 +325,6 @@ class CustomMapController: UIViewController {
         if containerDrawerView == nil { return }
         Mixpanel.mainInstance().track(event: "CustomMapDrawerClose")
 
-        collectionView.isScrollEnabled = false
         containerDrawerView?.swipeToNextState = true
         barBackButton.isHidden = true
         collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
@@ -368,6 +359,7 @@ class CustomMapController: UIViewController {
         barBackButton.isHidden = true
         floatBackButton.isHidden = true
         // remove observer to cancel drawer methods before sheetView is set to nil on mapVC (remove remaining observers on deinit)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewOffset"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)

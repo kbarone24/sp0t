@@ -31,21 +31,15 @@ class ProfileViewController: UIViewController {
     }
 
     private lazy var imageManager = SDWebImageManager()
-    public unowned var containerDrawerView: DrawerView? {
-        didSet {
-            configureDrawerView()
-        }
-    }
+    public weak var containerDrawerView: DrawerView?
 
     var postsFetched = false {
         didSet {
-            print("posts fetched", postsFetched)
             toggleNoPosts()
         }
     }
     var mapsFetched = false {
         didSet {
-            print("maps fetched", mapsFetched)
             toggleNoPosts()
         }
     }
@@ -121,7 +115,7 @@ class ProfileViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView()
+        containerDrawerView?.configure(canDrag: false, swipeDownToDismiss: false, startingPosition: .top)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -163,13 +157,6 @@ class ProfileViewController: UIViewController {
             button.imageInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
             navigationItem.rightBarButtonItem = button
         }
-    }
-
-    private func configureDrawerView() {
-        containerDrawerView?.canInteract = false
-        containerDrawerView?.swipeDownToDismiss = false
-        containerDrawerView?.showCloseButton = false
-        containerDrawerView?.present(to: .top)
     }
 
     private func toggleNoPosts() {

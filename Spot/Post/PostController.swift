@@ -15,7 +15,6 @@ import SnapKit
 import UIKit
 
 final class PostController: UIViewController {
-
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     
@@ -23,11 +22,7 @@ final class PostController: UIViewController {
     var spotObject: MapSpot!
     
     var postsCollection: UICollectionView!
-    unowned var containerDrawerView: DrawerView? {
-        didSet {
-            configureDrawerView()
-        }
-    }
+    weak var containerDrawerView: DrawerView?
     var openComments = false
     
     lazy var deleteIndicator = CustomActivityIndicator()
@@ -56,7 +51,7 @@ final class PostController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView()
+        containerDrawerView?.configure(canDrag: true, swipeDownToDismiss: true, startingPosition: .top)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -92,15 +87,7 @@ final class PostController: UIViewController {
     func setUpNavBar() {
         navigationController?.setNavigationBarHidden(true, animated: true)
     }
-    
-    func configureDrawerView() {
-        containerDrawerView?.swipeDownToDismiss = true
-        containerDrawerView?.canInteract = true
-        containerDrawerView?.canDrag = true
-        containerDrawerView?.showCloseButton = false
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: .top) }
-    }
-    
+
     func setUpView() {
         postsCollection = {
             let layout = UICollectionViewFlowLayout()
