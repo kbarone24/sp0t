@@ -88,7 +88,7 @@ class FindFriendsController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyProfileAddFriend(_:)), name: NSNotification.Name("SendFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         setUpNavBar()
-        configureDrawerView()
+        containerDrawerView?.configure(canDrag: false, swipeDownToDismiss: false, startingPosition: .top)
     }
 
     deinit {
@@ -116,13 +116,6 @@ class FindFriendsController: UIViewController {
             target: self,
             action: #selector(self.exit(_:))
         )
-    }
-
-    private func configureDrawerView() {
-        containerDrawerView?.canInteract = false
-        containerDrawerView?.swipeDownToDismiss = false
-        containerDrawerView?.showCloseButton = false
-        containerDrawerView?.present(to: .top)
     }
 
     private func loadSearchBar() {

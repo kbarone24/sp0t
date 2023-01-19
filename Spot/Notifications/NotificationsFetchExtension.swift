@@ -67,7 +67,8 @@ extension NotificationsController {
     }
 
     func getActivityNotifications(refresh: Bool) {
-        let notiRef = db.collection("users").document(uid).collection("notifications").limit(to: 15)
+        let fetchLimit = 13
+        let notiRef = db.collection("users").document(uid).collection("notifications").limit(to: fetchLimit)
         var notiQuery = notiRef.order(by: "timestamp", descending: true)
 
         if let endDocument, !refresh {
@@ -80,7 +81,7 @@ extension NotificationsController {
 
             if allDocs.isEmpty {
                 self.fetchGroup.leave(); return }
-            if allDocs.count < 15 {
+            if allDocs.count < fetchLimit {
                 self.refresh = .refreshDisabled
             }
 
@@ -129,7 +130,7 @@ extension NotificationsController {
         self.notifications = self.notifications.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
         self.pendingFriendRequests = self.pendingFriendRequests.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
         // so notfications aren't empty if the user is pendingFriendRequest heavy
-        if((pendingFriendRequests.isEmpty && notifications.count < 11) || (!pendingFriendRequests.isEmpty && notifications.count < 7)) && refresh == .refreshEnabled {
+        if (!pendingFriendRequests.isEmpty && notifications.count < 9) && refresh == .refreshEnabled {
             fetchNotifications(refresh: false)
         }
         if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }

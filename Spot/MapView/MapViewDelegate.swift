@@ -169,7 +169,7 @@ extension MapController: SpotMapViewDelegate {
         for id in view.postIDs {
             if let post = map.postsDictionary[id] { coordinates.append(post.coordinate) }
         }
-        let region = MKCoordinateRegion(coordinates: coordinates, overview: false)
+        let region = MKCoordinateRegion(coordinates: coordinates, overview: false, clusterTap: true)
         DispatchQueue.main.async { self.mapView.setRegion(region, animated: true) }
     }
 }
@@ -254,7 +254,6 @@ class SpotMapView: MKMapView {
     }
 
     func removeAllAnnos() {
-        print("remove all annos")
         removeAnnotations(annotations)
     }
 
@@ -330,7 +329,6 @@ class SpotMapView: MKMapView {
         let postFrame = CGRect(x: frame.midX - 35, y: 0, width: 70, height: 70)
 
         let usernameAvatarTouchArea = CGRect(x: frame.midX + 10, y: 42, width: frame.width / 2 - 10, height: 38)
-        print("tap location", tapLocation, postFrame, annotationView.postIDs)
         if postFrame.contains(tapLocation) {
             spotMapDelegate?.openPostFromSpotPost(view: annotationView)
 
