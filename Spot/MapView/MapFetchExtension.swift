@@ -380,7 +380,7 @@ extension MapController {
     
     func checkForActivityIndicator() {
         if !postsFetched {
-            DispatchQueue.main.async { self.mapActivityIndicator.startAnimating() }
+            DispatchQueue.main.async { self.mapActivityIndicator.startAnimating(duration: 1.5) }
         }
     }
 }

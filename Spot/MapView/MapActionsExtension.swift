@@ -85,9 +85,7 @@ extension MapController {
         let fromValue: ExploreMapViewModel.OpenedFrom = onboarding ? .onBoarding : .mapController
         let viewController = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: ServiceContainer.shared, from: fromValue))
         viewController.delegate = self
-        let transition = AddButtonTransition()
-        self.navigationController?.view.layer.add(transition, forKey: kCATransition)
-        self.navigationController?.pushViewController(viewController, animated: false)
+        self.navigationController?.pushViewController(viewController, animated: true)
     }
 
     func openNewMap() {
@@ -108,7 +106,7 @@ extension MapController {
         // called when sheetView value is set on home screen controller
         DispatchQueue.main.async {
             self.toggleHomeAppearance(hidden: open)
-            if !open { self.animateHomeAlphas() }
+          //  if !open { self.animateHomeAlphas() }
             self.navigationController?.setNavigationBarHidden(open, animated: false)
         }
     }
@@ -125,7 +123,10 @@ extension MapController {
         } else {
             mapView.delegate = self
             mapView.spotMapDelegate = self
-            DispatchQueue.main.async { self.addMapAnnotations() }
+            // re-add map annotations only if they've been removed (custom map opened in drawer)
+            if mapView.annotations.count < 2 {
+                DispatchQueue.main.async { self.addMapAnnotations() }
+            }
         }
     }
 

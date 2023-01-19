@@ -305,7 +305,7 @@ final class ExploreMapViewController: UIViewController {
     }
     
     @objc private func close() {
-         delegate?.finishPassing()
+        if viewModel.openedFrom == .onBoarding { delegate?.finishPassing() }
         navigationController?.popViewController(animated: true)
     }
 }

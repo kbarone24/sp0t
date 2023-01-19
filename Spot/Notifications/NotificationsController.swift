@@ -42,7 +42,7 @@ class NotificationsController: UIViewController {
     
     var containerDrawerView: DrawerView?
     private lazy var activityIndicator = CustomActivityIndicator()
-    var tableView: UITableView = {
+    lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
         tableView.backgroundColor = .white
         tableView.allowsSelection = true
@@ -84,20 +84,13 @@ class NotificationsController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView()
+        containerDrawerView?.configure(canDrag: false, swipeDownToDismiss: false, startingPosition: .top)
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "NotificationsOpen")
         navigationController?.navigationBar.isTranslucent = false
-    }
-    
-    func configureDrawerView() {
-        containerDrawerView?.canInteract = false
-        containerDrawerView?.swipeDownToDismiss = false
-        containerDrawerView?.showCloseButton = false
-        containerDrawerView?.present(to: .top)
     }
     
     func setUpNavBar() {

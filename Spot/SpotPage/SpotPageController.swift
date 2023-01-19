@@ -133,7 +133,7 @@ class SpotPageController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView()
+        containerDrawerView?.configure(canDrag: false, swipeDownToDismiss: false, startingPosition: .top)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -146,13 +146,6 @@ extension SpotPageController {
     private func setUpNavBar() {
         navigationController?.setNavigationBarHidden(true, animated: true)
         barView.isHidden = false
-    }
-
-    private func configureDrawerView() {
-        containerDrawerView?.canInteract = false
-        containerDrawerView?.swipeDownToDismiss = false
-        containerDrawerView?.showCloseButton = false
-        containerDrawerView?.present(to: .top)
     }
 
     private func viewSetup() {
