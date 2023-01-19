@@ -782,6 +782,8 @@ extension PostCell {
         db.collection("users").document(post.posterID).collection("notifications").addDocument(data: likeNotiValues)
         likeNotiValues["type"] = "likeOnAdd"
         for user in post.taggedUserIDs ?? [] {
+            // don't send noti to tagged user
+            if user == uid { continue }
             db.collection("users").document(user).collection("notifications").addDocument(data: likeNotiValues)
         }
 

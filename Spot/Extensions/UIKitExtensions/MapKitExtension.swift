@@ -147,7 +147,7 @@ extension MKCoordinateRegion {
         }
     }
 
-    init(coordinates: [CLLocationCoordinate2D], overview: Bool) {
+    init(coordinates: [CLLocationCoordinate2D], overview: Bool, clusterTap: Bool? = false) {
         self.init()
 
         guard let firstCoordinate = coordinates.first else {
@@ -193,9 +193,10 @@ extension MKCoordinateRegion {
             minLongitude = minLong
             maxLongitude = maxLong
 
-            // for smaller map area
-            let adjustedLatSpan = (maxLatitude - minLatitude) * 1.25
-            let adjustedLongSpan = (maxLongitude - minLongitude) * 1.25
+            // for smaller map area -> zoom in farther for clusters
+            let adjustment = (clusterTap ?? false) ? 1 : 1.15
+            let adjustedLatSpan = (maxLatitude - minLatitude) * adjustment
+            let adjustedLongSpan = (maxLongitude - minLongitude) * adjustment
             span = MKCoordinateSpan(latitudeDelta: max(minSpan, adjustedLatSpan), longitudeDelta: max(minSpan, adjustedLongSpan)).getAdjustedSpan()
         }
         let center = CLLocationCoordinate2DMake((minLatitude + maxLatitude) / 2, (minLongitude + maxLongitude) / 2)
