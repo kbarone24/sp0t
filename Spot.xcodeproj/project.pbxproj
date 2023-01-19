@@ -173,8 +173,6 @@
 		8C121DB82949352400CD4E07 /* NewSpotNameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA62949352400CD4E07 /* NewSpotNameView.swift */; };
 		8C121DB92949352400CD4E07 /* NewSpotNameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA62949352400CD4E07 /* NewSpotNameView.swift */; };
 		8C121DBA2949352400CD4E07 /* ImagePreviewActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA72949352400CD4E07 /* ImagePreviewActions.swift */; };
-		8C121DBB2949352400CD4E07 /* ImagePreviewActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA72949352400CD4E07 /* ImagePreviewActions.swift */; };
-		8C121DBC2949352400CD4E07 /* ImagePreviewActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA72949352400CD4E07 /* ImagePreviewActions.swift */; };
 		8C121DBD2949352400CD4E07 /* NewSpotMask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA82949352400CD4E07 /* NewSpotMask.swift */; };
 		8C121DBE2949352400CD4E07 /* NewSpotMask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA82949352400CD4E07 /* NewSpotMask.swift */; };
 		8C121DBF2949352400CD4E07 /* NewSpotMask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA82949352400CD4E07 /* NewSpotMask.swift */; };
@@ -197,8 +195,6 @@
 		8C121DD8294935EF00CD4E07 /* FriendRequestCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DCA294935EF00CD4E07 /* FriendRequestCell.swift */; };
 		8C121DD9294935EF00CD4E07 /* FriendRequestCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DCA294935EF00CD4E07 /* FriendRequestCell.swift */; };
 		8C121DDA294935EF00CD4E07 /* NotificationsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DCB294935EF00CD4E07 /* NotificationsController.swift */; };
-		8C121DDB294935EF00CD4E07 /* NotificationsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DCB294935EF00CD4E07 /* NotificationsController.swift */; };
-		8C121DDC294935EF00CD4E07 /* NotificationsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DCB294935EF00CD4E07 /* NotificationsController.swift */; };
 		8C121DDD294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DCC294935EF00CD4E07 /* ActivityIndicatorCell.swift */; };
 		8C121DDE294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DCC294935EF00CD4E07 /* ActivityIndicatorCell.swift */; };
 		8C121DDF294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DCC294935EF00CD4E07 /* ActivityIndicatorCell.swift */; };
@@ -234,8 +230,6 @@
 		8C121E4D2949519700CD4E07 /* ChooseMapTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E442949519700CD4E07 /* ChooseMapTableView.swift */; };
 		8C121E4E2949519700CD4E07 /* ChooseMapTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E442949519700CD4E07 /* ChooseMapTableView.swift */; };
 		8C121E4F2949519700CD4E07 /* ChooseMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E452949519700CD4E07 /* ChooseMapController.swift */; };
-		8C121E502949519700CD4E07 /* ChooseMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E452949519700CD4E07 /* ChooseMapController.swift */; };
-		8C121E512949519700CD4E07 /* ChooseMapController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E452949519700CD4E07 /* ChooseMapController.swift */; };
 		8C121E5A294951D300CD4E07 /* PhoneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E53294951D300CD4E07 /* PhoneController.swift */; };
 		8C121E5B294951D300CD4E07 /* PhoneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E53294951D300CD4E07 /* PhoneController.swift */; };
 		8C121E5C294951D300CD4E07 /* PhoneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E53294951D300CD4E07 /* PhoneController.swift */; };
@@ -393,8 +387,6 @@
 		8C66E116291C0C81006D29F6 /* EditProfileActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E114291C0C81006D29F6 /* EditProfileActions.swift */; };
 		8C66E117291C0C81006D29F6 /* EditProfileActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E114291C0C81006D29F6 /* EditProfileActions.swift */; };
 		8C66E119291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
-		8C66E11A291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
-		8C66E11B291C0EE9006D29F6 /* AccountOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66E118291C0EE9006D29F6 /* AccountOptions.swift */; };
 		8C66FAB2295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAB1295CD2C3007A347D /* MapControllerLocationManager.swift */; };
 		8C66FAB3295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAB1295CD2C3007A347D /* MapControllerLocationManager.swift */; };
 		8C66FAB4295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAB1295CD2C3007A347D /* MapControllerLocationManager.swift */; };
@@ -2147,7 +2139,6 @@
 				8CC4BA23296C7FE400BEAA88 /* CommentCell.swift in Sources */,
 				8C53A80B28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
 				8C121E61294951D300CD4E07 /* UsernameController.swift in Sources */,
-				8C66E11A291C0EE9006D29F6 /* AccountOptions.swift in Sources */,
 				8C61EB5428D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				8C121DD2294935EF00CD4E07 /* NotificationsFetchExtension.swift in Sources */,
 				8CA512A828BC056900F8C1FE /* HapticGenerator.swift in Sources */,
@@ -2166,7 +2157,6 @@
 				8CE4C93B291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
 				8C121DE1294935EF00CD4E07 /* ActivityCell.swift in Sources */,
 				59FCF5B624734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
-				8C121E502949519700CD4E07 /* ChooseMapController.swift in Sources */,
 				59FCF5BC24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				8C66225F28EF4B6800BA5D05 /* PostButton.swift in Sources */,
 				8C8DBB832888BE9300B31BFD /* NewMapController.swift in Sources */,
@@ -2198,7 +2188,6 @@
 				8C3B955B28B2B47100C06586 /* AddSpotButton.swift in Sources */,
 				8C121D7E294934BC00CD4E07 /* ChooseSpotFetchExtension.swift in Sources */,
 				8C66FABC295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */,
-				8C121DBB2949352400CD4E07 /* ImagePreviewActions.swift in Sources */,
 				8C121D932949351600CD4E07 /* ContactCell.swift in Sources */,
 				59056A5423197E4B00C7E753 /* PostNotification.swift in Sources */,
 				8C121E77294951E500CD4E07 /* SpotPageHeaderCell.swift in Sources */,
@@ -2271,7 +2260,6 @@
 				8CD1BE62292D609800367220 /* MapGeoQuery.swift in Sources */,
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
-				8C121DDB294935EF00CD4E07 /* NotificationsController.swift in Sources */,
 				8CC4BA1A296C7FE400BEAA88 /* LikeSeg.swift in Sources */,
 				8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8CC4BA26296C7FE400BEAA88 /* CommentSeg.swift in Sources */,
@@ -2297,7 +2285,6 @@
 				8CC4BA24296C7FE400BEAA88 /* CommentCell.swift in Sources */,
 				8C53A80C28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
 				8C121E62294951D300CD4E07 /* UsernameController.swift in Sources */,
-				8C66E11B291C0EE9006D29F6 /* AccountOptions.swift in Sources */,
 				8C61EB5528D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				8C121DD3294935EF00CD4E07 /* NotificationsFetchExtension.swift in Sources */,
 				8CA512A928BC056900F8C1FE /* HapticGenerator.swift in Sources */,
@@ -2316,7 +2303,6 @@
 				8CE4C93C291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
 				8C121DE2294935EF00CD4E07 /* ActivityCell.swift in Sources */,
 				59FCF5B724734A1C0012207D /* ImagesArray+CoreDataProperties.swift in Sources */,
-				8C121E512949519700CD4E07 /* ChooseMapController.swift in Sources */,
 				59FCF5BD24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				8C66226028EF4B6800BA5D05 /* PostButton.swift in Sources */,
 				8C8DBB842888BE9300B31BFD /* NewMapController.swift in Sources */,
@@ -2348,7 +2334,6 @@
 				8C3B955C28B2B47100C06586 /* AddSpotButton.swift in Sources */,
 				8C121D7F294934BC00CD4E07 /* ChooseSpotFetchExtension.swift in Sources */,
 				8C66FABD295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */,
-				8C121DBC2949352400CD4E07 /* ImagePreviewActions.swift in Sources */,
 				8C121D942949351600CD4E07 /* ContactCell.swift in Sources */,
 				59056A5523197E4B00C7E753 /* PostNotification.swift in Sources */,
 				8C121E78294951E500CD4E07 /* SpotPageHeaderCell.swift in Sources */,
@@ -2421,7 +2406,6 @@
 				8CD1BE63292D609800367220 /* MapGeoQuery.swift in Sources */,
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
-				8C121DDC294935EF00CD4E07 /* NotificationsController.swift in Sources */,
 				8CC4BA1B296C7FE400BEAA88 /* LikeSeg.swift in Sources */,
 				8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				8CC4BA27296C7FE400BEAA88 /* CommentSeg.swift in Sources */,

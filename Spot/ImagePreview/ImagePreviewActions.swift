@@ -244,7 +244,7 @@ extension ImagePreviewController {
             privacyLevel: "friends",
             description: ""
         )
-    
+        
         newSpot.posterUsername = UserDataModel.shared.userInfo.username
         finishPassing(spot: newSpot)
         UploadPostModel.shared.postType = .newSpot
@@ -254,7 +254,7 @@ extension ImagePreviewController {
         let extraMask = UIView()
         extraMask.backgroundColor = UIColor.black.withAlphaComponent(0.65)
         view.insertSubview(extraMask, at: 0)
-
+        
         extraMask.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
             $0.top.equalTo(postDetailView.snp.bottom)
@@ -262,6 +262,10 @@ extension ImagePreviewController {
     }
     
     @objc func postTap() {
+        guard let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService) else {
+            return
+        }
+        
         Mixpanel.mainInstance().track(event: "ImagePreviewPostTap")
         postButton?.isEnabled = false
         setCaptionValues()
@@ -273,25 +277,24 @@ extension ImagePreviewController {
         view.bringSubviewToFront(progressMask ?? UIView())
         let fullWidth = (self.progressBar?.bounds.width ?? 2) - 2
         
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.uploadPostImage(
-                images: UploadPostModel.shared.postObject?.postImage ?? [],
-                postID: UploadPostModel.shared.postObject?.id ?? "",
-                progressFill: self.progressBar?.progressFill ?? UIView(),
-                fullWidth: fullWidth) { [weak self] imageURLs, failed in
-                    guard let self = self else { return }
-                    if imageURLs.isEmpty && failed {
-                        Mixpanel.mainInstance().track(event: "FailedPostUpload")
-                        self.runFailedUpload()
-                        return
-                    }
-                    UploadPostModel.shared.postObject?.imageURLs = imageURLs
-                    self.uploadPostToDB(newMap: true)
-                    /// enable upload animation to finish
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        HapticGenerator.shared.play(.soft)
-                        self.popToMap()
-                    }
+        imageVideoService.uploadImages(
+            images: UploadPostModel.shared.postObject?.postImage ?? [],
+            parentView: view,
+            progressFill: self.progressBar?.progressFill ?? UIView(),
+            fullWidth: fullWidth
+        ) { [weak self] imageURLs, failed in
+            guard let self = self else { return }
+            if imageURLs.isEmpty && failed {
+                Mixpanel.mainInstance().track(event: "FailedPostUpload")
+                self.runFailedUpload()
+                return
+            }
+            UploadPostModel.shared.postObject?.imageURLs = imageURLs
+            self.uploadPostToDB(newMap: true)
+            /// enable upload animation to finish
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                HapticGenerator.shared.play(.soft)
+                self.popToMap()
             }
         }
     }
@@ -327,7 +330,9 @@ extension ImagePreviewController {
     private func uploadPostToDB(newMap: Bool) {
         guard let post = UploadPostModel.shared.postObject,
               let spotService = try? ServiceContainer.shared.service(for: \.spotService),
-              let postService = try? ServiceContainer.shared.service(for: \.mapPostService)
+              let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
+              let mapService = try? ServiceContainer.shared.service(for: \.mapsService),
+              let userService = try? ServiceContainer.shared.service(for: \.userService)
         else { return }
         
         var spot = UploadPostModel.shared.spotObject
@@ -345,13 +350,13 @@ extension ImagePreviewController {
             if map != nil {
                 if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
                 map!.postImageURLs.append(post.imageURLs.first ?? "")
-                self.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
+                await mapService.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
             }
             
             await postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
             
             let visitorList = spot?.visitorList ?? []
-            self.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
+            await userService.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
             
             Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
         }
@@ -365,16 +370,16 @@ extension ImagePreviewController {
         // Extract the duration of the keyboard animation
         let durationKey = UIResponder.keyboardAnimationDurationUserInfoKey
         let duration = notification.userInfo?[durationKey] as? Double ?? 0
-
+        
         // Extract the final frame of the keyboard
         let frameKey = UIResponder.keyboardFrameEndUserInfoKey
         let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue
-
+        
         // Extract the curve of the iOS keyboard animation
         let curveKey = UIResponder.keyboardAnimationCurveUserInfoKey
         let curveValue = notification.userInfo?[curveKey] as? Int ?? 0
         let curve = UIView.AnimationCurve(rawValue: curveValue) ?? .easeIn
-
+        
         // Create a property animator to manage the animation
         let animator = UIViewPropertyAnimator(
             duration: duration,
@@ -382,12 +387,12 @@ extension ImagePreviewController {
         ) {
             // Perform the necessary animation layout updates
             animations?(keyboardFrameValue?.cgRectValue ?? .zero)
-
+            
             // Required to trigger NSLayoutConstraint changes
             // to animate
             self.view?.layoutIfNeeded()
         }
-
+        
         // Start the animation
         animator.startAnimation()
     }

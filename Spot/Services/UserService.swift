@@ -13,7 +13,7 @@ protocol UserServiceProtocol {
     func getUserInfo(userID: String) async throws -> UserProfile
     func getUserFromUsername(username: String) async throws -> UserProfile?
     func setUserValues(poster: String, post: MapPost, spotID: String, visitorList: [String], mapID: String)
-    func updateUsername(newUsername: String, oldUsername: String)
+    func updateUsername(newUsername: String, oldUsername: String) async
 }
 
 final class UserService: UserServiceProtocol {
@@ -123,7 +123,7 @@ final class UserService: UserServiceProtocol {
         }
     }
     
-    func updateUsername(newUsername: String, oldUsername: String) {
+    func updateUsername(newUsername: String, oldUsername: String) async {
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self else { return }
             

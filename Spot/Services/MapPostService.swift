@@ -18,7 +18,7 @@ protocol MapPostServiceProtocol {
     func getPost(postID: String) async throws -> MapPost
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void)
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
-    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) async
+    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
     func updateMapNameInPosts(mapID: String, newName: String)
 }
 
@@ -240,22 +240,19 @@ final class MapPostService: MapPostServiceProtocol {
                         completion(allPosts)
                     }
                 }
-                do {
-                    let posts = try await getPosts(query: query)
-                    guard let posts else { continue }
-                    allPosts.append(contentsOf: posts)
-                } catch {
-                    continue
-                }
+                
+                let posts = try? await getPosts(query: query)
+                guard let posts else { continue }
+                allPosts.append(contentsOf: posts)
             }
         }
     }
     
-    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) async {
+    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
         /// send local notification first
         guard let postID = post.id else { return }
         
-        Task {
+        DispatchQueue.global(qos: .background).async { [weak self] in
             let caption = post.caption
             var notiPost = post
             notiPost.id = postID
@@ -286,21 +283,17 @@ final class MapPostService: MapPostServiceProtocol {
                 )
             )
             
-            let postRef = fireStore.collection("posts").document(postID)
-            do {
-                var post = post
-                post.g = GFUtils.geoHash(forLocation: post.coordinate)
-                try postRef.setData(from: post)
-                if !newMap {
-                    /// send new map notis for new map
-                    self.sendPostNotifications(post: post, map: map, spot: spot)
-                }
-                
-                let commentRef = postRef.collection("comments").document(commentObject.id ?? "")
-                
-                try commentRef.setData(from: commentObject)
-                
-            } catch {}
+            let postRef = self?.fireStore.collection("posts").document(postID)
+            var post = post
+            post.g = GFUtils.geoHash(forLocation: post.coordinate)
+            try? postRef?.setData(from: post)
+            if !newMap {
+                /// send new map notis for new map
+                self?.sendPostNotifications(post: post, map: map, spot: spot)
+            }
+            
+            let commentRef = postRef?.collection("comments").document(commentObject.id ?? "")
+            try? commentRef?.setData(from: commentObject)
         }
     }
     

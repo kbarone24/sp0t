@@ -159,6 +159,10 @@ final class ChooseMapController: UIViewController {
     }
     
     @objc func postTap() {
+        guard let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService) else {
+            return
+        }
+        
         postButton.isEnabled = false
         navigationController?.navigationBar.isUserInteractionEnabled = false
         
@@ -172,28 +176,27 @@ final class ChooseMapController: UIViewController {
         view.bringSubviewToFront(progressBar)
         let fullWidth = self.progressBar.bounds.width - 2
         
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.uploadPostImage(
-                images: UploadPostModel.shared.postObject?.postImage ?? [],
-                postID: UploadPostModel.shared.postObject?.id ?? "",
-                progressFill: self.progressBar.progressFill,
-                fullWidth: fullWidth) { [weak self] imageURLs, failed in
-                    
-                    guard let self = self else { return }
-                    if imageURLs.isEmpty && failed {
-                        Mixpanel.mainInstance().track(event: "FailedPostUpload")
-                        self.runFailedUpload()
-                        return
-                    }
-                    UploadPostModel.shared.postObject?.imageURLs = imageURLs
-                    self.uploadPostToDB(newMap: newMap)
-                    /// enable upload animation to finish
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        HapticGenerator.shared.play(.soft)
-                        self.popToMap()
-                    }
+        imageVideoService.uploadImages(
+            images: UploadPostModel.shared.postObject?.postImage ?? [],
+            parentView: view,
+            progressFill: self.progressBar.progressFill,
+            fullWidth: fullWidth
+        ) { [weak self] imageURLs, failed in
+                
+                guard let self = self else { return }
+                if imageURLs.isEmpty && failed {
+                    Mixpanel.mainInstance().track(event: "FailedPostUpload")
+                    self.runFailedUpload()
+                    return
+                }
+                UploadPostModel.shared.postObject?.imageURLs = imageURLs
+                self.uploadPostToDB(newMap: newMap)
+                /// enable upload animation to finish
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    HapticGenerator.shared.play(.soft)
+                    self.popToMap()
+                }
             }
-        }
     }
     
     func runFailedUpload() {
@@ -265,7 +268,9 @@ extension ChooseMapController: NewMapDelegate {
     private func uploadPostToDB(newMap: Bool) {
         guard let post = UploadPostModel.shared.postObject,
               let spotService = try? ServiceContainer.shared.service(for: \.spotService),
-              let postService = try? ServiceContainer.shared.service(for: \.mapPostService)
+              let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
+              let mapService = try? ServiceContainer.shared.service(for: \.mapsService),
+              let userService = try? ServiceContainer.shared.service(for: \.userService)
         else { return }
         
         var spot = UploadPostModel.shared.spotObject
@@ -283,13 +288,13 @@ extension ChooseMapController: NewMapDelegate {
             if map != nil {
                 if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
                 map!.postImageURLs.append(post.imageURLs.first ?? "")
-                self.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
+                await mapService.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
             }
             
             await postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
             
             let visitorList = spot?.visitorList ?? []
-            self.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
+            await userService.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
             
             Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
         }

@@ -18,6 +18,7 @@ protocol FriendsServiceProtocol {
     func acceptFriendRequest(friend: UserProfile, notificationID: String, completion: ((Error?) -> Void)?)
     func addFriend(receiverID: String, completion: ((Error?) -> Void)?)
     func removeFriend(friendID: String)
+    func removeFriendFromFriendsList(userID: String, friendID: String)
 }
 
 final class FriendsService: FriendsServiceProtocol {
@@ -226,18 +227,18 @@ final class FriendsService: FriendsServiceProtocol {
     }
     
     func removeFriend(friendID: String) {
-        UserDataModel.shared.userInfo.friendIDs.removeAll(where: { $0 == friendID })
-        UserDataModel.shared.userInfo.friendsList.removeAll(where: { $0.id == friendID })
-        UserDataModel.shared.userInfo.topFriends?.removeValue(forKey: friendID)
-        UserDataModel.shared.deletedFriendIDs.append(friendID)
-
-        let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-
-        removeFriendFromFriendsList(userID: uid, friendID: friendID)
-        removeFriendFromFriendsList(userID: friendID, friendID: uid)
-
         /// firebase function broken
         DispatchQueue.global(qos: .utility).async { [weak self] in
+            UserDataModel.shared.userInfo.friendIDs.removeAll(where: { $0 == friendID })
+            UserDataModel.shared.userInfo.friendsList.removeAll(where: { $0.id == friendID })
+            UserDataModel.shared.userInfo.topFriends?.removeValue(forKey: friendID)
+            UserDataModel.shared.deletedFriendIDs.append(friendID)
+
+            let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+            self?.removeFriendFromFriendsList(userID: uid, friendID: friendID)
+            self?.removeFriendFromFriendsList(userID: friendID, friendID: uid)
+            
             self?.removeFriendFromPosts(userID: uid, friendID: friendID)
             self?.removeFriendFromPosts(userID: friendID, friendID: uid)
 
@@ -246,7 +247,7 @@ final class FriendsService: FriendsServiceProtocol {
         }
     }
     
-    private func removeFriendFromFriendsList(userID: String, friendID: String) {
+    func removeFriendFromFriendsList(userID: String, friendID: String) {
         fireStore.collection(FirebaseCollectionNames.users.rawValue)
             .document(userID).updateData(
                 [

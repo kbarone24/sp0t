@@ -13,7 +13,7 @@ import GeoFire
 protocol SpotServiceProtocol {
     func getSpot(spotID: String) async throws -> MapSpot?
     func getNearbySpots(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapSpot]) -> Void) async
-    func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) async
+    func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool)
 }
 
 final class SpotService: SpotServiceProtocol {
@@ -37,20 +37,15 @@ final class SpotService: SpotServiceProtocol {
                         return
                     }
                     
-                    do {
-                        guard var spotInfo = try? doc.data(as: MapSpot.self) else {
-                            continuation.resume(returning: nil)
-                            return
-                        }
-                        for visitor in spotInfo.visitorList where UserDataModel.shared.userInfo.friendIDs.contains(visitor) {
-                            spotInfo.friendVisitors += 1
-                        }
-                        
-                        continuation.resume(returning: spotInfo)
-                        
-                    } catch {
-                        continuation.resume(throwing: error)
+                    guard var spotInfo = try? doc.data(as: MapSpot.self) else {
+                        continuation.resume(returning: nil)
+                        return
                     }
+                    for visitor in spotInfo.visitorList where UserDataModel.shared.userInfo.friendIDs.contains(visitor) {
+                        spotInfo.friendVisitors += 1
+                    }
+                    
+                    continuation.resume(returning: spotInfo)
                 }
         }
     }
@@ -77,12 +72,8 @@ final class SpotService: SpotServiceProtocol {
                         }
                     }
                     
-                    do {
-                        guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
-                        spots.append(spotInfo)
-                    } catch {
-                        continue
-                    }
+                    guard let spotInfo = try? doc.data(as: MapSpot.self) else { continue }
+                    spots.append(spotInfo)
                 }
             }
         }
@@ -121,14 +112,16 @@ final class SpotService: SpotServiceProtocol {
         }
     }
     
-    func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) async {
+    func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool) {
         guard let postID = post.id,
               let spotID = spot.id,
               let uid: String = Auth.auth().currentUser?.uid else {
             return
         }
         
-        Task {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            guard let self else { return }
+            
             let interval = Date().timeIntervalSince1970
             let timestamp = Date(timeIntervalSince1970: TimeInterval(interval))
             
@@ -175,24 +168,24 @@ final class SpotService: SpotServiceProtocol {
                     "posterDictionary": posterDictionary
                 ] as [String: Any]
                 
-                do {
-                    try await fireStore.collection("spots")
+                Task {
+                    try? await self.fireStore.collection("spots")
                         .document(spotID)
                         .setData(spotValues, merge: true)
                     
                     if submitPublic {
-                        try await fireStore.collection("submissions")
+                        try? await self.fireStore.collection("submissions")
                             .document(spot.id!)
                             .setData(["spotID": spotID])
                     }
-                } catch {}
-                
-                var notiSpot = spot
-                notiSpot.checkInTime = Int64(interval)
-                NotificationCenter.default.post(name: NSNotification.Name("NewSpot"), object: nil, userInfo: ["spot": notiSpot])
-                
-                /// add city to list of cities if this is the first post there
-                self.addToCityList(city: post.city ?? "")
+                    
+                    var notiSpot = spot
+                    notiSpot.checkInTime = Int64(interval)
+                    NotificationCenter.default.post(name: NSNotification.Name("NewSpot"), object: nil, userInfo: ["spot": notiSpot])
+                    
+                    /// add city to list of cities if this is the first post there
+                    self.addToCityList(city: post.city ?? "")
+                }
                 
                 /// increment users spot score by 6
             default:
@@ -210,9 +203,9 @@ final class SpotService: SpotServiceProtocol {
                     "posters": posters
                 ] as [String: Any]
                 
-                do {
-                    try await functions.httpsCallable("runSpotTransactions").call(parameters)
-                } catch {}
+                Task {
+                    try? await functions.httpsCallable("runSpotTransactions").call(parameters)
+                }
             }
         }
     }
