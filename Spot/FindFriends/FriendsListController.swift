@@ -47,7 +47,14 @@ final class FriendsListController: UIViewController {
     var friendsList: [UserProfile]
     var queriedFriends: [UserProfile] = []
 
-    var searchPan: UIPanGestureRecognizer?
+    private lazy var searchPan: UIPanGestureRecognizer = {
+        let searchPan = UIPanGestureRecognizer(target: self, action: #selector(searchPan(_:)))
+        searchPan.delegate = self
+        searchPan.isEnabled = false
+        
+        return searchPan
+    }()
+    
     var delegate: FriendsListDelegate?
 
     init(allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String]) {
@@ -155,10 +162,7 @@ final class FriendsListController: UIViewController {
             $0.height.equalTo(36)
         }
 
-        searchPan = UIPanGestureRecognizer(target: self, action: #selector(searchPan(_:)))
-        searchPan!.delegate = self
-        searchPan!.isEnabled = false
-        view.addGestureRecognizer(searchPan!)
+        view.addGestureRecognizer(searchPan)
     }
 
     func getFriends() {
@@ -239,13 +243,13 @@ extension FriendsListController: UISearchBarDelegate {
     }
 
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
-        searchPan!.isEnabled = true
+        searchPan.isEnabled = true
         readyToDismiss = false
         queried = true
     }
 
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
-        searchPan!.isEnabled = false
+        searchPan.isEnabled = false
         /// lag on ready to dismiss to avoid double tap to dismiss
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             guard let self = self else { return }
@@ -263,7 +267,7 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "FriendsCell", for: indexPath) as? ChooseFriendsCell {
             let friend = queried ? queriedFriends[indexPath.row] : friendsList[indexPath.row]
             let editable = !confirmedIDs.contains(friend.id!)
-            cell.setUp(friend: friend, allowsSelection: allowsSelection, editable: editable)
+            cell.setUp(user: friend, allowsSelection: allowsSelection, editable: editable)
             return cell
         }
         return UITableViewCell()
@@ -274,8 +278,12 @@ extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let id = queried ? queriedFriends[indexPath.row].id! : friendsList[indexPath.row].id!
-        if confirmedIDs.contains(id) { return } /// cannot unselect confirmed ID
+        let id = queried ? queriedFriends[indexPath.row].id ?? "" : friendsList[indexPath.row].id ?? ""
+        
+        /// cannot unselect confirmed ID
+        if id.isEmpty || confirmedIDs.contains(id) {
+            return
+        }
 
         Mixpanel.mainInstance().track(event: "FriendsListSelectFriend")
         if queried { if let i = queriedFriends.firstIndex(where: { $0.id == id }) { queriedFriends[i].selected = !queriedFriends[i].selected } }

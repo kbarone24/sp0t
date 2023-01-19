@@ -400,4 +400,8 @@ final class ImagePreviewController: UIViewController {
             addExtraMask()
         }
     }
+    
+    private func locationIsEmpty(location: CLLocation) -> Bool {
+        return location.coordinate.longitude == 0.0 && location.coordinate.latitude == 0.0
+    }
 }

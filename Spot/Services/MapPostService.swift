@@ -19,6 +19,7 @@ protocol MapPostServiceProtocol {
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void)
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) async
+    func updateMapNameInPosts(mapID: String, newName: String)
 }
 
 final class MapPostService: MapPostServiceProtocol {
@@ -209,12 +210,8 @@ final class MapPostService: MapPostServiceProtocol {
                             }
                         }
                         
-                        do {
-                            guard let postInfo = try? doc.data(as: MapPost.self) else { continue }
-                            posts.append(postInfo)
-                        } catch {
-                            continue
-                        }
+                        guard let postInfo = try? doc.data(as: MapPost.self) else { continue }
+                        posts.append(postInfo)
                     }
                 }
             }
@@ -304,6 +301,19 @@ final class MapPostService: MapPostServiceProtocol {
                 try commentRef.setData(from: commentObject)
                 
             } catch {}
+        }
+    }
+    
+    func updateMapNameInPosts(mapID: String, newName: String) {
+        DispatchQueue.global().async { [weak self] in
+            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                .whereField(FireBaseCollectionFields.mapID.rawValue, isEqualTo: mapID)
+                .getDocuments { snap, _ in
+                    guard let snap = snap else { return }
+                    for postDoc in snap.documents {
+                        postDoc.reference.updateData([FireBaseCollectionFields.mapName.rawValue: newName])
+                    }
+                }
         }
     }
     

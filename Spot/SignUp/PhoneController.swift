@@ -354,102 +354,46 @@ final class PhoneController: UIViewController, UITextFieldDelegate {
         sendButton.alpha = text.count < 10 ? 0.4 : 1.0
         sendButton.isEnabled = text.count < 10 ? false : true
     }
+    
+    // https://www.advancedswift.com/animate-with-ios-keyboard-swift/
+    private func animateWithKeyboard(
+        notification: NSNotification,
+        animations: ((_ keyboardFrame: CGRect) -> Void)?
+    ) {
+        // Extract the duration of the keyboard animation
+        let durationKey = UIResponder.keyboardAnimationDurationUserInfoKey
+        let duration = notification.userInfo?[durationKey] as? Double ?? 0
+
+        // Extract the final frame of the keyboard
+        let frameKey = UIResponder.keyboardFrameEndUserInfoKey
+        let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue
+
+        // Extract the curve of the iOS keyboard animation
+        let curveKey = UIResponder.keyboardAnimationCurveUserInfoKey
+        let curveValue = notification.userInfo?[curveKey] as? Int ?? 0
+        let curve = UIView.AnimationCurve(rawValue: curveValue) ?? .easeIn
+
+        // Create a property animator to manage the animation
+        let animator = UIViewPropertyAnimator(
+            duration: duration,
+            curve: curve
+        ) {
+            // Perform the necessary animation layout updates
+            animations?(keyboardFrameValue?.cgRectValue ?? .zero)
+
+            // Required to trigger NSLayoutConstraint changes
+            // to animate
+            self.view?.layoutIfNeeded()
+        }
+
+        // Start the animation
+        animator.startAnimation()
+    }
 }
 
 extension PhoneController: CountryPickerDelegate {
     func finishPassing(code: CountryCode) {
         countryCode = code
         countryCodeView.code = code.code
-    }
-}
-
-class CountryCodeView: UIButton {
-    var number: UILabel!
-    private(set) lazy var editButton: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(named: "DownCarat")
-        imageView.contentMode = .scaleAspectFit
-        return imageView
-    }()
-    
-    var separatorLine: UIView!
-
-    var code: String = "" {
-        didSet {
-            number.text = code
-            number.sizeToFit()
-        }
-    }
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-
-        number = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 28)
-            $0.textAlignment = .left
-            addSubview($0)
-        }
-        number.snp.makeConstraints {
-            $0.leading.equalToSuperview()
-            $0.top.equalTo(5)
-        }
-
-        addSubview(editButton)
-        editButton.snp.makeConstraints {
-            $0.leading.equalTo(number.snp.trailing).offset(3)
-            $0.top.equalTo(20)
-            $0.width.equalTo(12)
-            $0.height.equalTo(9)
-        }
-
-        separatorLine = UIView {
-            $0.backgroundColor = UIColor(red: 0.704, green: 0.704, blue: 0.704, alpha: 1.0)
-            addSubview($0)
-        }
-        separatorLine.snp.makeConstraints {
-            $0.leading.equalTo(editButton.snp.trailing).offset(12)
-            $0.top.bottom.equalToSuperview()
-            $0.width.equalTo(1)
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class ErrorBox: UIView {
-    var label: UILabel = {
-        let label = UILabel()
-        label.lineBreakMode = .byWordWrapping
-        label.numberOfLines = 0
-        label.textColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.00)
-        label.textAlignment = .center
-        label.font = UIFont(name: "SFCompactText-Regular", size: 14)
-        return label
-    }()
-
-    var message = "" {
-        didSet {
-            label.text = message
-            label.sizeToFit()
-        }
-    }
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
-
-        label.text = message
-        addSubview(label)
-        label.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(20)
-            $0.centerY.equalToSuperview()
-        }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 }

@@ -143,6 +143,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func registerServices() {
         do {
             let fireStore = Firestore.firestore()
+            let storage = Storage.storage()
 
             let mapService = MapService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: mapService, for: \.mapsService)
@@ -158,6 +159,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             
             let spotService = SpotService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: spotService, for: \.spotService)
+            
+            let imageVideoService = ImageVideoService(fireStore: fireStore, storage: storage)
+            try ServiceContainer.shared.register(service: imageVideoService, for: \.imageVideoService)
+            
+            let coreDataService = CoreDataService()
+            try ServiceContainer.shared.register(service: coreDataService, for: \.coreDataService)
+            
         } catch {
             #if DEBUG
             fatalError("Unable to initialize services: \(error.localizedDescription)")

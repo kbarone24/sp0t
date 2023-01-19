@@ -16,6 +16,8 @@ enum FirebaseCollectionNames: String {
     case spots
     case submissions
     case notifications
+    case mapLocations
+    case usernames
 }
 
 enum FireBaseCollectionFields: String {
@@ -49,6 +51,8 @@ enum FireBaseCollectionFields: String {
     case spotName
     case spotVisitors
     case taggedUserIDs
+    case posterUsernames
+    case usernameKeywords
 }
 
 enum FuctionsHttpsCall: String {

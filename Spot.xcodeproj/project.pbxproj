@@ -23,7 +23,6 @@
 		414CD283289EB383001F1776 /* ProfileBodyCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414CD282289EB383001F1776 /* ProfileBodyCell.swift */; };
 		416AE77B2896F1280037B8AF /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE77A2896F1280037B8AF /* ProfileViewController.swift */; };
 		416AE77D2896F2F60037B8AF /* CustomMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE77C2896F2F60037B8AF /* CustomMap.swift */; };
-		416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 416AE7802896F35F0037B8AF /* GlobalFunctions.swift */; };
 		59004DFF22C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E0022C58DE9004E06EF /* Profile.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E18C6D0226E55F3000751E6 /* Profile.storyboard */; };
 		59004E2722CBB1E6004E06EF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1DF6E03822089F4500BA0C36 /* Main.storyboard */; };
@@ -520,12 +519,16 @@
 		CD0E181E296CFDDE00F5DBB1 /* FriendsListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0E181D296CFDDE00F5DBB1 /* FriendsListController.swift */; };
 		CD0E181F296CFE7700F5DBB1 /* AvatarURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121E3C294939F900CD4E07 /* AvatarURLs.swift */; };
 		CD0E1822296CFFB400F5DBB1 /* UITableViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0E1821296CFFB400F5DBB1 /* UITableViewExtension.swift */; };
+		CD14B04B297927A70001537D /* ErrorBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD14B04A297927A70001537D /* ErrorBox.swift */; };
+		CD14B04D297927CC0001537D /* CountryCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD14B04C297927CC0001537D /* CountryCodeView.swift */; };
 		CD176EC6296D1ADC00B15952 /* CameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176EC5296D1ADC00B15952 /* CameraViewController.swift */; };
 		CD176EC8296D1CCF00B15952 /* CameraViewControllerAPIExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176EC7296D1CCF00B15952 /* CameraViewControllerAPIExtension.swift */; };
 		CD176ECA296D1D7F00B15952 /* UIApplicationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176EC9296D1D7F00B15952 /* UIApplicationExtension.swift */; };
 		CD176ECC296D1F3E00B15952 /* CameraViewControllerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ECB296D1F3E00B15952 /* CameraViewControllerActions.swift */; };
 		CD176ECE296D20AC00B15952 /* CameraViewControllerNextLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ECD296D20AC00B15952 /* CameraViewControllerNextLevel.swift */; };
 		CD176ED0296D219800B15952 /* FocusIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ECF296D219800B15952 /* FocusIndicatorView.swift */; };
+		CD176ED229713DAB00B15952 /* ImageVideoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ED129713DAB00B15952 /* ImageVideoService.swift */; };
+		CD176ED42971403300B15952 /* CoreDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ED32971403300B15952 /* CoreDataService.swift */; };
 		CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0728FFD3610099513F /* MapKitExtension.swift */; };
 		CD239A0A28FFD3BB0099513F /* UIColorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0928FFD3BB0099513F /* UIColorExtension.swift */; };
 		CD239A0C28FFD4EE0099513F /* StringExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0B28FFD4EE0099513F /* StringExtension.swift */; };
@@ -619,7 +622,6 @@
 		414CD282289EB383001F1776 /* ProfileBodyCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileBodyCell.swift; sourceTree = "<group>"; };
 		416AE77A2896F1280037B8AF /* ProfileViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
 		416AE77C2896F2F60037B8AF /* CustomMap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomMap.swift; sourceTree = "<group>"; };
-		416AE7802896F35F0037B8AF /* GlobalFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlobalFunctions.swift; sourceTree = "<group>"; };
 		59056A5223197E4B00C7E753 /* PostNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostNotification.swift; sourceTree = "<group>"; };
 		5916A8B224A27F8500118E83 /* MapSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSpot.swift; sourceTree = "<group>"; };
 		5916A8B624A5542800118E83 /* ResultSpot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultSpot.swift; sourceTree = "<group>"; };
@@ -808,12 +810,16 @@
 		CD0E181D296CFDDE00F5DBB1 /* FriendsListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FriendsListController.swift; path = Spot/FindFriends/FriendsListController.swift; sourceTree = SOURCE_ROOT; };
 		CD0E1820296CFF1A00F5DBB1 /* UISheetPresentationControllerDetent+Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UISheetPresentationControllerDetent+Private.h"; path = "Spot/Controllers/UISheetPresentationControllerDetent+Private.h"; sourceTree = SOURCE_ROOT; };
 		CD0E1821296CFFB400F5DBB1 /* UITableViewExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UITableViewExtension.swift; sourceTree = "<group>"; };
+		CD14B04A297927A70001537D /* ErrorBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBox.swift; sourceTree = "<group>"; };
+		CD14B04C297927CC0001537D /* CountryCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCodeView.swift; sourceTree = "<group>"; };
 		CD176EC5296D1ADC00B15952 /* CameraViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewController.swift; sourceTree = "<group>"; };
 		CD176EC7296D1CCF00B15952 /* CameraViewControllerAPIExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewControllerAPIExtension.swift; sourceTree = "<group>"; };
 		CD176EC9296D1D7F00B15952 /* UIApplicationExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UIApplicationExtension.swift; sourceTree = "<group>"; };
 		CD176ECB296D1F3E00B15952 /* CameraViewControllerActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewControllerActions.swift; sourceTree = "<group>"; };
 		CD176ECD296D20AC00B15952 /* CameraViewControllerNextLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewControllerNextLevel.swift; sourceTree = "<group>"; };
 		CD176ECF296D219800B15952 /* FocusIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusIndicatorView.swift; sourceTree = "<group>"; };
+		CD176ED129713DAB00B15952 /* ImageVideoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageVideoService.swift; sourceTree = "<group>"; };
+		CD176ED32971403300B15952 /* CoreDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataService.swift; sourceTree = "<group>"; };
 		CD1EA802294E38520042A041 /* AvatarURLs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AvatarURLs.swift; sourceTree = "<group>"; };
 		CD239A0728FFD3610099513F /* MapKitExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapKitExtension.swift; sourceTree = "<group>"; };
 		CD239A0928FFD3BB0099513F /* UIColorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColorExtension.swift; sourceTree = "<group>"; };
@@ -1215,6 +1221,8 @@
 				8C121E57294951D300CD4E07 /* ConfirmCodeController.swift */,
 				8C121E58294951D300CD4E07 /* CountryPickerController.swift */,
 				8C121E59294951D300CD4E07 /* NameController.swift */,
+				CD14B04A297927A70001537D /* ErrorBox.swift */,
+				CD14B04C297927CC0001537D /* CountryCodeView.swift */,
 			);
 			path = SignUp;
 			sourceTree = "<group>";
@@ -1353,7 +1361,6 @@
 				59F6ABBC23566A3600E18AAF /* PushNotificationManager.swift */,
 				8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */,
 				412555C3285AEA0200C071A4 /* BottomToTopTransition.swift */,
-				416AE7802896F35F0037B8AF /* GlobalFunctions.swift */,
 				8CD1BE64292EBC1300367220 /* POICategories.swift */,
 			);
 			path = HelperFunctions;
@@ -1531,6 +1538,8 @@
 				CD79D7F329247C76005C93F1 /* FriendsService.swift */,
 				CD79D7F52924837B005C93F1 /* UserService.swift */,
 				CD79D7F729249095005C93F1 /* SpotService.swift */,
+				CD176ED129713DAB00B15952 /* ImageVideoService.swift */,
+				CD176ED32971403300B15952 /* CoreDataService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1913,6 +1922,7 @@
 				8C4FDFC328DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
 				8C121DC02949352400CD4E07 /* ImagePreviewController.swift in Sources */,
 				8CA10A4C2912FC0300DD50EB /* NextButton.swift in Sources */,
+				CD176ED42971403300B15952 /* CoreDataService.swift in Sources */,
 				8CC4BA22296C7FE400BEAA88 /* CommentCell.swift in Sources */,
 				59F6ABAF234EA73500E18AAF /* Contact.swift in Sources */,
 				8C121D9E2949351600CD4E07 /* SearchContactsButtonCell.swift in Sources */,
@@ -1955,7 +1965,6 @@
 				CDF8E983290477C200BE929F /* CustomMapHeaderCell.swift in Sources */,
 				8C121D952949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
 				8C121E66294951D300CD4E07 /* ConfirmCodeController.swift in Sources */,
-				416AE7812896F35F0037B8AF /* GlobalFunctions.swift in Sources */,
 				8CC4BA25296C7FE400BEAA88 /* CommentSeg.swift in Sources */,
 				8C121D7A294934BC00CD4E07 /* ChooseSpotCell.swift in Sources */,
 				CDF8E984290477C200BE929F /* CustomMapDelegateExtension.swift in Sources */,
@@ -1971,6 +1980,7 @@
 				8C121E60294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8C121DEE2949361500CD4E07 /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				8C121DE0294935EF00CD4E07 /* ActivityCell.swift in Sources */,
+				CD14B04B297927A70001537D /* ErrorBox.swift in Sources */,
 				8C1E4862289C54240093030D /* ProfileMyMapCell.swift in Sources */,
 				8C121E79294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,
 				8C1E487A289C54C10093030D /* SpotPostAnnotationView.swift in Sources */,
@@ -2000,6 +2010,7 @@
 				8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				8C121D9B2949351600CD4E07 /* FindFriendsSearchExtension.swift in Sources */,
+				CD176ED229713DAB00B15952 /* ImageVideoService.swift in Sources */,
 				CDF8E982290477C200BE929F /* CustomMapBodyCell.swift in Sources */,
 				CD176ECE296D20AC00B15952 /* CameraViewControllerNextLevel.swift in Sources */,
 				CD239A1328FFD61C0099513F /* UITableViewCellExtension.swift in Sources */,
@@ -2102,6 +2113,7 @@
 				8C121E5D294951D300CD4E07 /* LandingPageController.swift in Sources */,
 				8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C1E489A289C54CB0093030D /* FriendPostView.swift in Sources */,
+				CD14B04D297927CC0001537D /* CountryCodeView.swift in Sources */,
 				CDF8E93F2903A21300BE929F /* MapService.swift in Sources */,
 				CD79D7F62924837B005C93F1 /* UserService.swift in Sources */,
 				8C121E492949519700CD4E07 /* CustomMapUploadCell.swift in Sources */,
@@ -2595,12 +2607,10 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
+				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -2654,7 +2664,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = sp0tDevProfile;
 				SWIFT_OBJC_BRIDGING_HEADER = "./Spot/Spot-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -2670,11 +2679,9 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = H5355TZ8Q3;
+				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				FRAMEWORK_SEARCH_PATHS = (
