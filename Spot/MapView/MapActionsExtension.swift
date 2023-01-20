@@ -123,10 +123,7 @@ extension MapController {
         } else {
             mapView.delegate = self
             mapView.spotMapDelegate = self
-            // re-add map annotations only if they've been removed (custom map opened in drawer)
-            if mapView.annotations.count < 2 {
-                DispatchQueue.main.async { self.addMapAnnotations() }
-            }
+            DispatchQueue.main.async { self.addMapAnnotations() }
         }
     }
 
