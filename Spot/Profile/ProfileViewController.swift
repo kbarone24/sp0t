@@ -97,6 +97,8 @@ class ProfileViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyMapsLoad(_:)), name: NSNotification.Name(("UserMapsLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewOffset), name: NSNotification.Name(("DrawerViewOffset")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewReset), name: NSNotification.Name(("DrawerViewReset")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
     }
 
@@ -124,10 +126,10 @@ class ProfileViewController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController?.setNavigationBarHidden(false, animated: false)
+        navigationController?.setNavigationBarHidden(false, animated: true)
 
         // Hacky way to avoid the nav bar get pushed up, when user go to custom map and drag the drawer to top, to middle and go back to profile
-        navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 47.0)
+        navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 50.0)
 
         navigationController?.navigationBar.barTintColor = UIColor.white
         navigationController?.navigationBar.isTranslucent = true
@@ -227,10 +229,8 @@ class ProfileViewController: UIViewController {
             $0.top.equalToSuperview().offset(243)
         }
 
-        activityIndicator = CustomActivityIndicator {
-            $0.isHidden = false
-            collectionView.addSubview($0)
-        }
+        activityIndicator.isHidden = false
+        collectionView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.width.height.equalTo(30)
             $0.centerX.equalToSuperview()
