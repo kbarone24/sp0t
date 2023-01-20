@@ -432,6 +432,12 @@
 		8C8DBB862888BE9F00B31BFD /* TagFriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */; };
 		8C8DBB872888BE9F00B31BFD /* TagFriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */; };
 		8C8DBB882888BE9F00B31BFD /* TagFriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */; };
+		8C941745297B0F4A00818D43 /* SpotPageCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C941744297B0F4A00818D43 /* SpotPageCollectionExtension.swift */; };
+		8C941746297B0F4A00818D43 /* SpotPageCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C941744297B0F4A00818D43 /* SpotPageCollectionExtension.swift */; };
+		8C941747297B0F4A00818D43 /* SpotPageCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C941744297B0F4A00818D43 /* SpotPageCollectionExtension.swift */; };
+		8C941749297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C941748297B10EB00818D43 /* SpotPageFetchExtension.swift */; };
+		8C94174A297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C941748297B10EB00818D43 /* SpotPageFetchExtension.swift */; };
+		8C94174B297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C941748297B10EB00818D43 /* SpotPageFetchExtension.swift */; };
 		8C99B11A2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
 		8C99B11B2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
 		8C99B11C2863A44E00C98A32 /* RefreshStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C99B1192863A44E00C98A32 /* RefreshStatus.swift */; };
@@ -771,6 +777,8 @@
 		8C88B0E627B46E3900DB4039 /* PostImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImageModel.swift; sourceTree = "<group>"; };
 		8C8DBB812888BE9300B31BFD /* NewMapController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NewMapController.swift; sourceTree = "<group>"; };
 		8C8DBB852888BE9F00B31BFD /* TagFriendsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TagFriendsView.swift; sourceTree = "<group>"; };
+		8C941744297B0F4A00818D43 /* SpotPageCollectionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPageCollectionExtension.swift; sourceTree = "<group>"; };
+		8C941748297B10EB00818D43 /* SpotPageFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPageFetchExtension.swift; sourceTree = "<group>"; };
 		8C99B1192863A44E00C98A32 /* RefreshStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshStatus.swift; sourceTree = "<group>"; };
 		8CA10A0A290B6C1900DD50EB /* UITextFieldExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITextFieldExtension.swift; sourceTree = "<group>"; };
 		8CA10A0C290C2A5B00DD50EB /* ContactsFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsFetcher.swift; sourceTree = "<group>"; };
@@ -1225,6 +1233,8 @@
 			isa = PBXGroup;
 			children = (
 				8C121E70294951E500CD4E07 /* SpotPageController.swift */,
+				8C941744297B0F4A00818D43 /* SpotPageCollectionExtension.swift */,
+				8C941748297B10EB00818D43 /* SpotPageFetchExtension.swift */,
 				8C121E71294951E500CD4E07 /* SpotPageHeaderCell.swift */,
 				8C121E72294951E500CD4E07 /* SpotPageBodyCell.swift */,
 			);
@@ -1943,6 +1953,7 @@
 				CDF8E95F2903C8A300BE929F /* AddFriendsView.swift in Sources */,
 				CD239A1B28FFD9A40099513F /* UINavigationBarExtension.swift in Sources */,
 				8C121D682949344A00CD4E07 /* FailedPostView.swift in Sources */,
+				8C941749297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */,
 				8C121E7F294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
 				8C3B955228AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
 				CDF8E94D2903B68200BE929F /* UITextViewExtension.swift in Sources */,
@@ -2064,6 +2075,7 @@
 				CD0E181E296CFDDE00F5DBB1 /* FriendsListController.swift in Sources */,
 				8C121E73294951E500CD4E07 /* SpotPageController.swift in Sources */,
 				8C121E4C2949519700CD4E07 /* ChooseMapTableView.swift in Sources */,
+				8C941745297B0F4A00818D43 /* SpotPageCollectionExtension.swift in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				CDF8E9772904653B00BE929F /* CMSampleBufferExtension.swift in Sources */,
 				CDF8E9472903B4F200BE929F /* FirestoreDecoder.swift in Sources */,
@@ -2158,6 +2170,7 @@
 				8CA10A492912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
 				8C121E6A294951D300CD4E07 /* CountryPickerController.swift in Sources */,
 				8C1E48B3289C54CB0093030D /* SpotPostView.swift in Sources */,
+				8C941746297B0F4A00818D43 /* SpotPageCollectionExtension.swift in Sources */,
 				8C121D692949344A00CD4E07 /* FailedPostView.swift in Sources */,
 				8CC2A54B26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CE4C93B291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
@@ -2234,6 +2247,7 @@
 				8CA10A4D2912FC0300DD50EB /* NextButton.swift in Sources */,
 				8C121DCF294935EF00CD4E07 /* FriendRequestCollectionCell.swift in Sources */,
 				8C121DDE294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */,
+				8C94174A297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */,
 				8C121DD8294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11424B6A6CF0051516C /* MapPost.swift in Sources */,
@@ -2309,6 +2323,7 @@
 				8CA10A4A2912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
 				8C121E6B294951D300CD4E07 /* CountryPickerController.swift in Sources */,
 				8C1E48B4289C54CB0093030D /* SpotPostView.swift in Sources */,
+				8C941747297B0F4A00818D43 /* SpotPageCollectionExtension.swift in Sources */,
 				8C121D6A2949344A00CD4E07 /* FailedPostView.swift in Sources */,
 				8CC2A54C26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8CE4C93C291C578F0023FE8A /* MapPostGroupExtension.swift in Sources */,
@@ -2385,6 +2400,7 @@
 				8CA10A4E2912FC0300DD50EB /* NextButton.swift in Sources */,
 				8C121DD0294935EF00CD4E07 /* FriendRequestCollectionCell.swift in Sources */,
 				8C121DDF294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */,
+				8C94174B297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */,
 				8C121DD9294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11524B6A6CF0051516C /* MapPost.swift in Sources */,
@@ -2659,7 +2675,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.05;
+				MARKETING_VERSION = 1.06;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2730,7 +2746,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.05;
+				MARKETING_VERSION = 1.06;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.sp0t.sp0t;
 				PRODUCT_NAME = "$(TARGET_NAME)";
