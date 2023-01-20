@@ -107,5 +107,12 @@ extension ProfileViewController {
             self.getNinePosts()
         }
     }
-}
 
+    @objc func notifyDrawerViewReset() {
+        collectionView.isScrollEnabled = true
+    }
+
+    @objc func notifyDrawerViewOffset() {
+        collectionView.isScrollEnabled = false
+    }
+}

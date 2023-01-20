@@ -71,7 +71,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         temp.numberOfLines = 0
         temp.lineBreakMode = .byWordWrapping
         temp.sizeToFit()
-        return temp.frame.height + 148
+        return temp.frame.height + 153
     }
 
     func openPost(posts: [MapPost], row: Int) {
