@@ -43,13 +43,17 @@ extension ImagePreviewController {
         currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
         nextImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
         
-        UIView.animate(withDuration: 0.2) {
-            self.view.layoutIfNeeded()
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.view.layoutIfNeeded()
+            
         } completion: { [weak self] _ in
-            guard let self = self else { return }
             // reset image index
-            if UploadPostModel.shared.postObject != nil { UploadPostModel.shared.postObject?.selectedImageIndex! += 1 }
-            self.setImages()
+            if UploadPostModel.shared.postObject != nil {
+                var selectedIndex = UploadPostModel.shared.postObject?.selectedImageIndex ?? 0
+                selectedIndex += 1
+                UploadPostModel.shared.postObject?.selectedImageIndex = selectedIndex
+            }
+            self?.setImages()
         }
     }
     
@@ -58,13 +62,17 @@ extension ImagePreviewController {
         currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width) }
         previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
         
-        UIView.animate(withDuration: 0.2) {
-            self.view.layoutIfNeeded()
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.view.layoutIfNeeded()
+            
         } completion: { [weak self] _ in
-            guard let self = self else { return }
             /// reset image indexes
-            if UploadPostModel.shared.postObject != nil { UploadPostModel.shared.postObject?.selectedImageIndex! -= 1 }
-            self.setImages()
+            if UploadPostModel.shared.postObject != nil {
+                var selectedIndex = UploadPostModel.shared.postObject?.selectedImageIndex ?? 1
+                selectedIndex -= 1
+                UploadPostModel.shared.postObject?.selectedImageIndex = selectedIndex
+            }
+            self?.setImages()
         }
     }
     
@@ -192,16 +200,20 @@ extension ImagePreviewController {
     
     func addNewSpotView(notification: NSNotification) {
         let frameKey = UIResponder.keyboardFrameEndUserInfoKey
-        guard let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue else { return }
-        if newSpotMask != nil { return }
-        
-        newSpotMask = NewSpotMask {
-            view.addSubview($0)
+        guard let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue,
+              newSpotMask == nil
+        else {
+            return
         }
-        newSpotMask?.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(newSpotNameView.snp.top).offset(-200)
-            $0.bottom.equalToSuperview()
+        
+        newSpotMask = NewSpotMask()
+        if let newSpotMask {
+            view.addSubview(newSpotMask)
+            newSpotMask.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview()
+                $0.top.equalTo(newSpotNameView.snp.top).offset(-200)
+                $0.bottom.equalToSuperview()
+            }
         }
         
         newSpotNameView.isHidden = false
@@ -342,21 +354,31 @@ extension ImagePreviewController {
             SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage())
         }
         
-        Task {
-            if spot != nil {
-                spot!.imageURL = post.imageURLs.first ?? ""
-                await spotService.uploadSpot(post: post, spot: spot!, submitPublic: false)
-            }
-            if map != nil {
-                if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
-                map!.postImageURLs.append(post.imageURLs.first ?? "")
-                await mapService.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
+        DispatchQueue.global(qos: .background).async {
+            if var spot = spot {
+                spot.imageURL = post.imageURLs.first ?? ""
+                spotService.uploadSpot(post: post, spot: spot, submitPublic: false)
             }
             
-            await postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+            if var map = map {
+                if map.imageURL == "" {
+                    map.imageURL = post.imageURLs.first ?? ""
+                }
+                
+                map.postImageURLs.append(post.imageURLs.first ?? "")
+                mapService.uploadMap(map: map, newMap: newMap, post: post, spot: spot)
+            }
+            
+            postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
             
             let visitorList = spot?.visitorList ?? []
-            await userService.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
+            userService.setUserValues(
+                poster: UserDataModel.shared.uid,
+                post: post,
+                spotID: spot?.id ?? "",
+                visitorList: visitorList,
+                mapID: map?.id ?? ""
+            )
             
             Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
         }

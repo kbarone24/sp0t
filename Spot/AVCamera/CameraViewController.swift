@@ -49,13 +49,13 @@ final class CameraViewController: UIViewController {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handlePhotoTapGestureRecognizer(_:)))
         tapGesture.delegate = self
         button.addGestureRecognizer(tapGesture)
-        
-        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGestureRecognizer(_:)))
-        longPressGesture.delegate = self
-        longPressGesture.minimumPressDuration = 2.0
-        longPressGesture.allowableMovement = 10.0
-        
-        button.addGestureRecognizer(longPressGesture)
+//
+//        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGestureRecognizer(_:)))
+//        longPressGesture.delegate = self
+//        longPressGesture.minimumPressDuration = 2.0
+//        longPressGesture.allowableMovement = 10.0
+//
+//        button.addGestureRecognizer(longPressGesture)
         
         return button
     }()
@@ -130,17 +130,6 @@ final class CameraViewController: UIViewController {
     override public var prefersStatusBarHidden: Bool {
         return true
     }
-    
-    /// show focus circle when user taps screen
-    private(set) lazy var tapIndicator: FocusIndicatorView = {
-        let indicator = FocusIndicatorView()
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleFocusTapGestureRecognizer(_:)))
-        tapGesture.delegate = self
-        indicator.addGestureRecognizer(tapGesture)
-        
-        return indicator
-    }()
     
     /// white screen for use with front flash
     private(set) lazy var frontFlashView: UIView = {
@@ -281,10 +270,8 @@ final class CameraViewController: UIViewController {
                 $0.height.equalTo(38.6)
             }
             
-            let titleView = NewMapTitleView {
-                cameraView.addSubview($0)
-            }
-            
+            let titleView = NewMapTitleView()
+            cameraView.addSubview(titleView)
             titleView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview().inset(60)
                 $0.top.equalTo(backButton.snp.top).offset(2)
@@ -300,12 +287,6 @@ final class CameraViewController: UIViewController {
             }
         }
         
-        cameraView.addSubview(tapIndicator)
-        tapIndicator.snp.makeConstraints {
-            $0.top.leading.equalToSuperview()
-            $0.height.width.equalTo(50)
-        }
-        
         cameraView.addSubview(frontFlashView)
         frontFlashView.isHidden = true
         frontFlashView.snp.makeConstraints {
@@ -313,14 +294,7 @@ final class CameraViewController: UIViewController {
         }
         
         volumeHandler?.start(true)
-        
-        view.addSubview(instructionsLabel)
         view.addSubview(cameraButton)
-        
-        instructionsLabel.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.bottom.equalTo(cameraButton.snp.top).offset(-15.0)
-        }
         
         cameraButton.snp.makeConstraints {
             $0.bottom.equalTo(cameraView.snp.bottom).offset(-28)
@@ -336,13 +310,13 @@ final class CameraViewController: UIViewController {
             $0.height.equalTo(29)
         }
         
-        let galleryText = UILabel {
-            $0.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 11)
-            $0.textAlignment = .center
-            $0.text = "GALLERY"
-            view.addSubview($0)
-        }
+        let galleryText = UILabel()
+        galleryText.textColor = UIColor(red: 0.898, green: 0.898, blue: 0.898, alpha: 1)
+        galleryText.font = UIFont(name: "SFCompactText-Semibold", size: 11)
+        galleryText.textAlignment = .center
+        galleryText.text = "GALLERY"
+        
+        view.addSubview(galleryText)
         galleryText.snp.makeConstraints {
             $0.leading.equalTo(galleryButton.snp.leading).offset(-10)
             $0.top.equalTo(galleryButton.snp.bottom).offset(1)
@@ -368,17 +342,21 @@ final class CameraViewController: UIViewController {
         /// double tap flips the camera
         let doubleTap = UITapGestureRecognizer(target: self, action: #selector(doubleTap))
         doubleTap.numberOfTapsRequired = 2
+        doubleTap.delaysTouchesBegan = true
         doubleTap.delegate = self
         cameraView.addGestureRecognizer(doubleTap)
+        
+        let singleTap = UITapGestureRecognizer(target: self, action: #selector(handleFocusTapGestureRecognizer(_:)))
+        singleTap.delegate = self
+        singleTap.numberOfTapsRequired = 1
+        cameraView.addGestureRecognizer(singleTap)
         
         addTop()
     }
     
     private func addTop() {
-        let topMask = UIView {
-            cameraView.insertSubview($0, at: 0)
-        }
-        
+        let topMask = UIView()
+        cameraView.insertSubview(topMask, at: 0)
         topMask.snp.makeConstraints {
             $0.leading.trailing.top.equalToSuperview()
             $0.height.equalTo(150)
@@ -455,7 +433,7 @@ extension CameraViewController {
             style: .default) { _ in
                 guard let settingsString = URL(string: UIApplication.openSettingsURLString) else { return }
                 UIApplication.shared.open(settingsString, options: [:], completionHandler: nil)
-            }
+        }
         
         alert.addAction(settingsAction)
         
@@ -471,7 +449,7 @@ extension CameraViewController {
                         }
                     }
                 }
-            }
+        }
         
         alert.addAction(cancelAction)
         

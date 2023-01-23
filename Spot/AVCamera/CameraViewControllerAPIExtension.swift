@@ -166,18 +166,31 @@ extension CameraViewController {
 
     @objc internal func handleFocusTapGestureRecognizer(_ gestureRecognizer: UIGestureRecognizer) {
         let tapPoint = gestureRecognizer.location(in: self.cameraView)
-
-        let focusView = self.tapIndicator
-        var focusFrame = focusView.frame
-        focusFrame.origin.x = CGFloat((tapPoint.x - (focusFrame.size.width * 0.5)).rounded())
-        focusFrame.origin.y = CGFloat((tapPoint.y - (focusFrame.size.height * 0.5)).rounded())
-        focusView.frame = focusFrame
-
-        self.cameraView.addSubview(focusView)
-        focusView.startAnimation()
-
+        pointInCamera(center: tapPoint)
         let adjustedPoint = NextLevel.shared.previewLayer.captureDevicePointConverted(fromLayerPoint: tapPoint)
         NextLevel.shared.focusExposeAndAdjustWhiteBalance(atAdjustedPoint: adjustedPoint)
+    }
+    
+    private func pointInCamera(center: CGPoint) {
+        let circlePath = UIBezierPath(
+            arcCenter: center,
+            radius: 30.0,
+            startAngle: 0.0,
+            endAngle: CGFloat(Double.pi * 2),
+            clockwise: true
+        )
+        
+        let shapeLayer = CAShapeLayer()
+        shapeLayer.path = circlePath.cgPath
+        shapeLayer.fillColor = UIColor.clear.cgColor
+        shapeLayer.strokeColor = UIColor.white.cgColor
+        shapeLayer.lineWidth = 3.0
+        
+        view.layer.addSublayer(shapeLayer)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            shapeLayer.removeFromSuperlayer()
+        }
     }
 }
 

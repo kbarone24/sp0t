@@ -157,22 +157,9 @@ extension CameraViewController: NextLevelDeviceDelegate {
     
     // focus, exposure, white balance
     func nextLevelWillStartFocus(_ nextLevel: NextLevel) {}
-    
-    func nextLevelDidStopFocus(_  nextLevel: NextLevel) {
-        let focusView = self.tapIndicator
-        if focusView.superview != nil {
-            focusView.stopAnimation()
-        }
-    }
-    
+    func nextLevelDidStopFocus(_  nextLevel: NextLevel) {}
     func nextLevelWillChangeExposure(_ nextLevel: NextLevel) {}
-    
-    func nextLevelDidChangeExposure(_ nextLevel: NextLevel) {
-        let focusView = self.tapIndicator
-        if focusView.superview != nil {
-            focusView.stopAnimation()
-        }
-    }
+    func nextLevelDidChangeExposure(_ nextLevel: NextLevel) {}
     
     func nextLevelWillChangeWhiteBalance(_ nextLevel: NextLevel) {}
     func nextLevelDidChangeWhiteBalance(_ nextLevel: NextLevel) {}

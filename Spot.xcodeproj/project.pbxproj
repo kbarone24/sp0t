@@ -518,7 +518,6 @@
 		CD176ECA296D1D7F00B15952 /* UIApplicationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176EC9296D1D7F00B15952 /* UIApplicationExtension.swift */; };
 		CD176ECC296D1F3E00B15952 /* CameraViewControllerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ECB296D1F3E00B15952 /* CameraViewControllerActions.swift */; };
 		CD176ECE296D20AC00B15952 /* CameraViewControllerNextLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ECD296D20AC00B15952 /* CameraViewControllerNextLevel.swift */; };
-		CD176ED0296D219800B15952 /* FocusIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ECF296D219800B15952 /* FocusIndicatorView.swift */; };
 		CD176ED229713DAB00B15952 /* ImageVideoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ED129713DAB00B15952 /* ImageVideoService.swift */; };
 		CD176ED42971403300B15952 /* CoreDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD176ED32971403300B15952 /* CoreDataService.swift */; };
 		CD239A0828FFD3610099513F /* MapKitExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD239A0728FFD3610099513F /* MapKitExtension.swift */; };
@@ -809,7 +808,6 @@
 		CD176EC9296D1D7F00B15952 /* UIApplicationExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UIApplicationExtension.swift; sourceTree = "<group>"; };
 		CD176ECB296D1F3E00B15952 /* CameraViewControllerActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewControllerActions.swift; sourceTree = "<group>"; };
 		CD176ECD296D20AC00B15952 /* CameraViewControllerNextLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewControllerNextLevel.swift; sourceTree = "<group>"; };
-		CD176ECF296D219800B15952 /* FocusIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusIndicatorView.swift; sourceTree = "<group>"; };
 		CD176ED129713DAB00B15952 /* ImageVideoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageVideoService.swift; sourceTree = "<group>"; };
 		CD176ED32971403300B15952 /* CoreDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataService.swift; sourceTree = "<group>"; };
 		CD239A0728FFD3610099513F /* MapKitExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapKitExtension.swift; sourceTree = "<group>"; };
@@ -1112,7 +1110,6 @@
 				CD176EC7296D1CCF00B15952 /* CameraViewControllerAPIExtension.swift */,
 				CD176ECB296D1F3E00B15952 /* CameraViewControllerActions.swift */,
 				CD176ECD296D20AC00B15952 /* CameraViewControllerNextLevel.swift */,
-				CD176ECF296D219800B15952 /* FocusIndicatorView.swift */,
 				8C121D532949344A00CD4E07 /* CameraButton.swift */,
 				8C121D552949344A00CD4E07 /* FailedPostView.swift */,
 			);
@@ -1996,7 +1993,6 @@
 				CDF8E982290477C200BE929F /* CustomMapBodyCell.swift in Sources */,
 				CD176ECE296D20AC00B15952 /* CameraViewControllerNextLevel.swift in Sources */,
 				CD239A1328FFD61C0099513F /* UITableViewCellExtension.swift in Sources */,
-				CD176ED0296D219800B15952 /* FocusIndicatorView.swift in Sources */,
 				CDF8E9492903B5EE00BE929F /* ArrayExtensions.swift in Sources */,
 				8C121DAB2949352400CD4E07 /* SpotNameButton.swift in Sources */,
 				8C61EB5328D237E600E7180A /* EnterMapCodeController.swift in Sources */,

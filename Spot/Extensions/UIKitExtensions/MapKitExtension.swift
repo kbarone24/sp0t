@@ -61,11 +61,16 @@ extension CLPlacemark {
             // add state name for US
             if country == "United States" {
                 if let administrativeArea {
-                    if addressString != "" { addressString = addressString + ", " }
-                    addressString = addressString + administrativeArea
+                    if addressString != "" {
+                        addressString += ", "
+                    }
+                    
+                    addressString += administrativeArea
                 }
             }
-            if addressString != "" { addressString = addressString + ", " }
+            if addressString != "" {
+                addressString += ", "
+            }
             addressString += country
         }
         return addressString
