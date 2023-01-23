@@ -47,6 +47,7 @@ final class MapController: UIViewController {
             DispatchQueue.main.async { self.mapActivityIndicator.stopAnimating() }
         }
     }
+    private(set) var currentRadius: Double = 0.0
 
     lazy var postDictionary = [String: MapPost]()
     lazy var postGroup: [MapPostGroup] = []
@@ -111,6 +112,7 @@ final class MapController: UIViewController {
         runMapFetches()
         setUpNavBar()
         locationManager.delegate = self
+        currentRadius = mapView.currentRadius()
     }
 
     override func viewDidAppear(_ animated: Bool) {

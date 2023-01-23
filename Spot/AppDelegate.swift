@@ -1,4 +1,5 @@
 import CoreData
+import SDWebImage
 import Firebase
 import FirebaseCrashlytics
 import FirebaseMessaging
@@ -7,7 +8,7 @@ import Mixpanel
 import UIKit
 import UserNotifications
 
-@UIApplicationMain
+@main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -62,6 +63,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Mixpanel.initialize(token: "fd9796146c1f75c2962ce3534e120d33", trackAutomaticEvents: true)
 
         IQKeyboardManager.shared.enableAutoToolbar = false
+        
+        SDImageCache.shared.deleteOldFiles()
+        
+        // Setting disk cache
+        SDImageCache.shared.config.maxDiskSize = 1_000_000 * 200 // 200 MB
+
+        // Setting memory cache
+        SDImageCache.shared.config.maxMemoryCost = 25 * 1_024 * 1_024
+        
+        // Setting cache expiry date
+        SDImageCache.shared.config.maxDiskAge = 60 * 5 // 5 minutes
 
         return true
     }
@@ -131,6 +143,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func registerServices() {
         do {
             let fireStore = Firestore.firestore()
+            let storage = Storage.storage()
 
             let mapService = MapService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: mapService, for: \.mapsService)
@@ -146,6 +159,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             
             let spotService = SpotService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: spotService, for: \.spotService)
+            
+            let imageVideoService = ImageVideoService(fireStore: fireStore, storage: storage)
+            try ServiceContainer.shared.register(service: imageVideoService, for: \.imageVideoService)
+            
+            let coreDataService = CoreDataService()
+            try ServiceContainer.shared.register(service: coreDataService, for: \.coreDataService)
+            
         } catch {
             #if DEBUG
             fatalError("Unable to initialize services: \(error.localizedDescription)")

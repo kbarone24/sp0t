@@ -941,12 +941,13 @@ PODS:
     - nanopb/encode (= 2.30909.0)
   - nanopb/decode (2.30909.0)
   - nanopb/encode (2.30909.0)
+  - NextLevel (0.18.0)
   - PromisesObjC (2.1.1)
   - R.swift (7.2.4)
   - RSKImageCropper (4.0.0)
-  - SDWebImage (5.14.2):
-    - SDWebImage/Core (= 5.14.2)
-  - SDWebImage/Core (5.14.2)
+  - SDWebImage (5.14.3):
+    - SDWebImage/Core (= 5.14.3)
+  - SDWebImage/Core (5.14.3)
   - SnapKit (5.6.0)
   - SwiftLint (0.50.3)
 
@@ -968,6 +969,7 @@ DEPENDENCIES:
   - IQKeyboardManagerSwift
   - JPSVolumeButtonHandler
   - Mixpanel-swift
+  - NextLevel
   - R.swift
   - RSKImageCropper
   - SnapKit
@@ -1029,6 +1031,7 @@ SPEC REPOS:
     - Libuv-gRPC
     - Mixpanel-swift
     - nanopb
+    - NextLevel
     - PromisesObjC
     - R.swift
     - RSKImageCropper
@@ -1091,13 +1094,14 @@ SPEC CHECKSUMS:
   Libuv-gRPC: 55e51798e14ef436ad9bc45d12d43b77b49df378
   Mixpanel-swift: 95fa64d39f15141f1c5b7797003e2123d4c3207e
   nanopb: b552cce312b6c8484180ef47159bc0f65a1f0431
+  NextLevel: ad582ac2d9c757fe285f9b53ede1f593c50a22e8
   PromisesObjC: ab77feca74fa2823e7af4249b8326368e61014cb
   R.swift: 681bb9135f482e7a81d9d27445b837fef5467e11
   RSKImageCropper: 90dfe482402fb8a40cabd5fea65186d9102cc425
-  SDWebImage: b9a731e1d6307f44ca703b3976d18c24ca561e84
+  SDWebImage: 9c36e66c8ce4620b41a7407698dda44211a96764
   SnapKit: e01d52ebb8ddbc333eefe2132acf85c8227d9c25
   SwiftLint: 77f7cb2b9bb81ab4a12fcc86448ba3f11afa50c6
 
-PODFILE CHECKSUM: d1d754c88107e3a2a660ebdd12e10efccfa1ccdf
+PODFILE CHECKSUM: 206c1b31183f924d34a1f974dade0697fc6480cd
 
 COCOAPODS: 1.11.3

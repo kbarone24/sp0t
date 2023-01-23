@@ -120,16 +120,15 @@ final class FailedPostView: UIView {
     }
 
     @objc func cancelTap() {
-        if let cameraVC = viewContainingController() as? AVCameraController {
+        if let cameraVC = viewContainingController() as? CameraViewController {
             cameraVC.deletePostDraft()
         }
-       // infoView.cancelButton.addTarget(self, action: #selector(self.deletePostDraft(_:)), for: .touchUpInside)
     }
 
     @objc func postTap() {
         /// upload and delete post draft if success
         self.isUserInteractionEnabled = false
-        if let cameraVC = viewContainingController() as? AVCameraController {
+        if let cameraVC = viewContainingController() as? CameraViewController {
             cameraVC.uploadPostDraft()
             progressBar.isHidden = false
         }

@@ -39,11 +39,11 @@ extension MapController {
     @objc func addTap() {
         Mixpanel.mainInstance().track(event: "HomeScreenAddTap")
         addFriendsView.removeFromSuperview()
-        if navigationController?.viewControllers.contains(where: { $0 is AVCameraController }) ?? false {
+        if navigationController?.viewControllers.contains(where: { $0 is CameraViewController }) ?? false {
             return
         }
 
-        guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController
+        guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "CameraViewController") as? CameraViewController
         else { return }
 
         let transition = AddButtonTransition()

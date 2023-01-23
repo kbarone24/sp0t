@@ -18,7 +18,8 @@ protocol MapPostServiceProtocol {
     func getPost(postID: String) async throws -> MapPost
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void)
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
-    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) async
+    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
+    func updateMapNameInPosts(mapID: String, newName: String)
 }
 
 final class MapPostService: MapPostServiceProtocol {
@@ -166,11 +167,12 @@ final class MapPostService: MapPostServiceProtocol {
             return
         }
         
+        let captionHeight = post.caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
+        
         Task {
             var postInfo = post
+            postInfo.captionHeight = captionHeight
             
-            let caption = postInfo.caption
-            postInfo.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
             do {
                 let userService = try ServiceContainer.shared.service(for: \.userService)
                 let user = try await userService.getUserInfo(userID: post.posterID)
@@ -208,12 +210,8 @@ final class MapPostService: MapPostServiceProtocol {
                             }
                         }
                         
-                        do {
-                            guard let postInfo = try? doc.data(as: MapPost.self) else { continue }
-                            posts.append(postInfo)
-                        } catch {
-                            continue
-                        }
+                        guard let postInfo = try? doc.data(as: MapPost.self) else { continue }
+                        posts.append(postInfo)
                     }
                 }
             }
@@ -242,22 +240,19 @@ final class MapPostService: MapPostServiceProtocol {
                         completion(allPosts)
                     }
                 }
-                do {
-                    let posts = try await getPosts(query: query)
-                    guard let posts else { continue }
-                    allPosts.append(contentsOf: posts)
-                } catch {
-                    continue
-                }
+                
+                let posts = try? await getPosts(query: query)
+                guard let posts else { continue }
+                allPosts.append(contentsOf: posts)
             }
         }
     }
     
-    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) async {
+    func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
         /// send local notification first
         guard let postID = post.id else { return }
         
-        Task {
+        DispatchQueue.global(qos: .background).async { [weak self] in
             let caption = post.caption
             var notiPost = post
             notiPost.id = postID
@@ -288,21 +283,30 @@ final class MapPostService: MapPostServiceProtocol {
                 )
             )
             
-            let postRef = fireStore.collection("posts").document(postID)
-            do {
-                var post = post
-                post.g = GFUtils.geoHash(forLocation: post.coordinate)
-                try postRef.setData(from: post)
-                if !newMap {
-                    /// send new map notis for new map
-                    self.sendPostNotifications(post: post, map: map, spot: spot)
+            let postRef = self?.fireStore.collection("posts").document(postID)
+            var post = post
+            post.g = GFUtils.geoHash(forLocation: post.coordinate)
+            try? postRef?.setData(from: post)
+            if !newMap {
+                /// send new map notis for new map
+                self?.sendPostNotifications(post: post, map: map, spot: spot)
+            }
+            
+            let commentRef = postRef?.collection("comments").document(commentObject.id ?? "")
+            try? commentRef?.setData(from: commentObject)
+        }
+    }
+    
+    func updateMapNameInPosts(mapID: String, newName: String) {
+        DispatchQueue.global().async { [weak self] in
+            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                .whereField(FireBaseCollectionFields.mapID.rawValue, isEqualTo: mapID)
+                .getDocuments { snap, _ in
+                    guard let snap = snap else { return }
+                    for postDoc in snap.documents {
+                        postDoc.reference.updateData([FireBaseCollectionFields.mapName.rawValue: newName])
+                    }
                 }
-                
-                let commentRef = postRef.collection("comments").document(commentObject.id ?? "")
-                
-                try commentRef.setData(from: commentObject)
-                
-            } catch {}
         }
     }
     
@@ -328,7 +332,7 @@ final class MapPostService: MapPostServiceProtocol {
         functions.httpsCallable(FuctionsHttpsCall.sendPostNotification.rawValue)
             .call(
                 notiValues,
-                completion: {_, _ in }
+                completion: { _, _ in }
             )
     }
 }

@@ -384,9 +384,9 @@ class CustomMapController: UIViewController {
     @objc func addAction() {
         Mixpanel.mainInstance().track(event: "CustomMapAddTap")
         // crash on double stack was happening here
-        if navigationController?.viewControllers.contains(where: { $0 is AVCameraController }) ?? false { return }
+        if navigationController?.viewControllers.contains(where: { $0 is CameraViewController }) ?? false { return }
         DispatchQueue.main.async {
-            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "AVCameraController") as? AVCameraController {
+            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(identifier: "CameraViewController") as? CameraViewController {
                 vc.mapObject = self.mapData
                 self.barView.isHidden = true
                 let transition = AddButtonTransition()

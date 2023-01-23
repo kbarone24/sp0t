@@ -68,9 +68,16 @@ extension MapController: MKMapViewDelegate {
     }
 
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-        if shouldRunGeoQuery() { DispatchQueue.global(qos: .utility).async { self.getVisibleSpots() }
+
+        if shouldRunGeoQuery() {
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                self?.getVisibleSpots()
+            }
         }
-        if postsFetched { setCityLabel() }
+        
+        if postsFetched {
+            setCityLabel()
+        }
     }
 
     func mapViewDidFinishLoadingMap(_ mapView: MKMapView) {

@@ -9,7 +9,7 @@
 import Firebase
 import UIKit
 
-///https://stackoverflow.com/questions/32309247/add-read-more-to-the-end-of-uilabel
+/// https://stackoverflow.com/questions/32309247/add-read-more-to-the-end-of-uilabel
 
 extension UILabel {
     

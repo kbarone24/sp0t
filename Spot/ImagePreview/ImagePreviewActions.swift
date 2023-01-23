@@ -43,13 +43,17 @@ extension ImagePreviewController {
         currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
         nextImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
         
-        UIView.animate(withDuration: 0.2) {
-            self.view.layoutIfNeeded()
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.view.layoutIfNeeded()
+            
         } completion: { [weak self] _ in
-            guard let self = self else { return }
             // reset image index
-            if UploadPostModel.shared.postObject != nil { UploadPostModel.shared.postObject?.selectedImageIndex! += 1 }
-            self.setImages()
+            if UploadPostModel.shared.postObject != nil {
+                var selectedIndex = UploadPostModel.shared.postObject?.selectedImageIndex ?? 0
+                selectedIndex += 1
+                UploadPostModel.shared.postObject?.selectedImageIndex = selectedIndex
+            }
+            self?.setImages()
         }
     }
     
@@ -58,13 +62,17 @@ extension ImagePreviewController {
         currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width) }
         previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
         
-        UIView.animate(withDuration: 0.2) {
-            self.view.layoutIfNeeded()
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.view.layoutIfNeeded()
+            
         } completion: { [weak self] _ in
-            guard let self = self else { return }
             /// reset image indexes
-            if UploadPostModel.shared.postObject != nil { UploadPostModel.shared.postObject?.selectedImageIndex! -= 1 }
-            self.setImages()
+            if UploadPostModel.shared.postObject != nil {
+                var selectedIndex = UploadPostModel.shared.postObject?.selectedImageIndex ?? 1
+                selectedIndex -= 1
+                UploadPostModel.shared.postObject?.selectedImageIndex = selectedIndex
+            }
+            self?.setImages()
         }
     }
     
@@ -100,7 +108,7 @@ extension ImagePreviewController {
         if cameraObject != nil { UploadPostModel.shared.selectedObjects.removeAll(where: { $0.fromCamera })} /// remove old captured image
         
         let controllers = navigationController?.viewControllers
-        if let camera = controllers?[safe: (controllers?.count ?? 0) - 3] as? AVCameraController {
+        if let camera = controllers?[safe: (controllers?.count ?? 0) - 3] as? CameraViewController {
             // reset postObject
             camera.setUpPost()
         }
@@ -192,16 +200,20 @@ extension ImagePreviewController {
     
     func addNewSpotView(notification: NSNotification) {
         let frameKey = UIResponder.keyboardFrameEndUserInfoKey
-        guard let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue else { return }
-        if newSpotMask != nil { return }
-        
-        newSpotMask = NewSpotMask {
-            view.addSubview($0)
+        guard let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue,
+              newSpotMask == nil
+        else {
+            return
         }
-        newSpotMask?.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(newSpotNameView.snp.top).offset(-200)
-            $0.bottom.equalToSuperview()
+        
+        newSpotMask = NewSpotMask()
+        if let newSpotMask {
+            view.addSubview(newSpotMask)
+            newSpotMask.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview()
+                $0.top.equalTo(newSpotNameView.snp.top).offset(-200)
+                $0.bottom.equalToSuperview()
+            }
         }
         
         newSpotNameView.isHidden = false
@@ -244,7 +256,7 @@ extension ImagePreviewController {
             privacyLevel: "friends",
             description: ""
         )
-    
+        
         newSpot.posterUsername = UserDataModel.shared.userInfo.username
         finishPassing(spot: newSpot)
         UploadPostModel.shared.postType = .newSpot
@@ -254,7 +266,7 @@ extension ImagePreviewController {
         let extraMask = UIView()
         extraMask.backgroundColor = UIColor.black.withAlphaComponent(0.65)
         view.insertSubview(extraMask, at: 0)
-
+        
         extraMask.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
             $0.top.equalTo(postDetailView.snp.bottom)
@@ -262,37 +274,40 @@ extension ImagePreviewController {
     }
     
     @objc func postTap() {
+        guard let imageVideoService = try? ServiceContainer.shared.service(for: \.imageVideoService) else {
+            return
+        }
+        
         Mixpanel.mainInstance().track(event: "ImagePreviewPostTap")
-        postButton?.isEnabled = false
+        postButton.isEnabled = false
         setCaptionValues()
         /// upload post
         UploadPostModel.shared.setFinalPostValues()
         if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
         
-        progressMask?.isHidden = false
-        view.bringSubviewToFront(progressMask ?? UIView())
-        let fullWidth = (self.progressBar?.bounds.width ?? 2) - 2
+        progressMask.isHidden = false
+        view.bringSubviewToFront(progressMask)
+        let fullWidth = (self.progressBar.bounds.width) - 2
         
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.uploadPostImage(
-                images: UploadPostModel.shared.postObject?.postImage ?? [],
-                postID: UploadPostModel.shared.postObject?.id ?? "",
-                progressFill: self.progressBar?.progressFill ?? UIView(),
-                fullWidth: fullWidth) { [weak self] imageURLs, failed in
-                    guard let self = self else { return }
-                    if imageURLs.isEmpty && failed {
-                        Mixpanel.mainInstance().track(event: "FailedPostUpload")
-                        self.runFailedUpload()
-                        return
-                    }
-                    UploadPostModel.shared.postObject?.imageURLs = imageURLs
-                    self.uploadPostToDB(newMap: true)
-                    /// enable upload animation to finish
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        HapticGenerator.shared.play(.soft)
-                        self.popToMap()
-                    }
-                }
+        imageVideoService.uploadImages(
+            images: UploadPostModel.shared.postObject?.postImage ?? [],
+            parentView: view,
+            progressFill: self.progressBar.progressFill,
+            fullWidth: fullWidth
+        ) { [weak self] imageURLs, failed in
+            guard let self = self else { return }
+            if imageURLs.isEmpty && failed {
+                Mixpanel.mainInstance().track(event: "FailedPostUpload")
+                self.runFailedUpload()
+                return
+            }
+            UploadPostModel.shared.postObject?.imageURLs = imageURLs
+            self.uploadPostToDB(newMap: true)
+            /// enable upload animation to finish
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                HapticGenerator.shared.play(.soft)
+                self.popToMap()
+            }
         }
     }
     
@@ -327,7 +342,9 @@ extension ImagePreviewController {
     private func uploadPostToDB(newMap: Bool) {
         guard let post = UploadPostModel.shared.postObject,
               let spotService = try? ServiceContainer.shared.service(for: \.spotService),
-              let postService = try? ServiceContainer.shared.service(for: \.mapPostService)
+              let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
+              let mapService = try? ServiceContainer.shared.service(for: \.mapsService),
+              let userService = try? ServiceContainer.shared.service(for: \.userService)
         else { return }
         
         var spot = UploadPostModel.shared.spotObject
@@ -337,23 +354,68 @@ extension ImagePreviewController {
             SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage())
         }
         
-        Task {
-            if spot != nil {
-                spot!.imageURL = post.imageURLs.first ?? ""
-                await spotService.uploadSpot(post: post, spot: spot!, submitPublic: false)
-            }
-            if map != nil {
-                if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
-                map!.postImageURLs.append(post.imageURLs.first ?? "")
-                self.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
+        DispatchQueue.global(qos: .background).async {
+            if var spot = spot {
+                spot.imageURL = post.imageURLs.first ?? ""
+                spotService.uploadSpot(post: post, spot: spot, submitPublic: false)
             }
             
-            await postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+            if var map = map {
+                if map.imageURL == "" {
+                    map.imageURL = post.imageURLs.first ?? ""
+                }
+                
+                map.postImageURLs.append(post.imageURLs.first ?? "")
+                mapService.uploadMap(map: map, newMap: newMap, post: post, spot: spot)
+            }
+            
+            postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
             
             let visitorList = spot?.visitorList ?? []
-            self.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
+            userService.setUserValues(
+                poster: UserDataModel.shared.uid,
+                post: post,
+                spotID: spot?.id ?? "",
+                visitorList: visitorList,
+                mapID: map?.id ?? ""
+            )
             
             Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
         }
+    }
+    
+    // https://www.advancedswift.com/animate-with-ios-keyboard-swift/
+    private func animateWithKeyboard(
+        notification: NSNotification,
+        animations: ((_ keyboardFrame: CGRect) -> Void)?
+    ) {
+        // Extract the duration of the keyboard animation
+        let durationKey = UIResponder.keyboardAnimationDurationUserInfoKey
+        let duration = notification.userInfo?[durationKey] as? Double ?? 0
+        
+        // Extract the final frame of the keyboard
+        let frameKey = UIResponder.keyboardFrameEndUserInfoKey
+        let keyboardFrameValue = notification.userInfo?[frameKey] as? NSValue
+        
+        // Extract the curve of the iOS keyboard animation
+        let curveKey = UIResponder.keyboardAnimationCurveUserInfoKey
+        let curveValue = notification.userInfo?[curveKey] as? Int ?? 0
+        let curve = UIView.AnimationCurve(rawValue: curveValue) ?? .easeIn
+        
+        // Create a property animator to manage the animation
+        let animator = UIViewPropertyAnimator(
+            duration: duration,
+            curve: curve
+        ) {
+            // Perform the necessary animation layout updates
+            animations?(keyboardFrameValue?.cgRectValue ?? .zero)
+            
+            // Required to trigger NSLayoutConstraint changes
+            // to animate
+            self.view?.layoutIfNeeded()
+        }
+        
+        // Start the animation
+        animator.startAnimation()
     }
 }

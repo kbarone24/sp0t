@@ -25,7 +25,7 @@ class TutorialViewController: UIViewController {
 
     var bottomMask: UIView!
     var topMask: UIView!
-    var centerPoint: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: -77.846_156, longitude: 166.664_954)
+    var centerPoint: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: -77.846156, longitude: 166.664954)
 
     override func viewDidLoad() {
         super.viewDidLoad()

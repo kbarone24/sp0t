@@ -20,7 +20,7 @@ protocol NotificationsDelegate: AnyObject {
 }
 
 class NotificationsController: UIViewController {
-
+    
     lazy var notifications: [UserNotification] = []
     lazy var pendingFriendRequests: [UserNotification] = []
     
@@ -80,7 +80,7 @@ class NotificationsController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(rawValue: "DeletePost"), object: nil)
         setupView()
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
@@ -136,7 +136,7 @@ class NotificationsController: UIViewController {
             $0.edges.equalToSuperview()
         }
     }
-
+    
     @objc func notifyFriendsLoad(_ notification: NSNotification) {
         guard !notifications.isEmpty else {
             return
@@ -187,7 +187,11 @@ extension NotificationsController: NotificationsDelegate {
     }
     
     func deleteFriend(friendID: String) {
-        self.removeFriend(friendID: friendID)
+        guard let friendsService = try? ServiceContainer.shared.service(for: \.friendsService)  else {
+            return
+        }
+        
+        friendsService.removeFriend(friendID: friendID)
     }
     
     func deleteFriendRequest(friendRequest: UserNotification) -> [UserNotification] {

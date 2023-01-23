@@ -231,4 +231,3 @@ final class CommentCell: UITableViewCell {
         }
     }
 }
-

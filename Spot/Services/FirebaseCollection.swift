@@ -8,6 +8,18 @@
 
 import Foundation
 
+enum FirebaseStorageFolder {
+    case videos
+    case pictures
+    
+    var reference: String {
+        switch self {
+        case .videos: return "spotVideos"
+        case .pictures: return "spotPics-dev"
+        }
+    }
+}
+
 enum FirebaseCollectionNames: String {
     case maps
     case posts
@@ -16,6 +28,8 @@ enum FirebaseCollectionNames: String {
     case spots
     case submissions
     case notifications
+    case mapLocations
+    case usernames
 }
 
 enum FireBaseCollectionFields: String {
@@ -49,6 +63,8 @@ enum FireBaseCollectionFields: String {
     case spotName
     case spotVisitors
     case taggedUserIDs
+    case posterUsernames
+    case usernameKeywords
 }
 
 enum FuctionsHttpsCall: String {

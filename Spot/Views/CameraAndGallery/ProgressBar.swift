@@ -6,11 +6,16 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 
-class ProgressBar: UIView {
-    var progressFill: UIView!
+final class ProgressBar: UIView {
+    private(set) lazy var progressFill: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(named: "SpotGreen")
+        view.layer.cornerRadius = 6.0
+        
+        return view
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -19,12 +24,8 @@ class ProgressBar: UIView {
         layer.cornerRadius = 6
         layer.borderWidth = 2
         layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-
-        progressFill = UIView {
-            $0.backgroundColor = UIColor(named: "SpotGreen")
-            $0.layer.cornerRadius = 6
-            addSubview($0)
-        }
+        
+        addSubview(progressFill)
         progressFill.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(1)
             $0.width.equalTo(0)
@@ -32,6 +33,7 @@ class ProgressBar: UIView {
         }
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
