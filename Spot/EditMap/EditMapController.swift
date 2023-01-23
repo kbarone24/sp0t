@@ -190,7 +190,11 @@ class EditMapController: UIViewController {
         let mapsRef = db.collection("maps").document(mapID)
         let mapName = mapNameTextField.text ?? ""
         let lowercaseName = mapName.lowercased()
-        if mapData?.mapName != mapName { updateMapNameInPosts(mapID: mapID, newName: mapNameTextField.text ?? "") }
+        
+        if mapData?.mapName != mapName, let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService) {
+            mapPostService.updateMapNameInPosts(mapID: mapID, newName: mapNameTextField.text ?? "")
+        }
+        
         mapData?.mapName = mapName
         mapData?.mapDescription = mapDescription.text == "Add a map bio..." ? "" : mapDescription.text
         mapData?.secret = secretToggle.image(for: .normal) == UIImage(named: "PrivateMapOff") ? false : true

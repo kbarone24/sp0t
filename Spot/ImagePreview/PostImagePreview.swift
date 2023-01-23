@@ -115,4 +115,3 @@ final class PostImagePreview: PostImageView {
         topMask.layer.addSublayer(layer)
     }
 }
-

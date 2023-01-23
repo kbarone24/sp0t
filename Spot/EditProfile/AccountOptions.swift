@@ -94,10 +94,17 @@ extension EditProfileViewController: DeleteAccountDelegate {
     }
 
     func deleteAccount() {
-        DispatchQueue.main.async { self.activityIndicator.startAnimating() }
+        guard let friendsService = try? ServiceContainer.shared.service(for: \.friendsService) else {
+            return
+        }
+        
+        DispatchQueue.main.async {
+            self.activityIndicator.startAnimating()
+        }
+        
         // delete from friends' friendsList
         for id in UserDataModel.shared.userInfo.friendIDs {
-            removeFriendFromFriendsList(userID: id, friendID: UserDataModel.shared.uid)
+            friendsService.removeFriendFromFriendsList(userID: id, friendID: UserDataModel.shared.uid)
         }
 
         let dispatch = DispatchGroup()

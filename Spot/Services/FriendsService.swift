@@ -17,6 +17,8 @@ protocol FriendsServiceProtocol {
     func removeFriendRequest(friendID: String, notificationID: String, completion: ((Error?) -> Void)?)
     func acceptFriendRequest(friend: UserProfile, notificationID: String, completion: ((Error?) -> Void)?)
     func addFriend(receiverID: String, completion: ((Error?) -> Void)?)
+    func removeFriend(friendID: String)
+    func removeFriendFromFriendsList(userID: String, friendID: String)
 }
 
 final class FriendsService: FriendsServiceProtocol {
@@ -222,5 +224,67 @@ final class FriendsService: FriendsServiceProtocol {
             )
         
         completion?(nil)
+    }
+    
+    func removeFriend(friendID: String) {
+        /// firebase function broken
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            UserDataModel.shared.userInfo.friendIDs.removeAll(where: { $0 == friendID })
+            UserDataModel.shared.userInfo.friendsList.removeAll(where: { $0.id == friendID })
+            UserDataModel.shared.userInfo.topFriends?.removeValue(forKey: friendID)
+            UserDataModel.shared.deletedFriendIDs.append(friendID)
+
+            let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
+
+            self?.removeFriendFromFriendsList(userID: uid, friendID: friendID)
+            self?.removeFriendFromFriendsList(userID: friendID, friendID: uid)
+            
+            self?.removeFriendFromPosts(userID: uid, friendID: friendID)
+            self?.removeFriendFromPosts(userID: friendID, friendID: uid)
+
+            self?.removeFriendFromNotis(userID: uid, friendID: friendID)
+            self?.removeFriendFromNotis(userID: friendID, friendID: uid)
+        }
+    }
+    
+    func removeFriendFromFriendsList(userID: String, friendID: String) {
+        fireStore.collection(FirebaseCollectionNames.users.rawValue)
+            .document(userID).updateData(
+                [
+                    FireBaseCollectionFields.friendsList.rawValue: FieldValue.arrayRemove([friendID]),
+                    "\(FireBaseCollectionFields.topFriends.rawValue).\(friendID)": FieldValue.delete()
+                ]
+            )
+    }
+    
+    private func removeFriendFromPosts(userID: String, friendID: String) {
+        fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+            .whereField(FireBaseCollectionFields.posterID.rawValue, isEqualTo: friendID)
+            .getDocuments { snap, _ in
+                guard let docs = snap?.documents else { return }
+                for doc in docs {
+                    doc.reference.updateData(
+                        [
+                            FireBaseCollectionFields.friendsList.rawValue: FieldValue.arrayRemove([userID])
+                        ]
+                    )
+                }
+            }
+    }
+    
+    private func removeFriendFromNotis(userID: String, friendID: String) {
+        let friendRequestValueString = "friendRequest"
+        
+        fireStore.collection(FirebaseCollectionNames.users.rawValue)
+            .document(userID)
+            .collection(FirebaseCollectionNames.notifications.rawValue)
+            .whereField(FireBaseCollectionFields.senderID.rawValue, isEqualTo: friendID)
+            .whereField(FireBaseCollectionFields.type.rawValue, isEqualTo: friendRequestValueString)
+            .getDocuments { snap, _ in
+            guard let docs = snap?.documents else { return }
+            for doc in docs {
+                doc.reference.delete()
+            }
+        }
     }
 }

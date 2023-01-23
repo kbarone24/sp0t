@@ -110,8 +110,12 @@ extension ProfileViewController {
 
     func removeFriend(blocked: Bool) {
         Mixpanel.mainInstance().track(event: "RemoveFriend")
-        guard let userID = userProfile?.id else { return }
-        removeFriend(friendID: userID)
+        guard let userID = userProfile?.id,
+              let friendsService = try? ServiceContainer.shared.service(for: \.friendsService)  else {
+            return
+        }
+        
+        friendsService.removeFriend(friendID: userID)
         NotificationCenter.default.post(name: NSNotification.Name("FriendRemove"), object: nil, userInfo: ["userID": userID])
         relation = blocked ? .blocked : .stranger
         DispatchQueue.main.async { self.collectionView.reloadData() }

@@ -61,11 +61,16 @@ extension CLPlacemark {
             // add state name for US
             if country == "United States" {
                 if let administrativeArea {
-                    if addressString != "" { addressString = addressString + ", " }
-                    addressString = addressString + administrativeArea
+                    if addressString != "" {
+                        addressString += ", "
+                    }
+                    
+                    addressString += administrativeArea
                 }
             }
-            if addressString != "" { addressString = addressString + ", " }
+            if addressString != "" {
+                addressString += ", "
+            }
             addressString += country
         }
         return addressString
@@ -86,11 +91,11 @@ extension CLLocationDistance {
     }
 
     func inFeet() -> CLLocationDistance {
-        return self * 3.280_84
+        return self * 3.28084
     }
 
     func inMiles() -> CLLocationDistance {
-        return self * 0.000_621_37
+        return self * 0.00062137
     }
 }
 // supplementary methods for offsetCenterCoordinate
@@ -137,14 +142,12 @@ extension CLLocationCoordinate2D {
         return latitude == 0.0 && longitude == 0.0
     }
 }
-// https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
 
+// https://stackoverflow.com/questions/15421106/centering-mkmapview-on-spot-n-pixels-below-pin
 // Supposed to exclude invalid geoQuery regions. Not sure how well it works
 extension MKCoordinateRegion {
     var maxSpan: Double {
-        get {
-            return 200
-        }
+        return 200
     }
 
     init(coordinates: [CLLocationCoordinate2D], overview: Bool) {
@@ -202,7 +205,7 @@ extension MKCoordinateRegion {
         self.init(center: center, span: span)
     }
 
-    // https://stackoverflow.com/questions/14374030/center-coordinate-of-a-set-of-cllocationscoordinate2d
+    /// https://stackoverflow.com/questions/14374030/center-coordinate-of-a-set-of-cllocationscoordinate2d
     func spanOutOfRange(span: MKCoordinateSpan) -> Bool {
         let span = span.getAdjustedSpan()
         return span.latitudeDelta > maxSpan || span.longitudeDelta > maxSpan

@@ -46,7 +46,7 @@ extension CustomMapController: MKMapViewDelegate {
         if centeredMap && containerDrawerView?.status == .middle { closeDrawer() }
         guard let mapView = mapView as? SpotMapView else { return }
         // gets called too much -> just use gesture recognizer
-        if mapView.region.span.longitudeDelta < 0.001_3 {
+        if mapView.region.span.longitudeDelta < 0.0013 {
             if mapView.shouldCluster {
                 mapView.shouldCluster = false
                 let annotations = mapView.annotations

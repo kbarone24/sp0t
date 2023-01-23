@@ -8,14 +8,19 @@
 
 import CoreLocation
 import Firebase
-import Foundation
 import IQKeyboardManagerSwift
 import Mixpanel
-import Photos
-import SnapKit
 import UIKit
+import AVKit
+import AVFoundation
 
-class ImagePreviewController: UIViewController {
+final class ImagePreviewController: UIViewController {
+    
+    enum Mode: Hashable {
+        case image
+        case video(url: URL)
+    }
+    
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
     lazy var currentImage = PostImagePreview(frame: .zero)
@@ -31,16 +36,35 @@ class ImagePreviewController: UIViewController {
         button.addTarget(self, action: #selector(backTap(_:)), for: .touchUpInside)
         return button
     }()
+    
     private lazy var dotView = UIView()
 
-    private var nextButton: FooterNextButton?
-    var postButton: UIButton?
-    var progressMask: UIView?
-    var progressBar: ProgressBar?
-
-    lazy var postDetailView = PostDetailView()
-    lazy var spotNameButton = SpotNameButton()
-    lazy var atButton: UIButton = {
+    private var nextButton: FooterNextButton = {
+        let button = FooterNextButton()
+        button.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
+        button.isEnabled = true
+        return button
+    }()
+    
+    private(set) lazy var postButton: UIButton = {
+        let button = UIButton()
+        button.addTarget(self, action: #selector(postTap), for: .touchUpInside)
+        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+        return button
+    }()
+    
+    private(set) lazy var progressMask: UIView = {
+        let view = UIView()
+        view.backgroundColor = .black.withAlphaComponent(0.7)
+        view.isHidden = true
+        return view
+    }()
+    
+    private(set) lazy var progressBar = ProgressBar()
+    private(set) lazy var postDetailView = PostDetailView()
+    private(set) lazy var spotNameButton = SpotNameButton()
+    
+    private(set) lazy var atButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         button.setTitle("@", for: .normal)
@@ -55,7 +79,8 @@ class ImagePreviewController: UIViewController {
         button.clipsToBounds = false
         return button
     }()
-    lazy var newSpotNameView = NewSpotNameView()
+    
+    private(set) lazy var newSpotNameView = NewSpotNameView()
     var newSpotMask: NewSpotMask?
 
     var cancelOnDismiss = false
@@ -63,25 +88,27 @@ class ImagePreviewController: UIViewController {
     var cameraObject: ImageObject?
 
     // swipe down to close keyboard
-    lazy var swipeToClose: UIPanGestureRecognizer = {
+    private(set) lazy var swipeToClose: UIPanGestureRecognizer = {
         let gesture = UIPanGestureRecognizer(target: self, action: #selector(swipeToClose(_:)))
         gesture.isEnabled = false
         return gesture
     }()
+    
     // tap to close keyboard
-    lazy var tapToClose: UITapGestureRecognizer = {
+    private(set) lazy var tapToClose: UITapGestureRecognizer = {
         let gesture = UITapGestureRecognizer(target: self, action: #selector(tapToClose(_:)))
         gesture.accessibilityValue = "tap_to_close"
         gesture.isEnabled = false
         return gesture
     }()
-    lazy var tapCaption: UITapGestureRecognizer = {
+    
+    private(set) lazy var tapCaption: UITapGestureRecognizer = {
         let gesture = UITapGestureRecognizer(target: self, action: #selector(captionTap))
         gesture.accessibilityValue = "caption_tap"
         return gesture
     }()
 
-    lazy var textView: UITextView = {
+    private(set) lazy var textView: UITextView = {
         let view = UITextView()
         view.backgroundColor = nil
         view.textColor = .white
@@ -97,10 +124,6 @@ class ImagePreviewController: UIViewController {
         view.isUserInteractionEnabled = false
         return view
     }()
-    let textViewPlaceholder = "Write a caption..."
-
-    lazy var shouldAnimateTextMask = false // tells keyboardWillChange whether to reposition
-    lazy var firstImageBottomConstraint: CGFloat = 0
 
     private(set) lazy var tagFriendsView: TagFriendsView = {
         let view = TagFriendsView()
@@ -110,9 +133,16 @@ class ImagePreviewController: UIViewController {
         return view
     }()
     
+    private var player: AVPlayer?
+    
     var actionButton: UIButton {
         return newMapMode ? postButton ?? UIButton() : nextButton ?? UIButton()
     }
+    
+    var mode: Mode = .image // default
+    let textViewPlaceholder = "Write a caption..."
+    var shouldAnimateTextMask = false // tells keyboardWillChange whether to reposition
+    var firstImageBottomConstraint: CGFloat = 0
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -124,6 +154,10 @@ class ImagePreviewController: UIViewController {
         super.viewDidAppear(animated)
         Mixpanel.mainInstance().track(event: "ImagePreviewOpen")
         enableKeyboardMethods()
+        
+        if mode != .image {
+            player?.play()
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -200,6 +234,68 @@ class ImagePreviewController: UIViewController {
         view.backgroundColor = .black
         guard let post = UploadPostModel.shared.postObject else { return }
 
+        switch mode {
+        case .image:
+            addPreviewPhoto(post)
+            
+        case .video(let url):
+            addPreviewVideo(path: url)
+        }
+
+        view.addSubview(backButton)
+        backButton.snp.makeConstraints {
+            $0.leading.equalTo(5.5)
+            $0.top.equalToSuperview().offset(60)
+            $0.width.equalTo(48.6)
+            $0.height.equalTo(38.6)
+        }
+
+        if newMapMode {
+            let titleView = NewMapTitleView()
+            view.addSubview(titleView)
+            titleView.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(60)
+                $0.top.equalTo(backButton.snp.top).offset(2)
+                $0.centerX.equalToSuperview()
+            }
+
+            view.addSubview(postButton)
+            postButton.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(18)
+                $0.height.equalTo(51)
+                $0.bottom.equalTo(-43)
+            }
+
+            view.addSubview(progressMask)
+            progressMask.snp.makeConstraints {
+                $0.edges.equalToSuperview()
+            }
+
+            progressMask.addSubview(progressBar)
+            progressBar.snp.makeConstraints {
+                $0.leading.trailing.equalToSuperview().inset(50)
+                $0.bottom.equalTo(postButton.snp.top).offset(-20)
+                $0.height.equalTo(18)
+            }
+
+        } else {
+            view.addSubview(nextButton)
+            nextButton.snp.makeConstraints {
+                $0.trailing.equalToSuperview().inset(15)
+                $0.bottom.equalToSuperview().inset(50)
+                $0.width.equalTo(94)
+                $0.height.equalTo(40)
+            }
+        }
+
+        view.addGestureRecognizer(swipeToClose)
+        tapToClose.delegate = self
+        view.addGestureRecognizer(tapToClose)
+        tapCaption.delegate = self
+        view.addGestureRecognizer(tapCaption)
+    }
+    
+    private func addPreviewPhoto(_ post: MapPost) {
         // add initial preview view and buttons
         currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex ?? 0)
         view.addSubview(currentImage)
@@ -221,73 +317,13 @@ class ImagePreviewController: UIViewController {
             view.addGestureRecognizer(pan)
             addDotView()
         }
-
-        view.addSubview(backButton)
-        backButton.snp.makeConstraints {
-            $0.leading.equalTo(5.5)
-            $0.top.equalToSuperview().offset(60)
-            $0.width.equalTo(48.6)
-            $0.height.equalTo(38.6)
-        }
-
-        if newMapMode {
-            let titleView = NewMapTitleView {
-                view.addSubview($0)
-            }
-            titleView.snp.makeConstraints {
-                $0.leading.trailing.equalToSuperview().inset(60)
-                $0.top.equalTo(backButton.snp.top).offset(2)
-                $0.centerX.equalToSuperview()
-            }
-
-            postButton = PostButton {
-                $0.addTarget(self, action: #selector(postTap), for: .touchUpInside)
-                $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
-                view.addSubview($0)
-            }
-            postButton?.snp.makeConstraints {
-                $0.leading.trailing.equalToSuperview().inset(18)
-                $0.height.equalTo(51)
-                $0.bottom.equalTo(-43)
-            }
-
-            progressMask = UIView {
-                $0.backgroundColor = .black.withAlphaComponent(0.7)
-                $0.isHidden = true
-                view.addSubview($0)
-            }
-            progressMask?.snp.makeConstraints {
-                $0.edges.equalToSuperview()
-            }
-
-            progressBar = ProgressBar {
-                progressMask?.addSubview($0)
-            }
-            progressBar?.snp.makeConstraints {
-                $0.leading.trailing.equalToSuperview().inset(50)
-                if let postButton { $0.bottom.equalTo(postButton.snp.top).offset(-20) }
-                $0.height.equalTo(18)
-            }
-
-        } else {
-            nextButton = FooterNextButton {
-                $0.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
-                $0.isEnabled = true
-                view.addSubview($0)
-            }
-            nextButton?.snp.makeConstraints {
-                $0.trailing.equalToSuperview().inset(15)
-                $0.bottom.equalToSuperview().inset(50)
-                $0.width.equalTo(94)
-                $0.height.equalTo(40)
-            }
-        }
-
-        view.addGestureRecognizer(swipeToClose)
-        tapToClose.delegate = self
-        view.addGestureRecognizer(tapToClose)
-        tapCaption.delegate = self
-        view.addGestureRecognizer(tapCaption)
+    }
+    
+    private func addPreviewVideo(path: URL) {
+        player = AVPlayer(url: path)
+        let playerLayer = AVPlayerLayer(player: player)
+        playerLayer.frame = self.view.bounds
+        self.view.layer.addSublayer(playerLayer)
     }
 
     func addDotView() {
@@ -304,15 +340,18 @@ class ImagePreviewController: UIViewController {
     }
 
     func addDots() {
-        for sub in dotView.subviews { sub.removeFromSuperview() }
+        dotView.subviews.forEach {
+            $0.removeFromSuperview()
+        }
+        
         for i in 0..<(UploadPostModel.shared.postObject?.frameIndexes?.count ?? 0) {
-            let dot = UIView {
-                $0.layer.borderColor = UIColor.white.cgColor
-                $0.layer.borderWidth = 1
-                $0.backgroundColor = i == UploadPostModel.shared.postObject?.selectedImageIndex ?? 0 ? .white : .clear
-                $0.layer.cornerRadius = 9 / 2
-                dotView.addSubview($0)
-            }
+            let dot = UIView()
+            dot.layer.borderColor = UIColor.white.cgColor
+            dot.layer.borderWidth = 1
+            dot.backgroundColor = i == UploadPostModel.shared.postObject?.selectedImageIndex ?? 0 ? .white : .clear
+            dot.layer.cornerRadius = 9 / 2
+            
+            dotView.addSubview(dot)
             let leading = i * 14
             dot.snp.makeConstraints {
                 $0.leading.equalTo(leading)
@@ -365,5 +404,9 @@ class ImagePreviewController: UIViewController {
         if UserDataModel.shared.screenSize == 0 && (UploadPostModel.shared.postObject?.postImage.contains(where: { $0.aspectRatio() > 1.45 }) ?? false) {
             addExtraMask()
         }
+    }
+    
+    private func locationIsEmpty(location: CLLocation) -> Bool {
+        return location.coordinate.longitude == 0.0 && location.coordinate.latitude == 0.0
     }
 }

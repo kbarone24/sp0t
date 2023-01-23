@@ -28,6 +28,7 @@ use_frameworks!
   pod 'R.swift'
   pod 'SwiftLint'
   pod 'GeoFire/Utils'
+  pod 'NextLevel' # https://github.com/NextLevel/NextLevel
 
   target 'SpotTests' do
     inherit! :search_paths

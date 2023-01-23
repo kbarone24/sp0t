@@ -61,7 +61,7 @@ class PostImageLoader: Operation {
         if frameIndexes.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i) } }
 
         var aspectRatios = post.aspectRatios ?? []
-        if aspectRatios.isEmpty { for _ in 0...post.imageURLs.count - 1 { aspectRatios.append(1.333_3) } }
+        if aspectRatios.isEmpty { for _ in 0...post.imageURLs.count - 1 { aspectRatios.append(1.3333) } }
 
         var currentAspect: CGFloat = 1
 

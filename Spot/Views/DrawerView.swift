@@ -314,7 +314,7 @@ class DrawerView: NSObject {
             UIView.animate(withDuration: animationDuration, animations: {
                 self.slideView.frame.origin.y = self.parentVC?.view.frame.height ?? 0
                 self.parentVC?.view.layoutIfNeeded()
-            }, completion: { [weak self] Bool in
+            }, completion: { [weak self] _ in
                 guard let self = self else { return }
                 if let closeDo = self.closeDo { closeDo() }
                 self.status = DrawerViewStatus.close

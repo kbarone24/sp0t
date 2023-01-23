@@ -112,5 +112,3 @@ class SpotNameButton: UIButton {
         }
     }
 }
-
-

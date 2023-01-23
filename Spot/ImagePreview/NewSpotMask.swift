@@ -31,4 +31,3 @@ class NewSpotMask: UIView {
         bottomMask.layer.addSublayer(layer)
     }
 }
-

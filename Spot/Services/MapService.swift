@@ -17,6 +17,7 @@ protocol MapServiceProtocol {
     func joinMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
     func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
     func getMap(mapID: String) async throws -> CustomMap
+    func uploadMap(map: CustomMap, newMap: Bool, post: MapPost, spot: MapSpot?)
 }
 
 final class MapService: MapServiceProtocol {
@@ -50,13 +51,8 @@ final class MapService: MapServiceProtocol {
                     var maps: [CustomMap] = []
                     
                     snapshot.documents.forEach { document in
-                        do {
-                            if let map = try? document.data(as: CustomMap.self) {
-                                maps.append(map)
-                            }
-                        } catch {
-                            continuation.resume(throwing: error)
-                            return
+                        if let map = try? document.data(as: CustomMap.self) {
+                            maps.append(map)
                         }
                     }
                     
@@ -86,13 +82,8 @@ final class MapService: MapServiceProtocol {
                     var posts: [MapPost] = []
                     
                     snapshot.documents.forEach { document in
-                        do {
-                            if let post = try? document.data(as: MapPost.self) {
-                                posts.append(post)
-                            }
-                        } catch {
-                            continuation.resume(throwing: error)
-                            return
+                        if let post = try? document.data(as: MapPost.self) {
+                            posts.append(post)
                         }
                     }
                     
@@ -148,25 +139,76 @@ final class MapService: MapServiceProtocol {
             self?.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
                 .document(mapID)
                 .getDocument { document, error in
-                    do {
-                        guard error == nil, let document else {
-                            if let error = error {
-                                continuation.resume(throwing: error)
-                            }
-                            return
+                    guard error == nil, let document else {
+                        if let error = error {
+                            continuation.resume(throwing: error)
                         }
-                        
-                        guard let data = try? document.data(as: CustomMap.self) else {
-                            continuation.resume(throwing: MapServiceError.decodingError)
-                            return
-                        }
-                        
-                        continuation.resume(returning: data)
-                    } catch {
-                        continuation.resume(throwing: error)
                         return
                     }
+                    
+                    guard let data = try? document.data(as: CustomMap.self) else {
+                        continuation.resume(throwing: MapServiceError.decodingError)
+                        return
+                    }
+                    
+                    continuation.resume(returning: data)
                 }
+        }
+    }
+    
+    func uploadMap(map: CustomMap, newMap: Bool, post: MapPost, spot: MapSpot?) {
+        guard let mapId = map.id, let postId = post.id else {
+            return
+        }
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            guard let self else {
+                return
+            }
+            
+            if newMap {
+                let mapRef = self.fireStore
+                    .collection(FirebaseCollectionNames.maps.rawValue)
+                    .document(map.id!)
+                try? mapRef.setData(from: map, merge: true)
+                
+            } else {
+                /// update values with backend function
+                let functions = Functions.functions()
+                let postLocation = ["lat": post.postLat, "long": post.postLong]
+                let spotLocation = ["lat": post.spotLat ?? 0.0, "long": post.spotLong ?? 0.0]
+                var posters = [UserDataModel.shared.uid]
+                
+                if !(post.addedUsers?.isEmpty ?? true) {
+                    posters.append(contentsOf: post.addedUsers ?? [])
+                }
+                
+                functions.httpsCallable("runMapTransactions").call(
+                    [
+                        "mapID": mapId,
+                        "uid": UserDataModel.shared.uid,
+                        "poiCategory": spot?.poiCategory ?? "",
+                        "postID": postId,
+                        "postImageURL": post.imageURLs.first ?? "",
+                        "postLocation": postLocation,
+                        "posters": posters,
+                        "posterUsername": UserDataModel.shared.userInfo.username,
+                        "spotID": post.spotID ?? "",
+                        "spotName": post.spotName ?? "",
+                        "spotLocation": spotLocation
+                    ]
+                ) { _, _ in }
+            }
+            
+            self.fireStore
+                .collection(FirebaseCollectionNames.mapLocations.rawValue)
+                .document(postId)
+                .setData(
+                    [
+                        "mapID": mapId,
+                        "postID": postId
+                    ]
+                )
         }
     }
 }

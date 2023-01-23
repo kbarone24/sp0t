@@ -64,7 +64,7 @@ class EditProfileCameraController: UIViewController, UINavigationControllerDeleg
         view.backgroundColor = UIColor(named: "SpotBlack")
 
         /// camera height will be 600 for iphone 6-10, 662.4 for XR + 11
-        let cameraAspect: CGFloat = 1.722_67
+        let cameraAspect: CGFloat = 1.72267
         cameraHeight = UIScreen.main.bounds.width * cameraAspect
 
         let minY: CGFloat = UIScreen.main.bounds.height > 800 ? 44 : 2

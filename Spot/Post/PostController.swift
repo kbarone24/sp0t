@@ -258,7 +258,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
             PostImageModel.shared.loadingOperations[post.id ?? ""] = dataLoader
         }
     }
-    ///https://medium.com/monstar-lab-bangladesh-engineering/tableview-prefetching-datasource-3de593530c4a
+    /// https://medium.com/monstar-lab-bangladesh-engineering/tableview-prefetching-datasource-3de593530c4a
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PostCell", for: indexPath) as? PostCell else {
