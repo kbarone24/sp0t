@@ -201,7 +201,7 @@ final class CameraViewController: UIViewController {
             }
             
         } else {
-            NextLevel.requestAuthorization(forMediaType: AVMediaType.video) { [weak self] (mediaType, status) in
+            NextLevel.requestAuthorization(forMediaType: AVMediaType.video) { [weak self] _, status in
                 if NextLevel.authorizationStatus(forMediaType: AVMediaType.video) == .authorized &&
                     NextLevel.authorizationStatus(forMediaType: AVMediaType.audio) == .authorized {
                     do {
@@ -221,7 +221,7 @@ final class CameraViewController: UIViewController {
                 }
             }
             
-            NextLevel.requestAuthorization(forMediaType: AVMediaType.audio) { [weak self] (mediaType, status) in
+            NextLevel.requestAuthorization(forMediaType: AVMediaType.audio) { [weak self] _, status in
                 
                 if NextLevel.authorizationStatus(forMediaType: AVMediaType.video) == .authorized &&
                     NextLevel.authorizationStatus(forMediaType: AVMediaType.audio) == .authorized {

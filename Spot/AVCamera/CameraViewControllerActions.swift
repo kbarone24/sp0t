@@ -110,34 +110,33 @@ extension CameraViewController {
     internal func pauseCapture() {
         UIView.animate(withDuration: 0.5, delay: 0, options: .curveEaseOut, animations: { [weak self] in
             self?.cameraButton.transform = .identity
-        }) { _ in
+        }, completion: { _ in
             NextLevel.shared.pause()
-        }
+        })
     }
     
-    internal func endCapture() {
+    func endCapture() {
         if let session = NextLevel.shared.session {
             if session.clips.count > 1 {
-                session.mergeClips(usingPreset: AVAssetExportPresetHighestQuality, completionHandler: { [weak self] (url: URL?, error: Error?) in
-                    if let url = url {
-                        self?.capturedVideo(path: url)
-                    } else if let _ = error {
-                        print("failed to merge clips at the end of capture \(String(describing: error))")
+                session.mergeClips(usingPreset: AVAssetExportPresetHighestQuality) { [weak self] (url: URL?, error: Error?) in
+                    
+                    guard let self, let url, error == nil else {
+                        return
                     }
-                })
-                
+                    
+                    self.capturedVideo(path: url)
+                }
             } else if let lastClipUrl = session.lastClipUrl {
                 self.capturedVideo(path: lastClipUrl)
                 
             } else if session.currentClipHasStarted {
-                session.endClip(completionHandler: { [weak self] (clip, error) in
-                    if error == nil, let url = clip?.url {
-                        self?.capturedVideo(path: url)
-                    } else {
-                        print("Error saving video: \(error?.localizedDescription ?? "")")
+                session.endClip { [weak self] clip, error in
+                    
+                    guard let self, let url = clip?.url, error == nil else {
+                        return
                     }
-                })
-                
+                    self.capturedVideo(path: url)
+                }
             } else {
                 // prompt that the video has been saved
                 let alertController = UIAlertController(title: "Video Capture", message: "Not enough video captured!", preferredStyle: .alert)
@@ -149,14 +148,40 @@ extension CameraViewController {
     }
     
     func capturedVideo(path: URL) {
-        DispatchQueue.main.async {
-            if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
-                UploadPostModel.shared.imageFromCamera = true
-                vc.mode = .video(url: path)
-                if let navController = self.navigationController {
-                    navController.pushViewController(vc, animated: false)
-                }
+        convertVideoToMPEG4Format(inputURL: path) { [weak self] assetExportSession in
+            guard let self, let assetExportSession else {
+                self?.showGenericAlert()
+                return
             }
+            
+            DispatchQueue.main.async {
+                guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController else {
+                    
+                    self.showGenericAlert()
+                    return
+                }
+                
+                UploadPostModel.shared.imageFromCamera = true
+                vc.mode = .video(url: assetExportSession.outputURL ?? path)
+                self.navigationController?.pushViewController(vc, animated: false)
+            }
+        }
+    }
+    
+    private func convertVideoToMPEG4Format(inputURL: URL, handler: @escaping (AVAssetExportSession?) -> Void) {
+        let asset = AVURLAsset(url: inputURL, options: nil)
+        try? FileManager.default.removeItem(at: inputURL)
+        
+        guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
+            handler(nil)
+            return
+        }
+        
+        exportSession.outputURL = inputURL
+        exportSession.outputFileType = .mp4
+        
+        exportSession.exportAsynchronously {
+            handler(exportSession)
         }
     }
 }

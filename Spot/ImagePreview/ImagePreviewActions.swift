@@ -267,20 +267,20 @@ extension ImagePreviewController {
         }
         
         Mixpanel.mainInstance().track(event: "ImagePreviewPostTap")
-        postButton?.isEnabled = false
+        postButton.isEnabled = false
         setCaptionValues()
         /// upload post
         UploadPostModel.shared.setFinalPostValues()
         if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
         
-        progressMask?.isHidden = false
-        view.bringSubviewToFront(progressMask ?? UIView())
-        let fullWidth = (self.progressBar?.bounds.width ?? 2) - 2
+        progressMask.isHidden = false
+        view.bringSubviewToFront(progressMask)
+        let fullWidth = (self.progressBar.bounds.width) - 2
         
         imageVideoService.uploadImages(
             images: UploadPostModel.shared.postObject?.postImage ?? [],
             parentView: view,
-            progressFill: self.progressBar?.progressFill ?? UIView(),
+            progressFill: self.progressBar.progressFill,
             fullWidth: fullWidth
         ) { [weak self] imageURLs, failed in
             guard let self = self else { return }

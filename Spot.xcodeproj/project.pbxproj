@@ -812,7 +812,6 @@
 		CD176ECF296D219800B15952 /* FocusIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusIndicatorView.swift; sourceTree = "<group>"; };
 		CD176ED129713DAB00B15952 /* ImageVideoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageVideoService.swift; sourceTree = "<group>"; };
 		CD176ED32971403300B15952 /* CoreDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataService.swift; sourceTree = "<group>"; };
-		CD1EA802294E38520042A041 /* AvatarURLs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AvatarURLs.swift; sourceTree = "<group>"; };
 		CD239A0728FFD3610099513F /* MapKitExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapKitExtension.swift; sourceTree = "<group>"; };
 		CD239A0928FFD3BB0099513F /* UIColorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColorExtension.swift; sourceTree = "<group>"; };
 		CD239A0B28FFD4EE0099513F /* StringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtension.swift; sourceTree = "<group>"; };
@@ -908,7 +907,6 @@
 				1DF6E03222089F4500BA0C36 /* Products */,
 				3798F58E8B6B5A60DAE46D6E /* Pods */,
 				2B0D14FAA805AA9639AEEB04 /* Frameworks */,
-				CD2499502938A25B008D1282 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -1508,14 +1506,6 @@
 				8C66FAE4295F67AD007A347D /* NSAttributedStringExtension.swift */,
 			);
 			path = FoundationExtensions;
-			sourceTree = "<group>";
-		};
-		CD2499502938A25B008D1282 /* Recovered References */ = {
-			isa = PBXGroup;
-			children = (
-				CD1EA802294E38520042A041 /* AvatarURLs.swift */,
-			);
-			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 		CDF8E93B2903A18000BE929F /* Services */ = {

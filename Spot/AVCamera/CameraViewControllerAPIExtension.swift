@@ -22,7 +22,7 @@ extension CameraViewController {
         }
         
         coreDataService.fetchFailedImageUploads { [weak self] postDraft, postImage in
-            guard let self else {
+            guard let self, let postDraft, let postImage else {
                 return
             }
             
@@ -86,6 +86,21 @@ extension CameraViewController {
         let alert = UIAlertController(
             title: "Upload failed",
             message: "Post saved to your drafts",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(
+            UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+                self?.cancelTap()
+            }
+        )
+        present(alert, animated: true, completion: nil)
+    }
+    
+    func showGenericAlert() {
+        let alert = UIAlertController(
+            title: "Something went wrong.",
+            message: "Try again.",
             preferredStyle: .alert
         )
         

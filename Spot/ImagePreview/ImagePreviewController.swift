@@ -39,11 +39,28 @@ final class ImagePreviewController: UIViewController {
     
     private lazy var dotView = UIView()
 
-    private var nextButton: FooterNextButton?
-    var postButton: UIButton?
-    var progressMask: UIView?
-    var progressBar: ProgressBar?
-
+    private var nextButton: FooterNextButton = {
+        let button = FooterNextButton()
+        button.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
+        button.isEnabled = true
+        return button
+    }()
+    
+    private(set) lazy var postButton: UIButton = {
+        let button = UIButton()
+        button.addTarget(self, action: #selector(postTap), for: .touchUpInside)
+        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+        return button
+    }()
+    
+    private(set) lazy var progressMask: UIView = {
+        let view = UIView()
+        view.backgroundColor = .black.withAlphaComponent(0.7)
+        view.isHidden = true
+        return view
+    }()
+    
+    private(set) lazy var progressBar = ProgressBar()
     private(set) lazy var postDetailView = PostDetailView()
     private(set) lazy var spotNameButton = SpotNameButton()
     
@@ -234,51 +251,36 @@ final class ImagePreviewController: UIViewController {
         }
 
         if newMapMode {
-            let titleView = NewMapTitleView {
-                view.addSubview($0)
-            }
+            let titleView = NewMapTitleView()
+            view.addSubview(titleView)
             titleView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview().inset(60)
                 $0.top.equalTo(backButton.snp.top).offset(2)
                 $0.centerX.equalToSuperview()
             }
 
-            postButton = PostButton {
-                $0.addTarget(self, action: #selector(postTap), for: .touchUpInside)
-                $0.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
-                view.addSubview($0)
-            }
-            postButton?.snp.makeConstraints {
+            view.addSubview(postButton)
+            postButton.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview().inset(18)
                 $0.height.equalTo(51)
                 $0.bottom.equalTo(-43)
             }
 
-            progressMask = UIView {
-                $0.backgroundColor = .black.withAlphaComponent(0.7)
-                $0.isHidden = true
-                view.addSubview($0)
-            }
-            progressMask?.snp.makeConstraints {
+            view.addSubview(progressMask)
+            progressMask.snp.makeConstraints {
                 $0.edges.equalToSuperview()
             }
 
-            progressBar = ProgressBar {
-                progressMask?.addSubview($0)
-            }
-            progressBar?.snp.makeConstraints {
+            progressMask.addSubview(progressBar)
+            progressBar.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview().inset(50)
-                if let postButton { $0.bottom.equalTo(postButton.snp.top).offset(-20) }
+                $0.bottom.equalTo(postButton.snp.top).offset(-20)
                 $0.height.equalTo(18)
             }
 
         } else {
-            nextButton = FooterNextButton {
-                $0.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
-                $0.isEnabled = true
-                view.addSubview($0)
-            }
-            nextButton?.snp.makeConstraints {
+            view.addSubview(nextButton)
+            nextButton.snp.makeConstraints {
                 $0.trailing.equalToSuperview().inset(15)
                 $0.bottom.equalToSuperview().inset(50)
                 $0.width.equalTo(94)
@@ -338,15 +340,18 @@ final class ImagePreviewController: UIViewController {
     }
 
     func addDots() {
-        for sub in dotView.subviews { sub.removeFromSuperview() }
+        dotView.subviews.forEach {
+            $0.removeFromSuperview()
+        }
+        
         for i in 0..<(UploadPostModel.shared.postObject?.frameIndexes?.count ?? 0) {
-            let dot = UIView {
-                $0.layer.borderColor = UIColor.white.cgColor
-                $0.layer.borderWidth = 1
-                $0.backgroundColor = i == UploadPostModel.shared.postObject?.selectedImageIndex ?? 0 ? .white : .clear
-                $0.layer.cornerRadius = 9 / 2
-                dotView.addSubview($0)
-            }
+            let dot = UIView()
+            dot.layer.borderColor = UIColor.white.cgColor
+            dot.layer.borderWidth = 1
+            dot.backgroundColor = i == UploadPostModel.shared.postObject?.selectedImageIndex ?? 0 ? .white : .clear
+            dot.layer.cornerRadius = 9 / 2
+            
+            dotView.addSubview(dot)
             let leading = i * 14
             dot.snp.makeConstraints {
                 $0.leading.equalTo(leading)

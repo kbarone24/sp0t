@@ -108,6 +108,7 @@ final class CoreDataService: CoreDataServiceProtocol {
     func uploadPostDraft(postDraft: PostDraft?, parentView: UIView?, progressFill: UIView?, completion: @escaping ((Bool) -> Void)) {
         guard let postDraft = postDraft,
               let model = postDraft.images as? Set<ImageModel>,
+              !model.isEmpty,
               let spotService = try? ServiceContainer.shared.service(for: \.spotService),
               let postService = try? ServiceContainer.shared.service(for: \.mapPostService),
               let mapService = try? ServiceContainer.shared.service(for: \.mapsService),
@@ -197,19 +198,21 @@ final class CoreDataService: CoreDataServiceProtocol {
                     post.timestamp = Firebase.Timestamp(date: Date())
                     
                     let newMap = post.mapID ?? "" != "" && mapToUpload.id ?? "" == ""
+                    let defaultMapID = UUID().uuidString
+                    let defaultPostID = UUID().uuidString
                     
                     if newMap {
                         mapToUpload = CustomMap(
-                            id: post.mapID!,
+                            id: post.mapID ?? defaultMapID,
                             founderID: uid,
-                            imageURL: imageURLs.first!,
+                            imageURL: imageURLs[0],
                             likers: [uid],
                             mapName: post.mapName ?? "",
                             memberIDs: [uid],
-                            posterDictionary: [post.id!: [uid]],
+                            posterDictionary: [(post.id ?? defaultPostID): [uid]],
                             posterIDs: [uid],
                             posterUsernames: [UserDataModel.shared.userInfo.username],
-                            postIDs: [post.id!],
+                            postIDs: [post.id ?? defaultPostID],
                             postImageURLs: post.imageURLs,
                             postLocations: [
                                 [
@@ -223,7 +226,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                             spotNames: [],
                             spotLocations: [],
                             memberProfiles: [UserDataModel.shared.userInfo],
-                            coverImage: uploadImages.first!
+                            coverImage: uploadImages[0]
                         )
                         
                         let lowercaseName = (post.mapName ?? "").lowercased()

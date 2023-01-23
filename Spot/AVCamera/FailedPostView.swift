@@ -123,7 +123,6 @@ final class FailedPostView: UIView {
         if let cameraVC = viewContainingController() as? CameraViewController {
             cameraVC.deletePostDraft()
         }
-       // infoView.cancelButton.addTarget(self, action: #selector(self.deletePostDraft(_:)), for: .touchUpInside)
     }
 
     @objc func postTap() {

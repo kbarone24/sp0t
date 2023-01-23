@@ -17,9 +17,16 @@ protocol ImageVideoServiceProtocol {
         fullWidth: CGFloat,
         completion: @escaping (([String], Bool) -> Void)
     )
+    
+    func uploadVideo(url: URL, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void)
 }
 
 final class ImageVideoService: ImageVideoServiceProtocol {
+    
+    enum ImageVideoServiceError: Error {
+        case parsingError
+    }
+    
     private let fireStore: Firestore
     private let storage: Storage
     
@@ -79,7 +86,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                 let imageID = UUID().uuidString
                 let storageRef = self.storage
                     .reference()
-                    .child("spotPics-dev")
+                    .child(FirebaseStorageFolder.pictures.reference)
                     .child("\(imageID)")
                 
                 var imageData = image.jpegData(compressionQuality: 0.5)
@@ -144,6 +151,38 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                                 }
                             }
                     }
+            }
+        }
+    }
+    
+    func uploadVideo(url: URL, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void) {
+        guard let data = try? Data(contentsOf: url) else {
+            failure(ImageVideoServiceError.parsingError)
+            return
+        }
+        
+        let videoID = UUID().uuidString
+        let uploadMetaData = StorageMetadata()
+        uploadMetaData.contentType = "video/mp4"
+        
+        let storageRef = storage.reference()
+            .child(FirebaseStorageFolder.videos.reference)
+            .child(videoID)
+        
+        storageRef.putData(data, metadata: uploadMetaData) { result in
+            switch result {
+            case .success:
+                storageRef.downloadURL { url, error in
+                    guard error == nil, let urlString = url?.absoluteString else {
+                        success("")
+                        return
+                    }
+                    
+                    success(urlString)
+                }
+                
+            case .failure(let error):
+                failure(error)
             }
         }
     }
