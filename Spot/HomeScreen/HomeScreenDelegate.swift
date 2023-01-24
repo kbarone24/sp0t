@@ -68,7 +68,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         if selectedControllerIndex == 0 { animateSideBar() }
 
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: nil, mapType: .customMap)
-        sheetView = DrawerView(present: customMapVC, presentationDirection: .bottomToTop) { [weak self] in
+        sheetView = DrawerView(present: customMapVC, presentationDirection: .rightToLeft) { [weak self] in
             self?.sheetView = nil
         }
 
