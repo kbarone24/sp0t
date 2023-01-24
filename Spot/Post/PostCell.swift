@@ -723,7 +723,8 @@ extension PostCell {
     func incrementPost(index: Int) {
         guard let postVC = viewContainingController() as? PostController else { return }
         postVC.selectedPostIndex += index
-        postVC.postsCollection.scrollToItem(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .left, animated: true)
+        print("increment")
+        DispatchQueue.main.async { postVC.postsCollection.scrollToItem(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .left, animated: true) }
     }
 
     @objc func likeTap(_ sender: UIButton) {
@@ -782,6 +783,8 @@ extension PostCell {
         db.collection("users").document(post.posterID).collection("notifications").addDocument(data: likeNotiValues)
         likeNotiValues["type"] = "likeOnAdd"
         for user in post.taggedUserIDs ?? [] {
+            // don't send noti to tagged user
+            if user == uid { continue }
             db.collection("users").document(user).collection("notifications").addDocument(data: likeNotiValues)
         }
 

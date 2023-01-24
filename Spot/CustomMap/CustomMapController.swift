@@ -33,6 +33,8 @@ class CustomMapController: UIViewController {
             if !ranSetUp { runInitialFetches() }
         }
     }
+
+    let startingDrawerOffset: CGFloat = -94
     var drawerViewIsDragging = false
     var currentContainerCanDragStatus: Bool?
     var offsetOnDismissal: CGFloat = 0
@@ -41,6 +43,8 @@ class CustomMapController: UIViewController {
     var centeredMap = false
     var ranSetUp = false
     var cancelOnDismiss = false
+
+    let barViewHeight: CGFloat = UserDataModel.shared.screenSize == 0 ? 65 : 90
 
     lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -119,7 +123,6 @@ class CustomMapController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? UIViewController()
 
         if let homeController = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController as? HomeScreenContainerController {
             if let mapNav = homeController.children.first(where: { $0 is UINavigationController }) as? UINavigationController {
@@ -134,8 +137,8 @@ class CustomMapController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView(present: !isMovingToParent) // only present when view reappears
         barView.isHidden = false
+        containerDrawerView?.configure(canDrag: currentContainerCanDragStatus ?? true, swipeDownToDismiss: false, startingPosition: .top)
 
         mapController?.mapView.delegate = self
         mapController?.mapView.spotMapDelegate = self
@@ -150,6 +153,10 @@ class CustomMapController: UIViewController {
         if (mapController?.mapView.annotations.isEmpty ?? true) || !centeredMap {
             DispatchQueue.main.async { self.addInitialAnnotations() }
         }
+
+        collectionView.isScrollEnabled = containerDrawerView?.status == .top
+      //  collectionView.contentOffset.y = offsetOnDismissal
+        currentContainerCanDragStatus = nil
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -215,23 +222,10 @@ class CustomMapController: UIViewController {
         navigationController.navigationBar.isTranslucent = true
     }
 
-    private func configureDrawerView(present: Bool) {
-        if containerDrawerView == nil { return }
-        containerDrawerView?.canInteract = true
-        containerDrawerView?.canDrag = currentContainerCanDragStatus ?? true
-        currentContainerCanDragStatus = nil
-        containerDrawerView?.swipeDownToDismiss = false
-        containerDrawerView?.showCloseButton = false
-
-        if containerDrawerView?.status.rawValue != DrawerViewDetent.top.rawValue && present {
-            DispatchQueue.main.async { self.containerDrawerView?.present(to: .top) }
-        }
-       // configureFullScreen()
-       // collectionView.contentOffset.y = offsetOnDismissal
-    }
-
     private func viewSetup() {
         if containerDrawerView == nil { return }
+        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewOffset), name: NSNotification.Name("DrawerViewOffset"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopBegan), name: NSNotification.Name("DrawerViewToTopBegan"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToTopCompletion), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToMiddleCompletion), name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(DrawerViewToBottomCompletion), name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
@@ -262,17 +256,16 @@ class CustomMapController: UIViewController {
         }
 
         containerDrawerView?.slideView.addSubview(barView)
-        let height: CGFloat = UserDataModel.shared.screenSize == 0 ? 65 : 90
         barView.snp.makeConstraints {
             $0.leading.top.width.equalToSuperview()
-            $0.height.equalTo(height)
+            $0.height.equalTo(barViewHeight)
         }
 
         barBackButton.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
         barView.addSubview(barBackButton)
         barBackButton.snp.makeConstraints {
-            $0.leading.equalTo(22)
-            $0.bottom.equalTo(-12)
+            $0.leading.equalTo(15)
+            $0.bottom.equalTo(-8)
             $0.height.equalTo(21.5)
             $0.width.equalTo(30)
         }
@@ -283,30 +276,51 @@ class CustomMapController: UIViewController {
             $0.bottom.equalTo(barBackButton)
             $0.height.equalTo(22)
         }
+
+        prepareOpenDrawer()
+        completeOpenDrawer()
+    }
+
+    @objc func drawerViewOffset() {
+        collectionView.isScrollEnabled = false
+    }
+
+    @objc func DrawerViewToTopBegan() {
+        prepareOpenDrawer()
+    }
+
+    func prepareOpenDrawer() {
+        guard currentContainerCanDragStatus == nil else { return }
+        if containerDrawerView == nil { return }
+
+        DispatchQueue.main.async {
+            self.barBackButton.alpha = 0.0
+            self.barBackButton.isHidden = false
+            UIView.transition(with: self.barBackButton, duration: 0.1,
+                              options: .transitionCrossDissolve,
+                              animations: {
+                self.barBackButton.alpha = 1.0
+            })
+            UIView.animate(withDuration: 0.2) {
+                self.collectionView.contentOffset.y = self.startingDrawerOffset
+            }
+        }
     }
 
     @objc func DrawerViewToTopCompletion() {
-        guard currentContainerCanDragStatus == nil else { return }
-        if containerDrawerView == nil { return }
-        configureFullScreen()
+        completeOpenDrawer()
     }
 
-    func configureFullScreen() {
-        barBackButton.alpha = 0.0
-        self.barBackButton.isHidden = false
-        UIView.transition(with: self.barBackButton, duration: 0.1,
-                          options: .transitionCrossDissolve,
-                          animations: {
-            self.barBackButton.alpha = 1.0
-        })
+    func completeOpenDrawer() {
+        guard currentContainerCanDragStatus == nil else { return }
+        if containerDrawerView == nil { return }
 
-        // When in top position enable collection view scroll
-        collectionView.isScrollEnabled = true
-        collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
-        barView.isUserInteractionEnabled = true
-        // Get top y content offset
-        if topYContentOffset == nil {
-            topYContentOffset = collectionView.contentOffset.y
+        DispatchQueue.main.async {
+            self.collectionView.isScrollEnabled = true
+            self.barView.isUserInteractionEnabled = true
+
+            self.collectionView.contentOffset.y = self.startingDrawerOffset
+            if self.topYContentOffset == nil { self.topYContentOffset = self.startingDrawerOffset }
         }
     }
 
@@ -316,7 +330,6 @@ class CustomMapController: UIViewController {
         // This line of code move the initial load naivgation bar up so it won't block the friend list button
         navigationController?.navigationBar.frame.origin = CGPoint(x: 0, y: 0)
 
-        collectionView.isScrollEnabled = false
         containerDrawerView?.swipeToNextState = true
         barBackButton.isHidden = true
 
@@ -333,7 +346,6 @@ class CustomMapController: UIViewController {
         if containerDrawerView == nil { return }
         Mixpanel.mainInstance().track(event: "CustomMapDrawerClose")
 
-        collectionView.isScrollEnabled = false
         containerDrawerView?.swipeToNextState = true
         barBackButton.isHidden = true
         collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
@@ -368,6 +380,7 @@ class CustomMapController: UIViewController {
         barBackButton.isHidden = true
         floatBackButton.isHidden = true
         // remove observer to cancel drawer methods before sheetView is set to nil on mapVC (remove remaining observers on deinit)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewOffset"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewToBottomComplete"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewToMiddleComplete"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
