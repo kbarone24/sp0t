@@ -20,10 +20,6 @@ protocol NotificationsDelegate: AnyObject {
 }
 
 class NotificationsController: UIViewController {
-<<<<<<< HEAD
-    
-=======
->>>>>>> ae2b8851 (memory leak issues fixed)
     lazy var notifications: [UserNotification] = []
     lazy var pendingFriendRequests: [UserNotification] = []
     
