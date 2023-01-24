@@ -31,21 +31,15 @@ class ProfileViewController: UIViewController {
     }
 
     private lazy var imageManager = SDWebImageManager()
-    public unowned var containerDrawerView: DrawerView? {
-        didSet {
-            configureDrawerView()
-        }
-    }
+    public unowned var containerDrawerView: DrawerView?
 
     var postsFetched = false {
         didSet {
-            print("posts fetched", postsFetched)
             toggleNoPosts()
         }
     }
     var mapsFetched = false {
         didSet {
-            print("maps fetched", mapsFetched)
             toggleNoPosts()
         }
     }
@@ -103,6 +97,8 @@ class ProfileViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyMapsLoad(_:)), name: NSNotification.Name(("UserMapsLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewOffset), name: NSNotification.Name(("DrawerViewOffset")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewReset), name: NSNotification.Name(("DrawerViewReset")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
     }
 
@@ -121,7 +117,7 @@ class ProfileViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView()
+        containerDrawerView?.configure(canDrag: false, swipeDownToDismiss: false, startingPosition: .top)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -130,10 +126,10 @@ class ProfileViewController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController?.setNavigationBarHidden(false, animated: false)
+        navigationController?.setNavigationBarHidden(false, animated: true)
 
         // Hacky way to avoid the nav bar get pushed up, when user go to custom map and drag the drawer to top, to middle and go back to profile
-        navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 47.0)
+        navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 50.0)
 
         navigationController?.navigationBar.barTintColor = UIColor.white
         navigationController?.navigationBar.isTranslucent = true
@@ -163,13 +159,8 @@ class ProfileViewController: UIViewController {
             button.imageInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
             navigationItem.rightBarButtonItem = button
         }
-    }
 
-    private func configureDrawerView() {
-        containerDrawerView?.canInteract = false
-        containerDrawerView?.swipeDownToDismiss = false
-        containerDrawerView?.showCloseButton = false
-        containerDrawerView?.present(to: .top)
+        collectionView.isScrollEnabled = true
     }
 
     private func toggleNoPosts() {
@@ -240,10 +231,8 @@ class ProfileViewController: UIViewController {
             $0.top.equalToSuperview().offset(243)
         }
 
-        activityIndicator = CustomActivityIndicator {
-            $0.isHidden = false
-            collectionView.addSubview($0)
-        }
+        activityIndicator.isHidden = false
+        collectionView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.width.height.equalTo(30)
             $0.centerX.equalToSuperview()

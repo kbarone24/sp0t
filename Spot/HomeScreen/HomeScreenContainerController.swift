@@ -29,7 +29,8 @@ class HomeScreenContainerController: UIViewController {
     lazy var sideBarController = MapSideBarController()
     var sheetView: DrawerView? {
         didSet {
-            mapController.drawerViewSet(open: sheetView != nil)
+            // call on animation completion for open
+            if sheetView == nil { mapController.drawerViewSet(open: false) }
         }
     }
 
@@ -50,6 +51,9 @@ class HomeScreenContainerController: UIViewController {
 
         mapTapGesture = UITapGestureRecognizer(target: self, action: #selector(mapTap))
         mapPanGesture = UIPanGestureRecognizer(target: self, action: #selector(mapPan(_:)))
+        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewOpen), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewClose), name: NSNotification.Name("DrawerViewCloseBegan"), object: nil)
+
         mapController.homeScreenDelegate = self
 
         addChild(mapNavController)
@@ -123,6 +127,16 @@ extension HomeScreenContainerController {
             $0.trailing.equalTo(view.snp.leading)
             $0.leading.equalToSuperview().offset(-UIScreen.main.bounds.width + 70)
         }
+    }
+
+    @objc func drawerViewOpen() {
+        if !(mapController.navigationController?.navigationBar.isHidden ?? false) {
+            mapController.drawerViewSet(open: true)
+        }
+    }
+
+    @objc func drawerViewClose() {
+        mapController.drawerViewSet(open: false)
     }
 
     @objc func mapTap() {

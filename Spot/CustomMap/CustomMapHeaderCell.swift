@@ -145,7 +145,7 @@ extension CustomMapHeaderCell {
 
         contentView.addSubview(mapCoverImage)
         mapCoverImage.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(-10)
+            $0.top.equalToSuperview().offset(-5)
             $0.leading.equalTo(15)
             $0.width.height.equalTo(84)
         }

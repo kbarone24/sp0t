@@ -15,19 +15,22 @@ import SnapKit
 import UIKit
 
 final class PostController: UIViewController {
-
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     
     lazy var postsList: [MapPost] = []
-    var spotObject: MapSpot!
-    
-    var postsCollection: UICollectionView!
-    unowned var containerDrawerView: DrawerView? {
-        didSet {
-            configureDrawerView()
-        }
-    }
+
+    var postsCollection: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.tag = 16
+        view.backgroundColor = .black
+        view.isScrollEnabled = false
+        view.layer.cornerRadius = 10
+        return view
+    }()
+    unowned var containerDrawerView: DrawerView?
     var openComments = false
     
     lazy var deleteIndicator = CustomActivityIndicator()
@@ -56,7 +59,7 @@ final class PostController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        configureDrawerView()
+        containerDrawerView?.configure(canDrag: true, swipeDownToDismiss: true, startingPosition: .top)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -92,31 +95,13 @@ final class PostController: UIViewController {
     func setUpNavBar() {
         navigationController?.setNavigationBarHidden(true, animated: true)
     }
-    
-    func configureDrawerView() {
-        containerDrawerView?.swipeDownToDismiss = true
-        containerDrawerView?.canInteract = true
-        containerDrawerView?.canDrag = true
-        containerDrawerView?.showCloseButton = false
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: .top) }
-    }
-    
+
     func setUpView() {
-        postsCollection = {
-            let layout = UICollectionViewFlowLayout()
-            layout.scrollDirection = .horizontal
-            let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-            view.tag = 16
-            view.backgroundColor = .black
-            view.dataSource = self
-            view.delegate = self
-            view.prefetchDataSource = self
-            view.isScrollEnabled = false
-            view.layer.cornerRadius = 10
-            view.register(PostCell.self, forCellWithReuseIdentifier: "PostCell")
-            view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
-            return view
-        }()
+        postsCollection.prefetchDataSource = self
+        postsCollection.dataSource = self
+        postsCollection.delegate = self
+        postsCollection.register(PostCell.self, forCellWithReuseIdentifier: "PostCell")
+        postsCollection.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         view.addSubview(postsCollection)
         postsCollection.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -265,6 +250,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
             return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
         }
         let post = postsList[indexPath.row]
+    //    DispatchQueue.main.async { cell.setUp(post: post, row: indexPath.row) }
         cell.setUp(post: post, row: indexPath.row)
         return cell
     }
@@ -276,7 +262,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
             if abs(indexPath.row - selectedPostIndex) > 3 { return }
             
             guard let post = postsList[safe: indexPath.row] else { return }
-            if let _ = PostImageModel.shared.loadingOperations[post.id ?? ""] { return }
+            if PostImageModel.shared.loadingOperations[post.id ?? ""] != nil { return }
             
             let dataLoader = PostImageLoader(post)
             dataLoader.queuePriority = .high
@@ -307,7 +293,7 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
     
     func setSeen(post: MapPost) {
         /// set seen on map
-        db.collection("posts").document(post.id!).updateData(["seenList": FieldValue.arrayUnion([uid])])
+        db.collection("posts").document(post.id ?? "").updateData(["seenList": FieldValue.arrayUnion([uid])])
         NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["post": post as Any]))
         /// show notification as seen
         updateNotifications(postID: post.id ?? "")
