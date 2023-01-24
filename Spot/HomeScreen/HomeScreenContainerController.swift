@@ -52,7 +52,7 @@ class HomeScreenContainerController: UIViewController {
         mapTapGesture = UITapGestureRecognizer(target: self, action: #selector(mapTap))
         mapPanGesture = UIPanGestureRecognizer(target: self, action: #selector(mapPan(_:)))
         NotificationCenter.default.addObserver(self, selector: #selector(drawerViewOpen), name: NSNotification.Name("DrawerViewToTopComplete"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewClose), name: NSNotification.Name("DrawerViewDismissComplete"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewClose), name: NSNotification.Name("DrawerViewCloseBegan"), object: nil)
 
         mapController.homeScreenDelegate = self
 

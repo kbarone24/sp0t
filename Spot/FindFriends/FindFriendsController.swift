@@ -21,7 +21,7 @@ enum FriendStatus {
 class FindFriendsController: UIViewController {
     let db: Firestore = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-    var containerDrawerView: DrawerView?
+    unowned var containerDrawerView: DrawerView?
 
     lazy var activeSearch = false
     lazy var contacts: [(UserProfile, FriendStatus)] = []
@@ -92,6 +92,7 @@ class FindFriendsController: UIViewController {
     }
 
     deinit {
+        print("find friends deinit")
         NotificationCenter.default.removeObserver(self)
     }
 
