@@ -19,8 +19,8 @@ extension MapController {
 
         let center = mapView.centerCoordinate.location.coordinate
         let maxRadius = min(CLLocationDistance(geoQueryLimit * 10_000), 3_500_000)
-        let radius = min(self.currentRadius / 2, maxRadius)
-
+        let radius = min(mapView.currentRadius() / 2, maxRadius)
+        print("radius", radius)
         Task {
             await spotService?.getNearbySpots(center: center, radius: radius, searchLimit: searchLimit ?? 50, completion: { [weak self] spots in
                 guard let self else { return }

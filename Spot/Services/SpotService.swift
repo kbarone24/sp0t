@@ -85,7 +85,6 @@ final class SpotService: SpotServiceProtocol {
             let queryBounds = GFUtils.queryBounds(
                 forLocation: center,
                 withRadius: radius)
-            
             let queries = queryBounds.map { bound -> Query in
                 return fireStore.collection(FirebaseCollectionNames.spots.rawValue)
                     .order(by: "g")
@@ -93,7 +92,7 @@ final class SpotService: SpotServiceProtocol {
                     .end(at: [bound.endValue])
                     .limit(to: searchLimit)
             }
-            
+
             var allSpots: [MapSpot] = []
             for query in queries {
                 defer {
