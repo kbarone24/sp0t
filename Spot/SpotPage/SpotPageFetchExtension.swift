@@ -46,10 +46,9 @@ extension SpotPageController {
                     if self.relatedPosts.contains(where: { $0.id == postInfo.id }) { continue }
                     if postInfo.posterID.isBlocked() { continue }
                     postGroup.enter()
-                    print("friendids contains", postInfo.friendsList.contains(UserDataModel.shared.uid))
                     self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
-                        self.addRelatedPost(postInfo: post)
+                        DispatchQueue.main.async { self.addRelatedPost(postInfo: post) }
                         postGroup.leave()
                     }
                 } catch let parseError {
@@ -98,7 +97,7 @@ extension SpotPageController {
                     postGroup.enter()
                     self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
                         guard let self = self else { return }
-                        self.addCommunityPost(postInfo: post)
+                        DispatchQueue.main.async { self.addCommunityPost(postInfo: post) }
                         postGroup.leave()
                     }
                 } catch let parseError {
@@ -107,7 +106,6 @@ extension SpotPageController {
             }
 
             postGroup.notify(queue: .main) {
-
                 self.activityIndicator.stopAnimating()
                 if self.fetching == .refreshDisabled {
                     self.fetchCommunityPostsComplete = true
@@ -116,7 +114,7 @@ extension SpotPageController {
                 }
 
                 self.communityEndDocument = allDocs.last
-                self.relatedPosts.sort(by: { $0.seconds > $1.seconds })
+            //    self.relatedPosts.sort(by: { $0.seconds > $1.seconds })
                 self.communityPosts.sort(by: { $0.seconds > $1.seconds })
                 self.collectionView.reloadData()
             }
@@ -130,15 +128,8 @@ extension SpotPageController {
 
     private func addCommunityPost(postInfo: MapPost) {
         if !hasPostAccess(post: postInfo) { return }
-        // (Map Posts) Check if mapID exist and append MapPost that belongs to different maps into community posts
-        // (Friend Posts) Check if related posts doesn't contain MapPost ID and append MapPost to community posts
-        if mapID != "" && postInfo.mapID == mapID {
-            if !relatedPosts.contains(where: { $0.id == postInfo.id }) { relatedPosts.append(postInfo) }
-        } else if mapID == "" && (UserDataModel.shared.userInfo.friendIDs.contains(postInfo.posterID) || UserDataModel.shared.uid == postInfo.posterID) {
-            if !relatedPosts.contains(where: { $0.id == postInfo.id }) { relatedPosts.append(postInfo) }
-        } else {
-            if !communityPosts.contains(where: { $0.id == postInfo.id }) { communityPosts.append(postInfo) }
-        }
+        // removed checks for related posts here because it causes the UI to jump and user will never see it. Friends posts to private maps will show in community posts -> feels better than jumpy UI
+        if !communityPosts.contains(where: { $0.id == postInfo.id }) { communityPosts.append(postInfo) }
     }
 
     private func hasPostAccess(post: MapPost) -> Bool {

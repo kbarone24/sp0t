@@ -31,7 +31,7 @@ class ProfileViewController: UIViewController {
     }
 
     private lazy var imageManager = SDWebImageManager()
-    public weak var containerDrawerView: DrawerView?
+    public unowned var containerDrawerView: DrawerView?
 
     var postsFetched = false {
         didSet {
@@ -159,6 +159,8 @@ class ProfileViewController: UIViewController {
             button.imageInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
             navigationItem.rightBarButtonItem = button
         }
+
+        collectionView.isScrollEnabled = true
     }
 
     private func toggleNoPosts() {

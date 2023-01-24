@@ -80,7 +80,7 @@ class SpotPageController: UIViewController {
         return label
     }()
     lazy var imageManager = SDWebImageManager()
-    public var containerDrawerView: DrawerView?
+    public unowned var containerDrawerView: DrawerView?
     lazy var activityIndicator = CustomActivityIndicator()
 
     var mapID: String?
@@ -147,6 +147,7 @@ extension SpotPageController {
     private func setUpNavBar() {
         navigationController?.setNavigationBarHidden(true, animated: true)
         barView.isHidden = false
+        collectionView.isScrollEnabled = true
     }
 
     private func viewSetup() {

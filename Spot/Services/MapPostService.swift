@@ -184,6 +184,7 @@ final class MapPostService: MapPostServiceProtocol {
                 return
             } catch {
                 completion(postInfo)
+                return
             }
         }
     }

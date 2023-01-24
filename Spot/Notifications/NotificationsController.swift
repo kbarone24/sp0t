@@ -20,7 +20,10 @@ protocol NotificationsDelegate: AnyObject {
 }
 
 class NotificationsController: UIViewController {
+<<<<<<< HEAD
     
+=======
+>>>>>>> ae2b8851 (memory leak issues fixed)
     lazy var notifications: [UserNotification] = []
     lazy var pendingFriendRequests: [UserNotification] = []
     
@@ -40,7 +43,7 @@ class NotificationsController: UIViewController {
         return service
     }()
     
-    var containerDrawerView: DrawerView?
+    unowned var containerDrawerView: DrawerView?
     private lazy var activityIndicator = CustomActivityIndicator()
     lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
@@ -57,20 +60,8 @@ class NotificationsController: UIViewController {
         return tableView
     }()
     
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override init(nibName: String?, bundle: Bundle?) {
-        super.init(nibName: nibName, bundle: bundle)
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            self.fetchNotifications(refresh: false)
-        }
-    }
-    
     deinit {
+        print("notifications deinit")
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -79,6 +70,7 @@ class NotificationsController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(rawValue: "DeletePost"), object: nil)
         setupView()
+        fetchNotifications(refresh: false)
     }
     
     override func viewWillAppear(_ animated: Bool) {
