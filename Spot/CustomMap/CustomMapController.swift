@@ -28,7 +28,7 @@ class CustomMapController: UIViewController {
     lazy var postsList: [MapPost] = []
 
     unowned var mapController: MapController?
-    weak var containerDrawerView: DrawerView? {
+    unowned var containerDrawerView: DrawerView? {
         didSet {
             if !ranSetUp { runInitialFetches() }
         }
@@ -108,7 +108,6 @@ class CustomMapController: UIViewController {
         self.mapData = mapData
         self.mapType = mapType
         self.containerDrawerView = presentedDrawerView
-        offsetOnDismissal = startingDrawerOffset
     }
 
     required init?(coder: NSCoder) {
@@ -156,8 +155,7 @@ class CustomMapController: UIViewController {
         }
 
         collectionView.isScrollEnabled = containerDrawerView?.status == .top
-        collectionView.contentOffset.y = offsetOnDismissal
-        print("set offset", collectionView.contentOffset.y)
+      //  collectionView.contentOffset.y = offsetOnDismissal
         currentContainerCanDragStatus = nil
     }
 
@@ -278,6 +276,9 @@ class CustomMapController: UIViewController {
             $0.bottom.equalTo(barBackButton)
             $0.height.equalTo(22)
         }
+
+        prepareOpenDrawer()
+        completeOpenDrawer()
     }
 
     @objc func drawerViewOffset() {
@@ -285,6 +286,10 @@ class CustomMapController: UIViewController {
     }
 
     @objc func DrawerViewToTopBegan() {
+        prepareOpenDrawer()
+    }
+
+    func prepareOpenDrawer() {
         guard currentContainerCanDragStatus == nil else { return }
         if containerDrawerView == nil { return }
 
@@ -303,14 +308,19 @@ class CustomMapController: UIViewController {
     }
 
     @objc func DrawerViewToTopCompletion() {
-        guard currentContainerCanDragStatus == nil else { print("drag nil"); return }
+        completeOpenDrawer()
+    }
+
+    func completeOpenDrawer() {
+        guard currentContainerCanDragStatus == nil else { return }
         if containerDrawerView == nil { return }
 
-        collectionView.isScrollEnabled = true
-        barView.isUserInteractionEnabled = true
+        DispatchQueue.main.async {
+            self.collectionView.isScrollEnabled = true
+            self.barView.isUserInteractionEnabled = true
 
-        if topYContentOffset == nil {
-            topYContentOffset = collectionView.contentOffset.y
+            self.collectionView.contentOffset.y = self.startingDrawerOffset
+            if self.topYContentOffset == nil { self.topYContentOffset = self.startingDrawerOffset }
         }
     }
 
