@@ -107,8 +107,6 @@ extension ProfileViewController {
             self.getNinePosts()
         }
     }
-<<<<<<< HEAD
-=======
 
     @objc func notifyDrawerViewReset() {
         collectionView.isScrollEnabled = true
@@ -117,5 +115,4 @@ extension ProfileViewController {
     @objc func notifyDrawerViewOffset() {
         collectionView.isScrollEnabled = false
     }
->>>>>>> 29e42358 (everything working except initial custom map animation)
 }
