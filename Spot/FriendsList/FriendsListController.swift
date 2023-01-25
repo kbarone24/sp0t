@@ -157,14 +157,10 @@ final class FriendsListController: UIViewController {
         }
 
         switch parentVC {
-            case .profile:
-            titleLabel.text = "Friends list"
-            case .newMap:
-            titleLabel.text = "Select friends"
-            case .mapAdd:
-            titleLabel.text = "Add friends"
-            case .mapMembers:
-            titleLabel.text = "Members"
+        case .profile: titleLabel.text = "Friends list"
+        case .newMap: titleLabel.text = "Select friends"
+        case .mapAdd: titleLabel.text = "Add friends"
+        case .mapMembers: titleLabel.text = "Members"
         }
         view.addSubview(titleLabel)
         titleLabel.snp.makeConstraints {
