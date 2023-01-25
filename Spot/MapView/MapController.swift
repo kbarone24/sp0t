@@ -111,6 +111,36 @@ final class MapController: UIViewController {
         runMapFetches()
         setUpNavBar()
         locationManager.delegate = self
+
+
+        db.collection("maps").getDocuments { snap, _ in
+            for doc in snap!.documents {
+                do {
+                    let map = try doc.data(as: CustomMap.self)
+                    let postsCount = map.postIDs.count
+                    if map.postImageURLs.count != postsCount {
+                        print("imageurls is off", map.mapName)
+                    }
+                    if map.postLocations.count != postsCount {
+                        print("postlocations is off", map.mapName)
+                    }
+                    if map.postSpotIDs.count != postsCount {
+                        print("postSpotIDs is off", map.mapName)
+                    }
+                    if map.postTimestamps.count != postsCount {
+                        print("postTimestamps is off", map.mapName)
+                    }
+                    if map.posterIDs.count != postsCount {
+                        print("posterids is off", map.mapName)
+                    }
+                    if map.posterUsernames.count != postsCount {
+                        print("posterUsernames is off", map.mapName)
+                    }
+                } catch {
+                    continue
+                }
+            }
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {

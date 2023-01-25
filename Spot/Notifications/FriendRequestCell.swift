@@ -56,22 +56,7 @@ final class FriendRequestCell: UICollectionViewCell {
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
-    private lazy var acceptButton: UIButton = {
-        let button = UIButton()
-        button.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
-        button.layer.cornerRadius = 14
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1).cgColor
-        button.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
-        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
-        let title = NSMutableAttributedString(string: "Accept", attributes: [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-            NSAttributedString.Key.foregroundColor: UIColor.black
-        ])
-        button.setAttributedTitle(title, for: .normal)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
+    private lazy var acceptButton = AddFriendButton(frame: .zero, title: "Accept")
 
     override init(frame: CGRect) {
         super.init(frame: frame)

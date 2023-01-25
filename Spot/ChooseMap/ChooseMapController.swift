@@ -196,7 +196,7 @@ final class ChooseMapController: UIViewController {
                     HapticGenerator.shared.play(.soft)
                     self.popToMap()
                 }
-            }
+        }
     }
     
     func runFailedUpload() {
@@ -272,29 +272,29 @@ extension ChooseMapController: NewMapDelegate {
               let mapService = try? ServiceContainer.shared.service(for: \.mapsService),
               let userService = try? ServiceContainer.shared.service(for: \.userService)
         else { return }
-        
-        var spot = UploadPostModel.shared.spotObject
-        var map = UploadPostModel.shared.mapObject
-        
+
         if UploadPostModel.shared.imageFromCamera {
             SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage())
         }
-        
+
+        let spot = UploadPostModel.shared.spotObject
+        let map = UploadPostModel.shared.mapObject
+
         Task {
-            if spot != nil {
-                spot!.imageURL = post.imageURLs.first ?? ""
-                await spotService.uploadSpot(post: post, spot: spot!, submitPublic: false)
+            if var spot {
+                spot.imageURL = post.imageURLs.first ?? ""
+                spotService.uploadSpot(post: post, spot: spot, submitPublic: false)
             }
-            if map != nil {
-                if map!.imageURL == "" { map!.imageURL = post.imageURLs.first ?? "" }
-                map!.postImageURLs.append(post.imageURLs.first ?? "")
-                await mapService.uploadMap(map: map!, newMap: newMap, post: post, spot: spot)
+            if var map {
+                if map.imageURL == "" { map.imageURL = post.imageURLs.first ?? "" }
+                map.postImageURLs.append(post.imageURLs.first ?? "")
+                mapService.uploadMap(map: map, newMap: newMap, post: post, spot: UploadPostModel.shared.spotObject)
             }
             
-            await postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
+            postService.uploadPost(post: post, map: map, spot: spot, newMap: newMap)
             
             let visitorList = spot?.visitorList ?? []
-            await userService.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
+            userService.setUserValues(poster: UserDataModel.shared.uid, post: post, spotID: spot?.id ?? "", visitorList: visitorList, mapID: map?.id ?? "")
             
             Mixpanel.mainInstance().track(event: "SuccessfulPostUpload")
         }

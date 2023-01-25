@@ -9,24 +9,77 @@
 import UIKit
 
 final class FailedPostView: UIView {
-    var contentView: UIView!
-    var retryLabel: UILabel!
-    var coverImage: UIImageView!
-    var cancelButton: UIButton!
-    var postButton: UIButton!
+    private lazy var contentView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+        view.layer.cornerRadius = 12
+        return view
+    }()
 
-    var progressBar: UIView!
-    var progressFill: UIView!
+    public lazy var coverImage: UIImageView = {
+        let view = UIImageView()
+        view.layer.cornerRadius = 8
+        view.clipsToBounds = true
+        view.contentMode = .scaleAspectFill
+        return view
+    }()
+
+    private lazy var retryLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Retry failed upload?"
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 18)
+        return label
+    }()
+
+    private lazy var cancelButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = UIColor(red: 0.871, green: 0.871, blue: 0.871, alpha: 1)
+        button.setTitle("Cancel", for: .normal)
+        button.setTitleColor(.red, for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
+        button.layer.cornerRadius = 13
+        button.contentHorizontalAlignment = .center
+        button.contentVerticalAlignment = .center
+        button.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var postButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = UIColor(named: "SpotGreen")
+        button.setTitle("Post", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+        button.layer.cornerRadius = 13
+        button.contentVerticalAlignment = .center
+        button.contentHorizontalAlignment = .center
+        button.addTarget(self, action: #selector(postTap), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var progressBar: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(named: "SpotGreen")?.withAlphaComponent(0.22)
+        view.layer.cornerRadius = 6
+        view.layer.borderWidth = 2
+        view.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
+        view.isHidden = true
+        return view
+    }()
+
+    public lazy var progressFill: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(named: "SpotGreen")
+        view.layer.cornerRadius = 6
+        return view
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = UIColor.black.withAlphaComponent(0.9)
 
-        contentView = UIView {
-            $0.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-            $0.layer.cornerRadius = 12
-            addSubview($0)
-        }
+        addSubview(contentView)
         contentView.snp.makeConstraints {
             $0.height.equalTo(160)
             $0.width.equalToSuperview().inset(30)
@@ -34,40 +87,20 @@ final class FailedPostView: UIView {
             $0.centerY.equalToSuperview().offset(-100)
         }
 
-        coverImage = UIImageView {
-            $0.layer.cornerRadius = 8
-            $0.clipsToBounds = true
-            $0.contentMode = .scaleAspectFill
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(coverImage)
         coverImage.snp.makeConstraints {
             $0.leading.top.equalTo(12)
             $0.height.equalTo(70)
             $0.width.equalTo(70)
         }
 
-        retryLabel = UILabel {
-            $0.text = "Retry failed upload?"
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 18)
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(retryLabel)
         retryLabel.snp.makeConstraints {
             $0.leading.equalTo(coverImage.snp.trailing).offset(14)
             $0.centerY.equalTo(coverImage.snp.centerY)
         }
 
-        cancelButton = UIButton {
-            $0.backgroundColor = UIColor(red: 0.871, green: 0.871, blue: 0.871, alpha: 1)
-            $0.setTitle("Cancel", for: .normal)
-            $0.setTitleColor(.red, for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
-            $0.layer.cornerRadius = 13
-            $0.contentHorizontalAlignment = .center
-            $0.contentVerticalAlignment = .center
-            $0.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(cancelButton)
         cancelButton.snp.makeConstraints {
             $0.trailing.equalTo(contentView.snp.centerX).offset(-15)
             $0.bottom.equalToSuperview().inset(12)
@@ -75,17 +108,7 @@ final class FailedPostView: UIView {
             $0.height.equalTo(40)
         }
 
-        postButton = UIButton {
-            $0.backgroundColor = UIColor(named: "SpotGreen")
-            $0.setTitle("Post", for: .normal)
-            $0.setTitleColor(.black, for: .normal)
-            $0.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-            $0.layer.cornerRadius = 13
-            $0.contentVerticalAlignment = .center
-            $0.contentHorizontalAlignment = .center
-            $0.addTarget(self, action: #selector(postTap), for: .touchUpInside)
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(postButton)
         postButton.snp.makeConstraints {
             $0.leading.equalTo(contentView.snp.centerX).offset(15)
             $0.bottom.equalToSuperview().inset(12)
@@ -93,25 +116,14 @@ final class FailedPostView: UIView {
             $0.height.equalTo(40)
         }
 
-        progressBar = UIView {
-            $0.backgroundColor = UIColor(named: "SpotGreen")?.withAlphaComponent(0.22)
-            $0.layer.cornerRadius = 6
-            $0.layer.borderWidth = 2
-            $0.layer.borderColor = UIColor(named: "SpotGreen")?.cgColor
-            $0.isHidden = true
-            addSubview($0)
-        }
+        addSubview(progressBar)
         progressBar.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(50)
             $0.top.equalTo(contentView.snp.bottom).offset(30)
             $0.height.equalTo(18)
         }
 
-        progressFill = UIView {
-            $0.backgroundColor = UIColor(named: "SpotGreen")
-            $0.layer.cornerRadius = 6
-            progressBar.addSubview($0)
-        }
+        progressBar.addSubview(progressFill)
         progressFill.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(1)
             $0.width.equalTo(0)

@@ -16,13 +16,14 @@ protocol FriendsListDelegate: AnyObject {
 }
 
 final class FriendsListController: UIViewController {
-    private let allowsSelection: Bool
-    private let showsSearchBar: Bool
-    private var readyToDismiss = true
-    private var queried = false
+    let allowsSelection: Bool
+    let showsSearchBar: Bool
+    var readyToDismiss = true
+    var queried = false
+    var canAddFriends = false
 
-    private lazy var activityIndicator = CustomActivityIndicator()
-    private lazy var userService: UserServiceProtocol? = {
+    lazy var activityIndicator = CustomActivityIndicator()
+    lazy var userService: UserServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.userService)
         return service
     }()
@@ -50,7 +51,7 @@ final class FriendsListController: UIViewController {
         return label
     }()
 
-    private lazy var tableView: UITableView = {
+    lazy var tableView: UITableView = {
         let view = UITableView()
         view.backgroundColor = nil
         view.separatorStyle = .none
@@ -60,7 +61,7 @@ final class FriendsListController: UIViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    
+
     private(set) lazy var searchBar: UISearchBar = {
         let searchBar = UISearchBar()
         searchBar.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
@@ -76,17 +77,29 @@ final class FriendsListController: UIViewController {
         return searchBar
     }()
 
-    private var confirmedIDs: [String] /// users who cannot be unselected
-    private var friendIDs: [String]
-    private var friendsList: [UserProfile]
-    private var queriedFriends: [UserProfile] = []
+    var confirmedIDs: [String] /// users who cannot be unselected
+    var friendIDs: [String]
+    var friendsList: [UserProfile]
+    var queriedFriends: [UserProfile] = []
 
-    private var searchPan: UIPanGestureRecognizer?
+    var searchPan: UIPanGestureRecognizer?
     weak var delegate: FriendsListDelegate?
+    var endUserPosition: Int = 0
+    lazy var refresh: RefreshStatus = .refreshDisabled
 
-    init(allowsSelection: Bool, showsSearchBar: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String]) {
+    enum ParentVC: Int {
+        case profile = 0
+        case mapMembers = 1
+        case mapAdd = 2
+        case newMap = 3
+    }
+    var parentVC: ParentVC
+
+    init(parentVC: ParentVC, allowsSelection: Bool, showsSearchBar: Bool, canAddFriends: Bool, friendIDs: [String], friendsList: [UserProfile], confirmedIDs: [String]) {
+        self.parentVC = parentVC
         self.allowsSelection = allowsSelection
         self.showsSearchBar = showsSearchBar
+        self.canAddFriends = canAddFriends
         self.friendIDs = friendIDs
         self.friendsList = friendsList
         self.queriedFriends = friendsList
@@ -96,6 +109,11 @@ final class FriendsListController: UIViewController {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        print("friends list deinit")
+        NotificationCenter.default.removeObserver(self)
     }
 
     override func viewDidLoad() {
@@ -109,6 +127,7 @@ final class FriendsListController: UIViewController {
             }
         }
         presentationController?.delegate = self
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyAddFriend), name: NSNotification.Name("SendFriendRequest"), object: nil)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -137,7 +156,16 @@ final class FriendsListController: UIViewController {
             $0.width.height.equalTo(40)
         }
 
-        titleLabel.text = allowsSelection ? "Select friends" : "Friends list"
+        switch parentVC {
+            case .profile:
+            titleLabel.text = "Friends list"
+            case .newMap:
+            titleLabel.text = "Select friends"
+            case .mapAdd:
+            titleLabel.text = "Add friends"
+            case .mapMembers:
+            titleLabel.text = "Members"
+        }
         view.addSubview(titleLabel)
         titleLabel.snp.makeConstraints {
             $0.top.equalTo(15)
@@ -146,6 +174,7 @@ final class FriendsListController: UIViewController {
         }
 
         tableView.register(ChooseFriendsCell.self, forCellReuseIdentifier: "FriendsCell")
+        tableView.register(ActivityIndicatorCell.self, forCellReuseIdentifier: "IndicatorCell")
         tableView.dataSource = self
         tableView.delegate = self
         view.addSubview(tableView)
@@ -180,22 +209,6 @@ final class FriendsListController: UIViewController {
         view.addGestureRecognizer(searchPan ?? UIPanGestureRecognizer())
     }
 
-    func getFriends() {
-        print("get friends")
-        let db: Firestore = Firestore.firestore()
-        Task {
-            for id in friendIDs {
-                guard let user = try await userService?.getUserInfo(userID: id) else { continue }
-                if user.username == "" { continue }
-                self.friendsList.append(user)
-            }
-            DispatchQueue.main.async {
-                self.activityIndicator.stopAnimating()
-                self.tableView.reloadData()
-            }
-        }
-    }
-
     @objc func doneTap(_ sender: UIButton) {
         var selectedUsers: [UserProfile] = []
         for friend in friendsList where friend.selected { selectedUsers.append(friend) }
@@ -211,6 +224,15 @@ final class FriendsListController: UIViewController {
         /// remove keyboard on down swipe + vertical swipe > horizontal
         if abs(sender.translation(in: view).y) > abs(sender.translation(in: view).x) {
             searchBar.resignFirstResponder()
+        }
+    }
+
+    @objc func notifyAddFriend(_ sender: NSNotification) {
+        // user data model will automatically update
+        if let receiverID = sender.userInfo?.first?.value as? String {
+            print("notify add friend")
+            UserDataModel.shared.userInfo.pendingFriendRequests.append(receiverID)
+            DispatchQueue.main.async { self.tableView.reloadData() }
         }
     }
 }
@@ -237,97 +259,5 @@ extension FriendsListController: UIGestureRecognizerDelegate, UIAdaptivePresenta
     func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
         /// dont want to recognize swipe to dismiss with keyboard active
         return readyToDismiss
-    }
-}
-
-extension FriendsListController: UISearchBarDelegate {
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        queried = searchText != ""
-        queriedFriends.removeAll()
-        queriedFriends = getQueriedUsers(userList: friendsList, searchText: searchText)
-        DispatchQueue.main.async { self.tableView.reloadData() }
-    }
-
-    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
-        searchPan?.isEnabled = true
-        readyToDismiss = false
-        queried = true
-    }
-
-    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
-        searchPan?.isEnabled = false
-        // lag on ready to dismiss to avoid double tap to dismiss
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            self.readyToDismiss = true
-        }
-    }
-}
-
-extension FriendsListController: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return queried ? queriedFriends.count : friendsList.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "FriendsCell", for: indexPath) as? ChooseFriendsCell {
-            let friend = queried ? queriedFriends[indexPath.row] : friendsList[indexPath.row]
-            let editable = !confirmedIDs.contains(friend.id ?? "")
-            cell.setUp(user: friend, allowsSelection: allowsSelection, editable: editable)
-            return cell
-        }
-        return UITableViewCell()
-    }
-
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 63
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let user = queried ? queriedFriends[indexPath.row] : friendsList[indexPath.row]
-        let id = user.id ?? ""
-
-        if allowsSelection {
-            if confirmedIDs.contains(id) { return } /// cannot unselect confirmed ID
-            Mixpanel.mainInstance().track(event: "FriendsListSelectFriend")
-            if queried { if let i = queriedFriends.firstIndex(where: { $0.id == id }) { queriedFriends[i].selected = !queriedFriends[i].selected } }
-            if let i = friendsList.firstIndex(where: { $0.id == id }) { friendsList[i].selected = !friendsList[i].selected }
-            DispatchQueue.main.async { self.tableView.reloadData() }
-            
-        } else {
-            DispatchQueue.main.async {
-                self.delegate?.finishPassing(openProfile: user)
-                self.dismiss(animated: true)
-            }
-        }
-    }
-}
-
-extension FriendsListController {
-    
-    func getQueriedUsers(userList: [UserProfile], searchText: String) -> [UserProfile] {
-        var queriedUsers: [UserProfile] = []
-        let usernameList = userList.map({ $0.username })
-        let nameList = userList.map({ $0.name })
-
-        let filteredUsernames = searchText.isEmpty ? usernameList : usernameList.filter({(dataString: String) -> Bool in
-            // If dataItem matches the searchText, return true to include it
-            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
-        })
-
-        let filteredNames = searchText.isEmpty ? nameList : nameList.filter({(dataString: String) -> Bool in
-            return dataString.range(of: searchText, options: [.anchored, .caseInsensitive]) != nil
-        })
-
-        for username in filteredUsernames {
-            if let user = userList.first(where: { $0.username == username }) { queriedUsers.append(user) }
-        }
-
-        for name in filteredNames {
-            if let user = userList.first(where: { $0.name == name }) {
-                if !queriedUsers.contains(where: { $0.id == user.id }) { queriedUsers.append(user) }
-            }
-        }
-        return queriedUsers
     }
 }
