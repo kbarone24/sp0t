@@ -266,7 +266,6 @@ struct CustomMap: Identifiable, Codable, Hashable {
         /// remove associated values
         posterDictionary.removeValue(forKey: postID)
         if let i = postIDs.firstIndex(where: { $0 == postID }) {
-            postIDs.remove(at: i)
             // check to make sure all of these values were consistently updated along postIDs
             if posterIDs.count == postIDs.count { posterIDs.remove(at: i) }
             if posterUsernames.count == postIDs.count { posterUsernames.remove(at: i) }
@@ -274,6 +273,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
             if postLocations.count == postIDs.count { postLocations.remove(at: i) }
             if postSpotIDs.count == postIDs.count { postSpotIDs.remove(at: i) }
             if postTimestamps.count == postIDs.count { postTimestamps.remove(at: i) }
+            postIDs.remove(at: i)
         }
         if spotID != "" {
             if let i = spotIDs.firstIndex(where: { $0 == spotID }) {

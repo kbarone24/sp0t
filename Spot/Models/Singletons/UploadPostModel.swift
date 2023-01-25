@@ -179,7 +179,7 @@ final class UploadPostModel {
         postObject.friendsList = post.friendsList
         postObject.hideFromFeed = post.hideFromFeed ?? false
         postObject.images = NSSet(array: imageObjects)
-        postObject.inviteList = spot?.inviteList ?? []
+        postObject.inviteList = post.inviteList ?? []
         postObject.mapID = post.mapID
         postObject.mapName = post.mapName
         postObject.postLat = post.postLat

@@ -328,7 +328,6 @@ extension ProfileViewController {
 
     func addFriendFromProfile() {
         Mixpanel.mainInstance().track(event: "ProfileHeaderAddFriendTap")
-        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SendFriendRequest"), object: nil, userInfo: ["userID": userProfile?.id ?? ""])
         friendService?.addFriend(receiverID: userProfile?.id ?? "", completion: nil)
         relation = .pending
         DispatchQueue.main.async { self.collectionView.reloadData() }
@@ -358,9 +357,12 @@ extension ProfileViewController {
 
     @objc func friendsListTap() {
         Mixpanel.mainInstance().track(event: "ProfileFriendsListTap")
+        userProfile?.sortFriends()
         let vc = FriendsListController(
+            parentVC: .profile,
             allowsSelection: false,
             showsSearchBar: false,
+            canAddFriends: relation != .myself,
             friendIDs: userProfile?.friendIDs ?? [],
             friendsList: userProfile?.friendsList ?? [],
             confirmedIDs: [])

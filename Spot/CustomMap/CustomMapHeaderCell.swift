@@ -363,8 +363,10 @@ extension CustomMapHeaderCell {
         guard let mapData = mapData else { return }
         let friendsList = UserDataModel.shared.userInfo.getSelectedFriends(memberIDs: mapData.memberIDs)
         let friendsVC = FriendsListController(
+            parentVC: .mapAdd,
             allowsSelection: true,
             showsSearchBar: true,
+            canAddFriends: false,
             friendIDs: UserDataModel.shared.userInfo.friendIDs,
             friendsList: friendsList,
             confirmedIDs: mapData.memberIDs
@@ -399,10 +401,11 @@ extension CustomMapHeaderCell {
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CustomMapMembersTap")
         guard let customMapVC = viewContainingController() as? CustomMapController else { return }
-
         let friendListVC = FriendsListController(
+            parentVC: .mapMembers,
             allowsSelection: false,
             showsSearchBar: false,
+            canAddFriends: true,
             friendIDs: mapData?.memberIDs ?? [],
             friendsList: [],
             confirmedIDs: [])

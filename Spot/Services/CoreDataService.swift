@@ -144,7 +144,8 @@ final class CoreDataService: CoreDataServiceProtocol {
                     .forEach {
                         aspectRatios.append(CGFloat($0))
                     }
-                
+
+                let postLocation = ["lat": postDraft.postLat, "long": postDraft.postLong]
                 var post = MapPost(
                     id: UUID().uuidString,
                     posterID: uid,
@@ -154,7 +155,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                     uploadImages: imagesToBeUploaded,
                     imageURLs: [],
                     aspectRatios: aspectRatios,
-                    imageLocations: [],
+                    imageLocations: [postLocation],
                     likers: []
                 )
                 
@@ -213,20 +214,20 @@ final class CoreDataService: CoreDataServiceProtocol {
                             posterIDs: [uid],
                             posterUsernames: [UserDataModel.shared.userInfo.username],
                             postIDs: [post.id ?? defaultPostID],
-                            postImageURLs: post.imageURLs,
+                            postImageURLs: [post.imageURLs.first ?? ""],
                             postLocations: [
                                 [
                                     "lat": post.postLat,
                                     "long": post.postLong
                                 ]
-                            ], postSpotIDs: [],
+                            ], postSpotIDs: [post.spotID ?? ""],
                             postTimestamps: [post.timestamp],
-                            secret: false,
+                            secret: postDraft.mapSecret,
                             spotIDs: [],
                             spotNames: [],
                             spotLocations: [],
                             memberProfiles: [UserDataModel.shared.userInfo],
-                            coverImage: uploadImages[0]
+                            coverImage: uploadImages.first ?? UIImage()
                         )
                         
                         let lowercaseName = (post.mapName ?? "").lowercased()
@@ -234,13 +235,17 @@ final class CoreDataService: CoreDataServiceProtocol {
                         mapToUpload.searchKeywords = lowercaseName.getKeywordArray()
                         
                         /// add added users
-                        if !(post.addedUsers?.isEmpty ?? true) { mapToUpload.memberIDs.append(contentsOf: post.addedUsers!); mapToUpload.likers.append(contentsOf: post.addedUsers!); mapToUpload.memberProfiles!.append(contentsOf: post.addedUserProfiles!); mapToUpload.posterDictionary[post.id!]?.append(contentsOf: post.addedUsers!)
+                        if let addedUsers = post.addedUsers, !addedUsers.isEmpty { mapToUpload.memberIDs.append(contentsOf: addedUsers)
+                            mapToUpload.likers.append(contentsOf: addedUsers)
+                            mapToUpload.memberProfiles?.append(contentsOf: post.addedUserProfiles ?? [])
+                            mapToUpload.posterDictionary[post.id ?? ""]?.append(contentsOf: addedUsers)
                         }
                         
-                        if spot.id != "" {
-                            mapToUpload.postSpotIDs.append(spot.id!)
-                            mapToUpload.spotIDs.append(spot.id!)
+                        if let spotID = spot.id {
+                            mapToUpload.postSpotIDs[0] = spotID
+                            mapToUpload.spotIDs.append(spotID)
                             mapToUpload.spotNames.append(spot.spotName)
+                            mapToUpload.spotPOICategories.append(spot.poiCategory ?? "")
                             mapToUpload.spotLocations.append(["lat": spot.spotLat, "long": spot.spotLong])
                         }
                     }
