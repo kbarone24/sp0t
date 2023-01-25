@@ -13,6 +13,8 @@ import Foundation
 extension CustomMapController {
     func getMapMembers() {
         guard let mapData = mapData else { return }
+        // sort members by #posts
+        sortMapMembers()
         // will show "x joined" if 7+ members or community map so don't need profiles
         if mapData.memberIDs.count > 6 || mapData.communityMap ?? false {
             DispatchQueue.main.async { self.collectionView.reloadData() }
@@ -41,6 +43,14 @@ extension CustomMapController {
                 self.firstMaxFourMapMemberList.sort(by: { $0.id == mapData.founderID && $1.id != mapData.founderID })
                 self.collectionView.reloadData()
         }
+    }
+
+    private func sortMapMembers() {
+        var posters: [String: Int] = [:]
+        for posterID in mapData?.posterIDs ?? [] {
+            posters[posterID] = (posters[posterID] ?? 0) + 1
+        }
+        mapData?.memberIDs.sort(by: { posters[$0] ?? 0 > posters[$1] ?? 0 })
     }
 
     func getPosts() {

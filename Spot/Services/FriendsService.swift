@@ -222,7 +222,8 @@ final class FriendsService: FriendsServiceProtocol {
                     "pendingFriendRequests": FieldValue.arrayUnion([receiverID])
                 ]
             )
-        
+
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SendFriendRequest"), object: nil, userInfo: ["userID": receiverID])
         completion?(nil)
     }
     
