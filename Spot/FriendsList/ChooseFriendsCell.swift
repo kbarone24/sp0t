@@ -12,7 +12,7 @@ import SDWebImage
 
 class ChooseFriendsCell: UITableViewCell {
     private lazy var userID = ""
-    private lazy var profileImage: UIImageView = {
+    private(set) lazy var profileImage: UIImageView = {
         let view = UIImageView()
         view.contentMode = .scaleAspectFit
         view.layer.cornerRadius = 21
@@ -22,7 +22,7 @@ class ChooseFriendsCell: UITableViewCell {
 
     private lazy var avatarImage = UIImageView()
 
-    private lazy var username: UILabel = {
+    private(set) lazy var username: UILabel = {
         let username = UILabel()
         username.textColor = .black
         username.font = UIFont(name: "SFCompactText-Semibold", size: 16)
@@ -31,6 +31,13 @@ class ChooseFriendsCell: UITableViewCell {
 
     private lazy var selectedBubble = UIImageView()
     private lazy var bottomLine = UIView()
+
+    private lazy var addFriendButton = AddFriendButton(frame: .zero, title: "Add")
+
+    private lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -58,7 +65,7 @@ class ChooseFriendsCell: UITableViewCell {
         username.snp.makeConstraints {
             $0.leading.equalTo(profileImage.snp.trailing).offset(8)
             $0.top.equalTo(21)
-            $0.trailing.equalToSuperview().inset(60)
+            $0.trailing.equalToSuperview().inset(85)
         }
 
         bottomLine.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
@@ -73,7 +80,8 @@ class ChooseFriendsCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func setUp(user: UserProfile, allowsSelection: Bool, editable: Bool) {
+    func setUp(user: UserProfile, allowsSelection: Bool, editable: Bool, showAddFriend: Bool) {
+        resetCell()
         userID = user.id ?? ""
 
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
@@ -83,7 +91,6 @@ class ChooseFriendsCell: UITableViewCell {
         avatarImage.sd_setImage(with: URL(string: user.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
 
         username.text = user.username
-
         if allowsSelection {
             selectedBubble.image = user.selected ? UIImage(named: "MapToggleOn") : UIImage(named: "MapToggleOff")
             contentView.addSubview(selectedBubble)
@@ -91,6 +98,21 @@ class ChooseFriendsCell: UITableViewCell {
                 $0.trailing.equalToSuperview().inset(25)
                 $0.width.height.equalTo(24)
                 $0.centerY.equalToSuperview()
+            }
+        } else if showAddFriend ?? true {
+            contentView.addSubview(addFriendButton)
+            if UserDataModel.shared.userInfo.friendsContains(id: user.id ?? "") {
+                setAddFriendFriends()
+            } else if UserDataModel.shared.userInfo.pendingFriendRequests.contains(user.id ?? "") {
+                setAddFriendPending()
+            } else {
+                setAddFriendAdd()
+            }
+            addFriendButton.snp.makeConstraints {
+                $0.trailing.equalToSuperview().inset(10)
+                $0.centerY.equalToSuperview()
+                $0.height.equalTo(39)
+                $0.width.equalTo(88)
             }
         }
 
@@ -100,10 +122,37 @@ class ChooseFriendsCell: UITableViewCell {
         }
     }
 
-    func resetCell() {
+    private func resetCell() {
         profileImage.image = UIImage()
         avatarImage.image = UIImage()
         selectedBubble.removeFromSuperview()
+        addFriendButton.removeFromSuperview()
+    }
+
+    private func setAddFriendAdd() {
+        addFriendButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
+        addFriendButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+        addFriendButton.setAttTitle(title: "Add", color: .black)
+        addFriendButton.addTarget(self, action: #selector(addFriendTap), for: .touchUpInside)
+    }
+
+    private func setAddFriendPending() {
+        addFriendButton.setImage(UIImage(), for: .normal)
+        addFriendButton.backgroundColor = UIColor(red: 0.965, green: 0.965, blue: 0.965, alpha: 1)
+        addFriendButton.setAttTitle(title: "Pending", color: .black)
+        addFriendButton.removeTarget(self, action: #selector(addFriendTap), for: .touchUpInside)
+    }
+
+    private func setAddFriendFriends() {
+        addFriendButton.setImage(UIImage(), for: .normal)
+        addFriendButton.backgroundColor = nil
+        addFriendButton.setAttTitle(title: "Friends", color: UIColor(red: 0.683, green: 0.683, blue: 0.683, alpha: 1))
+        addFriendButton.layer.borderWidth = 0
+        addFriendButton.removeTarget(self, action: #selector(addFriendTap), for: .touchUpInside)
+    }
+
+    @objc func addFriendTap() {
+        friendService?.addFriend(receiverID: userID, completion: nil)
     }
 
     override func prepareForReuse() {

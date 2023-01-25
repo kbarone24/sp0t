@@ -161,7 +161,7 @@ final class SpotService: SpotServiceProtocol {
                     "postMapIDs": [post.mapID ?? ""],
                     "postTimestamps": [timestamp],
                     "posterIDs": [uid],
-                    "postPrivacies": [post.privacyLevel!],
+                    "postPrivacies": [post.privacyLevel ?? ""],
                     "searchKeywords": keywords,
                     "tagDictionary": tagDictionary,
                     "posterDictionary": posterDictionary
@@ -174,7 +174,7 @@ final class SpotService: SpotServiceProtocol {
                     
                     if submitPublic {
                         try? await self.fireStore.collection("submissions")
-                            .document(spot.id!)
+                            .document(spot.id ?? "")
                             .setData(["spotID": spotID])
                     }
                     
