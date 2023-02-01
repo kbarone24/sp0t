@@ -43,8 +43,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Use your camera to take pictures and share on sp0t!</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Need microphone access to record audio</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Need microphone access to record audio</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Import your contacts to find friends on sp0t!</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -55,6 +55,7 @@
 	<true/>
 	<key>UIAppFonts</key>
 	<array>
+		<string>Univers-CE-55-Medium.ttf</string>
 		<string>Univers-CE-75-Black.ttf</string>
 		<string>Univers-LT-85-Extra-Black.ttf</string>
 		<string>SF-Compact-Text-Black.otf</string>

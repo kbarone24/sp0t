@@ -69,7 +69,7 @@ final class UserService: UserServiceProtocol {
                 
             } else {
                 self?.fireStore.collection(FirebaseCollectionNames.users.rawValue)
-                    .whereField(FireBaseCollectionFields.username.rawValue, isEqualTo: username)
+                    .whereField(FirebaseCollectionFields.username.rawValue, isEqualTo: username)
                     .getDocuments { snapshot, error in
                         guard error == nil,
                               let doc = snapshot?.documents.first else {
@@ -131,42 +131,42 @@ final class UserService: UserServiceProtocol {
                 .getDocuments { snap, _ in
                     guard let snap = snap else { return }
                     for doc in snap.documents {
-                        var posterUsernames = doc.get(FireBaseCollectionFields.posterUsernames.rawValue) as? [String] ?? []
+                        var posterUsernames = doc.get(FirebaseCollectionFields.posterUsernames.rawValue) as? [String] ?? []
                         for i in 0..<posterUsernames.count where posterUsernames[i] == oldUsername {
                             posterUsernames[i] = newUsername
                         }
-                        doc.reference.updateData([FireBaseCollectionFields.posterUsernames.rawValue: posterUsernames])
+                        doc.reference.updateData([FirebaseCollectionFields.posterUsernames.rawValue: posterUsernames])
                     }
                 }
             
             self.fireStore.collection(FirebaseCollectionNames.users.rawValue)
-                .whereField(FireBaseCollectionFields.username.rawValue, isEqualTo: oldUsername)
+                .whereField(FirebaseCollectionFields.username.rawValue, isEqualTo: oldUsername)
                 .getDocuments { snap, _ in
                     guard let snap = snap else { return }
                     if let doc = snap.documents.first {
                         let keywords = newUsername.getKeywordArray()
                         doc.reference.updateData([
-                            FireBaseCollectionFields.username.rawValue: newUsername,
-                            FireBaseCollectionFields.usernameKeywords.rawValue: keywords
+                            FirebaseCollectionFields.username.rawValue: newUsername,
+                            FirebaseCollectionFields.usernameKeywords.rawValue: keywords
                         ])
                     }
                 }
             
             self.fireStore.collection(FirebaseCollectionNames.usernames.rawValue)
-                .whereField(FireBaseCollectionFields.username.rawValue, isEqualTo: oldUsername)
+                .whereField(FirebaseCollectionFields.username.rawValue, isEqualTo: oldUsername)
                 .getDocuments { snap, _ in
                     guard let snap = snap else { return }
                     if let doc = snap.documents.first {
-                        doc.reference.updateData([FireBaseCollectionFields.username.rawValue: newUsername])
+                        doc.reference.updateData([FirebaseCollectionFields.username.rawValue: newUsername])
                     }
                 }
             
             self.fireStore.collection(FirebaseCollectionNames.spots.rawValue)
-                .whereField(FireBaseCollectionFields.posterUsername.rawValue, isEqualTo: oldUsername)
+                .whereField(FirebaseCollectionFields.posterUsername.rawValue, isEqualTo: oldUsername)
                 .getDocuments { snap, _ in
                     guard let snap = snap else { return }
                     if let doc = snap.documents.first {
-                        doc.reference.updateData([FireBaseCollectionFields.posterUsername.rawValue: newUsername])
+                        doc.reference.updateData([FirebaseCollectionFields.posterUsername.rawValue: newUsername])
                     }
                 }
         }

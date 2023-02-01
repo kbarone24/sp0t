@@ -1,0 +1,164 @@
+//
+//  ContentViewerSetUp.swift
+//  Spot
+//
+//  Created by Kenny Barone on 2/1/23.
+//  Copyright © 2023 sp0t, LLC. All rights reserved.
+//
+
+import Foundation
+import UIKit
+import FirebaseStorageUI
+
+extension ContentViewerCell {
+    func addDotView() {
+        for sub in dotView.subviews { sub.removeFromSuperview() }
+
+        let frameCount = post?.frameIndexes?.count ?? 1
+        if frameCount < 2 {
+            dotView.snp.updateConstraints {
+                $0.height.equalTo(0)
+            }
+            return
+        }
+
+        let spaces = CGFloat(6 * frameCount)
+        let lineWidth = (UIScreen.main.bounds.width - spaces) / CGFloat(frameCount)
+        var offset: CGFloat = 0
+
+        for i in 0...(frameCount) - 1 {
+            let line = UIView()
+            line.backgroundColor = i <= post?.selectedImageIndex ?? 0 ? UIColor(named: "SpotGreen") : UIColor(red: 1, green: 1, blue: 1, alpha: 0.2)
+            line.layer.cornerRadius = 1
+            dotView.addSubview(line)
+            line.snp.makeConstraints {
+                $0.top.bottom.equalToSuperview()
+                $0.leading.equalToSuperview().offset(offset)
+                $0.width.equalTo(lineWidth)
+            }
+            offset += 7 + lineWidth
+        }
+    }
+
+    func setLocationView() {
+        locationView.stopAnimating()
+        for view in locationView.subviews { view.removeFromSuperview() }
+        // add map if map exists unless parent == map
+        var mapShowing = false
+        if let mapName = post?.mapName, mapName != "", parentVC != .Map {
+            mapShowing = true
+
+            locationView.addSubview(mapIcon)
+            mapIcon.snp.makeConstraints {
+                $0.leading.equalToSuperview()
+                $0.width.equalTo(15)
+                $0.height.equalTo(16)
+                $0.centerY.equalToSuperview()
+            }
+
+            mapButton.setTitle(mapName, for: .normal)
+            locationView.addSubview(mapButton)
+            mapButton.snp.makeConstraints {
+                $0.leading.equalTo(mapIcon.snp.trailing).offset(6)
+                $0.bottom.equalTo(mapIcon).offset(6)
+                $0.trailing.lessThanOrEqualToSuperview()
+            }
+
+            locationView.addSubview(separatorView)
+            separatorView.snp.makeConstraints {
+                $0.leading.equalTo(mapButton.snp.trailing).offset(9)
+                $0.height.equalToSuperview()
+                $0.width.equalTo(2)
+            }
+        }
+        var spotShowing = false
+        if let spotName = post?.spotName, spotName != "", parentVC != .Spot {
+            // add spot if spot exists unless parent == spot
+            spotShowing = true
+
+            locationView.addSubview(spotIcon)
+            spotIcon.snp.makeConstraints {
+                if mapShowing {
+                    $0.leading.equalTo(separatorView.snp.trailing).offset(9)
+                } else {
+                    $0.leading.equalToSuperview()
+                }
+                $0.centerY.equalToSuperview()
+                $0.width.equalTo(14.17)
+                $0.height.equalTo(17)
+            }
+
+            spotButton.setTitle(spotName, for: .normal)
+            locationView.addSubview(spotButton)
+            spotButton.snp.makeConstraints {
+                $0.leading.equalTo(spotIcon.snp.trailing).offset(6)
+                $0.bottom.equalTo(spotIcon).offset(7)
+                $0.trailing.lessThanOrEqualToSuperview()
+            }
+        }
+        // always add city
+        cityLabel.text = post?.city ?? ""
+        locationView.addSubview(cityLabel)
+        cityLabel.snp.makeConstraints {
+            if spotShowing {
+                $0.leading.equalTo(spotButton.snp.trailing).offset(6)
+                $0.bottom.equalTo(spotIcon)
+            } else if mapShowing {
+                $0.leading.equalTo(separatorView.snp.trailing).offset(9)
+                $0.bottom.equalTo(mapIcon).offset(1)
+            } else {
+                $0.leading.equalToSuperview()
+                $0.bottom.equalTo(-8)
+            }
+            $0.trailing.lessThanOrEqualToSuperview()
+        }
+
+        // animate location if necessary
+        layoutIfNeeded()
+        animateLocation()
+    }
+
+    func setPostInfo() {
+        // add caption and check for more buton after laying out subviews / frame size is determined
+        captionLabel.attributedText = NSAttributedString(string: post?.caption ?? "")
+        addCaptionAttString()
+        contentView.layoutSubviews()
+        addMoreIfNeeded()
+
+        let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
+        profileImage.sd_setImage(with: URL(string: post?.userInfo?.imageURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
+
+        usernameLabel.text = post?.userInfo?.username ?? ""
+        timestampLabel.text = post?.timestamp.toString(allowDate: true) ?? ""
+    }
+
+    // modify for video
+    public func setContentData(images: [UIImage]) {
+        print("set content data", images.count)
+        if images.isEmpty { return }
+        var frameIndexes = post?.frameIndexes ?? []
+        if let imageURLs = post?.imageURLs, !imageURLs.isEmpty {
+            if frameIndexes.isEmpty { for i in 0...imageURLs.count - 1 { frameIndexes.append(i)} }
+            post?.frameIndexes = frameIndexes
+            post?.postImage = images
+
+            addDotView()
+            setCurrentImage()
+        }
+    }
+
+    public func addCaptionAttString() {
+        if let taggedUsers = post?.taggedUsers, !taggedUsers.isEmpty {
+            let attString = NSAttributedString.getAttString(caption: post?.caption ?? "", taggedFriends: taggedUsers, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 73)
+            captionLabel.attributedText = attString.0
+            tagRect = attString.1
+        }
+    }
+
+    private func addMoreIfNeeded() {
+        if captionLabel.intrinsicContentSize.height > captionLabel.frame.height {
+            moreShowing = true
+            captionLabel.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Semibold", size: 14.5), moreTextColor: .white)
+        }
+    }
+}
