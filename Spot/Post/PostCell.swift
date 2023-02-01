@@ -5,7 +5,7 @@
 //  Created by Kenny Barone on 8/16/22.
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
-
+/*
 import Firebase
 import Mixpanel
 import UIKit
@@ -362,7 +362,7 @@ final class PostCell: UICollectionViewCell {
 
     func addMoreIfNeeded() {
         if overflow {
-            captionLabel.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Semibold", size: 14.5)!, moreTextColor: .white)
+            captionLabel.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Semibold", size: 14.5), moreTextColor: .white)
         }
     }
 
@@ -595,13 +595,13 @@ extension PostCell {
         Mixpanel.mainInstance().track(event: "PostPageMapTap")
         if post.mapID ?? "" == "" { return }
         if let postVC = self.viewContainingController() as? PostController {
-            postVC.openMap(mapID: post.mapID!)
+        //    postVC.openMap(mapID: post.mapID!)
         }
     }
 
     func openProfile(user: UserProfile) {
         if let postVC = self.viewContainingController() as? PostController {
-            postVC.openProfile(user: user, openComments: false)
+        //    postVC.openProfile(user: user, openComments: false)
         }
     }
 
@@ -724,7 +724,7 @@ extension PostCell {
         guard let postVC = viewContainingController() as? PostController else { return }
         postVC.selectedPostIndex += index
         print("increment")
-        DispatchQueue.main.async { postVC.postsCollection.scrollToItem(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .left, animated: true) }
+      //  DispatchQueue.main.async { postVC.postsCollection.scrollToItem(at: IndexPath(row: postVC.selectedPostIndex, section: 0), at: .left, animated: true) }
     }
 
     @objc func likeTap(_ sender: UIButton) {
@@ -800,3 +800,4 @@ extension PostCell {
         friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
     }
 }
+*/

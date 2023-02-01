@@ -32,7 +32,7 @@ enum FirebaseCollectionNames: String {
     case usernames
 }
 
-enum FireBaseCollectionFields: String {
+enum FirebaseCollectionFields: String {
     case communityMap
     case friendsList
     case posterID

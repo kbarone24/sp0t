@@ -458,8 +458,7 @@ extension DrawerView: UINavigationControllerDelegate {
     func navigationController
     (_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController)
     -> UIViewControllerAnimatedTransitioning? {
-        if (toVC is PostController || fromVC is PostController) ||
-            (toVC is CustomMapController || fromVC is CustomMapController) {
+        if (toVC is CustomMapController || fromVC is CustomMapController) {
             transitionAnimation.startingOffset = slideView.frame.origin.y
             transitionAnimation.transitionMode = operation == .push ? .present : .pop
             return transitionAnimation

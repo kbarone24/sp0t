@@ -36,7 +36,7 @@ final class MapService: MapServiceProtocol {
         try await withUnsafeThrowingContinuation { [unowned self] continuation in
             
             self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
-                .whereField(FireBaseCollectionFields.communityMap.rawValue, isEqualTo: true)
+                .whereField(FirebaseCollectionFields.communityMap.rawValue, isEqualTo: true)
                 .getDocuments { snapshot, error in
                     
                     guard error == nil,
@@ -65,8 +65,8 @@ final class MapService: MapServiceProtocol {
         try await withUnsafeThrowingContinuation { [unowned self] continuation in
             
             self.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
-                .whereField(FireBaseCollectionFields.mapID.rawValue, isEqualTo: id)
-                .order(by: FireBaseCollectionFields.timestamp.rawValue, descending: true)
+                .whereField(FirebaseCollectionFields.mapID.rawValue, isEqualTo: id)
+                .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
                 .limit(to: limit)
                 .getDocuments { snapshot, error in
                     
@@ -103,8 +103,8 @@ final class MapService: MapServiceProtocol {
             .document(mapID)
             .updateData(
                 [
-                    FireBaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([userId]),
-                    FireBaseCollectionFields.memberIDs.rawValue: FieldValue.arrayUnion([userId])
+                    FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([userId]),
+                    FirebaseCollectionFields.memberIDs.rawValue: FieldValue.arrayUnion([userId])
                 ]
             ) { error in
                 completion(error)
@@ -126,8 +126,8 @@ final class MapService: MapServiceProtocol {
             .document(mapID)
             .updateData(
                 [
-                    FireBaseCollectionFields.likers.rawValue: FieldValue.arrayRemove([userId]),
-                    FireBaseCollectionFields.memberIDs.rawValue: FieldValue.arrayRemove([userId])
+                    FirebaseCollectionFields.likers.rawValue: FieldValue.arrayRemove([userId]),
+                    FirebaseCollectionFields.memberIDs.rawValue: FieldValue.arrayRemove([userId])
                 ]
             ) { error in
                 completion(error)

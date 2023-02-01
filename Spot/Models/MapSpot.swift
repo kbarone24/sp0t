@@ -186,21 +186,4 @@ struct MapSpot: Identifiable, Codable, Hashable {
         }
         return false
     }
-
-    func hasPOILevelAccess() -> Bool {
-        let uid = UserDataModel.shared.uid
-
-        if UserDataModel.shared.adminIDs.contains(where: { $0 == founderID }) {
-            return uid == founderID
-        }
-
-        if privacyLevel == "friends", !UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == founderID }) {
-            return uid == founderID
-
-        } else if privacyLevel == "invite" {
-            return inviteList?.contains(where: { $0 == uid }) ?? false
-        }
-
-        return true
-    }
 }
