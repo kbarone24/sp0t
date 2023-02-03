@@ -13,11 +13,14 @@ import Mixpanel
 import FirebaseStorageUI
 
 protocol ContentViewerDelegate: AnyObject {
-    func getSelectedPostIndex() -> Int
     func openPostComments()
     func openProfile(user: UserProfile)
     func openMap(mapID: String, mapName: String)
     func openSpot(post: MapPost)
+    func imageViewOffset(offset: Bool)
+    func getSelectedPostIndex() -> Int
+    func goToPreviousPost()
+    func goToNextPost()
 }
 
 class ContentViewerCell: UITableViewCell {
@@ -100,7 +103,15 @@ class ContentViewerCell: UITableViewCell {
         return label
     }()
 
-    lazy var postImageView = PostImagePreview(frame: .zero)
+    lazy var currentImage = PostImagePreview()
+    lazy var nextImage = PostImagePreview()
+    lazy var previousImage = PostImagePreview()
+    var cellOffset = false
+    var imageSwiping = false {
+        didSet {
+            delegate?.imageViewOffset(offset: imageSwiping)
+        }
+    }
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -123,9 +134,9 @@ class ContentViewerCell: UITableViewCell {
         self.parentVC = parentVC
         globalRow = row
 
-        addDotView()
         setLocationView()
         setPostInfo()
+        addDotView()
     }
 
     private func setUpView() {
@@ -149,6 +160,7 @@ class ContentViewerCell: UITableViewCell {
             $0.bottom.equalTo(locationView.snp.top).offset(-15)
             $0.trailing.lessThanOrEqualTo(-18)
             $0.height.lessThanOrEqualTo(54)
+          //  $0.height.greaterThanOrEqualTo(12)
         }
 
         contentView.addSubview(usernameLabel)
@@ -174,5 +186,12 @@ class ContentViewerCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         stopLocationAnimation()
+        resetImages()
+    }
+
+    func resetImages() {
+        currentImage.image = UIImage(); currentImage.removeFromSuperview()
+        nextImage.image = UIImage(); nextImage.removeFromSuperview()
+        previousImage.image = UIImage(); previousImage.removeFromSuperview()
     }
 }

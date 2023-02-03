@@ -269,11 +269,11 @@ extension MapController {
     }
 
     func filteredFromFeed(post: MapPost, friendsMap: Bool) -> Bool {
-        let yesterdaySeconds = Date().timeIntervalSince1970 - 86_400
+      //  let yesterdaySeconds = Date().timeIntervalSince1970 - 86_400
         return (post.userInfo?.id?.isBlocked() ?? false) ||
         (post.hiddenBy?.contains(self.uid) ?? false) ||
-        (friendsMap && !UserDataModel.shared.userInfo.friendsContains(id: post.posterID)) ||
-        (post.timestamp.seconds < Int64(yesterdaySeconds) && (post.seenList?.contains(self.uid) ?? false))
+        (friendsMap && !UserDataModel.shared.userInfo.friendsContains(id: post.posterID))
+        // || (post.timestamp.seconds < Int64(yesterdaySeconds) && (post.seenList?.contains(self.uid) ?? false))
     }
 
     func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool) {

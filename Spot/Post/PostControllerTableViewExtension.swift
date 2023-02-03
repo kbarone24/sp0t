@@ -15,7 +15,6 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        print("cell for row at")
         if let cell = tableView.dequeueReusableCell(withIdentifier: "ContentCell") as? ContentViewerCell, let post = postsList[safe: indexPath.row] {
             cell.delegate = self
             cell.setUp(post: post, parentVC: parentVC, row: indexPath.row)
@@ -25,11 +24,13 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return tableView.bounds.height - 95
+        return rowHeight
     }
 
     func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
+        print("prefetch")
         for indexPath in indexPaths {
+            print("prefetch", indexPath.row)
             if abs(indexPath.row - selectedPostIndex) > 3 { return }
 
             guard let post = postsList[safe: indexPath.row] else { return }
@@ -44,6 +45,7 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
 
     func tableView(_ tableView: UITableView, cancelPrefetchingForRowsAt indexPaths: [IndexPath]) {
         for indexPath in indexPaths {
+            print("cancel prefetch", indexPath.row)
             if abs(indexPath.row - selectedPostIndex) < 4 { return }
             guard let post = postsList[safe: indexPath.row] else { return }
             if let imageLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
@@ -78,7 +80,7 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
                 dataLoader.loadingCompleteHandler = updateCellImage
             }
         } else {
-
+            print("will display")
             /// Need to create a data loader for this index path
             if indexPath.row == self.selectedPostIndex && PostImageModel.shared.currentImageSet.id == post.id ?? "" {
                 updateCellImage(PostImageModel.shared.currentImageSet.images)

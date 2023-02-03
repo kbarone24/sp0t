@@ -29,7 +29,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
             return headerCell
 
         } else if let headerCell = cell as? SimpleMapHeaderCell {
-            let text = mapType == .friendsMap ? "Friends map" : "@\(userProfile?.username ?? "")'s posts"
+            let text = mapType == .friendsMap ? "Friends map" : "@\(userProfile?.username ?? "")'s map"
             headerCell.mapText = text
             return headerCell
 
@@ -75,11 +75,9 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
 
     func openPost(posts: [MapPost], row: Int) {
-        guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
         if navigationController?.viewControllers.last is PostController { return } // double stack happening here
-        setDrawerValuesForViewAppear()
-        postVC.postsList = posts
-        postVC.selectedPostIndex = row
+        let title = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s map" : mapData?.mapName ?? ""
+        let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: row, title: title)
         postVC.containerDrawerView = containerDrawerView
         DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
     }
@@ -126,7 +124,7 @@ extension CustomMapController: UIScrollViewDelegate {
                     }
                     var titleText = ""
                     if scrollView.contentOffset.y > 0 {
-                        titleText = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s posts" : mapData?.mapName ?? ""
+                        titleText = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s map" : mapData?.mapName ?? ""
                     }
                     titleLabel.text = titleText
                     titleLabel.sizeToFit()

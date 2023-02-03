@@ -23,9 +23,9 @@ final class ImagePreviewController: UIViewController {
     
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
-    lazy var currentImage = PostImagePreview(frame: .zero)
-    lazy var nextImage = PostImagePreview(frame: .zero)
-    lazy var previousImage = PostImagePreview(frame: .zero)
+    lazy var currentImage = PostImagePreview()
+    lazy var nextImage = PostImagePreview()
+    lazy var previousImage = PostImagePreview()
 
     private lazy var backButton: UIButton = {
         let button = UIButton()
@@ -148,6 +148,10 @@ final class ImagePreviewController: UIViewController {
         super.viewWillAppear(animated)
         // set hidden for smooth transition
         self.navigationController?.setNavigationBarHidden(true, animated: true)
+    }
+
+    override func viewDidLayoutSubviews() {
+        print("frame", currentImage.frame)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -297,21 +301,22 @@ final class ImagePreviewController: UIViewController {
     
     private func addPreviewPhoto(_ post: MapPost) {
         // add initial preview view and buttons
-        currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex ?? 0)
+        let post = UploadPostModel.shared.postObject
+        currentImage = PostImagePreview(frame: .zero, index: post?.selectedImageIndex ?? 0, parent: .ImagePreview)
         view.addSubview(currentImage)
-        currentImage.makeConstraints()
-        currentImage.setCurrentImage()
+        currentImage.makeConstraints(post: post)
+        currentImage.setCurrentImage(post: post)
 
-        if post.frameIndexes?.count ?? 0 > 1 {
-            nextImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) + 1)
+        if post?.frameIndexes?.count ?? 0 > 1 {
+            nextImage = PostImagePreview(frame: .zero, index: (post?.selectedImageIndex ?? 0) + 1, parent: .ImagePreview)
             view.addSubview(nextImage)
-            nextImage.makeConstraints()
-            nextImage.setCurrentImage()
+            nextImage.makeConstraints(post: post)
+            nextImage.setCurrentImage(post: post)
 
-            previousImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) - 1)
+            previousImage = PostImagePreview(frame: .zero, index: (post?.selectedImageIndex ?? 0) - 1, parent: .ImagePreview)
             view.addSubview(previousImage)
-            previousImage.makeConstraints()
-            previousImage.setCurrentImage()
+            previousImage.makeConstraints(post: post)
+            previousImage.setCurrentImage(post: post)
 
             let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
             view.addGestureRecognizer(pan)

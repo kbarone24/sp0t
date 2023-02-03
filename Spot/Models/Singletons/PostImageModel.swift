@@ -55,7 +55,7 @@ class PostImageLoader: Operation {
             }
         }
 
-        if post.imageURLs.count == 0 { return }
+        if post.imageURLs.isEmpty { return }
 
         var frameIndexes = post.frameIndexes ?? []
         if frameIndexes.isEmpty { for i in 0...post.imageURLs.count - 1 { frameIndexes.append(i) } }
@@ -72,17 +72,21 @@ class PostImageLoader: Operation {
 
             let transformer = SDImageResizingTransformer(size: CGSize(width: UIScreen.main.bounds.width * 2, height: UIScreen.main.bounds.width * 2 * currentAspect), scaleMode: .aspectFit)
 
-            SDWebImageManager.shared.loadImage(with: URL(string: postURL), options: [.highPriority, .scaleDownLargeImages], context: [.imageTransformer: transformer], progress: nil) { (rawImage, _, _, _, _, _) in
-                DispatchQueue.main.async { [weak self] in
+            SDWebImageManager.shared.loadImage(
+                with: URL(string: postURL),
+                options: [.highPriority, .scaleDownLargeImages],
+                context: [.imageTransformer: transformer], progress: nil) {
+                    (rawImage, _, _, _, _, _) in
+                    DispatchQueue.main.async { [weak self] in
 
-                    guard let self = self else { return }
-                    if self.isCancelled { return }
+                        guard let self = self else { return }
+                        if self.isCancelled { return }
 
-                    let i = self.post.imageURLs.lastIndex(where: { $0 == postURL })
-                    guard let image = rawImage else { images[i ?? 0] = UIImage(); imageEscape(); return } /// return blank image on failed download
-                    images[i ?? 0] = image
-                    imageEscape()
-                }
+                        let i = self.post.imageURLs.lastIndex(where: { $0 == postURL })
+                        guard let image = rawImage else { images[i ?? 0] = UIImage(); imageEscape(); return } /// return blank image on failed download
+                        images[i ?? 0] = image
+                        imageEscape()
+                    }
             }
         }
     }

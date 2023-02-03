@@ -27,7 +27,6 @@ class LocationScrollView: UIScrollView {
 
     func startAnimating() {
         if !animating {
-            print("start animating")
             animating = true
             animateScrollView()
         }

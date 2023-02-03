@@ -104,9 +104,8 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                     collectionCell?.transform = .identity
                 }
             }
-            guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
-            postVC.postsList = indexPath.section == 1 ? relatedPosts : communityPosts
-            postVC.selectedPostIndex = indexPath.item
+            let posts = indexPath.section == 1 ? relatedPosts : communityPosts
+            let postVC = PostController(parentVC: .Spot, postsList: posts, selectedPostIndex: indexPath.item, title: spotName)
             postVC.containerDrawerView = containerDrawerView
             barView.isHidden = true
             self.navigationController?.pushViewController(postVC, animated: true)

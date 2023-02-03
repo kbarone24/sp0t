@@ -29,11 +29,11 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
         isUserInteractionEnabled = true
         contentMode = .scaleAspectFill
 
-        enableZoom()
+       // enableZoom()
     }
 
     override func layoutSubviews() {
-        if currentAspect > 1.45 { addBottomMask() }
+       // if currentAspect > 1.45 { addBottomMask() }
     }
 
     required init?(coder: NSCoder) {
