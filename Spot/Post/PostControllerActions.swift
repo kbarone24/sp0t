@@ -39,6 +39,7 @@ extension PostController {
     }
 
     @objc func likeTap() {
+        HapticGenerator.shared.play(.light)
         if let i = postsList[selectedPostIndex].likers.firstIndex(where: { $0 == UserDataModel.shared.uid }) {
             Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
             postsList[selectedPostIndex].likers.remove(at: i)
@@ -57,6 +58,45 @@ extension PostController {
                 contentCell.post = nil
                 contentCell.stopLocationAnimation()
             }
+        }
+    }
+
+    @objc func tablePan(_ gesture: UIPanGestureRecognizer) {
+        let velocity = gesture.velocity(in: gesture.view)
+        let translation = gesture.translation(in: gesture.view)
+        let composite = translation.y + velocity.y / 4
+
+        switch gesture.state {
+        case .began:
+            if imageViewOffset { return }
+            if abs(velocity.y) > abs(velocity.x) {
+                tableViewOffset = true
+            }
+        case .changed:
+            if !tableViewOffset { return }
+            contentTable.setContentOffset(CGPoint(x: 0, y: currentRowContentOffset - translation.y), animated: false)
+        case .ended:
+            if composite < -(rowHeight / 4) && selectedPostIndex < postsList.count - 1 {
+                selectedPostIndex += 1
+            } else if composite > rowHeight / 4 && selectedPostIndex != 0 {
+                selectedPostIndex -= 1
+            }
+            scrollToSelectedRow(animated: true)
+        default:
+            scrollToSelectedRow(animated: true)
+        }
+    }
+
+    func scrollToSelectedRow(animated: Bool) {
+        var duration: TimeInterval = 0.05
+        if animated {
+            let offset = abs(currentRowContentOffset - contentTable.contentOffset.y)
+            duration = max(TimeInterval(0.35 * offset / rowHeight), 0.2)
+        }
+        UIView.animate(withDuration: duration, animations: {
+            self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
+        }) { [weak self] _ in
+            self?.tableViewOffset = false
         }
     }
 }
@@ -85,5 +125,40 @@ extension PostController: ContentViewerDelegate {
     func openSpot(post: MapPost) {
         let spotVC = SpotPageController(mapPost: post, presentedDrawerView: containerDrawerView)
         navigationController?.pushViewController(spotVC, animated: true)
+    }
+
+    func goToNextPost() {
+        if selectedPostIndex < postsList.count - 1 {
+            selectedPostIndex += 1
+            DispatchQueue.main.async { self.scrollToSelectedRow(animated: true) }
+        } else {
+            containerDrawerView?.closeAction()
+        }
+    }
+
+    func goToPreviousPost() {
+        if selectedPostIndex > 0 {
+            selectedPostIndex -= 1
+            DispatchQueue.main.async { self.scrollToSelectedRow(animated: true) }
+        } else {
+            containerDrawerView?.closeAction()
+        }
+    }
+
+    @objc func notifyImageChange(_ notification: NSNotification) {
+        if let index = notification.userInfo?.values.first as? Int {
+            postsList[selectedPostIndex].selectedImageIndex = index
+            containerDrawerView?.canSwipeRightToDismiss = postsList[selectedPostIndex].selectedImageIndex == 0
+        }
+    }
+
+    func updateDrawerViewOnIndexChange() {
+      //  containerDrawerView?.swipeUpToDismiss = selectedPostIndex == postsList.count - 1
+     //   containerDrawerView?.swipeDownToDismiss = selectedPostIndex == 0
+    }
+
+    // call to let table know cell is swiping
+    func imageViewOffset(offset: Bool) {
+        imageViewOffset = offset
     }
 }

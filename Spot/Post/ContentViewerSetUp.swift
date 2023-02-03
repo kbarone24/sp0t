@@ -12,8 +12,6 @@ import FirebaseStorageUI
 
 extension ContentViewerCell {
     func addDotView() {
-        for sub in dotView.subviews { sub.removeFromSuperview() }
-
         let frameCount = post?.frameIndexes?.count ?? 1
         if frameCount < 2 {
             dotView.snp.updateConstraints {
@@ -21,10 +19,17 @@ extension ContentViewerCell {
             }
             return
         }
+    }
 
+    func addDots() {
+        dotView.subviews.forEach {
+            $0.removeFromSuperview()
+        }
+
+        let frameCount = post?.frameIndexes?.count ?? 1
         let spaces = CGFloat(6 * frameCount)
         let lineWidth = (UIScreen.main.bounds.width - spaces) / CGFloat(frameCount)
-        var offset: CGFloat = 0
+        var leading: CGFloat = 0
 
         for i in 0...(frameCount) - 1 {
             let line = UIView()
@@ -33,10 +38,10 @@ extension ContentViewerCell {
             dotView.addSubview(line)
             line.snp.makeConstraints {
                 $0.top.bottom.equalToSuperview()
-                $0.leading.equalToSuperview().offset(offset)
+                $0.leading.equalTo(leading)
                 $0.width.equalTo(lineWidth)
             }
-            offset += 7 + lineWidth
+            leading += 7 + lineWidth
         }
     }
 
@@ -83,7 +88,7 @@ extension ContentViewerCell {
                 } else {
                     $0.leading.equalToSuperview()
                 }
-                $0.centerY.equalToSuperview()
+                $0.centerY.equalToSuperview().offset(-0.5)
                 $0.width.equalTo(14.17)
                 $0.height.equalTo(17)
             }
@@ -102,10 +107,10 @@ extension ContentViewerCell {
         cityLabel.snp.makeConstraints {
             if spotShowing {
                 $0.leading.equalTo(spotButton.snp.trailing).offset(6)
-                $0.bottom.equalTo(spotIcon)
+                $0.bottom.equalTo(spotIcon).offset(0.5)
             } else if mapShowing {
                 $0.leading.equalTo(separatorView.snp.trailing).offset(9)
-                $0.bottom.equalTo(mapIcon).offset(1)
+                $0.bottom.equalTo(mapIcon).offset(1.0)
             } else {
                 $0.leading.equalToSuperview()
                 $0.bottom.equalTo(-8)
@@ -122,6 +127,16 @@ extension ContentViewerCell {
         // add caption and check for more buton after laying out subviews / frame size is determined
         captionLabel.attributedText = NSAttributedString(string: post?.caption ?? "")
         addCaptionAttString()
+
+        // update username constraint with no caption -> will also move prof pic, timestamp
+        if post?.caption.isEmpty ?? true {
+            profileImage.snp.removeConstraints()
+            profileImage.snp.makeConstraints {
+                $0.leading.equalTo(14)
+                $0.centerY .equalTo(usernameLabel)
+                $0.height.width.equalTo(33)
+            }
+        }
         contentView.layoutSubviews()
         addMoreIfNeeded()
 
@@ -134,7 +149,6 @@ extension ContentViewerCell {
 
     // modify for video
     public func setContentData(images: [UIImage]) {
-        print("set content data", images.count)
         if images.isEmpty { return }
         var frameIndexes = post?.frameIndexes ?? []
         if let imageURLs = post?.imageURLs, !imageURLs.isEmpty {
@@ -142,8 +156,7 @@ extension ContentViewerCell {
             post?.frameIndexes = frameIndexes
             post?.postImage = images
 
-            addDotView()
-            setCurrentImage()
+            addImageView()
         }
     }
 
@@ -160,5 +173,52 @@ extension ContentViewerCell {
             moreShowing = true
             captionLabel.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Semibold", size: 14.5), moreTextColor: .white)
         }
+    }
+
+    func addImageView() {
+        resetImages()
+        currentImage = PostImagePreview(frame: .zero, index: post?.selectedImageIndex ?? 0, parent: .ContentPage)
+        contentView.addSubview(currentImage)
+        contentView.sendSubviewToBack(currentImage)
+        currentImage.makeConstraints(post: post)
+        currentImage.setCurrentImage(post: post)
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(imageTap(_:)))
+        currentImage.addGestureRecognizer(tap)
+
+        if post?.frameIndexes?.count ?? 0 > 1 {
+            nextImage = PostImagePreview(frame: .zero, index: (post?.selectedImageIndex ?? 0) + 1, parent: .ContentPage)
+            contentView.addSubview(nextImage)
+            contentView.sendSubviewToBack(nextImage)
+            nextImage.makeConstraints(post: post)
+            nextImage.setCurrentImage(post: post)
+
+            previousImage = PostImagePreview(frame: .zero, index: (post?.selectedImageIndex ?? 0) - 1, parent: .ContentPage)
+            contentView.addSubview(previousImage)
+            contentView.sendSubviewToBack(previousImage)
+            previousImage.makeConstraints(post: post)
+            previousImage.setCurrentImage(post: post)
+
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
+            pan.delegate = self
+            contentView.addGestureRecognizer(pan)
+            addDots()
+        }
+    }
+    // only called after user increments / decrements image
+    func setImages() {
+        let selectedIndex = post?.selectedImageIndex ?? 0
+        currentImage.index = selectedIndex
+        currentImage.makeConstraints(post: post)
+        currentImage.setCurrentImage(post: post)
+
+        previousImage.index = selectedIndex - 1
+        previousImage.makeConstraints(post: post)
+        previousImage.setCurrentImage(post: post)
+
+        nextImage.index = selectedIndex + 1
+        nextImage.makeConstraints(post: post)
+        nextImage.setCurrentImage(post: post)
+        addDots()
     }
 }

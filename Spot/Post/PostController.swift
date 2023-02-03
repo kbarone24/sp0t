@@ -29,16 +29,23 @@ final class PostController: UIViewController {
     var parentVC: PostParent
     var postsList: [MapPost]
 
+    let rowHeight: CGFloat = UIScreen.main.bounds.height - 95
     lazy var contentTable: UITableView = {
         let view = UITableView()
+        let window = UIApplication.shared.keyWindow
+        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+        view.contentInset = UIEdgeInsets(top: -statusHeight, left: 0, bottom: 100, right: 0)
         view.backgroundColor = .black
         view.separatorStyle = .none
         view.isScrollEnabled = false
+        view.isPrefetchingEnabled = true
         // inset to show button view
         view.register(ContentViewerCell.self, forCellReuseIdentifier: "ContentCell")
-        view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         return view
     }()
+    var currentRowContentOffset: CGFloat {
+        return rowHeight * CGFloat(selectedPostIndex)
+    }
 
     private lazy var titleView = UIView()
     private lazy var titleLabel: UILabel = {
@@ -68,6 +75,16 @@ final class PostController: UIViewController {
 
     unowned var containerDrawerView: DrawerView?
     var openComments = false
+    var imageViewOffset = false
+    var tableViewOffset = false {
+        didSet {
+            for cell in contentTable.visibleCells {
+                if let cell = cell as? ContentViewerCell {
+                    cell.cellOffset = tableViewOffset
+                }
+            }
+        }
+    }
     
     lazy var deleteIndicator = CustomActivityIndicator()
     
@@ -87,14 +104,14 @@ final class PostController: UIViewController {
         }
     }
 
-    private var scrolledToInitialRow = false
+    var scrolledToInitialRow = false
 
-    init(parentVC: PostParent, postsList: [MapPost], selectedPostIndex: Int? = 0) {
+    init(parentVC: PostParent, postsList: [MapPost], selectedPostIndex: Int? = 0, title: String? = "") {
         self.parentVC = parentVC
         self.postsList = postsList
         super.init(nibName: nil, bundle: nil)
 
-        titleLabel.text = parentVC.rawValue
+        titleLabel.text = (title ?? "" != "") ? title : parentVC.rawValue
         self.selectedPostIndex = selectedPostIndex ?? 0
     }
 
@@ -138,11 +155,7 @@ final class PostController: UIViewController {
     override func viewDidLayoutSubviews() {
         if !scrolledToInitialRow {
             DispatchQueue.main.async {
-                // move to universal scroll to row at override function
-                let startingOffset: CGFloat = (UIScreen.main.bounds.height - 95) * CGFloat(self.selectedPostIndex)
-                self.contentTable.contentOffset.y = startingOffset
-                self.scrolledToInitialRow = true
-                print("offset", self.contentTable.contentOffset.y)
+                self.scrollToSelectedRow(animated: false)
             }
         }
     }
@@ -162,13 +175,16 @@ final class PostController: UIViewController {
     }
 
     func setUpView() {
+        contentTable.prefetchDataSource = self
         contentTable.dataSource = self
         contentTable.delegate = self
-        //    contentTable.prefetchDataSource = self
         view.addSubview(contentTable)
         contentTable.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(tablePan(_:)))
+        pan.isEnabled = postsList.count > 1
+        contentTable.addGestureRecognizer(pan)
 
         view.addSubview(titleView)
         titleView.snp.makeConstraints {
@@ -199,6 +215,7 @@ final class PostController: UIViewController {
         }
 
         view.addSubview(buttonView)
+        buttonView.backgroundColor = .black
         buttonView.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
             $0.height.equalTo(95)
@@ -213,6 +230,7 @@ final class PostController: UIViewController {
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name("DeletePost"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
     }
 
     @objc func notifyCommentChange(_ notification: NSNotification) {
@@ -277,6 +295,7 @@ final class PostController: UIViewController {
         }
         DispatchQueue.main.async {
             self.updateButtonView()
+            self.updateDrawerViewOnIndexChange()
         }
     }
 

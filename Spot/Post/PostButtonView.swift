@@ -59,7 +59,7 @@ class PostButtonView: UIView {
         addSubview(commentButton)
         commentButton.snp.makeConstraints {
             $0.trailing.equalTo(likeButton.snp.leading).offset(-56)
-            $0.top.equalTo(likeButton)
+            $0.bottom.equalTo(likeButton)
             $0.width.equalTo(35.35)
             $0.height.equalTo(35.35)
         }
@@ -76,7 +76,6 @@ class PostButtonView: UIView {
     }
 
     func setCommentsAndLikes(post: MapPost?) {
-        print("post", post?.commentList.count, post?.likers.count)
         let liked = post?.likers.contains(UserDataModel.shared.uid) ?? false
         let likeImage = liked ? UIImage(named: "LikeButtonFilled") : UIImage(named: "LikeButton")
 

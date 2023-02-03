@@ -79,7 +79,122 @@ extension ContentViewerCell {
         locationView.stopAnimating()
     }
 
-    func setCurrentImage() {
-        
+    @objc func imageTap(_ gesture: UITapGestureRecognizer) {
+        let position = gesture.location(in: contentView)
+        if position.x < 75 {
+            if post?.selectedImageIndex ?? 0 > 0 {
+                goPreviousImage()
+            } else {
+                delegate?.goToPreviousPost()
+            }
+        } else if position.x > (gesture.view?.bounds.width ?? 0) - 75 {
+            if post?.selectedImageIndex ?? 0 < (post?.frameIndexes?.count ?? 0) - 1 {
+                goNextImage()
+            } else {
+                delegate?.goToNextPost()
+            }
+        }
+    }
+
+    @objc func imageSwipe(_ gesture: UIPanGestureRecognizer) {
+        let velocity = gesture.velocity(in: gesture.view)
+        let translation = gesture.translation(in: gesture.view)
+        let composite = translation.x + velocity.x / 4
+        let selectedIndex = post?.selectedImageIndex ?? 0
+        let imageCount = post?.frameIndexes?.count ?? 0
+
+        switch gesture.state {
+        case.began:
+            if cellOffset { return }
+            if abs(velocity.x) > abs(velocity.y) {
+                imageSwiping = true
+            }
+        case .changed:
+            if !imageSwiping { return }
+            let adjustedOffset: CGFloat =
+            post?.selectedImageIndex ?? 0 == 0 ? min(0, translation.x) :
+            post?.selectedImageIndex ?? 0 == (post?.frameIndexes?.count ?? 0) - 1 ? max(0, translation.x) :
+            translation.x
+
+            currentImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(adjustedOffset) })
+            nextImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width + adjustedOffset) })
+            previousImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width + adjustedOffset) })
+
+        case .ended:
+            if (composite < -UIScreen.main.bounds.width / 2) && (selectedIndex < imageCount - 1) {
+                self.animateToNextImage()
+            } else if (composite > UIScreen.main.bounds.width / 2) && (selectedIndex > 0) {
+                self.animateToPreviousImage()
+            } else {
+                self.resetImageFrame()
+            }
+            imageSwiping = false
+        default: return
+        }
+    }
+
+    private func goNextImage() {
+        Mixpanel.mainInstance().track(event: "ContentCellNextImage")
+        var selectedIndex = post?.selectedImageIndex ?? 0
+        selectedIndex += 1
+        post?.selectedImageIndex = selectedIndex
+        setImages()
+
+        NotificationCenter.default.post(Notification(name: Notification.Name("PostImageChange"), object: nil, userInfo: ["index": selectedIndex as Any]))
+    }
+
+    private func goPreviousImage() {
+        Mixpanel.mainInstance().track(event: "ContentCellPreviousImage")
+        var selectedIndex = post?.selectedImageIndex ?? 0
+        selectedIndex -= 1
+        post?.selectedImageIndex = selectedIndex
+        setImages()
+
+        NotificationCenter.default.post(Notification(name: Notification.Name("PostImageChange"), object: nil, userInfo: ["index": selectedIndex as Any]))
+    }
+
+    private func animateToNextImage() {
+        Mixpanel.mainInstance().track(event: "ContentCellSwipeToNextImage")
+        currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) }
+        nextImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
+
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.contentView.layoutIfNeeded()
+
+        } completion: { [weak self] _ in
+            if self?.post != nil {
+                self?.goNextImage()
+            }
+        }
+    }
+
+    private func animateToPreviousImage() {
+        Mixpanel.mainInstance().track(event: "ContentCellSwipeToPreviousImage")
+        currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width) }
+        previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
+
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.contentView.layoutIfNeeded()
+
+        } completion: { [weak self] _ in
+            if self?.post != nil {
+                self?.goPreviousImage()
+            }
+        }
+    }
+
+    private func resetImageFrame() {
+        currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
+        if previousImage.superview != nil { previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) } }
+        if nextImage.superview != nil { nextImage.snp.updateConstraints {
+            $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width )
+        } }
+        UIView.animate(withDuration: 0.2) {
+            self.contentView.layoutIfNeeded()
+        }
+    }
+
+    override func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 }

@@ -47,9 +47,12 @@ class DrawerView: NSObject {
     }
     public var isDraggingVertical: Bool = false
     public var isDraggingHorizontal: Bool = false
-    public var swipeDownToDismiss: Bool = false
     public var swipingToDismiss: Bool = false
     public var swipeToNextState: Bool = false
+
+    public var canSwipeDownToDismiss: Bool = false
+    public var canSwipeRightToDismiss: Bool = false
+
 
     // MARK: Private variable
     private lazy var myNav = UINavigationController()
@@ -174,7 +177,8 @@ class DrawerView: NSObject {
 
     public func configure(canDrag: Bool, swipeDownToDismiss: Bool, startingPosition: DrawerViewDetent) {
         self.canDrag = canDrag
-        self.swipeDownToDismiss = swipeDownToDismiss
+        self.canSwipeDownToDismiss = swipeDownToDismiss
+        self.canSwipeRightToDismiss = !canDrag && !swipeDownToDismiss
         if status.rawValue != startingPosition.rawValue { present(to: startingPosition) }
     }
 
@@ -310,18 +314,18 @@ class DrawerView: NSObject {
         let velocity = recognizer.velocity(in: recognizer.view)
         // When the user is still dragging or start dragging the if statement here will be fall through
         guard canDrag else {
-            if presentationDirection == .rightToLeft { swipeRightToDismiss(gesture: recognizer) }
+            if canSwipeRightToDismiss { swipeRightToDismiss(gesture: recognizer) }
             return
         }
         switch recognizer.state {
         case .began, .changed:
-            if swipeToNextState || swipeDownToDismiss {
+            if swipeToNextState || canSwipeDownToDismiss {
                 isDraggingVertical = true
                 offsetVerticalSlideViewConstraint(offset: translation.y)
             }
 
         case .ended, .cancelled:
-            if swipeDownToDismiss {
+            if canSwipeDownToDismiss {
                 // if swipe to dismiss, calculate if the swipe was hard enough
 
                 if translation.y * 5 + velocity.y > 1_000 {
