@@ -125,13 +125,7 @@ final class ImagePreviewController: UIViewController {
         return view
     }()
 
-    private(set) lazy var tagFriendsView: TagFriendsView = {
-        let view = TagFriendsView()
-        view.delegate = self
-        view.textColor = .white
-        
-        return view
-    }()
+    private(set) lazy var tagFriendsView = TagFriendsView()
     
     private var player: AVPlayer?
     

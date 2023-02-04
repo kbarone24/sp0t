@@ -255,7 +255,7 @@ final class MapPostService: MapPostServiceProtocol {
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
         /// send local notification first
         guard let postID = post.id else { return }
-        
+
         DispatchQueue.global(qos: .background).async { [weak self] in
             let caption = post.caption
             var notiPost = post

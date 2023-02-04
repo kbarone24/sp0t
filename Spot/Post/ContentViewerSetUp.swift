@@ -13,11 +13,9 @@ import FirebaseStorageUI
 extension ContentViewerCell {
     func addDotView() {
         let frameCount = post?.frameIndexes?.count ?? 1
-        if frameCount < 2 {
-            dotView.snp.updateConstraints {
-                $0.height.equalTo(0)
-            }
-            return
+        let dotViewHeight: CGFloat = frameCount < 2 ? 0 : 3
+        dotView.snp.updateConstraints {
+            $0.height.equalTo(dotViewHeight)
         }
     }
 

@@ -158,6 +158,13 @@ extension MapController: SpotMapViewDelegate {
             guard let post = map.postsDictionary[id] else { continue }
             if !posts.contains(where: { $0.id ?? "" == post.id ?? "" }) { posts.append(post) }
         }
+
+        var nonClusterPosts: [MapPost] = []
+        for post in map.postsDictionary where !posts.contains(where: { $0.id ?? "" == post.key }) && !nonClusterPosts.contains(where: { $0.id ?? "" == post.key }) { nonClusterPosts.append(post.value)
+        }
+        nonClusterPosts.sort(by: { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : $0.seen && !$1.seen })
+        posts.append(contentsOf: nonClusterPosts)
+
         DispatchQueue.main.async { self.openPosts(posts: posts) }
     }
 

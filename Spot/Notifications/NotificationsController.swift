@@ -65,7 +65,11 @@ class NotificationsController: UIViewController {
         super.viewDidLoad()
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(rawValue: "DeletePost"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewOffset), name: NSNotification.Name(("DrawerViewOffset")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewReset), name: NSNotification.Name(("DrawerViewReset")), object: nil)
+
         setupView()
+
         fetchNotifications(refresh: false)
     }
     
@@ -159,6 +163,14 @@ class NotificationsController: UIViewController {
             notifications.removeAll(where: { $0.mapID == post.mapID })
         }
         DispatchQueue.main.async { self.tableView.reloadData() }
+    }
+
+    @objc func notifyDrawerViewOffset() {
+        tableView.isScrollEnabled = false
+    }
+
+    @objc func notifyDrawerViewReset() {
+        tableView.isScrollEnabled = true
     }
 }
 
