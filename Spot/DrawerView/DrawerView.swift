@@ -53,9 +53,7 @@ class DrawerView: NSObject {
     public var canSwipeDownToDismiss: Bool = false
     public var canSwipeRightToDismiss: Bool = false
 
-
-    // MARK: Private variable
-    private lazy var myNav = UINavigationController()
+    public lazy var myNav = UINavigationController()
     private lazy var closeButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = .clear
@@ -142,7 +140,7 @@ class DrawerView: NSObject {
         slideView.addGestureRecognizer(panRecognizer)
 
         myNav = UINavigationController(rootViewController: rootVC)
-        myNav.delegate = self
+    //    myNav.delegate = self
         parentVC?.addChild(myNav)
         slideView.addSubview(myNav.view)
         myNav.view.layer.cornerRadius = cornerRadius
@@ -435,7 +433,6 @@ class DrawerView: NSObject {
             self.animationConstraints?.activate()
             NotificationCenter.default.post(name: NSNotification.Name("DrawerViewCloseBegan"), object: nil)
 
-
             UIView.animate(withDuration: animationDuration, animations: {
                 self.parentVC?.view.layoutIfNeeded()
 
@@ -450,6 +447,7 @@ class DrawerView: NSObject {
         } else {
             status = .close
             myNav.popViewController(animated: true)
+            NotificationCenter.default.post(name: NSNotification.Name("DrawerViewReset"), object: nil)
         }
     }
 
@@ -462,7 +460,7 @@ extension DrawerView: UINavigationControllerDelegate {
     func navigationController
     (_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController)
     -> UIViewControllerAnimatedTransitioning? {
-        if (toVC is CustomMapController || fromVC is CustomMapController) {
+        if toVC is CustomMapController || fromVC is CustomMapController {
             transitionAnimation.startingOffset = slideView.frame.origin.y
             transitionAnimation.transitionMode = operation == .push ? .present : .pop
             return transitionAnimation

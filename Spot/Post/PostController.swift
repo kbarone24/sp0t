@@ -27,7 +27,11 @@ final class PostController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
     var parentVC: PostParent
-    var postsList: [MapPost]
+    var postsList: [MapPost] {
+        didSet {
+            contentTable.isScrollEnabled = postsList.count > 1
+        }
+    }
 
     let rowHeight: CGFloat = UIScreen.main.bounds.height - 95
     lazy var contentTable: UITableView = {
@@ -39,6 +43,7 @@ final class PostController: UIViewController {
         view.separatorStyle = .none
         view.isScrollEnabled = false
         view.isPrefetchingEnabled = true
+        view.showsVerticalScrollIndicator = false
         // inset to show button view
         view.register(ContentViewerCell.self, forCellReuseIdentifier: "ContentCell")
         return view
@@ -75,14 +80,20 @@ final class PostController: UIViewController {
 
     unowned var containerDrawerView: DrawerView?
     var openComments = false
-    var imageViewOffset = false
+    var imageViewOffset = false {
+        didSet {
+            contentTable.isScrollEnabled = !imageViewOffset
+        }
+    }
     var tableViewOffset = false {
         didSet {
-            for cell in contentTable.visibleCells {
-                if let cell = cell as? ContentViewerCell {
-                    cell.cellOffset = tableViewOffset
-                }
-            }
+            setCellOffsets(offset: tableViewOffset)
+        }
+    }
+    var containerViewOffset = false {
+        didSet {
+            contentTable.isScrollEnabled = !containerViewOffset
+            setCellOffsets(offset: containerViewOffset)
         }
     }
     
@@ -113,6 +124,8 @@ final class PostController: UIViewController {
 
         titleLabel.text = (title ?? "" != "") ? title : parentVC.rawValue
         self.selectedPostIndex = selectedPostIndex ?? 0
+        setUpView()
+        addNotifications()
     }
 
     @available(*, unavailable)
@@ -143,8 +156,6 @@ final class PostController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         edgesForExtendedLayout = [.top]
-        setUpView()
-        addNotifications()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -182,9 +193,6 @@ final class PostController: UIViewController {
         contentTable.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(tablePan(_:)))
-        pan.isEnabled = postsList.count > 1
-        contentTable.addGestureRecognizer(pan)
 
         view.addSubview(titleView)
         titleView.snp.makeConstraints {
@@ -231,12 +239,16 @@ final class PostController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name("DeletePost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewOffset), name: NSNotification.Name("DrawerViewOffset"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewReset), name: NSNotification.Name("DrawerViewReset"), object: nil)
     }
 
     @objc func notifyCommentChange(_ notification: NSNotification) {
+        print("notify")
         guard let commentList = notification.userInfo?["commentList"] as? [MapComment] else { return }
         guard let postID = notification.userInfo?["postID"] as? String else { return }
         if let i = postsList.firstIndex(where: { $0.id == postID }) {
+            print("comment count", max(0, commentList.count - 1))
             postsList[i].commentCount = max(0, commentList.count - 1)
             postsList[i].commentList = commentList
             DispatchQueue.main.async { self.contentTable.reloadData() }
@@ -299,6 +311,15 @@ final class PostController: UIViewController {
         }
     }
 
+    // called if table view or container view removal has begun
+    private func setCellOffsets(offset: Bool) {
+        for cell in contentTable.visibleCells {
+            if let cell = cell as? ContentViewerCell {
+                cell.cellOffset = tableViewOffset
+            }
+        }
+    }
+
     func updateButtonView() {
         buttonView.setCommentsAndLikes(post: postsList[selectedPostIndex])
     }
@@ -306,6 +327,7 @@ final class PostController: UIViewController {
     func exitPosts() {
         for cell in contentTable.visibleCells { cell.layer.removeAllAnimations() }
         containerDrawerView?.closeAction()
+        navigationController?.popViewController(animated: true)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostIndexChange"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostLike"), object: nil)
     }

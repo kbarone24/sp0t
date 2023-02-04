@@ -117,8 +117,8 @@ extension ContentViewerCell {
             translation.x
 
             currentImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(adjustedOffset) })
-            nextImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width + adjustedOffset) })
-            previousImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width + adjustedOffset) })
+            if nextImage.superview != nil { nextImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width + adjustedOffset) }) }
+            if previousImage.superview != nil { previousImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width + adjustedOffset) }) }
 
         case .ended:
             if (composite < -UIScreen.main.bounds.width / 2) && (selectedIndex < imageCount - 1) {

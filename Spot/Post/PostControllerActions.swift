@@ -13,20 +13,17 @@ import Mixpanel
 extension PostController {
     func openComments(row: Int, animated: Bool) {
         if presentedViewController != nil { return }
-        if let commentsVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Comments") as? CommentsController {
-
-            Mixpanel.mainInstance().track(event: "PostOpenComments")
-
-            let post = self.postsList[selectedPostIndex]
-            commentsVC.commentList = post.commentList
-            commentsVC.post = post
-            commentsVC.postVC = self
-            present(commentsVC, animated: animated, completion: nil)
+        Mixpanel.mainInstance().track(event: "PostOpenComments")
+        let post = postsList[selectedPostIndex]
+        let commentsVC = CommentsController(commentsList: post.commentList, post: post)
+        commentsVC.delegate = self
+        DispatchQueue.main.async {
+            self.present(commentsVC, animated: animated, completion: nil)
         }
     }
 
     @objc func backTap() {
-        containerDrawerView?.closeAction()
+        exitPosts()
     }
 
     @objc func elipsesTap() {
@@ -52,6 +49,14 @@ extension PostController {
         updateButtonView()
     }
 
+    @objc func drawerViewOffset() {
+        containerViewOffset = true
+    }
+
+    @objc func drawerViewReset() {
+        containerViewOffset = false
+    }
+
     func removeTableAnimations() {
         for cell in contentTable.visibleCells {
             if let contentCell = cell as? ContentViewerCell {
@@ -61,42 +66,40 @@ extension PostController {
         }
     }
 
-    @objc func tablePan(_ gesture: UIPanGestureRecognizer) {
-        let velocity = gesture.velocity(in: gesture.view)
-        let translation = gesture.translation(in: gesture.view)
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        print("end dragging", scrollView.contentOffset.y - (CGFloat(selectedPostIndex) * rowHeight))
+        let velocity = scrollView.panGestureRecognizer.velocity(in: view)
+        let translation = scrollView.panGestureRecognizer.translation(in: view)
         let composite = translation.y + velocity.y / 4
 
-        switch gesture.state {
-        case .began:
-            if imageViewOffset { return }
-            if abs(velocity.y) > abs(velocity.x) {
-                tableViewOffset = true
-            }
-        case .changed:
-            if !tableViewOffset { return }
-            contentTable.setContentOffset(CGPoint(x: 0, y: currentRowContentOffset - translation.y), animated: false)
-        case .ended:
-            if composite < -(rowHeight / 4) && selectedPostIndex < postsList.count - 1 {
-                selectedPostIndex += 1
-            } else if composite > rowHeight / 4 && selectedPostIndex != 0 {
-                selectedPostIndex -= 1
-            }
-            scrollToSelectedRow(animated: true)
-        default:
-            scrollToSelectedRow(animated: true)
+        if composite < -(rowHeight / 4) && selectedPostIndex < postsList.count - 1 {
+            selectedPostIndex += 1
+        } else if composite > rowHeight / 4 && selectedPostIndex != 0 {
+            selectedPostIndex -= 1
         }
+        scrollToSelectedRow(animated: true)
     }
 
     func scrollToSelectedRow(animated: Bool) {
-        var duration: TimeInterval = 0.05
+        var duration: TimeInterval = 0.15
         if animated {
             let offset = abs(currentRowContentOffset - contentTable.contentOffset.y)
-            duration = max(TimeInterval(0.35 * offset / rowHeight), 0.2)
+            duration = max(TimeInterval(0.3 * offset / rowHeight), 0.2)
         }
+        print("scroll to row at", selectedPostIndex, duration)
+
+        /*
+        self.contentTable.setContentOffset(CGPoint(x: 0, y: rowHeight * CGFloat(selectedPostIndex)), animated: true)
+        self.tableViewOffset = false
+        */
+
         UIView.animate(withDuration: duration, animations: {
             self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
         }) { [weak self] _ in
             self?.tableViewOffset = false
+            if let cell = self?.contentTable.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? ContentViewerCell {
+                cell.animateLocation()
+            }
         }
     }
 }
@@ -160,5 +163,11 @@ extension PostController: ContentViewerDelegate {
     // call to let table know cell is swiping
     func imageViewOffset(offset: Bool) {
         imageViewOffset = offset
+    }
+}
+
+extension PostController: CommentsDelegate {
+    func openProfileFromComments(user: UserProfile) {
+        openProfile(user: user)
     }
 }
