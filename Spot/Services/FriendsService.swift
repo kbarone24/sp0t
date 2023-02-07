@@ -44,7 +44,7 @@ final class FriendsService: FriendsServiceProtocol {
                 .document(UserDataModel.shared.uid)
                 .updateData(
                     [
-                        "\(FireBaseCollectionFields.topFriends.rawValue).\(friendID)": FieldValue.increment(increment)
+                        "\(FirebaseCollectionFields.topFriends.rawValue).\(friendID)": FieldValue.increment(increment)
                     ]
                 )
             
@@ -52,7 +52,7 @@ final class FriendsService: FriendsServiceProtocol {
                 .document(friendID)
                 .updateData(
                     [
-                        "\(FireBaseCollectionFields.topFriends.rawValue).\(UserDataModel.shared.uid)": FieldValue.increment(increment)
+                        "\(FirebaseCollectionFields.topFriends.rawValue).\(UserDataModel.shared.uid)": FieldValue.increment(increment)
                     ]
                 )
             
@@ -75,8 +75,8 @@ final class FriendsService: FriendsServiceProtocol {
                 .document(notificationID)
                 .updateData(
                     [
-                        FireBaseCollectionFields.status.rawValue: "accepted",
-                        FireBaseCollectionFields.timestamp.rawValue: timestamp
+                        FirebaseCollectionFields.status.rawValue: "accepted",
+                        FirebaseCollectionFields.timestamp.rawValue: timestamp
                     ]
                 )
             
@@ -85,12 +85,12 @@ final class FriendsService: FriendsServiceProtocol {
                 .document(UUID().uuidString)
                 .setData(
                     [
-                        FireBaseCollectionFields.status.rawValue: "accepted",
-                        FireBaseCollectionFields.timestamp.rawValue: timestamp,
-                        FireBaseCollectionFields.senderID.rawValue: uid,
-                        FireBaseCollectionFields.senderUsername.rawValue: UserDataModel.shared.userInfo.username,
-                        FireBaseCollectionFields.type.rawValue: "friendRequest",
-                        FireBaseCollectionFields.seen.rawValue: false
+                        FirebaseCollectionFields.status.rawValue: "accepted",
+                        FirebaseCollectionFields.timestamp.rawValue: timestamp,
+                        FirebaseCollectionFields.senderID.rawValue: uid,
+                        FirebaseCollectionFields.senderUsername.rawValue: UserDataModel.shared.userInfo.username,
+                        FirebaseCollectionFields.type.rawValue: "friendRequest",
+                        FirebaseCollectionFields.seen.rawValue: false
                     ]
                 )
         }
@@ -102,8 +102,8 @@ final class FriendsService: FriendsServiceProtocol {
                 .document(userID)
                 .updateData(
                     [
-                        FireBaseCollectionFields.friendsList.rawValue: FieldValue.arrayUnion([friendID]),
-                        FireBaseCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayRemove([friendID]),
+                        FirebaseCollectionFields.friendsList.rawValue: FieldValue.arrayUnion([friendID]),
+                        FirebaseCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayRemove([friendID]),
                         "topFriends.\(friendID)": 0
                     ]
                 )
@@ -122,7 +122,7 @@ final class FriendsService: FriendsServiceProtocol {
             .document(uid)
             .updateData(
                 [
-                    FireBaseCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayRemove([friendID])
+                    FirebaseCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayRemove([friendID])
                 ]
             )
         
@@ -146,7 +146,7 @@ final class FriendsService: FriendsServiceProtocol {
                 .document(friendID)
                 .updateData(
                     [
-                        FireBaseCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayRemove([uid])
+                        FirebaseCollectionFields.pendingFriendRequests.rawValue: FieldValue.arrayRemove([uid])
                     ]
                 )
         }
@@ -252,21 +252,21 @@ final class FriendsService: FriendsServiceProtocol {
         fireStore.collection(FirebaseCollectionNames.users.rawValue)
             .document(userID).updateData(
                 [
-                    FireBaseCollectionFields.friendsList.rawValue: FieldValue.arrayRemove([friendID]),
-                    "\(FireBaseCollectionFields.topFriends.rawValue).\(friendID)": FieldValue.delete()
+                    FirebaseCollectionFields.friendsList.rawValue: FieldValue.arrayRemove([friendID]),
+                    "\(FirebaseCollectionFields.topFriends.rawValue).\(friendID)": FieldValue.delete()
                 ]
             )
     }
     
     private func removeFriendFromPosts(userID: String, friendID: String) {
         fireStore.collection(FirebaseCollectionNames.posts.rawValue)
-            .whereField(FireBaseCollectionFields.posterID.rawValue, isEqualTo: friendID)
+            .whereField(FirebaseCollectionFields.posterID.rawValue, isEqualTo: friendID)
             .getDocuments { snap, _ in
                 guard let docs = snap?.documents else { return }
                 for doc in docs {
                     doc.reference.updateData(
                         [
-                            FireBaseCollectionFields.friendsList.rawValue: FieldValue.arrayRemove([userID])
+                            FirebaseCollectionFields.friendsList.rawValue: FieldValue.arrayRemove([userID])
                         ]
                     )
                 }
@@ -279,8 +279,8 @@ final class FriendsService: FriendsServiceProtocol {
         fireStore.collection(FirebaseCollectionNames.users.rawValue)
             .document(userID)
             .collection(FirebaseCollectionNames.notifications.rawValue)
-            .whereField(FireBaseCollectionFields.senderID.rawValue, isEqualTo: friendID)
-            .whereField(FireBaseCollectionFields.type.rawValue, isEqualTo: friendRequestValueString)
+            .whereField(FirebaseCollectionFields.senderID.rawValue, isEqualTo: friendID)
+            .whereField(FirebaseCollectionFields.type.rawValue, isEqualTo: friendRequestValueString)
             .getDocuments { snap, _ in
             guard let docs = snap?.documents else { return }
             for doc in docs {

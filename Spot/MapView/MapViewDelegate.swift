@@ -153,11 +153,26 @@ extension MapController: SpotMapViewDelegate {
     func openPostFromSpotPost(view: SpotPostAnnotationView) {
         let map = getFriendsMapObject()
         var posts: [MapPost] = []
+        var unseenPost = false
         /// patch fix for double post getting added
         for id in view.postIDs {
             guard let post = map.postsDictionary[id] else { continue }
+            if !post.seen { unseenPost = true }
             if !posts.contains(where: { $0.id ?? "" == post.id ?? "" }) { posts.append(post) }
         }
+
+        var nonClusterPosts: [MapPost] = []
+        for post in map.postsDictionary where !posts.contains(where: { $0.id ?? "" == post.key }) && !nonClusterPosts.contains(where: { $0.id ?? "" == post.key }) {
+            // only add new posts if user opened a new post
+            if unseenPost {
+                if !post.value.seen { nonClusterPosts.append(post.value) }
+            } else {
+                nonClusterPosts.append(post.value)
+            }
+        }
+        nonClusterPosts.sort(by: { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : $0.seen && !$1.seen })
+        posts.append(contentsOf: nonClusterPosts)
+
         DispatchQueue.main.async { self.openPosts(posts: posts) }
     }
 

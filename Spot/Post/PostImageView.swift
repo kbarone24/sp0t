@@ -15,7 +15,7 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     var originalCenter: CGPoint
     var activeAnimation = false
     var currentAspect: CGFloat
-    var imageMask: UIView!
+    lazy var imageMask = UIImageView()
 
     override init(frame: CGRect) {
         stillImage = UIImage()
@@ -29,11 +29,11 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
         isUserInteractionEnabled = true
         contentMode = .scaleAspectFill
 
-        enableZoom()
+       // enableZoom()
     }
 
     override func layoutSubviews() {
-        if currentAspect > 1.45 { addBottomMask() }
+       // if currentAspect > 1.45 { addBottomMask() }
     }
 
     required init?(coder: NSCoder) {
@@ -41,7 +41,6 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     }
 
     func enableZoom() {
-
         isUserInteractionEnabled = true
 
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(zoom(_:)))
@@ -55,7 +54,6 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     }
 
     @objc func zoom(_ sender: UIPinchGestureRecognizer) {
-
         guard let scrollView = superview as? ImageScrollView else { return }
         /// only zoom if not already swiping between images
         if scrollView.contentOffset.x.truncatingRemainder(dividingBy: UIScreen.main.bounds.width) != 0 { return }
@@ -122,10 +120,8 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     }
 
     func addBottomMask() {
-        if imageMask != nil { return }
-        imageMask = UIView {
-            addSubview($0)
-        }
+        if imageMask.superview != nil { return }
+        addSubview(imageMask)
         imageMask.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -144,7 +140,6 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
 }
 
 class ImageScrollView: UIScrollView {
-
     var imageZoom: Bool
 
     override init(frame: CGRect) {

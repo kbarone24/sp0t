@@ -321,17 +321,11 @@
 		8C373D5C27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
 		8C373D5D27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
 		8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */; };
-		8C3B952628AC042B00C06586 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B952528AC042B00C06586 /* PostCell.swift */; };
-		8C3B952728AC042B00C06586 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B952528AC042B00C06586 /* PostCell.swift */; };
-		8C3B952828AC042B00C06586 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B952528AC042B00C06586 /* PostCell.swift */; };
 		8C3B953228AD530300C06586 /* HeelsMapPopUpController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */; };
 		8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B953528AD533100C06586 /* AvatarSelectionController.swift */; };
-		8C3B954E28AE932B00C06586 /* DeletePost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B954D28AE932B00C06586 /* DeletePost.swift */; };
-		8C3B954F28AE932B00C06586 /* DeletePost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B954D28AE932B00C06586 /* DeletePost.swift */; };
-		8C3B955028AE932B00C06586 /* DeletePost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B954D28AE932B00C06586 /* DeletePost.swift */; };
-		8C3B955228AE933D00C06586 /* PostCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */; };
-		8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */; };
-		8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */; };
+		8C3B955228AE933D00C06586 /* PostActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostActionSheet.swift */; };
+		8C3B955328AE933D00C06586 /* PostActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostActionSheet.swift */; };
+		8C3B955428AE933D00C06586 /* PostActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955128AE933D00C06586 /* PostActionSheet.swift */; };
 		8C3B955628B2B38E00C06586 /* AddButtonTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */; };
 		8C3B955728B2B38E00C06586 /* AddButtonTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */; };
 		8C3B955828B2B38E00C06586 /* AddButtonTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */; };
@@ -413,6 +407,39 @@
 		8C66FAF12969F899007A347D /* SideBarCampusMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAF02969F899007A347D /* SideBarCampusMapCell.swift */; };
 		8C66FAF22969F899007A347D /* SideBarCampusMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAF02969F899007A347D /* SideBarCampusMapCell.swift */; };
 		8C66FAF32969F899007A347D /* SideBarCampusMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C66FAF02969F899007A347D /* SideBarCampusMapCell.swift */; };
+		8C6790992982E91100815F7B /* ContentViewerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790982982E91100815F7B /* ContentViewerCell.swift */; };
+		8C67909A2982E91100815F7B /* ContentViewerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790982982E91100815F7B /* ContentViewerCell.swift */; };
+		8C67909B2982E91100815F7B /* ContentViewerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790982982E91100815F7B /* ContentViewerCell.swift */; };
+		8C6790B92984612800815F7B /* Univers-CE-55-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C6790B82984612800815F7B /* Univers-CE-55-Medium.ttf */; };
+		8C6790BA2984612800815F7B /* Univers-CE-55-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C6790B82984612800815F7B /* Univers-CE-55-Medium.ttf */; };
+		8C6790BB2984612800815F7B /* Univers-CE-55-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C6790B82984612800815F7B /* Univers-CE-55-Medium.ttf */; };
+		8C6790BD2984730600815F7B /* LocationScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790BC2984730600815F7B /* LocationScrollView.swift */; };
+		8C6790BE2984730600815F7B /* LocationScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790BC2984730600815F7B /* LocationScrollView.swift */; };
+		8C6790BF2984730600815F7B /* LocationScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790BC2984730600815F7B /* LocationScrollView.swift */; };
+		8C6790C12988A26800815F7B /* PostButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790C02988A26800815F7B /* PostButtonView.swift */; };
+		8C6790C22988A26800815F7B /* PostButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790C02988A26800815F7B /* PostButtonView.swift */; };
+		8C6790C32988A26800815F7B /* PostButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790C02988A26800815F7B /* PostButtonView.swift */; };
+		8C6790C52989E09E00815F7B /* ContentViewerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790C42989E09E00815F7B /* ContentViewerActions.swift */; };
+		8C6790C62989E09E00815F7B /* ContentViewerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790C42989E09E00815F7B /* ContentViewerActions.swift */; };
+		8C6790C72989E09E00815F7B /* ContentViewerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790C42989E09E00815F7B /* ContentViewerActions.swift */; };
+		8C6790C92989E26000815F7B /* PostControllerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790C82989E26000815F7B /* PostControllerActions.swift */; };
+		8C6790CA2989E26000815F7B /* PostControllerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790C82989E26000815F7B /* PostControllerActions.swift */; };
+		8C6790CB2989E26000815F7B /* PostControllerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790C82989E26000815F7B /* PostControllerActions.swift */; };
+		8C6790CD2989E29500815F7B /* PostControllerTableViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790CC2989E29500815F7B /* PostControllerTableViewExtension.swift */; };
+		8C6790CE2989E29500815F7B /* PostControllerTableViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790CC2989E29500815F7B /* PostControllerTableViewExtension.swift */; };
+		8C6790CF2989E29500815F7B /* PostControllerTableViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790CC2989E29500815F7B /* PostControllerTableViewExtension.swift */; };
+		8C6790D1298ACCB100815F7B /* ContentViewerSetUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790D0298ACCB100815F7B /* ContentViewerSetUp.swift */; };
+		8C6790D2298ACCB100815F7B /* ContentViewerSetUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790D0298ACCB100815F7B /* ContentViewerSetUp.swift */; };
+		8C6790D3298ACCB100815F7B /* ContentViewerSetUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790D0298ACCB100815F7B /* ContentViewerSetUp.swift */; };
+		8C6790D5298D7E3C00815F7B /* CommentsControllerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790D4298D7E3C00815F7B /* CommentsControllerActions.swift */; };
+		8C6790D6298D7E3C00815F7B /* CommentsControllerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790D4298D7E3C00815F7B /* CommentsControllerActions.swift */; };
+		8C6790D7298D7E3C00815F7B /* CommentsControllerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790D4298D7E3C00815F7B /* CommentsControllerActions.swift */; };
+		8C6790D9298D7EFF00815F7B /* CommentsControllerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790D8298D7EFF00815F7B /* CommentsControllerDelegate.swift */; };
+		8C6790DA298D7EFF00815F7B /* CommentsControllerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790D8298D7EFF00815F7B /* CommentsControllerDelegate.swift */; };
+		8C6790DB298D7EFF00815F7B /* CommentsControllerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790D8298D7EFF00815F7B /* CommentsControllerDelegate.swift */; };
+		8C6790DD298D884F00815F7B /* CommentsTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790DC298D884F00815F7B /* CommentsTitleView.swift */; };
+		8C6790DE298D884F00815F7B /* CommentsTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790DC298D884F00815F7B /* CommentsTitleView.swift */; };
+		8C6790DF298D884F00815F7B /* CommentsTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6790DC298D884F00815F7B /* CommentsTitleView.swift */; };
 		8C7409742937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
 		8C7409752937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
 		8C7409762937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */; };
@@ -487,21 +514,9 @@
 		8CC4BA10296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA0F296C7D4500BEAA88 /* UIButtonExtension.swift */; };
 		8CC4BA11296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA0F296C7D4500BEAA88 /* UIButtonExtension.swift */; };
 		8CC4BA12296C7D4500BEAA88 /* UIButtonExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA0F296C7D4500BEAA88 /* UIButtonExtension.swift */; };
-		8CC4BA19296C7FE400BEAA88 /* LikeSeg.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA13296C7FE400BEAA88 /* LikeSeg.swift */; };
-		8CC4BA1A296C7FE400BEAA88 /* LikeSeg.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA13296C7FE400BEAA88 /* LikeSeg.swift */; };
-		8CC4BA1B296C7FE400BEAA88 /* LikeSeg.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA13296C7FE400BEAA88 /* LikeSeg.swift */; };
-		8CC4BA1C296C7FE400BEAA88 /* CommentsControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA14296C7FE400BEAA88 /* CommentsControl.swift */; };
-		8CC4BA1D296C7FE400BEAA88 /* CommentsControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA14296C7FE400BEAA88 /* CommentsControl.swift */; };
-		8CC4BA1E296C7FE400BEAA88 /* CommentsControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA14296C7FE400BEAA88 /* CommentsControl.swift */; };
-		8CC4BA1F296C7FE400BEAA88 /* LikerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA15296C7FE400BEAA88 /* LikerCell.swift */; };
-		8CC4BA20296C7FE400BEAA88 /* LikerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA15296C7FE400BEAA88 /* LikerCell.swift */; };
-		8CC4BA21296C7FE400BEAA88 /* LikerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA15296C7FE400BEAA88 /* LikerCell.swift */; };
 		8CC4BA22296C7FE400BEAA88 /* CommentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA16296C7FE400BEAA88 /* CommentCell.swift */; };
 		8CC4BA23296C7FE400BEAA88 /* CommentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA16296C7FE400BEAA88 /* CommentCell.swift */; };
 		8CC4BA24296C7FE400BEAA88 /* CommentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA16296C7FE400BEAA88 /* CommentCell.swift */; };
-		8CC4BA25296C7FE400BEAA88 /* CommentSeg.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA17296C7FE400BEAA88 /* CommentSeg.swift */; };
-		8CC4BA26296C7FE400BEAA88 /* CommentSeg.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA17296C7FE400BEAA88 /* CommentSeg.swift */; };
-		8CC4BA27296C7FE400BEAA88 /* CommentSeg.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA17296C7FE400BEAA88 /* CommentSeg.swift */; };
 		8CC4BA28296C7FE400BEAA88 /* CommentsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA18296C7FE400BEAA88 /* CommentsViewController.swift */; };
 		8CC4BA29296C7FE400BEAA88 /* CommentsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA18296C7FE400BEAA88 /* CommentsViewController.swift */; };
 		8CC4BA2A296C7FE400BEAA88 /* CommentsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4BA18296C7FE400BEAA88 /* CommentsViewController.swift */; };
@@ -750,11 +765,9 @@
 		8C214BB8260C276D00E0C4FC /* NewUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewUser.swift; sourceTree = "<group>"; };
 		8C2209F7284D4B9300E5D165 /* ContactFriend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactFriend.swift; sourceTree = "<group>"; };
 		8C373D5B27FF567F002A1225 /* FriendsPostGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsPostGroup.swift; sourceTree = "<group>"; };
-		8C3B952528AC042B00C06586 /* PostCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCell.swift; sourceTree = "<group>"; };
 		8C3B953128AD530300C06586 /* HeelsMapPopUpController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeelsMapPopUpController.swift; sourceTree = "<group>"; };
 		8C3B953528AD533100C06586 /* AvatarSelectionController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AvatarSelectionController.swift; sourceTree = "<group>"; };
-		8C3B954D28AE932B00C06586 /* DeletePost.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeletePost.swift; sourceTree = "<group>"; };
-		8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostCellActionSheet.swift; sourceTree = "<group>"; };
+		8C3B955128AE933D00C06586 /* PostActionSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostActionSheet.swift; sourceTree = "<group>"; };
 		8C3B955528B2B38E00C06586 /* AddButtonTransition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddButtonTransition.swift; sourceTree = "<group>"; };
 		8C3B955928B2B47100C06586 /* AddSpotButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSpotButton.swift; sourceTree = "<group>"; };
 		8C3BAF65260CFB7B00349091 /* CountryCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCode.swift; sourceTree = "<group>"; };
@@ -784,6 +797,17 @@
 		8C66FAE4295F67AD007A347D /* NSAttributedStringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSAttributedStringExtension.swift; sourceTree = "<group>"; };
 		8C66FAE8295F9EF5007A347D /* HomeScreenDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenDelegate.swift; sourceTree = "<group>"; };
 		8C66FAF02969F899007A347D /* SideBarCampusMapCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideBarCampusMapCell.swift; sourceTree = "<group>"; };
+		8C6790982982E91100815F7B /* ContentViewerCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewerCell.swift; sourceTree = "<group>"; };
+		8C6790B82984612800815F7B /* Univers-CE-55-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-CE-55-Medium.ttf"; sourceTree = "<group>"; };
+		8C6790BC2984730600815F7B /* LocationScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationScrollView.swift; sourceTree = "<group>"; };
+		8C6790C02988A26800815F7B /* PostButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostButtonView.swift; sourceTree = "<group>"; };
+		8C6790C42989E09E00815F7B /* ContentViewerActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewerActions.swift; sourceTree = "<group>"; };
+		8C6790C82989E26000815F7B /* PostControllerActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostControllerActions.swift; sourceTree = "<group>"; };
+		8C6790CC2989E29500815F7B /* PostControllerTableViewExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostControllerTableViewExtension.swift; sourceTree = "<group>"; };
+		8C6790D0298ACCB100815F7B /* ContentViewerSetUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewerSetUp.swift; sourceTree = "<group>"; };
+		8C6790D4298D7E3C00815F7B /* CommentsControllerActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsControllerActions.swift; sourceTree = "<group>"; };
+		8C6790D8298D7EFF00815F7B /* CommentsControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsControllerDelegate.swift; sourceTree = "<group>"; };
+		8C6790DC298D884F00815F7B /* CommentsTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsTitleView.swift; sourceTree = "<group>"; };
 		8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-LT-85-Extra-Black.ttf"; sourceTree = "<group>"; };
 		8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Univers-CE-75-Black.ttf"; sourceTree = "<group>"; };
 		8C74097B29381CC2006D5D0E /* CLLocationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationExtension.swift; sourceTree = "<group>"; };
@@ -812,11 +836,7 @@
 		8CC2A55126BCAAC7000ADA7A /* ImageFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFetcher.swift; sourceTree = "<group>"; };
 		8CC3653926C5E9A900AC40AB /* UploadPostModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPostModel.swift; sourceTree = "<group>"; };
 		8CC4BA0F296C7D4500BEAA88 /* UIButtonExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UIButtonExtension.swift; sourceTree = "<group>"; };
-		8CC4BA13296C7FE400BEAA88 /* LikeSeg.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LikeSeg.swift; sourceTree = "<group>"; };
-		8CC4BA14296C7FE400BEAA88 /* CommentsControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentsControl.swift; sourceTree = "<group>"; };
-		8CC4BA15296C7FE400BEAA88 /* LikerCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LikerCell.swift; sourceTree = "<group>"; };
 		8CC4BA16296C7FE400BEAA88 /* CommentCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentCell.swift; sourceTree = "<group>"; };
-		8CC4BA17296C7FE400BEAA88 /* CommentSeg.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentSeg.swift; sourceTree = "<group>"; };
 		8CC4BA18296C7FE400BEAA88 /* CommentsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentsViewController.swift; sourceTree = "<group>"; };
 		8CD1BE60292D609800367220 /* MapGeoQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapGeoQuery.swift; sourceTree = "<group>"; };
 		8CD1BE64292EBC1300367220 /* POICategories.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POICategories.swift; sourceTree = "<group>"; };
@@ -1109,6 +1129,7 @@
 		59056A56231DDF0300C7E753 /* fonts */ = {
 			isa = PBXGroup;
 			children = (
+				8C6790B82984612800815F7B /* Univers-CE-55-Medium.ttf */,
 				8C7409732937BE10006D5D0E /* Univers-LT-85-Extra-Black.ttf */,
 				8C74097729381B79006D5D0E /* Univers-CE-75-Black.ttf */,
 				8CA512A428BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf */,
@@ -1279,10 +1300,15 @@
 			isa = PBXGroup;
 			children = (
 				599BD2BA23C652BD00ECB84A /* PostController.swift */,
-				8C3B952528AC042B00C06586 /* PostCell.swift */,
+				8C6790C02988A26800815F7B /* PostButtonView.swift */,
+				8C6790C82989E26000815F7B /* PostControllerActions.swift */,
+				8C6790CC2989E29500815F7B /* PostControllerTableViewExtension.swift */,
+				8C3B955128AE933D00C06586 /* PostActionSheet.swift */,
+				8C6790982982E91100815F7B /* ContentViewerCell.swift */,
+				8C6790D0298ACCB100815F7B /* ContentViewerSetUp.swift */,
+				8C6790C42989E09E00815F7B /* ContentViewerActions.swift */,
+				8C6790BC2984730600815F7B /* LocationScrollView.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
-				8C3B955128AE933D00C06586 /* PostCellActionSheet.swift */,
-				8C3B954D28AE932B00C06586 /* DeletePost.swift */,
 			);
 			path = Post;
 			sourceTree = "<group>";
@@ -1290,12 +1316,11 @@
 		8C12E66F2909C06D00FA5BF0 /* Comments */ = {
 			isa = PBXGroup;
 			children = (
-				8CC4BA16296C7FE400BEAA88 /* CommentCell.swift */,
-				8CC4BA14296C7FE400BEAA88 /* CommentsControl.swift */,
-				8CC4BA17296C7FE400BEAA88 /* CommentSeg.swift */,
 				8CC4BA18296C7FE400BEAA88 /* CommentsViewController.swift */,
-				8CC4BA15296C7FE400BEAA88 /* LikerCell.swift */,
-				8CC4BA13296C7FE400BEAA88 /* LikeSeg.swift */,
+				8C6790DC298D884F00815F7B /* CommentsTitleView.swift */,
+				8C6790D4298D7E3C00815F7B /* CommentsControllerActions.swift */,
+				8C6790D8298D7EFF00815F7B /* CommentsControllerDelegate.swift */,
+				8CC4BA16296C7FE400BEAA88 /* CommentCell.swift */,
 			);
 			path = Comments;
 			sourceTree = "<group>";
@@ -1767,6 +1792,7 @@
 				8CA512A528BC013200F8C1FE /* SF-Compact-Text-SemiboldItalic.otf in Resources */,
 				8C74097829381B7A006D5D0E /* Univers-CE-75-Black.ttf in Resources */,
 				8CDFEF46284D3B570038A9B8 /* Map.storyboard in Resources */,
+				8C6790B92984612800815F7B /* Univers-CE-55-Medium.ttf in Resources */,
 				8C1EAF83284BD08F00474879 /* Notifications.storyboard in Resources */,
 				413486882859310E0098B27B /* SF-Compact-Text-Bold.otf in Resources */,
 				8C7409742937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */,
@@ -1793,6 +1819,7 @@
 				59A5A3D3253A874600789B7E /* Info.plist in Resources */,
 				8CDFEF47284D3B570038A9B8 /* Map.storyboard in Resources */,
 				8C7409752937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */,
+				8C6790BA2984612800815F7B /* Univers-CE-55-Medium.ttf in Resources */,
 				8C1E48C2289C54CB0093030D /* SpotPostView.xib in Resources */,
 				8CF7BC2C29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */,
 				8C1EAF84284BD08F00474879 /* Notifications.storyboard in Resources */,
@@ -1816,6 +1843,7 @@
 				59A5A3D4253A874600789B7E /* Info.plist in Resources */,
 				8CDFEF48284D3B570038A9B8 /* Map.storyboard in Resources */,
 				8C7409762937BE11006D5D0E /* Univers-LT-85-Extra-Black.ttf in Resources */,
+				8C6790BB2984612800815F7B /* Univers-CE-55-Medium.ttf in Resources */,
 				8C1E48C3289C54CB0093030D /* SpotPostView.xib in Resources */,
 				8CF7BC2D29269D3F00EC9074 /* SF-Compact-Text-Black.otf in Resources */,
 				8C1EAF85284BD08F00474879 /* Notifications.storyboard in Resources */,
@@ -1945,9 +1973,10 @@
 				CD3D8DD32904FA150062DE8D /* ExploreMapTitleView.swift in Sources */,
 				8C121DF12949361500CD4E07 /* PhotoGalleryController.swift in Sources */,
 				8C8DBB862888BE9F00B31BFD /* TagFriendsView.swift in Sources */,
-				8CC4BA19296C7FE400BEAA88 /* LikeSeg.swift in Sources */,
 				8C4918B12919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */,
 				CDF8E9512903B7FC00BE929F /* UIViewExtension.swift in Sources */,
+				8C6790C52989E09E00815F7B /* ContentViewerActions.swift in Sources */,
+				8C6790DD298D884F00815F7B /* CommentsTitleView.swift in Sources */,
 				8CA512A728BC056900F8C1FE /* HapticGenerator.swift in Sources */,
 				8C4FDFC328DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
 				8C121DC02949352400CD4E07 /* ImagePreviewController.swift in Sources */,
@@ -1964,11 +1993,9 @@
 				8C66FAD8295F250F007A347D /* MapActionsExtension.swift in Sources */,
 				59CF623724479D56008E25DE /* SpotPhotoAlbum.swift in Sources */,
 				CD3D8DD929050A730062DE8D /* MapLoadingCell.swift in Sources */,
-				8C3B954E28AE932B00C06586 /* DeletePost.swift in Sources */,
 				CDF8E95B2903C82100BE929F /* ProfileButton.swift in Sources */,
 				CDF8E9532903B86D00BE929F /* UIImageViewExtension.swift in Sources */,
 				CDF8E96F290462FE00BE929F /* MapController.swift in Sources */,
-				8CC4BA1F296C7FE400BEAA88 /* LikerCell.swift in Sources */,
 				8C941751298072FE00818D43 /* AddFriendButton.swift in Sources */,
 				8C121E76294951E500CD4E07 /* SpotPageHeaderCell.swift in Sources */,
 				8C1E48B2289C54CB0093030D /* SpotPostView.swift in Sources */,
@@ -1979,13 +2006,13 @@
 				8C121D682949344A00CD4E07 /* FailedPostView.swift in Sources */,
 				8C941749297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */,
 				8C121E7F294B9E3900CD4E07 /* ChooseSpotSearchExtension.swift in Sources */,
-				8C3B955228AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
+				8C3B955228AE933D00C06586 /* PostActionSheet.swift in Sources */,
 				CDF8E94D2903B68200BE929F /* UITextViewExtension.swift in Sources */,
 				8C66FAE9295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */,
 				8C121D7D294934BC00CD4E07 /* ChooseSpotFetchExtension.swift in Sources */,
-				8C3B952628AC042B00C06586 /* PostCell.swift in Sources */,
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8C121D8F2949351600CD4E07 /* FindFriendsController.swift in Sources */,
+				8C6790BD2984730600815F7B /* LocationScrollView.swift in Sources */,
 				8C121E69294951D300CD4E07 /* CountryPickerController.swift in Sources */,
 				CD3D8DD12904F9960062DE8D /* ExploreMapPreviewCell.swift in Sources */,
 				8C4FDFBF28DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,
@@ -1997,7 +2024,6 @@
 				CDF8E983290477C200BE929F /* CustomMapHeaderCell.swift in Sources */,
 				8C121D952949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
 				8C121E66294951D300CD4E07 /* ConfirmCodeController.swift in Sources */,
-				8CC4BA25296C7FE400BEAA88 /* CommentSeg.swift in Sources */,
 				8C121D7A294934BC00CD4E07 /* ChooseSpotCell.swift in Sources */,
 				CDF8E984290477C200BE929F /* CustomMapDelegateExtension.swift in Sources */,
 				8C66E10D291ABB8D006D29F6 /* SearchContactsCell.swift in Sources */,
@@ -2005,7 +2031,6 @@
 				8CA10A1B2911B0DD00DD50EB /* CollectionExtension.swift in Sources */,
 				8C66FAB2295CD2C3007A347D /* MapControllerLocationManager.swift in Sources */,
 				8C121DF42949361500CD4E07 /* CircleView.swift in Sources */,
-				8CC4BA1C296C7FE400BEAA88 /* CommentsControl.swift in Sources */,
 				8C121DFA2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C66FADC295F396A007A347D /* SideBarCustomMapCell.swift in Sources */,
 				CD239A0E28FFD5480099513F /* UIScrollViewExtension.swift in Sources */,
@@ -2055,11 +2080,14 @@
 				8CD4987029708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
 				CD239A0C28FFD4EE0099513F /* StringExtension.swift in Sources */,
 				59056A5323197E4B00C7E753 /* PostNotification.swift in Sources */,
+				8C6790D9298D7EFF00815F7B /* CommentsControllerDelegate.swift in Sources */,
 				8CEF3FBC2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				8C121DFD2949361500CD4E07 /* GalleryCell.swift in Sources */,
 				8C121D892949351600CD4E07 /* FindFriendsFetchExtension.swift in Sources */,
+				8C6790992982E91100815F7B /* ContentViewerCell.swift in Sources */,
 				CDF8E94B2903B62400BE929F /* UILabelExtension.swift in Sources */,
 				8C121D71294934BC00CD4E07 /* TableViewLoadingCell.swift in Sources */,
+				8C6790CD2989E29500815F7B /* PostControllerTableViewExtension.swift in Sources */,
 				8CA10A482912FBDD00DD50EB /* CreateMapButton.swift in Sources */,
 				8C66E115291C0C81006D29F6 /* EditProfileActions.swift in Sources */,
 				8C214BB9260C276D00E0C4FC /* NewUser.swift in Sources */,
@@ -2129,14 +2157,17 @@
 				59FCF5B824734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				8C0DCBC025BA5FE000722D34 /* POI.swift in Sources */,
 				8C121DF72949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
+				8C6790D1298ACCB100815F7B /* ContentViewerSetUp.swift in Sources */,
 				8C1E48D3289C58470093030D /* ProfileMyMapImageCollectionViewCell.swift in Sources */,
 				8C9417552980781000818D43 /* FriendsListController.swift in Sources */,
 				CDF8E9642903CD7900BE929F /* ExploreMapViewController.swift in Sources */,
 				8C12E673290A074100FA5BF0 /* ProfileCollectionExtension.swift in Sources */,
+				8C6790C12988A26800815F7B /* PostButtonView.swift in Sources */,
 				8CD1BE65292EBC1400367220 /* POICategories.swift in Sources */,
 				8C2209F8284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				8C3B953228AD530300C06586 /* HeelsMapPopUpController.swift in Sources */,
 				414CD283289EB383001F1776 /* ProfileBodyCell.swift in Sources */,
+				8C6790C92989E26000815F7B /* PostControllerActions.swift in Sources */,
 				416AE77D2896F2F60037B8AF /* CustomMap.swift in Sources */,
 				8C121E4F2949519700CD4E07 /* ChooseMapController.swift in Sources */,
 				59F6ABBD23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
@@ -2163,6 +2194,7 @@
 				8C66FAE5295F67AD007A347D /* NSAttributedStringExtension.swift in Sources */,
 				5916A8B324A27F8500118E83 /* MapSpot.swift in Sources */,
 				8C121E6C294951D300CD4E07 /* NameController.swift in Sources */,
+				8C6790D5298D7E3C00815F7B /* CommentsControllerActions.swift in Sources */,
 				CD239A1528FFD6520099513F /* UICollectionViewCellExtension.swift in Sources */,
 				8CA10A0D290C2A5B00DD50EB /* ContactsFetcher.swift in Sources */,
 				CD176EC6296D1ADC00B15952 /* CameraViewController.swift in Sources */,
@@ -2182,6 +2214,7 @@
 				8CC4BA23296C7FE400BEAA88 /* CommentCell.swift in Sources */,
 				8C94175A2980836300818D43 /* FriendsListFetchExtension.swift in Sources */,
 				8C53A80B28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
+				8C6790CE2989E29500815F7B /* PostControllerTableViewExtension.swift in Sources */,
 				8C121E61294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8C61EB5428D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				8C121DD2294935EF00CD4E07 /* NotificationsFetchExtension.swift in Sources */,
@@ -2211,6 +2244,7 @@
 				8C99B11B2863A44E00C98A32 /* RefreshStatus.swift in Sources */,
 				8C121E67294951D300CD4E07 /* ConfirmCodeController.swift in Sources */,
 				59FCF5B324734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
+				8C6790DE298D884F00815F7B /* CommentsTitleView.swift in Sources */,
 				8C66E10A291ABB80006D29F6 /* SearchContactsHeader.swift in Sources */,
 				598B700E2305E49500613AFD /* FriendRequest.swift in Sources */,
 				8C121D9F2949351600CD4E07 /* SearchContactsButtonCell.swift in Sources */,
@@ -2226,7 +2260,6 @@
 				599BD2BC23C652BD00ECB84A /* PostController.swift in Sources */,
 				8C121E472949519700CD4E07 /* FriendsMapButton.swift in Sources */,
 				8C121D7B294934BC00CD4E07 /* ChooseSpotCell.swift in Sources */,
-				8CC4BA1D296C7FE400BEAA88 /* CommentsControl.swift in Sources */,
 				8C4918B22919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */,
 				8C121D8A2949351600CD4E07 /* FindFriendsFetchExtension.swift in Sources */,
 				8C4FDFC428DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
@@ -2238,12 +2271,11 @@
 				8C94174E297B21FC00818D43 /* UITableViewExtension.swift in Sources */,
 				8C121E77294951E500CD4E07 /* SpotPageHeaderCell.swift in Sources */,
 				8CC2A55326BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
-				8C3B952728AC042B00C06586 /* PostCell.swift in Sources */,
 				8C121D962949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
 				8C12E678290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
 				8C8304BE26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
-				8C3B954F28AE932B00C06586 /* DeletePost.swift in Sources */,
 				8C94175E2980837100818D43 /* FriendsListTableExtension.swift in Sources */,
+				8C67909A2982E91100815F7B /* ContentViewerCell.swift in Sources */,
 				8CC4BA29296C7FE400BEAA88 /* CommentsViewController.swift in Sources */,
 				8C121E4D2949519700CD4E07 /* ChooseMapTableView.swift in Sources */,
 				59E2354A246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
@@ -2252,10 +2284,10 @@
 				8C2074CD25CB38440040036B /* City.swift in Sources */,
 				8C66FAC5295E200F007A347D /* ChooseFriendsCell.swift in Sources */,
 				8C121D72294934BC00CD4E07 /* TableViewLoadingCell.swift in Sources */,
+				8C6790D6298D7E3C00815F7B /* CommentsControllerActions.swift in Sources */,
 				8CEF3FBD2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				5916A8B424A27F8500118E83 /* MapSpot.swift in Sources */,
 				8C66226328EF596700BA5D05 /* ProgressBar.swift in Sources */,
-				8CC4BA20296C7FE400BEAA88 /* LikerCell.swift in Sources */,
 				59FCF5AD24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C121DB52949352400CD4E07 /* PaddedNextButton.swift in Sources */,
 				59F4701F2368933C00BB79CC /* SceneDelegate.swift in Sources */,
@@ -2271,6 +2303,7 @@
 				8C1E4874289C54900093030D /* MapViewDelegate.swift in Sources */,
 				8C12E6672901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				8C121D75294934BC00CD4E07 /* CreateSpotButton.swift in Sources */,
+				8C6790BE2984730600815F7B /* LocationScrollView.swift in Sources */,
 				8C74097D29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				8C121D632949344A00CD4E07 /* CameraButton.swift in Sources */,
 				8CA10A4D2912FC0300DD50EB /* NextButton.swift in Sources */,
@@ -2295,8 +2328,11 @@
 				8C2209F9284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				8C373D5D27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C121E74294951E500CD4E07 /* SpotPageController.swift in Sources */,
+				8C6790CA2989E26000815F7B /* PostControllerActions.swift in Sources */,
+				8C6790D2298ACCB100815F7B /* ContentViewerSetUp.swift in Sources */,
 				8C5AF2EB288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
 				8C121DFE2949361500CD4E07 /* GalleryCell.swift in Sources */,
+				8C6790DA298D7EFF00815F7B /* CommentsControllerDelegate.swift in Sources */,
 				8C121DEF2949361500CD4E07 /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				8C66FADD295F396A007A347D /* SideBarCustomMapCell.swift in Sources */,
 				8C66226928F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
@@ -2305,7 +2341,9 @@
 				8C66FAE6295F67AD007A347D /* NSAttributedStringExtension.swift in Sources */,
 				5916A8BC24A566F400118E83 /* ResultUser.swift in Sources */,
 				8C121DD5294935EF00CD4E07 /* NotificationsTableExtension.swift in Sources */,
+				8C6790C22988A26800815F7B /* PostButtonView.swift in Sources */,
 				8C66FAE2295F6108007A347D /* SideBarNewMapCell.swift in Sources */,
+				8C6790C62989E09E00815F7B /* ContentViewerActions.swift in Sources */,
 				8C66E116291C0C81006D29F6 /* EditProfileActions.swift in Sources */,
 				8C66FAF22969F899007A347D /* SideBarCampusMapCell.swift in Sources */,
 				8CD1BE62292D609800367220 /* MapGeoQuery.swift in Sources */,
@@ -2313,9 +2351,7 @@
 				8CD4987129708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
 				8C9417562980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
-				8CC4BA1A296C7FE400BEAA88 /* LikeSeg.swift in Sources */,
-				8C3B955328AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
-				8CC4BA26296C7FE400BEAA88 /* CommentSeg.swift in Sources */,
+				8C3B955328AE933D00C06586 /* PostActionSheet.swift in Sources */,
 				8C121DF82949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C66FAEA295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */,
 				8C121E4A2949519700CD4E07 /* CustomMapUploadCell.swift in Sources */,
@@ -2338,6 +2374,7 @@
 				8CC4BA24296C7FE400BEAA88 /* CommentCell.swift in Sources */,
 				8C94175B2980836300818D43 /* FriendsListFetchExtension.swift in Sources */,
 				8C53A80C28C1A5C200A0276E /* MapOnboardingExtension.swift in Sources */,
+				8C6790CF2989E29500815F7B /* PostControllerTableViewExtension.swift in Sources */,
 				8C121E62294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8C61EB5528D237E600E7180A /* EnterMapCodeController.swift in Sources */,
 				8C121DD3294935EF00CD4E07 /* NotificationsFetchExtension.swift in Sources */,
@@ -2367,6 +2404,7 @@
 				8C99B11C2863A44E00C98A32 /* RefreshStatus.swift in Sources */,
 				8C121E68294951D300CD4E07 /* ConfirmCodeController.swift in Sources */,
 				59FCF5B424734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
+				8C6790DF298D884F00815F7B /* CommentsTitleView.swift in Sources */,
 				8C66E10B291ABB80006D29F6 /* SearchContactsHeader.swift in Sources */,
 				598B700F2305E49500613AFD /* FriendRequest.swift in Sources */,
 				8C121DA02949351600CD4E07 /* SearchContactsButtonCell.swift in Sources */,
@@ -2382,7 +2420,6 @@
 				599BD2BD23C652BD00ECB84A /* PostController.swift in Sources */,
 				8C121E482949519700CD4E07 /* FriendsMapButton.swift in Sources */,
 				8C121D7C294934BC00CD4E07 /* ChooseSpotCell.swift in Sources */,
-				8CC4BA1E296C7FE400BEAA88 /* CommentsControl.swift in Sources */,
 				8C4918B32919AA01002D95DB /* SearchContactsOverviewController.swift in Sources */,
 				8C121D8B2949351600CD4E07 /* FindFriendsFetchExtension.swift in Sources */,
 				8C4FDFC528DAB2F800A3B479 /* UsernameLabel.swift in Sources */,
@@ -2394,12 +2431,11 @@
 				8C94174F297B21FC00818D43 /* UITableViewExtension.swift in Sources */,
 				8C121E78294951E500CD4E07 /* SpotPageHeaderCell.swift in Sources */,
 				8CC2A55426BCAAC7000ADA7A /* ImageFetcher.swift in Sources */,
-				8C3B952828AC042B00C06586 /* PostCell.swift in Sources */,
 				8C121D972949351600CD4E07 /* FindFriendsHeader.swift in Sources */,
 				8C12E679290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
 				8C8304BF26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
-				8C3B955028AE932B00C06586 /* DeletePost.swift in Sources */,
 				8C94175F2980837100818D43 /* FriendsListTableExtension.swift in Sources */,
+				8C67909B2982E91100815F7B /* ContentViewerCell.swift in Sources */,
 				8CC4BA2A296C7FE400BEAA88 /* CommentsViewController.swift in Sources */,
 				8C121E4E2949519700CD4E07 /* ChooseMapTableView.swift in Sources */,
 				59E2354B246F0E550071B047 /* Drafts.xcdatamodeld in Sources */,
@@ -2408,10 +2444,10 @@
 				8C2074CE25CB38440040036B /* City.swift in Sources */,
 				8C66FAC6295E200F007A347D /* ChooseFriendsCell.swift in Sources */,
 				8C121D73294934BC00CD4E07 /* TableViewLoadingCell.swift in Sources */,
+				8C6790D7298D7E3C00815F7B /* CommentsControllerActions.swift in Sources */,
 				8CEF3FBE2804C13C0088E0EF /* PostImageView.swift in Sources */,
 				5916A8B524A27F8500118E83 /* MapSpot.swift in Sources */,
 				8C66226428EF596700BA5D05 /* ProgressBar.swift in Sources */,
-				8CC4BA21296C7FE400BEAA88 /* LikerCell.swift in Sources */,
 				59FCF5AE24734A1C0012207D /* PostDraft+CoreDataClass.swift in Sources */,
 				8C121DB62949352400CD4E07 /* PaddedNextButton.swift in Sources */,
 				59F470202368933C00BB79CC /* SceneDelegate.swift in Sources */,
@@ -2427,6 +2463,7 @@
 				8C1E4875289C54900093030D /* MapViewDelegate.swift in Sources */,
 				8C12E6682901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				8C121D76294934BC00CD4E07 /* CreateSpotButton.swift in Sources */,
+				8C6790BF2984730600815F7B /* LocationScrollView.swift in Sources */,
 				8C74097E29381CC2006D5D0E /* CLLocationExtension.swift in Sources */,
 				8C121D642949344A00CD4E07 /* CameraButton.swift in Sources */,
 				8CA10A4E2912FC0300DD50EB /* NextButton.swift in Sources */,
@@ -2451,8 +2488,11 @@
 				8C2209FA284D4B9300E5D165 /* ContactFriend.swift in Sources */,
 				8C373D5E27FF567F002A1225 /* FriendsPostGroup.swift in Sources */,
 				8C121E75294951E500CD4E07 /* SpotPageController.swift in Sources */,
+				8C6790CB2989E26000815F7B /* PostControllerActions.swift in Sources */,
+				8C6790D3298ACCB100815F7B /* ContentViewerSetUp.swift in Sources */,
 				8C5AF2EC288F24C40051B3B5 /* ImageAvatarView.swift in Sources */,
 				8C121DFF2949361500CD4E07 /* GalleryCell.swift in Sources */,
+				8C6790DB298D7EFF00815F7B /* CommentsControllerDelegate.swift in Sources */,
 				8C121DF02949361500CD4E07 /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				8C66FADE295F396A007A347D /* SideBarCustomMapCell.swift in Sources */,
 				8C66226A28F4C05400BA5D05 /* PillButtonWithImage.swift in Sources */,
@@ -2461,7 +2501,9 @@
 				8C66FAE7295F67AD007A347D /* NSAttributedStringExtension.swift in Sources */,
 				5916A8BD24A566F400118E83 /* ResultUser.swift in Sources */,
 				8C121DD6294935EF00CD4E07 /* NotificationsTableExtension.swift in Sources */,
+				8C6790C32988A26800815F7B /* PostButtonView.swift in Sources */,
 				8C66FAE3295F6108007A347D /* SideBarNewMapCell.swift in Sources */,
+				8C6790C72989E09E00815F7B /* ContentViewerActions.swift in Sources */,
 				8C66E117291C0C81006D29F6 /* EditProfileActions.swift in Sources */,
 				8C66FAF32969F899007A347D /* SideBarCampusMapCell.swift in Sources */,
 				8CD1BE63292D609800367220 /* MapGeoQuery.swift in Sources */,
@@ -2469,9 +2511,7 @@
 				8CD4987229708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
 				8C9417572980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
-				8CC4BA1B296C7FE400BEAA88 /* LikeSeg.swift in Sources */,
-				8C3B955428AE933D00C06586 /* PostCellActionSheet.swift in Sources */,
-				8CC4BA27296C7FE400BEAA88 /* CommentSeg.swift in Sources */,
+				8C3B955428AE933D00C06586 /* PostActionSheet.swift in Sources */,
 				8C121DF92949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C66FAEB295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */,
 				8C121E4B2949519700CD4E07 /* CustomMapUploadCell.swift in Sources */,
@@ -2655,7 +2695,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
@@ -2727,7 +2767,7 @@
 				CODE_SIGN_ENTITLEMENTS = Spot/Spot.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = H5355TZ8Q3;
 				ENABLE_PREVIEWS = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;

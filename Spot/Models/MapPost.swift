@@ -58,7 +58,6 @@ struct MapPost: Identifiable, Codable, Hashable {
     var postScore: Double? = 0
     var selectedImageIndex: Int? = 0
     var imageHeight: CGFloat? = 0
-    var captionHeight: CGFloat? = 0
     var cellHeight: CGFloat? = 0
     var commentsHeight: CGFloat? = 0
 
@@ -164,7 +163,6 @@ struct MapPost: Identifiable, Codable, Hashable {
         self.postScore = 0
         self.selectedImageIndex = 0
         self.imageHeight = 0
-        self.captionHeight = 0
         self.cellHeight = 0
         self.commentsHeight = 0
     }
@@ -189,7 +187,6 @@ struct MapPost: Identifiable, Codable, Hashable {
         self.postScore = 0
         self.selectedImageIndex = 0
         self.imageHeight = 0
-        self.captionHeight = 0
         self.cellHeight = 0
         self.commentsHeight = 0
         self.posterID = ""
@@ -219,9 +216,20 @@ struct MapPost: Identifiable, Codable, Hashable {
         self.postScore = 0
         self.selectedImageIndex = 0
         self.imageHeight = 0
-        self.captionHeight = 0
         self.cellHeight = 0
         self.commentsHeight = 0
         self.friendsList = []
+    }
+}
+
+extension [MapPost] {
+    // call to always have opened post be first in content viewer
+    mutating func sortPostsOnOpen(index: Int) {
+        var i = 0
+        while i < index {
+            let element = remove(at: 0)
+            append(element)
+            i += 1
+        }
     }
 }

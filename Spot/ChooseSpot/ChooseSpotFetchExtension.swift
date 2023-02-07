@@ -126,7 +126,7 @@ extension ChooseSpotController {
         Task {
             await spotService?.getNearbySpots(center: postLocation.coordinate, radius: radius, searchLimit: searchLimit, completion: { [weak self] spots in
                 guard let self = self else { return }
-                let accessSpots = spots.filter({ $0.hasPOILevelAccess() })
+                let accessSpots = spots.filter({ $0.showSpotOnMap() })
                 for spot in accessSpots {
                     self.addSpot(spot: spot, query: false)
                 }

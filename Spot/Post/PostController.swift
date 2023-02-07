@@ -14,24 +14,91 @@ import Mixpanel
 import SnapKit
 import UIKit
 
+enum PostParent: String {
+    case Home
+    case Spot
+    case Map
+    case Profile
+    case Notifications
+}
+
 final class PostController: UIViewController {
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-    
-    lazy var postsList: [MapPost] = []
 
-    var postsCollection: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        view.tag = 16
+    var parentVC: PostParent
+    var postsList: [MapPost] {
+        didSet {
+            contentTable.isScrollEnabled = postsList.count > 1
+        }
+    }
+
+    let rowHeight: CGFloat = UIScreen.main.bounds.height - 95
+    lazy var contentTable: UITableView = {
+        let view = UITableView()
+        let window = UIApplication.shared.keyWindow
+        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
+        view.contentInset = UIEdgeInsets(top: -statusHeight, left: 0, bottom: 100, right: 0)
         view.backgroundColor = .black
+        view.separatorStyle = .none
         view.isScrollEnabled = false
-        view.layer.cornerRadius = 10
+        view.isPrefetchingEnabled = true
+        view.showsVerticalScrollIndicator = false
+        // inset to show button view
+        view.register(ContentViewerCell.self, forCellReuseIdentifier: "ContentCell")
         return view
     }()
+    var currentRowContentOffset: CGFloat {
+        return rowHeight * CGFloat(selectedPostIndex)
+    }
+    var maxRowContentOffset: CGFloat {
+        return rowHeight * CGFloat(postsList.count - 1)
+    }
+
+    private lazy var titleView = UIView()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.961, green: 0.961, blue: 0.961, alpha: 1)
+        label.font = UIFont(name: "UniversCE-Black", size: 16.5)
+        return label
+    }()
+    private lazy var backArrow: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "BackArrow"), for: .normal)
+        button.addTarget(self, action: #selector(backTap), for: .touchUpInside)
+        return button
+    }()
+    private lazy var moreButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "Elipses"), for: .normal)
+        button.addTarget(self, action: #selector(elipsesTap), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var buttonView = PostButtonView()
+
     unowned var containerDrawerView: DrawerView?
     var openComments = false
+    var imageViewOffset = false {
+        didSet {
+            contentTable.isScrollEnabled = !imageViewOffset
+        }
+    }
+    var tableViewOffset = false {
+        didSet {
+            setCellOffsets(offset: tableViewOffset)
+        }
+    }
+    var containerViewOffset = false {
+        didSet {
+            contentTable.isScrollEnabled = !containerViewOffset
+            setCellOffsets(offset: containerViewOffset)
+        }
+    }
     
     lazy var deleteIndicator = CustomActivityIndicator()
     
@@ -39,27 +106,53 @@ final class PostController: UIViewController {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
         return service
     }()
+
+    private lazy var friendService: FriendsServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.friendsService)
+        return service
+    }()
     
     var selectedPostIndex = 0 {
         didSet {
-            guard let post = postsList[safe: selectedPostIndex] else { return }
-            DispatchQueue.global().async {
-                self.setSeen(post: post)
-                self.checkForUpdates(postID: post.id ?? "", index: self.selectedPostIndex)
-            }
+            updatePostIndex()
         }
     }
-    
-    var dotView: UIView!
-    
+
+    var scrolledToInitialRow = false
+    var animatingToNextRow = false {
+        didSet {
+            contentTable.isScrollEnabled = !animatingToNextRow
+        }
+    }
+
+    // pause image loading during row animation to avoid laggy scrolling
+    init(parentVC: PostParent, postsList: [MapPost], selectedPostIndex: Int? = 0, title: String? = "") {
+        self.parentVC = parentVC
+        // sort posts on first open to avoid having to load all of the rows before the current post
+        self.postsList = postsList
+        self.selectedPostIndex = selectedPostIndex ?? 0
+
+        super.init(nibName: nil, bundle: nil)
+
+        titleLabel.text = (title ?? "" != "") ? title : parentVC.rawValue
+        setUpView()
+        addNotifications()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     deinit {
-        print("deinit post")
+        removeTableAnimations()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        containerDrawerView?.configure(canDrag: true, swipeDownToDismiss: true, startingPosition: .top)
+        containerDrawerView?.configure(canDrag: false, swipeRightToDismiss: true, startingPosition: .top)
+        updateDrawerViewOnIndexChange()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -74,14 +167,14 @@ final class PostController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setUpView()
+        edgesForExtendedLayout = [.top]
     }
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         cancelDownloads()
     }
-    
+
     func cancelDownloads() {
         // cancel image loading operations and reset map
         for op in PostImageModel.shared.loadingOperations {
@@ -97,45 +190,76 @@ final class PostController: UIViewController {
     }
 
     func setUpView() {
-        postsCollection.prefetchDataSource = self
-        postsCollection.dataSource = self
-        postsCollection.delegate = self
-        postsCollection.register(PostCell.self, forCellWithReuseIdentifier: "PostCell")
-        postsCollection.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
-        view.addSubview(postsCollection)
-        postsCollection.snp.makeConstraints {
+        contentTable.prefetchDataSource = self
+        contentTable.dataSource = self
+        contentTable.delegate = self
+        view.addSubview(contentTable)
+        contentTable.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        if selectedPostIndex == 0 {
-            selectedPostIndex = 0 /// set again here to make sure didSet methods are called
-        } else {
-            DispatchQueue.main.async { self.postsCollection.scrollToItem(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .left, animated: false) }
+
+        view.addSubview(titleView)
+        titleView.snp.makeConstraints {
+            $0.leading.trailing.top.equalToSuperview()
+            $0.height.equalTo(100)
         }
-        addNotifications()
+
+        titleView.addSubview(backArrow)
+        backArrow.snp.makeConstraints {
+            $0.leading.equalTo(5)
+            $0.top.equalTo(50)
+            $0.width.equalTo(53)
+            $0.height.equalTo(49)
+        }
+
+        titleView.addSubview(titleLabel)
+        titleLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalTo(backArrow)
+        }
+
+        titleView.addSubview(moreButton)
+        moreButton.snp.makeConstraints {
+            $0.centerY.equalTo(backArrow)
+            $0.trailing.equalTo(-8)
+            $0.height.equalTo(14.5)
+            $0.width.equalTo(40.2)
+        }
+
+        view.addSubview(buttonView)
+        buttonView.backgroundColor = .black
+        buttonView.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(95)
+        }
+
+        buttonView.commentButton.addTarget(self, action: #selector(commentsTap), for: .touchUpInside)
+        buttonView.likeButton.addTarget(self, action: #selector(likeTap), for: .touchUpInside)
+        // set current comment / like info and look for changes
+        updatePostIndex()
+
+        DispatchQueue.main.async {
+            self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
+        }
     }
-    
+
     func addNotifications() {
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostLike(_:)), name: NSNotification.Name("PostLike"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name("DeletePost"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewOffset), name: NSNotification.Name("DrawerViewOffset"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewReset), name: NSNotification.Name("DrawerViewReset"), object: nil)
     }
-    
-    @objc func notifyPostLike(_ notification: NSNotification) {
-        if let info = notification.userInfo as? [String: Any] {
-            if let post = info["post"] as? MapPost {
-                guard let index = self.postsList.firstIndex(where: { $0.id == post.id }) else { return }
-                self.postsList[index] = post
-            }
-        }
-    }
-    
+
     @objc func notifyCommentChange(_ notification: NSNotification) {
+        print("notify")
         guard let commentList = notification.userInfo?["commentList"] as? [MapComment] else { return }
         guard let postID = notification.userInfo?["postID"] as? String else { return }
         if let i = postsList.firstIndex(where: { $0.id == postID }) {
+            print("comment count", max(0, commentList.count - 1))
             postsList[i].commentCount = max(0, commentList.count - 1)
             postsList[i].commentList = commentList
-            DispatchQueue.main.async { self.postsCollection.reloadData() }
+            DispatchQueue.main.async { self.contentTable.reloadData() }
         }
     }
     
@@ -143,154 +267,11 @@ final class PostController: UIViewController {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
         DispatchQueue.main.async {
             if let index = self.postsList.firstIndex(where: { $0.id == post.id }) {
-                print("got index")
                 self.deletePostLocally(index: index)
-            } else {
-                print("no index")
             }
         }
     }
-    
-    func openComments(row: Int, animated: Bool) {
-        if presentedViewController != nil { return }
-        if let commentsVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Comments") as? CommentsController {
-            
-            Mixpanel.mainInstance().track(event: "PostOpenComments")
-            
-            let post = self.postsList[selectedPostIndex]
-            commentsVC.commentList = post.commentList
-            commentsVC.post = post
-            commentsVC.postVC = self
-            present(commentsVC, animated: animated, completion: nil)
-        }
-    }
-    
-    func openProfile(user: UserProfile, openComments: Bool) {
-        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
-        self.openComments = openComments
-        DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
-    }
-    
-    func openMap(mapID: String) {
-        var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
-        map.id = mapID
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
-        navigationController?.pushViewController(customMapVC, animated: true)
-    }
-    
-    func openSpot(post: MapPost) {
-        let spotVC = SpotPageController(mapPost: post, presentedDrawerView: containerDrawerView)
-        navigationController?.pushViewController(spotVC, animated: true)
-    }
-}
 
-extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching, UICollectionViewDelegateFlowLayout {
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return postsList.count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        /// adjusted inset will always = 0 unless extending scroll view edges beneath inset again
-        let adjustedInset = collectionView.adjustedContentInset.top + collectionView.adjustedContentInset.bottom
-        return CGSize(width: collectionView.bounds.width, height: collectionView.bounds.height - adjustedInset)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets.zero
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        
-        let updateCellImage: ([UIImage]?) -> Void = { [weak self] (images) in
-            guard let self = self else { return }
-            guard let post = self.postsList[safe: indexPath.row] else { return }
-            guard let cell = cell as? PostCell else { return } /// declare cell within closure in case cancelled
-            if post.imageURLs.count != images?.count { return } /// patch fix for wrong images getting called with a post -> crashing on image out of bounds on get frame indexes
-            
-            if let index = self.postsList.lastIndex(where: { $0.id == post.id }) { if indexPath.row != index { return }  }
-            
-            if indexPath.row == self.selectedPostIndex { PostImageModel.shared.currentImageSet = (id: post.id ?? "", images: images ?? []) }
-            
-            cell.finishImageSetUp(images: images ?? [])
-        }
-        
-        guard let post = postsList[safe: indexPath.row] else { return }
-        
-        /// Try to find an existing data loader
-        if let dataLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
-            /// Has the data already been loaded?
-            if dataLoader.images.count == post.imageURLs.count {
-                guard let cell = cell as? PostCell else { return }
-                cell.finishImageSetUp(images: dataLoader.images)
-                //  loadingOperations.removeValue(forKey: post.id ?? "")
-            } else {
-                /// No data loaded yet, so add the completion closure to update the cell once the data arrives
-                dataLoader.loadingCompleteHandler = updateCellImage
-            }
-        } else {
-            
-            /// Need to create a data loader for this index path
-            if indexPath.row == self.selectedPostIndex && PostImageModel.shared.currentImageSet.id == post.id ?? "" {
-                updateCellImage(PostImageModel.shared.currentImageSet.images)
-                return
-            }
-            
-            let dataLoader = PostImageLoader(post)
-            /// Provide the completion closure, and kick off the loading operation
-            dataLoader.loadingCompleteHandler = updateCellImage
-            PostImageModel.shared.loadingQueue.addOperation(dataLoader)
-            PostImageModel.shared.loadingOperations[post.id ?? ""] = dataLoader
-        }
-    }
-    /// https://medium.com/monstar-lab-bangladesh-engineering/tableview-prefetching-datasource-3de593530c4a
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PostCell", for: indexPath) as? PostCell else {
-            return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
-        }
-        let post = postsList[indexPath.row]
-    //    DispatchQueue.main.async { cell.setUp(post: post, row: indexPath.row) }
-        cell.setUp(post: post, row: indexPath.row)
-        return cell
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
-        
-        for indexPath in indexPaths {
-            
-            if abs(indexPath.row - selectedPostIndex) > 3 { return }
-            
-            guard let post = postsList[safe: indexPath.row] else { return }
-            if PostImageModel.shared.loadingOperations[post.id ?? ""] != nil { return }
-            
-            let dataLoader = PostImageLoader(post)
-            dataLoader.queuePriority = .high
-            PostImageModel.shared.loadingQueue.addOperation(dataLoader)
-            PostImageModel.shared.loadingOperations[post.id ?? ""] = dataLoader
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cancelPrefetchingForItemsAt indexPaths: [IndexPath]) {
-        for indexPath in indexPaths {
-            /// I think due to the size of the table, prefetching was being cancelled for way too many rows, some like 1 or 2 rows away from the selected post index. This is kind of a hacky fix to ensure that fetching isn't cancelled when we'll need the image soon
-            if abs(indexPath.row - selectedPostIndex) < 4 { return }
-            
-            guard let post = postsList[safe: indexPath.row] else { return }
-            
-            if let imageLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
-                imageLoader.cancel()
-                PostImageModel.shared.loadingOperations.removeValue(forKey: post.id ?? "")
-            }
-        }
-    }
-    
-    func exitPosts() {
-        containerDrawerView?.closeAction()
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostIndexChange"), object: nil)
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostLike"), object: nil)
-    }
-    
     func setSeen(post: MapPost) {
         /// set seen on map
         db.collection("posts").document(post.id ?? "").updateData(["seenList": FieldValue.arrayUnion([uid])])
@@ -298,29 +279,25 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
         /// show notification as seen
         updateNotifications(postID: post.id ?? "")
     }
-    
+
     func checkForUpdates(postID: String, index: Int) {
         Task {
             /// update just the necessary info -> comments and likes
             guard let post = try? await mapPostService?.getPost(postID: postID) else {
                 return
             }
-            
+
             if let i = self.postsList.firstIndex(where: { $0.id == postID }) {
                 self.postsList[i].commentList = post.commentList
                 self.postsList[i].commentCount = post.commentCount
                 self.postsList[i].likers = post.likers
                 if index != self.selectedPostIndex { return }
-                /// update cell if this is the current post
-                DispatchQueue.main.async {
-                    if let cell = self.postsCollection.cellForItem(at: IndexPath(item: index, section: 0)) as? PostCell {
-                        cell.updatePost(post: self.postsList[i])
-                    }
-                }
+                /// update button view if this is the current post
+                updateButtonView(index: nil)
             }
         }
     }
-    
+
     func updateNotifications(postID: String) {
         db.collection("users").document(uid).collection("notifications").whereField("postID", isEqualTo: postID).getDocuments { snap, _ in
             guard let snap = snap else { return }
@@ -328,5 +305,37 @@ extension PostController: UICollectionViewDelegate, UICollectionViewDataSource, 
                 doc.reference.updateData(["seen": true])
             }
         }
+    }
+
+    private func updatePostIndex() {
+        guard let post = postsList[safe: selectedPostIndex] else { return }
+        DispatchQueue.global().async {
+            self.setSeen(post: post)
+            self.checkForUpdates(postID: post.id ?? "", index: self.selectedPostIndex)
+        }
+        DispatchQueue.main.async {
+            self.updateButtonView(index: nil)
+            self.updateDrawerViewOnIndexChange()
+        }
+    }
+
+    // called if table view or container view removal has begun
+    private func setCellOffsets(offset: Bool) {
+        for cell in contentTable.visibleCells {
+            if let cell = cell as? ContentViewerCell {
+                cell.cellOffset = tableViewOffset
+            }
+        }
+    }
+
+    func updateButtonView(index: Int?) {
+        buttonView.setCommentsAndLikes(post: postsList[index ?? selectedPostIndex])
+    }
+
+    func exitPosts() {
+        for cell in contentTable.visibleCells { cell.layer.removeAllAnimations() }
+        containerDrawerView?.closeAction()
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostIndexChange"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostLike"), object: nil)
     }
 }

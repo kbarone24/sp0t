@@ -21,7 +21,7 @@ extension UILabel {
         configureHandler(self)
     }
     
-    func addTrailing(with trailingText: String, moreText: String, moreTextFont: UIFont, moreTextColor: UIColor) {
+    func addTrailing(with trailingText: String, moreText: String, moreTextFont: UIFont?, moreTextColor: UIColor) {
         
         let readMoreText: String = trailingText + moreText
         if self.visibleTextLength == 0 { return }
@@ -48,7 +48,7 @@ extension UILabel {
                 ) + trailingText
             
             let answerAttributed = NSMutableAttributedString(string: trimmedForReadMore, attributes: [NSAttributedString.Key.font: self.font as Any])
-            let readMoreAttributed = NSMutableAttributedString(string: moreText, attributes: [NSAttributedString.Key.font: moreTextFont, NSAttributedString.Key.foregroundColor: moreTextColor])
+            let readMoreAttributed = NSMutableAttributedString(string: moreText, attributes: [NSAttributedString.Key.font: moreTextFont as Any, NSAttributedString.Key.foregroundColor: moreTextColor])
             answerAttributed.append(readMoreAttributed)
             self.attributedText = answerAttributed
         }
@@ -103,5 +103,15 @@ extension UILabel {
         let textHeight = text.boundingRect(with: maxSize, options: .usesLineFragmentOrigin, attributes: [.font: font as Any], context: nil).height
         let lineHeight = font.lineHeight
         return Int(ceil(textHeight / lineHeight))
+    }
+
+    func createBorderedLabel(text: String, strokeColor: UIColor? = .white, textColor: UIColor? = .black, strokeWidth: Int, font: UIFont?) {
+        let attributes: [NSAttributedString.Key: Any] = [
+            NSAttributedString.Key.strokeColor: strokeColor as Any,
+            NSAttributedString.Key.foregroundColor: textColor as Any,
+            NSAttributedString.Key.strokeWidth: strokeWidth,
+            NSAttributedString.Key.font: font as Any
+        ]
+        self.attributedText = NSAttributedString(string: text, attributes: attributes)
     }
 }

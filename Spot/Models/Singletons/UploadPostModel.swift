@@ -27,7 +27,7 @@ final class UploadPostModel {
     lazy var postType: PostType = .none
 
     lazy var nearbySpots: [MapSpot] = []
-    lazy var friendObjects: [UserProfile] = []
+    lazy var taggedUserProfiles: [UserProfile] = []
 
     lazy var locationAccess: Bool = false
     var cameraAccess: AVAuthorizationStatus {
@@ -117,7 +117,10 @@ final class UploadPostModel {
     }
 
     func setTaggedUsers() {
+        // store to remove if user posts to private map
         let taggedUsers = postObject?.caption.getTaggedUsers() ?? []
+        self.taggedUserProfiles = taggedUsers
+
         let usernames = taggedUsers.map({ $0.username })
         postObject?.taggedUsers = usernames
         postObject?.addedUsers = taggedUsers.map({ $0.id ?? "" })
@@ -135,6 +138,16 @@ final class UploadPostModel {
         postObject?.timestamp = Firebase.Timestamp(date: Date())
         postObject?.userInfo = UserDataModel.shared.userInfo
         postObject?.selectedImageIndex = 0
+
+        if postObject?.privacyLevel == "invite" {
+            for user in taggedUserProfiles {
+                if !(postObject?.inviteList?.contains(where: { $0 == user.id ?? "" }) ?? false) {
+                    postObject?.taggedUsers?.removeAll(where: { $0 == user.username })
+                    postObject?.taggedUserIDs?.removeAll(where: { $0 == user.id ?? "" })
+                    postObject?.addedUsers?.removeAll(where: { $0 == user.id ?? "" })
+                }
+            }
+        }
     }
 
     func setFinalMapValues() {
@@ -272,7 +285,7 @@ final class UploadPostModel {
         selectedObjects.removeAll()
         imageObjects.removeAll()
         nearbySpots.removeAll()
-        friendObjects.removeAll()
+        taggedUserProfiles.removeAll()
         assetsFull = nil
 
         postObject = nil

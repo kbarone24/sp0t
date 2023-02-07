@@ -35,7 +35,6 @@ extension ImagePreviewController {
             
         default: return
         }
-        
     }
     
     func animateNext() {
@@ -88,18 +87,19 @@ extension ImagePreviewController {
     }
     
     func setImages() {
-        let selectedIndex = UploadPostModel.shared.postObject?.selectedImageIndex ?? 0
+        let post = UploadPostModel.shared.postObject
+        let selectedIndex = post?.selectedImageIndex ?? 0
         currentImage.index = selectedIndex
-        currentImage.makeConstraints()
-        currentImage.setCurrentImage()
+        currentImage.makeConstraints(post: post)
+        currentImage.setCurrentImage(post: post)
         
         previousImage.index = selectedIndex - 1
-        previousImage.makeConstraints()
-        previousImage.setCurrentImage()
+        previousImage.makeConstraints(post: post)
+        previousImage.setCurrentImage(post: post)
         
         nextImage.index = selectedIndex + 1
-        nextImage.makeConstraints()
-        nextImage.setCurrentImage()
+        nextImage.makeConstraints(post: post)
+        nextImage.setCurrentImage(post: post)
         addDots()
     }
     
