@@ -207,8 +207,6 @@ extension MapController {
                         recentGroup.leave()
                     }
                     continue
-                } catch {
-                    continue
                 }
             }
             recentGroup.notify(queue: .global()) {
@@ -254,8 +252,6 @@ extension MapController {
                         recentGroup.leave()
                     }
                     continue
-                } catch {
-                    continue
                 }
             }
             recentGroup.notify(queue: .global()) {
@@ -269,19 +265,19 @@ extension MapController {
     }
 
     func filteredFromFeed(post: MapPost, friendsMap: Bool) -> Bool {
-      //  let yesterdaySeconds = Date().timeIntervalSince1970 - 86_400
+        let yesterdaySeconds = Date().timeIntervalSince1970 - 86_400
         return (post.userInfo?.id?.isBlocked() ?? false) ||
         (post.hiddenBy?.contains(self.uid) ?? false) ||
         (friendsMap && !UserDataModel.shared.userInfo.friendsContains(id: post.posterID))
-        // || (post.timestamp.seconds < Int64(yesterdaySeconds) && (post.seenList?.contains(self.uid) ?? false))
+         || (post.timestamp.seconds < Int64(yesterdaySeconds) && (post.seenList?.contains(self.uid) ?? false))
     }
 
     func addPostToDictionary(post: MapPost, map: CustomMap?, newPost: Bool) {
         // Run post contains again in case added on async fetch
         if postsContains(postID: post.id ?? "") { return }
         postDictionary.updateValue(post, forKey: post.id ?? "")
+        
         let groupData = updateFriendsPostGroup(post: post, spot: nil)
-
         // only add annotation immediately if not initial fetch
         if postsFetched {
             let map = getFriendsMapObject()
@@ -350,8 +346,6 @@ extension MapController {
                     }
                     mapInfo.addSpotGroups()
                     UserDataModel.shared.userInfo.mapsList.append(mapInfo)
-                } catch {
-                    continue
                 }
             }
 

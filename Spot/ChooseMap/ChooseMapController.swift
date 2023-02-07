@@ -71,7 +71,6 @@ final class ChooseMapController: UIViewController {
         if let mapNav = navigationController as? MapNavigationController {
             mapNav.requiredStatusBarStyle = .darkContent
         }
-        
     }
     
     func addButtons() {

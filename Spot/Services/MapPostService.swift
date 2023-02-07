@@ -169,13 +169,9 @@ final class MapPostService: MapPostServiceProtocol {
             completion(post)
             return
         }
-        
-        let captionHeight = post.caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
-        
+
         Task {
             var postInfo = post
-            postInfo.captionHeight = captionHeight
-            
             do {
                 let userService = try ServiceContainer.shared.service(for: \.userService)
                 let user = try await userService.getUserInfo(userID: post.posterID)
@@ -271,7 +267,6 @@ final class MapPostService: MapPostServiceProtocol {
             )
             
             notiPost.commentList = [commentObject]
-            notiPost.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
             notiPost.userInfo = UserDataModel.shared.userInfo
             
             NotificationCenter.default.post(

@@ -51,6 +51,9 @@ final class PostController: UIViewController {
     var currentRowContentOffset: CGFloat {
         return rowHeight * CGFloat(selectedPostIndex)
     }
+    var maxRowContentOffset: CGFloat {
+        return rowHeight * CGFloat(postsList.count - 1)
+    }
 
     private lazy var titleView = UIView()
     private lazy var titleLabel: UILabel = {
@@ -116,14 +119,22 @@ final class PostController: UIViewController {
     }
 
     var scrolledToInitialRow = false
+    var animatingToNextRow = false {
+        didSet {
+            contentTable.isScrollEnabled = !animatingToNextRow
+        }
+    }
 
+    // pause image loading during row animation to avoid laggy scrolling
     init(parentVC: PostParent, postsList: [MapPost], selectedPostIndex: Int? = 0, title: String? = "") {
         self.parentVC = parentVC
+        // sort posts on first open to avoid having to load all of the rows before the current post
         self.postsList = postsList
+        self.selectedPostIndex = selectedPostIndex ?? 0
+
         super.init(nibName: nil, bundle: nil)
 
         titleLabel.text = (title ?? "" != "") ? title : parentVC.rawValue
-        self.selectedPostIndex = selectedPostIndex ?? 0
         setUpView()
         addNotifications()
     }
@@ -140,7 +151,8 @@ final class PostController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        containerDrawerView?.configure(canDrag: false, swipeDownToDismiss: false, startingPosition: .top)
+        containerDrawerView?.configure(canDrag: false, swipeRightToDismiss: true, startingPosition: .top)
+        updateDrawerViewOnIndexChange()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -163,14 +175,6 @@ final class PostController: UIViewController {
         cancelDownloads()
     }
 
-    override func viewDidLayoutSubviews() {
-        if !scrolledToInitialRow {
-            DispatchQueue.main.async {
-                self.scrollToSelectedRow(animated: false)
-            }
-        }
-    }
-    
     func cancelDownloads() {
         // cancel image loading operations and reset map
         for op in PostImageModel.shared.loadingOperations {
@@ -233,6 +237,10 @@ final class PostController: UIViewController {
         buttonView.likeButton.addTarget(self, action: #selector(likeTap), for: .touchUpInside)
         // set current comment / like info and look for changes
         updatePostIndex()
+
+        DispatchQueue.main.async {
+            self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
+        }
     }
 
     func addNotifications() {
@@ -285,7 +293,7 @@ final class PostController: UIViewController {
                 self.postsList[i].likers = post.likers
                 if index != self.selectedPostIndex { return }
                 /// update button view if this is the current post
-                updateButtonView()
+                updateButtonView(index: nil)
             }
         }
     }
@@ -306,7 +314,7 @@ final class PostController: UIViewController {
             self.checkForUpdates(postID: post.id ?? "", index: self.selectedPostIndex)
         }
         DispatchQueue.main.async {
-            self.updateButtonView()
+            self.updateButtonView(index: nil)
             self.updateDrawerViewOnIndexChange()
         }
     }
@@ -320,14 +328,13 @@ final class PostController: UIViewController {
         }
     }
 
-    func updateButtonView() {
-        buttonView.setCommentsAndLikes(post: postsList[selectedPostIndex])
+    func updateButtonView(index: Int?) {
+        buttonView.setCommentsAndLikes(post: postsList[index ?? selectedPostIndex])
     }
 
     func exitPosts() {
         for cell in contentTable.visibleCells { cell.layer.removeAllAnimations() }
         containerDrawerView?.closeAction()
-        navigationController?.popViewController(animated: true)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostIndexChange"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostLike"), object: nil)
     }

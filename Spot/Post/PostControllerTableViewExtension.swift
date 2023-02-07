@@ -54,14 +54,13 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         let updateCellImage: ([UIImage]?) -> Void = { [weak self] (images) in
-            guard let self = self, let post = self.postsList[safe: indexPath.row], let cell = cell as? ContentViewerCell else { return }
+            guard let self = self, let post = self.postsList[safe: indexPath.row] else { return }
             if post.imageURLs.count != images?.count { return } /// patch fix for wrong images getting called with a post -> crashing on image out of bounds on get frame indexes
 
             if let index = self.postsList.lastIndex(where: { $0.id == post.id }) { if indexPath.row != index { return }  }
 
             if indexPath.row == self.selectedPostIndex { PostImageModel.shared.currentImageSet = (id: post.id ?? "", images: images ?? []) }
-
-            cell.setContentData(images: images ?? [])
+            self.setImagesFor(indexPath: indexPath, images: images ?? [], cell: cell)
         }
 
         guard let post = postsList[safe: indexPath.row] else { return }
@@ -69,15 +68,13 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
         if let dataLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
             // Has the data already been loaded?
             if dataLoader.images.count == post.imageURLs.count {
-                guard let cell = cell as? ContentViewerCell else { return }
-                cell.setContentData(images: dataLoader.images)
+                setImagesFor(indexPath: indexPath, images: dataLoader.images, cell: cell)
                 //  loadingOperations.removeValue(forKey: post.id ?? "")
             } else {
                 // No data loaded yet, so add the completion closure to update the cell once the data arrives
                 dataLoader.loadingCompleteHandler = updateCellImage
             }
         } else {
-            print("will display", indexPath.row)
             /// Need to create a data loader for this index path
             if indexPath.row == self.selectedPostIndex && PostImageModel.shared.currentImageSet.id == post.id ?? "" {
                 updateCellImage(PostImageModel.shared.currentImageSet.images)
@@ -89,6 +86,15 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
             dataLoader.loadingCompleteHandler = updateCellImage
             PostImageModel.shared.loadingQueue.addOperation(dataLoader)
             PostImageModel.shared.loadingOperations[post.id ?? ""] = dataLoader
+        }
+    }
+
+    func setImagesFor(indexPath: IndexPath, images: [UIImage], cell: UITableViewCell) {
+        let delay: TimeInterval = animatingToNextRow ? 0.25 : 0.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            if let cell = cell as? ContentViewerCell {
+                cell.setContentData(images: images)
+            }
         }
     }
 }

@@ -19,8 +19,8 @@ protocol ContentViewerDelegate: AnyObject {
     func openSpot(post: MapPost)
     func imageViewOffset(offset: Bool)
     func getSelectedPostIndex() -> Int
-    func goToPreviousPost()
-    func goToNextPost()
+    func tapToPreviousPost()
+    func tapToNextPost()
 }
 
 class ContentViewerCell: UITableViewCell {
@@ -83,6 +83,7 @@ class ContentViewerCell: UITableViewCell {
         image.backgroundColor = .gray
         image.layer.cornerRadius = 33 / 2
         image.isUserInteractionEnabled = true
+        image.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(userTap)))
         return image
     }()
 
@@ -92,7 +93,7 @@ class ContentViewerCell: UITableViewCell {
         // replace with actual font
         label.font = UIFont(name: "UniversCE-Black", size: 16.5)
         label.isUserInteractionEnabled = true
-        label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(usernameTap)))
+        label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(userTap)))
         return label
     }()
 

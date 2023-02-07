@@ -161,18 +161,6 @@ public extension String {
         return selectedUsers
     }
 
-    func getCaptionHeight(fontSize: CGFloat, maxCaption: CGFloat) -> CGFloat {
-        let caption = self
-        let tempLabel = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 88, height: UIScreen.main.bounds.height))
-        tempLabel.text = caption
-        tempLabel.font = UIFont(name: "SFCompactText-Medium", size: fontSize)
-        tempLabel.numberOfLines = 0
-        tempLabel.lineBreakMode = .byWordWrapping
-        tempLabel.sizeToFit()
-
-        return maxCaption != 0 ? min(maxCaption, tempLabel.frame.height.rounded(.up)) : tempLabel.frame.height.rounded(.up)
-    }
-
     func getMapString(secret: Bool) -> NSAttributedString {
         if secret {
             // show secret icon

@@ -24,7 +24,7 @@ extension ContentViewerCell {
         }
     }
 
-    @objc func usernameTap() {
+    @objc func userTap() {
         if let user = post?.userInfo {
             delegate?.openProfile(user: user)
         }
@@ -85,13 +85,13 @@ extension ContentViewerCell {
             if post?.selectedImageIndex ?? 0 > 0 {
                 goPreviousImage()
             } else {
-                delegate?.goToPreviousPost()
+                delegate?.tapToPreviousPost()
             }
         } else if position.x > (gesture.view?.bounds.width ?? 0) - 75 {
             if post?.selectedImageIndex ?? 0 < (post?.frameIndexes?.count ?? 0) - 1 {
                 goNextImage()
             } else {
-                delegate?.goToNextPost()
+                delegate?.tapToNextPost()
             }
         }
     }
@@ -116,7 +116,7 @@ extension ContentViewerCell {
             post?.selectedImageIndex ?? 0 == (post?.frameIndexes?.count ?? 0) - 1 ? max(0, translation.x) :
             translation.x
 
-            currentImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(adjustedOffset) })
+            if currentImage.superview != nil { currentImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(adjustedOffset) }) }
             if nextImage.superview != nil { nextImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width + adjustedOffset) }) }
             if previousImage.superview != nil { previousImage.snp.updateConstraints({ $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width + adjustedOffset) }) }
 
@@ -184,7 +184,7 @@ extension ContentViewerCell {
     }
 
     private func resetImageFrame() {
-        currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() }
+        if currentImage.superview != nil { currentImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview() } }
         if previousImage.superview != nil { previousImage.snp.updateConstraints { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width) } }
         if nextImage.superview != nil { nextImage.snp.updateConstraints {
             $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width )

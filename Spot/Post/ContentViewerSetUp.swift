@@ -63,7 +63,7 @@ extension ContentViewerCell {
             locationView.addSubview(mapButton)
             mapButton.snp.makeConstraints {
                 $0.leading.equalTo(mapIcon.snp.trailing).offset(6)
-                $0.bottom.equalTo(mapIcon).offset(6)
+                $0.bottom.equalTo(mapIcon).offset(6.5)
                 $0.trailing.lessThanOrEqualToSuperview()
             }
 
@@ -108,7 +108,7 @@ extension ContentViewerCell {
                 $0.bottom.equalTo(spotIcon).offset(0.5)
             } else if mapShowing {
                 $0.leading.equalTo(separatorView.snp.trailing).offset(9)
-                $0.bottom.equalTo(mapIcon).offset(1.0)
+                $0.bottom.equalTo(mapIcon).offset(0.5)
             } else {
                 $0.leading.equalToSuperview()
                 $0.bottom.equalTo(-8)
