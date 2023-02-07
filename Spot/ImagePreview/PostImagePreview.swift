@@ -49,11 +49,30 @@ final class PostImagePreview: PostImageView {
         UIImage()
 
         let currentAspect = (currentImage.size.height) / (currentImage.size.width)
-        switch parent {
+      /*  switch parent {
         case .ImagePreview:
             setImagePreviewConstraints(aspectRatio: currentAspect, post: post)
         case .ContentPage:
             setContentPageConstraints(aspectRatio: currentAspect, post: post)
+        } */
+        let roundedAspect = getRoundedAspectRatio(aspect: currentAspect)
+        snp.makeConstraints {
+            if roundedAspect == UserDataModel.shared.maxAspect {
+                // stretch full size
+                let bottomOffset: CGFloat = parent == .ContentPage ? 0 : -105
+                $0.top.equalToSuperview()
+                $0.bottom.equalToSuperview().offset(bottomOffset)
+            } else {
+                // center in view at aspect fill (true height)
+                let bottomOffset: CGFloat = parent == .ContentPage ? -5 : -45
+                $0.height.equalTo(currentAspect * UIScreen.main.bounds.width)
+                $0.centerY.equalToSuperview().offset(bottomOffset)
+            }
+            if index == post.selectedImageIndex {
+                $0.leading.trailing.equalToSuperview()
+            } else if index < post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width)
+            } else if index > post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width)
+            }
         }
 
         for sub in subviews { sub.removeFromSuperview() }
@@ -64,7 +83,7 @@ final class PostImagePreview: PostImageView {
             }
         }
     }
-
+/*
     private func setImagePreviewConstraints(aspectRatio: CGFloat, post: MapPost) {
         let layoutValues = getImageLayoutValues(imageAspect: aspectRatio)
         let currentHeight = layoutValues.imageHeight
@@ -80,25 +99,7 @@ final class PostImagePreview: PostImageView {
             }
         }
     }
-
-    private func setContentPageConstraints(aspectRatio: CGFloat, post: MapPost) {
-        let roundedAspect = getRoundedAspectRatio(aspect: aspectRatio)
-        snp.makeConstraints {
-            if roundedAspect == UserDataModel.shared.maxAspect {
-                // stretch full size
-                $0.top.bottom.equalToSuperview()
-            } else {
-                // center in view at aspect fill (true height)
-                $0.height.equalTo(aspectRatio * UIScreen.main.bounds.width)
-                $0.centerY.equalToSuperview().offset(-5)
-            }
-            if index == post.selectedImageIndex {
-                $0.leading.trailing.equalToSuperview()
-            } else if index < post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(-UIScreen.main.bounds.width)
-            } else if index > post.selectedImageIndex ?? 0 { $0.leading.trailing.equalToSuperview().offset(UIScreen.main.bounds.width)
-            }
-        }
-    }
+*/
 
     func setCurrentImage(post: MapPost?) {
         guard let post = post else { return }

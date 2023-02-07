@@ -39,12 +39,10 @@ extension MapController {
     @objc func notifyPostOpen(_ notification: NSNotification) {
         guard let post = notification.userInfo?.first?.value as? MapPost else { return }
         guard let postID = post.id else { return }
-        // check coordinate to refresh annotation on the map
-        var coordinate: CLLocationCoordinate2D?
+
         if var post = postDictionary[postID] {
             if !(post.seenList?.contains(uid) ?? false) { post.seenList?.append(uid) }
             postDictionary.updateValue(post, forKey: postID)
-            coordinate = post.coordinate
         }
         updateFriendsPostGroupSeen(postID: post.id ?? "")
 
@@ -52,18 +50,16 @@ extension MapController {
             // moved to main thread to try to solve memory crash
             if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == post.mapID ?? "" }) {
                 UserDataModel.shared.userInfo.mapsList[i].updateSeen(postID: postID)
-                if UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID] != nil {
-                    coordinate = UserDataModel.shared.userInfo.mapsList[i].postsDictionary[postID]?.coordinate
-                }
             }
 
             self.finishPostsLoad(resort: false, newPost: false, upload: false)
-            if let coordinate {
+            // not necessary bc removing / adding annotations on every view controller remove / add
+            /* if let coordinate {
                 if let annotation = self.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: coordinate) }) {
                     self.mapView.removeAnnotation(annotation)
                     self.mapView.addAnnotation(annotation)
                 }
-            }
+            } */
         }
     }
 

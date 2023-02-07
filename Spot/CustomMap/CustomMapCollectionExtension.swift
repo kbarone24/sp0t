@@ -60,7 +60,9 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 0 { return }
-        openPost(posts: postsList, row: indexPath.item)
+        var posts = postsList
+        posts.sortPostsOnOpen(index: indexPath.item)
+        openPost(posts: posts, row: indexPath.item)
         Mixpanel.mainInstance().track(event: "CustomMapOpenPostFromGallery")
     }
 
@@ -77,7 +79,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     func openPost(posts: [MapPost], row: Int) {
         if navigationController?.viewControllers.last is PostController { return } // double stack happening here
         let title = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s map" : mapData?.mapName ?? ""
-        let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: row, title: title)
+        let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: 0, title: title)
         postVC.containerDrawerView = containerDrawerView
         DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
     }

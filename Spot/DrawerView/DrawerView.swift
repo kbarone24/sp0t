@@ -26,6 +26,13 @@ enum PresentationDirection: Int {
 }
 
 class DrawerView: NSObject {
+    enum DismissalDirection: String {
+        case down
+        case right
+        case up
+        case none
+    }
+
     public lazy var slideView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -46,12 +53,13 @@ class DrawerView: NSObject {
         }
     }
     public var isDraggingVertical: Bool = false
-    public var isDraggingHorizontal: Bool = false
-    public var swipingToDismiss: Bool = false
     public var swipeToNextState: Bool = false
 
     public var canSwipeDownToDismiss: Bool = false
     public var canSwipeRightToDismiss: Bool = false
+    public var canSwipeUpToDismiss: Bool = false
+
+    public var dismissalDirection: DismissalDirection = .none
 
     public lazy var myNav = UINavigationController()
     private lazy var closeButton: UIButton = {
@@ -69,7 +77,6 @@ class DrawerView: NSObject {
     }()
     private lazy var panRecognizer = UIPanGestureRecognizer()
 
-    private let transitionAnimation = BottomToTopTransition()
     private var drawerCornerRadius: CGFloat = 0.0
 
     public var rootVC = UIViewController()
@@ -140,7 +147,7 @@ class DrawerView: NSObject {
         slideView.addGestureRecognizer(panRecognizer)
 
         myNav = UINavigationController(rootViewController: rootVC)
-    //    myNav.delegate = self
+        myNav.delegate = self
         parentVC?.addChild(myNav)
         slideView.addSubview(myNav.view)
         myNav.view.layer.cornerRadius = cornerRadius
@@ -173,10 +180,12 @@ class DrawerView: NSObject {
         status = .close
     }
 
-    public func configure(canDrag: Bool, swipeDownToDismiss: Bool, startingPosition: DrawerViewDetent) {
+    public func configure(canDrag: Bool, swipeRightToDismiss: Bool, startingPosition: DrawerViewDetent) {
         self.canDrag = canDrag
-        self.canSwipeDownToDismiss = swipeDownToDismiss
-        self.canSwipeRightToDismiss = !canDrag && !swipeDownToDismiss
+        self.canSwipeRightToDismiss = swipeRightToDismiss
+        // values will be set from view controllers
+        canSwipeUpToDismiss = false
+        canSwipeDownToDismiss = false
         if status.rawValue != startingPosition.rawValue { present(to: startingPosition) }
     }
 
@@ -203,8 +212,6 @@ class DrawerView: NSObject {
             self.detentsPointer = self.detents.firstIndex(of: DrawerViewDetent(rawValue: to?.rawValue ?? 2) ?? .top) ?? 0
             UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseOut) {
                 self.myNav.view.layer.cornerRadius = self.drawerCornerRadius
-               //  self.myNav.view.layoutIfNeeded()
-               //  self.parentVC?.view.layoutIfNeeded()
                 self.parentVC?.view.layoutSubviews()
 
             } completion: { _ in
@@ -244,6 +251,7 @@ class DrawerView: NSObject {
     private func goTop() {
         // used to set collection view content offset on CustomMapController
         NotificationCenter.default.post(name: NSNotification.Name("DrawerViewToTopBegan"), object: nil)
+        NotificationCenter.default.post(name: NSNotification.Name("DrawerViewReset"), object: nil)
 
         // update in case swipe to dismiss was activated
         yPosition = 0
@@ -277,11 +285,12 @@ class DrawerView: NSObject {
     }
 
     private func offsetVerticalSlideViewConstraint(offset: CGFloat) {
-        if offset > 0 { NotificationCenter.default.post(name: NSNotification.Name("DrawerViewOffset"), object: nil) }
-        bottomEdgeConstraint?.update(offset: max(0, yPosition + offset))
+        if abs(offset) > 0 { NotificationCenter.default.post(name: NSNotification.Name("DrawerViewOffset"), object: nil) }
+        let adjustedOffset: CGFloat = dismissalDirection == .up ? min(0, yPosition + offset) : max(0, yPosition + offset)
+        bottomEdgeConstraint?.update(offset: adjustedOffset)
         switch status {
         case .top:
-            topConstraints?.update(offset: max(0, offset))
+            topConstraints?.update(offset: adjustedOffset)
         case .middle:
             midConstraints?.update(offset: midConstraintOffset + offset)
         case .bottom:
@@ -293,7 +302,7 @@ class DrawerView: NSObject {
 
     private func offsetHorizontalSlideViewConstraint(offset: CGFloat) {
         if offset > 0 { NotificationCenter.default.post(name: NSNotification.Name("DrawerViewOffset"), object: nil) }
-        boundingConstraint?.update(offset: offset)
+        boundingConstraint?.update(offset: max(0, offset))
     }
 
     private func resetHorizontalSlideViewConstraint() {
@@ -301,9 +310,9 @@ class DrawerView: NSObject {
         boundingConstraint?.update(offset: 0)
         UIView.animate(withDuration: 0.2, animations: {
             parent.view.layoutIfNeeded()
-        }) { _ in
+        }, completion: { _ in
             NotificationCenter.default.post(name: NSNotification.Name("DrawerViewReset"), object: nil)
-        }
+        })
     }
 
     // MARK: Pan gesture
@@ -312,28 +321,17 @@ class DrawerView: NSObject {
         let velocity = recognizer.velocity(in: recognizer.view)
         // When the user is still dragging or start dragging the if statement here will be fall through
         guard canDrag else {
-            if canSwipeRightToDismiss { swipeRightToDismiss(gesture: recognizer) }
+            if canSwipeDownToDismiss || canSwipeRightToDismiss || canSwipeUpToDismiss { swipeToDismiss(gesture: recognizer) }
             return
         }
         switch recognizer.state {
         case .began, .changed:
-            if swipeToNextState || canSwipeDownToDismiss {
+            if swipeToNextState {
                 isDraggingVertical = true
                 offsetVerticalSlideViewConstraint(offset: translation.y)
             }
-
         case .ended, .cancelled:
-            if canSwipeDownToDismiss {
-                // if swipe to dismiss, calculate if the swipe was hard enough
-
-                if translation.y * 5 + velocity.y > 1_000 {
-                    self.swipingToDismiss = true
-                    closeAction()
-                    return
-                } else {
-                    goTop()
-                }
-            } else if swipeToNextState {
+            if swipeToNextState {
                 // if dragging, calculate final position
 
                 // already advanced past mid state
@@ -382,34 +380,55 @@ class DrawerView: NSObject {
         }
     }
 
-    private func swipeRightToDismiss(gesture: UIPanGestureRecognizer) {
+    private func swipeToDismiss(gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: gesture.view)
         let location = gesture.location(in: gesture.view)
         let velocity = gesture.velocity(in: gesture.view)
         switch gesture.state {
         case .began:
-            if velocity.x > 0 &&
-                velocity.x > velocity.y &&
-                location.x < 100 {
-                isDraggingHorizontal = true
+            if abs(velocity.x) > abs(velocity.y) {
+                if location.x < 100 && velocity.x > 0 && canSwipeRightToDismiss {
+                    dismissalDirection = .right }
+            } else {
+                if velocity.y > 0 && canSwipeDownToDismiss {
+                    dismissalDirection = .down
+                } else if canSwipeUpToDismiss {
+                    dismissalDirection = .up
+                }
             }
         case .changed:
-            if isDraggingHorizontal { offsetHorizontalSlideViewConstraint(offset: translation.x) }
-
-        case .cancelled, .ended:
-            if !isDraggingHorizontal { return }
-            isDraggingHorizontal = false
-
-            let compositeValue = translation.x + velocity.x / 3
-            if compositeValue > 200 {
-                closeAction()
-            } else {
-                resetHorizontalSlideViewConstraint()
+            if dismissalDirection == .right {
+                offsetHorizontalSlideViewConstraint(offset: translation.x)
+            } else if dismissalDirection != .none {
+                offsetVerticalSlideViewConstraint(offset: translation.y)
             }
-
-        default:
-            return
-
+        case .cancelled, .ended:
+            switch dismissalDirection {
+            case .right:
+                let compositeValue = translation.x + velocity.x / 3
+                if compositeValue > 200 {
+                    closeAction(dismissalDirection: .right)
+                } else {
+                    resetHorizontalSlideViewConstraint()
+                }
+            case .up:
+                let compositeValue = translation.y + velocity.y / 3
+                if compositeValue < 200 {
+                    closeAction(dismissalDirection: .up)
+                } else {
+                    goTop()
+                }
+            case .down:
+                let compositeValue = translation.y + velocity.y / 3
+                if compositeValue > 200 {
+                    closeAction(dismissalDirection: .down)
+                } else {
+                    goTop()
+                }
+            default: return
+            }
+            dismissalDirection = .none
+        default: return
         }
     }
 
@@ -418,19 +437,27 @@ class DrawerView: NSObject {
         closeAction()
     }
 
-    func closeAction() {
-        guard let parent = parentVC else { return }
+    func closeAction(dismissalDirection: DismissalDirection? = .right) {
+    //    guard let parent = parentVC else { return }
         // animation duration as a proportion of drawer's current position (0.3 is default duration)
-        let animationDuration = ((slideView.frame.height - slideView.frame.origin.y) * 0.25) / (parent.view.bounds.height)
-
+        var animationDuration: CGFloat = 0.25
         if myNav.viewControllers.count == 1 {
-            if presentationDirection == .bottomToTop {
-                self.topConstraints?.deactivate()
+            switch dismissalDirection ?? .right {
+            case .down:
+                animationDuration = ((slideView.frame.height - slideView.frame.origin.y) * 0.25) / (slideView.frame.height)
+                self.topConstraints?.update(offset: UIScreen.main.bounds.height)
                 self.bottomEdgeConstraint?.update(offset: UIScreen.main.bounds.height)
-            } else {
+            case .right:
+                animationDuration = ((slideView.frame.width - slideView.frame.origin.x) * 0.25) / (slideView.frame.width)
                 self.boundingConstraint?.deactivate()
+                self.animationConstraints?.activate()
+            case .up:
+                animationDuration = ((slideView.frame.maxY) * 0.25) / (slideView.frame.height)
+                self.topConstraints?.update(offset: -UIScreen.main.bounds.height)
+                self.bottomEdgeConstraint?.update(offset: -UIScreen.main.bounds.height)
+            default: return
             }
-            self.animationConstraints?.activate()
+
             NotificationCenter.default.post(name: NSNotification.Name("DrawerViewCloseBegan"), object: nil)
 
             UIView.animate(withDuration: animationDuration, animations: {
@@ -441,7 +468,6 @@ class DrawerView: NSObject {
                 self.status = DrawerViewStatus.close
                 self.slideView.removeFromSuperview()
                 self.myNav.removeFromParent()
-                self.swipingToDismiss = false
                 if let closeDo = self.closeDo { closeDo() }
             })
         } else {
@@ -460,14 +486,27 @@ extension DrawerView: UINavigationControllerDelegate {
     func navigationController
     (_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController)
     -> UIViewControllerAnimatedTransitioning? {
-        if toVC is CustomMapController || fromVC is CustomMapController {
-            transitionAnimation.startingOffset = slideView.frame.origin.y
-            transitionAnimation.transitionMode = operation == .push ? .present : .pop
-            return transitionAnimation
-
-        } else {
-            return nil
+        let bottomToTopTransition = BottomToTopTransition()
+        if toVC is CustomMapController && operation == .push || fromVC is CustomMapController && operation == .pop {
+            bottomToTopTransition.transitionMode = operation == .push ? .present : .pop
+            return bottomToTopTransition
+        } else if fromVC is PostController && operation == .pop {
+            switch dismissalDirection {
+            case .down:
+                bottomToTopTransition.minY = slideView.frame.origin.y
+                bottomToTopTransition.transitionMode = .pop
+                bottomToTopTransition.dismissalDirection = .down
+                return bottomToTopTransition
+            case .up:
+                bottomToTopTransition.maxY = slideView.frame.maxY
+                bottomToTopTransition.transitionMode = .pop
+                bottomToTopTransition.dismissalDirection = .up
+                return bottomToTopTransition
+            default:
+                return nil
+            }
         }
+        return nil
     }
 }
 

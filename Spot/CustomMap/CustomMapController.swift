@@ -138,7 +138,7 @@ class CustomMapController: UIViewController {
         super.viewWillAppear(animated)
         setUpNavBar()
         barView.isHidden = false
-        containerDrawerView?.configure(canDrag: currentContainerCanDragStatus ?? true, swipeDownToDismiss: false, startingPosition: .top)
+        containerDrawerView?.configure(canDrag: currentContainerCanDragStatus ?? true, swipeRightToDismiss: false, startingPosition: .top)
 
         mapController?.mapView.delegate = self
         mapController?.mapView.spotMapDelegate = self
@@ -374,6 +374,7 @@ class CustomMapController: UIViewController {
     }
 
     @objc func backButtonAction() {
+        print("back tap")
         cancelOnDismiss = true
         centeredMap = false // will prevent drawer to close on map move
         Mixpanel.mainInstance().track(event: "CustomMapBackTap")
