@@ -11,17 +11,64 @@ import Mixpanel
 import Firebase
 import SDWebImage
 
+protocol CommentCellDelegate: AnyObject {
+    func tagUserFromCell(username: String)
+    func likeCommentFromCell(comment: MapComment)
+    func unlikeCommentFromCell(comment: MapComment)
+    func openProfileFromCell(user: UserProfile)
+}
+
 final class CommentCell: UITableViewCell {
-    var comment: MapComment!
-    var post: MapPost!
+    private var comment: MapComment?
+    private var post: MapPost?
+    public weak var delegate: CommentCellDelegate?
 
-    var profilePic: UIImageView!
-    var username: UILabel!
-    var commentLabel: UILabel!
-    var likeButton: UIButton!
-    var numLikes: UILabel!
+    private(set) lazy var likeButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.contentHorizontalAlignment = .center
+        button.contentVerticalAlignment = .center
+        return button
+    }()
+    private(set) lazy var numLikes: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 10.5)
+        label.textAlignment = .center
+        label.isHidden = false
+        return label
+    }()
+    private(set) lazy var profilePic: UIImageView = {
+        let view = UIImageView()
+        view.contentMode = .scaleAspectFill
+        view.layer.cornerRadius = 39 / 2
+        view.clipsToBounds = true
+        view.isUserInteractionEnabled = true
+        let tap = UITapGestureRecognizer(target: self, action: #selector(userTap))
+        view.addGestureRecognizer(tap)
+        return view
+    }()
+    private(set) lazy var usernameLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
+        label.isUserInteractionEnabled = true
+        label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(userTap)))
+        return label
+    }()
+    private(set) lazy var commentLabel: UILabel = {
+        let label = UILabel()
+        label.lineBreakMode = .byWordWrapping
+        label.numberOfLines = 0
+        label.textColor = UIColor(red: 0.562, green: 0.562, blue: 0.562, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
+        label.isUserInteractionEnabled = true
+        label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tappedLabel(_:))))
+        return label
+    }()
 
-    var tagRect: [(rect: CGRect, username: String)] = []
+    private lazy var tagRect: [(rect: CGRect, username: String)] = []
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
     var likeCount: Int = 0 {
@@ -50,14 +97,7 @@ final class CommentCell: UITableViewCell {
     }
 
     func setUpView() {
-        resetCell()
-
-        likeButton = UIButton {
-            $0.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
-            $0.contentHorizontalAlignment = .center
-            $0.contentVerticalAlignment = .center
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(likeButton)
         likeButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(20)
             $0.top.equalTo(21)
@@ -65,59 +105,31 @@ final class CommentCell: UITableViewCell {
             $0.height.equalTo(27)
         }
 
-        numLikes = UILabel {
-            $0.textColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Heavy", size: 10.5)
-            $0.textAlignment = .center
-            $0.isHidden = false
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(numLikes)
         numLikes.snp.makeConstraints {
             $0.leading.equalTo(likeButton.snp.trailing)
             $0.bottom.equalTo(likeButton.snp.bottom).inset(5)
         }
 
-        profilePic = UIImageView {
-            $0.contentMode = .scaleAspectFill
-            $0.layer.cornerRadius = 39 / 2
-            $0.clipsToBounds = true
-            $0.isUserInteractionEnabled = true
-            let tap = UITapGestureRecognizer(target: self, action: #selector(userTap))
-            $0.addGestureRecognizer(tap)
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(profilePic)
         profilePic.snp.makeConstraints {
             $0.leading.equalTo(13)
             $0.top.equalTo(15)
             $0.width.height.equalTo(39)
         }
 
-        username = UILabel {
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
-            $0.isUserInteractionEnabled = true
-            let tap = UITapGestureRecognizer(target: self, action: #selector(userTap))
-            $0.addGestureRecognizer(tap)
-            contentView.addSubview($0)
-        }
-        username.snp.makeConstraints {
+        contentView.addSubview(usernameLabel)
+        usernameLabel.snp.makeConstraints {
             $0.leading.equalTo(profilePic.snp.trailing).offset(9)
             $0.top.equalTo(17)
             $0.trailing.lessThanOrEqualTo(likeButton.snp.leading).inset(5)
         }
 
-        commentLabel = UILabel {
-            $0.lineBreakMode = .byWordWrapping
-            $0.numberOfLines = 0
-            $0.textColor = UIColor(red: 0.562, green: 0.562, blue: 0.562, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
-            $0.isUserInteractionEnabled = true
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(commentLabel)
         commentLabel.snp.makeConstraints {
             $0.leading.equalTo(profilePic.snp.trailing).offset(9)
             $0.trailing.lessThanOrEqualTo(likeButton.snp.leading).offset(-8)
-            $0.top.equalTo(username.snp.bottom).offset(1)
+            $0.top.equalTo(usernameLabel.snp.bottom).offset(1)
             $0.bottom.lessThanOrEqualToSuperview()
         }
     }
@@ -131,13 +143,18 @@ final class CommentCell: UITableViewCell {
         commentLabel.sizeToFit()
         addAttString()
 
-        username.text = comment.userInfo?.username ?? ""
-        username.sizeToFit()
+        usernameLabel.text = comment.userInfo?.username ?? ""
+        usernameLabel.sizeToFit()
 
         let liked = comment.likers?.contains(where: { $0 == uid }) ?? false
         let image = liked ? UIImage(named: "CommentLikeButtonFilled") : UIImage(named: "CommentLikeButton")?.withTintColor(UIColor(red: 0.342, green: 0.342, blue: 0.342, alpha: 1))
         likeButton.setImage(image, for: .normal)
-        liked ? likeButton.addTarget(self, action: #selector(unlikeTap(_:)), for: .touchUpInside) : likeButton.addTarget(self, action: #selector(likeTap(_:)), for: .touchUpInside)
+        if liked {
+            likeButton.addTarget(self, action: #selector(unlikeTap(_:)), for: .touchUpInside)
+        } else {
+            likeButton.addTarget(self, action: #selector(likeTap(_:)), for: .touchUpInside)
+        }
+
         likeCount = comment.likers?.count ?? 0
 
         let url = comment.userInfo?.imageURL ?? ""
@@ -147,87 +164,72 @@ final class CommentCell: UITableViewCell {
         }
     }
 
-    func resetCell() {
-        if profilePic != nil { profilePic.removeFromSuperview() }
-        if username != nil { username.text = ""; username.removeFromSuperview() }
-        if commentLabel != nil { commentLabel.text = ""; commentLabel.attributedText = nil; commentLabel.removeFromSuperview() }
-        if likeButton != nil { likeButton.removeFromSuperview() }
-        if numLikes != nil { numLikes.text = ""; numLikes.removeFromSuperview() }
-    }
-
     override func prepareForReuse() {
         super.prepareForReuse()
-        if profilePic != nil { profilePic.sd_cancelCurrentImageLoad() }
+        profilePic.sd_cancelCurrentImageLoad()
     }
 
     func addAttString() {
-        if !(comment.taggedUsers?.isEmpty ?? true) {
-            let attString = NSAttributedString.getAttString(caption: comment.comment, taggedFriends: comment.taggedUsers!, font: commentLabel.font, maxWidth: UIScreen.main.bounds.width - 105)
+        if !(comment?.taggedUsers?.isEmpty ?? true) {
+            let attString = NSAttributedString.getAttString(
+                caption: comment?.comment ?? "",
+                taggedFriends: comment?.taggedUsers ?? [],
+                font: commentLabel.font,
+                maxWidth: UIScreen.main.bounds.width - 105
+            )
             commentLabel.attributedText = attString.0
             tagRect = attString.1
-
-            let tap = UITapGestureRecognizer(target: self, action: #selector(self.tappedLabel(_:)))
-            commentLabel.isUserInteractionEnabled = true
-            commentLabel.addGestureRecognizer(tap)
         }
     }
+    // https://stackoverflow.com/questions/37942812/turn-some-parts-of-uilabel-to-act-like-a-uibutton
 
     func tagUser() {
         /// @ tapped comment's poster at the end of the active comment text
-        let username = "@\(comment.userInfo?.username ?? "") "
-
-        guard let commentsVC = viewContainingController() as? CommentsController else { return }
-        if !commentsVC.textView.isFirstResponder {
-            var text = (commentsVC.textView.text ?? "")
-            if text == commentsVC.emptyTextString { text = ""; commentsVC.textView.alpha = 1.0; commentsVC.postButton.isEnabled = true } /// have to enable manually because the textView didn't technically "edit"
-            text.insert(contentsOf: username, at: text.startIndex)
-            commentsVC.textView.text = text
-        }
+        let username = "@\(comment?.userInfo?.username ?? "") "
+        delegate?.tagUserFromCell(username: username)
     }
 
     @objc func likeTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "CommentsLikeComment")
-        if let commentsVC = viewContainingController() as? CommentsController {
-            commentsVC.likeComment(comment: comment, post: post)
+        if let comment {
+            Mixpanel.mainInstance().track(event: "CommentsLikeComment")
+            delegate?.likeCommentFromCell(comment: comment)
         }
     }
 
     @objc func unlikeTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "CommentsUnlikeComment")
-        if let commentsVC = viewContainingController() as? CommentsController {
-            commentsVC.unlikeComment(comment: comment, post: post)
+        if let comment {
+            Mixpanel.mainInstance().track(event: "CommentsUnlikeComment")
+            delegate?.unlikeCommentFromCell(comment: comment)
         }
     }
 
     @objc func tappedLabel(_ sender: UITapGestureRecognizer) {
+        print("tapped label")
         // tag tap
-        for r in tagRect {
-            if r.rect.contains(sender.location(in: sender.view)) {
-                Mixpanel.mainInstance().track(event: "CommentsOpenTaggedUserProfile")
-                /// open tag from friends list
-                if let friend = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == r.username }) {
-                    openProfile(user: friend)
-                    return
-                } else {
-                    /// pass blank user object to open func, run get user func on profile load
-                    let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: r.username)
-                    self.openProfile(user: user)
-                }
+        for r in tagRect where r.rect.contains(sender.location(in: sender.view)) {
+            Mixpanel.mainInstance().track(event: "CommentsOpenTaggedUserProfile")
+            /// open tag from friends list
+            if let friend = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == r.username }) {
+                delegate?.openProfileFromCell(user: friend)
+            } else {
+                /// pass blank user object to open func, run get user func on profile load
+                let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: r.username)
+                delegate?.openProfileFromCell(user: user)
             }
+            return
         }
+
         Mixpanel.mainInstance().track(event: "CommentsTapTagUser")
         tagUser()
     }
 
     @objc func userTap() {
         Mixpanel.mainInstance().track(event: "CommentsUserTap")
-        guard let user = comment.userInfo else { return }
+        guard let user = comment?.userInfo else { return }
         openProfile(user: user)
     }
 
     func openProfile(user: UserProfile) {
-        if let commentsVC = self.viewContainingController() as? CommentsController {
-            commentsVC.openProfile(user: user)
-        }
+        delegate?.openProfileFromCell(user: user)
     }
 }

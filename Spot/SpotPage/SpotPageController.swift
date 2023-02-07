@@ -134,7 +134,7 @@ class SpotPageController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        containerDrawerView?.configure(canDrag: false, swipeDownToDismiss: false, startingPosition: .top)
+        containerDrawerView?.configure(canDrag: false, swipeRightToDismiss: true, startingPosition: .top)
     }
 
     override func viewDidAppear(_ animated: Bool) {

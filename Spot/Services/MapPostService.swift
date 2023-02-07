@@ -20,6 +20,9 @@ protocol MapPostServiceProtocol {
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
     func updateMapNameInPosts(mapID: String, newName: String)
+    func likePostDB(post: MapPost)
+    func unlikePostDB(post: MapPost)
+    func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool)
 }
 
 final class MapPostService: MapPostServiceProtocol {
@@ -37,14 +40,14 @@ final class MapPostService: MapPostServiceProtocol {
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
-                .whereField(FireBaseCollectionFields.mapID.rawValue, isEqualTo: mapID).order(by: "timestamp", descending: true)
+                .whereField(FirebaseCollectionFields.mapID.rawValue, isEqualTo: mapID).order(by: "timestamp", descending: true)
                 .getDocuments { snapshot, error in
                     guard let snapshot, error == nil else {
                         completion?(error)
                         return
                     }
                     for doc in snapshot.documents {
-                        doc.reference.updateData([FireBaseCollectionFields.inviteList.rawValue: FieldValue.arrayUnion(inviteList)])
+                        doc.reference.updateData([FirebaseCollectionFields.inviteList.rawValue: FieldValue.arrayUnion(inviteList)])
                     }
                 }
         }
@@ -52,8 +55,8 @@ final class MapPostService: MapPostServiceProtocol {
     
     func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool) -> Void)?) {
         fireStore.collection(FirebaseCollectionNames.posts.rawValue)
-            .whereField(FireBaseCollectionFields.posterID.rawValue, isEqualTo: friendID)
-            .order(by: FireBaseCollectionFields.timestamp.rawValue, descending: true)
+            .whereField(FirebaseCollectionFields.posterID.rawValue, isEqualTo: friendID)
+            .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
             .getDocuments { snapshot, _ in
                 guard let snapshot else {
                     completion?(false)
@@ -61,12 +64,12 @@ final class MapPostService: MapPostServiceProtocol {
                 }
                 
                 for doc in snapshot.documents {
-                    let hideFromFeed = doc.get(FireBaseCollectionFields.hideFromFeed.rawValue) as? Bool ?? false
-                    let privacyLevel = doc.get(FireBaseCollectionFields.privacyLevel.rawValue) as? String ?? "friends"
+                    let hideFromFeed = doc.get(FirebaseCollectionFields.hideFromFeed.rawValue) as? Bool ?? false
+                    let privacyLevel = doc.get(FirebaseCollectionFields.privacyLevel.rawValue) as? String ?? "friends"
                     if !hideFromFeed && privacyLevel != "invite" {
                         doc.reference.updateData(
                             [
-                                FireBaseCollectionFields.friendsList.rawValue: FieldValue.arrayUnion([userID])
+                                FirebaseCollectionFields.friendsList.rawValue: FieldValue.arrayUnion([userID])
                             ]
                         )
                     }
@@ -84,8 +87,8 @@ final class MapPostService: MapPostServiceProtocol {
             
             self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
                 .document(postID)
-                .collection(FireBaseCollectionFields.comments.rawValue)
-                .order(by: FireBaseCollectionFields.timestamp.rawValue, descending: true)
+                .collection(FirebaseCollectionFields.comments.rawValue)
+                .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
                 .getDocuments { snapshot, _ in
                     guard let snapshot,
                           !snapshot.documents.isEmpty
@@ -166,13 +169,9 @@ final class MapPostService: MapPostServiceProtocol {
             completion(post)
             return
         }
-        
-        let captionHeight = post.caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
-        
+
         Task {
             var postInfo = post
-            postInfo.captionHeight = captionHeight
-            
             do {
                 let userService = try ServiceContainer.shared.service(for: \.userService)
                 let user = try await userService.getUserInfo(userID: post.posterID)
@@ -252,7 +251,7 @@ final class MapPostService: MapPostServiceProtocol {
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
         /// send local notification first
         guard let postID = post.id else { return }
-        
+
         DispatchQueue.global(qos: .background).async { [weak self] in
             let caption = post.caption
             var notiPost = post
@@ -268,7 +267,6 @@ final class MapPostService: MapPostServiceProtocol {
             )
             
             notiPost.commentList = [commentObject]
-            notiPost.captionHeight = caption.getCaptionHeight(fontSize: 14.5, maxCaption: 52)
             notiPost.userInfo = UserDataModel.shared.userInfo
             
             NotificationCenter.default.post(
@@ -301,33 +299,77 @@ final class MapPostService: MapPostServiceProtocol {
     func updateMapNameInPosts(mapID: String, newName: String) {
         DispatchQueue.global().async { [weak self] in
             self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
-                .whereField(FireBaseCollectionFields.mapID.rawValue, isEqualTo: mapID)
+                .whereField(FirebaseCollectionFields.mapID.rawValue, isEqualTo: mapID)
                 .getDocuments { snap, _ in
                     guard let snap = snap else { return }
                     for postDoc in snap.documents {
-                        postDoc.reference.updateData([FireBaseCollectionFields.mapName.rawValue: newName])
+                        postDoc.reference.updateData([FirebaseCollectionFields.mapName.rawValue: newName])
                     }
                 }
         }
     }
-    
+
+    func likePostDB(post: MapPost) {
+        fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData([
+            FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
+        ])
+        if post.posterID == UserDataModel.shared.uid { return }
+
+        var likeNotiValues: [String: Any] = [
+            "imageURL": post.imageURLs.first ?? "",
+            "originalPoster": post.userInfo?.username ?? "",
+            "postID": post.id ?? "",
+            "seen": false,
+            "senderID": UserDataModel.shared.uid,
+            "senderUsername": UserDataModel.shared.userInfo.username,
+            "spotID": post.spotID ?? "",
+            "timestamp": Timestamp(date: Date()),
+            "type": "like"
+        ] as [String: Any]
+        fireStore.collection("users").document(post.posterID).collection("notifications").addDocument(data: likeNotiValues)
+
+        likeNotiValues["type"] = "likeOnAdd"
+        for user in post.taggedUserIDs ?? [] {
+            // don't send noti to current user
+            if user == UserDataModel.shared.uid { continue }
+            fireStore.collection("users").document(user).collection("notifications").addDocument(data: likeNotiValues)
+        }
+
+        let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
+        friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
+    }
+
+    func unlikePostDB(post: MapPost) {
+        fireStore.collection("posts").document(post.id ?? "").updateData([
+            "likers": FieldValue.arrayRemove([UserDataModel.shared.uid])
+        ])
+
+        let functions = Functions.functions()
+        functions.httpsCallable("unlikePost").call(["postID": post.id ?? "", "posterID": post.posterID, "likerID": UserDataModel.shared.uid]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
+
+        let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
+        friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
+    }
+
     private func sendPostNotifications(post: MapPost, map: CustomMap?, spot: MapSpot?) {
         let functions = Functions.functions()
         let notiValues: [String: Any] = [
-            FireBaseCollectionFields.communityMap.rawValue: map?.communityMap ?? false,
-            FireBaseCollectionFields.friendIDs.rawValue: UserDataModel.shared.userInfo.friendIDs,
-            FireBaseCollectionFields.imageURLs.rawValue: post.imageURLs,
-            FireBaseCollectionFields.mapID.rawValue: map?.id ?? "",
-            FireBaseCollectionFields.mapMembers.rawValue: map?.memberIDs ?? [],
-            FireBaseCollectionFields.mapName.rawValue: map?.mapName ?? "",
-            FireBaseCollectionFields.postID.rawValue: post.id ?? "",
-            FireBaseCollectionFields.posterID.rawValue: UserDataModel.shared.uid,
-            FireBaseCollectionFields.posterUsername.rawValue: UserDataModel.shared.userInfo.username,
-            FireBaseCollectionFields.privacyLevel.rawValue: post.privacyLevel ?? "friends",
-            FireBaseCollectionFields.spotID.rawValue: spot?.id ?? "",
-            FireBaseCollectionFields.spotName.rawValue: spot?.spotName ?? "",
-            FireBaseCollectionFields.spotVisitors.rawValue: spot?.visitorList ?? [],
-            FireBaseCollectionFields.taggedUserIDs.rawValue: post.taggedUserIDs ?? []
+            FirebaseCollectionFields.communityMap.rawValue: map?.communityMap ?? false,
+            FirebaseCollectionFields.friendIDs.rawValue: UserDataModel.shared.userInfo.friendIDs,
+            FirebaseCollectionFields.imageURLs.rawValue: post.imageURLs,
+            FirebaseCollectionFields.mapID.rawValue: map?.id ?? "",
+            FirebaseCollectionFields.mapMembers.rawValue: map?.memberIDs ?? [],
+            FirebaseCollectionFields.mapName.rawValue: map?.mapName ?? "",
+            FirebaseCollectionFields.postID.rawValue: post.id ?? "",
+            FirebaseCollectionFields.posterID.rawValue: UserDataModel.shared.uid,
+            FirebaseCollectionFields.posterUsername.rawValue: UserDataModel.shared.userInfo.username,
+            FirebaseCollectionFields.privacyLevel.rawValue: post.privacyLevel ?? "friends",
+            FirebaseCollectionFields.spotID.rawValue: spot?.id ?? "",
+            FirebaseCollectionFields.spotName.rawValue: spot?.spotName ?? "",
+            FirebaseCollectionFields.spotVisitors.rawValue: spot?.visitorList ?? [],
+            FirebaseCollectionFields.taggedUserIDs.rawValue: post.taggedUserIDs ?? []
         ]
         
         functions.httpsCallable(FuctionsHttpsCall.sendPostNotification.rawValue)
@@ -335,5 +377,24 @@ final class MapPostService: MapPostServiceProtocol {
                 notiValues,
                 completion: { _, _ in }
             )
+    }
+
+    func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
+        fireStore.collection("mapLocations").document(post.id ?? "").delete()
+        var posters = [UserDataModel.shared.uid]
+        posters.append(contentsOf: post.addedUsers ?? [])
+        let functions = Functions.functions()
+        functions.httpsCallable("postDelete").call([
+            "postIDs": [post.id],
+            "spotID": post.spotID ?? "",
+            "mapID": post.mapID ?? "",
+            "uid": UserDataModel.shared.uid,
+            "posters": posters,
+            "spotDelete": spotDelete,
+            "mapDelete": mapDelete,
+            "spotRemove": spotRemove
+        ]) { result, error in
+            print("result", result?.data as Any, error as Any)
+        }
     }
 }

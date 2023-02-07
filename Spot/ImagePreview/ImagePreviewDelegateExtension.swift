@@ -105,8 +105,7 @@ extension ImagePreviewController: UITextViewDelegate {
     }
 
     func addTagTable(tagString: String) {
-        tagFriendsView.searchText = tagString
-        
+        tagFriendsView.setUp(userList: UserDataModel.shared.userInfo.friendsList, textColor: .white, delegate: self, searchText: tagString)
         postDetailView.addSubview(tagFriendsView)
         tagFriendsView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()

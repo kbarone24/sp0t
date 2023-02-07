@@ -54,9 +54,8 @@ extension HomeScreenContainerController: HomeScreenDelegate {
     func openPosts(posts: [MapPost]) {
         Mixpanel.mainInstance().track(event: "MapPostTap")
         if sheetView != nil { return }
-        guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
-        postVC.postsList = posts
-        sheetView = DrawerView(present: postVC, presentationDirection: .bottomToTop) { [weak self] in
+        let postVC = PostController(parentVC: .Home, postsList: posts)
+        sheetView = DrawerView(present: postVC, presentationDirection: .rightToLeft) { [weak self] in
             self?.sheetView = nil
         }
         postVC.containerDrawerView = sheetView
@@ -68,7 +67,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         if selectedControllerIndex == 0 { animateSideBar() }
 
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: nil, mapType: .customMap)
-        sheetView = DrawerView(present: customMapVC, presentationDirection: .rightToLeft) { [weak self] in
+        sheetView = DrawerView(present: customMapVC, presentationDirection: .bottomToTop) { [weak self] in
             self?.sheetView = nil
         }
 

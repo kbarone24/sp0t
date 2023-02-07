@@ -65,14 +65,18 @@ class NotificationsController: UIViewController {
         super.viewDidLoad()
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(rawValue: "DeletePost"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewOffset), name: NSNotification.Name(("DrawerViewOffset")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewReset), name: NSNotification.Name(("DrawerViewReset")), object: nil)
+
         setupView()
+
         fetchNotifications(refresh: false)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        containerDrawerView?.configure(canDrag: false, swipeDownToDismiss: false, startingPosition: .top)
+        containerDrawerView?.configure(canDrag: false, swipeRightToDismiss: true, startingPosition: .top)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -160,6 +164,14 @@ class NotificationsController: UIViewController {
         }
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
+
+    @objc func notifyDrawerViewOffset() {
+        tableView.isScrollEnabled = false
+    }
+
+    @objc func notifyDrawerViewReset() {
+        tableView.isScrollEnabled = true
+    }
 }
 
 extension NotificationsController: NotificationsDelegate {
@@ -199,8 +211,7 @@ extension NotificationsController {
     }
     
     func openPost(post: MapPost, commentNoti: Bool) {
-        guard let postVC = UIStoryboard(name: "Feed", bundle: nil).instantiateViewController(identifier: "Post") as? PostController else { return }
-        postVC.postsList = [post]
+        let postVC = PostController(parentVC: .Notifications, postsList: [post])
         postVC.containerDrawerView = containerDrawerView
         postVC.openComments = commentNoti
         DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }

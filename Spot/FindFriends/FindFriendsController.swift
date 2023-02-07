@@ -88,7 +88,7 @@ class FindFriendsController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyProfileAddFriend(_:)), name: NSNotification.Name("SendFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         setUpNavBar()
-        containerDrawerView?.configure(canDrag: false, swipeDownToDismiss: false, startingPosition: .top)
+        containerDrawerView?.configure(canDrag: false, swipeRightToDismiss: true, startingPosition: .top)
     }
 
     deinit {

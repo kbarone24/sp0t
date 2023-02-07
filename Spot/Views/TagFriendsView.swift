@@ -10,36 +10,39 @@ import Firebase
 import UIKit
 import SDWebImage
 
-protocol TagFriendsDelegate {
+protocol TagFriendsDelegate: AnyObject {
     func finishPassing(selectedUser: UserProfile)
 }
 
 final class TagFriendsView: UIView {
-    var collectionView: UICollectionView!
-    lazy var queryUsers: [UserProfile] = []
-    var delegate: TagFriendsDelegate?
-    var searchText: String = "" {
-        didSet {
-            runQuery()
-        }
-    }
-    var textColor: UIColor = .white
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        backgroundColor = nil
-
+    private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.itemSize = CGSize(width: 80, height: 80)
         layout.minimumInteritemSpacing = 6
         layout.scrollDirection = .horizontal
 
-        collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.backgroundColor = nil
-        collectionView.showsHorizontalScrollIndicator = false
-        collectionView.register(TagFriendCell.self, forCellWithReuseIdentifier: "TagFriendCell")
-        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
-        collectionView.contentInset = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
+        let collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collection.backgroundColor = nil
+        collection.showsHorizontalScrollIndicator = false
+        collection.register(TagFriendCell.self, forCellWithReuseIdentifier: "TagFriendCell")
+        collection.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
+        collection.contentInset = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
+        return collection
+    }()
+    private var userList: [UserProfile] = []
+    private lazy var queryUsers: [UserProfile] = []
+    private var delegate: TagFriendsDelegate?
+    private var searchText: String = "" {
+        didSet {
+            runQuery()
+        }
+    }
+    private var textColor: UIColor = .white
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = nil
+
         collectionView.delegate = self
         collectionView.dataSource = self
         addSubview(collectionView)
@@ -48,15 +51,21 @@ final class TagFriendsView: UIView {
         }
     }
 
-    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    public func setUp(userList: [UserProfile], textColor: UIColor, delegate: TagFriendsDelegate, searchText: String) {
+        self.userList = userList
+        self.textColor = textColor
+        self.delegate = delegate
+        self.searchText = searchText
     }
 
     func runQuery() {
         queryUsers.removeAll()
 
-        var adjustedFriends = UserDataModel.shared.userInfo.friendsList
+        var adjustedFriends = userList
         adjustedFriends.removeAll(where: { $0.id == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" }) /// remove bot
         let usernameList = adjustedFriends.map({ $0.username })
         let nameList = adjustedFriends.map({ $0.name })

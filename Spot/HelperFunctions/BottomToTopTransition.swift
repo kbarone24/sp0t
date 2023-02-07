@@ -9,6 +9,10 @@
 import Foundation
 
 class BottomToTopTransition: NSObject {
+    enum DismissalDirection {
+        case up
+        case down
+    }
 
     enum BottomToTopTransitionMode {
         case present
@@ -16,8 +20,9 @@ class BottomToTopTransition: NSObject {
         case pop
     }
     var transitionMode: BottomToTopTransitionMode = .present
-    var startingOffset: CGFloat = 0
-    /// set current offset variable to pass through?
+    var dismissalDirection: DismissalDirection = .down
+    var minY: CGFloat = 0
+    var maxY: CGFloat = UIScreen.main.bounds.height
 }
 
 extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
@@ -39,14 +44,16 @@ extension BottomToTopTransition: UIViewControllerAnimatedTransitioning {
             let transitionModeKey = (transitionMode == .pop) ? UITransitionContextViewKey.to : UITransitionContextViewKey.from
             let finalViewModeKey = (transitionMode == .pop) ? UITransitionContextViewControllerKey.from : UITransitionContextViewControllerKey.to
             if let previousView = transitionContext.view(forKey: transitionModeKey) {
-                let nowView = transitionContext.viewController(forKey: finalViewModeKey)?.view
-                nowView!.frame = CGRect(x: nowView!.frame.minX, y: startingOffset, width: nowView!.frame.width, height: nowView!.frame.height)
-                transitionContext.containerView.insertSubview(previousView, belowSubview: nowView ?? UIView())
+                guard let nowView = transitionContext.viewController(forKey: finalViewModeKey)?.view else { return }
+                nowView.frame = CGRect(x: nowView.frame.minX, y: minY, width: nowView.frame.width, height: maxY)
+                transitionContext.containerView.insertSubview(previousView, belowSubview: nowView)
+                let yValue: CGFloat = dismissalDirection == .down ? transitionContext.containerView.frame.height : -transitionContext.containerView.frame.height
                 UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {
-                    nowView?.frame.origin = CGPoint(x: 0, y: transitionContext.containerView.frame.height)
+                    nowView.frame.origin = CGPoint(x: 0, y: yValue)
                 } completion: { success in
-                    self.startingOffset = 0
-                    nowView?.removeFromSuperview()
+                    self.minY = 0
+                    self.maxY = UIScreen.main.bounds.height
+                    nowView.removeFromSuperview()
                     transitionContext.completeTransition(success)
                 }
             }
