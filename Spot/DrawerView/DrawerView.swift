@@ -285,8 +285,8 @@ class DrawerView: NSObject {
     }
 
     private func offsetVerticalSlideViewConstraint(offset: CGFloat) {
-        if abs(offset) > 0 { NotificationCenter.default.post(name: NSNotification.Name("DrawerViewOffset"), object: nil) }
         let adjustedOffset: CGFloat = dismissalDirection == .up ? min(0, yPosition + offset) : max(0, yPosition + offset)
+        if abs(adjustedOffset) > 0 { NotificationCenter.default.post(name: NSNotification.Name("DrawerViewOffset"), object: nil) }
         bottomEdgeConstraint?.update(offset: adjustedOffset)
         switch status {
         case .top:

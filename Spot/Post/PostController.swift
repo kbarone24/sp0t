@@ -58,6 +58,10 @@ final class PostController: UIViewController {
     private lazy var titleView = UIView()
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
+        label.textAlignment = .center
+        label.lineBreakMode = .byTruncatingTail
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.7
         label.textColor = UIColor(red: 0.961, green: 0.961, blue: 0.961, alpha: 1)
         label.font = UIFont(name: "UniversCE-Black", size: 16.5)
         return label
@@ -200,7 +204,7 @@ final class PostController: UIViewController {
 
         view.addSubview(titleView)
         titleView.snp.makeConstraints {
-            $0.leading.trailing.top.equalToSuperview()
+            $0.top.leading.trailing.equalToSuperview()
             $0.height.equalTo(100)
         }
 
@@ -212,18 +216,19 @@ final class PostController: UIViewController {
             $0.height.equalTo(49)
         }
 
-        titleView.addSubview(titleLabel)
-        titleLabel.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.centerY.equalTo(backArrow)
-        }
-
         titleView.addSubview(moreButton)
         moreButton.snp.makeConstraints {
             $0.centerY.equalTo(backArrow)
             $0.trailing.equalTo(-8)
             $0.height.equalTo(14.5)
             $0.width.equalTo(40.2)
+        }
+
+        titleView.addSubview(titleLabel)
+        titleLabel.snp.makeConstraints {
+            $0.centerY.equalTo(backArrow)
+            $0.leading.equalTo(backArrow.snp.trailing).offset(10)
+            $0.trailing.equalTo(moreButton.snp.leading).offset(-10)
         }
 
         view.addSubview(buttonView)

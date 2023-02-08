@@ -117,7 +117,7 @@ extension PostController {
         animatingToNextRow = true
         DispatchQueue.main.async {
             self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex + (increment ?? 0), section: 0), at: .top, animated: true)
-            self.updateButtonView(index: self.selectedPostIndex + (increment ?? 0))
+         //   self.updateButtonView(index: self.selectedPostIndex + (increment ?? 0))
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             // set selected post index after main animation to avoid clogging main thread
