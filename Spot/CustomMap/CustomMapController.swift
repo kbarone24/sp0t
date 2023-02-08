@@ -154,9 +154,14 @@ class CustomMapController: UIViewController {
             DispatchQueue.main.async { self.addInitialAnnotations() }
         }
 
-        collectionView.isScrollEnabled = containerDrawerView?.status == .top
-      //  collectionView.contentOffset.y = offsetOnDismissal
+     //   collectionView.isScrollEnabled = containerDrawerView?.status == .top
+        collectionView.isScrollEnabled = true
+        collectionView.contentOffset.y = offsetOnDismissal
         currentContainerCanDragStatus = nil
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            print("scroll after", self.collectionView.isScrollEnabled)
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
