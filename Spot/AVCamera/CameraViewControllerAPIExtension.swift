@@ -153,7 +153,7 @@ extension CameraViewController {
 
 extension CameraViewController {
     
-    @objc internal func handlePhotoTapGestureRecognizer(_ gestureRecognizer: UIGestureRecognizer) {
+    @objc internal func takePhoto() {
         capture()
     }
     
@@ -199,6 +199,8 @@ extension CameraViewController {
 extension CameraViewController: UIGestureRecognizerDelegate {
 
     @objc internal func handleLongPressGestureRecognizer(_ gestureRecognizer: UIGestureRecognizer) {
+        progressView.isHidden = false
+        instructionsLabel.isHidden = true
         NextLevel.shared.captureMode = .video
         
         switch gestureRecognizer.state {
@@ -221,6 +223,7 @@ extension CameraViewController: UIGestureRecognizerDelegate {
             
         case .failed:
             self.pauseCapture()
+            progressView.isHidden = true
             fallthrough
             
         default:

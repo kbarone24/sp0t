@@ -175,8 +175,6 @@
 		8C121DBE2949352400CD4E07 /* NewSpotMask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA82949352400CD4E07 /* NewSpotMask.swift */; };
 		8C121DBF2949352400CD4E07 /* NewSpotMask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA82949352400CD4E07 /* NewSpotMask.swift */; };
 		8C121DC02949352400CD4E07 /* ImagePreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA92949352400CD4E07 /* ImagePreviewController.swift */; };
-		8C121DC12949352400CD4E07 /* ImagePreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA92949352400CD4E07 /* ImagePreviewController.swift */; };
-		8C121DC22949352400CD4E07 /* ImagePreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA92949352400CD4E07 /* ImagePreviewController.swift */; };
 		8C121DC32949352400CD4E07 /* ImagePreviewDelegateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DAA2949352400CD4E07 /* ImagePreviewDelegateExtension.swift */; };
 		8C121DC42949352400CD4E07 /* ImagePreviewDelegateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DAA2949352400CD4E07 /* ImagePreviewDelegateExtension.swift */; };
 		8C121DC52949352400CD4E07 /* ImagePreviewDelegateExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DAA2949352400CD4E07 /* ImagePreviewDelegateExtension.swift */; };
@@ -2321,7 +2319,6 @@
 				8C941766298084EF00818D43 /* FriendsListSearchExtension.swift in Sources */,
 				8C121DAC2949352400CD4E07 /* SpotNameButton.swift in Sources */,
 				8C121E5E294951D300CD4E07 /* LandingPageController.swift in Sources */,
-				8C121DC12949352400CD4E07 /* ImagePreviewController.swift in Sources */,
 				8CE4C951292437600023FE8A /* AvatarCell.swift in Sources */,
 				8C214BBA260C276D00E0C4FC /* NewUser.swift in Sources */,
 				8C0DCBC125BA5FE000722D34 /* POI.swift in Sources */,
@@ -2481,7 +2478,6 @@
 				8C941767298084EF00818D43 /* FriendsListSearchExtension.swift in Sources */,
 				8C121DAD2949352400CD4E07 /* SpotNameButton.swift in Sources */,
 				8C121E5F294951D300CD4E07 /* LandingPageController.swift in Sources */,
-				8C121DC22949352400CD4E07 /* ImagePreviewController.swift in Sources */,
 				8CE4C952292437600023FE8A /* AvatarCell.swift in Sources */,
 				8C214BBB260C276D00E0C4FC /* NewUser.swift in Sources */,
 				8C0DCBC225BA5FE000722D34 /* POI.swift in Sources */,

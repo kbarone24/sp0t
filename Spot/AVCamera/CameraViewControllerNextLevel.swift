@@ -111,7 +111,7 @@ extension CameraViewController: NextLevelVideoDelegate {
                 gifMode: self.gifMode,
                 creationDate: Date(),
                 fromCamera: true)
-            vc.cameraObject = object
+            vc.imageObject = object
             UploadPostModel.shared.imageFromCamera = true
             
             vc.mode = .image

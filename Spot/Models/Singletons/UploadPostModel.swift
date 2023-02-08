@@ -17,6 +17,7 @@ final class UploadPostModel {
     var selectedObjects: [ImageObject] = []
     var imageObjects: [(image: ImageObject, selected: Bool)] = []
     var imageFromCamera = false
+    var videoFromCamera = false
     var cancelOnDismiss = false // stop assets fetch on dismiss
     var galleryOpen = false // don't sort imageObjects when gallery visible
 
