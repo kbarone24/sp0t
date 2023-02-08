@@ -72,7 +72,7 @@ extension CameraViewController {
         switch CLLocationManager().authorizationStatus {
         case .restricted, .denied, .notDetermined:
             showSettingsAlert(title: "Allow location access in Settings to post on sp0t", message: "sp0t needs your location to pin your posts on the map", location: true)
-        
+            
         default:
             break
         }
@@ -98,21 +98,12 @@ extension CameraViewController {
 }
 
 extension CameraViewController {
-    
     internal func startCapture() {
-        UIView.animate(withDuration: 0.15, delay: 0, options: .curveEaseInOut) { [weak self] in
-            self?.cameraButton.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
-        }
-        
         NextLevel.shared.record()
     }
     
     internal func pauseCapture() {
-        UIView.animate(withDuration: 0.5, delay: 0, options: .curveEaseOut, animations: { [weak self] in
-            self?.cameraButton.transform = .identity
-        }, completion: { _ in
-            NextLevel.shared.pause()
-        })
+        NextLevel.shared.pause()
     }
     
     func endCapture() {
@@ -145,43 +136,33 @@ extension CameraViewController {
                 self.present(alertController, animated: true, completion: nil)
             }
         }
+        progressView.isHidden = true
+        NextLevel.shared.videoZoomFactor = 0.0
     }
     
     func capturedVideo(path: URL) {
-        convertVideoToMPEG4Format(inputURL: path) { [weak self] assetExportSession in
-            guard let self, let assetExportSession else {
-                self?.showGenericAlert()
-                return
-            }
+        guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController,
+              let videoData = try? Data(contentsOf: path, options: .mappedIfSafe)
+        else {
             
-            DispatchQueue.main.async {
-                guard let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController else {
-                    
-                    self.showGenericAlert()
-                    return
-                }
-                
-                UploadPostModel.shared.imageFromCamera = true
-                vc.mode = .video(url: assetExportSession.outputURL ?? path)
-                self.navigationController?.pushViewController(vc, animated: false)
-            }
-        }
-    }
-    
-    private func convertVideoToMPEG4Format(inputURL: URL, handler: @escaping (AVAssetExportSession?) -> Void) {
-        let asset = AVURLAsset(url: inputURL, options: nil)
-        try? FileManager.default.removeItem(at: inputURL)
-        
-        guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
-            handler(nil)
+            self.showGenericAlert()
             return
         }
         
-        exportSession.outputURL = inputURL
-        exportSession.outputFileType = .mp4
+        UploadPostModel.shared.videoFromCamera = true
+        vc.mode = .video(url: path)
+        let object = VideoObject(
+            id: UUID().uuidString,
+            asset: PHAsset(),
+            videoData: videoData,
+            videoPath: path,
+            rawLocation: UserDataModel.shared.currentLocation,
+            creationDate: Date(),
+            fromCamera: true
+        )
+        vc.videoObject = object
+        UploadPostModel.shared.videoFromCamera = true
         
-        exportSession.exportAsynchronously {
-            handler(exportSession)
-        }
+        self.navigationController?.pushViewController(vc, animated: false)
     }
 }

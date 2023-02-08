@@ -156,33 +156,35 @@ final class ImageVideoService: ImageVideoServiceProtocol {
     }
     
     func uploadVideo(url: URL, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void) {
-        guard let data = try? Data(contentsOf: url) else {
-            failure(ImageVideoServiceError.parsingError)
-            return
-        }
-        
-        let videoID = UUID().uuidString
-        let uploadMetaData = StorageMetadata()
-        uploadMetaData.contentType = "video/mp4"
-        
-        let storageRef = storage.reference()
-            .child(FirebaseStorageFolder.videos.reference)
-            .child(videoID)
-        
-        storageRef.putData(data, metadata: uploadMetaData) { result in
-            switch result {
-            case .success:
-                storageRef.downloadURL { url, error in
-                    guard error == nil, let urlString = url?.absoluteString else {
-                        success("")
-                        return
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            guard let self, let data = try? Data(contentsOf: url) else {
+                failure(ImageVideoServiceError.parsingError)
+                return
+            }
+            
+            let videoID = UUID().uuidString
+            let uploadMetaData = StorageMetadata()
+            uploadMetaData.contentType = "video/mp4"
+            
+            let storageRef = self.storage.reference()
+                .child(FirebaseStorageFolder.videos.reference)
+                .child(videoID)
+            
+            storageRef.putData(data, metadata: uploadMetaData) { result in
+                switch result {
+                case .success:
+                    storageRef.downloadURL { url, error in
+                        guard error == nil, let urlString = url?.absoluteString else {
+                            success("")
+                            return
+                        }
+                        
+                        success(urlString)
                     }
                     
-                    success(urlString)
+                case .failure(let error):
+                    failure(error)
                 }
-                
-            case .failure(let error):
-                failure(error)
             }
         }
     }

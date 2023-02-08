@@ -23,3 +23,13 @@ struct ImageObject {
     let creationDate: Date
     var fromCamera: Bool
 }
+
+struct VideoObject {
+    let id: String
+    let asset: PHAsset
+    let videoData: Data
+    let videoPath: URL
+    let rawLocation: CLLocation
+    let creationDate: Date
+    var fromCamera: Bool
+}

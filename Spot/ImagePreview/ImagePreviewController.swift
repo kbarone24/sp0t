@@ -39,7 +39,7 @@ final class ImagePreviewController: UIViewController {
     
     private lazy var dotView = UIView()
 
-    private var nextButton: FooterNextButton = {
+    private lazy var nextButton: FooterNextButton = {
         let button = FooterNextButton()
         button.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
         button.isEnabled = true
@@ -85,7 +85,8 @@ final class ImagePreviewController: UIViewController {
 
     var cancelOnDismiss = false
     var newMapMode = false
-    var cameraObject: ImageObject?
+    var imageObject: ImageObject?
+    var videoObject: VideoObject?
 
     // swipe down to close keyboard
     private(set) lazy var swipeToClose: UIPanGestureRecognizer = {
@@ -136,13 +137,27 @@ final class ImagePreviewController: UIViewController {
     private var player: AVPlayer?
     
     var actionButton: UIButton {
-        return newMapMode ? postButton ?? UIButton() : nextButton ?? UIButton()
+        return newMapMode ? postButton : nextButton
     }
     
     var mode: Mode = .image // default
     let textViewPlaceholder = "Write a caption..."
     var shouldAnimateTextMask = false // tells keyboardWillChange whether to reposition
     var firstImageBottomConstraint: CGFloat = 0
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+        view.tag = 2
+        setPostInfo()
+        addPreviewView()
+        addPostDetail()
+        
+        NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem, queue: nil) { [weak self] _ in
+            self?.player?.seek(to: CMTime.zero)
+            self?.player?.play()
+        }
+    }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -164,16 +179,7 @@ final class ImagePreviewController: UIViewController {
         super.viewWillDisappear(animated)
         IQKeyboardManager.shared.enable = true
         disableKeyboardMethods()
-    }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .black
-        view.tag = 2
-
-        setPostInfo()
-        addPreviewView()
-        addPostDetail()
+        player?.pause()
     }
 
     func enableKeyboardMethods() {
@@ -190,8 +196,18 @@ final class ImagePreviewController: UIViewController {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
     }
-
+    
     func setPostInfo() {
+        switch mode {
+        case .image:
+            setImagePostInfo()
+            
+        case .video(let url):
+            setVideoPostInfo(url: url)
+        }
+    }
+    
+    private func setImagePostInfo() {
         newMapMode = UploadPostModel.shared.mapObject != nil
         var post = UploadPostModel.shared.postObject ?? MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
         var selectedImages: [UIImage] = []
@@ -199,7 +215,8 @@ final class ImagePreviewController: UIViewController {
         var frameIndexes: [Int] = []
         var aspectRatios: [CGFloat] = []
         var imageLocations: [[String: Double]] = []
-        if let cameraObject { UploadPostModel.shared.selectedObjects.append(cameraObject) }
+        if let imageObject { UploadPostModel.shared.selectedObjects.append(imageObject)
+        }
 
         // cycle through selected imageObjects and find individual sets of images / frames
         for obj in UploadPostModel.shared.selectedObjects {
@@ -226,6 +243,33 @@ final class ImagePreviewController: UIViewController {
             post.postLong = imageLocation.coordinate.longitude
         }
 
+        UploadPostModel.shared.postObject = post
+        UploadPostModel.shared.setPostCity()
+    }
+    
+    private func setVideoPostInfo(url: URL) {
+        newMapMode = UploadPostModel.shared.mapObject != nil
+        guard let videoObject else {
+            return
+        }
+        
+        var post = UploadPostModel.shared.postObject ?? MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
+        var locations: [[String: Double]] = []
+        let location = locationIsEmpty(location: videoObject.rawLocation) ? UserDataModel.shared.currentLocation : videoObject.rawLocation
+        
+        locations.append(["lat": location.coordinate.latitude, "long": location.coordinate.longitude])
+        
+        post.imageLocations = locations
+        post.videoLocalPath = videoObject.videoPath
+        post.postVideo = videoObject.videoData
+        
+        let thisLocation = UploadPostModel.shared.selectedObjects.first?.rawLocation ?? UserDataModel.shared.currentLocation
+        if !locationIsEmpty(location: thisLocation) {
+            post.setImageLocation = true
+            post.postLat = thisLocation.coordinate.latitude
+            post.postLong = thisLocation.coordinate.longitude
+        }
+        
         UploadPostModel.shared.postObject = post
         UploadPostModel.shared.setPostCity()
     }
@@ -324,6 +368,7 @@ final class ImagePreviewController: UIViewController {
         let playerLayer = AVPlayerLayer(player: player)
         playerLayer.frame = self.view.bounds
         self.view.layer.addSublayer(playerLayer)
+        player?.play()
     }
 
     func addDotView() {

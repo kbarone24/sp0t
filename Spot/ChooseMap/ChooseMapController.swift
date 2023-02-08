@@ -176,26 +176,43 @@ final class ChooseMapController: UIViewController {
         view.bringSubviewToFront(progressBar)
         let fullWidth = self.progressBar.bounds.width - 2
         
-        imageVideoService.uploadImages(
-            images: UploadPostModel.shared.postObject?.postImage ?? [],
-            parentView: view,
-            progressFill: self.progressBar.progressFill,
-            fullWidth: fullWidth
-        ) { [weak self] imageURLs, failed in
-                
-                guard let self = self else { return }
-                if imageURLs.isEmpty && failed {
-                    Mixpanel.mainInstance().track(event: "FailedPostUpload")
-                    self.runFailedUpload()
-                    return
-                }
-                UploadPostModel.shared.postObject?.imageURLs = imageURLs
-                self.uploadPostToDB(newMap: newMap)
-                /// enable upload animation to finish
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    HapticGenerator.shared.play(.soft)
-                    self.popToMap()
-                }
+        if let _ = UploadPostModel.shared.postObject?.postVideo, let url = UploadPostModel.shared.postObject?.videoLocalPath {
+            imageVideoService.uploadVideo(
+                url: url)
+            { [weak self] videoURL in
+                    UploadPostModel.shared.postObject?.videoURL = videoURL
+                    self?.uploadPostToDB(newMap: true)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        HapticGenerator.shared.play(.soft)
+                        self?.popToMap()
+            }
+                    
+            } failure: { error in
+                print(error.localizedDescription)
+            }
+            
+        } else {
+            imageVideoService.uploadImages(
+                images: UploadPostModel.shared.postObject?.postImage ?? [],
+                parentView: view,
+                progressFill: self.progressBar.progressFill,
+                fullWidth: fullWidth
+            ) { [weak self] imageURLs, failed in
+                    
+                    guard let self = self else { return }
+                    if imageURLs.isEmpty && failed {
+                        Mixpanel.mainInstance().track(event: "FailedPostUpload")
+                        self.runFailedUpload()
+                        return
+                    }
+                    UploadPostModel.shared.postObject?.imageURLs = imageURLs
+                    self.uploadPostToDB(newMap: newMap)
+                    /// enable upload animation to finish
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        HapticGenerator.shared.play(.soft)
+                        self.popToMap()
+                    }
+            }
         }
     }
     

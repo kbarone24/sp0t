@@ -68,10 +68,10 @@ extension MapController: MKMapViewDelegate {
     }
 
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-
+        let mapRadius = mapView.currentRadius()
         if shouldRunGeoQuery() {
             DispatchQueue.global(qos: .utility).async { [weak self] in
-                self?.getVisibleSpots()
+                self?.getVisibleSpots(mapRadius: mapRadius)
             }
         }
         
