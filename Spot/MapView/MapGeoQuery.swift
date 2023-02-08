@@ -13,13 +13,13 @@ import MapKit
 import GeoFire
 
 extension MapController {
-    func getVisibleSpots(searchLimit: Int? = 50) {
+    func getVisibleSpots(searchLimit: Int? = 50, mapRadius: CGFloat) {
         geoQueryLimit = searchLimit ?? 50
         mapView.enableGeoQuery = false
 
         let center = mapView.centerCoordinate.location.coordinate
         let maxRadius = min(CLLocationDistance(geoQueryLimit * 10_000), 3_500_000)
-        let radius = min(mapView.currentRadius() / 2, maxRadius)
+        let radius = min(mapRadius / 2, maxRadius)
         Task {
             await spotService?.getNearbySpots(center: center, radius: radius, searchLimit: searchLimit ?? 50, completion: { [weak self] spots in
                 guard let self else { return }
@@ -30,7 +30,7 @@ extension MapController {
                     self.geoQueryLimit < 800 &&
                     radius < 400_000 &&
                     self.shouldRunGeoQuery() {
-                    self.getVisibleSpots(searchLimit: self.geoQueryLimit * 2)
+                    self.getVisibleSpots(searchLimit: self.geoQueryLimit * 2, mapRadius: mapRadius)
 
                 } else {
                     // activity indicator will only be animating after explore maps join

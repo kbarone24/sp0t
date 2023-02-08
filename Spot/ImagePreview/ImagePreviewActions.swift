@@ -105,7 +105,10 @@ extension ImagePreviewController {
     
     @objc func backTap(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "ImagePreviewBackTap")
-        if cameraObject != nil { UploadPostModel.shared.selectedObjects.removeAll(where: { $0.fromCamera })} /// remove old captured image
+        if imageObject != nil {
+            // remove old captured image
+            UploadPostModel.shared.selectedObjects.removeAll(where: { $0.fromCamera })
+        }
         
         let controllers = navigationController?.viewControllers
         if let camera = controllers?[safe: (controllers?.count ?? 0) - 3] as? CameraViewController {
@@ -283,30 +286,49 @@ extension ImagePreviewController {
         setCaptionValues()
         /// upload post
         UploadPostModel.shared.setFinalPostValues()
-        if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
+        if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues()
+        }
         
         progressMask.isHidden = false
         view.bringSubviewToFront(progressMask)
         let fullWidth = (self.progressBar.bounds.width) - 2
         
-        imageVideoService.uploadImages(
-            images: UploadPostModel.shared.postObject?.postImage ?? [],
-            parentView: view,
-            progressFill: self.progressBar.progressFill,
-            fullWidth: fullWidth
-        ) { [weak self] imageURLs, failed in
-            guard let self = self else { return }
-            if imageURLs.isEmpty && failed {
-                Mixpanel.mainInstance().track(event: "FailedPostUpload")
-                self.runFailedUpload()
-                return
+        switch mode {
+        case .image:
+            imageVideoService.uploadImages(
+                images: UploadPostModel.shared.postObject?.postImage ?? [],
+                parentView: view,
+                progressFill: self.progressBar.progressFill,
+                fullWidth: fullWidth
+            ) { [weak self] imageURLs, failed in
+                guard let self = self else { return }
+                if imageURLs.isEmpty && failed {
+                    Mixpanel.mainInstance().track(event: "FailedPostUpload")
+                    self.runFailedUpload()
+                    return
+                }
+                UploadPostModel.shared.postObject?.imageURLs = imageURLs
+                self.uploadPostToDB(newMap: true)
+                /// enable upload animation to finish
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    HapticGenerator.shared.play(.soft)
+                    self.popToMap()
+                }
             }
-            UploadPostModel.shared.postObject?.imageURLs = imageURLs
-            self.uploadPostToDB(newMap: true)
-            /// enable upload animation to finish
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                HapticGenerator.shared.play(.soft)
-                self.popToMap()
+            
+        case .video(let url):
+            imageVideoService.uploadVideo(
+                url: url)
+            { [weak self] videoURL in
+                    UploadPostModel.shared.postObject?.videoURL = videoURL
+                    self?.uploadPostToDB(newMap: true)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        HapticGenerator.shared.play(.soft)
+                        self?.popToMap()
+                    }
+                    
+            } failure: { error in
+                print(error.localizedDescription)
             }
         }
     }
@@ -347,8 +369,8 @@ extension ImagePreviewController {
               let userService = try? ServiceContainer.shared.service(for: \.userService)
         else { return }
         
-        var spot = UploadPostModel.shared.spotObject
-        var map = UploadPostModel.shared.mapObject
+        let spot = UploadPostModel.shared.spotObject
+        let map = UploadPostModel.shared.mapObject
         
         if UploadPostModel.shared.imageFromCamera {
             SpotPhotoAlbum.shared.save(image: post.postImage.first ?? UIImage())

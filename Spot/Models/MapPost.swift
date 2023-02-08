@@ -27,6 +27,7 @@ struct MapPost: Identifiable, Codable, Hashable {
     var hideFromFeed: Bool? = false
     var imageLocations: [[String: Double]]? = []
     var imageURLs: [String]
+    var videoURL: String?
     var inviteList: [String]? = []
     var likers: [String]
     var mapID: String? = ""
@@ -54,6 +55,8 @@ struct MapPost: Identifiable, Codable, Hashable {
     var mapInfo: CustomMap?
     var commentList: [MapComment] = []
     var postImage: [UIImage] = []
+    var postVideo: Data?
+    var videoLocalPath: URL?
 
     var postScore: Double? = 0
     var selectedImageIndex: Int? = 0

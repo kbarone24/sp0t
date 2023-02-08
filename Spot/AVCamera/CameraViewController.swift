@@ -46,18 +46,30 @@ final class CameraViewController: UIViewController {
     private(set) lazy var cameraButton: CameraButton = {
         let button = CameraButton()
 
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handlePhotoTapGestureRecognizer(_:)))
-        tapGesture.delegate = self
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(takePhoto))
+        tapGesture.numberOfTapsRequired = 1
+        tapGesture.delaysTouchesBegan = false
         button.addGestureRecognizer(tapGesture)
-//
-//        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGestureRecognizer(_:)))
-//        longPressGesture.delegate = self
-//        longPressGesture.minimumPressDuration = 2.0
-//        longPressGesture.allowableMovement = 10.0
-//
-//        button.addGestureRecognizer(longPressGesture)
+
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGestureRecognizer(_:)))
+        longPressGesture.delegate = self
+        longPressGesture.numberOfTouchesRequired = 1
+        longPressGesture.allowableMovement = 50.0
+        longPressGesture.delaysTouchesBegan = false
+
+        button.addGestureRecognizer(longPressGesture)
         
         return button
+    }()
+    
+    private(set) lazy var progressView: UIProgressView = {
+        let progress = UIProgressView(progressViewStyle: .bar)
+        
+        progress.progressTintColor = UIColor(hexString: "39F3FF")
+        progress.trackTintColor = UIColor(hexString: "39F3FF").withAlphaComponent(0.2)
+        progress.setProgress(0.0, animated: false)
+        progress.layer.cornerRadius = 1.0
+        return progress
     }()
     
     private(set) lazy var galleryButton: UIButton = {
@@ -149,6 +161,7 @@ final class CameraViewController: UIViewController {
     
     internal var mapObject: CustomMap?
     internal var postDraft: PostDraft?
+    let maxVideoDuration = CMTimeMake(value: 5, timescale: 1)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -166,7 +179,7 @@ final class CameraViewController: UIViewController {
         NextLevel.shared.photoDelegate = self
         NextLevel.shared.flashDelegate = self
         
-        NextLevel.shared.videoConfiguration.maximumCaptureDuration = CMTimeMakeWithSeconds(5, preferredTimescale: 600)
+        NextLevel.shared.videoConfiguration.maximumCaptureDuration = maxVideoDuration
         NextLevel.shared.audioConfiguration.bitRate = 44_000
     }
     
@@ -239,6 +252,8 @@ final class CameraViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         NextLevel.shared.stop()
+        progressView.isHidden = true
+        instructionsLabel.isHidden = true
         
         if isMovingFromParent {
             if UploadPostModel.shared.postObject == nil {
@@ -301,6 +316,21 @@ final class CameraViewController: UIViewController {
             $0.width.height.equalTo(76)
             $0.centerX.equalToSuperview()
         }
+        
+        view.addSubview(instructionsLabel)
+        instructionsLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalTo(cameraButton.snp.top).offset(-20.0)
+        }
+        
+        view.addSubview(progressView)
+        progressView.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.width.equalTo(77.0)
+            $0.height.equalTo(16.0)
+            $0.bottom.equalTo(cameraButton.snp.top).offset(-20.0)
+        }
+        progressView.isHidden = true
         
         view.addSubview(galleryButton)
         galleryButton.snp.makeConstraints {
