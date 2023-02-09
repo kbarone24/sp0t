@@ -257,14 +257,16 @@ final class PostController: UIViewController {
     }
 
     @objc func notifyCommentChange(_ notification: NSNotification) {
-        print("notify")
         guard let commentList = notification.userInfo?["commentList"] as? [MapComment] else { return }
         guard let postID = notification.userInfo?["postID"] as? String else { return }
         if let i = postsList.firstIndex(where: { $0.id == postID }) {
             print("comment count", max(0, commentList.count - 1))
             postsList[i].commentCount = max(0, commentList.count - 1)
             postsList[i].commentList = commentList
-            DispatchQueue.main.async { self.contentTable.reloadData() }
+            DispatchQueue.main.async {
+                self.contentTable.reloadData()
+                self.updateButtonView(index: nil)
+            }
         }
     }
     

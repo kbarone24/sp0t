@@ -99,6 +99,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func setDrawerValuesForViewAppear() {
         offsetOnDismissal = collectionView.contentOffset.y
+        statusOnDismissal = DrawerViewDetent(rawValue: containerDrawerView?.detentsPointer ?? 0) ?? .top
         currentContainerCanDragStatus = containerDrawerView?.canDrag
     }
 }
