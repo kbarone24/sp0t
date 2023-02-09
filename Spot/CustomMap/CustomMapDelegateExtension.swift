@@ -43,7 +43,7 @@ extension CustomMapController: MKMapViewDelegate {
     }
 
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
-        if centeredMap && containerDrawerView?.status == .middle { closeDrawer() }
+     //   if centeredMap && containerDrawerView?.status == .middle { closeDrawer() }
         guard let mapView = mapView as? SpotMapView else { return }
         // gets called too much -> just use gesture recognizer
         if mapView.region.span.longitudeDelta < 0.0013 {
@@ -76,7 +76,7 @@ extension CustomMapController: MKMapViewDelegate {
     }
 
     func closeDrawer() {
-        DispatchQueue.main.async { self.containerDrawerView?.present(to: .bottom) }
+      //  DispatchQueue.main.async { self.containerDrawerView?.present(to: .bottom) }
     }
 }
 
@@ -139,7 +139,7 @@ extension CustomMapController: SpotMapViewDelegate {
     }
 
     func centerMapOnPostsInCluster(view: SpotPostAnnotationView) {
-        closeDrawer()
+     //   closeDrawer()
 
         var coordinates: [CLLocationCoordinate2D] = []
         for id in view.postIDs {

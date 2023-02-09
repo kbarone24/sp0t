@@ -181,8 +181,8 @@ extension ContentViewerCell {
         currentImage.makeConstraints(post: post)
         currentImage.setCurrentImage(post: post)
 
-        let tap = UITapGestureRecognizer(target: self, action: #selector(imageTap(_:)))
-        currentImage.addGestureRecognizer(tap)
+        imageTap = UITapGestureRecognizer(target: self, action: #selector(imageTap(_:)))
+        contentView.addGestureRecognizer(imageTap ?? UITapGestureRecognizer())
 
         if post?.frameIndexes?.count ?? 0 > 1 {
             nextImage = PostImagePreview(frame: .zero, index: (post?.selectedImageIndex ?? 0) + 1, parent: .ContentPage)
@@ -197,9 +197,9 @@ extension ContentViewerCell {
             previousImage.makeConstraints(post: post)
             previousImage.setCurrentImage(post: post)
 
-            let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
-            pan.delegate = self
-            contentView.addGestureRecognizer(pan)
+            imagePan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
+            imagePan?.delegate = self
+            contentView.addGestureRecognizer(imagePan ?? UIPanGestureRecognizer())
             addDots()
         }
     }
