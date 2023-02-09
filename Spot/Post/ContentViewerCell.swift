@@ -114,6 +114,9 @@ class ContentViewerCell: UITableViewCell {
         }
     }
 
+    var imagePan: UIPanGestureRecognizer?
+    var imageTap: UITapGestureRecognizer?
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
@@ -194,5 +197,8 @@ class ContentViewerCell: UITableViewCell {
         currentImage.image = UIImage(); currentImage.removeFromSuperview()
         nextImage.image = UIImage(); nextImage.removeFromSuperview()
         previousImage.image = UIImage(); previousImage.removeFromSuperview()
+
+        contentView.removeGestureRecognizer(imagePan ?? UIPanGestureRecognizer())
+        contentView.removeGestureRecognizer(imageTap ?? UITapGestureRecognizer())
     }
 }

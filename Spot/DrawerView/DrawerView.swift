@@ -96,7 +96,7 @@ class DrawerView: NSObject {
     private var botConstraints: Constraint?
     private var bottomEdgeConstraint: Constraint?
     private var detents: [DrawerViewDetent] = [.bottom, .middle, .top]
-    private var detentsPointer = 0 {
+    public var detentsPointer = 0 {
         didSet {
             if detentsPointer > detents.count - 1 {
                 detentsPointer = detents.count - 1
@@ -180,9 +180,10 @@ class DrawerView: NSObject {
         status = .close
     }
 
-    public func configure(canDrag: Bool, swipeRightToDismiss: Bool, startingPosition: DrawerViewDetent) {
+    public func configure(canDrag: Bool, swipeRightToDismiss: Bool, startingPosition: DrawerViewDetent, presentationDirection: PresentationDirection? = .rightToLeft) {
         self.canDrag = canDrag
         self.canSwipeRightToDismiss = swipeRightToDismiss
+        self.presentationDirection = presentationDirection ?? .rightToLeft
         // values will be set from view controllers
         canSwipeUpToDismiss = false
         canSwipeDownToDismiss = false
@@ -194,7 +195,7 @@ class DrawerView: NSObject {
         DispatchQueue.main.async {
             if self.animationConstraints != nil {
                 // handle constraints for initial animation (right-to-left only)
-                self.removeAnimationConstraints()
+                self.removeAnimationConstraints(detent: to)
             } else {
                 self.topConstraints?.deactivate()
                 self.midConstraints?.deactivate()
@@ -220,9 +221,10 @@ class DrawerView: NSObject {
         }
     }
 
-    private func removeAnimationConstraints() {
+    private func removeAnimationConstraints(detent: DrawerViewDetent? = .top) {
         guard let parent = parentVC else { return }
-        status = .top
+        status = DrawerViewStatus(rawValue: detent?.rawValue ?? 0) ?? .top
+        print("status", status)
         animationConstraints?.deactivate()
         slideView.snp.removeConstraints()
         slideView.snp.makeConstraints {
@@ -233,17 +235,17 @@ class DrawerView: NSObject {
 
             midConstraints = $0.top.equalToSuperview().offset(self.midConstraintOffset).constraint
         }
-        midConstraints?.deactivate()
+        if status != .middle { midConstraints?.deactivate() }
 
         slideView.snp.makeConstraints {
             botConstraints = $0.top.equalTo(parent.view.snp.bottom).offset(self.botConstraintOffset).constraint
         }
-        botConstraints?.deactivate()
+        if status != .bottom { botConstraints?.deactivate() }
 
         slideView.snp.makeConstraints {
             topConstraints = $0.top.equalToSuperview().constraint
         }
-
+        if status != .top { topConstraints?.deactivate() }
         // send drawer view to top notification for remove animation
     }
 
@@ -334,7 +336,7 @@ class DrawerView: NSObject {
             if swipeToNextState {
                 // if dragging, calculate final position
 
-                // already advanced past mid state
+                /* already advanced past mid state
                 var yAdjustment: CGFloat = 0
                 if status.rawValue == 0 && translation.y < -midConstraintOffset {
                     detentsPointer += 1
@@ -344,13 +346,14 @@ class DrawerView: NSObject {
                     detentsPointer -= 1
                     yAdjustment = midConstraintOffset
                 }
-
+                */
                 // determine if swipe to next state
-                let compositeValue = translation.y + velocity.y / 3 - yAdjustment
+                // force swipe between top and bottom states for now
+                let compositeValue = translation.y + velocity.y / 3
                 if compositeValue > 100 {
-                    detentsPointer = max(detentsPointer - 1, 0)
+                    detentsPointer = 0
                 } else if compositeValue < -100 {
-                    detentsPointer = min(detentsPointer + 1, 2)
+                    detentsPointer = 2
                 }
 
                 topConstraints?.deactivate()

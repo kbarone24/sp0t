@@ -38,6 +38,7 @@ class CustomMapController: UIViewController {
     var drawerViewIsDragging = false
     var currentContainerCanDragStatus: Bool?
     var offsetOnDismissal: CGFloat = 0
+    var statusOnDismissal: DrawerViewDetent = .top
 
     var mapType: MapType = .customMap
     var centeredMap = false
@@ -138,7 +139,8 @@ class CustomMapController: UIViewController {
         super.viewWillAppear(animated)
         setUpNavBar()
         barView.isHidden = false
-        containerDrawerView?.configure(canDrag: currentContainerCanDragStatus ?? true, swipeRightToDismiss: false, startingPosition: .top)
+        print("status on dismiss", statusOnDismissal, statusOnDismissal.rawValue)
+        containerDrawerView?.configure(canDrag: currentContainerCanDragStatus ?? true, swipeRightToDismiss: false, startingPosition: statusOnDismissal, presentationDirection: .bottomToTop)
 
         mapController?.mapView.delegate = self
         mapController?.mapView.spotMapDelegate = self
@@ -394,7 +396,7 @@ class CustomMapController: UIViewController {
         DispatchQueue.main.async {
             self.mapController?.mapView.removeAllAnnos()
             if self.navigationController?.viewControllers.count == 1 { self.mapController?.offsetCustomMapCenter() }
-            self.containerDrawerView?.closeAction()
+            self.containerDrawerView?.closeAction(dismissalDirection: .down)
             self.mapController?.mapView.delegate = nil
             self.mapController?.mapView.spotMapDelegate = nil
         }

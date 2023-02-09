@@ -57,7 +57,7 @@ final class CameraViewController: UIViewController {
         longPressGesture.allowableMovement = 50.0
         longPressGesture.delaysTouchesBegan = false
 
-        button.addGestureRecognizer(longPressGesture)
+     //   button.addGestureRecognizer(longPressGesture)
         
         return button
     }()
@@ -316,7 +316,8 @@ final class CameraViewController: UIViewController {
             $0.width.height.equalTo(76)
             $0.centerX.equalToSuperview()
         }
-        
+
+        /*
         view.addSubview(instructionsLabel)
         instructionsLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
@@ -331,6 +332,7 @@ final class CameraViewController: UIViewController {
             $0.bottom.equalTo(cameraButton.snp.top).offset(-20.0)
         }
         progressView.isHidden = true
+        */
         
         view.addSubview(galleryButton)
         galleryButton.snp.makeConstraints {
