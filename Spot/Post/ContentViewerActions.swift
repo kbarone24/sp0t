@@ -105,7 +105,7 @@ extension ContentViewerCell {
 
         switch gesture.state {
         case.began:
-            if cellOffset { return }
+            if cellOffset || imageSwiping { return }
             if abs(velocity.x) > abs(velocity.y) {
                 imageSwiping = true
             }
