@@ -139,7 +139,6 @@ class CustomMapController: UIViewController {
         super.viewWillAppear(animated)
         setUpNavBar()
         barView.isHidden = false
-        print("status on dismiss", statusOnDismissal, statusOnDismissal.rawValue)
         containerDrawerView?.configure(canDrag: currentContainerCanDragStatus ?? true, swipeRightToDismiss: false, startingPosition: statusOnDismissal, presentationDirection: .bottomToTop)
 
         mapController?.mapView.delegate = self

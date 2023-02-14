@@ -21,7 +21,6 @@ enum FriendStatus {
 class FindFriendsController: UIViewController {
     let db: Firestore = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
-    unowned var containerDrawerView: DrawerView?
 
     lazy var activeSearch = false
     lazy var contacts: [(UserProfile, FriendStatus)] = []
@@ -88,7 +87,6 @@ class FindFriendsController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyProfileAddFriend(_:)), name: NSNotification.Name("SendFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
         setUpNavBar()
-        containerDrawerView?.configure(canDrag: false, swipeRightToDismiss: true, startingPosition: .top)
     }
 
     deinit {
@@ -205,11 +203,7 @@ class FindFriendsController: UIViewController {
 
     @objc func exit(_ sender: UIButton) {
         Mixpanel.mainInstance().track(event: "FindFriendsExitTap")
-        if let drawer = containerDrawerView {
-            drawer.closeAction()
-        } else {
-            navigationController?.popViewController(animated: true)
-        }
+        navigationController?.popViewController(animated: true)
     }
 
     @objc func searchCancelTap(_ sender: UIButton) {
@@ -269,8 +263,8 @@ class FindFriendsController: UIViewController {
     }
 
     func openProfile(user: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
-        DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
+      //  let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
+     //   DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
     }
 
     @objc func notifyProfileAddFriend(_ sender: Notification) {

@@ -11,6 +11,19 @@ import UIKit
 import Mixpanel
 
 extension ContentViewerCell {
+    @objc func likeTap() {
+        delegate?.likePost(postID: post?.id ?? "")
+    }
+
+    @objc func commentsTap() {
+        Mixpanel.mainInstance().track(event: "PostPageOpenCommentsFromButton")
+        delegate?.openPostComments()
+    }
+
+    @objc func moreTap() {
+        delegate?.openPostActionSheet()
+    }
+
     @objc func captionTap(_ sender: UITapGestureRecognizer) {
         if tapInTagRect(sender: sender) {
             /// profile open handled on function call
@@ -70,7 +83,8 @@ extension ContentViewerCell {
     }
 
     func animateLocation() {
-        if delegate?.getSelectedPostIndex() == self.globalRow && locationView.contentSize.width > UIScreen.main.bounds.width - (locationView.contentInset.left + locationView.contentInset.right) {
+        if locationView.bounds.width == 0 { return }
+        if delegate?.getSelectedPostIndex() == self.globalRow && locationView.contentSize.width > locationView.bounds.width - (locationView.contentInset.left + locationView.contentInset.right) {
             DispatchQueue.main.async { self.locationView.startAnimating() }
         }
     }

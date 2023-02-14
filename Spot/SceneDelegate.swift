@@ -36,8 +36,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let notificationName = Notification.Name("openPush")
         NotificationCenter.default.post(name: notificationName, object: nil, userInfo: nil)
 
-        let homeScreenController = HomeScreenContainerController()
-        window.rootViewController = homeScreenController
+        let tabBarController = SpotTabBarController()
+        window.rootViewController = tabBarController
         window.makeKeyAndVisible()
     }
 

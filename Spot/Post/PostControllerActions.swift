@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import Firebase
 import Mixpanel
 
 extension PostController {
@@ -22,39 +23,122 @@ extension PostController {
         }
     }
 
-    @objc func backTap() {
-        exitPosts()
-    }
-
-    @objc func elipsesTap() {
-        Mixpanel.mainInstance().track(event: "PostPageElipsesTap")
-        addActionSheet()
-    }
-
-    @objc func commentsTap() {
-        openComments(row: selectedPostIndex, animated: true)
-    }
-
-    @objc func likeTap() {
-        HapticGenerator.shared.play(.light)
-        if let i = postsList[selectedPostIndex].likers.firstIndex(where: { $0 == UserDataModel.shared.uid }) {
-            Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
-            postsList[selectedPostIndex].likers.remove(at: i)
-            mapPostService?.unlikePostDB(post: postsList[selectedPostIndex])
-        } else {
-            Mixpanel.mainInstance().track(event: "PostPageLikePost")
-            postsList[selectedPostIndex].likers.append(UserDataModel.shared.uid)
-            mapPostService?.likePostDB(post: postsList[selectedPostIndex])
-        }
-        updateButtonView(index: nil)
-    }
-
     @objc func drawerViewOffset() {
         containerViewOffset = true
     }
 
     @objc func drawerViewReset() {
         containerViewOffset = false
+    }
+
+    @objc func findFriendsTap() {
+        Mixpanel.mainInstance().track(event: "HomeScreenFindFriendsTap")
+        let findFriendsController = FindFriendsController()
+        navigationController?.pushViewController(findFriendsController, animated: true)
+    }
+
+    @objc func backTap() {
+        exitPosts()
+    }
+
+    func exitPosts() {
+        for cell in contentTable.visibleCells { cell.layer.removeAllAnimations() }
+        navigationController?.popViewController(animated: true)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostIndexChange"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostLike"), object: nil)
+    }
+
+    @objc func notifyCommentChange(_ notification: NSNotification) {
+        guard let commentList = notification.userInfo?["commentList"] as? [MapComment] else { return }
+        guard let postID = notification.userInfo?["postID"] as? String else { return }
+        if let i = postsList.firstIndex(where: { $0.id == postID }) {
+            postsList[i].commentCount = max(0, commentList.count - 1)
+            postsList[i].commentList = commentList
+            DispatchQueue.main.async {
+                self.updateCommentsAndLikes(row: i)
+            }
+        }
+    }
+
+    @objc func notifyPostDelete(_ notification: NSNotification) {
+        guard let post = notification.userInfo?["post"] as? MapPost else { return }
+        DispatchQueue.main.async {
+            if let index = self.postsList.firstIndex(where: { $0.id == post.id }) {
+                self.deletePostLocally(index: index)
+            }
+        }
+    }
+
+    func setSeen(post: MapPost) {
+        /// set seen on map
+        db.collection("posts").document(post.id ?? "").updateData(["seenList": FieldValue.arrayUnion([uid])])
+        NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["post": post as Any]))
+        /// show notification as seen
+        updateNotifications(postID: post.id ?? "")
+    }
+
+    func checkForUpdates(postID: String, index: Int) {
+        Task {
+            /// update just the necessary info -> comments and likes
+            guard let post = try? await mapPostService?.getPost(postID: postID) else {
+                return
+            }
+
+            if let i = self.postsList.firstIndex(where: { $0.id == postID }) {
+                self.postsList[i].commentList = post.commentList
+                self.postsList[i].commentCount = post.commentCount
+                self.postsList[i].likers = post.likers
+                /// update button view if this is the current post
+                if index == self.selectedPostIndex {
+                    self.updateCommentsAndLikes(row: index)
+                }
+            }
+        }
+    }
+
+    func updateCommentsAndLikes(row: Int) {
+        if let cell = self.contentTable.cellForRow(at: IndexPath(row: row, section: 0)) as? ContentViewerCell {
+            // set values individually to avoid overwriting image data
+            cell.post?.commentList = postsList[row].commentList
+            cell.post?.commentCount = postsList[row].commentCount
+            cell.post?.likers = postsList[row].likers
+            cell.setCommentsAndLikes()
+        }
+    }
+
+    func updateNotifications(postID: String) {
+        db.collection("users").document(uid).collection("notifications").whereField("postID", isEqualTo: postID).getDocuments { snap, _ in
+            guard let snap = snap else { return }
+            for doc in snap.documents {
+                doc.reference.updateData(["seen": true])
+            }
+        }
+    }
+
+    func updatePostIndex() {
+        guard let post = postsList[safe: selectedPostIndex] else { return }
+        DispatchQueue.global().async {
+            self.setSeen(post: post)
+            self.checkForUpdates(postID: post.id ?? "", index: self.selectedPostIndex)
+
+            if self.parentVC == .Home {
+                switch self.selectedSegment {
+                case .MyPosts:
+                    self.myPostIndex = self.selectedPostIndex
+                    if self.postsList.count - self.selectedPostIndex < 5 {
+                        if self.myPostsRefreshStatus == .refreshEnabled { self.getMyPosts() }
+                    }
+                case .NearbyPosts:
+                    self.nearbyPostIndex = self.selectedPostIndex
+                    if self.postsList.count - self.selectedPostIndex < 5 {
+                        if self.nearbyRefreshStatus == .refreshEnabled { self.getNearbyPosts() }
+                    }
+                }
+            }
+        }
+        DispatchQueue.main.async {
+            self.updateDrawerViewOnIndexChange()
+        }
     }
 
     func removeTableAnimations() {
@@ -67,6 +151,7 @@ extension PostController {
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if parentVC == .Home { return }
         // disables scroll view "bounce" and enables drawer view swipeToDismiss method to take priority
         if scrollView.contentOffset.y < 0 {
             scrollView.contentOffset.y = 0
@@ -81,6 +166,7 @@ extension PostController {
         let translation = scrollView.panGestureRecognizer.translation(in: view)
         let composite = translation.y + velocity.y / 4
 
+        let rowHeight = contentTable.bounds.height
         if composite < -(rowHeight / 4) && selectedPostIndex < postsList.count - 1 {
             selectedPostIndex += 1
         } else if composite > rowHeight / 4 && selectedPostIndex != 0 {
@@ -95,7 +181,7 @@ extension PostController {
         var duration: TimeInterval = 0.15
         if animated {
             let offset = abs(currentRowContentOffset - contentTable.contentOffset.y)
-            duration = max(TimeInterval(0.25 * offset / rowHeight), 0.15)
+            duration = max(TimeInterval(0.25 * offset / contentTable.bounds.height), 0.15)
         }
         animatingToNextRow = true
 
@@ -117,7 +203,6 @@ extension PostController {
         animatingToNextRow = true
         DispatchQueue.main.async {
             self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex + (increment ?? 0), section: 0), at: .top, animated: true)
-         //   self.updateButtonView(index: self.selectedPostIndex + (increment ?? 0))
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             // set selected post index after main animation to avoid clogging main thread
@@ -128,72 +213,65 @@ extension PostController {
             }
         }
     }
-}
 
-extension PostController: ContentViewerDelegate {
-    func getSelectedPostIndex() -> Int {
-        return selectedPostIndex
-    }
-
-    func openPostComments() {
-        openComments(row: selectedPostIndex, animated: true)
-    }
-
-    func openProfile(user: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
-        DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
-    }
-
-    func openMap(mapID: String, mapName: String) {
-        var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: mapName, memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
-        map.id = mapID
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
-        navigationController?.pushViewController(customMapVC, animated: true)
-    }
-
-    func openSpot(post: MapPost) {
-        let spotVC = SpotPageController(mapPost: post, presentedDrawerView: containerDrawerView)
-        navigationController?.pushViewController(spotVC, animated: true)
-    }
-
-    func tapToNextPost() {
-        if animatingToNextRow { return }
-        if selectedPostIndex < postsList.count - 1 {
-            tapToSelectedRow(increment: 1)
-        } else {
-            containerDrawerView?.closeAction()
+    // called if table view or container view removal has begun
+    func setCellOffsets(offset: Bool) {
+        for cell in contentTable.visibleCells {
+            if let cell = cell as? ContentViewerCell {
+                cell.cellOffset = tableViewOffset
+            }
         }
     }
 
-    func tapToPreviousPost() {
-        if animatingToNextRow { return }
-        if selectedPostIndex > 0 {
-            tapToSelectedRow(increment: -1)
-        } else {
-            containerDrawerView?.closeAction()
+    @objc func myWorldTap() {
+        switch selectedSegment {
+        case .MyPosts:
+            scrollToTop()
+        case .NearbyPosts:
+            selectedSegment = .MyPosts
         }
     }
 
-    @objc func notifyImageChange(_ notification: NSNotification) {
-        if let index = notification.userInfo?.values.first as? Int {
-            postsList[selectedPostIndex].selectedImageIndex = index
-            containerDrawerView?.canSwipeRightToDismiss = postsList[selectedPostIndex].selectedImageIndex == 0
+    @objc func nearbyTap() {
+        switch selectedSegment {
+        case .NearbyPosts:
+            scrollToTop()
+        case .MyPosts:
+            selectedSegment = .NearbyPosts
         }
     }
 
-    func updateDrawerViewOnIndexChange() {
-        containerDrawerView?.canSwipeUpToDismiss = selectedPostIndex == postsList.count - 1
-        containerDrawerView?.canSwipeDownToDismiss = selectedPostIndex == 0
+    private func scrollToTop() {
+        DispatchQueue.main.async { self.contentTable.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
+        selectedPostIndex = 0
     }
 
-    // call to let table know cell is swiping
-    func imageViewOffset(offset: Bool) {
-        imageViewOffset = offset
-    }
-}
-
-extension PostController: CommentsDelegate {
-    func openProfileFromComments(user: UserProfile) {
-        openProfile(user: user)
+    func setButtonBar(animated: Bool) {
+        buttonBar.snp.removeConstraints()
+        switch selectedSegment {
+        case .NearbyPosts:
+            nearbyButton.alpha = 1.0
+            myWorldButton.alpha = 0.5
+            buttonBar.snp.makeConstraints {
+                $0.top.equalTo(nearbyButton.snp.bottom).offset(5)
+                $0.centerX.equalTo(nearbyButton)
+                $0.width.equalTo(65)
+                $0.height.equalTo(3)
+            }
+        case .MyPosts:
+            myWorldButton.alpha = 1.0
+            nearbyButton.alpha = 0.5
+            buttonBar.snp.makeConstraints {
+                $0.top.equalTo(myWorldButton.snp.bottom).offset(5)
+                $0.centerX.equalTo(myWorldButton)
+                $0.width.equalTo(65)
+                $0.height.equalTo(3)
+            }
+        }
+        if animated {
+            UIView.animate(withDuration: 0.2) {
+                self.view.layoutIfNeeded()
+            }
+        }
     }
 }

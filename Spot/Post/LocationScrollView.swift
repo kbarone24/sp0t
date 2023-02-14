@@ -50,7 +50,7 @@ class LocationScrollView: UIScrollView {
             setOffset = maxOffset
         }
 
-        let animationDuration: TimeInterval = max(1, min(3, TimeInterval(maxOffset / 100)))
+        let animationDuration: TimeInterval = max(1.5, min(3.5, TimeInterval(maxOffset / 100)))
         animator = UIViewPropertyAnimator(duration: animationDuration, curve: .easeInOut, animations: {
             self.setContentOffset(CGPoint(x: setOffset, y: 0), animated: false)
         })
