@@ -224,7 +224,7 @@ final class MapPostService: MapPostServiceProtocol {
             let queryBounds = GFUtils.queryBounds(
                 forLocation: center,
                 withRadius: radius)
-            
+
             let queries = queryBounds.map { bound -> Query in
                 return fireStore.collection(FirebaseCollectionNames.posts.rawValue)
                     .order(by: "g")

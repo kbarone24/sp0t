@@ -37,7 +37,7 @@ final class UserService: UserServiceProtocol {
                 continuation.resume(returning: user)
                 return
                 
-            } else if userID == UserDataModel.shared.uid {
+            } else if userID == UserDataModel.shared.uid && UserDataModel.shared.userInfo.username != "" {
                 continuation.resume(returning: UserDataModel.shared.userInfo)
                 return
                 
