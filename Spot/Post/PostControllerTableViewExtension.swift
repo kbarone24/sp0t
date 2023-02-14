@@ -11,11 +11,16 @@ import UIKit
 
 extension PostController: UITableViewDataSource, UITableViewDelegate, UITableViewDataSourcePrefetching {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return postsList.count
+        let refreshStatus: RefreshStatus = selectedSegment == .MyPosts ? myPostsRefreshStatus : nearbyRefreshStatus
+        let addRefresh = refreshStatus == .activelyRefreshing ? 1 : 0
+        return postsList.count + addRefresh
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "ContentCell") as? ContentViewerCell, let post = postsList[safe: indexPath.row] {
+        if indexPath.row > postsList.count - 1, let cell = tableView.dequeueReusableCell(withIdentifier: "LoadingCell") as? ContentLoadingCell {
+            return cell
+            
+        } else if let cell = tableView.dequeueReusableCell(withIdentifier: "ContentCell") as? ContentViewerCell, let post = postsList[safe: indexPath.row] {
             cell.delegate = self
             cell.setUp(post: post, parentVC: parentVC, row: indexPath.row)
             return cell
@@ -24,11 +29,12 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return rowHeight
+        return tableView.bounds.height - 0.01
     }
 
     func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
         for indexPath in indexPaths {
+            print("prefetch", indexPath.row)
             if abs(indexPath.row - selectedPostIndex) > 3 { return }
 
             guard let post = postsList[safe: indexPath.row] else { return }
@@ -53,6 +59,7 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
     }
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        print("will display", indexPath.row)
         let updateCellImage: ([UIImage]?) -> Void = { [weak self] (images) in
             guard let self = self, let post = self.postsList[safe: indexPath.row] else { return }
             if post.imageURLs.count != images?.count { return } /// patch fix for wrong images getting called with a post -> crashing on image out of bounds on get frame indexes
@@ -60,12 +67,14 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
             if let index = self.postsList.lastIndex(where: { $0.id == post.id }) { if indexPath.row != index { return }  }
 
             if indexPath.row == self.selectedPostIndex { PostImageModel.shared.currentImageSet = (id: post.id ?? "", images: images ?? []) }
+            print("set images for", indexPath.row, images?.count)
             self.setImagesFor(indexPath: indexPath, images: images ?? [], cell: cell)
         }
 
         guard let post = postsList[safe: indexPath.row] else { return }
         // Try to find an existing data loader
         if let dataLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
+            print("got loading operation")
             // Has the data already been loaded?
             if dataLoader.images.count == post.imageURLs.count {
                 setImagesFor(indexPath: indexPath, images: dataLoader.images, cell: cell)

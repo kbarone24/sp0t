@@ -45,6 +45,7 @@ extension ContentViewerCell {
 
     func setLocationView() {
         locationView.stopAnimating()
+        locationView.contentOffset.x = -locationView.contentInset.left
         for view in locationView.subviews { view.removeFromSuperview() }
         // add map if map exists unless parent == map
         var mapShowing = false
@@ -135,14 +136,15 @@ extension ContentViewerCell {
                 $0.height.width.equalTo(33)
             }
         }
-        contentView.layoutSubviews()
-        addMoreIfNeeded()
 
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
         profileImage.sd_setImage(with: URL(string: post?.userInfo?.imageURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: transformer])
 
         usernameLabel.text = post?.userInfo?.username ?? ""
         timestampLabel.text = post?.timestamp.toString(allowDate: true) ?? ""
+
+        contentView.layoutIfNeeded()
+        addMoreIfNeeded()
     }
 
     // modify for video
@@ -160,7 +162,8 @@ extension ContentViewerCell {
 
     public func addCaptionAttString() {
         if let taggedUsers = post?.taggedUsers, !taggedUsers.isEmpty {
-            let attString = NSAttributedString.getAttString(caption: post?.caption ?? "", taggedFriends: taggedUsers, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 73)
+            // maxWidth = button view width (52) + spacing (12) + leading constraint (55)
+            let attString = NSAttributedString.getAttString(caption: post?.caption ?? "", taggedFriends: taggedUsers, font: captionLabel.font, maxWidth: UIScreen.main.bounds.width - 159)
             captionLabel.attributedText = attString.0
             tagRect = attString.1
         }
@@ -169,8 +172,19 @@ extension ContentViewerCell {
     private func addMoreIfNeeded() {
         if captionLabel.intrinsicContentSize.height > captionLabel.frame.height {
             moreShowing = true
-            captionLabel.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Semibold", size: 14.5), moreTextColor: .white)
+            captionLabel.addTrailing(with: "... ", moreText: "more", moreTextFont: UIFont(name: "SFCompactText-Bold", size: 14.5), moreTextColor: .white)
         }
+    }
+
+    func setCommentsAndLikes() {
+        let liked = post?.likers.contains(UserDataModel.shared.uid) ?? false
+        let likeImage = liked ? UIImage(named: "LikeButtonFilled") : UIImage(named: "LikeButton")
+
+        numLikes.text = post?.likers.count ?? 0 > 0 ? String(post?.likers.count ?? 0) : ""
+        likeButton.setImage(likeImage, for: .normal)
+
+        let commentCount = max((post?.commentList.count ?? 0) - 1, 0)
+        numComments.text = commentCount > 0 ? String(commentCount) : ""
     }
 
     func addImageView() {

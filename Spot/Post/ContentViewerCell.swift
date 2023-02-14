@@ -13,7 +13,9 @@ import Mixpanel
 import FirebaseStorageUI
 
 protocol ContentViewerDelegate: AnyObject {
+    func likePost(postID: String)
     func openPostComments()
+    func openPostActionSheet()
     func openProfile(user: UserProfile)
     func openMap(mapID: String, mapName: String)
     func openSpot(post: MapPost)
@@ -37,7 +39,7 @@ class ContentViewerCell: UITableViewCell {
         let button = UIButton()
         button.setTitleColor(.white, for: .normal)
         // replace with actual font
-        button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 16.5)
+        button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
         button.contentVerticalAlignment = .center
         button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
         return button
@@ -52,7 +54,7 @@ class ContentViewerCell: UITableViewCell {
         let button = UIButton()
         button.setTitleColor(.white, for: .normal)
         // replace with actual font
-        button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 16.5)
+        button.titleLabel?.font = UIFont(name: "UniversCE-Black", size: 15)
         button.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
         return button
     }()
@@ -91,7 +93,7 @@ class ContentViewerCell: UITableViewCell {
         let label = UILabel()
         label.textColor = .white
         // replace with actual font
-        label.font = UIFont(name: "UniversCE-Black", size: 16.5)
+        label.font = UIFont(name: "UniversCE-Black", size: 15)
         label.isUserInteractionEnabled = true
         label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(userTap)))
         return label
@@ -100,8 +102,46 @@ class ContentViewerCell: UITableViewCell {
     lazy var timestampLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor.white.withAlphaComponent(0.6)
-        label.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
+        label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
         return label
+    }()
+
+    lazy var buttonView = UIView()
+    lazy var likeButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "LikeButton"), for: .normal)
+        button.addTarget(self, action: #selector(likeTap), for: .touchUpInside)
+        return button
+    }()
+    lazy var numLikes: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.font = UIFont(name: "UniversCE-Black", size: 12)
+        return label
+    }()
+    lazy var commentButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "CommentButton"), for: .normal)
+        button.addTarget(self, action: #selector(commentsTap), for: .touchUpInside)
+        return button
+    }()
+    lazy var numComments: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.font = UIFont(name: "UniversCE-Black", size: 12)
+        return label
+    }()
+    lazy var moreButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "MoreButton"), for: .normal)
+        button.addTarget(self, action: #selector(moreTap), for: .touchUpInside)
+        return button
     }()
 
     lazy var currentImage = PostImagePreview()
@@ -140,6 +180,7 @@ class ContentViewerCell: UITableViewCell {
 
         setLocationView()
         setPostInfo()
+        setCommentsAndLikes()
         addDotView()
     }
 
@@ -150,11 +191,55 @@ class ContentViewerCell: UITableViewCell {
             $0.leading.trailing.bottom.equalToSuperview()
             $0.height.equalTo(3)
         }
+
+        contentView.addSubview(buttonView)
+        buttonView.snp.makeConstraints {
+            $0.trailing.equalTo(-4)
+            $0.bottom.equalTo(dotView.snp.top).offset(-12)
+            $0.height.equalTo(186)
+            $0.width.equalTo(52)
+        }
+
+        buttonView.addSubview(moreButton)
+        moreButton.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(52)
+        }
+
+        buttonView.addSubview(numComments)
+        numComments.snp.makeConstraints {
+            $0.bottom.equalTo(moreButton.snp.top).offset(-5)
+            $0.height.greaterThanOrEqualTo(11)
+            $0.centerX.equalToSuperview()
+        }
+
+        buttonView.addSubview(commentButton)
+        commentButton.snp.makeConstraints {
+            $0.bottom.equalTo(numComments.snp.top).offset(1)
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(52)
+        }
+
+        buttonView.addSubview(numLikes)
+        numLikes.snp.makeConstraints {
+            $0.bottom.equalTo(commentButton.snp.top).offset(-5)
+            $0.height.greaterThanOrEqualTo(11)
+            $0.centerX.equalToSuperview()
+        }
+
+        buttonView.addSubview(likeButton)
+        likeButton.snp.makeConstraints {
+            $0.bottom.equalTo(numLikes.snp.top).offset(1)
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(52)
+        }
+
         // location view subviews are added when cell is dequeued
         contentView.addSubview(locationView)
         locationView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalTo(dotView.snp.top).offset(-10)
+            $0.leading.equalToSuperview()
+            $0.trailing.equalTo(buttonView.snp.leading).offset(-7)
+            $0.bottom.equalTo(dotView.snp.top).offset(-15)
             $0.height.equalTo(32)
         }
 
@@ -162,8 +247,8 @@ class ContentViewerCell: UITableViewCell {
         captionLabel.snp.makeConstraints {
             $0.leading.equalTo(55)
             $0.bottom.equalTo(locationView.snp.top).offset(-15)
-            $0.trailing.lessThanOrEqualTo(-18)
-            $0.height.lessThanOrEqualTo(54)
+            $0.trailing.lessThanOrEqualTo(buttonView.snp.leading).offset(-7)
+            $0.height.lessThanOrEqualTo(52)
           //  $0.height.greaterThanOrEqualTo(12)
         }
 
