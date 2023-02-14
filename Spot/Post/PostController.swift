@@ -27,27 +27,70 @@ final class PostController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
     var parentVC: PostParent
-    var postsList: [MapPost] {
+    // values for feed fetch
+    enum FetchType {
+        case MyPosts
+        case NearbyPosts
+    }
+    var selectedSegment: FetchType = .MyPosts {
         didSet {
-            contentTable.isScrollEnabled = postsList.count > 1
+            postsList = selectedSegmentPosts
+            DispatchQueue.main.async {
+                self.setButtonBar(animated: true)
+                self.selectedPostIndex = self.selectedSegmentPostIndex
+                self.contentTable.reloadData()
+                self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
+            }
         }
     }
+    var postsList: [MapPost] {
+        didSet {
+            DispatchQueue.main.async { self.contentTable.isScrollEnabled = self.postsList.count > 1 }
+        }
+    }
+    var myPostsFetched = false
+    lazy var localPosts: [MapPost] = []
+    lazy var myPosts: [MapPost] = []
+    lazy var friendsFetchIDs: [String] = []
+    lazy var mapFetchIDs: [String] = []
+    var friendsListener, mapsListener: ListenerRegistration?
+    lazy var homeFetchGroup = DispatchGroup()
+    var homeFetchLeaveCount = 0
+    var friendsPostEndDocument: DocumentSnapshot?
+    var nearbyPostEndDocument: DocumentSnapshot?
+    lazy var myPostsRefreshStatus: RefreshStatus = .refreshDisabled
 
-    let rowHeight: CGFloat = UIScreen.main.bounds.height - 95
+    var nearbyPostsFetched = false
+    lazy var nearbyPosts: [MapPost] = []
+    var mapPostEndDocument: DocumentSnapshot?
+    lazy var nearbyRefreshStatus: RefreshStatus = .refreshDisabled
+    var selectedSegmentPosts: [MapPost] {
+        return selectedSegment == .MyPosts ? myPosts : nearbyPosts
+    }
+    var selectedSegmentPostIndex: Int {
+        return selectedSegment == .MyPosts ? myPostIndex : nearbyPostIndex
+    }
+    var selectedRefreshStatus: RefreshStatus {
+        return selectedSegment == .MyPosts ? myPostsRefreshStatus : nearbyRefreshStatus
+    }
+
     lazy var contentTable: UITableView = {
         let view = UITableView()
-        let window = UIApplication.shared.keyWindow
-        let statusHeight = window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0
-        view.contentInset = UIEdgeInsets(top: -statusHeight, left: 0, bottom: 100, right: 0)
+        view.contentInset = UIEdgeInsets(top: -50, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
         view.backgroundColor = .black
         view.separatorStyle = .none
         view.isScrollEnabled = false
         view.isPrefetchingEnabled = true
         view.showsVerticalScrollIndicator = false
+        view.scrollsToTop = false
         // inset to show button view
         view.register(ContentViewerCell.self, forCellReuseIdentifier: "ContentCell")
+        view.register(ContentLoadingCell.self, forCellReuseIdentifier: "LoadingCell")
         return view
     }()
+    var rowHeight: CGFloat {
+        return contentTable.bounds.height - 0.01
+    }
     var currentRowContentOffset: CGFloat {
         return rowHeight * CGFloat(selectedPostIndex)
     }
@@ -56,6 +99,49 @@ final class PostController: UIViewController {
     }
 
     private lazy var titleView = UIView()
+    //TODO: import real fonts for these buttons
+    lazy var myWorldButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let attText = AttributedString("My World", attributes: AttributeContainer([
+            .font: UIFont(name: "UniversCE-Black", size: 15) as Any,
+            .foregroundColor: UIColor.white
+        ]))
+        configuration.attributedTitle = attText
+        let button = UIButton(configuration: configuration)
+        button.alpha = 0.5
+        button.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor, opacity: 1, radius: 4, offset: CGSize(width: 0, height: 1.5))
+        button.addTarget(self, action: #selector(myWorldTap), for: .touchUpInside)
+        return button
+    }()
+    lazy var nearbyButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let attText = AttributedString("Nearby", attributes: AttributeContainer([
+            .font: UIFont(name: "UniversCE-Black", size: 15) as Any,
+            .foregroundColor: UIColor.white
+        ]))
+        configuration.attributedTitle = attText
+        let button = UIButton(configuration: configuration)
+        button.alpha = 0.5
+        button.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor, opacity: 1, radius: 4, offset: CGSize(width: 0, height: 1.5))
+        button.addTarget(self, action: #selector(nearbyTap), for: .touchUpInside)
+        return button
+    }()
+    lazy var buttonBar: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white.withAlphaComponent(0.95)
+        view.layer.cornerRadius = 1
+        return view
+    }()
+    lazy var findFriendsButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "FindFriendsNavIcon"), for: .normal)
+        button.addTarget(self, action: #selector(findFriendsTap), for: .touchUpInside)
+        return button
+    }()
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
@@ -74,33 +160,25 @@ final class PostController: UIViewController {
         button.addTarget(self, action: #selector(backTap), for: .touchUpInside)
         return button
     }()
-    private lazy var moreButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
-        let button = UIButton(configuration: configuration)
-        button.setImage(UIImage(named: "Elipses"), for: .normal)
-        button.addTarget(self, action: #selector(elipsesTap), for: .touchUpInside)
-        return button
-    }()
-
-    private lazy var buttonView = PostButtonView()
 
     unowned var containerDrawerView: DrawerView?
     var openComments = false
     var imageViewOffset = false {
         didSet {
-            contentTable.isScrollEnabled = !imageViewOffset
+            DispatchQueue.main.async { self.contentTable.isScrollEnabled = !self.imageViewOffset }
         }
     }
     var tableViewOffset = false {
         didSet {
-            setCellOffsets(offset: tableViewOffset)
+            DispatchQueue.main.async { self.setCellOffsets(offset: self.tableViewOffset) }
         }
     }
     var containerViewOffset = false {
         didSet {
-            contentTable.isScrollEnabled = !containerViewOffset
-            setCellOffsets(offset: containerViewOffset)
+            DispatchQueue.main.async {
+                self.contentTable.isScrollEnabled = !self.containerViewOffset
+                self.setCellOffsets(offset: self.containerViewOffset)
+            }
         }
     }
     
@@ -115,7 +193,9 @@ final class PostController: UIViewController {
         let service = try? ServiceContainer.shared.service(for: \.friendsService)
         return service
     }()
-    
+
+    var myPostIndex = 0
+    var nearbyPostIndex = 0
     var selectedPostIndex = 0 {
         didSet {
             updatePostIndex()
@@ -172,6 +252,9 @@ final class PostController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         edgesForExtendedLayout = [.top]
+        if parentVC == .Home {
+            DispatchQueue.global(qos: .userInitiated).async { self.getMyPosts() }
+        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -198,53 +281,59 @@ final class PostController: UIViewController {
         contentTable.dataSource = self
         contentTable.delegate = self
         view.addSubview(contentTable)
+        contentTable.reloadData()
         contentTable.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
 
+        let statusBarOffset: CGFloat = UserDataModel.shared.screenSize == 0 ? 20 : 40
         view.addSubview(titleView)
         titleView.snp.makeConstraints {
-            $0.top.leading.trailing.equalToSuperview()
-            $0.height.equalTo(100)
+            $0.top.equalTo(statusBarOffset)
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(60)
         }
 
-        titleView.addSubview(backArrow)
-        backArrow.snp.makeConstraints {
-            $0.leading.equalTo(5)
-            $0.top.equalTo(50)
-            $0.width.equalTo(53)
-            $0.height.equalTo(49)
-        }
+        if parentVC == .Home {
+            titleView.addSubview(myWorldButton)
+            myWorldButton.snp.makeConstraints {
+                $0.trailing.equalTo(titleView.snp.centerX).offset(-5)
+                $0.centerY.equalToSuperview()
+            }
+            titleView.addSubview(nearbyButton)
+            nearbyButton.snp.makeConstraints {
+                $0.leading.equalTo(titleView.snp.centerX).offset(5)
+                $0.centerY.equalToSuperview()
+            }
+            titleView.addSubview(buttonBar)
+            setButtonBar(animated: false)
+            titleView.addSubview(findFriendsButton)
+            findFriendsButton.snp.makeConstraints {
+                $0.leading.equalTo(5)
+                $0.top.equalTo(myWorldButton).offset(-10)
+                $0.width.equalTo(62)
+                $0.height.equalTo(46)
+            }
 
-        titleView.addSubview(moreButton)
-        moreButton.snp.makeConstraints {
-            $0.centerY.equalTo(backArrow)
-            $0.trailing.equalTo(-8)
-            $0.height.equalTo(14.5)
-            $0.width.equalTo(40.2)
+        } else {
+            titleView.addSubview(backArrow)
+            backArrow.snp.makeConstraints {
+                $0.leading.equalTo(5)
+                $0.top.equalTo(50)
+                $0.width.equalTo(53)
+                $0.height.equalTo(49)
+            }
+            titleView.addSubview(titleLabel)
+            titleLabel.snp.makeConstraints {
+                $0.centerY.equalTo(backArrow)
+                $0.leading.equalTo(backArrow.snp.trailing).offset(10)
+                $0.trailing.equalTo(-68)
+            }
+            updatePostIndex()
         }
-
-        titleView.addSubview(titleLabel)
-        titleLabel.snp.makeConstraints {
-            $0.centerY.equalTo(backArrow)
-            $0.leading.equalTo(backArrow.snp.trailing).offset(10)
-            $0.trailing.equalTo(moreButton.snp.leading).offset(-10)
-        }
-
-        view.addSubview(buttonView)
-        buttonView.backgroundColor = .black
-        buttonView.snp.makeConstraints {
-            $0.leading.trailing.bottom.equalToSuperview()
-            $0.height.equalTo(95)
-        }
-
-        buttonView.commentButton.addTarget(self, action: #selector(commentsTap), for: .touchUpInside)
-        buttonView.likeButton.addTarget(self, action: #selector(likeTap), for: .touchUpInside)
-        // set current comment / like info and look for changes
-        updatePostIndex()
 
         DispatchQueue.main.async {
-            self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
+           // self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
         }
     }
 
@@ -254,95 +343,6 @@ final class PostController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(drawerViewOffset), name: NSNotification.Name("DrawerViewOffset"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(drawerViewReset), name: NSNotification.Name("DrawerViewReset"), object: nil)
-    }
-
-    @objc func notifyCommentChange(_ notification: NSNotification) {
-        guard let commentList = notification.userInfo?["commentList"] as? [MapComment] else { return }
-        guard let postID = notification.userInfo?["postID"] as? String else { return }
-        if let i = postsList.firstIndex(where: { $0.id == postID }) {
-            print("comment count", max(0, commentList.count - 1))
-            postsList[i].commentCount = max(0, commentList.count - 1)
-            postsList[i].commentList = commentList
-            DispatchQueue.main.async {
-                self.contentTable.reloadData()
-                self.updateButtonView(index: nil)
-            }
-        }
-    }
-    
-    @objc func notifyPostDelete(_ notification: NSNotification) {
-        guard let post = notification.userInfo?["post"] as? MapPost else { return }
-        DispatchQueue.main.async {
-            if let index = self.postsList.firstIndex(where: { $0.id == post.id }) {
-                self.deletePostLocally(index: index)
-            }
-        }
-    }
-
-    func setSeen(post: MapPost) {
-        /// set seen on map
-        db.collection("posts").document(post.id ?? "").updateData(["seenList": FieldValue.arrayUnion([uid])])
-        NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["post": post as Any]))
-        /// show notification as seen
-        updateNotifications(postID: post.id ?? "")
-    }
-
-    func checkForUpdates(postID: String, index: Int) {
-        Task {
-            /// update just the necessary info -> comments and likes
-            guard let post = try? await mapPostService?.getPost(postID: postID) else {
-                return
-            }
-
-            if let i = self.postsList.firstIndex(where: { $0.id == postID }) {
-                self.postsList[i].commentList = post.commentList
-                self.postsList[i].commentCount = post.commentCount
-                self.postsList[i].likers = post.likers
-                if index != self.selectedPostIndex { return }
-                /// update button view if this is the current post
-                updateButtonView(index: nil)
-            }
-        }
-    }
-
-    func updateNotifications(postID: String) {
-        db.collection("users").document(uid).collection("notifications").whereField("postID", isEqualTo: postID).getDocuments { snap, _ in
-            guard let snap = snap else { return }
-            for doc in snap.documents {
-                doc.reference.updateData(["seen": true])
-            }
-        }
-    }
-
-    private func updatePostIndex() {
-        guard let post = postsList[safe: selectedPostIndex] else { return }
-        DispatchQueue.global().async {
-            self.setSeen(post: post)
-            self.checkForUpdates(postID: post.id ?? "", index: self.selectedPostIndex)
-        }
-        DispatchQueue.main.async {
-            self.updateButtonView(index: nil)
-            self.updateDrawerViewOnIndexChange()
-        }
-    }
-
-    // called if table view or container view removal has begun
-    private func setCellOffsets(offset: Bool) {
-        for cell in contentTable.visibleCells {
-            if let cell = cell as? ContentViewerCell {
-                cell.cellOffset = tableViewOffset
-            }
-        }
-    }
-
-    func updateButtonView(index: Int?) {
-        buttonView.setCommentsAndLikes(post: postsList[index ?? selectedPostIndex])
-    }
-
-    func exitPosts() {
-        for cell in contentTable.visibleCells { cell.layer.removeAllAnimations() }
-        containerDrawerView?.closeAction()
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostIndexChange"), object: nil)
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostLike"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyCitySet), name: NSNotification.Name("UserCitySet"), object: nil)
     }
 }

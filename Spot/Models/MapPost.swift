@@ -225,6 +225,35 @@ struct MapPost: Identifiable, Codable, Hashable {
     }
 }
 
+extension MapPost {
+    func getNearbyPostScore() -> Double {
+        var postScore: Double = 10
+
+        if UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) { postScore += 10 }
+        let postTime = Double(timestamp.seconds)
+
+        postScore += Double(likers.count) * 10
+        postScore += likers.count > 2 ? 50 : 0
+        postScore += Double(commentList.count) * 5
+        postScore += !seen ? 50 : 0
+
+        let current = Date().timeIntervalSince1970
+        let currentTime = Double(current)
+        let timeSincePost = currentTime - postTime
+
+        /// add multiplier for recency
+        var factor = min(1 + (1_000_000 / timeSincePost), 5)
+        let multiplier = pow(1.6, factor)
+        factor = multiplier
+        postScore *= factor
+
+        let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
+        let finalScore = postScore / pow(distance / 10, 1.05)
+
+        return finalScore
+    }
+}
+
 extension [MapPost] {
     // call to always have opened post be first in content viewer
     mutating func sortPostsOnOpen(index: Int) {
