@@ -147,7 +147,7 @@ extension ContentViewerCell {
         addMoreIfNeeded()
     }
 
-    // modify for video
+    // TODO: modify for video -> adding the image view only when images are ready should make it easier to add a video player instead of images if content type == video
     public func setContentData(images: [UIImage]) {
         if images.isEmpty { return }
         var frameIndexes = post?.frameIndexes ?? []

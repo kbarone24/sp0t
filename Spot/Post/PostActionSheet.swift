@@ -168,10 +168,14 @@ extension PostController {
     }
 
     func deletePostLocally(index: Int) {
+        let postID = postsList[index].id ?? ""
+        UserDataModel.shared.deletedPostIDs.append(postID)
         if postsList.count > 1 {
             // check for if == selectedPostIndex
             contentTable.performBatchUpdates {
                 self.postsList.remove(at: index)
+                self.myPosts.removeAll(where: { $0.id == postID })
+                self.nearbyPosts.removeAll(where: { $0.id == postID })
                 self.contentTable.deleteRows(at: [IndexPath(item: index, section: 0)], with: .automatic)
                 if self.selectedPostIndex >= postsList.count { self.selectedPostIndex = postsList.count - 1 }
             } completion: { _ in

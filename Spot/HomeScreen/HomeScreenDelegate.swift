@@ -58,7 +58,6 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         sheetView = DrawerView(present: postVC, presentationDirection: .rightToLeft) { [weak self] in
             self?.sheetView = nil
         }
-        postVC.containerDrawerView = sheetView
     }
 
     func openMap(map: CustomMap) {
