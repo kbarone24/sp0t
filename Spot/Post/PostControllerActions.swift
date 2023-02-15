@@ -40,6 +40,17 @@ extension PostController {
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("PostLike"), object: nil)
     }
 
+    @objc func notifyNewPost(_ notification: NSNotification) {
+        if parentVC == .Home {
+            guard let post = notification.userInfo?["post"] as? MapPost else { return }
+            DispatchQueue.main.async {
+                self.myPosts.insert(post, at: 0)
+                self.selectedSegment = .MyPosts
+                self.scrollToTop()
+            }
+        }
+    }
+
     @objc func notifyCommentChange(_ notification: NSNotification) {
         guard let commentList = notification.userInfo?["commentList"] as? [MapComment] else { return }
         guard let postID = notification.userInfo?["postID"] as? String else { return }
@@ -221,7 +232,7 @@ extension PostController {
         }
     }
 
-    private func scrollToTop() {
+    public func scrollToTop() {
         DispatchQueue.main.async { self.contentTable.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
         selectedPostIndex = 0
     }
