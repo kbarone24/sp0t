@@ -39,28 +39,27 @@ extension PostController: ContentViewerDelegate {
     }
 
     func openProfile(user: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: containerDrawerView)
+        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: nil)
         DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
     }
 
     func openMap(mapID: String, mapName: String) {
         var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: mapName, memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         map.id = mapID
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: nil, mapType: .customMap)
         navigationController?.pushViewController(customMapVC, animated: true)
     }
 
     func openSpot(post: MapPost) {
-        let spotVC = SpotPageController(mapPost: post, presentedDrawerView: containerDrawerView)
+        let spotVC = SpotPageController(mapPost: post, presentedDrawerView: nil)
         navigationController?.pushViewController(spotVC, animated: true)
     }
 
     func tapToNextPost() {
+        print("animating to next row", animatingToNextRow)
         if animatingToNextRow { return }
         if selectedPostIndex < postsList.count - 1 {
             tapToSelectedRow(increment: 1)
-        } else {
-            containerDrawerView?.closeAction()
         }
     }
 
@@ -68,15 +67,12 @@ extension PostController: ContentViewerDelegate {
         if animatingToNextRow { return }
         if selectedPostIndex > 0 {
             tapToSelectedRow(increment: -1)
-        } else {
-            containerDrawerView?.closeAction()
         }
     }
 
     @objc func notifyImageChange(_ notification: NSNotification) {
         if let index = notification.userInfo?.values.first as? Int {
             postsList[selectedPostIndex].selectedImageIndex = index
-            containerDrawerView?.canSwipeRightToDismiss = postsList[selectedPostIndex].selectedImageIndex == 0
         }
     }
 
@@ -84,11 +80,6 @@ extension PostController: ContentViewerDelegate {
         if (!nearbyPostsFetched && selectedSegment == .NearbyPosts) || (myPostsFetched && selectedSegment == .MyPosts) {
             DispatchQueue.global().async { self.getNearbyPosts() }
         }
-    }
-
-    func updateDrawerViewOnIndexChange() {
-        containerDrawerView?.canSwipeUpToDismiss = selectedPostIndex == postsList.count - 1
-        containerDrawerView?.canSwipeDownToDismiss = selectedPostIndex == 0
     }
 
     // call to let table know cell is swiping

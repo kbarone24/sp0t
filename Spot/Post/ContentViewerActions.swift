@@ -60,12 +60,12 @@ extension ContentViewerCell {
             let expandedRect = CGRect(x: r.rect.minX - 3, y: r.rect.minY, width: r.rect.width + 6, height: r.rect.height + 3)
             if expandedRect.contains(sender.location(in: sender.view)) {
                 Mixpanel.mainInstance().track(event: "PostPageOpenTaggedUserProfile")
-                /// open tag from friends list
+                // open tag from friends list
                 if let user = UserDataModel.shared.userInfo.friendsList.first(where: { $0.username == r.username }) {
                     delegate?.openProfile(user: user)
                     return true
                 } else {
-                    /// pass blank user object to open func, run get user func on profile load
+                    // pass blank user object to open func, run get user func on profile load
                     let user = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: r.username)
                     delegate?.openProfile(user: user)
                 }
@@ -123,6 +123,7 @@ extension ContentViewerCell {
             if abs(velocity.x) > abs(velocity.y) {
                 imageSwiping = true
             }
+
         case .changed:
             if !imageSwiping { return }
             let adjustedOffset: CGFloat =
@@ -143,6 +144,7 @@ extension ContentViewerCell {
                 self.resetImageFrame()
             }
             imageSwiping = false
+
         default: return
         }
     }

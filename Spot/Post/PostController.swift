@@ -27,12 +27,13 @@ final class PostController: UIViewController {
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
     var parentVC: PostParent
+
     // values for feed fetch
     enum FetchType {
         case MyPosts
         case NearbyPosts
     }
-    var selectedSegment: FetchType = .MyPosts {
+    lazy var selectedSegment: FetchType = .MyPosts {
         didSet {
             postsList = selectedSegmentPosts
             DispatchQueue.main.async {
@@ -59,11 +60,23 @@ final class PostController: UIViewController {
     var friendsPostEndDocument: DocumentSnapshot?
     var nearbyPostEndDocument: DocumentSnapshot?
     lazy var myPostsRefreshStatus: RefreshStatus = .refreshDisabled
+    let myPostsFetchLimit: Int = 5
+    lazy var reachedEndOfFriendPosts = false {
+        didSet {
+            if reachedEndOfFriendPosts && reachedEndOfMapPosts { myPostsRefreshStatus = .refreshDisabled }
+        }
+    }
+    lazy var reachedEndOfMapPosts = false {
+        didSet {
+            if reachedEndOfFriendPosts && reachedEndOfMapPosts { myPostsRefreshStatus = .refreshDisabled }
+        }
+    }
 
     var nearbyPostsFetched = false
     lazy var nearbyPosts: [MapPost] = []
     var mapPostEndDocument: DocumentSnapshot?
     lazy var nearbyRefreshStatus: RefreshStatus = .refreshDisabled
+
     var selectedSegmentPosts: [MapPost] {
         return selectedSegment == .MyPosts ? myPosts : nearbyPosts
     }
@@ -134,7 +147,7 @@ final class PostController: UIViewController {
         view.layer.cornerRadius = 1
         return view
     }()
-    lazy var findFriendsButton: UIButton = {
+    private lazy var findFriendsButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
         let button = UIButton(configuration: configuration)
@@ -161,7 +174,6 @@ final class PostController: UIViewController {
         return button
     }()
 
-    unowned var containerDrawerView: DrawerView?
     var openComments = false
     var imageViewOffset = false {
         didSet {
@@ -173,15 +185,7 @@ final class PostController: UIViewController {
             DispatchQueue.main.async { self.setCellOffsets(offset: self.tableViewOffset) }
         }
     }
-    var containerViewOffset = false {
-        didSet {
-            DispatchQueue.main.async {
-                self.contentTable.isScrollEnabled = !self.containerViewOffset
-                self.setCellOffsets(offset: self.containerViewOffset)
-            }
-        }
-    }
-    
+
     lazy var deleteIndicator = CustomActivityIndicator()
     
     lazy var mapPostService: MapPostServiceProtocol? = {
@@ -235,8 +239,6 @@ final class PostController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        containerDrawerView?.configure(canDrag: false, swipeRightToDismiss: true, startingPosition: .top)
-        updateDrawerViewOnIndexChange()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -339,10 +341,7 @@ final class PostController: UIViewController {
 
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCommentChange(_:)), name: NSNotification.Name(("CommentChange")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name("DeletePost"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewOffset), name: NSNotification.Name("DrawerViewOffset"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(drawerViewReset), name: NSNotification.Name("DrawerViewReset"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCitySet), name: NSNotification.Name("UserCitySet"), object: nil)
     }
 }
