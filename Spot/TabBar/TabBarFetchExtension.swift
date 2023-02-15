@@ -44,6 +44,7 @@ extension SpotTabBarController {
 
             if UserDataModel.shared.userInfo.id == "" {
                 UserDataModel.shared.userInfo = activeUser
+                self.getUserMaps()
             } else {
                 self.updateUserInfo(user: activeUser)
             }
@@ -85,5 +86,39 @@ extension SpotTabBarController {
         UserDataModel.shared.userInfo.friendIDs = user.friendIDs
         UserDataModel.shared.userInfo.username = user.username
         print("update user info", user.username)
+    }
+
+    func getUserMaps() {
+        mapsListener = db.collection("maps").whereField("likers", arrayContains: UserDataModel.shared.uid).addSnapshotListener(includeMetadataChanges: true, listener: { [weak self] snap, _ in
+            guard let self = self else { return }
+            guard let snap = snap else { return }
+            if snap.metadata.isFromCache { return }
+            for doc in snap.documents {
+                do {
+                    let mapIn = try? doc.data(as: CustomMap.self)
+                    guard var mapInfo = mapIn else { continue }
+                    if UserDataModel.shared.deletedMapIDs.contains(where: { $0 == mapInfo.id }) { continue }
+                    if let i = UserDataModel.shared.userInfo.mapsList.firstIndex(where: { $0.id == mapInfo.id }) {
+                        self.updateMap(map: mapInfo, index: i)
+                        continue
+                    }
+                 //   mapInfo.addSpotGroups()
+                    UserDataModel.shared.userInfo.mapsList.append(mapInfo)
+                    print("maps list", UserDataModel.shared.userInfo.mapsList.count)
+                }
+            }
+
+            NotificationCenter.default.post(Notification(name: Notification.Name("UserMapsLoad")))
+            UserDataModel.shared.userInfo.sortMaps()
+        })
+    }
+
+    private func updateMap(map: CustomMap, index: Int) {
+        // might not need to update values separately on new fetch
+        let oldMap = UserDataModel.shared.userInfo.mapsList[index]
+        var newMap = map
+        newMap.postsDictionary = oldMap.postsDictionary
+        newMap.postGroup = oldMap.postGroup
+        UserDataModel.shared.userInfo.mapsList[index] = newMap
     }
 }

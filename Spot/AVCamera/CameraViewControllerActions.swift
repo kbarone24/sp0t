@@ -17,10 +17,10 @@ import Firebase
 
 extension CameraViewController {
     @objc func galleryTap() {
-        openGalary()
+        openGallery()
     }
     
-    private func openGalary() {
+    private func openGallery() {
         if UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited {
             openGallery(assetsFetched: true)
         } else {
@@ -29,21 +29,7 @@ extension CameraViewController {
     }
     
     func popToMap() {
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem()
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem()
-        
-        let transition = CATransition()
-        transition.duration = 0.3
-        transition.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-        transition.type = CATransitionType.push
-        transition.subtype = CATransitionSubtype.fromBottom
-        
-        if let homeController = UIApplication.shared.keyWindow?.rootViewController as? HomeScreenContainerController {
-            homeController.uploadMapReset()
-        }
-        /// add up to down transition on return to map
-        self.navigationController?.view.layer.add(transition, forKey: kCATransition)
-        self.navigationController?.popViewController(animated: false)
+        DispatchQueue.main.async { self.dismiss(animated: true) }
     }
     
     func openGallery(assetsFetched: Bool) {
@@ -66,7 +52,6 @@ extension CameraViewController {
 }
 
 // MARK: - permissions
-
 extension CameraViewController {
     func askForLocationAccess() {
         switch CLLocationManager().authorizationStatus {

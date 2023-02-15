@@ -245,7 +245,7 @@ final class ChooseMapController: UIViewController {
     func popToMap() {
         UploadPostModel.shared.destroy()
         DispatchQueue.main.async {
-            self.navigationController?.popToRootViewController(animated: true)
+            self.dismiss(animated: true)
         }
     }
 }

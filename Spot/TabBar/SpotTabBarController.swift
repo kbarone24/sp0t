@@ -20,7 +20,7 @@ class SpotTabBarController: UITabBarController {
     private(set) lazy var profileItem = UITabBarItem(title: "", image: UIImage(named: "ProfileTab"), selectedImage: UIImage(named: "ProfileTabSelected"))
 
     let db = Firestore.firestore()
-    var userListener: ListenerRegistration?
+    var userListener, mapsListener: ListenerRegistration?
     
     let locationManager = CLLocationManager()
     var firstTimeGettingLocation = false
@@ -38,12 +38,11 @@ class SpotTabBarController: UITabBarController {
         super.viewDidLoad()
         delegate = self
 
+        addNotifications()
         checkLocationAuth()
-        getActiveUser()
-    }
-
-    override func viewDidLayoutSubviews() {
-        print("height", tabBar.frame.height)
+        DispatchQueue.global(qos: .utility).async {
+            self.getActiveUser()
+        }
     }
 
     private func viewSetup() {
@@ -74,11 +73,32 @@ class SpotTabBarController: UITabBarController {
 
         self.viewControllers = [nav0, nav1, emptyVC, nav2, nav3]
     }
+
+    private func addNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost), name: NSNotification.Name(("NewPost")), object: nil)
+    }
 }
 
 extension SpotTabBarController: UITabBarControllerDelegate {
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
-        print("select")
+        if let nav = viewController as? UINavigationController {
+            if let post = nav.viewControllers.first as? PostController {
+                if selectedIndex == 0 {
+                    post.scrollToTop()
+                } else {
+                    return true
+                }
+            }
+            if let explore = nav.viewControllers.first as? ExploreMapViewController {
+                print("explore map")
+            } else if let notis = nav.viewControllers.first as? NotificationsController {
+                print("notis")
+            } else if let profile = nav.viewControllers.first as? ProfileViewController {
+                print("profile")
+            }
+        } else {
+            openCamera()
+        }
         return false
     }
 }
