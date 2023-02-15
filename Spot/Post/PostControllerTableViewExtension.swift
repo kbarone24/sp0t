@@ -11,8 +11,7 @@ import UIKit
 
 extension PostController: UITableViewDataSource, UITableViewDelegate, UITableViewDataSourcePrefetching {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        let refreshStatus: RefreshStatus = selectedSegment == .MyPosts ? myPostsRefreshStatus : nearbyRefreshStatus
-        let addRefresh = refreshStatus == .activelyRefreshing ? 1 : 0
+        let addRefresh = selectedRefreshStatus == .activelyRefreshing ? 1 : 0
         return postsList.count + addRefresh
     }
 
@@ -67,14 +66,12 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
             if let index = self.postsList.lastIndex(where: { $0.id == post.id }) { if indexPath.row != index { return }  }
 
             if indexPath.row == self.selectedPostIndex { PostImageModel.shared.currentImageSet = (id: post.id ?? "", images: images ?? []) }
-            print("set images for", indexPath.row, images?.count)
             self.setImagesFor(indexPath: indexPath, images: images ?? [], cell: cell)
         }
 
         guard let post = postsList[safe: indexPath.row] else { return }
         // Try to find an existing data loader
         if let dataLoader = PostImageModel.shared.loadingOperations[post.id ?? ""] {
-            print("got loading operation")
             // Has the data already been loaded?
             if dataLoader.images.count == post.imageURLs.count {
                 setImagesFor(indexPath: indexPath, images: dataLoader.images, cell: cell)

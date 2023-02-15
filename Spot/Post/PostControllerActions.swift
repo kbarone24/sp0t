@@ -23,14 +23,6 @@ extension PostController {
         }
     }
 
-    @objc func drawerViewOffset() {
-        containerViewOffset = true
-    }
-
-    @objc func drawerViewReset() {
-        containerViewOffset = false
-    }
-
     @objc func findFriendsTap() {
         Mixpanel.mainInstance().track(event: "HomeScreenFindFriendsTap")
         let findFriendsController = FindFriendsController()
@@ -56,15 +48,6 @@ extension PostController {
             postsList[i].commentList = commentList
             DispatchQueue.main.async {
                 self.updateCommentsAndLikes(row: i)
-            }
-        }
-    }
-
-    @objc func notifyPostDelete(_ notification: NSNotification) {
-        guard let post = notification.userInfo?["post"] as? MapPost else { return }
-        DispatchQueue.main.async {
-            if let index = self.postsList.firstIndex(where: { $0.id == post.id }) {
-                self.deletePostLocally(index: index)
             }
         }
     }
@@ -135,9 +118,6 @@ extension PostController {
                     }
                 }
             }
-        }
-        DispatchQueue.main.async {
-            self.updateDrawerViewOnIndexChange()
         }
     }
 

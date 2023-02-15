@@ -81,7 +81,6 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
         setDrawerValuesForViewAppear()
         let title = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s map" : mapData?.mapName ?? ""
         let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: 0, title: title)
-        postVC.containerDrawerView = containerDrawerView
         DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
     }
 

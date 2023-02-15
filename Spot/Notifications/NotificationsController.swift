@@ -212,7 +212,6 @@ extension NotificationsController {
     
     func openPost(post: MapPost, commentNoti: Bool) {
         let postVC = PostController(parentVC: .Notifications, postsList: [post])
-        postVC.containerDrawerView = containerDrawerView
         postVC.openComments = commentNoti
         DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
     }

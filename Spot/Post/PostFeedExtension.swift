@@ -13,56 +13,9 @@ import Mixpanel
 import MapKit
 
 extension PostController {
-    func getNearbyPosts() {
-        nearbyRefreshStatus = .activelyRefreshing
-        let db = Firestore.firestore()
-        var nearbyQuery = db.collection("posts").limit(to: 300).whereField("city", isEqualTo: UserDataModel.shared.userCity).order(by: "timestamp", descending: true)
-        if let nearbyPostEndDocument { nearbyQuery = nearbyQuery.start(afterDocument: nearbyPostEndDocument) }
-        var currentFetchPosts: [MapPost] = []
-
-        nearbyQuery.getDocuments { snap, _ in
-            guard let snap = snap else { return }
-
-            let recentGroup = DispatchGroup()
-            for doc in snap.documents {
-                do {
-                    let postIn = try? doc.data(as: MapPost.self)
-                    guard let postInfo = postIn else { continue }
-                    if postInfo.privacyLevel != "public" && !postInfo.friendsList.contains(UserDataModel.shared.uid) && !(postInfo.inviteList?.contains(UserDataModel.shared.uid) ?? false) { continue }
-                    if self.postsContains(postID: postInfo.id ?? "", fetchType: .NearbyPosts) || self.filteredFromFeed(post: postInfo) { continue }
-
-                    recentGroup.enter()
-                    self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
-                        guard let self = self else { return }
-                        DispatchQueue.main.async {
-                            if post.id ?? "" != "" {
-                                if !self.postsContains(postID: post.id ?? "", fetchType: .NearbyPosts) {
-                                    var post = post
-                                    post.postScore = post.getNearbyPostScore()
-                                    currentFetchPosts.append(post)
-                                }
-                            }
-                            recentGroup.leave()
-                        }
-                    }
-                    continue
-                }
-            }
-            // TODO: add nearby refresh control
-            recentGroup.notify(queue: .main) {
-                currentFetchPosts.sort(by: { $0.postScore ?? 0 > $1.postScore ?? 0 })
-                self.nearbyPosts.append(contentsOf: currentFetchPosts)
-                self.nearbyPostsFetched = true
-                self.nearbyRefreshStatus = .refreshEnabled
-                self.refetchAndRefreshIfNecessary(currentFetchCount: currentFetchPosts.count, fetchType: .NearbyPosts)
-            }
-        }
-    }
-
     func getMyPosts() {
-        // fetch all posts in last 7 days
         let db = Firestore.firestore()
-        let recentQuery = db.collection("posts").limit(to: 5).order(by: "timestamp", descending: true)
+        let recentQuery = db.collection("posts").limit(to: myPostsFetchLimit).order(by: "timestamp", descending: true)
 
         var friendsQuery = recentQuery.whereField("friendsList", arrayContains: UserDataModel.shared.uid)
         if let friendsPostEndDocument { friendsQuery = friendsQuery.start(afterDocument: friendsPostEndDocument) }
@@ -75,16 +28,12 @@ extension PostController {
         localPosts.removeAll()
         
         homeFetchGroup.enter()
-        if !myPostsFetched {
-            addFriendsListener(query: friendsQuery)
-        } else {
-            getFriendsPosts(query: friendsQuery)
-        }
-
         homeFetchGroup.enter()
         if !myPostsFetched {
+            addFriendsListener(query: friendsQuery)
             addMapListener(query: mapsQuery)
         } else {
+            getFriendsPosts(query: friendsQuery)
             getMapPosts(query: mapsQuery)
         }
 
@@ -148,12 +97,18 @@ extension PostController {
     }
 
     private func setFriendPostDetails(snap: QuerySnapshot, newPost: Bool, newFetch: Bool) {
-        if newFetch { friendsPostEndDocument = snap.documents.last }
+        if newFetch {
+            friendsPostEndDocument = snap.documents.last
+            reachedEndOfFriendPosts = snap.documents.count < 5
+        }
         self.setPostDetails(snap: snap, newPost: newPost, newFetch: newFetch)
     }
 
     private func setMapPostDetails(snap: QuerySnapshot, newPost: Bool, newFetch: Bool) {
-        if newFetch { mapPostEndDocument = snap.documents.last }
+        if newFetch {
+            mapPostEndDocument = snap.documents.last
+            reachedEndOfMapPosts = snap.documents.count < 5
+        }
         setPostDetails(snap: snap, newPost: newPost, newFetch: newFetch)
     }
 
@@ -194,6 +149,7 @@ extension PostController {
     }
 
     private func leaveHomeFetchGroup(newPost: Bool, newFetch: Bool) {
+        // homeFetchLeaveCount variable might not be necessary with newFetch variable. Ensures that we don't call homeFetchGroup.leave() more than we call enter
         if homeFetchLeaveCount < 2 && newFetch {
             homeFetchLeaveCount += 1
             homeFetchGroup.leave()
@@ -203,6 +159,56 @@ extension PostController {
             self.postsList.insert(contentsOf: localPosts, at: newPostIndex)
             self.localPosts.removeAll()
             DispatchQueue.main.async { self.contentTable.reloadData() }
+        }
+    }
+
+    // I don't think we need to use a listener for the nearby fetch because we're not necessarily showing the most recent post
+    // An ideal solution would use a listener to check for new and deleted posts but MVP will work without it
+    func getNearbyPosts() {
+        nearbyRefreshStatus = .activelyRefreshing
+        let db = Firestore.firestore()
+        // Fetch amount has to be much larger since user won't have access to all posts
+        var nearbyQuery = db.collection("posts").limit(to: 150).whereField("city", isEqualTo: UserDataModel.shared.userCity).order(by: "timestamp", descending: true)
+        if let nearbyPostEndDocument { nearbyQuery = nearbyQuery.start(afterDocument: nearbyPostEndDocument) }
+        var currentFetchPosts: [MapPost] = []
+
+        nearbyQuery.getDocuments { snap, _ in
+            guard let snap = snap else { return }
+            if snap.documents.count < 150 { self.nearbyRefreshStatus = .refreshDisabled }
+            let recentGroup = DispatchGroup()
+
+            for doc in snap.documents {
+                do {
+                    let postIn = try? doc.data(as: MapPost.self)
+                    guard let postInfo = postIn else { continue }
+                    if postInfo.privacyLevel != "public" && !postInfo.friendsList.contains(UserDataModel.shared.uid) && !(postInfo.inviteList?.contains(UserDataModel.shared.uid) ?? false) { continue }
+                    if self.postsContains(postID: postInfo.id ?? "", fetchType: .NearbyPosts) || self.filteredFromFeed(post: postInfo) { continue }
+
+                    recentGroup.enter()
+                    self.mapPostService?.setPostDetails(post: postInfo) { [weak self] post in
+                        guard let self = self else { return }
+                        DispatchQueue.main.async {
+                            if post.id ?? "" != "" {
+                                if !self.postsContains(postID: post.id ?? "", fetchType: .NearbyPosts) {
+                                    var post = post
+                                    post.postScore = post.getNearbyPostScore()
+                                    currentFetchPosts.append(post)
+                                }
+                            }
+                            recentGroup.leave()
+                        }
+                    }
+                    continue
+                }
+            }
+
+            recentGroup.notify(queue: .main) {
+                currentFetchPosts.sort(by: { $0.postScore ?? 0 > $1.postScore ?? 0 })
+                self.nearbyPosts.append(contentsOf: currentFetchPosts)
+                self.nearbyPostsFetched = true
+                self.nearbyRefreshStatus = .refreshEnabled
+                self.refetchAndRefreshIfNecessary(currentFetchCount: currentFetchPosts.count, fetchType: .NearbyPosts)
+            }
         }
     }
     
@@ -217,7 +223,15 @@ extension PostController {
 
     private func refetchAndRefreshIfNecessary(currentFetchCount: Int, fetchType: FetchType) {
         // re-run fetch if not enough posts returned or scrolled to bottom of table while fetch was happening
-        if currentFetchCount < 5 || (selectedSegment == fetchType && postsList.count - self.selectedPostIndex < 5) {
+        // TODO: select nearby posts index if user has no new posts on initial fetch
+        if self.selectedSegment == fetchType {
+            postsList = selectedSegmentPosts
+            DispatchQueue.main.async { self.contentTable.reloadData() }
+        }
+
+        if (currentFetchCount < 5 && fetchType == .MyPosts && myPostsRefreshStatus != .refreshDisabled) ||
+            (currentFetchCount < 15 && fetchType == .NearbyPosts && myPostsRefreshStatus != .refreshDisabled) ||
+            (selectedSegment == fetchType && postsList.count - selectedPostIndex < 5 && selectedRefreshStatus != .refreshDisabled) {
             switch fetchType {
             case .MyPosts:
                 DispatchQueue.global().async { self.getMyPosts() }
@@ -225,6 +239,8 @@ extension PostController {
                 DispatchQueue.global().async { self.getNearbyPosts() }
             }
         } else {
+            // fetch other segment so it's ready when user taps
+            // TODO: show an indicator when the user has new posts on the opposite segment
             switch fetchType {
             case .MyPosts:
                 if !nearbyPostsFetched { DispatchQueue.global().async { self.getNearbyPosts() } }
@@ -233,11 +249,6 @@ extension PostController {
             }
         }
 
-        if self.selectedSegment == fetchType {
-            print("set posts list", selectedSegmentPosts.count)
-            postsList = selectedSegmentPosts
-            DispatchQueue.main.async { self.contentTable.reloadData() }
-        }
     }
     
     private func filteredFromFeed(post: MapPost) -> Bool {
@@ -251,7 +262,7 @@ extension PostController {
 
     private func updatePost(post: MapPost) {
         Task {
-            // use old post to only update values that CHANGE -> comments and likers
+            // use old post to only update values that CHANGE -> comments and likers. Otherwise post images will get reset
             var oldPost = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
             if let post = postsList.first(where: { $0.id ?? "" == post.id ?? "" }) {
                 oldPost = post
@@ -267,6 +278,9 @@ extension PostController {
             }
             if let i = postsList.firstIndex(where: { $0.id ?? "" == post.id ?? "" }) {
                 postsList[i] = oldPost
+            }
+            if let i = myPosts.firstIndex(where: { $0.id ?? "" == post.id ?? "" }) {
+                myPosts[i] = oldPost
             }
         }
     }
