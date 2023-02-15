@@ -26,7 +26,6 @@ protocol MapPostServiceProtocol {
 }
 
 final class MapPostService: MapPostServiceProtocol {
-    
     enum MapPostServiceError: Error {
         case decodingError
     }
@@ -225,12 +224,15 @@ final class MapPostService: MapPostServiceProtocol {
                 forLocation: center,
                 withRadius: radius)
 
+            let seconds = Date().timeIntervalSince1970 - 86_400 * 7
+            let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
             let queries = queryBounds.map { bound -> Query in
                 return fireStore.collection(FirebaseCollectionNames.posts.rawValue)
                     .order(by: "g")
                     .start(at: [bound.startValue])
                     .end(at: [bound.endValue])
                     .limit(to: searchLimit)
+                    .whereField("timestamp", isGreaterThanOrEqualTo: timestamp)
             }
             
             var allPosts: [MapPost] = []
