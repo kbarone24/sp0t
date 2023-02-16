@@ -76,6 +76,7 @@ final class FriendsService: FriendsServiceProtocol {
                 .updateData(
                     [
                         FirebaseCollectionFields.status.rawValue: "accepted",
+                        FirebaseCollectionFields.seen.rawValue: true,
                         FirebaseCollectionFields.timestamp.rawValue: timestamp
                     ]
                 )

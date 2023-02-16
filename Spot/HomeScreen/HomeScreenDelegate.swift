@@ -28,7 +28,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         sheetView = DrawerView(present: notificationsController, presentationDirection: .rightToLeft, closeAction: { [weak self] in
             self?.sheetView = nil
         })
-        notificationsController.containerDrawerView = sheetView
+//        notificationsController.containerDrawerView = sheetView
     }
 
     func openProfile() {
