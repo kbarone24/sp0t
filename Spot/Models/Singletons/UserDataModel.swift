@@ -16,17 +16,27 @@ final class UserDataModel {
     var uid: String { Auth.auth().currentUser?.uid ?? "invalid user" }
     static let shared = UserDataModel()
 
-    var userSpots: [String] = []
-    var userCity: String = ""
+    lazy var userSpots: [String] = []
+    lazy var userCity: String = ""
 
-    var adminIDs: [String] = []
-    var deletedPostIDs: [String] = []
-    var deletedMapIDs: [String] = []
-    var deletedFriendIDs: [String] = []
+    lazy var adminIDs: [String] = []
+    lazy var deletedPostIDs: [String] = []
+    lazy var deletedMapIDs: [String] = []
+    lazy var deletedFriendIDs: [String] = []
 
     var screenSize = UIScreen.main.bounds.height < 800 ? 0 : UIScreen.main.bounds.width > 400 ? 2 : 1 /// 0 = iphone8-, 1 = iphoneX + with 375 width, 2 = iPhoneX+ with 414 width
     var largeScreen = UIScreen.main.bounds.width > 800
 
+    // MARK: fetch values
+    let db = Firestore.firestore()
+    lazy var localNotis: [UserNotification] = []
+    lazy var notifications: [UserNotification] = []
+    lazy var pendingFriendRequests: [UserNotification] = []
+    lazy var notificationsRefreshStatus: RefreshStatus = .activelyRefreshing
+    var notificationsFetched = false
+    var notificationsEndDocument: DocumentSnapshot?
+    var userListener, mapsListener, notificationsListener: ListenerRegistration?
+    
     var maxAspect: CGFloat {
         return screenSize == 0 ? 1.7 : screenSize == 1 ? 1.78 : 1.83
     }
@@ -34,10 +44,24 @@ final class UserDataModel {
     var userInfo: UserProfile
     var currentLocation: CLLocation
 
+    lazy var userService: UserServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.userService)
+        return service
+    }()
+
+    lazy var mapService: MapPostServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapPostService)
+        return service
+    }()
+
     private init() {
         userInfo = UserProfile(currentLocation: "", imageURL: "", name: "", userBio: "", username: "")
         userInfo.id = ""
         currentLocation = CLLocation()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     func destroy() {
@@ -45,7 +69,28 @@ final class UserDataModel {
         userInfo.id = ""
 
         adminIDs.removeAll()
+        deletedPostIDs.removeAll()
+        deletedMapIDs.removeAll()
+        deletedFriendIDs.removeAll()
         userSpots.removeAll()
         userCity = ""
+
+        notifications.removeAll()
+        pendingFriendRequests.removeAll()
+        notificationsEndDocument = nil
+        userListener?.remove()
+        mapsListener?.remove()
+        notificationsListener?.remove()
+    }
+
+    func addListeners() {
+        DispatchQueue.global(qos: .utility).async {
+            self.addUserListener()
+            self.addMapsListener()
+            self.addNotificationsListener()
+        }
+
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(rawValue: "DeletePost"), object: nil)
     }
 }
