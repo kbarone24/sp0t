@@ -19,11 +19,9 @@ class SpotTabBarController: UITabBarController {
     private(set) lazy var notificationsItem = UITabBarItem(title: "", image: UIImage(named: "NotificationsTab"), selectedImage: UIImage(named: "NotificationsTabSelected"))
     private(set) lazy var profileItem = UITabBarItem(title: "", image: UIImage(named: "ProfileTab"), selectedImage: UIImage(named: "ProfileTabSelected"))
 
-    let db = Firestore.firestore()
-    var userListener, mapsListener: ListenerRegistration?
-    
     let locationManager = CLLocationManager()
     var firstTimeGettingLocation = false
+    let db = Firestore.firestore()
 
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -40,14 +38,13 @@ class SpotTabBarController: UITabBarController {
 
         addNotifications()
         checkLocationAuth()
-        DispatchQueue.global(qos: .utility).async {
-            self.getActiveUser()
-        }
+        UserDataModel.shared.addListeners()
     }
 
     private func viewSetup() {
         view.backgroundColor = .black
         tabBar.backgroundColor = .black
+        tabBar.clipsToBounds = false
         tabBar.tintColor = .white
         tabBar.isTranslucent = false
 
@@ -92,7 +89,9 @@ extension SpotTabBarController: UITabBarControllerDelegate {
             if let explore = nav.viewControllers.first as? ExploreMapViewController {
                 print("explore map")
             } else if let notis = nav.viewControllers.first as? NotificationsController {
-                print("notis")
+                Mixpanel.mainInstance().track(event: "HomeScreenNotificationsTap")
+                return true
+
             } else if let profile = nav.viewControllers.first as? ProfileViewController {
                 print("profile")
             }
