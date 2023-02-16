@@ -12,7 +12,7 @@ import UIKit
 extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView.cellForRow(at: indexPath) is ActivityCell {
-            let notification = notifications[indexPath.row]
+            let notification = UserDataModel.shared.notifications[indexPath.row]
             if notification.type == "mapInvite" {
                 openMap(mapID: notification.mapID ?? "")
             } else if let post = notification.postInfo {
@@ -25,21 +25,21 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
-        return pendingFriendRequests.isEmpty ? 1 : 2
+        return UserDataModel.shared.pendingFriendRequests.isEmpty ? 1 : 2
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if section == 0 && !pendingFriendRequests.isEmpty {
+        if section == 0 && !UserDataModel.shared.pendingFriendRequests.isEmpty {
             return 1
-        } else if refresh == .activelyRefreshing {
-            return notifications.count + 1
+        } else if UserDataModel.shared.notificationsRefreshStatus == .activelyRefreshing {
+            return UserDataModel.shared.notifications.count + 1
         } else {
-            return notifications.count
+            return UserDataModel.shared.notifications.count
         }
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        if indexPath.section == 0 && !pendingFriendRequests.isEmpty {
+        if indexPath.section == 0 && !UserDataModel.shared.pendingFriendRequests.isEmpty {
             return 226
         } else {
             return 70
@@ -47,20 +47,21 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return pendingFriendRequests.isEmpty ? 0 : 32
+        return UserDataModel.shared.pendingFriendRequests.isEmpty ? 0 : 32
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.section == 0 && !pendingFriendRequests.isEmpty, let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCollectionCell") as? FriendRequestCollectionCell {
+        if indexPath.section == 0 && !UserDataModel.shared.pendingFriendRequests.isEmpty,
+           let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCollectionCell") as? FriendRequestCollectionCell {
             cell.notificationControllerDelegate = self
-            cell.setValues(notifications: pendingFriendRequests)
+            cell.setValues(notifications: UserDataModel.shared.pendingFriendRequests)
             return cell
-        } else if indexPath.row == notifications.count, let cell = tableView.dequeueReusableCell(withIdentifier: "IndicatorCell") as? ActivityIndicatorCell {
+        } else if indexPath.row == UserDataModel.shared.notifications.count, let cell = tableView.dequeueReusableCell(withIdentifier: "IndicatorCell") as? ActivityIndicatorCell {
             cell.animate()
             return cell
         } else if let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as? ActivityCell {
             cell.notificationControllerDelegate = self
-            cell.setValues(notification: notifications[indexPath.row])
+            cell.setValues(notification: UserDataModel.shared.notifications[indexPath.row])
             return cell
         }
         return UITableViewCell()
@@ -76,9 +77,9 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if pendingFriendRequests.isEmpty {
+        if UserDataModel.shared.pendingFriendRequests.isEmpty {
             return "ACTIVITY"
-        } else if notifications.isEmpty {
+        } else if UserDataModel.shared.notifications.isEmpty {
             return "FRIEND REQUESTS"
         } else {
             if section == 0 {
@@ -86,6 +87,15 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
             } else {
                 return "ACTIVITY"
             }
+        }
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // tries to query more data when the user is about 5 cells from hitting the end
+        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 350)) && UserDataModel.shared.notificationsRefreshStatus == .refreshEnabled {
+            // reload to show activity indicator
+            DispatchQueue.main.async { self.tableView.reloadData() }
+            UserDataModel.shared.getNotifications()
         }
     }
 }

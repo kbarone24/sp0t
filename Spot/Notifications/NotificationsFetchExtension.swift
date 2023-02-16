@@ -11,6 +11,7 @@ import UIKit
 import Firebase
 
 extension NotificationsController {
+    /*
     func fetchNotifications(refresh: Bool) {
         // fetchGroup is the high-level dispatch for both fetches
         fetchGroup.enter()
@@ -46,10 +47,6 @@ extension NotificationsController {
                         guard var notification = unwrappedNotification else { continue }
                         notification.id = doc.documentID
 
-                        if !notification.seen {
-                            try await doc.reference.updateData(["seen": true])
-                        }
-                        
                         let user = try await self.userService?.getUserInfo(userID: notification.senderID)
                         if user?.id != "" {
                             notification.userInfo = user
@@ -114,9 +111,9 @@ extension NotificationsController {
                             notification.postInfo = post
                         }
 
-                            if !brokenPost {
-                                self.notifications.append(notification)
-                            }
+                        if !brokenPost {
+                            self.notifications.append(notification)
+                        }
                         
                     } catch {}
                 }
@@ -136,14 +133,5 @@ extension NotificationsController {
         if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }
         DispatchQueue.main.async { self.tableView.reloadData() }
     }
-
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        // tries to query more data when the user is about 5 cells from hitting the end
-        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 350)) && refresh == .refreshEnabled {
-            // reload to show activity indicator
-            DispatchQueue.main.async { self.tableView.reloadData() }
-            fetchNotifications(refresh: false)
-            refresh = .activelyRefreshing
-        }
-    }
+*/
 }
