@@ -21,13 +21,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         registerServices()
 
-        /// set navigation bar appearance with gradient
-        UINavigationBar.appearance().backIndicatorImage = UIImage()
-        UINavigationBar.appearance().backIndicatorTransitionMaskImage = UIImage()
+        let navigationBarAppearance = UINavigationBarAppearance()
+        navigationBarAppearance.titleTextAttributes = [
+            NSAttributedString.Key.foregroundColor: UIColor.white,
+            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 19) as Any
+        ]
+        UINavigationBar.appearance().backIndicatorImage = UIImage(named: "BackArrow")
 
         // Sets the translucent background color
         // Set translucent. (Default value is already true, so this can  be removed if desired.)
-        UINavigationBar.appearance().isTranslucent = true
+      //   UINavigationBar.appearance().isTranslucent = true
         // UINavigationBar.appearance().edgesForExtendedLayout = UIRectEdge.none
 
         /// set bar button appearance (remove "back" from back buttons)
@@ -46,14 +49,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         searchBarAppearance.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
 
         UIView.appearance().isExclusiveTouch = true
-
-        let navigationBarAppearance = UINavigationBarAppearance()
-        navigationBarAppearance.titleTextAttributes = [
-            NSAttributedString.Key.foregroundColor: UIColor.black,
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
-        ]
-
-        navigationBarAppearance.backgroundColor = .white
 
         if #available(iOS 15.0, *) {
             UITableView.appearance().sectionHeaderTopPadding = 0.0

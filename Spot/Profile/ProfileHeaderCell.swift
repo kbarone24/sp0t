@@ -42,7 +42,7 @@ class ProfileHeaderCell: UICollectionViewCell {
 
     private lazy var usernameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .black
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
         label.text = ""
         label.adjustsFontSizeToFitWidth = true
@@ -76,8 +76,8 @@ class ProfileHeaderCell: UICollectionViewCell {
     public lazy var actionButton: UIButton = {
         let button = UIButton()
         button.setTitle("Edit profile", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+        button.setTitleColor(UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1), for: .normal)
+        button.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
         button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
         button.layer.cornerRadius = 37 / 2
         return button
@@ -114,17 +114,17 @@ class ProfileHeaderCell: UICollectionViewCell {
         switch relation {
         case .myself:
             actionButton.setTitle("Edit profile", for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
         case .friend:
             actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Friends", for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
         case .pending:
             actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Pending", for: .normal)
-            actionButton.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+            actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
         case .stranger, .received:
             actionButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
@@ -134,13 +134,12 @@ class ProfileHeaderCell: UICollectionViewCell {
             actionButton.setTitle("Blocked", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
         }
-        actionButton.setTitleColor(.black, for: .normal)
     }
 }
 
 extension ProfileHeaderCell {
     private func viewSetup() {
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = UIColor(named: "SpotBlack")
 
         contentView.addSubview(profileImage)
         profileImage.snp.makeConstraints {

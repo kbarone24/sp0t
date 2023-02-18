@@ -37,7 +37,7 @@ final class FriendRequestCell: UICollectionViewCell {
         let label = UILabel()
         label.isUserInteractionEnabled = true
         label.textAlignment = .center
-        label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         return label
     }()
@@ -50,13 +50,32 @@ final class FriendRequestCell: UICollectionViewCell {
     }()
 
     private lazy var closeButton: UIButton = {
-        let button = UIButton()
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
         button.setImage(UIImage(named: "CancelButtonGray"), for: .normal)
-        button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        button.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
-    private lazy var acceptButton = AddFriendButton(frame: .zero, title: "Accept")
+    private lazy var acceptButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("Accept", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
+        button.addTarget(self, action: #selector(acceptTap), for: .touchUpInside)
+        button.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+        button.layer.cornerRadius = 11.5
+        return button
+    }()
+    lazy var acceptedImage = UIImageView(image: UIImage(named: "AddedFriendIcon"))
+    lazy var acceptedLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Accepted"
+        label.textColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 15)
+        return label
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -88,7 +107,7 @@ final class FriendRequestCell: UICollectionViewCell {
         contentView.addSubview(senderUsername)
         senderUsername.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(profilePic.snp.bottom).offset(14)
+            $0.top.equalTo(profilePic.snp.bottom).offset(17)
             $0.height.lessThanOrEqualTo(18)
         }
 
@@ -98,15 +117,27 @@ final class FriendRequestCell: UICollectionViewCell {
             $0.top.equalToSuperview().offset(10)
         }
 
-        acceptButton.addTarget(self, action: #selector(acceptTap), for: .touchUpInside)
         contentView.addSubview(acceptButton)
         acceptButton.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(14)
-            $0.top.equalTo(senderUsername.snp.bottom).offset(14)
-            $0.bottom.equalToSuperview().offset(-11)
+            $0.leading.trailing.equalToSuperview().inset(23)
+            $0.top.equalTo(senderUsername.snp.bottom).offset(18)
+            $0.bottom.equalToSuperview().offset(-13)
         }
 
-        closeButton.addTarget(self, action: #selector(cancelTap), for: .touchUpInside)
+        contentView.addSubview(acceptedLabel)
+        acceptedLabel.isHidden = true
+        acceptedLabel.snp.makeConstraints {
+            $0.centerY.equalTo(acceptButton)
+            $0.centerX.equalToSuperview().offset(10.5)
+        }
+
+        contentView.addSubview(acceptedImage)
+        acceptedImage.isHidden = true
+        acceptedImage.snp.makeConstraints {
+            $0.centerY.equalTo(acceptButton)
+            $0.trailing.equalTo(acceptedLabel.snp.leading).offset(-4)
+        }
+
         contentView.addSubview(closeButton)
         closeButton.snp.makeConstraints {
             $0.leading.equalToSuperview()
@@ -117,7 +148,9 @@ final class FriendRequestCell: UICollectionViewCell {
 
     func setValues(notification: UserNotification) {
         self.friendRequest = notification
-        self.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+        self.backgroundColor = UIColor(red: 0.094, green: 0.094, blue: 0.094, alpha: 1)
+        self.layer.borderColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1).cgColor
+        self.layer.borderWidth = 1
         self.layer.cornerRadius = 14
 
         let url = friendRequest?.userInfo?.imageURL ?? ""
@@ -131,6 +164,8 @@ final class FriendRequestCell: UICollectionViewCell {
         }
         senderUsername.text = friendRequest?.userInfo?.username
         timestamp.text = friendRequest?.timestamp.toString(allowDate: false) ?? ""
+
+        setStatus(status: notification.status ?? "")
     }
 
     @objc func profileTap() {
@@ -145,21 +180,19 @@ final class FriendRequestCell: UICollectionViewCell {
 
     @objc func acceptTap() {
         Mixpanel.mainInstance().track(event: "NotificationsFriendRequestAccepted")
-        acceptButton.isEnabled = false
-        setAccepted()
-        collectionDelegate?.acceptFriend(sender: self)
+        accepted = true
+        setStatus(status: "accepted")
+
+        guard let friend = friendRequest?.userInfo else { return }
+        let notiID = friendRequest?.id ?? ""
+        collectionDelegate?.acceptFriend(friend: friend, notiID: notiID)
     }
 
-    func setAccepted() {
-        accepted = true
-        acceptButton.backgroundColor = .white
-        acceptButton.layer.borderColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1).cgColor
-        acceptButton.setImage(UIImage(named: "AddedFriendIcon"), for: .normal)
-        let title = NSMutableAttributedString(string: "Confirmed", attributes: [
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Bold", size: 15) as Any,
-            NSAttributedString.Key.foregroundColor: UIColor(red: 0.47, green: 0.47, blue: 0.47, alpha: 1.00)
-        ])
-        acceptButton.setAttributedTitle(title, for: .normal)
+    private func setStatus(status: String) {
+        let pending = status == "pending"
+        acceptButton.isHidden = !pending
+        acceptedImage.isHidden = pending
+        acceptedLabel.isHidden = pending
     }
 
     override func prepareForReuse() {

@@ -48,7 +48,7 @@ class ProfileMyMapCell: UICollectionViewCell {
 
     private lazy var mapName: UILabel = {
         let label = UILabel()
-        label.textColor = .black
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         label.text = "@\(UserDataModel.shared.userInfo.username)'s map"
         return label
@@ -73,7 +73,7 @@ class ProfileMyMapCell: UICollectionViewCell {
 
 extension ProfileMyMapCell {
     private func viewSetup() {
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = UIColor(named: "SpotBlack")
 
         mapImageCollectionView.delegate = self
         mapImageCollectionView.dataSource = self

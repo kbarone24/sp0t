@@ -98,7 +98,7 @@ class SearchContactsOverviewController: UIViewController {
     @objc func skipTap() {
         // present map
         Mixpanel.mainInstance().track(event: "SearchContactsSkipTap")
-        DispatchQueue.main.async { self.animateToMap() }
+        DispatchQueue.main.async { self.animateHome() }
     }
 
     @objc func searchContactsTap() {
@@ -110,17 +110,19 @@ class SearchContactsOverviewController: UIViewController {
                 DispatchQueue.main.async { self.presentSearchContacts() }
             } else {
                 Mixpanel.mainInstance().track(event: "SearchContactsAuthDisabled")
-                DispatchQueue.main.async { self.animateToMap() }
+                DispatchQueue.main.async { self.animateHome() }
             }
         }
     }
 
-    func animateToMap() {
-        guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
-        let homeScreenController = HomeScreenContainerController()
-        navigationController?.popToRootViewController(animated: false)
-        window.rootViewController = homeScreenController
-        window.makeKeyAndVisible()
+    func animateHome() {
+        DispatchQueue.main.async {
+            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+            let homeScreenController = SpotTabBarController()
+            self.navigationController?.popToRootViewController(animated: false)
+            window.rootViewController = homeScreenController
+            window.makeKeyAndVisible()
+        }
     }
 
     func presentSearchContacts() {

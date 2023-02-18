@@ -20,7 +20,7 @@ class ProfileBodyCell: UICollectionViewCell {
 
     private lazy var mapName: UILabel = {
         let label = UILabel()
-        label.textColor = .black
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         return label
     }()
@@ -64,7 +64,7 @@ class ProfileBodyCell: UICollectionViewCell {
 
 extension ProfileBodyCell {
     private func viewSetup() {
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = UIColor(named: "SpotBlack")
 
         contentView.addSubview(mapImage)
         mapImage.snp.makeConstraints {

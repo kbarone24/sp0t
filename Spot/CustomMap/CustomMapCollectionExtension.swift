@@ -78,7 +78,6 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func openPost(posts: [MapPost], row: Int) {
         if navigationController?.viewControllers.last is PostController { return } // double stack happening here
-        setDrawerValuesForViewAppear()
         let title = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s map" : mapData?.mapName ?? ""
         let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: 0, title: title)
         DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
@@ -92,53 +91,23 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
             mapName: mapData?.mapName ?? ""
         )
 
-        let spotVC = SpotPageController(mapPost: emptyPost, presentedDrawerView: containerDrawerView)
+        let spotVC = SpotPageController(mapPost: emptyPost)
         navigationController?.pushViewController(spotVC, animated: true)
-    }
-
-    func setDrawerValuesForViewAppear() {
-        offsetOnDismissal = collectionView.contentOffset.y
-        statusOnDismissal = DrawerViewDetent(rawValue: containerDrawerView?.detentsPointer ?? 0) ?? .top
-        currentContainerCanDragStatus = containerDrawerView?.canDrag
     }
 }
 
 extension CustomMapController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if cancelOnDismiss { return }
-        let itemHeight = UIScreen.main.bounds.width * 1.373
+        DispatchQueue.main.async {
+            self.title = scrollView.contentOffset.y > 40 ? self.mapData?.mapName ?? "" : ""
+        }
 
+        let itemHeight = UIScreen.main.bounds.width * 1.373
         // Check if need to refresh according to content position
         if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 1.5)) && refresh == .refreshEnabled {
             self.getPosts()
             refresh = .activelyRefreshing
-        }
-
-        if let topY = topYContentOffset {
-            if containerDrawerView?.status == .top {
-                // Disable the bouncing effect when scroll view is scrolled to top
-                if scrollView.contentOffset.y <= topY {
-                    scrollView.contentOffset.y = topY
-                }
-                // Show navigation bar + adjust offset for small header
-                if scrollView.contentOffset.y > topY {
-                    UIView.animate(withDuration: 0.3) {
-                        self.barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
-                    }
-                    var titleText = ""
-                    if scrollView.contentOffset.y > 0 {
-                        titleText = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s map" : mapData?.mapName ?? ""
-                    }
-                    titleLabel.text = titleText
-                    titleLabel.sizeToFit()
-                }
-            }
-
-            // Set scroll view content offset when in transition
-            guard let container = containerDrawerView else { return }
-            if let middleY = middleYContentOffset, scrollView.contentOffset.y <= middleY && container.slideView.frame.minY >= (middleY - topY) {
-                scrollView.contentOffset.y = middleY
-            }
         }
     }
 }

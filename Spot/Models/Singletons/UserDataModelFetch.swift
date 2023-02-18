@@ -39,12 +39,14 @@ extension UserDataModel {
                         let userService = try ServiceContainer.shared.service(for: \.userService)
                         let friend = try await userService.getUserInfo(userID: userID)
 
-                        if !self.userInfo.friendsList.contains(where: { $0.id == userID }) && !self.deletedFriendIDs.contains(userID) {
-                            self.userInfo.friendsList.append(friend)
-
-                            if self.userInfo.friendsList.count == self.userInfo.friendIDs.count {
-                                self.userInfo.sortFriends() /// sort for top friends
-                                NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
+                        DispatchQueue.main.async {
+                            if !self.userInfo.friendsList.contains(where: { $0.id == userID }) && !self.deletedFriendIDs.contains(userID) {
+                                self.userInfo.friendsList.append(friend)
+                                
+                                if self.userInfo.friendsList.count == self.userInfo.friendIDs.count {
+                                    self.userInfo.sortFriends() /// sort for top friends
+                                    NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
+                                }
                             }
                         }
                     } catch {
@@ -137,7 +139,7 @@ extension UserDataModel {
                 do {
                     let unwrappedNotification = try? doc.data(as: UserNotification.self)
                     guard var notification = unwrappedNotification else { continue }
-                    if self.notifications.contains(where: { $0.id ?? "" == notification.id ?? "" }) { continue }
+                    if self.notifications.contains(where: { $0.id ?? "" == notification.id ?? "" }) || self.pendingFriendRequests.contains(where: { $0.id ?? "" == notification.id ?? "" }) { continue }
                     let user = try await self.userService?.getUserInfo(userID: notification.senderID)
                     if user?.id == "" { continue }
                     notification.userInfo = user
@@ -149,27 +151,35 @@ extension UserDataModel {
                         notification.postInfo = post
 
                     } else if notification.status == "pending" {
+                        print("pending friends append")
                         self.pendingFriendRequests.append(notification)
                         continue
                     }
                     self.localNotis.append(notification)
                 }
             }
-            self.sortAndReloadNotifications()
+            self.sortAndReloadNotifications(newFetch: newFetch)
         }
     }
 
-    private func sortAndReloadNotifications() {
+    private func sortAndReloadNotifications(newFetch: Bool) {
         notificationsFetched = true
         pendingFriendRequests.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
         localNotis.sort(by: { $0.seen == $1.seen ? $0.timestamp.seconds > $1.timestamp.seconds : !$0.seen && $1.seen })
-        notifications.append(contentsOf: localNotis)
+        if newFetch {
+            notifications.append(contentsOf: localNotis)
+        } else {
+            notifications.insert(contentsOf: localNotis, at: 0)
+        }
         localNotis.removeAll()
+
         if notificationsRefreshStatus != .refreshDisabled { print("set refresh enabled"); notificationsRefreshStatus = .refreshEnabled }
-        if notifications.count < 8 && notificationsRefreshStatus == .refreshEnabled {
+        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
+
+        // re-run fetch if fetch pulled in a bunch of old friend requests and notis dont fill screen
+        if notifications.count < 8 && newFetch && notificationsRefreshStatus == .refreshEnabled {
             DispatchQueue.global(qos: .utility).async { self.getNotifications() }
         }
-        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
     }
 
     public func setSeenForDocumentIDs(docIDs: [String]) {
@@ -187,19 +197,14 @@ extension UserDataModel {
     }
 
     @objc func notifyFriendRequestAccept(_ notification: NSNotification) {
-        if !pendingFriendRequests.isEmpty {
-            for i in 0...pendingFriendRequests.count - 1 {
-                if let noti = notification.userInfo?["notiID"] as? String {
-                    if pendingFriendRequests[safe: i]?.id == noti {
-                        var newNoti = pendingFriendRequests.remove(at: i)
-                        newNoti.status = "accepted"
-                        newNoti.timestamp = Timestamp()
-                        UserDataModel.shared.notifications.append(newNoti)
-                    }
-                }
+        if let notiID = notification.userInfo?.values.first as? String {
+            if let i = pendingFriendRequests.firstIndex(where: { $0.id == notiID }) {
+                pendingFriendRequests[i].seen = true
+                pendingFriendRequests[i].status = "accepted"
+                pendingFriendRequests[i].timestamp = Timestamp()
             }
         }
-        self.sortAndReloadNotifications()
+        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsSeenSet")))
     }
 
     @objc func notifyPostDelete(_ notification: NSNotification) {
@@ -209,6 +214,6 @@ extension UserDataModel {
         if mapDelete {
             notifications.removeAll(where: { $0.mapID == post.mapID })
         }
-        sortAndReloadNotifications()
+        NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
     }
 }

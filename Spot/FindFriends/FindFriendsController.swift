@@ -109,12 +109,6 @@ class FindFriendsController: UIViewController {
             .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
             .font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
         ]
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrowDark"),
-            style: .plain,
-            target: self,
-            action: #selector(self.exit(_:))
-        )
     }
 
     private func loadSearchBar() {
