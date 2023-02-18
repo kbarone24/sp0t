@@ -13,7 +13,6 @@ import UIKit
 
 protocol EditProfileDelegate: AnyObject {
     func finishPassing(userInfo: UserProfile)
-    func logout()
 }
 
 class EditProfileViewController: UIViewController {

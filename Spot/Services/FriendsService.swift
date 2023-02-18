@@ -174,6 +174,7 @@ final class FriendsService: FriendsServiceProtocol {
         addFriendToFriendsList(userID: uid, friendID: friendId, completion: nil)
         addFriendToFriendsList(userID: friendId, friendID: uid, completion: nil)
         sendFriendRequestNotis(friendID: friendId, notificationID: notificationID, completion: nil)
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: ["notiID": notificationID])
 
         // adjust individual posts "friendsList" docs
         DispatchQueue.global().async {

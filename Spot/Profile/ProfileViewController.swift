@@ -31,7 +31,6 @@ class ProfileViewController: UIViewController {
     }
 
     private lazy var imageManager = SDWebImageManager()
-    public unowned var containerDrawerView: DrawerView?
 
     var postsFetched = false {
         didSet {
@@ -84,9 +83,8 @@ class ProfileViewController: UIViewController {
         NotificationCenter.default.removeObserver(self)
     }
 
-    init(userProfile: UserProfile? = nil, presentedDrawerView: DrawerView? = nil) {
+    init(userProfile: UserProfile? = nil) {
         super.init(nibName: nil, bundle: nil)
-        containerDrawerView = presentedDrawerView
         if UserDataModel.shared.userInfo.blockedBy?.contains(userProfile?.id ?? "") ?? false {
             return
         }
@@ -117,7 +115,6 @@ class ProfileViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        containerDrawerView?.configure(canDrag: false, swipeRightToDismiss: true, startingPosition: .top)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -128,26 +125,15 @@ class ProfileViewController: UIViewController {
     private func setUpNavBar() {
         navigationController?.setNavigationBarHidden(false, animated: true)
 
-        // Hacky way to avoid the nav bar get pushed up, when user go to custom map and drag the drawer to top, to middle and go back to profile
-        navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 50.0)
-
-        navigationController?.navigationBar.barTintColor = UIColor.white
-        navigationController?.navigationBar.isTranslucent = true
+        navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
+        navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.barStyle = .black
-        navigationController?.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
+        navigationController?.navigationBar.tintColor = UIColor.white
 
         navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-            .font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
+            .foregroundColor: UIColor.white,
+            .font: UIFont(name: "SFCompactText-Heavy", size: 19) as Any
         ]
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackArrowDark"),
-            style: .plain,
-            target: self,
-            action: #selector(backTap)
-        )
 
         if relation != .myself {
             let button = UIBarButtonItem(
@@ -159,7 +145,6 @@ class ProfileViewController: UIViewController {
             button.imageInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
             navigationItem.rightBarButtonItem = button
         }
-
         collectionView.isScrollEnabled = true
     }
 
@@ -210,10 +195,9 @@ class ProfileViewController: UIViewController {
     }
 
     func viewSetup() {
-        view.backgroundColor = .white
-        // inputViewController?.edgesForExtendedLayout = .none
-        self.title = ""
+        view.backgroundColor = UIColor(named: "SpotBlack")
         navigationItem.backButtonTitle = ""
+        navigationItem.title = ""
 
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
 
@@ -241,6 +225,7 @@ class ProfileViewController: UIViewController {
     }
 
     func getNinePosts() {
+        print("get nine posts")
         guard let userID = userProfile?.id else { return }
         let db = Firestore.firestore()
         let q0 = db.collection("posts").whereField("posterID", isEqualTo: userID)
@@ -257,13 +242,13 @@ class ProfileViewController: UIViewController {
                     dispatch.enter()
                     self.mapPostService?.setPostDetails(post: postInfo) { post in
                         DispatchQueue.main.async {
-                            self.posts.append(post)
+                            if !self.posts.contains(where: { $0.id == post.id }) {
+                                self.posts.append(post)
+                            }
                             self.postsFetched = true
                             dispatch.leave()
                         }
                     }
-                } catch let parseError {
-                    print("JSON Error \(parseError.localizedDescription)")
                 }
             }
             dispatch.notify(queue: .main) { [weak self] in
@@ -374,14 +359,6 @@ extension ProfileViewController {
         addOptionsActionSheet()
     }
 
-    @objc func backTap() {
-        popVC()
-    }
-
-    func popVC() {
-        containerDrawerView?.closeAction()
-    }
-
     func acceptFriendRequest() {
         self.relation = .friend
         DispatchQueue.main.async { self.collectionView.reloadData() }
@@ -413,8 +390,6 @@ extension ProfileViewController {
                     Mixpanel.mainInstance().track(event: "ProfileHeaderAcceptTap")
                     guard let user = self.userProfile else { return }
                     self.friendService?.acceptFriendRequest(friend: user, notificationID: doc.documentID, completion: nil)
-                    // tableView reload handled by notification
-                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil, userInfo: ["notiID": doc.documentID])
                 }
             }
         }
@@ -426,15 +401,11 @@ extension ProfileViewController: EditProfileDelegate {
         self.userProfile = userInfo
         DispatchQueue.main.async { self.collectionView.reloadItems(at: [IndexPath(row: 0, section: 0)]) }
     }
-
-    func logout() {
-        DispatchQueue.main.async { self.containerDrawerView?.closeAction() }
-    }
 }
 
 extension ProfileViewController: FriendsListDelegate {
     func finishPassing(openProfile: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: openProfile, presentedDrawerView: containerDrawerView)
+        let profileVC = ProfileViewController(userProfile: openProfile)
         self.navigationController?.pushViewController(profileVC, animated: true)
     }
 

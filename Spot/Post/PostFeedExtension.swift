@@ -212,7 +212,7 @@ extension PostController {
         }
     }
     
-    private func postsContains(postID: String, fetchType: FetchType) -> Bool {
+    private func postsContains(postID: String, fetchType: FeedFetchType) -> Bool {
         switch fetchType {
         case .MyPosts:
             return localPosts.contains(where: { $0.id == postID }) || myPosts.contains(where: { $0.id == postID })
@@ -221,7 +221,7 @@ extension PostController {
         }
     }
 
-    private func refetchAndRefreshIfNecessary(currentFetchCount: Int, fetchType: FetchType) {
+    private func refetchAndRefreshIfNecessary(currentFetchCount: Int, fetchType: FeedFetchType) {
         // re-run fetch if not enough posts returned or scrolled to bottom of table while fetch was happening
         // TODO: select nearby posts index if user has no new posts on initial fetch
         if self.selectedSegment == fetchType {

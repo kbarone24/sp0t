@@ -38,17 +38,15 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         sheetView = DrawerView(present: profileVC, presentationDirection: .rightToLeft, closeAction: { [weak self] in
             self?.sheetView = nil
         })
-        profileVC.containerDrawerView = sheetView
     }
 
     func openSpot(post: MapPost) {
         Mixpanel.mainInstance().track(event: "MapSpotTap")
         if sheetView != nil { return }
-        let spotVC = SpotPageController(mapPost: post, presentedDrawerView: nil)
+        let spotVC = SpotPageController(mapPost: post)
         sheetView = DrawerView(present: spotVC, presentationDirection: .rightToLeft) { [weak self] in
             self?.sheetView = nil
         }
-        spotVC.containerDrawerView = sheetView
     }
 
     func openPosts(posts: [MapPost]) {
@@ -65,12 +63,10 @@ extension HomeScreenContainerController: HomeScreenDelegate {
         if sheetView != nil { return }
         if selectedControllerIndex == 0 { animateSideBar() }
 
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: nil, mapType: .customMap)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], mapType: .customMap)
         sheetView = DrawerView(present: customMapVC, presentationDirection: .bottomToTop) { [weak self] in
             self?.sheetView = nil
         }
-
-        customMapVC.containerDrawerView = sheetView
     }
 
     func openNewMap() {

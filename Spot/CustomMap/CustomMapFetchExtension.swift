@@ -86,23 +86,17 @@ extension CustomMapController {
                                 DispatchQueue.main.async {
                                     self.postsList.append(post)
                                     self.mapData?.postsDictionary.updateValue(post, forKey: post.id ?? "")
-                                    if let groupData = self.mapData?.updateGroup(post: post) {
-                                        self.addAnnotation(group: groupData.group, newGroup: groupData.newGroup)
-                                    }
                                 }
                             }
                             postGroup.leave()
                         }
 
-                    } catch {
-                        continue
-                    }
+                    } 
                 }
                 postGroup.notify(queue: .main) {
                     self.postsList.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
                     self.collectionView.reloadData()
                     if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }
-                    if !self.centeredMap { self.setInitialRegion() }
                 }
             }
         }
@@ -118,24 +112,5 @@ extension CustomMapController {
             return UserDataModel.shared.userInfo.friendIDs.contains(post.posterID) || uid == post.posterID
         }
         return true
-    }
-
-    func addAnnotation(group: MapPostGroup?, newGroup: Bool) {
-        if let group = group {
-            if newGroup, let mapData {
-                // add new group
-                mapController?.mapView.addSpotAnnotation(group: group, map: mapData)
-            } else if let anno = mapController?.mapView.annotations.first(where: { $0.coordinate.isEqualTo(coordinate: group.coordinate) }) {
-                // update existing group
-                    mapController?.mapView.removeAnnotation(anno)
-                if let mapData = mapData { mapController?.mapView.addSpotAnnotation(group: group, map: mapData) }
-            }
-        }
-    }
-
-    func addInitialAnnotations() {
-        guard let mapData = mapData else { return }
-        mapController?.mapView.removeAllAnnos()
-        for group in mapData.postGroup { mapController?.mapView.addSpotAnnotation(group: group, map: mapData) }
     }
 }

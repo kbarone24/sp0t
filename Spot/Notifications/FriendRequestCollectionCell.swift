@@ -13,7 +13,7 @@ import UIKit
 protocol FriendRequestCollectionCellDelegate: AnyObject {
     func deleteFriendRequest(sender: AnyObject?, accepted: Bool)
     func getProfile(userProfile: UserProfile)
-    func acceptFriend(sender: AnyObject?)
+    func acceptFriend(friend: UserProfile, notiID: String)
 }
 
 class FriendRequestCollectionCell: UITableViewCell {
@@ -21,8 +21,8 @@ class FriendRequestCollectionCell: UITableViewCell {
     weak var notificationControllerDelegate: NotificationsDelegate?
     private lazy var friendRequests: [UserNotification] = []
 
-    private let itemHeight: CGFloat = 225
-    private let itemWidth: CGFloat = 187.5
+    private let itemHeight: CGFloat = 223
+    private let itemWidth: CGFloat = 187
 
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -48,7 +48,7 @@ class FriendRequestCollectionCell: UITableViewCell {
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        self.backgroundColor = .white
+        self.backgroundColor = UIColor(named: "SpotBlack")
         self.selectionStyle = .none
 
         collectionView.delegate = self
@@ -116,11 +116,7 @@ extension FriendRequestCollectionCell: FriendRequestCollectionCellDelegate {
         notificationControllerDelegate?.getProfile(userProfile: userProfile)
     }
 
-    func acceptFriend(sender: AnyObject?) {
-        guard let cell = sender as? FriendRequestCell,
-              let friend = cell.friendRequest?.userInfo else { return }
-        let notiID = cell.friendRequest?.id ?? ""
-        DispatchQueue.global(qos: .userInitiated).async { self.friendService?.acceptFriendRequest(friend: friend, notificationID: notiID, completion: nil)
-        }
+    func acceptFriend(friend: UserProfile, notiID: String) {
+        DispatchQueue.global(qos: .userInitiated).async { self.friendService?.acceptFriendRequest(friend: friend, notificationID: notiID, completion: nil) }
     }
 }
