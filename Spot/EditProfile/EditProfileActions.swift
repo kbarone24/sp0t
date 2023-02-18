@@ -125,7 +125,6 @@ extension EditProfileViewController {
     func returnToLandingPage() {
         dismiss(animated: false, completion: {
             NotificationCenter.default.post(Notification(name: Notification.Name("Logout"), object: nil, userInfo: nil))
-            self.delegate?.logout()
             UserDataModel.shared.destroy()
             if let landingPage = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(identifier: "LandingPage") as? LandingPageController {
                 //    self.navigationController?.popToRootViewController(animated: false)

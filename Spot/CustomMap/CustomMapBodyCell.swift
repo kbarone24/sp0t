@@ -85,7 +85,7 @@ class CustomMapBodyCell: UICollectionViewCell {
 
 extension CustomMapBodyCell {
     private func viewSetup() {
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = .black
 
         contentView.addSubview(postImage)
         postImage.snp.makeConstraints {

@@ -142,6 +142,7 @@ extension PostController {
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        print("offset", scrollView.contentOffset.y)
         if parentVC == .Home { return }
         // disables scroll view "bounce" and enables drawer view swipeToDismiss method to take priority
         if scrollView.contentOffset.y < 0 {
@@ -235,34 +236,5 @@ extension PostController {
     public func scrollToTop() {
         DispatchQueue.main.async { self.contentTable.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
         selectedPostIndex = 0
-    }
-
-    func setButtonBar(animated: Bool) {
-        buttonBar.snp.removeConstraints()
-        switch selectedSegment {
-        case .NearbyPosts:
-            nearbyButton.alpha = 1.0
-            myWorldButton.alpha = 0.5
-            buttonBar.snp.makeConstraints {
-                $0.top.equalTo(nearbyButton.snp.bottom).offset(5)
-                $0.centerX.equalTo(nearbyButton)
-                $0.width.equalTo(65)
-                $0.height.equalTo(3)
-            }
-        case .MyPosts:
-            myWorldButton.alpha = 1.0
-            nearbyButton.alpha = 0.5
-            buttonBar.snp.makeConstraints {
-                $0.top.equalTo(myWorldButton.snp.bottom).offset(5)
-                $0.centerX.equalTo(myWorldButton)
-                $0.width.equalTo(65)
-                $0.height.equalTo(3)
-            }
-        }
-        if animated {
-            UIView.animate(withDuration: 0.2) {
-                self.view.layoutIfNeeded()
-            }
-        }
     }
 }

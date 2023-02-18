@@ -78,7 +78,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: 130) : CGSize(width: view.frame.width / 2 - 0.5, height: (view.frame.width / 2 - 0.5) * 267 / 194.5)
+        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: 100) : CGSize(width: view.frame.width / 2 - 0.5, height: (view.frame.width / 2 - 0.5) * 267 / 194.5)
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
@@ -107,7 +107,6 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             var posts = indexPath.section == 1 ? relatedPosts : communityPosts
             posts.sortPostsOnOpen(index: indexPath.item)
             let postVC = PostController(parentVC: .Spot, postsList: posts, selectedPostIndex: 0, title: spotName)
-            barView.isHidden = true
             self.navigationController?.pushViewController(postVC, animated: true)
         }
     }
@@ -115,9 +114,8 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
 
 extension SpotPageController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if scrollView.contentOffset.y > -91 {
-            barView.backgroundColor = scrollView.contentOffset.y > 0 ? .white : .clear
-            titleLabel.text = scrollView.contentOffset.y > 0 ? spotName : ""
+        DispatchQueue.main.async {
+            self.navigationItem.title = scrollView.contentOffset.y > 75 ? self.spotName : ""
         }
 
         if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 500)) && fetching == .refreshEnabled {

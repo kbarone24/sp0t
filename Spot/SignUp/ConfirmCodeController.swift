@@ -254,7 +254,7 @@ class ConfirmCodeController: UIViewController {
 
                     if self.codeType == .logIn {
                         Mixpanel.mainInstance().track(event: "ConfirmCodeLoginSuccess")
-                        DispatchQueue.main.async { self.animateToMap() }
+                        DispatchQueue.main.async { self.animateHome() }
                         return
                     } else if self.codeType == .newAccount {
                         self.getInitialFriends { friendIDs in
@@ -353,14 +353,14 @@ class ConfirmCodeController: UIViewController {
         }
     }
 
-    func animateToMap() {
-        view.endEditing(true)
-        activityIndicator.stopAnimating()
-
-        guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return}
+    func animateHome() {
         DispatchQueue.main.async {
+            self.view.endEditing(true)
+            self.activityIndicator.stopAnimating()
+
+            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return}
             self.navigationController?.popToRootViewController(animated: false)
-            let homeScreenController = HomeScreenContainerController()
+            let homeScreenController = SpotTabBarController()
             window.rootViewController = homeScreenController
             window.makeKeyAndVisible()
         }

@@ -74,10 +74,10 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             if cell is ProfileMyMapCell {
                 guard relation == .friend || relation == .myself else { return }
                 let mapData = getMyMap()
-                let customMapVC = CustomMapController(userProfile: userProfile, mapData: mapData, postsList: [], presentedDrawerView: containerDrawerView, mapType: .myMap)
+                let customMapVC = CustomMapController(userProfile: userProfile, mapData: mapData, postsList: [], mapType: .myMap)
                 navigationController?.pushViewController(customMapVC, animated: true)
             } else if cell is ProfileBodyCell {
-                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[indexPath.row - 1], postsList: [], presentedDrawerView: containerDrawerView, mapType: .customMap)
+                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[indexPath.row - 1], postsList: [], mapType: .customMap)
                 navigationController?.pushViewController(customMapVC, animated: true)
             }
         }
@@ -111,11 +111,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         // Show navigation bar when user scroll pass the header section
-        if scrollView.contentOffset.y > -91.0 {
-            navigationController?.navigationBar.isTranslucent = false
-            if scrollView.contentOffset.y > 35 {
-                self.title = userProfile?.name
-            } else { self.title = ""}
-        }
+        if scrollView.contentOffset.y > 35 {
+            self.navigationItem.title = userProfile?.name
+        } else { self.title = ""}
     }
 }

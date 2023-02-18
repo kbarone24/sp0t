@@ -16,7 +16,6 @@ class AddFriendButton: UIButton {
         layer.cornerRadius = 14
         layer.borderWidth = 1
         layer.borderColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1).cgColor
-        setImage(UIImage(named: "AddFriendIcon"), for: .normal)
         imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 7)
         translatesAutoresizingMaskIntoConstraints = false
         setAttTitle(title: title, color: .black)

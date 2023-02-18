@@ -12,7 +12,7 @@ import UIKit
 final class SimpleMapHeaderCell: UICollectionViewCell {
     private lazy var mapLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .black
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
         label.adjustsFontSizeToFitWidth = true
         label.text = ""

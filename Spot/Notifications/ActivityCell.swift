@@ -33,13 +33,14 @@ class ActivityCell: UITableViewCell {
     private lazy var username: UILabel = {
         let label = UILabel()
         label.isUserInteractionEnabled = true
-        label.textColor = .black
-        label.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 14.5)
         return label
     }()
 
     private lazy var detailLabel: UILabel = {
         let label = UILabel()
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.numberOfLines = 2
         label.lineBreakMode = .byWordWrapping
         return label
@@ -183,7 +184,7 @@ class ActivityCell: UITableViewCell {
         let timeRange = NSRange(location: attributedString.length - time.count, length: time.count)
 
         attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-Regular", size: 14.5) as Any, range: detailRange)
-        attributedString.addAttribute(.foregroundColor, value: UIColor.black, range: detailRange)
+        attributedString.addAttribute(.foregroundColor, value: UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1), range: detailRange)
 
         attributedString.addAttribute(.font, value: UIFont(name: "SFCompactText-Regular", size: 14.5) as Any, range: timeRange)
         attributedString.addAttribute(.foregroundColor, value: UIColor(red: 0.696, green: 0.696, blue: 0.696, alpha: 1), range: timeRange)
@@ -241,7 +242,9 @@ class ActivityCell: UITableViewCell {
     private func setBackgroundColor() {
         if (notification.type == "friendRequest" && notification.status == "accepted" && notification.seen == false) || notification.type == "mapInvite" && notification.seen == false {
             self.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.2)
-        } else { self.backgroundColor = .white }
+        } else {
+            self.backgroundColor = UIColor(named: "SpotBlack")
+        }
     }
 
     func lines(label: UILabel) -> Int {

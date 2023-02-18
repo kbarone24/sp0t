@@ -25,13 +25,14 @@ class NotificationsController: UIViewController {
 
     lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
-        tableView.backgroundColor = .white
+        tableView.backgroundColor = UIColor(named: "SpotBlack")
         tableView.allowsSelection = true
         tableView.rowHeight = 70
         tableView.register(ActivityCell.self, forCellReuseIdentifier: "ActivityCell")
         tableView.register(FriendRequestCollectionCell.self, forCellReuseIdentifier: "FriendRequestCollectionCell")
         tableView.register(ActivityIndicatorCell.self, forCellReuseIdentifier: "IndicatorCell")
         tableView.isUserInteractionEnabled = true
+        tableView.showsVerticalScrollIndicator = false
         tableView.separatorStyle = .none
         tableView.translatesAutoresizingMaskIntoConstraints = true
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
@@ -73,24 +74,21 @@ class NotificationsController: UIViewController {
     func setUpNavBar() {
         navigationItem.title = "Notifications"
         navigationController?.setNavigationBarHidden(false, animated: false)
-        navigationController?.navigationBar.frame.origin = CGPoint(x: 0.0, y: 47.0)
-        navigationItem.backButtonTitle = ""
-        navigationController?.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
 
         navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
-        navigationController?.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
+        navigationController?.navigationBar.tintColor = UIColor.white
+    //    navigationController?.view.backgroundColor = .black
         
         navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-            .font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
+            .foregroundColor: UIColor.white,
+            .font: UIFont(name: "SFCompactText-Heavy", size: 19) as Any
         ]
     }
     
     func setupView() {
-        view.backgroundColor = .white
-        
+        view.backgroundColor = UIColor(named: "SpotBlack")
+
         tableView.dataSource = self
         tableView.delegate = self
         tableView.reloadData()
@@ -111,7 +109,9 @@ class NotificationsController: UIViewController {
     }
 
     private func setTabBarIcon() {
-        let unseenPost = UserDataModel.shared.notifications.contains(where: { $0.seen == false })
+        print("notis contains seen", UserDataModel.shared.notifications.contains(where: { !$0.seen }), "pending friends", UserDataModel.shared.pendingFriendRequests.contains(where: { !$0.seen }))
+
+        let unseenPost = UserDataModel.shared.notifications.contains(where: { !$0.seen }) || UserDataModel.shared.pendingFriendRequests.contains(where: { !$0.seen })
         DispatchQueue.main.async {
             let unselectedImage = unseenPost ? UIImage(named: "NotificationsTabActive") : UIImage(named: "NotificationsTab")
             let selectedImage = unseenPost ? UIImage(named: "NotificationsTabActiveSelected") : UIImage(named: "NotificationsTabSelected")
@@ -151,7 +151,7 @@ extension NotificationsController: NotificationsDelegate {
 
 extension NotificationsController {
     func openProfile(user: UserProfile) {
-        let profileVC = ProfileViewController(userProfile: user, presentedDrawerView: nil)
+        let profileVC = ProfileViewController(userProfile: user)
         DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
     }
     
@@ -164,7 +164,7 @@ extension NotificationsController {
     func openMap(mapID: String) {
         var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         map.id = mapID
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], presentedDrawerView: nil, mapType: .customMap)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], mapType: .customMap)
         navigationController?.pushViewController(customMapVC, animated: true)
     }
 }

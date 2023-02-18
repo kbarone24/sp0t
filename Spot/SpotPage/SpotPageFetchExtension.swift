@@ -51,9 +51,7 @@ extension SpotPageController {
                         DispatchQueue.main.async { self.addRelatedPost(postInfo: post) }
                         postGroup.leave()
                     }
-                } catch let parseError {
-                    print("JSON Error \(parseError.localizedDescription)")
-                }
+                } 
             }
 
             postGroup.notify(queue: .main) {

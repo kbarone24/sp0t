@@ -124,7 +124,7 @@ class EmailLoginController: UIViewController {
                 self.errorLabel.isHidden = true
 
                 /// check to make sure user has 2 factor enabled
-                self.animateToMap()
+                self.animateHome()
 
             } else {
                 Mixpanel.mainInstance().track(event: "LoginUnsuccessful")
@@ -148,13 +148,13 @@ class EmailLoginController: UIViewController {
         }
     }
 
-    func animateToMap() {
-        self.loginButton.isEnabled = true
-        self.activityIndicator.stopAnimating()
-        
+    func animateHome() {
         DispatchQueue.main.async {
+            self.loginButton.isEnabled = true
+            self.activityIndicator.stopAnimating()
+
             guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
-            let homeScreenController = HomeScreenContainerController()
+            let homeScreenController = SpotTabBarController()
             self.navigationController?.popToRootViewController(animated: false)
             window.rootViewController = homeScreenController
             window.makeKeyAndVisible()

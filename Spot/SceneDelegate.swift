@@ -22,7 +22,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
               let vc = sb.instantiateViewController(withIdentifier: "LandingPage") as? LandingPageController,
               let window = self.window
         else {
-            animateToMap()
+            animateToHome()
             return
         }
 
@@ -30,12 +30,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.makeKeyAndVisible()
     }
 
-    func animateToMap() {
+    func animateToHome() {
         guard let window else { return }
-
-        let notificationName = Notification.Name("openPush")
-        NotificationCenter.default.post(name: notificationName, object: nil, userInfo: nil)
-
         let tabBarController = SpotTabBarController()
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()

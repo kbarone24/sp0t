@@ -14,7 +14,7 @@ import UIKit
 class SpotPageHeaderCell: UICollectionViewCell {
     private lazy var spotName: UILabel = {
         let label = UILabel()
-        label.textColor = .black
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
         label.adjustsFontSizeToFitWidth = true
         return label
@@ -52,11 +52,11 @@ class SpotPageHeaderCell: UICollectionViewCell {
 
 extension SpotPageHeaderCell {
     private func viewSetup() {
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = UIColor(named: "SpotBlack")
 
         contentView.addSubview(spotName)
         spotName.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(50)
+            $0.top.equalTo(20)
             $0.leading.trailing.equalToSuperview().inset(17)
             $0.height.equalTo(23)
         }
