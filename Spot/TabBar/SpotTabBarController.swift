@@ -32,6 +32,11 @@ class SpotTabBarController: UITabBarController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        print("tab bar deinit")
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         delegate = self
@@ -73,6 +78,11 @@ class SpotTabBarController: UITabBarController {
 
     private func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost), name: NSNotification.Name(("NewPost")), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyLogout), name: NSNotification.Name(("Logout")), object: nil)
+    }
+
+    @objc private func notifyLogout() {
+        DispatchQueue.main.async { self.dismiss(animated: false) }
     }
 }
 
@@ -93,7 +103,8 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                 return true
 
             } else if let profile = nav.viewControllers.first as? ProfileViewController {
-                print("profile")
+                Mixpanel.mainInstance().track(event: "HomeScreenProfileTap")
+                return true
             }
         } else {
             openCamera()

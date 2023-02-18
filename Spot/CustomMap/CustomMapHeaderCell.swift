@@ -26,8 +26,8 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
     private lazy var mapName: UILabel = {
         let label = UILabel()
-        label.textColor = .black
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 22)
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
         label.text = ""
         label.numberOfLines = 2
         label.adjustsFontSizeToFitWidth = true
@@ -141,7 +141,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
 extension CustomMapHeaderCell {
     private func viewSetup() {
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = UIColor(named: "SpotBlack")
 
         contentView.addSubview(mapCoverImage)
         mapCoverImage.snp.makeConstraints {
@@ -348,7 +348,6 @@ extension CustomMapHeaderCell {
         if editButton.tag == 0 {
             guard let mapData = mapData else { return }
             guard let vc = viewContainingController() as? CustomMapController else { return }
-            vc.setDrawerValuesForViewAppear()
             let editVC = EditMapController(mapData: mapData)
             editVC.customMapVC = vc
             editVC.modalPresentationStyle = .fullScreen
@@ -444,7 +443,7 @@ extension CustomMapHeaderCell {
 extension CustomMapHeaderCell: MapCodeDelegate, FriendsListDelegate {
     func finishPassing(openProfile: UserProfile) {
         guard let containerVC = viewContainingController() as? CustomMapController else { return }
-        let profileVC = ProfileViewController(userProfile: openProfile, presentedDrawerView: containerVC.containerDrawerView)
+        let profileVC = ProfileViewController(userProfile: openProfile)
         containerVC.navigationController?.pushViewController(profileVC, animated: true)
     }
 

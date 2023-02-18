@@ -163,7 +163,7 @@ class SearchContactsController: UIViewController {
         let selectedContactIDs = (contacts.filter({ $0.selected }).map({ $0.id ?? "" }))
         Mixpanel.mainInstance().track(event: "SearchContactsAddTap", properties: ["count": selectedContactIDs.count])
         sendFriendRequests(selectedContactIDs: selectedContactIDs)
-        animateToMap()
+        animateHome()
     }
 
     func sendFriendRequests(selectedContactIDs: [String]) {
@@ -177,12 +177,14 @@ class SearchContactsController: UIViewController {
         }
     }
 
-    func animateToMap() {
-        guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
-        let homeScreenController = HomeScreenContainerController()
-        navigationController?.popToRootViewController(animated: false)
-        window.rootViewController = homeScreenController
-        window.makeKeyAndVisible()
+    func animateHome() {
+        DispatchQueue.main.async {
+            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+            let homeScreenController = HomeScreenContainerController()
+            self.navigationController?.popToRootViewController(animated: false)
+            window.rootViewController = homeScreenController
+            window.makeKeyAndVisible()
+        }
     }
 }
 

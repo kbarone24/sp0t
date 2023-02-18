@@ -103,7 +103,7 @@ extension ProfileViewController {
         let text = block ? "User successfully blocked." : "Thank you for the feedback. We will review your report ASAP."
         let alert = UIAlertController(title: "Success!", message: text, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Ok", style: .default) { _ in
-            self.popVC()
+            DispatchQueue.main.async { self.navigationController?.popViewController(animated: true) }
         })
         present(alert, animated: true, completion: nil)
     }

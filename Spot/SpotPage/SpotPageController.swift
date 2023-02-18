@@ -18,33 +18,15 @@ class SpotPageController: UIViewController {
         layout.scrollDirection = .vertical
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.backgroundColor = .clear
+        view.showsVerticalScrollIndicator = false
         view.register(SpotPageHeaderCell.self, forCellWithReuseIdentifier: "SpotPageHeaderCell")
         view.register(SpotPageBodyCell.self, forCellWithReuseIdentifier: "SpotPageBodyCell")
         view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
         return view
     }()
-    lazy var barView = UIView()
-    lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
-        label.text = ""
-        label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
-        label.textAlignment = .center
-        label.numberOfLines = 0
-        label.sizeToFit()
-        label.adjustsFontSizeToFitWidth = true
-        return label
-    }()
-    
     lazy var mapPostService: MapPostServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
         return service
-    }()
-    
-    lazy var barBackButton: UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage(named: "BackArrowDark"), for: .normal)
-        return button
     }()
 
     lazy var mapPostLabel: UILabel = {
@@ -80,7 +62,6 @@ class SpotPageController: UIViewController {
         return label
     }()
     lazy var imageManager = SDWebImageManager()
-    public unowned var containerDrawerView: DrawerView?
     lazy var activityIndicator = CustomActivityIndicator()
 
     var mapID: String?
@@ -103,13 +84,12 @@ class SpotPageController: UIViewController {
     lazy var relatedPosts: [MapPost] = []
     lazy var communityPosts: [MapPost] = []
 
-    init(mapPost: MapPost, presentedDrawerView: DrawerView? = nil) {
+    init(mapPost: MapPost) {
         super.init(nibName: nil, bundle: nil)
         self.mapID = mapPost.mapID
         self.mapName = mapPost.mapName
         self.spotName = mapPost.spotName ?? ""
         self.spotID = mapPost.spotID ?? ""
-        self.containerDrawerView = presentedDrawerView
     }
 
     required init?(coder: NSCoder) {
@@ -118,7 +98,6 @@ class SpotPageController: UIViewController {
 
     deinit {
         print("SpotPageController(\(self) deinit")
-        barView.removeFromSuperview()
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -134,7 +113,6 @@ class SpotPageController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setUpNavBar()
-        containerDrawerView?.configure(canDrag: false, swipeRightToDismiss: true, startingPosition: .top)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -145,13 +123,22 @@ class SpotPageController: UIViewController {
 
 extension SpotPageController {
     private func setUpNavBar() {
-        navigationController?.setNavigationBarHidden(true, animated: true)
-        barView.isHidden = false
-        collectionView.isScrollEnabled = true
+        navigationController?.setNavigationBarHidden(false, animated: true)
+        navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barStyle = .black
+        navigationController?.navigationBar.tintColor = UIColor.white
+
+        navigationController?.navigationBar.titleTextAttributes = [
+            .foregroundColor: UIColor.white,
+            .font: UIFont(name: "SFCompactText-Heavy", size: 19) as Any
+        ]
+
+        navigationItem.title = collectionView.contentOffset.y > 75 ? self.spotName : ""
     }
 
     private func viewSetup() {
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(named: "SpotBlack")
         NotificationCenter.default.addObserver(self, selector: #selector(notifyPostDelete(_:)), name: NSNotification.Name(("DeletePost")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewOffset), name: NSNotification.Name(("DrawerViewOffset")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewReset), name: NSNotification.Name(("DrawerViewReset")), object: nil)
@@ -163,29 +150,6 @@ extension SpotPageController {
             $0.edges.equalToSuperview()
         }
 
-        containerDrawerView?.slideView.addSubview(barView)
-        let height: CGFloat = UserDataModel.shared.screenSize == 0 ? 65 : 90
-        barView.snp.makeConstraints {
-            $0.leading.top.width.equalToSuperview()
-            $0.height.equalTo(height)
-        }
-
-        barBackButton.addTarget(self, action: #selector(backButtonAction), for: .touchUpInside)
-        barView.addSubview(barBackButton)
-        barBackButton.snp.makeConstraints {
-            $0.leading.equalTo(15)
-            $0.bottom.equalTo(-8)
-            $0.height.equalTo(21.5)
-            $0.width.equalTo(30)
-        }
-
-        barView.addSubview(titleLabel)
-        titleLabel.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(60)
-            $0.bottom.equalTo(barBackButton)
-            $0.height.equalTo(22)
-        }
-
         activityIndicator.startAnimating()
         view.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
@@ -193,11 +157,6 @@ extension SpotPageController {
             $0.centerX.equalToSuperview()
             $0.width.height.equalTo(30)
         }
-    }
-
-    @objc func backButtonAction() {
-        Mixpanel.mainInstance().track(event: "SpotPageBackTap")
-        containerDrawerView?.closeAction()
     }
 
     @objc func notifyPostDelete(_ notification: NSNotification) {

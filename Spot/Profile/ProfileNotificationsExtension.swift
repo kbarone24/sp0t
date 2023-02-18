@@ -57,6 +57,7 @@ extension ProfileViewController {
     }
 
     @objc func notifyUserLoad(_ notification: NSNotification) {
+        print("notify user load")
         if userProfile?.username ?? "" != "" { return }
         userProfile = UserDataModel.shared.userInfo
         getUserRelation()
