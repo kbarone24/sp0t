@@ -13,6 +13,7 @@ class PostDetailView: UIView {
     lazy var bottomMask = UIView()
     override func layoutSubviews() {
         super.layoutSubviews()
+
         if bottomMask.superview != nil { return }
         bottomMask.isUserInteractionEnabled = false
         insertSubview(bottomMask, at: 0)

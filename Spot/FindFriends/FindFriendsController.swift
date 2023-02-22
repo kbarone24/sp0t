@@ -39,7 +39,7 @@ class FindFriendsController: UIViewController {
     lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-        tableView.backgroundColor = .white
+        tableView.backgroundColor = UIColor(named: "SpotBlack")
         tableView.tag = 0
         tableView.separatorStyle = .none
         tableView.allowsSelection = false
@@ -72,10 +72,15 @@ class FindFriendsController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(named: "SpotBlack")
         loadSearchBar()
         loadTableView()
         fetchTableData()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setUpNavBar()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -86,7 +91,6 @@ class FindFriendsController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyHideUser(_:)), name: NSNotification.Name("ContactCellHideUser"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyProfileAddFriend(_:)), name: NSNotification.Name("SendFriendRequest"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
-        setUpNavBar()
     }
 
     deinit {
@@ -95,20 +99,8 @@ class FindFriendsController: UIViewController {
     }
 
     private func setUpNavBar() {
-        title = "Add friends"
-        navigationItem.backButtonTitle = ""
-
-        navigationController?.navigationBar.barTintColor = UIColor.white
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
-        navigationController?.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
-        navigationController?.navigationBar.addWhiteBackground()
-
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor(red: 0, green: 0, blue: 0, alpha: 1),
-            .font: UIFont(name: "SFCompactText-Heavy", size: 20) as Any
-        ]
+        navigationItem.title = "Add friends"
+        navigationController?.setUpDarkNav(translucent: false)
     }
 
     private func loadSearchBar() {

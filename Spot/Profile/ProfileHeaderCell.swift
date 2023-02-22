@@ -115,24 +115,29 @@ class ProfileHeaderCell: UICollectionViewCell {
         case .myself:
             actionButton.setTitle("Edit profile", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
+            actionButton.setTitleColor(UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1), for: .normal)
         case .friend:
             actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Friends", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
+            actionButton.setTitleColor(UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1), for: .normal)
         case .pending:
             actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Pending", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
+            actionButton.setTitleColor(UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1), for: .normal)
         case .stranger, .received:
             actionButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle(relation == .stranger ? "Add friend" : "Accept friend request", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
+            actionButton.setTitleColor(.black, for: .normal)
         case .blocked:
             actionButton.setTitle("Blocked", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.929, green: 0.337, blue: 0.337, alpha: 1)
+            actionButton.setTitleColor(.black, for: .normal)
         }
     }
 }

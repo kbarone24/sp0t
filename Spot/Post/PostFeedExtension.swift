@@ -37,7 +37,7 @@ extension PostController {
             getMapPosts(query: mapsQuery)
         }
 
-        homeFetchGroup.notify(queue: .main) { [weak self] in
+        homeFetchGroup.notify(queue: .global()) { [weak self] in
             guard let self else { return }
             let localCount = self.localPosts.count
             self.localPosts.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
@@ -165,6 +165,7 @@ extension PostController {
     // I don't think we need to use a listener for the nearby fetch because we're not necessarily showing the most recent post
     // An ideal solution would use a listener to check for new and deleted posts but MVP will work without it
     func getNearbyPosts() {
+        if UserDataModel.shared.userCity == "" { return }
         nearbyRefreshStatus = .activelyRefreshing
         let db = Firestore.firestore()
         // Fetch amount has to be much larger since user won't have access to all posts
@@ -202,7 +203,7 @@ extension PostController {
                 }
             }
 
-            recentGroup.notify(queue: .main) {
+            recentGroup.notify(queue: .global()) {
                 currentFetchPosts.sort(by: { $0.postScore ?? 0 > $1.postScore ?? 0 })
                 self.nearbyPosts.append(contentsOf: currentFetchPosts)
                 self.nearbyPostsFetched = true
@@ -229,26 +230,30 @@ extension PostController {
             DispatchQueue.main.async { self.contentTable.reloadData() }
         }
 
-        if (currentFetchCount < 5 && fetchType == .MyPosts && myPostsRefreshStatus != .refreshDisabled) ||
-            (currentFetchCount < 15 && fetchType == .NearbyPosts && myPostsRefreshStatus != .refreshDisabled) ||
-            (selectedSegment == fetchType && postsList.count - selectedPostIndex < 5 && selectedRefreshStatus != .refreshDisabled) {
-            switch fetchType {
-            case .MyPosts:
-                DispatchQueue.global().async { self.getMyPosts() }
-            case .NearbyPosts:
-                DispatchQueue.global().async { self.getNearbyPosts() }
+        // TODO: show an indicator when the user has new posts on the opposite segment
+        switch fetchType {
+        case .MyPosts:
+            if myPostsRefreshStatus == .refreshEnabled {
+                if currentFetchCount < 5 || selectedSegment == .MyPosts && postsList.count - selectedPostIndex < 5 {
+                    DispatchQueue.global().async { self.getMyPosts() }
+                    return
+                }
             }
-        } else {
-            // fetch other segment so it's ready when user taps
-            // TODO: show an indicator when the user has new posts on the opposite segment
-            switch fetchType {
-            case .MyPosts:
-                if !nearbyPostsFetched { DispatchQueue.global().async { self.getNearbyPosts() } }
-            case .NearbyPosts:
-                if !myPostsFetched { DispatchQueue.global().async { self.getMyPosts() } }
+            if !nearbyPostsFetched {
+                DispatchQueue.global(qos: .utility).async { self.getNearbyPosts() }
+            }
+
+        case .NearbyPosts:
+            if nearbyRefreshStatus == .refreshEnabled {
+                if currentFetchCount < 15 || selectedSegment == .NearbyPosts && postsList.count - selectedPostIndex < 5 {
+                    DispatchQueue.global().async { self.getNearbyPosts() }
+                    return
+                }
+            }
+            if !myPostsFetched {
+                DispatchQueue.global(qos: .utility).async { self.getMyPosts() }
             }
         }
-
     }
     
     private func filteredFromFeed(post: MapPost) -> Bool {

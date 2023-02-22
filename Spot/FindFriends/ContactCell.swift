@@ -63,7 +63,7 @@ class ContactCell: UITableViewCell {
         let label = UILabel()
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
-        label.textColor = .black
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         return label
     }()
@@ -94,7 +94,7 @@ class ContactCell: UITableViewCell {
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = .white
+        backgroundColor = UIColor(named: "SpotBlack")
         isUserInteractionEnabled = true
 
         contentView.addSubview(profileImage)

@@ -56,10 +56,11 @@ extension PostController: ContentViewerDelegate {
     }
 
     func tapToNextPost() {
-        print("animating to next row", animatingToNextRow)
         if animatingToNextRow { return }
         if selectedPostIndex < postsList.count - 1 {
             tapToSelectedRow(increment: 1)
+        } else if parentVC != .Home {
+            DispatchQueue.main.async { self.navigationController?.popViewController(animated: true) }
         }
     }
 
@@ -67,6 +68,8 @@ extension PostController: ContentViewerDelegate {
         if animatingToNextRow { return }
         if selectedPostIndex > 0 {
             tapToSelectedRow(increment: -1)
+        } else if parentVC != .Home {
+            DispatchQueue.main.async { self.navigationController?.popViewController(animated: true) }
         }
     }
 
@@ -77,8 +80,10 @@ extension PostController: ContentViewerDelegate {
     }
 
     @objc func notifyCitySet(_ notification: NSNotification) {
-        if (!nearbyPostsFetched && selectedSegment == .NearbyPosts) || (myPostsFetched && selectedSegment == .MyPosts) {
-            DispatchQueue.global().async { self.getNearbyPosts() }
+        if !nearbyPostsFetched {
+            if selectedSegment == .NearbyPosts || myPostsFetched {
+                DispatchQueue.global().async { self.getNearbyPosts() }
+            }
         }
     }
 

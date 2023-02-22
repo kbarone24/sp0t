@@ -10,7 +10,7 @@ import UIKit
 import SDWebImage
 
 final class MapMemberCell: UICollectionViewCell {
-    private lazy var userImageView: UIImageView = {
+    private(set) lazy var profilePic: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.layer.cornerRadius = 31
@@ -18,9 +18,16 @@ final class MapMemberCell: UICollectionViewCell {
         return imageView
     }()
 
-    private lazy var usernameLabel: UILabel = {
+    private(set) lazy var avatarImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.layer.masksToBounds = true
+        imageView.contentMode = UIView.ContentMode.scaleAspectFill
+        return imageView
+    }()
+
+    private(set) lazy var usernameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .black
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         label.textAlignment = .center
         return label
@@ -39,13 +46,25 @@ final class MapMemberCell: UICollectionViewCell {
     func cellSetUp(user: UserProfile) {
         if user.imageURL != "" {
             let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
-            userImageView.sd_setImage(
+            profilePic.sd_setImage(
                 with: URL(string: user.imageURL),
                 placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .white),
                 options: .highPriority,
                 context: [.imageTransformer: transformer])
+
+            let avatarURL = user.avatarURL ?? ""
+            if avatarURL != "" {
+                let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFill)
+                avatarImage.sd_setImage(
+                    with: URL(string: avatarURL),
+                    placeholderImage: nil,
+                    options: .highPriority,
+                    context: [.imageTransformer: aviTransformer])
+            }
+
         } else {
-            userImageView.image = UIImage(named: "AddMembers")
+            profilePic.image = UIImage(named: "AddMembers")
+            avatarImage.image = UIImage()
         }
 
         usernameLabel.text = user.username
@@ -53,24 +72,33 @@ final class MapMemberCell: UICollectionViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        userImageView.sd_cancelCurrentImageLoad()
+        profilePic.sd_cancelCurrentImageLoad()
+        avatarImage.sd_cancelCurrentImageLoad()
     }
 }
 
 extension MapMemberCell {
     private func viewSetup() {
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = nil
 
-        contentView.addSubview(userImageView)
-        userImageView.snp.makeConstraints {
+        contentView.addSubview(profilePic)
+        profilePic.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.width.height.equalTo(62)
+        }
+
+        contentView.addSubview(avatarImage)
+        avatarImage.snp.makeConstraints {
+            $0.leading.equalTo(profilePic.snp.leading).offset(-3)
+            $0.bottom.equalTo(profilePic.snp.bottom).offset(3)
+            $0.width.equalTo(30.3)
+            $0.height.equalTo(39.75)
         }
 
         contentView.addSubview(usernameLabel)
         usernameLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(userImageView.snp.bottom).offset(6)
+            $0.top.equalTo(profilePic.snp.bottom).offset(6)
             $0.height.equalTo(17)
         }
     }

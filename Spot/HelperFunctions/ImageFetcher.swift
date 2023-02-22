@@ -31,7 +31,7 @@ class ImageFetcher {
         let editingOptions = PHContentEditingInputRequestOptions()
         editingOptions.isNetworkAccessAllowed = true
 
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global().async {
 
             self.contentRequestID = currentAsset.requestContentEditingInput(with: editingOptions) { [weak self] input, info in
 
@@ -95,7 +95,6 @@ class ImageFetcher {
     }
 
     func fetchImage(currentAsset: PHAsset, item: Int, completion: @escaping(_ result: UIImage, _ failed: Bool) -> Void) {
-
         isFetching = true
         fetchingIndex = item
 
@@ -103,7 +102,7 @@ class ImageFetcher {
         options.deliveryMode = .highQualityFormat
         options.isNetworkAccessAllowed = true
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        DispatchQueue.global().async { [weak self] in
 
             guard let self = self else { return }
 

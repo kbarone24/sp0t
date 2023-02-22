@@ -39,15 +39,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .selected)
         BarButtonItemAppearance.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.black], for: .highlighted)
 
-        /// search bar attributes
-        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [
-            NSAttributedString.Key.foregroundColor: UIColor(red: 0.514, green: 0.518, blue: 0.537, alpha: 1),
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Semibold", size: 15) as Any
-        ]
-
-        let searchBarAppearance = UISearchBar.appearance()
-        searchBarAppearance.barTintColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-
         UIView.appearance().isExclusiveTouch = true
 
         if #available(iOS 15.0, *) {

@@ -24,13 +24,17 @@ class ChooseFriendsCell: UITableViewCell {
 
     private(set) lazy var username: UILabel = {
         let username = UILabel()
-        username.textColor = .black
+        username.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         username.font = UIFont(name: "SFCompactText-Semibold", size: 16)
         return username
     }()
 
     private lazy var selectedBubble = UIImageView()
-    private lazy var bottomLine = UIView()
+    private lazy var bottomLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
+        return view
+    }()
 
     private lazy var addFriendButton = AddFriendButton(frame: .zero, title: "Add")
 
@@ -41,7 +45,7 @@ class ChooseFriendsCell: UITableViewCell {
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = .white
+        backgroundColor = UIColor(named: "SpotBlack")
         contentView.alpha = 1.0
         selectionStyle = .none
 
@@ -68,7 +72,6 @@ class ChooseFriendsCell: UITableViewCell {
             $0.trailing.equalToSuperview().inset(85)
         }
 
-        bottomLine.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
         contentView.addSubview(bottomLine)
         bottomLine.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
@@ -99,7 +102,7 @@ class ChooseFriendsCell: UITableViewCell {
                 $0.width.height.equalTo(24)
                 $0.centerY.equalToSuperview()
             }
-        } else if showAddFriend ?? true {
+        } else if showAddFriend {
             contentView.addSubview(addFriendButton)
             if UserDataModel.shared.userInfo.friendsContains(id: user.id ?? "") {
                 setAddFriendFriends()

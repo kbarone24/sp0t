@@ -60,7 +60,7 @@ class SearchContactsButtonCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
-        backgroundColor = .white
+        backgroundColor = UIColor(named: "SpotBlack")
 
         contentView.addSubview(pillBackground)
         pillBackground.snp.makeConstraints {

@@ -28,12 +28,11 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return tableView.bounds.height - 0.01
+        return max(0.01, tableView.bounds.height - 0.01)
     }
 
     func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
         for indexPath in indexPaths {
-            print("prefetch", indexPath.row)
             if abs(indexPath.row - selectedPostIndex) > 3 { return }
 
             guard let post = postsList[safe: indexPath.row] else { return }
@@ -58,7 +57,6 @@ extension PostController: UITableViewDataSource, UITableViewDelegate, UITableVie
     }
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        print("will display", indexPath.row)
         let updateCellImage: ([UIImage]?) -> Void = { [weak self] (images) in
             guard let self = self, let post = self.postsList[safe: indexPath.row] else { return }
             if post.imageURLs.count != images?.count { return } /// patch fix for wrong images getting called with a post -> crashing on image out of bounds on get frame indexes
