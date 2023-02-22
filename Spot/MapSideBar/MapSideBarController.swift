@@ -59,10 +59,10 @@ class MapSideBarController: UIViewController {
             $0.bottom.equalToSuperview().inset(10)
         }
 
-        tableView.register(TableViewLoadingCell.self, forCellReuseIdentifier: "LoadingCell")
-        tableView.register(SideBarNewMapCell.self, forCellReuseIdentifier: "NewCell")
-        tableView.register(SideBarCampusMapCell.self, forCellReuseIdentifier: "CampusCell")
-        tableView.register(SideBarCustomMapCell.self, forCellReuseIdentifier: "MapCell")
+       // tableView.register(TableViewLoadingCell.self, forCellReuseIdentifier: "LoadingCell")
+       // tableView.register(SideBarNewMapCell.self, forCellReuseIdentifier: "NewCell")
+       // tableView.register(SideBarCampusMapCell.self, forCellReuseIdentifier: "CampusCell")
+       // tableView.register(SideBarCustomMapCell.self, forCellReuseIdentifier: "MapCell")
         tableView.delegate = self
         tableView.dataSource = self
         view.addSubview(tableView)
@@ -94,7 +94,8 @@ extension MapSideBarController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let emptyCell = UITableViewCell()
-        switch indexPath.row {
+        return emptyCell
+     /*   switch indexPath.row {
         case 0:
             if mapsLoaded {
                 return tableView.dequeueReusableCell(withIdentifier: "NewCell", for: indexPath) as? SideBarNewMapCell ?? emptyCell
@@ -116,7 +117,7 @@ extension MapSideBarController: UITableViewDelegate, UITableViewDataSource {
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? SideBarCustomMapCell else { return emptyCell }
             cell.setUp(map: UserDataModel.shared.userInfo.mapsList[indexPath.row - extraCells])
             return cell
-        }
+        } */
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

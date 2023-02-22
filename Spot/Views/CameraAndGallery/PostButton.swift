@@ -17,7 +17,14 @@ final class PostButton: UIButton {
         return imageView
     }()
     
-    var postText: UILabel!
+    private(set) lazy var postText: UILabel = {
+        let label = UILabel()
+        label.text = "Post"
+        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Bold", size: 16.5)
+        return label
+    }()
+    
     override var isEnabled: Bool {
         didSet {
             alpha = isEnabled ? 1.0 : 0.5
@@ -37,12 +44,7 @@ final class PostButton: UIButton {
             $0.width.equalTo(16)
         }
 
-        postText = UILabel {
-            $0.text = "Post"
-            $0.textColor = .black
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 16.5)
-            addSubview($0)
-        }
+        addSubview(postText)
         postText.snp.makeConstraints {
             $0.leading.equalTo(postIcon.snp.trailing).offset(6)
             $0.centerY.equalToSuperview()

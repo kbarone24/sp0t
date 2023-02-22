@@ -47,7 +47,7 @@ class FindFriendsHeader: UITableViewHeaderFooterView {
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
         let backgroundView = UIView()
-        backgroundView.backgroundColor = .white
+        backgroundView.backgroundColor = UIColor(named: "SpotBlack")
         self.backgroundView = backgroundView
 
         contentView.addSubview(label)
