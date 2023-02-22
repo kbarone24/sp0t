@@ -20,7 +20,7 @@ class EditProfileViewController: UIViewController {
         let label = UILabel()
         label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
         label.text = "Edit profile"
-        label.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+        label.textColor = .white
         label.textAlignment = .center
         return label
     }()
@@ -83,10 +83,10 @@ class EditProfileViewController: UIViewController {
     }()
     var locationTextfield: UITextField = {
         let textField = UITextField()
-        textField.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
+        textField.backgroundColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1)
         textField.layer.cornerRadius = 11
         textField.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-        textField.textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+        textField.textColor = .white
         textField.tintColor = UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 1)
         textField.setLeftPaddingPoints(8)
         textField.setRightPaddingPoints(8)
@@ -123,7 +123,7 @@ class EditProfileViewController: UIViewController {
     }
 
     private func viewSetup() {
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(named: "SpotBlack")
 
         view.addSubview(editLabel)
         editLabel.snp.makeConstraints {

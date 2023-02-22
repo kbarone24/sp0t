@@ -87,6 +87,9 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         cancelOnDismiss = true
+        if isMovingFromParent {
+            NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "PhotoGalleryRemove")))
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -105,13 +108,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
         navigationController?.navigationBar.tintColor = .white
         navigationController?.navigationBar.isTranslucent = false
 
-        let cancelButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(cancelTap(_:)))
-        navigationItem.setLeftBarButton(cancelButton, animated: false)
-        self.navigationItem.leftBarButtonItem?.tintColor = nil
-
-        if let mapNav = navigationController as? MapNavigationController {
-            mapNav.requiredStatusBarStyle = .lightContent
-        }
     }
 
     func addCollectionView() {
@@ -149,22 +145,6 @@ class PhotoGalleryController: UIViewController, PHPhotoLibraryChangeObserver {
                 self.refreshes += 1
                 DispatchQueue.main.async { self.collectionView.reloadData() }
             }
-        }
-    }
-
-    @objc func cancelTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "CalleryCancelTap")
-        if let cameraVC = navigationController?.viewControllers.first(where: { $0 is CameraViewController }) as? CameraViewController {
-            cameraVC.cancelFromGallery()
-            DispatchQueue.main.async { self.navigationController?.popToViewController(cameraVC, animated: true) }
-        }
-    }
-
-    @objc func nextTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "GalleryNextTap")
-        if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "ImagePreview") as? ImagePreviewController {
-            vc.mode = .image
-            DispatchQueue.main.async { self.navigationController?.pushViewController(vc, animated: false) }
         }
     }
 

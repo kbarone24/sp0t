@@ -123,17 +123,7 @@ class ProfileViewController: UIViewController {
     }
 
     private func setUpNavBar() {
-        navigationController?.setNavigationBarHidden(false, animated: true)
-
-        navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
-        navigationController?.navigationBar.tintColor = UIColor.white
-
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor.white,
-            .font: UIFont(name: "SFCompactText-Heavy", size: 19) as Any
-        ]
+        navigationController?.setUpDarkNav(translucent: true)
 
         if relation != .myself {
             let button = UIBarButtonItem(

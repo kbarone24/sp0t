@@ -28,6 +28,14 @@ extension ChooseSpotController: UISearchBarDelegate {
             NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(runSpotQuery), object: nil)
         }
     }
+
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        tableView.isScrollEnabled = false
+    }
+
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        tableView.isScrollEnabled = true
+    }
 }
 
 extension ChooseSpotController {

@@ -14,6 +14,7 @@ import UIKit
 
 protocol ChooseSpotDelegate: AnyObject {
     func finishPassing(spot: MapSpot?)
+    func toggle(cancel: Bool)
 }
 
 final class ChooseSpotController: UIViewController {
@@ -32,7 +33,7 @@ final class ChooseSpotController: UIViewController {
     private(set) lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
-        tableView.backgroundColor = .white
+        tableView.backgroundColor = nil
         tableView.separatorStyle = .none
         tableView.showsVerticalScrollIndicator = false
         tableView.register(ChooseSpotCell.self, forCellReuseIdentifier: "ChooseSpot")
@@ -90,7 +91,6 @@ final class ChooseSpotController: UIViewController {
 
     lazy var postLocation = CLLocation()
     var delegate: ChooseSpotDelegate?
-    unowned var previewVC: ImagePreviewController?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -101,7 +101,7 @@ final class ChooseSpotController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        previewVC?.cancelOnDismiss = true
+        delegate?.toggle(cancel: true)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -112,7 +112,7 @@ final class ChooseSpotController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         /// added to will disappear due to lag when dismissing and quick tapping on ImagePreviewController
         super.viewWillDisappear(animated)
-        previewVC?.cancelOnDismiss = false
+        delegate?.toggle(cancel: false)
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -120,12 +120,8 @@ final class ChooseSpotController: UIViewController {
     }
 
     func setUpView() {
-        view.backgroundColor = .white
-        searchBarContainer = UIView {
-            $0.backgroundColor = .white
-            view.addSubview($0)
-        }
-        searchBarContainer.backgroundColor = .white
+        view.backgroundColor = UIColor(named: "SpotBlack")
+        searchBarContainer.backgroundColor = nil
         view.addSubview(searchBarContainer)
         searchBarContainer.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
@@ -169,6 +165,7 @@ final class ChooseSpotController: UIViewController {
         Mixpanel.mainInstance().track(event: "ChooseSpotCreateTap")
         DispatchQueue.main.async {
             self.delegate?.finishPassing(spot: nil)
+            HapticGenerator.shared.play(.light)
             self.dismiss(animated: true)
         }
     }
@@ -209,6 +206,7 @@ extension ChooseSpotController: UITableViewDelegate, UITableViewDataSource {
         DispatchQueue.main.async {
             self.searchBar.resignFirstResponder()
             self.delegate?.finishPassing(spot: spot)
+            HapticGenerator.shared.play(.light)
             self.dismiss(animated: true)
         }
     }

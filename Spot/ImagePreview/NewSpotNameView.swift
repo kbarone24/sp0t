@@ -88,6 +88,6 @@ extension NewSpotNameView: UITextViewDelegate {
 
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         if text == "\n" { textView.endEditing(true); return false }
-        return text.count < 50
+        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 50)
     }
 }

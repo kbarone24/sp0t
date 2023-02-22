@@ -15,7 +15,6 @@ import AVKit
 import AVFoundation
 
 final class ImagePreviewController: UIViewController {
-    
     enum Mode: Hashable {
         case image
         case video(url: URL)
@@ -26,33 +25,19 @@ final class ImagePreviewController: UIViewController {
     lazy var currentImage = PostImagePreview()
     lazy var nextImage = PostImagePreview()
     lazy var previousImage = PostImagePreview()
-
-    private lazy var backButton: UIButton = {
-        let button = UIButton()
-        button.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        button.contentHorizontalAlignment = .fill
-        button.contentVerticalAlignment = .fill
-        button.setImage(UIImage(named: "BackArrow"), for: .normal)
-        button.addTarget(self, action: #selector(backTap(_:)), for: .touchUpInside)
-        return button
-    }()
-    
     private lazy var dotView = UIView()
 
-    private lazy var nextButton: FooterNextButton = {
-        let button = FooterNextButton()
-        button.addTarget(self, action: #selector(chooseMapTap), for: .touchUpInside)
-        button.isEnabled = true
-        return button
-    }()
-    
-    private(set) lazy var postButton: UIButton = {
+    lazy var postButton: UIButton = {
         let button = UIButton()
+        button.setTitle("Post", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 15)
+        button.backgroundColor = UIColor(named: "SpotGreen")
+        button.layer.cornerRadius = 8
         button.addTarget(self, action: #selector(postTap), for: .touchUpInside)
-        button.backgroundColor = UIColor(red: 0.225, green: 0.952, blue: 1, alpha: 1)
         return button
     }()
-    
+
     private(set) lazy var progressMask: UIView = {
         let view = UIView()
         view.backgroundColor = .black.withAlphaComponent(0.7)
@@ -62,8 +47,9 @@ final class ImagePreviewController: UIViewController {
     
     private(set) lazy var progressBar = ProgressBar()
     private(set) lazy var postDetailView = PostDetailView()
-    private(set) lazy var spotNameButton = SpotNameButton()
-    
+    private(set) lazy var spotNameButton = PostAccessoryButton(type: .Spot, name: nil)
+    private(set) lazy var mapNameButton = PostAccessoryButton(type: .Map, name: nil)
+
     private(set) lazy var atButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = UIColor.black.withAlphaComponent(0.5)
@@ -129,11 +115,7 @@ final class ImagePreviewController: UIViewController {
     private(set) lazy var tagFriendsView = TagFriendsView()
     
     private var player: AVPlayer?
-    
-    var actionButton: UIButton {
-        return newMapMode ? postButton : nextButton
-    }
-    
+
     var mode: Mode = .image // default
     let textViewPlaceholder = "Write a caption..."
     var shouldAnimateTextMask = false // tells keyboardWillChange whether to reposition
@@ -155,12 +137,7 @@ final class ImagePreviewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // set hidden for smooth transition
-        self.navigationController?.setNavigationBarHidden(true, animated: true)
-    }
-
-    override func viewDidLayoutSubviews() {
-        print("frame", currentImage.frame)
+        setUpNavBar()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -171,6 +148,9 @@ final class ImagePreviewController: UIViewController {
         if mode != .image {
             player?.play()
         }
+
+        // for smooth nav bar transition -> black background not removed with animation
+        navigationController?.setNavigationBarHidden(false, animated: false)
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -178,6 +158,14 @@ final class ImagePreviewController: UIViewController {
         IQKeyboardManager.shared.enable = true
         disableKeyboardMethods()
         player?.pause()
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isMovingFromParent {
+            resetPostInfo()
+            NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "ImagePreviewRemove")))
+        }
     }
 
     func enableKeyboardMethods() {
@@ -203,6 +191,12 @@ final class ImagePreviewController: UIViewController {
         case .video(let url):
             setVideoPostInfo(url: url)
         }
+    }
+
+    private func setUpNavBar() {
+        navigationController?.setNavigationBarHidden(true, animated: true)
+      //  navigationController?.navigationBar.tintColor = .white
+        navigationController?.navigationBar.addTransparentBackground()
     }
     
     private func setImagePostInfo() {
@@ -284,50 +278,24 @@ final class ImagePreviewController: UIViewController {
             addPreviewVideo(path: url)
         }
 
-        view.addSubview(backButton)
-        backButton.snp.makeConstraints {
-            $0.leading.equalTo(5.5)
-            $0.top.equalToSuperview().offset(60)
-            $0.width.equalTo(48.6)
-            $0.height.equalTo(38.6)
+        view.addSubview(postButton)
+        postButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(15)
+            $0.bottom.equalToSuperview().inset(50)
+            $0.width.equalTo(94)
+            $0.height.equalTo(40)
         }
 
-        if newMapMode {
-            let titleView = NewMapTitleView()
-            view.addSubview(titleView)
-            titleView.snp.makeConstraints {
-                $0.leading.trailing.equalToSuperview().inset(60)
-                $0.top.equalTo(backButton.snp.top).offset(2)
-                $0.centerX.equalToSuperview()
-            }
+        view.addSubview(progressMask)
+        progressMask.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
 
-            view.addSubview(postButton)
-            postButton.snp.makeConstraints {
-                $0.leading.trailing.equalToSuperview().inset(18)
-                $0.height.equalTo(51)
-                $0.bottom.equalTo(-43)
-            }
-
-            view.addSubview(progressMask)
-            progressMask.snp.makeConstraints {
-                $0.edges.equalToSuperview()
-            }
-
-            progressMask.addSubview(progressBar)
-            progressBar.snp.makeConstraints {
-                $0.leading.trailing.equalToSuperview().inset(50)
-                $0.bottom.equalTo(postButton.snp.top).offset(-20)
-                $0.height.equalTo(18)
-            }
-
-        } else {
-            view.addSubview(nextButton)
-            nextButton.snp.makeConstraints {
-                $0.trailing.equalToSuperview().inset(15)
-                $0.bottom.equalToSuperview().inset(50)
-                $0.width.equalTo(94)
-                $0.height.equalTo(40)
-            }
+        progressMask.addSubview(progressBar)
+        progressBar.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(50)
+            $0.centerY.equalToSuperview()
+            $0.height.equalTo(18)
         }
 
         view.addGestureRecognizer(swipeToClose)
@@ -409,16 +377,35 @@ final class ImagePreviewController: UIViewController {
         view.addSubview(postDetailView)
         postDetailView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(160)
+            $0.height.equalTo(200)
             $0.bottom.equalToSuperview().offset(-105) // hard code bc done button and next button not perfectly aligned
+        }
+
+        spotNameButton.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
+        spotNameButton.delegate = self
+        postDetailView.addSubview(spotNameButton)
+        spotNameButton.snp.makeConstraints {
+            $0.leading.equalTo(16)
+            $0.bottom.equalToSuperview().offset(-6)
+            $0.height.equalTo(36)
+            $0.trailing.lessThanOrEqualToSuperview().inset(157)
+        }
+
+        mapNameButton.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
+        mapNameButton.delegate = self
+        postDetailView.addSubview(mapNameButton)
+        mapNameButton.snp.makeConstraints {
+            $0.leading.equalTo(spotNameButton.snp.trailing).offset(9)
+            $0.bottom.height.equalTo(spotNameButton)
+            $0.trailing.lessThanOrEqualToSuperview().inset(16)
         }
 
         textView.delegate = self
         postDetailView.addSubview(textView)
         textView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.height.lessThanOrEqualToSuperview().inset(36)
-            $0.bottom.equalToSuperview().offset(-3)
+        //    $0.height.lessThanOrEqualToSuperview().inset(36)
+            $0.bottom.equalTo(spotNameButton.snp.top)
         }
 
         postDetailView.addSubview(atButton)
@@ -426,15 +413,6 @@ final class ImagePreviewController: UIViewController {
             $0.trailing.equalToSuperview().inset(15)
             $0.top.equalTo(textView.snp.top).offset(-4)
             $0.height.width.equalTo(36)
-        }
-
-        spotNameButton.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
-        postDetailView.addSubview(spotNameButton)
-        spotNameButton.snp.makeConstraints {
-            $0.leading.equalTo(16)
-            $0.bottom.equalTo(textView.snp.top)
-            $0.height.equalTo(36)
-            $0.trailing.lessThanOrEqualToSuperview().inset(16)
         }
 
         newSpotNameView.isHidden = true

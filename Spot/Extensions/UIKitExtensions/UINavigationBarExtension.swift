@@ -65,52 +65,53 @@ extension UINavigationBar {
         }
     }
 
+    func addTransparentBackground() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundColor = .clear
+        appearance.shadowImage = UIImage()
+        appearance.titleTextAttributes[.foregroundColor] = UIColor.white
+        appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)
+        isTranslucent = true
+        tintColor = .white
+        standardAppearance = appearance
+        scrollEdgeAppearance = appearance
+    }
+
     func addBlackBackground() {
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundColor = .black
-            appearance.titleTextAttributes[.foregroundColor] = UIColor.white
-            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)!
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
-        } else {
-            setBackgroundImage(UIImage(color: UIColor.black), for: .default)
-        }
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundColor = UIColor(named: "SpotBlack")
+        appearance.titleTextAttributes[.foregroundColor] = UIColor.white
+        appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 19)
+        standardAppearance = appearance
+        scrollEdgeAppearance = appearance
     }
 
     func addWhiteBackground() {
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundColor = .white
-            appearance.titleTextAttributes[.foregroundColor] = UIColor.black
-            appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 20)!
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
-        } else {
-            setBackgroundImage(UIImage(color: UIColor.white), for: .default)
-        }
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundColor = .white
+        appearance.titleTextAttributes[.foregroundColor] = UIColor.black
+        appearance.titleTextAttributes[.font] = UIFont(name: "SFCompactText-Heavy", size: 20)
+        standardAppearance = appearance
+        scrollEdgeAppearance = appearance
     }
 
     func removeBackgroundImage() {
-
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundImage = UIImage()
-            standardAppearance = appearance
-            scrollEdgeAppearance = appearance
-        } else {
-            setBackgroundImage(UIImage(), for: .default)
-        }
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundImage = UIImage()
+        standardAppearance = appearance
+        scrollEdgeAppearance = appearance
     }
 
-    func image(fromLayer layer: CALayer) -> UIImage {
+    func image(fromLayer layer: CALayer) -> UIImage? {
         UIGraphicsBeginImageContext(layer.frame.size)
-        layer.render(in: UIGraphicsGetCurrentContext()!)
+        guard let context = UIGraphicsGetCurrentContext() else { return nil }
+        layer.render(in: context)
         let outputImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return outputImage!
+        return outputImage
     }
 }

@@ -111,8 +111,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
 extension ProfileViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         // Show navigation bar when user scroll pass the header section
-        if scrollView.contentOffset.y > 35 {
-            self.navigationItem.title = userProfile?.name
-        } else { self.title = ""}
+        DispatchQueue.main.async {
+            self.navigationItem.title = scrollView.contentOffset.y > 35 ? self.userProfile?.name : ""
+        }
     }
 }

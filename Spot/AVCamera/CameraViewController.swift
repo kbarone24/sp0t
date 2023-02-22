@@ -181,11 +181,13 @@ final class CameraViewController: UIViewController {
         
         NextLevel.shared.videoConfiguration.maximumCaptureDuration = maxVideoDuration
         NextLevel.shared.audioConfiguration.bitRate = 44_000
+
+        NotificationCenter.default.addObserver(self, selector: #selector(photoGalleryRemove), name: Notification.Name(rawValue: "PhotoGalleryRemove"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(imagePreviewRemove), name: Notification.Name(rawValue: "ImagePreviewRemove"), object: nil)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
         navigationController?.setNavigationBarHidden(true, animated: true)
         
         if NextLevel.authorizationStatus(forMediaType: AVMediaType.video) == .authorized &&
@@ -254,13 +256,12 @@ final class CameraViewController: UIViewController {
         NextLevel.shared.stop()
         progressView.isHidden = true
         instructionsLabel.isHidden = true
+        newMapMode = false
         
         if isMovingFromParent {
             if UploadPostModel.shared.postObject == nil {
                 UploadPostModel.shared.destroy()
             }
-            
-            navigationController?.setNavigationBarHidden(false, animated: true)
         }
     }
     
