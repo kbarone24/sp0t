@@ -102,23 +102,14 @@ extension ImagePreviewController {
         nextImage.setCurrentImage(post: post)
         addDots()
     }
-    
-    @objc func backTap(_ sender: UIButton) {
-        Mixpanel.mainInstance().track(event: "ImagePreviewBackTap")
+
+    func resetPostInfo() {
         if imageObject != nil {
             // remove old captured image
             UploadPostModel.shared.selectedObjects.removeAll(where: { $0.fromCamera })
         }
-        
-        let controllers = navigationController?.viewControllers
-        if let camera = controllers?[safe: (controllers?.count ?? 0) - 3] as? CameraViewController {
-            // reset postObject
-            camera.setUpPost()
-        }
-        
-        navigationController?.popViewController(animated: false)
     }
-    
+        
     @objc func atTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewTagUserTap")
         HapticGenerator.shared.play(.light)
@@ -133,11 +124,24 @@ extension ImagePreviewController {
     
     @objc func spotTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewSpotNameTap")
-        if newSpotNameView.spotName != "" { newSpotNameView.textView.becomeFirstResponder(); return }
+        if newSpotNameView.spotName != "" {
+            newSpotNameView.textView.becomeFirstResponder()
+            return
+        }
         textView.resignFirstResponder()
-        launchPicker()
+        launchChooseSpot()
     }
-    
+
+    @objc func mapTap() {
+        Mixpanel.mainInstance().track(event: "ImagePreviewMapNameTap")
+        if newMapMode {
+            launchNewMap()
+            return
+        }
+        textView.resignFirstResponder()
+        launchChooseMap()
+    }
+
     @objc func captionTap() {
         Mixpanel.mainInstance().track(event: "ImagePreviewCaptionTap")
         if newSpotNameView.textView.isFirstResponder { return }
@@ -150,22 +154,19 @@ extension ImagePreviewController {
         UploadPostModel.shared.postObject?.caption = captionText == textViewPlaceholder ? "" : captionText
         UploadPostModel.shared.setTaggedUsers()
     }
-    
-    @objc func chooseMapTap() {
-        Mixpanel.mainInstance().track(event: "ImagePreviewChooseMapTap")
-        setCaptionValues()
-        if let vc = storyboard?.instantiateViewController(withIdentifier: "ShareTo") as? ChooseMapController {
-            navigationController?.pushViewController(vc, animated: true)
-        }
-    }
-    
-    func launchPicker() {
+
+    func launchChooseSpot() {
         cancelOnDismiss = true
-        if let vc = storyboard?.instantiateViewController(withIdentifier: "ChooseSpot") as? ChooseSpotController {
-            vc.delegate = self
-            vc.previewVC = self
-            DispatchQueue.main.async { self.present(vc, animated: true) }
-        }
+        let vc = ChooseSpotController()
+        vc.delegate = self
+        DispatchQueue.main.async { self.present(vc, animated: true) }
+    }
+
+    func launchChooseMap() {
+        cancelOnDismiss = true
+        let vc = ChooseMapController()
+        vc.delegate = self
+        DispatchQueue.main.async { self.present(vc, animated: true) }
     }
     
     @objc func keyboardWillShow(_ notification: NSNotification) {
@@ -182,7 +183,7 @@ extension ImagePreviewController {
             self.postDetailView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
                 $0.bottom.equalToSuperview().offset(-keyboardFrame.height)
-                $0.height.equalTo(160)
+                $0.height.equalTo(200)
             }
         }
     }
@@ -195,8 +196,8 @@ extension ImagePreviewController {
             self.postDetailView.snp.removeConstraints()
             self.postDetailView.snp.makeConstraints {
                 $0.leading.trailing.equalToSuperview()
-                $0.height.equalTo(160)
-                $0.bottom.equalTo(self.actionButton.snp.top).offset(-15)
+                $0.height.equalTo(200)
+                $0.bottom.equalTo(self.postButton.snp.top).offset(-15)
             }
         }
     }
@@ -237,7 +238,8 @@ extension ImagePreviewController {
         if spotName != "" {
             createNewSpot(spotName: spotName)
         } else {
-            cancelSpotSelection()
+            print("cancel on remove name view")
+            cancelSpot()
         }
         
         newSpotNameView.isHidden = true

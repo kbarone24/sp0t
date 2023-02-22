@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import SDWebImage
 
-class SideBarCustomMapCell: UITableViewCell {
+class ChooseMapCustomCell: UITableViewCell {
     private lazy var mapImage: UIImageView = {
         let view = UIImageView()
         view.layer.masksToBounds = true
@@ -21,8 +21,8 @@ class SideBarCustomMapCell: UITableViewCell {
 
     private lazy var mapLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .black
-        label.font = UIFont(name: "SFCompactText-Bold", size: 17.5)
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 18)
         label.numberOfLines = 2
         label.lineBreakMode = .byTruncatingTail
         label.adjustsFontSizeToFitWidth = true
@@ -32,13 +32,13 @@ class SideBarCustomMapCell: UITableViewCell {
 
     private lazy var bottomLine: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.961, green: 0.961, blue: 0.961, alpha: 1)
+        view.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
         return view
     }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = .white
+        backgroundColor = UIColor(named: "SpotBlack")
         selectionStyle = .none
 
         contentView.addSubview(mapImage)
@@ -68,6 +68,8 @@ class SideBarCustomMapCell: UITableViewCell {
     }
 
     func setUp(map: CustomMap) {
+        backgroundColor = map == UploadPostModel.shared.mapObject ? UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.4) : UIColor(named: "SpotBlack")
+
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
         mapImage.sd_setImage(
             with: URL(string: map.imageURL),

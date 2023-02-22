@@ -24,22 +24,65 @@ extension ImagePreviewController: UIGestureRecognizerDelegate {
     }
 }
 
+extension ImagePreviewController: PostAccessoryDelegate {
+    func cancelSpot() {
+        print("cancel spot")
+        newSpotNameView.textView.text = ""
+        UploadPostModel.shared.setSpotValues(spot: nil)
+        spotNameButton.name = nil
+    }
+
+    func cancelMap() {
+        UploadPostModel.shared.setMapValues(map: nil)
+        mapNameButton.name = nil
+        newMapMode = false
+    }
+}
+
 extension ImagePreviewController: ChooseSpotDelegate {
+    func toggle(cancel: Bool) {
+        cancelOnDismiss = cancel
+    }
+
     func finishPassing(spot: MapSpot?) {
+        print("finish passing spot", spot?.spotName)
         cancelOnDismiss = false
         if spot != nil {
             UploadPostModel.shared.setSpotValues(spot: spot)
-            spotNameButton.spotName = spot?.spotName ?? ""
+            spotNameButton.name = spot?.spotName ?? ""
         } else {
             newSpotNameView.textView.becomeFirstResponder()
         }
-
-    }
-    func cancelSpotSelection() {
-        UploadPostModel.shared.setSpotValues(spot: nil)
-        spotNameButton.spotName = nil
     }
  }
+
+extension ImagePreviewController: ChooseMapDelegate {
+    func finishPassing(map: CustomMap?) {
+        if let map {
+            UploadPostModel.shared.setMapValues(map: map)
+            mapNameButton.name = map.mapName
+        } else {
+            launchNewMap()
+        }
+    }
+
+    func launchNewMap() {
+        DispatchQueue.main.async {
+            let mapObject = self.newMapMode ? UploadPostModel.shared.mapObject : nil
+            let vc = NewMapController(mapObject: mapObject)
+            vc.delegate = self
+            self.present(vc, animated: true)
+        }
+    }
+}
+
+extension ImagePreviewController: NewMapDelegate {
+    func finishPassing(map: CustomMap) {
+        newMapMode = true
+        UploadPostModel.shared.setMapValues(map: map)
+        mapNameButton.name = map.mapName
+    }
+}
 
 extension ImagePreviewController: TagFriendsDelegate {
     func finishPassing(selectedUser: UserProfile) {
@@ -72,16 +115,7 @@ extension ImagePreviewController: UITextViewDelegate {
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         // return on done button tap
         if text == "\n" { textView.endEditing(true); return false }
-
-        let maxLines: CGFloat = 6
-        let maxHeight: CGFloat = (textView.font?.lineHeight ?? 0) * maxLines + 30 // lineheight * # lines  + textContainer insets
-
-        let currentText = textView.text ?? ""
-        guard let stringRange = Range(range, in: currentText) else { return false }
-        let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
-
-        let val = getCaptionHeight(text: updatedText) <= maxHeight
-        return val
+        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 350)
     }
 
     func textViewDidChange(_ textView: UITextView) {
@@ -116,18 +150,6 @@ extension ImagePreviewController: UITextViewDelegate {
         spotNameButton.isHidden = true
     }
 
-    func getCaptionHeight(text: String) -> CGFloat {
-        let temp = UITextView(frame: textView.frame)
-        temp.text = text
-        temp.font = UIFont(name: "SFCompactText-Regular", size: 19)
-        temp.textContainerInset = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
-        temp.isScrollEnabled = false
-        temp.textContainer.maximumNumberOfLines = 6
-
-        let size = temp.sizeThatFits(CGSize(width: temp.bounds.width, height: UIScreen.main.bounds.height))
-        return max(51, size.height)
-    }
-
     @objc func swipeToClose(_ sender: UIPanGestureRecognizer) {
         if !self.textView.isFirstResponder { return }
         let direction = sender.velocity(in: view)
@@ -141,7 +163,6 @@ extension ImagePreviewController: UITextViewDelegate {
 
     @objc func tapToClose(_ sender: UITapGestureRecognizer) {
         if !self.textView.isFirstResponder { return }
-        print("frame y", sender.location(in: postDetailView).y)
         if sender.location(in: postDetailView).y > spotNameButton.frame.minY { print(">"); return }
         textView.resignFirstResponder()
         swipeToClose.isEnabled = false

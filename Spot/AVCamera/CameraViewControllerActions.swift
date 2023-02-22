@@ -19,7 +19,16 @@ extension CameraViewController {
     @objc func galleryTap() {
         openGallery()
     }
-    
+
+    @objc func imagePreviewRemove() {
+        print("set up post")
+        setUpPost()
+    }
+
+    @objc func photoGalleryRemove() {
+        cancelFromGallery()
+    }
+
     private func openGallery() {
         if UploadPostModel.shared.galleryAccess == .authorized || UploadPostModel.shared.galleryAccess == .limited {
             openGallery(assetsFetched: true)
@@ -42,6 +51,7 @@ extension CameraViewController {
     }
     
     func cancelFromGallery() {
+        print("cancel from gallery")
         Mixpanel.mainInstance().track(event: "UploadCancelFromGallery", properties: nil)
         // reset selectedImages and imageObjects
         UploadPostModel.shared.selectedObjects.removeAll()

@@ -38,15 +38,15 @@ final class FriendsListController: UIViewController {
 
     private lazy var cancelButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(named: "CancelButtonDark"), for: .normal)
+        button.setImage(UIImage(named: "CancelButton"), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         return button
     }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .black
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 20.5)
+        label.textColor = .white
+        label.font = UIFont(name: "SFCompactText-Heavy", size: 19)
         label.textAlignment = .center
         return label
     }()
@@ -62,18 +62,10 @@ final class FriendsListController: UIViewController {
         return view
     }()
 
-    private(set) lazy var searchBar: UISearchBar = {
-        let searchBar = UISearchBar()
-        searchBar.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
-        searchBar.searchTextField.backgroundColor = UIColor(red: 0.945, green: 0.945, blue: 0.949, alpha: 1)
-        searchBar.searchTextField.leftView?.tintColor = UIColor(red: 0.396, green: 0.396, blue: 0.396, alpha: 1)
+    private(set) lazy var searchBar: SpotSearchBar = {
+        let searchBar = SpotSearchBar()
         searchBar.delegate = self
-        searchBar.autocapitalizationType = .none
-        searchBar.autocorrectionType = .no
         searchBar.placeholder = " Search"
-        searchBar.clipsToBounds = true
-        searchBar.layer.cornerRadius = 3
-        searchBar.keyboardDistanceFromTextField = 250
         return searchBar
     }()
 
@@ -136,7 +128,7 @@ final class FriendsListController: UIViewController {
     }
 
     func addTableView() {
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(named: "SpotBlack")
 
         if allowsSelection {
             view.addSubview(doneButton)

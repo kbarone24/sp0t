@@ -196,7 +196,7 @@ final class PostController: UIViewController {
         super.viewDidLoad()
         edgesForExtendedLayout = [.top]
         if parentVC == .Home {
-            DispatchQueue.global(qos: .userInitiated).async { self.getMyPosts() }
+            DispatchQueue.global().async { self.getMyPosts() }
         }
     }
     
@@ -244,8 +244,11 @@ final class PostController: UIViewController {
         }
 
         navigationItem.titleView = titleView
-        DispatchQueue.main.async {
-            self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
+        
+        if parentVC != .Home {
+            DispatchQueue.main.async {
+                self.contentTable.scrollToRow(at: IndexPath(row: self.selectedPostIndex, section: 0), at: .top, animated: false)
+            }
         }
     }
 

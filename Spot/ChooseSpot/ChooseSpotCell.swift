@@ -12,14 +12,14 @@ import UIKit
 class ChooseSpotCell: UITableViewCell {
     private lazy var topLine: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.967, green: 0.967, blue: 0.967, alpha: 1)
+        view.backgroundColor = UIColor(red: 0.129, green: 0.129, blue: 0.129, alpha: 1)
         return view
     }()
     private lazy var distanceLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .right
         label.textColor = UIColor(red: 0.808, green: 0.808, blue: 0.808, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 13)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         label.sizeToFit()
         return label
     }()
@@ -27,25 +27,25 @@ class ChooseSpotCell: UITableViewCell {
         let label = UILabel()
         label.lineBreakMode = .byTruncatingTail
         label.font = UIFont(name: "SFCompactText-Semibold", size: 16)
-        label.textColor = .black
+        label.textColor = UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1)
         return label
     }()
     private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
+        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         label.lineBreakMode = .byTruncatingTail
         return label
     }()
     private lazy var separatorView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.839, green: 0.839, blue: 0.839, alpha: 1)
+        view.backgroundColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 1)
         return view
     }()
     private var postsLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1)
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 13.5)
+        label.textColor = UIColor(red: 0.671, green: 0.671, blue: 0.671, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
         return label
     }()
 
@@ -95,7 +95,7 @@ class ChooseSpotCell: UITableViewCell {
     }
 
     func setUp(spot: MapSpot) {
-        backgroundColor = spot.selected ?? false ? UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.4) : .white
+        backgroundColor = spot.selected ?? false ? UIColor(red: 0.488, green: 0.969, blue: 1, alpha: 0.4) : UIColor(named: "SpotBlack")
         spotID = spot.id ?? ""
 
         distanceLabel.text = spot.distance.getLocationString()

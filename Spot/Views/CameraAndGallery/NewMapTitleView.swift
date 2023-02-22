@@ -28,7 +28,7 @@ class NewMapTitleView: UIView {
         }
 
         mapLabel = UILabel {
-            $0.text = "\(UploadPostModel.shared.mapObject!.mapName)"
+            $0.text = "\(UploadPostModel.shared.mapObject?.mapName ?? "")"
             $0.textColor = .white
             $0.font = UIFont(name: "SFCompactText-Bold", size: 16.5)
             $0.textAlignment = .center

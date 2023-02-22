@@ -13,11 +13,7 @@ extension CommentsController: UITextViewDelegate {
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         /// send tap
         if text == "\n" { postComment(); return false }
-
-        let currentText = textView.text ?? ""
-        guard let stringRange = Range(range, in: currentText) else { return false }
-        let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
-        return updatedText.count <= 560
+        return textView.shouldChangeText(range: range, replacementText: text, maxChar: 450)
     }
 
     func textViewDidChange(_ textView: UITextView) {
