@@ -109,8 +109,6 @@ class NotificationsController: UIViewController {
     }
 
     private func setTabBarIcon() {
-        print("notis contains seen", UserDataModel.shared.notifications.contains(where: { !$0.seen }), "pending friends", UserDataModel.shared.pendingFriendRequests.contains(where: { !$0.seen }))
-
         let unseenPost = UserDataModel.shared.notifications.contains(where: { !$0.seen }) || UserDataModel.shared.pendingFriendRequests.contains(where: { !$0.seen })
         DispatchQueue.main.async {
             let unselectedImage = unseenPost ? UIImage(named: "NotificationsTabActive") : UIImage(named: "NotificationsTab")

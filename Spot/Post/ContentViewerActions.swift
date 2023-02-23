@@ -84,7 +84,7 @@ extension ContentViewerCell {
 
     func animateLocation() {
         if locationView.bounds.width == 0 { return }
-        if delegate?.getSelectedPostIndex() == self.globalRow && locationView.contentSize.width > locationView.bounds.width - (locationView.contentInset.left + locationView.contentInset.right) {
+        if delegate?.getSelectedPostIndex() == self.globalRow && locationView.contentSize.width > locationView.bounds.width {
             DispatchQueue.main.async { self.locationView.startAnimating() }
         }
     }

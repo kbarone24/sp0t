@@ -103,9 +103,7 @@ extension PostController {
     func updateNotifications(postID: String) {
         db.collection("users").document(uid).collection("notifications").whereField("postID", isEqualTo: postID).getDocuments { snap, _ in
             guard let snap = snap else { return }
-            for doc in snap.documents {
-                doc.reference.updateData(["seen": true])
-            }
+            UserDataModel.shared.setSeenForDocumentIDs(docIDs: snap.documents.map({ $0.documentID }))
         }
     }
 
