@@ -131,6 +131,7 @@ class NewMapController: UIViewController {
         // most values will be set in updatePostLevelValues
         mapObject = CustomMap(
             id: UUID().uuidString,
+            communityMap: true,
             founderID: uid,
             imageURL: "",
             likers: [uid],

@@ -262,6 +262,7 @@ class ActivityCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        postImage.sd_cancelCurrentImageLoad()
         profilePic.sd_cancelCurrentImageLoad()
         avatarImage.sd_cancelCurrentImageLoad()
     }
