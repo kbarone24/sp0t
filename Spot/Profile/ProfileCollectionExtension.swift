@@ -17,13 +17,11 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        // always show empty posts cell for non-friend
-        let showCollectionItems = (noPostLabel.isHidden && (!maps.isEmpty || !posts.isEmpty)) || (relation != .myself && relation != .friend)
-        return section == 0 ? 1 : showCollectionItems ? maps.count + 1 : 0
+        return section == 0 ? 1 : postsList.count
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.section == 0 ? "ProfileHeaderCell" : "BodyCell", for: indexPath)
         guard let userProfile = userProfile else {
             return collectionView.dequeueReusableCell(withReuseIdentifier: "Default", for: indexPath)
         }
@@ -34,52 +32,36 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             headerCell.friendListButton.addTarget(self, action: #selector(friendsListTap), for: .touchUpInside)
             return headerCell
 
-        } else if let mapCell = cell as? ProfileMyMapCell {
-            mapCell.cellSetup(userAccount: userProfile.username, posts: posts, relation: relation)
-            return mapCell
-
-        } else if let bodyCell = cell as? ProfileBodyCell {
-            bodyCell.cellSetup(mapData: maps[indexPath.row - 1], userID: userProfile.id ?? "")
-            return bodyCell
+        } else if let postCell = cell as? CustomMapBodyCell {
+            postCell.cellSetup(postData: postsList[indexPath.row], transform: true)
         }
         return cell
     }
 
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return section == 0 ? UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) : UIEdgeInsets(top: 0, left: 14, bottom: 0, right: 14)
-    }
-
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = (view.frame.width - 40) / 2
-        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: 160) : CGSize(width: width, height: 230)
+        if indexPath.section == 0 {
+            return CGSize(width: view.frame.width, height: 160)
+        }
+        return CGSize(width: itemWidth, height: itemHeight)
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 0
+        return 2
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        return 2
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section != 0 {
-            Mixpanel.mainInstance().track(event: "ProfileMapSelect")
-            let collectionCell = collectionView.cellForItem(at: indexPath)
-            UIView.animate(withDuration: 0.15) {
-                collectionCell?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-            } completion: { (_) in
-                UIView.animate(withDuration: 0.15) {
-                    collectionCell?.transform = .identity
-                }
-            }
-
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: indexPath.row == 0 ? "ProfileMyMapCell" : "ProfileBodyCell", for: indexPath)
-            if cell is ProfileMyMapCell {
-                guard relation == .friend || relation == .myself else { return }
-                let mapData = getMyMap()
-                let customMapVC = CustomMapController(userProfile: userProfile, mapData: mapData, postsList: [], mapType: .myMap)
-                navigationController?.pushViewController(customMapVC, animated: true)
-            } else if cell is ProfileBodyCell {
-                let customMapVC = CustomMapController(userProfile: userProfile, mapData: maps[indexPath.row - 1], postsList: [], mapType: .customMap)
-                navigationController?.pushViewController(customMapVC, animated: true)
-            }
+            Mixpanel.mainInstance().track(event: "ProfileOpenPostFromGallery")
+            if navigationController?.viewControllers.last is PostController { return } // double stack happening here
+            var posts = Array(postsList.suffix(from: indexPath.row))
+            let title = "@\(userProfile?.username ?? "")'s posts"
+            let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: 0, title: title)
+            postVC.delegate = self
+            DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
         }
     }
 
@@ -101,10 +83,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         }
     }
 
-    func getMyMap() -> CustomMap {
-        var mapData = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
-        mapData.createPosts(posts: posts)
-        return mapData
+    public func scrollToTop() {
+        DispatchQueue.main.async { self.collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
     }
 }
 
@@ -113,6 +93,11 @@ extension ProfileViewController: UIScrollViewDelegate {
         // Show navigation bar when user scroll pass the header section
         DispatchQueue.main.async {
             self.navigationItem.title = scrollView.contentOffset.y > 35 ? self.userProfile?.name : ""
+        }
+        if scrollView.contentOffset.y > UIScreen.main.bounds.height &&
+            scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 4) &&
+            refreshStatus == .refreshEnabled {
+            DispatchQueue.global().async { self.getPosts() }
         }
     }
 }

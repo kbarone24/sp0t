@@ -91,20 +91,39 @@ extension SpotTabBarController: UITabBarControllerDelegate {
         if let nav = viewController as? UINavigationController {
             if let post = nav.viewControllers.first as? PostController {
                 if selectedIndex == 0 {
-                    post.scrollToTop()
-                } else {
-                    return true
+                    if nav.viewControllers.count == 1 {
+                        post.scrollToTop()
+                    } else {
+                        nav.popToRootViewController(animated: true)
+                    }
+                    return false
                 }
+                return true
             }
             if let explore = nav.viewControllers.first as? ExploreMapViewController {
                 print("explore map")
-            } else if let notis = nav.viewControllers.first as? NotificationsController {
-                Mixpanel.mainInstance().track(event: "HomeScreenNotificationsTap")
+            }
+            if let notis = nav.viewControllers.first as? NotificationsController {
+                if selectedIndex == 3 {
+                    if nav.viewControllers.count == 1 {
+                        notis.scrollToTop()
+                    } else {
+                        nav.popToRootViewController(animated: true)
+                    }
+                    return false
+                }
+                return true
+            } else if let profile = nav.viewControllers.first as? ProfileViewController {
+                if selectedIndex == 4 {
+                    if nav.viewControllers.count == 1 {
+                        profile.scrollToTop()
+                    } else {
+                        nav.popToRootViewController(animated: true)
+                    }
+                    return false
+                }
                 return true
 
-            } else if let profile = nav.viewControllers.first as? ProfileViewController {
-                Mixpanel.mainInstance().track(event: "HomeScreenProfileTap")
-                return true
             }
         } else {
             openCamera()

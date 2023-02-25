@@ -98,4 +98,10 @@ extension NotificationsController: UITableViewDelegate, UITableViewDataSource {
             UserDataModel.shared.getNotifications()
         }
     }
+
+    public func scrollToTop() {
+        if !UserDataModel.shared.notifications.isEmpty {
+            DispatchQueue.main.async { self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
+        }
+    }
 }

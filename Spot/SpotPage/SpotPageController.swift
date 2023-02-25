@@ -13,6 +13,8 @@ import SnapKit
 import UIKit
 
 class SpotPageController: UIViewController {
+    let itemWidth: CGFloat = UIScreen.main.bounds.width / 2 - 1
+    let itemHeight: CGFloat = (UIScreen.main.bounds.width / 2 - 1) * 1.495
     lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -29,38 +31,6 @@ class SpotPageController: UIViewController {
         return service
     }()
 
-    lazy var mapPostLabel: UILabel = {
-        let label = UILabel()
-        label.text = ""
-        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
-        label.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-        label.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
-        label.clipsToBounds = true
-        label.layer.cornerRadius = 8
-        label.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
-        return label
-    }()
-    lazy var communityPostLabel: UILabel = {
-        let label = UILabel()
-        let frontPadding = "    "
-        let bottomPadding = "   "
-        let imageAttachment = NSTextAttachment()
-        imageAttachment.image = UIImage(named: "CommunityGlobe")
-        imageAttachment.bounds = CGRect(x: 0, y: -2.5, width: imageAttachment.image?.size.width ?? 0, height: imageAttachment.image?.size.height ?? 0)
-        let attachmentString = NSAttributedString(attachment: imageAttachment)
-        let completeText = NSMutableAttributedString(string: frontPadding)
-        completeText.append(attachmentString)
-        completeText.append(NSAttributedString(string: " "))
-        completeText.append(NSAttributedString(string: "Community Posts" + bottomPadding))
-        label.attributedText = completeText
-        label.font = UIFont(name: "SFCompactText-Bold", size: 14)
-        label.backgroundColor = UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)
-        label.textColor = UIColor(red: 0.587, green: 0.587, blue: 0.587, alpha: 1)
-        label.clipsToBounds = true
-        label.layer.cornerRadius = 8
-        label.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
-        return label
-    }()
     lazy var imageManager = SDWebImageManager()
     lazy var activityIndicator = CustomActivityIndicator()
 
@@ -76,13 +46,9 @@ class SpotPageController: UIViewController {
             }
         }
     }
-    var relatedEndDocument: DocumentSnapshot?
-    var communityEndDocument: DocumentSnapshot?
-    var fetchRelatedPostsComplete = false
-    var fetchCommunityPostsComplete = false
-    lazy var fetching: RefreshStatus = .activelyRefreshing
-    lazy var relatedPosts: [MapPost] = []
-    lazy var communityPosts: [MapPost] = []
+    lazy var postsList: [MapPost] = []
+    var endDocument: DocumentSnapshot?
+    lazy var refreshStatus: RefreshStatus = .activelyRefreshing
 
     init(mapPost: MapPost) {
         super.init(nibName: nil, bundle: nil)
@@ -106,7 +72,7 @@ class SpotPageController: UIViewController {
         viewSetup()
         DispatchQueue.global(qos: .userInitiated).async {
             self.fetchSpot()
-            self.fetchRelatedPosts()
+            self.getPosts()
         }
     }
 
@@ -123,18 +89,13 @@ class SpotPageController: UIViewController {
 
 extension SpotPageController {
     private func setUpNavBar() {
-        navigationController?.setNavigationBarHidden(false, animated: true)
-        navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
-        navigationController?.navigationBar.tintColor = UIColor.white
-
+        navigationController?.setUpDarkNav(translucent: true)
         navigationController?.navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor.white,
             .font: UIFont(name: "SFCompactText-Heavy", size: 19) as Any
         ]
 
-        navigationItem.title = collectionView.contentOffset.y > 75 ? self.spotName : ""
+        navigationItem.title = collectionView.contentOffset.y > 40 ? self.spotName : ""
     }
 
     private func viewSetup() {
@@ -161,13 +122,7 @@ extension SpotPageController {
 
     @objc func notifyPostDelete(_ notification: NSNotification) {
         guard let post = notification.userInfo?["post"] as? MapPost else { return }
-        //  guard let spotDelete = notification.userInfo?["spotDelete"] as? Bool else { return }
-        //  guard let mapDelete = notification.userInfo?["mapDelete"] as? Bool else { return }
-
-        // check if post being deleted from map controllers child and update map if necessary
-        relatedPosts.removeAll(where: { $0.id == post.id })
-        communityPosts.removeAll(where: { $0.id == post.id })
-
+        postsList.removeAll(where: { $0.id == post.id })
         DispatchQueue.main.async { [weak self] in
             self?.collectionView.reloadData()
         }

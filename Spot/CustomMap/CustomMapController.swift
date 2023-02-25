@@ -16,7 +16,8 @@ class CustomMapController: UIViewController {
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid ID"
     var endDocument: DocumentSnapshot?
-    var refresh: RefreshStatus = .activelyRefreshing
+    var refreshStatus: RefreshStatus = .activelyRefreshing
+    lazy var activityIndicator = CustomActivityIndicator()
 
     var userProfile: UserProfile?
     public var mapData: CustomMap?
@@ -24,10 +25,11 @@ class CustomMapController: UIViewController {
     var firstMaxFourMapMemberList: [UserProfile] = []
     lazy var postsList: [MapPost] = []
 
-    var mapType: MapType = .customMap
     var centeredMap = false
     var cancelOnDismiss = false
 
+    let itemWidth: CGFloat = UIScreen.main.bounds.width / 2 - 1
+    let itemHeight: CGFloat = (UIScreen.main.bounds.width / 2 - 1) * 1.495
     lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -52,12 +54,11 @@ class CustomMapController: UIViewController {
         return service
     }()
 
-    init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost], mapType: MapType) {
+    init(userProfile: UserProfile? = nil, mapData: CustomMap?, postsList: [MapPost]) {
         super.init(nibName: nil, bundle: nil)
         self.userProfile = userProfile
         self.postsList = postsList.sorted(by: { $0.timestamp.seconds > $1.timestamp.seconds })
         self.mapData = mapData
-        self.mapType = mapType
     }
 
     required init?(coder: NSCoder) {
@@ -71,6 +72,7 @@ class CustomMapController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        viewSetup()
         runInitialFetches()
     }
 
@@ -86,22 +88,17 @@ class CustomMapController: UIViewController {
     }
 
     private func runInitialFetches() {
-        switch mapType {
-        case .customMap:
-            getMapInfo()
-        case .friendsMap:
-            viewSetup()
-            getPosts()
-        case .myMap:
-            viewSetup()
-            getPosts()
+        DispatchQueue.main.async { self.activityIndicator.startAnimating() }
+        DispatchQueue.global().async {
+            self.getMapInfo()
+            self.getPosts()
         }
     }
 
     private func getMapInfo() {
         // map passed through
         if mapData?.founderID ?? "" != "" {
-            runMapSetup()
+            getMapMembers()
             return
         }
         
@@ -114,36 +111,16 @@ class CustomMapController: UIViewController {
                 let mapsService = try ServiceContainer.shared.service(for: \.mapsService)
                 let map = try await mapsService.getMap(mapID: mapID)
                 self?.mapData = map
-                self?.runMapSetup()
+                self?.getMapMembers()
             } catch {
                 return
             }
         }
     }
 
-    private func runMapSetup() {
-        if mapData == nil { return }
-        mapData?.addSpotGroups()
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getMapMembers()
-            self.getPosts()
-        }
-        DispatchQueue.main.async { self.viewSetup() }
-    }
-
     private func setUpNavBar() {
-        navigationController?.setNavigationBarHidden(false, animated: true)
-        navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
-        navigationController?.navigationBar.tintColor = UIColor.white
-
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor.white,
-            .font: UIFont(name: "SFCompactText-Heavy", size: 19) as Any
-        ]
-
-        title = collectionView.contentOffset.y > 75 ? self.mapData?.mapName : ""
+        navigationController?.setUpDarkNav(translucent: true)
+        navigationItem.title = collectionView.contentOffset.y > 75 ? self.mapData?.mapName : ""
     }
 
     private func viewSetup() {
@@ -155,6 +132,13 @@ class CustomMapController: UIViewController {
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
+        }
+
+        collectionView.addSubview(activityIndicator)
+        activityIndicator.snp.makeConstraints {
+            $0.width.height.equalTo(30)
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(-100)
         }
     }
 

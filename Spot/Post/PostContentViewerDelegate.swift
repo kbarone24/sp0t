@@ -46,13 +46,13 @@ extension PostController: ContentViewerDelegate {
     func openMap(mapID: String, mapName: String) {
         var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: mapName, memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         map.id = mapID
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], mapType: .customMap)
-        navigationController?.pushViewController(customMapVC, animated: true)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
+        DispatchQueue.main.async { self.navigationController?.pushViewController(customMapVC, animated: true) }
     }
 
     func openSpot(post: MapPost) {
         let spotVC = SpotPageController(mapPost: post)
-        navigationController?.pushViewController(spotVC, animated: true)
+        DispatchQueue.main.async { self.navigationController?.pushViewController(spotVC, animated: true) }
     }
 
     func tapToNextPost() {
