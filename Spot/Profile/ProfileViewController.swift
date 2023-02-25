@@ -20,8 +20,9 @@ class ProfileViewController: UIViewController {
             DispatchQueue.main.async { self.collectionView.reloadData() }
         }
     }
-    lazy var maps = [CustomMap]()
-    lazy var posts = [MapPost]()
+    lazy var refreshStatus: RefreshStatus = .refreshEnabled
+    var endDocument: DocumentSnapshot?
+    lazy var postsList = [MapPost]()
     var relation: ProfileRelation = .myself
 
     private var pendingFriendRequestNotiID: String? {
@@ -37,20 +38,16 @@ class ProfileViewController: UIViewController {
             toggleNoPosts()
         }
     }
-    var mapsFetched = false {
-        didSet {
-            toggleNoPosts()
-        }
-    }
 
+    let itemWidth: CGFloat = UIScreen.main.bounds.width / 2 - 1
+    let itemHeight: CGFloat = (UIScreen.main.bounds.width / 2 - 1) * 1.495
     lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.backgroundColor = .clear
         view.register(ProfileHeaderCell.self, forCellWithReuseIdentifier: "ProfileHeaderCell")
-        view.register(ProfileMyMapCell.self, forCellWithReuseIdentifier: "ProfileMyMapCell")
-        view.register(ProfileBodyCell.self, forCellWithReuseIdentifier: "ProfileBodyCell")
+        view.register(CustomMapBodyCell.self, forCellWithReuseIdentifier: "BodyCell")
         view.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Default")
         return view
     }()
@@ -68,7 +65,7 @@ class ProfileViewController: UIViewController {
         return service
     }()
     
-    private lazy var mapPostService: MapPostServiceProtocol? = {
+    lazy var mapPostService: MapPostServiceProtocol? = {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
         return service
     }()
@@ -93,10 +90,6 @@ class ProfileViewController: UIViewController {
         /// need to add immediately to track active user profile getting fetched
         NotificationCenter.default.addObserver(self, selector: #selector(notifyUserLoad(_:)), name: NSNotification.Name(("UserProfileLoad")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendsLoad), name: NSNotification.Name(("FriendsListLoad")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyMapsLoad(_:)), name: NSNotification.Name(("UserMapsLoad")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewOffset), name: NSNotification.Name(("DrawerViewOffset")), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyDrawerViewReset), name: NSNotification.Name(("DrawerViewReset")), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyFriendRequestAccept(_:)), name: NSNotification.Name(rawValue: "AcceptedFriendRequest"), object: nil)
     }
 
@@ -140,7 +133,7 @@ class ProfileViewController: UIViewController {
 
     private func toggleNoPosts() {
         DispatchQueue.main.async {
-            self.noPostLabel.isHidden = self.postsFetched && (self.maps.isEmpty && self.posts.isEmpty) ? false : true
+            self.noPostLabel.isHidden = self.postsFetched && self.postsList.isEmpty ? false : true
             self.activityIndicator.stopAnimating()
         }
     }
@@ -177,10 +170,11 @@ class ProfileViewController: UIViewController {
     }
 
     func runFetches() {
-        DispatchQueue.main.async { self.activityIndicator.startAnimating() }
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.getMaps()
-            self.getNinePosts()
+        if refreshStatus == .refreshEnabled {
+            if postsList.isEmpty {
+                DispatchQueue.main.async { self.activityIndicator.startAnimating() }
+            }
+            DispatchQueue.global(qos: .userInitiated).async { self.getPosts() }
         }
     }
 
@@ -205,80 +199,13 @@ class ProfileViewController: UIViewController {
             $0.top.equalToSuperview().offset(243)
         }
 
-        activityIndicator.isHidden = false
+        activityIndicator.isHidden = true
         collectionView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.width.height.equalTo(30)
             $0.centerX.equalToSuperview()
             $0.centerY.equalToSuperview().offset(-100)
         }
-    }
-
-    func getNinePosts() {
-        print("get nine posts")
-        guard let userID = userProfile?.id else { return }
-        let db = Firestore.firestore()
-        let q0 = db.collection("posts").whereField("posterID", isEqualTo: userID)
-        let query = q0.whereField("friendsList", arrayContains: UserDataModel.shared.uid).order(by: "timestamp", descending: true).limit(to: 9)
-        query.getDocuments { [weak self] (snap, _) in
-            guard let snap, let self else { return }
-            let dispatch = DispatchGroup()
-            if snap.documents.isEmpty && (self.relation == .friend || self.relation == .myself) { self.postsFetched = true }
-            for doc in snap.documents {
-                do {
-                    let unwrappedInfo = try? doc.data(as: MapPost.self)
-                    guard let postInfo = unwrappedInfo else { continue }
-                    if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "") { continue }
-                    dispatch.enter()
-                    self.mapPostService?.setPostDetails(post: postInfo) { post in
-                        DispatchQueue.main.async {
-                            if !self.posts.contains(where: { $0.id == post.id }) {
-                                self.posts.append(post)
-                            }
-                            self.postsFetched = true
-                            dispatch.leave()
-                        }
-                    }
-                }
-            }
-            dispatch.notify(queue: .main) { [weak self] in
-                guard let self = self else { return }
-                self.collectionView.reloadData()
-            }
-        }
-    }
-
-    func getMaps() {
-        if relation == .myself {
-            mapsFetched = true
-            maps = UserDataModel.shared.userInfo.mapsList.filter({ $0.posterIDs.contains(UserDataModel.shared.uid) }) /// only show maps user is member of, not follower maps
-            sortAndReloadMaps()
-            return
-        }
-
-        let db = Firestore.firestore()
-        let query = db.collection("maps").whereField("posterIDs", arrayContains: userProfile?.id ?? "")
-        query.getDocuments { (snap, _) in
-            guard let snap = snap else { return }
-            for doc in snap.documents {
-                do {
-                    let unwrappedInfo = try? doc.data(as: CustomMap.self)
-                    guard let mapInfo = unwrappedInfo else { continue }
-                    /// friend doesn't have access to secret map
-                    if mapInfo.secret && !mapInfo.memberIDs.contains(UserDataModel.shared.uid) { continue }
-                    if !self.maps.contains(where: { $0.id == mapInfo.id }) { self.maps.append(mapInfo) }
-                } catch let parseError {
-                    print("JSON Error \(parseError.localizedDescription)")
-                }
-            }
-            self.mapsFetched = true
-            self.sortAndReloadMaps()
-        }
-    }
-
-    private func sortAndReloadMaps() {
-        maps.sort(by: { $0.userTimestamp.seconds > $1.userTimestamp.seconds })
-        DispatchQueue.main.async { self.collectionView.reloadData() }
     }
 }
 

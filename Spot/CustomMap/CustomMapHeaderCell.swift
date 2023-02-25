@@ -53,7 +53,7 @@ final class CustomMapHeaderCell: UICollectionViewCell {
 
     private lazy var mapCreatorCount: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.292, green: 0.292, blue: 0.292, alpha: 1)
+        label.textColor = UIColor(red: 0.521, green: 0.521, blue: 0.521, alpha: 1)
         label.font = UIFont(name: "SFCompactText-Bold", size: 13.5)
         label.text = ""
         label.adjustsFontSizeToFitWidth = true
@@ -230,7 +230,7 @@ extension CustomMapHeaderCell {
         guard let mapData = mapData else { return }
         if mapData.secret {
             let str = mapData.mapName
-            mapName.attributedText = str.getAttributedStringWithImage(image: UIImage(named: "SecretMap") ?? UIImage())
+            mapName.attributedText = str.getAttributedStringWithImage(image: UIImage(named: "PinkLockIcon") ?? UIImage(), offset: 0)
         } else {
             mapName.text = mapData.mapName
             mapName.sizeToFit()

@@ -49,19 +49,6 @@ class ProfileHeaderCell: UICollectionViewCell {
         return label
     }()
 
-    private lazy var locationButton: UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage(named: "ProfileLocation"), for: .normal)
-        button.setTitle("", for: .normal)
-        button.titleLabel?.adjustsFontSizeToFitWidth = true
-        button.setTitleColor(UIColor(red: 0.613, green: 0.613, blue: 0.613, alpha: 1), for: .normal)
-        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Semibold", size: 13)
-        button.addTarget(self, action: #selector(locationButtonAction), for: .touchUpInside)
-        button.snp.contentCompressionResistanceHorizontalPriority = 700
-        return button
-    }()
-
     public lazy var friendListButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage(named: "FriendsIcon"), for: .normal)
@@ -76,10 +63,10 @@ class ProfileHeaderCell: UICollectionViewCell {
     public lazy var actionButton: UIButton = {
         let button = UIButton()
         button.setTitle("Edit profile", for: .normal)
-        button.setTitleColor(UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1), for: .normal)
+        button.setTitleColor(.white, for: .normal)
         button.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
         button.titleLabel?.font = UIFont(name: "SFCompactText-Bold", size: 14.5)
-        button.layer.cornerRadius = 37 / 2
+        button.layer.cornerRadius = 12
         return button
     }()
 
@@ -101,13 +88,6 @@ class ProfileHeaderCell: UICollectionViewCell {
         let aviTransformer = SDImageResizingTransformer(size: CGSize(width: 69.4, height: 100), scaleMode: .aspectFit)
         profileAvatar.sd_setImage(with: URL(string: userProfile.avatarURL ?? ""), placeholderImage: nil, options: .highPriority, context: [.imageTransformer: aviTransformer])
         usernameLabel.text = userProfile.username
-        locationButton.setTitle(userProfile.currentLocation, for: .normal)
-        if userProfile.currentLocation == "" {
-            locationButton.setImage(UIImage(), for: .normal)
-            friendListButton.snp.updateConstraints {
-                $0.leading.equalTo(locationButton.snp.trailing)
-            }
-        }
         friendListButton.setTitle("\(userProfile.friendIDs.count) friends", for: .normal)
 
         self.relation = relation
@@ -115,19 +95,19 @@ class ProfileHeaderCell: UICollectionViewCell {
         case .myself:
             actionButton.setTitle("Edit profile", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
-            actionButton.setTitleColor(UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1), for: .normal)
+            actionButton.setTitleColor(.white, for: .normal)
         case .friend:
             actionButton.setImage(UIImage(named: "FriendsIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Friends", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
-            actionButton.setTitleColor(UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1), for: .normal)
+            actionButton.setTitleColor(.white, for: .normal)
         case .pending:
             actionButton.setImage(UIImage(named: "FriendsPendingIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
             actionButton.setTitle("Pending", for: .normal)
             actionButton.backgroundColor = UIColor(red: 0.196, green: 0.196, blue: 0.196, alpha: 1)
-            actionButton.setTitleColor(UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1), for: .normal)
+            actionButton.setTitleColor(.white, for: .normal)
         case .stranger, .received:
             actionButton.setImage(UIImage(named: "AddFriendIcon"), for: .normal)
             actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
@@ -170,32 +150,20 @@ extension ProfileHeaderCell {
             $0.width.equalTo(113)
         }
 
-        // location button will truncate if overflow
-        contentView.addSubview(locationButton)
-        locationButton.snp.makeConstraints {
-            $0.top.equalTo(usernameLabel.snp.bottom).offset(-4)
-            $0.height.equalTo(38)
-            $0.leading.equalTo(profileImage.snp.trailing).offset(15)
-        }
-
         // friends list button always shows in its entirety
         contentView.addSubview(friendListButton)
         friendListButton.snp.makeConstraints {
-            $0.top.equalTo(locationButton)
-            $0.leading.equalTo(locationButton.snp.trailing).offset(15)
+            $0.top.equalTo(usernameLabel.snp.bottom).offset(-4)
+            $0.leading.equalTo(profileImage.snp.trailing).offset(15)
             $0.trailing.lessThanOrEqualToSuperview().inset(20)
             $0.height.equalTo(38)
         }
 
         contentView.addSubview(actionButton)
         actionButton.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(14)
+            $0.leading.trailing.equalToSuperview().inset(10)
             $0.height.equalTo(37)
             $0.top.equalTo(profileImage.snp.bottom).offset(16)
         }
-    }
-
-    @objc func locationButtonAction() {
-        Mixpanel.mainInstance().track(event: "ProfileHeaderLocationTap")
     }
 }
