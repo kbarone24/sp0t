@@ -28,11 +28,16 @@ enum FeedFetchType {
     case NearbyPosts
 }
 
+protocol PostControllerDelegate: AnyObject {
+    func indexChanged(rowsRemaining: Int)
+}
+
 final class PostController: UIViewController {
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
     var parentVC: PostParent
+    weak var delegate: PostControllerDelegate?
 
     lazy var selectedSegment: FeedFetchType = .MyPosts {
         didSet {

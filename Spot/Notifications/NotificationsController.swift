@@ -73,17 +73,7 @@ class NotificationsController: UIViewController {
     
     func setUpNavBar() {
         navigationItem.title = "Notifications"
-        navigationController?.setNavigationBarHidden(false, animated: false)
-        navigationController?.navigationBar.barTintColor = UIColor(named: "SpotBlack")
-
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.tintColor = UIColor.white
-    //    navigationController?.view.backgroundColor = .black
-        
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor.white,
-            .font: UIFont(name: "SFCompactText-Heavy", size: 19) as Any
-        ]
+        navigationController?.setUpDarkNav(translucent: true)
     }
     
     func setupView() {
@@ -162,7 +152,7 @@ extension NotificationsController {
     func openMap(mapID: String) {
         var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
         map.id = mapID
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], mapType: .customMap)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
         navigationController?.pushViewController(customMapVC, animated: true)
     }
 }

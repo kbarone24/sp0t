@@ -21,16 +21,10 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let identifier = indexPath.section == 0 && mapType == .customMap ? "CustomMapHeaderCell" : indexPath.section == 0 ? "SimpleMapHeaderCell" : "CustomMapBodyCell"
-
+        let identifier = indexPath.section == 0 ? "CustomMapHeaderCell" : "CustomMapBodyCell"
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath)
         if let headerCell = cell as? CustomMapHeaderCell {
             headerCell.cellSetup(mapData: mapData, memberProfiles: firstMaxFourMapMemberList)
-            return headerCell
-
-        } else if let headerCell = cell as? SimpleMapHeaderCell {
-            let text = mapType == .friendsMap ? "Friends map" : "@\(userProfile?.username ?? "")'s map"
-            headerCell.mapText = text
             return headerCell
 
         } else if let bodyCell = cell as? CustomMapBodyCell {
@@ -42,12 +36,9 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         if indexPath.section == 0 {
-            if mapType == .customMap {
-                return CGSize(width: UIScreen.main.bounds.width, height: getHeaderHeight())
-            }
-            return CGSize(width: view.frame.width, height: 35)
+            return CGSize(width: UIScreen.main.bounds.width, height: getHeaderHeight())
         }
-        return CGSize(width: UIScreen.main.bounds.width / 2 - 0.5, height: (UIScreen.main.bounds.width / 2 - 0.5) * 267 / 194.5)
+        return CGSize(width: itemWidth, height: itemHeight)
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -60,8 +51,7 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if indexPath.section == 0 { return }
-        var posts = postsList
-        posts.sortPostsOnOpen(index: indexPath.item)
+        let posts = Array(postsList.suffix(from: indexPath.row))
         openPost(posts: posts, row: indexPath.item)
         Mixpanel.mainInstance().track(event: "CustomMapOpenPostFromGallery")
     }
@@ -78,8 +68,9 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func openPost(posts: [MapPost], row: Int) {
         if navigationController?.viewControllers.last is PostController { return } // double stack happening here
-        let title = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s map" : mapData?.mapName ?? ""
+        let title = mapData?.mapName ?? ""
         let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: 0, title: title)
+        postVC.delegate = self
         DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
     }
 
@@ -100,14 +91,15 @@ extension CustomMapController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if cancelOnDismiss { return }
         DispatchQueue.main.async {
-            self.title = scrollView.contentOffset.y > 40 ? self.mapData?.mapName ?? "" : ""
+            self.navigationItem.title = scrollView.contentOffset.y > 25 ? self.mapData?.mapName ?? "" : ""
         }
 
-        let itemHeight = UIScreen.main.bounds.width * 1.373
         // Check if need to refresh according to content position
-        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 1.5)) && refresh == .refreshEnabled {
-            self.getPosts()
-            refresh = .activelyRefreshing
+        if scrollView.contentOffset.y > UIScreen.main.bounds.height &&
+            scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 4) &&
+            refreshStatus == .refreshEnabled {
+            print("refresh on scroll view")
+            DispatchQueue.global().async { self.getPosts() }
         }
     }
 }

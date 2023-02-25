@@ -110,7 +110,6 @@ extension UserDataModel {
             guard let self = self else { return }
             if snap?.metadata.isFromCache ?? false { return }
             guard let snap = snap else { return }
-            print("set noti info")
             self.setNotiInfo(snap: snap, newFetch: !self.notificationsFetched)
         })
     }
@@ -173,7 +172,7 @@ extension UserDataModel {
         }
         localNotis.removeAll()
 
-        if notificationsRefreshStatus != .refreshDisabled { print("set refresh enabled"); notificationsRefreshStatus = .refreshEnabled }
+        if notificationsRefreshStatus != .refreshDisabled { notificationsRefreshStatus = .refreshEnabled }
         NotificationCenter.default.post(Notification(name: Notification.Name("NotificationsLoad")))
 
         // re-run fetch if fetch pulled in a bunch of old friend requests and notis dont fill screen

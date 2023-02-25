@@ -26,7 +26,7 @@ extension PostController {
     @objc func findFriendsTap() {
         Mixpanel.mainInstance().track(event: "HomeScreenFindFriendsTap")
         let findFriendsController = FindFriendsController()
-        navigationController?.pushViewController(findFriendsController, animated: true)
+        DispatchQueue.main.async { self.navigationController?.pushViewController(findFriendsController, animated: true) }
     }
 
     @objc func backTap() {
@@ -126,6 +126,8 @@ extension PostController {
                         if self.nearbyRefreshStatus == .refreshEnabled { self.getNearbyPosts() }
                     }
                 }
+            } else {
+                self.delegate?.indexChanged(rowsRemaining: self.postsList.count - self.selectedPostIndex)
             }
         }
     }
@@ -140,7 +142,6 @@ extension PostController {
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        print("offset", scrollView.contentOffset.y)
         if parentVC == .Home { return }
         // disables scroll view "bounce" and enables drawer view swipeToDismiss method to take priority
         if scrollView.contentOffset.y < 0 {
