@@ -190,6 +190,7 @@ final class MapService: MapServiceProtocol {
                         "poiCategory": spot?.poiCategory ?? "",
                         "postID": postId,
                         "postImageURL": post.imageURLs.first ?? "",
+                        "videoURL": post.videoURL ?? "",
                         "postLocation": postLocation,
                         "posters": posters,
                         "posterUsername": UserDataModel.shared.userInfo.username,

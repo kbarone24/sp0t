@@ -19,6 +19,7 @@ protocol ImageVideoServiceProtocol {
     )
     
     func uploadVideo(url: URL, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void)
+    func downloadVideo(url: String, completion: @escaping ((URL?) -> Void))
 }
 
 final class ImageVideoService: ImageVideoServiceProtocol {
@@ -187,5 +188,34 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                 }
             }
         }
+    }
+    
+    func downloadVideo(url: String, completion: @escaping ((URL?) -> Void)) {
+        guard let videoURL = URL(string: url),
+              let documentsDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        else { return }
+        
+        // check if the file already exist at the destination folder if you don't want to download it twice
+        guard !FileManager.default.fileExists(atPath: documentsDirectoryURL.appendingPathComponent(videoURL.lastPathComponent).path) else {
+            completion(documentsDirectoryURL.appendingPathComponent(videoURL.lastPathComponent))
+            return
+        }
+        
+        // set up your download task
+        URLSession.shared.downloadTask(with: videoURL) { location, response, error in
+            
+            // use guard to unwrap your optional url
+            guard let location = location, error == nil else {
+                completion(nil)
+                return
+            }
+            
+            // create a deatination url with the server response suggested file name
+            let destinationURL = documentsDirectoryURL.appendingPathComponent(response?.suggestedFilename ?? videoURL.lastPathComponent)
+            
+            try? FileManager.default.moveItem(at: location, to: destinationURL)
+            completion(destinationURL)
+        }
+        .resume()
     }
 }

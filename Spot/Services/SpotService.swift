@@ -155,6 +155,7 @@ final class SpotService: SpotServiceProtocol {
                     "spotLong": spot.spotLong,
                     "g": geoHash,
                     "imageURL": post.imageURLs.first ?? "",
+                    "videoURL": post.videoURL ?? "",
                     "phone": spot.phone ?? "",
                     "poiCategory": spot.poiCategory ?? "",
                     "postIDs": [postID],

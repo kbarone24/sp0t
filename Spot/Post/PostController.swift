@@ -14,25 +14,31 @@ import Mixpanel
 import SnapKit
 import UIKit
 
-enum PostParent: String {
-    case Home
-    case Spot
-    case Map
-    case Profile
-    case Notifications
-}
-
-// values for feed fetch
-enum FeedFetchType {
-    case MyPosts
-    case NearbyPosts
-}
-
 protocol PostControllerDelegate: AnyObject {
     func indexChanged(rowsRemaining: Int)
 }
 
 final class PostController: UIViewController {
+    
+    private(set) lazy var allPostsViewController: AllPostsViewController = {
+        return AllPostsViewController()
+    }()
+    
+    private(set) lazy var nearbyPostsViewController: NearbyPostsViewController = {
+        let nearby = NearbyPostsViewController()
+        
+        return nearby
+    }()
+    
+    private(set) lazy var pageViewController: UIPageViewController = {
+        let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
+        
+        pageViewController.delegate = self
+        pageViewController.dataSource = self
+        return pageViewController
+    }()
+    
+
     let db = Firestore.firestore()
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
 
@@ -83,16 +89,6 @@ final class PostController: UIViewController {
     var mapPostEndDocument: DocumentSnapshot?
     lazy var nearbyRefreshStatus: RefreshStatus = .refreshDisabled
 
-    var selectedSegmentPosts: [MapPost] {
-        return selectedSegment == .MyPosts ? myPosts : nearbyPosts
-    }
-    var selectedSegmentPostIndex: Int {
-        return selectedSegment == .MyPosts ? myPostIndex : nearbyPostIndex
-    }
-    var selectedRefreshStatus: RefreshStatus {
-        return selectedSegment == .MyPosts ? myPostsRefreshStatus : nearbyRefreshStatus
-    }
-
     lazy var contentTable: UITableView = {
         let view = UITableView()
         view.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
@@ -105,10 +101,11 @@ final class PostController: UIViewController {
         view.contentInsetAdjustmentBehavior = .never
         view.shouldIgnoreContentInsetAdjustment = true
         // inset to show button view
-        view.register(ContentViewerCell.self, forCellReuseIdentifier: "ContentCell")
-        view.register(ContentLoadingCell.self, forCellReuseIdentifier: "LoadingCell")
+        view.register(ContentViewerCell.self, forCellReuseIdentifier: ContentViewerCell.reuseID)
+        view.register(ContentLoadingCell.self, forCellReuseIdentifier: ContentLoadingCell.reuseID)
         return view
     }()
+    
     var rowHeight: CGFloat {
         return contentTable.bounds.height - 0.01
     }
@@ -154,6 +151,7 @@ final class PostController: UIViewController {
     }
 
     var scrolledToInitialRow = false
+    var isPageControllerTransitioning = false
     var animatingToNextRow = false {
         didSet {
             contentTable.isScrollEnabled = !animatingToNextRow
@@ -200,9 +198,6 @@ final class PostController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         edgesForExtendedLayout = [.top]
-        if parentVC == .Home {
-            DispatchQueue.global().async { self.getMyPosts() }
-        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -262,5 +257,38 @@ final class PostController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyCitySet), name: NSNotification.Name("UserCitySet"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
+    }
+}
+
+// MARK: UIPageViewControllerDelegate and UIPageViewControllerDataSource
+
+extension PostController: UIPageViewControllerDelegate, UIPageViewControllerDataSource {
+    
+    override func willTransition(to newCollection: UITraitCollection, with coordinator: UIViewControllerTransitionCoordinator) {
+        isPageControllerTransitioning = true
+    }
+    
+    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+        
+        guard completed,
+              let currentViewController = pageViewController.viewControllers?.first,
+              let previewViewController = previousViewControllers.first,
+              currentViewController != previewViewController else {
+            isPageControllerTransitioning = false
+            return
+        }
+        
+        isPageControllerTransitioning = false
+        if previewViewController == allPostsViewController {
+            
+        } else if previewViewController == nearbyPostsViewController {
+            
+        }
+        
+        // Update segment control
+    }
+    
+    func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
+        <#code#>
     }
 }

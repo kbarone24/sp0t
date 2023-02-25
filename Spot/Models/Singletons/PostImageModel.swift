@@ -11,7 +11,7 @@ import Foundation
 import SDWebImage
 import UIKit
 
-class PostImageModel {
+final class PostImageModel {
 
     let uid: String = Auth.auth().currentUser?.uid ?? "invalid user"
     static let shared = PostImageModel()
@@ -27,7 +27,7 @@ class PostImageModel {
     }
 }
 
-class PostImageLoader: Operation {
+final class PostImageLoader: Operation {
     /// set of operations for loading a postImage
     var images: [UIImage] = []
     var loadingCompleteHandler: (([UIImage]?) -> Void)?
@@ -75,8 +75,7 @@ class PostImageLoader: Operation {
             SDWebImageManager.shared.loadImage(
                 with: URL(string: postURL),
                 options: [.highPriority, .scaleDownLargeImages],
-                context: [.imageTransformer: transformer], progress: nil) {
-                    (rawImage, _, _, _, _, _) in
+                context: [.imageTransformer: transformer], progress: nil) { (rawImage, _, _, _, _, _) in
                     DispatchQueue.main.async { [weak self] in
 
                         guard let self = self else { return }

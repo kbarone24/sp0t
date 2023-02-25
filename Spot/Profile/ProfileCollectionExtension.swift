@@ -83,8 +83,23 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         }
     }
 
-    public func scrollToTop() {
-        DispatchQueue.main.async { self.collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
+    func getMyMap() -> CustomMap {
+        var mapData = CustomMap(
+            founderID: "",
+            imageURL: "",
+            videoURL: "",
+            likers: [],
+            mapName: "",
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: []
+        )
+        mapData.createPosts(posts: posts)
+        return mapData
     }
 }
 

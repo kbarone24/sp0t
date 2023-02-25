@@ -65,6 +65,7 @@ extension ChooseSpotController {
                         founderID: "",
                         mapItem: item,
                         imageURL: "",
+                        videoURL: "",
                         spotName: spotName,
                         privacyLevel: "public"
                     )
@@ -91,17 +92,16 @@ extension ChooseSpotController {
             if !self.queryValid(searchText: searchText) { self.spotSearching = false; return }
 
             if docs.isEmpty { self.reloadResultsTable(searchText: searchText) }
-
+            
             for doc in docs {
-                do {
-                    /// get all spots that match query and order by distance
-                    let info = try? doc.data(as: MapSpot.self)
-                    guard let spotInfo = info else { return }
-                    if spotInfo.showSpotOnMap() {
-                        self.addSpot(spot: spotInfo, query: true)
-                    }
-                } catch { continue }
+                /// get all spots that match query and order by distance
+                let info = try? doc.data(as: MapSpot.self)
+                guard let spotInfo = info else { return }
+                if spotInfo.showSpotOnMap() {
+                    self.addSpot(spot: spotInfo, query: true)
+                }
             }
+            
             self.reloadResultsTable(searchText: searchText )
         }
     }

@@ -90,6 +90,7 @@ extension SpotTabBarController: UITabBarControllerDelegate {
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
         if let nav = viewController as? UINavigationController {
             if let post = nav.viewControllers.first as? PostController {
+                Mixpanel.mainInstance().track(event: "PostsScreenNotificationsTap")
                 if selectedIndex == 0 {
                     if nav.viewControllers.count == 1 {
                         post.scrollToTop()
@@ -100,9 +101,12 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                 }
                 return true
             }
+            
             if let explore = nav.viewControllers.first as? ExploreMapViewController {
-                print("explore map")
+                Mixpanel.mainInstance().track(event: "ExploreMapScreenNotificationsTap")
+                return true
             }
+            
             if let notis = nav.viewControllers.first as? NotificationsController {
                 if selectedIndex == 3 {
                     if nav.viewControllers.count == 1 {
@@ -113,6 +117,7 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                     return false
                 }
                 return true
+                
             } else if let profile = nav.viewControllers.first as? ProfileViewController {
                 if selectedIndex == 4 {
                     if nav.viewControllers.count == 1 {
@@ -123,7 +128,6 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                     return false
                 }
                 return true
-
             }
         } else {
             openCamera()

@@ -142,7 +142,21 @@ extension MapController: MKMapViewDelegate {
     }
 
     func getFriendsMapObject() -> CustomMap {
-        var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
+        var map = CustomMap(
+            founderID: "",
+            imageURL: "",
+            videoURL: "",
+            likers: [],
+            mapName: "",
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: []
+        )
+        
         map.postsDictionary = postDictionary
         map.postGroup = postGroup
         return map

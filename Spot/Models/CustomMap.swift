@@ -17,6 +17,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var communityMap: Bool? = false
     var founderID: String
     var imageURL: String
+    var videoURL: String
     var likers: [String]
     var lowercaseName: String?
     var mainCampusMap: Bool?
@@ -68,6 +69,7 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case communityMap
         case founderID
         case imageURL
+        case videoURL
         case lowercaseName
         case likers
         case mainCampusMap
@@ -277,12 +279,13 @@ struct CustomMap: Identifiable, Codable, Hashable {
         }
         if spotID != "" {
             if let i = spotIDs.firstIndex(where: { $0 == spotID }) {
-                spotIDs.remove(at: i)
                 // check to make sure all of these values were consistently updated along spotIDs
                 // crash was happening due to poi categories not existing on old maps
                 if spotNames.count == spotIDs.count { spotNames.remove(at: i) }
                 if spotLocations.count == spotIDs.count { spotLocations.remove(at: i) }
-                if spotPOICategories.count == spotIDs.count { spotPOICategories.remove(at: i) }
+                if spotPOICategories.count == spotIDs.count { spotPOICategories.remove(at: i)
+                }
+                spotIDs.remove(at: i)
             }
             postGroup.removeAll(where: { $0.id == spotID })
         }

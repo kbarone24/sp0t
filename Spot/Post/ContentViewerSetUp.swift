@@ -6,7 +6,6 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 import FirebaseStorageUI
 
@@ -146,9 +145,13 @@ extension ContentViewerCell {
         contentView.layoutIfNeeded()
         addMoreIfNeeded()
     }
-
-    // TODO: modify for video -> adding the image view only when images are ready should make it easier to add a video player instead of images if content type == video
-    public func setContentData(images: [UIImage]) {
+    
+    func setVideo(url: URL?) {
+        guard let url, let post else { return }
+        currentImage.configure(mode: .video(post, url))
+    }
+    
+    func setImages(images: [UIImage]) {
         if images.isEmpty { return }
         var frameIndexes = post?.frameIndexes ?? []
         if let imageURLs = post?.imageURLs, !imageURLs.isEmpty {
@@ -187,29 +190,29 @@ extension ContentViewerCell {
         numComments.text = commentCount > 0 ? String(commentCount) : ""
     }
 
-    func addImageView() {
-        resetImages()
-        currentImage = PostImagePreview(frame: .zero, index: post?.selectedImageIndex ?? 0, parent: .ContentPage)
+    private func addImageView() {
+        guard let post else {
+            return
+        }
+        
+        currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex ?? 0, parent: .ContentPage)
         contentView.addSubview(currentImage)
         contentView.sendSubviewToBack(currentImage)
-        currentImage.makeConstraints(post: post)
-        currentImage.setCurrentImage(post: post)
+        currentImage.configure(mode: .image(post))
 
         imageTap = UITapGestureRecognizer(target: self, action: #selector(imageTap(_:)))
         contentView.addGestureRecognizer(imageTap ?? UITapGestureRecognizer())
 
-        if post?.frameIndexes?.count ?? 0 > 1 {
-            nextImage = PostImagePreview(frame: .zero, index: (post?.selectedImageIndex ?? 0) + 1, parent: .ContentPage)
+        if post.frameIndexes?.count ?? 0 > 1 {
+            nextImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) + 1, parent: .ContentPage)
             contentView.addSubview(nextImage)
             contentView.sendSubviewToBack(nextImage)
-            nextImage.makeConstraints(post: post)
-            nextImage.setCurrentImage(post: post)
+            nextImage.configure(mode: .image(post))
 
-            previousImage = PostImagePreview(frame: .zero, index: (post?.selectedImageIndex ?? 0) - 1, parent: .ContentPage)
+            previousImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) - 1, parent: .ContentPage)
             contentView.addSubview(previousImage)
             contentView.sendSubviewToBack(previousImage)
-            previousImage.makeConstraints(post: post)
-            previousImage.setCurrentImage(post: post)
+            previousImage.configure(mode: .image(post))
 
             imagePan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
             imagePan?.delegate = self
@@ -219,18 +222,19 @@ extension ContentViewerCell {
     }
     // only called after user increments / decrements image
     func setImages() {
-        let selectedIndex = post?.selectedImageIndex ?? 0
+        guard let post else {
+            return
+        }
+        
+        let selectedIndex = post.selectedImageIndex ?? 0
         currentImage.index = selectedIndex
-        currentImage.makeConstraints(post: post)
-        currentImage.setCurrentImage(post: post)
+        currentImage.configure(mode: .image(post))
 
         previousImage.index = selectedIndex - 1
-        previousImage.makeConstraints(post: post)
-        previousImage.setCurrentImage(post: post)
+        previousImage.configure(mode: .image(post))
 
         nextImage.index = selectedIndex + 1
-        nextImage.makeConstraints(post: post)
-        nextImage.setCurrentImage(post: post)
+        nextImage.configure(mode: .image(post))
         addDots()
     }
 }

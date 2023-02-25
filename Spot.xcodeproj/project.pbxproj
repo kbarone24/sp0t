@@ -156,8 +156,6 @@
 		8C121D9F2949351600CD4E07 /* SearchContactsButtonCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121D882949351600CD4E07 /* SearchContactsButtonCell.swift */; };
 		8C121DA02949351600CD4E07 /* SearchContactsButtonCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121D882949351600CD4E07 /* SearchContactsButtonCell.swift */; };
 		8C121DAE2949352400CD4E07 /* PostImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA32949352400CD4E07 /* PostImagePreview.swift */; };
-		8C121DAF2949352400CD4E07 /* PostImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA32949352400CD4E07 /* PostImagePreview.swift */; };
-		8C121DB02949352400CD4E07 /* PostImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA32949352400CD4E07 /* PostImagePreview.swift */; };
 		8C121DB12949352400CD4E07 /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA42949352400CD4E07 /* PostDetailView.swift */; };
 		8C121DB22949352400CD4E07 /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA42949352400CD4E07 /* PostDetailView.swift */; };
 		8C121DB32949352400CD4E07 /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C121DA42949352400CD4E07 /* PostDetailView.swift */; };
@@ -258,8 +256,6 @@
 		8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E680290AD7F600FA5BF0 /* TextCancelButton.swift */; };
 		8C1E4862289C54240093030D /* ProfileMyMapCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4861289C54240093030D /* ProfileMyMapCell.swift */; };
 		8C1E4873289C54900093030D /* MapViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4872289C54900093030D /* MapViewDelegate.swift */; };
-		8C1E4874289C54900093030D /* MapViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4872289C54900093030D /* MapViewDelegate.swift */; };
-		8C1E4875289C54900093030D /* MapViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4872289C54900093030D /* MapViewDelegate.swift */; };
 		8C1E487A289C54C10093030D /* SpotPostAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4877289C54C10093030D /* SpotPostAnnotationView.swift */; };
 		8C1E4880289C54C10093030D /* SpotNameAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4879289C54C10093030D /* SpotNameAnnotationView.swift */; };
 		8C1E4897289C54CB0093030D /* SpotNameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E4884289C54CB0093030D /* SpotNameView.swift */; };
@@ -613,12 +609,20 @@
 		CD79D7FA293896FF005C93F1 /* CGPointExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */; };
 		CDAE20D9290A153900EB1F75 /* MapPostBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDAE20D8290A153900EB1F75 /* MapPostBody.swift */; };
 		CDC59829290A197D00E021AE /* MapPhotosCollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */; };
+		CDD8544029A8104E0083B9C8 /* PostControllerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8543F29A8104E0083B9C8 /* PostControllerViewModel.swift */; };
+		CDD8544229A98E9B0083B9C8 /* PostTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8544129A98E9B0083B9C8 /* PostTypes.swift */; };
+		CDD8544429A991120083B9C8 /* NearbyPostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8544329A991120083B9C8 /* NearbyPostsViewController.swift */; };
+		CDD8544629A9912C0083B9C8 /* AllPostsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8544529A9912C0083B9C8 /* AllPostsViewController.swift */; };
+		CDD8544829A991E00083B9C8 /* NearbyPostsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8544729A991E00083B9C8 /* NearbyPostsViewModel.swift */; };
+		CDD8544A29A992040083B9C8 /* AllPostsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8544929A992040083B9C8 /* AllPostsViewModel.swift */; };
+		CDD8544C29A9A1DA0083B9C8 /* FireStoreDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8544B29A9A1DA0083B9C8 /* FireStoreDocument.swift */; };
+		CDD8544E29A9A30B0083B9C8 /* FirestorePublishers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8544D29A9A30B0083B9C8 /* FirestorePublishers.swift */; };
+		CDD8545029A9A6320083B9C8 /* FirebaseSubscriptionListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8544F29A9A6320083B9C8 /* FirebaseSubscriptionListener.swift */; };
 		CDF8E93D2903A19D00BE929F /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */; };
 		CDF8E93F2903A21300BE929F /* MapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E93E2903A21300BE929F /* MapService.swift */; };
 		CDF8E9412903AC4E00BE929F /* FirebaseCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9402903AC4E00BE929F /* FirebaseCollection.swift */; };
 		CDF8E9432903B31800BE929F /* MapPostGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9422903B31800BE929F /* MapPostGroup.swift */; };
 		CDF8E9452903B49B00BE929F /* FirestoreSubscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9442903B49B00BE929F /* FirestoreSubscription.swift */; };
-		CDF8E9472903B4F200BE929F /* FirestoreDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9462903B4F200BE929F /* FirestoreDecoder.swift */; };
 		CDF8E9492903B5EE00BE929F /* ArrayExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E9482903B5EE00BE929F /* ArrayExtensions.swift */; };
 		CDF8E94B2903B62400BE929F /* UILabelExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E94A2903B62400BE929F /* UILabelExtension.swift */; };
 		CDF8E94D2903B68200BE929F /* UITextViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF8E94C2903B68200BE929F /* UITextViewExtension.swift */; };
@@ -926,12 +930,20 @@
 		CD79D7F9293896FF005C93F1 /* CGPointExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGPointExtension.swift; sourceTree = "<group>"; };
 		CDAE20D8290A153900EB1F75 /* MapPostBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostBody.swift; sourceTree = "<group>"; };
 		CDC59828290A197C00E021AE /* MapPhotosCollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPhotosCollectionView.swift; sourceTree = "<group>"; };
+		CDD8543F29A8104E0083B9C8 /* PostControllerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostControllerViewModel.swift; sourceTree = "<group>"; };
+		CDD8544129A98E9B0083B9C8 /* PostTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostTypes.swift; sourceTree = "<group>"; };
+		CDD8544329A991120083B9C8 /* NearbyPostsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyPostsViewController.swift; sourceTree = "<group>"; };
+		CDD8544529A9912C0083B9C8 /* AllPostsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllPostsViewController.swift; sourceTree = "<group>"; };
+		CDD8544729A991E00083B9C8 /* NearbyPostsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyPostsViewModel.swift; sourceTree = "<group>"; };
+		CDD8544929A992040083B9C8 /* AllPostsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllPostsViewModel.swift; sourceTree = "<group>"; };
+		CDD8544B29A9A1DA0083B9C8 /* FireStoreDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireStoreDocument.swift; sourceTree = "<group>"; };
+		CDD8544D29A9A30B0083B9C8 /* FirestorePublishers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestorePublishers.swift; sourceTree = "<group>"; };
+		CDD8544F29A9A6320083B9C8 /* FirebaseSubscriptionListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseSubscriptionListener.swift; sourceTree = "<group>"; };
 		CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		CDF8E93E2903A21300BE929F /* MapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapService.swift; sourceTree = "<group>"; };
 		CDF8E9402903AC4E00BE929F /* FirebaseCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseCollection.swift; sourceTree = "<group>"; };
 		CDF8E9422903B31800BE929F /* MapPostGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostGroup.swift; sourceTree = "<group>"; };
 		CDF8E9442903B49B00BE929F /* FirestoreSubscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreSubscription.swift; sourceTree = "<group>"; };
-		CDF8E9462903B4F200BE929F /* FirestoreDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreDecoder.swift; sourceTree = "<group>"; };
 		CDF8E9482903B5EE00BE929F /* ArrayExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrayExtensions.swift; sourceTree = "<group>"; };
 		CDF8E94A2903B62400BE929F /* UILabelExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UILabelExtension.swift; sourceTree = "<group>"; };
 		CDF8E94C2903B68200BE929F /* UITextViewExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITextViewExtension.swift; sourceTree = "<group>"; };
@@ -1342,6 +1354,7 @@
 			isa = PBXGroup;
 			children = (
 				599BD2BA23C652BD00ECB84A /* PostController.swift */,
+				CDD8543F29A8104E0083B9C8 /* PostControllerViewModel.swift */,
 				8C6790C82989E26000815F7B /* PostControllerActions.swift */,
 				8C6790CC2989E29500815F7B /* PostControllerTableViewExtension.swift */,
 				8CD72F692995F177001FB699 /* PostFeedExtension.swift */,
@@ -1354,6 +1367,11 @@
 				8C6790BC2984730600815F7B /* LocationScrollView.swift */,
 				8CEF3FBB2804C13C0088E0EF /* PostImageView.swift */,
 				8C4DD7452996AD67005040B6 /* ContentLoadingCell.swift */,
+				CDD8544129A98E9B0083B9C8 /* PostTypes.swift */,
+				CDD8544329A991120083B9C8 /* NearbyPostsViewController.swift */,
+				CDD8544729A991E00083B9C8 /* NearbyPostsViewModel.swift */,
+				CDD8544529A9912C0083B9C8 /* AllPostsViewController.swift */,
+				CDD8544929A992040083B9C8 /* AllPostsViewModel.swift */,
 			);
 			path = Post;
 			sourceTree = "<group>";
@@ -1646,8 +1664,10 @@
 			children = (
 				CDF8E93C2903A19D00BE929F /* ServiceContainer.swift */,
 				CDF8E9402903AC4E00BE929F /* FirebaseCollection.swift */,
+				CDD8544D29A9A30B0083B9C8 /* FirestorePublishers.swift */,
 				CDF8E9442903B49B00BE929F /* FirestoreSubscription.swift */,
-				CDF8E9462903B4F200BE929F /* FirestoreDecoder.swift */,
+				CDD8544B29A9A1DA0083B9C8 /* FireStoreDocument.swift */,
+				CDD8544F29A9A6320083B9C8 /* FirebaseSubscriptionListener.swift */,
 				CDF8E93E2903A21300BE929F /* MapService.swift */,
 				CD79D7F1292455E3005C93F1 /* MapPostService.swift */,
 				CD79D7F329247C76005C93F1 /* FriendsService.swift */,
@@ -2075,6 +2095,7 @@
 				8C66FAE9295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */,
 				8C121D7D294934BC00CD4E07 /* ChooseSpotFetchExtension.swift in Sources */,
 				8C9ADBA329A8103800A494B8 /* ProfileFetchExtension.swift in Sources */,
+				CDD8544A29A992040083B9C8 /* AllPostsViewModel.swift in Sources */,
 				8CC2A54A26BC7F99000ADA7A /* ImageObject.swift in Sources */,
 				8C121D8F2949351600CD4E07 /* FindFriendsController.swift in Sources */,
 				8C6790BD2984730600815F7B /* LocationScrollView.swift in Sources */,
@@ -2084,6 +2105,7 @@
 				8C1E4880289C54C10093030D /* SpotNameAnnotationView.swift in Sources */,
 				8C66226228EF596700BA5D05 /* ProgressBar.swift in Sources */,
 				8C121DAE2949352400CD4E07 /* PostImagePreview.swift in Sources */,
+				CDD8544429A991120083B9C8 /* NearbyPostsViewController.swift in Sources */,
 				CD79D7FA293896FF005C93F1 /* CGPointExtension.swift in Sources */,
 				8C121DD4294935EF00CD4E07 /* NotificationsTableExtension.swift in Sources */,
 				CDF8E983290477C200BE929F /* CustomMapHeaderCell.swift in Sources */,
@@ -2099,6 +2121,7 @@
 				8C121DFA2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C66FADC295F396A007A347D /* ChooseMapCustomCell.swift in Sources */,
 				CD239A0E28FFD5480099513F /* UIScrollViewExtension.swift in Sources */,
+				CDD8544C29A9A1DA0083B9C8 /* FireStoreDocument.swift in Sources */,
 				8C121E60294951D300CD4E07 /* UsernameController.swift in Sources */,
 				8C121DEE2949361500CD4E07 /* PhotoGalleryImagePreviewExtension.swift in Sources */,
 				8C121DE0294935EF00CD4E07 /* ActivityCell.swift in Sources */,
@@ -2107,6 +2130,7 @@
 				8C121E79294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,
 				8C1E487A289C54C10093030D /* SpotPostAnnotationView.swift in Sources */,
 				8CD49876297616D300F994C6 /* DrawerView.swift in Sources */,
+				CDD8545029A9A6320083B9C8 /* FirebaseSubscriptionListener.swift in Sources */,
 				8CA10A0B290B6C1900DD50EB /* UITextFieldExtension.swift in Sources */,
 				594CE11324B6A6CF0051516C /* MapPost.swift in Sources */,
 				CDC59829290A197D00E021AE /* MapPhotosCollectionView.swift in Sources */,
@@ -2134,6 +2158,7 @@
 				8C121DC32949352400CD4E07 /* ImagePreviewDelegateExtension.swift in Sources */,
 				8C12E6662901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				8C121DD7294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
+				CDD8544229A98E9B0083B9C8 /* PostTypes.swift in Sources */,
 				8C3B953628AD533100C06586 /* AvatarSelectionController.swift in Sources */,
 				59FCF5BB24734A1C0012207D /* ImageModel+CoreDataProperties.swift in Sources */,
 				8C121D9B2949351600CD4E07 /* FindFriendsSearchExtension.swift in Sources */,
@@ -2167,6 +2192,7 @@
 				CDF8E9592903C7F200BE929F /* NotificationsButton.swift in Sources */,
 				CD239A1128FFD5AC0099513F /* PaddedTextField.swift in Sources */,
 				8C1E4873289C54900093030D /* MapViewDelegate.swift in Sources */,
+				CDD8544029A8104E0083B9C8 /* PostControllerViewModel.swift in Sources */,
 				8CA512AD28BE52D700F8C1FE /* MapNotificationsExtension.swift in Sources */,
 				CDF8E98E29048C2E00BE929F /* MapHeaderActionSheet.swift in Sources */,
 				8C3B955628B2B38E00C06586 /* AddButtonTransition.swift in Sources */,
@@ -2187,6 +2213,7 @@
 				CD79D7F829249095005C93F1 /* SpotService.swift in Sources */,
 				599BD2BB23C652BD00ECB84A /* PostController.swift in Sources */,
 				CDF8E985290477C200BE929F /* CustomMapCollectionExtension.swift in Sources */,
+				CDD8544829A991E00083B9C8 /* NearbyPostsViewModel.swift in Sources */,
 				8C66FAC4295E200F007A347D /* ChooseFriendsCell.swift in Sources */,
 				8C3BAF66260CFB7B00349091 /* CountryCode.swift in Sources */,
 				8C65DFE629A55F0D00CF3CA5 /* NewMapActions.swift in Sources */,
@@ -2197,7 +2224,6 @@
 				8C941745297B0F4A00818D43 /* SpotPageCollectionExtension.swift in Sources */,
 				59BA812324D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
 				CDF8E9772904653B00BE929F /* CMSampleBufferExtension.swift in Sources */,
-				CDF8E9472903B4F200BE929F /* FirestoreDecoder.swift in Sources */,
 				412555C4285AEA0300C071A4 /* BottomToTopTransition.swift in Sources */,
 				8CC3653A26C5E9A900AC40AB /* UploadPostModel.swift in Sources */,
 				8C12E677290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */,
@@ -2215,12 +2241,14 @@
 				CDF8E988290486B000BE929F /* SimpleMapHeaderCell.swift in Sources */,
 				8C8304BD26E98C3700EEBCFC /* UserDataModel.swift in Sources */,
 				CDF8E981290477C200BE929F /* CustomMapFetchExtension.swift in Sources */,
+				CDD8544E29A9A30B0083B9C8 /* FirestorePublishers.swift in Sources */,
 				8C69967529A05DEA00883F1C /* PostTitleView.swift in Sources */,
 				CDF8E9412903AC4E00BE929F /* FirebaseCollection.swift in Sources */,
 				8C2074CC25CB38440040036B /* City.swift in Sources */,
 				8CD72F5829959C23001FB699 /* SpotTabBarController.swift in Sources */,
 				8C1E4897289C54CB0093030D /* SpotNameView.swift in Sources */,
 				8C4DD7462996AD67005040B6 /* ContentLoadingCell.swift in Sources */,
+				CDD8544629A9912C0083B9C8 /* AllPostsViewController.swift in Sources */,
 				CDF8E975290464F600BE929F /* AVCaptureDeviceExtension.swift in Sources */,
 				8C66FAE1295F6108007A347D /* ChooseMapNewCell.swift in Sources */,
 				416AE77B2896F1280037B8AF /* ProfileViewController.swift in Sources */,
@@ -2375,7 +2403,6 @@
 				8C121DFB2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C121DB82949352400CD4E07 /* NewSpotNameView.swift in Sources */,
 				59BA812424D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
-				8C1E4874289C54900093030D /* MapViewDelegate.swift in Sources */,
 				8C12E6672901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				8C121D75294934BC00CD4E07 /* CreateSpotButton.swift in Sources */,
 				8C6790BE2984730600815F7B /* LocationScrollView.swift in Sources */,
@@ -2391,7 +2418,6 @@
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11424B6A6CF0051516C /* MapPost.swift in Sources */,
 				8CD49877297616D300F994C6 /* DrawerView.swift in Sources */,
-				8C121DAF2949352400CD4E07 /* PostImagePreview.swift in Sources */,
 				59F6ABBE23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C121DBE2949352400CD4E07 /* NewSpotMask.swift in Sources */,
 				8C65DFE729A55F0D00CF3CA5 /* NewMapActions.swift in Sources */,
@@ -2545,7 +2571,6 @@
 				8C121DFC2949361500CD4E07 /* SelectedImagesFooter.swift in Sources */,
 				8C121DB92949352400CD4E07 /* NewSpotNameView.swift in Sources */,
 				59BA812524D9C9CB00FFCDFA /* UserProfile.swift in Sources */,
-				8C1E4875289C54900093030D /* MapViewDelegate.swift in Sources */,
 				8C12E6682901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */,
 				8C121D76294934BC00CD4E07 /* CreateSpotButton.swift in Sources */,
 				8C6790BF2984730600815F7B /* LocationScrollView.swift in Sources */,
@@ -2561,7 +2586,6 @@
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11524B6A6CF0051516C /* MapPost.swift in Sources */,
 				8CD49878297616D300F994C6 /* DrawerView.swift in Sources */,
-				8C121DB02949352400CD4E07 /* PostImagePreview.swift in Sources */,
 				59F6ABBF23566A3600E18AAF /* PushNotificationManager.swift in Sources */,
 				8C121DBF2949352400CD4E07 /* NewSpotMask.swift in Sources */,
 				8C65DFE829A55F0D00CF3CA5 /* NewMapActions.swift in Sources */,

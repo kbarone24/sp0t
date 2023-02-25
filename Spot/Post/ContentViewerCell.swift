@@ -6,11 +6,11 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
 import Firebase
 import Mixpanel
 import FirebaseStorageUI
+import AVFoundation
 
 protocol ContentViewerDelegate: AnyObject {
     func likePost(postID: String)
@@ -25,17 +25,14 @@ protocol ContentViewerDelegate: AnyObject {
     func tapToNextPost()
 }
 
-class ContentViewerCell: UITableViewCell {
-    lazy var parentVC: PostParent = .Home
-    public var post: MapPost?
-    public var globalRow = 0
-    public weak var delegate: ContentViewerDelegate?
+enum ContentViewerCellMode: Hashable {
+    case video
+    case image
+}
 
-    lazy var dotView = UIView()
+final class ContentViewerCell: UITableViewCell {
 
-    lazy var locationView = LocationScrollView()
-    lazy var mapIcon = UIImageView(image: UIImage(named: "FeedMapIcon"))
-    lazy var mapButton: UIButton = {
+    private(set) lazy var mapButton: UIButton = {
         let button = UIButton()
         button.setTitleColor(.white, for: .normal)
         // replace with actual font
@@ -44,13 +41,14 @@ class ContentViewerCell: UITableViewCell {
         button.addTarget(self, action: #selector(mapTap), for: .touchUpInside)
         return button
     }()
-    lazy var separatorView: UIView = {
+    
+    private(set) lazy var separatorView: UIView = {
         let view = UIView()
         view.backgroundColor = .white.withAlphaComponent(0.25)
         return view
     }()
-    lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
-    lazy var spotButton: UIButton = {
+    
+    private(set) lazy var spotButton: UIButton = {
         let button = UIButton()
         button.setTitleColor(.white, for: .normal)
         // replace with actual font
@@ -58,14 +56,15 @@ class ContentViewerCell: UITableViewCell {
         button.addTarget(self, action: #selector(spotTap), for: .touchUpInside)
         return button
     }()
-    lazy var cityLabel: UILabel = {
+    
+    private(set) lazy var cityLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white.withAlphaComponent(0.6)
         label.font = UIFont(name: "SFCompactText-Medium", size: 15)
         return label
     }()
 
-    lazy var captionLabel: UILabel = {
+    private(set) lazy var captionLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont(name: "SFCompactText-Medium", size: 14.5)
@@ -75,10 +74,8 @@ class ContentViewerCell: UITableViewCell {
         label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(captionTap)))
         return label
     }()
-    lazy var tagRect: [(rect: CGRect, username: String)] = []
-    var moreShowing = false
 
-    lazy var profileImage: UIImageView = {
+    private(set) lazy var profileImage: UIImageView = {
         let image = UIImageView()
         image.contentMode = .scaleAspectFill
         image.layer.masksToBounds = true
@@ -89,7 +86,7 @@ class ContentViewerCell: UITableViewCell {
         return image
     }()
 
-    lazy var usernameLabel: UILabel = {
+    private(set) lazy var usernameLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
         // replace with actual font
@@ -99,15 +96,15 @@ class ContentViewerCell: UITableViewCell {
         return label
     }()
 
-    lazy var timestampLabel: UILabel = {
+    private(set) lazy var timestampLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor.white.withAlphaComponent(0.6)
         label.font = UIFont(name: "SFCompactText-Medium", size: 13.5)
         return label
     }()
 
-    lazy var buttonView = UIView()
-    lazy var likeButton: UIButton = {
+    private(set) lazy var buttonView = UIView()
+    private(set) lazy var likeButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
         let button = UIButton(configuration: configuration)
@@ -115,13 +112,15 @@ class ContentViewerCell: UITableViewCell {
         button.addTarget(self, action: #selector(likeTap), for: .touchUpInside)
         return button
     }()
-    lazy var numLikes: UILabel = {
+    
+    private(set) lazy var numLikes: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont(name: "UniversCE-Black", size: 12)
         return label
     }()
-    lazy var commentButton: UIButton = {
+    
+    private(set) lazy var commentButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
         let button = UIButton(configuration: configuration)
@@ -129,13 +128,15 @@ class ContentViewerCell: UITableViewCell {
         button.addTarget(self, action: #selector(commentsTap), for: .touchUpInside)
         return button
     }()
-    lazy var numComments: UILabel = {
+    
+    private(set) lazy var numComments: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont(name: "UniversCE-Black", size: 12)
         return label
     }()
-    lazy var moreButton: UIButton = {
+    
+    private(set) lazy var moreButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
         let button = UIButton(configuration: configuration)
@@ -143,10 +144,7 @@ class ContentViewerCell: UITableViewCell {
         button.addTarget(self, action: #selector(moreTap), for: .touchUpInside)
         return button
     }()
-
-    lazy var currentImage = PostImagePreview()
-    lazy var nextImage = PostImagePreview()
-    lazy var previousImage = PostImagePreview()
+    
     var cellOffset = false
     var imageSwiping = false {
         didSet {
@@ -156,6 +154,22 @@ class ContentViewerCell: UITableViewCell {
 
     var imagePan: UIPanGestureRecognizer?
     var imageTap: UITapGestureRecognizer?
+    
+    internal var tagRect: [(rect: CGRect, username: String)] = []
+    var moreShowing = false
+    private(set) lazy var dotView = UIView()
+    private(set) lazy var locationView = LocationScrollView()
+    private(set) lazy var mapIcon = UIImageView(image: UIImage(named: "FeedMapIcon"))
+    private(set) lazy var spotIcon = UIImageView(image: UIImage(named: "FeedSpotIcon"))
+    internal lazy var currentImage = PostImagePreview()
+    internal lazy var nextImage = PostImagePreview()
+    internal lazy var previousImage = PostImagePreview()
+
+    lazy var parentVC: PostParent = .Home
+    internal var post: MapPost?
+    var globalRow = 0
+    var mode: ContentViewerCellMode = .image // Default
+    weak var delegate: ContentViewerDelegate?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -164,6 +178,7 @@ class ContentViewerCell: UITableViewCell {
         setUpView()
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -173,11 +188,12 @@ class ContentViewerCell: UITableViewCell {
         animateLocation()
     }
 
-    public func setUp(post: MapPost, parentVC: PostParent, row: Int) {
+    func setUp(post: MapPost, parentVC: PostParent, row: Int, mode: ContentViewerCellMode) {
         self.post = post
         self.parentVC = parentVC
-        globalRow = row
-
+        self.globalRow = row
+        self.mode = mode
+        
         setLocationView()
         setPostInfo()
         setCommentsAndLikes()
@@ -249,7 +265,6 @@ class ContentViewerCell: UITableViewCell {
             $0.bottom.equalTo(locationView.snp.top).offset(-15)
             $0.trailing.lessThanOrEqualTo(buttonView.snp.leading).offset(-7)
             $0.height.lessThanOrEqualTo(52)
-          //  $0.height.greaterThanOrEqualTo(12)
         }
 
         contentView.addSubview(usernameLabel)

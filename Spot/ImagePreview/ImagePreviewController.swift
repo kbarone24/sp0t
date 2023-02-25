@@ -307,22 +307,19 @@ final class ImagePreviewController: UIViewController {
     
     private func addPreviewPhoto(_ post: MapPost) {
         // add initial preview view and buttons
-        let post = UploadPostModel.shared.postObject
-        currentImage = PostImagePreview(frame: .zero, index: post?.selectedImageIndex ?? 0, parent: .ImagePreview)
+
+        currentImage = PostImagePreview(frame: .zero, index: post.selectedImageIndex ?? 0, parent: .ImagePreview)
         view.addSubview(currentImage)
-        currentImage.makeConstraints(post: post)
-        currentImage.setCurrentImage(post: post)
+        currentImage.configure(mode: .image(post))
 
-        if post?.frameIndexes?.count ?? 0 > 1 {
-            nextImage = PostImagePreview(frame: .zero, index: (post?.selectedImageIndex ?? 0) + 1, parent: .ImagePreview)
+        if post.frameIndexes?.count ?? 0 > 1 {
+            nextImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) + 1, parent: .ImagePreview)
             view.addSubview(nextImage)
-            nextImage.makeConstraints(post: post)
-            nextImage.setCurrentImage(post: post)
+            nextImage.configure(mode: .image(post))
 
-            previousImage = PostImagePreview(frame: .zero, index: (post?.selectedImageIndex ?? 0) - 1, parent: .ImagePreview)
+            previousImage = PostImagePreview(frame: .zero, index: (post.selectedImageIndex ?? 0) - 1, parent: .ImagePreview)
             view.addSubview(previousImage)
-            previousImage.makeConstraints(post: post)
-            previousImage.setCurrentImage(post: post)
+            previousImage.configure(mode: .image(post))
 
             let pan = UIPanGestureRecognizer(target: self, action: #selector(imageSwipe(_:)))
             view.addGestureRecognizer(pan)
