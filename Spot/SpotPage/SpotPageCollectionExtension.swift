@@ -12,7 +12,7 @@ import Mixpanel
 
 extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 3
+        return 2
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -20,9 +20,7 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
         case 0:
             return 1
         case 1:
-            return relatedPosts.count
-        case 2:
-            return communityPosts.count
+            return postsList.count
         default:
             return 0
         }
@@ -34,51 +32,14 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
             headerCell.cellSetup(spotName: spotName, spot: spot)
             return headerCell
         } else if let bodyCell = cell as? SpotPageBodyCell {
-            // Setup map post label
-            if indexPath == IndexPath(row: 0, section: 1) {
-                let frontPadding = "    "
-                let bottomPadding = "   "
-                if let mapName, mapName != "" {
-                    mapPostLabel.text = frontPadding + mapName + bottomPadding
-                } else {
-                    mapPostLabel.text = frontPadding + "Friends posts" + bottomPadding
-                }
-                addHeaderView(label: mapPostLabel, cell: cell, communityEmpty: false)
-            }
-            // set up community post label
-            if !communityPosts.isEmpty {
-                if indexPath == IndexPath(row: 0, section: 2) {
-                    addHeaderView(label: communityPostLabel, cell: cell, communityEmpty: false)
-                }
-            } else if fetchCommunityPostsComplete {
-                if indexPath == IndexPath(row: relatedPosts.count - 1, section: 1) {
-                    addHeaderView(label: communityPostLabel, cell: cell, communityEmpty: true)
-                }
-            }
-
-            bodyCell.cellSetup(mapPost: indexPath.section == 1 ? relatedPosts[indexPath.row] : communityPosts[indexPath.row])
-
+            bodyCell.cellSetup(mapPost: postsList[indexPath.row])
             return bodyCell
         }
         return cell
     }
 
-    func addHeaderView(label: UILabel, cell: UICollectionViewCell, communityEmpty: Bool) {
-        if !collectionView.subviews.contains(label) { collectionView.addSubview(label) }
-        label.snp.removeConstraints()
-        label.snp.makeConstraints {
-            $0.leading.equalToSuperview()
-            $0.height.equalTo(31)
-            if !communityEmpty {
-                $0.top.equalToSuperview().offset(cell.frame.minY - 15.5)
-            } else {
-                $0.bottom.equalToSuperview().offset(cell.frame.maxY + 15.5)
-            }
-        }
-    }
-
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: 100) : CGSize(width: view.frame.width / 2 - 0.5, height: (view.frame.width / 2 - 0.5) * 267 / 194.5)
+        return indexPath.section == 0 ? CGSize(width: view.frame.width, height: 94) : CGSize(width: itemWidth, height: itemHeight)
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
@@ -86,11 +47,11 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 1
+        return 2
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 1
+        return 2
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -104,9 +65,9 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                     collectionCell?.transform = .identity
                 }
             }
-            var posts = indexPath.section == 1 ? relatedPosts : communityPosts
-            posts.sortPostsOnOpen(index: indexPath.item)
+            let posts = Array(postsList.suffix(from: indexPath.row))
             let postVC = PostController(parentVC: .Spot, postsList: posts, selectedPostIndex: 0, title: spotName)
+            postVC.delegate = self
             self.navigationController?.pushViewController(postVC, animated: true)
         }
     }
@@ -115,12 +76,14 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
 extension SpotPageController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         DispatchQueue.main.async {
-            self.navigationItem.title = scrollView.contentOffset.y > 75 ? self.spotName : ""
+            self.navigationItem.title = scrollView.contentOffset.y > 30 ? self.spotName : ""
         }
 
-        if (scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - 500)) && fetching == .refreshEnabled {
-            DispatchQueue.global(qos: .userInitiated).async {
-                self.fetchRelatedPostsComplete ? self.fetchCommunityPosts() : self.fetchRelatedPosts()
+        if scrollView.contentOffset.y > UIScreen.main.bounds.height &&
+            scrollView.contentOffset.y >= (scrollView.contentSize.height - scrollView.frame.size.height - itemHeight * 4) &&
+            refreshStatus == .refreshEnabled {
+            DispatchQueue.global().async {
+                self.getPosts()
             }
         }
     }

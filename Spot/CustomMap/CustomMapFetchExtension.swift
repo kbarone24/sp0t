@@ -54,63 +54,42 @@ extension CustomMapController {
     }
 
     func getPosts() {
-        var query = db.collection("posts").order(by: "timestamp", descending: true).limit(to: 21)
-        switch mapType {
-        case .customMap:
-            query = query.whereField("mapID", isEqualTo: mapData?.id ?? "")
-        case .myMap:
-            query = query.whereField("posterID", isEqualTo: userProfile?.id ?? "")
-        case .friendsMap:
-            query = query.whereField("friendsList", arrayContains: uid)
+        guard let mapID = mapData?.id else { return }
+        refreshStatus = .activelyRefreshing
+        let limit = 20
+        var query = db.collection("posts").whereField("mapID", isEqualTo: mapID).order(by: "timestamp", descending: true).limit(to: limit)
+        if let endDocument = endDocument { query = query.start(afterDocument: endDocument) }
+        Task {
+            let documents = try? await mapPostService?.getPostsFrom(query: query, caller: .CustomMap, limit: limit)
+            guard var posts = documents?.posts else { return }
+            posts.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
+
+            self.endDocument = documents?.endDocument
+            if self.endDocument == nil { self.refreshStatus = .refreshDisabled }
+            self.reloadCollectionView(posts: posts)
         }
-        if let endDocument = endDocument { query = query.start(atDocument: endDocument) }
 
-        DispatchQueue.global().async {
-            query.getDocuments { [weak self] snap, _ in
-                guard let self = self else { return }
-                guard let allDocs = snap?.documents else { return }
-                if allDocs.count < 21 { self.refresh = .refreshDisabled }
-                self.endDocument = allDocs.last
+    }
+    private func reloadCollectionView(posts: [MapPost]) {
+        DispatchQueue.main.async {
+            self.postsList.append(contentsOf: posts)
+            self.collectionView.reloadData()
+            if self.refreshStatus != .refreshDisabled { self.refreshStatus = .refreshEnabled }
+            self.activityIndicator.stopAnimating()
 
-                let docs = self.refresh == .refreshDisabled ? allDocs : allDocs.dropLast()
-                let postGroup = DispatchGroup()
-                for doc in docs {
-                    do {
-                        let unwrappedInfo = try? doc.data(as: MapPost.self)
-                        guard let postInfo = unwrappedInfo else { return }
-                        if self.postsList.contains(where: { $0.id == postInfo.id }) { continue }
-                        if !self.hasMapPostAccess(post: postInfo) { continue }
-                        postGroup.enter()
-                        self.mapPostService?.setPostDetails(post: postInfo) { post in
-                            if let id = post.id, id != "", !self.postsList.contains(where: { $0.id == id }) {
-                                DispatchQueue.main.async {
-                                    self.postsList.append(post)
-                                    self.mapData?.postsDictionary.updateValue(post, forKey: post.id ?? "")
-                                }
-                            }
-                            postGroup.leave()
-                        }
-
-                    } 
-                }
-                postGroup.notify(queue: .main) {
-                    self.postsList.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
-                    self.collectionView.reloadData()
-                    if self.refresh != .refreshDisabled { self.refresh = .refreshEnabled }
-                }
+            guard let controllers = self.navigationController?.children else { return }
+            if let postController = controllers.last as? PostController {
+                postController.postsList.append(contentsOf: posts)
+                postController.contentTable.reloadData()
             }
         }
     }
+}
 
-    func hasMapPostAccess(post: MapPost) -> Bool {
-        if UserDataModel.shared.deletedPostIDs.contains(post.id ?? "_") || post.posterID.isBlocked() { return false }
-        if mapType == .friendsMap || mapType == .myMap {
-            /// show only friends level posts for friends map and my map,
-            if post.privacyLevel == "invite" && post.hideFromFeed ?? false {
-                return false
-            }
-            return UserDataModel.shared.userInfo.friendIDs.contains(post.posterID) || uid == post.posterID
+extension CustomMapController: PostControllerDelegate {
+    func indexChanged(rowsRemaining: Int) {
+        if rowsRemaining < 5 && refreshStatus == .refreshEnabled {
+            DispatchQueue.global().async { self.getPosts() }
         }
-        return true
     }
 }

@@ -11,11 +11,20 @@ import Firebase
 import CoreLocation
 import GeoFire
 
+enum MapServiceCaller {
+    case Profile
+    case Spot
+    case CustomMap
+    case Feed
+}
+
 protocol MapPostServiceProtocol {
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?)
     func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool) -> Void)?)
     func getComments(postID: String) async throws -> [MapComment]
     func getPost(postID: String) async throws -> MapPost
+    func getPostDocuments(query: Query) async throws -> [MapPost]?
+    func getPostsFrom(query: Query, caller: MapServiceCaller, limit: Int) async throws -> (posts: [MapPost]?, endDocument: DocumentSnapshot?)
     func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void)
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
@@ -187,7 +196,7 @@ final class MapPostService: MapPostServiceProtocol {
         }
     }
     // function does NOT fetch user info
-    func getPosts(query: Query) async throws -> [MapPost]? {
+    func getPostDocuments(query: Query) async throws -> [MapPost]? {
         try await withCheckedThrowingContinuation { continuation in
             query.getDocuments { snap, error in
                 guard error == nil, let docs = snap?.documents, !docs.isEmpty
@@ -216,7 +225,71 @@ final class MapPostService: MapPostServiceProtocol {
             }
         }
     }
-    
+
+    // function will fetch user info
+    func getPostsFrom(query: Query, caller: MapServiceCaller, limit: Int) async throws -> (posts: [MapPost]?, endDocument: DocumentSnapshot?) {
+        try await withCheckedThrowingContinuation { continuation in
+            query.getDocuments { snap, error in
+                guard error == nil, let docs = snap?.documents, !docs.isEmpty
+                else {
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: ([], nil))
+                    }
+                    return
+                }
+
+                Task {
+                    var posts: [MapPost] = []
+                    let endDocument: DocumentSnapshot? = docs.count < limit ? nil : docs.last
+                    for doc in docs {
+                        defer {
+                            if doc == docs.last {
+                                continuation.resume(returning: (posts, endDocument))
+                            }
+                        }
+
+                        guard var postInfo = try? doc.data(as: MapPost.self) else { continue }
+                        if !self.hasPostAccess(postInfo: postInfo, caller: caller) { continue }
+
+                        let userService = try ServiceContainer.shared.service(for: \.userService)
+                        let user = try await userService.getUserInfo(userID: postInfo.posterID)
+                        postInfo.userInfo = user
+
+                        let comments = try await self.getComments(postID: postInfo.id ?? "")
+                        postInfo.commentList = comments
+                        posts.append(postInfo)
+                    }
+                }
+            }
+        }
+    }
+
+    private func hasPostAccess(postInfo: MapPost, caller: MapServiceCaller) -> Bool {
+        if UserDataModel.shared.deletedPostIDs.contains(postInfo.id ?? "_") || postInfo.posterID.isBlocked() { return false }
+        switch caller {
+        case .Profile:
+            if postInfo.privacyLevel == "invite" {
+                return postInfo.inviteList?.contains(UserDataModel.shared.uid) ?? false
+            }
+            return true
+        case .CustomMap:
+            return true
+        case .Spot:
+            if postInfo.privacyLevel == "invite" {
+                if postInfo.hideFromFeed ?? false {
+                    return (postInfo.inviteList?.contains(UserDataModel.shared.uid)) ?? false
+                } else {
+                    return UserDataModel.shared.userInfo.friendIDs.contains(postInfo.posterID) || UserDataModel.shared.uid == postInfo.posterID
+                }
+            }
+            return true
+        default:
+            return false
+        }
+    }
+
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping(_ post: [MapPost]) -> Void) async {
         
         Task {
@@ -243,7 +316,7 @@ final class MapPostService: MapPostServiceProtocol {
                     }
                 }
                 
-                let posts = try? await getPosts(query: query)
+                let posts = try? await getPostDocuments(query: query)
                 guard let posts else { continue }
                 allPosts.append(contentsOf: posts)
             }
