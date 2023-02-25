@@ -53,7 +53,7 @@ class SpotTabBarController: UITabBarController {
         tabBar.tintColor = .white
         tabBar.isTranslucent = false
 
-        let postVC = PostController(parentVC: .Home, postsList: [])
+        let postVC = PostController(parentVC: .Home)
         let nav0 = UINavigationController(rootViewController: postVC)
         nav0.tabBarItem = feedItem
 
@@ -93,7 +93,7 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                 Mixpanel.mainInstance().track(event: "PostsScreenNotificationsTap")
                 if selectedIndex == 0 {
                     if nav.viewControllers.count == 1 {
-                        post.scrollToTop()
+                        post.allPostsViewController.scrollToTop()
                     } else {
                         nav.popToRootViewController(animated: true)
                     }

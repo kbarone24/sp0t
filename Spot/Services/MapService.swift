@@ -18,6 +18,7 @@ protocol MapServiceProtocol {
     func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
     func getMap(mapID: String) async throws -> CustomMap
     func uploadMap(map: CustomMap, newMap: Bool, post: MapPost, spot: MapSpot?)
+    func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void)
 }
 
 final class MapService: MapServiceProtocol {
@@ -169,7 +170,7 @@ final class MapService: MapServiceProtocol {
             if newMap {
                 let mapRef = self.fireStore
                     .collection(FirebaseCollectionNames.maps.rawValue)
-                    .document(map.id!)
+                    .document(mapId)
                 try? mapRef.setData(from: map, merge: true)
                 
             } else {
@@ -210,6 +211,34 @@ final class MapService: MapServiceProtocol {
                         "postID": postId
                     ]
                 )
+        }
+    }
+    
+    func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void) {
+        guard !mapID.isEmpty else {
+            completion(false)
+            return
+        }
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                .whereField(FirebaseCollectionFields.mapID.rawValue, isEqualTo: mapID)
+                .getDocuments { snap, _ in
+                    var postCount = 0
+                    var mapDelete = false
+                    for doc in snap?.documents ?? [] {
+                        if !UserDataModel.shared.deletedPostIDs.contains(where: { $0 == doc.documentID }) {
+                            postCount += 1
+                        }
+                        
+                        if doc == snap?.documents.last {
+                            mapDelete = postCount == 1
+                        }
+                    }
+                    
+                    if mapDelete { UserDataModel.shared.deletedMapIDs.append(mapID) }
+                    completion(mapDelete)
+                }
         }
     }
 }
