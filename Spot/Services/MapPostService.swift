@@ -6,7 +6,6 @@
 //  Copyright © 2022 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import Firebase
 import CoreLocation
 import GeoFire
@@ -19,19 +18,22 @@ enum MapServiceCaller {
 }
 
 protocol MapPostServiceProtocol {
+    func fetchAllPostsForCurrentUser(limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) async throws -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?)
+    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?) async throws ->  ([MapPost], DocumentSnapshot?)
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?)
     func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool) -> Void)?)
+    func getPostsFrom(query: Query, caller: MapServiceCaller, limit: Int) async throws -> (posts: [MapPost]?, endDocument: DocumentSnapshot?)
     func getComments(postID: String) async throws -> [MapComment]
     func getPost(postID: String) async throws -> MapPost
-    func getPostDocuments(query: Query) async throws -> [MapPost]?
-    func getPostsFrom(query: Query, caller: MapServiceCaller, limit: Int) async throws -> (posts: [MapPost]?, endDocument: DocumentSnapshot?)
-    func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void)
+    func setPostDetails(post: MapPost) async throws -> MapPost
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
     func updateMapNameInPosts(mapID: String, newName: String)
     func likePostDB(post: MapPost)
     func unlikePostDB(post: MapPost)
     func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool)
+    func setSeen(post: MapPost)
+    func reportPost(postID: String, feedbackText: String, userId: String)
 }
 
 final class MapPostService: MapPostServiceProtocol {
@@ -43,6 +45,188 @@ final class MapPostService: MapPostServiceProtocol {
     
     init(fireStore: Firestore) {
         self.fireStore = fireStore
+    }
+    
+    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?) async throws -> ([MapPost], DocumentSnapshot?) {
+        try await withUnsafeThrowingContinuation { continuation in
+            Task {
+                guard let locationService = try? ServiceContainer.shared.service(for: \.locationService),
+                      let location = locationService.currentLocation,
+                      let city = try? await locationService.reverseGeocode(location: location, zoomLevel: 0)
+                else {
+                    continuation.resume(returning: ([], lastItem))
+                    return
+                }
+                
+                let request = self.fireStore
+                    .collection(FirebaseCollectionNames.posts.rawValue)
+                    .limit(to: limit)
+                    .whereField(FirebaseCollectionFields.city.rawValue, isEqualTo: city)
+                    .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
+                
+                if let lastItem {
+                    request.start(afterDocument: lastItem)
+                }
+                
+                request.getDocuments { snapshot, error in
+                    guard let snapshot, error == nil else {
+                        continuation.resume(returning: ([], lastItem))
+                        return
+                    }
+                    
+                    guard !snapshot.documents.isEmpty else {
+                        continuation.resume(returning: ([], lastItem))
+                        return
+                    }
+                    
+                    Task {
+                        var posts: [MapPost] = []
+                        var lastDocument: DocumentSnapshot?
+                        
+                        for document in snapshot.documents {
+                            guard let mapPost = try? document.data(as: MapPost.self) else {
+                                continue
+                            }
+                            
+                            guard mapPost.privacyLevel == "public",
+                                  !mapPost.friendsList.contains(UserDataModel.shared.uid),
+                                  !(mapPost.inviteList?.contains(UserDataModel.shared.uid) ?? false),
+                                  !(mapPost.userInfo?.id?.isBlocked() ?? false),
+                                  !((mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) || UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? ""))
+                            else {
+                                continue
+                            }
+                            
+                            defer {
+                                if document == snapshot.documents.last {
+                                    lastDocument = document
+                                    continuation.resume(
+                                        returning: (
+                                            posts.sorted {
+                                                $0.postScore ?? 0.0 > $1.postScore ?? 0.0
+                                            },
+                                            lastDocument
+                                        )
+                                    )
+                                }
+                            }
+                            
+                            if var post = try? await self.setPostDetails(post: mapPost) {
+                                post.postScore = post.getNearbyPostScore()
+                                posts.append(post)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    func fetchAllPostsForCurrentUser(limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) async throws -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?) {
+        try await withUnsafeThrowingContinuation { [weak self] continuation in
+            guard let self else {
+                continuation.resume(returning: ([], lastMapItem, lastFriendsItem))
+                return
+            }
+            
+            Task {
+                var posts: [MapPost] = []
+                let request = self.fireStore
+                    .collection(FirebaseCollectionNames.posts.rawValue)
+                    .limit(to: limit)
+                    .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
+                
+                let friendsQuery = request.whereField(FirebaseCollectionFields.friendsList.rawValue, arrayContains: UserDataModel.shared.uid)
+                
+                if let lastFriendsItem {
+                    friendsQuery.start(afterDocument: lastFriendsItem)
+                }
+                
+                let mapsQuery = request.whereField(FirebaseCollectionFields.inviteList.rawValue, arrayContains: UserDataModel.shared.uid)
+                
+                if let lastMapItem {
+                    mapsQuery.start(afterDocument: lastMapItem)
+                }
+                
+                var lastMapDocument: DocumentSnapshot?
+                var lastFriendsDocument: DocumentSnapshot?
+                
+                guard let friendsPosts = try? await self.fetchSnapshot(query: friendsQuery),
+                      let mapsPosts = try? await self.fetchSnapshot(query: mapsQuery),
+                      let postsFromFriends = try? await self.setPostDetails(snapshot: friendsPosts),
+                      let postsFromMaps = try? await self.setPostDetails(snapshot: mapsPosts)
+                else {
+                    continuation.resume(returning: ([], lastMapItem, lastFriendsItem))
+                    return
+                }
+                
+                lastMapDocument = mapsPosts.documents.last
+                lastFriendsDocument = friendsPosts.documents.last
+                
+                for post in postsFromMaps {
+                    posts.append(post)
+                }
+                
+                for post in postsFromFriends {
+                    posts.append(post)
+                }
+                
+                continuation.resume(
+                    returning: (
+                        posts.sorted {
+                            $0.timestamp.seconds > $1.timestamp.seconds
+                        },
+                        lastMapDocument,
+                        lastFriendsDocument
+                    )
+                )
+            }
+        }
+    }
+    
+    private func fetchSnapshot(query: Query) async throws -> QuerySnapshot? {
+        try await withUnsafeThrowingContinuation { continuation in
+            query.getDocuments { snapshot, error in
+                guard let snapshot, error == nil else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                
+                continuation.resume(returning: snapshot)
+            }
+        }
+    }
+    
+    private func setPostDetails(snapshot: QuerySnapshot) async throws -> [MapPost] {
+        try await withUnsafeThrowingContinuation { [weak self] continuation in
+            guard let self, !snapshot.documents.isEmpty else {
+                continuation.resume(returning: [])
+                return
+            }
+            
+            Task {
+                var posts: [MapPost] = []
+                for document in snapshot.documents {
+                    guard let mapPost = try? document.data(as: MapPost.self),
+                          !(mapPost.userInfo?.id?.isBlocked() ?? false),
+                          !((mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) || UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? ""))
+                    else {
+                        continue
+                    }
+                    
+                    defer {
+                        if document == snapshot.documents.last {
+                            continuation.resume(returning: posts)
+                        }
+                    }
+                    
+                    if var post = try? await self.setPostDetails(post: mapPost) {
+                        post.postScore = post.getNearbyPostScore()
+                        posts.append(post)
+                    }
+                }
+            }
+        }
     }
     
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?) {
@@ -143,58 +327,56 @@ final class MapPostService: MapPostServiceProtocol {
     }
     
     func getPost(postID: String) async throws -> MapPost {
-        try await withUnsafeThrowingContinuation { [weak self] continuation in
-            var emptyPost = MapPost(
-                spotID: "",
-                spotName: "",
-                mapID: "",
-                mapName: ""
-            )
-            emptyPost.id = ""
-            
-            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+        try await withUnsafeThrowingContinuation { continuation in
+            self.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
                 .document(postID)
-                .getDocument { [weak self] doc, _ in
-                    
-                    do {
-                        guard let postInfo = try doc?.data(as: MapPost.self) else {
+                .getDocument { doc, _ in
+                    Task {
+                        
+                        var emptyPost = MapPost(
+                            spotID: "",
+                            spotName: "",
+                            mapID: "",
+                            mapName: ""
+                        )
+                        emptyPost.id = ""
+                        
+                        guard let postInfo = try? doc?.data(as: MapPost.self) else {
                             continuation.resume(returning: emptyPost)
                             return
                         }
                         
-                        self?.setPostDetails(post: postInfo) { post in
-                            continuation.resume(returning: post)
-                        }
-                    } catch {
-                        continuation.resume(returning: emptyPost)
+                        let post = try? await self.setPostDetails(post: postInfo)
+                        continuation.resume(returning: post ?? emptyPost)
                     }
                 }
         }
     }
     
-    func setPostDetails(post: MapPost, completion: @escaping (_ post: MapPost) -> Void) {
-        guard let id = post.id, !id.isEmpty else {
-            completion(post)
-            return
-        }
-
-        Task {
-            var postInfo = post
-            do {
-                let userService = try ServiceContainer.shared.service(for: \.userService)
-                let user = try await userService.getUserInfo(userID: post.posterID)
-                postInfo.userInfo = user
+    func setPostDetails(post: MapPost) async throws -> MapPost {
+        try await withUnsafeThrowingContinuation { continuation in
+            guard let id = post.id, !id.isEmpty else {
+                continuation.resume(returning: post)
+                return
+            }
+            
+            Task {
+                guard let userService = try? ServiceContainer.shared.service(for: \.userService),
+                      let user = try? await userService.getUserInfo(userID: post.posterID)
+                else {
+                    continuation.resume(returning: post)
+                    return
+                }
                 
-                let comments = try await getComments(postID: id)
-                postInfo.commentList = comments
-                completion(postInfo)
-                return
-            } catch {
-                completion(postInfo)
-                return
+                var postInfo = post
+                postInfo.userInfo = user
+                let comments = try? await getComments(postID: id)
+                postInfo.commentList = comments ?? []
+                continuation.resume(returning: postInfo)
             }
         }
     }
+    
     // function does NOT fetch user info
     func getPostDocuments(query: Query) async throws -> [MapPost]? {
         try await withCheckedThrowingContinuation { continuation in
@@ -296,7 +478,7 @@ final class MapPostService: MapPostServiceProtocol {
             let queryBounds = GFUtils.queryBounds(
                 forLocation: center,
                 withRadius: radius)
-
+            
             let seconds = Date().timeIntervalSince1970 - 86_400 * 7
             let timestamp = Timestamp(seconds: Int64(seconds), nanoseconds: 0)
             let queries = queryBounds.map { bound -> Query in
@@ -326,7 +508,7 @@ final class MapPostService: MapPostServiceProtocol {
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool) {
         /// send local notification first
         guard let postID = post.id else { return }
-
+        
         DispatchQueue.global(qos: .background).async { [weak self] in
             let caption = post.caption
             var notiPost = post
@@ -383,13 +565,13 @@ final class MapPostService: MapPostServiceProtocol {
                 }
         }
     }
-
+    
     func likePostDB(post: MapPost) {
         fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData([
             FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
         ])
         if post.posterID == UserDataModel.shared.uid { return }
-
+        
         var likeNotiValues: [String: Any] = [
             "imageURL": post.imageURLs.first ?? "",
             "originalPoster": post.userInfo?.username ?? "",
@@ -402,38 +584,39 @@ final class MapPostService: MapPostServiceProtocol {
             "type": "like"
         ] as [String: Any]
         fireStore.collection("users").document(post.posterID).collection("notifications").addDocument(data: likeNotiValues)
-
+        
         likeNotiValues["type"] = "likeOnAdd"
         for user in post.taggedUserIDs ?? [] {
             // don't send noti to current user
             if user == UserDataModel.shared.uid { continue }
             fireStore.collection("users").document(user).collection("notifications").addDocument(data: likeNotiValues)
         }
-
+        
         let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
         friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
     }
-
+    
     func unlikePostDB(post: MapPost) {
         fireStore.collection("posts").document(post.id ?? "").updateData([
             "likers": FieldValue.arrayRemove([UserDataModel.shared.uid])
         ])
-
+        
         let functions = Functions.functions()
         functions.httpsCallable("unlikePost").call(["postID": post.id ?? "", "posterID": post.posterID, "likerID": UserDataModel.shared.uid]) { result, error in
             print(result?.data as Any, error as Any)
         }
-
+        
         let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
         friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
     }
-
+    
     private func sendPostNotifications(post: MapPost, map: CustomMap?, spot: MapSpot?) {
         let functions = Functions.functions()
         let notiValues: [String: Any] = [
             FirebaseCollectionFields.communityMap.rawValue: map?.communityMap ?? false,
             FirebaseCollectionFields.friendIDs.rawValue: UserDataModel.shared.userInfo.friendIDs,
             FirebaseCollectionFields.imageURLs.rawValue: post.imageURLs,
+            "videoURL": post.videoURL ?? "",
             FirebaseCollectionFields.mapID.rawValue: map?.id ?? "",
             FirebaseCollectionFields.mapMembers.rawValue: map?.memberIDs ?? [],
             FirebaseCollectionFields.mapName.rawValue: map?.mapName ?? "",
@@ -453,7 +636,7 @@ final class MapPostService: MapPostServiceProtocol {
                 completion: { _, _ in }
             )
     }
-
+    
     func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool) {
         fireStore.collection("mapLocations").document(post.id ?? "").delete()
         var posters = [UserDataModel.shared.uid]
@@ -470,6 +653,51 @@ final class MapPostService: MapPostServiceProtocol {
             "spotRemove": spotRemove
         ]) { result, error in
             print("result", result?.data as Any, error as Any)
+        }
+    }
+    
+    func setSeen(post: MapPost) {
+        guard let id = post.id, let uid = Auth.auth().currentUser?.uid else { return }
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.fireStore
+                .collection(FirebaseCollectionNames.posts.rawValue)
+                .document(id)
+                .updateData(
+                    [
+                        FirebaseCollectionFields.seenList.rawValue: FieldValue.arrayUnion([uid])
+                    ]
+                )
+            
+            NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["post": post as Any]))
+            
+            self?.updateNotifications(postID: id, uid: uid)
+        }
+    }
+    
+    private func updateNotifications(postID: String, uid: String) {
+        fireStore
+            .collection(FirebaseCollectionNames.users.rawValue)
+            .document(uid)
+            .collection(FirebaseCollectionNames.notifications.rawValue)
+            .whereField("postID", isEqualTo: postID)
+            .getDocuments { snap, _ in
+                guard let snap = snap else { return }
+                UserDataModel.shared.setSeenForDocumentIDs(docIDs: snap.documents.map({ $0.documentID }))
+            }
+    }
+    
+    func reportPost(postID: String, feedbackText: String, userId: String) {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.fireStore.collection("feedback")
+                .addDocument(
+                    data: [
+                        "feedbackText": feedbackText,
+                        "postID": postID,
+                        "type": "reportPost",
+                        "userID": userId
+                    ]
+                )
         }
     }
 }

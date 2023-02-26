@@ -39,6 +39,7 @@ enum FirebaseCollectionFields: String {
     case mapID
     case timestamp
     case likers
+    case seenList
     case memberIDs
     case hideFromFeed
     case inviteList
@@ -65,6 +66,7 @@ enum FirebaseCollectionFields: String {
     case taggedUserIDs
     case posterUsernames
     case usernameKeywords
+    case city
 }
 
 enum FuctionsHttpsCall: String {

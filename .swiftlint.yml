@@ -67,10 +67,10 @@ empty_count:
     severity: warning
 
 type_body_length:
-    - 300
+    - 700
 
 file_length:
-    - 500
+    - 1000
 
 type_name:
     excluded: iPhone # excluded via string

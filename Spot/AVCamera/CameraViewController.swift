@@ -53,12 +53,12 @@ final class CameraViewController: UIViewController {
 
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGestureRecognizer(_:)))
         longPressGesture.delegate = self
+        longPressGesture.delaysTouchesEnded = false
         longPressGesture.numberOfTouchesRequired = 1
         longPressGesture.allowableMovement = 50.0
-        longPressGesture.delaysTouchesBegan = false
+        longPressGesture.delaysTouchesBegan = true
 
-     //   button.addGestureRecognizer(longPressGesture)
-        
+        button.addGestureRecognizer(longPressGesture)
         return button
     }()
     

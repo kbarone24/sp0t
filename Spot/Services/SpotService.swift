@@ -14,6 +14,8 @@ protocol SpotServiceProtocol {
     func getSpot(spotID: String) async throws -> MapSpot?
     func getNearbySpots(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapSpot]) -> Void) async
     func uploadSpot(post: MapPost, spot: MapSpot, submitPublic: Bool)
+    func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void)
+    func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void)
 }
 
 final class SpotService: SpotServiceProtocol {
@@ -92,7 +94,7 @@ final class SpotService: SpotServiceProtocol {
                     .end(at: [bound.endValue])
                     .limit(to: searchLimit)
             }
-
+            
             var allSpots: [MapSpot] = []
             for query in queries {
                 defer {
@@ -155,6 +157,7 @@ final class SpotService: SpotServiceProtocol {
                     "spotLong": spot.spotLong,
                     "g": geoHash,
                     "imageURL": post.imageURLs.first ?? "",
+                    "videoURL": post.videoURL ?? "",
                     "phone": spot.phone ?? "",
                     "poiCategory": spot.poiCategory ?? "",
                     "postIDs": [postID],
@@ -225,6 +228,38 @@ final class SpotService: SpotServiceProtocol {
                         .setData(["cityName": city, "g": g])
                 }
             }
+        }
+    }
+    
+    func checkForSpotRemove(spotID: String, mapID: String, completion: @escaping(_ remove: Bool) -> Void) {
+        guard !spotID.isEmpty, !mapID.isEmpty else {
+            completion(false)
+            return
+        }
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                .whereField(FirebaseCollectionFields.mapID.rawValue, isEqualTo: mapID)
+                .whereField(FirebaseCollectionFields.spotID.rawValue, isEqualTo: spotID)
+                .getDocuments { snap, _ in
+                    completion(snap?.documents.count ?? 0 <= 1)
+                }
+        }
+    }
+    
+    func checkForSpotDelete(spotID: String, postID: String, completion: @escaping(_ delete: Bool) -> Void) {
+        guard !spotID.isEmpty, !postID.isEmpty else {
+            completion(false)
+            return
+        }
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
+                .whereField(FirebaseCollectionFields.spotID.rawValue, isEqualTo: spotID)
+                .getDocuments { snap, _ in
+                    let spotDelete = snap?.documents.count ?? 0 == 1 && snap?.documents.first?.documentID ?? "" == postID
+                    completion(spotDelete)
+                }
         }
     }
 }

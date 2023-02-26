@@ -144,13 +144,29 @@ extension NotificationsController {
     }
     
     func openPost(post: MapPost, commentNoti: Bool) {
-        let postVC = PostController(parentVC: .Notifications, postsList: [post])
-        postVC.openComments = commentNoti
-        DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
+        let postVC = PostController(parentVC: .Notifications)
+        postVC.loadView()
+        postVC.allPostsViewController.openComments = commentNoti
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(postVC, animated: true)
+        }
     }
     
     func openMap(mapID: String) {
-        var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
+        var map = CustomMap(
+            founderID: "",
+            imageURL: "",
+            videoURL: "",
+            likers: [],
+            mapName: "",
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: []
+        )
         map.id = mapID
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
         navigationController?.pushViewController(customMapVC, animated: true)

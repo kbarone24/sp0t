@@ -52,7 +52,7 @@ extension HomeScreenContainerController: HomeScreenDelegate {
     func openPosts(posts: [MapPost]) {
         Mixpanel.mainInstance().track(event: "MapPostTap")
         if sheetView != nil { return }
-        let postVC = PostController(parentVC: .Home, postsList: posts)
+        let postVC = PostController(parentVC: .Home)
         sheetView = DrawerView(present: postVC, presentationDirection: .rightToLeft) { [weak self] in
             self?.sheetView = nil
         }

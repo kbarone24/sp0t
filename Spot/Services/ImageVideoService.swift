@@ -8,6 +8,7 @@
 
 import UIKit
 import Firebase
+import SDWebImage
 
 protocol ImageVideoServiceProtocol {
     func uploadImages(
@@ -19,6 +20,8 @@ protocol ImageVideoServiceProtocol {
     )
     
     func uploadVideo(url: URL, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void)
+    func downloadVideo(url: String, completion: @escaping ((URL?) -> Void))
+    func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize) async throws -> [UIImage]
 }
 
 final class ImageVideoService: ImageVideoServiceProtocol {
@@ -29,6 +32,7 @@ final class ImageVideoService: ImageVideoServiceProtocol {
     
     private let fireStore: Firestore
     private let storage: Storage
+    private let imageCache = CacheService<String, UIImage>()
     
     init(fireStore: Firestore, storage: Storage) {
         self.fireStore = fireStore
@@ -185,6 +189,104 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                 case .failure(let error):
                     failure(error)
                 }
+            }
+        }
+    }
+    
+    func downloadVideo(url: String, completion: @escaping ((URL?) -> Void)) {
+        guard let videoURL = URL(string: url),
+              let documentsDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        else { return }
+        
+        // check if the file already exist at the destination folder if you don't want to download it twice
+        guard !FileManager.default.fileExists(atPath: documentsDirectoryURL.appendingPathComponent(videoURL.lastPathComponent).path) else {
+            completion(documentsDirectoryURL.appendingPathComponent(videoURL.lastPathComponent))
+            return
+        }
+        
+        // set up your download task
+        URLSession.shared.downloadTask(with: videoURL) { location, response, error in
+            
+            // use guard to unwrap your optional url
+            guard let location = location, error == nil else {
+                completion(nil)
+                return
+            }
+            
+            // create a deatination url with the server response suggested file name
+            let destinationURL = documentsDirectoryURL.appendingPathComponent(response?.suggestedFilename ?? videoURL.lastPathComponent)
+            
+            try? FileManager.default.moveItem(at: location, to: destinationURL)
+            completion(destinationURL)
+        }
+        .resume()
+    }
+    
+    func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize) async throws -> [UIImage] {
+        guard !urls.isEmpty else {
+            return []
+        }
+        
+        return try await withUnsafeThrowingContinuation { [unowned self] continuation in
+            
+            var images: [UIImage] = []
+            
+            let cachedKeys = self.imageCache.allCachedKeys()
+            if cachedKeys.count == urls.count {
+                for key in cachedKeys where cachedKeys.count == urls.count {
+                    if let image = self.imageCache.entry(forKey: key)?.value {
+                        images.append(image)
+                    }
+                }
+                
+                continuation.resume(returning: images)
+                return
+            }
+            
+            var frameIndexes = frameIndexes ?? []
+            if frameIndexes.isEmpty {
+                for i in 0...urls.count - 1 {
+                    frameIndexes.append(i)
+                }
+            }
+            
+            var aspect: [CGFloat] = []
+            if let aspectRatios, aspectRatios.isEmpty {
+                for _ in 0...urls.count - 1 {
+                    aspect.append(1.3333)
+                }
+            }
+            
+            var currentAspect: CGFloat = 1
+            
+            for x in 0...urls.count - 1 {
+                let postURL = urls[x]
+                if let y = frameIndexes.firstIndex(where: { $0 == x }), let aspectRatios {
+                    currentAspect = aspectRatios[y]
+                }
+                
+                let adjustedSize = CGSize(width: size.width, height: size.width * currentAspect)
+                let transformer = SDImageResizingTransformer(size: adjustedSize, scaleMode: .aspectFit)
+                
+                SDWebImageManager.shared.loadImage(
+                    with: URL(string: postURL),
+                    options: [.highPriority, .scaleDownLargeImages],
+                    context: [.imageTransformer: transformer], progress: nil) { (rawImage, _, _, _, _, _) in
+                        defer {
+                            if x == urls.count - 1 {
+                                continuation.resume(returning: images)
+                            }
+                        }
+                        
+                        let i = urls.lastIndex(where: { $0 == postURL })
+                        guard let image = rawImage else {
+                            images.append(UIImage())
+                            return
+                        }
+                        images.append(image)
+                        self.imageCache.removeValue(forKey: postURL)
+                        self.imageCache.insert(CacheService.Entry(key: postURL, value: image))
+                    }
             }
         }
     }

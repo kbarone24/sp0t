@@ -35,8 +35,7 @@ extension ProfileViewController {
             if self.refreshStatus != .refreshDisabled { self.refreshStatus = .refreshEnabled }
             self.activityIndicator.stopAnimating()
             if let postController = self.navigationController?.children.last as? PostController {
-                postController.postsList.append(contentsOf: posts)
-                postController.contentTable.reloadData()
+                postController.allPostsViewController.refresh.send(true)
             }
         }
     }

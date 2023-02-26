@@ -134,6 +134,7 @@ class NewMapController: UIViewController {
             communityMap: true,
             founderID: uid,
             imageURL: "",
+            videoURL: post.videoURL ?? "",
             likers: [uid],
             mapName: "",
             memberIDs: [uid],

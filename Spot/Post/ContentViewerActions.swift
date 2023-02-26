@@ -85,7 +85,9 @@ extension ContentViewerCell {
     func animateLocation() {
         if locationView.bounds.width == 0 { return }
         if delegate?.getSelectedPostIndex() == self.globalRow && locationView.contentSize.width > locationView.bounds.width {
-            DispatchQueue.main.async { self.locationView.startAnimating() }
+            DispatchQueue.main.async {
+                self.locationView.startAnimating()
+            }
         }
     }
 
@@ -101,6 +103,7 @@ extension ContentViewerCell {
             } else {
                 delegate?.tapToPreviousPost()
             }
+            
         } else if position.x > (gesture.view?.bounds.width ?? 0) - 75 {
             if post?.selectedImageIndex ?? 0 < (post?.frameIndexes?.count ?? 0) - 1 {
                 goNextImage()
