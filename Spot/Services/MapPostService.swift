@@ -567,47 +567,54 @@ final class MapPostService: MapPostServiceProtocol {
     }
     
     func likePostDB(post: MapPost) {
-        fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData([
-            FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
-        ])
-        if post.posterID == UserDataModel.shared.uid { return }
-        
-        var likeNotiValues: [String: Any] = [
-            "imageURL": post.imageURLs.first ?? "",
-            "originalPoster": post.userInfo?.username ?? "",
-            "postID": post.id ?? "",
-            "seen": false,
-            "senderID": UserDataModel.shared.uid,
-            "senderUsername": UserDataModel.shared.userInfo.username,
-            "spotID": post.spotID ?? "",
-            "timestamp": Timestamp(date: Date()),
-            "type": "like"
-        ] as [String: Any]
-        fireStore.collection("users").document(post.posterID).collection("notifications").addDocument(data: likeNotiValues)
-        
-        likeNotiValues["type"] = "likeOnAdd"
-        for user in post.taggedUserIDs ?? [] {
-            // don't send noti to current user
-            if user == UserDataModel.shared.uid { continue }
-            fireStore.collection("users").document(user).collection("notifications").addDocument(data: likeNotiValues)
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            
+            self?.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData([
+                FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([UserDataModel.shared.uid])
+            ])
+            
+            if post.posterID == UserDataModel.shared.uid { return }
+            
+            var likeNotiValues: [String: Any] = [
+                "imageURL": post.imageURLs.first ?? "",
+                "originalPoster": post.userInfo?.username ?? "",
+                "postID": post.id ?? "",
+                "seen": false,
+                "senderID": UserDataModel.shared.uid,
+                "senderUsername": UserDataModel.shared.userInfo.username,
+                "spotID": post.spotID ?? "",
+                "timestamp": Timestamp(date: Date()),
+                "type": "like"
+            ] as [String: Any]
+            
+            self?.fireStore.collection("users").document(post.posterID).collection("notifications").addDocument(data: likeNotiValues)
+            
+            likeNotiValues["type"] = "likeOnAdd"
+            for user in post.taggedUserIDs ?? [] {
+                // don't send noti to current user
+                if user == UserDataModel.shared.uid { continue }
+                self?.fireStore.collection("users").document(user).collection("notifications").addDocument(data: likeNotiValues)
+            }
+            
+            let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
+            friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
         }
-        
-        let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
-        friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
     }
     
     func unlikePostDB(post: MapPost) {
-        fireStore.collection("posts").document(post.id ?? "").updateData([
-            "likers": FieldValue.arrayRemove([UserDataModel.shared.uid])
-        ])
-        
-        let functions = Functions.functions()
-        functions.httpsCallable("unlikePost").call(["postID": post.id ?? "", "posterID": post.posterID, "likerID": UserDataModel.shared.uid]) { result, error in
-            print(result?.data as Any, error as Any)
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.fireStore.collection("posts").document(post.id ?? "").updateData([
+                "likers": FieldValue.arrayRemove([UserDataModel.shared.uid])
+            ])
+            
+            let functions = Functions.functions()
+            functions.httpsCallable("unlikePost").call(["postID": post.id ?? "", "posterID": post.posterID, "likerID": UserDataModel.shared.uid]) { result, error in
+                print(result?.data as Any, error as Any)
+            }
+            
+            let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
+            friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
         }
-        
-        let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
-        friendService?.incrementTopFriends(friendID: post.posterID, increment: -1, completion: nil)
     }
     
     private func sendPostNotifications(post: MapPost, map: CustomMap?, spot: MapSpot?) {
