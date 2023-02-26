@@ -109,10 +109,16 @@ final class UploadPostModel {
 
     func setPostCity() {
         let location = CLLocation(latitude: postObject?.postLat ?? 0, longitude: postObject?.postLong ?? 0)
-        location.reverseGeocode(zoomLevel: 0) { [weak self] (city, err)  in
-            guard let self = self else { return }
-            guard self.postObject != nil else { return }
-            if city == "" && err { return }
+        
+        guard let locationService = try? ServiceContainer.shared.service(for: \.locationService) else {
+            return
+        }
+        
+        Task {
+            guard let city = try? await locationService.reverseGeocode(location: location, zoomLevel: 0) else {
+                return
+            }
+            
             self.postObject?.city = city
         }
     }
@@ -139,15 +145,15 @@ final class UploadPostModel {
         postObject?.timestamp = Firebase.Timestamp(date: Date())
         postObject?.userInfo = UserDataModel.shared.userInfo
         postObject?.selectedImageIndex = 0
-
-        if postObject?.privacyLevel == "invite" {
-            for user in taggedUserProfiles {
-                if !(postObject?.inviteList?.contains(where: { $0 == user.id ?? "" }) ?? false) {
-                    postObject?.taggedUsers?.removeAll(where: { $0 == user.username })
-                    postObject?.taggedUserIDs?.removeAll(where: { $0 == user.id ?? "" })
-                    postObject?.addedUsers?.removeAll(where: { $0 == user.id ?? "" })
-                }
-            }
+        
+        guard postObject?.privacyLevel == "invite" else {
+            return
+        }
+        
+        for user in taggedUserProfiles where (postObject?.inviteList?.contains(where: { $0 == user.id ?? "" }) ?? false) {
+            postObject?.taggedUsers?.removeAll(where: { $0 == user.username })
+            postObject?.taggedUserIDs?.removeAll(where: { $0 == user.id ?? "" })
+            postObject?.addedUsers?.removeAll(where: { $0 == user.id ?? "" })
         }
     }
 

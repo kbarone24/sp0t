@@ -244,7 +244,6 @@ final class ExploreMapViewController: UIViewController {
     }
 
     deinit {
-        print("explore map deinit")
         NotificationCenter.default.removeObserver(self)
     }
 

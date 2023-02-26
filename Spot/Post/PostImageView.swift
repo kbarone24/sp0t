@@ -38,6 +38,7 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
         // bottom mask added by PostImagePreview superclass now
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -141,7 +142,7 @@ class PostImageView: UIImageView, UIGestureRecognizerDelegate {
     }
 }
 
-class ImageScrollView: UIScrollView {
+final class ImageScrollView: UIScrollView {
     var imageZoom: Bool
 
     override init(frame: CGRect) {
@@ -149,6 +150,7 @@ class ImageScrollView: UIScrollView {
         super.init(frame: frame)
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

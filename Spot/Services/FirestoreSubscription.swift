@@ -9,35 +9,74 @@
 import Combine
 import FirebaseFirestore
 import FirebaseFirestoreSwift
+import Firebase
 
-// https://stackoverflow.com/questions/69362825/how-to-use-swifts-new-async-await-features-with-firestore-listeners
+final class FirestoreSubscription<S: Subscriber, Model: Codable>: Subscription {
+    private var subscriber: S?
+    private var listener: ListenerRegistration? = nil
+    init(subscriber: S) {
+        self.subscriber = subscriber
+        self.listener = nil
+    }
+    deinit {
+        listener?.remove()
+    }
 
-struct FirestoreSubscription {
-    static func subscribe(id: AnyHashable, docPath: String) -> AnyPublisher<DocumentSnapshot, Never> {
-        let subject = PassthroughSubject<DocumentSnapshot, Never>()
-        
-        let docRef = Firestore.firestore().document(docPath)
-        let listener = docRef.addSnapshotListener { snapshot, _ in
-            if let snapshot = snapshot {
-                subject.send(snapshot)
-            }
-        }
-        
-        listeners[id] = Listener(document: docRef, listener: listener, subject: subject)
-        
-        return subject.eraseToAnyPublisher()
+    func request(_ demand: Subscribers.Demand) {
     }
     
-    static func cancel(id: AnyHashable) {
-        listeners[id]?.listener.remove()
-        listeners[id]?.subject.send(completion: .finished)
-        listeners[id] = nil
+    func cancel() {
+        subscriber = nil
+        listener?.remove()
+        listener = nil
     }
 }
 
-private var listeners: [AnyHashable: Listener] = [:]
-private struct Listener {
-    let document: DocumentReference
-    let listener: ListenerRegistration
-    let subject: PassthroughSubject<DocumentSnapshot, Never>
+extension FirestoreSubscription  where S.Input == [Document<Model>], S.Failure == Error {
+    convenience init(query: Query, subscriber: S) {
+        self.init(subscriber: subscriber)
+        self.listener = query.addSnapshotListener(result())
+    }
+    func result() -> ((QuerySnapshot?, Error?) -> Void) {
+        { [weak self] (snapshot, error) in
+            if let error = error {
+                self?.subscriber?.receive(completion: Subscribers.Completion.failure(error))
+            } else {
+                do {
+                    let data = try snapshot?.documents.map { document -> Document<Model> in
+                        let data = try document.data(as: Model.self, decoder: Firestore.Decoder())
+                        return .init(ref: document.reference, data: data)
+                    }
+                    
+                    guard let data else { return }
+                    _ = self?.subscriber?.receive(data)
+                } catch {
+                    self?.subscriber?.receive(completion: Subscribers.Completion.failure(error))
+                }
+            }
+        }
+    }
+}
+
+extension FirestoreSubscription where S.Input == Document<Model>, S.Failure == Error {
+    convenience init(documentRef: DocumentReference, subscriber: S) {
+        self.init(subscriber: subscriber)
+        self.listener = documentRef.addSnapshotListener(result(ref: documentRef))
+    }
+    func result(ref: DocumentReference) -> ((DocumentSnapshot?, Error?) -> Void) {
+        { [weak self] (snapshot, error) in
+            if let error = error {
+                self?.subscriber?.receive(completion: Subscribers.Completion.failure(error))
+            } else {
+                do {
+                    guard let data = try snapshot?.data(as: Model.self, decoder: Firestore.Decoder()) else {
+                        return
+                    }
+                    _ = self?.subscriber?.receive(.init(ref: ref, data: data))
+                } catch {
+                    self?.subscriber?.receive(completion: Subscribers.Completion.failure(error))
+                }
+            }
+        }
+    }
 }

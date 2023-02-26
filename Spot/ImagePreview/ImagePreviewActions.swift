@@ -87,19 +87,19 @@ extension ImagePreviewController {
     }
     
     func setImages() {
-        let post = UploadPostModel.shared.postObject
-        let selectedIndex = post?.selectedImageIndex ?? 0
+        guard let post = UploadPostModel.shared.postObject else {
+            return
+        }
+        
+        let selectedIndex = post.selectedImageIndex ?? 0
         currentImage.index = selectedIndex
-        currentImage.makeConstraints(post: post)
-        currentImage.setCurrentImage(post: post)
+        currentImage.configure(mode: .image(post))
         
         previousImage.index = selectedIndex - 1
-        previousImage.makeConstraints(post: post)
-        previousImage.setCurrentImage(post: post)
+        previousImage.configure(mode: .image(post))
         
         nextImage.index = selectedIndex + 1
-        nextImage.makeConstraints(post: post)
-        nextImage.setCurrentImage(post: post)
+        nextImage.configure(mode: .image(post))
         addDots()
     }
 
@@ -257,6 +257,7 @@ extension ImagePreviewController {
             founderID: uid,
             post: post,
             imageURL: "",
+            videoURL: post.videoURL ?? "",
             spotName: spotName,
             privacyLevel: "friends",
             description: ""
@@ -319,18 +320,18 @@ extension ImagePreviewController {
             }
             
         case .video(let url):
-            imageVideoService.uploadVideo(
-                url: url)
-            { [weak self] videoURL in
-                    UploadPostModel.shared.postObject?.videoURL = videoURL
-                    self?.uploadPostToDB(newMap: true)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        HapticGenerator.shared.play(.soft)
-                        self?.popToMap()
-                    }
-                    
-            } failure: { error in
-                print(error.localizedDescription)
+            imageVideoService.uploadVideo(url: url) { [weak self] videoURL in
+                UploadPostModel.shared.postObject?.videoURL = videoURL
+                UploadPostModel.shared.spotObject?.videoURL = videoURL
+                UploadPostModel.shared.mapObject?.videoURL = videoURL
+                self?.uploadPostToDB(newMap: true)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    HapticGenerator.shared.play(.soft)
+                    self?.popToMap()
+                }
+                
+            } failure: { [weak self] _ in
+                self?.showFailAlert()
             }
         }
     }
@@ -342,17 +343,21 @@ extension ImagePreviewController {
     
     func showFailAlert() {
         let alert = UIAlertController(title: "Upload failed", message: "Spot saved to your drafts", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
-            switch action.style {
-            case .default:
-                self.popToMap()
-            case .cancel:
-                self.popToMap()
-            case .destructive:
-                self.popToMap()
-            @unknown default:
-                fatalError("Fail alert error")
-            }}))
+        alert.addAction(
+            UIAlertAction(title: "OK", style: .default) { action in
+                switch action.style {
+                case .default:
+                    self.popToMap()
+                case .cancel:
+                    self.popToMap()
+                case .destructive:
+                    self.popToMap()
+                @unknown default:
+                    fatalError("Fail alert error")
+                }
+            }
+        )
+        
         present(alert, animated: true, completion: nil)
     }
     

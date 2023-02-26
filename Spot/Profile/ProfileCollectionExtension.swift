@@ -57,9 +57,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         if indexPath.section != 0 {
             Mixpanel.mainInstance().track(event: "ProfileOpenPostFromGallery")
             if navigationController?.viewControllers.last is PostController { return } // double stack happening here
-            var posts = Array(postsList.suffix(from: indexPath.row))
             let title = "@\(userProfile?.username ?? "")'s posts"
-            let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: 0, title: title)
+            let postVC = PostController(parentVC: .Map)
             postVC.delegate = self
             DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
         }
@@ -83,8 +82,23 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         }
     }
 
-    public func scrollToTop() {
-        DispatchQueue.main.async { self.collectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: .top, animated: true) }
+    func getMyMap() -> CustomMap {
+        var mapData = CustomMap(
+            founderID: "",
+            imageURL: "",
+            videoURL: "",
+            likers: [],
+            mapName: "",
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: []
+        )
+
+        return mapData
     }
 }
 

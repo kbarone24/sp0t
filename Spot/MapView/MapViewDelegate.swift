@@ -125,9 +125,16 @@ extension MapController: MKMapViewDelegate {
         let radius = mapView.currentRadius() / 1_000
         let zoomLevel = radius < 60 ? 0 : radius < 800 ? 1 : 2
         let location = mapView.centerCoordinate.location
-        location.reverseGeocode(zoomLevel: zoomLevel) { [weak self] (address, err) in
-            guard let self = self else { return }
-            if address == "" && err { return }
+        
+        guard let locationService = try? ServiceContainer.shared.service(for: \.locationService) else {
+            return
+        }
+        
+        Task {
+            guard let address = try? await locationService.reverseGeocode(location: location, zoomLevel: zoomLevel) else {
+                return
+            }
+            
             self.cityLabel.text = address
             self.cityLabel.layoutIfNeeded()
             self.cityLabel.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.4).cgColor, opacity: 1, radius: 2, offset: CGSize(width: 0.5, height: 0.5))
@@ -142,7 +149,21 @@ extension MapController: MKMapViewDelegate {
     }
 
     func getFriendsMapObject() -> CustomMap {
-        var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: "", memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
+        var map = CustomMap(
+            founderID: "",
+            imageURL: "",
+            videoURL: "",
+            likers: [],
+            mapName: "",
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: []
+        )
+        
         map.postsDictionary = postDictionary
         map.postGroup = postGroup
         return map

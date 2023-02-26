@@ -9,12 +9,12 @@
 import Foundation
 import UIKit
 
-class PostTitleView: UIView {
+final class PostTitleView: UIView {
     override var intrinsicContentSize: CGSize {
         return UIView.layoutFittingExpandedSize
     }
 
-    //TODO: import real fonts for these buttons
+    // TODO: import real fonts for these buttons
     lazy var myWorldButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -28,6 +28,7 @@ class PostTitleView: UIView {
         button.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor, opacity: 1, radius: 4, offset: CGSize(width: 0, height: 1.5))
         return button
     }()
+    
     lazy var nearbyButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -41,12 +42,14 @@ class PostTitleView: UIView {
         button.addShadow(shadowColor: UIColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor, opacity: 1, radius: 4, offset: CGSize(width: 0, height: 1.5))
         return button
     }()
+    
     lazy var buttonBar: UIView = {
         let view = UIView()
         view.backgroundColor = .white.withAlphaComponent(0.95)
         view.layer.cornerRadius = 1
         return view
     }()
+    
     lazy var findFriendsButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
@@ -119,9 +122,10 @@ class PostTitleView: UIView {
                 $0.height.equalTo(3)
             }
         }
+        
         if animated {
-            UIView.animate(withDuration: 0.2) {
-                self.layoutIfNeeded()
+            UIView.animate(withDuration: 0.2) { [weak self] in
+                self?.layoutIfNeeded()
             }
         }
     }

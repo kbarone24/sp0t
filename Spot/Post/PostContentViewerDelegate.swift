@@ -44,7 +44,21 @@ extension PostController: ContentViewerDelegate {
     }
 
     func openMap(mapID: String, mapName: String) {
-        var map = CustomMap(founderID: "", imageURL: "", likers: [], mapName: mapName, memberIDs: [], posterIDs: [], posterUsernames: [], postIDs: [], postImageURLs: [], secret: false, spotIDs: [])
+        var map = CustomMap(
+            founderID: "",
+            imageURL: "",
+            videoURL: "",
+            likers: [],
+            mapName: mapName,
+            memberIDs: [],
+            posterIDs: [],
+            posterUsernames: [],
+            postIDs: [],
+            postImageURLs: [],
+            secret: false,
+            spotIDs: []
+        )
+        
         map.id = mapID
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
         DispatchQueue.main.async { self.navigationController?.pushViewController(customMapVC, animated: true) }

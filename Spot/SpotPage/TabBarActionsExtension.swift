@@ -23,8 +23,11 @@ extension SpotTabBarController {
         if presentedViewController != nil { return }
         Mixpanel.mainInstance().track(event: "HomeScreenAddTap")
         let cameraVC = CameraViewController()
+        
         let nav = UINavigationController(rootViewController: cameraVC)
         nav.modalPresentationStyle = .fullScreen
-        DispatchQueue.main.async { self.present(nav, animated: true) }
+        DispatchQueue.main.async {
+            self.present(nav, animated: true)
+        }
     }
 }

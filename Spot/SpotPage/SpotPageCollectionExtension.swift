@@ -65,9 +65,8 @@ extension SpotPageController: UICollectionViewDelegate, UICollectionViewDataSour
                     collectionCell?.transform = .identity
                 }
             }
-            let posts = Array(postsList.suffix(from: indexPath.row))
-            let postVC = PostController(parentVC: .Spot, postsList: posts, selectedPostIndex: 0, title: spotName)
-            postVC.delegate = self
+            
+            let postVC = PostController(parentVC: .Spot)
             self.navigationController?.pushViewController(postVC, animated: true)
         }
     }
