@@ -105,6 +105,7 @@ final class AllPostsViewController: UIViewController {
     private let limit = PassthroughSubject<Int, Never>()
     private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
     private let friendsLastItem = PassthroughSubject<DocumentSnapshot?, Never>()
+    private var isRefreshingPagination = false
     
     init(viewModel: AllPostsViewModel) {
         self.viewModel = viewModel
@@ -143,6 +144,7 @@ final class AllPostsViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] snapshot in
                 self?.snapshot = snapshot
+                self?.isRefreshingPagination = false
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
             }
@@ -351,7 +353,7 @@ extension AllPostsViewController: ContentViewerDelegate {
             }
         }
         
-        let post = allPosts.filter { $0.id == postID }.first
+        let post = allPosts.first(where: { $0.id == postID })
         
         if allPosts[selectedPostIndex].likers.firstIndex(where: { $0 == UserDataModel.shared.uid }) != nil {
             Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
@@ -399,7 +401,7 @@ extension AllPostsViewController: ContentViewerDelegate {
         )
         
         map.id = mapID
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], mapType: .customMap)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
         navigationController?.pushViewController(customMapVC, animated: true)
     }
     
@@ -456,7 +458,8 @@ extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
-        if indexPath.row >= snapshot.numberOfItems - 10 {
+        if (indexPath.row >= snapshot.numberOfItems - 10) && !isRefreshingPagination {
+            isRefreshingPagination = true
             limit.send(15)
             friendsLastItem.send(viewModel.lastFriendsItem)
             lastItem.send(viewModel.lastMapItem)

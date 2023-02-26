@@ -40,7 +40,13 @@ final class CacheService<Key: Hashable, Value> {
     }
     
     func allCachedKeys() -> [Key] {
-        keyTracker.keys.map { $0 }
+        var keys: [Key] = []
+        
+        queue.sync {
+            keys = keyTracker.keys.map { $0 }
+        }
+        
+        return keys
     }
     
     func allCachedEntries() -> [Entry] {
@@ -160,7 +166,13 @@ extension CacheService: Codable where Key: Codable, Value: Codable {
     }
     
     func allCachedKeys() -> [Key] {
-        keyTracker.keys.map { $0 }
+        var keys: [Key] = []
+        
+        queue.sync {
+            keys = keyTracker.keys.map { $0 }
+        }
+        
+        return keys
     }
     
     func allCachedEntries() -> [Entry] {

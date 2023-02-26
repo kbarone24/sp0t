@@ -244,8 +244,6 @@
 		8C12E6672901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E6652901D61D00FA5BF0 /* ProfileActionSheet.swift */; };
 		8C12E6682901D61D00FA5BF0 /* ProfileActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E6652901D61D00FA5BF0 /* ProfileActionSheet.swift */; };
 		8C12E673290A074100FA5BF0 /* ProfileCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E672290A074100FA5BF0 /* ProfileCollectionExtension.swift */; };
-		8C12E674290A074100FA5BF0 /* ProfileCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E672290A074100FA5BF0 /* ProfileCollectionExtension.swift */; };
-		8C12E675290A074100FA5BF0 /* ProfileCollectionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E672290A074100FA5BF0 /* ProfileCollectionExtension.swift */; };
 		8C12E677290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E676290A088C00FA5BF0 /* ProfileNotificationsExtension.swift */; };
 		8C12E678290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E676290A088C00FA5BF0 /* ProfileNotificationsExtension.swift */; };
 		8C12E679290A088C00FA5BF0 /* ProfileNotificationsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C12E676290A088C00FA5BF0 /* ProfileNotificationsExtension.swift */; };
@@ -2361,7 +2359,6 @@
 				8C121DCF294935EF00CD4E07 /* FriendRequestCollectionCell.swift in Sources */,
 				8C121DDE294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */,
 				8C9ADBA429A8103800A494B8 /* ProfileFetchExtension.swift in Sources */,
-				8C94174A297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */,
 				8C121DD8294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5B924734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11424B6A6CF0051516C /* MapPost.swift in Sources */,
@@ -2406,7 +2403,6 @@
 				8C121DF82949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C66FAEA295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */,
 				8C65DFF329A6846600CF3CA5 /* MapPrivacyView.swift in Sources */,
-				8C12E674290A074100FA5BF0 /* ProfileCollectionExtension.swift in Sources */,
 				8C121E7A294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,
 				8C121E5B294951D300CD4E07 /* PhoneController.swift in Sources */,
 				8C4FDFC028DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,
@@ -2517,7 +2513,6 @@
 				8C121DD0294935EF00CD4E07 /* FriendRequestCollectionCell.swift in Sources */,
 				8C121DDF294935EF00CD4E07 /* ActivityIndicatorCell.swift in Sources */,
 				8C9ADBA529A8103800A494B8 /* ProfileFetchExtension.swift in Sources */,
-				8C94174B297B10EB00818D43 /* SpotPageFetchExtension.swift in Sources */,
 				8C121DD9294935EF00CD4E07 /* FriendRequestCell.swift in Sources */,
 				59FCF5BA24734A1C0012207D /* ImageModel+CoreDataClass.swift in Sources */,
 				594CE11524B6A6CF0051516C /* MapPost.swift in Sources */,
@@ -2562,7 +2557,6 @@
 				8C121DF92949361500CD4E07 /* PhotoGalleryLimitedAccessExtension.swift in Sources */,
 				8C66FAEB295F9EF5007A347D /* HomeScreenDelegate.swift in Sources */,
 				8C65DFF429A6846600CF3CA5 /* MapPrivacyView.swift in Sources */,
-				8C12E675290A074100FA5BF0 /* ProfileCollectionExtension.swift in Sources */,
 				8C121E7B294951E500CD4E07 /* SpotPageBodyCell.swift in Sources */,
 				8C121E5C294951D300CD4E07 /* PhoneController.swift in Sources */,
 				8C4FDFC128DAA94300A3B479 /* RightAlignedAvatarView.swift in Sources */,

@@ -104,6 +104,7 @@ final class NearbyPostsViewController: UIViewController {
     private(set) var refresh = PassthroughSubject<Bool, Never>()
     private let limit = PassthroughSubject<Int, Never>()
     private let lastItem = PassthroughSubject<DocumentSnapshot?, Never>()
+    private var isRefreshingPagination = false
     
     init(viewModel: NearbyPostsViewModel) {
         self.viewModel = viewModel
@@ -144,6 +145,7 @@ final class NearbyPostsViewController: UIViewController {
                 self?.snapshot = snapshot
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
+                self?.isRefreshingPagination = false
                 
                 if snapshot.itemIdentifiers.isEmpty {
                     self?.showEmptyAlert()
@@ -184,6 +186,10 @@ final class NearbyPostsViewController: UIViewController {
         alert.title = "Nothing to show"
         alert.message = "There are no nearby posts to you at this time. We are coming to your location"
         present(alert, animated: true)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) {
+            alert.dismiss(animated: true)
+        }
     }
     
     // called if table view or container view removal has begun
@@ -337,7 +343,7 @@ extension NearbyPostsViewController: ContentViewerDelegate {
         )
         
         map.id = mapID
-        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], mapType: .customMap)
+        let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [])
         navigationController?.pushViewController(customMapVC, animated: true)
     }
 
@@ -396,7 +402,8 @@ extension NearbyPostsViewController: UITableViewDataSource, UITableViewDelegate 
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
-        if indexPath.row >= snapshot.numberOfItems - 10 {
+        if (indexPath.row >= snapshot.numberOfItems - 10) && !isRefreshingPagination {
+            isRefreshingPagination = true
             limit.send(15)
             lastItem.send(viewModel.lastItem)
         }

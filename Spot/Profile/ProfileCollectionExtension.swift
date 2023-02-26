@@ -57,9 +57,8 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
         if indexPath.section != 0 {
             Mixpanel.mainInstance().track(event: "ProfileOpenPostFromGallery")
             if navigationController?.viewControllers.last is PostController { return } // double stack happening here
-            var posts = Array(postsList.suffix(from: indexPath.row))
             let title = "@\(userProfile?.username ?? "")'s posts"
-            let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: 0, title: title)
+            let postVC = PostController(parentVC: .Map)
             postVC.delegate = self
             DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
         }
@@ -98,7 +97,7 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             secret: false,
             spotIDs: []
         )
-        mapData.createPosts(posts: posts)
+
         return mapData
     }
 }

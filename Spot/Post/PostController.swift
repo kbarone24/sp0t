@@ -147,12 +147,7 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
             direction = .forward
         }
         
-        isPageControllerTransitioning = true
-        view.isUserInteractionEnabled = false
-        pageViewController.setViewControllers([viewController], direction: direction, animated: true) { [weak self] _ in
-            self?.view.isUserInteractionEnabled = true
-            self?.isPageControllerTransitioning = false
-        }
+        pageViewController.setViewControllers([viewController], direction: direction, animated: true)
     }
     
     override func willTransition(to newCollection: UITraitCollection, with coordinator: UIViewControllerTransitionCoordinator) {

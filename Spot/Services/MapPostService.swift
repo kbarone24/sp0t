@@ -22,6 +22,7 @@ protocol MapPostServiceProtocol {
     func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?) async throws ->  ([MapPost], DocumentSnapshot?)
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?)
     func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool) -> Void)?)
+    func getPostsFrom(query: Query, caller: MapServiceCaller, limit: Int) async throws -> (posts: [MapPost]?, endDocument: DocumentSnapshot?)
     func getComments(postID: String) async throws -> [MapComment]
     func getPost(postID: String) async throws -> MapPost
     func setPostDetails(post: MapPost) async throws -> MapPost

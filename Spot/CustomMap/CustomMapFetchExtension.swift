@@ -79,8 +79,7 @@ extension CustomMapController {
 
             guard let controllers = self.navigationController?.children else { return }
             if let postController = controllers.last as? PostController {
-                postController.postsList.append(contentsOf: posts)
-                postController.contentTable.reloadData()
+                postController.allPostsViewController.refresh.send(true)
             }
         }
     }

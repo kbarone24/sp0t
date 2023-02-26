@@ -121,7 +121,7 @@ extension SpotTabBarController: UITabBarControllerDelegate {
             } else if let profile = nav.viewControllers.first as? ProfileViewController {
                 if selectedIndex == 4 {
                     if nav.viewControllers.count == 1 {
-                        profile.scrollToTop()
+                        // profile.scrollToTop()
                     } else {
                         nav.popToRootViewController(animated: true)
                     }
