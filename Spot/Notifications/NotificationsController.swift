@@ -144,9 +144,12 @@ extension NotificationsController {
     }
     
     func openPost(post: MapPost, commentNoti: Bool) {
-        let postVC = PostController(parentVC: .Notifications, postsList: [post])
-        postVC.openComments = commentNoti
-        DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
+        let postVC = PostController(parentVC: .Notifications)
+        postVC.loadView()
+        postVC.allPostsViewController.openComments = commentNoti
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(postVC, animated: true)
+        }
     }
     
     func openMap(mapID: String) {

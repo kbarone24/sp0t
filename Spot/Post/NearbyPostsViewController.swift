@@ -31,8 +31,7 @@ final class NearbyPostsViewController: UIViewController {
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
         tableView.backgroundColor = .black
         tableView.separatorStyle = .none
-        tableView.isScrollEnabled = false
-        tableView.isPrefetchingEnabled = true
+        tableView.isScrollEnabled = true
         tableView.showsVerticalScrollIndicator = false
         tableView.scrollsToTop = false
         tableView.contentInsetAdjustmentBehavior = .never
@@ -40,6 +39,8 @@ final class NearbyPostsViewController: UIViewController {
         // inset to show button view
         tableView.register(ContentViewerCell.self, forCellReuseIdentifier: ContentViewerCell.reuseID)
         tableView.sectionHeaderTopPadding = 0.0
+        tableView.delegate = self
+        tableView.dataSource = self
         
         return tableView
     }()
@@ -66,22 +67,8 @@ final class NearbyPostsViewController: UIViewController {
         return rowHeight * CGFloat(selectedPostIndex)
     }
     
-    var animatingToNextRow = false {
-        didSet {
-            tableView.isScrollEnabled = !animatingToNextRow
-        }
-    }
-    
     var maxRowContentOffset: CGFloat {
-        return rowHeight * CGFloat(postsCount - 1)
-    }
-    
-    var imageViewOffset = false {
-        didSet {
-            DispatchQueue.main.async {
-                self.tableView.isScrollEnabled = !self.imageViewOffset
-            }
-        }
+        return rowHeight * CGFloat(snapshot.numberOfItems - 1)
     }
     
     var tableViewOffset = false {
@@ -92,16 +79,12 @@ final class NearbyPostsViewController: UIViewController {
         }
     }
     
-    private var postsCount: Int = 0 {
-        didSet {
-            DispatchQueue.main.async {
-                self.tableView.isScrollEnabled = self.postsCount > 1
-            }
-        }
-    }
-    
     var selectedPostIndex = 0 {
         didSet {
+            guard !snapshot.itemIdentifiers.isEmpty else {
+                return
+            }
+            
             let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
             switch item {
             case .item(let post):
@@ -161,6 +144,10 @@ final class NearbyPostsViewController: UIViewController {
                 self?.snapshot = snapshot
                 self?.activityIndicator.stopAnimating()
                 self?.refreshControl.endRefreshing()
+                
+                if snapshot.itemIdentifiers.isEmpty {
+                    self?.showEmptyAlert()
+                }
             }
             .store(in: &subscriptions)
         
@@ -171,11 +158,14 @@ final class NearbyPostsViewController: UIViewController {
     
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyCitySet), name: NSNotification.Name("UserCitySet"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
     }
     
     func scrollToTop() {
+        guard !snapshot.itemIdentifiers.isEmpty else {
+            return
+        }
+        
         DispatchQueue.main.async {
             self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
         }
@@ -189,6 +179,13 @@ final class NearbyPostsViewController: UIViewController {
         refreshControl.beginRefreshing()
     }
     
+    private func showEmptyAlert() {
+        let alert = UIAlertController()
+        alert.title = "Nothing to show"
+        alert.message = "There are no nearby posts to you at this time. We are coming to your location"
+        present(alert, animated: true)
+    }
+    
     // called if table view or container view removal has begun
     func setCellOffsets(offset: Bool) {
         for cell in tableView.visibleCells {
@@ -199,35 +196,24 @@ final class NearbyPostsViewController: UIViewController {
     }
     
     func tapToNextPost() {
-        guard !animatingToNextRow else {
-            return
-        }
-        
         if selectedPostIndex < snapshot.numberOfItems - 1 {
             tapToSelectedRow(increment: 1)
         }
     }
 
     func tapToPreviousPost() {
-        guard !animatingToNextRow else {
-            return
-        }
-        
         if selectedPostIndex > 0 {
             tapToSelectedRow(increment: -1)
         }
     }
     
     func tapToSelectedRow(increment: Int? = 0) {
-        // animate scroll view animation so that prefetch methods are called
-        animatingToNextRow = true
         DispatchQueue.main.async {
             self.tableView.scrollToRow(at: IndexPath(row: self.selectedPostIndex + (increment ?? 0), section: 0), at: .top, animated: true)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             // set selected post index after main animation to avoid clogging main thread
             if let increment, increment != 0 { self?.selectedPostIndex += increment }
-            self?.animatingToNextRow = false
             if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? ContentViewerCell {
                 cell.animateLocation()
             }
@@ -240,7 +226,6 @@ final class NearbyPostsViewController: UIViewController {
             let offset = abs(currentRowContentOffset - tableView.contentOffset.y)
             duration = max(TimeInterval(0.25 * offset / tableView.bounds.height), 0.15)
         }
-        animatingToNextRow = true
 
         UIView.transition(with: tableView, duration: duration, options: [.beginFromCurrentState, .curveEaseOut], animations: {
             self.tableView.setContentOffset(CGPoint(x: 0, y: CGFloat(self.currentRowContentOffset)), animated: false)
@@ -250,7 +235,6 @@ final class NearbyPostsViewController: UIViewController {
             self?.tableViewOffset = false
             if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? ContentViewerCell {
                 cell.animateLocation()
-                self?.animatingToNextRow = false
             }
         })
     }
@@ -259,15 +243,6 @@ final class NearbyPostsViewController: UIViewController {
         refresh.send(true)
     }
 
-    @objc func notifyCitySet(_ notification: NSNotification) {
-        refresh.send(true)
-    }
-
-    // call to let table know cell is swiping
-    func imageViewOffset(offset: Bool) {
-        imageViewOffset = offset
-    }
-    
     func openComments(row: Int, animated: Bool) {
         if presentedViewController != nil { return }
         Mixpanel.mainInstance().track(event: "PostOpenComments")
@@ -282,16 +257,6 @@ final class NearbyPostsViewController: UIViewController {
 
     @objc func notifyNewPost(_ notification: NSNotification) {
         refresh.send(true)
-    }
-
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if scrollView.contentOffset.y < 0 {
-            scrollView.contentOffset.y = 0
-        }
-        
-        if scrollView.contentOffset.y > maxRowContentOffset {
-            scrollView.contentOffset.y = maxRowContentOffset
-        }
     }
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
@@ -324,7 +289,7 @@ extension NearbyPostsViewController: ContentViewerDelegate {
             }
         }
         
-        let post = allPosts.filter { $0.id == postID }.first
+        let post = allPosts.first(where: { $0.id == postID })
         
         if allPosts[selectedPostIndex].likers.firstIndex(where: { $0 == UserDataModel.shared.uid }) != nil {
             Mixpanel.mainInstance().track(event: "PostPageUnlikePost")
@@ -395,6 +360,10 @@ extension NearbyPostsViewController: CommentsDelegate {
 extension NearbyPostsViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        guard !snapshot.sectionIdentifiers.isEmpty else {
+            return 0
+        }
+        
         let section = snapshot.sectionIdentifiers[section]
         return snapshot.numberOfItems(inSection: section)
     }
@@ -427,7 +396,7 @@ extension NearbyPostsViewController: UITableViewDataSource, UITableViewDelegate 
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
-        if indexPath.row >= snapshot.numberOfItems - 5 {
+        if indexPath.row >= snapshot.numberOfItems - 10 {
             limit.send(15)
             lastItem.send(viewModel.lastItem)
         }
@@ -466,8 +435,7 @@ extension NearbyPostsViewController: UITableViewDataSource, UITableViewDelegate 
         videoURL: URL? = nil,
         cell: UITableViewCell
     ) {
-        let delay: TimeInterval = animatingToNextRow ? 0.25 : 0.0
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             guard let cell = cell as? ContentViewerCell else {
                 return
             }

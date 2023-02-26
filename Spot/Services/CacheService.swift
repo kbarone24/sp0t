@@ -9,6 +9,8 @@
 import Foundation
 
 final class CacheService<Key: Hashable, Value> {
+    
+    private let queue = DispatchQueue(label: "caching", qos: .background)
 
     private let wrapped = NSCache<WrappedKey, Entry>()
     private let dateProvider: () -> Date
@@ -25,10 +27,16 @@ final class CacheService<Key: Hashable, Value> {
     }
     
     func allCachedValues() -> [Value] {
-        keyTracker.keys.map {
-            self.entry(forKey: $0)?.value
+        var values: [Value] = []
+        
+        queue.sync {
+            values = keyTracker.keys.map {
+                self.entry(forKey: $0)?.value
+            }
+            .compactMap { $0 }
         }
-        .compactMap { $0 }
+        
+        return values
     }
     
     func allCachedKeys() -> [Key] {
@@ -36,10 +44,16 @@ final class CacheService<Key: Hashable, Value> {
     }
     
     func allCachedEntries() -> [Entry] {
-        keyTracker.keys.map {
-            self.entry(forKey: $0)
+        var entries: [Entry] = []
+        
+        queue.sync {
+            entries = keyTracker.keys.map {
+                self.entry(forKey: $0)
+            }
+            .compactMap { $0 }
         }
-        .compactMap { $0 }
+        
+        return entries
     }
     
     func entry(forKey key: Key) -> Entry? {
@@ -133,10 +147,16 @@ extension CacheService: Codable where Key: Codable, Value: Codable {
     }
     
     func allCachedValues() -> [Value] {
-        keyTracker.keys.map {
-            self.entry(forKey: $0)?.value
+        var values: [Value] = []
+        
+        queue.sync {
+            values = keyTracker.keys.map {
+                self.entry(forKey: $0)?.value
+            }
+            .compactMap { $0 }
         }
-        .compactMap { $0 }
+        
+        return values
     }
     
     func allCachedKeys() -> [Key] {
@@ -144,10 +164,16 @@ extension CacheService: Codable where Key: Codable, Value: Codable {
     }
     
     func allCachedEntries() -> [Entry] {
-        keyTracker.keys.map {
-            self.entry(forKey: $0)
+        var entries: [Entry] = []
+        
+        queue.sync {
+            entries = keyTracker.keys.map {
+                self.entry(forKey: $0)
+            }
+            .compactMap { $0 }
         }
-        .compactMap { $0 }
+        
+        return entries
     }
     
     func entry(forKey key: Key) -> Entry? {
@@ -164,19 +190,37 @@ extension CacheService: Codable where Key: Codable, Value: Codable {
     }
 
     func insert(_ entry: Entry) {
-        wrapped.setObject(entry, forKey: WrappedKey(entry.key))
-        keyTracker.keys.insert(entry.key)
-        try? saveToDisk(withName: "\(entry.key)")
+        queue.async(flags: .barrier) { [weak self] in
+            self?.wrapped.setObject(entry, forKey: WrappedKey(entry.key))
+            self?.keyTracker.keys.insert(entry.key)
+            try? self?.saveToDisk(withName: "\(entry.key)")
+        }
     }
     
     func removeValue(forKey key: Key) {
-        wrapped.removeObject(forKey: WrappedKey(key))
-        try? deleteFromDisk(fileName: "\(key)")
+        queue.async(flags: .barrier) { [weak self] in
+            self?.wrapped.removeObject(forKey: WrappedKey(key))
+            try? self?.deleteFromDisk(fileName: "\(key)")
+        }
     }
 }
 
 private extension CacheService where Key: Codable, Value: Codable {
     func saveToDisk(
+        withName name: String,
+        using fileManager: FileManager = .default
+    ) throws {
+        let folderURLs = fileManager.urls(
+            for: .cachesDirectory,
+            in: .userDomainMask
+        )
+
+        let fileURL = folderURLs[0].appendingPathComponent(name + ".cache")
+        let data = try JSONEncoder().encode(self)
+        try data.write(to: fileURL)
+    }
+    
+    func readFromDisk(
         withName name: String,
         using fileManager: FileManager = .default
     ) throws {

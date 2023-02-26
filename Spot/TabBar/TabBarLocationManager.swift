@@ -81,8 +81,14 @@ extension SpotTabBarController: CLLocationManagerDelegate {
     }
 
     private func setUserCityFor(location: CLLocation) {
-        location.reverseGeocode(zoomLevel: 0) { (city, err)  in
-            if city == "" && err { return }
+        guard let locationService = try? ServiceContainer.shared.service(for: \.locationService) else {
+            return
+        }
+        
+        Task {
+            guard let city = try? await locationService.reverseGeocode(location: location, zoomLevel: 0) else {
+                return
+            }
             UserDataModel.shared.userCity = city
             NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UserCitySet")))
         }

@@ -68,9 +68,8 @@ extension CustomMapController: UICollectionViewDelegate, UICollectionViewDataSou
 
     func openPost(posts: [MapPost], row: Int) {
         if navigationController?.viewControllers.last is PostController { return } // double stack happening here
-        let title = mapData?.mapName ?? ""
-        let postVC = PostController(parentVC: .Map, postsList: posts, selectedPostIndex: 0, title: title)
-        postVC.delegate = self
+        let title = mapType == .friendsMap ? "Friends map" : mapType == .myMap ? "@\(userProfile?.username ?? "")'s map" : mapData?.mapName ?? ""
+        let postVC = PostController(parentVC: .Map)
         DispatchQueue.main.async { self.navigationController?.pushViewController(postVC, animated: true) }
     }
 

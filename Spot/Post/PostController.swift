@@ -23,14 +23,12 @@ final class PostController: UIViewController {
     private(set) lazy var allPostsViewController: AllPostsViewController = {
         let viewModel = AllPostsViewModel(serviceContainer: ServiceContainer.shared)
         let allPostsVC = AllPostsViewController(viewModel: viewModel)
-        allPostsVC.loadView()
         return allPostsVC
     }()
     
     private(set) lazy var nearbyPostsViewController: NearbyPostsViewController = {
         let viewModel = NearbyPostsViewModel(serviceContainer: ServiceContainer.shared)
         let nearby = NearbyPostsViewController(viewModel: viewModel)
-        nearby.loadView()
         return nearby
     }()
     
@@ -45,9 +43,10 @@ final class PostController: UIViewController {
     var parentVC: PostParent
     weak var delegate: PostControllerDelegate?
 
-    lazy var selectedSegment: FeedFetchType = .MyPosts {
+    private var selectedSegment: FeedFetchType = .MyPosts {
         didSet {
             DispatchQueue.main.async {
+                self.setSelectedSegment(segment: self.selectedSegment)
                 self.titleView.setButtonBar(animated: true, selectedSegment: self.selectedSegment)
             }
         }
@@ -77,6 +76,25 @@ final class PostController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         edgesForExtendedLayout = [.top]
+        
+        nearbyPostsViewController.viewDidLoad()
+        allPostsViewController.viewDidLoad()
+        setSelectedSegment(segment: selectedSegment)
+        
+        addChild(pageViewController)
+        view.addSubview(pageViewController.view)
+        
+        pageViewController.view.snp.makeConstraints { make in
+            make.leading.trailing.top.bottom.equalToSuperview()
+        }
+        pageViewController.didMove(toParent: self)
+        
+        switch selectedSegment {
+        case .MyPosts:
+            pageViewController.setViewControllers([allPostsViewController], direction: .reverse, animated: true)
+        case .NearbyPosts:
+            pageViewController.setViewControllers([nearbyPostsViewController], direction: .forward, animated: true)
+        }
     }
     
     func setUpNavBar() {
@@ -111,6 +129,32 @@ final class PostController: UIViewController {
 
 extension PostController: UIPageViewControllerDelegate, UIPageViewControllerDataSource {
     
+    private func setSelectedSegment(segment: FeedFetchType) {
+        guard isViewLoaded else {
+            return
+        }
+        
+        let viewController: UIViewController
+        let direction: UIPageViewController.NavigationDirection
+        
+        switch segment {
+        case .MyPosts:
+            viewController = self.allPostsViewController
+            direction = .reverse
+            
+        case .NearbyPosts:
+            viewController = self.nearbyPostsViewController
+            direction = .forward
+        }
+        
+        isPageControllerTransitioning = true
+        view.isUserInteractionEnabled = false
+        pageViewController.setViewControllers([viewController], direction: direction, animated: true) { [weak self] _ in
+            self?.view.isUserInteractionEnabled = true
+            self?.isPageControllerTransitioning = false
+        }
+    }
+    
     override func willTransition(to newCollection: UITraitCollection, with coordinator: UIViewControllerTransitionCoordinator) {
         isPageControllerTransitioning = true
     }
@@ -119,16 +163,16 @@ extension PostController: UIPageViewControllerDelegate, UIPageViewControllerData
         
         guard completed,
               let currentViewController = pageViewController.viewControllers?.first,
-              let previewViewController = previousViewControllers.first,
-              currentViewController != previewViewController else {
+              let previousViewController = previousViewControllers.first,
+              currentViewController != previousViewController else {
             isPageControllerTransitioning = false
             return
         }
         
         isPageControllerTransitioning = false
-        if previewViewController == allPostsViewController {
+        if previousViewController == allPostsViewController {
             selectedSegment = .NearbyPosts
-        } else if previewViewController == nearbyPostsViewController {
+        } else if previousViewController == nearbyPostsViewController {
             selectedSegment = .MyPosts
         }
     }

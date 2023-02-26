@@ -56,7 +56,12 @@ final class NearbyPostsViewModel {
     }
     
     func bind(to input: Input) -> Output {
-        let request = Publishers.CombineLatest3(input.refresh, input.limit, input.lastItem)
+        let request = Publishers.CombineLatest3(
+            input.refresh,
+            input.limit,
+            input.lastItem.removeDuplicates()
+        )
+            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
             .receive(on: DispatchQueue.global(qos: .background))
             .map { [unowned self] forced, limit, lastItem in
                 self.fetchPosts(forced: forced, limit: limit, lastItem: lastItem)
@@ -86,7 +91,7 @@ final class NearbyPostsViewModel {
     
     func deletePost(post: MapPost) {
         let items = cache.allCachedValues()
-        if var cachedPost = items.first(where: { $0.id == post.id }), let id = cachedPost.id {
+        if let cachedPost = items.first(where: { $0.id == post.id }), let id = cachedPost.id {
             cache.removeValue(forKey: id)
         }
     }

@@ -19,7 +19,6 @@ protocol ContentViewerDelegate: AnyObject {
     func openProfile(user: UserProfile)
     func openMap(mapID: String, mapName: String)
     func openSpot(post: MapPost)
-    func imageViewOffset(offset: Bool)
     func getSelectedPostIndex() -> Int
     func tapToPreviousPost()
     func tapToNextPost()
@@ -146,11 +145,7 @@ final class ContentViewerCell: UITableViewCell {
     }()
     
     var cellOffset = false
-    var imageSwiping = false {
-        didSet {
-            delegate?.imageViewOffset(offset: imageSwiping)
-        }
-    }
+    var imageSwiping = false
 
     var imagePan: UIPanGestureRecognizer?
     var imageTap: UITapGestureRecognizer?

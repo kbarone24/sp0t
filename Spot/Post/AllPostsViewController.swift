@@ -30,8 +30,7 @@ final class AllPostsViewController: UIViewController {
         tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UIScreen.main.bounds.height, right: 0)
         tableView.backgroundColor = .black
         tableView.separatorStyle = .none
-        tableView.isScrollEnabled = false
-        tableView.isPrefetchingEnabled = true
+        tableView.isScrollEnabled = true
         tableView.showsVerticalScrollIndicator = false
         tableView.scrollsToTop = false
         tableView.contentInsetAdjustmentBehavior = .never
@@ -39,6 +38,8 @@ final class AllPostsViewController: UIViewController {
         // inset to show button view
         tableView.register(ContentViewerCell.self, forCellReuseIdentifier: ContentViewerCell.reuseID)
         tableView.sectionHeaderTopPadding = 0.0
+        tableView.delegate = self
+        tableView.dataSource = self
         
         return tableView
     }()
@@ -59,6 +60,10 @@ final class AllPostsViewController: UIViewController {
     
     var selectedPostIndex = 0 {
         didSet {
+            guard !snapshot.itemIdentifiers.isEmpty else {
+                return
+            }
+            
             let item = snapshot.itemIdentifiers(inSection: .main)[selectedPostIndex]
             switch item {
             case .item(let post):
@@ -75,36 +80,14 @@ final class AllPostsViewController: UIViewController {
         return rowHeight * CGFloat(selectedPostIndex)
     }
     
-    var animatingToNextRow = false {
-        didSet {
-            tableView.isScrollEnabled = !animatingToNextRow
-        }
-    }
-    
     var maxRowContentOffset: CGFloat {
-        return rowHeight * CGFloat(postsCount - 1)
-    }
-    
-    var imageViewOffset = false {
-        didSet {
-            DispatchQueue.main.async {
-                self.tableView.isScrollEnabled = !self.imageViewOffset
-            }
-        }
+        return rowHeight * CGFloat(snapshot.numberOfItems - 1)
     }
     
     var tableViewOffset = false {
         didSet {
             DispatchQueue.main.async {
                 self.setCellOffsets(offset: self.tableViewOffset)
-            }
-        }
-    }
-    
-    private var postsCount: Int = 0 {
-        didSet {
-            DispatchQueue.main.async {
-                self.tableView.isScrollEnabled = self.postsCount > 1
             }
         }
     }
@@ -169,6 +152,9 @@ final class AllPostsViewController: UIViewController {
         limit.send(15)
         lastItem.send(nil)
         friendsLastItem.send(nil)
+        
+        subscribeToFriendsListener()
+        subscribeToMapListener()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -185,6 +171,60 @@ final class AllPostsViewController: UIViewController {
         }
     }
     
+    private func subscribeToFriendsListener() {
+        let request = Firestore.firestore()
+            .collection(FirebaseCollectionNames.posts.rawValue)
+            .limit(to: 15)
+            .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
+        
+        let friendsQuery = request.whereField(FirebaseCollectionFields.friendsList.rawValue, arrayContains: UserDataModel.shared.uid)
+        
+        if let lastFriendsItem = viewModel.lastFriendsItem {
+            friendsQuery.start(afterDocument: lastFriendsItem)
+        }
+        
+        friendsQuery.snapshotPublisher()
+            .removeDuplicates()
+            .sink(
+                receiveCompletion: { _ in },
+                receiveValue: { [weak self] _ in
+                    self?.refresh.send(true)
+                    if self?.snapshot.numberOfItems ?? 0 <= 0 {
+                        self?.limit.send(15)
+                    } else {
+                        self?.limit.send(self?.snapshot.numberOfItems ?? 15)
+                    }
+                })
+            .store(in: &subscriptions)
+    }
+    
+    private func subscribeToMapListener() {
+        let request = Firestore.firestore()
+            .collection(FirebaseCollectionNames.posts.rawValue)
+            .limit(to: 15)
+            .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
+        
+        let mapsQuery = request.whereField(FirebaseCollectionFields.inviteList.rawValue, arrayContains: UserDataModel.shared.uid)
+        
+        if let lastMapItem = viewModel.lastMapItem {
+            mapsQuery.start(afterDocument: lastMapItem)
+        }
+        
+        mapsQuery.snapshotPublisher()
+            .removeDuplicates()
+            .sink(
+                receiveCompletion: { _ in },
+                receiveValue: { [weak self] _ in
+                    self?.refresh.send(true)
+                    if self?.snapshot.numberOfItems ?? 0 <= 0 {
+                        self?.limit.send(15)
+                    } else {
+                        self?.limit.send(self?.snapshot.numberOfItems ?? 15)
+                    }
+                })
+            .store(in: &subscriptions)
+    }
+    
     @objc private func forceRefresh() {
         refresh.send(true)
         lastItem.send(nil)
@@ -194,11 +234,14 @@ final class AllPostsViewController: UIViewController {
     
     func addNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(notifyImageChange(_:)), name: NSNotification.Name("PostImageChange"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(notifyCitySet), name: NSNotification.Name("UserCitySet"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(notifyNewPost(_:)), name: NSNotification.Name(("NewPost")), object: nil)
     }
     
     func scrollToTop() {
+        guard !snapshot.itemIdentifiers.isEmpty else {
+            return
+        }
+        
         DispatchQueue.main.async {
             self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
         }
@@ -226,26 +269,12 @@ final class AllPostsViewController: UIViewController {
     @objc func notifyNewPost(_ notification: NSNotification) {
         refresh.send(true)
     }
-    
-    @objc func notifyCitySet(_ notification: NSNotification) {
-        refresh.send(true)
-    }
-    
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if scrollView.contentOffset.y < 0 {
-            scrollView.contentOffset.y = 0
-        }
-        
-        if scrollView.contentOffset.y > maxRowContentOffset {
-            scrollView.contentOffset.y = maxRowContentOffset
-        }
-    }
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         let velocity = scrollView.panGestureRecognizer.velocity(in: view)
         let translation = scrollView.panGestureRecognizer.translation(in: view)
         let composite = translation.y + velocity.y / 4
-
+        
         let rowHeight = tableView.bounds.height
         if composite < -(rowHeight / 4) && selectedPostIndex < snapshot.numberOfItems - 1 {
             selectedPostIndex += 1
@@ -263,17 +292,15 @@ final class AllPostsViewController: UIViewController {
             let offset = abs(currentRowContentOffset - tableView.contentOffset.y)
             duration = max(TimeInterval(0.25 * offset / tableView.bounds.height), 0.15)
         }
-        animatingToNextRow = true
-
+        
         UIView.transition(with: tableView, duration: duration, options: [.beginFromCurrentState, .curveEaseOut], animations: {
             self.tableView.setContentOffset(CGPoint(x: 0, y: CGFloat(self.currentRowContentOffset)), animated: false)
             self.tableView.layoutIfNeeded()
-
+            
         }, completion: { [weak self] _ in
             self?.tableViewOffset = false
             if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? ContentViewerCell {
                 cell.animateLocation()
-                self?.animatingToNextRow = false
             }
         })
     }
@@ -290,20 +317,12 @@ extension AllPostsViewController: ContentViewerDelegate {
     }
     
     func tapToNextPost() {
-        guard !animatingToNextRow else {
-            return
-        }
-        
         if selectedPostIndex < snapshot.numberOfItems - 1 {
             tapToSelectedRow(increment: 1)
         }
     }
-
+    
     func tapToPreviousPost() {
-        guard !animatingToNextRow else {
-            return
-        }
-        
         if selectedPostIndex > 0 {
             tapToSelectedRow(increment: -1)
         }
@@ -311,23 +330,16 @@ extension AllPostsViewController: ContentViewerDelegate {
     
     func tapToSelectedRow(increment: Int? = 0) {
         // animate scroll view animation so that prefetch methods are called
-        animatingToNextRow = true
         DispatchQueue.main.async {
             self.tableView.scrollToRow(at: IndexPath(row: self.selectedPostIndex + (increment ?? 0), section: 0), at: .top, animated: true)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             // set selected post index after main animation to avoid clogging main thread
             if let increment, increment != 0 { self?.selectedPostIndex += increment }
-            self?.animatingToNextRow = false
             if let cell = self?.tableView.cellForRow(at: IndexPath(row: self?.selectedPostIndex ?? 0, section: 0)) as? ContentViewerCell {
                 cell.animateLocation()
             }
         }
-    }
-    
-    // call to let table know cell is swiping
-    func imageViewOffset(offset: Bool) {
-        imageViewOffset = offset
     }
     
     func likePost(postID: String) {
@@ -351,25 +363,25 @@ extension AllPostsViewController: ContentViewerDelegate {
         
         refresh.send(false)
     }
-
+    
     func openPostComments() {
         openComments(row: selectedPostIndex, animated: true)
     }
-
+    
     func openPostActionSheet() {
         Mixpanel.mainInstance().track(event: "PostPageElipsesTap")
         addActionSheet()
     }
-
+    
     func getSelectedPostIndex() -> Int {
         return selectedPostIndex
     }
-
+    
     func openProfile(user: UserProfile) {
         let profileVC = ProfileViewController(userProfile: user)
         DispatchQueue.main.async { self.navigationController?.pushViewController(profileVC, animated: true) }
     }
-
+    
     func openMap(mapID: String, mapName: String) {
         var map = CustomMap(
             founderID: "",
@@ -390,7 +402,7 @@ extension AllPostsViewController: ContentViewerDelegate {
         let customMapVC = CustomMapController(userProfile: nil, mapData: map, postsList: [], mapType: .customMap)
         navigationController?.pushViewController(customMapVC, animated: true)
     }
-
+    
     func openSpot(post: MapPost) {
         let spotVC = SpotPageController(mapPost: post)
         navigationController?.pushViewController(spotVC, animated: true)
@@ -408,6 +420,10 @@ extension AllPostsViewController: CommentsDelegate {
 extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        guard !snapshot.sectionIdentifiers.isEmpty else {
+            return 0
+        }
+        
         let section = snapshot.sectionIdentifiers[section]
         return snapshot.numberOfItems(inSection: section)
     }
@@ -440,7 +456,7 @@ extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
-        if indexPath.row >= snapshot.numberOfItems - 5 {
+        if indexPath.row >= snapshot.numberOfItems - 10 {
             limit.send(15)
             friendsLastItem.send(viewModel.lastFriendsItem)
             lastItem.send(viewModel.lastMapItem)
@@ -480,8 +496,7 @@ extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
         videoURL: URL? = nil,
         cell: UITableViewCell
     ) {
-        let delay: TimeInterval = animatingToNextRow ? 0.25 : 0.0
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             guard let cell = cell as? ContentViewerCell else {
                 return
             }

@@ -260,13 +260,6 @@ final class ImageVideoService: ImageVideoServiceProtocol {
             var currentAspect: CGFloat = 1
             
             for x in 0...urls.count - 1 {
-                
-                defer {
-                    if x == urls.count - 1 {
-                        continuation.resume(returning: images)
-                    }
-                }
-                
                 let postURL = urls[x]
                 if let y = frameIndexes.firstIndex(where: { $0 == x }), let aspectRatios {
                     currentAspect = aspectRatios[y]
@@ -279,12 +272,18 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                     with: URL(string: postURL),
                     options: [.highPriority, .scaleDownLargeImages],
                     context: [.imageTransformer: transformer], progress: nil) { (rawImage, _, _, _, _, _) in
+                        defer {
+                            if x == urls.count - 1 {
+                                continuation.resume(returning: images)
+                            }
+                        }
+                        
                         let i = urls.lastIndex(where: { $0 == postURL })
                         guard let image = rawImage else {
-                            images[i ?? 0] = UIImage()
+                            images.append(UIImage())
                             return
                         }
-                        images[i ?? 0] = image
+                        images.append(image)
                         self.imageCache.removeValue(forKey: postURL)
                         self.imageCache.insert(CacheService.Entry(key: postURL, value: image))
                     }

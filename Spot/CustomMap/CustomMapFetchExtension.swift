@@ -68,8 +68,8 @@ extension CustomMapController {
             if self.endDocument == nil { self.refreshStatus = .refreshDisabled }
             self.reloadCollectionView(posts: posts)
         }
-
     }
+    
     private func reloadCollectionView(posts: [MapPost]) {
         DispatchQueue.main.async {
             self.postsList.append(contentsOf: posts)

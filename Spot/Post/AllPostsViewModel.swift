@@ -59,7 +59,13 @@ final class AllPostsViewModel {
     }
     
     func bind(to input: Input) -> Output {
-        let request = Publishers.CombineLatest4(input.refresh, input.limit, input.lastMapItem, input.lastFriendsItem)
+        let request = Publishers.CombineLatest4(
+            input.refresh,
+            input.limit,
+            input.lastMapItem.removeDuplicates(),
+            input.lastFriendsItem.removeDuplicates()
+        )
+            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.global(qos: .background))
             .receive(on: DispatchQueue.global(qos: .background))
             .map { [unowned self] forced, limit, lastMapItem, lastFriendsItem in
                 self.fetchPosts(forced: forced, limit: limit, lastMapItem: lastMapItem, lastFriendsItem: lastFriendsItem)
@@ -89,7 +95,7 @@ final class AllPostsViewModel {
     
     func deletePost(post: MapPost) {
         let items = cache.allCachedValues()
-        if var cachedPost = items.first(where: { $0.id == post.id }), let id = cachedPost.id {
+        if let cachedPost = items.first(where: { $0.id == post.id }), let id = cachedPost.id {
             cache.removeValue(forKey: id)
         }
     }
@@ -180,69 +186,6 @@ final class AllPostsViewModel {
                 aspectRatios: post.aspectRatios,
                 size: size
             )
-        }
-    }
-    
-    // TODO: Add subscription to Friends Collection and Map Posts
-    // TODO: Add the update post logic
-    
-    /*
-     if !myPostsFetched {
-         addFriendsListener(query: friendsQuery)
-         addMapListener(query: mapsQuery)
-     } else {
-         getFriendsPosts(query: friendsQuery)
-         getMapPosts(query: mapsQuery)
-     }
-     */
-    
-    /*
-     class FriendsViewModel: ObservableObject {
-         @Published var friends: [Document<User>] = []
-         var cancellable: AnyCancellable? = nil
-         @ObservedObject var authStore = AuthStore(auth: Auth.auth())
-         init() {
-             bind()
-         }
-         func bind() {
-             cancellable = Document<Room>.listen(query: Firestore.firestore().collection("user").whereField("friends", arrayContains: Auth.auth().currentUser!.uid).limit(to: 10)).sink(receiveCompletion: { error in
-             }, receiveValue: { [weak self] friends in
-                 print("My friends..",friends.joined(separator: ","))
-                 self?.friends = friends
-             })
-         }
-     }
-     */
-    
-    
-    private func addFriendsListener(query: Query) {
-        friendsListener = query.addSnapshotListener(includeMetadataChanges: true) { [weak self] (snap, _) in
-            guard let self = self else { return }
-            guard let snap = snap else { return }
-            if snap.metadata.isFromCache { return }
-
-            // check for deleted post on listener
-            var newPost = false
-            let postIDs = snap.documents.map({ $0.documentID })
-            self.friendsFetchIDs = postIDs
-            if self.myPostsFetched { newPost = self.checkForPostDelete(postIDs: postIDs, friendsFetch: true) }
-            
-            // self.setFriendPostDetails(snap: snap, newPost: newPost, newFetch: !self.myPostsFetched)
-        }
-    }
-
-    private func addMapListener(query: Query) {
-        mapsListener = query.addSnapshotListener(includeMetadataChanges: true) { [weak self] (snap, _) in
-            guard let self = self else { return }
-            guard let snap = snap else { return }
-            if snap.metadata.isFromCache { return }
-
-            // check for deleted post on listener
-            var newPost = false
-            let postIDs = snap.documents.map({ $0.documentID })
-            self.mapFetchIDs = postIDs
-            if self.myPostsFetched { newPost = self.checkForPostDelete(postIDs: postIDs, friendsFetch: false) }
-            // self.setMapPostDetails(snap: snap, newPost: newPost, newFetch: !self.myPostsFetched)
         }
     }
 }
