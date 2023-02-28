@@ -64,11 +64,14 @@ extension PostController {
     }
 
     func setSeen(post: MapPost) {
-        /// set seen on map
-        db.collection("posts").document(post.id ?? "").updateData(["seenList": FieldValue.arrayUnion([uid])])
+        mapPostService?.updateSeenDB(post: post)
         NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["post": post as Any]))
         /// show notification as seen
         updateNotifications(postID: post.id ?? "")
+
+        if let index = postsList.firstIndex(of: post) {
+            if !(postsList[index].seenList?.contains(uid) ?? false) { postsList[index].seenList?.append(uid) }
+        }
     }
 
     func checkForUpdates(postID: String, index: Int) {

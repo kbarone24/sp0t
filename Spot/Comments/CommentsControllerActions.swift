@@ -120,7 +120,6 @@ extension CommentsController {
         /// set extraneous values
         self.db.collection("posts").document(self.post.id ?? "").updateData(["commentCount": FieldValue.increment(Int64(1))])
         friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
-
     }
 
     func resetTextView() {
