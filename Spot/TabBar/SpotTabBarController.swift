@@ -103,7 +103,14 @@ extension SpotTabBarController: UITabBarControllerDelegate {
             }
             
             if let explore = nav.viewControllers.first as? ExploreMapViewController {
-                Mixpanel.mainInstance().track(event: "ExploreMapScreenNotificationsTap")
+                if selectedIndex == 1 {
+                    if nav.viewControllers.count == 1 {
+                        print("1")
+                    } else {
+                        nav.popToRootViewController(animated: true)
+                    }
+                    return false
+                }
                 return true
             }
             

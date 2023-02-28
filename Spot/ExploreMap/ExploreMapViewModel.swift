@@ -233,7 +233,7 @@ final class ExploreMapViewModel {
         
         DispatchQueue.global(qos: .background).async {
             for map in mapsToJoin {
-                mapService.joinMap(customMap: map, completion: { _ in })
+                mapService.followMap(customMap: map, completion: { _ in })
             }
             
             Mixpanel.mainInstance().track(event: "ExploreMapsJoinTap", properties: ["mapCount": mapsToJoin.count])
@@ -261,7 +261,7 @@ final class ExploreMapViewModel {
             completion(true)
             
             DispatchQueue.global(qos: .background).async { [weak self] in
-                self?.service.joinMap(customMap: map) { error in
+                self?.service.followMap(customMap: map) { error in
                     if error != nil {
                         completion(false)
                     }

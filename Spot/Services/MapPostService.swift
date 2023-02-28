@@ -29,6 +29,7 @@ protocol MapPostServiceProtocol {
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
     func updateMapNameInPosts(mapID: String, newName: String)
+    func updateSeenDB(post: MapPost)
     func likePostDB(post: MapPost)
     func unlikePostDB(post: MapPost)
     func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool)
@@ -598,6 +599,23 @@ final class MapPostService: MapPostServiceProtocol {
             
             let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
             friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
+
+            incrementSpotScoreFor(post: post, increment: 3)
+             incrementMapScoreFor(post: post, increment: 5)
+        }
+    }
+
+    func updateSeenDB(post: MapPost) {
+        /// set seen on map
+        let newUser = !(post.seenList?.contains(UserDataModel.shared.uid) ?? false)
+
+        DispatchQueue.global(qos: .background).async {
+            self.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData(["seenList": FieldValue.arrayUnion([UserDataModel.shared.uid])])
+        }
+
+        // update mapScore
+        if newUser {
+            incrementMapScoreFor(post: post, increment: 1)
         }
     }
     
@@ -705,6 +723,18 @@ final class MapPostService: MapPostServiceProtocol {
                         "userID": userId
                     ]
                 )
+
+    private func incrementSpotScoreFor(post: MapPost, increment: Int) {
+        DispatchQueue.global(qos: .utility).async {
+            self.fireStore.collection(FirebaseCollectionNames.users.rawValue).document(post.posterID).updateData(["spotScore": FieldValue.increment(Int64(increment))])
+        }
+    }
+
+    private func incrementMapScoreFor(post: MapPost, increment: Int) {
+        if let mapID = post.mapID, mapID != "" {
+            DispatchQueue.global(qos: .background).async {
+                self.fireStore.collection(FirebaseCollectionNames.maps.rawValue).document(mapID).updateData(["mapScore": FieldValue.increment(Int64(increment))])
+            }
         }
     }
 }
