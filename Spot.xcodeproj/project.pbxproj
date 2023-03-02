@@ -529,10 +529,6 @@
 		8CD49877297616D300F994C6 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD49874297616D200F994C6 /* DrawerView.swift */; };
 		8CD49878297616D300F994C6 /* DrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD49874297616D200F994C6 /* DrawerView.swift */; };
 		8CD72F5829959C23001FB699 /* SpotTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F5729959C23001FB699 /* SpotTabBarController.swift */; };
-		8CD72F622995CFDE001FB699 /* TabBarLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F612995CFDE001FB699 /* TabBarLocationManager.swift */; };
-		8CD72F662995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */; };
-		8CD72F672995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */; };
-		8CD72F682995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */; };
 		8CDFEF46284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF47284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
 		8CDFEF48284D3B570038A9B8 /* Map.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CDFEF45284D3B570038A9B8 /* Map.storyboard */; };
@@ -858,8 +854,6 @@
 		8CD4986F29708AB800F994C6 /* AdminNotificationSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminNotificationSender.swift; sourceTree = "<group>"; };
 		8CD49874297616D200F994C6 /* DrawerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawerView.swift; sourceTree = "<group>"; };
 		8CD72F5729959C23001FB699 /* SpotTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotTabBarController.swift; sourceTree = "<group>"; };
-		8CD72F612995CFDE001FB699 /* TabBarLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarLocationManager.swift; sourceTree = "<group>"; };
-		8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarFetchExtension.swift; sourceTree = "<group>"; };
 		8CDFEF45284D3B570038A9B8 /* Map.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Map.storyboard; sourceTree = "<group>"; };
 		8CE4C939291C578F0023FE8A /* MapPostGroupExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPostGroupExtension.swift; sourceTree = "<group>"; };
 		8CE4C9402922AFBF0023FE8A /* TimestampExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampExtension.swift; sourceTree = "<group>"; };
@@ -1541,8 +1535,6 @@
 			isa = PBXGroup;
 			children = (
 				8CD72F5729959C23001FB699 /* SpotTabBarController.swift */,
-				8CD72F612995CFDE001FB699 /* TabBarLocationManager.swift */,
-				8CD72F652995D0B3001FB699 /* TabBarFetchExtension.swift */,
 			);
 			path = TabBar;
 			sourceTree = "<group>";
@@ -1641,10 +1633,10 @@
 				CD79D7F329247C76005C93F1 /* FriendsService.swift */,
 				CD79D7F52924837B005C93F1 /* UserService.swift */,
 				CD79D7F729249095005C93F1 /* SpotService.swift */,
+				CDD8545529AB312D0083B9C8 /* LocationService.swift */,
 				CD176ED129713DAB00B15952 /* ImageVideoService.swift */,
 				CD176ED32971403300B15952 /* CoreDataService.swift */,
 				CDD8545129A9DF550083B9C8 /* CacheService.swift */,
-				CDD8545529AB312D0083B9C8 /* LocationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -2036,7 +2028,6 @@
 				8CA10A4C2912FC0300DD50EB /* NextButton.swift in Sources */,
 				CD176ED42971403300B15952 /* CoreDataService.swift in Sources */,
 				8CC4BA22296C7FE400BEAA88 /* CommentCell.swift in Sources */,
-				8CD72F622995CFDE001FB699 /* TabBarLocationManager.swift in Sources */,
 				59F6ABAF234EA73500E18AAF /* Contact.swift in Sources */,
 				8C121D9E2949351600CD4E07 /* SearchContactsButtonCell.swift in Sources */,
 				8C66FABB295E0B3F007A347D /* HomeScreenContainerController.swift in Sources */,
@@ -2109,7 +2100,6 @@
 				594CE11324B6A6CF0051516C /* MapPost.swift in Sources */,
 				CDC59829290A197D00E021AE /* MapPhotosCollectionView.swift in Sources */,
 				8C121DBA2949352400CD4E07 /* ImagePreviewActions.swift in Sources */,
-				8CD72F662995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */,
 				8C121D982949351600CD4E07 /* InviteFriendsCell.swift in Sources */,
 				CD176ECC296D1F3E00B15952 /* CameraViewControllerActions.swift in Sources */,
 				59FCF5B224734A1C0012207D /* ImagesArray+CoreDataClass.swift in Sources */,
@@ -2416,7 +2406,6 @@
 				8C66FAF22969F899007A347D /* SideBarCampusMapCell.swift in Sources */,
 				8CD1BE62292D609800367220 /* MapGeoQuery.swift in Sources */,
 				1DF6E04A22089F4800BA0C36 /* SpotTests.swift in Sources */,
-				8CD72F672995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */,
 				8CD4987129708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
 				8C9417562980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E682290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,
@@ -2573,7 +2562,6 @@
 				8C66FAF32969F899007A347D /* SideBarCampusMapCell.swift in Sources */,
 				8CD1BE63292D609800367220 /* MapGeoQuery.swift in Sources */,
 				1DF6E05522089F4800BA0C36 /* SpotUITests.swift in Sources */,
-				8CD72F682995D0B3001FB699 /* TabBarFetchExtension.swift in Sources */,
 				8CD4987229708AB800F994C6 /* AdminNotificationSender.swift in Sources */,
 				8C9417572980781000818D43 /* FriendsListController.swift in Sources */,
 				8C12E683290AD7F600FA5BF0 /* TextCancelButton.swift in Sources */,

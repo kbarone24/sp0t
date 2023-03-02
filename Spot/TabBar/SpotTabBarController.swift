@@ -6,28 +6,32 @@
 //  Copyright © 2023 sp0t, LLC. All rights reserved.
 //
 
-import Foundation
 import UIKit
-import Firebase
 import Mixpanel
 import MapKit
 
-class SpotTabBarController: UITabBarController {
+final class SpotTabBarController: UITabBarController {
+    
     private(set) lazy var feedItem = UITabBarItem(title: "", image: UIImage(named: "HomeTab"), selectedImage: UIImage(named: "HomeTabSelected"))
+    
     private(set) lazy var mapItem = UITabBarItem(title: "", image: UIImage(named: "MapTab"), selectedImage: UIImage(named: "MapTabSelected"))
+    
     private(set) lazy var addItem = UITabBarItem(title: "", image: UIImage(named: "AddButton")?.withRenderingMode(.alwaysOriginal), selectedImage: UIImage())
+    
     private(set) lazy var notificationsItem = UITabBarItem(title: "", image: UIImage(named: "NotificationsTab"), selectedImage: UIImage(named: "NotificationsTabSelected"))
+    
     private(set) lazy var profileItem = UITabBarItem(title: "", image: UIImage(named: "ProfileTab"), selectedImage: UIImage(named: "ProfileTabSelected"))
-
-    let locationManager = CLLocationManager()
-    var firstTimeGettingLocation = false
-    let db = Firestore.firestore()
-
+    
+    private lazy var locationService: LocationServiceProtocol? = {
+        return try? ServiceContainer.shared.service(for: \.locationService)
+    }()
+    
     init() {
         super.init(nibName: nil, bundle: nil)
         viewSetup()
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -84,6 +88,12 @@ class SpotTabBarController: UITabBarController {
     @objc private func notifyLogout() {
         DispatchQueue.main.async { self.dismiss(animated: false) }
     }
+    
+    private func checkLocationAuth() {
+        if let alert = locationService?.checkLocationAuth() {
+            present(alert, animated: true)
+        }
+    }
 }
 
 extension SpotTabBarController: UITabBarControllerDelegate {
@@ -102,7 +112,7 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                 return true
             }
             
-            if let explore = nav.viewControllers.first as? ExploreMapViewController {
+            if nav.viewControllers.first is ExploreMapViewController {
                 if selectedIndex == 1 {
                     if nav.viewControllers.count == 1 {
                         print("1")
@@ -125,7 +135,7 @@ extension SpotTabBarController: UITabBarControllerDelegate {
                 }
                 return true
                 
-            } else if let profile = nav.viewControllers.first as? ProfileViewController {
+            } else if nav.viewControllers.first is ProfileViewController {
                 if selectedIndex == 4 {
                     if nav.viewControllers.count == 1 {
                         // profile.scrollToTop()

@@ -22,7 +22,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         let locationManager = CLLocationManager()
         locationManager.requestAlwaysAuthorization()
-        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         locationManager.startUpdatingLocation()
         registerServices(locationManager: locationManager)
 
@@ -127,6 +126,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             if let locationManager {
                 let locationService = LocationService(locationManager: locationManager)
                 try ServiceContainer.shared.register(service: locationService, for: \.locationService)
+            }
+            
+            DispatchQueue.global(qos: .background).async {
+                fireStore.collection("users").whereField("admin", isEqualTo: true).getDocuments { (snap, _) in
+                    guard let snap = snap else { return }
+                    for doc in snap.documents { UserDataModel.shared.adminIDs.append(doc.documentID)
+                    }
+                }
+                // opt kenny/tyler/b0t/hog/test/john/ella out of tracking
+                let uid = UserDataModel.shared.uid
+                if uid == "djEkPdL5GQUyJamNXiMbtjrsUYM2" ||
+                    uid == "kwpjnnDCSKcTZ0YKB3tevLI1Qdi2" ||
+                    uid == "T4KMLe3XlQaPBJvtZVArqXQvaNT2" ||
+                    uid == "Za1OQPFoCWWbAdxB5yu98iE8WZT2" ||
+                    uid == "oAKwM2NgLjTlaE2xqvKEXiIVKYu1" ||
+                    uid == "2MpKovZvUYOR4h7YvAGexGqS7Uq1" ||
+                    uid == "W75L1D248ibsm6heDoV8AzlWXCx2" {
+                    Mixpanel.mainInstance().optOutTracking()
+                }
             }
             
         } catch {
