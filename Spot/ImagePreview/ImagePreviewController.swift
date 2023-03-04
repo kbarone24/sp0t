@@ -48,7 +48,7 @@ final class ImagePreviewController: UIViewController {
     private(set) lazy var progressBar = ProgressBar()
     private(set) lazy var postDetailView = PostDetailView()
     private(set) lazy var spotNameButton = PostAccessoryButton(type: .Spot, name: nil)
-    private(set) lazy var mapNameButton = PostAccessoryButton(type: .Map, name: nil)
+    private(set) lazy var mapNameButton = PostAccessoryButton(type: .Map, name: UploadPostModel.shared.mapObject?.mapName)
 
     private(set) lazy var atButton: UIButton = {
         let button = UIButton()

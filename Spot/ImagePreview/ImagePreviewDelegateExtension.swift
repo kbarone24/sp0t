@@ -69,7 +69,7 @@ extension ImagePreviewController: ChooseMapDelegate {
     func launchNewMap() {
         DispatchQueue.main.async {
             let mapObject = self.newMapMode ? UploadPostModel.shared.mapObject : nil
-            let vc = NewMapController(mapObject: mapObject)
+            let vc = NewMapController(mapObject: mapObject, newMapMode: false)
             vc.delegate = self
             self.present(vc, animated: true)
         }

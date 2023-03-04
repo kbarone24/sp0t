@@ -388,7 +388,6 @@ extension AllPostsViewController: ContentViewerDelegate {
         var map = CustomMap(
             founderID: "",
             imageURL: "",
-            videoURL: "",
             likers: [],
             mapName: mapName,
             memberIDs: [],

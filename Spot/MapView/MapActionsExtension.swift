@@ -82,10 +82,12 @@ extension MapController {
     }
 
     func openExploreMaps(onboarding: Bool) {
+        /*
         let fromValue: ExploreMapViewModel.OpenedFrom = onboarding ? .onBoarding : .mapController
         let viewController = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: ServiceContainer.shared, from: fromValue))
         viewController.delegate = self
         self.navigationController?.pushViewController(viewController, animated: true)
+        */
     }
 
     func openNewMap() {
@@ -96,7 +98,7 @@ extension MapController {
         DispatchQueue.main.async { [weak self] in
             if let vc = UIStoryboard(name: "Upload", bundle: nil).instantiateViewController(withIdentifier: "NewMap") as? NewMapController {
                 UploadPostModel.shared.createSharedInstance()
-                vc.presentedModally = true
+                vc.newMapMode = true
                 self?.navigationController?.pushViewController(vc, animated: true)
             }
         }

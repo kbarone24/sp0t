@@ -44,18 +44,17 @@ extension CustomMapHeaderCell {
     }
 
     func unfollowMap() {
-        Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
         guard let userIndex = self.mapData?.likers.firstIndex(of: UserDataModel.shared.uid) else { return }
+        Mixpanel.mainInstance().track(event: "CustomMapUnfollow")
+
         mapData?.likers.remove(at: userIndex)
         if let memberIndex = self.mapData?.memberIDs.firstIndex(of: UserDataModel.shared.uid) {
             mapData?.memberIDs.remove(at: memberIndex)
         }
-
         UserDataModel.shared.userInfo.mapsList.removeAll(where: { $0.id == self.mapData?.id ?? "_" })
 
-        let db = Firestore.firestore()
-        let mapsRef = db.collection("maps").document(mapData?.id ?? "")
-        mapsRef.updateData(["likers": FieldValue.arrayRemove([UserDataModel.shared.uid]), "memberIDs": FieldValue.arrayRemove([UserDataModel.shared.uid])])
+        guard let mapData else { return }
+        mapService?.leaveMap(customMap: mapData, completion: { _ in })
         sendEditNotification()
     }
 }

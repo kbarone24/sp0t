@@ -156,7 +156,6 @@ extension NotificationsController {
         var map = CustomMap(
             founderID: "",
             imageURL: "",
-            videoURL: "",
             likers: [],
             mapName: "",
             memberIDs: [],

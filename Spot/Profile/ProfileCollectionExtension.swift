@@ -81,25 +81,6 @@ extension ProfileViewController: UICollectionViewDelegate, UICollectionViewDataS
             }
         }
     }
-
-    func getMyMap() -> CustomMap {
-        var mapData = CustomMap(
-            founderID: "",
-            imageURL: "",
-            videoURL: "",
-            likers: [],
-            mapName: "",
-            memberIDs: [],
-            posterIDs: [],
-            posterUsernames: [],
-            postIDs: [],
-            postImageURLs: [],
-            secret: false,
-            spotIDs: []
-        )
-
-        return mapData
-    }
 }
 
 extension ProfileViewController: UIScrollViewDelegate {

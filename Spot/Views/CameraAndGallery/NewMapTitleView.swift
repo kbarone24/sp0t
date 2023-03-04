@@ -10,31 +10,33 @@ import Foundation
 import UIKit
 
 class NewMapTitleView: UIView {
-    var topLabel: UILabel!
-    var mapLabel: UILabel!
+    private(set) lazy var topLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Share your first post to"
+        label.textColor = UIColor(red: 0.729, green: 0.729, blue: 0.729, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Semibold", size: 13)
+        label.textAlignment = .center
+        return label
+
+    }()
+    private(set) lazy var mapLabel: UILabel = {
+        let label = UILabel()
+        label.text = "\(UploadPostModel.shared.mapObject?.mapName ?? "")"
+        label.textColor = .white
+        label.font = UIFont(name: "SFCompactText-Bold", size: 16.5)
+        label.textAlignment = .center
+        label.lineBreakMode = .byTruncatingTail
+        return label
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
 
-        topLabel = UILabel {
-            $0.text = "Share your first post to"
-            $0.textColor = UIColor(red: 0.729, green: 0.729, blue: 0.729, alpha: 1)
-            $0.font = UIFont(name: "SFCompactText-Semibold", size: 13)
-            $0.textAlignment = .center
-            addSubview($0)
-        }
+        addSubview(topLabel)
         topLabel.snp.makeConstraints {
             $0.top.centerX.equalToSuperview()
         }
-
-        mapLabel = UILabel {
-            $0.text = "\(UploadPostModel.shared.mapObject?.mapName ?? "")"
-            $0.textColor = .white
-            $0.font = UIFont(name: "SFCompactText-Bold", size: 16.5)
-            $0.textAlignment = .center
-            $0.lineBreakMode = .byTruncatingTail
-            addSubview($0)
-        }
+        addSubview(mapLabel)
         mapLabel.snp.makeConstraints {
             $0.top.equalTo(topLabel.snp.bottom).offset(2)
             $0.leading.trailing.equalToSuperview()

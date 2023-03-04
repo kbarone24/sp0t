@@ -45,6 +45,10 @@ final class CustomMapHeaderCell: UICollectionViewCell {
         let service = try? ServiceContainer.shared.service(for: \.mapPostService)
         return service
     }()
+    lazy var mapService: MapServiceProtocol? = {
+        let service = try? ServiceContainer.shared.service(for: \.mapsService)
+        return service
+    }()
 
     private lazy var mapCreatorProfileImage1 = MapCreatorProfileImage(frame: .zero)
     private lazy var mapCreatorProfileImage2 = MapCreatorProfileImage(frame: .zero)
@@ -393,8 +397,10 @@ extension CustomMapHeaderCell {
             mapData?.memberIDs.append(UserDataModel.shared.uid)
         }
 
-        if let mapData = mapData { UserDataModel.shared.userInfo.mapsList.append(mapData) }
-        addNewUsersInDB(addedUsers: [UserDataModel.shared.uid])
+        guard let mapData else { return }
+        UserDataModel.shared.userInfo.mapsList.append(mapData)
+        mapService?.followMap(customMap: mapData, completion: { _ in })
+        sendEditNotification()
     }
 
     @objc func userTap() {
@@ -414,24 +420,8 @@ extension CustomMapHeaderCell {
 
     func addNewUsersInDB(addedUsers: [String]) {
         guard let mapData = mapData else { return }
-        let db = Firestore.firestore()
-        let mapsRef = db.collection("maps").document(mapData.id ?? "")
-        mapsRef.updateData(["likers": FieldValue.arrayUnion(mapData.likers), "memberIDs": FieldValue.arrayUnion(mapData.memberIDs), "updateUserID": UserDataModel.shared.uid])
-        mapPostService?.updatePostInviteLists(mapID: mapData.id ?? "", inviteList: mapData.memberIDs, completion: nil)
         sendEditNotification()
-        // cancel on map join
-        if addedUsers.first == UserDataModel.shared.uid { return }
-        let functions = Functions.functions()
-        functions.httpsCallable("sendMapInviteNotifications").call([
-            "imageURL": mapData.imageURL,
-            "mapID": mapData.id ?? "",
-            "mapName": mapData.mapName,
-            "postID": mapData.postIDs.first ?? "",
-            "receiverIDs": addedUsers,
-            "senderID": UserDataModel.shared.uid,
-            "senderUsername": UserDataModel.shared.userInfo.username]) { result, error in
-            print(result?.data as Any, error as Any)
-        }
+        mapService?.addNewUsersToMap(customMap: mapData, addedUsers: addedUsers)
     }
 
     func sendEditNotification() {
