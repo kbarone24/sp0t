@@ -20,7 +20,7 @@ final class ExploreMapTitleView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = .white
+        backgroundColor = .clear
         
         addSubview(descriptionLabel)
         descriptionLabel.snp.makeConstraints { make in

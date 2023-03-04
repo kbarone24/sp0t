@@ -19,7 +19,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
     var city: String? = ""
     var founderID: String
     var imageURL: String
-    var videoURL: String
     var inviteList: [String]? = []
     var lowercaseName: String?
     var phone: String? = ""
@@ -57,7 +56,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case city
         case founderID = "createdBy"
         case imageURL
-        case videoURL
         case inviteList
         case lowercaseName
         case phone
@@ -79,10 +77,9 @@ struct MapSpot: Identifiable, Codable, Hashable {
         case visitorList
     }
 
-    init(post: MapPost?, postDraft: PostDraft, imageURL: String, videoURL: String) {
+    init(post: MapPost?, postDraft: PostDraft, imageURL: String) {
         self.founderID = postDraft.createdBy ?? ""
         self.imageURL = imageURL
-        self.videoURL = videoURL
         self.privacyLevel = postDraft.spotPrivacy ?? ""
         self.spotDescription = postDraft.caption ?? ""
         self.spotLat = postDraft.spotLat
@@ -100,7 +97,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
         founderID: String,
         post: MapPost,
         imageURL: String,
-        videoURL: String,
         spotName: String,
         privacyLevel: String,
         description: String
@@ -109,7 +105,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
         self.id = id
         self.founderID = founderID
         self.imageURL = imageURL
-        self.videoURL = videoURL
         self.privacyLevel = privacyLevel
         self.spotName = spotName
         self.spotDescription = description
@@ -122,7 +117,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
         founderID: String,
         mapItem: MKMapItem,
         imageURL: String,
-        videoURL: String,
         spotName: String,
         privacyLevel: String
     ) {
@@ -130,7 +124,6 @@ struct MapSpot: Identifiable, Codable, Hashable {
         self.id = id
         self.founderID = founderID
         self.imageURL = imageURL
-        self.videoURL = videoURL
         self.privacyLevel = privacyLevel
         self.spotName = spotName
         self.spotDescription = mapItem.pointOfInterestCategory?.toString() ?? ""

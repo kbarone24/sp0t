@@ -12,13 +12,15 @@ import Foundation
 // This is what will be used for app map API calls going forward
 
 protocol MapServiceProtocol {
-    func fetchMaps() async throws -> [CustomMap]
+    func fetchTopMaps(limit: Int) async throws -> [CustomMap]
     func fetchMapPosts(id: String, limit: Int) async throws -> [MapPost]
-    func joinMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
+    func followMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
     func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
+    func addNewUsersToMap(customMap: CustomMap, addedUsers: [String])
     func getMap(mapID: String) async throws -> CustomMap
     func uploadMap(map: CustomMap, newMap: Bool, post: MapPost, spot: MapSpot?)
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void)
+    func reportMap(mapID: String, feedbackText: String, userID: String)
 }
 
 final class MapService: MapServiceProtocol {
@@ -33,13 +35,14 @@ final class MapService: MapServiceProtocol {
         self.fireStore = fireStore
     }
     
-    func fetchMaps()  async throws -> [CustomMap] {
+    func fetchTopMaps(limit: Int)  async throws -> [CustomMap] {
         try await withUnsafeThrowingContinuation { [unowned self] continuation in
             
             self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
-                .whereField(FirebaseCollectionFields.communityMap.rawValue, isEqualTo: true)
+                .order(by: "lastPostTimestamp", descending: true)
+                .limit(to: limit)
                 .getDocuments { snapshot, error in
-                    
+
                     guard error == nil,
                           let snapshot = snapshot,
                           !snapshot.documents.isEmpty else {
@@ -52,8 +55,11 @@ final class MapService: MapServiceProtocol {
                     var maps: [CustomMap] = []
                     
                     snapshot.documents.forEach { document in
-                        if let map = try? document.data(as: CustomMap.self) {
-                            maps.append(map)
+                        if var map = try? document.data(as: CustomMap.self) {
+                            if !map.secret {
+                                map.setAdjustedMapScore()
+                                maps.append(map)
+                            }
                         }
                     }
                     
@@ -93,26 +99,54 @@ final class MapService: MapServiceProtocol {
         }
     }
     
-    func joinMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void)) {
+    func followMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void)) {
         guard let mapID = customMap.id,
               case let userId = UserDataModel.shared.uid
         else {
             completion(nil)
             return
         }
+        var dataUpdate: [String: Any] = [FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([userId])]
+        if customMap.communityMap ?? false {
+            dataUpdate[FirebaseCollectionFields.memberIDs.rawValue] = FieldValue.arrayUnion([userId])
+        }
         self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
             .document(mapID)
             .updateData(
-                [
-                    FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion([userId]),
-                    FirebaseCollectionFields.memberIDs.rawValue: FieldValue.arrayUnion([userId])
-                ]
+                dataUpdate
             ) { error in
                 completion(error)
             }
         
         let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
         mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: [UserDataModel.shared.uid], completion: nil)
+        incrementMapScore(mapID: mapID, increment: 10)
+    }
+
+    func addNewUsersToMap(customMap: CustomMap, addedUsers: [String]) {
+        guard let mapID = customMap.id else { return }
+        self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
+            .document(mapID)
+            .updateData(
+                [
+                    FirebaseCollectionFields.likers.rawValue: FieldValue.arrayUnion(addedUsers),
+                    FirebaseCollectionFields.memberIDs.rawValue: FieldValue.arrayUnion(addedUsers)
+                ]
+            )
+        let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
+        mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: addedUsers, completion: nil)
+
+        let functions = Functions.functions()
+        functions.httpsCallable("sendMapInviteNotifications").call([
+            "imageURL": customMap.imageURL,
+            "mapID": customMap.id ?? "",
+            "mapName": customMap.mapName,
+            "postID": customMap.postIDs.first ?? "",
+            "receiverIDs": addedUsers,
+            "senderID": UserDataModel.shared.uid,
+            "senderUsername": UserDataModel.shared.userInfo.username]) { result, error in
+            print(result?.data as Any, error as Any)
+        }
     }
     
     func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void)) {
@@ -133,6 +167,7 @@ final class MapService: MapServiceProtocol {
             ) { error in
                 completion(error)
             }
+        incrementMapScore(mapID: mapID, increment: -10)
     }
     
     func getMap(mapID: String) async throws -> CustomMap {
@@ -239,6 +274,26 @@ final class MapService: MapServiceProtocol {
                     if mapDelete { UserDataModel.shared.deletedMapIDs.append(mapID) }
                     completion(mapDelete)
                 }
+        }
+    }
+
+    func reportMap(mapID: String, feedbackText: String, userID: String) {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.fireStore.collection("feedback")
+                .addDocument(
+                    data: [
+                        "feedbackText": feedbackText,
+                        "mapID": mapID,
+                        "type": "reportMap",
+                        "userID": userID
+                    ]
+                )
+        }
+    }
+
+    private func incrementMapScore(mapID: String, increment: Int) {
+        DispatchQueue.global(qos: .background).async {
+            self.fireStore.collection(FirebaseCollectionNames.maps.rawValue).document(mapID).updateData(["mapScore": FieldValue.increment(Int64(increment))])
         }
     }
 }

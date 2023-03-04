@@ -52,18 +52,21 @@ extension NewMapController {
         mapObject?.lowercaseName = lowercaseName
         mapObject?.searchKeywords = lowercaseName.getKeywordArray()
         mapObject?.coverImage = UploadPostModel.shared.postObject?.postImage.first ?? UIImage()
-        if presentedModally { UploadPostModel.shared.postObject?.hideFromFeed = mapObject?.secret ?? false }
+        if newMapMode {
+            UploadPostModel.shared.postObject?.hideFromFeed = mapObject?.secret ?? false
+            UploadPostModel.shared.setMapValues(map: mapObject)
+        }
     }
 
     @objc func nextTapped() {
         Mixpanel.mainInstance().track(event: "NewMapNextTap")
         setFinalMapValues()
-        UploadPostModel.shared.setMapValues(map: mapObject)
+
+        let vc = CameraViewController()
         DispatchQueue.main.async {
-            if let vc = self.storyboard?.instantiateViewController(withIdentifier: "CameraViewController") as? CameraViewController {
-                vc.newMapMode = true
-                self.navigationController?.pushViewController(vc, animated: true)
-            }
+            vc.newMapMode = true
+            self.tabBarController?.tabBar.isHidden = true
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
 
@@ -75,15 +78,9 @@ extension NewMapController {
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
 
-    @objc func backTapped() {
-        // destroy on return to map
-        UploadPostModel.shared.destroy()
-        DispatchQueue.main.async { self.navigationController?.popViewController(animated: true) }
-    }
-
     @objc func cancelTapped() {
         Mixpanel.mainInstance().track(event: "NewMapCancelTap")
-        if let mapVC = navigationController?.viewControllers.first as? MapController { mapVC.uploadMapReset() }
+        UploadPostModel.shared.destroy()
         DispatchQueue.main.async { self.dismiss(animated: true) }
     }
 
@@ -96,8 +93,9 @@ extension NewMapController {
     @objc func keyboardWillShow(_ notification: NSNotification) {
         animateWithKeyboard(notification: notification) { keyboardFrame in
             self.actionButton.snp.removeConstraints()
+            let tabBarOffset = self.newMapMode ? (self.tabBarController?.tabBar.frame.height ?? 0) : 0
             self.actionButton.snp.makeConstraints {
-                $0.bottom.equalToSuperview().offset(-keyboardFrame.height - 10)
+                $0.bottom.equalToSuperview().offset(-keyboardFrame.height - 10 + tabBarOffset)
                 $0.leading.trailing.equalToSuperview().inset(self.margin)
                 $0.height.equalTo(51)
                 $0.centerX.equalToSuperview()

@@ -17,7 +17,6 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var communityMap: Bool? = false
     var founderID: String
     var imageURL: String
-    var videoURL: String
     var likers: [String]
     var lowercaseName: String?
     var mainCampusMap: Bool?
@@ -29,6 +28,9 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var posterUsernames: [String]
     var postIDs: [String]
     var postImageURLs: [String]
+    var postCommentCounts: [Int]? = []
+    var postLikeCounts: [Int]? = []
+    var postSeenCounts: [Int]? = []
     var postLocations: [[String: Double]] = []
     var postSpotIDs: [String] = []
     var postTimestamps: [Firebase.Timestamp] = []
@@ -38,6 +40,10 @@ struct CustomMap: Identifiable, Codable, Hashable {
     var spotNames: [String] = []
     var spotLocations: [[String: Double]] = []
     var spotPOICategories: [String] = []
+
+    var mapScore: Double? = 0
+    var adjustedMapScore: Double = 0
+    var boostMultiplier: Double? = 0
 
     var selected = false
     var memberProfiles: [UserProfile]? = []
@@ -69,7 +75,6 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case communityMap
         case founderID
         case imageURL
-        case videoURL
         case lowercaseName
         case likers
         case mainCampusMap
@@ -81,6 +86,9 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case posterUsernames
         case postIDs
         case postImageURLs
+        case postCommentCounts
+        case postLikeCounts
+        case postSeenCounts
         case postSpotIDs
         case postLocations
         case postTimestamps
@@ -90,6 +98,8 @@ struct CustomMap: Identifiable, Codable, Hashable {
         case spotNames
         case spotLocations
         case spotPOICategories
+        case mapScore
+        case boostMultiplier
     }
 
     mutating func updateSeen(postID: String) {
@@ -221,6 +231,8 @@ struct CustomMap: Identifiable, Codable, Hashable {
         guard let postID = post?.id else { return }
         if !postIDs.contains(postID) {
             postIDs.append(postID)
+            postLikeCounts?.append(0)
+            postSeenCounts?.append(0)
             posterIDs.append(post?.posterID ?? "")
             posterUsernames.append(post?.userInfo?.username ?? "")
             postTimestamps.append(post?.timestamp ?? Timestamp())
@@ -289,5 +301,36 @@ struct CustomMap: Identifiable, Codable, Hashable {
             }
             postGroup.removeAll(where: { $0.id == spotID })
         }
+    }
+
+    mutating func setAdjustedMapScore() {
+        var adjustedMapScore = mapScore ?? 0
+        // mapScore should be about 1/2 of the maps total ranking
+        // boost for recent posts
+        // measure posts based on total # likes + ratio of likes to views
+        // boostMap god mode feature should have the ability to shoot a map to the top
+        var postLevelScore: Double = 0
+        var posters: [String] = []
+        for i in postIDs.count - 10...postIDs.count - 1 {
+            var newPosterBonus = false
+            var post = MapPost(spotID: "", spotName: "", mapID: "", mapName: "")
+            post.timestamp = postTimestamps[safe: i] ?? Timestamp(seconds: 0, nanoseconds: 0)
+
+            let seenCount = postSeenCounts?[safe: i] ?? 10
+
+            // bonus for new poster
+            let poster = posterIDs[safe: i] ?? ""
+            newPosterBonus = !posters.contains(poster)
+            posters.append(poster)
+
+            post.posterID = posterIDs[safe: i] ?? ""
+            var postScore = post.getBasePostScore(likeCount: postLikeCounts?[safe: i] ?? 0, seenCount: seenCount, commentCount: postCommentCounts?[safe: i] ?? 0)
+            if newPosterBonus { postScore *= 1.25 }
+            postLevelScore += postScore
+        }
+        adjustedMapScore += postLevelScore
+        let boost = boostMultiplier ?? 1
+        adjustedMapScore *= boost
+        self.adjustedMapScore = adjustedMapScore
     }
 }

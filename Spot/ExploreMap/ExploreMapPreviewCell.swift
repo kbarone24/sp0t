@@ -9,55 +9,67 @@
 import UIKit
 
 protocol ExploreMapPreviewCellDelegate: AnyObject {
-    func cellTapped(data: CustomMap)
+    func cellTapped(map: CustomMap, posts: [MapPost])
     func joinMap(map: CustomMap)
+    func moreTapped(map: CustomMap)
     func cacheScrollPosition(map: CustomMap, position: CGPoint)
 }
 
 final class ExploreMapPreviewCell: UITableViewCell {
     typealias Snapshot = NSDiffableDataSourceSnapshot<MapPhotosCollectionView.Section, MapPhotosCollectionView.Item>
-    typealias JoinButton = ExploreMapViewModel.JoinButtonType
 
     private lazy var titleContainer = UIView()
 
+    private lazy var rankLabel = GradientLabel(topColor: UIColor(hexString: "#A5A5A5"), bottomColor: UIColor(hexString: "#505050"), font: UIFont(name: "SFCompactText-Heavy", size: 28))
+
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "SFCompactText-Heavy", size: 18)
-        label.textColor = .black
+        label.font = UIFont(name: "SFCompactText-Bold", size: 16)
+        //TODO: replace with real font
+        label.textColor = .white
         label.numberOfLines = 0
         label.textAlignment = .left
         return label
     }()
     
-    private lazy var subTitleLabel: UILabel = {
+    private lazy var scoreLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "SFCompactText-Semibold", size: 14)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 11.5)
         label.numberOfLines = 0
-        label.textColor = UIColor(hexString: "B6B6B6")
+        label.textColor = UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
         label.textAlignment = .left
         return label
     }()
-    
-    private lazy var iconView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
-        imageView.layer.cornerRadius = 17.0
-        imageView.clipsToBounds = true
-        imageView.layer.masksToBounds = true
-        return imageView
+
+    private lazy var separatorIcon: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.851, green: 0.851, blue: 0.851, alpha: 1)
+        return view
     }()
-    
+
+    private lazy var founderLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.433, green: 0.433, blue: 0.433, alpha: 1)
+        label.font = UIFont(name: "SFCompactText-Bold", size: 11.5)
+        return label
+    }()
+
     private lazy var headerView = UIView()
-    
-    private lazy var checkMark: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
-        return imageView
-    }()
-    
+
     private lazy var joinButton: UIButton = {
-        let button = UIButton()
-        button.addTarget(self, action: #selector(tapped), for: .touchUpInside)
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.addTarget(self, action: #selector(joinTapped), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var moreButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 7.5, leading: 7.5, bottom: 7.5, trailing: 7.5)
+        let button = UIButton(configuration: configuration)
+        button.setImage(UIImage(named: "SimpleMoreButton"), for: .normal)
+        button.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
         return button
     }()
     
@@ -78,51 +90,65 @@ final class ExploreMapPreviewCell: UITableViewCell {
         return collectionView
     }()
 
+    var tap: UITapGestureRecognizer?
     private weak var delegate: ExploreMapPreviewCellDelegate?
-    private var onTap: (() -> Void)?
-    
+    private var onJoinTap: (() -> Void)?
+    private var onCellTap: (() -> Void)?
+    private var onMoreTap: (() -> Void)?
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
-        backgroundColor = .white
-        contentView.backgroundColor = .white
+        backgroundColor = UIColor(named: "SpotBlack")
+        contentView.backgroundColor = UIColor(named: "SpotBlack")
         
         contentView.addSubview(headerView)
         contentView.addSubview(photosCollectionView)
 
-        headerView.addSubview(iconView)
+        headerView.addSubview(rankLabel)
         headerView.addSubview(titleContainer)
+        headerView.addSubview(moreButton)
         titleContainer.addSubview(titleLabel)
-        titleContainer.addSubview(subTitleLabel)
+        titleContainer.addSubview(scoreLabel)
+        titleContainer.addSubview(separatorIcon)
+        titleContainer.addSubview(founderLabel)
         
         headerView.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
         }
-        
-        iconView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(10.0)
-            $0.height.equalTo(64.0)
-            $0.width.equalTo(64.0)
-            $0.leading.equalToSuperview().offset(14.0)
-            $0.bottom.equalToSuperview().inset(10.0)
+
+        rankLabel.snp.makeConstraints {
+            $0.leading.equalTo(14.0)
+            $0.centerY.equalToSuperview()
         }
 
         // auto-sizing container to center with cover image
         titleContainer.snp.makeConstraints {
-            $0.leading.equalTo(iconView.snp.trailing).offset(10.0)
+            $0.top.equalToSuperview().offset(8.0)
+            $0.leading.equalTo(40)
             $0.trailing.equalToSuperview().inset(96.0)
-            $0.centerY.equalTo(iconView)
+            $0.bottom.equalToSuperview().offset(-8.0)
         }
-        
+
         titleLabel.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.leading.trailing.equalToSuperview()
         }
         
-        subTitleLabel.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(5.0)
-            $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalToSuperview()
+        scoreLabel.snp.makeConstraints {
+            $0.top.equalTo(titleLabel.snp.bottom).offset(3.0)
+            $0.leading.bottom.equalToSuperview()
+        }
+
+        separatorIcon.snp.makeConstraints {
+            $0.leading.equalTo(scoreLabel.snp.trailing).offset(5)
+            $0.centerY.equalTo(scoreLabel)
+            $0.height.width.equalTo(2)
+        }
+
+        founderLabel.snp.makeConstraints {
+            $0.leading.equalTo(separatorIcon.snp.trailing).offset(5)
+            $0.centerY.equalTo(scoreLabel)
         }
 
         let itemWidth = (UIScreen.main.bounds.width - 18) / 2.85
@@ -132,6 +158,13 @@ final class ExploreMapPreviewCell: UITableViewCell {
             $0.top.equalTo(headerView.snp.bottom).offset(4.0)
             $0.bottom.equalToSuperview().inset(28.0)
             $0.height.equalTo(itemHeight)
+        }
+
+        moreButton.snp.makeConstraints {
+            $0.trailing.equalTo(-10)
+            $0.centerY.equalToSuperview()
+            $0.height.equalTo(18.3)
+            $0.width.equalTo(29.83)
         }
     }
     
@@ -143,117 +176,108 @@ final class ExploreMapPreviewCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         titleLabel.text = ""
-        subTitleLabel.text = ""
-        subTitleLabel.attributedText = nil
-        iconView.image = nil
-        iconView.sd_cancelCurrentImageLoad()
-        onTap = nil
-        checkMark.image = UIImage(named: "MapToggleOff")
-        checkMark.removeFromSuperview()
+        scoreLabel.text = ""
+        scoreLabel.attributedText = nil
         joinButton.removeFromSuperview()
+        onJoinTap = nil
+        onCellTap = nil
+        if let tap { removeGestureRecognizer(tap) }
         headerView.gestureRecognizers?.forEach { headerView.removeGestureRecognizer($0) }
     }
     
     func configure(
         customMap: CustomMap,
         data: [MapPost],
+        rank: Int,
         isSelected: Bool,
-        buttonType: JoinButton,
         delegate: ExploreMapPreviewCellDelegate?,
         position: CGPoint
     ) {
         self.delegate = delegate
-        
+        tap = UITapGestureRecognizer(target: self, action: #selector(cellTapped(_:)))
+        addGestureRecognizer(tap ?? UITapGestureRecognizer())
+
+        rankLabel.text = String(rank)
         titleLabel.text = customMap.mapName
-        
-        iconView.sd_setImage(
-            with: URL(string: customMap.imageURL),
-            placeholderImage: nil,
-            options: .highPriority
-        )
-        
+
         let attachment = NSTextAttachment()
-        attachment.image = UIImage(named: "FriendsIcon")?
-            .withRenderingMode(.alwaysTemplate)
-            .withTintColor(UIColor(hexString: "B6B6B6"))
+        attachment.image = UIImage(named: "MapScoreIcon")?
+            .withRenderingMode(.alwaysOriginal)
         let attachmentString = NSAttributedString(attachment: attachment)
         let myString = NSMutableAttributedString()
         myString.append(attachmentString)
         myString.append(
-            NSMutableAttributedString(string: " \(customMap.memberIDs.count)")
+            NSMutableAttributedString(string: " \(Int(customMap.mapScore ?? 0))")
         )
         
         myString.addAttributes(
             [
-                .foregroundColor: UIColor(hexString: "B6B6B6") as Any
+                .foregroundColor: UIColor(red: 0.433, green: 0.433, blue: 0.433, alpha: 1) as Any
             ],
             range: NSRange(location: 0, length: myString.length)
         )
         
-        subTitleLabel.attributedText = myString
-        
-        switch buttonType {
-        case .joinedText:
-            self.onTap = { [weak self] in
-                self?.delegate?.joinMap(map: customMap)
-            }
-            
-            headerView.addSubview(joinButton)
+        scoreLabel.attributedText = myString
+        founderLabel.text = "by \(customMap.posterUsernames.first ?? "")"
+
+        headerView.addSubview(joinButton)
+        if isSelected {
+            joinButton.isUserInteractionEnabled = false
+            joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)
+            joinButton.snp.removeConstraints()
             joinButton.snp.makeConstraints {
                 $0.centerY.equalToSuperview()
-                $0.trailing.equalToSuperview().inset(13.0)
-                $0.height.equalTo(40.0)
-                $0.width.equalTo(75.0)
+                $0.trailing.equalTo(moreButton.snp.leading).offset(-4.5)
+                $0.height.equalTo(21.54)
+                $0.width.equalTo(25)
             }
             
-            if isSelected {
-                joinButton.isUserInteractionEnabled = false
-                joinButton.setImage(UIImage(named: "JoinedButtonImage"), for: .normal)
-            } else {
-                joinButton.isUserInteractionEnabled = true
-                joinButton.setImage(UIImage(named: "JoinButtonImage"), for: .normal)
-            }
-            
-        case .checkmark:
-            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapped))
-            headerView.addGestureRecognizer(tapGesture)
-            
-            self.onTap = { [weak self] in
-                self?.delegate?.cellTapped(data: customMap)
-            }
-            
-            headerView.addSubview(checkMark)
-            checkMark.snp.makeConstraints {
+        } else {
+            joinButton.isUserInteractionEnabled = true
+            joinButton.setImage(UIImage(named: "JoinButtonImage"), for: .normal)
+            joinButton.snp.removeConstraints()
+            joinButton.snp.makeConstraints {
                 $0.centerY.equalToSuperview()
-                $0.trailing.equalToSuperview().inset(15.0)
-                $0.height.width.equalTo(40.0)
-            }
-            
-            if isSelected {
-                checkMark.image = UIImage(named: "MapToggleOn")
-            } else {
-                checkMark.image = UIImage(named: "MapToggleOff")
+                $0.trailing.equalTo(moreButton.snp.leading).offset(-4.5)
+                $0.height.equalTo(38)
+                $0.width.equalTo(38)
             }
         }
-        
+
+        self.onJoinTap = { [weak self] in
+            self?.delegate?.joinMap(map: customMap)
+        }
+
+        self.onMoreTap = { [weak self] in
+            self?.delegate?.moreTapped(map: customMap)
+        }
+
+        self.onCellTap = { [weak self] in
+            self?.delegate?.cellTapped(map: customMap, posts: data)
+        }
+
         var snapshot = Snapshot()
         snapshot.appendSections([.main(customMap)])
         data.forEach {
             snapshot.appendItems([.item($0)], toSection: .main(customMap))
         }
         
-        // let remainder = customMap.postIDs.count - 7
-        // if remainder > 0 {
-        //    snapshot.appendItems([.extra(remainder)], toSection: .main(customMap))
-        // }
-        
         photosCollectionView.configure(snapshot: snapshot, delegate: delegate, position: position)
+    }
 
-        layoutIfNeeded()
+    @objc private func cellTapped(_ sender: UITapGestureRecognizer) {
+        // cancelTouches in and around the action buttons to avoid accidental taps
+        let location = sender.location(in: self)
+        if location.x > joinButton.frame.minX - 10 && location.y < headerView.frame.maxY { return }
+        onCellTap?()
     }
     
-    @objc private func tapped() {
-        onTap?()
+    @objc private func joinTapped() {
+        onJoinTap?()
         HapticGenerator.shared.play(.light)
+    }
+
+    @objc private func moreTapped() {
+        onMoreTap?()
     }
 }

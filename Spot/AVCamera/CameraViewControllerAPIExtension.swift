@@ -117,7 +117,6 @@ extension CameraViewController {
         let emptyMap = CustomMap(
             founderID: "",
             imageURL: "",
-            videoURL: "",
             likers: [],
             mapName: "",
             memberIDs: [],
