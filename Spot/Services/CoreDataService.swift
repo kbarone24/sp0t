@@ -159,7 +159,7 @@ final class CoreDataService: CoreDataServiceProtocol {
                     likers: []
                 )
                 
-                var spot = MapSpot(post: post, postDraft: postDraft, imageURL: "", videoURL: "")
+                var spot = MapSpot(post: post, postDraft: postDraft, imageURL: "")
                 
                 UploadPostModel.shared.postType = postDraft.newSpot ? .newSpot : postDraft.postToPOI ? .postToPOI : spot.id != "" ? .postToSpot : .none
                 var mapToUpload: CustomMap
@@ -170,7 +170,6 @@ final class CoreDataService: CoreDataServiceProtocol {
                     mapToUpload = CustomMap(
                         founderID: "",
                         imageURL: "",
-                        videoURL: "",
                         likers: [],
                         mapName: "",
                         memberIDs: [],
@@ -208,7 +207,6 @@ final class CoreDataService: CoreDataServiceProtocol {
                             id: post.mapID ?? defaultMapID,
                             founderID: uid,
                             imageURL: imageURLs[0],
-                            videoURL: "",
                             likers: [uid],
                             mapName: post.mapName ?? "",
                             memberIDs: [uid],

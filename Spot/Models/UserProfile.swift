@@ -108,7 +108,6 @@ struct UserProfile: Identifiable, Codable, Hashable {
         for friend in friendsList where !friendObjects.contains(where: { $0.id == friend.id }) {
             friendObjects.append(friend)
         }
-        print("ct", friendObjects.count)
         friendsList = friendObjects
     }
 }

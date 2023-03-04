@@ -88,7 +88,9 @@ class CustomMapController: UIViewController {
     }
 
     private func runInitialFetches() {
-        DispatchQueue.main.async { self.activityIndicator.startAnimating() }
+        if postsList.isEmpty {
+            DispatchQueue.main.async { self.activityIndicator.startAnimating() }
+        }
         DispatchQueue.global().async {
             self.getMapInfo()
             self.getPosts()
@@ -134,6 +136,7 @@ class CustomMapController: UIViewController {
             $0.edges.equalToSuperview()
         }
 
+        activityIndicator.isHidden = true
         collectionView.addSubview(activityIndicator)
         activityIndicator.snp.makeConstraints {
             $0.width.height.equalTo(30)

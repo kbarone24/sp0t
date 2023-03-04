@@ -12,7 +12,7 @@ import Foundation
 // This is what will be used for app map API calls going forward
 
 protocol MapServiceProtocol {
-    func fetchTopMaps() async throws -> [CustomMap]
+    func fetchTopMaps(limit: Int) async throws -> [CustomMap]
     func fetchMapPosts(id: String, limit: Int) async throws -> [MapPost]
     func followMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
     func leaveMap(customMap: CustomMap, completion: @escaping ((Error?) -> Void))
@@ -20,6 +20,7 @@ protocol MapServiceProtocol {
     func getMap(mapID: String) async throws -> CustomMap
     func uploadMap(map: CustomMap, newMap: Bool, post: MapPost, spot: MapSpot?)
     func checkForMapDelete(mapID: String, completion: @escaping(_ delete: Bool) -> Void)
+    func reportMap(mapID: String, feedbackText: String, userID: String)
 }
 
 final class MapService: MapServiceProtocol {
@@ -34,13 +35,14 @@ final class MapService: MapServiceProtocol {
         self.fireStore = fireStore
     }
     
-    func fetchTopMaps()  async throws -> [CustomMap] {
+    func fetchTopMaps(limit: Int)  async throws -> [CustomMap] {
         try await withUnsafeThrowingContinuation { [unowned self] continuation in
             
             self.fireStore.collection(FirebaseCollectionNames.maps.rawValue)
-                .whereField(FirebaseCollectionFields.communityMap.rawValue, isEqualTo: true)
+                .order(by: "lastPostTimestamp", descending: true)
+                .limit(to: limit)
                 .getDocuments { snapshot, error in
-                    
+
                     guard error == nil,
                           let snapshot = snapshot,
                           !snapshot.documents.isEmpty else {
@@ -53,8 +55,11 @@ final class MapService: MapServiceProtocol {
                     var maps: [CustomMap] = []
                     
                     snapshot.documents.forEach { document in
-                        if let map = try? document.data(as: CustomMap.self) {
-                            maps.append(map)
+                        if var map = try? document.data(as: CustomMap.self) {
+                            if !map.secret {
+                                map.setAdjustedMapScore()
+                                maps.append(map)
+                            }
                         }
                     }
                     
@@ -269,6 +274,20 @@ final class MapService: MapServiceProtocol {
                     if mapDelete { UserDataModel.shared.deletedMapIDs.append(mapID) }
                     completion(mapDelete)
                 }
+        }
+    }
+
+    func reportMap(mapID: String, feedbackText: String, userID: String) {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.fireStore.collection("feedback")
+                .addDocument(
+                    data: [
+                        "feedbackText": feedbackText,
+                        "mapID": mapID,
+                        "type": "reportMap",
+                        "userID": userID
+                    ]
+                )
         }
     }
 

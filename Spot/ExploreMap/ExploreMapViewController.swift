@@ -19,7 +19,6 @@ final class ExploreMapViewController: UIViewController {
     typealias Input = ExploreMapViewModel.Input
     typealias DataSource = UITableViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
-    typealias JoinButton = ExploreMapViewModel.JoinButtonType
     typealias Title = ExploreMapViewModel.TitleData
     weak var delegate: ExploreMapDelegate?
 
@@ -28,29 +27,24 @@ final class ExploreMapViewController: UIViewController {
     }
 
     enum Item: Hashable {
-        case item(customMap: CustomMap, data: [MapPost], isSelected: Bool, buttonType: JoinButton, offSetBy: CGPoint)
+        case item(customMap: CustomMap, data: [MapPost], isSelected: Bool, offsetBy: CGPoint)
     }
 
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.contentInset = .zero
-        tableView.backgroundColor = .white
+        tableView.backgroundColor = UIColor(named: "SpotBlack")
         tableView.separatorStyle = .none
         tableView.allowsSelection = false
         tableView.showsVerticalScrollIndicator = false
         tableView.dataSource = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120.0
-        tableView.backgroundView?.backgroundColor = .white
-        tableView.backgroundColor = .white
-        tableView.contentInset = UIEdgeInsets(top: 4, left: 0, bottom: 80, right: 0)
-
+        tableView.backgroundView?.backgroundColor = UIColor(named: "SpotBlack")
+        tableView.contentInset = UIEdgeInsets(top: 4, left: 0, bottom: 30, right: 0)
+        tableView.sectionHeaderTopPadding = 0.0
+        tableView.clipsToBounds = true
         tableView.register(ExploreMapPreviewCell.self, forCellReuseIdentifier: ExploreMapPreviewCell.reuseID)
-
-        if #available(iOS 15.0, *) {
-            tableView.sectionHeaderTopPadding = 0.0
-        }
-
         return tableView
     }()
     
@@ -59,6 +53,7 @@ final class ExploreMapViewController: UIViewController {
         refreshControl.addTarget(self, action: #selector(forceRefresh), for: .valueChanged)
         return refreshControl
     }()
+    private lazy var footer = ExploreMapFooter(frame: CGRect(origin: .zero, size: CGSize(width: UIScreen.main.bounds.width, height: 120)))
     
     private lazy var activityIndicator: CustomActivityIndicator = {
         let activityIndictor = CustomActivityIndicator()
@@ -66,29 +61,8 @@ final class ExploreMapViewController: UIViewController {
         return activityIndictor
     }()
 
-    private lazy var bottomMask: UIView = {
-        let view = UIView()
-        view.isUserInteractionEnabled = false
-        return view
-    }()
-    var maskLayer: CAGradientLayer?
-    
-    private lazy var joinButton: UIButton = {
-        let button = UIButton()
-        button.backgroundColor = UIColor(hexString: "39F3FF")
-        button.layer.cornerRadius = 10.0
-        button.clipsToBounds = true
-        button.titleLabel?.font = UIFont(name: "SFCompactText-Heavy", size: 16.0)
-        button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.textAlignment = .center
-        button.setTitle("Join 0 maps", for: .normal)
-        button.addTarget(self, action: #selector(joinButtonTapped), for: .touchUpInside)
-        
-        return button
-    }()
+    private lazy var addMapConfirmationView = AddMapConfirmationView()
 
-    private lazy var descriptionView = ExploreMapTitleView()
-    
     private var snapshot = Snapshot() {
         didSet {
             tableView.reloadData()
@@ -99,10 +73,10 @@ final class ExploreMapViewController: UIViewController {
         let dataSource = DataSource(tableView: tableView) { tableView, indexPath, item in
 
             switch item {
-            case .item(let customMap, let data, let isSelected, let buttonType, let position):
+            case .item(let customMap, let data, let isSelected, let position):
                 let cell = tableView.dequeueReusableCell(withIdentifier: ExploreMapPreviewCell.reuseID, for: indexPath) as? ExploreMapPreviewCell
                 
-                cell?.configure(customMap: customMap, data: data, isSelected: isSelected, buttonType: buttonType, delegate: self, position: position)
+                cell?.configure(customMap: customMap, data: data, rank: indexPath.row + 1, isSelected: isSelected, delegate: self, position: position)
                 return cell
             }
         }
@@ -134,46 +108,30 @@ final class ExploreMapViewController: UIViewController {
         super.viewDidLoad()
         setUpNavBar()
 
-        view.addSubview(descriptionView)
         view.addSubview(tableView)
-        view.addSubview(joinButton)
         view.addSubview(activityIndicator)
 
-        descriptionView.configure(title: "", description: "Maps created by fellow Tar Heels")
-        descriptionView.snp.makeConstraints { make in
-            make.leading.trailing.top.equalToSuperview()
-            make.height.equalTo(26.0)
-        }
-        
         tableView.refreshControl = refreshControl
-
+        footer.isHidden = true
+        footer.delegate = self
+        tableView.tableFooterView = footer
         tableView.snp.makeConstraints { make in
-            make.top.equalTo(descriptionView.snp.bottom)
-            make.leading.trailing.equalToSuperview()
-            make.bottom.equalToSuperview().inset(20.0)
+            make.edges.equalToSuperview()
         }
-        
-        joinButton.snp.makeConstraints { make in
-            make.leading.trailing.equalToSuperview().inset(22.0)
-            make.bottom.equalToSuperview().inset(42.0)
-            make.height.equalTo(50.0)
-        }
-        
+
         activityIndicator.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
-            make.top.equalTo(80)
+            make.top.equalTo(100)
             make.width.height.equalTo(30)
         }
-        
         activityIndicator.startAnimating()
 
-        if viewModel.openedFrom == .onBoarding {
-            view.insertSubview(bottomMask, belowSubview: joinButton)
-            bottomMask.backgroundColor = .white
-            bottomMask.snp.makeConstraints {
-                $0.leading.trailing.bottom.equalToSuperview()
-                $0.top.equalTo(joinButton.snp.top).offset(-16)
-            }
+        addMapConfirmationView.isHidden = true
+        view.addSubview(addMapConfirmationView)
+        addMapConfirmationView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(34)
+            $0.height.equalTo(57)
+            $0.bottom.equalTo(-23)
         }
 
         let input = Input(refresh: refresh, loading: loading, selectMap: selectMap)
@@ -196,39 +154,20 @@ final class ExploreMapViewController: UIViewController {
                 if isLoading {
                     self?.activityIndicator.startAnimating()
                     self?.refreshControl.beginRefreshing()
+                    self?.footer.isHidden = true
                 } else {
                     self?.activityIndicator.stopAnimating()
                     self?.refreshControl.endRefreshing()
+                    self?.footer.isHidden = false
                 }
-            }
-            .store(in: &subscriptions)
-        
-        output.selectedMaps
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] selectedMaps in
-                let count = selectedMaps.count
-                let title = count == 1 ? "Join 1 map" : "Join \(count) maps"
-                let isEnabled = !selectedMaps.isEmpty
-                self?.joinButton.isEnabled = isEnabled
-                self?.joinButton.setTitle(title, for: .normal)
-                if isEnabled {
-                    self?.joinButton.backgroundColor = UIColor(hexString: "39F3FF")
-                } else {
-                    self?.joinButton.backgroundColor = UIColor(hexString: "39F3FF").withAlphaComponent(0.6)
-                }
-            }
-            .store(in: &subscriptions)
-        
-        output.joinButtonIsHidden
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isHidden in
-                self?.joinButton.isHidden = isHidden
             }
             .store(in: &subscriptions)
         
         refresh.send(true)
         loading.send(true)
         selectMap.send(nil)
+
+        NotificationCenter.default.addObserver(self, selector: #selector(notifyEditMap(_:)), name: NSNotification.Name(("EditMap")), object: nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -239,11 +178,11 @@ final class ExploreMapViewController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        subscriptions.forEach { $0.cancel() }
-        subscriptions.removeAll()
     }
 
     deinit {
+        subscriptions.forEach { $0.cancel() }
+        subscriptions.removeAll()
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -252,60 +191,17 @@ final class ExploreMapViewController: UIViewController {
     }
 
     private func setUpNavBar() {
-        view.backgroundColor = .white
-        navigationItem.backButtonTitle = ""
-
-        navigationController?.navigationBar.barTintColor = UIColor.white
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.barStyle = .black
-        navigationController?.navigationBar.tintColor = UIColor.black
-        navigationController?.view.backgroundColor = .white
-
-        if viewModel.openedFrom == .mapController {
-            let backButton = UIBarButtonItem(image: UIImage(named: "BackArrow"), style: .plain, target: self, action: #selector(close))
-            navigationItem.setLeftBarButton(backButton, animated: false)
-            self.navigationItem.leftBarButtonItem?.tintColor = nil
-        } else {
-            navigationItem.leftBarButtonItem = UIBarButtonItem()
-        }
-
-        title = "UNC Maps"
-        let appearance = navigationController?.navigationBar.standardAppearance
-        appearance?.titleTextAttributes = [
-            NSAttributedString.Key.foregroundColor: UIColor.black,
-            NSAttributedString.Key.font: UIFont(name: "SFCompactText-Heavy", size: 22) as Any
-        ]
+        view.backgroundColor = UIColor(named: "SpotBlack")
+        navigationController?.setUpDarkNav(translucent: true)
+        navigationItem.title = "❤️‍🔥Hot maps❤️‍🔥"
     }
 
-    private func addBottomMask() {
-        if maskLayer != nil { return }
-        maskLayer = CAGradientLayer()
-        maskLayer?.frame = bottomMask.bounds
-        maskLayer?.colors = [
-                UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor,
-                UIColor.white.cgColor,
-                UIColor.white.cgColor
-            ]
-        maskLayer?.startPoint = CGPoint(x: 0.5, y: 0.0)
-        maskLayer?.endPoint = CGPoint(x: 0.5, y: 1.0)
-        maskLayer?.locations = [0, 0.4, 1]
-        if let maskLayer { bottomMask.layer.addSublayer(maskLayer) }
-    }
-    
     @objc private func forceRefresh() {
         refreshControl.beginRefreshing()
         refresh.send(true)
     }
     
-    @objc private func joinButtonTapped() {
-        loading.send(true)
-        viewModel.joinAllSelectedMaps { [weak self] in
-            self?.close()
-        }
-    }
-    
     @objc private func close() {
-        if viewModel.openedFrom == .onBoarding { delegate?.finishPassing() }
         navigationController?.popViewController(animated: true)
     }
 }
@@ -325,26 +221,29 @@ extension ExploreMapViewController: UITableViewDataSource {
         let item = snapshot.itemIdentifiers(inSection: section)[indexPath.row]
         
         switch item {
-        case .item(let customMap, let data, let isSelected, let buttonType, let position):
+        case .item(let customMap, let data, let isSelected, let position):
             guard let cell = tableView.dequeueReusableCell(withIdentifier: ExploreMapPreviewCell.reuseID, for: indexPath) as? ExploreMapPreviewCell else {
                 return UITableViewCell()
             }
             
-            cell.configure(customMap: customMap, data: data, isSelected: isSelected, buttonType: buttonType, delegate: self, position: position)
+            cell.configure(customMap: customMap, data: data, rank: indexPath.row + 1, isSelected: isSelected, delegate: self, position: position)
             return cell
         }
     }
 }
 
 extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
-    func cellTapped(data: CustomMap) {
-        selectMap.send(data)
-        refresh.send(false)
+    func cellTapped(map: CustomMap, posts: [MapPost]) {
+        let updatedMap = viewModel.cachedMaps.first(where: { $0.key == map })?.key ?? map
+        let customMapVC = CustomMapController(userProfile: nil, mapData: updatedMap, postsList: posts)
+        DispatchQueue.main.async {
+            self.navigationController?.pushViewController(customMapVC, animated: true)
+        }
     }
-    
+
     func joinMap(map: CustomMap) {
-        loading.send(true)
-        viewModel.joinMap(map: map) { [weak self] successful in
+        toggleAddMapView()
+        viewModel.joinMap(map: map, writeToFirebase: true) { [weak self] successful in
             // If there's an error that get returned after the UI is updated...
             // Then synchronize again the the database.
             // Or else, continue with the client's version
@@ -355,8 +254,77 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
             }
         }
     }
+
+    func moreTapped(map: CustomMap) {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alert.addAction(
+            UIAlertAction(title: "Report map", style: .destructive) { [weak self] _ in
+                self?.reportPost(map: map)
+            })
+        alert.addAction(
+            UIAlertAction(title: "Dismiss", style: .cancel) { _ in
+            })
+        present(alert, animated: true)
+    }
+
+    private func toggleAddMapView() {
+        addMapConfirmationView.isHidden = false
+        addMapConfirmationView.alpha = 1.0
+        UIView.animate(withDuration: 0.3, delay: 2.0, animations: { [weak self] in
+            self?.addMapConfirmationView.alpha = 0.0
+        }, completion: { [weak self] _ in
+            self?.addMapConfirmationView.isHidden = true
+            self?.addMapConfirmationView.alpha = 1.0
+        })
+    }
     
     func cacheScrollPosition(map: CustomMap, position: CGPoint) {
         viewModel.cacheScrollPosition(map: map, position: position)
+    }
+
+    @objc func notifyEditMap(_ notification: Notification) {
+        guard let map = notification.userInfo?["map"] as? CustomMap else { return }
+        viewModel.editMap(map: map)
+        refresh.send(false)
+    }
+
+    private func reportPost(map: CustomMap) {
+        let alertController = UIAlertController(title: "Report map", message: nil, preferredStyle: .alert)
+
+        alertController.addAction(
+            UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
+                if let txtField = alertController.textFields?.first, let text = txtField.text {
+                    Mixpanel.mainInstance().track(event: "ReportMapTap")
+                    self?.viewModel.service.reportMap(mapID: map.id ?? "", feedbackText: text, userID: UserDataModel.shared.uid)
+                    self?.showConfirmationAction()
+                }
+            }
+        )
+
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { (_) in
+            Mixpanel.mainInstance().track(event: "ReportMapCancelTap")
+        }))
+        alertController.addTextField { (textField) in
+            textField.autocorrectionType = .default
+            textField.placeholder = "Why are you reporting this map?"
+        }
+
+        present(alertController, animated: true, completion: nil)
+    }
+
+    private func showConfirmationAction() {
+        let text = "Thank you for the feedback. We will review your report ASAP."
+        let alert = UIAlertController(title: "Success!", message: text, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: .default))
+        present(alert, animated: true, completion: nil)
+    }
+}
+
+extension ExploreMapViewController: ExploreMapFooterDelegate {
+    func buttonAction() {
+        let mapVC = NewMapController(mapObject: nil, newMapMode: true)
+        let vc = UINavigationController(rootViewController: mapVC)
+        vc.modalPresentationStyle = .fullScreen
+        DispatchQueue.main.async { self.present(vc, animated: true) }
     }
 }

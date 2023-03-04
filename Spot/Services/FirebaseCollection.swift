@@ -67,6 +67,7 @@ enum FirebaseCollectionFields: String {
     case posterUsernames
     case usernameKeywords
     case city
+    case secret
 }
 
 enum FuctionsHttpsCall: String {

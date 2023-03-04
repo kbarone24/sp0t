@@ -105,6 +105,7 @@ final class UploadPostModel {
         mapObject = map
         postObject?.mapID = map?.id ?? ""
         postObject?.mapName = map?.mapName ?? ""
+        postObject?.privacyLevel = map?.secret ?? false ? "invite" : "public"
     }
 
     func setPostCity() {

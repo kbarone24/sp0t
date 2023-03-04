@@ -257,7 +257,6 @@ extension ImagePreviewController {
             founderID: uid,
             post: post,
             imageURL: "",
-            videoURL: post.videoURL ?? "",
             spotName: spotName,
             privacyLevel: "friends",
             description: ""
@@ -289,8 +288,7 @@ extension ImagePreviewController {
         setCaptionValues()
         /// upload post
         UploadPostModel.shared.setFinalPostValues()
-        if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues()
-        }
+        if UploadPostModel.shared.mapObject != nil { UploadPostModel.shared.setFinalMapValues() }
         
         progressMask.isHidden = false
         view.bringSubviewToFront(progressMask)
@@ -322,8 +320,6 @@ extension ImagePreviewController {
         case .video(let url):
             imageVideoService.uploadVideo(url: url) { [weak self] videoURL in
                 UploadPostModel.shared.postObject?.videoURL = videoURL
-                UploadPostModel.shared.spotObject?.videoURL = videoURL
-                UploadPostModel.shared.mapObject?.videoURL = videoURL
                 self?.uploadPostToDB(newMap: true)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                     HapticGenerator.shared.play(.soft)
