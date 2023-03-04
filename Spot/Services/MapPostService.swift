@@ -29,7 +29,6 @@ protocol MapPostServiceProtocol {
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
     func updateMapNameInPosts(mapID: String, newName: String)
-    func updateSeenDB(post: MapPost)
     func likePostDB(post: MapPost)
     func unlikePostDB(post: MapPost)
     func runDeletePostFunctions(post: MapPost, spotDelete: Bool, mapDelete: Bool, spotRemove: Bool)
@@ -600,25 +599,11 @@ final class MapPostService: MapPostServiceProtocol {
             let friendService = try? ServiceContainer.shared.service(for: \.friendsService)
             friendService?.incrementTopFriends(friendID: post.posterID, increment: 1, completion: nil)
 
-            incrementSpotScoreFor(post: post, increment: 3)
-             incrementMapScoreFor(post: post, increment: 5)
+            self?.incrementSpotScoreFor(post: post, increment: 3)
+            self?.incrementMapScoreFor(post: post, increment: 5)
         }
     }
 
-    func updateSeenDB(post: MapPost) {
-        /// set seen on map
-        let newUser = !(post.seenList?.contains(UserDataModel.shared.uid) ?? false)
-
-        DispatchQueue.global(qos: .background).async {
-            self.fireStore.collection(FirebaseCollectionNames.posts.rawValue).document(post.id ?? "").updateData(["seenList": FieldValue.arrayUnion([UserDataModel.shared.uid])])
-        }
-
-        // update mapScore
-        if newUser {
-            incrementMapScoreFor(post: post, increment: 1)
-        }
-    }
-    
     func unlikePostDB(post: MapPost) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.fireStore.collection("posts").document(post.id ?? "").updateData([
@@ -683,7 +668,8 @@ final class MapPostService: MapPostServiceProtocol {
     
     func setSeen(post: MapPost) {
         guard let id = post.id, let uid = Auth.auth().currentUser?.uid else { return }
-        
+        let newUser = !(post.seenList?.contains(UserDataModel.shared.uid) ?? false)
+
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.fireStore
                 .collection(FirebaseCollectionNames.posts.rawValue)
@@ -697,9 +683,13 @@ final class MapPostService: MapPostServiceProtocol {
             NotificationCenter.default.post(Notification(name: Notification.Name("PostOpen"), object: nil, userInfo: ["post": post as Any]))
             
             self?.updateNotifications(postID: id, uid: uid)
+
+            if newUser {
+                self?.incrementMapScoreFor(post: post, increment: 1)
+            }
         }
     }
-    
+
     private func updateNotifications(postID: String, uid: String) {
         fireStore
             .collection(FirebaseCollectionNames.users.rawValue)
@@ -723,6 +713,8 @@ final class MapPostService: MapPostServiceProtocol {
                         "userID": userId
                     ]
                 )
+        }
+    }
 
     private func incrementSpotScoreFor(post: MapPost, increment: Int) {
         DispatchQueue.global(qos: .utility).async {

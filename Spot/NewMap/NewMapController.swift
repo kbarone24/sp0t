@@ -70,6 +70,16 @@ class NewMapController: UIViewController {
 
     var nextButton: UIButton?
     var createButton: UIButton?
+    private(set) lazy var cancelButton: UIButton = {
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 5, bottom: 5, trailing: 5)
+        let button = UIButton(configuration: configuration)
+        button.contentHorizontalAlignment = .fill
+        button.contentVerticalAlignment = .fill
+        button.setImage(UIImage(named: "CancelButton"), for: .normal)
+        button.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+        return button
+    }()
 
     lazy var keyboardPan: UIPanGestureRecognizer = {
         let pan = UIPanGestureRecognizer(target: self, action: #selector(keyboardPan(_:)))
@@ -77,16 +87,18 @@ class NewMapController: UIViewController {
         return pan
     }()
     var readyToDismiss = true
-    var presentedModally = false
+    var newMapMode = false
 
     let margin: CGFloat = 18
     var actionButton: UIButton {
-        return presentedModally ? nextButton ?? UIButton() : createButton ?? UIButton()
+        return newMapMode ? nextButton ?? UIButton() : createButton ?? UIButton()
     }
 
-    init(mapObject: CustomMap?) {
+    init(mapObject: CustomMap?, newMapMode: Bool) {
         super.init(nibName: nil, bundle: nil)
+        self.newMapMode = newMapMode
         if mapObject == nil {
+            if newMapMode { UploadPostModel.shared.createSharedInstance() }
             addMapObject()
         } else {
             self.mapObject = mapObject
@@ -101,11 +113,11 @@ class NewMapController: UIViewController {
         super.viewDidLoad()
         setUpView()
         presentationController?.delegate = self
+        edgesForExtendedLayout = [.top]
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if presentedModally { setUpNavBar() }
         enableKeyboardMethods()
         delegate?.toggle(cancel: true)
     }
@@ -113,7 +125,6 @@ class NewMapController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         nameField.becomeFirstResponder()
-        self.navigationController?.setNavigationBarHidden(false, animated: true)
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -134,7 +145,6 @@ class NewMapController: UIViewController {
             communityMap: true,
             founderID: uid,
             imageURL: "",
-            videoURL: post.videoURL ?? "",
             likers: [uid],
             mapName: "",
             memberIDs: [uid],
@@ -164,11 +174,22 @@ class NewMapController: UIViewController {
         nameField.text = mapObject?.mapName ?? ""
         view.addSubview(nameField)
         let screenSizeOffset: CGFloat = UserDataModel.shared.screenSize == 2 ? 20 : 0
-        let topOffset: CGFloat = presentedModally ? 15 + screenSizeOffset : 30 + screenSizeOffset
+        let presentationOFfset: CGFloat = newMapMode ? 30 : screenSizeOffset
+        let topOffset: CGFloat = 30 + presentationOFfset
+        let edgeInset: CGFloat = newMapMode ? 48 : 18
         nameField.snp.makeConstraints {
             $0.top.equalTo(topOffset)
-            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.leading.trailing.equalToSuperview().inset(edgeInset)
             $0.height.equalTo(50)
+        }
+
+        if newMapMode {
+            view.addSubview(cancelButton)
+            cancelButton.snp.makeConstraints {
+                $0.leading.equalToSuperview().offset(4)
+                $0.centerY.equalTo(nameField)
+                $0.width.height.equalTo(60)
+            }
         }
 
         view.addSubview(collaboratorLabel)
@@ -209,7 +230,7 @@ class NewMapController: UIViewController {
             $0.height.equalTo(40)
         }
 
-        if presentedModally {
+        if newMapMode {
             nextButton = NextButton()
             nextButton?.addTarget(self, action: #selector(nextTapped), for: .touchUpInside)
             nextButton?.isEnabled = false
@@ -240,19 +261,5 @@ class NewMapController: UIViewController {
         // private: 0, public: 1, community: 2
         let tag = (mapObject?.secret ?? false) ? 0 : (mapObject?.communityMap ?? false) ? 2 : 1
         togglePrivacy(tag: tag)
-    }
-
-    func setUpNavBar() {
-        title = "Create a map"
-        navigationController?.setNavigationBarHidden(false, animated: true)
-        navigationController?.navigationBar.tintColor = .black
-        navigationController?.navigationBar.addWhiteBackground()
-
-        let barButtonItem = UIBarButtonItem(image: UIImage(named: "BackArrowDark"), style: .plain, target: self, action: #selector(backTapped))
-        navigationItem.leftBarButtonItem = barButtonItem
-
-        if let mapNav = navigationController as? MapNavigationController {
-            mapNav.requiredStatusBarStyle = .darkContent
-        }
     }
 }

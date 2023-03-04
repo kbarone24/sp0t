@@ -63,6 +63,7 @@ extension CustomMapController {
             let documents = try? await mapPostService?.getPostsFrom(query: query, caller: .CustomMap, limit: limit)
             guard var posts = documents?.posts else { return }
             posts.sort(by: { $0.timestamp.seconds > $1.timestamp.seconds })
+            for i in 0..<posts.count { if self.postsList.contains(posts[i]) { posts.remove(at: i) } }
 
             self.endDocument = documents?.endDocument
             if self.endDocument == nil { self.refreshStatus = .refreshDisabled }

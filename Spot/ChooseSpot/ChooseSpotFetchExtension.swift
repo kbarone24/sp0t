@@ -112,7 +112,6 @@ extension ChooseSpotController {
                         founderID: "",
                         mapItem: item,
                         imageURL: "",
-                        videoURL: "",
                         spotName: name,
                         privacyLevel: "public"
                     )

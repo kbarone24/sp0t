@@ -58,7 +58,7 @@ class SpotTabBarController: UITabBarController {
         nav0.tabBarItem = feedItem
 
         // TODO: Replace with new explore vc
-        let exploreVC = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: ServiceContainer.shared, from: .mapController))
+        let exploreVC = ExploreMapViewController(viewModel: ExploreMapViewModel(serviceContainer: ServiceContainer.shared))
         let nav1 = UINavigationController(rootViewController: exploreVC)
         nav1.tabBarItem = mapItem
 

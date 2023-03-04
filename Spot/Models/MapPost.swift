@@ -227,30 +227,49 @@ struct MapPost: Identifiable, Codable, Hashable {
 
 extension MapPost {
     func getNearbyPostScore() -> Double {
-        var postScore: Double = 10
-
-        if UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) { postScore += 10 }
-        let postTime = Double(timestamp.seconds)
-
-        postScore += Double(likers.count) * 10
-        postScore += likers.count > 2 ? 50 : 0
-        postScore += Double(commentList.count) * 5
-        postScore += !seen ? 50 : 0
-
-        let current = Date().timeIntervalSince1970
-        let currentTime = Double(current)
-        let timeSincePost = currentTime - postTime
-
-        /// add multiplier for recency
-        var factor = min(1 + (1_000_000 / timeSincePost), 5)
-        let multiplier = pow(1.6, factor)
-        factor = multiplier
-        postScore *= factor
+        let postScore = getBasePostScore(likeCount: nil, seenCount: nil, commentCount: nil)
 
         let distance = max(CLLocation(latitude: postLat, longitude: postLong).distance(from: UserDataModel.shared.currentLocation), 1)
         let finalScore = postScore / pow(distance / 10, 1.05)
 
         return finalScore
+    }
+
+    func getBasePostScore(likeCount: Int?, seenCount: Int?, commentCount: Int?) -> Double {
+        let nearbyPostMode = likeCount == nil
+        var postScore: Double = 10
+        let postTime = Double(timestamp.seconds)
+
+        // will only increment when called from nearby feed
+        if nearbyPostMode {
+            postScore += !seen ? 50 : 0
+            if UserDataModel.shared.userInfo.friendIDs.contains(where: { $0 == posterID }) {
+                postScore += 10
+            }
+        }
+
+        let seenCount = nearbyPostMode ? Double(seenList?.count ?? 0) : Double(seenCount ?? 0)
+        let likeCount = nearbyPostMode ? Double(likers.count) : Double(likeCount ?? 0)
+        let commentCount = nearbyPostMode ? Double(commentList.count) : Double(commentCount ?? 0)
+
+        postScore += likeCount * 10
+        postScore += commentCount * 5
+        postScore += likeCount > 2 ? 50 : 0
+
+        let current = Date().timeIntervalSince1970
+        let currentTime = Double(current)
+        let timeSincePost = currentTime - postTime
+
+        /// add multiplier for recency -> heavier weighted for nearby posts
+        let maxFactor: Double = nearbyPostMode ? 5 : 3
+        var factor = min(1 + (1_000_000 / timeSincePost), maxFactor)
+        let multiplier = pow(1.6, factor)
+        factor = multiplier
+        postScore *= factor
+
+        // multiply by ratio of likes / people who have seen it
+        postScore *= (1 + Double(likeCount / max(seenCount, 1)) * 3)
+        return postScore
     }
 }
 
