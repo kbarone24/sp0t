@@ -33,7 +33,6 @@ final class ExploreMapViewModel {
     }
     
     let service: MapServiceProtocol
-
     private let selectMapPassthroughSubject = PassthroughSubject<CustomMap?, Never>()
     
     var cachedMaps: [CustomMap: [MapPost]] = [:]
