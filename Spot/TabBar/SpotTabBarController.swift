@@ -53,6 +53,7 @@ final class SpotTabBarController: UITabBarController {
     private func viewSetup() {
         view.backgroundColor = .black
         tabBar.backgroundColor = .black
+        tabBar.barTintColor = .black
         tabBar.clipsToBounds = false
         tabBar.tintColor = .white
         tabBar.isTranslucent = false
@@ -115,7 +116,7 @@ extension SpotTabBarController: UITabBarControllerDelegate {
             if nav.viewControllers.first is ExploreMapViewController {
                 if selectedIndex == 1 {
                     if nav.viewControllers.count == 1 {
-                        print("1")
+                        explore.scrollToTop()
                     } else {
                         nav.popToRootViewController(animated: true)
                     }
@@ -138,7 +139,7 @@ extension SpotTabBarController: UITabBarControllerDelegate {
             } else if nav.viewControllers.first is ProfileViewController {
                 if selectedIndex == 4 {
                     if nav.viewControllers.count == 1 {
-                        // profile.scrollToTop()
+                        profile.scrollToTop()
                     } else {
                         nav.popToRootViewController(animated: true)
                     }

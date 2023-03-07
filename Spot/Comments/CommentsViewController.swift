@@ -189,7 +189,7 @@ final class CommentsController: UIViewController {
         let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
         profileImage.sd_setImage(
             with: URL(string: UserDataModel.shared.userInfo.imageURL),
-            placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)),
+            placeholderImage: UIImage(color: .darkGray),
             options: .highPriority,
             context: [.imageTransformer: transformer]
         )
