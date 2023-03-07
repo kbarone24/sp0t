@@ -60,7 +60,7 @@ final class MapPostBody: UIView {
         postImage.sd_cancelCurrentImageLoad()
         postImage.sd_setImage(
             with: URL(string: data.imageURLs.first ?? ""),
-            placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)),
+            placeholderImage: UIImage(color: .darkGray),
             options: .highPriority,
             context: [
                 .imageTransformer: transformer
