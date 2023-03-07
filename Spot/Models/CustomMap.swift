@@ -341,7 +341,6 @@ extension CustomMap {
         self.communityMap = customMap.communityMap
         self.founderID = customMap.founderID
         self.imageURL = customMap.imageURL
-        self.videoURL = customMap.videoURL
         self.likers = customMap.likers
         self.lowercaseName = customMap.lowercaseName
         self.mainCampusMap = customMap.mainCampusMap

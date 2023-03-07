@@ -14,7 +14,6 @@ final class CustomMapCache: NSObject, NSCoding {
     let communityMap: Bool?
     let founderID: String
     let imageURL: String
-    let videoURL: String
     var likers: [String]
     let lowercaseName: String?
     let mainCampusMap: Bool?
@@ -46,7 +45,6 @@ final class CustomMapCache: NSObject, NSCoding {
         self.communityMap = customMap.communityMap
         self.founderID = customMap.founderID
         self.imageURL = customMap.imageURL
-        self.videoURL = customMap.videoURL
         self.likers = customMap.likers
         self.lowercaseName = customMap.lowercaseName
         self.mainCampusMap = customMap.mainCampusMap
@@ -81,7 +79,6 @@ final class CustomMapCache: NSObject, NSCoding {
         coder.encode(communityMap, forKey: "communityMap")
         coder.encode(founderID, forKey: "founderID")
         coder.encode(imageURL, forKey: "imageURL")
-        coder.encode(videoURL, forKey: "videoURL")
         coder.encode(likers, forKey: "likers")
         coder.encode(lowercaseName, forKey: "lowercaseName")
         coder.encode(mainCampusMap, forKey: "mainCampusMap")
@@ -114,7 +111,6 @@ final class CustomMapCache: NSObject, NSCoding {
         self.communityMap = coder.decodeBool(forKey: "communityMap")
         self.founderID = coder.decodeObject(forKey: "founderID") as? String ?? ""
         self.imageURL = coder.decodeObject(forKey: "imageURL") as? String ?? ""
-        self.videoURL = coder.decodeObject(forKey: "videoURL") as? String ?? ""
         self.likers = coder.decodeObject(forKey: "likers") as? [String] ?? []
         self.lowercaseName = coder.decodeObject(forKey: "lowercaseName") as? String? ?? ""
         self.mainCampusMap = coder.decodeBool(forKey: "mainCampusMap")
