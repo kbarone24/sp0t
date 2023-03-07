@@ -285,6 +285,10 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
     func moreTapped(map: CustomMap) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(
+            UIAlertAction(title: "Share map", style: .default) { [weak self] _ in
+                self?.shareMap(map: map)
+            })
+        alert.addAction(
             UIAlertAction(title: "Report map", style: .destructive) { [weak self] _ in
                 self?.reportMap(map: map)
             })
@@ -314,6 +318,10 @@ extension ExploreMapViewController: ExploreMapPreviewCellDelegate {
         guard let map = notification.userInfo?["map"] as? CustomMap else { return }
         viewModel.editMap(map: map)
         refresh.send(false)
+    }
+
+    private func shareMap(map: CustomMap) {
+        print("share map")
     }
 
     private func reportMap(map: CustomMap) {
