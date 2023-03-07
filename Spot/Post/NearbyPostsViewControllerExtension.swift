@@ -18,6 +18,11 @@ extension NearbyPostsViewController {
         case .item(let post):
             let activeUser = post.userInfo?.id ?? "" == Auth.auth().currentUser?.uid
             let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+            alert.addAction(
+                UIAlertAction(title: "Share post", style: .default) { [weak self] _ in
+                    self?.sharePost()
+                }
+            )
             if !activeUser {
                 alert.addAction(
                     UIAlertAction(title: "Hide post", style: .default) { [weak self] _ in
@@ -42,6 +47,10 @@ extension NearbyPostsViewController {
         }
     }
     // https://medium.com/swift-india/uialertcontroller-in-swift-22f3c5b1dd68
+
+    private func sharePost() {
+        print("share tap")
+    }
 
     func hidePostFromFeed() {
         Mixpanel.mainInstance().track(event: "HidePostFromFeed")
