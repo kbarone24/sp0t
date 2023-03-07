@@ -173,6 +173,11 @@ class ActivityCell: UITableViewCell {
             var notiText = "posted in "
             notiText += notification.postInfo?.spotName ?? ""
             subtitle = notiText
+        case "mapJoin":
+            subtitle = "joined \(notification.mapName ?? "a map")"
+        case "mapFollow":
+            subtitle = "followed \(notification.mapName ?? "a map")"
+
         default:
             subtitle = notification.type
         }
@@ -205,7 +210,7 @@ class ActivityCell: UITableViewCell {
         switch notiType {
         case "friendRequest":
             postImage.image = UIImage(named: "AcceptedYourFriendRequest")
-        case "mapInvite":
+        case "mapInvite", "mapJoin", "mapFollow":
             postImage.image = UIImage(named: "AddedToMap")
         default:
             if !(notification.postInfo?.imageURLs.isEmpty ?? true) {
@@ -227,7 +232,7 @@ class ActivityCell: UITableViewCell {
                 $0.width.equalTo(33)
                 $0.height.equalTo(27)
                 $0.trailing.equalToSuperview().offset(-22)
-            case "mapInvite":
+            case "mapInvite", "mapJoin", "mapFollow":
                 $0.width.equalTo(45.07)
                 $0.height.equalTo(30.04)
                 $0.trailing.equalToSuperview().offset(-15)

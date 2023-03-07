@@ -120,7 +120,9 @@ final class MapService: MapServiceProtocol {
         
         let mapPostService = try? ServiceContainer.shared.service(for: \.mapPostService)
         mapPostService?.updatePostInviteLists(mapID: mapID, inviteList: [UserDataModel.shared.uid], completion: nil)
+
         incrementMapScore(mapID: mapID, increment: 10)
+        sendMapJoinNotifications(map: customMap)
     }
 
     func addNewUsersToMap(customMap: CustomMap, addedUsers: [String]) {
@@ -295,5 +297,25 @@ final class MapService: MapServiceProtocol {
         DispatchQueue.global(qos: .background).async {
             self.fireStore.collection(FirebaseCollectionNames.maps.rawValue).document(mapID).updateData(["mapScore": FieldValue.increment(Int64(increment))])
         }
+    }
+
+    private func sendMapJoinNotifications(map: CustomMap) {
+        guard let mapID = map.id,
+              let postID = map.postIDs[safe: 0] else { return }
+        let type = map.communityMap ?? false ? "mapJoin" : "mapFollow"
+
+        let data: [String: Any] = [
+            "imageURL": map.imageURL,
+            "postID": postID,
+            "seen": false,
+            "mapID": mapID,
+            "mapName": map.mapName,
+            "senderID": UserDataModel.shared.uid,
+            "senderUsername": UserDataModel.shared.userInfo.username,
+            "timestamp": Timestamp(),
+            "type": type,
+        ]
+
+        fireStore.collection(FirebaseCollectionNames.users.rawValue).document(map.founderID).collection(FirebaseCollectionNames.notifications.rawValue).addDocument(data: data)
     }
 }

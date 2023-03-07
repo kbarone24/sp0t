@@ -58,7 +58,7 @@ class NotificationsController: UIViewController {
         super.viewDidLoad()
         setupView()
         // Set seen for all visible notifications - all future calls will come from the fetch method
-        DispatchQueue.global(qos: .utility).async { UserDataModel.shared.setSeenForDocumentIDs(docIDs: UserDataModel.shared.notifications.map{ $0.id ?? "" }) }
+        DispatchQueue.global(qos: .utility).async { UserDataModel.shared.setSeenForDocumentIDs(docIDs: UserDataModel.shared.notifications.map { $0.id ?? "" }) }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -101,6 +101,7 @@ class NotificationsController: UIViewController {
     private func setTabBarIcon() {
         let unseenPost = UserDataModel.shared.notifications.contains(where: { !$0.seen }) || UserDataModel.shared.pendingFriendRequests.contains(where: { !$0.seen })
         DispatchQueue.main.async {
+            print("unseen post", unseenPost)
             let unselectedImage = unseenPost ? UIImage(named: "NotificationsTabActive") : UIImage(named: "NotificationsTab")
             let selectedImage = unseenPost ? UIImage(named: "NotificationsTabActiveSelected") : UIImage(named: "NotificationsTabSelected")
             self.navigationController?.tabBarItem = UITabBarItem(

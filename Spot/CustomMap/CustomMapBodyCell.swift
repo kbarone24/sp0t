@@ -57,14 +57,14 @@ class CustomMapBodyCell: UICollectionViewCell {
             
             postImage.sd_setImage(
                 with: URL(string: postData.imageURLs.first ?? ""),
-                placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)),
+                placeholderImage: UIImage(color: .darkGray),
                 options: .highPriority,
                 context: [.imageTransformer: transformer]
             )
         } else {
             postImage.sd_setImage(
                 with: URL(string: postData.imageURLs.first ?? ""),
-                placeholderImage: UIImage(color: UIColor(red: 0.957, green: 0.957, blue: 0.957, alpha: 1)),
+                placeholderImage: UIImage(color: .darkGray),
                 options: .highPriority
                 )
         }
