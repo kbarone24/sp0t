@@ -184,6 +184,7 @@ class NewMapController: UIViewController {
         }
 
         if newMapMode {
+            navigationController?.setNavigationBarHidden(true, animated: true)
             view.addSubview(cancelButton)
             cancelButton.snp.makeConstraints {
                 $0.leading.equalToSuperview().offset(4)

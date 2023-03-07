@@ -78,7 +78,7 @@ extension MapController {
                 let transformer = SDImageResizingTransformer(size: CGSize(width: 100, height: 100), scaleMode: .aspectFill)
                 self.titleView.profileButton.profileImage.sd_setImage(
                     with: URL(string: UserDataModel.shared.userInfo.imageURL),
-                    placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .black),
+                    placeholderImage: UIImage(color: UIColor(named: "BlankImage") ?? .darkGray),
                     options: .highPriority, context: [.imageTransformer: transformer])
                 
                 for friend in UserDataModel.shared.userInfo.friendIDs {
