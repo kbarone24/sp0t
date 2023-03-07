@@ -9,6 +9,7 @@
 import UIKit
 import Firebase
 import SDWebImage
+import PINCache
 
 protocol ImageVideoServiceProtocol {
     func uploadImages(
@@ -20,8 +21,8 @@ protocol ImageVideoServiceProtocol {
     )
     
     func uploadVideo(url: URL, success: @escaping (String) -> Void, failure: @escaping (Error) -> Void)
-    func downloadVideo(url: String, completion: @escaping ((URL?) -> Void))
-    func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize) async throws -> [UIImage]
+    func downloadVideo(url: String, usingCache: Bool, completion: @escaping ((URL?) -> Void))
+    func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize, usingCache: Bool, completion: (([UIImage]) -> Void)?)
 }
 
 final class ImageVideoService: ImageVideoServiceProtocol {
@@ -32,7 +33,6 @@ final class ImageVideoService: ImageVideoServiceProtocol {
     
     private let fireStore: Firestore
     private let storage: Storage
-    private let imageCache = CacheService<String, UIImage>()
     
     init(fireStore: Firestore, storage: Storage) {
         self.fireStore = fireStore
@@ -193,7 +193,9 @@ final class ImageVideoService: ImageVideoServiceProtocol {
         }
     }
     
-    func downloadVideo(url: String, completion: @escaping ((URL?) -> Void)) {
+    // TODO: Add access to cache for video
+    
+    func downloadVideo(url: String, usingCache: Bool, completion: @escaping ((URL?) -> Void)) {
         guard let videoURL = URL(string: url),
               let documentsDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         else { return }
@@ -222,24 +224,23 @@ final class ImageVideoService: ImageVideoServiceProtocol {
         .resume()
     }
     
-    func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize) async throws -> [UIImage] {
+    func downloadImages(urls: [String], frameIndexes: [Int]?, aspectRatios: [CGFloat]?, size: CGSize, usingCache: Bool, completion: (([UIImage]) -> Void)?) {
         guard !urls.isEmpty else {
-            return []
+            completion?([])
+            return
         }
         
-        return try await withUnsafeThrowingContinuation { [unowned self] continuation in
-            
+        DispatchQueue.global(qos: .background).async {
             var images: [UIImage] = []
             
-            let cachedKeys = self.imageCache.allCachedKeys()
-            if cachedKeys.count == urls.count {
-                for key in cachedKeys where cachedKeys.count == urls.count {
-                    if let image = self.imageCache.entry(forKey: key)?.value {
+            guard !usingCache else {
+                urls.forEach { url in
+                    if let image = PINCache.shared.object(forKey: url) as? UIImage {
                         images.append(image)
                     }
                 }
                 
-                continuation.resume(returning: images)
+                completion?(images)
                 return
             }
             
@@ -268,25 +269,35 @@ final class ImageVideoService: ImageVideoServiceProtocol {
                 let adjustedSize = CGSize(width: size.width, height: size.width * currentAspect)
                 let transformer = SDImageResizingTransformer(size: adjustedSize, scaleMode: .aspectFit)
                 
+                if let image = PINCache.shared.object(forKey: postURL) as? UIImage {
+                    images.append(image)
+                    
+                    // This will get called in the case where all images are already cached
+                    if x == urls.count - 1 && images.count == urls.count {
+                        completion?(images)
+                    }
+                    continue
+                }
+                
                 SDWebImageManager.shared.loadImage(
                     with: URL(string: postURL),
                     options: [.highPriority, .scaleDownLargeImages],
-                    context: [.imageTransformer: transformer], progress: nil) { (rawImage, _, _, _, _, _) in
-                        defer {
-                            if x == urls.count - 1 {
-                                continuation.resume(returning: images)
-                            }
+                    context: [.imageTransformer: transformer], progress: nil)
+                { (rawImage, _, _, _, _, _) in
+                    defer {
+                        if x == urls.count - 1 {
+                            completion?(images)
                         }
-                        
-                        let i = urls.lastIndex(where: { $0 == postURL })
-                        guard let image = rawImage else {
-                            images.append(UIImage())
-                            return
-                        }
-                        images.append(image)
-                        self.imageCache.removeValue(forKey: postURL)
-                        self.imageCache.insert(CacheService.Entry(key: postURL, value: image))
                     }
+                    
+                    _ = urls.lastIndex(where: { $0 == postURL })
+                    guard let image = rawImage else {
+                        images.append(UIImage())
+                        return
+                    }
+                    images.append(image)
+                    PINCache.shared.setObject(image, forKey: postURL)
+                }
             }
         }
     }

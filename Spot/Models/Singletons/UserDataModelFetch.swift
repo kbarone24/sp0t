@@ -30,23 +30,21 @@ extension UserDataModel {
             } else {
                 self.updateUserInfo(user: activeUser)
             }
-
+            
             NotificationCenter.default.post(Notification(name: Notification.Name("UserProfileLoad")))
-
-            for userID in self.userInfo.friendIDs {
-                Task {
+            
+            Task(priority: .utility) {
+                for userID in self.userInfo.friendIDs {
                     do {
                         let userService = try ServiceContainer.shared.service(for: \.userService)
                         let friend = try await userService.getUserInfo(userID: userID)
-
-                        DispatchQueue.main.async {
-                            if !self.userInfo.friendsList.contains(where: { $0.id == userID }) && !self.deletedFriendIDs.contains(userID) {
-                                self.userInfo.friendsList.append(friend)
-                                
-                                if self.userInfo.friendsList.count == self.userInfo.friendIDs.count {
-                                    self.userInfo.sortFriends() /// sort for top friends
-                                    NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
-                                }
+                        
+                        if !self.userInfo.friendsList.contains(where: { $0.id == userID }) && !self.deletedFriendIDs.contains(userID) {
+                            self.userInfo.friendsList.append(friend)
+                            
+                            if self.userInfo.friendsList.count == self.userInfo.friendIDs.count {
+                                self.userInfo.sortFriends() /// sort for top friends
+                                NotificationCenter.default.post(Notification(name: Notification.Name("FriendsListLoad")))
                             }
                         }
                     } catch {

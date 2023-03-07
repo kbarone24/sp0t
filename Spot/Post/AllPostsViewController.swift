@@ -469,24 +469,24 @@ extension AllPostsViewController: UITableViewDataSource, UITableViewDelegate {
         
         switch item {
         case .item(let post):
-            Task {
-                if let videoURL = post.videoURL {
-                    viewModel.imageVideoService.downloadVideo(url: videoURL) { [weak self] url in
-                        self?.setContentFor(indexPath: indexPath, videoURL: url, cell: cell)
-                    }
-                    
-                } else {
-                    let images = try? await viewModel.imageVideoService.downloadImages(
-                        urls: post.imageURLs,
-                        frameIndexes: post.frameIndexes,
-                        aspectRatios: post.aspectRatios,
-                        size: CGSize(
-                            width: UIScreen.main.bounds.width * 2,
-                            height: UIScreen.main.bounds.width * 2
-                        )
-                    )
-                    
-                    self.setContentFor(indexPath: indexPath, images: images ?? [], cell: cell)
+            if let videoURL = post.videoURL {
+                // TODO: Revisit using video cache
+                viewModel.imageVideoService.downloadVideo(url: videoURL, usingCache: false) { [weak self] url in
+                    self?.setContentFor(indexPath: indexPath, videoURL: url, cell: cell)
+                }
+                
+            } else {
+                viewModel.imageVideoService.downloadImages(
+                    urls: post.imageURLs,
+                    frameIndexes: post.frameIndexes,
+                    aspectRatios: post.aspectRatios,
+                    size: CGSize(
+                        width: UIScreen.main.bounds.width * 2,
+                        height: UIScreen.main.bounds.width * 2
+                    ),
+                    usingCache: false
+                ) { [weak self] images in
+                    self?.setContentFor(indexPath: indexPath, images: images, cell: cell)
                 }
             }
         }

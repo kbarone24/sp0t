@@ -15,6 +15,18 @@ struct MapPostGroup: Hashable {
         var id: String
         var timestamp: Timestamp
         var seen: Bool
+        
+        init(id: String, timestamp: Timestamp, seen: Bool) {
+            self.id = id
+            self.timestamp = timestamp
+            self.seen = seen
+        }
+        
+        init(postIDCache: PostIDCache) {
+            self.id = postIDCache.id
+            self.timestamp = postIDCache.timestamp
+            self.seen = postIDCache.seen
+        }
     }
 
     var id: String /// can be post or spotID
@@ -35,6 +47,23 @@ struct MapPostGroup: Hashable {
                 return !p1.seen && p2.seen
             }
             return p1.timestamp.seconds > p2.timestamp.seconds
+        }
+    }
+}
+
+extension MapPostGroup {
+    init(group: MapPostGroupCache) {
+        self.id = group.id
+        self.coordinate = CLLocationCoordinate2D(latitude: group.latitude, longitude: group.longitude)
+        self.spotName = group.spotName
+        self.postIDs = group.postIDs.map { PostID(postIDCache: $0) }
+        self.postTimestamps = group.postTimestamps
+        self.postsToSpot = group.postsToSpot
+        self.numberOfPosters = group.numberOfPosters
+        if let poiCategory = group.poiCategory {
+            self.poiCategory = POICategory(rawValue: poiCategory)
+        } else {
+            self.poiCategory = nil
         }
     }
 }

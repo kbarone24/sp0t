@@ -17,15 +17,31 @@ enum MapServiceCaller {
     case Feed
 }
 
+enum MapPostType: String {
+    case nearby = "NEARBY"
+    case friends = "FRIENDS"
+    case maps = "MAPS"
+}
+
+final class RequestBody {
+    let query: Query
+    let type: MapPostType
+    
+    init(query: Query, type: MapPostType) {
+        self.query = query
+        self.type = type
+    }
+}
+
 protocol MapPostServiceProtocol {
-    func fetchAllPostsForCurrentUser(limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) async throws -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?)
-    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?) async throws ->  ([MapPost], DocumentSnapshot?)
+    func fetchAllPostsForCurrentUser(limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?)
+    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?)
     func updatePostInviteLists(mapID: String, inviteList: [String], completion: ((Error?) -> Void)?)
     func adjustPostFriendsList(userID: String, friendID: String, completion: ((Bool) -> Void)?)
     func getPostsFrom(query: Query, caller: MapServiceCaller, limit: Int) async throws -> (posts: [MapPost]?, endDocument: DocumentSnapshot?)
     func getComments(postID: String) async throws -> [MapComment]
     func getPost(postID: String) async throws -> MapPost
-    func setPostDetails(post: MapPost) async throws -> MapPost
+    func setPostDetails(post: MapPost) async -> MapPost
     func getNearbyPosts(center: CLLocationCoordinate2D, radius: CLLocationDistance, searchLimit: Int, completion: @escaping([MapPost]) -> Void) async
     func uploadPost(post: MapPost, map: CustomMap?, spot: MapSpot?, newMap: Bool)
     func updateMapNameInPosts(mapID: String, newName: String)
@@ -42,95 +58,69 @@ final class MapPostService: MapPostServiceProtocol {
     }
     
     private let fireStore: Firestore
+    private let imageVideoService: ImageVideoServiceProtocol
+    private var lastMapDocument: DocumentSnapshot?
+    private var lastFriendsDocument: DocumentSnapshot?
+    private var lastNearbysDocument: DocumentSnapshot?
     
-    init(fireStore: Firestore) {
+    init(fireStore: Firestore, imageVideoService: ImageVideoServiceProtocol) {
         self.fireStore = fireStore
+        self.imageVideoService = imageVideoService
     }
     
-    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?) async throws -> ([MapPost], DocumentSnapshot?) {
-        try await withUnsafeThrowingContinuation { continuation in
-            Task {
-                guard let locationService = try? ServiceContainer.shared.service(for: \.locationService)
+    func fetchNearbyPosts(limit: Int, lastItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?) {
+        await withUnsafeContinuation { continuation in
+            Task(priority: .high) {
+                guard let locationService = try? ServiceContainer.shared.service(for: \.locationService),
+                      let currentLocation = locationService.currentLocation
                 else {
                     continuation.resume(returning: ([], lastItem))
                     return
                 }
                 
-                locationService.getCurrentUserCityLocation(zoomLevel: 0) { city in
-                    let request = self.fireStore
-                        .collection(FirebaseCollectionNames.posts.rawValue)
-                        .limit(to: limit)
-                        .whereField(FirebaseCollectionFields.city.rawValue, isEqualTo: city)
-                        .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
-                    
-                    if let lastItem {
-                        request.start(afterDocument: lastItem)
-                    }
-                    
-                    request.getDocuments { snapshot, error in
-                        guard let snapshot, error == nil else {
-                            continuation.resume(returning: ([], lastItem))
-                            return
-                        }
-                        
-                        guard !snapshot.documents.isEmpty else {
-                            continuation.resume(returning: ([], lastItem))
-                            return
-                        }
-                        
-                        Task(priority: .high) {
-                            var posts: [MapPost] = []
-                            var lastDocument: DocumentSnapshot?
-                            
-                            for document in snapshot.documents {
-                                guard let mapPost = try? document.data(as: MapPost.self) else {
-                                    continue
-                                }
-                                
-                                guard mapPost.privacyLevel == "public",
-                                      !mapPost.friendsList.contains(UserDataModel.shared.uid),
-                                      !(mapPost.inviteList?.contains(UserDataModel.shared.uid) ?? false),
-                                      !(mapPost.userInfo?.id?.isBlocked() ?? false),
-                                      !((mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) || UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? ""))
-                                else {
-                                    continue
-                                }
-                                
-                                defer {
-                                    if document == snapshot.documents.last {
-                                        lastDocument = document
-                                        continuation.resume(
-                                            returning: (
-                                                posts.sorted {
-                                                    $0.postScore ?? 0.0 > $1.postScore ?? 0.0
-                                                },
-                                                lastDocument
-                                            )
-                                        )
-                                    }
-                                }
-                                
-                                if var post = try? await self.setPostDetails(post: mapPost) {
-                                    post.postScore = post.getNearbyPostScore()
-                                    posts.append(post)
-                                }
-                            }
-                        }
-                    }
+                async let city = locationService.getCityFromLocation(location: currentLocation, zoomLevel: 0)
+                
+                let request = self.fireStore
+                    .collection(FirebaseCollectionNames.posts.rawValue)
+                    .limit(to: limit)
+                    .whereField(FirebaseCollectionFields.city.rawValue, isEqualTo: await city)
+                    .order(by: FirebaseCollectionFields.timestamp.rawValue, descending: true)
+                
+                if let lastItem {
+                    request.start(afterDocument: lastItem)
                 }
+                
+                let requests: [RequestBody] = [RequestBody(query: request, type: .nearby)]
+                
+                async let fetchPosts = requests.throwingAsyncValues { requestBody in
+                    async let snapshot = self.fetchSnapshot(request: requestBody)
+                    return await self.fetchNearbyPostDetails(snapshot: snapshot)
+                }
+                
+                let posts = await fetchPosts
+                    .flatMap { $0 }
+                    .compactMap { $0 }
+                
+                continuation.resume(
+                    returning: (
+                        posts.sorted {
+                            $0.timestamp.seconds > $1.timestamp.seconds
+                        },
+                        lastNearbysDocument
+                    )
+                )
             }
         }
     }
     
-    func fetchAllPostsForCurrentUser(limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) async throws -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?) {
-        try await withUnsafeThrowingContinuation { [weak self] continuation in
+    func fetchAllPostsForCurrentUser(limit: Int, lastMapItem: DocumentSnapshot?, lastFriendsItem: DocumentSnapshot?) async -> ([MapPost], DocumentSnapshot?, DocumentSnapshot?) {
+        await withUnsafeContinuation { [weak self] continuation in
             guard let self else {
                 continuation.resume(returning: ([], lastMapItem, lastFriendsItem))
                 return
             }
             
             Task(priority: .high) {
-                var posts: [MapPost] = []
                 let request = self.fireStore
                     .collection(FirebaseCollectionNames.posts.rawValue)
                     .limit(to: limit)
@@ -148,28 +138,19 @@ final class MapPostService: MapPostServiceProtocol {
                     mapsQuery.start(afterDocument: lastMapItem)
                 }
                 
-                var lastMapDocument: DocumentSnapshot?
-                var lastFriendsDocument: DocumentSnapshot?
+                let requests: [RequestBody] = [
+                    RequestBody(query: mapsQuery, type: .maps),
+                    RequestBody(query: friendsQuery, type: .friends)
+                ]
                 
-                guard let friendsPosts = try? await self.fetchSnapshot(query: friendsQuery),
-                      let mapsPosts = try? await self.fetchSnapshot(query: mapsQuery),
-                      let postsFromFriends = try? await self.setPostDetails(snapshot: friendsPosts),
-                      let postsFromMaps = try? await self.setPostDetails(snapshot: mapsPosts)
-                else {
-                    continuation.resume(returning: ([], lastMapItem, lastFriendsItem))
-                    return
+                async let fetchPosts = requests.throwingAsyncValues { requestBody in
+                    async let snapshot = self.fetchSnapshot(request: requestBody)
+                    return await self.fetchAllPostDetails(snapshot: snapshot)
                 }
                 
-                lastMapDocument = mapsPosts.documents.last
-                lastFriendsDocument = friendsPosts.documents.last
-                
-                for post in postsFromMaps {
-                    posts.append(post)
-                }
-                
-                for post in postsFromFriends {
-                    posts.append(post)
-                }
+                let posts = await fetchPosts
+                    .flatMap { $0 }
+                    .compactMap { $0 }
                 
                 continuation.resume(
                     returning: (
@@ -184,12 +165,21 @@ final class MapPostService: MapPostServiceProtocol {
         }
     }
     
-    private func fetchSnapshot(query: Query) async throws -> QuerySnapshot? {
-        try await withUnsafeThrowingContinuation { continuation in
-            query.getDocuments { snapshot, error in
+    private func fetchSnapshot(request: RequestBody) async -> QuerySnapshot? {
+        await withUnsafeContinuation { continuation in
+            request.query.getDocuments { snapshot, error in
                 guard let snapshot, error == nil else {
                     continuation.resume(returning: nil)
                     return
+                }
+                
+                switch request.type {
+                case .nearby:
+                    self.lastNearbysDocument = snapshot.documents.last
+                case .friends:
+                    self.lastFriendsDocument = snapshot.documents.last
+                case .maps:
+                    self.lastMapDocument = snapshot.documents.last
                 }
                 
                 continuation.resume(returning: snapshot)
@@ -197,35 +187,39 @@ final class MapPostService: MapPostServiceProtocol {
         }
     }
     
-    private func setPostDetails(snapshot: QuerySnapshot) async throws -> [MapPost] {
-        try await withUnsafeThrowingContinuation { [weak self] continuation in
-            guard let self, !snapshot.documents.isEmpty else {
-                continuation.resume(returning: [])
-                return
+    private func fetchAllPostDetails(snapshot: QuerySnapshot?) async -> [MapPost?] {
+        guard let snapshot else {
+            return []
+        }
+        
+        return await snapshot.documents.throwingAsyncValues { document in
+            if let mapPost = try? document.data(as: MapPost.self),
+                  !(mapPost.userInfo?.id?.isBlocked() ?? false),
+               !((mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) || UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? "")) {
+                return await self.setPostDetails(post: mapPost)
+            } else {
+                return nil
+            }
+        }
+    }
+    
+    private func fetchNearbyPostDetails(snapshot: QuerySnapshot?) async -> [MapPost?] {
+        guard let snapshot else {
+            return []
+        }
+        
+        return await snapshot.documents.throwingAsyncValues { document in
+            guard let mapPost = try? document.data(as: MapPost.self),
+                  mapPost.privacyLevel == "public",
+                  !mapPost.friendsList.contains(UserDataModel.shared.uid),
+                  !(mapPost.inviteList?.contains(UserDataModel.shared.uid) ?? false),
+                  !(mapPost.userInfo?.id?.isBlocked() ?? false),
+                  !((mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) || UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? ""))
+            else {
+                return nil
             }
             
-            Task {
-                var posts: [MapPost] = []
-                for document in snapshot.documents {
-                    guard let mapPost = try? document.data(as: MapPost.self),
-                          !(mapPost.userInfo?.id?.isBlocked() ?? false),
-                          !((mapPost.hiddenBy?.contains(UserDataModel.shared.uid) ?? false) || UserDataModel.shared.deletedPostIDs.contains(mapPost.id ?? ""))
-                    else {
-                        continue
-                    }
-                    
-                    defer {
-                        if document == snapshot.documents.last {
-                            continuation.resume(returning: posts)
-                        }
-                    }
-                    
-                    if var post = try? await self.setPostDetails(post: mapPost) {
-                        post.postScore = post.getNearbyPostScore()
-                        posts.append(post)
-                    }
-                }
-            }
+            return await self.setPostDetails(post: mapPost)
         }
     }
     
@@ -289,7 +283,7 @@ final class MapPostService: MapPostServiceProtocol {
                         return
                     }
                     
-                    Task {
+                    Task(priority: .high) {
                         var commentList: [MapComment] = []
                         
                         for doc in snapshot.documents {
@@ -331,7 +325,7 @@ final class MapPostService: MapPostServiceProtocol {
             self.fireStore.collection(FirebaseCollectionNames.posts.rawValue)
                 .document(postID)
                 .getDocument { doc, _ in
-                    Task {
+                    Task(priority: .high) {
                         
                         var emptyPost = MapPost(
                             spotID: "",
@@ -346,21 +340,41 @@ final class MapPostService: MapPostServiceProtocol {
                             return
                         }
                         
-                        let post = try? await self.setPostDetails(post: postInfo)
-                        continuation.resume(returning: post ?? emptyPost)
+                        let post = await self.setPostDetails(post: postInfo)
+                        continuation.resume(returning: post)
                     }
                 }
         }
     }
     
-    func setPostDetails(post: MapPost) async throws -> MapPost {
-        try await withUnsafeThrowingContinuation { continuation in
+    private func fetchImagesFromPost(post: MapPost) {
+        DispatchQueue.global(qos: .background).async {
+            let size = CGSize(
+                width: UIScreen.main.bounds.width * 2,
+                height: UIScreen.main.bounds.width * 2
+            )
+            
+            self.imageVideoService.downloadImages(
+                urls: post.imageURLs,
+                frameIndexes: post.frameIndexes,
+                aspectRatios: post.aspectRatios,
+                size: size,
+                usingCache: false,
+                completion: nil
+            )
+        }
+    }
+    
+    func setPostDetails(post: MapPost) async -> MapPost {
+        self.fetchImagesFromPost(post: post)
+        
+        return await withUnsafeContinuation { continuation in
             guard let id = post.id, !id.isEmpty else {
                 continuation.resume(returning: post)
                 return
             }
             
-            Task {
+            Task(priority: .high) {
                 guard let userService = try? ServiceContainer.shared.service(for: \.userService),
                       let user = try? await userService.getUserInfo(userID: post.posterID)
                 else {
@@ -372,6 +386,7 @@ final class MapPostService: MapPostServiceProtocol {
                 postInfo.userInfo = user
                 let comments = try? await getComments(postID: id)
                 postInfo.commentList = comments ?? []
+                postInfo.postScore = post.getNearbyPostScore()
                 continuation.resume(returning: postInfo)
             }
         }

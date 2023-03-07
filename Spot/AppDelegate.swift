@@ -8,6 +8,7 @@ import Mixpanel
 import UIKit
 import UserNotifications
 import CoreLocation
+import PINCache
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -19,6 +20,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let settings = db.settings
         settings.isPersistenceEnabled = true
         db.settings = settings
+        
+        PINCache.shared.diskCache.ageLimit = 60 * 60 * 48
+        PINCache.shared.memoryCache.ageLimit = 60 * 60 * 24
         
         let locationManager = CLLocationManager()
         locationManager.requestAlwaysAuthorization()
@@ -105,9 +109,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             let mapService = MapService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: mapService, for: \.mapsService)
             
-            let mapPostService = MapPostService(fireStore: fireStore)
-            try ServiceContainer.shared.register(service: mapPostService, for: \.mapPostService)
-            
             let friendsService = FriendsService(fireStore: fireStore)
             try ServiceContainer.shared.register(service: friendsService, for: \.friendsService)
             
@@ -122,6 +123,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             
             let coreDataService = CoreDataService()
             try ServiceContainer.shared.register(service: coreDataService, for: \.coreDataService)
+            
+            let mapPostService = MapPostService(fireStore: fireStore, imageVideoService: imageVideoService)
+            try ServiceContainer.shared.register(service: mapPostService, for: \.mapPostService)
             
             if let locationManager {
                 let locationService = LocationService(locationManager: locationManager)

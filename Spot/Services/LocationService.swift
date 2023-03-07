@@ -12,8 +12,7 @@ import Mixpanel
 
 protocol LocationServiceProtocol {
     var currentLocation: CLLocation? { get set }
-    func getCurrentUserCityLocation(zoomLevel: Int, completion: @escaping ((String) -> Void))
-    func getCityFromLocation(location: CLLocation, zoomLevel: Int) async throws -> String
+    func getCityFromLocation(location: CLLocation, zoomLevel: Int) async -> String
     func locationAlert() -> UIAlertController
     func checkLocationAuth() -> UIAlertController?
 }
@@ -30,24 +29,13 @@ final class LocationService: NSObject, LocationServiceProtocol {
         self.locationManager.delegate = self
     }
     
-    func getCurrentUserCityLocation(zoomLevel: Int, completion: @escaping ((String) -> Void)) {
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            guard let self, let location = self.currentLocation else {
-                completion("")
-                return
-            }
-            
+    func getCityFromLocation(location: CLLocation, zoomLevel: Int) async -> String {
+        await withUnsafeContinuation { continuation in
             self.cityFrom(location: location, zoomLevel: zoomLevel) { city in
-                completion(city)
-                UserDataModel.shared.userCity = city
-                NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UserCitySet")))
-            }
-        }
-    }
-    
-    func getCityFromLocation(location: CLLocation, zoomLevel: Int) async throws -> String {
-        try await withUnsafeThrowingContinuation { continuation in
-            self.cityFrom(location: location, zoomLevel: zoomLevel) { city in
+                if location.coordinate == self.currentLocation?.coordinate {
+                    NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "UserCitySet")))
+                }
+                
                 continuation.resume(returning: city)
             }
         }

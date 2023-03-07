@@ -7,33 +7,42 @@
 //
 
 import Foundation
+import PINCache
 
 final class CacheService<Key: Hashable, Value> {
     
-    private let queue = DispatchQueue(label: "caching", qos: .background)
+    private let readingQueue: DispatchQueue
+    private let writingQueue: DispatchQueue
+    private let deletingQueue: DispatchQueue
 
     private let wrapped = NSCache<WrappedKey, Entry>()
     private let dateProvider: () -> Date
     private let entryLifetime: TimeInterval
     private let keyTracker = KeyTracker()
 
-    init(dateProvider: @escaping () -> Date = Date.init,
-         entryLifetime: TimeInterval = 12 * 60 * 60,
-         maximumEntryCount: Int = 150) {
+    init(
+        className: String,
+        dateProvider: @escaping () -> Date = Date.init,
+        entryLifetime: TimeInterval = 12 * 60 * 60,
+        maximumEntryCount: Int = 150
+    ) {
         self.dateProvider = dateProvider
         self.entryLifetime = entryLifetime
         wrapped.countLimit = maximumEntryCount
         wrapped.delegate = keyTracker
+        self.readingQueue = DispatchQueue(label: "\(className)_reading", qos: .background)
+        self.writingQueue = DispatchQueue(label: "\(className)_writing", qos: .background)
+        self.deletingQueue = DispatchQueue(label: "\(className)_deleting", qos: .background)
     }
     
     func allCachedValues() -> [Value] {
         var values: [Value] = []
         
-        queue.sync {
-            values = keyTracker.keys.map {
-                self.entry(forKey: $0)?.value
+        readingQueue.sync { [weak self] in
+            values = self?.keyTracker.keys.map {
+                self?.entry(forKey: $0)?.value
             }
-            .compactMap { $0 }
+            .compactMap { $0 } ?? []
         }
         
         return values
@@ -42,8 +51,8 @@ final class CacheService<Key: Hashable, Value> {
     func allCachedKeys() -> [Key] {
         var keys: [Key] = []
         
-        queue.sync {
-            keys = keyTracker.keys.map { $0 }
+        readingQueue.sync { [weak self] in
+            keys = self?.keyTracker.keys.map { $0 } ?? []
         }
         
         return keys
@@ -52,11 +61,11 @@ final class CacheService<Key: Hashable, Value> {
     func allCachedEntries() -> [Entry] {
         var entries: [Entry] = []
         
-        queue.sync {
-            entries = keyTracker.keys.map {
-                self.entry(forKey: $0)
+        readingQueue.sync { [weak self] in
+            entries = self?.keyTracker.keys.map {
+                self?.entry(forKey: $0)
             }
-            .compactMap { $0 }
+            .compactMap { $0 } ?? []
         }
         
         return entries
@@ -76,12 +85,16 @@ final class CacheService<Key: Hashable, Value> {
     }
 
     func insert(_ entry: Entry) {
-        wrapped.setObject(entry, forKey: WrappedKey(entry.key))
-        keyTracker.keys.insert(entry.key)
+        writingQueue.async { [weak self] in
+            self?.wrapped.setObject(entry, forKey: WrappedKey(entry.key))
+            self?.keyTracker.keys.insert(entry.key)
+        }
     }
     
     func removeValue(forKey key: Key) {
-        wrapped.removeObject(forKey: WrappedKey(key))
+        deletingQueue.async { [weak self] in
+            self?.wrapped.removeObject(forKey: WrappedKey(key))
+        }
     }
 }
 
@@ -140,7 +153,7 @@ private extension CacheService {
 
 extension CacheService: Codable where Key: Codable, Value: Codable {
     convenience init(from decoder: Decoder) throws {
-        self.init()
+        self.init(className: UUID().uuidString)
 
         let container = try decoder.singleValueContainer()
         let entries = try container.decode([Entry].self)
@@ -155,7 +168,7 @@ extension CacheService: Codable where Key: Codable, Value: Codable {
     func allCachedValues() -> [Value] {
         var values: [Value] = []
         
-        queue.sync {
+        readingQueue.sync {
             values = keyTracker.keys.map {
                 self.entry(forKey: $0)?.value
             }
@@ -168,7 +181,7 @@ extension CacheService: Codable where Key: Codable, Value: Codable {
     func allCachedKeys() -> [Key] {
         var keys: [Key] = []
         
-        queue.sync {
+        readingQueue.sync {
             keys = keyTracker.keys.map { $0 }
         }
         
@@ -178,7 +191,7 @@ extension CacheService: Codable where Key: Codable, Value: Codable {
     func allCachedEntries() -> [Entry] {
         var entries: [Entry] = []
         
-        queue.sync {
+        readingQueue.sync {
             entries = keyTracker.keys.map {
                 self.entry(forKey: $0)
             }
@@ -202,7 +215,7 @@ extension CacheService: Codable where Key: Codable, Value: Codable {
     }
 
     func insert(_ entry: Entry) {
-        queue.async(flags: .barrier) { [weak self] in
+        writingQueue.async { [weak self] in
             self?.wrapped.setObject(entry, forKey: WrappedKey(entry.key))
             self?.keyTracker.keys.insert(entry.key)
             try? self?.saveToDisk(withName: "\(entry.key)")
@@ -210,7 +223,7 @@ extension CacheService: Codable where Key: Codable, Value: Codable {
     }
     
     func removeValue(forKey key: Key) {
-        queue.async(flags: .barrier) { [weak self] in
+        deletingQueue.async { [weak self] in
             self?.wrapped.removeObject(forKey: WrappedKey(key))
             try? self?.deleteFromDisk(fileName: "\(key)")
         }

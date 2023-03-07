@@ -29,6 +29,7 @@ final class SpotTabBarController: UITabBarController {
     init() {
         super.init(nibName: nil, bundle: nil)
         viewSetup()
+        UserDataModel.shared.addListeners()
     }
 
     @available(*, unavailable)
@@ -47,7 +48,6 @@ final class SpotTabBarController: UITabBarController {
 
         addNotifications()
         checkLocationAuth()
-        UserDataModel.shared.addListeners()
     }
 
     private func viewSetup() {
